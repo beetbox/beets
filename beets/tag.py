@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Handles low-level interfacing for files' tags. Wraps mutagen to
 automatically detect file types and provide a unified interface for the
 specific tags Beets is interested in."""
@@ -15,13 +14,7 @@ class FileTypeError(IOError):
 
 
 
-
-
-
-###########################
-#### UTILITY FUNCTIONS ####
-###########################
-# For dealing with the sort of weirdnesses we find in metadata fields.
+#### utility functions ####
 
 def fromslashed(slashed, sep=u'/'):
     """Extract a pair of items from a slashed string. If only one
@@ -83,10 +76,6 @@ def normalize_pair(pair, noneval=None):
 
 
 
-
-###############################
-#### MediaField descriptor ####
-###############################
 
 class MediaField(object):
     """A descriptor providing access to a particular (abstract) metadata
@@ -295,11 +284,6 @@ class MediaField(object):
 
 
 
-
-#########################
-#### MediaFile class ####
-#########################
-
 class MediaFile(object):
     """Represents a multimedia file on disk and provides access to its
     metadata."""
@@ -318,9 +302,8 @@ class MediaFile(object):
     def save_tags(self):
         self.tags.save()
     
-    ###########################
-    #### FIELD DEFINITIONS ####
-    ###########################
+    
+    #### field definitions ####
     
     title = MediaField('TIT2', "\xa9nam")
     artist = MediaField('TPE1', "\xa9ART")

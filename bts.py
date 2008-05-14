@@ -44,4 +44,3 @@ command is one of: add, remove, update, write, list, help"""
     
     # no command matched
     op.error('invalid command "' + cmd + '"')
-        

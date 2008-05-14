@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import sqlite3, os, sys, operator
 from beets.tag import MediaFile, FileTypeError
 from string import Template
@@ -34,11 +33,6 @@ class LibraryError(Exception):
     pass
 
 
-
-
-##############
-#### ITEM ####
-##############
 
 class Item(object):
     def __init__(self, values, library=None):
@@ -185,10 +179,6 @@ class Item(object):
 
 
 
-#################
-#### LIBRARY ####
-#################
-
 class Library(object):
     def __init__(self, path='library.blb'):
         self.path = path
@@ -260,4 +250,3 @@ class Library(object):
     def save(self):
         """Writes the library to disk (completing a sqlite transaction)."""
         self.conn.commit()
-    
