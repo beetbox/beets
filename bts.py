@@ -2,6 +2,11 @@
 from optparse import OptionParser
 from beets import Library
 
+def add(lib, paths):
+    for path in paths:
+        lib.add(path)
+    lib.save()
+
 if __name__ == "__main__":
     # parse options
     usage = """usage: %prog [options] command
@@ -25,16 +30,16 @@ command is one of: add, remove, update, write, list, help"""
     
     # choose which command to invoke
     avail_commands = [
-        (lib.add,    ['add']),
-        (lib.remove, ['remove', 'rm']),
-        (lib.update, ['update', 'up']),
-        (lib.write,  ['write', 'wr', 'w']),
-        (lib.list,   ['list', 'ls']),
+        (add,        ['add']),
+        #(remove,     ['remove', 'rm']),
+        #(update,     ['update', 'up']),
+        #(write,      ['write', 'wr', 'w']),
+        #(list,       ['list', 'ls']),
         (help,       ['help', 'h'])
     ]
     for test_command in avail_commands:
         if cmd in test_command[1]:
-            (test_command[0])(*args)
+            (test_command[0])(lib, args)
             op.exit()
     
     # no command matched
