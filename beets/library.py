@@ -31,6 +31,10 @@ item_keys = map(operator.itemgetter(0), item_fields)
 
 class LibraryError(Exception):
     pass
+class InvalidFieldError(Exception):
+    pass
+
+
 
 
 
@@ -176,6 +180,110 @@ class Item(object):
         i = cls({}, library=library)
         i.read(path)
         return i
+
+
+
+
+
+
+
+class QueryElement(object):
+    """A building block for library queries."""
+    def clause(self):
+        """Returns (clause, subvals) where clause is a valid sqlite WHERE
+        clause implementing the query element and subvals is a list of items
+        to be substituted for ?s in the clause."""
+        raise NotImplementedError
+    
+class SubstringQueryElement(QueryElement):
+    """A query element that matches a substring in a specific item field."""
+    
+    def __init__(self, field, value):
+        if field not in item_keys:
+            raise InvalidFieldError(field + ' is not an item key')
+        self.field = field
+        self.value = value
+    
+    def clause(self):
+        search = '%' + (self.value.replace('\\','\\\\').replace('%','\\%')
+                            .replace('_','\\_')) + '%'
+        clause = self.field + " like ? escape '\\'"
+        subvals = [search]
+        return (clause, subvals)
+
+class AndQueryElement(QueryElement):
+    """A conjunction of a list of other query elements. Can be indexed like a
+    list to access the sub-elements."""
+    
+    def __init__(self, elements = None):
+        if elements is None:
+            self.elements = []
+        else:
+            self.elements = elements
+    
+    # is there a better way to do this?
+    def __len__(self): return len(self.elements)
+    def __getitem__(self, key): return self.elements[key]
+    def __setitem__(self, key, value): self.elements[key] = value
+    def __delitem__(self, key): del self.elements[key]
+    def __iter__(self): iter(self.elements)
+    def __contains__(self, item): item in self.elements
+    
+    def clause(self):
+        clause_parts = []
+        subvals = []
+        for el in self.elements:
+            el_clause, el_subvals = el.clause()
+            clause_parts.append('(' + el_clause + ')')
+            subvals += el_subvals
+        clause = ' and '.join(clause_parts)
+        return (clause, subvals)
+    
+    @classmethod
+    def from_dict(cls, matches):
+        """Construct a query element from a dictionary, matches, whose keys
+        are item field names and whose values are substring patterns."""
+        elements = []
+        for key, pattern in matches.iteritems():
+            elements.append(SubstringQueryElement(key, pattern))
+        return cls(elements)
+
+class Query(AndQueryElement):
+    """A query into the item database."""
+    
+    def statement(self, columns='*'):
+        """Returns (query, subvals) where clause is a sqlite SELECT statement
+        to enact this query and subvals is a list of values to substitute in
+        for ?s in the query."""
+        clause, subvals = self.clause()
+        return ('select ' + columns + ' from items where ' + clause, subvals)
+
+    def execute(self, library):
+        """Runs the query in the specified library, returning an
+        ItemResultIterator."""
+        cursor = library.conn.cursor()
+        cursor.execute(*self.statement())
+        return ItemResultIterator(cursor)
+
+class ItemResultIterator(object):
+    """An iterator into an item result set."""
+    
+    def __init__(self, cursor):
+        self.cursor = cursor
+    
+    def __iter__(self): return self
+    
+    def next(self):
+        try:
+            row = self.cursor.next()
+        except StopIteration:
+            self.cursor.close()
+            raise StopIteration
+        return Item(row)
+
+
+
+
 
 
 
