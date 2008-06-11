@@ -188,16 +188,30 @@ class Item(object):
 
 
 
-class QueryElement(object):
-    """A building block for library queries."""
+class Query(object):
+    """An abstract class representing a query into the item database."""
     def clause(self):
         """Returns (clause, subvals) where clause is a valid sqlite WHERE
-        clause implementing the query element and subvals is a list of items
-        to be substituted for ?s in the clause."""
+        clause implementing the query and subvals is a list of items to be
+        substituted for ?s in the clause."""
         raise NotImplementedError
+
+    def statement(self, columns='*'):
+        """Returns (query, subvals) where clause is a sqlite SELECT statement
+        to enact this query and subvals is a list of values to substitute in
+        for ?s in the query."""
+        clause, subvals = self.clause()
+        return ('select ' + columns + ' from items where ' + clause, subvals)
+
+    def execute(self, library):
+        """Runs the query in the specified library, returning an
+        ItemResultIterator."""
+        cursor = library.conn.cursor()
+        cursor.execute(*self.statement())
+        return ResultIterator(cursor)
     
-class SubstringQueryElement(QueryElement):
-    """A query element that matches a substring in a specific item field."""
+class SubstringQuery(Query):
+    """A query that matches a substring in a specific item field."""
     
     def __init__(self, field, pattern):
         if field not in item_keys:
@@ -212,8 +226,8 @@ class SubstringQueryElement(QueryElement):
         subvals = [search]
         return (clause, subvals)
 
-class AnySubstringQueryElement(QueryElement):
-    """A query element that matches a substring in any item field."""
+class AnySubstringQuery(Query):
+    """A query that matches a substring in any item field."""
     
     def __init__(self, pattern):
         self.pattern = pattern
@@ -222,16 +236,16 @@ class AnySubstringQueryElement(QueryElement):
         clause_parts = []
         subvals = []
         for field in item_keys:
-            el_clause, el_subvals = (SubstringQueryElement(field, self.pattern)
+            el_clause, el_subvals = (SubstringQuery(field, self.pattern)
                                      .clause())
             clause_parts.append('(' + el_clause + ')')
             subvals += el_subvals
         clause = ' or '.join(clause_parts)
         return clause, subvals
 
-class AndQueryElement(QueryElement):
-    """A conjunction of a list of other query elements. Can be indexed like a
-    list to access the sub-elements."""
+class AndQuery(Query):
+    """A conjunction of a list of other queries. Can be indexed like a list to
+    access the sub-queries."""
     
     def __init__(self, elements = None):
         if elements is None:
@@ -259,11 +273,11 @@ class AndQueryElement(QueryElement):
     
     @classmethod
     def from_dict(cls, matches):
-        """Construct a query element from a dictionary, matches, whose keys
-        are item field names and whose values are substring patterns."""
+        """Construct a query from a dictionary, matches, whose keys are item
+        field names and whose values are substring patterns."""
         elements = []
         for key, pattern in matches.iteritems():
-            elements.append(SubstringQueryElement(key, pattern))
+            elements.append(SubstringQuery(key, pattern))
         return cls(elements)
 
     
@@ -277,7 +291,7 @@ class AndQueryElement(QueryElement):
                                 r'(?<!\\):' # unescaped :
                            r')?'
        
-                           r'(\S+)',        # the term itself, greedily consumed
+                           r'(\S+)',        # the term itself
                            re.I)            # case-insensitive
     @classmethod
     def _parse_query(cls, query_string):
@@ -304,34 +318,20 @@ class AndQueryElement(QueryElement):
         elements = []
         for key, pattern in cls._parse_query(query_string):
             if key is None: # no key specified; match any field
-                elements.append(AnySubstringQueryElement(pattern))
+                elements.append(AnySubstringQuery(pattern))
             elif key.lower() in item_keys: # ignore unrecognized keys
-                elements.append(SubstringQueryElement(key.lower(), pattern))
+                elements.append(SubstringQuery(key.lower(), pattern))
         if not elements: # no terms in query
-            elements = [TrueQueryElement()]
+            elements = [TrueQuery()]
         return cls(elements)
 
-class TrueQueryElement(QueryElement):
-    """A query element that always matches."""
+class TrueQuery(Query):
+    """A query that always matches."""
     def clause(self):
         return '1', ()
 
-class Query(AndQueryElement):
+class Query(AndQuery):
     """A query into the item database."""
-    
-    def statement(self, columns='*'):
-        """Returns (query, subvals) where clause is a sqlite SELECT statement
-        to enact this query and subvals is a list of values to substitute in
-        for ?s in the query."""
-        clause, subvals = self.clause()
-        return ('select ' + columns + ' from items where ' + clause, subvals)
-
-    def execute(self, library):
-        """Runs the query in the specified library, returning an
-        ItemResultIterator."""
-        cursor = library.conn.cursor()
-        cursor.execute(*self.statement())
-        return ResultIterator(cursor)
 
 class ResultIterator(object):
     """An iterator into an item query result set."""
@@ -428,9 +428,9 @@ class Library(object):
         """Returns a ResultIterator to the items matching query, which may be
         None (match the entire library), a Query object, or a query string."""
         if query is None:
-            query = Query([TrueQueryElement()])
+            query = TrueQuery()
         elif isinstance(query, str) or isinstance(query, unicode):
-            query = Query.from_string(query)
+            query = AndQuery.from_string(query)
         elif not isinstance(query, Query):
             raise ValueError('query must be None or have type Query or str')
         return query.execute(self)
