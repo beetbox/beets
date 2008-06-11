@@ -7,6 +7,13 @@ def add(lib, paths):
         lib.add(path)
     lib.save()
 
+def ls(lib, criteria):
+    q = ' '.join(criteria)
+    if not q.strip():
+        q = None    # no criteria => match anything
+    for item in lib.get(q):
+        print item.artist + ' - ' + item.album + ' - ' + item.title
+
 if __name__ == "__main__":
     # parse options
     usage = """usage: %prog [options] command
@@ -34,7 +41,7 @@ command is one of: add, remove, update, write, list, help"""
         #(remove,     ['remove', 'rm']),
         #(update,     ['update', 'up']),
         #(write,      ['write', 'wr', 'w']),
-        #(list,       ['list', 'ls']),
+        (ls,         ['list', 'ls']),
         (help,       ['help', 'h'])
     ]
     for test_command in avail_commands:

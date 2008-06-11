@@ -1,4 +1,4 @@
-import sqlite3, os, sys, operator
+import sqlite3, os, sys, operator, re
 from beets.tag import MediaFile, FileTypeError
 from string import Template
 
@@ -187,6 +187,7 @@ class Item(object):
 
 
 
+
 class QueryElement(object):
     """A building block for library queries."""
     def clause(self):
@@ -198,18 +199,35 @@ class QueryElement(object):
 class SubstringQueryElement(QueryElement):
     """A query element that matches a substring in a specific item field."""
     
-    def __init__(self, field, value):
+    def __init__(self, field, pattern):
         if field not in item_keys:
             raise InvalidFieldError(field + ' is not an item key')
         self.field = field
-        self.value = value
+        self.pattern = pattern
     
     def clause(self):
-        search = '%' + (self.value.replace('\\','\\\\').replace('%','\\%')
+        search = '%' + (self.pattern.replace('\\','\\\\').replace('%','\\%')
                             .replace('_','\\_')) + '%'
         clause = self.field + " like ? escape '\\'"
         subvals = [search]
         return (clause, subvals)
+
+class AnySubstringQueryElement(QueryElement):
+    """A query element that matches a substring in any item field."""
+    
+    def __init__(self, pattern):
+        self.pattern = pattern
+    
+    def clause(self):
+        clause_parts = []
+        subvals = []
+        for field in item_keys:
+            el_clause, el_subvals = (SubstringQueryElement(field, self.pattern)
+                                     .clause())
+            clause_parts.append('(' + el_clause + ')')
+            subvals += el_subvals
+        clause = ' or '.join(clause_parts)
+        return clause, subvals
 
 class AndQueryElement(QueryElement):
     """A conjunction of a list of other query elements. Can be indexed like a
@@ -237,7 +255,7 @@ class AndQueryElement(QueryElement):
             clause_parts.append('(' + el_clause + ')')
             subvals += el_subvals
         clause = ' and '.join(clause_parts)
-        return (clause, subvals)
+        return clause, subvals
     
     @classmethod
     def from_dict(cls, matches):
@@ -247,6 +265,56 @@ class AndQueryElement(QueryElement):
         for key, pattern in matches.iteritems():
             elements.append(SubstringQueryElement(key, pattern))
         return cls(elements)
+
+    
+    # regular expression for _parse_query, below
+    _pq_regex = re.compile(r'(?:^|(?<=\s))' # zero-width match for whitespace or
+                                            # beginning of string
+       
+                           # non-grouping optional segment for the keyword
+                           r'(?:'
+                                r'(\S+?)'   # the keyword
+                                r'(?<!\\):' # unescaped :
+                           r')?'
+       
+                           r'(\S+)',        # the term itself, greedily consumed
+                           re.I)            # case-insensitive
+    @classmethod
+    def _parse_query(cls, query_string):
+        """Takes a query in the form of a whitespace-separated list of search
+        terms that may be preceded with a key followed by a colon. Returns a
+        list of pairs (key, term) where key is None if the search term has no
+        key.
+
+        For instance,
+        parse_query('stapler color:red') ==
+            [(None, 'stapler'), ('color', 'red')]
+
+        Colons may be 'escaped' with a backslash to disable the keying
+        behavior.
+        """
+        out = []
+        for match in cls._pq_regex.finditer(query_string):
+            out.append((match.group(1), match.group(2).replace(r'\:',':')))
+        return out
+
+    @classmethod
+    def from_string(cls, query_string):
+        """Creates a query from a string in the format used by _parse_query."""
+        elements = []
+        for key, pattern in cls._parse_query(query_string):
+            if key is None: # no key specified; match any field
+                elements.append(AnySubstringQueryElement(pattern))
+            elif key.lower() in item_keys: # ignore unrecognized keys
+                elements.append(SubstringQueryElement(key.lower(), pattern))
+        if not elements: # no terms in query
+            elements = [TrueQueryElement()]
+        return cls(elements)
+
+class TrueQueryElement(QueryElement):
+    """A query element that always matches."""
+    def clause(self):
+        return '1', ()
 
 class Query(AndQueryElement):
     """A query into the item database."""
@@ -263,10 +331,10 @@ class Query(AndQueryElement):
         ItemResultIterator."""
         cursor = library.conn.cursor()
         cursor.execute(*self.statement())
-        return ItemResultIterator(cursor)
+        return ResultIterator(cursor)
 
-class ItemResultIterator(object):
-    """An iterator into an item result set."""
+class ResultIterator(object):
+    """An iterator into an item query result set."""
     
     def __init__(self, cursor):
         self.cursor = cursor
@@ -280,6 +348,7 @@ class ItemResultIterator(object):
             self.cursor.close()
             raise StopIteration
         return Item(row)
+
 
 
 
@@ -354,6 +423,17 @@ class Library(object):
         
         else: # something else: special file?
             self.__log(path + ' special file, skipping')
+    
+    def get(self, query):
+        """Returns a ResultIterator to the items matching query, which may be
+        None (match the entire library), a Query object, or a query string."""
+        if query is None:
+            query = Query([TrueQueryElement()])
+        elif isinstance(query, str) or isinstance(query, unicode):
+            query = Query.from_string(query)
+        elif not isinstance(query, Query):
+            raise ValueError('query must be None or have type Query or str')
+        return query.execute(self)
     
     def save(self):
         """Writes the library to disk (completing a sqlite transaction)."""
