@@ -224,23 +224,6 @@ class SubstringQuery(Query):
                             .replace('_','\\_')) + '%'
         clause = self.field + " like ? escape '\\'"
         subvals = [search]
-        return (clause, subvals)
-    
-class AnySubstringQuery(Query):
-    """A query that matches a substring in any item field. """
-    
-    def __init__(self, pattern):
-        self.pattern = pattern
-    
-    def clause(self):
-        clause_parts = []
-        subvals = []
-        for field in item_keys:
-            subq_clause, subq_subvals = (SubstringQuery(field, self.pattern)
-                                         .clause())
-            clause_parts.append('(' + subq_clause + ')')
-            subvals += subq_subvals
-        clause = ' or '.join(clause_parts)
         return clause, subvals
 
 class CollectionQuery(Query):
@@ -253,8 +236,6 @@ class CollectionQuery(Query):
     # is there a better way to do this?
     def __len__(self): return len(self.subqueries)
     def __getitem__(self, key): return self.subqueries[key]
-    def __setitem__(self, key, value): self.subqueries[key] = value
-    def __delitem__(self, key): del self.subqueries[key]
     def __iter__(self): iter(self.subqueries)
     def __contains__(self, item): item in self.subqueries
 
@@ -263,8 +244,8 @@ class CollectionQuery(Query):
         subqueries with the string joiner (padded by spaces)."""
         clause_parts = []
         subvals = []
-        for el in self.subqueries:
-            subq_clause, subq_subvals = el.clause()
+        for subq in self.subqueries:
+            subq_clause, subq_subvals = subq.clause()
             clause_parts.append('(' + subq_clause + ')')
             subvals += subq_subvals
         clause = (' ' + joiner + ' ').join(clause_parts)
@@ -323,7 +304,25 @@ class CollectionQuery(Query):
             subqueries = [TrueQuery()]
         return cls(subqueries)
 
-class AndQuery(CollectionQuery):
+class AnySubstringQuery(CollectionQuery):
+    """A query that matches a substring in any item field. """
+
+    def __init__(self, pattern):
+        subqueries = []
+        for field in item_keys:
+            subqueries.append(SubstringQuery(field, pattern))
+        super(AnySubstringQuery, self).__init__(subqueries)
+
+    def clause(self):
+        return self.clause_with_joiner('or')
+
+class MutableCollectionQuery(CollectionQuery):
+    """A collection query whose subqueries may be modified after the query is
+    initialized."""
+    def __setitem__(self, key, value): self.subqueries[key] = value
+    def __delitem__(self, key): del self.subqueries[key]
+
+class AndQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
     def clause(self):
         return self.clause_with_joiner('and')
