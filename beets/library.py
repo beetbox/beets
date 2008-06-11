@@ -225,9 +225,9 @@ class SubstringQuery(Query):
         clause = self.field + " like ? escape '\\'"
         subvals = [search]
         return (clause, subvals)
-
+    
 class AnySubstringQuery(Query):
-    """A query that matches a substring in any item field."""
+    """A query that matches a substring in any item field. """
     
     def __init__(self, pattern):
         self.pattern = pattern
@@ -236,54 +236,52 @@ class AnySubstringQuery(Query):
         clause_parts = []
         subvals = []
         for field in item_keys:
-            el_clause, el_subvals = (SubstringQuery(field, self.pattern)
-                                     .clause())
-            clause_parts.append('(' + el_clause + ')')
-            subvals += el_subvals
+            subq_clause, subq_subvals = (SubstringQuery(field, self.pattern)
+                                         .clause())
+            clause_parts.append('(' + subq_clause + ')')
+            subvals += subq_subvals
         clause = ' or '.join(clause_parts)
         return clause, subvals
 
-class AndQuery(Query):
-    """A conjunction of a list of other queries. Can be indexed like a list to
-    access the sub-queries."""
+class CollectionQuery(Query):
+    """An abstract query class that aggregates other queries. Can be indexed
+    like a list to access the sub-queries."""
     
-    def __init__(self, elements = None):
-        if elements is None:
-            self.elements = []
-        else:
-            self.elements = elements
+    def __init__(self, subqueries = ()):
+        self.subqueries = subqueries
     
     # is there a better way to do this?
-    def __len__(self): return len(self.elements)
-    def __getitem__(self, key): return self.elements[key]
-    def __setitem__(self, key, value): self.elements[key] = value
-    def __delitem__(self, key): del self.elements[key]
-    def __iter__(self): iter(self.elements)
-    def __contains__(self, item): item in self.elements
-    
-    def clause(self):
+    def __len__(self): return len(self.subqueries)
+    def __getitem__(self, key): return self.subqueries[key]
+    def __setitem__(self, key, value): self.subqueries[key] = value
+    def __delitem__(self, key): del self.subqueries[key]
+    def __iter__(self): iter(self.subqueries)
+    def __contains__(self, item): item in self.subqueries
+
+    def clause_with_joiner(self, joiner):
+        """Returns a clause created by joining together the clauses of all
+        subqueries with the string joiner (padded by spaces)."""
         clause_parts = []
         subvals = []
-        for el in self.elements:
-            el_clause, el_subvals = el.clause()
-            clause_parts.append('(' + el_clause + ')')
-            subvals += el_subvals
-        clause = ' and '.join(clause_parts)
+        for el in self.subqueries:
+            subq_clause, subq_subvals = el.clause()
+            clause_parts.append('(' + subq_clause + ')')
+            subvals += subq_subvals
+        clause = (' ' + joiner + ' ').join(clause_parts)
         return clause, subvals
     
     @classmethod
     def from_dict(cls, matches):
         """Construct a query from a dictionary, matches, whose keys are item
         field names and whose values are substring patterns."""
-        elements = []
+        subqueries = []
         for key, pattern in matches.iteritems():
-            elements.append(SubstringQuery(key, pattern))
-        return cls(elements)
-
+            subqueries.append(SubstringQuery(key, pattern))
+        return cls(subqueries)
     
     # regular expression for _parse_query, below
-    _pq_regex = re.compile(r'(?:^|(?<=\s))' # zero-width match for whitespace or
-                                            # beginning of string
+    _pq_regex = re.compile(r'(?:^|(?<=\s))' # zero-width match for whitespace
+                                            # or beginning of string
        
                            # non-grouping optional segment for the keyword
                            r'(?:'
@@ -315,23 +313,25 @@ class AndQuery(Query):
     @classmethod
     def from_string(cls, query_string):
         """Creates a query from a string in the format used by _parse_query."""
-        elements = []
+        subqueries = []
         for key, pattern in cls._parse_query(query_string):
             if key is None: # no key specified; match any field
-                elements.append(AnySubstringQuery(pattern))
+                subqueries.append(AnySubstringQuery(pattern))
             elif key.lower() in item_keys: # ignore unrecognized keys
-                elements.append(SubstringQuery(key.lower(), pattern))
-        if not elements: # no terms in query
-            elements = [TrueQuery()]
-        return cls(elements)
+                subqueries.append(SubstringQuery(key.lower(), pattern))
+        if not subqueries: # no terms in query
+            subqueries = [TrueQuery()]
+        return cls(subqueries)
+
+class AndQuery(CollectionQuery):
+    """A conjunction of a list of other queries."""
+    def clause(self):
+        return self.clause_with_joiner('and')
 
 class TrueQuery(Query):
     """A query that always matches."""
     def clause(self):
         return '1', ()
-
-class Query(AndQuery):
-    """A query into the item database."""
 
 class ResultIterator(object):
     """An iterator into an item query result set."""

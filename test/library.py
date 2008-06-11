@@ -3,7 +3,7 @@ import unittest, sys, os
 sys.path.append('..')
 import beets.library
 
-parse_query = beets.library.AndQuery._parse_query
+parse_query = beets.library.CollectionQuery._parse_query
 
 class QueryParseTest(unittest.TestCase):
     def test_one_basic_term(self):
