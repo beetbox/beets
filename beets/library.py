@@ -138,11 +138,13 @@ class Item(object):
             store_id = self.id
  
         # build assignments for query
-        assignments = ','.join( ['?=?'] * (len(item_fields)-1) )
+        assignments = ''
         subvars = []
         for key in item_keys:
             if key != 'id':
-                subvars += [key, self.record[key]]
+                assignments += key + '=?,'
+                subvars.append(self.record[key])
+        assignments = assignments[:-1] # knock off last ,
 
         # finish the query
         query = 'update items set ' + assignments + ' where id=?'
