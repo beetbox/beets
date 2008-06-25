@@ -103,10 +103,9 @@ class Item(object):
         if key in item_keys:
             self.record[key] = value
             if self.library: # we're "connected" to a library; keep it updated
-                c = self.library.conn.cursor()
-                c.execute('update items set ' + key + '=? where id=?',
-                          (self.record[key], self.id))
-                c.close()
+                self.library.conn.execute(
+                        'update items set ' + key + '=? where id=?',
+                        (self.record[key], self.id) )
         else:
             object.__setattr__(self, key, value)
     
@@ -123,8 +122,8 @@ class Item(object):
         if load_id is None:
             load_id = self.id
         
-        c = self.library.conn.cursor()
-        c.execute('select * from items where id=?', (load_id,))
+        self.library.conn.execute(
+                'select * from items where id=?', (load_id,) )
         self._fillrecord(c.fetchone())
         c.close()
     
@@ -149,9 +148,7 @@ class Item(object):
         query = 'update items set ' + assignments + ' where id=?'
         subvars.append(self.id)
 
-        c = self.library.conn.cursor()
-        c.execute(query, subvars)
-        c.close()
+        self.library.conn.execute(query, subvars)
 
     def add(self):
         """Add the item as a new object to the library database. The id field
@@ -324,11 +321,11 @@ class Query(object):
         return ('select ' + columns + ' from items where ' + clause, subvals)
 
     def execute(self, library):
-        """Runs the query in the specified library, returning an
-        ItemResultIterator."""
-        cursor = library.conn.cursor()
-        cursor.execute(*self.statement())
-        return ResultIterator(cursor, library)
+        """Runs the query in the specified library, returning a
+        ResultIterator."""
+        c = library.conn.cursor()
+        c.execute(*self.statement())
+        return ResultIterator(c, library)
     
 class SubstringQuery(Query):
     """A query that matches a substring in a specific item field."""
@@ -500,9 +497,7 @@ class Library(object):
         setup_sql += ', '.join(map(' '.join, item_fields))
         setup_sql += ');'
         
-        c = self.conn.cursor()
-        c.executescript(setup_sql)
-        c.close()
+        self.conn.executescript(setup_sql)
         self.conn.commit()
     
     
@@ -520,10 +515,9 @@ class Library(object):
         def __getitem__(self, key):
             """Return the current value of option "key"."""
             self._validate_key(key)
-            c = self.library.conn.cursor()
-            c.execute('select value from options where key=?', (key,))
-            result = c.fetchone()
-            c.close()
+            result = (self.library.conn.
+                execute('select value from options where key=?', (key,)).
+                fetchone())
             if result is None: # no value stored
                 return library_options[key] # return default value
             else:
@@ -532,10 +526,9 @@ class Library(object):
         def __setitem__(self, key, value):
             """Set the value of option "key" to "value"."""
             self._validate_key(key)
-            c = self.library.conn.cursor()
-            c.execute('insert or replace into options values (?,?)',
-                      (key, value))
-            c.close()
+            self.library.conn.execute(
+                    'insert or replace into options values (?,?)',
+                    (key, value) )
     
     options = None
     # will be set to a _LibraryOptionsAccessor when the library is initialized
