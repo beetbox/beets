@@ -20,14 +20,23 @@ metadata_fields = [
     ('lyrics',   'text'),
     ('comments', 'text'),
     ('bpm',      'int'),
-    ('comp',     'bool')
+    ('comp',     'bool'),
 ]
 item_fields = [
     ('id',      'integer primary key'),
-    ('path',    'text')
+    ('path',    'text'),
 ] + metadata_fields
 metadata_keys = map(operator.itemgetter(0), metadata_fields)
 item_keys = map(operator.itemgetter(0), item_fields)
+
+# Entries in the "options" table along with their default values.
+library_options = {
+    'directory':    u'~/Music',
+    'path_format':  u'$artist/$album/$track $title.$extension',
+}
+
+
+#### exceptions ####
 
 class LibraryError(Exception):
     pass
@@ -35,7 +44,27 @@ class InvalidFieldError(Exception):
     pass
 
 
+#### utility functions ####
 
+def _normpath(path):
+    """Provide the canonical form of the path suitable for storing in the
+    database."""
+    # force absolute paths:
+    # os.path.normpath(os.path.abspath(os.path.expanduser(path)))
+    return os.path.normpath(os.path.expanduser(path))
+
+def _log(msg):
+    """Print a log message."""
+    print >>sys.stderr, msg
+
+def _ancestry(path):
+    """Return a list consisting of path's parent directory, its grandparent,
+    and so on. For instance, _ancestry('/a/b/c') == ['/', '/a', '/a/b']."""
+    out = []
+    while path != '/':
+        path = os.path.dirname(path)
+        out.insert(0, path)
+    return out
 
 
 class Item(object):
@@ -52,26 +81,34 @@ class Item(object):
                 pass # don't use values that aren't present
 
 
-    #### field accessors ####
+    #### item field accessors ####
 
-    def __getattr__(self, name):
-        if name in item_keys:
-            return self.record[name]
-            # maybe fetch if it's not available
+    def __getattr__(self, key):
+        """If key is an item attribute (i.e., a column in the database),
+        returns the record entry for that key. Otherwise, performs an ordinary
+        getattr."""
+        
+        if key in item_keys:
+            return self.record[key]
         else:
-            return self.__dict__[name]
+            return object.__getattr__(self, key)
 
-    def __setattr__(self, name, value):
-        if name in item_keys:
-            self.record[name] = value
+    def __setattr__(self, key, value):
+        """If key is an item attribute (i.e., a column in the database), sets
+        the record entry for that key to value. If the item is associated with
+        a library, the new value is stored in the library's database.
+        
+        Otherwise, performs an ordinary setattr."""
+        
+        if key in item_keys:
+            self.record[key] = value
             if self.library: # we're "connected" to a library; keep it updated
                 c = self.library.conn.cursor()
-                c.execute('update items set ?=? where id=?',
-                          (self.colname, obj.record[self.colname],
-                           obj.record['id']))
+                c.execute('update items set ' + key + '=? where id=?',
+                          (self.record[key], self.id))
                 c.close()
         else:
-            self.__dict__[name] = value
+            object.__setattr__(self, key, value)
     
     
     #### interaction with the database ####
@@ -84,7 +121,7 @@ class Item(object):
             raise LibraryError('no library to load from')
         
         if load_id is None:
-            load_id = self.record['id']
+            load_id = self.id
         
         c = self.library.conn.cursor()
         c.execute('select * from items where id=?', (load_id,))
@@ -99,7 +136,7 @@ class Item(object):
             raise LibraryError('no library to store to')
             
         if store_id is None:
-            store_id = self.record['id']
+            store_id = self.id
  
         # build assignments for query
         assignments = ','.join( ['?=?'] * (len(item_fields)-1) )
@@ -110,7 +147,7 @@ class Item(object):
 
         # finish the query
         query = 'update items set ' + assignments + ' where id=?'
-        subvars.append(self.record['id'])
+        subvars.append(self.id)
 
         c = self.library.conn.cursor()
         c.execute(query, subvars)
@@ -138,11 +175,15 @@ class Item(object):
         new_id = c.lastrowid
         c.close()
         
-        self.record['id'] = new_id
+        self.record['id'] = new_id # don't use self.id because the id does not
+                                   # need to be updated
         return new_id
     
+    def remove(self):
+        FixMe
     
-    #### interaction with files ####
+    
+    #### interaction with files' metadata ####
     
     def read(self, read_path=None):
         """Read the metadata from a file. If no read_path is provided, the
@@ -150,12 +191,13 @@ class Item(object):
         the metadata is read."""
         
         if read_path is None:
-            read_path = self.record['path']
+            read_path = self.path
         f = MediaFile(read_path)
         
         for key in metadata_keys:
             self.record[key] = getattr(f, key)
-        self.record['path'] = read_path
+        self.record['path'] = read_path # don't use self.path because there's
+                                        # no DB row to update yet
         
         if self.library:
             self.add()
@@ -165,13 +207,91 @@ class Item(object):
         the metadata is written to the path stored in the item."""
         
         if write_path is None:
-            write_path = self.record['path']
+            write_path = self.path
         f = MediaFile(write_path)
         
         for key in metadata_keys:
             setattr(f, key, self.record[key])
         
         f.save_tags()
+    
+    
+    #### dealing with files themselves ####
+    
+    def destination(self):
+        """Returns the path within the library directory designated for this
+        item (i.e., where the file ought to be)."""
+        
+        libpath = self.library.options['directory']
+        subpath_tmpl = Template(self.library.options['path_format'])
+        
+        # build the mapping for substitution in the path template, beginning
+        # with the values from the database
+        mapping = {}
+        for key in item_keys:
+            value = self.record[key]
+            # sanitize the value for inclusion in a path:
+            # replace / and leading . with _
+            if isinstance(value, str) or isinstance(value, unicode):
+                value.replace(os.sep, '_')
+                re.sub(r'[' + os.sep + r']|^\.', '_', value)
+            elif key in ('track', 'maxtrack', 'disc', 'maxdisc'):
+                # pad with zeros
+                value = '%02i' % value
+            else:
+                value = str(value)
+            mapping[key] = value
+            
+        # one additional substitution: extension
+        _, extension = os.path.splitext(self.path)
+        extension = extension[1:] # remove leading .
+        mapping[u'extension'] = extension
+        
+        subpath = subpath_tmpl.substitute(mapping)
+        return _normpath(os.path.join(libpath, subpath))
+    
+    def move(self, copy=False):
+        """Move the item to its designated location within the library
+        directory. Subdirectories are created as needed. If moving fails (for
+        instance, because the move would cross filesystems), a copy is
+        attempted. If moving or copying succeeds, the path in the database is
+        updated to reflect the new location.
+        
+        If copy is True, moving is not attempted before copying.
+        
+        Passes on appropriate exceptions if directories cannot be created or
+        copying fails.
+        
+        Note that one should almost certainly call library.save() after this
+        method in order to keep on-disk data consistent."""
+        
+        # We could use os.renames (super-rename) here if it didn't prune the
+        # old pathname first. We only need the second half of its behavior.
+        
+        dest = self.destination()
+        
+        # Create necessary ancestry for the move.
+        for ancestor in _ancestry(dest):
+            if not os.path.isdir(ancestor):
+                os.mkdir(ancestor)
+        
+        try: # move
+            if copy:
+                # Hacky. Skip to "except" so we don't try moving.
+                raise Exception('skipping move')
+            os.rename(self.path, dest)
+        except: # copy
+            FixMe
+            
+        # Either copying or moving succeeded, so update the stored path.
+        self.path = dest
+    
+    def delete(self):
+        """Deletes the item from the filesystem. If the item is located
+        in the library directory, any empty parent directories are trimmed.
+        Also calls remove(), deleting the appropriate row from the database."""
+        FixMe
+        self.remove()
     
     @classmethod
     def from_path(cls, path, library=None):
@@ -208,7 +328,7 @@ class Query(object):
         ItemResultIterator."""
         cursor = library.conn.cursor()
         cursor.execute(*self.statement())
-        return ResultIterator(cursor)
+        return ResultIterator(cursor, library)
     
 class SubstringQuery(Query):
     """A query that matches a substring in a specific item field."""
@@ -335,8 +455,9 @@ class TrueQuery(Query):
 class ResultIterator(object):
     """An iterator into an item query result set."""
     
-    def __init__(self, cursor):
+    def __init__(self, cursor, library):
         self.cursor = cursor
+        self.library = library
     
     def __iter__(self): return self
     
@@ -346,7 +467,7 @@ class ResultIterator(object):
         except StopIteration:
             self.cursor.close()
             raise StopIteration
-        return Item(row)
+        return Item(row, self.library)
 
 
 
@@ -361,6 +482,7 @@ class Library(object):
         self.conn = sqlite3.connect(self.path)
         self.conn.row_factory = sqlite3.Row
             # this way we can access our SELECT results like dictionaries
+        self.options = Library._LibraryOptionsAccessor(self)
         self.__setup()
     
     def __setup(self):
@@ -384,18 +506,39 @@ class Library(object):
         self.conn.commit()
     
     
-    #### utility functions ####
+    #### library options ####
     
-    def __normpath(self, path):
-        """Provide the canonical form of the path suitable for storing in the
-        database. In the future, options may modify the behavior of this
-        method."""
-        # force absolute paths:
-        # os.path.normpath(os.path.abspath(os.path.expanduser(path)))
-        return os.path.normpath(os.path.expanduser(path))
-    def __log(self, msg):
-        """Print a log message."""
-        print >>sys.stderr, msg
+    class _LibraryOptionsAccessor(object):
+        """Provides access to the library's configuration variables."""
+        def __init__(self, library):
+            self.library = library
+        
+        def _validate_key(self, key):
+            if key not in library_options:
+                raise ValueError(key + " is not a valid option name")
+            
+        def __getitem__(self, key):
+            """Return the current value of option "key"."""
+            self._validate_key(key)
+            c = self.library.conn.cursor()
+            c.execute('select value from options where key=?', (key,))
+            result = c.fetchone()
+            c.close()
+            if result is None: # no value stored
+                return library_options[key] # return default value
+            else:
+                return result[0]
+            
+        def __setitem__(self, key, value):
+            """Set the value of option "key" to "value"."""
+            self._validate_key(key)
+            c = self.library.conn.cursor()
+            c.execute('insert or replace into options values (?,?)',
+                      (key, value))
+            c.close()
+    
+    options = None
+    # will be set to a _LibraryOptionsAccessor when the library is initialized
     
     
     #### main interface ####
@@ -413,17 +556,17 @@ class Library(object):
             #fixme avoid clobbering/duplicates!
             # add _if_ it's legible (otherwise ignore but say so)
             try:
-                Item.from_path(self.__normpath(path), self)
+                Item.from_path(_normpath(path), self)
             except FileTypeError:
-                self.__log(path + ' of unknown type, skipping')
+                _log(path + ' of unknown type, skipping')
         
         elif not os.path.exists(path): # no file
             raise IOError('file not found: ' + path)
         
         else: # something else: special file?
-            self.__log(path + ' special file, skipping')
+            _log(path + ' special file, skipping')
     
-    def get(self, query):
+    def get(self, query=None):
         """Returns a ResultIterator to the items matching query, which may be
         None (match the entire library), a Query object, or a query string."""
         if query is None:
