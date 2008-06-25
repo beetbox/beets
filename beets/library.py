@@ -1,4 +1,4 @@
-import sqlite3, os, sys, operator, re
+import sqlite3, os, sys, operator, re, shutil
 from beets.tag import MediaFile, FileTypeError
 from string import Template
 
@@ -281,7 +281,7 @@ class Item(object):
                 raise Exception('skipping move')
             os.rename(self.path, dest)
         except: # copy
-            FixMe
+            shutil.copy(self.path, dest)
             
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
