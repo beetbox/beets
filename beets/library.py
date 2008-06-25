@@ -249,15 +249,14 @@ class Item(object):
     
     def move(self, copy=False):
         """Move the item to its designated location within the library
-        directory. Subdirectories are created as needed. If moving fails (for
-        instance, because the move would cross filesystems), a copy is
-        attempted. If moving or copying succeeds, the path in the database is
-        updated to reflect the new location.
+        directory (provided by destination()). Subdirectories are created as
+        needed. If the operation succeeds, the path in the database is updated
+        to reflect the new location.
         
-        If copy is True, moving is not attempted before copying.
+        If copy is True, moving the file is copied rather than moved.
         
         Passes on appropriate exceptions if directories cannot be created or
-        copying fails.
+        moving/copying fails.
         
         Note that one should almost certainly call library.save() after this
         method in order to keep on-disk data consistent."""
@@ -272,13 +271,10 @@ class Item(object):
             if not os.path.isdir(ancestor):
                 os.mkdir(ancestor)
         
-        try: # move
-            if copy:
-                # Hacky. Skip to "except" so we don't try moving.
-                raise Exception('skipping move')
-            os.rename(self.path, dest)
-        except: # copy
+        if copy:
             shutil.copy(self.path, dest)
+        else:
+            shutil.move(self.path, dest)
             
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
