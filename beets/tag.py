@@ -124,7 +124,7 @@ class MediaField(object):
     def __fetchdata(self, obj):
         """Get the value associated with this descriptor's key (and id3desc if
         present) from the mutagen tag dict. Unwraps from a list if necessary."""
-        (mykey, mytype, mystyle) = self.__params(obj)
+        (mykey, mytype, mystyle) = self._params(obj)
         
         try:
             # fetch the value, which may be a scalar or a list
@@ -151,10 +151,10 @@ class MediaField(object):
         except KeyError: # the tag isn't present
             return None
     
-    def __storedata(self, obj, val):
+    def _storedata(self, obj, val):
         """Store val for this descriptor's key in the tag dictionary. Store it
         as a single-item list if necessary. Uses id3desc if present."""
-        (mykey, mytype, mystyle) = self.__params(obj)
+        (mykey, mytype, mystyle) = self._params(obj)
         
         # wrap as a list if necessary
         if mytype & self.TYPE_LIST: out = [val]
@@ -184,7 +184,7 @@ class MediaField(object):
         else:
             obj.tags[mykey] = out
     
-    def __params(self, obj):
+    def _params(self, obj):
         return (self.keys[obj.type],
                 self.types[obj.type],
                 self.styles[obj.type])
@@ -192,7 +192,7 @@ class MediaField(object):
     def __get__(self, obj, owner):
         """Retrieve the value of this metadata field."""
         out = None
-        (mykey, mytype, mystyle) = self.__params(obj)
+        (mykey, mytype, mystyle) = self._params(obj)
         
         out = self.__fetchdata(obj)
         
@@ -227,7 +227,7 @@ class MediaField(object):
     
     def __set__(self, obj, val):
         """Set the value of this metadata field."""
-        (mykey, mytype, mystyle) = self.__params(obj)
+        (mykey, mytype, mystyle) = self._params(obj)
         
         # apply style filters
         if mystyle & self.STYLE_SLASHED or mystyle & self.STYLE_2PLE:
@@ -279,7 +279,7 @@ class MediaField(object):
             out = bool(out)
         
         # store the data
-        self.__storedata(obj, out)
+        self._storedata(obj, out)
 
 
 

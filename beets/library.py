@@ -70,9 +70,9 @@ def _ancestry(path):
 class Item(object):
     def __init__(self, values, library=None):
         self.library = library
-        self.__fillrecord(values)
+        self._fillrecord(values)
     
-    def __fillrecord(self, values):
+    def _fillrecord(self, values):
         self.record = {}  
         for key in item_keys:
             try:
@@ -125,7 +125,7 @@ class Item(object):
         
         c = self.library.conn.cursor()
         c.execute('select * from items where id=?', (load_id,))
-        self.__fillrecord(c.fetchone())
+        self._fillrecord(c.fetchone())
         c.close()
     
     def store(self, store_id=None):
@@ -483,9 +483,9 @@ class Library(object):
         self.conn.row_factory = sqlite3.Row
             # this way we can access our SELECT results like dictionaries
         self.options = Library._LibraryOptionsAccessor(self)
-        self.__setup()
+        self._setup()
     
-    def __setup(self):
+    def _setup(self):
         "Set up the schema of the library file."
         
         # options (library data) table
