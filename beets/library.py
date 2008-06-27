@@ -179,7 +179,10 @@ class Item(object):
         return new_id
     
     def remove(self):
-        FixMe
+        """Removes the item from the database (leaving the file on disk)."""
+        
+        self.library.conn.execute('delete from items where id=?',
+                                  (self.id,) )
     
     
     #### interaction with files' metadata ####
@@ -263,12 +266,10 @@ class Item(object):
         Note that one should almost certainly call library.save() after this
         method in order to keep on-disk data consistent."""
         
-        # We could use os.renames (super-rename) here if it didn't prune the
-        # old pathname first. We only need the second half of its behavior.
-        
         dest = self.destination()
         
-        # Create necessary ancestry for the move.
+        # Create necessary ancestry for the move. Like os.renames but only
+        # halfway.
         for ancestor in _ancestry(dest):
             if not os.path.isdir(ancestor):
                 os.mkdir(ancestor)
@@ -284,8 +285,12 @@ class Item(object):
     def delete(self):
         """Deletes the item from the filesystem. If the item is located
         in the library directory, any empty parent directories are trimmed.
-        Also calls remove(), deleting the appropriate row from the database."""
-        FixMe
+        Also calls remove(), deleting the appropriate row from the database.
+        
+        As with move(), library.save() should almost certainly be called after
+        invoking this."""
+        
+        os.unlink(self.path)
         self.remove()
     
     @classmethod
