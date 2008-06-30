@@ -539,28 +539,17 @@ class Library(object):
     
     #### main interface ####
     
-    def add(self, path, clobber=False):
+    def add(self, path):
         """Add a file to the library or recursively search a directory and add
         all its contents."""
         
-        if os.path.isdir(path): # directory
-            # recurse into contents
-            for ent in os.listdir(path):
-                self.add(path + os.sep + ent, clobber)
-        
-        elif os.path.isfile(path): # normal file
-            #fixme avoid clobbering/duplicates!
-            # add _if_ it's legible (otherwise ignore but say so)
-            try:
-                Item.from_path(_normpath(path), self)
-            except FileTypeError:
-                _log(path + ' of unknown type, skipping')
-        
-        elif not os.path.exists(path): # no file
-            raise IOError('file not found: ' + path)
-        
-        else: # something else: special file?
-            _log(path + ' special file, skipping')
+        for root, dirs, files in os.walk(path):
+            for filebase in files:
+                filepath = os.join(root, filebase)
+                try:
+                    Item.from_path(_normpath(filepath), self)
+                except FileTypeError:
+                    _log(filepath + ' of unknown type, skipping')
     
     def get(self, query=None):
         """Returns a ResultIterator to the items matching query, which may be
