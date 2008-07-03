@@ -121,9 +121,10 @@ class MediaField(object):
                         'mp4': mp4style }
         self.id3desc = id3desc
     
-    def __fetchdata(self, obj):
+    def _fetchdata(self, obj):
         """Get the value associated with this descriptor's key (and id3desc if
-        present) from the mutagen tag dict. Unwraps from a list if necessary."""
+        present) from the mutagen tag dict. Unwraps from a list if
+        necessary."""
         (mykey, mytype, mystyle) = self._params(obj)
         
         try:
@@ -194,7 +195,7 @@ class MediaField(object):
         out = None
         (mykey, mytype, mystyle) = self._params(obj)
         
-        out = self.__fetchdata(obj)
+        out = self._fetchdata(obj)
         
         # deal with slashed and tuple storage
         if mystyle & self.STYLE_SLASHED or mystyle & self.STYLE_2PLE:
@@ -232,7 +233,7 @@ class MediaField(object):
         # apply style filters
         if mystyle & self.STYLE_SLASHED or mystyle & self.STYLE_2PLE:
             # fetch the existing value so we can preserve half of it
-            pair = self.__fetchdata(obj)
+            pair = self._fetchdata(obj)
             if mystyle & self.STYLE_SLASHED:
                 pair = fromslashed(pair)
             pair = normalize_pair(pair, noneval=0)
