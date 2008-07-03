@@ -545,7 +545,7 @@ class Library(object):
         
         for root, dirs, files in os.walk(path):
             for filebase in files:
-                filepath = os.join(root, filebase)
+                filepath = os.path.join(root, filebase)
                 try:
                     Item.from_path(_normpath(filepath), self)
                 except FileTypeError:
