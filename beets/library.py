@@ -66,6 +66,20 @@ def _ancestry(path):
         out.insert(0, path)
     return out
 
+def _walk_files(path):
+    """Like os.walk, but only yields the files in the directory tree. The full
+    pathnames to the files (under path) are given. Also, if path is a file,
+    _walk_files just yields that."""
+    if os.path.isfile(path):
+        yield path
+    else:
+        for root, dirs, files in os.walk(path):
+            for filebase in files:
+                yield os.path.join(root, filebase)
+
+
+
+
 
 class Item(object):
     def __init__(self, values, library=None):
@@ -112,7 +126,7 @@ class Item(object):
     
     #### interaction with the database ####
     
-    def load(self, fetch_id=None):
+    def load(self, load_id=None):
         """Refresh the item's metadata from the library database. If fetch_id
         is not specified, use the current item's id."""
         
@@ -195,7 +209,7 @@ class Item(object):
         if read_path is None:
             read_path = self.path
         f = MediaFile(read_path)
-        
+
         for key in metadata_keys:
             self.record[key] = getattr(f, key)
         self.record['path'] = read_path # don't use self.path because there's
@@ -230,7 +244,7 @@ class Item(object):
         # build the mapping for substitution in the path template, beginning
         # with the values from the database
         mapping = {}
-        for key in item_keys:
+        for key in metadata_keys:
             value = self.record[key]
             # sanitize the value for inclusion in a path:
             # replace / and leading . with _
@@ -539,17 +553,18 @@ class Library(object):
     
     #### main interface ####
     
-    def add(self, path):
+    def add(self, path, copy=False):
         """Add a file to the library or recursively search a directory and add
-        all its contents."""
+        all its contents. If copy is True, copy files to their destination in
+        the library directory while adding."""
         
-        for root, dirs, files in os.walk(path):
-            for filebase in files:
-                filepath = os.path.join(root, filebase)
-                try:
-                    Item.from_path(_normpath(filepath), self)
-                except FileTypeError:
-                    _log(filepath + ' of unknown type, skipping')
+        for f in _walk_files(path):
+            try:
+                i = Item.from_path(_normpath(f), self)
+                if copy:
+                    i.move(copy=True)
+            except FileTypeError:
+                _log(f + ' of unknown type, skipping')
     
     def get(self, query=None):
         """Returns a ResultIterator to the items matching query, which may be

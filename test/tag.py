@@ -116,19 +116,50 @@ correct_dicts = {
         'comments': u'',
         'bpm':      0,
         'comp':     False
+    },
+    
+    # empty.mp3 has had its ID3 tag deleted with mp3info -d
+    'empty': {
+        'title':    u'',
+        'artist':   u'',
+        'album':    u'',
+        'genre':    u'',
+        'composer': u'',
+        'grouping': u'',
+        'year':     0,
+        'track':    0,
+        'maxtrack': 0,
+        'disc':     0,
+        'maxdisc':  0,
+        'lyrics':   u'',
+        'comments': u'',
+        'bpm':      0,
+        'comp':     False
     }
 
 }
 
+def suite_for_file(path, correct_dict):
+    s = unittest.TestSuite()
+    for field in correct_dict.keys():
+        s.addTest(MakeReadingTest(path, correct_dict, field)())
+        s.addTest(MakeWritingTest(path, correct_dict, field)())
+    return s
+
 def suite():
     s = unittest.TestSuite()
+    
+    # General tests.
     for kind in ('m4a', 'mp3'):
         for tagset in ('full', 'partial', 'min'):
             path = 'rsrc' + os.sep + tagset + '.' + kind
             correct_dict = correct_dicts[tagset]
-            for field in correct_dict.keys():
-                s.addTest(MakeReadingTest(path, correct_dict, field)())
-                s.addTest(MakeWritingTest(path, correct_dict, field)())
+            s.addTest(suite_for_file(path, correct_dict))
+    
+    # Special test for missing ID3 tag.
+    s.addTest(suite_for_file('rsrc' + os.sep + 'empty.mp3',
+                             correct_dicts['empty']))
+    
     return s
 
 if __name__ == '__main__':

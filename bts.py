@@ -16,7 +16,8 @@ def ls(lib, criteria):
 
 def imp(lib, paths):
     for path in paths:
-        pass
+        lib.add(path, copy=True)
+    lib.save()
 
 if __name__ == "__main__":
     # parse options
