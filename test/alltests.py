@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import unittest
 
-test_modules = ['tag', 'library']
+test_modules = ['test_mediafile', 'test_library']
 
 def suite():
     s = unittest.TestSuite()

@@ -1,5 +1,5 @@
 import sqlite3, os, sys, operator, re, shutil
-from beets.tag import MediaFile, FileTypeError
+from beets.mediafile import MediaFile, FileTypeError
 from string import Template
 
 # Fields in the "items" table; all the metadata available for items in the

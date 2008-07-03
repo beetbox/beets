@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import unittest, sys, os, shutil
 sys.path.append('..')
-import beets.tag
+import beets.mediafile
 
 def MakeReadingTest(path, correct_dict, field):
     class ReadingTest(unittest.TestCase):
         def setUp(self):
-            self.f = beets.tag.MediaFile(path)
+            self.f = beets.mediafile.MediaFile(path)
         def runTest(self):
             got = getattr(self.f, field)
             correct = correct_dict[field]
@@ -37,12 +37,12 @@ def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
         
         def runTest(self):    
             # write new tag
-            a = beets.tag.MediaFile(self.tpath)
+            a = beets.mediafile.MediaFile(self.tpath)
             setattr(a, field, self.value)
             a.save_tags()
             
             # verify ALL tags are correct with modification
-            b = beets.tag.MediaFile(self.tpath)
+            b = beets.mediafile.MediaFile(self.tpath)
             for readfield in correct_dict.keys():
                 got = getattr(b, readfield)
                 if readfield is field:
