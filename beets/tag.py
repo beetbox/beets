@@ -1,6 +1,16 @@
-"""Handles low-level interfacing for files' tags. Wraps mutagen to
-automatically detect file types and provide a unified interface for the
-specific tags Beets is interested in."""
+"""Handles low-level interfacing for files' tags. Wraps Mutagen to
+automatically detect file types and provide a unified interface for a useful
+subset of music files' tags.
+
+Usage:
+>>> f = MediaFile('something.mp3')
+>>> f.title
+u'Lucy in the Sky with Diamonds'
+>>> f.artist = 'The Beatles'
+
+A field will always return a reasonable value of the correct type, even if no
+tag is present. If no value is available, the value will be false (e.g., zero
+or the empty string)."""
 
 from mutagen import mp4, mp3, id3
 import os.path
