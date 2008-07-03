@@ -294,6 +294,8 @@ class MediaFile(object):
         if ext == '.mp3':
             self.type = 'mp3'
             self.tags = mp3.Open(path)
+            if not self.tags.tags:
+                self.tags.add_tags()
         elif ext == '.m4a' or ext == '.mp4' or ext == '.m4b' or ext == '.m4p':
             self.type = 'mp4'
             self.tags = mp4.Open(path)
