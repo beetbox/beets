@@ -131,7 +131,7 @@ class MediaField(object):
             # fetch the value, which may be a scalar or a list
             if obj.type == 'mp3':
                 if self.id3desc is not None: # also match on 'desc' field
-                    frames = obj.tags.tags.getall(mykey)
+                    frames = obj.mgfile.tags.getall(mykey)
                     entry = None
                     for frame in frames:
                         if frame.desc == self.id3desc:
@@ -140,9 +140,9 @@ class MediaField(object):
                     if entry is None: # no desc match
                         return None
                 else:
-                    entry = obj.tags[mykey].text
+                    entry = obj.mgfile[mykey].text
             else:
-                entry = obj.tags[mykey]
+                entry = obj.mgfile[mykey]
             
             # possibly index the list
             if mytype & self.TYPE_LIST:
@@ -163,7 +163,7 @@ class MediaField(object):
         
         if obj.type == 'mp3':
             if self.id3desc is not None: # match on id3desc
-                frames = obj.tags.tags.getall(mykey)
+                frames = obj.mgfile.tags.getall(mykey)
                 
                 # try modifying in place
                 found = False
@@ -177,13 +177,13 @@ class MediaField(object):
                 if not found:
                     frame = id3.Frames[mykey](encoding=3, desc=self.id3desc,
                                               text=val)
-                    obj.tags.tags.add(frame)
+                    obj.mgfile.tags.add(frame)
             
             else: # no match on desc; just replace based on key
                 frame = id3.Frames[mykey](encoding=3, text=val)
-                obj.tags.tags.setall(mykey, [frame])
+                obj.mgfile.tags.setall(mykey, [frame])
         else:
-            obj.tags[mykey] = out
+            obj.mgfile[mykey] = out
     
     def _params(self, obj):
         return (self.keys[obj.type],
@@ -293,17 +293,20 @@ class MediaFile(object):
         root, ext = os.path.splitext(path)
         if ext == '.mp3':
             self.type = 'mp3'
-            self.tags = mp3.Open(path)
-            if not self.tags.tags:
-                self.tags.add_tags()
+            self.mgfile = mp3.Open(path)
+            # mgfile = mutagen file = that which a MediaFile wraps
         elif ext == '.m4a' or ext == '.mp4' or ext == '.m4b' or ext == '.m4p':
             self.type = 'mp4'
-            self.tags = mp4.Open(path)
+            self.mgfile = mp4.Open(path)
         else:
             raise FileTypeError('unsupported file extension: ' + ext)
+        
+        # add a set of tags if it's missing
+        if not self.mgfile.tags:
+            self.mgfile.add_tags()
     
     def save_tags(self):
-        self.tags.save()
+        self.mgfile.save()
     
     
     #### field definitions ####
