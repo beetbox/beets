@@ -229,7 +229,7 @@ class Item(object):
         for key in metadata_keys:
             setattr(f, key, self.record[key])
         
-        f.save_tags()
+        f.save()
     
     
     #### dealing with files themselves ####
