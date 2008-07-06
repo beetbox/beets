@@ -150,7 +150,7 @@ def suite():
     s = unittest.TestSuite()
     
     # General tests.
-    for kind in ('m4a', 'mp3'):
+    for kind in ('m4a', 'mp3', 'flac'):
         for tagset in ('full', 'partial', 'min'):
             path = 'rsrc' + os.sep + tagset + '.' + kind
             correct_dict = correct_dicts[tagset]

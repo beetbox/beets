@@ -13,7 +13,7 @@ A field will always return a reasonable value of the correct type, even if no
 tag is present. If no value is available, the value will be false (e.g., zero
 or the empty string)."""
 
-from mutagen import mp4, mp3, id3
+import mutagen
 import os.path
 
 __all__ = ['FileTypeError', 'MediaFile']
@@ -115,21 +115,28 @@ class MediaField(object):
     STYLE_RIGHT =   1 << 6 # likewise, in second entry
     # These are mutually exclusive and relevant only with SLASHED and 2PLE.
     
-    def __init__(self, id3key, mp4key,
+    def __init__(self, id3key, mp4key, flackey,
             # in ID3 tags, use only the frame with this "desc" field
             id3desc=None,
             # compositions of the TYPE_ flag above
-            id3type=TYPE_UNICODE|TYPE_LIST, mp4type=TYPE_UNICODE|TYPE_LIST,
+            id3type =  TYPE_UNICODE|TYPE_LIST,
+            mp4type =  TYPE_UNICODE|TYPE_LIST,
+            flactype = TYPE_UNICODE|TYPE_LIST,
             # compositions of STYLE_ flags
-            id3style=STYLE_UNICODE, mp4style=STYLE_UNICODE
+            id3style =  STYLE_UNICODE,
+            mp4style =  STYLE_UNICODE,
+            flacstyle = STYLE_UNICODE
             ):
         
-        self.keys = { 'mp3': id3key,
-                      'mp4': mp4key }
-        self.types = { 'mp3': id3type,
-                       'mp4': mp4type }
-        self.styles = { 'mp3': id3style,
-                        'mp4': mp4style }
+        self.keys = { 'mp3':  id3key,
+                      'mp4':  mp4key,
+                      'flac': flackey }
+        self.types = { 'mp3':  id3type,
+                       'mp4':  mp4type,
+                       'flac': flactype }
+        self.styles = { 'mp3':  id3style,
+                        'mp4':  mp4style,
+                        'flac': flacstyle }
         self.id3desc = id3desc
     
     def _fetchdata(self, obj):
@@ -186,12 +193,12 @@ class MediaField(object):
                 
                 # need to make a new frame?
                 if not found:
-                    frame = id3.Frames[mykey](encoding=3, desc=self.id3desc,
-                                              text=val)
+                    frame = mutagen.id3.Frames[mykey](
+                                encoding=3, desc=self.id3desc, text=val)
                     obj.mgfile.tags.add(frame)
             
             else: # no match on desc; just replace based on key
-                frame = id3.Frames[mykey](encoding=3, text=val)
+                frame = mutagen.id3.Frames[mykey](encoding=3, text=val)
                 obj.mgfile.tags.setall(mykey, [frame])
         else:
             obj.mgfile[mykey] = out
@@ -301,16 +308,19 @@ class MediaFile(object):
     metadata."""
     
     def __init__(self, path):
-        root, ext = os.path.splitext(path)
-        if ext == '.mp3':
-            self.type = 'mp3'
-            self.mgfile = mp3.Open(path)
-            # mgfile = mutagen file = that which a MediaFile wraps
-        elif ext == '.m4a' or ext == '.mp4' or ext == '.m4b' or ext == '.m4p':
+        self.mgfile = mutagen.File(path)
+        if self.mgfile is None: # Mutagen couldn't guess the type
+            raise FileTypeError('file type unsupported by Mutagen')
+        elif type(self.mgfile).__name__ == 'M4A' or \
+             type(self.mgfile).__name__ == 'MP4':
             self.type = 'mp4'
-            self.mgfile = mp4.Open(path)
+        elif type(self.mgfile).__name__ == 'ID3' or \
+             type(self.mgfile).__name__ == 'MP3':
+            self.type = 'mp3'
+        elif type(self.mgfile).__name__ == 'FLAC':
+            self.type = 'flac'
         else:
-            raise FileTypeError('unsupported file extension: ' + ext)
+            raise FileTypeError('file type unsupported by MediaFile')
         
         # add a set of tags if it's missing
         if not self.mgfile.tags:
@@ -322,39 +332,48 @@ class MediaFile(object):
     
     #### field definitions ####
     
-    title = MediaField('TIT2', "\xa9nam")
-    artist = MediaField('TPE1', "\xa9ART")
-    album = MediaField('TALB', "\xa9alb")
-    genre = MediaField('TCON', "\xa9gen")
-    composer = MediaField('TCOM', "\xa9wrt")
-    grouping = MediaField('TIT1', "\xa9grp")
-    year = MediaField('TDRC', "\xa9day",
+    title = MediaField('TIT2', "\xa9nam", 'title')
+    artist = MediaField('TPE1', "\xa9ART", 'artist')
+    album = MediaField('TALB', "\xa9alb", 'album')
+    genre = MediaField('TCON', "\xa9gen", 'genre')
+    composer = MediaField('TCOM', "\xa9wrt", 'composer')
+    grouping = MediaField('TIT1', "\xa9grp", 'grouping')
+    year = MediaField('TDRC', "\xa9day", 'date',
                 id3style=MediaField.STYLE_INTEGER,
-                mp4style=MediaField.STYLE_INTEGER)
-    track = MediaField('TRCK', 'trkn',
+                mp4style=MediaField.STYLE_INTEGER,
+                flacstyle=MediaField.STYLE_INTEGER)
+    track = MediaField('TRCK', 'trkn', 'tracknumber',
                 id3style=MediaField.STYLE_SLASHED | MediaField.STYLE_LEFT,
                 mp4type=MediaField.TYPE_LIST,
-                mp4style=MediaField.STYLE_2PLE | MediaField.STYLE_LEFT)
-    maxtrack = MediaField('TRCK', 'trkn',
+                mp4style=MediaField.STYLE_2PLE | MediaField.STYLE_LEFT,
+                flacstyle=MediaField.STYLE_INTEGER)
+    maxtrack = MediaField('TRCK', 'trkn', 'tracktotal',
                 id3style=MediaField.STYLE_SLASHED | MediaField.STYLE_RIGHT,
                 mp4type=MediaField.TYPE_LIST,
-                mp4style=MediaField.STYLE_2PLE | MediaField.STYLE_RIGHT)
-    disc = MediaField('TPOS', 'disk',
+                mp4style=MediaField.STYLE_2PLE | MediaField.STYLE_RIGHT,
+                flacstyle=MediaField.STYLE_INTEGER)
+    disc = MediaField('TPOS', 'disk', 'disc',
                 id3style=MediaField.STYLE_SLASHED | MediaField.STYLE_LEFT,
                 mp4type=MediaField.TYPE_LIST,
-                mp4style=MediaField.STYLE_2PLE | MediaField.STYLE_LEFT)
-    maxdisc = MediaField('TPOS', 'disk',
+                mp4style=MediaField.STYLE_2PLE | MediaField.STYLE_LEFT,
+                flacstyle=MediaField.STYLE_INTEGER)
+    maxdisc = MediaField('TPOS', 'disk', 'disctotal',
                 id3style=MediaField.STYLE_SLASHED | MediaField.STYLE_RIGHT,
                 mp4type=MediaField.TYPE_LIST,
-                mp4style=MediaField.STYLE_2PLE | MediaField.STYLE_RIGHT)
-    lyrics = MediaField(u"USLT", "\xa9lyr", id3desc=u'',
+                mp4style=MediaField.STYLE_2PLE | MediaField.STYLE_RIGHT,
+                flacstyle=MediaField.STYLE_INTEGER)
+    lyrics = MediaField(u"USLT", "\xa9lyr", 'lyrics',
+                id3desc=u'',
                 id3type=MediaField.TYPE_UNICODE)
-    comments = MediaField(u"COMM", "\xa9cmt", id3desc=u'')
-    bpm = MediaField('TBPM', 'tmpo',
+    comments = MediaField(u"COMM", "\xa9cmt", 'description',
+                id3desc=u'')
+    bpm = MediaField('TBPM', 'tmpo', 'bpm',
                 id3style=MediaField.STYLE_INTEGER,
                 mp4type=MediaField.TYPE_LIST | MediaField.TYPE_INTEGER,
-                mp4style=MediaField.STYLE_INTEGER)
-    comp = MediaField('TCMP', 'cpil',
+                mp4style=MediaField.STYLE_INTEGER,
+                flacstyle=MediaField.STYLE_INTEGER)
+    comp = MediaField('TCMP', 'cpil', 'compilation',
                 id3style=MediaField.STYLE_BOOLEAN,
                 mp4type=MediaField.TYPE_BOOLEAN,
-                mp4style=MediaField.STYLE_BOOLEAN)
+                mp4style=MediaField.STYLE_BOOLEAN,
+                flacstyle=MediaField.STYLE_BOOLEAN)
