@@ -39,7 +39,7 @@ def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
             # write new tag
             a = beets.mediafile.MediaFile(self.tpath)
             setattr(a, field, self.value)
-            a.save_tags()
+            a.save()
             
             # verify ALL tags are correct with modification
             b = beets.mediafile.MediaFile(self.tpath)
