@@ -84,16 +84,22 @@ def _walk_files(path):
 class Item(object):
     def __init__(self, values, library=None):
         self.library = library
-        self._fillrecord(values)
+        self.dirty = {}
+        self._fill_record(values)
+        self._clear_dirty()
     
-    def _fillrecord(self, values):
-        self.record = {}  
+    def _fill_record(self, values):
+        self.record = {}
         for key in item_keys:
             try:
-                self.record[key] = values[key]
+                setattr(self, key, values[key])
             except KeyError:
                 pass # don't use values that aren't present
 
+    def _clear_dirty(self):
+        self.dirty = {}
+        for key in item_keys:
+            self.dirty[key] = False
 
     #### item field accessors ####
 
@@ -109,17 +115,15 @@ class Item(object):
 
     def __setattr__(self, key, value):
         """If key is an item attribute (i.e., a column in the database), sets
-        the record entry for that key to value. If the item is associated with
-        a library, the new value is stored in the library's database.
+        the record entry for that key to value. Note that to change the
+        attribute in the database or in the file's tags, one must call store()
+        or write().
         
         Otherwise, performs an ordinary setattr."""
         
         if key in item_keys:
             self.record[key] = value
-            if self.library: # we're "connected" to a library; keep it updated
-                self.library.conn.execute(
-                        'update items set ' + key + '=? where id=?',
-                        (self.record[key], self.id) )
+            self.dirty[key] = True
         else:
             object.__setattr__(self, key, value)
     
@@ -138,12 +142,13 @@ class Item(object):
         
         self.library.conn.execute(
                 'select * from items where id=?', (load_id,) )
-        self._fillrecord(c.fetchone())
+        self._fill_record(c.fetchone())
         c.close()
     
-    def store(self, store_id=None):
+    def store(self, store_id=None, store_all=False):
         """Save the item's metadata into the library database. If store_id is
-        not specified, use the current item's id."""
+        specified, use it instead of the item's current id. If store_all is
+        true, save the entire record instead of just the dirty fields."""
         
         if not self.library:
             raise LibraryError('no library to store to')
@@ -155,9 +160,14 @@ class Item(object):
         assignments = ''
         subvars = []
         for key in item_keys:
-            if key != 'id':
+            if (key != 'id') and (self.dirty[key] or store_all):
                 assignments += key + '=?,'
-                subvars.append(self.record[key])
+                subvars.append(getattr(self, key))
+        
+        if not assignments:
+            # nothing to store (i.e., nothing was dirty)
+            return
+        
         assignments = assignments[:-1] # knock off last ,
 
         # finish the query
@@ -165,11 +175,15 @@ class Item(object):
         subvars.append(self.id)
 
         self.library.conn.execute(query, subvars)
+        self._clear_dirty()
 
-    def add(self):
+    def add(self, library=None):
         """Add the item as a new object to the library database. The id field
-        will be updated; the new id is returned."""
+        will be updated; the new id is returned. If library is specified, set
+        the item's library before adding."""
         
+        if library:
+            self.library = library
         if not self.library:
             raise LibraryError('no library to add to')
             
@@ -179,7 +193,7 @@ class Item(object):
         subvars = []
         for key in item_keys:
             if key != 'id':
-                subvars.append(self.record[key])
+                subvars.append(getattr(self, key))
         
         # issue query
         c = self.library.conn.cursor()
@@ -188,8 +202,8 @@ class Item(object):
         new_id = c.lastrowid
         c.close()
         
-        self.record['id'] = new_id # don't use self.id because the id does not
-                                   # need to be updated
+        self._clear_dirty()
+        self.id = new_id
         return new_id
     
     def remove(self):
@@ -202,33 +216,22 @@ class Item(object):
     #### interaction with files' metadata ####
     
     def read(self, read_path=None):
-        """Read the metadata from a file. If no read_path is provided, the
-        item's path is used. If the item has a library, it is stored after
-        the metadata is read."""
+        """Read the metadata from the associated file. If read_path is
+        specified, read metadata from that file instead."""
         
         if read_path is None:
             read_path = self.path
         f = MediaFile(read_path)
 
         for key in metadata_keys:
-            self.record[key] = getattr(f, key)
-        self.record['path'] = read_path # don't use self.path because there's
-                                        # no DB row to update yet
-        
-        if self.library:
-            self.add()
+            setattr(self, key, getattr(f, key))
+        self.path = read_path
     
-    def write(self, write_path=None):
-        """Writes the item's metadata to a file. If no write_path is specified,
-        the metadata is written to the path stored in the item."""
-        
-        if write_path is None:
-            write_path = self.path
-        f = MediaFile(write_path)
-        
+    def write(self):
+        """Writes the item's metadata to the associated file."""
+        f = MediaFile(self.path)
         for key in metadata_keys:
-            setattr(f, key, self.record[key])
-        
+            setattr(f, key, getattr(self, key))
         f.save()
     
     
@@ -245,7 +248,7 @@ class Item(object):
         # with the values from the database
         mapping = {}
         for key in metadata_keys:
-            value = self.record[key]
+            value = getattr(self, key)
             # sanitize the value for inclusion in a path:
             # replace / and leading . with _
             if isinstance(value, str) or isinstance(value, unicode):
@@ -269,16 +272,16 @@ class Item(object):
     def move(self, copy=False):
         """Move the item to its designated location within the library
         directory (provided by destination()). Subdirectories are created as
-        needed. If the operation succeeds, the path in the database is updated
-        to reflect the new location.
+        needed. If the operation succeeds, the item's path field is updated to
+        reflect the new location.
         
         If copy is True, moving the file is copied rather than moved.
         
         Passes on appropriate exceptions if directories cannot be created or
         moving/copying fails.
         
-        Note that one should almost certainly call library.save() after this
-        method in order to keep on-disk data consistent."""
+        Note that one should almost certainly call store() and library.save()
+        after this method in order to keep on-disk data consistent."""
         
         dest = self.destination()
         
@@ -302,16 +305,15 @@ class Item(object):
         Also calls remove(), deleting the appropriate row from the database.
         
         As with move(), library.save() should almost certainly be called after
-        invoking this."""
+        invoking this (although store() should not)."""
         
         os.unlink(self.path)
         self.remove()
     
     @classmethod
-    def from_path(cls, path, library=None):
-        """Creates a new item from the media file at the specified path. If a
-        library is specified, add it to that library."""
-        i = cls({}, library=library)
+    def from_path(cls, path):
+        """Creates a new item from the media file at the specified path."""
+        i = cls({})
         i.read(path)
         return i
 
@@ -560,9 +562,10 @@ class Library(object):
         
         for f in _walk_files(path):
             try:
-                i = Item.from_path(_normpath(f), self)
+                i = Item.from_path(_normpath(f))
                 if copy:
                     i.move(copy=True)
+                i.add(self)
             except FileTypeError:
                 _log(f + ' of unknown type, skipping')
     
