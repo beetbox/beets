@@ -7,7 +7,7 @@ Usage:
 >>> f.title
 u'Lucy in the Sky with Diamonds'
 >>> f.artist = 'The Beatles'
->>> f.save_tags()
+>>> f.save()
 
 A field will always return a reasonable value of the correct type, even if no
 tag is present. If no value is available, the value will be false (e.g., zero
@@ -87,29 +87,22 @@ def normalize_pair(pair, noneval=None):
 
 
 
-#### constants used to define a field's behavior ####
+#### flags used to define fields' behavior ####
 
-# possible types used to store the relevant data
-TYPE_RAW =     0      # stored as a single object (not in a list)
-TYPE_LIST =    1 << 0 # stored in the first element of a list
-TYPE_UNICODE = 1 << 1 # stored as a unicode object
-TYPE_INTEGER = 1 << 2 # as an int
-TYPE_BOOLEAN = 1 << 3 # as a bool
-# RAW and LIST are mutually exclusive, as are UNICODE, INTEGER and
-# BOOLEAN. Must pick either RAW or LIST, but none of the other types
-# are necessary.
+# mutually exclusive; choose one
+STORE_RAW =     0      # stored as a single object (not in a list)
+STORE_LIST =    1 << 0 # stored in the first element of a list
 
-# non-type aspects of data storage
-STYLE_PLAIN =   0      # no filtering
-STYLE_UNICODE = 1 << 0 # value is a string, stored as a string
-STYLE_INTEGER = 1 << 1 # value is an integer, maybe stored as a string
-STYLE_BOOLEAN = 1 << 2 # value is a boolean, probably stored as a string
-STYLE_SLASHED = 1 << 3 # int stored in a string on one side of a / char
-STYLE_2PLE =    1 << 4 # stored as one value in an integer 2-tuple
-# The above styles are all mutually exclusive.
-STYLE_LEFT =    1 << 5 # for SLASHED or 2PLE, value is in first entry
-STYLE_RIGHT =   1 << 6 # likewise, in second entry
-# These are mutually exclusive and relevant only with SLASHED and 2PLE.
+# mutually exclusive; choose one
+STORE_UNICODE = 1 << 1 # stored as a unicode string
+STORE_INTEGER = 1 << 2 # as an int
+STORE_BOOLEAN = 1 << 3 # as a bool
+STORE_SLASHED = 1 << 4 # int stored in a string on one side of a / char
+STORE_2PLE =    1 << 5 # stored as one value in an integer 2-tuple
+
+# for use with STORE_SLASHED and STORE_2PLE; mutually exclusive; choose one
+STORE_LEFT =    1 << 6 # value is in first entry
+STORE_RIGHT =   1 << 7 # in second entry
 
 
 
@@ -123,38 +116,34 @@ class MediaField(object):
     def __init__(self, id3key, mp4key, flackey,
             # in ID3 tags, use only the frame with this "desc" field
             id3desc=None,
-            # compositions of the TYPE_ flag above
-            id3type =  TYPE_UNICODE|TYPE_LIST,
-            mp4type =  TYPE_UNICODE|TYPE_LIST,
-            flactype = TYPE_UNICODE|TYPE_LIST,
-            # compositions of STYLE_ flags
-            id3style =  STYLE_UNICODE,
-            mp4style =  STYLE_UNICODE,
-            flacstyle = STYLE_UNICODE
+            # the field's semantic (Python) type
+            out_type = unicode,
+            # compositions of the STORE_ flags above
+            id3_style =  STORE_UNICODE | STORE_LIST,
+            mp4_style =  STORE_UNICODE | STORE_LIST,
+            flac_style = STORE_UNICODE | STORE_LIST
             ):
-        
+            
+        self.id3desc = id3desc
+        self.out_type = out_type
         self.keys = { 'mp3':  id3key,
                       'mp4':  mp4key,
                       'flac': flackey }
-        self.types = { 'mp3':  id3type,
-                       'mp4':  mp4type,
-                       'flac': flactype }
-        self.styles = { 'mp3':  id3style,
-                        'mp4':  mp4style,
-                        'flac': flacstyle }
-        self.id3desc = id3desc
+        self.styles = { 'mp3':  id3_style,
+                        'mp4':  mp4_style,
+                        'flac': flac_style }
     
     def _fetchdata(self, obj):
         """Get the value associated with this descriptor's key (and id3desc if
         present) from the mutagen tag dict. Unwraps from a list if
         necessary."""
-        (mykey, mytype, mystyle) = self._params(obj)
+        (key, style) = self._params(obj)
         
         try:
             # fetch the value, which may be a scalar or a list
             if obj.type == 'mp3':
                 if self.id3desc is not None: # also match on 'desc' field
-                    frames = obj.mgfile.tags.getall(mykey)
+                    frames = obj.mgfile.tags.getall(key)
                     entry = None
                     for frame in frames:
                         if frame.desc == self.id3desc:
@@ -163,12 +152,12 @@ class MediaField(object):
                     if entry is None: # no desc match
                         return None
                 else:
-                    entry = obj.mgfile[mykey].text
+                    entry = obj.mgfile[key].text
             else:
-                entry = obj.mgfile[mykey]
+                entry = obj.mgfile[key]
             
             # possibly index the list
-            if mytype & TYPE_LIST:
+            if style & STORE_LIST:
                 return entry[0]
             else:
                 return entry
@@ -178,15 +167,15 @@ class MediaField(object):
     def _storedata(self, obj, val):
         """Store val for this descriptor's key in the tag dictionary. Store it
         as a single-item list if necessary. Uses id3desc if present."""
-        (mykey, mytype, mystyle) = self._params(obj)
+        (key, style) = self._params(obj)
         
         # wrap as a list if necessary
-        if mytype & TYPE_LIST: out = [val]
-        else:                       out = val
+        if style & STORE_LIST: out = [val]
+        else:                         out = val
         
         if obj.type == 'mp3':
             if self.id3desc is not None: # match on id3desc
-                frames = obj.mgfile.tags.getall(mykey)
+                frames = obj.mgfile.tags.getall(key)
                 
                 # try modifying in place
                 found = False
@@ -198,37 +187,33 @@ class MediaField(object):
                 
                 # need to make a new frame?
                 if not found:
-                    frame = mutagen.id3.Frames[mykey](
+                    frame = mutagen.id3.Frames[key](
                                 encoding=3, desc=self.id3desc, text=val)
                     obj.mgfile.tags.add(frame)
             
             else: # no match on desc; just replace based on key
-                frame = mutagen.id3.Frames[mykey](encoding=3, text=val)
-                obj.mgfile.tags.setall(mykey, [frame])
+                frame = mutagen.id3.Frames[key](encoding=3, text=val)
+                obj.mgfile.tags.setall(key, [frame])
         else:
-            obj.mgfile[mykey] = out
+            obj.mgfile[key] = out
     
     def _params(self, obj):
         return (self.keys[obj.type],
-                self.types[obj.type],
                 self.styles[obj.type])
     
     def __get__(self, obj, owner):
         """Retrieve the value of this metadata field."""
-        out = None
-        (mykey, mytype, mystyle) = self._params(obj)
-        
+        (key, style) = self._params(obj)
         out = self._fetchdata(obj)
         
         # deal with slashed and tuple storage
-        if mystyle & STYLE_SLASHED or mystyle & STYLE_2PLE:
-            if mystyle & STYLE_SLASHED:
+        if style & STORE_SLASHED or style & STORE_2PLE:
+            if style & STORE_SLASHED:
                 out = fromslashed(out)
-            out = unpair(out, mystyle & STYLE_RIGHT, noneval=0)
+            out = unpair(out, style & STORE_RIGHT, noneval=0)
         
         # return the appropriate type
-        if mystyle & STYLE_INTEGER or mystyle & STYLE_SLASHED \
-                    or mystyle & STYLE_2PLE:
+        if self.out_type == int:
             if out is None:
                 return 0
             else:
@@ -236,12 +221,12 @@ class MediaField(object):
                     return int(out)
                 except: # in case out is not convertible directly to an int
                     return int(unicode(out))
-        elif mystyle & STYLE_BOOLEAN:
+        elif self.out_type == bool:
             if out is None:
                 return False
             else:
                 return bool(int(out)) # should work for strings, bools, ints
-        elif mystyle & STYLE_UNICODE:
+        elif self.out_type == unicode:
             if out is None:
                 return u''
             else:
@@ -251,23 +236,23 @@ class MediaField(object):
     
     def __set__(self, obj, val):
         """Set the value of this metadata field."""
-        (mykey, mytype, mystyle) = self._params(obj)
+        (key, style) = self._params(obj)
         
-        # apply style filters
-        if mystyle & STYLE_SLASHED or mystyle & STYLE_2PLE:
+        # possibly pack a slashed or tuple
+        if style & STORE_SLASHED or style & STORE_2PLE:
             # fetch the existing value so we can preserve half of it
             pair = self._fetchdata(obj)
-            if mystyle & STYLE_SLASHED:
+            if style & STORE_SLASHED:
                 pair = fromslashed(pair)
             pair = normalize_pair(pair, noneval=0)
             
             # set the appropriate side of the pair
-            if mystyle & STYLE_LEFT:
+            if style & STORE_LEFT:
                 pair = (val, pair[1])
             else:
                 pair = (pair[0], val)
             
-            if mystyle & STYLE_SLASHED:
+            if style & STORE_SLASHED:
                 out = toslashed(pair)
             else:
                 out = pair
@@ -276,30 +261,30 @@ class MediaField(object):
         
         # deal with Nones according to abstract type if present
         if out is None:
-            if mystyle & STYLE_INTEGER:
+            if self.out_type == int:
                 out = 0
-            elif mystyle & STYLE_BOOLEAN:
+            elif self.out_type == bool:
                 out = False
-            elif mystyle & STYLE_UNICODE:
+            elif self.out_type == unicode:
                 out = u''
             # We trust that SLASHED and 2PLE are handled above.
         
         # convert to correct storage type
-        if mytype & TYPE_UNICODE:
+        if style & STORE_UNICODE:
             if out is None:
                 out = u''
             else:
-                if mystyle & STYLE_BOOLEAN:
+                if self.out_type == bool:
                     # store bools as 1,0 instead of True,False
                     out = unicode(int(out))
                 else:
                     out = unicode(out)
-        elif mytype & TYPE_INTEGER:
+        elif style & STORE_INTEGER:
             if out is None:
                 out = 0
             else:
                 out = int(out)
-        elif mytype & TYPE_BOOLEAN:
+        elif style & STORE_BOOLEAN:
             out = bool(out)
         
         # store the data
@@ -334,7 +319,7 @@ class MediaFile(object):
         if not self.mgfile.tags:
             self.mgfile.add_tags()
     
-    def save_tags(self):
+    def save(self):
         self.mgfile.save()
     
     
@@ -346,42 +331,31 @@ class MediaFile(object):
     genre = MediaField('TCON', "\xa9gen", 'genre')
     composer = MediaField('TCOM', "\xa9wrt", 'composer')
     grouping = MediaField('TIT1', "\xa9grp", 'grouping')
-    year = MediaField('TDRC', "\xa9day", 'date',
-                id3style=STYLE_INTEGER,
-                mp4style=STYLE_INTEGER,
-                flacstyle=STYLE_INTEGER)
+    year = MediaField('TDRC', "\xa9day", 'date', out_type=int)
     track = MediaField('TRCK', 'trkn', 'tracknumber',
-                id3style=STYLE_SLASHED | STYLE_LEFT,
-                mp4type=TYPE_LIST,
-                mp4style=STYLE_2PLE | STYLE_LEFT,
-                flacstyle=STYLE_INTEGER)
+                id3_style = STORE_LIST | STORE_SLASHED | STORE_LEFT,
+                mp4_style = STORE_LIST | STORE_2PLE | STORE_LEFT,
+                out_type = int)
     maxtrack = MediaField('TRCK', 'trkn', 'tracktotal',
-                id3style=STYLE_SLASHED | STYLE_RIGHT,
-                mp4type=TYPE_LIST,
-                mp4style=STYLE_2PLE | STYLE_RIGHT,
-                flacstyle=STYLE_INTEGER)
+                id3_style = STORE_LIST | STORE_SLASHED | STORE_RIGHT,
+                mp4_style = STORE_LIST | STORE_2PLE | STORE_RIGHT,
+                out_type = int)
     disc = MediaField('TPOS', 'disk', 'disc',
-                id3style=STYLE_SLASHED | STYLE_LEFT,
-                mp4type=TYPE_LIST,
-                mp4style=STYLE_2PLE | STYLE_LEFT,
-                flacstyle=STYLE_INTEGER)
+                id3_style = STORE_LIST | STORE_SLASHED | STORE_LEFT,
+                mp4_style = STORE_LIST | STORE_2PLE | STORE_LEFT,
+                out_type = int)
     maxdisc = MediaField('TPOS', 'disk', 'disctotal',
-                id3style=STYLE_SLASHED | STYLE_RIGHT,
-                mp4type=TYPE_LIST,
-                mp4style=STYLE_2PLE | STYLE_RIGHT,
-                flacstyle=STYLE_INTEGER)
+                id3_style = STORE_LIST | STORE_SLASHED | STORE_RIGHT,
+                mp4_style = STORE_LIST | STORE_2PLE | STORE_RIGHT,
+                out_type = int)
     lyrics = MediaField(u"USLT", "\xa9lyr", 'lyrics',
-                id3desc=u'',
-                id3type=TYPE_UNICODE)
+                id3desc = u'',
+                id3_style = STORE_RAW | STORE_UNICODE)
     comments = MediaField(u"COMM", "\xa9cmt", 'description',
-                id3desc=u'')
+                id3desc = u'')
     bpm = MediaField('TBPM', 'tmpo', 'bpm',
-                id3style=STYLE_INTEGER,
-                mp4type=TYPE_LIST | TYPE_INTEGER,
-                mp4style=STYLE_INTEGER,
-                flacstyle=STYLE_INTEGER)
+                mp4_style = STORE_LIST | STORE_INTEGER,
+                out_type = int)
     comp = MediaField('TCMP', 'cpil', 'compilation',
-                id3style=STYLE_BOOLEAN,
-                mp4type=TYPE_BOOLEAN,
-                mp4style=STYLE_BOOLEAN,
-                flacstyle=STYLE_BOOLEAN)
+                mp4_style = STORE_RAW | STORE_BOOLEAN,
+                out_type = bool)
