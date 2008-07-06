@@ -140,7 +140,7 @@ class Item(object):
         if load_id is None:
             load_id = self.id
         
-        self.library.conn.execute(
+        c = self.library.conn.execute(
                 'select * from items where id=?', (load_id,) )
         self._fill_record(c.fetchone())
         c.close()
