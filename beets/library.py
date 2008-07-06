@@ -6,21 +6,21 @@ from string import Template
 # library. These are used directly in SQL; they are vulnerable to injection if
 # accessible to the user.
 metadata_fields = [
-    ('title',    'text'),
-    ('artist',   'text'),
-    ('album',    'text'),
-    ('genre',    'text'),
-    ('composer', 'text'),
-    ('grouping', 'text'),
-    ('year',     'int'),
-    ('track',    'int'),
-    ('maxtrack', 'int'),
-    ('disc',     'int'),
-    ('maxdisc',  'int'),
-    ('lyrics',   'text'),
-    ('comments', 'text'),
-    ('bpm',      'int'),
-    ('comp',     'bool'),
+    ('title',      'text'),
+    ('artist',     'text'),
+    ('album',      'text'),
+    ('genre',      'text'),
+    ('composer',   'text'),
+    ('grouping',   'text'),
+    ('year',       'int'),
+    ('track',      'int'),
+    ('tracktotal', 'int'),
+    ('disc',       'int'),
+    ('disctotal',  'int'),
+    ('lyrics',     'text'),
+    ('comments',   'text'),
+    ('bpm',        'int'),
+    ('comp',       'bool'),
 ]
 item_fields = [
     ('id',      'integer primary key'),
@@ -251,7 +251,7 @@ class Item(object):
             if isinstance(value, str) or isinstance(value, unicode):
                 value.replace(os.sep, '_')
                 re.sub(r'[' + os.sep + r']|^\.', '_', value)
-            elif key in ('track', 'maxtrack', 'disc', 'maxdisc'):
+            elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
                 # pad with zeros
                 value = '%02i' % value
             else:

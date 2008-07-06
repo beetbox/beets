@@ -336,7 +336,7 @@ class MediaFile(object):
                 id3_style = STORE_LIST | STORE_SLASHED | STORE_LEFT,
                 mp4_style = STORE_LIST | STORE_2PLE | STORE_LEFT,
                 out_type = int)
-    maxtrack = MediaField('TRCK', 'trkn', 'tracktotal',
+    tracktotal = MediaField('TRCK', 'trkn', 'tracktotal',
                 id3_style = STORE_LIST | STORE_SLASHED | STORE_RIGHT,
                 mp4_style = STORE_LIST | STORE_2PLE | STORE_RIGHT,
                 out_type = int)
@@ -344,7 +344,7 @@ class MediaFile(object):
                 id3_style = STORE_LIST | STORE_SLASHED | STORE_LEFT,
                 mp4_style = STORE_LIST | STORE_2PLE | STORE_LEFT,
                 out_type = int)
-    maxdisc = MediaField('TPOS', 'disk', 'disctotal',
+    disctotal = MediaField('TPOS', 'disk', 'disctotal',
                 id3_style = STORE_LIST | STORE_SLASHED | STORE_RIGHT,
                 mp4_style = STORE_LIST | STORE_2PLE | STORE_RIGHT,
                 out_type = int)
