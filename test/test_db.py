@@ -29,6 +29,7 @@ def item(lib=None): return beets.library.Item({
     'comp':       True,
     'path':       'somepath',
 }, lib)
+np = beets.library._normpath
 
 class LoadTest(unittest.TestCase):
     def setUp(self):
@@ -122,12 +123,12 @@ class DestinationTest(unittest.TestCase):
     def test_directory_works_with_trailing_slash(self):
         self.lib.options['directory'] = 'one/'
         self.lib.options['path_format'] = 'two'
-        self.assertEqual(self.i.destination(), 'one/two')
+        self.assertEqual(self.i.destination(), np('one/two'))
     
     def test_directory_works_without_trailing_slash(self):
         self.lib.options['directory'] = 'one'
         self.lib.options['path_format'] = 'two'
-        self.assertEqual(self.i.destination(), 'one/two')
+        self.assertEqual(self.i.destination(), np('one/two'))
     
     def test_destination_substitues_metadata_values(self):
         self.lib.options['directory'] = 'base'
@@ -135,13 +136,13 @@ class DestinationTest(unittest.TestCase):
         self.i.title = 'three'
         self.i.artist = 'two'
         self.i.album = 'one'
-        self.assertEqual(self.i.destination(), 'base/one/two three')
+        self.assertEqual(self.i.destination(), np('base/one/two three'))
     
     def test_destination_substitutes_extension(self):
         self.lib.options['directory'] = 'base'
         self.lib.options['path_format'] = '$extension'
         self.i.path = 'hey.audioFormat'
-        self.assertEqual(self.i.destination(), 'base/audioFormat')
+        self.assertEqual(self.i.destination(), np('base/audioFormat'))
     
     def test_destination_pads_some_indices(self):
         self.lib.options['directory'] = 'base'
@@ -153,7 +154,7 @@ class DestinationTest(unittest.TestCase):
         self.i.disctotal = 4
         self.i.bpm = 5
         self.i.year = 6
-        self.assertEqual(self.i.destination(), 'base/01 02 03 04 5 6')
+        self.assertEqual(self.i.destination(), np('base/01 02 03 04 5 6'))
         
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

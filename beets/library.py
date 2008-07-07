@@ -49,9 +49,7 @@ class InvalidFieldError(Exception):
 def _normpath(path):
     """Provide the canonical form of the path suitable for storing in the
     database."""
-    # force absolute paths:
-    # os.path.normpath(os.path.abspath(os.path.expanduser(path)))
-    return os.path.normpath(os.path.expanduser(path))
+    return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
 
 def _log(msg):
     """Print a log message."""

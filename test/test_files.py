@@ -57,7 +57,7 @@ class MoveTest(unittest.TestCase):
     
     def test_move_changes_path(self):
         self.i.move()
-        self.assertEqual(self.i.path,self.dest)
+        self.assertEqual(self.i.path, beets.library._normpath(self.dest))
 
 class DeleteTest(unittest.TestCase):
     def setUp(self):
