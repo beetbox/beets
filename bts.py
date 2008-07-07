@@ -19,6 +19,38 @@ def imp(lib, paths):
         lib.add(path, copy=True)
     lib.save()
 
+def option(lib, options):
+    (key, value) = options
+    lib.options[key] = value
+    lib.save()
+
+def remove(lib, criteria):
+    q = ' '.join(criteria)
+    if not q.strip():
+        raise ValueError('must provide some criteria for removing')
+    for item in lib.get(q):
+        print "removing " + item.path
+        item.remove()
+    lib.save()
+
+def delete(lib, criteria):
+    q = ' '.join(criteria)
+    if not q.strip():
+        raise ValueError('must provide some criteria for deleting')
+    for item in lib.get(q):
+        print "deleting " + item.path
+        item.delete()
+    lib.save()
+
+def read(lib, criteria):
+    q = ' '.join(criteria)
+    if not q.strip():
+        q = None
+    for item in lib.get(q):
+        item.read()
+        item.store()
+    lib.save()
+
 if __name__ == "__main__":
     # parse options
     usage = """usage: %prog [options] command
@@ -44,10 +76,12 @@ command is one of: add, remove, update, write, list, help"""
     avail_commands = [
         (add,        ['add']),
         (imp,        ['import', 'im', 'imp']),
-        #(remove,     ['remove', 'rm']),
-        #(update,     ['update', 'up']),
+        (remove,     ['remove', 'rm']),
+        (delete,     ['delete', 'del']),
+        (read,       ['read', 'r']),
         #(write,      ['write', 'wr', 'w']),
         (ls,         ['list', 'ls']),
+        (option,     ['set']),
         (help,       ['help', 'h']),
     ]
     for test_command in avail_commands:
