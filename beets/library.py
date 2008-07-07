@@ -61,9 +61,10 @@ def _ancestry(path):
     """Return a list consisting of path's parent directory, its grandparent,
     and so on. For instance, _ancestry('/a/b/c') == ['/', '/a', '/a/b']."""
     out = []
-    while path != '/':
+    while path and path != '/':
         path = os.path.dirname(path)
-        out.insert(0, path)
+        if path: # don't yield ''
+            out.insert(0, path)
     return out
 
 def _walk_files(path):
@@ -143,6 +144,7 @@ class Item(object):
         c = self.library.conn.execute(
                 'select * from items where id=?', (load_id,) )
         self._fill_record(c.fetchone())
+        self._clear_dirty()
         c.close()
     
     def store(self, store_id=None, store_all=False):

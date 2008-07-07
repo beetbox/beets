@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+
+"""
+Various tests for querying the library database.
+"""
+
 import unittest, sys, os
 sys.path.append('..')
 import beets.library
@@ -43,7 +48,7 @@ class QueryParseTest(unittest.TestCase):
 
 class GetTest(unittest.TestCase):
     def setUp(self):
-        self.lib = beets.library.Library('rsrc' + os.sep + 'get.blb')
+        self.lib = beets.library.Library('rsrc' + os.sep + 'test.blb')
     
     def assert_matched(self, result_iterator, title):
         self.assertEqual(result_iterator.next().title, title)

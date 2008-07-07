@@ -1,7 +1,13 @@
 #!/usr/bin/env python
+
+"""
+Test the MediaFile metadata layer.
+"""
+
 import unittest, sys, os, shutil
 sys.path.append('..')
 import beets.mediafile
+
 
 def MakeReadingTest(path, correct_dict, field):
     class ReadingTest(unittest.TestCase):
