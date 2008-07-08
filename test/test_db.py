@@ -78,16 +78,23 @@ class StoreTest(unittest.TestCase):
 
 class AddTest(unittest.TestCase):
     def setUp(self):
-        self.lib = lib()
+        self.lib = beets.library.Library(':memory:')
         self.i = item(self.lib)
     def tearDown(self):
         self.lib.conn.close()
     
-    def test_add_inserts_row(self):
+    def test_item_add_inserts_row(self):
         self.i.add()
         new_grouping = self.lib.conn.execute('select grouping from items '
             'where composer="the composer"').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
+    
+    def test_library_add_inserts_row(self):
+        self.lib.add(os.path.join('rsrc', 'full.mp3'))
+        new_grouping = self.lib.conn.execute('select grouping from items '
+            'where composer="the composer"').fetchone()['grouping']
+        self.assertEqual(new_grouping, self.i.grouping)
+        
 
 class RemoveTest(unittest.TestCase):
     def setUp(self):

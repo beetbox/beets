@@ -123,7 +123,21 @@ class WalkTest(unittest.TestCase):
             self.assertTrue(f in s)
             s.remove(f)
         self.assertTrue(not s)
-        
+
+class AddTest(unittest.TestCase):
+    def setUp(self):
+        self.dir = os.path.join('rsrc', 'test_lib')
+        self.lib = beets.library.Library(':memory:')
+        self.lib.options['directory'] = self.dir
+        self.lib.options['path_format'] = 'item'
+    def tearDown(self):
+        if os.path.exists(self.dir):
+            shutil.rmtree(self.dir)
+
+    def test_library_add_copies(self):
+        self.lib.add(os.path.join('rsrc', 'full.mp3'), copy=True)
+        self.assertTrue(os.path.isfile(os.path.join(self.dir, 'item')))
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

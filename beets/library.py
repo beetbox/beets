@@ -311,10 +311,13 @@ class Item(object):
         self.remove()
     
     @classmethod
-    def from_path(cls, path):
-        """Creates a new item from the media file at the specified path."""
+    def from_path(cls, path, library=None):
+        """Creates a new item from the media file at the specified path. Sets
+        the item's library (but does not add the item) if library is
+        specified."""
         i = cls({})
         i.read(path)
+        i.library = library
         return i
 
 
@@ -562,10 +565,10 @@ class Library(object):
         
         for f in _walk_files(path):
             try:
-                i = Item.from_path(_normpath(f))
+                i = Item.from_path(_normpath(f), self)
                 if copy:
                     i.move(copy=True)
-                i.add(self)
+                i.add()
             except FileTypeError:
                 _log(f + ' of unknown type, skipping')
     
