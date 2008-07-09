@@ -121,8 +121,10 @@ class Item(object):
         Otherwise, performs an ordinary setattr."""
         
         if key in item_keys:
-            self.record[key] = value
-            self.dirty[key] = True
+            if (not (key in self.record)) or (self.record[key] != value):
+                # don't dirty if value unchanged
+                self.record[key] = value
+                self.dirty[key] = True
         else:
             object.__setattr__(self, key, value)
     

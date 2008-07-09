@@ -117,8 +117,12 @@ class GetSetTest(unittest.TestCase):
         self.assertEqual(self.i.bpm, 4915)
     
     def test_set_sets_dirty_flag(self):
-        self.i.comp = True
+        self.i.comp = not self.i.comp
         self.assertTrue(self.i.dirty['comp'])
+    
+    def test_set_does_not_dirty_if_value_unchanged(self):
+        self.i.title = self.i.title
+        self.assertTrue(not self.i.dirty['title'])
 
 class DestinationTest(unittest.TestCase):
     def setUp(self):
