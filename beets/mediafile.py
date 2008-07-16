@@ -89,20 +89,30 @@ def normalize_pair(pair, noneval=None):
 
 #### flags used to define fields' behavior ####
 
-# mutually exclusive; choose one
-STORE_RAW =     0      # stored as a single object (not in a list)
-STORE_LIST =    1 << 0 # stored in the first element of a list
+class Enumeration(object):
+    def __init__(self, *values):
+        for value, equiv in zip(values, range(1, len(values)+1)):
+            setattr(self, value, equiv)
+packing = Enumeration('SLASHED', 'TUPLE')
 
-# mutually exclusive; choose one
-STORE_UNICODE = 1 << 1 # stored as a unicode string
-STORE_INTEGER = 1 << 2 # as an int
-STORE_BOOLEAN = 1 << 3 # as a bool
-STORE_SLASHED = 1 << 4 # int stored in a string on one side of a / char
-STORE_2PLE =    1 << 5 # stored as one value in an integer 2-tuple
-
-# for use with STORE_SLASHED and STORE_2PLE; mutually exclusive; choose one
-STORE_LEFT =    1 << 6 # value is in first entry
-STORE_RIGHT =   1 << 7 # in second entry
+class StorageStyle(object):
+    """Parameterizes the storage behavior of a single field for a certain tag
+    format."""
+    def __init__(self,
+                 # Store item as a single object or as first element of a list.
+                 list_elem = True,
+                 # Which type the value is stored as (unicode, int, or bool).
+                 as_type = unicode,
+                 # If this value is packed in a multiple-value storage unit,
+                 # which type of packing (in the packing enum). Otherwise,
+                 # None. (Makes as_type irrelevant).
+                 packing = None,
+                 # If the value is packed, in which position it is stored.
+                 pack_pos = 0):
+        self.list_elem = list_elem
+        self.as_type = as_type
+        self.packing = packing
+        self.pack_pos = pack_pos
 
 
 
@@ -116,12 +126,12 @@ class MediaField(object):
     def __init__(self, id3key, mp4key, flackey,
             # in ID3 tags, use only the frame with this "desc" field
             id3desc=None,
-            # the field's semantic (Python) type
+            # the field's semantic (exterior) type
             out_type = unicode,
-            # compositions of the STORE_ flags above
-            id3_style =  STORE_UNICODE | STORE_LIST,
-            mp4_style =  STORE_UNICODE | STORE_LIST,
-            flac_style = STORE_UNICODE | STORE_LIST
+            # StorageStyle instances parameterizing the field's storage
+            id3_style =  StorageStyle(),
+            mp4_style =  StorageStyle(),
+            flac_style = StorageStyle()
             ):
             
         self.id3desc = id3desc
@@ -157,7 +167,7 @@ class MediaField(object):
                 entry = obj.mgfile[key]
             
             # possibly index the list
-            if style & STORE_LIST:
+            if style.list_elem:
                 return entry[0]
             else:
                 return entry
@@ -170,8 +180,8 @@ class MediaField(object):
         (key, style) = self._params(obj)
         
         # wrap as a list if necessary
-        if style & STORE_LIST: out = [val]
-        else:                         out = val
+        if style.list_elem: out = [val]
+        else:             out = val
         
         if obj.type == 'mp3':
             if self.id3desc is not None: # match on id3desc
@@ -207,10 +217,10 @@ class MediaField(object):
         out = self._fetchdata(obj)
         
         # deal with slashed and tuple storage
-        if style & STORE_SLASHED or style & STORE_2PLE:
-            if style & STORE_SLASHED:
+        if style.packing:
+            if style.packing == packing.SLASHED:
                 out = fromslashed(out)
-            out = unpair(out, style & STORE_RIGHT, noneval=0)
+            out = unpair(out, style.pack_pos, noneval=0)
         
         # return the appropriate type
         if self.out_type == int:
@@ -238,54 +248,54 @@ class MediaField(object):
         """Set the value of this metadata field."""
         (key, style) = self._params(obj)
         
-        # possibly pack a slashed or tuple
-        if style & STORE_SLASHED or style & STORE_2PLE:
+        if style.packing:
             # fetch the existing value so we can preserve half of it
             pair = self._fetchdata(obj)
-            if style & STORE_SLASHED:
+            if style.packing == packing.SLASHED:
                 pair = fromslashed(pair)
             pair = normalize_pair(pair, noneval=0)
             
             # set the appropriate side of the pair
-            if style & STORE_LEFT:
+            if style.pack_pos == 0:
                 pair = (val, pair[1])
             else:
                 pair = (pair[0], val)
             
-            if style & STORE_SLASHED:
+            if style.packing == packing.SLASHED:
                 out = toslashed(pair)
             else:
                 out = pair
-        else: # plain, integer, or boolean
+                
+        else: # unicode, integer, or boolean
             out = val
         
-        # deal with Nones according to abstract type if present
-        if out is None:
-            if self.out_type == int:
-                out = 0
-            elif self.out_type == bool:
-                out = False
-            elif self.out_type == unicode:
-                out = u''
-            # We trust that SLASHED and 2PLE are handled above.
+            # deal with Nones according to abstract type if present
+            if out is None:
+                if self.out_type == int:
+                    out = 0
+                elif self.out_type == bool:
+                    out = False
+                elif self.out_type == unicode:
+                    out = u''
+                # We trust that packed values are handled above.
         
-        # convert to correct storage type
-        if style & STORE_UNICODE:
-            if out is None:
-                out = u''
-            else:
-                if self.out_type == bool:
-                    # store bools as 1,0 instead of True,False
-                    out = unicode(int(out))
+            # convert to correct storage type (irrelevant for packed values)
+            if style.as_type == unicode:
+                if out is None:
+                    out = u''
                 else:
-                    out = unicode(out)
-        elif style & STORE_INTEGER:
-            if out is None:
-                out = 0
-            else:
-                out = int(out)
-        elif style & STORE_BOOLEAN:
-            out = bool(out)
+                    if self.out_type == bool:
+                        # store bools as 1,0 instead of True,False
+                        out = unicode(int(out))
+                    else:
+                        out = unicode(out)
+            elif style.as_type == int:
+                if out is None:
+                    out = 0
+                else:
+                    out = int(out)
+            elif style.as_type == bool:
+                out = bool(out)
         
         # store the data
         self._storedata(obj, out)
@@ -333,29 +343,37 @@ class MediaFile(object):
     grouping = MediaField('TIT1', "\xa9grp", 'grouping')
     year = MediaField('TDRC', "\xa9day", 'date', out_type=int)
     track = MediaField('TRCK', 'trkn', 'tracknumber',
-                id3_style = STORE_LIST | STORE_SLASHED | STORE_LEFT,
-                mp4_style = STORE_LIST | STORE_2PLE | STORE_LEFT,
+                id3_style = StorageStyle(packing = packing.SLASHED,
+                                pack_pos = 0),
+                mp4_style = StorageStyle(packing = packing.TUPLE,     
+                                pack_pos = 0),                              
                 out_type = int)
     tracktotal = MediaField('TRCK', 'trkn', 'tracktotal',
-                id3_style = STORE_LIST | STORE_SLASHED | STORE_RIGHT,
-                mp4_style = STORE_LIST | STORE_2PLE | STORE_RIGHT,
+                id3_style = StorageStyle(packing = packing.SLASHED,
+                                pack_pos = 1),
+                mp4_style = StorageStyle(packing = packing.TUPLE,     
+                                pack_pos = 1),
                 out_type = int)
     disc = MediaField('TPOS', 'disk', 'disc',
-                id3_style = STORE_LIST | STORE_SLASHED | STORE_LEFT,
-                mp4_style = STORE_LIST | STORE_2PLE | STORE_LEFT,
+                id3_style = StorageStyle(packing = packing.SLASHED,
+                                pack_pos = 0),
+                mp4_style = StorageStyle(packing = packing.TUPLE,     
+                                pack_pos = 0),
                 out_type = int)
     disctotal = MediaField('TPOS', 'disk', 'disctotal',
-                id3_style = STORE_LIST | STORE_SLASHED | STORE_RIGHT,
-                mp4_style = STORE_LIST | STORE_2PLE | STORE_RIGHT,
+                id3_style = StorageStyle(packing = packing.SLASHED,
+                                pack_pos = 1),
+                mp4_style = StorageStyle(packing = packing.TUPLE,     
+                                pack_pos = 1),
                 out_type = int)
     lyrics = MediaField(u"USLT", "\xa9lyr", 'lyrics',
                 id3desc = u'',
-                id3_style = STORE_RAW | STORE_UNICODE)
+                id3_style = StorageStyle(list_elem = False))
     comments = MediaField(u"COMM", "\xa9cmt", 'description',
                 id3desc = u'')
     bpm = MediaField('TBPM', 'tmpo', 'bpm',
-                mp4_style = STORE_LIST | STORE_INTEGER,
+                mp4_style = StorageStyle(as_type = int),
                 out_type = int)
     comp = MediaField('TCMP', 'cpil', 'compilation',
-                mp4_style = STORE_RAW | STORE_BOOLEAN,
+                mp4_style = StorageStyle(list_elem = False, as_type = bool),
                 out_type = bool)
