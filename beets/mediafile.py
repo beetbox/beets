@@ -25,66 +25,6 @@ class FileTypeError(IOError):
 
 
 
-#### utility functions ####
-
-def fromslashed(slashed, sep=u'/'):
-    """Extract a pair of items from a slashed string. If only one
-    value is present, it is assumed to be the left-hand value."""
-    
-    if slashed is None:
-        return (None, None)
-    
-    items = slashed.split(sep)
-    
-    if len(items) == 1:
-        out = (items[0], None)
-    else:
-        out = (items[0], items[1])
-    
-    # represent "nothing stored" more gracefully
-    if out[0] == '': out[0] = None
-    if out[1] == '': out[1] = None
-    
-    return out
-
-def toslashed(pair_or_val, sep=u'/'):
-    """Store a pair of items or a single item in a slashed string. If
-    only one value is provided (in a list/tuple or as a single value),
-    no slash is used."""
-    if type(pair_or_val) is list or type(pair_or_val) is tuple:
-        if len(pair_or_val) == 0:
-            out = [u'']
-        elif len(pair_or_val) == 1:
-            out = [unicode(pair_or_val[0])]
-        else:
-            out = [unicode(pair_or_val[0]), unicode(pair_or_val[1])]
-    else: # "scalar"
-        out = [unicode(pair_or_val)]
-    return sep.join(out)
-
-def unpair(pair, right=False, noneval=None):
-    """Return the left or right value in a pair (as selected by the "right"
-    parameter. If the value on that side is not available, return noneval.)"""
-    if right: idx = 1
-    else: idx = 0
-    
-    try:
-        out = pair[idx]
-    except:
-        out = None
-    finally:
-        if out is None:
-            return noneval
-        else:
-            return out
-
-def normalize_pair(pair, noneval=None):
-    """Make sure the pair is a tuple that has exactly two entries. If we need
-    to fill anything in, we'll use noneval."""
-    return (unpair(pair, False, noneval),
-            unpair(pair, True, noneval))
-
-
 
 
 #### flags used to define fields' behavior ####
@@ -93,7 +33,11 @@ class Enumeration(object):
     def __init__(self, *values):
         for value, equiv in zip(values, range(1, len(values)+1)):
             setattr(self, value, equiv)
-packing = Enumeration('SLASHED', 'TUPLE')
+# determine style of packing if any
+packing = Enumeration('SLASHED', # pair delimited by /
+                      'TUPLE',   # a python tuple of 2 items
+                      'DATE'     # YYYY-MM-DD
+                     )
 
 class StorageStyle(object):
     """Parameterizes the storage behavior of a single field for a certain tag
@@ -123,6 +67,86 @@ class StorageStyle(object):
 
 
 
+
+#### dealing with packings ####
+
+class Packed(object):
+    """Makes a packed list of values subscriptable. To access the packed output
+    after making changes, use packed_thing.items."""
+    
+    def __init__(self, items, packstyle, none_val=0, out_type=int):
+        """Create a Packed object for subscripting the packed values in items.
+        The items are packed using packstyle, which is a value from the
+        packing enum. none_val is returned from a request when no suitable
+        value is found in the items. Vales are converted to out_type before
+        they are returned."""
+        self.items = items
+        self.packstyle = packstyle
+        self.none_val = none_val
+        self.out_type = out_type
+    
+    def __getitem__(self, index):
+        if not isinstance(index, int):
+            raise TypeError('index must be an integer')
+    
+        if self.items is None:
+            return self.none_val
+    
+        # transform from a string packing into a list we can index into
+        if self.packstyle == packing.SLASHED:
+            seq = unicode(self.items).split('/')
+        elif self.packstyle == packing.DATE:
+            seq = unicode(self.items).split('-')
+        elif self.packstyle == packing.TUPLE:
+            seq = self.items # tuple: items is already indexable
+    
+        try:
+            out = seq[index]
+        except:
+            out = None
+    
+        if out is None or out == self.none_val or out == '':
+            return self.out_type(self.none_val)
+        else:
+            return self.out_type(out)
+    
+    def __setitem__(self, index, value):
+
+        if self.packstyle in (packing.SLASHED, packing.TUPLE):
+            # SLASHED and TUPLE are always two-item packings
+            length = 2
+        else:
+            # DATE can have up to three fields
+            length = 3
+    
+        # make a list of the items we'll pack
+        new_items = []
+        for i in range(length):
+            if i == index:
+                next_item = value
+            else:
+                next_item = self[i]
+            new_items.append(next_item)
+    
+        if self.packstyle == packing.DATE:
+            # Truncate the items wherever we reach an invalid (none) entry.
+            # This prevents dates like 2008-00-05.
+            for i, item in enumerate(new_items):
+                if item == self.none_val or item is None:
+                    del(new_items[i:]) # truncate
+                    break
+    
+        if self.packstyle == packing.SLASHED:
+            self.items = '/'.join(map(unicode, new_items))
+        elif self.packstyle == packing.DATE:
+            field_lengths = [4, 2, 2] # YYYY-MM-DD
+            elems = []
+            for i, item in enumerate(new_items):
+                elems.append( ('%0' + str(field_lengths[i]) + 'i') % item )
+            self.items = '-'.join(elems)
+        elif self.packstyle == packing.TUPLE:
+            self.items = new_items
+        
 
 
 class MediaField(object):
@@ -217,11 +241,7 @@ class MediaField(object):
         style = self._style(obj)
         out = self._fetchdata(obj)
         
-        # deal with slashed and tuple storage
-        if style.packing:
-            if style.packing == packing.SLASHED:
-                out = fromslashed(out)
-            out = unpair(out, style.pack_pos, noneval=0)
+        if style.packing: out = Packed(out, style.packing)[style.pack_pos]
         
         # return the appropriate type
         if self.out_type == int:
@@ -250,24 +270,11 @@ class MediaField(object):
         style = self._style(obj)
         
         if style.packing:
-            # fetch the existing value so we can preserve half of it
-            pair = self._fetchdata(obj)
-            if style.packing == packing.SLASHED:
-                pair = fromslashed(pair)
-            pair = normalize_pair(pair, noneval=0)
-            
-            # set the appropriate side of the pair
-            if style.pack_pos == 0:
-                pair = (val, pair[1])
-            else:
-                pair = (pair[0], val)
-            
-            if style.packing == packing.SLASHED:
-                out = toslashed(pair)
-            else:
-                out = pair
+            p = Packed(self._fetchdata(obj), style.packing)
+            p[style.pack_pos] = val
+            out = p.items
                 
-        else: # unicode, integer, or boolean
+        else: # unicode, integer, or boolean scalar
             out = val
         
             # deal with Nones according to abstract type if present
@@ -367,9 +374,37 @@ class MediaFile(object):
                 flac = StorageStyle('grouping')
             )
     year = MediaField(out_type=int,
-                mp3  = StorageStyle('TDRC'),
-                mp4  = StorageStyle("\xa9day"), 
-                flac = StorageStyle('date')
+                mp3  = StorageStyle('TDRC',
+                                    packing = packing.DATE,
+                                    pack_pos = 0),
+                mp4  = StorageStyle("\xa9day",
+                                    packing = packing.DATE,
+                                    pack_pos = 0), 
+                flac = StorageStyle('date',
+                                    packing = packing.DATE,
+                                    pack_pos = 0)
+            )
+    month = MediaField(out_type=int,
+                mp3  = StorageStyle('TDRC',
+                                    packing = packing.DATE,
+                                    pack_pos = 1),
+                mp4  = StorageStyle("\xa9day",
+                                    packing = packing.DATE,
+                                    pack_pos = 1), 
+                flac = StorageStyle('date',
+                                    packing = packing.DATE,
+                                    pack_pos = 1)
+            )
+    day = MediaField(out_type=int,
+                mp3  = StorageStyle('TDRC',
+                                    packing = packing.DATE,
+                                    pack_pos = 2),
+                mp4  = StorageStyle("\xa9day",
+                                    packing = packing.DATE,
+                                    pack_pos = 2), 
+                flac = StorageStyle('date',
+                                    packing = packing.DATE,
+                                    pack_pos = 2)
             )
     track = MediaField(out_type = int,
                 mp3  = StorageStyle('TRCK',
