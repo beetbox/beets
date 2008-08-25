@@ -70,6 +70,7 @@ def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
 
 correct_dicts = {
 
+    # All of the fields iTunes supports that we do also.
     'full': {
         'title':      u'full',
         'artist':     u'the artist',
@@ -90,47 +91,22 @@ correct_dicts = {
         'comp':       True
     },
 
+    # Additional coverage for common cases when "total" fields are unset. Created
+    # with iTunes.
     'partial': {
-        'title':      u'partial',
-        'artist':     u'the artist',
-        'album':      u'the album',
-        'genre':      u'',
-        'composer':   u'',
-        'grouping':   u'',
-        'year':       0,
-        'month':      0,
-        'day':        0,
         'track':      2,
         'tracktotal': 0,
         'disc':       4,
-        'disctotal':  0,
-        'lyrics':     u'',
-        'comments':   u'',
-        'bpm':        0,
-        'comp':       False
+        'disctotal':  0
     },
-
     'min': {
-        'title':      u'min',
-        'artist':     u'',
-        'album':      u'',
-        'genre':      u'',
-        'composer':   u'',
-        'grouping':   u'',
-        'year':       0,
-        'month':      0,
-        'day':        0,
         'track':      0,
         'tracktotal': 0,
         'disc':       0,
-        'disctotal':  0,
-        'lyrics':     u'',
-        'comments':   u'',
-        'bpm':        0,
-        'comp':       False
+        'disctotal':  0
     },
     
-    # empty.mp3 has had its ID3 tag deleted with mp3info -d
+    # ID3 tag deleted with `mp3info -d`. Tests default values.
     'empty': {
         'title':      u'',
         'artist':     u'',
@@ -151,7 +127,7 @@ correct_dicts = {
         'comp':       False
     },
     
-    # full release date
+    # Full release date.
     'date': {
         'year':       1987,
         'month':      3,
@@ -160,11 +136,12 @@ correct_dicts = {
 
 }
 
-def suite_for_file(path, correct_dict):
+def suite_for_file(path, correct_dict, writing=True):
     s = unittest.TestSuite()
     for field in correct_dict:
         s.addTest(MakeReadingTest(path, correct_dict, field)())
-        if not (   field == 'month' and correct_dict['year']  == 0
+        if writing and \
+           not (   field == 'month' and correct_dict['year']  == 0
                 or field == 'day'   and correct_dict['month'] == 0):
              # ensure that we don't test fields that can't be modified
              s.addTest(MakeWritingTest(path, correct_dict, field)())
@@ -182,7 +159,8 @@ def suite():
     
     # Special test for missing ID3 tag.
     s.addTest(suite_for_file(os.path.join('rsrc', 'empty.mp3'),
-                             correct_dicts['empty']))
+                             correct_dicts['empty'],
+                             writing=False))
     
     # Special test for advanced release date.
     s.addTest(suite_for_file(os.path.join('rsrc', 'date.mp3'),
