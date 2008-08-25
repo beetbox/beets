@@ -13,6 +13,8 @@ metadata_fields = [
     ('composer',   'text'),
     ('grouping',   'text'),
     ('year',       'int'),
+    ('month',      'int'),
+    ('day',        'int'),
     ('track',      'int'),
     ('tracktotal', 'int'),
     ('disc',       'int'),
@@ -80,6 +82,8 @@ def _walk_files(path):
 
 
 
+
+
 class Item(object):
     def __init__(self, values, library=None):
         self.library = library
@@ -100,6 +104,10 @@ class Item(object):
         for key in item_keys:
             self.dirty[key] = False
 
+    def __repr__(self):
+        return 'Item(' + repr(self.record) + ', library=' + self.library + ')'
+
+
     #### item field accessors ####
 
     def __getattr__(self, key):
@@ -110,7 +118,7 @@ class Item(object):
         if key in item_keys:
             return self.record[key]
         else:
-            return object.__getattr__(self, key)
+            return super(Item, self).__getattr__(key)
 
     def __setattr__(self, key, value):
         """If key is an item attribute (i.e., a column in the database), sets
@@ -126,7 +134,7 @@ class Item(object):
                 self.record[key] = value
                 self.dirty[key] = True
         else:
-            object.__setattr__(self, key, value)
+            super(Item, self).__setattr__(key, value)
     
     
     #### interaction with the database ####
