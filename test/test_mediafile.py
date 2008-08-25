@@ -4,7 +4,7 @@
 Test the MediaFile metadata layer.
 """
 
-import unittest, sys, os, shutil
+import unittest, sys, os, shutil, datetime
 sys.path.append('..')
 import beets.mediafile
 
@@ -37,6 +37,8 @@ def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
                 self.value = correct_dict[field] + 42
             elif type(correct_dict[field]) is bool:
                 self.value = not correct_dict[field]
+            elif type(correct_dict[field]) is datetime.date:
+                self.value = correct_dict[field] + datetime.timedelta(42)
             else:
                 raise ValueError('unknown field type ' + \
                         str(type(correct_dict[field])))
@@ -51,13 +53,34 @@ def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
             b = beets.mediafile.MediaFile(self.tpath)
             for readfield in correct_dict.keys():
                 got = getattr(b, readfield)
-                if readfield is field:
+                
+                # Make sure the modified field was changed correctly...
+                if readfield == field:
                     self.assertEqual(got, self.value,
                         field + ' modified incorrectly (changed to ' + \
                         repr(self.value) + ' but read ' + repr(got) + \
                         ') when testing ' + os.path.basename(path))
+                
+                # ... and that no other field was changed.
                 else:
-                    correct = getattr(a, readfield)
+                    # The value should be what it was originally most of the time.
+                    correct = correct_dict[readfield]
+                    
+                    # The date field, however, is modified when its components
+                    # change.
+                    if readfield == 'date' and field in ('year', 'month', 'day'):
+                        try:
+                            correct = datetime.date(
+                                self.value if field == 'year' else correct.year,
+                                self.value if field == 'month' else correct.month,
+                                self.value if field == 'day' else correct.day
+                            )
+                        except ValueError:
+                            correct = datetime.date.min
+                    # And vice-versa.
+                    if field == 'date' and readfield in ('year', 'month', 'day'):
+                        correct = getattr(self.value, readfield)
+                    
                     self.assertEqual(got, correct,
                         readfield + ' changed when it should not have (expected'
                         ' ' + repr(correct) + ', got ' + repr(got) + ') when '
@@ -81,6 +104,7 @@ correct_dicts = {
         'year':       2001,
         'month':      0,
         'day':        0,
+        'date':       datetime.date(2001, 1, 1),
         'track':      2,
         'tracktotal': 3,
         'disc':       4,
@@ -117,6 +141,7 @@ correct_dicts = {
         'year':       0,
         'month':      0,
         'day':        0,
+        'date':       datetime.date.min,
         'track':      0,
         'tracktotal': 0,
         'disc':       0,
@@ -131,7 +156,8 @@ correct_dicts = {
     'date': {
         'year':       1987,
         'month':      3,
-        'day':        31
+        'day':        31,
+        'date':       datetime.date(1987, 3, 31)
     },
 
 }

@@ -15,6 +15,7 @@ or the empty string)."""
 
 import mutagen
 import os.path
+import datetime
 
 __all__ = ['FileTypeError', 'MediaFile']
 
@@ -308,9 +309,25 @@ class MediaField(object):
         # store the data
         self._storedata(obj, out)
 
-
-
-
+class CompositeDateField(object):
+    def __init__(self, year_field, month_field, day_field):
+        self.year_field = year_field
+        self.month_field = month_field
+        self.day_field = day_field
+        
+    def __get__(self, obj, owner):
+        try:
+            return datetime.date(max(self.year_field.__get__(obj, owner),
+                                     datetime.MINYEAR),
+                                 max(self.month_field.__get__(obj, owner), 1),
+                                 max(self.day_field.__get__(obj, owner), 1)
+                                )
+        except ValueError: # Out of range values.
+            return datetime.date.min
+    def __set__(self, obj, val):
+        self.year_field.__set__(obj, val.year)
+        self.month_field.__set__(obj, val.month)
+        self.day_field.__set__(obj, val.day)
 
 
 
@@ -406,6 +423,7 @@ class MediaFile(object):
                                     packing = packing.DATE,
                                     pack_pos = 2)
             )
+    date = CompositeDateField(year, month, day)
     track = MediaField(out_type = int,
                 mp3  = StorageStyle('TRCK',
                                     packing = packing.SLASHED,
