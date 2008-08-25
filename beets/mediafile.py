@@ -310,12 +310,28 @@ class MediaField(object):
         self._storedata(obj, out)
 
 class CompositeDateField(object):
+    """
+    A MediaFile field for conveniently accessing the year, month, and day fields
+    as a datetime.date object. Allows both getting and setting of the component
+    fields.
+    """
     def __init__(self, year_field, month_field, day_field):
+        """
+        Create a new date field from the indicated MediaFields for the component
+        values.
+        """
         self.year_field = year_field
         self.month_field = month_field
         self.day_field = day_field
         
     def __get__(self, obj, owner):
+        """
+        Return a datetime.date object whose components indicating the smallest
+        valid date whose components are at least as large as the three component
+        fields (that is, if year == 1999, month == 0, and day == 0, then
+        date == datetime.date(1999, 1, 1)). If the components indicate an invalid
+        date (e.g., if month == 47), datetime.date.min is returned.
+        """
         try:
             return datetime.date(max(self.year_field.__get__(obj, owner),
                                      datetime.MINYEAR),
@@ -324,7 +340,12 @@ class CompositeDateField(object):
                                 )
         except ValueError: # Out of range values.
             return datetime.date.min
+    
     def __set__(self, obj, val):
+        """
+        Set the year, month, and day fields to match the components of the
+        provided datetime.date object.
+        """
         self.year_field.__set__(obj, val.year)
         self.month_field.__set__(obj, val.month)
         self.day_field.__set__(obj, val.day)
