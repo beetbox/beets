@@ -8,11 +8,14 @@ use of the wide range of MPD clients.
 import eventlet.api
 import re
 from string import Template
+from beets import Library
+import sys
 
 
 
 DEFAULT_PORT = 6600
 PROTOCOL_VERSION = '0.12.2'
+BUFSIZE = 1024
 
 HELLO = 'OK MPD %s' % PROTOCOL_VERSION
 CLIST_BEGIN = 'command_list_begin'
@@ -39,8 +42,21 @@ ERROR_EXIST = 56
 
 
 
+def debug(msg):
+    print >>sys.stderr, msg
+
+
+
 class Server(object):
     """A MPD-compatible music player server.
+    
+    The functions with the `cmd_` prefix are invoked in response to
+    client commands. For instance, if the client says `status`,
+    `cmd_status` will be invoked. The arguments to the client's commands
+    are used as function arguments (*args). The functions should return
+    a `Response` object.
+    
+    This is a generic superclass and doesn't support many commands.
     """
     
     def __init__(self, host, port=DEFAULT_PORT):
@@ -59,17 +75,45 @@ class Server(object):
                 sock, address = self.listener.accept()
             except KeyboardInterrupt:
                 break # ^C ends the server.
-            eventlet.api.spawn(Connection.handle, sock)
+            eventlet.api.spawn(Connection.handle, sock, self)
+
+    def cmd_ping(self):
+        return SuccessResponse()
     
+    def cmd_commands(self):
+        """Just lists the commands available to the user. For the time
+        being, lists all commands because no authentication is present.
+        """
+        out = []
+        for key in dir(self):
+            if key.startswith('cmd_'):
+                out.append('command: ' + key[4:])
+        return SuccessResponse(out)
+    
+    def cmd_notcommands(self):
+        """Lists all unavailable commands. Because there's currently no
+        authentication, returns no commands.
+        """
+        return SuccessResponse()
+
+class BGServer(Server):
+    """A `Server` using GStreamer to play audio and beets to store its
+    library.
+    """
+    
+    def __init__(self, host, port=DEFAULT_PORT, libpath='library.blb'):
+        super(BGServer, self).__init__(host, port)
+        self.library = Library(libpath)
+
 class Connection(object):
     """A connection between a client and the server. Handles input and
     output from and to the client.
     """
     
-    def __init__(self, client):
+    def __init__(self, client, server):
         """Create a new connection for the accepted socket `client`.
         """
-        self.fp = client.makefile()
+        self.client, self.server = client, server
     
     def send(self, data):
         """Send data, which is either a string or an iterable
@@ -82,7 +126,27 @@ class Connection(object):
             lines = data
         
         for line in lines:
-            self.fp.write(line + NEWLINE)
+            debug(line)
+            self.client.sendall(line + NEWLINE)
+    
+    line_re = re.compile(r'([^\r\n]*)(?:\r\n|\n\r|\n|\r)')
+    def lines(self):
+        """A generator yielding lines (delimited by some usual newline
+        code) as they arrive from the client.
+        """
+        buf = ''
+        while True:
+            # Dump new data on the buffer.
+            chunk = self.client.recv(BUFSIZE)
+            if not chunk: break # EOF.
+            buf += chunk
+            
+            # Clear out and yield any lines in the buffer.
+            while True:
+                match = self.line_re.match(buf)
+                if not match: break # No lines remain.
+                yield match.group(1)
+                buf = buf[match.end():] # Remove line from buffer.
     
     def run(self):
         """Send a greeting to the client and begin processing commands
@@ -91,41 +155,36 @@ class Connection(object):
         self.send(HELLO)
         
         clist = None # Initially, no command list is being constructed.
-        for line in self.fp:
-            line = line.rstrip()
-            
+        for line in self.lines():
+            debug(line)
+               
             if clist is not None:
                 # Command list already opened.
                 if line == CLIST_END:
-                    self.send(clist.run())
+                    self.send(clist.run(self.server))
                     clist = None
                 else:
                     clist.append(Command(line))
             
             elif line == CLIST_BEGIN or line == CLIST_VERBOSE_BEGIN:
                 # Begin a command list.
-                clist = CommandList(line == CLIST_VERBOSE_BEGIN)
+                clist = CommandList([], line == CLIST_VERBOSE_BEGIN)
                 
             else:
                 # Ordinary command.
-                self.send(Command(line).run())
+                self.send(Command(line).run(self.server))
     
     @classmethod
-    def handle(cls, client):
-        """Creates a new `Connection` for `client` and runs it.
+    def handle(cls, client, server):
+        """Creates a new `Connection` for `client` and `server` and runs
+        it.
         """
-        cls(client).run()
+        cls(client, server).run()
 
 
 
 class Command(object):
     """A command issued by the client for processing by the server.
-    
-    The functions with the `cmd_` prefix are invoked in response to
-    client commands. For instance, if the client says `status`,
-    `cmd_status` will be invoked. The arguments to the client's commands
-    are used as function arguments (*args). The functions should return
-    a `Response` object.
     """
     
     command_re = re.compile(r'^([^ \t]+)[ \t]*')
@@ -140,12 +199,13 @@ class Command(object):
         arg_matches = self.arg_re.findall(s[command_match.end():])
         self.args = [m[0] or m[1] for m in arg_matches]
         
-    def run(self):
-        """Executes the command, returning a `Response` object.
+    def run(self, server):
+        """Executes the command on the given `Sever`, returning a
+        `Response` object.
         """
         func_name = 'cmd_' + self.name
-        if hasattr(self, func_name):
-            return getattr(self, func_name)(*self.args)
+        if hasattr(server, func_name):
+            return getattr(server, func_name)(*self.args)
         else:
             return ErrorResponse(ERROR_UNKNOWN, self.name, 'unknown command')
 
@@ -163,19 +223,19 @@ class CommandList(list):
                 self.append(item)
         self.verbose = verbose
 
-    def run(self):
+    def run(self, server):
         """Execute all the commands in this list, returning a list of
         strings to be sent as a response.
         """
         out = []
 
         for i, command in enumerate(self):
-            resp = command.run()
+            resp = command.run(server)
             out.extend(resp.items)
 
             # If the command failed, stop executing and send the completion
             # code for this command.
-            if isinstance(self, ErrorResponse):
+            if isinstance(resp, ErrorResponse):
                 resp.index = i # Give the error the correct index.
                 break
 
@@ -240,4 +300,4 @@ class SuccessResponse(Response):
 
 
 if __name__ == '__main__':
-    Server('0.0.0.0').run()
+    BGServer('0.0.0.0', 6600, 'library.blb').run()
