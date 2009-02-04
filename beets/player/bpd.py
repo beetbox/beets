@@ -99,7 +99,7 @@ class Server(object):
             value = int(value)
         except:
             return ErrorResponse(ERROR_ARG, name, 'non-integer argument')
-        if (minval is not None and value < minval) or
+        if (minval is not None and value < minval) or \
            (maxval is not None and value > maxval):
             return ErrorResponse(ERROR_ARG, name, 'value out of range')
         else:
@@ -409,10 +409,10 @@ class BGServer(Server):
     library.
     """
 
-    def __init__(self, host, port=DEFAULT_PORT, libpath='library.blb'):
+    def __init__(self, library, host='127.0.0.1', port=DEFAULT_PORT):
         import gstplayer
         super(BGServer, self).__init__(host, port)
-        self.library = Library(libpath)
+        self.library = library
         self.player = gstplayer.GstPlayer()
     
     def run(self):
@@ -435,4 +435,4 @@ class BGServer(Server):
 
 
 if __name__ == '__main__':
-    BGServer('0.0.0.0', 6600, 'library.blb').run()
+    BGServer(Library('library.blb')).run()

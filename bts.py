@@ -51,6 +51,13 @@ def read(lib, criteria):
         item.store()
     lib.save()
 
+def bpd(lib, opts):
+    host = opts.pop(0) if opts else '127.0.0.1'
+    port = int(opts.pop(0)) if opts else 6600
+    
+    import beets.player.bpd
+    beets.player.bpd.BGServer(lib, host, port).run()
+
 if __name__ == "__main__":
     # parse options
     usage = """usage: %prog [options] command
@@ -78,11 +85,16 @@ command is one of: add, remove, update, write, list, help"""
         (imp,        ['import', 'im', 'imp']),
         (remove,     ['remove', 'rm']),
         (delete,     ['delete', 'del']),
+        
         (read,       ['read', 'r']),
         #(write,      ['write', 'wr', 'w']),
+        
         (ls,         ['list', 'ls']),
+        
         (option,     ['set']),
         (help,       ['help', 'h']),
+        
+        (bpd,        ['bpd']),
     ]
     for test_command in avail_commands:
         if cmd in test_command[1]:
