@@ -77,9 +77,11 @@ class Server(object):
         """Block and start listening for connections from clients. An
         interrupt (^C) closes the server.
         """
-        self.listener = eventlet.api.tcp_listener((self.host, self.port))
         try:
-            eventlet.api.tcp_server(self.listener, Connection.handle, self) 
+            self.listener = eventlet.api.tcp_listener((self.host, self.port))
+            while True:
+                sock, address = self.listener.accept()
+                eventlet.api.spawn(Connection.handle, sock, self)
         except KeyboardInterrupt:
             pass # ^C ends the server.
 
