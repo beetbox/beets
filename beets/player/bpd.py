@@ -39,6 +39,9 @@ ERROR_UPDATE_ALREADY = 54
 ERROR_PLAYER_SYNC = 55
 ERROR_EXIST = 56
 
+VOLUME_MIN = 0
+VOLUME_MAX = 100
+
 
 def debug(msg):
     print >>sys.stderr, msg
@@ -61,21 +64,60 @@ class Server(object):
         on port `port`.
         """
         self.host, self.port = host, port
+        
+        # Default server values.
+        self.random = False
+        self.repeat = False
+        self.volume = VOLUME_MAX
+        self.crossfade = 0
+        self.playlist = []
+        self.playlist_version = 0
     
     def run(self):
         """Block and start listening for connections from clients. An
         interrupt (^C) closes the server.
         """
         self.listener = eventlet.api.tcp_listener((self.host, self.port))
-        while True:
-            try:
-                sock, address = self.listener.accept()
-            except KeyboardInterrupt:
-                break # ^C ends the server.
-            eventlet.api.spawn(Connection.handle, sock, self)
+        try:
+            eventlet.api.tcp_server(self.listener, Connection.handle, self) 
+        except KeyboardInterrupt:
+            pass # ^C ends the server.
+
+    def _flag_cmd(self, attr, name, state):
+        """A helper function for various commands that toggle a
+        boolean flag.
+        """
+        try:
+            setattr(self, attr, bool(int(state)))
+            return SuccessResponse()
+        except ValueError:
+            return ErrorResponse(ERROR_ARG, name, 'non-boolean argument')
+    
+    def _int_cmd(self, attr, name, value, minval=None, maxval=None):
+        """Helper function for commands that set an integer value."""
+        try:
+            value = int(value)
+        except:
+            return ErrorResponse(ERROR_ARG, name, 'non-integer argument')
+        if (minval is not None and value < minval) or
+           (maxval is not None and value > maxval):
+            return ErrorResponse(ERROR_ARG, name, 'value out of range')
+        else:
+            setattr(self, attr, value)
+            return SuccessResponse()
 
     def cmd_ping(self):
+        """Succeeds."""
         return SuccessResponse()
+    
+    def cmd_kill(self):
+        """Exits the server process."""
+        self.listener.close()
+        exit(0)
+    
+    def cmd_close(self):
+        """Closes the connection."""
+        return CloseResponse()
     
     def cmd_commands(self):
         """Just lists the commands available to the user. For the time
@@ -92,6 +134,74 @@ class Server(object):
         authentication, returns no commands.
         """
         return SuccessResponse()
+    
+    def cmd_random(self, state):
+        """Set or unset random (shuffle) mode."""
+        return self._flag_cmd('random', 'random', state)
+    
+    def cmd_repeat(self, state):
+        """Set or unset repeat mode."""
+        return self._flag_cmd('repeat', 'repeat', state)
+    
+    def cmd_setvol(self, vol):
+        """Set the player's volume level (0-100)."""
+        return self._int_cmd('volume', 'setvol', vol, VOLUME_MIN, VOLUME_MAX)
+    
+    def cmd_crossfade(self, crossfade):
+        """Set the number of seconds of crossfading."""
+        return self._int_cmd('crossfade', 'crossfade', crossfade, 0)
+    
+    def cmd_clear(self):
+        """Clear the playlist."""
+        self.playlist = []
+        self.playlist_version += 1
+        return SuccessResponse()
+    
+    def cmd_delete(self, index):
+        """Remove the song at index from the playlist."""
+        try:
+            index = int(i_from)
+        except:
+            return ErrorResponse(ERROR_ARG, 'delete', 'non-integer argument')
+        try:
+            del(self.playlist[index])
+        except IndexError:
+            return ErrorResponse(ERROR_ARG, 'delete', 'index out of range')
+        self.playlist_version += 1
+        return SuccessResponse()
+    
+    def cmd_move(self, i_from, i_to):
+        """Move a track in the playlist."""
+        try:
+            i_from = int(i_from)
+            i_to = int(i_to)
+        except:
+            return ErrorResponse(ERROR_ARG, 'move', 'non-integer argument')
+        try:
+            track = self.playlist.pop(i_from)
+            self.playlist.insert(i_to, track)
+        except IndexError:
+            return ErrorResponse(ERROR_ARG, 'move', 'index out of range')
+    
+    def cmd_swap(self, i, j):
+        try:
+            i = int(i)
+            j = int(j)
+        except:
+            return ErrorResponse(ERROR_ARG, 'swap', 'non-integer argument')
+        try:
+            track_i = self.playlist[i]
+            track_j = self.playlist[j]
+        except IndexError:
+            return ErrorResponse(ERROR_ARG, 'swap', 'index out of range')
+        self.playlist[j] = track_i
+        self.playlist[i] = track_j
+        return SuccessResponse()
+    
+    def cmd_urlhandlers(self):
+        """Indicates supported URL schemes. None by default."""
+        return SuccessReponse()
+    
 
 class Connection(object):
     """A connection between a client and the server. Handles input and
@@ -160,7 +270,14 @@ class Connection(object):
                 
             else:
                 # Ordinary command.
-                self.send(Command(line).run(self.server))
+                response = Command(line).run(self.server)
+                if isinstance(response, CloseResponse):
+                    # A sentinel indicating connection closure.
+                    self.client.close()
+                    return
+                else:
+                    # Normal response.
+                    self.send(response)
     
     @classmethod
     def handle(cls, client, server):
@@ -281,6 +398,11 @@ class SuccessResponse(Response):
     def completion(self):
         return RESP_OK
 
+class CloseResponse(Response):
+    """A dummy response that indicates that the connection should be
+    closed.
+    """
+
 
 class BGServer(Server):
     """A `Server` using GStreamer to play audio and beets to store its
@@ -296,6 +418,20 @@ class BGServer(Server):
     def run(self):
         super(BGServer, self).run()
         self.player.run()
+    
+    def cmd_status(self):
+        statuses = ['volume: ' + str(self.volume),
+                    'repeat: ' + str(int(self.repeat)),
+                    'random: ' + str(int(self.random)),
+                    'playlist: ' + str(self.playlist_version),
+                    'playlistlength: ' + str(len(self.playlist)),
+                    'xfade: ' + str(self.crossfade),
+                   ]
+        if self.player.playing:
+            statuses += ['state: play']
+        else:
+            statuses += ['state: pause']
+        return SuccessResponse(statuses)
 
 
 if __name__ == '__main__':
