@@ -12,7 +12,6 @@ from beets import Library
 import sys
 
 
-
 DEFAULT_PORT = 6600
 PROTOCOL_VERSION = '0.12.2'
 BUFSIZE = 1024
@@ -41,10 +40,8 @@ ERROR_PLAYER_SYNC = 55
 ERROR_EXIST = 56
 
 
-
 def debug(msg):
     print >>sys.stderr, msg
-
 
 
 class Server(object):
@@ -95,15 +92,6 @@ class Server(object):
         authentication, returns no commands.
         """
         return SuccessResponse()
-
-class BGServer(Server):
-    """A `Server` using GStreamer to play audio and beets to store its
-    library.
-    """
-    
-    def __init__(self, host, port=DEFAULT_PORT, libpath='library.blb'):
-        super(BGServer, self).__init__(host, port)
-        self.library = Library(libpath)
 
 class Connection(object):
     """A connection between a client and the server. Handles input and
@@ -181,8 +169,6 @@ class Connection(object):
         """
         cls(client, server).run()
 
-
-
 class Command(object):
     """A command issued by the client for processing by the server.
     """
@@ -250,8 +236,6 @@ class CommandList(list):
 
         return out
 
-
-
 class Response(object):
     """A result of executing a single `Command`. A `Response` is
     iterable and consists of zero or more lines of response data
@@ -297,6 +281,21 @@ class SuccessResponse(Response):
     def completion(self):
         return RESP_OK
 
+
+class BGServer(Server):
+    """A `Server` using GStreamer to play audio and beets to store its
+    library.
+    """
+
+    def __init__(self, host, port=DEFAULT_PORT, libpath='library.blb'):
+        import gstplayer
+        super(BGServer, self).__init__(host, port)
+        self.library = Library(libpath)
+        self.player = gstplayer.GstPlayer()
+    
+    def run(self):
+        super(BGServer, self).run()
+        self.player.run()
 
 
 if __name__ == '__main__':

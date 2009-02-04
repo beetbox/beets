@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""A wrapper for the GStreamer Python bindings that exposes a simple
+music player.
+"""
+
 import gst
 import sys
 import time
@@ -8,8 +12,27 @@ import thread
 import os
 
 class GstPlayer(object):
+    """A music player abstracting GStreamer's Playbin element.
+    
+    Create a player object, then call run() to start a thread with a
+    runloop. Then call play_file to play music. Use player.playing
+    to check whether music is currently playing.
+    
+    A basic play queue is also implemented (just a Python list,
+    player.queue, whose last element is next to play). To use it,
+    just call enqueue() and then play(). When a track finishes and
+    another is available on the queue, it is played automatically.
+    """
+    
     def __init__(self):
-        # set up the Gstreamer player
+        """Initialize a player.
+        
+        Once the player has been created, call run() to begin the main
+        runloop in a separate thread.
+        """
+        
+        # Set up the Gstreamer player. From the pygst tutorial:
+        # http://pygstdocs.berlios.de/pygst-tutorial/playbin.html
         self.player = gst.element_factory_make("playbin", "player")
         fakesink = gst.element_factory_make("fakesink", "fakesink")
         self.player.set_property("video-sink", fakesink)
@@ -17,14 +40,18 @@ class GstPlayer(object):
         bus.add_signal_watch()
         bus.connect("message", self._handle_message)
         
-        # set up our own stuff
+        # Set up our own stuff.
         self.playing = False
         self.queue = []
 
     def _get_state(self):
+        """Returns the current state flag of the playbin."""
+        # gst's get_state function returns a 3-tuple; we just want the
+        # status flag in position 1.
         return self.player.get_state()[1]
     
     def _handle_message(self, bus, message):
+        """Callback for status updates from GStreamer."""
         if message.type == gst.MESSAGE_EOS:
             # file finished playing
             if self.queue:
@@ -40,20 +67,28 @@ class GstPlayer(object):
             self.playing = False
 
     def play_file(self, path):
+        """Immediately begin playing the audio file at the given
+        path.
+        """
         self.player.set_state(gst.STATE_NULL)
         self.player.set_property("uri", "file://" + path)
         self.player.set_state(gst.STATE_PLAYING)
         self.playing = True
 
     def play(self):
+        """If paused, resume playback. Otherwise, start playing the
+        queue.
+        """
         if self._get_state() == gst.STATE_PAUSED:
             self.player.set_state(gst.STATE_PLAYING)
             self.playing = True
         else:
-            # presumably, nothing is playing
-            self.play_file(self.queue.pop())
+            # Nothing is playing. Start the queue.
+            if self.queue:
+                self.play_file(self.queue.pop())
     
     def pause(self):
+        """Pause playback."""
         self.player.set_state(gst.STATE_PAUSED)
         self.playing = False
 
@@ -61,6 +96,12 @@ class GstPlayer(object):
         self.queue[0:0] = [path] # push to front
 
     def run(self):
+        """Start a new thread for the player.
+        
+        Call this function before trying to play any music with
+        play_file() or play().
+        """
+        # If we don't use the MainLoop, messages are never sent.
         gobject.threads_init()
         def start():
             loop = gobject.MainLoop()
@@ -68,16 +109,17 @@ class GstPlayer(object):
         thread.start_new_thread(start, ())
 
     def block(self):
-        """Block until we stop playing."""
+        """Block until playing finishes (the queue empties)."""
         while self.playing:
             time.sleep(1)
 
+
 if __name__ == '__main__':
-    path = sys.argv[1]
+    # A very simple command-line player. Just give it names of audio
+    # files on the command line; these are all queued and played.
     p = GstPlayer()
     for path in sys.argv[1:]:
         p.enqueue(os.path.abspath(os.path.expanduser(path)))
     p.run()
     p.play()
     p.block()
-
