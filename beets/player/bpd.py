@@ -10,6 +10,7 @@ import re
 from string import Template
 from beets import Library
 import sys
+import traceback
 
 
 DEFAULT_PORT = 6600
@@ -60,7 +61,7 @@ class BPDError(Exception):
         """
         return ErrorResponse(self.code, cmd.name, self.message)
 
-def make_bpd_error(self, s_code, s_message):
+def make_bpd_error(s_code, s_message):
     """Create a BPDError subclass for a static code and message.
     """
     class NewBPDError(BPDError):
@@ -120,6 +121,8 @@ class Server(object):
         self.crossfade = 0
         self.playlist = []
         self.playlist_version = 0
+        self.current_index = -1
+        self.paused = False
     
     def run(self):
         """Block and start listening for connections from clients. An
@@ -132,21 +135,6 @@ class Server(object):
                 eventlet.api.spawn(Connection.handle, sock, self)
         except KeyboardInterrupt:
             pass # ^C ends the server.
-
-    def _generic_status(self):
-        """Returns some status information for use with an
-        implementation of cmd_status.
-        
-        Gives a list of response-lines for: volume, repeat, random,
-        playlist, playlistlength, and xfade.
-        """
-        return ['volume: ' + str(self.volume),
-                'repeat: ' + str(int(self.repeat)),
-                'random: ' + str(int(self.random)),
-                'playlist: ' + str(self.playlist_version),
-                'playlistlength: ' + str(len(self.playlist)),
-                'xfade: ' + str(self.crossfade),
-               ]
 
     def _item_info(self, item):
         """An abstract method that should response lines containing a
@@ -198,6 +186,39 @@ class Server(object):
         authentication, returns no commands.
         """
         pass
+    
+    def cmd_status(self):
+        """Returns some status information for use with an
+        implementation of cmd_status.
+        
+        Gives a list of response-lines for: volume, repeat, random,
+        playlist, playlistlength, and xfade.
+        """
+        status_lines = ['volume: ' + str(self.volume),
+                        'repeat: ' + str(int(self.repeat)),
+                        'random: ' + str(int(self.random)),
+                        'playlist: ' + str(self.playlist_version),
+                        'playlistlength: ' + str(len(self.playlist)),
+                        'xfade: ' + str(self.crossfade),
+                       ]
+        
+        if self.current_index == -1:
+            state = 'stop'
+        elif self.paused:
+            state = 'pause'
+        else:
+            state = 'play'
+        status_lines.append('state: ' + state)
+        
+        if self.current_index != -1: # i.e., paused or playing
+            current_id = self._item_id(self.playlist[self.current_index])
+            status_lines += ['song: ' + str(self.current_index),
+                             'songid: ' + str(current_id),
+                            ]
+        
+        # Still missing: time, bitrate, audio, updating_db, error
+        
+        return SuccessResponse(status_lines)
     
     def cmd_random(self, state):
         """Set or unset random (shuffle) mode."""
@@ -276,7 +297,7 @@ class Server(object):
         info = []
         for track in l:
             info += self._item_info(track)
-        return SuccessReponse(info)
+        return SuccessResponse(info)
     
     def cmd_playlistinfo(self, index=-1):
         """Gives metadata information about the entire playlist or a
@@ -293,8 +314,65 @@ class Server(object):
             return SuccessReponse(self._item_info(track))
     def cmd_playlistid(self, track_id=-1):
         return self.cmd_playlistinfo(self._id_to_index(track_id))
-        
     
+    def cmd_currentsong(self):
+        """Returns information about the currently-playing song.
+        """
+        if self.current_index != -1: # -1 means stopped.
+            return self._item_info(self.playlist[self.current_index])
+    
+    def cmd_next(self):
+        """Advance to the next song in the playlist."""
+        self.current_index += 1
+        if self.current_index >= len(self.playlist):
+            # Fallen off the end. Just move to stopped state.
+            return self.cmd_stop()
+    
+    def cmd_previous(self):
+        """Step back to the last song."""
+        self.current_index -= 1
+        if self.current_index < 0:
+            return self.cmd_stop()
+    
+    def cmd_pause(self, state=None):
+        """Set the pause state playback."""
+        if state is None:
+            self.paused = not self.paused # Toggle.
+        else:
+            self.paused = cast_arg('intbool', state)
+    
+    def cmd_play(self, index=-1):
+        """Begin playback, possibly at a specified playlist index."""
+        index = cast_arg(int, index)
+        if index == -1: # No index specified: start where we are.
+            if not self.playlist: # Empty playlist: stop immediately.
+                return self.cmd_stop()
+            if self.current_index == -1: # No current song.
+                self.current_index = 0 # Start at the beginning.
+            # If we have a current song, just stay there.
+        else: # Start with the specified index.
+            self.current_index = index
+        
+        self.paused = False
+    
+    def cmd_playid(self, track_id=0):
+        index = self._id_to_index(track_id)
+        self.cmd_play(index)
+    
+    def cmd_stop(self):
+        """Stop playback."""
+        self.current_index = -1
+        self.paused = False
+    
+    def cmd_seek(self, index, time):
+        """Seek to a specified point in a specified song."""
+        index = cast_arg(int, index)
+        if index < 0 or index >= len(self.playlist):
+            raise ArgumentIndexError()
+        self.current_index = index
+    def cmd_seekid(self, track_id, time):
+        index = self._id_to_index(track_id)
+        return self.cmd_seek(index, time)
 
 class Connection(object):
     """A connection between a client and the server. Handles input and
@@ -402,7 +480,7 @@ class Command(object):
             try:
                 response = getattr(server, func_name)(*self.args)
             
-            except BPDError as e:
+            except BPDError, e:
                 # An exposed error. Send it to the client.
                 return e.response(self)
             
@@ -411,9 +489,9 @@ class Command(object):
                 # it on the Connection.
                 raise
             
-            except Exception as e:
+            except Exception, e:
                 # An "unintentional" error. Hide it from the client.
-                debug(e)
+                debug(traceback.format_exc(e))
                 return ErrorResponse(ERROR_SYSTEM, self.name, 'server error')
             
             if response is None:
@@ -447,6 +525,7 @@ class CommandList(list):
 
         for i, command in enumerate(self):
             resp = command.run(server)
+            print resp.items
             out.extend(resp.items)
 
             # If the command failed, stop executing and send the completion
@@ -521,32 +600,33 @@ class BGServer(Server):
     """
 
     def __init__(self, library, host='127.0.0.1', port=DEFAULT_PORT):
-        import gstplayer
+        #import gstplayer
         super(BGServer, self).__init__(host, port)
-        self.library = library
-        self.player = gstplayer.GstPlayer()
+        self.lib = library
+        #self.player = gstplayer.GstPlayer()
     
     def run(self):
         super(BGServer, self).run()
-        self.player.run()
+        #self.player.run()
     
     def _item_info(self, item):
         info_lines = ['file: ' + item.path,
                       'Time: ' + '100', #fixme
-                      'Artist: ' + item.artist,
                       'Title: ' + item.title,
-                      'Album: ' + item.album]
+                      'Artist: ' + item.artist,
+                      'Album: ' + item.album,
+                      'Genre: ' + item.genre,
+                     ]
         
         track = str(item.track)
         if item.tracktotal:
             track += '/' + str(item.tracktotal)
         info_lines.append('Track: ' + track)
         
-        info_lines += ['Date: ' + str(item.year),
-                       'Genre: ' + item.genre]
+        info_lines.append('Date: ' + str(item.year))
         
         try:
-            pos = self._id_to_index(self.item.id)
+            pos = self._id_to_index(item.id)
             info_lines.append('Pos: ' + str(pos))
         except ArgumentNotFoundError:
             # Don't include position if not in playlist.
@@ -559,24 +639,16 @@ class BGServer(Server):
     def _item_id(self, item):
         return item.id
     
-    def cmd_status(self):
-        statuses = self._generic_status()
-        if self.player.playing:
-            statuses += ['state: play']
-        else:
-            statuses += ['state: pause']
-        return SuccessResponse(statuses)
-    
     def cmd_lsinfo(self, path="/"):
         if path != "/":
             raise BPDError(ERROR_NO_EXIST, 'cannot list paths other than /')
-        return _items_info(self.lib.get())
+        return self._items_info(self.lib.get())
     
     def cmd_search(self, key, value):
         if key == 'filename':
             key = 'path'
         query = key + ':' + value + ''
-        return _items_info(self.lib.get(query))
+        return self._items_info(self.lib.get(query))
 
 
 if __name__ == '__main__':
