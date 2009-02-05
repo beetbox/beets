@@ -105,7 +105,8 @@ class Item(object):
             self.dirty[key] = False
 
     def __repr__(self):
-        return 'Item(' + repr(self.record) + ', library=' + self.library + ')'
+        return 'Item(' + repr(self.record) + \
+               ', library=' + repr(self.library) + ')'
 
 
     #### item field accessors ####
@@ -358,15 +359,26 @@ class Query(object):
         c = library.conn.cursor()
         c.execute(*self.statement())
         return ResultIterator(c, library)
-    
-class SubstringQuery(Query):
-    """A query that matches a substring in a specific item field."""
+
+class FieldQuery(Query):
+    """An abstract query that searches in a specific field for a
+    pattern.
+    """
     
     def __init__(self, field, pattern):
         if field not in item_keys:
             raise InvalidFieldError(field + ' is not an item key')
         self.field = field
         self.pattern = pattern
+        
+class MatchQuery(FieldQuery):
+    """A query that looks for exact matches in an item field."""
+    
+    def clause(self):
+        return self.field + " = ?", [self.pattern]
+
+class SubstringQuery(FieldQuery):
+    """A query that matches a substring in a specific item field."""
     
     def clause(self):
         search = '%' + (self.pattern.replace('\\','\\\\').replace('%','\\%')
@@ -490,12 +502,22 @@ class ResultIterator(object):
     
     def __iter__(self): return self
     
+    def count(self):
+        """Returns the number of matched rows and invalidates the
+        iterator."""
+        # Apparently, there is no good way to get the number of rows
+        # returned by an sqlite SELECT.
+        num = 0
+        for i in self:
+            num += 1
+        return num
+    
     def next(self):
         try:
             row = self.cursor.next()
         except StopIteration:
             self.cursor.close()
-            raise StopIteration
+            raise
         return Item(row, self.library)
 
 

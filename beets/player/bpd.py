@@ -8,7 +8,7 @@ use of the wide range of MPD clients.
 import eventlet.api
 import re
 from string import Template
-from beets import Library
+import beets
 import sys
 import traceback
 
@@ -152,8 +152,8 @@ class Server(object):
         returns its index in the playlist.
         """
         track_id = cast_arg(int, track_id)
-        for index, track in self.playlist:
-            if _item_id(track) == track_id:
+        for index, track in enumerate(self.playlist):
+            if self._item_id(track) == track_id:
                 return index
         # Loop finished with no track found.
         raise ArgumentNotFoundError()
@@ -311,9 +311,18 @@ class Server(object):
                 track = self.playlist[index]
             except IndexError:
                 raise ArgumentIndexError()
-            return SuccessReponse(self._item_info(track))
+            return SuccessResponse(self._item_info(track))
     def cmd_playlistid(self, track_id=-1):
         return self.cmd_playlistinfo(self._id_to_index(track_id))
+    
+    def cmd_plchanges(self, version):
+        """Returns playlist changes since the given version.
+        
+        This is a "fake" implementation that ignores the version and
+        just returns the entire playlist (rather like version=0). This
+        seems to satisfy many clients.
+        """
+        return self.cmd_playlistinfo()
     
     def cmd_currentsong(self):
         """Returns information about the currently-playing song.
@@ -354,9 +363,13 @@ class Server(object):
             self.current_index = index
         
         self.paused = False
-    
+        
     def cmd_playid(self, track_id=0):
-        index = self._id_to_index(track_id)
+        track_id = cast_arg(int, track_id)
+        if track_id == -1:
+            index = -1
+        else:
+            index = self._id_to_index(track_id)
         self.cmd_play(index)
     
     def cmd_stop(self):
@@ -525,7 +538,6 @@ class CommandList(list):
 
         for i, command in enumerate(self):
             resp = command.run(server)
-            print resp.items
             out.extend(resp.items)
 
             # If the command failed, stop executing and send the completion
@@ -640,16 +652,53 @@ class BGServer(Server):
         return item.id
     
     def cmd_lsinfo(self, path="/"):
+        """Return info on all the items in the path."""
         if path != "/":
             raise BPDError(ERROR_NO_EXIST, 'cannot list paths other than /')
         return self._items_info(self.lib.get())
+    def cmd_listallinfo(self, path="/"):
+        """Return info on all the items in the directory, recursively."""
+        # Because we have a flat directory path, this recursive version
+        # is equivalent to the non-recursive version.
+        return self.cmd_lsinfo(path)
+    def cmd_listall(self, path="/"):
+        """Return the paths all items in the directory, recursively."""
+        if path != "/":
+            raise BPDError(ERROR_NO_EXIST, 'cannot list paths other than /')
+        out = ['file: ' + i.path for i in self.lib.get()]
+        return SuccessResponse(out)
     
     def cmd_search(self, key, value):
+        """Perform a substring match in a specific column."""
         if key == 'filename':
             key = 'path'
-        query = key + ':' + value + ''
+        query = beets.library.SubstringQuery(key, value)
         return self._items_info(self.lib.get(query))
+    
+    def cmd_find(self, key, value):
+        """Perform an exact match in a specific column."""
+        if key == 'filename':
+            key = 'path'
+        query = beets.library.MatchQuery(key, value)
+        return self._items_info(self.lib.get(query))
+    
+    def _get_by_path(self, path):
+        it = self.lib.get(beets.library.MatchQuery('path', path))
+        try:
+            return it.next()
+        except StopIteration:
+            raise ArgumentNotFoundError()
+    def cmd_add(self, path):
+        """Adds a track to the playlist, specified by its path."""
+        self.playlist.append(self._get_by_path(path))
+        self.playlist_version += 1
+    def cmd_addid(self, path):
+        """Same as cmd_add but returns an id."""
+        track = self._get_by_path(path)
+        self.playlist.append(track)
+        self.playlist_version += 1
+        return SuccessResponse(['Id: ' + str(track.id)])
 
 
 if __name__ == '__main__':
-    BGServer(Library('library.blb')).run()
+    BGServer(beets.Library('library.blb')).run()

@@ -1,1 +1,2 @@
-from beets.library import Library
+import beets.library
+Library = beets.library.Library
