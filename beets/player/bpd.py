@@ -530,6 +530,35 @@ class BGServer(Server):
         super(BGServer, self).run()
         self.player.run()
     
+    def _item_info(self, item):
+        info_lines = ['file: ' + item.path,
+                      'Time: ' + '100', #fixme
+                      'Artist: ' + item.artist,
+                      'Title: ' + item.title,
+                      'Album: ' + item.album]
+        
+        track = str(item.track)
+        if item.tracktotal:
+            track += '/' + str(item.tracktotal)
+        info_lines.append('Track: ' + track)
+        
+        info_lines += ['Date: ' + str(item.year),
+                       'Genre: ' + item.genre]
+        
+        try:
+            pos = self._id_to_index(self.item.id)
+            info_lines.append('Pos: ' + str(pos))
+        except ArgumentNotFoundError:
+            # Don't include position if not in playlist.
+            pass
+        
+        info_lines.append('Id: ' + str(item.id))
+        
+        return info_lines
+        
+    def _item_id(self, item):
+        return item.id
+    
     def cmd_status(self):
         statuses = self._generic_status()
         if self.player.playing:
@@ -537,6 +566,17 @@ class BGServer(Server):
         else:
             statuses += ['state: pause']
         return SuccessResponse(statuses)
+    
+    def cmd_lsinfo(self, path="/"):
+        if path != "/":
+            raise BPDError(ERROR_NO_EXIST, 'cannot list paths other than /')
+        return _items_info(self.lib.get())
+    
+    def cmd_search(self, key, value):
+        if key == 'filename':
+            key = 'path'
+        query = key + ':' + value + ''
+        return _items_info(self.lib.get(query))
 
 
 if __name__ == '__main__':
