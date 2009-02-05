@@ -132,16 +132,6 @@ class Server(object):
                 eventlet.api.spawn(Connection.handle, sock, self)
         except KeyboardInterrupt:
             pass # ^C ends the server.
-    
-    def _int_cmd(self, attr, name, value, minval=None, maxval=None):
-        """Helper function for commands that set an integer value."""
-        value = cast_arg(int, value)
-        if (minval is not None and value < minval) or \
-           (maxval is not None and value > maxval):
-            raise ArgumentIndexError()
-        else:
-            setattr(self, attr, value)
-            return SuccessResponse()
 
     def _generic_status(self):
         """Returns some status information for use with an
@@ -168,6 +158,17 @@ class Server(object):
         """An abstract method returning the integer id for an item.
         """
         raise NotImplementedError
+
+    def _id_to_index(self, track_id):
+        """Searches the playlist for a song with the given id and
+        returns its index in the playlist.
+        """
+        track_id = cast_arg(int, track_id)
+        for index, track in self.playlist:
+            if _item_id(track) == track_id:
+                return index
+        # Loop finished with no track found.
+        raise ArgumentNotFoundError()
 
     def cmd_ping(self):
         """Succeeds."""
@@ -232,18 +233,24 @@ class Server(object):
         except IndexError:
             raise ArgumentIndexError()
         self.playlist_version += 1
+    def cmd_deleteid(self, track_id):
+        self.cmd_delete(self._id_to_index(track_id))
     
-    def cmd_move(self, i_from, i_to):
+    def cmd_move(self, idx_from, idx_to):
         """Move a track in the playlist."""
-        i_from = cast_arg(int, i_from)
-        i_to = cast_arg(int, i_to)
+        idx_from = cast_arg(int, idx_from)
+        idx_to = cast_arg(int, idx_to)
         try:
-            track = self.playlist.pop(i_from)
-            self.playlist.insert(i_to, track)
+            track = self.playlist.pop(idx_from)
+            self.playlist.insert(idx_to, track)
         except IndexError:
             raise ArgumentIndexError()
+    def cmd_moveid(self, id_from, idx_to):
+        idx_from = self._id_to_index(idx_from)
+        return self.cmd_move(idx_from, idx_to)
     
     def cmd_swap(self, i, j):
+        """Swaps two tracks in the playlist."""
         i = cast_arg(int, i)
         j = cast_arg(int, j)
         try:
@@ -253,11 +260,14 @@ class Server(object):
             raise ArgumentIndexError()
         self.playlist[j] = track_i
         self.playlist[i] = track_j
+    def cmd_swapid(self, i_id, j_id):
+        i = self._id_to_index(i_id)
+        j = self._id_to_index(j_id)
+        return self.cmd_swap(i, j)
     
     def cmd_urlhandlers(self):
         """Indicates supported URL schemes. None by default."""
         pass
-    
     
     def _items_info(self, l):
         """Gets info (using _item_info) for an entire list (e.g.,
@@ -281,20 +291,8 @@ class Server(object):
             except IndexError:
                 raise ArgumentIndexError()
             return SuccessReponse(self._item_info(track))
-    
     def cmd_playlistid(self, track_id=-1):
-        """Gives metadata information about the entire playlist or a
-        single track, given by its id.
-        """
-        track_id = cast_arg(int, track_id)
-        if track_id == -1:
-            return self._items_info(self.playlist)
-        else:
-            for track in self.playlist:
-                if _item_id(track) == track_id:
-                    return SuccessReponse(self._item_info(track))
-            # Loop finished with no track found.
-            raise ArgumentNotFoundError()
+        return self.cmd_playlistinfo(self._id_to_index(track_id))
         
     
 
