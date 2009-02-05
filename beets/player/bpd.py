@@ -59,13 +59,19 @@ class BPDError(Exception):
         to the given command.
         """
         return ErrorResponse(self.code, cmd.name, self.message)
-    
-class ArgumentTypeError(object):
-    """An error resulting from trying to cast an input argument.
+
+def make_bpd_error(self, s_code, s_message):
+    """Create a BPDError subclass for a static code and message.
     """
-    code = ERROR_ARG
-    message = 'invalid type for argument'
-    def __init__(self): pass
+    class NewBPDError(BPDError):
+        code = s_code
+        message = s_message
+        def __init__(self): pass
+    return NewBPDError
+
+ArgumentTypeError = make_bpd_error(ERROR_ARG, 'invalid type for argument')
+ArgumentIndexError = make_bpd_error(ERROR_ARG, 'argument out of range')
+ArgumentNotFoundError = make_bpd_error(ERROR_NO_EXIST, 'argument not found')
 
 def cast_arg(t, val):
     """Attempts to call t on val, raising a CommandArgumentError
@@ -81,19 +87,6 @@ def cast_arg(t, val):
             return t(val)
         except ValueError:
             raise CommandArgumentError()
-
-class ArgumentIndexError(object):
-    """An error resulting from an out-of-range index argument.
-    """
-    code = ERROR_ARG
-    message = 'argument out of range'
-    def __init__(self): pass
-
-class ArgumentNotFoundError(object):
-    """An error for arguments that do not exist."""
-    code = ERROR_NO_EXIST
-    message = 'argument not found'
-    def __init__(self): pass
 
 class BPDClose(Exception):
     """Raised by a command invocation to indicate that the connection
