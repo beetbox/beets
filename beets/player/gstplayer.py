@@ -10,6 +10,7 @@ import time
 import gobject
 import thread
 import os
+import copy
 
 class GstPlayer(object):
     """A music player abstracting GStreamer's Playbin element.
@@ -24,9 +25,12 @@ class GstPlayer(object):
     another is available on the queue, it is played automatically.
     """
     
-    def __init__(self):
+    def __init__(self, finished_callback=None):
         """Initialize a player.
         
+        If a finished_callback is provided, it is called every time a
+        track started with play_file finishes.
+
         Once the player has been created, call run() to begin the main
         runloop in a separate thread.
         """
@@ -42,7 +46,7 @@ class GstPlayer(object):
         
         # Set up our own stuff.
         self.playing = False
-        self.queue = []
+        self.finished_callback = finished_callback
 
     def _get_state(self):
         """Returns the current state flag of the playbin."""
@@ -54,10 +58,9 @@ class GstPlayer(object):
         """Callback for status updates from GStreamer."""
         if message.type == gst.MESSAGE_EOS:
             # file finished playing
-            if self.queue:
-                self.play_file(self.queue.pop())
-            else:
-                self.playing = False
+            self.playing = False
+            if self.finished_callback:
+                self.finished_callback()
 
         elif message.type == gst.MESSAGE_ERROR:
             # error
@@ -76,24 +79,14 @@ class GstPlayer(object):
         self.playing = True
 
     def play(self):
-        """If paused, resume playback. Otherwise, start playing the
-        queue.
-        """
+        """If paused, resume playback."""
         if self._get_state() == gst.STATE_PAUSED:
             self.player.set_state(gst.STATE_PLAYING)
             self.playing = True
-        else:
-            # Nothing is playing. Start the queue.
-            if self.queue:
-                self.play_file(self.queue.pop())
     
     def pause(self):
         """Pause playback."""
         self.player.set_state(gst.STATE_PAUSED)
-        self.playing = False
-
-    def enqueue(self, path):
-        self.queue[0:0] = [path] # push to front
 
     def run(self):
         """Start a new thread for the player.
@@ -109,17 +102,40 @@ class GstPlayer(object):
         thread.start_new_thread(start, ())
 
     def block(self):
-        """Block until playing finishes (the queue empties)."""
+        """Block until playing finishes."""
         while self.playing:
             time.sleep(1)
 
 
+def play_simple(paths):
+    """Play the files in paths in a straightforward way, without
+    using the player's callback function.
+    """
+    p = GstPlayer()
+    p.run()
+    for path in paths:
+        p.play_file(path)
+        p.block()
+
+def play_complicated(paths):
+    """Play the files in the path one after the other by using the
+    callback function to advance to the next song.
+    """
+    my_paths = copy.copy(paths)
+    def next_song():
+        my_paths.pop(0)
+        p.play_file(my_paths[0])
+    p = GstPlayer(next_song)
+    p.run()
+    p.play_file(my_paths[0])
+    while my_paths:
+        time.sleep(1)
+
 if __name__ == '__main__':
     # A very simple command-line player. Just give it names of audio
-    # files on the command line; these are all queued and played.
-    p = GstPlayer()
-    for path in sys.argv[1:]:
-        p.enqueue(os.path.abspath(os.path.expanduser(path)))
-    p.run()
-    p.play()
-    p.block()
+    # files on the command line; these are all played in sequence.
+    paths = [os.path.abspath(os.path.expanduser(p))
+             for p in sys.argv[1:]]
+    # play_simple(paths)
+    play_complicated(paths)
+
