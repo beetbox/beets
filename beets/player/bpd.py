@@ -701,6 +701,7 @@ class BGServer(Server):
         return self._items_info(self.lib.get(query))
     
     def _get_by_path(self, path):
+        """Helper function returning the item at a given path."""
         it = self.lib.get(beets.library.MatchQuery('path', path))
         try:
             return it.next()
@@ -716,6 +717,10 @@ class BGServer(Server):
         self.playlist.append(track)
         self.playlist_version += 1
         return SuccessResponse(['Id: ' + str(track.id)])
+
+    # The functions below hook into the half-implementations provided
+    # by the base class. Together, they're enough to implement all
+    # normal playback functionality.
 
     def cmd_play(self, index=-1):
         super(BGServer, self).cmd_play(index)
@@ -735,3 +740,4 @@ class BGServer(Server):
 
 if __name__ == '__main__':
     BGServer(beets.Library('library.blb')).run()
+
