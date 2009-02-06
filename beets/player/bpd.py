@@ -254,6 +254,13 @@ class Server(object):
         except IndexError:
             raise ArgumentIndexError()
         self.playlist_version += 1
+
+        if self.current_index == index: # Deleted playing song.
+            return self.cmd_stop()
+        elif index < self.current_index: # Deleted before playing.
+            # Shift playing index down.
+            self.current_index -= 1
+
     def cmd_deleteid(self, track_id):
         self.cmd_delete(self._id_to_index(track_id))
     
@@ -336,12 +343,16 @@ class Server(object):
         if self.current_index >= len(self.playlist):
             # Fallen off the end. Just move to stopped state.
             return self.cmd_stop()
+        else:
+            return self.cmd_play()
     
     def cmd_previous(self):
         """Step back to the last song."""
         self.current_index -= 1
         if self.current_index < 0:
             return self.cmd_stop()
+        else:
+            return self.cmd_play()
     
     def cmd_pause(self, state=None):
         """Set the pause state playback."""
@@ -370,7 +381,7 @@ class Server(object):
             index = -1
         else:
             index = self._id_to_index(track_id)
-        self.cmd_play(index)
+        return self.cmd_play(index)
     
     def cmd_stop(self):
         """Stop playback."""
@@ -383,6 +394,7 @@ class Server(object):
         if index < 0 or index >= len(self.playlist):
             raise ArgumentIndexError()
         self.current_index = index
+        return self.cmd_play()
     def cmd_seekid(self, track_id, time):
         index = self._id_to_index(track_id)
         return self.cmd_seek(index, time)
@@ -612,14 +624,20 @@ class BGServer(Server):
     """
 
     def __init__(self, library, host='127.0.0.1', port=DEFAULT_PORT):
-        #import gstplayer
+        import gstplayer
         super(BGServer, self).__init__(host, port)
         self.lib = library
-        #self.player = gstplayer.GstPlayer()
+        self.player = gstplayer.GstPlayer(self.play_finished)
     
     def run(self):
+        self.player.run()
         super(BGServer, self).run()
-        #self.player.run()
+
+    def play_finished(self):
+        """A callback invoked every time our player finishes a
+        track.
+        """
+        self.cmd_next()
     
     def _item_info(self, item):
         info_lines = ['file: ' + item.path,
@@ -699,6 +717,21 @@ class BGServer(Server):
         self.playlist_version += 1
         return SuccessResponse(['Id: ' + str(track.id)])
 
+    def cmd_play(self, index=-1):
+        super(BGServer, self).cmd_play(index)
+        if self.current_index > -1: # Not stopped.
+            self.player.play_file(self.playlist[self.current_index].path)
+
+    def cmd_pause(self, state=None):
+        super(BGServer, self).cmd_pause(state)
+        if self.paused:
+            self.player.pause()
+        elif self.playing:
+            self.player.play()
+
+    def cmd_stop(self):
+        super(BGServer, self).cmd_stop()
+        self.player.stop()
 
 if __name__ == '__main__':
     BGServer(beets.Library('library.blb')).run()

@@ -88,6 +88,10 @@ class GstPlayer(object):
         """Pause playback."""
         self.player.set_state(gst.STATE_PAUSED)
 
+    def stop(self):
+        """Halt playback."""
+        self.player.set_state(gst.STATE_NULL)
+
     def run(self):
         """Start a new thread for the player.
         
