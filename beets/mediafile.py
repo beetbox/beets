@@ -357,7 +357,11 @@ class MediaFile(object):
     metadata."""
     
     def __init__(self, path):
-        self.mgfile = mutagen.File(path)
+        try:
+            self.mgfile = mutagen.File(path)
+        except mutagen.mp3.HeaderNotFoundError:
+            raise FileTypeError('Mutagen could not read file')
+
         if self.mgfile is None: # Mutagen couldn't guess the type
             raise FileTypeError('file type unsupported by Mutagen')
         elif type(self.mgfile).__name__ == 'M4A' or \
