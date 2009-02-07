@@ -16,6 +16,7 @@ or the empty string)."""
 import mutagen
 import os.path
 import datetime
+import re
 
 __all__ = ['FileTypeError', 'MediaFile']
 
@@ -92,14 +93,20 @@ class Packed(object):
     
         if self.items is None:
             return self.none_val
+
+        items = self.items
+        if self.packstyle == packing.DATE:
+            # Remove time information from dates. Usually delimited by
+            # a "T".
+            items = re.sub(r'[Tt].*$', '', unicode(items))
     
         # transform from a string packing into a list we can index into
         if self.packstyle == packing.SLASHED:
-            seq = unicode(self.items).split('/')
+            seq = unicode(items).split('/')
         elif self.packstyle == packing.DATE:
-            seq = unicode(self.items).split('-')
+            seq = unicode(items).split('-')
         elif self.packstyle == packing.TUPLE:
-            seq = self.items # tuple: items is already indexable
+            seq = items # tuple: items is already indexable
     
         try:
             out = seq[index]
@@ -209,7 +216,7 @@ class MediaField(object):
         
         # wrap as a list if necessary
         if style.list_elem: out = [val]
-        else:             out = val
+        else:               out = val
         
         if obj.type == 'mp3':
             if style.id3_desc is not None: # match on desc field
@@ -242,7 +249,8 @@ class MediaField(object):
         style = self._style(obj)
         out = self._fetchdata(obj)
         
-        if style.packing: out = Packed(out, style.packing)[style.pack_pos]
+        if style.packing:
+            out = Packed(out, style.packing)[style.pack_pos]
         
         # return the appropriate type
         if self.out_type == int:
@@ -329,8 +337,8 @@ class CompositeDateField(object):
         Return a datetime.date object whose components indicating the smallest
         valid date whose components are at least as large as the three component
         fields (that is, if year == 1999, month == 0, and day == 0, then
-        date == datetime.date(1999, 1, 1)). If the components indicate an invalid
-        date (e.g., if month == 47), datetime.date.min is returned.
+        date == datetime.date(1999, 1, 1)). If the components indicate an
+        invalid date (e.g., if month == 47), datetime.date.min is returned.
         """
         try:
             return datetime.date(max(self.year_field.__get__(obj, owner),

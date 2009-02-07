@@ -227,6 +227,10 @@ def suite():
     s.addTest(suite_for_file(os.path.join('rsrc', 'date.mp3'),
                              correct_dicts['date']))
 
+    # Test for dates that include times (like iTunes purchases).
+    s.addTest(suite_for_file(os.path.join('rsrc', 'time.m4a'),
+                             correct_dicts['date']))
+
     # Read-only attribute tests.
     for fname, correct_dict in read_only_correct_dicts.iteritems():
         path = os.path.join('rsrc', fname)
