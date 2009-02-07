@@ -335,7 +335,8 @@ class Server(object):
         """Returns information about the currently-playing song.
         """
         if self.current_index != -1: # -1 means stopped.
-            return self._item_info(self.playlist[self.current_index])
+            track = self.playlist[self.current_index]
+            return SuccessResponse(self._item_info(track))
     
     def cmd_next(self):
         """Advance to the next song in the playlist."""
@@ -415,13 +416,12 @@ class Connection(object):
         every string.
         """
         if isinstance(data, basestring): # Passed a single string.
-            lines = (data,)
+            out = data + NEWLINE
         else: # Passed an iterable of strings (for instance, a Response).
-            lines = data
+            out = NEWLINE.join(data) + NEWLINE
         
-        for line in lines:
-            debug(line)
-            self.client.sendall(line + NEWLINE)
+        debug(out)
+        self.client.sendall(out)
     
     line_re = re.compile(r'([^\r\n]*)(?:\r\n|\n\r|\n|\r)')
     def lines(self):
@@ -641,7 +641,7 @@ class BGServer(Server):
     
     def _item_info(self, item):
         info_lines = ['file: ' + item.path,
-                      'Time: ' + '100', #fixme
+                      'Time: ' + str(int(item.length)),
                       'Title: ' + item.title,
                       'Artist: ' + item.artist,
                       'Album: ' + item.album,
@@ -717,6 +717,15 @@ class BGServer(Server):
         self.playlist.append(track)
         self.playlist_version += 1
         return SuccessResponse(['Id: ' + str(track.id)])
+
+    def cmd_status(self):
+        response = super(BGServer, self).cmd_status()
+        if self.current_index > -1:
+            item = self.playlist[self.current_index]
+            response.items += ['bitrate: ' + str(item.bitrate/1000),
+                               'time: 0:' + str(int(item.length)), #fixme
+                              ]
+        return response
 
     # The functions below hook into the half-implementations provided
     # by the base class. Together, they're enough to implement all
