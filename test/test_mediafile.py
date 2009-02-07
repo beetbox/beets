@@ -78,22 +78,23 @@ def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
                 
                 # ... and that no other field was changed.
                 else:
-                    # The value should be what it was originally most of the time.
+                    # The value should be what it was originally most of the
+                    # time.
                     correct = correct_dict[readfield]
                     
                     # The date field, however, is modified when its components
                     # change.
-                    if readfield == 'date' and field in ('year', 'month', 'day'):
+                    if readfield=='date' and field in ('year', 'month', 'day'):
                         try:
                             correct = datetime.date(
-                                self.value if field == 'year' else correct.year,
-                                self.value if field == 'month' else correct.month,
-                                self.value if field == 'day' else correct.day
+                                self.value if field=='year' else correct.year,
+                                self.value if field=='month' else correct.month,
+                                self.value if field=='day' else correct.day
                             )
                         except ValueError:
                             correct = datetime.date.min
                     # And vice-versa.
-                    if field == 'date' and readfield in ('year', 'month', 'day'):
+                    if field=='date' and readfield in ('year', 'month', 'day'):
                         correct = getattr(self.value, readfield)
                     
                     self.assertEqual(got, correct,
@@ -130,8 +131,8 @@ correct_dicts = {
         'comp':       True
     },
 
-    # Additional coverage for common cases when "total" fields are unset. Created
-    # with iTunes.
+    # Additional coverage for common cases when "total" fields are unset.
+    # Created with iTunes.
     'partial': {
         'track':      2,
         'tracktotal': 0,
