@@ -4,8 +4,10 @@ from string import Template
 
 # Fields in the "items" table; all the metadata available for items in the
 # library. These are used directly in SQL; they are vulnerable to injection if
-# accessible to the user.
-metadata_fields = [
+# accessible to the user. The fields are divided into read-write
+# metadata, all metadata (inlcuding read-only attributes), and all
+# fields (i.e., including non-metadata attributes).
+metadata_rw_fields = [
     ('title',      'text'),
     ('artist',     'text'),
     ('album',      'text'),
@@ -24,10 +26,15 @@ metadata_fields = [
     ('bpm',        'int'),
     ('comp',       'bool'),
 ]
+metadata_fields = [
+    ('length',  'real'),
+    ('bitrate', 'int'),
+] + metadata_rw_fields
 item_fields = [
     ('id',      'integer primary key'),
     ('path',    'text'),
 ] + metadata_fields
+metadata_rw_keys = map(operator.itemgetter(0), metadata_rw_fields)
 metadata_keys = map(operator.itemgetter(0), metadata_fields)
 item_keys = map(operator.itemgetter(0), item_fields)
 
@@ -241,7 +248,7 @@ class Item(object):
     def write(self):
         """Writes the item's metadata to the associated file."""
         f = MediaFile(self.path)
-        for key in metadata_keys:
+        for key in metadata_rw_keys:
             setattr(f, key, getattr(self, key))
         f.save()
     
@@ -262,7 +269,7 @@ class Item(object):
             value = getattr(self, key)
             # sanitize the value for inclusion in a path:
             # replace / and leading . with _
-            if isinstance(value, str) or isinstance(value, unicode):
+            if isinstance(value, basestring):
                 value.replace(os.sep, '_')
                 re.sub(r'[' + os.sep + r']|^\.', '_', value)
             elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
@@ -466,11 +473,11 @@ class CollectionQuery(Query):
         return cls(subqueries)
 
 class AnySubstringQuery(CollectionQuery):
-    """A query that matches a substring in any item field. """
+    """A query that matches a substring in any metadata field. """
 
     def __init__(self, pattern):
         subqueries = []
-        for field in item_keys:
+        for field in metadata_rw_keys:
             subqueries.append(SubstringQuery(field, pattern))
         super(AnySubstringQuery, self).__init__(subqueries)
 

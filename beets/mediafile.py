@@ -505,4 +505,12 @@ class MediaFile(object):
                                     as_type = bool), 
                 flac = StorageStyle('compilation')
             )
-            
+
+    @property
+    def length(self):
+        return self.mgfile.info.length
+
+    @property
+    def bitrate(self):
+        return self.mgfile.info.bitrate
+

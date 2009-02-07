@@ -21,6 +21,21 @@ def MakeReadingTest(path, correct_dict, field):
                 repr(got) + ') when testing ' + os.path.basename(path))
     return ReadingTest
 
+def MakeReadOnlyTest(path, field, value):
+    class ReadOnlyTest(unittest.TestCase):
+        def setUp(self):
+            self.f = beets.mediafile.MediaFile(path)
+        def runTest(self):
+            got = getattr(self.f, field)
+            fail_msg = field + ' incorrect (expected ' + \
+                       repr(value) + ', got ' + repr(got) + \
+                       ') on ' + os.path.basename(path)
+            if field == 'length':
+                self.assertTrue(value-0.1 < got < value+0.1, fail_msg)
+            else:
+                self.assertEqual(got, value, fail_msg)
+    return ReadOnlyTest
+
 def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
     
     class WritingTest(unittest.TestCase):
@@ -162,6 +177,24 @@ correct_dicts = {
 
 }
 
+read_only_correct_dicts = {
+    
+    'full.mp3': {
+        'length': 1.0,
+        'bitrate': 80000,
+    },
+
+    'full.flac': {
+        'length': 1.0,
+    },
+
+    'full.m4a': {
+        'length': 1.0,
+        'bitrate': 64000,
+    },
+
+}
+
 def suite_for_file(path, correct_dict, writing=True):
     s = unittest.TestSuite()
     for field in correct_dict:
@@ -191,6 +224,12 @@ def suite():
     # Special test for advanced release date.
     s.addTest(suite_for_file(os.path.join('rsrc', 'date.mp3'),
                              correct_dicts['date']))
+
+    # Read-only attribute tests.
+    for fname, correct_dict in read_only_correct_dicts.iteritems():
+        path = os.path.join('rsrc', fname)
+        for field, value in correct_dict.iteritems():
+            s.addTest(MakeReadOnlyTest(path, field, value)())
     
     return s
 

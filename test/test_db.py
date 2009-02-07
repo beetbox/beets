@@ -30,6 +30,8 @@ def item(lib=None): return beets.library.Item({
     'bpm':        8,
     'comp':       True,
     'path':       'somepath',
+    'length':     60.0,
+    'bitrate':    128000,
 }, lib)
 np = beets.library._normpath
 
