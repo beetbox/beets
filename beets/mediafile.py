@@ -512,5 +512,9 @@ class MediaFile(object):
 
     @property
     def bitrate(self):
-        return self.mgfile.info.bitrate
+        if self.type == 'flac':
+            return self.mgfile.info.sample_rate * \
+                   self.mgfile.info.bits_per_sample
+        else:
+            return self.mgfile.info.bitrate
 

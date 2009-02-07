@@ -186,6 +186,7 @@ read_only_correct_dicts = {
 
     'full.flac': {
         'length': 1.0,
+        'bitrate': 705600,
     },
 
     'full.m4a': {
