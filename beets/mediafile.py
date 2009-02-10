@@ -14,7 +14,6 @@ tag is present. If no value is available, the value will be false (e.g., zero
 or the empty string)."""
 
 import mutagen
-import os.path
 import datetime
 import re
 
