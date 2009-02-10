@@ -9,8 +9,8 @@ import eventlet.api
 import re
 from string import Template
 import beets
-import sys
 import traceback
+import logging
 
 
 DEFAULT_PORT = 6600
@@ -44,8 +44,11 @@ VOLUME_MIN = 0
 VOLUME_MAX = 100
 
 
-def debug(msg):
-    print >>sys.stderr, msg
+# Logger.
+log = logging.getLogger('bpd')
+log.setLevel(logging.DEBUG)
+log.addHandler(logging.StreamHandler())
+
 
 class BPDError(Exception):
     """An error that should be exposed to the client to the BPD
@@ -420,7 +423,7 @@ class Connection(object):
         else: # Passed an iterable of strings (for instance, a Response).
             out = NEWLINE.join(data) + NEWLINE
         
-        debug(out)
+        log.debug(out)
         self.client.sendall(out)
     
     line_re = re.compile(r'([^\r\n]*)(?:\r\n|\n\r|\n|\r)')
@@ -450,7 +453,7 @@ class Connection(object):
         
         clist = None # Initially, no command list is being constructed.
         for line in self.lines():
-            debug(line)
+            log.debug(line)
                
             if clist is not None:
                 # Command list already opened.
@@ -516,7 +519,7 @@ class Command(object):
             
             except Exception, e:
                 # An "unintentional" error. Hide it from the client.
-                debug(traceback.format_exc(e))
+                l.error(traceback.format_exc(e))
                 return ErrorResponse(ERROR_SYSTEM, self.name, 'server error')
             
             if response is None:

@@ -1,6 +1,7 @@
 import sqlite3, os, sys, operator, re, shutil
 from beets.mediafile import MediaFile, FileTypeError
 from string import Template
+import logging
 
 # Fields in the "items" table; all the metadata available for items in the
 # library. These are used directly in SQL; they are vulnerable to injection if
@@ -44,6 +45,12 @@ library_options = {
     'path_format':  u'$artist/$album/$track $title.$extension',
 }
 
+# Logger.
+
+log = logging.getLogger('beets')
+log.setLevel(logging.DEBUG)
+log.addHandler(logging.StreamHandler())
+
 
 #### exceptions ####
 
@@ -59,10 +66,6 @@ def _normpath(path):
     """Provide the canonical form of the path suitable for storing in the
     database."""
     return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
-
-def _log(msg):
-    """Print a log message."""
-    print >>sys.stderr, msg
 
 def _ancestry(path):
     """Return a list consisting of path's parent directory, its grandparent,
@@ -609,7 +612,7 @@ class Library(object):
                     i.move(copy=True)
                 i.add()
             except FileTypeError:
-                _log(f + ' of unknown type, skipping')
+                log.warn(f + ' of unknown type, skipping')
     
     def get(self, query=None):
         """Returns a ResultIterator to the items matching query, which may be
