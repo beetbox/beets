@@ -627,7 +627,7 @@ class BGServer(Server):
     """
 
     def __init__(self, library, host='127.0.0.1', port=DEFAULT_PORT):
-        import gstplayer
+        import beets.player.gstplayer
         super(BGServer, self).__init__(host, port)
         self.lib = library
         self.player = gstplayer.GstPlayer(self.play_finished)

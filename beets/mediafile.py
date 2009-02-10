@@ -3,15 +3,17 @@ automatically detect file types and provide a unified interface for a useful
 subset of music files' tags.
 
 Usage:
->>> f = MediaFile('Lucy.mp3')
->>> f.title
-u'Lucy in the Sky with Diamonds'
->>> f.artist = 'The Beatles'
->>> f.save()
+
+    >>> f = MediaFile('Lucy.mp3')
+    >>> f.title
+    u'Lucy in the Sky with Diamonds'
+    >>> f.artist = 'The Beatles'
+    >>> f.save()
 
 A field will always return a reasonable value of the correct type, even if no
 tag is present. If no value is available, the value will be false (e.g., zero
-or the empty string)."""
+or the empty string).
+"""
 
 import mutagen
 import datetime
@@ -42,7 +44,8 @@ packing = Enumeration('SLASHED', # pair delimited by /
 
 class StorageStyle(object):
     """Parameterizes the storage behavior of a single field for a certain tag
-    format."""
+    format.
+    """
     def __init__(self,
                  # The Mutagen key used to access the data for this field.
                  key,
@@ -73,14 +76,16 @@ class StorageStyle(object):
 
 class Packed(object):
     """Makes a packed list of values subscriptable. To access the packed output
-    after making changes, use packed_thing.items."""
+    after making changes, use packed_thing.items.
+    """
     
     def __init__(self, items, packstyle, none_val=0, out_type=int):
         """Create a Packed object for subscripting the packed values in items.
         The items are packed using packstyle, which is a value from the
         packing enum. none_val is returned from a request when no suitable
         value is found in the items. Vales are converted to out_type before
-        they are returned."""
+        they are returned.
+        """
         self.items = items
         self.packstyle = packstyle
         self.none_val = none_val
@@ -160,7 +165,8 @@ class MediaField(object):
     """A descriptor providing access to a particular (abstract) metadata
     field. out_type is the type that users of MediaFile should see and can
     be unicode, int, or bool. id3, mp4, and flac are StorageStyle instances
-    parameterizing the field's storage for each type."""
+    parameterizing the field's storage for each type.
+    """
     
     def __init__(self,
             # The field's semantic (exterior) type.
@@ -180,7 +186,8 @@ class MediaField(object):
     def _fetchdata(self, obj):
         """Get the value associated with this descriptor's key (and id3_desc if
         present) from the mutagen tag dict. Unwraps from a list if
-        necessary."""
+        necessary.
+        """
         style = self._style(obj)
         
         try:
@@ -210,7 +217,8 @@ class MediaField(object):
     
     def _storedata(self, obj, val):
         """Store val for this descriptor's key in the tag dictionary. Store it
-        as a single-item list if necessary. Uses id3_desc if present."""
+        as a single-item list if necessary. Uses id3_desc if present.
+        """
         style = self._style(obj)
         
         # wrap as a list if necessary
@@ -244,7 +252,8 @@ class MediaField(object):
     def _style(self, obj): return self.styles[obj.type]
     
     def __get__(self, obj, owner):
-        """Retrieve the value of this metadata field."""
+        """Retrieve the value of this metadata field.
+        """
         style = self._style(obj)
         out = self._fetchdata(obj)
         
@@ -274,7 +283,8 @@ class MediaField(object):
             return out
     
     def __set__(self, obj, val):
-        """Set the value of this metadata field."""
+        """Set the value of this metadata field.
+        """
         style = self._style(obj)
         
         if style.packing:
@@ -317,27 +327,25 @@ class MediaField(object):
         self._storedata(obj, out)
 
 class CompositeDateField(object):
-    """
-    A MediaFile field for conveniently accessing the year, month, and day fields
-    as a datetime.date object. Allows both getting and setting of the component
-    fields.
+    """A MediaFile field for conveniently accessing the year, month, and day
+    fields as a datetime.date object. Allows both getting and setting of the
+    component fields.
     """
     def __init__(self, year_field, month_field, day_field):
-        """
-        Create a new date field from the indicated MediaFields for the component
-        values.
+        """Create a new date field from the indicated MediaFields for the
+        component values.
         """
         self.year_field = year_field
         self.month_field = month_field
         self.day_field = day_field
         
     def __get__(self, obj, owner):
-        """
-        Return a datetime.date object whose components indicating the smallest
-        valid date whose components are at least as large as the three component
-        fields (that is, if year == 1999, month == 0, and day == 0, then
-        date == datetime.date(1999, 1, 1)). If the components indicate an
-        invalid date (e.g., if month == 47), datetime.date.min is returned.
+        """Return a datetime.date object whose components indicating the
+        smallest valid date whose components are at least as large as the
+        three component fields (that is, if year == 1999, month == 0, and
+        day == 0, then date == datetime.date(1999, 1, 1)). If the components
+        indicate an invalid date (e.g., if month == 47), datetime.date.min is
+        returned.
         """
         try:
             return datetime.date(max(self.year_field.__get__(obj, owner),
@@ -349,8 +357,7 @@ class CompositeDateField(object):
             return datetime.date.min
     
     def __set__(self, obj, val):
-        """
-        Set the year, month, and day fields to match the components of the
+        """Set the year, month, and day fields to match the components of the
         provided datetime.date object.
         """
         self.year_field.__set__(obj, val.year)
@@ -361,7 +368,8 @@ class CompositeDateField(object):
 
 class MediaFile(object):
     """Represents a multimedia file on disk and provides access to its
-    metadata."""
+    metadata.
+    """
     
     def __init__(self, path):
         try:

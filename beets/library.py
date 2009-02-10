@@ -1,7 +1,11 @@
-import sqlite3, os, sys, operator, re, shutil
-from beets.mediafile import MediaFile, FileTypeError
+import sqlite3
+import os
+import operator
+import re
+import shutil
 from string import Template
 import logging
+from beets.mediafile import MediaFile, FileTypeError
 
 # Fields in the "items" table; all the metadata available for items in the
 # library. These are used directly in SQL; they are vulnerable to injection if
@@ -46,7 +50,6 @@ library_options = {
 }
 
 # Logger.
-
 log = logging.getLogger('beets')
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.StreamHandler())
@@ -64,12 +67,14 @@ class InvalidFieldError(Exception):
 
 def _normpath(path):
     """Provide the canonical form of the path suitable for storing in the
-    database."""
+    database.
+    """
     return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
 
 def _ancestry(path):
     """Return a list consisting of path's parent directory, its grandparent,
-    and so on. For instance, _ancestry('/a/b/c') == ['/', '/a', '/a/b']."""
+    and so on. For instance, _ancestry('/a/b/c') == ['/', '/a', '/a/b'].
+    """
     out = []
     while path and path != '/':
         path = os.path.dirname(path)
@@ -80,7 +85,8 @@ def _ancestry(path):
 def _walk_files(path):
     """Like os.walk, but only yields the files in the directory tree. The full
     pathnames to the files (under path) are given. Also, if path is a file,
-    _walk_files just yields that."""
+    _walk_files just yields that.
+    """
     if os.path.isfile(path):
         yield path
     else:
@@ -124,8 +130,8 @@ class Item(object):
     def __getattr__(self, key):
         """If key is an item attribute (i.e., a column in the database),
         returns the record entry for that key. Otherwise, performs an ordinary
-        getattr."""
-        
+        getattr.
+        """
         if key in item_keys:
             return self.record[key]
         else:
@@ -137,8 +143,8 @@ class Item(object):
         attribute in the database or in the file's tags, one must call store()
         or write().
         
-        Otherwise, performs an ordinary setattr."""
-        
+        Otherwise, performs an ordinary setattr.
+        """
         if key in item_keys:
             if (not (key in self.record)) or (self.record[key] != value):
                 # don't dirty if value unchanged
@@ -152,8 +158,8 @@ class Item(object):
     
     def load(self, load_id=None):
         """Refresh the item's metadata from the library database. If fetch_id
-        is not specified, use the current item's id."""
-        
+        is not specified, use the current item's id.
+        """
         if not self.library:
             raise LibraryError('no library to load from')
         
@@ -169,8 +175,8 @@ class Item(object):
     def store(self, store_id=None, store_all=False):
         """Save the item's metadata into the library database. If store_id is
         specified, use it instead of the item's current id. If store_all is
-        true, save the entire record instead of just the dirty fields."""
-        
+        true, save the entire record instead of just the dirty fields.
+        """
         if not self.library:
             raise LibraryError('no library to store to')
             
@@ -201,8 +207,8 @@ class Item(object):
     def add(self, library=None):
         """Add the item as a new object to the library database. The id field
         will be updated; the new id is returned. If library is specified, set
-        the item's library before adding."""
-        
+        the item's library before adding.
+        """
         if library:
             self.library = library
         if not self.library:
@@ -228,8 +234,8 @@ class Item(object):
         return new_id
     
     def remove(self):
-        """Removes the item from the database (leaving the file on disk)."""
-        
+        """Removes the item from the database (leaving the file on disk).
+        """
         self.library.conn.execute('delete from items where id=?',
                                   (self.id,) )
     
@@ -238,8 +244,8 @@ class Item(object):
     
     def read(self, read_path=None):
         """Read the metadata from the associated file. If read_path is
-        specified, read metadata from that file instead."""
-        
+        specified, read metadata from that file instead.
+        """
         if read_path is None:
             read_path = self.path
         f = MediaFile(read_path)
@@ -249,7 +255,8 @@ class Item(object):
         self.path = read_path
     
     def write(self):
-        """Writes the item's metadata to the associated file."""
+        """Writes the item's metadata to the associated file.
+        """
         f = MediaFile(self.path)
         for key in metadata_rw_keys:
             setattr(f, key, getattr(self, key))
@@ -260,8 +267,8 @@ class Item(object):
     
     def destination(self):
         """Returns the path within the library directory designated for this
-        item (i.e., where the file ought to be)."""
-        
+        item (i.e., where the file ought to be).
+        """
         libpath = self.library.options['directory']
         subpath_tmpl = Template(self.library.options['path_format'])
         
@@ -302,8 +309,8 @@ class Item(object):
         moving/copying fails.
         
         Note that one should almost certainly call store() and library.save()
-        after this method in order to keep on-disk data consistent."""
-        
+        after this method in order to keep on-disk data consistent.
+        """
         dest = self.destination()
         
         # Create necessary ancestry for the move. Like os.renames but only
@@ -326,8 +333,8 @@ class Item(object):
         Also calls remove(), deleting the appropriate row from the database.
         
         As with move(), library.save() should almost certainly be called after
-        invoking this (although store() should not)."""
-        
+        invoking this (although store() should not).
+        """
         os.unlink(self.path)
         self.remove()
     
@@ -335,7 +342,8 @@ class Item(object):
     def from_path(cls, path, library=None):
         """Creates a new item from the media file at the specified path. Sets
         the item's library (but does not add the item) if library is
-        specified."""
+        specified.
+        """
         i = cls({})
         i.read(path)
         i.library = library
@@ -353,19 +361,22 @@ class Query(object):
     def clause(self):
         """Returns (clause, subvals) where clause is a valid sqlite WHERE
         clause implementing the query and subvals is a list of items to be
-        substituted for ?s in the clause."""
+        substituted for ?s in the clause.
+        """
         raise NotImplementedError
 
     def statement(self, columns='*'):
         """Returns (query, subvals) where clause is a sqlite SELECT statement
         to enact this query and subvals is a list of values to substitute in
-        for ?s in the query."""
+        for ?s in the query.
+        """
         clause, subvals = self.clause()
         return ('select ' + columns + ' from items where ' + clause, subvals)
 
     def execute(self, library):
         """Runs the query in the specified library, returning a
-        ResultIterator."""
+        ResultIterator.
+        """
         c = library.conn.cursor()
         c.execute(*self.statement())
         return ResultIterator(c, library)
@@ -399,7 +410,8 @@ class SubstringQuery(FieldQuery):
 
 class CollectionQuery(Query):
     """An abstract query class that aggregates other queries. Can be indexed
-    like a list to access the sub-queries."""
+    like a list to access the sub-queries.
+    """
     
     def __init__(self, subqueries = ()):
         self.subqueries = subqueries
@@ -412,7 +424,8 @@ class CollectionQuery(Query):
 
     def clause_with_joiner(self, joiner):
         """Returns a clause created by joining together the clauses of all
-        subqueries with the string joiner (padded by spaces)."""
+        subqueries with the string joiner (padded by spaces).
+        """
         clause_parts = []
         subvals = []
         for subq in self.subqueries:
@@ -425,7 +438,8 @@ class CollectionQuery(Query):
     @classmethod
     def from_dict(cls, matches):
         """Construct a query from a dictionary, matches, whose keys are item
-        field names and whose values are substring patterns."""
+        field names and whose values are substring patterns.
+        """
         subqueries = []
         for key, pattern in matches.iteritems():
             subqueries.append(SubstringQuery(key, pattern))
@@ -489,7 +503,8 @@ class AnySubstringQuery(CollectionQuery):
 
 class MutableCollectionQuery(CollectionQuery):
     """A collection query whose subqueries may be modified after the query is
-    initialized."""
+    initialized.
+    """
     def __setitem__(self, key, value): self.subqueries[key] = value
     def __delitem__(self, key): del self.subqueries[key]
 
@@ -514,7 +529,8 @@ class ResultIterator(object):
     
     def count(self):
         """Returns the number of matched rows and invalidates the
-        iterator."""
+        iterator.
+        """
         # Apparently, there is no good way to get the number of rows
         # returned by an sqlite SELECT.
         num = 0
@@ -547,7 +563,7 @@ class Library(object):
         self._setup()
     
     def _setup(self):
-        "Set up the schema of the library file."
+        """Set up the schema of the library file."""
         
         # options (library data) table
         setup_sql = """
@@ -558,7 +574,7 @@ class Library(object):
         
         # items (things in the library) table
         setup_sql += 'create table if not exists items ('
-        setup_sql += ', '.join(map(' '.join, item_fields))
+        setup_sql += ', '.join([' '.join(f) for f in item_fields])
         setup_sql += ');'
         
         self.conn.executescript(setup_sql)
@@ -603,7 +619,8 @@ class Library(object):
     def add(self, path, copy=False):
         """Add a file to the library or recursively search a directory and add
         all its contents. If copy is True, copy files to their destination in
-        the library directory while adding."""
+        the library directory while adding.
+        """
         
         for f in _walk_files(path):
             try:
@@ -616,7 +633,8 @@ class Library(object):
     
     def get(self, query=None):
         """Returns a ResultIterator to the items matching query, which may be
-        None (match the entire library), a Query object, or a query string."""
+        None (match the entire library), a Query object, or a query string.
+        """
         if query is None:
             query = TrueQuery()
         elif isinstance(query, str) or isinstance(query, unicode):
@@ -626,5 +644,7 @@ class Library(object):
         return query.execute(self)
     
     def save(self):
-        """Writes the library to disk (completing a sqlite transaction)."""
+        """Writes the library to disk (completing a sqlite transaction).
+        """
         self.conn.commit()
+

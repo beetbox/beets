@@ -87,9 +87,9 @@ def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
                     if readfield=='date' and field in ('year', 'month', 'day'):
                         try:
                             correct = datetime.date(
-                                self.value if field=='year' else correct.year,
-                                self.value if field=='month' else correct.month,
-                                self.value if field=='day' else correct.day
+                               self.value if field=='year' else correct.year,
+                               self.value if field=='month' else correct.month,
+                               self.value if field=='day' else correct.day
                             )
                         except ValueError:
                             correct = datetime.date.min
@@ -98,9 +98,10 @@ def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
                         correct = getattr(self.value, readfield)
                     
                     self.assertEqual(got, correct,
-                        readfield + ' changed when it should not have (expected'
-                        ' ' + repr(correct) + ', got ' + repr(got) + ') when '
-                        'modifying ' + field + ' in ' + os.path.basename(path))
+                        readfield + ' changed when it should not have'
+                        ' (expected ' + repr(correct) + ', got ' + \
+                        repr(got) + ') when modifying ' + field + ' in ' + \
+                        os.path.basename(path))
                 
         def tearDown(self):
             os.remove(self.tpath)
