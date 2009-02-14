@@ -424,7 +424,7 @@ class Connection(object):
             out = NEWLINE.join(data) + NEWLINE
         
         log.debug(out)
-        self.client.sendall(out)
+        self.client.sendall(out.encode('utf-8'))
     
     line_re = re.compile(r'([^\r\n]*)(?:\r\n|\n\r|\n|\r)')
     def lines(self):
@@ -627,10 +627,10 @@ class BGServer(Server):
     """
 
     def __init__(self, library, host='127.0.0.1', port=DEFAULT_PORT):
-        import beets.player.gstplayer
+        from beets.player.gstplayer import GstPlayer
         super(BGServer, self).__init__(host, port)
         self.lib = library
-        self.player = gstplayer.GstPlayer(self.play_finished)
+        self.player = GstPlayer(self.play_finished)
     
     def run(self):
         self.player.run()

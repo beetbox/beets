@@ -2,6 +2,10 @@
 from optparse import OptionParser
 from beets import Library
 
+def _print(txt):
+    """Print the text encoded using UTF-8."""
+    print txt.encode('utf-8')
+
 def add(lib, paths):
     for path in paths:
         lib.add(path)
@@ -12,7 +16,7 @@ def ls(lib, criteria):
     if not q.strip():
         q = None    # no criteria => match anything
     for item in lib.get(q):
-        print item.artist + ' - ' + item.album + ' - ' + item.title
+        _print(item.artist + ' - ' + item.album + ' - ' + item.title)
 
 def imp(lib, paths):
     for path in paths:
@@ -29,7 +33,7 @@ def remove(lib, criteria):
     if not q.strip():
         raise ValueError('must provide some criteria for removing')
     for item in lib.get(q):
-        print "removing " + item.path
+        _print("removing " + item.path)
         item.remove()
     lib.save()
 
@@ -38,7 +42,7 @@ def delete(lib, criteria):
     if not q.strip():
         raise ValueError('must provide some criteria for deleting')
     for item in lib.get(q):
-        print "deleting " + item.path
+        _print("deleting " + item.path)
         item.delete()
     lib.save()
 
