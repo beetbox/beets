@@ -167,7 +167,7 @@ class Item(object):
             load_id = self.id
         
         c = self.library.conn.execute(
-                'select * from items where id=?', (load_id,) )
+                'SELECT * FROM items WHERE id=?', (load_id,) )
         self._fill_record(c.fetchone())
         self._clear_dirty()
         c.close()
@@ -198,7 +198,7 @@ class Item(object):
         assignments = assignments[:-1] # knock off last ,
 
         # finish the query
-        query = 'update items set ' + assignments + ' where id=?'
+        query = 'UPDATE items SET ' + assignments + ' WHERE id=?'
         subvars.append(self.id)
 
         self.library.conn.execute(query, subvars)
@@ -224,7 +224,7 @@ class Item(object):
         
         # issue query
         c = self.library.conn.cursor()
-        query = 'insert into items (' + columns + ') values (' + values + ')'
+        query = 'INSERT INTO items (' + columns + ') VALUES (' + values + ')'
         c.execute(query, subvars)
         new_id = c.lastrowid
         c.close()
@@ -236,7 +236,7 @@ class Item(object):
     def remove(self):
         """Removes the item from the database (leaving the file on disk).
         """
-        self.library.conn.execute('delete from items where id=?',
+        self.library.conn.execute('DELETE FROM items WHERE id=?',
                                   (self.id,) )
     
     
@@ -371,7 +371,7 @@ class Query(object):
         for ?s in the query.
         """
         clause, subvals = self.clause()
-        return ('select ' + columns + ' from items where ' + clause, subvals)
+        return ('SELECT ' + columns + ' FROM items WHERE ' + clause, subvals)
 
     def execute(self, library):
         """Runs the query in the specified library, returning a
@@ -567,13 +567,14 @@ class Library(object):
         
         # options (library data) table
         setup_sql = """
-        create table if not exists options (
-            key text primary key,
-            value text
+        PRAGMA synchronous = OFF;
+        CREATE TABLE IF NOT EXISTS options (
+            key TEXT PRIMARY KEY,
+            value TEXT
         );"""
         
         # items (things in the library) table
-        setup_sql += 'create table if not exists items ('
+        setup_sql += 'CREATE TABLE IF NOT EXISTS items ('
         setup_sql += ', '.join([' '.join(f) for f in item_fields])
         setup_sql += ');'
         
@@ -596,7 +597,7 @@ class Library(object):
             """Return the current value of option "key"."""
             self._validate_key(key)
             result = (self.library.conn.
-                execute('select value from options where key=?', (key,)).
+                execute('SELECT value FROM options WHERE key=?', (key,)).
                 fetchone())
             if result is None: # no value stored
                 return library_options[key] # return default value
@@ -607,12 +608,30 @@ class Library(object):
             """Set the value of option "key" to "value"."""
             self._validate_key(key)
             self.library.conn.execute(
-                    'insert or replace into options values (?,?)',
+                    'INSERT OR REPLACE INTO options VALUES (?,?)',
                     (key, value) )
     
     options = None
     # will be set to a _LibraryOptionsAccessor when the library is initialized
     
+
+    ### helpers ###
+
+    @classmethod
+    def _get_query(cls, val=None):
+        """Takes a value which may be None, a query string, or a Query object,
+        and returns a suitable Query object.
+        """
+        if val is None:
+            return TrueQuery()
+        elif isinstance(val, basestring):
+            return AndQuery.from_string(val)
+        elif isinstance(val, Query):
+            return val
+        elif not isinstance(query, Query):
+            raise ValueError('query must be None or have type Query or str')
+       
+
     
     #### main interface ####
     
@@ -635,16 +654,58 @@ class Library(object):
         """Returns a ResultIterator to the items matching query, which may be
         None (match the entire library), a Query object, or a query string.
         """
-        if query is None:
-            query = TrueQuery()
-        elif isinstance(query, str) or isinstance(query, unicode):
-            query = AndQuery.from_string(query)
-        elif not isinstance(query, Query):
-            raise ValueError('query must be None or have type Query or str')
-        return query.execute(self)
+        return self._get_query(query).execute(self)
     
     def save(self):
         """Writes the library to disk (completing a sqlite transaction).
         """
         self.conn.commit()
+
+
+    ### browsing ###
+
+    def artists(self, query=None):
+        """Returns a list of artists in the database, possibly filtered by a
+        query (in the same sense as get()).
+        """
+        where, subvals = self._get_query(query).clause()
+        sql = "SELECT DISTINCT artist FROM items " + \
+              "WHERE " + where + \
+              " ORDER BY artist"
+        c = self.conn.execute(sql, subvals)
+        return [res[0] for res in c.fetchall()]
+
+    def albums(self, artist=None, query=None):
+        """Returns a list of (artist, album) pairs, possibly filtered by an
+        artist name or an arbitrary query.
+        """
+        query = self._get_query(query)
+        if artist:
+            # "Add" the artist to the query.
+            query = AndQuery((query, MatchQuery('artist', artist)))
+        where, subvals = query.clause()
+        sql = "SELECT DISTINCT artist, album FROM items " + \
+              "WHERE " + where + \
+              " ORDER BY artist, album"
+        c = self.conn.execute(sql, subvals)
+        return [(res[0], res[1]) for res in c.fetchall()]
+
+    def items(self, artist=None, album=None, query=None):
+        """Returns a ResultIterator over the items matching the given artist,
+        album, and query (if present). Sorts in such a way as to group albums
+        appropriately.
+        """
+        queries = [self._get_query(query)]
+        if artist:
+            queries.append(MatchQuery('artist', artist))
+        if album:
+            queries.append(MatchQuery('album', album))
+        super_query = AndQuery(queries)
+        where, subvals = super_query.clause()
+
+        sql = "SELECT * FROM items " + \
+              "WHERE " + where + \
+              " ORDER BY artist, album, disc, track"
+        c = self.conn.execute(sql, subvals)
+        return ResultIterator(c, self)
 
