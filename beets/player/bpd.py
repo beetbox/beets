@@ -11,6 +11,7 @@ from string import Template
 import beets
 import traceback
 import logging
+import time
 
 
 DEFAULT_PORT = 6600
@@ -178,6 +179,7 @@ class Server(object):
         """Block and start listening for connections from clients. An
         interrupt (^C) closes the server.
         """
+        self.startup_time = time.time()
         try:
             self.listener = eventlet.api.tcp_listener((self.host, self.port))
             while True:
@@ -830,6 +832,19 @@ class BGServer(Server):
                                'time: 0:' + str(int(item.length)), #fixme
                               ]
         return response
+
+    def cmd_stats(self):
+        # The first three items need to be done more efficiently. The
+        # last three need to be implemented.
+        out = ['artists: ' + str(len(self.lib.artists())),
+               'albums: ' + str(len(self.lib.albums())),
+               'songs: ' + str(len(list(self.lib.items()))),
+               'uptime: ' + str(int(time.time() - self.startup_time)),
+               'playtime: ' + '0',
+               'db_playtime: ' + '0',
+               'db_update: ' + '0',
+              ]
+        return SuccessResponse(out)
 
     # The functions below hook into the half-implementations provided
     # by the base class. Together, they're enough to implement all

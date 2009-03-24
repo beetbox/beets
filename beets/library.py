@@ -527,17 +527,6 @@ class ResultIterator(object):
     
     def __iter__(self): return self
     
-    def count(self):
-        """Returns the number of matched rows and invalidates the
-        iterator.
-        """
-        # Apparently, there is no good way to get the number of rows
-        # returned by an sqlite SELECT.
-        num = 0
-        for i in self:
-            num += 1
-        return num
-    
     def next(self):
         try:
             row = self.cursor.next()
