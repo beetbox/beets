@@ -129,14 +129,14 @@ def path_to_list(path):
     while path:
         
         # Search for one path component.
-        m = path_to_list_pattern.match(s)
+        m = path_to_list_pattern.match(path)
         if not m: break # Should never happen.
         component = m.group(0)
         
         # Chop off this component and the / that follows it.
         path = path[len(component):]
-        if len(s) >= 1 and s[0] == '/': # Should always be true.
-            s = s[1:] # chop it off, too
+        if len(path) >= 1 and path[0] == '/': # Should always be true.
+            path = path[1:]
         
         out.append(component.replace('\\/', '/').replace('\\\\', '\\'))
     
@@ -566,7 +566,7 @@ class Command(object):
             
             except Exception, e:
                 # An "unintentional" error. Hide it from the client.
-                l.error(traceback.format_exc(e))
+                log.error(traceback.format_exc(e))
                 return ErrorResponse(ERROR_SYSTEM, self.name, 'server error')
             
             if response is None:
@@ -693,8 +693,12 @@ class BGServer(Server):
         """
         self.cmd_next()
     
+    def _item_path(self, item):
+        """Returns the item's "virtual path."""
+        return seq_to_path((item.artist, item.album, item.title))
+
     def _item_info(self, item):
-        info_lines = ['file: ' + item.path,
+        info_lines = ['file: ' + self._item_path(item),
                       'Time: ' + str(int(item.length)),
                       'Title: ' + item.title,
                       'Artist: ' + item.artist,
@@ -722,23 +726,68 @@ class BGServer(Server):
         
     def _item_id(self, item):
         return item.id
+
+    def _parse_path(self, path="/"):
+        """Take an artist/album/track path and return its components.
+        """
+        if len(path) >= 1 and path[0] == '/': # Remove leading slash.
+            path = path[1:]
+        items = path_to_list(path)
+
+        artist, album, track = None, None, None
+        if items: artist = items.pop(0)
+        if items: album = items.pop(0)
+        if items: track = items.pop(0)
+        return artist, album, track
     
     def cmd_lsinfo(self, path="/"):
         """Return info on all the items in the path."""
-        if path != "/":
-            raise BPDError(ERROR_NO_EXIST, 'cannot list paths other than /')
-        return self._items_info(self.lib.get())
-    def cmd_listallinfo(self, path="/"):
-        """Return info on all the items in the directory, recursively."""
-        # Because we have a flat directory path, this recursive version
-        # is equivalent to the non-recursive version.
-        return self.cmd_lsinfo(path)
+        artist, album, track = self._parse_path(path)
+        
+        if not artist: # List all artists.
+            artists = self.lib.artists()
+            return SuccessResponse(['directory: ' + a for a in artists])
+        elif not album: # List all albums for an artist.
+            albums = self.lib.albums(artist)
+            contents = ['directory: ' + seq_to_path(alb) for alb in albums]
+            return SuccessResponse(contents)
+        elif not track: # List all tracks on an album.
+            items = self.lib.items(artist, album)
+            return self._items_info(items)
+        else: # List a track. This isn't a directory.
+            raise BPDError(ERROR_ARG, 'this is not a directory')
+        
+    def _listall(self, path="/", info=False):
+        """Helper function for recursive listing. If info, show
+        tracks' complete info; otherwise, just show items' paths.
+        """
+        artist, album, track = self._parse_path(path)
+        out = []
+
+        # artists
+        if not artist:
+            out += ['directory: ' + a for a in artists]
+
+        # albums
+        if not album:
+            albums = self.lib.albums(artist or None)
+            out += ['directory: ' + seq_to_path(alb) for alb in albums]
+
+        # tracks
+        if info:
+            str_func = self._item_info
+        else:
+            str_func = lambda i: 'file: ' + self._item_path(i)
+        out += map(str_func, lib.items(artist or None, album or None))
+
+        return SuccessResponse(out)
+    
     def cmd_listall(self, path="/"):
         """Return the paths all items in the directory, recursively."""
-        if path != "/":
-            raise BPDError(ERROR_NO_EXIST, 'cannot list paths other than /')
-        out = ['file: ' + i.path for i in self.lib.get()]
-        return SuccessResponse(out)
+        return self._listall(path, False)
+    def cmd_listallinfo(self, path="/"):
+        """Return info on all the items in the directory, recursively."""
+        return self._listall(path, True)
     
     def cmd_search(self, key, value):
         """Perform a substring match in a specific column."""
@@ -756,7 +805,8 @@ class BGServer(Server):
     
     def _get_by_path(self, path):
         """Helper function returning the item at a given path."""
-        it = self.lib.get(beets.library.MatchQuery('path', path))
+        artist, album, track = path_to_list(path)
+        it = self.lib.items(artist, album, track)
         try:
             return it.next()
         except StopIteration:

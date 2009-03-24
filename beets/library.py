@@ -690,16 +690,18 @@ class Library(object):
         c = self.conn.execute(sql, subvals)
         return [(res[0], res[1]) for res in c.fetchall()]
 
-    def items(self, artist=None, album=None, query=None):
+    def items(self, artist=None, album=None, title=None, query=None):
         """Returns a ResultIterator over the items matching the given artist,
-        album, and query (if present). Sorts in such a way as to group albums
-        appropriately.
+        album, title, and query (if present). Sorts in such a way as to group
+        albums appropriately.
         """
         queries = [self._get_query(query)]
         if artist:
             queries.append(MatchQuery('artist', artist))
         if album:
             queries.append(MatchQuery('album', album))
+        if title:
+            queries.append(MatchQuery('title', title))
         super_query = AndQuery(queries)
         where, subvals = super_query.clause()
 
