@@ -50,6 +50,8 @@ log.setLevel(logging.DEBUG)
 log.addHandler(logging.StreamHandler())
 
 
+# Error-handling, exceptions, parameter parsing.
+
 class BPDError(Exception):
     """An error that should be exposed to the client to the BPD
     server.
@@ -97,6 +99,51 @@ class BPDClose(Exception):
     should be closed.
     """
 
+
+# Path-like encoding of string sequences. We use this to simulate the
+# directory structure required by the MPD protocol to browse music in
+# the library.
+
+def seq_to_path(seq):
+    """Encodes a sequence of strings as a path-like string. The
+    sequence can be recovered exactly using path_to_list.
+    """
+    
+    out = []
+    for s in seq:
+        out.append(s.replace('\\', '\\\\').replace('/', '\\/'))
+    return '/'.join(out)
+
+path_to_list_pattern = re.compile(r'(?:\\/|[^/])*')
+def path_to_list(path):
+    """Takes a path-like string (probably encoded by seq_to_path) and
+    returns the list of strings it represents.
+    """
+    
+    # To simplify parsing, ensure that everything is terminated by a
+    # slash. Note that seq_to_path never added a trailing slash, so
+    # they are "disallowed" by this encoding.
+    path += '/'
+    
+    out = []
+    while path:
+        
+        # Search for one path component.
+        m = path_to_list_pattern.match(s)
+        if not m: break # Should never happen.
+        component = m.group(0)
+        
+        # Chop off this component and the / that follows it.
+        path = path[len(component):]
+        if len(s) >= 1 and s[0] == '/': # Should always be true.
+            s = s[1:] # chop it off, too
+        
+        out.append(component.replace('\\/', '/').replace('\\\\', '\\'))
+    
+    return out
+
+
+# Generic server infrastructure, implementing the basic protocol.
 
 class Server(object):
     """A MPD-compatible music player server.
@@ -621,6 +668,10 @@ class SuccessResponse(Response):
         return RESP_OK
 
 
+
+# A subclass of the basic, protocol-handling server that actually plays
+# music.
+
 class BGServer(Server):
     """A `Server` using GStreamer to play audio and beets to store its
     library.
@@ -749,6 +800,9 @@ class BGServer(Server):
     def cmd_stop(self):
         super(BGServer, self).cmd_stop()
         self.player.stop()
+
+
+# When run as a script, just start the server.
 
 if __name__ == '__main__':
     BGServer(beets.Library('library.blb')).run()
