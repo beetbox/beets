@@ -57,20 +57,21 @@ class BPDError(Exception):
     """An error that should be exposed to the client to the BPD
     server.
     """
-    def __init__(self, code, message):
+    def __init__(self, code, message, cmd_name='', index=0):
         self.code = code
         self.message = message
-        self.index = 0
+        self.cmd_name = cmd_name
+        self.index = index
         
     template = Template('$resp [$code@$index] {$cmd_name} $message')
-    def response(self, cmd):
+    def response(self):
         """Returns a string to be used as the response code for the
         erring command.
         """
         return self.template.substitute({'resp':     RESP_ERR,
                                          'code':     self.code,
                                          'index':    self.index,
-                                         'cmd_name': cmd,
+                                         'cmd_name': self.cmd_name,
                                          'message':  self.message
                                        })
 
@@ -500,7 +501,7 @@ class Connection(object):
             command.run(self)
         except BPDError, e:
             # Send the error.
-            self.send(e.response(command.name))
+            self.send(e.response())
         else:
             # Send success code.
             self.send(RESP_OK)
@@ -571,9 +572,11 @@ class Command(object):
                     for response in responses:
                         conn.send(response)
             
-            except BPDError:
-                # An exposed error. Let the Connection handle it.
-                raise
+            except BPDError, e:
+                # An exposed error. Set the command name and then let
+                # the Connection handle it.
+                e.cmd_name = self.name
+                raise e
             
             except BPDClose:
                 # An indication that the connection should close. Send
@@ -583,10 +586,10 @@ class Command(object):
             except Exception, e:
                 # An "unintentional" error. Hide it from the client.
                 log.error(traceback.format_exc(e))
-                raise BPDError(ERROR_SYSTEM, 'server error')
+                raise BPDError(ERROR_SYSTEM, 'server error', self.name)
                 
         else:
-            raise BPDError(ERROR_UNKNOWN, 'unknown command')
+            raise BPDError(ERROR_UNKNOWN, 'unknown command', self.name)
 
 class CommandList(list):
     """A list of commands issued by the client for processing by the
@@ -713,17 +716,16 @@ class BGServer(Server):
         tracks' complete info; otherwise, just show items' paths.
         """
         artist, album, track = self._parse_path(path)
-        out = []
 
         # artists
         if not artist:
-            for artist in self.lib.artists():
-                yield 'directory: ' + artist
+            for a in self.lib.artists():
+                yield 'directory: ' + a
 
         # albums
         if not album:
-            for album in self.lib.albums(artist or None):
-                yield 'directory: ' + seq_to_path(album)
+            for a in self.lib.albums(artist or None):
+                yield 'directory: ' + seq_to_path(a)
 
         # tracks
         items = self.lib.items(artist or None, album or None)
