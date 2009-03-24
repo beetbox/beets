@@ -60,12 +60,19 @@ class BPDError(Exception):
     def __init__(self, code, message):
         self.code = code
         self.message = message
+        self.index = 0
         
+    template = Template('$resp [$code@$index] {$cmd_name} $message')
     def response(self, cmd):
-        """Returns an ErrorResponse for the exception as a response
-        to the given command.
+        """Returns a string to be used as the response code for the
+        erring command.
         """
-        return ErrorResponse(self.code, cmd.name, self.message)
+        return self.template.substitute({'resp':     RESP_ERR,
+                                         'code':     self.code,
+                                         'index':    self.index,
+                                         'cmd_name': cmd,
+                                         'message':  self.message
+                                       })
 
 def make_bpd_error(s_code, s_message):
     """Create a BPDError subclass for a static code and message.
@@ -149,12 +156,12 @@ def path_to_list(path):
 class Server(object):
     """A MPD-compatible music player server.
     
-    The functions with the `cmd_` prefix are invoked in response to
+    The generators with the `cmd_` prefix are invoked in response to
     client commands. For instance, if the client says `status`,
     `cmd_status` will be invoked. The arguments to the client's commands
-    are used as function arguments (*args). The functions should return
-    a `Response` object (or None to indicate an empty but successful
-    response). They may also raise BPDError exceptions to report errors.
+    are used as function arguments (*args). The generators should yield
+    strings or sequences of strings as many times as necessary.
+    They may also raise BPDError exceptions to report errors.
     
     This is a generic superclass and doesn't support many commands.
     """
@@ -230,8 +237,7 @@ class Server(object):
         out = []
         for key in dir(self):
             if key.startswith('cmd_'):
-                out.append('command: ' + key[4:])
-        return SuccessResponse(out)
+                yield 'command: ' + key[4:]
     
     def cmd_notcommands(self):
         """Lists all unavailable commands. Because there's currently no
@@ -246,13 +252,13 @@ class Server(object):
         Gives a list of response-lines for: volume, repeat, random,
         playlist, playlistlength, and xfade.
         """
-        status_lines = ['volume: ' + str(self.volume),
-                        'repeat: ' + str(int(self.repeat)),
-                        'random: ' + str(int(self.random)),
-                        'playlist: ' + str(self.playlist_version),
-                        'playlistlength: ' + str(len(self.playlist)),
-                        'xfade: ' + str(self.crossfade),
-                       ]
+        yield ('volume: ' + str(self.volume),
+               'repeat: ' + str(int(self.repeat)),
+               'random: ' + str(int(self.random)),
+               'playlist: ' + str(self.playlist_version),
+               'playlistlength: ' + str(len(self.playlist)),
+               'xfade: ' + str(self.crossfade),
+              )
         
         if self.current_index == -1:
             state = 'stop'
@@ -260,17 +266,14 @@ class Server(object):
             state = 'pause'
         else:
             state = 'play'
-        status_lines.append('state: ' + state)
+        yield 'state: ' + state
         
         if self.current_index != -1: # i.e., paused or playing
             current_id = self._item_id(self.playlist[self.current_index])
-            status_lines += ['song: ' + str(self.current_index),
-                             'songid: ' + str(current_id),
-                            ]
+            yield 'song: ' + str(self.current_index)
+            yield 'songid: ' + str(current_id)
         
-        # Still missing: time, bitrate, audio, updating_db, error
-        
-        return SuccessResponse(status_lines)
+        #fixme Still missing: time, bitrate, audio, updating_db, error
     
     def cmd_random(self, state):
         """Set or unset random (shuffle) mode."""
@@ -308,7 +311,7 @@ class Server(object):
         self.playlist_version += 1
 
         if self.current_index == index: # Deleted playing song.
-            return self.cmd_stop()
+            self.cmd_stop()
         elif index < self.current_index: # Deleted before playing.
             # Shift playing index down.
             self.current_index -= 1
@@ -327,7 +330,7 @@ class Server(object):
             raise ArgumentIndexError()
     def cmd_moveid(self, id_from, idx_to):
         idx_from = self._id_to_index(idx_from)
-        return self.cmd_move(idx_from, idx_to)
+        for l in self.cmd_move(idx_from, idx_to): yield l
     
     def cmd_swap(self, i, j):
         """Swaps two tracks in the playlist."""
@@ -343,20 +346,11 @@ class Server(object):
     def cmd_swapid(self, i_id, j_id):
         i = self._id_to_index(i_id)
         j = self._id_to_index(j_id)
-        return self.cmd_swap(i, j)
+        for l in self.cmd_swap(i, j): yield l
     
     def cmd_urlhandlers(self):
         """Indicates supported URL schemes. None by default."""
         pass
-    
-    def _items_info(self, l):
-        """Gets info (using _item_info) for an entire list (e.g.,
-        the playlist).
-        """
-        info = []
-        for track in l:
-            info += self._item_info(track)
-        return SuccessResponse(info)
     
     def cmd_playlistinfo(self, index=-1):
         """Gives metadata information about the entire playlist or a
@@ -364,48 +358,50 @@ class Server(object):
         """
         index = cast_arg(int, index)
         if index == -1:
-            return self._items_info(self.playlist)
+            for track in self.playlist:
+                yield self._item_info(track)
         else:
             try:
                 track = self.playlist[index]
             except IndexError:
                 raise ArgumentIndexError()
-            return SuccessResponse(self._item_info(track))
+            yield self._item_info(track)
     def cmd_playlistid(self, track_id=-1):
-        return self.cmd_playlistinfo(self._id_to_index(track_id))
+        for l in self.cmd_playlistinfo(self._id_to_index(track_id)):
+            yield l
     
     def cmd_plchanges(self, version):
-        """Returns playlist changes since the given version.
+        """Yields playlist changes since the given version.
         
         This is a "fake" implementation that ignores the version and
         just returns the entire playlist (rather like version=0). This
         seems to satisfy many clients.
         """
-        return self.cmd_playlistinfo()
+        for l in self.cmd_playlistinfo(): yield l
     
     def cmd_currentsong(self):
-        """Returns information about the currently-playing song.
+        """Yields information about the currently-playing song.
         """
         if self.current_index != -1: # -1 means stopped.
             track = self.playlist[self.current_index]
-            return SuccessResponse(self._item_info(track))
+            yield self._item_info(track)
     
     def cmd_next(self):
         """Advance to the next song in the playlist."""
         self.current_index += 1
         if self.current_index >= len(self.playlist):
             # Fallen off the end. Just move to stopped state.
-            return self.cmd_stop()
+            self.cmd_stop()
         else:
-            return self.cmd_play()
+            self.cmd_play()
     
     def cmd_previous(self):
         """Step back to the last song."""
         self.current_index -= 1
         if self.current_index < 0:
-            return self.cmd_stop()
+            self.cmd_stop()
         else:
-            return self.cmd_play()
+            self.cmd_play()
     
     def cmd_pause(self, state=None):
         """Set the pause state playback."""
@@ -419,7 +415,7 @@ class Server(object):
         index = cast_arg(int, index)
         if index == -1: # No index specified: start where we are.
             if not self.playlist: # Empty playlist: stop immediately.
-                return self.cmd_stop()
+                self.cmd_stop()
             if self.current_index == -1: # No current song.
                 self.current_index = 0 # Start at the beginning.
             # If we have a current song, just stay there.
@@ -434,7 +430,7 @@ class Server(object):
             index = -1
         else:
             index = self._id_to_index(track_id)
-        return self.cmd_play(index)
+        self.cmd_play(index)
     
     def cmd_stop(self):
         """Stop playback."""
@@ -447,10 +443,10 @@ class Server(object):
         if index < 0 or index >= len(self.playlist):
             raise ArgumentIndexError()
         self.current_index = index
-        return self.cmd_play()
+        self.cmd_play()
     def cmd_seekid(self, track_id, time):
         index = self._id_to_index(track_id)
-        return self.cmd_seek(index, time)
+        for l in self.cmd_seek(index, time): yield l
 
 class Connection(object):
     """A connection between a client and the server. Handles input and
@@ -462,17 +458,21 @@ class Connection(object):
         """
         self.client, self.server = client, server
     
-    def send(self, data):
+    def send(self, data=None):
         """Send data, which is either a string or an iterable
         consisting of strings, to the client. A newline is added after
-        every string.
+        every string. `data` may be None, in which case nothing is
+        sent.
         """
+        if data is None:
+            return
+        
         if isinstance(data, basestring): # Passed a single string.
             out = data + NEWLINE
         else: # Passed an iterable of strings (for instance, a Response).
             out = NEWLINE.join(data) + NEWLINE
         
-        log.debug(out)
+        log.debug(out[:-1]) # Don't log trailing newline.
         self.client.sendall(out.encode('utf-8'))
     
     line_re = re.compile(r'([^\r\n]*)(?:\r\n|\n\r|\n|\r)')
@@ -494,6 +494,17 @@ class Connection(object):
                 yield match.group(1)
                 buf = buf[match.end():] # Remove line from buffer.
     
+    def do_command(self, command):
+        """Run the given command and give an appropriate response."""
+        try:
+            command.run(self)
+        except BPDError, e:
+            # Send the error.
+            self.send(e.response(command.name))
+        else:
+            # Send success code.
+            self.send(RESP_OK)
+    
     def run(self):
         """Send a greeting to the client and begin processing commands
         as they arrive. Blocks until the client disconnects.
@@ -507,8 +518,8 @@ class Connection(object):
             if clist is not None:
                 # Command list already opened.
                 if line == CLIST_END:
-                    self.send(clist.run(self.server))
-                    clist = None
+                    self.do_command(clist)
+                    clist = None # Clear the command list.
                 else:
                     clist.append(Command(line))
             
@@ -519,7 +530,7 @@ class Connection(object):
             else:
                 # Ordinary command.
                 try:
-                    self.send(Command(line).run(self.server))
+                    self.do_command(Command(line))
                 except BPDClose:
                     # Command indicates that the conn should close.
                     self.client.close()
@@ -548,18 +559,21 @@ class Command(object):
         arg_matches = self.arg_re.findall(s[command_match.end():])
         self.args = [m[0] or m[1] for m in arg_matches]
         
-    def run(self, server):
-        """Executes the command on the given `Sever`, returning a
-        `Response` object.
+    def run(self, conn):
+        """Executes the command on the given connection.
         """
         func_name = 'cmd_' + self.name
-        if hasattr(server, func_name):
+        if hasattr(conn.server, func_name):
             try:
-                response = getattr(server, func_name)(*self.args)
+                responses = getattr(conn.server, func_name)(*self.args)
+                if responses is not None:
+                    # Yielding nothing is considered success.
+                    for response in responses:
+                        conn.send(response)
             
-            except BPDError, e:
-                # An exposed error. Send it to the client.
-                return e.response(self)
+            except BPDError:
+                # An exposed error. Let the Connection handle it.
+                raise
             
             except BPDClose:
                 # An indication that the connection should close. Send
@@ -569,16 +583,10 @@ class Command(object):
             except Exception, e:
                 # An "unintentional" error. Hide it from the client.
                 log.error(traceback.format_exc(e))
-                return ErrorResponse(ERROR_SYSTEM, self.name, 'server error')
-            
-            if response is None:
-                # Assume success if nothing is returned.
-                return SuccessResponse()
-            else:
-                return response
+                raise BPDError(ERROR_SYSTEM, 'server error')
                 
         else:
-            return ErrorResponse(ERROR_UNKNOWN, self.name, 'unknown command')
+            raise BPDError(ERROR_UNKNOWN, 'unknown command')
 
 class CommandList(list):
     """A list of commands issued by the client for processing by the
@@ -594,80 +602,22 @@ class CommandList(list):
                 self.append(item)
         self.verbose = verbose
 
-    def run(self, server):
-        """Execute all the commands in this list, returning a list of
-        strings to be sent as a response.
+    def run(self, conn):
+        """Execute all the commands in this list.
         """
-        out = []
 
         for i, command in enumerate(self):
-            resp = command.run(server)
-            out.extend(resp.items)
-
-            # If the command failed, stop executing and send the completion
-            # code for this command.
-            if isinstance(resp, ErrorResponse):
-                resp.index = i # Give the error the correct index.
-                break
+            try:
+                command.run(conn)
+            except BPDError, e:
+                # If the command failed, stop executing.
+                e.index = i # Give the error the correct index.
+                raise e
 
             # Otherwise, possibly send the output delimeter if we're in a
             # verbose ("OK") command list.
             if self.verbose:
-                out.append(RESP_CLIST_VERBOSE)
-
-        # Give a completion code matching that of the last command (correct
-        # for both success and failure).
-        out.append(resp.completion())
-
-        return out
-
-class Response(object):
-    """A result of executing a single `Command`. A `Response` is
-    iterable and consists of zero or more lines of response data
-    (`items`) and a completion code. It is an abstract class.
-    """
-    def __init__(self, items=None):
-        """Create a response consisting of the given lines of
-        response messages.
-        """
-        self.items = (items if items else [])
-    def __iter__(self):
-        """Iterate through the `Response`'s items and then its
-        completion code."""
-        return iter(self.items + [self.completion()])
-    def completion(self):
-        """Returns the completion code of the response."""
-        raise NotImplementedError
-
-class ErrorResponse(Response):
-    """A result of a command that fails.
-    """
-    template = Template('$resp [$code@$index] {$cmd_name} $message')
-    
-    def __init__(self, code, cmd_name, message, index=0, items=None):
-        """Create a new `ErrorResponse` for error code `code`
-        resulting from command with name `cmd_name`. `message` is an
-        explanatory error message, `index` is the index of a command
-        in a command list, and `items` is the additional data to be
-        send to the client.
-        """
-        super(ErrorResponse, self).__init__(items)
-        self.code, self.index, self.cmd_name, self.message = \
-             code,      index,      cmd_name,      message
-    
-    def completion(self):
-        return self.template.substitute({'resp':     RESP_ERR,
-                                         'code':     self.code,
-                                         'index':    self.index,
-                                         'cmd_name': self.cmd_name,
-                                         'message':  self.message
-                                       })
-
-class SuccessResponse(Response):
-    """A result of a command that succeeds.
-    """
-    def completion(self):
-        return RESP_OK
+                conn.send(RESP_CLIST_VERBOSE)
 
 
 
@@ -743,19 +693,18 @@ class BGServer(Server):
         return artist, album, track
     
     def cmd_lsinfo(self, path="/"):
-        """Return info on all the items in the path."""
+        """Yields info on all the items in the path."""
         artist, album, track = self._parse_path(path)
         
         if not artist: # List all artists.
-            artists = self.lib.artists()
-            return SuccessResponse(['directory: ' + a for a in artists])
+            for artist in self.lib.artists():
+                yield 'directory: ' + artist
         elif not album: # List all albums for an artist.
-            albums = self.lib.albums(artist)
-            contents = ['directory: ' + seq_to_path(alb) for alb in albums]
-            return SuccessResponse(contents)
+            for album in self.lib.albums(artist):
+                yield 'directory: ' + seq_to_path(album)
         elif not track: # List all tracks on an album.
-            items = self.lib.items(artist, album)
-            return self._items_info(items)
+            for item in self.lib.items(artist, album):
+                yield self._item_info(item)
         else: # List a track. This isn't a directory.
             raise BPDError(ERROR_ARG, 'this is not a directory')
         
@@ -768,44 +717,45 @@ class BGServer(Server):
 
         # artists
         if not artist:
-            artists = self.lib.artists()
-            out += ['directory: ' + a for a in artists]
+            for artist in self.lib.artists():
+                yield 'directory: ' + artist
 
         # albums
         if not album:
-            albums = self.lib.albums(artist or None)
-            out += ['directory: ' + seq_to_path(alb) for alb in albums]
+            for album in self.lib.albums(artist or None):
+                yield 'directory: ' + seq_to_path(album)
 
         # tracks
         items = self.lib.items(artist or None, album or None)
         if info:
             for item in items:
-                out += self._item_info(item)
+                yield self._item_info(item)
         else:
-            out += ['file: ' + self._item_path(i) for i in items]
-
-        return SuccessResponse(out)
+            for item in items:
+                yield 'file: ' + self._item_path(i)
     
     def cmd_listall(self, path="/"):
         """Return the paths all items in the directory, recursively."""
-        return self._listall(path, False)
+        for l in self._listall(path, False): yield l
     def cmd_listallinfo(self, path="/"):
         """Return info on all the items in the directory, recursively."""
-        return self._listall(path, True)
+        for l in self._listall(path, True): yield l
     
     def cmd_search(self, key, value):
         """Perform a substring match in a specific column."""
         if key == 'filename':
             key = 'path'
         query = beets.library.SubstringQuery(key, value)
-        return self._items_info(self.lib.get(query))
+        for item in self.lib.get(query):
+            yield self._item_info(item)
     
     def cmd_find(self, key, value):
         """Perform an exact match in a specific column."""
         if key == 'filename':
             key = 'path'
         query = beets.library.MatchQuery(key, value)
-        return self._items_info(self.lib.get(query))
+        for item in self.lib.get(query):
+            yield self._item_info(item)
     
     def _get_by_path(self, path):
         """Helper function returning the item at a given path."""
@@ -820,33 +770,30 @@ class BGServer(Server):
         self.playlist.append(self._get_by_path(path))
         self.playlist_version += 1
     def cmd_addid(self, path):
-        """Same as cmd_add but returns an id."""
+        """Same as cmd_add but yields an id."""
         track = self._get_by_path(path)
         self.playlist.append(track)
         self.playlist_version += 1
-        return SuccessResponse(['Id: ' + str(track.id)])
+        yield 'Id: ' + str(track.id)
 
     def cmd_status(self):
-        response = super(BGServer, self).cmd_status()
+        for l in super(BGServer, self).cmd_status(): yield l
         if self.current_index > -1:
             item = self.playlist[self.current_index]
-            response.items += ['bitrate: ' + str(item.bitrate/1000),
-                               'time: 0:' + str(int(item.length)), #fixme
-                              ]
-        return response
+            yield 'bitrate: ' + str(item.bitrate/1000)
+            yield 'time: 0:' + str(int(item.length)) #fixme
 
     def cmd_stats(self):
         # The first three items need to be done more efficiently. The
         # last three need to be implemented.
-        out = ['artists: ' + str(len(self.lib.artists())),
-               'albums: ' + str(len(self.lib.albums())),
-               'songs: ' + str(len(list(self.lib.items()))),
-               'uptime: ' + str(int(time.time() - self.startup_time)),
-               'playtime: ' + '0',
-               'db_playtime: ' + '0',
-               'db_update: ' + str(int(self.startup_time)),
-              ]
-        return SuccessResponse(out)
+        yield ('artists: ' + str(len(self.lib.artists())),
+                'albums: ' + str(len(self.lib.albums())),
+                'songs: ' + str(len(list(self.lib.items()))),
+                'uptime: ' + str(int(time.time() - self.startup_time)),
+                'playtime: ' + '0',
+                'db_playtime: ' + '0',
+                'db_update: ' + str(int(self.startup_time)),
+               )
 
     # The functions below hook into the half-implementations provided
     # by the base class. Together, they're enough to implement all
