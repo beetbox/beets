@@ -768,6 +768,7 @@ class BGServer(Server):
 
         # artists
         if not artist:
+            artists = self.lib.artists()
             out += ['directory: ' + a for a in artists]
 
         # albums
@@ -776,11 +777,12 @@ class BGServer(Server):
             out += ['directory: ' + seq_to_path(alb) for alb in albums]
 
         # tracks
+        items = self.lib.items(artist or None, album or None)
         if info:
-            str_func = self._item_info
+            for item in items:
+                out += self._item_info(item)
         else:
-            str_func = lambda i: 'file: ' + self._item_path(i)
-        out += map(str_func, lib.items(artist or None, album or None))
+            out += ['file: ' + self._item_path(i) for i in items]
 
         return SuccessResponse(out)
     
@@ -842,7 +844,7 @@ class BGServer(Server):
                'uptime: ' + str(int(time.time() - self.startup_time)),
                'playtime: ' + '0',
                'db_playtime: ' + '0',
-               'db_update: ' + '0',
+               'db_update: ' + str(int(self.startup_time)),
               ]
         return SuccessResponse(out)
 
