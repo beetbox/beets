@@ -15,7 +15,7 @@ import time
 
 
 DEFAULT_PORT = 6600
-PROTOCOL_VERSION = '0.12.2'
+PROTOCOL_VERSION = '0.13.0'
 BUFSIZE = 1024
 
 HELLO = 'OK MPD %s' % PROTOCOL_VERSION
@@ -789,13 +789,36 @@ class BGServer(Server):
         # The first three items need to be done more efficiently. The
         # last three need to be implemented.
         yield ('artists: ' + str(len(self.lib.artists())),
-                'albums: ' + str(len(self.lib.albums())),
-                'songs: ' + str(len(list(self.lib.items()))),
-                'uptime: ' + str(int(time.time() - self.startup_time)),
-                'playtime: ' + '0',
-                'db_playtime: ' + '0',
-                'db_update: ' + str(int(self.startup_time)),
-               )
+               'albums: ' + str(len(self.lib.albums())),
+               'songs: ' + str(len(list(self.lib.items()))),
+               'uptime: ' + str(int(time.time() - self.startup_time)),
+               'playtime: ' + '0',
+               'db_playtime: ' + '0',
+               'db_update: ' + str(int(self.startup_time)),
+              )
+
+    # Search functionality.
+
+    tagtype_map = {
+        'Artist':       'artist',
+        'Album':        'album',
+        'Title':        'title',
+        'Track':        'track',
+        # Name?
+        'Genre':        'genre',
+        'Date':         'year',
+        'Composer':     'composer',
+        # Performer?
+        'Disc':         'disc',
+    }
+
+    def cmd_tagtypes(self):
+        """Returns a list of the metadata (tag) fields available for
+        searching.
+        """
+        for tag in self.tagtype_map:
+            yield 'tagtype: ' + tag
+        
 
     # The functions below hook into the half-implementations provided
     # by the base class. Together, they're enough to implement all
