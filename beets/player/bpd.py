@@ -167,7 +167,7 @@ class Server(object):
     This is a generic superclass and doesn't support many commands.
     """
     
-    def __init__(self, host, port=DEFAULT_PORT):
+    def __init__(self, host='', port=DEFAULT_PORT):
         """Create a new server bound to address `host` and listening
         on port `port`.
         """
@@ -632,7 +632,7 @@ class BGServer(Server):
     library.
     """
 
-    def __init__(self, library, host='127.0.0.1', port=DEFAULT_PORT):
+    def __init__(self, library, host='', port=DEFAULT_PORT):
         from beets.player.gstplayer import GstPlayer
         super(BGServer, self).__init__(host, port)
         self.lib = library

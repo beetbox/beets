@@ -56,7 +56,7 @@ def read(lib, criteria):
     lib.save()
 
 def bpd(lib, opts):
-    host = opts.pop(0) if opts else '127.0.0.1'
+    host = opts.pop(0) if opts else ''
     port = int(opts.pop(0)) if opts else 6600
     
     import beets.player.bpd
