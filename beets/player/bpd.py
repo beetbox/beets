@@ -81,6 +81,8 @@ def make_bpd_error(s_code, s_message):
     class NewBPDError(BPDError):
         code = s_code
         message = s_message
+        cmd_name = ''
+        index = 0
         def __init__(self): pass
     return NewBPDError
 
@@ -831,6 +833,30 @@ class Server(BaseServer):
         query = beets.library.MatchQuery(key, value)
         for item in self.lib.get(query):
             yield self._item_info(item)
+    
+    
+    # "Outputs." Just a dummy implementation because we don't control
+    # any outputs.
+    
+    def cmd_outputs(self):
+        """List the available outputs."""
+        yield ('outputid: 0',
+               'outputname: gstreamer',
+               'outputenabled: 1',
+              )
+    
+    def cmd_enableoutput(self, output_id):
+        output_id = cast_arg(int, output_id)
+        if output_id != 0:
+            raise ArgumentIndexError()
+    
+    def cmd_disableoutput(self, output_id):
+        output_id = cast_arg(int, output_id)
+        if output_id == 0:
+            raise BPDError(ERROR_ARG, 'cannot disable this output')
+        else:
+            raise ArgumentIndexError()
+        
 
             
     # The functions below hook into the half-implementations provided
