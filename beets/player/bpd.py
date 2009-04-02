@@ -154,7 +154,7 @@ def path_to_list(path):
 
 # Generic server infrastructure, implementing the basic protocol.
 
-class Server(object):
+class BaseServer(object):
     """A MPD-compatible music player server.
     
     The generators with the `cmd_` prefix are invoked in response to
@@ -627,26 +627,29 @@ class CommandList(list):
 # A subclass of the basic, protocol-handling server that actually plays
 # music.
 
-class BGServer(Server):
-    """A `Server` using GStreamer to play audio and beets to store its
-    library.
+class Server(BaseServer):
+    """An MPD-compatible server using GStreamer to play audio and beets
+    to store its library.
     """
 
     def __init__(self, library, host='', port=DEFAULT_PORT):
         from beets.player.gstplayer import GstPlayer
-        super(BGServer, self).__init__(host, port)
+        super(Server, self).__init__(host, port)
         self.lib = library
         self.player = GstPlayer(self.play_finished)
     
     def run(self):
         self.player.run()
-        super(BGServer, self).run()
+        super(Server, self).run()
 
     def play_finished(self):
         """A callback invoked every time our player finishes a
         track.
         """
         self.cmd_next()
+    
+    
+    # Metadata helper functions.
     
     def _item_path(self, item):
         """Returns the item's "virtual path."""
@@ -682,6 +685,9 @@ class BGServer(Server):
     def _item_id(self, item):
         return item.id
 
+
+    # Path (directory tree) browsing.
+    
     def _parse_path(self, path="/"):
         """Take an artist/album/track path and return its components.
         """
@@ -743,21 +749,8 @@ class BGServer(Server):
         """Return info on all the items in the directory, recursively."""
         for l in self._listall(path, True): yield l
     
-    def cmd_search(self, key, value):
-        """Perform a substring match in a specific column."""
-        if key == 'filename':
-            key = 'path'
-        query = beets.library.SubstringQuery(key, value)
-        for item in self.lib.get(query):
-            yield self._item_info(item)
     
-    def cmd_find(self, key, value):
-        """Perform an exact match in a specific column."""
-        if key == 'filename':
-            key = 'path'
-        query = beets.library.MatchQuery(key, value)
-        for item in self.lib.get(query):
-            yield self._item_info(item)
+    # Playlist manipulation.
     
     def _get_by_path(self, path):
         """Helper function returning the item at a given path."""
@@ -778,8 +771,11 @@ class BGServer(Server):
         self.playlist_version += 1
         yield 'Id: ' + str(track.id)
 
+
+    # Server info.
+
     def cmd_status(self):
-        for l in super(BGServer, self).cmd_status(): yield l
+        for l in super(Server, self).cmd_status(): yield l
         if self.current_index > -1:
             item = self.playlist[self.current_index]
             yield 'bitrate: ' + str(item.bitrate/1000)
@@ -797,7 +793,8 @@ class BGServer(Server):
                'db_update: ' + str(int(self.startup_time)),
               )
 
-    # Search functionality.
+
+    # Searching.
 
     tagtype_map = {
         'Artist':       'artist',
@@ -818,31 +815,47 @@ class BGServer(Server):
         """
         for tag in self.tagtype_map:
             yield 'tagtype: ' + tag
-        
+    
+    def cmd_search(self, key, value):
+        """Perform a substring match in a specific column."""
+        if key == 'filename':
+            key = 'path'
+        query = beets.library.SubstringQuery(key, value)
+        for item in self.lib.get(query):
+            yield self._item_info(item)
+    
+    def cmd_find(self, key, value):
+        """Perform an exact match in a specific column."""
+        if key == 'filename':
+            key = 'path'
+        query = beets.library.MatchQuery(key, value)
+        for item in self.lib.get(query):
+            yield self._item_info(item)
 
+            
     # The functions below hook into the half-implementations provided
     # by the base class. Together, they're enough to implement all
     # normal playback functionality.
 
     def cmd_play(self, index=-1):
-        super(BGServer, self).cmd_play(index)
+        super(Server, self).cmd_play(index)
         if self.current_index > -1: # Not stopped.
             self.player.play_file(self.playlist[self.current_index].path)
 
     def cmd_pause(self, state=None):
-        super(BGServer, self).cmd_pause(state)
+        super(Server, self).cmd_pause(state)
         if self.paused:
             self.player.pause()
         elif self.playing:
             self.player.play()
 
     def cmd_stop(self):
-        super(BGServer, self).cmd_stop()
+        super(Server, self).cmd_stop()
         self.player.stop()
 
 
 # When run as a script, just start the server.
 
 if __name__ == '__main__':
-    BGServer(beets.Library('library.blb')).run()
+    Server(beets.Library('library.blb')).run()
 

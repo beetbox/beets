@@ -59,8 +59,8 @@ def bpd(lib, opts):
     host = opts.pop(0) if opts else ''
     port = int(opts.pop(0)) if opts else 6600
     
-    import beets.player.bpd
-    beets.player.bpd.BGServer(lib, host, port).run()
+    from beets.player.bpd import Server
+    Server(lib, host, port).run()
 
 if __name__ == "__main__":
     # parse options
