@@ -382,6 +382,16 @@ class BaseServer(object):
         """
         for l in self.cmd_playlistinfo(): yield l
     
+    def cmd_plchangesposid(self, version):
+        """Like plchanges, but only yields position and id.
+        
+        Also a dummy implementation.
+        """
+        for idx, track in enumerate(self.playlist):
+            yield ('Pos: ' + str(idx), 
+                   'Id: ' + str(track.id),
+                  )
+    
     def cmd_currentsong(self):
         """Yields information about the currently-playing song.
         """
