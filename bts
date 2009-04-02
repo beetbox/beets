@@ -1,34 +1,47 @@
 #!/usr/bin/env python
 from optparse import OptionParser
 from beets import Library
+from ConfigParser import SafeConfigParser
+import os
+
+CONFIG_DEFAULTS = {
+    # beets
+    'library': 'library.blb',
+
+    # bpd
+    'host': '',
+    'port': '6600',
+}
+
+CONFIG_FILE = os.path.expanduser('~/.beetsrc')
 
 def _print(txt):
     """Print the text encoded using UTF-8."""
     print txt.encode('utf-8')
 
-def add(lib, paths):
+def add(lib, config, paths):
     for path in paths:
         lib.add(path)
     lib.save()
 
-def ls(lib, criteria):
+def ls(lib, config, criteria):
     q = ' '.join(criteria)
     if not q.strip():
         q = None    # no criteria => match anything
     for item in lib.get(q):
         _print(item.artist + ' - ' + item.album + ' - ' + item.title)
 
-def imp(lib, paths):
+def imp(lib, config, paths):
     for path in paths:
         lib.add(path, copy=True)
     lib.save()
 
-def option(lib, options):
+def option(lib, config, options):
     (key, value) = options
     lib.options[key] = value
     lib.save()
 
-def remove(lib, criteria):
+def remove(lib, config, criteria):
     q = ' '.join(criteria)
     if not q.strip():
         raise ValueError('must provide some criteria for removing')
@@ -37,7 +50,7 @@ def remove(lib, criteria):
         item.remove()
     lib.save()
 
-def delete(lib, criteria):
+def delete(lib, config, criteria):
     q = ' '.join(criteria)
     if not q.strip():
         raise ValueError('must provide some criteria for deleting')
@@ -46,7 +59,7 @@ def delete(lib, criteria):
         item.delete()
     lib.save()
 
-def read(lib, criteria):
+def read(lib, config, criteria):
     q = ' '.join(criteria)
     if not q.strip():
         q = None
@@ -55,9 +68,11 @@ def read(lib, criteria):
         item.store()
     lib.save()
 
-def bpd(lib, opts):
-    host = opts.pop(0) if opts else ''
-    port = int(opts.pop(0)) if opts else 6600
+def bpd(lib, config, opts):
+    host = opts.pop(0) if opts else None
+    host = host if host else config.get('bpd', 'host')
+    port = int(opts.pop(0)) if opts else None
+    port = port if port else config.getint('bpd', 'port')
     
     from beets.player.bpd import Server
     Server(lib, host, port).run()
@@ -68,7 +83,7 @@ if __name__ == "__main__":
 command is one of: add, remove, update, write, list, help"""
     op = OptionParser(usage=usage)
     op.add_option('-l', '--library', dest='libpath', metavar='PATH',
-                  default='library.blb',
+                  default=None,
                   help='work on the specified library file')
     op.remove_option('--help')
     opts, args = op.parse_args()
@@ -77,8 +92,17 @@ command is one of: add, remove, update, write, list, help"""
     if len(args) < 1:
         op.error('no command specified')
     cmd = args.pop(0)
-    
-    lib = Library(opts.libpath)
+
+    # read defaults from config file
+    config = SafeConfigParser(CONFIG_DEFAULTS)
+    config.read(CONFIG_FILE)
+    for sec in ('beets', 'bpd'):
+        if not config.has_section(sec):
+            config.add_section(sec)
+    if not opts.libpath:
+        opts.libpath = config.get('beets', 'library')
+
+    lib = Library(os.path.expanduser(opts.libpath))
     
     # make a "help" command
     def help(*args): op.print_help()
@@ -102,7 +126,7 @@ command is one of: add, remove, update, write, list, help"""
     ]
     for test_command in avail_commands:
         if cmd in test_command[1]:
-            (test_command[0])(lib, args)
+            (test_command[0])(lib, config, args)
             op.exit()
     
     # no command matched
