@@ -45,7 +45,7 @@ VOLUME_MIN = 0
 VOLUME_MAX = 100
 
 SAFE_COMMANDS = (
-    # Commands that should be available when unauthenticated.
+    # Commands that are available when unauthenticated.
     'close', 'commands', 'notcommands', 'password', 'ping',
 )
 
@@ -191,6 +191,7 @@ class BaseServer(object):
         self.playlist_version = 0
         self.current_index = -1
         self.paused = False
+        self.error = None
     
     def run(self):
         """Block and start listening for connections from clients. An
@@ -302,8 +303,18 @@ class BaseServer(object):
             current_id = self._item_id(self.playlist[self.current_index])
             yield 'song: ' + str(self.current_index)
             yield 'songid: ' + str(current_id)
+
+        if self.error:
+            yield 'error: ' + self.error
         
-        #fixme Still missing: time, bitrate, audio, updating_db, error
+        #fixme Still missing: time, bitrate, audio, updating_db
+
+    def cmd_clearerror(self, conn):
+        """Removes the persistent error state of the server. This
+        error is set when a problem arises not in response to a
+        command (for instance, when playing a file).
+        """
+        self.error = None
     
     def cmd_random(self, conn, state):
         """Set or unset random (shuffle) mode."""
