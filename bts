@@ -11,6 +11,7 @@ CONFIG_DEFAULTS = {
     # bpd
     'host': '',
     'port': '6600',
+    'password': '',
 }
 
 CONFIG_FILE = os.path.expanduser('~/.beetsrc')
@@ -73,9 +74,10 @@ def bpd(lib, config, opts):
     host = host if host else config.get('bpd', 'host')
     port = int(opts.pop(0)) if opts else None
     port = port if port else config.getint('bpd', 'port')
+    password = config.get('bpd', 'password')
     
     from beets.player.bpd import Server
-    Server(lib, host, port).run()
+    Server(lib, host, port, password).run()
 
 if __name__ == "__main__":
     # parse options

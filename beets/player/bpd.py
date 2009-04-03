@@ -44,6 +44,11 @@ ERROR_EXIST = 56
 VOLUME_MIN = 0
 VOLUME_MAX = 100
 
+SAFE_COMMANDS = (
+    # Commands that should be available when unauthenticated.
+    'close', 'commands', 'notcommands', 'password', 'ping',
+)
+
 
 # Logger.
 log = logging.getLogger('bpd')
@@ -169,11 +174,12 @@ class BaseServer(object):
     This is a generic superclass and doesn't support many commands.
     """
     
-    def __init__(self, host='', port=DEFAULT_PORT):
+    def __init__(self, host='', port=DEFAULT_PORT, password=''):
         """Create a new server bound to address `host` and listening
-        on port `port`.
+        on port `port`. If `password` is given, it is required to do
+        anything significant on the server.
         """
-        self.host, self.port = host, port
+        self.host, self.port, self.password = host, port, password
         
         # Default server values.
         self.random = False
@@ -644,9 +650,9 @@ class Server(BaseServer):
     to store its library.
     """
 
-    def __init__(self, library, host='', port=DEFAULT_PORT):
+    def __init__(self, library, host='', port=DEFAULT_PORT, password=''):
         from beets.player.gstplayer import GstPlayer
-        super(Server, self).__init__(host, port)
+        super(Server, self).__init__(host, port, password)
         self.lib = library
         self.player = GstPlayer(self.play_finished)
     
