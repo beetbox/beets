@@ -167,9 +167,10 @@ class BaseServer(object):
     The generators with the `cmd_` prefix are invoked in response to
     client commands. For instance, if the client says `status`,
     `cmd_status` will be invoked. The arguments to the client's commands
-    are used as function arguments (*args). The generators should yield
-    strings or sequences of strings as many times as necessary.
-    They may also raise BPDError exceptions to report errors.
+    are used as function arguments following the connection issuing the
+    command. The generators should yield strings or sequences of strings
+    as many times as necessary. They may also raise BPDError exceptions
+    to report errors.
     
     This is a generic superclass and doesn't support many commands.
     """
@@ -226,35 +227,55 @@ class BaseServer(object):
         # Loop finished with no track found.
         raise ArgumentNotFoundError()
 
-    def cmd_ping(self):
+    def cmd_ping(self, conn):
         """Succeeds."""
         pass
     
-    def cmd_kill(self):
+    def cmd_kill(self, conn):
         """Exits the server process."""
         self.listener.close()
         exit(0)
     
-    def cmd_close(self):
+    def cmd_close(self, conn):
         """Closes the connection."""
         raise BPDClose()
     
-    def cmd_commands(self):
-        """Just lists the commands available to the user. For the time
-        being, lists all commands because no authentication is present.
-        """
-        out = []
-        for key in dir(self):
-            if key.startswith('cmd_'):
-                yield 'command: ' + key[4:]
+    def cmd_password(self, conn, password):
+        """Attempts password authentication."""
+        if password == self.password:
+            conn.authenticated = True
+        else:
+            conn.authenticated = False
+            raise BPDError(ERROR_PASSWORD, 'incorrect password')
     
-    def cmd_notcommands(self):
-        """Lists all unavailable commands. Because there's currently no
-        authentication, returns no commands.
-        """
-        pass
+    def cmd_commands(self, conn):
+        """Lists the commands available to the user."""
+        if self.password and not conn.authenticated:
+            # Not authenticated. Show limited list of commands.
+            for cmd in SAFE_COMMANDS:
+                yield 'command: ' + cmd
+        
+        else:
+            # Authenticated. Show all commands.
+            for func in dir(self):
+                if func.startswith('cmd_'):
+                    yield 'command: ' + func[4:]
     
-    def cmd_status(self):
+    def cmd_notcommands(self, conn):
+        """Lists all unavailable commands."""
+        if self.password and not conn.authenticated:
+            # Not authenticated. Show privileged commands.
+            for func in dir(self):
+                if func.startswith('cmd_'):
+                    cmd = func[4:]
+                    if cmd not in SAFE_COMMANDS:
+                        yield 'command: ' + cmd
+        
+        else:
+            # Authenticated. No commands are unavailable.
+            pass
+    
+    def cmd_status(self, conn):
         """Returns some status information for use with an
         implementation of cmd_status.
         
@@ -284,33 +305,33 @@ class BaseServer(object):
         
         #fixme Still missing: time, bitrate, audio, updating_db, error
     
-    def cmd_random(self, state):
+    def cmd_random(self, conn, state):
         """Set or unset random (shuffle) mode."""
         self.random = cast_arg('intbool', state)
     
-    def cmd_repeat(self, state):
+    def cmd_repeat(self, conn, state):
         """Set or unset repeat mode."""
         self.repeat = cast_arg('intbool', state)
     
-    def cmd_setvol(self, vol):
+    def cmd_setvol(self, conn, vol):
         """Set the player's volume level (0-100)."""
         vol = cast_arg(int, vol)
         if vol < VOLUME_MIN or vol > VOLUME_MAX:
             raise BPDError(ERROR_ARG, 'volume out of range')
         self.volume = vol
     
-    def cmd_crossfade(self, crossfade):
+    def cmd_crossfade(self, conn, crossfade):
         """Set the number of seconds of crossfading."""
         crossfade = cast_arg(int, crossfade)
         if crossfade < 0:            
             raise BPDError(ERROR_ARG, 'crossfade time must be nonnegative')
     
-    def cmd_clear(self):
+    def cmd_clear(self, conn):
         """Clear the playlist."""
         self.playlist = []
         self.playlist_version += 1
     
-    def cmd_delete(self, index):
+    def cmd_delete(self, conn, index):
         """Remove the song at index from the playlist."""
         index = cast_arg(int, index)
         try:
@@ -320,15 +341,15 @@ class BaseServer(object):
         self.playlist_version += 1
 
         if self.current_index == index: # Deleted playing song.
-            self.cmd_stop()
+            self.cmd_stop(conn)
         elif index < self.current_index: # Deleted before playing.
             # Shift playing index down.
             self.current_index -= 1
 
-    def cmd_deleteid(self, track_id):
-        self.cmd_delete(self._id_to_index(track_id))
+    def cmd_deleteid(self, conn, track_id):
+        self.cmd_delete(conn, self._id_to_index(track_id))
     
-    def cmd_move(self, idx_from, idx_to):
+    def cmd_move(self, conn, idx_from, idx_to):
         """Move a track in the playlist."""
         idx_from = cast_arg(int, idx_from)
         idx_to = cast_arg(int, idx_to)
@@ -337,11 +358,11 @@ class BaseServer(object):
             self.playlist.insert(idx_to, track)
         except IndexError:
             raise ArgumentIndexError()
-    def cmd_moveid(self, id_from, idx_to):
+    def cmd_moveid(self, conn, id_from, idx_to):
         idx_from = self._id_to_index(idx_from)
-        for l in self.cmd_move(idx_from, idx_to): yield l
+        for l in self.cmd_move(conn, idx_from, idx_to): yield l
     
-    def cmd_swap(self, i, j):
+    def cmd_swap(self, conn, i, j):
         """Swaps two tracks in the playlist."""
         i = cast_arg(int, i)
         j = cast_arg(int, j)
@@ -352,16 +373,16 @@ class BaseServer(object):
             raise ArgumentIndexError()
         self.playlist[j] = track_i
         self.playlist[i] = track_j
-    def cmd_swapid(self, i_id, j_id):
+    def cmd_swapid(self, conn, i_id, j_id):
         i = self._id_to_index(i_id)
         j = self._id_to_index(j_id)
-        for l in self.cmd_swap(i, j): yield l
+        for l in self.cmd_swap(conn, i, j): yield l
     
-    def cmd_urlhandlers(self):
+    def cmd_urlhandlers(self, conn):
         """Indicates supported URL schemes. None by default."""
         pass
     
-    def cmd_playlistinfo(self, index=-1):
+    def cmd_playlistinfo(self, conn, index=-1):
         """Gives metadata information about the entire playlist or a
         single track, given by its index.
         """
@@ -376,19 +397,19 @@ class BaseServer(object):
                 raise ArgumentIndexError()
             yield self._item_info(track)
     def cmd_playlistid(self, track_id=-1):
-        for l in self.cmd_playlistinfo(self._id_to_index(track_id)):
+        for l in self.cmd_playlistinfo(conn, self._id_to_index(track_id)):
             yield l
     
-    def cmd_plchanges(self, version):
+    def cmd_plchanges(self, conn, version):
         """Yields playlist changes since the given version.
         
         This is a "fake" implementation that ignores the version and
         just returns the entire playlist (rather like version=0). This
         seems to satisfy many clients.
         """
-        for l in self.cmd_playlistinfo(): yield l
+        for l in self.cmd_playlistinfo(conn): yield l
     
-    def cmd_plchangesposid(self, version):
+    def cmd_plchangesposid(self, conn, version):
         """Like plchanges, but only yields position and id.
         
         Also a dummy implementation.
@@ -398,43 +419,43 @@ class BaseServer(object):
                    'Id: ' + str(track.id),
                   )
     
-    def cmd_currentsong(self):
+    def cmd_currentsong(self, conn):
         """Yields information about the currently-playing song.
         """
         if self.current_index != -1: # -1 means stopped.
             track = self.playlist[self.current_index]
             yield self._item_info(track)
     
-    def cmd_next(self):
+    def cmd_next(self, conn):
         """Advance to the next song in the playlist."""
         self.current_index += 1
         if self.current_index >= len(self.playlist):
             # Fallen off the end. Just move to stopped state.
-            self.cmd_stop()
+            self.cmd_stop(conn)
         else:
-            self.cmd_play()
+            self.cmd_play(conn)
     
-    def cmd_previous(self):
+    def cmd_previous(self, conn):
         """Step back to the last song."""
         self.current_index -= 1
         if self.current_index < 0:
-            self.cmd_stop()
+            self.cmd_stop(conn)
         else:
-            self.cmd_play()
+            self.cmd_play(conn)
     
-    def cmd_pause(self, state=None):
+    def cmd_pause(self, conn, state=None):
         """Set the pause state playback."""
         if state is None:
             self.paused = not self.paused # Toggle.
         else:
             self.paused = cast_arg('intbool', state)
     
-    def cmd_play(self, index=-1):
+    def cmd_play(self, conn, index=-1):
         """Begin playback, possibly at a specified playlist index."""
         index = cast_arg(int, index)
         if index == -1: # No index specified: start where we are.
             if not self.playlist: # Empty playlist: stop immediately.
-                self.cmd_stop()
+                self.cmd_stop(conn)
             if self.current_index == -1: # No current song.
                 self.current_index = 0 # Start at the beginning.
             # If we have a current song, just stay there.
@@ -443,29 +464,29 @@ class BaseServer(object):
         
         self.paused = False
         
-    def cmd_playid(self, track_id=0):
+    def cmd_playid(self, conn, track_id=0):
         track_id = cast_arg(int, track_id)
         if track_id == -1:
             index = -1
         else:
             index = self._id_to_index(track_id)
-        self.cmd_play(index)
+        self.cmd_play(conn, index)
     
-    def cmd_stop(self):
+    def cmd_stop(self, conn):
         """Stop playback."""
         self.current_index = -1
         self.paused = False
     
-    def cmd_seek(self, index, time):
+    def cmd_seek(self, conn, index, time):
         """Seek to a specified point in a specified song."""
         index = cast_arg(int, index)
         if index < 0 or index >= len(self.playlist):
             raise ArgumentIndexError()
         self.current_index = index
-        self.cmd_play()
+        self.cmd_play(conn)
     def cmd_seekid(self, track_id, time):
         index = self._id_to_index(track_id)
-        for l in self.cmd_seek(index, time): yield l
+        for l in self.cmd_seek(conn, index, time): yield l
 
 class Connection(object):
     """A connection between a client and the server. Handles input and
@@ -476,6 +497,7 @@ class Connection(object):
         """Create a new connection for the accepted socket `client`.
         """
         self.client, self.server = client, server
+        self.authenticated = False
     
     def send(self, data=None):
         """Send data, which is either a string or an iterable
@@ -581,33 +603,43 @@ class Command(object):
     def run(self, conn):
         """Executes the command on the given connection.
         """
+        
+        # Attempt to get correct command function.
         func_name = 'cmd_' + self.name
-        if hasattr(conn.server, func_name):
-            try:
-                responses = getattr(conn.server, func_name)(*self.args)
-                if responses is not None:
-                    # Yielding nothing is considered success.
-                    for response in responses:
-                        conn.send(response)
-            
-            except BPDError, e:
-                # An exposed error. Set the command name and then let
-                # the Connection handle it.
-                e.cmd_name = self.name
-                raise e
-            
-            except BPDClose:
-                # An indication that the connection should close. Send
-                # it on the Connection.
-                raise
-            
-            except Exception, e:
-                # An "unintentional" error. Hide it from the client.
-                log.error(traceback.format_exc(e))
-                raise BPDError(ERROR_SYSTEM, 'server error', self.name)
-                
-        else:
+        if not hasattr(conn.server, func_name):
             raise BPDError(ERROR_UNKNOWN, 'unknown command', self.name)
+        func = getattr(conn.server, func_name)
+        
+        # Ensure we have permission for this command.
+        if conn.server.password and \
+                not conn.authenticated and \
+                self.name not in SAFE_COMMANDS:
+            raise BPDError(ERROR_PERMISSION, 'insufficient privileges')
+        
+        try:
+            args = [conn] + self.args
+            responses = func(*args)
+            if responses is not None:
+                # Yielding nothing is considered success.
+                for response in responses:
+                    conn.send(response)
+        
+        except BPDError, e:
+            # An exposed error. Set the command name and then let
+            # the Connection handle it.
+            e.cmd_name = self.name
+            raise e
+        
+        except BPDClose:
+            # An indication that the connection should close. Send
+            # it on the Connection.
+            raise
+        
+        except Exception, e:
+            # An "unintentional" error. Hide it from the client.
+            log.error(traceback.format_exc(e))
+            raise BPDError(ERROR_SYSTEM, 'server error', self.name)
+            
 
 class CommandList(list):
     """A list of commands issued by the client for processing by the
@@ -664,7 +696,7 @@ class Server(BaseServer):
         """A callback invoked every time our player finishes a
         track.
         """
-        self.cmd_next()
+        self.cmd_next(None)
     
     
     # Metadata helper functions.
@@ -719,7 +751,7 @@ class Server(BaseServer):
         if items: track = items.pop(0)
         return artist, album, track
     
-    def cmd_lsinfo(self, path="/"):
+    def cmd_lsinfo(self, conn, path="/"):
         """Yields info on all the items in the path."""
         artist, album, track = self._parse_path(path)
         
@@ -760,10 +792,10 @@ class Server(BaseServer):
             for item in items:
                 yield 'file: ' + self._item_path(i)
     
-    def cmd_listall(self, path="/"):
+    def cmd_listall(self, conn, path="/"):
         """Return the paths all items in the directory, recursively."""
         for l in self._listall(path, False): yield l
-    def cmd_listallinfo(self, path="/"):
+    def cmd_listallinfo(self, conn, path="/"):
         """Return info on all the items in the directory, recursively."""
         for l in self._listall(path, True): yield l
     
@@ -778,11 +810,11 @@ class Server(BaseServer):
             return it.next()
         except StopIteration:
             raise ArgumentNotFoundError()
-    def cmd_add(self, path):
+    def cmd_add(self, conn, path):
         """Adds a track to the playlist, specified by its path."""
         self.playlist.append(self._get_by_path(path))
         self.playlist_version += 1
-    def cmd_addid(self, path):
+    def cmd_addid(self, conn, path):
         """Same as cmd_add but yields an id."""
         track = self._get_by_path(path)
         self.playlist.append(track)
@@ -792,14 +824,14 @@ class Server(BaseServer):
 
     # Server info.
 
-    def cmd_status(self):
-        for l in super(Server, self).cmd_status(): yield l
+    def cmd_status(self, conn):
+        for l in super(Server, self).cmd_status(conn): yield l
         if self.current_index > -1:
             item = self.playlist[self.current_index]
             yield 'bitrate: ' + str(item.bitrate/1000)
             yield 'time: 0:' + str(int(item.length)) #fixme
 
-    def cmd_stats(self):
+    def cmd_stats(self, conn):
         # The first three items need to be done more efficiently. The
         # last three need to be implemented.
         yield ('artists: ' + str(len(self.lib.artists())),
@@ -827,14 +859,14 @@ class Server(BaseServer):
         'Disc':         'disc',
     }
 
-    def cmd_tagtypes(self):
+    def cmd_tagtypes(self, conn):
         """Returns a list of the metadata (tag) fields available for
         searching.
         """
         for tag in self.tagtype_map:
             yield 'tagtype: ' + tag
     
-    def cmd_search(self, key, value):
+    def cmd_search(self, conn, key, value):
         """Perform a substring match in a specific column."""
         if key == 'filename':
             key = 'path'
@@ -842,7 +874,7 @@ class Server(BaseServer):
         for item in self.lib.get(query):
             yield self._item_info(item)
     
-    def cmd_find(self, key, value):
+    def cmd_find(self, conn, key, value):
         """Perform an exact match in a specific column."""
         if key == 'filename':
             key = 'path'
@@ -854,19 +886,19 @@ class Server(BaseServer):
     # "Outputs." Just a dummy implementation because we don't control
     # any outputs.
     
-    def cmd_outputs(self):
+    def cmd_outputs(self, conn):
         """List the available outputs."""
         yield ('outputid: 0',
                'outputname: gstreamer',
                'outputenabled: 1',
               )
     
-    def cmd_enableoutput(self, output_id):
+    def cmd_enableoutput(self, conn, output_id):
         output_id = cast_arg(int, output_id)
         if output_id != 0:
             raise ArgumentIndexError()
     
-    def cmd_disableoutput(self, output_id):
+    def cmd_disableoutput(self, conn, output_id):
         output_id = cast_arg(int, output_id)
         if output_id == 0:
             raise BPDError(ERROR_ARG, 'cannot disable this output')
@@ -879,19 +911,19 @@ class Server(BaseServer):
     # by the base class. Together, they're enough to implement all
     # normal playback functionality.
 
-    def cmd_play(self, index=-1):
-        super(Server, self).cmd_play(index)
+    def cmd_play(self, conn, index=-1):
+        super(Server, self).cmd_play(conn, index)
         if self.current_index > -1: # Not stopped.
             self.player.play_file(self.playlist[self.current_index].path)
 
-    def cmd_pause(self, state=None):
-        super(Server, self).cmd_pause(state)
+    def cmd_pause(self, conn, state=None):
+        super(Server, self).cmd_pause(conn, state)
         if self.paused:
             self.player.pause()
         elif self.playing:
             self.player.play()
 
-    def cmd_stop(self):
+    def cmd_stop(self, conn):
         super(Server, self).cmd_stop()
         self.player.stop()
 
