@@ -306,8 +306,6 @@ class BaseServer(object):
 
         if self.error:
             yield 'error: ' + self.error
-        
-        #fixme Still missing: time, bitrate, audio, updating_db
 
     def cmd_clearerror(self, conn):
         """Removes the persistent error state of the server. This
@@ -341,6 +339,7 @@ class BaseServer(object):
         """Clear the playlist."""
         self.playlist = []
         self.playlist_version += 1
+        self.cmd_stop(conn)
     
     def cmd_delete(self, conn, index):
         """Remove the song at index from the playlist."""
@@ -407,7 +406,7 @@ class BaseServer(object):
             except IndexError:
                 raise ArgumentIndexError()
             yield self._item_info(track)
-    def cmd_playlistid(self, track_id=-1):
+    def cmd_playlistid(self, conn, track_id=-1):
         for l in self.cmd_playlistinfo(conn, self._id_to_index(track_id)):
             yield l
     
@@ -464,12 +463,17 @@ class BaseServer(object):
     def cmd_play(self, conn, index=-1):
         """Begin playback, possibly at a specified playlist index."""
         index = cast_arg(int, index)
+        
+        if index < -1 or index > len(self.playlist):
+            raise ArgumentIndexError()
+        
         if index == -1: # No index specified: start where we are.
             if not self.playlist: # Empty playlist: stop immediately.
                 self.cmd_stop(conn)
             if self.current_index == -1: # No current song.
                 self.current_index = 0 # Start at the beginning.
             # If we have a current song, just stay there.
+        
         else: # Start with the specified index.
             self.current_index = index
         
@@ -488,16 +492,15 @@ class BaseServer(object):
         self.current_index = -1
         self.paused = False
     
-    def cmd_seek(self, conn, index, time):
+    def cmd_seek(self, conn, index, pos):
         """Seek to a specified point in a specified song."""
         index = cast_arg(int, index)
         if index < 0 or index >= len(self.playlist):
             raise ArgumentIndexError()
         self.current_index = index
-        self.cmd_play(conn)
-    def cmd_seekid(self, track_id, time):
+    def cmd_seekid(self, track_id, pos):
         index = self._id_to_index(track_id)
-        for l in self.cmd_seek(conn, index, time): yield l
+        for l in self.cmd_seek(conn, index, pos): yield l
 
 class Connection(object):
     """A connection between a client and the server. Handles input and
@@ -839,8 +842,15 @@ class Server(BaseServer):
         for l in super(Server, self).cmd_status(conn): yield l
         if self.current_index > -1:
             item = self.playlist[self.current_index]
+            
             yield 'bitrate: ' + str(item.bitrate/1000)
-            yield 'time: 0:' + str(int(item.length)) #fixme
+            #fixme: missing 'audio'
+            
+            (pos, total) = self.player.time()
+            yield 'time: ' + str(pos) + ':' + str(total)
+            
+        #fixme: also missing 'updating_db'
+
 
     def cmd_stats(self, conn):
         # The first three items need to be done more efficiently. The
@@ -918,14 +928,21 @@ class Server(BaseServer):
         
 
             
-    # The functions below hook into the half-implementations provided
-    # by the base class. Together, they're enough to implement all
-    # normal playback functionality.
+    # Playback control. The functions below hook into the
+    # half-implementations provided by the base class. Together, they're
+    # enough to implement all normal playback functionality.
 
     def cmd_play(self, conn, index=-1):
+        new_index = index != -1 and index != self.current_index
+        was_paused = self.paused
         super(Server, self).cmd_play(conn, index)
+        
         if self.current_index > -1: # Not stopped.
-            self.player.play_file(self.playlist[self.current_index].path)
+            if was_paused and not new_index:
+                # Just unpause.
+                self.player.play()
+            else:
+                self.player.play_file(self.playlist[self.current_index].path)
 
     def cmd_pause(self, conn, state=None):
         super(Server, self).cmd_pause(conn, state)
@@ -935,8 +952,15 @@ class Server(BaseServer):
             self.player.play()
 
     def cmd_stop(self, conn):
-        super(Server, self).cmd_stop()
+        super(Server, self).cmd_stop(conn)
         self.player.stop()
+    
+    def cmd_seek(self, conn, index, pos):
+        """Seeks to the specified position in the specified song."""
+        index = cast_arg(int, index)
+        pos = cast_arg(int, pos)
+        super(Server, self).cmd_seek(conn, index, pos)
+        self.player.seek(pos)
 
 
 # When run as a script, just start the server.

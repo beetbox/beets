@@ -47,6 +47,7 @@ class GstPlayer(object):
         # Set up our own stuff.
         self.playing = False
         self.finished_callback = finished_callback
+        self.cached_time = None
 
     def _get_state(self):
         """Returns the current state flag of the playbin."""
@@ -59,6 +60,7 @@ class GstPlayer(object):
         if message.type == gst.MESSAGE_EOS:
             # file finished playing
             self.playing = False
+            self.cached_time = None
             if self.finished_callback:
                 self.finished_callback()
 
@@ -91,6 +93,8 @@ class GstPlayer(object):
     def stop(self):
         """Halt playback."""
         self.player.set_state(gst.STATE_NULL)
+        self.playing = False
+        self.cached_time = None
 
     def run(self):
         """Start a new thread for the player.
@@ -105,6 +109,41 @@ class GstPlayer(object):
             loop.run()
         thread.start_new_thread(start, ())
 
+    def time(self):
+        """Returns a tuple containing (position, length) where both
+        values are integers in seconds. If no stream is available,
+        returns (0, 0).
+        """
+        fmt = gst.Format(gst.FORMAT_TIME)
+        try:
+            pos = self.player.query_position(fmt, None)[0]/(10**9)
+            length = self.player.query_duration(fmt, None)[0]/(10**9)
+            self.cached_time = (pos, length)
+            return (pos, length)
+            
+        except gst.QueryError:
+            # Stream not ready. For small gaps of time, for instance
+            # after seeking, the time values are unavailable. For this
+            # reason, we cache recent.
+            if self.playing and self.cached_time:
+                return self.cached_time
+            else:
+                return (0, 0)
+
+    def seek(self, position):
+        """Seeks to position (in seconds)."""
+        cur_pos, cur_len = self.time()
+        if position > cur_len:
+            self.stop()
+            return
+        
+        fmt = gst.Format(gst.FORMAT_TIME)
+        ns = position * 10**9 # convert to nanoseconds
+        self.player.seek_simple(fmt, gst.SEEK_FLAG_FLUSH, ns)
+        
+        # save new cached time
+        self.cached_time = (position, cur_len)
+        
     def block(self):
         """Block until playing finishes."""
         while self.playing:
