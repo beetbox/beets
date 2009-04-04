@@ -164,13 +164,12 @@ def path_to_list(path):
 class BaseServer(object):
     """A MPD-compatible music player server.
     
-    The generators with the `cmd_` prefix are invoked in response to
+    The functions with the `cmd_` prefix are invoked in response to
     client commands. For instance, if the client says `status`,
     `cmd_status` will be invoked. The arguments to the client's commands
     are used as function arguments following the connection issuing the
-    command. The generators should yield strings or sequences of strings
-    as many times as necessary. They may also raise BPDError exceptions
-    to report errors.
+    command. The functions may send data on the connection. They may
+    also raise BPDError exceptions to report errors.
     
     This is a generic superclass and doesn't support many commands.
     """
@@ -254,13 +253,13 @@ class BaseServer(object):
         if self.password and not conn.authenticated:
             # Not authenticated. Show limited list of commands.
             for cmd in SAFE_COMMANDS:
-                yield 'command: ' + cmd
+                conn.send('command: ' + cmd)
         
         else:
             # Authenticated. Show all commands.
             for func in dir(self):
                 if func.startswith('cmd_'):
-                    yield 'command: ' + func[4:]
+                    conn.send('command: ' + func[4:])
     
     def cmd_notcommands(self, conn):
         """Lists all unavailable commands."""
@@ -270,7 +269,7 @@ class BaseServer(object):
                 if func.startswith('cmd_'):
                     cmd = func[4:]
                     if cmd not in SAFE_COMMANDS:
-                        yield 'command: ' + cmd
+                        conn.send('command: ' + cmd)
         
         else:
             # Authenticated. No commands are unavailable.
@@ -283,13 +282,13 @@ class BaseServer(object):
         Gives a list of response-lines for: volume, repeat, random,
         playlist, playlistlength, and xfade.
         """
-        yield ('volume: ' + str(self.volume),
-               'repeat: ' + str(int(self.repeat)),
-               'random: ' + str(int(self.random)),
-               'playlist: ' + str(self.playlist_version),
-               'playlistlength: ' + str(len(self.playlist)),
-               'xfade: ' + str(self.crossfade),
-              )
+        conn.send('volume: ' + str(self.volume),
+                  'repeat: ' + str(int(self.repeat)),
+                  'random: ' + str(int(self.random)),
+                  'playlist: ' + str(self.playlist_version),
+                  'playlistlength: ' + str(len(self.playlist)),
+                  'xfade: ' + str(self.crossfade),
+                  )
         
         if self.current_index == -1:
             state = 'stop'
@@ -297,15 +296,15 @@ class BaseServer(object):
             state = 'pause'
         else:
             state = 'play'
-        yield 'state: ' + state
+        conn.send('state: ' + state)
         
         if self.current_index != -1: # i.e., paused or playing
             current_id = self._item_id(self.playlist[self.current_index])
-            yield 'song: ' + str(self.current_index)
-            yield 'songid: ' + str(current_id)
+            conn.send('song: ' + str(self.current_index))
+            conn.send('songid: ' + str(current_id))
 
         if self.error:
-            yield 'error: ' + self.error
+            conn.send('error: ' + self.error)
 
     def cmd_clearerror(self, conn):
         """Removes the persistent error state of the server. This
@@ -370,7 +369,7 @@ class BaseServer(object):
             raise ArgumentIndexError()
     def cmd_moveid(self, conn, id_from, idx_to):
         idx_from = self._id_to_index(idx_from)
-        for l in self.cmd_move(conn, idx_from, idx_to): yield l
+        self.cmd_move(conn, idx_from, idx_to)
     
     def cmd_swap(self, conn, i, j):
         """Swaps two tracks in the playlist."""
@@ -386,7 +385,7 @@ class BaseServer(object):
     def cmd_swapid(self, conn, i_id, j_id):
         i = self._id_to_index(i_id)
         j = self._id_to_index(j_id)
-        for l in self.cmd_swap(conn, i, j): yield l
+        self.cmd_swap(conn, i, j)
     
     def cmd_urlhandlers(self, conn):
         """Indicates supported URL schemes. None by default."""
@@ -399,42 +398,41 @@ class BaseServer(object):
         index = cast_arg(int, index)
         if index == -1:
             for track in self.playlist:
-                yield self._item_info(track)
+                conn.send(*self._item_info(track))
         else:
             try:
                 track = self.playlist[index]
             except IndexError:
                 raise ArgumentIndexError()
-            yield self._item_info(track)
+            conn.send(*self._item_info(track))
     def cmd_playlistid(self, conn, track_id=-1):
-        for l in self.cmd_playlistinfo(conn, self._id_to_index(track_id)):
-            yield l
+        self.cmd_playlistinfo(conn, self._id_to_index(track_id))
     
     def cmd_plchanges(self, conn, version):
-        """Yields playlist changes since the given version.
+        """Sends playlist changes since the given version.
         
         This is a "fake" implementation that ignores the version and
         just returns the entire playlist (rather like version=0). This
         seems to satisfy many clients.
         """
-        for l in self.cmd_playlistinfo(conn): yield l
+        self.cmd_playlistinfo(conn)
     
     def cmd_plchangesposid(self, conn, version):
-        """Like plchanges, but only yields position and id.
+        """Like plchanges, but only sends position and id.
         
         Also a dummy implementation.
         """
         for idx, track in enumerate(self.playlist):
-            yield ('Pos: ' + str(idx), 
-                   'Id: ' + str(track.id),
-                  )
+            conn.send('Pos: ' + str(idx), 
+                      'Id: ' + str(track.id),
+                      )
     
     def cmd_currentsong(self, conn):
-        """Yields information about the currently-playing song.
+        """Sends information about the currently-playing song.
         """
         if self.current_index != -1: # -1 means stopped.
             track = self.playlist[self.current_index]
-            yield self._item_info(track)
+            conn.send(*self._item_info(track))
     
     def cmd_next(self, conn):
         """Advance to the next song in the playlist."""
@@ -500,7 +498,7 @@ class BaseServer(object):
         self.current_index = index
     def cmd_seekid(self, track_id, pos):
         index = self._id_to_index(track_id)
-        for l in self.cmd_seek(conn, index, pos): yield l
+        self.cmd_seek(conn, index, pos)
 
 class Connection(object):
     """A connection between a client and the server. Handles input and
@@ -513,20 +511,12 @@ class Connection(object):
         self.client, self.server = client, server
         self.authenticated = False
     
-    def send(self, data=None):
-        """Send data, which is either a string or an iterable
-        consisting of strings, to the client. A newline is added after
-        every string. `data` may be None, in which case nothing is
-        sent.
+    def send(self, *lines):
+        """Send lines, which are strings, to the client. A newline is
+        added after every string. `data` may be None, in which case
+        nothing is sent.
         """
-        if data is None:
-            return
-        
-        if isinstance(data, basestring): # Passed a single string.
-            out = data + NEWLINE
-        else: # Passed an iterable of strings (for instance, a Response).
-            out = NEWLINE.join(data) + NEWLINE
-        
+        out = NEWLINE.join(lines) + NEWLINE
         log.debug(out[:-1]) # Don't log trailing newline.
         self.client.sendall(out.encode('utf-8'))
     
@@ -632,11 +622,7 @@ class Command(object):
         
         try:
             args = [conn] + self.args
-            responses = func(*args)
-            if responses is not None:
-                # Yielding nothing is considered success.
-                for response in responses:
-                    conn.send(response)
+            func(*args)
         
         except BPDError, e:
             # An exposed error. Set the command name and then let
@@ -766,22 +752,22 @@ class Server(BaseServer):
         return artist, album, track
     
     def cmd_lsinfo(self, conn, path="/"):
-        """Yields info on all the items in the path."""
+        """Sends info on all the items in the path."""
         artist, album, track = self._parse_path(path)
         
         if not artist: # List all artists.
             for artist in self.lib.artists():
-                yield 'directory: ' + artist
+                conn.send('directory: ' + artist)
         elif not album: # List all albums for an artist.
             for album in self.lib.albums(artist):
-                yield 'directory: ' + seq_to_path(album)
+                conn.send('directory: ' + seq_to_path(album))
         elif not track: # List all tracks on an album.
             for item in self.lib.items(artist, album):
-                yield self._item_info(item)
+                conn.send(*self._item_info(item))
         else: # List a track. This isn't a directory.
             raise BPDError(ERROR_ARG, 'this is not a directory')
         
-    def _listall(self, path="/", info=False):
+    def _listall(self, conn, path="/", info=False):
         """Helper function for recursive listing. If info, show
         tracks' complete info; otherwise, just show items' paths.
         """
@@ -790,28 +776,28 @@ class Server(BaseServer):
         # artists
         if not artist:
             for a in self.lib.artists():
-                yield 'directory: ' + a
+                conn.send('directory: ' + a)
 
         # albums
         if not album:
             for a in self.lib.albums(artist or None):
-                yield 'directory: ' + seq_to_path(a)
+                conn.send('directory: ' + seq_to_path(a))
 
         # tracks
         items = self.lib.items(artist or None, album or None)
         if info:
             for item in items:
-                yield self._item_info(item)
+                conn.send(*self._item_info(item))
         else:
             for item in items:
-                yield 'file: ' + self._item_path(i)
+                conn.send('file: ' + self._item_path(i))
     
     def cmd_listall(self, conn, path="/"):
-        """Return the paths all items in the directory, recursively."""
-        for l in self._listall(path, False): yield l
+        """Send the paths all items in the directory, recursively."""
+        self._listall(conn, path, False)
     def cmd_listallinfo(self, conn, path="/"):
-        """Return info on all the items in the directory, recursively."""
-        for l in self._listall(path, True): yield l
+        """Send info on all the items in the directory, recursively."""
+        self._listall(conn, path, True)
     
     
     # Playlist manipulation.
@@ -829,25 +815,25 @@ class Server(BaseServer):
         self.playlist.append(self._get_by_path(path))
         self.playlist_version += 1
     def cmd_addid(self, conn, path):
-        """Same as cmd_add but yields an id."""
+        """Same as cmd_add but sends an id."""
         track = self._get_by_path(path)
         self.playlist.append(track)
         self.playlist_version += 1
-        yield 'Id: ' + str(track.id)
+        conn.send('Id: ' + str(track.id))
 
 
     # Server info.
 
     def cmd_status(self, conn):
-        for l in super(Server, self).cmd_status(conn): yield l
+        super(Server, self).cmd_status(conn)
         if self.current_index > -1:
             item = self.playlist[self.current_index]
             
-            yield 'bitrate: ' + str(item.bitrate/1000)
+            conn.send('bitrate: ' + str(item.bitrate/1000))
             #fixme: missing 'audio'
             
             (pos, total) = self.player.time()
-            yield 'time: ' + str(pos) + ':' + str(total)
+            conn.send('time: ' + str(pos) + ':' + str(total))
             
         #fixme: also missing 'updating_db'
 
@@ -855,14 +841,14 @@ class Server(BaseServer):
     def cmd_stats(self, conn):
         # The first three items need to be done more efficiently. The
         # last three need to be implemented.
-        yield ('artists: ' + str(len(self.lib.artists())),
-               'albums: ' + str(len(self.lib.albums())),
-               'songs: ' + str(len(list(self.lib.items()))),
-               'uptime: ' + str(int(time.time() - self.startup_time)),
-               'playtime: ' + '0',
-               'db_playtime: ' + '0',
-               'db_update: ' + str(int(self.startup_time)),
-              )
+        conn.send('artists: ' + str(len(self.lib.artists())),
+                  'albums: ' + str(len(self.lib.albums())),
+                  'songs: ' + str(len(list(self.lib.items()))),
+                  'uptime: ' + str(int(time.time() - self.startup_time)),
+                  'playtime: ' + '0',
+                  'db_playtime: ' + '0',
+                  'db_update: ' + str(int(self.startup_time)),
+                  )
 
 
     # Searching.
@@ -885,7 +871,7 @@ class Server(BaseServer):
         searching.
         """
         for tag in self.tagtype_map:
-            yield 'tagtype: ' + tag
+            conn.send('tagtype: ' + tag)
     
     def cmd_search(self, conn, key, value):
         """Perform a substring match in a specific column."""
@@ -893,7 +879,7 @@ class Server(BaseServer):
             key = 'path'
         query = beets.library.SubstringQuery(key, value)
         for item in self.lib.get(query):
-            yield self._item_info(item)
+            conn.send(*self._item_info(item))
     
     def cmd_find(self, conn, key, value):
         """Perform an exact match in a specific column."""
@@ -901,7 +887,7 @@ class Server(BaseServer):
             key = 'path'
         query = beets.library.MatchQuery(key, value)
         for item in self.lib.get(query):
-            yield self._item_info(item)
+            conn.send(*self._item_info(item))
     
     
     # "Outputs." Just a dummy implementation because we don't control
@@ -909,10 +895,10 @@ class Server(BaseServer):
     
     def cmd_outputs(self, conn):
         """List the available outputs."""
-        yield ('outputid: 0',
-               'outputname: gstreamer',
-               'outputenabled: 1',
-              )
+        conn.send('outputid: 0',
+                  'outputname: gstreamer',
+                  'outputenabled: 1',
+                  )
     
     def cmd_enableoutput(self, conn, output_id):
         output_id = cast_arg(int, output_id)
