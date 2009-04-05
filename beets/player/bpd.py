@@ -423,7 +423,7 @@ class BaseServer(object):
         Also a dummy implementation.
         """
         for idx, track in enumerate(self.playlist):
-            conn.send('Pos: ' + str(idx), 
+            conn.send('cpos: ' + str(idx), 
                       'Id: ' + str(track.id),
                       )
     
@@ -934,7 +934,7 @@ class Server(BaseServer):
         super(Server, self).cmd_pause(conn, state)
         if self.paused:
             self.player.pause()
-        elif self.playing:
+        elif self.player.playing:
             self.player.play()
 
     def cmd_stop(self, conn):
