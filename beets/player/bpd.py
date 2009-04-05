@@ -360,6 +360,8 @@ class BaseServer(object):
     
     def cmd_move(self, conn, idx_from, idx_to):
         """Move a track in the playlist."""
+        print idx_from, idx_to
+        print self.current_index, [i.title for i in self.playlist]
         idx_from = cast_arg(int, idx_from)
         idx_to = cast_arg(int, idx_to)
         try:
@@ -367,6 +369,13 @@ class BaseServer(object):
             self.playlist.insert(idx_to, track)
         except IndexError:
             raise ArgumentIndexError()
+        
+        # Update currently-playing song.
+        if idx_from == self.current_index:
+            self.current_index = idx_to
+        
+        self.playlist_version += 1
+    
     def cmd_moveid(self, conn, id_from, idx_to):
         idx_from = self._id_to_index(idx_from)
         self.cmd_move(conn, idx_from, idx_to)
@@ -380,8 +389,18 @@ class BaseServer(object):
             track_j = self.playlist[j]
         except IndexError:
             raise ArgumentIndexError()
+        
         self.playlist[j] = track_i
         self.playlist[i] = track_j
+        
+        # Update currently-playing song.
+        if self.current_index == i:
+            self.current_index = j
+        elif self.current_index == j:
+            self.current_index = i
+    
+        self.playlist_version += 1
+        
     def cmd_swapid(self, conn, i_id, j_id):
         i = self._id_to_index(i_id)
         j = self._id_to_index(j_id)
@@ -912,8 +931,7 @@ class Server(BaseServer):
         else:
             raise ArgumentIndexError()
         
-
-            
+   
     # Playback control. The functions below hook into the
     # half-implementations provided by the base class. Together, they're
     # enough to implement all normal playback functionality.
@@ -953,4 +971,3 @@ class Server(BaseServer):
 
 if __name__ == '__main__':
     Server(beets.Library('library.blb')).run()
-
