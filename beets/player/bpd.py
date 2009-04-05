@@ -858,31 +858,32 @@ class Server(BaseServer):
 
 
     def cmd_stats(self, conn):
-        # The first three items need to be done more efficiently. The
-        # last three need to be implemented.
+        # The first two items need to be done more efficiently.
+        songs, totaltime = beets.library.TrueQuery().count(self.lib)
         conn.send('artists: ' + str(len(self.lib.artists())),
                   'albums: ' + str(len(self.lib.albums())),
-                  'songs: ' + str(len(list(self.lib.items()))),
+                  'songs: ' + str(songs),
                   'uptime: ' + str(int(time.time() - self.startup_time)),
-                  'playtime: ' + '0',
-                  'db_playtime: ' + '0',
-                  'db_update: ' + str(int(self.startup_time)),
+                  'playtime: ' + '0', #fixme
+                  'db_playtime: ' + str(int(totaltime)),
+                  'db_update: ' + str(int(self.startup_time)), #fixme
                   )
 
 
     # Searching.
 
     tagtype_map = {
-        'Artist':       'artist',
-        'Album':        'album',
-        'Title':        'title',
-        'Track':        'track',
+        'artist':       'artist',
+        'album':        'album',
+        'title':        'title',
+        'track':        'track',
         # Name?
-        'Genre':        'genre',
-        'Date':         'year',
-        'Composer':     'composer',
+        'genre':        'genre',
+        'date':         'year',
+        'composer':     'composer',
         # Performer?
-        'Disc':         'disc',
+        'disc':         'disc',
+        'filename':     'path', # Suspect.
     }
 
     def cmd_tagtypes(self, conn):
@@ -892,22 +893,59 @@ class Server(BaseServer):
         for tag in self.tagtype_map:
             conn.send('tagtype: ' + tag)
     
-    def cmd_search(self, conn, key, value):
+    def _tagtype_to_key(self, tag):
+        """Uses `tagtype_map` to look up the beets column name for an
+        MPD tagtype (or throw an appropriate exception).
+        """
+        try:
+            return self.tagtype_map[tag.lower()]
+        except KeyError:
+            raise BPDError(ERROR_UNKNOWN, 'no such tagtype')
+    
+    def cmd_search(self, conn, tag, value):
         """Perform a substring match in a specific column."""
-        if key == 'filename':
-            key = 'path'
+        key = self._tagtype_to_key(tag)
         query = beets.library.SubstringQuery(key, value)
         for item in self.lib.get(query):
             conn.send(*self._item_info(item))
     
-    def cmd_find(self, conn, key, value):
+    def cmd_find(self, conn, tag, value):
         """Perform an exact match in a specific column."""
-        if key == 'filename':
-            key = 'path'
+        key = self._tagtype_to_key(tag)
         query = beets.library.MatchQuery(key, value)
         for item in self.lib.get(query):
             conn.send(*self._item_info(item))
     
+    def cmd_list(self, conn, show_tag, match_tag=None, match_term=None):
+        """List distinct metadata values for show_tag, possibly
+        filtered by matching match_tag to match_term.
+        """
+        show_key = self._tagtype_to_key(show_tag)
+        if match_tag and match_term:
+            match_key = self._tagtype_to_key(match_tag)
+            query = beets.library.MatchQuery(match_key, match_term)
+        else:
+            query = beets.library.TrueQuery()
+        
+        clause, subvals = query.clause()
+        statement = 'SELECT DISTINCT ' + show_key + \
+                    ' FROM items WHERE ' + clause
+        c = self.lib.conn.cursor()
+        c.execute(statement, subvals)
+        
+        for row in c:
+            conn.send(show_tag + ': ' + row[0])
+    
+    def cmd_count(self, conn, tag, value):
+        """Returns the number and total time of songs matching the
+        tag/value query.
+        """
+        key = self._tagtype_to_key(tag)
+        query = beets.library.MatchQuery(key, value)
+        songs, playtime = query.count(self.lib)
+        conn.send('songs: ' + str(songs),
+                  'playtime: ' + str(int(playtime)))
+        
     
     # "Outputs." Just a dummy implementation because we don't control
     # any outputs.

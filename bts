@@ -82,7 +82,7 @@ def bpd(lib, config, opts):
 if __name__ == "__main__":
     # parse options
     usage = """usage: %prog [options] command
-command is one of: add, remove, update, write, list, help"""
+command is one of: add, remove, update, write, list, bpd, help"""
     op = OptionParser(usage=usage)
     op.add_option('-l', '--library', dest='libpath', metavar='PATH',
                   default=None,

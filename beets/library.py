@@ -373,6 +373,17 @@ class Query(object):
         clause, subvals = self.clause()
         return ('SELECT ' + columns + ' FROM items WHERE ' + clause, subvals)
 
+    def count(self, library):
+        """Returns `(num, length)` where `num` is the number of items in
+        the library matching this query and `length` is their total
+        length in seconds.
+        """
+        clause, subvals = self.clause()
+        statement = 'SELECT COUNT(id), SUM(length) FROM items WHERE ' + clause
+        c = library.conn.cursor()
+        result = c.execute(statement, subvals).fetchone()
+        return (result[0], result[1])
+
     def execute(self, library):
         """Runs the query in the specified library, returning a
         ResultIterator.
