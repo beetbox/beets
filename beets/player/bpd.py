@@ -858,10 +858,17 @@ class Server(BaseServer):
 
 
     def cmd_stats(self, conn):
-        # The first two items need to be done more efficiently.
+        """Sends some statistics about the library."""
         songs, totaltime = beets.library.TrueQuery().count(self.lib)
-        conn.send('artists: ' + str(len(self.lib.artists())),
-                  'albums: ' + str(len(self.lib.albums())),
+
+        statement = 'SELECT COUNT(DISTINCT artist), ' \
+                           'COUNT(DISTINCT album) FROM items'
+        c = self.lib.conn.cursor()
+        result = c.execute(statement).fetchone()
+        artists, albums = result[0], result[1]
+
+        conn.send('artists: ' + str(artists),
+                  'albums: ' + str(albums),
                   'songs: ' + str(songs),
                   'uptime: ' + str(int(time.time() - self.startup_time)),
                   'playtime: ' + '0', #fixme
