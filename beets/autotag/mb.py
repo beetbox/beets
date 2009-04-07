@@ -60,21 +60,24 @@ def find_releases(criteria, limit=25):
     query = ' '.join(query_parts)
     
     # Build the filter and send the query.
-    filter = mbws.ReleaseFilter(limit=limit, query=query)
+    filt = mbws.ReleaseFilter(limit=limit, query=query)
     _query_wait()
-    query = mbws.Query()
-    return query.getReleases(filter=filter)
+    return mbws.Query().getReleases(filter=filt)
 
-def release_dict(release):
+def release_dict(release, tracks=None):
     """Takes a MusicBrainz `Release` object and returns a dictionary
-    containing the interesting data about that release.
+    containing the interesting data about that release. A list of
+    `Track` objects may also be provided as `tracks`; they are then
+    included in the resulting dictionary.
     """
+    # Basic info.
     out = {'album':     release.title,
            'album_id':  release.id,
            'artist':    release.artist.name,
            'artist_id': release.artist.id,
           }
 
+    # Release date.
     date_str = release.getEarliestReleaseDate()
     try:
         # If the date-string is just an integer, then it's the release
@@ -89,7 +92,28 @@ def release_dict(release):
                     'day':   date.day,
                    })
 
+    # Tracks.
+    if tracks:
+        out['tracks'] = []
+        for track in tracks:
+            out['tracks'].append({'title':  track.title,
+                                  'id':     track.id,
+                                  'length': track.duration/(1000.0),
+                                })
+
     return out
+
+def release_tracks(release_id):
+    """Given a MusicBrainz release ID, fetch a list of tracks on the
+    release. If the release is not found, returns an empty list.
+    """
+    inc = mbws.ReleaseIncludes(tracks=True)
+    _query_wait()
+    release = mbws.Query().getReleaseById(release_id, inc)
+    if release:
+        return release.tracks
+    else:
+        return []
 
 def match_album(artist, album, tracks=None):
     """Searches for a single album ("release" in MusicBrainz parlance)
@@ -99,14 +123,21 @@ def match_album(artist, album, tracks=None):
     The query consists of an artist name, an album name, and,
     optionally, a number of tracks on the album.
     """
+    # Build search criteria.
     criteria = {'artist':  artist, 'release': album}
     if tracks is not None:
         criteria['tracks'] = str(tracks)
 
+    # Search for the release.
     results = find_releases(criteria, 1)
     if not results:
         return None
-    return release_dict(results[0].release)
+    release = results[0].release
+        
+    # Look up tracks.
+    tracks = release_tracks(release.id)
+    
+    return release_dict(release, tracks)
 
 
 if __name__ == '__main__':
