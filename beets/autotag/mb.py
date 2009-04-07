@@ -1,41 +1,74 @@
+# coding=utf-8
+
+# Portions Copyright (C) 2006 Lukáš Lalinský
+# from the MusicBrainz Picard project.
+
+"""Searches for albums in the MusicBrainz database.
+
+This is a thin layer of the official `python-musicbrainz2` module. It
+abstracts away that module's object model, the server's Lucene query
+syntax, and other uninteresting parts of using musicbrainz2. The
+principal interface is the function `match_album`.
+"""
+
 import re
 import time
 import datetime
 import musicbrainz2.webservice as mbws
 
+# MusicBrainz requires that a client does not query the server more
+# than once a second. This function enforces that limit using a
+# module-global variable to keep track of the last time a query was
+# sent.
 QUERY_WAIT_TIME = 1.0
 last_query_time = 0.0
-def query_wait():
+def _query_wait():
+    """Wait until at least `QUERY_WAIT_TIME` seconds have passed since
+    the last invocation of this function. This should be called (by
+    this module) before every query is sent.
+    """
     global last_query_time
+    since_last_query = time.time() - last_query_time
+    if since_last_query < QUERY_WAIT_TIME:
+        time.sleep(QUERY_WAIT_TIME - since_last_query)
+    last_query_time = time.time()
 
-    now = time.time()
-    while now - last_query_time < QUERY_WAIT_TIME:
-        time.sleep(QUERY_WAIT_TIME - (now - last_query_time))
-        now = time.time()
-
-    last_query_time = now
-
-# Regex stolen from MusicBrainz Picard.
-def lucene_escape(text):
+def _lucene_escape(text):
+    """Escapes a string so it may be used verbatim in a Lucene query
+    string.
+    """
+    # Regex stolen from MusicBrainz Picard.
     return re.sub(r'([+\-&|!(){}\[\]\^"~*?:\\])', r'\\\1', text)
 
-# Workings more or less stolen from Picard.
+# Workings of this function more or less stolen from Picard.
 def find_releases(criteria, limit=25):
+    """Get a list of `ReleaseResult` objects from the MusicBrainz
+    database that match `criteria`. The latter is a dictionary whose
+    keys are MusicBrainz field names and whose values are search terms
+    for those fields.
+
+    The field names are from MusicBrainz's Lucene query syntax, which
+    is detailed here:
+        http://wiki.musicbrainz.org/Text_Search_Syntax
+    """
     # Build Lucene query (the MusicBrainz 'query' filter).
     query_parts = []
     for name, value in criteria.items():
-        value = lucene_escape(value).strip().lower()
+        value = _lucene_escape(value).strip().lower()
         if value:
             query_parts.append('%s:(%s)' % (name, value.encode('utf-8')))
     query = ' '.join(query_parts)
     
     # Build the filter and send the query.
     filter = mbws.ReleaseFilter(limit=limit, query=query)
-    query_wait()
+    _query_wait()
     query = mbws.Query()
     return query.getReleases(filter=filter)
 
 def release_dict(release):
+    """Takes a MusicBrainz `Release` object and returns a dictionary
+    containing the interesting data about that release.
+    """
     out = {'album':     release.title,
            'album_id':  release.id,
            'artist':    release.artist.name,
@@ -59,6 +92,13 @@ def release_dict(release):
     return out
 
 def match_album(artist, album, tracks=None):
+    """Searches for a single album ("release" in MusicBrainz parlance)
+    and returns information about in a dictionary (as returned by
+    `release_dict`).
+
+    The query consists of an artist name, an album name, and,
+    optionally, a number of tracks on the album.
+    """
     criteria = {'artist':  artist, 'release': album}
     if tracks is not None:
         criteria['tracks'] = str(tracks)
