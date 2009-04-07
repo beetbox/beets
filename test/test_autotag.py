@@ -6,7 +6,18 @@ import sys
 import time
 import musicbrainz2.model
 sys.path.append('..')
+from beets import autotag
 from beets.autotag import mb
+from beets.library import Item
+
+class AutotagTest(unittest.TestCase):
+    def test_likely_metadata_finds_pluralities(self):
+        items = [Item({'artist': 'The Beetles', 'album': 'The White Album'}),
+                 Item({'artist': 'The Beatles', 'album': 'The White Album'}),
+                 Item({'artist': 'The Beatles', 'album': 'Teh White Album'})]
+        l_artist, l_album = autotag.likely_metadata(items)
+        self.assertEqual(l_artist, 'The Beatles')
+        self.assertEqual(l_album, 'The White Album')
 
 class MBQueryWaitTest(unittest.TestCase):
     def setup(self):
