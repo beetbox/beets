@@ -138,7 +138,6 @@ def seq_to_path(seq):
     """Encodes a sequence of strings as a path-like string. The
     sequence can be recovered exactly using path_to_list.
     """
-    
     out = []
     for s in seq:
         out.append(s.replace('\\', '\\\\').replace('/', '\\/'))
@@ -149,7 +148,6 @@ def path_to_list(path):
     """Takes a path-like string (probably encoded by seq_to_path) and
     returns the list of strings it represents.
     """
-    
     # To simplify parsing, ensure that everything is terminated by a
     # slash. Note that seq_to_path never added a trailing slash, so
     # they are "disallowed" by this encoding.
@@ -387,6 +385,10 @@ class BaseServer(object):
         # Update currently-playing song.
         if idx_from == self.current_index:
             self.current_index = idx_to
+        elif idx_from < self.current_index <= idx_to:
+            self.current_index -= 1
+        elif idx_from > self.current_index >= idx_to:
+            self.current_index += 1
         
         self.playlist_version += 1
     
