@@ -1,11 +1,27 @@
 # coding=utf-8
-
+#
+# This file is part of beets.
+# Copyright 2009, Adrian Sampson.
+#
 # Portions Copyright (C) 2006 Lukáš Lalinský
 # from the MusicBrainz Picard project.
+# 
+# Beets is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# Beets is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with beets.  If not, see <http://www.gnu.org/licenses/>.
 
 """Searches for albums in the MusicBrainz database.
 
-This is a thin layer of the official `python-musicbrainz2` module. It
+This is a thin layer over the official `python-musicbrainz2` module. It
 abstracts away that module's object model, the server's Lucene query
 syntax, and other uninteresting parts of using musicbrainz2. The
 principal interface is the function `match_album`.
@@ -25,7 +41,7 @@ last_query_time = 0.0
 def _query_wait():
     """Wait until at least `QUERY_WAIT_TIME` seconds have passed since
     the last invocation of this function. This should be called (by
-    this module) before every query is sent.
+    this module) before any query is sent.
     """
     global last_query_time
     since_last_query = time.time() - last_query_time
@@ -140,7 +156,7 @@ def match_album(artist, album, tracks=None):
     return release_dict(release, tracks)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__': # Smoke test.
     print match_album('the little ones', 'morning tide')
     print match_album('the 6ths', 'hyacinths and thistles')
 

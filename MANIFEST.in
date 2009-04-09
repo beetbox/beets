@@ -2,3 +2,6 @@
 # that make the distribution heavier than it needs to be.
 prune test
 
+# Include documentation.
+include *.txt
+
