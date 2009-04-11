@@ -140,35 +140,27 @@ def seq_to_path(seq):
     """
     out = []
     for s in seq:
-        out.append(s.replace('\\', '\\\\').replace('/', '\\/'))
+        out.append(s.replace('\\', '\\\\') # preserve backslashes
+                    .replace('_', '\\_')   # preserve _s
+                    .replace('/', '_')     # hide /s as _s
+                  )
     return '/'.join(out)
 
-path_to_list_pattern = re.compile(r'(?:\\/|[^/])*')
+
 def path_to_list(path):
     """Takes a path-like string (probably encoded by seq_to_path) and
     returns the list of strings it represents.
     """
-    # To simplify parsing, ensure that everything is terminated by a
-    # slash. Note that seq_to_path never added a trailing slash, so
-    # they are "disallowed" by this encoding.
-    path += '/'
-    
-    out = []
-    while path:
-        
-        # Search for one path component.
-        m = path_to_list_pattern.match(path)
-        if not m: break # Should never happen.
-        component = m.group(0)
-        
-        # Chop off this component and the / that follows it.
-        path = path[len(component):]
-        if len(path) >= 1 and path[0] == '/': # Should always be true.
-            path = path[1:]
-        
-        out.append(component.replace('\\/', '/').replace('\\\\', '\\'))
-    
-    return out
+    def repl(m):
+        # This function maps "escaped" characters to original
+        # characters. Because the regex is in the right order, the
+        # sequences are replaced top-to-bottom.
+        return {'\\\\': '\\',
+                '\\_':  '_',
+                '_':    '/',
+               }[m.group(0)]
+    return [re.sub(r'\\\\|\\_|_', repl, component)
+            for component in path.split('/')]
 
 
 # Generic server infrastructure, implementing the basic protocol.
@@ -792,7 +784,7 @@ class Server(BaseServer):
         
         if not artist: # List all artists.
             for artist in self.lib.artists():
-                conn.send('directory: ' + artist)
+                conn.send('directory: ' + seq_to_path((artist,)))
         elif not album: # List all albums for an artist.
             for album in self.lib.albums(artist):
                 conn.send('directory: ' + seq_to_path(album))
