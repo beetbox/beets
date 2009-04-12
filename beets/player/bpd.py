@@ -134,22 +134,30 @@ class BPDClose(Exception):
 # directory structure required by the MPD protocol to browse music in
 # the library.
 
-def seq_to_path(seq):
+def seq_to_path(seq, placeholder=''):
     """Encodes a sequence of strings as a path-like string. The
-    sequence can be recovered exactly using path_to_list.
+    sequence can be recovered exactly using path_to_list. If
+    `placeholder` is provided, it is used in place of empty path
+    components.
     """
     out = []
     for s in seq:
-        out.append(s.replace('\\', '\\\\') # preserve backslashes
-                    .replace('_', '\\_')   # preserve _s
-                    .replace('/', '_')     # hide /s as _s
-                  )
+        if placeholder and s == '':
+            out.append(placeholder)
+        else:
+            out.append(s.replace('\\', '\\\\') # preserve backslashes
+                        .replace('_', '\\_')   # preserve _s
+                        .replace('/', '_')     # hide /s as _s
+                      )
     return '/'.join(out)
 
 
-def path_to_list(path):
+def path_to_list(path, placeholder=''):
     """Takes a path-like string (probably encoded by seq_to_path) and
-    returns the list of strings it represents.
+    returns the list of strings it represents. If `placeholder` is
+    provided, it is interpreted to represent an empty path component.
+    Also, when given a `placeholder`, this function ignores empty
+    path components.
     """
     def repl(m):
         # This function maps "escaped" characters to original
@@ -159,8 +167,24 @@ def path_to_list(path):
                 '\\_':  '_',
                 '_':    '/',
                }[m.group(0)]
-    return [re.sub(r'\\\\|\\_|_', repl, component)
-            for component in path.split('/')]
+    components = [re.sub(r'\\\\|\\_|_', repl, component)
+                  for component in path.split('/')]
+    
+    if placeholder:
+        new_components = []
+        for c in components:
+            if c == '':
+                # Drop empty path components.
+                continue
+            if c == placeholder:
+                new_components.append('')
+            else:
+                new_components.append(c)
+        components = new_components
+    
+    return components
+
+PATH_PH = '(unknown)'
 
 
 # Generic server infrastructure, implementing the basic protocol.
@@ -730,7 +754,7 @@ class Server(BaseServer):
     
     def _item_path(self, item):
         """Returns the item's "virtual path."""
-        return seq_to_path((item.artist, item.album, item.title))
+        return seq_to_path((item.artist, item.album, item.title), PATH_PH)
 
     def _item_info(self, item):
         info_lines = ['file: ' + self._item_path(item),
@@ -770,25 +794,27 @@ class Server(BaseServer):
         """
         if len(path) >= 1 and path[0] == '/': # Remove leading slash.
             path = path[1:]
-        items = path_to_list(path)
+        items = path_to_list(path, PATH_PH)
 
-        artist, album, track = None, None, None
-        if items: artist = items.pop(0)
-        if items: album = items.pop(0)
-        if items: track = items.pop(0)
-        return artist, album, track
+        dirs = [None, None, None]
+        for i in range(len(dirs)):
+            if items:
+                # Take a directory if it exists. Otherwise, leave as "none".
+                # This way, we ensure that we always return 3 elements.
+                dirs[i] = items.pop(0)
+        return dirs
     
     def cmd_lsinfo(self, conn, path="/"):
         """Sends info on all the items in the path."""
         artist, album, track = self._parse_path(path)
         
-        if not artist: # List all artists.
+        if artist is None: # List all artists.
             for artist in self.lib.artists():
-                conn.send('directory: ' + seq_to_path((artist,)))
-        elif not album: # List all albums for an artist.
+                conn.send('directory: ' + seq_to_path((artist,), PATH_PH))
+        elif album is None: # List all albums for an artist.
             for album in self.lib.albums(artist):
-                conn.send('directory: ' + seq_to_path(album))
-        elif not track: # List all tracks on an album.
+                conn.send('directory: ' + seq_to_path(album, PATH_PH))
+        elif track is None: # List all tracks on an album.
             for item in self.lib.items(artist, album):
                 conn.send(*self._item_info(item))
         else: # List a track. This isn't a directory.
@@ -808,7 +834,7 @@ class Server(BaseServer):
         # albums
         if not album:
             for a in self.lib.albums(artist or None):
-                conn.send('directory: ' + seq_to_path(a))
+                conn.send('directory: ' + seq_to_path(a, PATH_PH))
 
         # tracks
         items = self.lib.items(artist or None, album or None)
@@ -831,7 +857,7 @@ class Server(BaseServer):
     
     def _get_by_path(self, path):
         """Helper function returning the item at a given path."""
-        artist, album, track = path_to_list(path)
+        artist, album, track = path_to_list(path, PATH_PH)
         it = self.lib.items(artist, album, track)
         try:
             return it.next()

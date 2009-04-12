@@ -23,13 +23,6 @@ sys.path.append('..')
 from beets.player import bpd
 
 class FauxPathTest(unittest.TestCase):
-    
-    # The current encoding actually cannot distinguish between ['']
-    # and []. This doesn't cause a bug because we never use empty
-    # sequences, but it might be nice to fix someday.
-    #def test_empty_seq_preserved(self):
-    #    seq = []
-    #    self.assertEqual(bpd.path_to_list(bpd.seq_to_path(seq)), seq)
         
     def test_single_element_preserved(self):
         seq = ['hello']
@@ -72,7 +65,29 @@ class FauxPathTest(unittest.TestCase):
         with_slashes = bpd.seq_to_path(['good/day', 'sir'])
         self.assertEqual(no_slashes.count('/'), with_slashes.count('/'))
     
+    def test_empty_seq_preserved_with_placeholder(self):
+        seq = []
+        self.assertEqual(bpd.path_to_list(bpd.seq_to_path(seq, 'PH'), 'PH'),
+                         seq)
 
+    def test_empty_strings_preserved_with_placeholder(self):
+        seq = ['hello', '', 'sup']
+        self.assertEqual(bpd.path_to_list(bpd.seq_to_path(seq, 'PH'), 'PH'),
+                         seq)
+    
+    def test_empty_strings_only_preserved_with_placeholder(self):
+        seq = ['', '', '']
+        self.assertEqual(bpd.path_to_list(bpd.seq_to_path(seq, 'PH'), 'PH'),
+                         seq)
+    
+    def test_placeholder_does_replace(self):
+        seq = ['hello', '', 'sup']
+        self.assertFalse('//' in bpd.seq_to_path(seq, 'PH'))
+    
+    # Note that the path encodes doesn't currently try to distinguish
+    # between the placeholder and strings identical to the placeholder.
+    # This might be a nice feature but is not currently essential.
+    
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

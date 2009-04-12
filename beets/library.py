@@ -696,7 +696,7 @@ class Library(object):
         artist name or an arbitrary query.
         """
         query = self._get_query(query)
-        if artist:
+        if artist is not None:
             # "Add" the artist to the query.
             query = AndQuery((query, MatchQuery('artist', artist)))
         where, subvals = query.clause()
@@ -712,11 +712,11 @@ class Library(object):
         albums appropriately.
         """
         queries = [self._get_query(query)]
-        if artist:
+        if artist is not None:
             queries.append(MatchQuery('artist', artist))
-        if album:
+        if album is not None:
             queries.append(MatchQuery('album', album))
-        if title:
+        if title is not None:
             queries.append(MatchQuery('title', title))
         super_query = AndQuery(queries)
         where, subvals = super_query.clause()
