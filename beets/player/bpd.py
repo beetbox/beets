@@ -855,24 +855,42 @@ class Server(BaseServer):
     
     # Playlist manipulation.
     
-    def _get_by_path(self, path):
-        """Helper function returning the item at a given path."""
-        artist, album, track = path_to_list(path, PATH_PH)
-        it = self.lib.items(artist, album, track)
-        try:
-            return it.next()
-        except StopIteration:
+    def _add(self, conn, path, send_id=False):
+        """Adds a track or directory to the playlist, specified by a
+        path. If `send_id`, write each item's id to the client.
+        """
+        components = path_to_list(path)
+        
+        if len(components) <= 3:
+            # Add a single track.
+            it = self.lib.items(*components)
+            
+            found_an_item = None
+            for item in it:
+                found_an_item = True
+                self.playlist.append(item)
+                if send_id:
+                    conn.send('Id: ' + str(item.id))
+                
+            if not found_an_item:
+                # No items matched.
+                raise ArgumentNotFoundError()
+            
+            self.playlist_version += 1
+        
+        else:
+            # More than three path components: invalid pathname.
             raise ArgumentNotFoundError()
+        
     def cmd_add(self, conn, path):
-        """Adds a track to the playlist, specified by its path."""
-        self.playlist.append(self._get_by_path(path))
-        self.playlist_version += 1
+        """Adds a track or directory to the playlist, specified by a
+        path.
+        """
+        self._add(conn, path, False)
+    
     def cmd_addid(self, conn, path):
-        """Same as cmd_add but sends an id."""
-        track = self._get_by_path(path)
-        self.playlist.append(track)
-        self.playlist_version += 1
-        conn.send('Id: ' + str(track.id))
+        """Same as `cmd_add` but sends an id back to the client."""
+        self._add(conn, path, True)
 
 
     # Server info.
