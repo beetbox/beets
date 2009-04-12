@@ -90,7 +90,7 @@ class GstPlayer(object):
         path.
         """
         self.player.set_state(gst.STATE_NULL)
-        self.player.set_property("uri", "file://" + path)
+        self.player.set_property("uri", ("file://" + path).encode('utf-8'))
         self.player.set_state(gst.STATE_PLAYING)
         self.playing = True
 
