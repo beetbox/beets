@@ -859,14 +859,12 @@ class Server(BaseServer):
         """Adds a track or directory to the playlist, specified by a
         path. If `send_id`, write each item's id to the client.
         """
-        components = path_to_list(path)
+        components = path_to_list(path, PATH_PH)
         
         if len(components) <= 3:
             # Add a single track.
-            it = self.lib.items(*components)
-            
             found_an_item = None
-            for item in it:
+            for item in self.lib.items(*components):
                 found_an_item = True
                 self.playlist.append(item)
                 if send_id:
