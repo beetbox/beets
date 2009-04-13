@@ -123,6 +123,12 @@ class MBReleaseDictTest(unittest.TestCase):
         self.assertEqual(t[1]['id'], 'ID TWO')
         self.assertEqual(t[1]['length'], 200.0)
 
+    def test_parse_release_year_month_only(self):
+        release = self._make_release('1987-03')
+        d = mb.release_dict(release)
+        self.assertEqual(d['year'], 1987)
+        self.assertEqual(d['month'], 3)
+
 class MBWhiteBoxTest(unittest.TestCase):
     def test_match_album_finds_el_producto(self):
         a = mb.match_album('the avalanches', 'el producto')

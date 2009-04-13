@@ -95,18 +95,10 @@ def release_dict(release, tracks=None):
 
     # Release date.
     date_str = release.getEarliestReleaseDate()
-    try:
-        # If the date-string is just an integer, then it's the release
-        # year.
-        out['year'] = int(date_str)
-    except ValueError:
-        # Otherwise, it is a full date in the format YYYY-MM-DD.
-        timestamp = time.mktime(time.strptime(date_str, '%Y-%m-%d'))
-        date = datetime.date.fromtimestamp(timestamp)
-        out.update({'year':  date.year,
-                    'month': date.month,
-                    'day':   date.day,
-                   })
+    date_parts = date_str.split('-')
+    for key in ('year', 'month', 'day'):
+        if date_parts:
+            out[key] = int(date_parts.pop(0))
 
     # Tracks.
     if tracks:
