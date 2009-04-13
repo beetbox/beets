@@ -56,9 +56,16 @@ def imp(lib, config, paths):
     lib.save()
 
 def option(lib, config, options):
-    (key, value) = options
-    lib.options[key] = value
-    lib.save()
+    if len(options) == 1: # Get.
+        (key,) = options
+        _print(lib.options[key])
+    elif len(options) == 2: # Set.
+        (key, value) = options
+        lib.options[key] = value
+        lib.save()
+    elif len(options) == 0: # List.
+        for key in lib.options:
+            print key
 
 def remove(lib, config, criteria):
     q = ' '.join(criteria)
@@ -105,7 +112,7 @@ def bpd(lib, config, opts):
 if __name__ == "__main__":
     # parse options
     usage = """usage: %prog [options] command
-command is one of: add, remove, update, write, list, bpd, tagalbum, help"""
+command is one of: add, remove, update, write, list, set, bpd, tagalbum, help"""
     op = OptionParser(usage=usage)
     op.add_option('-l', '--library', dest='libpath', metavar='PATH',
                   default=None,

@@ -606,8 +606,13 @@ class Library(object):
             self.library = library
         
         def _validate_key(self, key):
-            if key not in library_options:
+            if key not in self:
                 raise ValueError(key + " is not a valid option name")
+
+        def __iter__(self):
+            return iter(library_options)
+        def __contains__(self, key):
+            return key in library_options
             
         def __getitem__(self, key):
             """Return the current value of option "key"."""
