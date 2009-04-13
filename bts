@@ -18,6 +18,7 @@
 
 from optparse import OptionParser
 from beets import Library
+from beets import autotag
 from ConfigParser import SafeConfigParser
 import os
 
@@ -86,6 +87,11 @@ def read(lib, config, criteria):
         item.store()
     lib.save()
 
+def tagalbum(lib, config, paths):
+    for path in paths:
+        autotag.tag_album_dir(os.path.expanduser(path), lib)
+        lib.save()
+
 def bpd(lib, config, opts):
     host = opts.pop(0) if opts else None
     host = host if host else config.get('bpd', 'host')
@@ -99,7 +105,7 @@ def bpd(lib, config, opts):
 if __name__ == "__main__":
     # parse options
     usage = """usage: %prog [options] command
-command is one of: add, remove, update, write, list, bpd, help"""
+command is one of: add, remove, update, write, list, bpd, tagalbum, help"""
     op = OptionParser(usage=usage)
     op.add_option('-l', '--library', dest='libpath', metavar='PATH',
                   default=None,
@@ -132,6 +138,7 @@ command is one of: add, remove, update, write, list, bpd, help"""
         (imp,        ['import', 'im', 'imp']),
         (remove,     ['remove', 'rm']),
         (delete,     ['delete', 'del']),
+        (tagalbum,   ['tagalbum', 'tag']),
         
         (read,       ['read', 'r']),
         #(write,      ['write', 'wr', 'w']),
