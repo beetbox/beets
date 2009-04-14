@@ -24,8 +24,10 @@ from beets import library
 from beets.mediafile import FileTypeError
 
 # If the MusicBrainz length is more than this many seconds away from the
-# track length, an error is reported.
-LENGTH_TOLERANCE = 2
+# track length, an error is reported. 30 seconds may seem like overkill,
+# but tracks do seem to vary a lot in the wild and this is the
+# threshold used by Picard before it even applies a penalty.
+LENGTH_TOLERANCE = 30
 
 def likely_metadata(items):
     """Returns the most likely artist and album for a set of Items.
@@ -140,9 +142,7 @@ def tag_album_dir(path, lib):
                                               )):
         
         # For safety, ensure track lengths match.
-        if not (item.length - LENGTH_TOLERANCE <
-                track_data['length'] <
-                item.length + LENGTH_TOLERANCE):
+        if abs(item.length - track_data['length']) > LENGTH_TOLERANCE:
             print "Length mismatch on track %i: actual length is %f and MB " \
                   "length is %f." % (index, item.length, track_data['length'])
             return
