@@ -225,9 +225,13 @@ class MediaField(object):
             
             # possibly index the list
             if style.list_elem:
-                return entry[0]
+                if entry: # List must have at least one value.
+                    return entry[0]
+                else:
+                    return None
             else:
                 return entry
+
         except KeyError: # the tag isn't present
             return None
     

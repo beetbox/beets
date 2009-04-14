@@ -222,6 +222,19 @@ def suite_for_file(path, correct_dict, writing=True):
              s.addTest(MakeWritingTest(path, correct_dict, field)())
     return s
 
+class EdgeTest(unittest.TestCase):
+    def setUp(self):
+        self.emptylist = beets.mediafile.MediaFile(
+                                os.path.join('rsrc', 'emptylist.mp3'))
+
+    def test_emptylist(self):
+        # Some files have an ID3 frame that has a list with no elements.
+        # This is very hard to produce, so this is just the first 8192
+        # bytes of a file found "in the wild".
+        genre = self.emptylist.genre
+        self.assertEqual(genre, '')
+
+
 def suite():
     s = unittest.TestSuite()
     
@@ -250,6 +263,9 @@ def suite():
         path = os.path.join('rsrc', fname)
         for field, value in correct_dict.iteritems():
             s.addTest(MakeReadOnlyTest(path, field, value)())
+
+    # Edge cases.
+    s.addTest(EdgeTest('test_emptylist'))
     
     return s
 
