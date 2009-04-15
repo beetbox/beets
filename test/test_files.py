@@ -151,6 +151,19 @@ class AddTest(unittest.TestCase):
         self.lib.add(os.path.join('rsrc', 'full.mp3'), copy=True)
         self.assertTrue(os.path.isfile(os.path.join(self.dir, 'item')))
 
+class DestinationTest(unittest.TestCase):
+    def setUp(self):
+        self.lib = beets.library.Library(':memory:')
+        self.i = beets.library.Item.from_path(join('rsrc', 'full.mp3'))
+        self.i.library = self.lib
+    
+    def test_destination_escapes_slashes(self):
+        self.i.album = 'one/two'
+        dest = self.i.destination()
+        self.assertTrue('one' in dest)
+        self.assertTrue('two' in dest)
+        self.assertFalse('one/two' in dest)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

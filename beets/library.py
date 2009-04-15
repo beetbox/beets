@@ -297,7 +297,7 @@ class Item(object):
             # replace / and leading . with _
             if isinstance(value, basestring):
                 value.replace(os.sep, '_')
-                re.sub(r'[' + os.sep + r']|^\.', '_', value)
+                value = re.sub(r'[\\/:]|^\.', '_', value)
             elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
                 # pad with zeros
                 value = '%02i' % value
