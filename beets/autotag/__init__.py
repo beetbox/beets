@@ -152,7 +152,8 @@ def tag_album_dir(path, lib):
         
         item.artist = info['artist']
         item.album = info['album']
-        item.track_total = len(items)
+        item.tracktotal = len(items)
+        
         item.year = info['year']
         if 'month' in info:
             item.month = info['month']
