@@ -223,16 +223,32 @@ def suite_for_file(path, correct_dict, writing=True):
     return s
 
 class EdgeTest(unittest.TestCase):
-    def setUp(self):
-        self.emptylist = beets.mediafile.MediaFile(
-                                os.path.join('rsrc', 'emptylist.mp3'))
-
     def test_emptylist(self):
         # Some files have an ID3 frame that has a list with no elements.
         # This is very hard to produce, so this is just the first 8192
         # bytes of a file found "in the wild".
-        genre = self.emptylist.genre
+        emptylist = beets.mediafile.MediaFile(
+                                os.path.join('rsrc', 'emptylist.mp3'))
+        genre = emptylist.genre
         self.assertEqual(genre, '')
+
+    def test_release_time_with_space(self):
+        # Ensures that release times delimited by spaces are ignored.
+        # Amie Street produces such files.
+        space_time = beets.mediafile.MediaFile(
+                                os.path.join('rsrc', 'space_time.mp3'))
+        self.assertEqual(space_time.year, 2009)
+        self.assertEqual(space_time.month, 9)
+        self.assertEqual(space_time.day, 4)
+
+    def test_release_time_with_t(self):
+        # Ensures that release times delimited by Ts are ignored.
+        # The iTunes Store produces such files.
+        t_time = beets.mediafile.MediaFile(
+                                os.path.join('rsrc', 't_time.m4a'))
+        self.assertEqual(t_time.year, 1987)
+        self.assertEqual(t_time.month, 3)
+        self.assertEqual(t_time.day, 31)
 
 
 def suite():
@@ -254,10 +270,6 @@ def suite():
     s.addTest(suite_for_file(os.path.join('rsrc', 'date.mp3'),
                              correct_dicts['date']))
 
-    # Test for dates that include times (like iTunes purchases).
-    s.addTest(suite_for_file(os.path.join('rsrc', 'time.m4a'),
-                             correct_dicts['date']))
-
     # Read-only attribute tests.
     for fname, correct_dict in read_only_correct_dicts.iteritems():
         path = os.path.join('rsrc', fname)
@@ -266,6 +278,8 @@ def suite():
 
     # Edge cases.
     s.addTest(EdgeTest('test_emptylist'))
+    s.addTest(EdgeTest('test_release_time_with_t'))
+    s.addTest(EdgeTest('test_release_time_with_space'))
     
     return s
 

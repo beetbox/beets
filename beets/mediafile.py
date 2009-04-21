@@ -117,8 +117,8 @@ class Packed(object):
         items = self.items
         if self.packstyle == packing.DATE:
             # Remove time information from dates. Usually delimited by
-            # a "T".
-            items = re.sub(r'[Tt].*$', '', unicode(items))
+            # a "T" or a space.
+            items = re.sub(r'[Tt ].*$', '', unicode(items))
     
         # transform from a string packing into a list we can index into
         if self.packstyle == packing.SLASHED:
