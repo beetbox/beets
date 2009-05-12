@@ -930,16 +930,16 @@ class Server(BaseServer):
     # Searching.
 
     tagtype_map = {
-        'artist':       'artist',
-        'album':        'album',
-        'title':        'title',
-        'track':        'track',
+        'Artist':       'artist',
+        'Album':        'album',
+        'Title':        'title',
+        'Track':        'track',
         # Name?
-        'genre':        'genre',
-        'date':         'year',
-        'composer':     'composer',
+        'Genre':        'genre',
+        'Date':         'year',
+        'Composer':     'composer',
         # Performer?
-        'disc':         'disc',
+        'Disc':         'disc',
         'filename':     'path', # Suspect.
     }
 
@@ -950,25 +950,28 @@ class Server(BaseServer):
         for tag in self.tagtype_map:
             conn.send('tagtype: ' + tag)
     
-    def _tagtype_to_key(self, tag):
+    def _tagtype_lookup(self, tag):
         """Uses `tagtype_map` to look up the beets column name for an
-        MPD tagtype (or throw an appropriate exception).
+        MPD tagtype (or throw an appropriate exception). Returns both
+        the canonical name of the MPD tagtype and the beets column
+        name.
         """
-        try:
-            return self.tagtype_map[tag.lower()]
-        except KeyError:
-            raise BPDError(ERROR_UNKNOWN, 'no such tagtype')
+        for test_tag, key in self.tagtype_map.items():
+            # Match case-insensitively.
+            if test_tag.lower() == tag.lower():
+                return test_tag, key
+        raise BPDError(ERROR_UNKNOWN, 'no such tagtype')
     
     def cmd_search(self, conn, tag, value):
         """Perform a substring match in a specific column."""
-        key = self._tagtype_to_key(tag)
+        _, key = self._tagtype_lookup(tag)
         query = beets.library.SubstringQuery(key, value)
         for item in self.lib.get(query):
             conn.send(*self._item_info(item))
     
     def cmd_find(self, conn, tag, value):
         """Perform an exact match in a specific column."""
-        key = self._tagtype_to_key(tag)
+        _, key = self._tagtype_lookup(tag)
         query = beets.library.MatchQuery(key, value)
         for item in self.lib.get(query):
             conn.send(*self._item_info(item))
@@ -977,9 +980,9 @@ class Server(BaseServer):
         """List distinct metadata values for show_tag, possibly
         filtered by matching match_tag to match_term.
         """
-        show_key = self._tagtype_to_key(show_tag)
+        show_tag_canon, show_key = self._tagtype_lookup(show_tag)
         if match_tag and match_term:
-            match_key = self._tagtype_to_key(match_tag)
+            _, match_key = self._tagtype_lookup(match_tag)
             query = beets.library.MatchQuery(match_key, match_term)
         else:
             query = beets.library.TrueQuery()
@@ -991,13 +994,13 @@ class Server(BaseServer):
         c.execute(statement, subvals)
         
         for row in c:
-            conn.send(show_tag + ': ' + unicode(row[0]))
+            conn.send(show_tag_canon + ': ' + unicode(row[0]))
     
     def cmd_count(self, conn, tag, value):
         """Returns the number and total time of songs matching the
         tag/value query.
         """
-        key = self._tagtype_to_key(tag)
+        _, key = self._tagtype_lookup(tag)
         query = beets.library.MatchQuery(key, value)
         songs, playtime = query.count(self.lib)
         conn.send('songs: ' + str(songs),
