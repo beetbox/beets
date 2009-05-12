@@ -250,6 +250,12 @@ class EdgeTest(unittest.TestCase):
         self.assertEqual(t_time.month, 3)
         self.assertEqual(t_time.day, 31)
 
+    def test_tempo_with_bpm(self):
+        # Some files have a string like "128 BPM" in the tempo field
+        # rather than just a number.
+        f = beets.mediafile.MediaFile(os.path.join('rsrc', 'bpm.mp3'))
+        self.assertEqual(f.bpm, 128)
+
 
 def suite():
     s = unittest.TestSuite()
@@ -280,6 +286,7 @@ def suite():
     s.addTest(EdgeTest('test_emptylist'))
     s.addTest(EdgeTest('test_release_time_with_t'))
     s.addTest(EdgeTest('test_release_time_with_space'))
+    s.addTest(EdgeTest('test_tempo_with_bpm'))
     
     return s
 

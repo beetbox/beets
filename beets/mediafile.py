@@ -284,11 +284,19 @@ class MediaField(object):
         if self.out_type == int:
             if out is None:
                 return 0
+            elif isinstance(out, int) or isinstance(out, float):
+                # Just a number.
+                return int(out)
             else:
-                try:
+                # Process any other type as a string.
+                if not isinstance(out, basestring):
+                    out = unicode(out)
+                # Get a number from the front of the string.
+                out = re.match('[0-9]*', out.strip()).group(0)
+                if not out:
+                    return 0
+                else:
                     return int(out)
-                except: # in case out is not convertible directly to an int
-                    return int(unicode(out))
         elif self.out_type == bool:
             if out is None:
                 return False
