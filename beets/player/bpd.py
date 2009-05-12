@@ -961,35 +961,46 @@ class Server(BaseServer):
             if test_tag.lower() == tag.lower():
                 return test_tag, key
         raise BPDError(ERROR_UNKNOWN, 'no such tagtype')
+
+    def _metadata_query(self, query_type, kv):
+        """Helper function returns a query object that will find items
+        according to the library query type provided and the key-value
+        pairs specified.
+        """
+        if kv: # At least one key-value pair.
+            queries = []
+            # Iterate pairwise over the arguments.
+            it = iter(kv)
+            for tag, value in zip(it, it):
+                _, key = self._tagtype_lookup(tag)
+                queries.append(query_type(key, value))
+            return beets.library.AndQuery(queries)
+        else: # No key-value pairs.
+            return beets.library.TrueQuery()
     
-    def cmd_search(self, conn, tag, value):
-        """Perform a substring match in a specific column."""
-        _, key = self._tagtype_lookup(tag)
-        query = beets.library.SubstringQuery(key, value)
-        for item in self.lib.get(query):
+    def cmd_search(self, conn, *kv):
+        """Perform a substring match for items."""
+        query = self._metadata_query(beets.library.SubstringQuery, kv)
+        for item in self.lib.items(query=query):
             conn.send(*self._item_info(item))
     
-    def cmd_find(self, conn, tag, value):
-        """Perform an exact match in a specific column."""
-        _, key = self._tagtype_lookup(tag)
-        query = beets.library.MatchQuery(key, value)
-        for item in self.lib.get(query):
+    def cmd_find(self, conn, *kv):
+        """Perform an exact match for items."""
+        query = self._metadata_query(beets.library.MatchQuery, kv)
+        for item in self.lib.items(query=query):
             conn.send(*self._item_info(item))
     
-    def cmd_list(self, conn, show_tag, match_tag=None, match_term=None):
+    def cmd_list(self, conn, show_tag, *kv):
         """List distinct metadata values for show_tag, possibly
         filtered by matching match_tag to match_term.
         """
         show_tag_canon, show_key = self._tagtype_lookup(show_tag)
-        if match_tag and match_term:
-            _, match_key = self._tagtype_lookup(match_tag)
-            query = beets.library.MatchQuery(match_key, match_term)
-        else:
-            query = beets.library.TrueQuery()
+        query = self._metadata_query(beets.library.MatchQuery, kv)
         
         clause, subvals = query.clause()
         statement = 'SELECT DISTINCT ' + show_key + \
-                    ' FROM items WHERE ' + clause
+                    ' FROM items WHERE ' + clause + \
+                    ' ORDER BY ' + show_key
         c = self.lib.conn.cursor()
         c.execute(statement, subvals)
         
