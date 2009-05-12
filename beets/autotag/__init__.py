@@ -69,9 +69,9 @@ def _input_yn(prompt):
     """
     resp = raw_input(prompt)
     while True:
-        if len(resp) == 0 or resp[0].tolower() == 'y':
+        if len(resp) == 0 or resp[0].lower() == 'y':
             return True
-        elif len(resp) > 0 and resp[0].tolower() == 'n':
+        elif len(resp) > 0 and resp[0].lower() == 'n':
             return False
         resp = raw_input("Type 'y' or 'n': ")
 
