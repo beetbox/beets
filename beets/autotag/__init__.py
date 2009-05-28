@@ -75,6 +75,31 @@ def _input_yn(prompt):
             return False
         resp = raw_input("Type 'y' or 'n': ")
 
+def order_items(items):
+    # First, see if the current tags indicate an ordering.
+    ordered_items = [None]*len(items)
+    available_indices = set(range(len(items)))
+    for item in items:
+        if item.track:
+            index = item.track - 1
+            ordered_items[index] = item
+            if index in available_indices:
+                available_indices.remove(index)
+            else:
+                # Same index used twice.
+                return None
+        else:
+            # If we have any item without an index, give up.
+            return None
+    if available_indices:
+        # Not all indices were used.
+        return None
+   
+    #fixme: Otherwise, match based on names and lengths of tracks
+    # (confirm).
+    
+    return ordered_items
+
 def tag_album_dir(path, lib):
     # Read items from directory.
     items = []
@@ -119,22 +144,10 @@ def tag_album_dir(path, lib):
         return
     
     # Determine order of existing tracks.
-    # First, see if the current tags indicate an ordering.
-    ordered_items = [None]*len(items)
-    available_indices = set(range(len(items)))
-    for item in items:
-        if item.track:
-            index = item.track - 1
-            ordered_items[index] = item
-            available_indices.remove(index)
-        else:
-            # If we have any item without an index, give up.
-            break
-    if available_indices:
-        print "Tracks are not correctly ordered."
+    ordered_items = order_items(items)
+    if not ordered_items:
+        print "Tracks could not be ordered."
         return
-        #fixme:
-        # Otherwise, match based on names and lengths of tracks (confirm).
     
     # Apply new metadata.
     for index, (item, track_data) in enumerate(zip(ordered_items,
