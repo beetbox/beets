@@ -19,9 +19,7 @@
 
 import os
 from collections import defaultdict
-from beets.autotag.mb import match_album
-from beets import library
-from beets.mediafile import FileTypeError
+from beets.autotag import mb
 
 # If the MusicBrainz length is more than this many seconds away from the
 # track length, an error is reported. 30 seconds may seem like overkill,
@@ -29,7 +27,10 @@ from beets.mediafile import FileTypeError
 # threshold used by Picard before it even applies a penalty.
 LENGTH_TOLERANCE = 30
 
-def likely_metadata(items):
+class AutotagError(Exception): pass
+class UnorderedTracksError(AutotagError): pass
+
+def current_metadata(items):
     """Returns the most likely artist and album for a set of Items.
     Each is determined by tag reflected by the plurality of the Items.
     """
@@ -62,20 +63,9 @@ def likely_metadata(items):
     
     return (likelies['artist'], likelies['album'])
 
-def _input_yn(prompt):
-    """Prompts user for a "yes" or "no" response where an empty response
-    is treated as "yes". Keeps prompting until acceptable input is
-    given; returns a boolean.
-    """
-    resp = raw_input(prompt)
-    while True:
-        if len(resp) == 0 or resp[0].lower() == 'y':
-            return True
-        elif len(resp) > 0 and resp[0].lower() == 'n':
-            return False
-        resp = raw_input("Type 'y' or 'n': ")
-
 def order_items(items):
+    """Given a list of items, put them in album order.
+    """
     # First, see if the current tags indicate an ordering.
     ordered_items = [None]*len(items)
     available_indices = set(range(len(items)))
@@ -100,69 +90,48 @@ def order_items(items):
     
     return ordered_items
 
-def tag_album_dir(path, lib):
-    # Read items from directory.
-    items = []
-    for filename in os.listdir(path):
-        filepath = library._normpath(os.path.join(path, filename))
-        try:
-            i = library.Item.from_path(filepath, lib)
-        except FileTypeError:
-            continue
-        items.append(i)
+def distance(items, info):
+    """Determines how "significant" an album metadata change would be.
+    Returns a float in [0.0,1.0]. The list of items must be ordered.
+    """
+    cur_artist, cur_album = current_metadata(items)
     
-    #fixme Check if MB tags are already present.
+    # These accumulate the possible distance components. The final
+    # distance will be dist/dist_max.
+    dist = 0.0
+    dist_max = 0.0
     
-    # Find existing metadata.
-    cur_artist, cur_album = likely_metadata(items)
+    # If either tag is missing, change should be confirmed.
+    if len(cur_artist) == 0 or len(cur_album) == 0:
+        return 1.0
     
-    # Find "correct" metadata.
-    info = match_album(cur_artist, cur_album, len(items))
-    if len(cur_artist) == 0 or len(cur_album) == 0 or \
-                cur_artist.lower() != info['artist'].lower() or \
-                cur_album.lower()  != info['album'].lower():
-        # If we're making a "significant" change (changing the artist or
-        # album), confirm with the user to avoid mistakes.
-        print "Correcting tags from:"
-        print '%s - %s' % (cur_artist, cur_album)
-        print "To:"
-        print '%s - %s' % (info['artist'], info['album'])
-        if not _input_yn("Apply change ([y]/n)? "):
-            return
+    # Check whether the new values differ from the old ones.
+    #fixme edit distance instead of 1/0
+    #fixme filter non-alphanum
+    if cur_artist.lower() != info['artist'].lower() or \
+       cur_album.lower()  != info['album'].lower():
+        dist += 1.0
+        dist_max += 1.0
     
-    else:
-        print 'Tagging album: %s - %s' % (info['artist'], info['album'])
-    
-    
-    # Ensure that we don't have the album already.
-    q = library.AndQuery((library.MatchQuery('artist', info['artist']),
-                          library.MatchQuery('album',  info['album'])))
-    count, _ = q.count(lib)
-    if count >= 1:
-        print "This album (%s - %s) is already in the library!" % \
-              (info['artist'], info['album'])
-        return
-    
-    # Determine order of existing tracks.
-    ordered_items = order_items(items)
-    if not ordered_items:
-        print "Tracks could not be ordered."
-        return
-    
-    # Apply new metadata.
-    for index, (item, track_data) in enumerate(zip(ordered_items,
-                                                   info['tracks']
-                                              )):
-        
-        # For safety, ensure track lengths match.
+    # Find track distances.
+    for item, track_data in zip(items, info['tracks']):
+        # Check track length.
         if abs(item.length - track_data['length']) > LENGTH_TOLERANCE:
-            print "Length mismatch on track %i: actual length is %f and MB " \
-                  "length is %f." % (index, item.length, track_data['length'])
-            return
-            
-        if item.title != track_data['title']:
-            print "%s -> %s" % (item.title, track_data['title'])
-        
+            # Abort with maximum. (fixme, something softer?)
+            return 1.0
+        #fixme track name
+    
+    # Normalize distance, avoiding divide-by-zero.
+    if dist_max == 0.0:
+        return 0.0
+    else:
+        return dist/dist_max
+
+def apply_metadata(items, info):
+    """Set the items' metadata to match the data given in info. The
+    list of items must be ordered.
+    """
+    for index, (item, track_data) in enumerate(zip(items,  info['tracks'])):
         item.artist = info['artist']
         item.album = info['album']
         item.tracktotal = len(items)
@@ -176,19 +145,30 @@ def tag_album_dir(path, lib):
         item.title = track_data['title']
         item.track = index + 1
         
-        #fixme Set MusicBrainz IDs!
+        #fixme Set MusicBrainz IDs
+
+def tag_album(items):
+    """Bundles together the functionality used to infer tags for a
+    set of items comprised by an album. Returns everything relevant
+    and a little bit more:
+        - The list of items, possibly reordered.
+        - The current metadata: an (artist, album) tuple.
+        - The inferred metadata dictionary.
+        - The distance between the current and new metadata.
+    May raise an UnorderedTracksError if existing metadata is
+    insufficient.
+    """
+    # Get current and candidate metadata.
+    cur_artist, cur_album = current_metadata(items)
+    info = mb.match_album(cur_artist, cur_album, len(items))
     
-    # Add items to library and write their tags.
-    for item in ordered_items:
-        item.move(True)
-        item.add()
-        item.write()
-
-
-if __name__ == '__main__':
-    import sys
-    lib = library.Library()
-    path = os.path.expanduser(sys.argv[1])
-    tag_album_dir(path, lib)
-    lib.save()
+    # Put items in order.
+    items = order_items(items)
+    if not items:
+        raise UnorderedTracksError()
+    
+    # Get the change distance.
+    dist = distance(items, info)
+    
+    return items, (cur_artist, cur_album), info, dist
 

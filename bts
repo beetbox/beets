@@ -18,9 +18,12 @@
 
 from optparse import OptionParser
 from beets import Library
-from beets import autotag
 from ConfigParser import SafeConfigParser
 import os
+
+from beets import autotag
+from beets import library
+from beets.mediafile import FileTypeError
 
 CONFIG_DEFAULTS = {
     # beets
@@ -37,6 +40,72 @@ CONFIG_FILE = os.path.expanduser('~/.beetsrc')
 def _print(txt):
     """Print the text encoded using UTF-8."""
     print txt.encode('utf-8')
+
+def _input_yn(prompt):
+    """Prompts user for a "yes" or "no" response where an empty response
+    is treated as "yes". Keeps prompting until acceptable input is
+    given; returns a boolean.
+    """
+    resp = raw_input(prompt)
+    while True:
+        if len(resp) == 0 or resp[0].lower() == 'y':
+            return True
+        elif len(resp) > 0 and resp[0].lower() == 'n':
+            return False
+        resp = raw_input("Type 'y' or 'n': ")
+
+
+def tag_album_dir(path, lib):
+    # Read items from directory.
+    items = []
+    for filename in os.listdir(path):
+        filepath = os.path.join(path, filename)
+        try:
+            i = library.Item.from_path(filepath, lib)
+        except FileTypeError:
+            continue
+        items.append(i)
+    
+    # Infer tags.
+    try:
+        items, (cur_artist, cur_album), info, dist = autotag.tag_album(items)
+    except autotag.UnorderedTracksError:
+        print "Tracks could not be ordered."
+        return
+    
+    # Show what we're about to do.
+    if cur_artist != info['artist'] or cur_album != info['album']:
+        print "Correcting tags from:"
+        print '  %s - %s' % (cur_artist, cur_album)
+        print "To:"
+        print '  %s - %s' % (info['artist'], info['album'])
+    else:
+        print "Tagging: %s - %s" % (info['artist'], info['album'])
+    for item, track_data in zip(items, info['tracks']):
+        if item.title != track_data['title']:
+            print "     %s -> %s" % (item.title, track_data['title'])
+    
+    # Warn if change is significant.
+    if dist > 0.0:
+        if not _input_yn("Apply change ([y]/n)? "):
+            return
+    
+    # Ensure that we don't have the album already.
+    q = library.AndQuery((library.MatchQuery('artist', info['artist']),
+                          library.MatchQuery('album',  info['album'])))
+    count, _ = q.count(lib)
+    if count >= 1:
+        print "This album (%s - %s) is already in the library!" % \
+              (info['artist'], info['album'])
+        return
+    
+    # Change metadata and add to library.
+    autotag.apply_metadata(items, info)
+    for item in items:
+        item.move(True)
+        item.add()
+        item.write()
+
 
 def add(lib, config, paths):
     for path in paths:
@@ -96,7 +165,7 @@ def read(lib, config, criteria):
 
 def tagalbum(lib, config, paths):
     for path in paths:
-        autotag.tag_album_dir(os.path.expanduser(path), lib)
+        tag_album_dir(os.path.expanduser(path), lib)
         lib.save()
 
 def bpd(lib, config, opts):
