@@ -116,7 +116,10 @@ def distance(items, info):
     # Find track distances.
     for item, track_data in zip(items, info['tracks']):
         # Check track length.
-        if abs(item.length - track_data['length']) > LENGTH_TOLERANCE:
+        if 'length' not in track_data:
+            # If there's no length to check, assume the worst.
+            return 1.0
+        elif abs(item.length - track_data['length']) > LENGTH_TOLERANCE:
             # Abort with maximum. (fixme, something softer?)
             return 1.0
         #fixme track name
@@ -136,7 +139,8 @@ def apply_metadata(items, info):
         item.album = info['album']
         item.tracktotal = len(items)
         
-        item.year = info['year']
+        if 'year' in info:
+            item.year = info['year']
         if 'month' in info:
             item.month = info['month']
         if 'day' in info:

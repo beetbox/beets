@@ -62,15 +62,6 @@ class MBQueryWaitTest(unittest.TestCase):
         self.assertTrue(time2 - time1 < 1.0)
 
 
-def make_release():
-    release = musicbrainz2.model.Release()
-    release.title = 'ALBUM TITLE'
-    release.id = 'ALBUM ID'
-    release.artist = musicbrainz2.model.Artist()
-    release.artist.name = 'ARTIST NAME'
-    release.artist.id = 'ARTIST ID'
-    return release
-
 class MBReleaseDictTest(unittest.TestCase):
     def _make_release(self, date_str='2009'):
         release = musicbrainz2.model.Release()
@@ -81,7 +72,8 @@ class MBReleaseDictTest(unittest.TestCase):
         release.artist.id = 'ARTIST ID'
 
         event = musicbrainz2.model.ReleaseEvent()
-        event.date = date_str
+        if date_str is not None:
+            event.date = date_str
         release.releaseEvents.append(event)
 
         return release
@@ -90,7 +82,8 @@ class MBReleaseDictTest(unittest.TestCase):
         track = musicbrainz2.model.Track()
         track.title = title
         track.id = tr_id
-        track.duration = duration
+        if duration is not None:
+            track.duration = duration
         return track
     
     def test_parse_release_with_year(self):
@@ -128,6 +121,19 @@ class MBReleaseDictTest(unittest.TestCase):
         d = mb.release_dict(release)
         self.assertEqual(d['year'], 1987)
         self.assertEqual(d['month'], 3)
+    
+    def test_no_durations(self):
+        release = self._make_release()
+        tracks = [self._make_track('TITLE', 'ID', None)]
+        d = mb.release_dict(release, tracks)
+        self.assertFalse('length' in d['tracks'][0])
+
+    def test_no_release_date(self):
+        release = self._make_release(None)
+        d = mb.release_dict(release)
+        self.assertFalse('year' in d)
+        self.assertFalse('month' in d)
+        self.assertFalse('day' in d)
 
 class MBWhiteBoxTest(unittest.TestCase):
     def test_match_album_finds_el_producto(self):

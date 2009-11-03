@@ -94,20 +94,30 @@ def release_dict(release, tracks=None):
           }
 
     # Release date.
-    date_str = release.getEarliestReleaseDate()
-    date_parts = date_str.split('-')
-    for key in ('year', 'month', 'day'):
-        if date_parts:
-            out[key] = int(date_parts.pop(0))
+    try:
+        date_str = release.getEarliestReleaseDate()
+    except:
+        # The python-musicbrainz2 module has a bug that will raise an
+        # exception when there is no release date to be found. In this
+        # case, we just skip adding a release date to the dict.
+        pass
+    else:
+        if date_str:
+            date_parts = date_str.split('-')
+            for key in ('year', 'month', 'day'):
+                if date_parts:
+                    out[key] = int(date_parts.pop(0))
 
     # Tracks.
     if tracks:
         out['tracks'] = []
         for track in tracks:
-            out['tracks'].append({'title':  track.title,
-                                  'id':     track.id,
-                                  'length': track.duration/(1000.0),
-                                })
+            t = {'title': track.title,
+                 'id': track.id}
+            if track.duration is not None:
+                # Duration not always present.
+                t['length'] = track.duration/(1000.0)
+            out['tracks'].append(t)
 
     return out
 
