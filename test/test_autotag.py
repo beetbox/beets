@@ -27,11 +27,11 @@ from beets.autotag import mb
 from beets.library import Item
 
 class AutotagTest(unittest.TestCase):
-    def test_likely_metadata_finds_pluralities(self):
+    def test_current_metadata_finds_pluralities(self):
         items = [Item({'artist': 'The Beetles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'Teh White Album'})]
-        l_artist, l_album = autotag.likely_metadata(items)
+        l_artist, l_album = autotag.current_metadata(items)
         self.assertEqual(l_artist, 'The Beatles')
         self.assertEqual(l_album, 'The White Album')
 
