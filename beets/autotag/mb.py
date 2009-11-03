@@ -72,8 +72,8 @@ def find_releases(criteria, limit=25):
     for name, value in criteria.items():
         value = _lucene_escape(value).strip().lower()
         if value:
-            query_parts.append('%s:(%s)' % (name, value.encode('utf-8')))
-    query = ' '.join(query_parts)
+            query_parts.append(u'%s:(%s)' % (name, value))
+    query = u' '.join(query_parts)
     
     # Build the filter and send the query.
     filt = mbws.ReleaseFilter(limit=limit, query=query)
