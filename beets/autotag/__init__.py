@@ -20,6 +20,8 @@
 import os
 from collections import defaultdict
 from beets.autotag import mb
+import re
+from munkres import Munkres
 
 # If the MusicBrainz length is more than this many seconds away from the
 # track length, an error is reported. 30 seconds may seem like overkill,
@@ -29,6 +31,38 @@ LENGTH_TOLERANCE = 30
 
 class AutotagError(Exception): pass
 class UnorderedTracksError(AutotagError): pass
+
+def _ie_dist(str1, str2):
+    """Gives an "intuitive" edit distance between two strings. This is
+    an edit distance, normalized by the string length, ignoring case
+    and nonalphanumeric characters.
+    """
+    str1 = re.sub(r'[^a-z0-9]', '', str1.lower())
+    str2 = re.sub(r'[^a-z0-9]', '', str2.lower())
+    
+    # Here's a nice DP edit distance implementation from Wikibooks:
+    # http://en.wikibooks.org/wiki/Algorithm_implementation/Strings/
+    # Levenshtein_distance#Python
+    # This should probably be written in a C module.
+    def levenshtein(s1, s2):
+        if len(s1) < len(s2):
+            return levenshtein(s2, s1)
+        if not s1:
+            return len(s2)
+     
+        previous_row = xrange(len(s2) + 1)
+        for i, c1 in enumerate(s1):
+            current_row = [i + 1]
+            for j, c2 in enumerate(s2):
+                insertions = previous_row[j + 1] + 1
+                deletions = current_row[j] + 1
+                substitutions = previous_row[j] + (c1 != c2)
+                current_row.append(min(insertions, deletions, substitutions))
+            previous_row = current_row
+     
+        return previous_row[-1]
+    
+    return levenshtein(str1, str2)
 
 def current_metadata(items):
     """Returns the most likely artist and album for a set of Items.
@@ -63,12 +97,13 @@ def current_metadata(items):
     
     return (likelies['artist'], likelies['album'])
 
-def order_items(items):
-    """Given a list of items, put them in album order.
+def _order_items_meta(items):
+    """Orders the items based on their existing metadata. Returns
+    False on failure.
     """
-    # First, see if the current tags indicate an ordering.
     ordered_items = [None]*len(items)
     available_indices = set(range(len(items)))
+    
     for item in items:
         if item.track:
             index = item.track - 1
@@ -81,14 +116,43 @@ def order_items(items):
         else:
             # If we have any item without an index, give up.
             return None
+    
     if available_indices:
         # Not all indices were used.
         return None
-   
-    #fixme: Otherwise, match based on names and lengths of tracks
-    # (confirm).
+
+def _order_items_match(items, trackinfo):
+    """Orders the items based on how they match some canonical track
+    information. This always produces a result if the numbers of tracks
+    match. However, it is compuationally expensive: the core algorithm
+    (for min-cost bipartite matching) is somewhere between O(n^2) and
+    O(n^3); also, the cost matrix has to calculate edit distances n^2
+    times. So this should be used as a fallback.
+    """
+    # Construct the cost matrix.
+    costs = []
+    for cur_item in items:
+        row = []
+        for canon_item in trackinfo:
+            row.append(_ie_dist(cur_item.title, canon_item['title']))
+        costs.append(row)
     
+    # Find a minimum-cost bipartite matching.
+    matching = Munkres().compute(costs)
+    
+    # Order items based on the matching.
+    ordered_items = [None]*len(items)
+    for cur_idx, canon_idx in matching:
+        ordered_items[canon_idx] = items[cur_idx]
     return ordered_items
+
+def order_items(items, trackinfo):
+    """Given a list of items, put them in album order.
+    """
+    # Try using metadata, using matching as a fallback.
+    ordered = _order_items_meta(items)
+    if ordered: return ordered
+    return _order_items_match(items, trackinfo)
 
 def distance(items, info):
     """Determines how "significant" an album metadata change would be.
@@ -167,7 +231,8 @@ def tag_album(items):
     info = mb.match_album(cur_artist, cur_album, len(items))
     
     # Put items in order.
-    items = order_items(items)
+    #fixme need to try ordering tracks for every candidate album
+    items = order_items(items, info['tracks'])
     if not items:
         raise UnorderedTracksError()
     
