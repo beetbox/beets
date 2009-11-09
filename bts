@@ -59,8 +59,8 @@ def tag_album(items, lib):
     # Infer tags.
     try:
         items, (cur_artist, cur_album), info, dist = autotag.tag_album(items)
-    except autotag.UnorderedTracksError:
-        print "Tracks could not be ordered."
+    except autotag.AutotagError:
+        print "Untaggable album:", os.path.dirname(items[0].path)
         return
     
     # Show what we're about to do.

@@ -31,6 +31,8 @@ from beets import library, mediafile
 LENGTH_TOLERANCE = 30
 
 class AutotagError(Exception): pass
+class InsufficientMetadataError(AutotagError): pass
+class UnknownAlbumError(AutotagError): pass
 class UnorderedTracksError(AutotagError): pass
 
 def albums_in_dir(path, lib=None):
@@ -244,12 +246,17 @@ def tag_album(items):
         - The current metadata: an (artist, album) tuple.
         - The inferred metadata dictionary.
         - The distance between the current and new metadata.
-    May raise an UnorderedTracksError if existing metadata is
-    insufficient.
+    May raise an AutotagError if existing metadata is insufficient.
     """
     # Get current and candidate metadata.
     cur_artist, cur_album = current_metadata(items)
+    if not cur_artist or not cur_album:
+        raise InsufficientMetadataError()
     info = mb.match_album(cur_artist, cur_album, len(items))
+    
+    # Make sure the album has the correct number of tracks.
+    if len(items) != len(info['tracks']):
+        raise UnknownAlbumError()
     
     # Put items in order.
     #fixme need to try ordering tracks for every candidate album
