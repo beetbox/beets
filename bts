@@ -55,17 +55,7 @@ def _input_yn(prompt):
         resp = raw_input("Type 'y' or 'n': ")
 
 
-def tag_album_dir(path, lib):
-    # Read items from directory.
-    items = []
-    for filename in os.listdir(path):
-        filepath = os.path.join(path, filename)
-        try:
-            i = library.Item.from_path(filepath, lib)
-        except FileTypeError:
-            continue
-        items.append(i)
-    
+def tag_album(items, lib):
     # Infer tags.
     try:
         items, (cur_artist, cur_album), info, dist = autotag.tag_album(items)
@@ -165,8 +155,9 @@ def read(lib, config, criteria):
 
 def tagalbum(lib, config, paths):
     for path in paths:
-        tag_album_dir(os.path.expanduser(path), lib)
-        lib.save()
+        for album in autotag.albums_in_dir(os.path.expanduser(path), lib):
+            tag_album(album, lib)
+            lib.save()
 
 def bpd(lib, config, opts):
     host = opts.pop(0) if opts else None

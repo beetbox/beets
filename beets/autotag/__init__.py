@@ -22,6 +22,7 @@ from collections import defaultdict
 from beets.autotag import mb
 import re
 from munkres import Munkres
+from beets import library, mediafile
 
 # If the MusicBrainz length is more than this many seconds away from the
 # track length, an error is reported. 30 seconds may seem like overkill,
@@ -31,6 +32,26 @@ LENGTH_TOLERANCE = 30
 
 class AutotagError(Exception): pass
 class UnorderedTracksError(AutotagError): pass
+
+def albums_in_dir(path, lib=None):
+    """Recursively searches the given directory and returns an iterable
+    of lists of items where each list is probably an album.
+    Specifically, any folder containing any media files is an album.
+    """
+    for root, dirs, files in os.walk(path):
+        # Get a list of items in the directory.
+        items = []
+        for filename in files:
+            try:
+                i = library.Item.from_path(os.path.join(root, filename), lib)
+            except mediafile.FileTypeError:
+                pass
+            else:
+                items.append(i)
+        
+        # If it's nonempty, yield it.
+        if items:
+            yield items
 
 def _ie_dist(str1, str2):
     """Gives an "intuitive" edit distance between two strings. This is

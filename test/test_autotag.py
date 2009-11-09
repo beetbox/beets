@@ -19,7 +19,10 @@
 
 import unittest
 import sys
+import os
+import shutil
 import time
+import re
 import musicbrainz2.model
 sys.path.append('..')
 from beets import autotag
@@ -146,6 +149,49 @@ class MBWhiteBoxTest(unittest.TestCase):
         a = mb.match_album('mia', 'kala ')
         self.assertEqual(a['artist'], 'M.I.A.')
         self.assertEqual(a['album'], 'Kala')
+
+def _mkmp3(path):
+    shutil.copyfile(os.path.join('rsrc', 'min.mp3'), path)
+class AlbumsInDirTest(unittest.TestCase):
+    def setUp(self):
+        # create a directory structure for testing
+        self.base = os.path.join('rsrc', 'temp_albumsindir')
+        os.mkdir(self.base)
+        
+        os.mkdir(os.path.join(self.base, 'album1'))
+        os.mkdir(os.path.join(self.base, 'album2'))
+        os.mkdir(os.path.join(self.base, 'more'))
+        os.mkdir(os.path.join(self.base, 'more', 'album3'))
+        os.mkdir(os.path.join(self.base, 'more', 'album4'))
+        
+        _mkmp3(os.path.join(self.base, 'album1', 'album1song1.mp3'))
+        _mkmp3(os.path.join(self.base, 'album1', 'album1song2.mp3'))
+        _mkmp3(os.path.join(self.base, 'album2', 'album2song.mp3'))
+        _mkmp3(os.path.join(self.base, 'more', 'album3', 'album3song.mp3'))
+        _mkmp3(os.path.join(self.base, 'more', 'album4', 'album4song.mp3'))
+    def tearDown(self):
+        shutil.rmtree(self.base)
+    
+    def test_finds_all_albums(self):
+        albums = list(autotag.albums_in_dir(self.base))
+        self.assertEqual(len(albums), 4)
+    
+    def test_separates_contents(self):
+        found = []
+        for album in autotag.albums_in_dir(self.base):
+            found.append(re.search(r'album(.)song', album[0].path).group(1))
+        self.assertTrue('1' in found)
+        self.assertTrue('2' in found)
+        self.assertTrue('3' in found)
+        self.assertTrue('4' in found)
+    
+    def test_finds_multiple_songs(self):
+        for album in autotag.albums_in_dir(self.base):
+            n = re.search(r'album(.)song', album[0].path).group(1)
+            if n == '1':
+                self.assertEqual(len(album), 2)
+            else:
+                self.assertEqual(len(album), 1)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
