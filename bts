@@ -16,13 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with beets.  If not, see <http://www.gnu.org/licenses/>.
 
-from optparse import OptionParser
-from beets import Library
+import cmdln
 from ConfigParser import SafeConfigParser
 import os
+import sys
 
 from beets import autotag
 from beets import library
+from beets import Library
 from beets.mediafile import FileTypeError
 
 CONFIG_DEFAULTS = {
@@ -58,7 +59,7 @@ def _input_yn(prompt):
 def tag_album(items, lib):
     # Infer tags.
     try:
-        items, (cur_artist, cur_album), info, dist = autotag.tag_album(items)
+        items,(cur_artist,cur_album),info,dist = autotag.tag_album(items)
     except autotag.AutotagError:
         print "Untaggable album:", os.path.dirname(items[0].path)
         return
@@ -66,14 +67,14 @@ def tag_album(items, lib):
     # Show what we're about to do.
     if cur_artist != info['artist'] or cur_album != info['album']:
         print "Correcting tags from:"
-        print '  %s - %s' % (cur_artist, cur_album)
+        print '     %s - %s' % (cur_artist, cur_album)
         print "To:"
-        print '  %s - %s' % (info['artist'], info['album'])
+        print '     %s - %s' % (info['artist'], info['album'])
     else:
         print "Tagging: %s - %s" % (info['artist'], info['album'])
     for item, track_data in zip(items, info['tracks']):
         if item.title != track_data['title']:
-            print "     %s -> %s" % (item.title, track_data['title'])
+            print " * %s -> %s" % (item.title, track_data['title'])
     
     # Warn if change is significant.
     if dist > 0.0:
@@ -97,130 +98,73 @@ def tag_album(items, lib):
         item.write()
 
 
-def add(lib, config, paths):
-    for path in paths:
-        lib.add(path)
-    lib.save()
 
-def ls(lib, config, criteria):
-    q = ' '.join(criteria)
-    if not q.strip():
-        q = None    # no criteria => match anything
-    for item in lib.get(q):
-        _print(item.artist + ' - ' + item.album + ' - ' + item.title)
-
-def imp(lib, config, paths):
-    for path in paths:
-        lib.add(path, copy=True)
-    lib.save()
-
-def option(lib, config, options):
-    if len(options) == 1: # Get.
-        (key,) = options
-        _print(lib.options[key])
-    elif len(options) == 2: # Set.
-        (key, value) = options
-        lib.options[key] = value
-        lib.save()
-    elif len(options) == 0: # List.
-        for key in lib.options:
-            print key
-
-def remove(lib, config, criteria):
-    q = ' '.join(criteria)
-    if not q.strip():
-        raise ValueError('must provide some criteria for removing')
-    for item in lib.get(q):
-        _print("removing " + item.path)
-        item.remove()
-    lib.save()
-
-def delete(lib, config, criteria):
-    q = ' '.join(criteria)
-    if not q.strip():
-        raise ValueError('must provide some criteria for deleting')
-    for item in lib.get(q):
-        _print("deleting " + item.path)
-        item.delete()
-    lib.save()
-
-def read(lib, config, criteria):
-    q = ' '.join(criteria)
-    if not q.strip():
-        q = None
-    for item in lib.get(q):
-        item.read()
-        item.store()
-    lib.save()
-
-def tagalbum(lib, config, paths):
-    for path in paths:
-        for album in autotag.albums_in_dir(os.path.expanduser(path), lib):
-            tag_album(album, lib)
-            lib.save()
-
-def bpd(lib, config, opts):
-    host = opts.pop(0) if opts else None
-    host = host if host else config.get('bpd', 'host')
-    port = int(opts.pop(0)) if opts else None
-    port = port if port else config.getint('bpd', 'port')
-    password = config.get('bpd', 'password')
+class BeetsApp(cmdln.Cmdln):
+    name = "bts"
     
-    from beets.player.bpd import Server
-    Server(lib, host, port, password).run()
-
-if __name__ == "__main__":
-    # parse options
-    usage = """usage: %prog [options] command
-command is one of: add, remove, update, write, list, set, bpd, tagalbum, help"""
-    op = OptionParser(usage=usage)
-    op.add_option('-l', '--library', dest='libpath', metavar='PATH',
-                  default=None,
-                  help='work on the specified library file')
-    op.remove_option('--help')
-    opts, args = op.parse_args()
+    def get_optparser(self):
+        # Add global options to the command.
+        parser = cmdln.Cmdln.get_optparser(self)
+        parser.add_option('-l', '--library', dest='libpath',
+                          help='the library database file to use')
+        return parser
     
-    # make sure we have a command
-    if len(args) < 1:
-        op.error('no command specified')
-    cmd = args.pop(0)
-
-    # read defaults from config file
-    config = SafeConfigParser(CONFIG_DEFAULTS)
-    config.read(CONFIG_FILE)
-    for sec in ('beets', 'bpd'):
-        if not config.has_section(sec):
-            config.add_section(sec)
-    if not opts.libpath:
-        opts.libpath = config.get('beets', 'library')
-
-    lib = Library(os.path.expanduser(opts.libpath))
-    
-    # make a "help" command
-    def help(*args): op.print_help()
-    
-    # choose which command to invoke
-    avail_commands = [
-        (add,        ['add']),
-        (imp,        ['import', 'im', 'imp']),
-        (remove,     ['remove', 'rm']),
-        (delete,     ['delete', 'del']),
-        (tagalbum,   ['tagalbum', 'tag']),
+    def postoptparse(self):
+        # Read defaults from config file.
+        self.config = SafeConfigParser(CONFIG_DEFAULTS)
+        self.config.read(CONFIG_FILE)
+        for sec in ('beets', 'bpd'):
+            if not self.config.has_section(sec):
+                self.config.add_section(sec)
         
-        (read,       ['read', 'r']),
-        #(write,      ['write', 'wr', 'w']),
-        
-        (ls,         ['list', 'ls']),
-        
-        (option,     ['set']),
-        (help,       ['help', 'h']),
-        
-        (bpd,        ['bpd']),
-    ]
-    for test_command in avail_commands:
-        if cmd in test_command[1]:
-            (test_command[0])(lib, config, args)
-            op.exit()
+        # Open library file.
+        libpath = self.options.libpath
+        if not libpath:
+            libpath = self.config.get('beets', 'library')
+        self.lib = Library(os.path.expanduser(libpath))
     
-    # no command matched
-    op.error('invalid command "' + cmd + '"')
+    @cmdln.alias("imp", "im")
+    def do_import(self, subcmd, opts, *paths):
+        """${cmd_name}: import new music
+        
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        for path in paths:
+            for album in autotag.albums_in_dir(os.path.expanduser(path),
+                                               self.lib):
+                print
+                tag_album(album, self.lib)
+                self.lib.save()
+    
+    @cmdln.alias("ls")
+    def do_list(self, subcmd, opts, *criteria):
+        """${cmd_name}: query the library
+        
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        q = ' '.join(criteria)
+        if not q.strip():
+            q = None    # no criteria => match anything
+        for item in self.lib.get(q):
+            _print(item.artist + ' - ' + item.album + ' - ' + item.title)
+    
+    
+    def do_bpd(self, subcmd, opts, host=None, port=None):
+        """${cmd_name}: run an MPD-compatible music player server
+        
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        host = host or self.config.get('bpd', 'host')
+        port = port or self.config.get('bpd', 'port')
+        password = self.config.get('bpd', 'password')
+        
+        from beets.player.bpd import Server
+        Server(self.lib, host, int(port), password).run()
+
+
+if __name__ == '__main__':
+    app = BeetsApp()
+    sys.exit(app.main())
