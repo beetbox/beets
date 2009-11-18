@@ -140,6 +140,9 @@ class GetSetTest(unittest.TestCase):
     def test_set_does_not_dirty_if_value_unchanged(self):
         self.i.title = self.i.title
         self.assertTrue(not self.i.dirty['title'])
+    
+    def test_invalid_field_raises_attributeerror(self):
+        self.assertRaises(AttributeError, getattr, self.i, 'xyzzy')
 
 class DestinationTest(unittest.TestCase):
     def setUp(self):

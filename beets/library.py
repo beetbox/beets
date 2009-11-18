@@ -151,7 +151,7 @@ class Item(object):
         if key in item_keys:
             return self.record[key]
         else:
-            return super(Item, self).__getattr__(key)
+            raise AttributeError(key + ' is not a valid item field')
 
     def __setattr__(self, key, value):
         """If key is an item attribute (i.e., a column in the database), sets
