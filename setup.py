@@ -38,9 +38,19 @@ setup(name='beets',
       the database.
       """,
 
-      packages=['beets'],
+      packages=['beets',
+                'beets.autotag',
+                'beets.player',
+      ],
       scripts=['bts'],
 
-      requires=['sqlite3', 'mutagen', 'eventlet (>=0.8)'],
-     )
+      provides=['beets'],
+      requires=['sqlite3',
+                'mutagen',
+                'musicbrainz2 (>=0.7.0)',
+                'munkres',
+                'cmdln',
+                'eventlet (>=0.8)',
+      ],
+)
 
