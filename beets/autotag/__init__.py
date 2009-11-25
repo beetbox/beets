@@ -130,12 +130,17 @@ def _order_items_meta(items):
     for item in items:
         if item.track:
             index = item.track - 1
-            ordered_items[index] = item
+            
+            # Make sure the index is valid.
             if index in available_indices:
                 available_indices.remove(index)
             else:
                 # Same index used twice.
                 return None
+                
+            # Apply index.
+            ordered_items[index] = item
+            
         else:
             # If we have any item without an index, give up.
             return None
@@ -143,6 +148,8 @@ def _order_items_meta(items):
     if available_indices:
         # Not all indices were used.
         return None
+    
+    return ordered_items
 
 def _order_items_match(items, trackinfo):
     """Orders the items based on how they match some canonical track
