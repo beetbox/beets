@@ -143,6 +143,8 @@ class BeetsApp(cmdln.Cmdln):
                 self.lib.save()
     
     @cmdln.alias("ls")
+    @cmdln.option('-a', '--album', action='store_true',
+                  help='show matching albums instead of tracks')
     def do_list(self, subcmd, opts, *criteria):
         """${cmd_name}: query the library
         
@@ -152,8 +154,13 @@ class BeetsApp(cmdln.Cmdln):
         q = ' '.join(criteria)
         if not q.strip():
             q = None    # no criteria => match anything
-        for item in self.lib.get(q):
-            _print(item.artist + ' - ' + item.album + ' - ' + item.title)
+            
+        if opts.album:
+            for artist, album in self.lib.albums(query=q):
+                _print(artist + ' - ' + album)
+        else:
+            for item in self.lib.items(query=q):
+                _print(item.artist + ' - ' + item.album + ' - ' + item.title)
     
     
     def do_bpd(self, subcmd, opts, host=None, port=None):
