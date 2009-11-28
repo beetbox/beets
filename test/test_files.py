@@ -38,8 +38,8 @@ class MoveTest(unittest.TestCase):
         
         # set up the destination
         self.libdir = join('rsrc', 'testlibdir')
-        self.lib.options['directory'] = self.libdir
-        self.lib.options['path_format'] = join('$artist',
+        self.lib.directory = self.libdir
+        self.lib.path_format = join('$artist',
                                                 '$album', '$title')
         self.i.artist = 'one'
         self.i.album = 'two'
@@ -141,8 +141,8 @@ class AddTest(unittest.TestCase):
     def setUp(self):
         self.dir = os.path.join('rsrc', 'test_lib')
         self.lib = beets.library.Library(':memory:')
-        self.lib.options['directory'] = self.dir
-        self.lib.options['path_format'] = 'item'
+        self.lib.directory = self.dir
+        self.lib.path_format = 'item'
     def tearDown(self):
         if os.path.exists(self.dir):
             shutil.rmtree(self.dir)

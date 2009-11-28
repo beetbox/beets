@@ -29,6 +29,8 @@ from beets.mediafile import FileTypeError
 CONFIG_DEFAULTS = {
     # beets
     'library': 'library.blb',
+    'directory': '~/Music',
+    'path_format': '$artist/$album/$track $title.$extension',
 
     # bpd
     'host': '',
@@ -118,10 +120,13 @@ class BeetsApp(cmdln.Cmdln):
                 self.config.add_section(sec)
         
         # Open library file.
-        libpath = self.options.libpath
-        if not libpath:
-            libpath = self.config.get('beets', 'library')
-        self.lib = Library(os.path.expanduser(libpath))
+        libpath = self.options.libpath or self.config.get('beets', 'library')
+        directory = self.config.get('beets', 'directory')
+        path_format = self.config.get('beets', 'path_format')
+        
+        self.lib = Library(os.path.expanduser(libpath),
+                           directory,
+                           path_format)
     
     @cmdln.alias("imp", "im")
     def do_import(self, subcmd, opts, *paths):

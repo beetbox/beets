@@ -59,12 +59,6 @@ metadata_rw_keys = map(operator.itemgetter(0), metadata_rw_fields)
 metadata_keys = map(operator.itemgetter(0), metadata_fields)
 item_keys = map(operator.itemgetter(0), item_fields)
 
-# Entries in the "options" table along with their default values.
-library_options = {
-    'directory':    u'~/Music',
-    'path_format':  u'$artist/$album/$track $title.$extension',
-}
-
 # Logger.
 log = logging.getLogger('beets')
 log.setLevel(logging.DEBUG)
@@ -285,8 +279,8 @@ class Item(object):
         """Returns the path within the library directory designated for this
         item (i.e., where the file ought to be).
         """
-        libpath = self.library.options['directory']
-        subpath_tmpl = Template(self.library.options['path_format'])
+        libpath = self.library.directory
+        subpath_tmpl = Template(self.library.path_format)
         
         # build the mapping for substitution in the path template, beginning
         # with the values from the database
@@ -570,70 +564,28 @@ class ResultIterator(object):
 
 
 class Library(object):
-    def __init__(self, path='library.blb'):
+    def __init__(self, path='library.blb',
+                       directory='~/Music',
+                       path_format='$artist/$album/$track $title.$extension'):
         self.path = path
+        self.directory = directory
+        self.path_format = path_format
+        
         self.conn = sqlite3.connect(self.path)
         self.conn.row_factory = sqlite3.Row
             # this way we can access our SELECT results like dictionaries
-        self.options = Library._LibraryOptionsAccessor(self)
+        
         self._setup()
     
     def _setup(self):
         """Set up the schema of the library file."""
         
-        # options (library data) table
-        setup_sql = """
-        PRAGMA synchronous = OFF;
-        CREATE TABLE IF NOT EXISTS options (
-            key TEXT PRIMARY KEY,
-            value TEXT
-        );"""
-        
-        # items (things in the library) table
-        setup_sql += 'CREATE TABLE IF NOT EXISTS items ('
+        setup_sql =  'CREATE TABLE IF NOT EXISTS items ('
         setup_sql += ', '.join([' '.join(f) for f in item_fields])
         setup_sql += ');'
         
         self.conn.executescript(setup_sql)
         self.conn.commit()
-    
-    
-    #### library options ####
-    
-    class _LibraryOptionsAccessor(object):
-        """Provides access to the library's configuration variables."""
-        def __init__(self, library):
-            self.library = library
-        
-        def _validate_key(self, key):
-            if key not in self:
-                raise ValueError(key + " is not a valid option name")
-
-        def __iter__(self):
-            return iter(library_options)
-        def __contains__(self, key):
-            return key in library_options
-            
-        def __getitem__(self, key):
-            """Return the current value of option "key"."""
-            self._validate_key(key)
-            result = (self.library.conn.
-                execute('SELECT value FROM options WHERE key=?', (key,)).
-                fetchone())
-            if result is None: # no value stored
-                return library_options[key] # return default value
-            else:
-                return result[0]
-            
-        def __setitem__(self, key, value):
-            """Set the value of option "key" to "value"."""
-            self._validate_key(key)
-            self.library.conn.execute(
-                    'INSERT OR REPLACE INTO options VALUES (?,?)',
-                    (key, value) )
-    
-    options = None
-    # will be set to a _LibraryOptionsAccessor when the library is initialized
     
 
     ### helpers ###

@@ -152,32 +152,32 @@ class DestinationTest(unittest.TestCase):
         self.lib.conn.close()
     
     def test_directory_works_with_trailing_slash(self):
-        self.lib.options['directory'] = 'one/'
-        self.lib.options['path_format'] = 'two'
+        self.lib.directory = 'one/'
+        self.lib.path_format = 'two'
         self.assertEqual(self.i.destination(), np('one/two'))
     
     def test_directory_works_without_trailing_slash(self):
-        self.lib.options['directory'] = 'one'
-        self.lib.options['path_format'] = 'two'
+        self.lib.directory = 'one'
+        self.lib.path_format = 'two'
         self.assertEqual(self.i.destination(), np('one/two'))
     
     def test_destination_substitues_metadata_values(self):
-        self.lib.options['directory'] = 'base'
-        self.lib.options['path_format'] = '$album/$artist $title'
+        self.lib.directory = 'base'
+        self.lib.path_format = '$album/$artist $title'
         self.i.title = 'three'
         self.i.artist = 'two'
         self.i.album = 'one'
         self.assertEqual(self.i.destination(), np('base/one/two three'))
     
     def test_destination_substitutes_extension(self):
-        self.lib.options['directory'] = 'base'
-        self.lib.options['path_format'] = '$extension'
+        self.lib.directory = 'base'
+        self.lib.path_format = '$extension'
         self.i.path = 'hey.audioFormat'
         self.assertEqual(self.i.destination(), np('base/audioFormat'))
     
     def test_destination_pads_some_indices(self):
-        self.lib.options['directory'] = 'base'
-        self.lib.options['path_format'] = '$track $tracktotal ' \
+        self.lib.directory = 'base'
+        self.lib.path_format = '$track $tracktotal ' \
             '$disc $disctotal $bpm $year'
         self.i.track = 1
         self.i.tracktotal = 2

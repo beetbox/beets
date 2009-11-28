@@ -1085,9 +1085,3 @@ class Server(BaseServer):
         pos = cast_arg(int, pos)
         super(Server, self).cmd_seek(conn, index, pos)
         self.player.seek(pos)
-
-
-# When run as a script, just start the server.
-
-if __name__ == '__main__':
-    Server(beets.Library('library.blb')).run()
