@@ -169,11 +169,11 @@ class DestinationTest(unittest.TestCase):
         self.i.album = 'one'
         self.assertEqual(self.i.destination(), np('base/one/two three'))
     
-    def test_destination_substitutes_extension(self):
+    def test_destination_preserves_extension(self):
         self.lib.directory = 'base'
-        self.lib.path_format = '$extension'
+        self.lib.path_format = '$title'
         self.i.path = 'hey.audioFormat'
-        self.assertEqual(self.i.destination(), np('base/audioFormat'))
+        self.assertEqual(self.i.destination(),np('base/the title.audioFormat'))
     
     def test_destination_pads_some_indices(self):
         self.lib.directory = 'base'
@@ -186,6 +186,25 @@ class DestinationTest(unittest.TestCase):
         self.i.bpm = 5
         self.i.year = 6
         self.assertEqual(self.i.destination(), np('base/01 02 03 04 5 6'))
+    
+    def test_destination_escapes_slashes(self):
+        self.i.album = 'one/two'
+        dest = self.i.destination()
+        self.assertTrue('one' in dest)
+        self.assertTrue('two' in dest)
+        self.assertFalse('one/two' in dest)
+    
+    def test_destination_long_names_truncated(self):
+        self.i.title = 'X'*300
+        self.i.artist = 'Y'*300
+        for c in self.i.destination().split(os.path.sep):
+            self.assertTrue(len(c) <= 255)
+    
+    def test_destination_long_names_keep_extension(self):
+        self.i.title = 'X'*300
+        self.i.path = 'something.extn'
+        dest = self.i.destination()
+        self.assertEqual(dest[-5:], '.extn')
         
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

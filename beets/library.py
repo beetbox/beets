@@ -23,6 +23,8 @@ from string import Template
 import logging
 from beets.mediafile import MediaFile, FileTypeError
 
+MAX_FILENAME_LENGTH = 200
+
 # Fields in the "items" table; all the metadata available for items in the
 # library. These are used directly in SQL; they are vulnerable to injection if
 # accessible to the user. The fields are divided into read-write
@@ -86,8 +88,14 @@ def _ancestry(path):
     and so on. For instance, _ancestry('/a/b/c') == ['/', '/a', '/a/b'].
     """
     out = []
-    while path and path != '/':
+    last_path = None
+    while path:
         path = os.path.dirname(path)
+        
+        if path == last_path:
+            break
+        last_path = path
+    
         if path: # don't yield ''
             out.insert(0, path)
     return out
@@ -104,7 +112,24 @@ def _walk_files(path):
             for filebase in files:
                 yield os.path.join(root, filebase)
 
-
+def _components(path):
+    """Return a list of the path components in path. For instance,
+    _components('/a/b/c') == ['a', 'b', 'c'].
+    """
+    comps = []
+    ances = _ancestry(path)
+    for anc in ances:
+        comp = os.path.basename(anc)
+        if comp:
+            comps.append(comp)
+        else: # root
+            comps.append(anc)
+    
+    last = os.path.basename(path)
+    if last:
+        comps.append(last)
+    
+    return comps
 
 
 
@@ -298,13 +323,21 @@ class Item(object):
             else:
                 value = str(value)
             mapping[key] = value
-            
-        # one additional substitution: extension
-        _, extension = os.path.splitext(self.path)
-        extension = extension[1:] # remove leading .
-        mapping[u'extension'] = extension
         
+        # Perform substitution.
         subpath = subpath_tmpl.substitute(mapping)
+        
+        # Truncate path components.
+        comps = _components(subpath)
+        for i, comp in enumerate(comps):
+            if len(comp) > MAX_FILENAME_LENGTH:
+                comps[i] = comp[:MAX_FILENAME_LENGTH]
+        subpath = os.path.join(*comps)
+        
+        # Preserve extension.
+        _, extension = os.path.splitext(self.path)
+        subpath += extension
+        
         return _normpath(os.path.join(libpath, subpath))
     
     def move(self, copy=False):
@@ -566,7 +599,7 @@ class ResultIterator(object):
 class Library(object):
     def __init__(self, path='library.blb',
                        directory='~/Music',
-                       path_format='$artist/$album/$track $title.$extension'):
+                       path_format='$artist/$album/$track $title'):
         self.path = path
         self.directory = directory
         self.path_format = path_format

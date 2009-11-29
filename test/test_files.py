@@ -39,12 +39,11 @@ class MoveTest(unittest.TestCase):
         # set up the destination
         self.libdir = join('rsrc', 'testlibdir')
         self.lib.directory = self.libdir
-        self.lib.path_format = join('$artist',
-                                                '$album', '$title')
+        self.lib.path_format = join('$artist', '$album', '$title')
         self.i.artist = 'one'
         self.i.album = 'two'
         self.i.title = 'three'
-        self.dest = join(self.libdir, 'one', 'two', 'three')
+        self.dest = join(self.libdir, 'one', 'two', 'three.mp3')
         
     def tearDown(self):
         if os.path.exists(self.path):
@@ -149,20 +148,34 @@ class AddTest(unittest.TestCase):
 
     def test_library_add_copies(self):
         self.lib.add(os.path.join('rsrc', 'full.mp3'), copy=True)
-        self.assertTrue(os.path.isfile(os.path.join(self.dir, 'item')))
-
-class DestinationTest(unittest.TestCase):
-    def setUp(self):
-        self.lib = beets.library.Library(':memory:')
-        self.i = beets.library.Item.from_path(join('rsrc', 'full.mp3'))
-        self.i.library = self.lib
+        self.assertTrue(os.path.isfile(os.path.join(self.dir, 'item.mp3')))
     
-    def test_destination_escapes_slashes(self):
-        self.i.album = 'one/two'
-        dest = self.i.destination()
-        self.assertTrue('one' in dest)
-        self.assertTrue('two' in dest)
-        self.assertFalse('one/two' in dest)
+class HelperTest(unittest.TestCase):
+    def test_ancestry_works_on_file(self):
+        p = '/a/b/c'
+        a =  ['/','/a','/a/b']
+        self.assertEqual(beets.library._ancestry(p), a)
+    def test_ancestry_works_on_dir(self):
+        p = '/a/b/c/'
+        a = ['/', '/a', '/a/b', '/a/b/c']
+        self.assertEqual(beets.library._ancestry(p), a)
+    def test_ancestry_works_on_relative(self):
+        p = 'a/b/c'
+        a = ['a', 'a/b']
+        self.assertEqual(beets.library._ancestry(p), a)
+    
+    def test_components_works_on_file(self):
+        p = '/a/b/c'
+        a =  ['/', 'a', 'b', 'c']
+        self.assertEqual(beets.library._components(p), a)
+    def test_components_works_on_dir(self):
+        p = '/a/b/c/'
+        a =  ['/', 'a', 'b', 'c']
+        self.assertEqual(beets.library._components(p), a)
+    def test_components_works_on_relative(self):
+        p = 'a/b/c'
+        a =  ['a', 'b', 'c']
+        self.assertEqual(beets.library._components(p), a)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
