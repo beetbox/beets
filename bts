@@ -30,7 +30,7 @@ CONFIG_DEFAULTS = {
     # beets
     'library': 'library.blb',
     'directory': '~/Music',
-    'path_format': '$artist/$album/$track $title.$extension',
+    'path_format': '$artist/$album/$track $title',
 
     # bpd
     'host': '',
