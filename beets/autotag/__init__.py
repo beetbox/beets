@@ -24,16 +24,46 @@ import re
 from munkres import Munkres
 from beets import library, mediafile
 
-# If the MusicBrainz length is more than this many seconds away from the
-# track length, an error is reported. 30 seconds may seem like overkill,
-# but tracks do seem to vary a lot in the wild and this is the
-# threshold used by Picard before it even applies a penalty.
-LENGTH_TOLERANCE = 30
+# Try 5 releases. In the future, this should be more dynamic: let the
+# probability of continuing to the next release be inversely
+# proportional to how good our current best is and how long we've
+# already taken.
+MAX_CANDIDATES = 5
 
-class AutotagError(Exception): pass
-class InsufficientMetadataError(AutotagError): pass
-class UnknownAlbumError(AutotagError): pass
-class UnorderedTracksError(AutotagError): pass
+# Distance parameters.
+# Text distance weights: proportions on the normalized intuitive edit
+# distance.
+ARTIST_WEIGHT = 3.0 * 3.0
+ALBUM_WEIGHT = 3.0 * 3.0
+TRACK_TITLE_WEIGHT = 1.0 * 3.0
+# Track length weights: no penalty before GRACE, maximum (WEIGHT)
+# penalty at GRACE+MAX discrepancy.
+TRACK_LENGTH_GRACE = 15
+TRACK_LENGTH_MAX = 30
+TRACK_LENGTH_WEIGHT = 1.0
+
+# Distances greater than this are "hopeless cases": almost certainly
+# not correct and should be discarded.
+GIVEUP_DIST = 0.5
+
+# Autotagging exceptions.
+class AutotagError(Exception):
+    pass
+class InsufficientMetadataError(AutotagError):
+    pass
+class UnknownAlbumError(AutotagError):
+    pass
+class UnorderedTracksError(AutotagError):
+    pass
+
+def _first_n(it, n):
+    """Takes an iterator and returns another iterator, trunacted to
+    yield only the first n elements.
+    """
+    for i, v in enumerate(it):
+        if i >= n:
+            break
+        yield v
 
 def albums_in_dir(path, lib=None):
     """Recursively searches the given directory and returns an iterable
@@ -85,7 +115,7 @@ def _ie_dist(str1, str2):
      
         return previous_row[-1]
     
-    return levenshtein(str1, str2)
+    return levenshtein(str1, str2) / float(max(len(str1), len(str2)))
 
 def current_metadata(items):
     """Returns the most likely artist and album for a set of Items.
@@ -195,29 +225,30 @@ def distance(items, info):
     dist = 0.0
     dist_max = 0.0
     
-    # If either tag is missing, change should be confirmed.
-    if len(cur_artist) == 0 or len(cur_album) == 0:
-        return 1.0
+    # Artist/album metadata.
+    dist += _ie_dist(cur_artist, info['artist']) * ARTIST_WEIGHT
+    dist_max += ARTIST_WEIGHT
+    dist += _ie_dist(cur_album,  info['album']) * ALBUM_WEIGHT
+    dist_max += ALBUM_WEIGHT
     
-    # Check whether the new values differ from the old ones.
-    #fixme edit distance instead of 1/0
-    #fixme filter non-alphanum
-    if cur_artist.lower() != info['artist'].lower() or \
-       cur_album.lower()  != info['album'].lower():
-        dist += 1.0
-        dist_max += 1.0
-    
-    # Find track distances.
+    # Track distances.
     for item, track_data in zip(items, info['tracks']):
+
         # Check track length.
         if 'length' not in track_data:
             # If there's no length to check, assume the worst.
-            return 1.0
-        elif abs(item.length - track_data['length']) > LENGTH_TOLERANCE:
-            # Abort with maximum. (fixme, something softer?)
-            return 1.0
-        #fixme track name
-    
+            dist += TRACK_LENGTH_WEIGHT
+        else:
+            diff = abs(item.length - track_data['length'])
+            diff = max(diff - TRACK_LENGTH_GRACE, 0.0)
+            diff = min(diff, TRACK_LENGTH_MAX)
+            dist += (diff / TRACK_LENGTH_MAX) * TRACK_LENGTH_WEIGHT
+        dist_max += TRACK_LENGTH_WEIGHT
+        
+        # Track title.
+        dist += _ie_dist(item.title, track_data['title']) * TRACK_TITLE_WEIGHT
+        dist_max += TRACK_TITLE_WEIGHT
+
     # Normalize distance, avoiding divide-by-zero.
     if dist_max == 0.0:
         return 0.0
@@ -259,20 +290,34 @@ def tag_album(items):
     cur_artist, cur_album = current_metadata(items)
     if not cur_artist or not cur_album:
         raise InsufficientMetadataError()
-    info = mb.match_album(cur_artist, cur_album, len(items))
+    candidates = mb.match_album(cur_artist, cur_album, len(items))
     
-    # Make sure the album has the correct number of tracks.
-    if len(items) != len(info['tracks']):
+    best = None
+    best_dist = None
+    for info in _first_n(candidates, MAX_CANDIDATES):
+
+        # Make sure the album has the correct number of tracks.
+        if len(items) != len(info['tracks']):
+            continue
+    
+        # Put items in order.
+        items = order_items(items, info['tracks'])
+        if not items:
+            continue
+    
+        # Get the change distance.
+        dist = distance(items, info)
+
+        # Compare this to the best.
+        if best_dist is None or dist < best_dist:
+            best_dist = dist
+            best = info
+
+    # No suitable candidates.
+    if best is None or best_dist > GIVEUP_DIST:
+        #fixme Remove restriction on track numbers then requery for
+        # diagnosis.
         raise UnknownAlbumError()
     
-    # Put items in order.
-    #fixme need to try ordering tracks for every candidate album
-    items = order_items(items, info['tracks'])
-    if not items:
-        raise UnorderedTracksError()
-    
-    # Get the change distance.
-    dist = distance(items, info)
-    
-    return items, (cur_artist, cur_album), info, dist
+    return items, (cur_artist, cur_album), best, best_dist
 

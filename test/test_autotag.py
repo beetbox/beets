@@ -140,13 +140,13 @@ class MBReleaseDictTest(unittest.TestCase):
 
 class MBWhiteBoxTest(unittest.TestCase):
     def test_match_album_finds_el_producto(self):
-        a = mb.match_album('the avalanches', 'el producto')
+        a = mb.match_album_single('the avalanches', 'el producto')
         self.assertEqual(a['album'], 'El Producto')
         self.assertEqual(a['artist'], 'The Avalanches')
         self.assertEqual(len(a['tracks']), 7)
 
     def test_match_album_tolerates_small_errors(self):
-        a = mb.match_album('mia', 'kala ')
+        a = mb.match_album_single('mia', 'kala ')
         self.assertEqual(a['artist'], 'M.I.A.')
         self.assertEqual(a['album'], 'Kala')
 

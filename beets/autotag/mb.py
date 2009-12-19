@@ -135,8 +135,8 @@ def release_tracks(release_id):
 
 def match_album(artist, album, tracks=None):
     """Searches for a single album ("release" in MusicBrainz parlance)
-    and returns information about in a dictionary (as returned by
-    `release_dict`).
+    and returns an iterator over dictionaries of information (as
+    returned by `release_dict`).
 
     The query consists of an artist name, an album name, and,
     optionally, a number of tracks on the album.
@@ -147,18 +147,21 @@ def match_album(artist, album, tracks=None):
         criteria['tracks'] = str(tracks)
 
     # Search for the release.
-    results = find_releases(criteria, 1)
-    if not results:
+    results = find_releases(criteria, 10)
+
+    for result in results:
+        release = result.release
+        tracks = release_tracks(release.id)
+        yield release_dict(release, tracks)
+
+def match_album_single(artist, album, tracks=None):
+    """Behaves like match_album but, instead of returning an iterator,
+    tries to get just a single result. Returns an info dictionary or
+    None if no suitable match.
+    """
+    it = match_album(artist, album, tracks)
+    try:
+        return it.next()
+    except StopIteration:
         return None
-    release = results[0].release
-        
-    # Look up tracks.
-    tracks = release_tracks(release.id)
-    
-    return release_dict(release, tracks)
-
-
-if __name__ == '__main__': # Smoke test.
-    print match_album('the little ones', 'morning tide')
-    print match_album('the 6ths', 'hyacinths and thistles')
 
