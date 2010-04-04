@@ -152,7 +152,7 @@ def seq_to_path(seq, placeholder=''):
     return '/'.join(out)
 
 
-def path_to_list(path, placeholder=''):
+def path_to_list(path, placeholder=u''):
     """Takes a path-like string (probably encoded by seq_to_path) and
     returns the list of strings it represents. If `placeholder` is
     provided, it is interpreted to represent an empty path component.
@@ -163,28 +163,28 @@ def path_to_list(path, placeholder=''):
         # This function maps "escaped" characters to original
         # characters. Because the regex is in the right order, the
         # sequences are replaced top-to-bottom.
-        return {'\\\\': '\\',
-                '\\_':  '_',
-                '_':    '/',
+        return {u'\\\\': u'\\',
+                u'\\_':  u'_',
+                u'_':    u'/',
                }[m.group(0)]
-    components = [re.sub(r'\\\\|\\_|_', repl, component)
-                  for component in path.split('/')]
+    components = [re.sub(ur'\\\\|\\_|_', repl, component)
+                  for component in path.split(u'/')]
     
     if placeholder:
         new_components = []
         for c in components:
-            if c == '':
+            if c == u'':
                 # Drop empty path components.
                 continue
             if c == placeholder:
-                new_components.append('')
+                new_components.append(u'')
             else:
                 new_components.append(c)
         components = new_components
     
     return components
 
-PATH_PH = '(unknown)'
+PATH_PH = u'(unknown)'
 
 
 # Generic server infrastructure, implementing the basic protocol.
@@ -654,6 +654,7 @@ class Command(object):
         self.name = command_match.group(1)
         arg_matches = self.arg_re.findall(s[command_match.end():])
         self.args = [m[0] or m[1] for m in arg_matches]
+        self.args = [s.decode('utf8') for s in self.args]
         
     def run(self, conn):
         """Executes the command on the given connection.
@@ -789,10 +790,10 @@ class Server(BaseServer):
 
     # Path (directory tree) browsing.
     
-    def _parse_path(self, path="/"):
+    def _parse_path(self, path=u"/"):
         """Take an artist/album/track path and return its components.
         """
-        if len(path) >= 1 and path[0] == '/': # Remove leading slash.
+        if len(path) >= 1 and path[0] == u'/': # Remove leading slash.
             path = path[1:]
         items = path_to_list(path, PATH_PH)
 
@@ -804,16 +805,16 @@ class Server(BaseServer):
                 dirs[i] = items.pop(0)
         return dirs
     
-    def cmd_lsinfo(self, conn, path="/"):
+    def cmd_lsinfo(self, conn, path=u"/"):
         """Sends info on all the items in the path."""
         artist, album, track = self._parse_path(path)
         
         if artist is None: # List all artists.
             for artist in self.lib.artists():
-                conn.send('directory: ' + seq_to_path((artist,), PATH_PH))
+                conn.send(u'directory: ' + seq_to_path((artist,), PATH_PH))
         elif album is None: # List all albums for an artist.
             for album in self.lib.albums(artist):
-                conn.send('directory: ' + seq_to_path(album, PATH_PH))
+                conn.send(u'directory: ' + seq_to_path(album, PATH_PH))
         elif track is None: # List all tracks on an album.
             for item in self.lib.items(artist, album):
                 conn.send(*self._item_info(item))
