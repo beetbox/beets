@@ -176,6 +176,21 @@ class BeetsApp(cmdln.Cmdln):
         from beets.player.bpd import Server
         Server(self.lib, host, int(port), password).run()
 
+    def do_dadd(self, subcmd, opts, name, *criteria):
+        """${cmd_name}: add files to a device
+        
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        q = ' '.join(criteria)
+        if not q.strip(): q = None
+        items = self.lib.items(query=q)
+
+        from beets import device
+        path = device.pod_path(name)
+        pod = device.get_pod(path)
+
+        device.add(pod, items)
 
 if __name__ == '__main__':
     app = BeetsApp()
