@@ -32,15 +32,15 @@ DEFAULT_PORT = 6600
 PROTOCOL_VERSION = '0.13.0'
 BUFSIZE = 1024
 
-HELLO = 'OK MPD %s' % PROTOCOL_VERSION
-CLIST_BEGIN = 'command_list_begin'
-CLIST_VERBOSE_BEGIN = 'command_list_ok_begin'
-CLIST_END = 'command_list_end'
-RESP_OK = 'OK'
-RESP_CLIST_VERBOSE = 'list_OK'
-RESP_ERR = 'ACK'
+HELLO = u'OK MPD %s' % PROTOCOL_VERSION
+CLIST_BEGIN = u'command_list_begin'
+CLIST_VERBOSE_BEGIN = u'command_list_ok_begin'
+CLIST_END = u'command_list_end'
+RESP_OK = u'OK'
+RESP_CLIST_VERBOSE = u'list_OK'
+RESP_ERR = u'ACK'
 
-NEWLINE = "\n"
+NEWLINE = u"\n"
 
 ERROR_NOT_LIST = 1
 ERROR_ARG = 2
@@ -60,7 +60,7 @@ VOLUME_MAX = 100
 
 SAFE_COMMANDS = (
     # Commands that are available when unauthenticated.
-    'close', 'commands', 'notcommands', 'password', 'ping',
+    u'close', u'commands', u'notcommands', u'password', u'ping',
 )
 
 
@@ -82,7 +82,7 @@ class BPDError(Exception):
         self.cmd_name = cmd_name
         self.index = index
         
-    template = Template('$resp [$code@$index] {$cmd_name} $message')
+    template = Template(u'$resp [$code@$index] {$cmd_name} $message')
     def response(self):
         """Returns a string to be used as the response code for the
         erring command.
@@ -134,7 +134,7 @@ class BPDClose(Exception):
 # directory structure required by the MPD protocol to browse music in
 # the library.
 
-def seq_to_path(seq, placeholder=''):
+def seq_to_path(seq, placeholder=u''):
     """Encodes a sequence of strings as a path-like string. The
     sequence can be recovered exactly using path_to_list. If
     `placeholder` is provided, it is used in place of empty path
@@ -142,14 +142,14 @@ def seq_to_path(seq, placeholder=''):
     """
     out = []
     for s in seq:
-        if placeholder and s == '':
+        if placeholder and s == u'':
             out.append(placeholder)
         else:
-            out.append(s.replace('\\', '\\\\') # preserve backslashes
-                        .replace('_', '\\_')   # preserve _s
-                        .replace('/', '_')     # hide /s as _s
+            out.append(s.replace(u'\\', u'\\\\') # preserve backslashes
+                        .replace(u'_', u'\\_')   # preserve _s
+                        .replace(u'/', u'_')     # hide /s as _s
                       )
-    return '/'.join(out)
+    return u'/'.join(out)
 
 
 def path_to_list(path, placeholder=u''):
@@ -281,13 +281,13 @@ class BaseServer(object):
         if self.password and not conn.authenticated:
             # Not authenticated. Show limited list of commands.
             for cmd in SAFE_COMMANDS:
-                conn.send('command: ' + cmd)
+                conn.send(u'command: ' + cmd)
         
         else:
             # Authenticated. Show all commands.
             for func in dir(self):
                 if func.startswith('cmd_'):
-                    conn.send('command: ' + func[4:])
+                    conn.send(u'command: ' + func[4:])
     
     def cmd_notcommands(self, conn):
         """Lists all unavailable commands."""
@@ -297,7 +297,7 @@ class BaseServer(object):
                 if func.startswith('cmd_'):
                     cmd = func[4:]
                     if cmd not in SAFE_COMMANDS:
-                        conn.send('command: ' + cmd)
+                        conn.send(u'command: ' + cmd)
         
         else:
             # Authenticated. No commands are unavailable.
@@ -310,29 +310,29 @@ class BaseServer(object):
         Gives a list of response-lines for: volume, repeat, random,
         playlist, playlistlength, and xfade.
         """
-        conn.send('volume: ' + str(self.volume),
-                  'repeat: ' + str(int(self.repeat)),
-                  'random: ' + str(int(self.random)),
-                  'playlist: ' + str(self.playlist_version),
-                  'playlistlength: ' + str(len(self.playlist)),
-                  'xfade: ' + str(self.crossfade),
+        conn.send(u'volume: ' + unicode(self.volume),
+                  u'repeat: ' + unicode(int(self.repeat)),
+                  u'random: ' + unicode(int(self.random)),
+                  u'playlist: ' + unicode(self.playlist_version),
+                  u'playlistlength: ' + unicode(len(self.playlist)),
+                  u'xfade: ' + unicode(self.crossfade),
                   )
         
         if self.current_index == -1:
-            state = 'stop'
+            state = u'stop'
         elif self.paused:
-            state = 'pause'
+            state = u'pause'
         else:
-            state = 'play'
-        conn.send('state: ' + state)
+            state = u'play'
+        conn.send(u'state: ' + state)
         
         if self.current_index != -1: # i.e., paused or playing
             current_id = self._item_id(self.playlist[self.current_index])
-            conn.send('song: ' + str(self.current_index))
-            conn.send('songid: ' + str(current_id))
+            conn.send(u'song: ' + unicode(self.current_index))
+            conn.send(u'songid: ' + unicode(current_id))
 
         if self.error:
-            conn.send('error: ' + self.error)
+            conn.send(u'error: ' + self.error)
 
     def cmd_clearerror(self, conn):
         """Removes the persistent error state of the server. This
@@ -353,14 +353,14 @@ class BaseServer(object):
         """Set the player's volume level (0-100)."""
         vol = cast_arg(int, vol)
         if vol < VOLUME_MIN or vol > VOLUME_MAX:
-            raise BPDError(ERROR_ARG, 'volume out of range')
+            raise BPDError(ERROR_ARG, u'volume out of range')
         self.volume = vol
     
     def cmd_crossfade(self, conn, crossfade):
         """Set the number of seconds of crossfading."""
         crossfade = cast_arg(int, crossfade)
         if crossfade < 0:            
-            raise BPDError(ERROR_ARG, 'crossfade time must be nonnegative')
+            raise BPDError(ERROR_ARG, u'crossfade time must be nonnegative')
     
     def cmd_clear(self, conn):
         """Clear the playlist."""
@@ -474,8 +474,8 @@ class BaseServer(object):
         Also a dummy implementation.
         """
         for idx, track in enumerate(self.playlist):
-            conn.send('cpos: ' + str(idx), 
-                      'Id: ' + str(track.id),
+            conn.send(u'cpos: ' + unicode(idx), 
+                      u'Id: ' + unicode(track.id),
                       )
     
     def cmd_currentsong(self, conn):
@@ -670,7 +670,7 @@ class Command(object):
         if conn.server.password and \
                 not conn.authenticated and \
                 self.name not in SAFE_COMMANDS:
-            raise BPDError(ERROR_PERMISSION, 'insufficient privileges')
+            raise BPDError(ERROR_PERMISSION, u'insufficient privileges')
         
         try:
             args = [conn] + self.args
@@ -690,7 +690,7 @@ class Command(object):
         except Exception, e:
             # An "unintentional" error. Hide it from the client.
             log.error(traceback.format_exc(e))
-            raise BPDError(ERROR_SYSTEM, 'server error', self.name)
+            raise BPDError(ERROR_SYSTEM, u'server error', self.name)
             
 
 class CommandList(list):
@@ -758,29 +758,29 @@ class Server(BaseServer):
         return seq_to_path((item.artist, item.album, item.title), PATH_PH)
 
     def _item_info(self, item):
-        info_lines = ['file: ' + self._item_path(item),
-                      'Time: ' + str(int(item.length)),
-                      'Title: ' + item.title,
-                      'Artist: ' + item.artist,
-                      'Album: ' + item.album,
-                      'Genre: ' + item.genre,
+        info_lines = [u'file: ' + self._item_path(item),
+                      u'Time: ' + unicode(int(item.length)),
+                      u'Title: ' + item.title,
+                      u'Artist: ' + item.artist,
+                      u'Album: ' + item.album,
+                      u'Genre: ' + item.genre,
                      ]
         
-        track = str(item.track)
+        track = unicode(item.track)
         if item.tracktotal:
-            track += '/' + str(item.tracktotal)
-        info_lines.append('Track: ' + track)
+            track += u'/' + unicode(item.tracktotal)
+        info_lines.append(u'Track: ' + track)
         
-        info_lines.append('Date: ' + str(item.year))
+        info_lines.append(u'Date: ' + unicode(item.year))
         
         try:
             pos = self._id_to_index(item.id)
-            info_lines.append('Pos: ' + str(pos))
+            info_lines.append(u'Pos: ' + unicode(pos))
         except ArgumentNotFoundError:
             # Don't include position if not in playlist.
             pass
         
-        info_lines.append('Id: ' + str(item.id))
+        info_lines.append(u'Id: ' + unicode(item.id))
         
         return info_lines
         
@@ -821,7 +821,7 @@ class Server(BaseServer):
         else: # List a track. This isn't a directory.
             raise BPDError(ERROR_ARG, 'this is not a directory')
         
-    def _listall(self, conn, path="/", info=False):
+    def _listall(self, conn, path=u"/", info=False):
         """Helper function for recursive listing. If info, show
         tracks' complete info; otherwise, just show items' paths.
         """
@@ -830,12 +830,12 @@ class Server(BaseServer):
         # artists
         if not artist:
             for a in self.lib.artists():
-                conn.send('directory: ' + a)
+                conn.send(u'directory: ' + a)
 
         # albums
         if not album:
             for a in self.lib.albums(artist or None):
-                conn.send('directory: ' + seq_to_path(a, PATH_PH))
+                conn.send(u'directory: ' + seq_to_path(a, PATH_PH))
 
         # tracks
         items = self.lib.items(artist or None, album or None)
@@ -844,12 +844,12 @@ class Server(BaseServer):
                 conn.send(*self._item_info(item))
         else:
             for item in items:
-                conn.send('file: ' + self._item_path(i))
+                conn.send(u'file: ' + self._item_path(i))
     
-    def cmd_listall(self, conn, path="/"):
+    def cmd_listall(self, conn, path=u"/"):
         """Send the paths all items in the directory, recursively."""
         self._listall(conn, path, False)
-    def cmd_listallinfo(self, conn, path="/"):
+    def cmd_listallinfo(self, conn, path=u"/"):
         """Send info on all the items in the directory, recursively."""
         self._listall(conn, path, True)
     
@@ -869,7 +869,7 @@ class Server(BaseServer):
                 found_an_item = True
                 self.playlist.append(item)
                 if send_id:
-                    conn.send('Id: ' + str(item.id))
+                    conn.send(u'Id: ' + unicode(item.id))
                 
             if not found_an_item:
                 # No items matched.
@@ -899,11 +899,11 @@ class Server(BaseServer):
         if self.current_index > -1:
             item = self.playlist[self.current_index]
             
-            conn.send('bitrate: ' + str(item.bitrate/1000))
+            conn.send(u'bitrate: ' + unicode(item.bitrate/1000))
             #fixme: missing 'audio'
             
             (pos, total) = self.player.time()
-            conn.send('time: ' + str(pos) + ':' + str(total))
+            conn.send(u'time: ' + unicode(pos) + u':' + unicode(total))
             
         #fixme: also missing 'updating_db'
 
@@ -918,30 +918,30 @@ class Server(BaseServer):
         result = c.execute(statement).fetchone()
         artists, albums = result[0], result[1]
 
-        conn.send('artists: ' + str(artists),
-                  'albums: ' + str(albums),
-                  'songs: ' + str(songs),
-                  'uptime: ' + str(int(time.time() - self.startup_time)),
-                  'playtime: ' + '0', #fixme
-                  'db_playtime: ' + str(int(totaltime)),
-                  'db_update: ' + str(int(self.startup_time)), #fixme
+        conn.send(u'artists: ' + unicode(artists),
+                  u'albums: ' + unicode(albums),
+                  u'songs: ' + unicode(songs),
+                  u'uptime: ' + unicode(int(time.time() - self.startup_time)),
+                  u'playtime: ' + u'0', #fixme
+                  u'db_playtime: ' + unicode(int(totaltime)),
+                  u'db_update: ' + unicode(int(self.startup_time)), #fixme
                   )
 
 
     # Searching.
 
     tagtype_map = {
-        'Artist':       'artist',
-        'Album':        'album',
-        'Title':        'title',
-        'Track':        'track',
+        u'Artist':       u'artist',
+        u'Album':        u'album',
+        u'Title':        u'title',
+        u'Track':        u'track',
         # Name?
-        'Genre':        'genre',
-        'Date':         'year',
-        'Composer':     'composer',
+        u'Genre':        u'genre',
+        u'Date':         u'year',
+        u'Composer':     u'composer',
         # Performer?
-        'Disc':         'disc',
-        'filename':     'path', # Suspect.
+        u'Disc':         u'disc',
+        u'filename':     u'path', # Suspect.
     }
 
     def cmd_tagtypes(self, conn):
@@ -949,7 +949,7 @@ class Server(BaseServer):
         searching.
         """
         for tag in self.tagtype_map:
-            conn.send('tagtype: ' + tag)
+            conn.send(u'tagtype: ' + tag)
     
     def _tagtype_lookup(self, tag):
         """Uses `tagtype_map` to look up the beets column name for an
@@ -961,7 +961,7 @@ class Server(BaseServer):
             # Match case-insensitively.
             if test_tag.lower() == tag.lower():
                 return test_tag, key
-        raise BPDError(ERROR_UNKNOWN, 'no such tagtype')
+        raise BPDError(ERROR_UNKNOWN, u'no such tagtype')
 
     def _metadata_query(self, query_type, any_query_type, kv):
         """Helper function returns a query object that will find items
@@ -974,11 +974,11 @@ class Server(BaseServer):
             # Iterate pairwise over the arguments.
             it = iter(kv)
             for tag, value in zip(it, it):
-                if tag.lower() == 'any':
+                if tag.lower() == u'any':
                     if any_query_type:
                         queries.append(any_query_type(value))
                     else:
-                        raise BPDError(ERROR_UNKNOWN, 'no such tagtype')
+                        raise BPDError(ERROR_UNKNOWN, u'no such tagtype')
                 else:
                     _, key = self._tagtype_lookup(tag)
                     queries.append(query_type(key, value))
@@ -1017,7 +1017,7 @@ class Server(BaseServer):
         c.execute(statement, subvals)
         
         for row in c:
-            conn.send(show_tag_canon + ': ' + unicode(row[0]))
+            conn.send(show_tag_canon + u': ' + unicode(row[0]))
     
     def cmd_count(self, conn, tag, value):
         """Returns the number and total time of songs matching the
@@ -1026,8 +1026,8 @@ class Server(BaseServer):
         _, key = self._tagtype_lookup(tag)
         query = beets.library.MatchQuery(key, value)
         songs, playtime = query.count(self.lib)
-        conn.send('songs: ' + str(songs),
-                  'playtime: ' + str(int(playtime)))
+        conn.send(u'songs: ' + unicode(songs),
+                  u'playtime: ' + unicode(int(playtime)))
         
     
     # "Outputs." Just a dummy implementation because we don't control
@@ -1035,9 +1035,9 @@ class Server(BaseServer):
     
     def cmd_outputs(self, conn):
         """List the available outputs."""
-        conn.send('outputid: 0',
-                  'outputname: gstreamer',
-                  'outputenabled: 1',
+        conn.send(u'outputid: 0',
+                  u'outputname: gstreamer',
+                  u'outputenabled: 1',
                   )
     
     def cmd_enableoutput(self, conn, output_id):
@@ -1048,7 +1048,7 @@ class Server(BaseServer):
     def cmd_disableoutput(self, conn, output_id):
         output_id = cast_arg(int, output_id)
         if output_id == 0:
-            raise BPDError(ERROR_ARG, 'cannot disable this output')
+            raise BPDError(ERROR_ARG, u'cannot disable this output')
         else:
             raise ArgumentIndexError()
         
@@ -1086,3 +1086,4 @@ class Server(BaseServer):
         pos = cast_arg(int, pos)
         super(Server, self).cmd_seek(conn, index, pos)
         self.player.seek(pos)
+
