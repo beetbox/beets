@@ -19,7 +19,7 @@ Beets library. Attempts to implement a compatible protocol to allow
 use of the wide range of MPD clients.
 """
 
-import eventlet.api
+import eventlet
 import re
 from string import Template
 import beets
@@ -226,10 +226,10 @@ class BaseServer(object):
         """
         self.startup_time = time.time()
         try:
-            self.listener = eventlet.api.tcp_listener((self.host, self.port))
+            self.listener = eventlet.listen((self.host, self.port))
             while True:
                 sock, address = self.listener.accept()
-                eventlet.api.spawn(Connection.handle, sock, self)
+                eventlet.spawn_n(Connection.handle, sock, self)
         except KeyboardInterrupt:
             pass # ^C ends the server.
 
