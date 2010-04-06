@@ -187,10 +187,8 @@ class BeetsApp(cmdln.Cmdln):
         items = self.lib.items(query=q)
 
         from beets import device
-        path = device.pod_path(name)
-        pod = device.get_pod(path)
-
-        device.add(pod, items)
+        pod = device.PodLibrary.by_name(name)
+        pod.add_items(items)
 
 if __name__ == '__main__':
     app = BeetsApp()
