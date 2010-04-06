@@ -193,19 +193,11 @@ class Item(object):
     
     def load(self, load_id=None):
         """Refresh the item's metadata from the library database. If fetch_id
-        is not specified, use the current item's id.
+        is not specified, use the item's current id.
         """
         if not self.library:
-            raise LibraryError('no library to load from')
-        
-        if load_id is None:
-            load_id = self.id
-        
-        c = self.library.conn.execute(
-                'SELECT * FROM items WHERE id=?', (load_id,) )
-        self._fill_record(c.fetchone())
-        self._clear_dirty()
-        c.close()
+            raise LibraryError('no library to store to')
+        self.library.load(self, load_id)
     
     def store(self, store_id=None, store_all=False):
         """Save the item's metadata into the library database. If store_id is
@@ -214,32 +206,10 @@ class Item(object):
         """
         if not self.library:
             raise LibraryError('no library to store to')
-            
-        if store_id is None:
-            store_id = self.id
- 
-        # build assignments for query
-        assignments = ''
-        subvars = []
-        for key in item_keys:
-            if (key != 'id') and (self.dirty[key] or store_all):
-                assignments += key + '=?,'
-                subvars.append(getattr(self, key))
-        
-        if not assignments:
-            # nothing to store (i.e., nothing was dirty)
-            return
-        
-        assignments = assignments[:-1] # knock off last ,
-
-        # finish the query
-        query = 'UPDATE items SET ' + assignments + ' WHERE id=?'
-        subvars.append(self.id)
-
-        self.library.conn.execute(query, subvars)
+        self.library.store(self, store_id, store_all)
         self._clear_dirty()
 
-    def add(self, library=None):
+    def add(self, library=None, copy=False):
         """Add the item as a new object to the library database. The id field
         will be updated; the new id is returned. If library is specified, set
         the item's library before adding.
@@ -248,31 +218,15 @@ class Item(object):
             self.library = library
         if not self.library:
             raise LibraryError('no library to add to')
+        self.library.add_item(self, copy)
+        return self.id
             
-        # build essential parts of query
-        columns = ','.join([key for key in item_keys if key != 'id'])
-        values = ','.join( ['?'] * (len(item_keys)-1) )
-        subvars = []
-        for key in item_keys:
-            if key != 'id':
-                subvars.append(getattr(self, key))
-        
-        # issue query
-        c = self.library.conn.cursor()
-        query = 'INSERT INTO items (' + columns + ') VALUES (' + values + ')'
-        c.execute(query, subvars)
-        new_id = c.lastrowid
-        c.close()
-        
-        self._clear_dirty()
-        self.id = new_id
-        return new_id
-    
     def remove(self):
         """Removes the item from the database (leaving the file on disk).
         """
-        self.library.conn.execute('DELETE FROM items WHERE id=?',
-                                  (self.id,) )
+        if not self.library:
+            raise LibraryError('no library to remove from')
+        self.library.remove(self)
     
     
     #### interaction with files' metadata ####
@@ -618,8 +572,9 @@ class BaseLibrary(object):
 
     ### basic operations ###
 
-    def add_items(self, items, copy=False): #FIXME rename to "add", copy default to true
-        """Add each item to the library. If copy, then each item is
+    def add_item(self, item, copy=False): #FIXME rename to "add", copy default to true
+        """Add the item as a new object to the library database. The id field
+        will be updated; the new id is returned. If copy, then each item is
         copied to the destination location before it is added.
         """
         raise NotImplementedError
@@ -635,6 +590,24 @@ class BaseLibrary(object):
         default.
         """
         pass
+
+    def load(self, item, load_id=None):
+        """Refresh the item's metadata from the library database. If fetch_id
+        is not specified, use the item's current id.
+        """
+        raise NotImplementedError
+
+    def store(self, item, store_id=None, store_all=False):
+        """Save the item's metadata into the library database. If store_id is
+        specified, use it instead of the item's current id. If store_all is
+        true, save the entire record instead of just the dirty fields.
+        """
+        raise NotImplementedError
+
+    def remove(self, item):
+        """Removes the item from the database (leaving the file on disk).
+        """
+        raise NotImplementedError
 
 
     ### browsing operations ###
@@ -687,10 +660,11 @@ class BaseLibrary(object):
         items = []
         for f in _walk_files(path):
             try:
-                items.append(Item.from_path(_normpath(f), self))
+                item = Item.from_path(_normpath(f), self)
             except FileTypeError:
                 log.warn(f + ' of unknown type, skipping')
-        self.add_items(items, copy)
+            self.add_item(item, copy)
+
 
 class Library(BaseLibrary):
     """A music library using an SQLite database as a metadata store."""
@@ -719,13 +693,30 @@ class Library(BaseLibrary):
 
     #### main interface ####
     
-    def add_items(self, items, copy=False):
-        for i in items:
-            #FIXME make a deep copy of the item?
-            i.library = self
-            if copy:
-                i.move(copy=True)
-            i.add()
+    def add_item(self, item, copy=False):
+        #FIXME make a deep copy of the item?
+        item.library = self
+        if copy:
+            item.move(copy=True)
+
+        # build essential parts of query
+        columns = ','.join([key for key in item_keys if key != 'id'])
+        values = ','.join( ['?'] * (len(item_keys)-1) )
+        subvars = []
+        for key in item_keys:
+            if key != 'id':
+                subvars.append(getattr(item, key))
+        
+        # issue query
+        c = self.conn.cursor()
+        query = 'INSERT INTO items (' + columns + ') VALUES (' + values + ')'
+        c.execute(query, subvars)
+        new_id = c.lastrowid
+        c.close()
+        
+        item._clear_dirty()
+        item.id = new_id
+        return new_id
     
     def get(self, query=None):
         return self._get_query(query).execute(self)
@@ -734,6 +725,43 @@ class Library(BaseLibrary):
         """Writes the library to disk (completing a sqlite transaction).
         """
         self.conn.commit()
+
+    def load(self, item, load_id=None):
+        if load_id is None:
+            load_id = item.id
+        
+        c = self.conn.execute(
+                'SELECT * FROM items WHERE id=?', (load_id,) )
+        item._fill_record(c.fetchone())
+        item._clear_dirty()
+        c.close()
+
+    def store(self, item, store_id=None, store_all=False):
+        if store_id is None:
+            store_id = item.id
+ 
+        # build assignments for query
+        assignments = ''
+        subvars = []
+        for key in item_keys:
+            if (key != 'id') and (item.dirty[key] or store_all):
+                assignments += key + '=?,'
+                subvars.append(getattr(item, key))
+        
+        if not assignments:
+            # nothing to store (i.e., nothing was dirty)
+            return
+        
+        assignments = assignments[:-1] # knock off last ,
+
+        # finish the query
+        query = 'UPDATE items SET ' + assignments + ' WHERE id=?'
+        subvars.append(item.id)
+
+        self.conn.execute(query, subvars)
+
+    def remove(self, item):
+        self.conn.execute('DELETE FROM items WHERE id=?', (item.id,))
 
 
     ### browsing ###
