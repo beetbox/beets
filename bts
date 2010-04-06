@@ -95,7 +95,7 @@ def tag_album(items, lib):
     # Change metadata and add to library.
     autotag.apply_metadata(items, info)
     for item in items:
-        item.move(True)
+        item.move(lib, True)
         item.add()
         item.write()
 

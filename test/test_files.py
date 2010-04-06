@@ -52,23 +52,23 @@ class MoveTest(unittest.TestCase):
             shutil.rmtree(self.libdir)
     
     def test_move_arrives(self):
-        self.i.move()
+        self.i.move(self.lib)
         self.assertTrue(os.path.exists(self.dest))
     
     def test_move_departs(self):
-        self.i.move()
+        self.i.move(self.lib)
         self.assertTrue(not os.path.exists(self.path))
     
     def test_copy_arrives(self):
-        self.i.move(copy=True)
+        self.i.move(self.lib, copy=True)
         self.assertTrue(os.path.exists(self.dest))
     
     def test_copy_does_not_depart(self):
-        self.i.move(copy=True)
+        self.i.move(self.lib, copy=True)
         self.assertTrue(os.path.exists(self.path))
     
     def test_move_changes_path(self):
-        self.i.move()
+        self.i.move(self.lib)
         self.assertEqual(self.i.path, beets.library._normpath(self.dest))
 
 class WalkTest(unittest.TestCase):

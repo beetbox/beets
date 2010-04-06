@@ -264,7 +264,7 @@ class Item(object):
     
     #### dealing with files themselves ####
     
-    def move(self, copy=False):
+    def move(self, library, copy=False):
         """Move the item to its designated location within the library
         directory (provided by destination()). Subdirectories are created as
         needed. If the operation succeeds, the item's path field is updated to
@@ -278,7 +278,7 @@ class Item(object):
         Note that one should almost certainly call store() and library.save()
         after this method in order to keep on-disk data consistent.
         """
-        dest = self.library.destination(self)
+        dest = library.destination(self)
         
         # Create necessary ancestry for the move. Like os.renames but only
         # halfway.
@@ -685,7 +685,7 @@ class Library(BaseLibrary):
         #FIXME make a deep copy of the item?
         item.library = self
         if copy:
-            item.move(copy=True)
+            item.move(self, copy=True)
 
         # build essential parts of query
         columns = ','.join([key for key in item_keys if key != 'id'])
