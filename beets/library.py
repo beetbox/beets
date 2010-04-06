@@ -254,46 +254,6 @@ class Item(object):
     
     #### dealing with files themselves ####
     
-    def destination(self):
-        """Returns the path within the library directory designated for this
-        item (i.e., where the file ought to be).
-        """
-        libpath = self.library.directory
-        subpath_tmpl = Template(self.library.path_format)
-        
-        # build the mapping for substitution in the path template, beginning
-        # with the values from the database
-        mapping = {}
-        for key in metadata_keys:
-            value = getattr(self, key)
-            # sanitize the value for inclusion in a path:
-            # replace / and leading . with _
-            if isinstance(value, basestring):
-                value.replace(os.sep, '_')
-                value = re.sub(r'[\\/:]|^\.', '_', value)
-            elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
-                # pad with zeros
-                value = '%02i' % value
-            else:
-                value = str(value)
-            mapping[key] = value
-        
-        # Perform substitution.
-        subpath = subpath_tmpl.substitute(mapping)
-        
-        # Truncate path components.
-        comps = _components(subpath)
-        for i, comp in enumerate(comps):
-            if len(comp) > MAX_FILENAME_LENGTH:
-                comps[i] = comp[:MAX_FILENAME_LENGTH]
-        subpath = os.path.join(*comps)
-        
-        # Preserve extension.
-        _, extension = os.path.splitext(self.path)
-        subpath += extension
-        
-        return _normpath(os.path.join(libpath, subpath))
-    
     def move(self, copy=False):
         """Move the item to its designated location within the library
         directory (provided by destination()). Subdirectories are created as
@@ -308,7 +268,7 @@ class Item(object):
         Note that one should almost certainly call store() and library.save()
         after this method in order to keep on-disk data consistent.
         """
-        dest = self.destination()
+        dest = self.library.destination(self)
         
         # Create necessary ancestry for the move. Like os.renames but only
         # halfway.
@@ -689,7 +649,46 @@ class Library(BaseLibrary):
         
         self.conn.executescript(setup_sql)
         self.conn.commit()
-    
+
+    def destination(self, item):
+        """Returns the path in the library directory designated for item
+        item (i.e., where the file ought to be).
+        """
+        libpath = self.directory
+        subpath_tmpl = Template(self.path_format)
+        
+        # build the mapping for substitution in the path template, beginning
+        # with the values from the database
+        mapping = {}
+        for key in metadata_keys:
+            value = getattr(item, key)
+            # sanitize the value for inclusion in a path:
+            # replace / and leading . with _
+            if isinstance(value, basestring):
+                value.replace(os.sep, '_')
+                value = re.sub(r'[\\/:]|^\.', '_', value)
+            elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
+                # pad with zeros
+                value = '%02i' % value
+            else:
+                value = str(value)
+            mapping[key] = value
+        
+        # Perform substitution.
+        subpath = subpath_tmpl.substitute(mapping)
+        
+        # Truncate path components.
+        comps = _components(subpath)
+        for i, comp in enumerate(comps):
+            if len(comp) > MAX_FILENAME_LENGTH:
+                comps[i] = comp[:MAX_FILENAME_LENGTH]
+        subpath = os.path.join(*comps)
+        
+        # Preserve extension.
+        _, extension = os.path.splitext(item.path)
+        subpath += extension
+        
+        return _normpath(os.path.join(libpath, subpath))   
 
     #### main interface ####
     
@@ -802,4 +801,6 @@ class Library(BaseLibrary):
               " ORDER BY artist, album, disc, track"
         c = self.conn.execute(sql, subvals)
         return ResultIterator(c, self)
+
+
 
