@@ -65,7 +65,7 @@ def _first_n(it, n):
             break
         yield v
 
-def albums_in_dir(path, lib=None):
+def albums_in_dir(path):
     """Recursively searches the given directory and returns an iterable
     of lists of items where each list is probably an album.
     Specifically, any folder containing any media files is an album.
@@ -75,7 +75,7 @@ def albums_in_dir(path, lib=None):
         items = []
         for filename in files:
             try:
-                i = library.Item.from_path(os.path.join(root, filename), lib)
+                i = library.Item.from_path(os.path.join(root, filename))
             except mediafile.FileTypeError:
                 pass
             else:

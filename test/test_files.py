@@ -34,7 +34,7 @@ class MoveTest(unittest.TestCase):
         # add it to a temporary library
         self.lib = beets.library.Library(':memory:')
         self.i = beets.library.Item.from_path(self.path)
-        self.i.add(self.lib)
+        self.lib.add(self.i)
         
         # set up the destination
         self.libdir = join('rsrc', 'testlibdir')
@@ -52,48 +52,24 @@ class MoveTest(unittest.TestCase):
             shutil.rmtree(self.libdir)
     
     def test_move_arrives(self):
-        self.i.move()
+        self.i.move(self.lib)
         self.assertTrue(os.path.exists(self.dest))
     
     def test_move_departs(self):
-        self.i.move()
+        self.i.move(self.lib)
         self.assertTrue(not os.path.exists(self.path))
     
     def test_copy_arrives(self):
-        self.i.move(copy=True)
+        self.i.move(self.lib, copy=True)
         self.assertTrue(os.path.exists(self.dest))
     
     def test_copy_does_not_depart(self):
-        self.i.move(copy=True)
+        self.i.move(self.lib, copy=True)
         self.assertTrue(os.path.exists(self.path))
     
     def test_move_changes_path(self):
-        self.i.move()
+        self.i.move(self.lib)
         self.assertEqual(self.i.path, beets.library._normpath(self.dest))
-
-class DeleteTest(unittest.TestCase):
-    def setUp(self):
-        # make a temporary file
-        self.path = join('rsrc', 'temp.mp3')
-        shutil.copy(join('rsrc', 'full.mp3'), self.path)
-        
-        # add it to a temporary library
-        self.lib = beets.library.Library(':memory:')
-        self.i = beets.library.Item.from_path(self.path)
-        self.i.add(self.lib)
-    def tearDown(self):
-        # make sure the temp file is gone
-        if os.path.exists(self.path):
-            os.remove(self.path)
-    
-    def test_delete_deletes_file(self):
-        self.i.delete()
-        self.assertTrue(not os.path.exists(self.path))
-    
-    def test_delete_removes_from_db(self):
-        self.i.delete()
-        c = self.lib.conn.execute('select * from items where 1')
-        self.assertEqual(c.fetchone(), None)
 
 class WalkTest(unittest.TestCase):
     def setUp(self):
@@ -146,8 +122,8 @@ class AddTest(unittest.TestCase):
         if os.path.exists(self.dir):
             shutil.rmtree(self.dir)
 
-    def test_library_add_copies(self):
-        self.lib.add(os.path.join('rsrc', 'full.mp3'), copy=True)
+    def test_library_add_path_copies(self):
+        self.lib.add_path(os.path.join('rsrc', 'full.mp3'), copy=True)
         self.assertTrue(os.path.isfile(os.path.join(self.dir, 'item.mp3')))
     
 class HelperTest(unittest.TestCase):

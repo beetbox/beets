@@ -23,7 +23,7 @@ import beets.library
 
 def lib(): return beets.library.Library('rsrc' + os.sep + 'test.blb')
 def boracay(l): return beets.library.Item(l.conn.execute('select * from items '
-    'where id=3').fetchone(), l)
+    'where id=3').fetchone())
 def item(lib=None): return beets.library.Item({
     'title':      u'the title',
     'artist':     u'the artist',
@@ -45,7 +45,7 @@ def item(lib=None): return beets.library.Item({
     'path':       'somepath',
     'length':     60.0,
     'bitrate':    128000,
-}, lib)
+})
 np = beets.library._normpath
 
 class LoadTest(unittest.TestCase):
@@ -58,12 +58,12 @@ class LoadTest(unittest.TestCase):
     def test_load_restores_data_from_db(self):
         original_title = self.i.title
         self.i.title = 'something'
-        self.i.load()
+        self.lib.load(self.i)
         self.assertEqual(original_title, self.i.title)
     
     def test_load_clears_dirty_flags(self):
         self.i.artist = 'something'
-        self.i.load()
+        self.lib.load(self.i)
         self.assertTrue(not self.i.dirty['artist'])
 
 class StoreTest(unittest.TestCase):
@@ -75,7 +75,7 @@ class StoreTest(unittest.TestCase):
     
     def test_store_changes_database_value(self):
         self.i.year = 1987
-        self.i.store()
+        self.lib.store(self.i)
         new_year = self.lib.conn.execute('select year from items where '
             'title="Boracay"').fetchone()['year']
         self.assertEqual(new_year, 1987)
@@ -83,14 +83,14 @@ class StoreTest(unittest.TestCase):
     def test_store_only_writes_dirty_fields(self):
         original_genre = self.i.genre
         self.i.record['genre'] = 'beatboxing' # change value w/o dirtying
-        self.i.store()
+        self.lib.store(self.i)
         new_genre = self.lib.conn.execute('select genre from items where '
             'title="Boracay"').fetchone()['genre']
         self.assertEqual(new_genre, original_genre)
     
     def test_store_clears_dirty_flags(self):
         self.i.composer = 'tvp'
-        self.i.store()
+        self.lib.store(self.i)
         self.assertTrue(not self.i.dirty['composer'])
 
 class AddTest(unittest.TestCase):
@@ -101,13 +101,13 @@ class AddTest(unittest.TestCase):
         self.lib.conn.close()
     
     def test_item_add_inserts_row(self):
-        self.i.add()
+        self.lib.add(self.i)
         new_grouping = self.lib.conn.execute('select grouping from items '
             'where composer="the composer"').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
     
-    def test_library_add_inserts_row(self):
-        self.lib.add(os.path.join('rsrc', 'full.mp3'))
+    def test_library_add_path_inserts_row(self):
+        self.lib.add_path(os.path.join('rsrc', 'full.mp3'))
         new_grouping = self.lib.conn.execute('select grouping from items '
             'where composer="the composer"').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
@@ -121,7 +121,7 @@ class RemoveTest(unittest.TestCase):
         self.lib.conn.close()
     
     def test_remove_deletes_from_db(self):
-        self.i.remove()
+        self.lib.remove(self.i)
         c = self.lib.conn.execute('select * from items where id=3')
         self.assertEqual(c.fetchone(), None)
 
@@ -154,12 +154,12 @@ class DestinationTest(unittest.TestCase):
     def test_directory_works_with_trailing_slash(self):
         self.lib.directory = 'one/'
         self.lib.path_format = 'two'
-        self.assertEqual(self.i.destination(), np('one/two'))
+        self.assertEqual(self.lib.destination(self.i), np('one/two'))
     
     def test_directory_works_without_trailing_slash(self):
         self.lib.directory = 'one'
         self.lib.path_format = 'two'
-        self.assertEqual(self.i.destination(), np('one/two'))
+        self.assertEqual(self.lib.destination(self.i), np('one/two'))
     
     def test_destination_substitues_metadata_values(self):
         self.lib.directory = 'base'
@@ -167,13 +167,15 @@ class DestinationTest(unittest.TestCase):
         self.i.title = 'three'
         self.i.artist = 'two'
         self.i.album = 'one'
-        self.assertEqual(self.i.destination(), np('base/one/two three'))
+        self.assertEqual(self.lib.destination(self.i),
+                         np('base/one/two three'))
     
     def test_destination_preserves_extension(self):
         self.lib.directory = 'base'
         self.lib.path_format = '$title'
         self.i.path = 'hey.audioFormat'
-        self.assertEqual(self.i.destination(),np('base/the title.audioFormat'))
+        self.assertEqual(self.lib.destination(self.i),
+                         np('base/the title.audioFormat'))
     
     def test_destination_pads_some_indices(self):
         self.lib.directory = 'base'
@@ -185,11 +187,12 @@ class DestinationTest(unittest.TestCase):
         self.i.disctotal = 4
         self.i.bpm = 5
         self.i.year = 6
-        self.assertEqual(self.i.destination(), np('base/01 02 03 04 5 6'))
+        self.assertEqual(self.lib.destination(self.i),
+                         np('base/01 02 03 04 5 6'))
     
     def test_destination_escapes_slashes(self):
         self.i.album = 'one/two'
-        dest = self.i.destination()
+        dest = self.lib.destination(self.i)
         self.assertTrue('one' in dest)
         self.assertTrue('two' in dest)
         self.assertFalse('one/two' in dest)
@@ -197,13 +200,13 @@ class DestinationTest(unittest.TestCase):
     def test_destination_long_names_truncated(self):
         self.i.title = 'X'*300
         self.i.artist = 'Y'*300
-        for c in self.i.destination().split(os.path.sep):
+        for c in self.lib.destination(self.i).split(os.path.sep):
             self.assertTrue(len(c) <= 255)
     
     def test_destination_long_names_keep_extension(self):
         self.i.title = 'X'*300
         self.i.path = 'something.extn'
-        dest = self.i.destination()
+        dest = self.lib.destination(self.i)
         self.assertEqual(dest[-5:], '.extn')
         
 def suite():

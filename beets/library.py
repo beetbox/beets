@@ -136,12 +136,19 @@ def _components(path):
 
 
 class Item(object):
-    def __init__(self, values, library=None):
-        self.library = library
+    def __init__(self, values):
         self.dirty = {}
         self._fill_record(values)
         self._clear_dirty()
-    
+        
+    @classmethod
+    def from_path(cls, path):
+        """Creates a new item from the media file at the specified path.
+        """
+        i = cls({})
+        i.read(path)
+        return i
+
     def _fill_record(self, values):
         self.record = {}
         for key in item_keys:
@@ -156,8 +163,7 @@ class Item(object):
             self.dirty[key] = False
 
     def __repr__(self):
-        return 'Item(' + repr(self.record) + \
-               ', library=' + repr(self.library) + ')'
+        return 'Item(' + repr(self.record) + ')'
 
 
     #### item field accessors ####
@@ -189,92 +195,6 @@ class Item(object):
             super(Item, self).__setattr__(key, value)
     
     
-    #### interaction with the database ####
-    
-    def load(self, load_id=None):
-        """Refresh the item's metadata from the library database. If fetch_id
-        is not specified, use the current item's id.
-        """
-        if not self.library:
-            raise LibraryError('no library to load from')
-        
-        if load_id is None:
-            load_id = self.id
-        
-        c = self.library.conn.execute(
-                'SELECT * FROM items WHERE id=?', (load_id,) )
-        self._fill_record(c.fetchone())
-        self._clear_dirty()
-        c.close()
-    
-    def store(self, store_id=None, store_all=False):
-        """Save the item's metadata into the library database. If store_id is
-        specified, use it instead of the item's current id. If store_all is
-        true, save the entire record instead of just the dirty fields.
-        """
-        if not self.library:
-            raise LibraryError('no library to store to')
-            
-        if store_id is None:
-            store_id = self.id
- 
-        # build assignments for query
-        assignments = ''
-        subvars = []
-        for key in item_keys:
-            if (key != 'id') and (self.dirty[key] or store_all):
-                assignments += key + '=?,'
-                subvars.append(getattr(self, key))
-        
-        if not assignments:
-            # nothing to store (i.e., nothing was dirty)
-            return
-        
-        assignments = assignments[:-1] # knock off last ,
-
-        # finish the query
-        query = 'UPDATE items SET ' + assignments + ' WHERE id=?'
-        subvars.append(self.id)
-
-        self.library.conn.execute(query, subvars)
-        self._clear_dirty()
-
-    def add(self, library=None):
-        """Add the item as a new object to the library database. The id field
-        will be updated; the new id is returned. If library is specified, set
-        the item's library before adding.
-        """
-        if library:
-            self.library = library
-        if not self.library:
-            raise LibraryError('no library to add to')
-            
-        # build essential parts of query
-        columns = ','.join([key for key in item_keys if key != 'id'])
-        values = ','.join( ['?'] * (len(item_keys)-1) )
-        subvars = []
-        for key in item_keys:
-            if key != 'id':
-                subvars.append(getattr(self, key))
-        
-        # issue query
-        c = self.library.conn.cursor()
-        query = 'INSERT INTO items (' + columns + ') VALUES (' + values + ')'
-        c.execute(query, subvars)
-        new_id = c.lastrowid
-        c.close()
-        
-        self._clear_dirty()
-        self.id = new_id
-        return new_id
-    
-    def remove(self):
-        """Removes the item from the database (leaving the file on disk).
-        """
-        self.library.conn.execute('DELETE FROM items WHERE id=?',
-                                  (self.id,) )
-    
-    
     #### interaction with files' metadata ####
     
     def read(self, read_path=None):
@@ -300,47 +220,7 @@ class Item(object):
     
     #### dealing with files themselves ####
     
-    def destination(self):
-        """Returns the path within the library directory designated for this
-        item (i.e., where the file ought to be).
-        """
-        libpath = self.library.directory
-        subpath_tmpl = Template(self.library.path_format)
-        
-        # build the mapping for substitution in the path template, beginning
-        # with the values from the database
-        mapping = {}
-        for key in metadata_keys:
-            value = getattr(self, key)
-            # sanitize the value for inclusion in a path:
-            # replace / and leading . with _
-            if isinstance(value, basestring):
-                value.replace(os.sep, '_')
-                value = re.sub(r'[\\/:]|^\.', '_', value)
-            elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
-                # pad with zeros
-                value = '%02i' % value
-            else:
-                value = str(value)
-            mapping[key] = value
-        
-        # Perform substitution.
-        subpath = subpath_tmpl.substitute(mapping)
-        
-        # Truncate path components.
-        comps = _components(subpath)
-        for i, comp in enumerate(comps):
-            if len(comp) > MAX_FILENAME_LENGTH:
-                comps[i] = comp[:MAX_FILENAME_LENGTH]
-        subpath = os.path.join(*comps)
-        
-        # Preserve extension.
-        _, extension = os.path.splitext(self.path)
-        subpath += extension
-        
-        return _normpath(os.path.join(libpath, subpath))
-    
-    def move(self, copy=False):
+    def move(self, library, copy=False):
         """Move the item to its designated location within the library
         directory (provided by destination()). Subdirectories are created as
         needed. If the operation succeeds, the item's path field is updated to
@@ -354,7 +234,7 @@ class Item(object):
         Note that one should almost certainly call store() and library.save()
         after this method in order to keep on-disk data consistent.
         """
-        dest = self.destination()
+        dest = library.destination(self)
         
         # Create necessary ancestry for the move. Like os.renames but only
         # halfway.
@@ -369,28 +249,7 @@ class Item(object):
             
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
-    
-    def delete(self):
-        """Deletes the item from the filesystem. If the item is located
-        in the library directory, any empty parent directories are trimmed.
-        Also calls remove(), deleting the appropriate row from the database.
-        
-        As with move(), library.save() should almost certainly be called after
-        invoking this (although store() should not).
-        """
-        os.unlink(self.path)
-        self.remove()
-    
-    @classmethod
-    def from_path(cls, path, library=None):
-        """Creates a new item from the media file at the specified path. Sets
-        the item's library (but does not add the item) if library is
-        specified.
-        """
-        i = cls({})
-        i.read(path)
-        i.library = library
-        return i
+
 
 
 
@@ -587,39 +446,18 @@ class ResultIterator(object):
         except StopIteration:
             self.cursor.close()
             raise
-        return Item(row, self.library)
+        return Item(row)
 
 
 
 
+class BaseLibrary(object):
+    """Abstract base class for music libraries, which are loosely
+    defined as sets of Items.
+    """
+    def __init__(self):
+        raise NotImplementedError
 
-
-
-
-class Library(object):
-    def __init__(self, path='library.blb',
-                       directory='~/Music',
-                       path_format='$artist/$album/$track $title'):
-        self.path = path
-        self.directory = directory
-        self.path_format = path_format
-        
-        self.conn = sqlite3.connect(self.path)
-        self.conn.row_factory = sqlite3.Row
-            # this way we can access our SELECT results like dictionaries
-        
-        self._setup()
-    
-    def _setup(self):
-        """Set up the schema of the library file."""
-        
-        setup_sql =  'CREATE TABLE IF NOT EXISTS items ('
-        setup_sql += ', '.join([' '.join(f) for f in item_fields])
-        setup_sql += ');'
-        
-        self.conn.executescript(setup_sql)
-        self.conn.commit()
-    
 
     ### helpers ###
 
@@ -636,30 +474,196 @@ class Library(object):
             return val
         elif not isinstance(query, Query):
             raise ValueError('query must be None or have type Query or str')
-       
 
-    
-    #### main interface ####
-    
-    def add(self, path, copy=False):
-        """Add a file to the library or recursively search a directory and add
-        all its contents. If copy is True, copy files to their destination in
-        the library directory while adding.
+
+    ### basic operations ###
+
+    def add(self, item, copy=False): #FIXME copy should default to true
+        """Add the item as a new object to the library database. The id field
+        will be updated; the new id is returned. If copy, then each item is
+        copied to the destination location before it is added.
         """
-        
-        for f in _walk_files(path):
-            try:
-                i = Item.from_path(_normpath(f), self)
-                if copy:
-                    i.move(copy=True)
-                i.add()
-            except FileTypeError:
-                log.warn(f + ' of unknown type, skipping')
-    
+        raise NotImplementedError
+
     def get(self, query=None):
-        """Returns a ResultIterator to the items matching query, which may be
+        """Returns a sequence of the items matching query, which may be
         None (match the entire library), a Query object, or a query string.
         """
+        raise NotImplementedError
+
+    def save(self):
+        """Ensure that the library is consistent on disk. A no-op by
+        default.
+        """
+        pass
+
+    def load(self, item, load_id=None):
+        """Refresh the item's metadata from the library database. If fetch_id
+        is not specified, use the item's current id.
+        """
+        raise NotImplementedError
+
+    def store(self, item, store_id=None, store_all=False):
+        """Save the item's metadata into the library database. If store_id is
+        specified, use it instead of the item's current id. If store_all is
+        true, save the entire record instead of just the dirty fields.
+        """
+        raise NotImplementedError
+
+    def remove(self, item):
+        """Removes the item from the database (leaving the file on disk).
+        """
+        raise NotImplementedError
+
+
+    ### browsing operations ###
+    # Naive implementations are provided, but these methods should be
+    # overridden if a better implementation exists.
+
+    def artists(self, query=None):
+        """Returns a sorted sequence of artists in the database, possibly
+        filtered by a query (in the same sense as get()).
+        """
+        out = set()
+        for item in self.get(query):
+            out.add(item.artist)
+        return sorted(out)
+
+    def albums(self, artist=None, query=None):
+        """Returns a sorted list of (artist, album) pairs, possibly filtered
+        by an artist name or an arbitrary query.
+        """
+        out = set()
+        for item in self.get(query):
+            if artist is None or item.artist == artist:
+                out.add((item.artist, item.album))
+        return sorted(out)
+
+    def items(self, artist=None, album=None, title=None, query=None):
+        """Returns a sequence of the items matching the given artist,
+        album, title, and query (if present). Sorts in such a way as to
+        group albums appropriately.
+        """
+        out = []
+        for item in self.get(query):
+            if (artist is None or item.artist == artist) and \
+               (album is None  or item.album == album) and \
+               (title is None  or item.title == title):
+                out.append(item)
+
+        # Sort by: artist, album, disc, track.
+        def compare(a, b):
+            return cmp(a.artist, b.artist) or \
+                   cmp(a.album, b.album) or \
+                   cmp(a.disc, b.disc) or \
+                   cmp(a.track, b.track)
+        return sorted(out, compare)
+
+
+    ### convenience methods ###
+
+    def add_path(self, path, copy=False):
+        items = []
+        for f in _walk_files(path):
+            try:
+                item = Item.from_path(_normpath(f))
+            except FileTypeError:
+                log.warn(f + ' of unknown type, skipping')
+            self.add(item, copy)
+
+
+class Library(BaseLibrary):
+    """A music library using an SQLite database as a metadata store."""
+    def __init__(self, path='library.blb',
+                       directory='~/Music',
+                       path_format='$artist/$album/$track $title'):
+        self.path = path
+        self.directory = directory
+        self.path_format = path_format
+        
+        self.conn = sqlite3.connect(self.path)
+        self.conn.row_factory = sqlite3.Row
+            # this way we can access our SELECT results like dictionaries
+        
+        self._setup()
+    
+    def _setup(self):
+        """Set up the schema of the library file."""
+        setup_sql =  'CREATE TABLE IF NOT EXISTS items ('
+        setup_sql += ', '.join([' '.join(f) for f in item_fields])
+        setup_sql += ');'
+        
+        self.conn.executescript(setup_sql)
+        self.conn.commit()
+
+    def destination(self, item):
+        """Returns the path in the library directory designated for item
+        item (i.e., where the file ought to be).
+        """
+        libpath = self.directory
+        subpath_tmpl = Template(self.path_format)
+        
+        # build the mapping for substitution in the path template, beginning
+        # with the values from the database
+        mapping = {}
+        for key in metadata_keys:
+            value = getattr(item, key)
+            # sanitize the value for inclusion in a path:
+            # replace / and leading . with _
+            if isinstance(value, basestring):
+                value.replace(os.sep, '_')
+                value = re.sub(r'[\\/:]|^\.', '_', value)
+            elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
+                # pad with zeros
+                value = '%02i' % value
+            else:
+                value = str(value)
+            mapping[key] = value
+        
+        # Perform substitution.
+        subpath = subpath_tmpl.substitute(mapping)
+        
+        # Truncate path components.
+        comps = _components(subpath)
+        for i, comp in enumerate(comps):
+            if len(comp) > MAX_FILENAME_LENGTH:
+                comps[i] = comp[:MAX_FILENAME_LENGTH]
+        subpath = os.path.join(*comps)
+        
+        # Preserve extension.
+        _, extension = os.path.splitext(item.path)
+        subpath += extension
+        
+        return _normpath(os.path.join(libpath, subpath))   
+
+    #### main interface ####
+    
+    def add(self, item, copy=False):
+        #FIXME make a deep copy of the item?
+        item.library = self
+        if copy:
+            item.move(self, copy=True)
+
+        # build essential parts of query
+        columns = ','.join([key for key in item_keys if key != 'id'])
+        values = ','.join( ['?'] * (len(item_keys)-1) )
+        subvars = []
+        for key in item_keys:
+            if key != 'id':
+                subvars.append(getattr(item, key))
+        
+        # issue query
+        c = self.conn.cursor()
+        query = 'INSERT INTO items (' + columns + ') VALUES (' + values + ')'
+        c.execute(query, subvars)
+        new_id = c.lastrowid
+        c.close()
+        
+        item._clear_dirty()
+        item.id = new_id
+        return new_id
+    
+    def get(self, query=None):
         return self._get_query(query).execute(self)
     
     def save(self):
@@ -667,13 +671,48 @@ class Library(object):
         """
         self.conn.commit()
 
+    def load(self, item, load_id=None):
+        if load_id is None:
+            load_id = item.id
+        
+        c = self.conn.execute(
+                'SELECT * FROM items WHERE id=?', (load_id,) )
+        item._fill_record(c.fetchone())
+        item._clear_dirty()
+        c.close()
+
+    def store(self, item, store_id=None, store_all=False):
+        if store_id is None:
+            store_id = item.id
+ 
+        # build assignments for query
+        assignments = ''
+        subvars = []
+        for key in item_keys:
+            if (key != 'id') and (item.dirty[key] or store_all):
+                assignments += key + '=?,'
+                subvars.append(getattr(item, key))
+        
+        if not assignments:
+            # nothing to store (i.e., nothing was dirty)
+            return
+        
+        assignments = assignments[:-1] # knock off last ,
+
+        # finish the query
+        query = 'UPDATE items SET ' + assignments + ' WHERE id=?'
+        subvars.append(item.id)
+
+        self.conn.execute(query, subvars)
+        item._clear_dirty()
+
+    def remove(self, item):
+        self.conn.execute('DELETE FROM items WHERE id=?', (item.id,))
+
 
     ### browsing ###
 
     def artists(self, query=None):
-        """Returns a list of artists in the database, possibly filtered by a
-        query (in the same sense as get()).
-        """
         where, subvals = self._get_query(query).clause()
         sql = "SELECT DISTINCT artist FROM items " + \
               "WHERE " + where + \
@@ -682,9 +721,6 @@ class Library(object):
         return [res[0] for res in c.fetchall()]
 
     def albums(self, artist=None, query=None):
-        """Returns a list of (artist, album) pairs, possibly filtered by an
-        artist name or an arbitrary query.
-        """
         query = self._get_query(query)
         if artist is not None:
             # "Add" the artist to the query.
@@ -697,10 +733,6 @@ class Library(object):
         return [(res[0], res[1]) for res in c.fetchall()]
 
     def items(self, artist=None, album=None, title=None, query=None):
-        """Returns a ResultIterator over the items matching the given artist,
-        album, title, and query (if present). Sorts in such a way as to group
-        albums appropriately.
-        """
         queries = [self._get_query(query)]
         if artist is not None:
             queries.append(MatchQuery('artist', artist))
@@ -716,4 +748,6 @@ class Library(object):
               " ORDER BY artist, album, disc, track"
         c = self.conn.execute(sql, subvals)
         return ResultIterator(c, self)
+
+
 

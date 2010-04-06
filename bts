@@ -95,10 +95,9 @@ def tag_album(items, lib):
     # Change metadata and add to library.
     autotag.apply_metadata(items, info)
     for item in items:
-        item.move(True)
-        item.add()
+        item.move(lib, True)
+        lib.add(item)
         item.write()
-
 
 
 class BeetsApp(cmdln.Cmdln):
@@ -136,8 +135,7 @@ class BeetsApp(cmdln.Cmdln):
         ${cmd_option_list}
         """
         for path in paths:
-            for album in autotag.albums_in_dir(os.path.expanduser(path),
-                                               self.lib):
+            for album in autotag.albums_in_dir(os.path.expanduser(path)):
                 print
                 tag_album(album, self.lib)
                 self.lib.save()
@@ -176,7 +174,23 @@ class BeetsApp(cmdln.Cmdln):
         from beets.player.bpd import Server
         Server(self.lib, host, int(port), password).run()
 
+    def do_dadd(self, subcmd, opts, name, *criteria):
+        """${cmd_name}: add files to a device
+        
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        q = ' '.join(criteria)
+        if not q.strip(): q = None
+        items = self.lib.items(query=q)
+
+        from beets import device
+        pod = device.PodLibrary.by_name(name)
+        for item in items:
+            pod.add(item)
+        pod.save()
 
 if __name__ == '__main__':
     app = BeetsApp()
     sys.exit(app.main())
+
