@@ -218,7 +218,7 @@ class Item(object):
             self.library = library
         if not self.library:
             raise LibraryError('no library to add to')
-        self.library.add_item(self, copy)
+        self.library.add(self, copy)
         return self.id
             
     def remove(self):
@@ -532,7 +532,7 @@ class BaseLibrary(object):
 
     ### basic operations ###
 
-    def add_item(self, item, copy=False): #FIXME rename to "add", copy default to true
+    def add(self, item, copy=False): #FIXME copy should default to true
         """Add the item as a new object to the library database. The id field
         will be updated; the new id is returned. If copy, then each item is
         copied to the destination location before it is added.
@@ -616,14 +616,14 @@ class BaseLibrary(object):
 
     ### convenience methods ###
 
-    def add(self, path, copy=False): #FIXME change name to add_path()
+    def add_path(self, path, copy=False):
         items = []
         for f in _walk_files(path):
             try:
                 item = Item.from_path(_normpath(f), self)
             except FileTypeError:
                 log.warn(f + ' of unknown type, skipping')
-            self.add_item(item, copy)
+            self.add(item, copy)
 
 
 class Library(BaseLibrary):
@@ -692,7 +692,7 @@ class Library(BaseLibrary):
 
     #### main interface ####
     
-    def add_item(self, item, copy=False):
+    def add(self, item, copy=False):
         #FIXME make a deep copy of the item?
         item.library = self
         if copy:

@@ -146,8 +146,8 @@ class AddTest(unittest.TestCase):
         if os.path.exists(self.dir):
             shutil.rmtree(self.dir)
 
-    def test_library_add_copies(self):
-        self.lib.add(os.path.join('rsrc', 'full.mp3'), copy=True)
+    def test_library_add_path_copies(self):
+        self.lib.add_path(os.path.join('rsrc', 'full.mp3'), copy=True)
         self.assertTrue(os.path.isfile(os.path.join(self.dir, 'item.mp3')))
     
 class HelperTest(unittest.TestCase):

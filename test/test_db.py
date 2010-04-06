@@ -106,8 +106,8 @@ class AddTest(unittest.TestCase):
             'where composer="the composer"').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
     
-    def test_library_add_inserts_row(self):
-        self.lib.add(os.path.join('rsrc', 'full.mp3'))
+    def test_library_add_path_inserts_row(self):
+        self.lib.add_path(os.path.join('rsrc', 'full.mp3'))
         new_grouping = self.lib.conn.execute('select grouping from items '
             'where composer="the composer"').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
