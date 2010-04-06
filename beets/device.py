@@ -3,7 +3,7 @@ import os
 import sys
 import socket
 import locale
-from beets.library import Library, Item
+from beets.library import BaseLibrary, Item
 
 FIELD_MAP = {
     'artist':   'artist',
@@ -17,7 +17,7 @@ FIELD_MAP = {
     'tracks':   'tracktotal',
 }
 
-class PodLibrary(Library):
+class PodLibrary(BaseLibrary):
     def __init__(self, path):
         self.db = gpod.Database(path)
 

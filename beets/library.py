@@ -592,34 +592,12 @@ class ResultIterator(object):
 
 
 
+class BaseLibrary(object):
+    """Base class for music libraries."""
 
+    def __init__(self):
+        raise NotImplementedError
 
-
-
-class Library(object):
-    def __init__(self, path='library.blb',
-                       directory='~/Music',
-                       path_format='$artist/$album/$track $title'):
-        self.path = path
-        self.directory = directory
-        self.path_format = path_format
-        
-        self.conn = sqlite3.connect(self.path)
-        self.conn.row_factory = sqlite3.Row
-            # this way we can access our SELECT results like dictionaries
-        
-        self._setup()
-    
-    def _setup(self):
-        """Set up the schema of the library file."""
-        
-        setup_sql =  'CREATE TABLE IF NOT EXISTS items ('
-        setup_sql += ', '.join([' '.join(f) for f in item_fields])
-        setup_sql += ');'
-        
-        self.conn.executescript(setup_sql)
-        self.conn.commit()
-    
 
     ### helpers ###
 
@@ -636,30 +614,120 @@ class Library(object):
             return val
         elif not isinstance(query, Query):
             raise ValueError('query must be None or have type Query or str')
-       
 
-    
-    #### main interface ####
-    
-    def add(self, path, copy=False):
-        """Add a file to the library or recursively search a directory and add
-        all its contents. If copy is True, copy files to their destination in
-        the library directory while adding.
+
+    ### basic operations ###
+
+    def add_items(self, items, copy=False): #FIXME rename to "add", copy default to true
+        """Add each item to the library. If copy, then each item is
+        copied to the destination location before it is added.
         """
-        
-        for f in _walk_files(path):
-            try:
-                i = Item.from_path(_normpath(f), self)
-                if copy:
-                    i.move(copy=True)
-                i.add()
-            except FileTypeError:
-                log.warn(f + ' of unknown type, skipping')
-    
+        raise NotImplementedError
+
     def get(self, query=None):
-        """Returns a ResultIterator to the items matching query, which may be
+        """Returns a sequence of the items matching query, which may be
         None (match the entire library), a Query object, or a query string.
         """
+        raise NotImplementedError
+
+    def save(self):
+        """Ensure that the library is consistent on disk. A no-op by
+        default.
+        """
+        pass
+
+
+    ### browsing operations ###
+    # Naive implementations are provided, but these methods should be
+    # overridden if a better implementation exists.
+
+    def artists(self, query=None):
+        """Returns a sorted sequence of artists in the database, possibly
+        filtered by a query (in the same sense as get()).
+        """
+        out = set()
+        for item in self.get(query):
+            out.add(item.artist)
+        return sorted(out)
+
+    def albums(self, artist=None, query=None):
+        """Returns a sorted list of (artist, album) pairs, possibly filtered
+        by an artist name or an arbitrary query.
+        """
+        out = set()
+        for item in self.get(query):
+            if artist is None or item.artist == artist:
+                out.add((item.artist, item.album))
+        return sorted(out)
+
+    def items(self, artist=None, album=None, title=None, query=None):
+        """Returns a sequence of the items matching the given artist,
+        album, title, and query (if present). Sorts in such a way as to
+        group albums appropriately.
+        """
+        out = []
+        for item in self.get(query):
+            if (artist is None or item.artist == artist) and \
+               (album is None  or item.album == album) and \
+               (title is None  or item.title == title):
+                out.append(item)
+
+        # Sort by: artist, album, disc, track.
+        def compare(a, b):
+            return cmp(a.artist, b.artist) or \
+                   cmp(a.album, b.album) or \
+                   cmp(a.disc, b.disc) or \
+                   cmp(a.track, b.track)
+        return sorted(out, compare)
+
+
+    ### convenience methods ###
+
+    def add(self, path, copy=False): #FIXME change name to add_path()
+        items = []
+        for f in _walk_files(path):
+            try:
+                items.append(Item.from_path(_normpath(f), self))
+            except FileTypeError:
+                log.warn(f + ' of unknown type, skipping')
+        self.add_items(items, copy)
+
+class Library(BaseLibrary):
+    """A music library using an SQLite database as a metadata store."""
+    def __init__(self, path='library.blb',
+                       directory='~/Music',
+                       path_format='$artist/$album/$track $title'):
+        self.path = path
+        self.directory = directory
+        self.path_format = path_format
+        
+        self.conn = sqlite3.connect(self.path)
+        self.conn.row_factory = sqlite3.Row
+            # this way we can access our SELECT results like dictionaries
+        
+        self._setup()
+    
+    def _setup(self):
+        """Set up the schema of the library file."""
+        setup_sql =  'CREATE TABLE IF NOT EXISTS items ('
+        setup_sql += ', '.join([' '.join(f) for f in item_fields])
+        setup_sql += ');'
+        
+        self.conn.executescript(setup_sql)
+        self.conn.commit()
+    
+
+    #### main interface ####
+    
+    def add_items(self, items, copy=False):
+        for i in items:
+            #FIXME make a deep copy of the item?
+            i.library = self
+            if copy:
+                i.move(copy=True)
+            i.add()
+    
+    def get(self, query=None):
         return self._get_query(query).execute(self)
     
     def save(self):
@@ -671,9 +739,6 @@ class Library(object):
     ### browsing ###
 
     def artists(self, query=None):
-        """Returns a list of artists in the database, possibly filtered by a
-        query (in the same sense as get()).
-        """
         where, subvals = self._get_query(query).clause()
         sql = "SELECT DISTINCT artist FROM items " + \
               "WHERE " + where + \
@@ -682,9 +747,6 @@ class Library(object):
         return [res[0] for res in c.fetchall()]
 
     def albums(self, artist=None, query=None):
-        """Returns a list of (artist, album) pairs, possibly filtered by an
-        artist name or an arbitrary query.
-        """
         query = self._get_query(query)
         if artist is not None:
             # "Add" the artist to the query.
@@ -697,10 +759,6 @@ class Library(object):
         return [(res[0], res[1]) for res in c.fetchall()]
 
     def items(self, artist=None, album=None, title=None, query=None):
-        """Returns a ResultIterator over the items matching the given artist,
-        album, title, and query (if present). Sorts in such a way as to group
-        albums appropriately.
-        """
         queries = [self._get_query(query)]
         if artist is not None:
             queries.append(MatchQuery('artist', artist))
