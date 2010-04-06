@@ -452,8 +452,9 @@ class ResultIterator(object):
 
 
 class BaseLibrary(object):
-    """Base class for music libraries."""
-
+    """Abstract base class for music libraries, which are loosely
+    defined as sets of Items.
+    """
     def __init__(self):
         raise NotImplementedError
 

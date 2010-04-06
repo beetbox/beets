@@ -1,8 +1,24 @@
-import gpod
+# This file is part of beets.
+# Copyright 2009, Adrian Sampson.
+# 
+# Beets is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# Beets is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with beets.  If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import sys
 import socket
 import locale
+import gpod
 from beets.library import BaseLibrary, Item
 
 FIELD_MAP = {
@@ -21,7 +37,15 @@ class PodLibrary(BaseLibrary):
     def __init__(self, path):
         self.db = gpod.Database(path)
         self.syncing = False
+    # Browsing convenience.
+    def artists(self, query=None):
+        raise NotImplementedError
 
+    def albums(self, artist=None, query=None):
+        raise NotImplementedError
+
+    def items(self, artist=None, album=None, title=None, query=None):
+        raise NotImplementedError
     @classmethod
     def by_name(cls, name):
         return cls(os.path.join(os.path.expanduser('~'), '.gvfs', name))
@@ -62,15 +86,14 @@ class PodLibrary(BaseLibrary):
 
     def save(self):
         self._stop_sync()
-        gpod.itdb_write(self.pod._itdb, None)
+        gpod.itdb_write(self.db._itdb, None)
 
-    # Browsing convenience.
-    def artists(self, query=None):
+    def load(self, item, load_id=None):
         raise NotImplementedError
 
-    def albums(self, artist=None, query=None):
+    def store(self, item, store_id=None, store_all=False):
         raise NotImplementedError
 
-    def items(self, artist=None, album=None, title=None, query=None):
+    def remove(self, item):
         raise NotImplementedError
 
