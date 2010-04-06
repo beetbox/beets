@@ -135,8 +135,7 @@ class BeetsApp(cmdln.Cmdln):
         ${cmd_option_list}
         """
         for path in paths:
-            for album in autotag.albums_in_dir(os.path.expanduser(path),
-                                               self.lib):
+            for album in autotag.albums_in_dir(os.path.expanduser(path)):
                 print
                 tag_album(album, self.lib)
                 self.lib.save()

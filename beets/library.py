@@ -136,21 +136,17 @@ def _components(path):
 
 
 class Item(object):
-    def __init__(self, values, library=None):
-        self.library = library
+    def __init__(self, values):
         self.dirty = {}
         self._fill_record(values)
         self._clear_dirty()
         
     @classmethod
-    def from_path(cls, path, library=None):
-        """Creates a new item from the media file at the specified path. Sets
-        the item's library (but does not add the item) if library is
-        specified.
+    def from_path(cls, path):
+        """Creates a new item from the media file at the specified path.
         """
         i = cls({})
         i.read(path)
-        i.library = library
         return i
 
     def _fill_record(self, values):
@@ -450,7 +446,7 @@ class ResultIterator(object):
         except StopIteration:
             self.cursor.close()
             raise
-        return Item(row, self.library)
+        return Item(row)
 
 
 
@@ -569,7 +565,7 @@ class BaseLibrary(object):
         items = []
         for f in _walk_files(path):
             try:
-                item = Item.from_path(_normpath(f), self)
+                item = Item.from_path(_normpath(f))
             except FileTypeError:
                 log.warn(f + ' of unknown type, skipping')
             self.add(item, copy)

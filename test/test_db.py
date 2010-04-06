@@ -23,7 +23,7 @@ import beets.library
 
 def lib(): return beets.library.Library('rsrc' + os.sep + 'test.blb')
 def boracay(l): return beets.library.Item(l.conn.execute('select * from items '
-    'where id=3').fetchone(), l)
+    'where id=3').fetchone())
 def item(lib=None): return beets.library.Item({
     'title':      u'the title',
     'artist':     u'the artist',
@@ -45,7 +45,7 @@ def item(lib=None): return beets.library.Item({
     'path':       'somepath',
     'length':     60.0,
     'bitrate':    128000,
-}, lib)
+})
 np = beets.library._normpath
 
 class LoadTest(unittest.TestCase):
