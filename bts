@@ -188,8 +188,11 @@ class BeetsApp(cmdln.Cmdln):
 
         from beets import device
         pod = device.PodLibrary.by_name(name)
-        pod.add_items(items)
+        for item in items:
+            pod.add(item)
+        pod.save()
 
 if __name__ == '__main__':
     app = BeetsApp()
     sys.exit(app.main())
+

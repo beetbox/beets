@@ -71,30 +71,6 @@ class MoveTest(unittest.TestCase):
         self.i.move()
         self.assertEqual(self.i.path, beets.library._normpath(self.dest))
 
-class DeleteTest(unittest.TestCase):
-    def setUp(self):
-        # make a temporary file
-        self.path = join('rsrc', 'temp.mp3')
-        shutil.copy(join('rsrc', 'full.mp3'), self.path)
-        
-        # add it to a temporary library
-        self.lib = beets.library.Library(':memory:')
-        self.i = beets.library.Item.from_path(self.path)
-        self.i.add(self.lib)
-    def tearDown(self):
-        # make sure the temp file is gone
-        if os.path.exists(self.path):
-            os.remove(self.path)
-    
-    def test_delete_deletes_file(self):
-        self.i.delete()
-        self.assertTrue(not os.path.exists(self.path))
-    
-    def test_delete_removes_from_db(self):
-        self.i.delete()
-        c = self.lib.conn.execute('select * from items where 1')
-        self.assertEqual(c.fetchone(), None)
-
 class WalkTest(unittest.TestCase):
     def setUp(self):
         # create a directory structure for testing

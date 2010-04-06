@@ -141,7 +141,18 @@ class Item(object):
         self.dirty = {}
         self._fill_record(values)
         self._clear_dirty()
-    
+        
+    @classmethod
+    def from_path(cls, path, library=None):
+        """Creates a new item from the media file at the specified path. Sets
+        the item's library (but does not add the item) if library is
+        specified.
+        """
+        i = cls({})
+        i.read(path)
+        i.library = library
+        return i
+
     def _fill_record(self, values):
         self.record = {}
         for key in item_keys:
@@ -156,8 +167,7 @@ class Item(object):
             self.dirty[key] = False
 
     def __repr__(self):
-        return 'Item(' + repr(self.record) + \
-               ', library=' + repr(self.library) + ')'
+        return 'Item(' + repr(self.record) + ')'
 
 
     #### item field accessors ####
@@ -283,28 +293,7 @@ class Item(object):
             
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
-    
-    def delete(self):
-        """Deletes the item from the filesystem. If the item is located
-        in the library directory, any empty parent directories are trimmed.
-        Also calls remove(), deleting the appropriate row from the database.
-        
-        As with move(), library.save() should almost certainly be called after
-        invoking this (although store() should not).
-        """
-        os.unlink(self.path)
-        self.remove()
-    
-    @classmethod
-    def from_path(cls, path, library=None):
-        """Creates a new item from the media file at the specified path. Sets
-        the item's library (but does not add the item) if library is
-        specified.
-        """
-        i = cls({})
-        i.read(path)
-        i.library = library
-        return i
+
 
 
 
