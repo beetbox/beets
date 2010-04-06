@@ -34,7 +34,7 @@ class MoveTest(unittest.TestCase):
         # add it to a temporary library
         self.lib = beets.library.Library(':memory:')
         self.i = beets.library.Item.from_path(self.path)
-        self.i.add(self.lib)
+        self.lib.add(self.i)
         
         # set up the destination
         self.libdir = join('rsrc', 'testlibdir')

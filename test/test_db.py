@@ -58,12 +58,12 @@ class LoadTest(unittest.TestCase):
     def test_load_restores_data_from_db(self):
         original_title = self.i.title
         self.i.title = 'something'
-        self.i.load()
+        self.lib.load(self.i)
         self.assertEqual(original_title, self.i.title)
     
     def test_load_clears_dirty_flags(self):
         self.i.artist = 'something'
-        self.i.load()
+        self.lib.load(self.i)
         self.assertTrue(not self.i.dirty['artist'])
 
 class StoreTest(unittest.TestCase):
@@ -75,7 +75,7 @@ class StoreTest(unittest.TestCase):
     
     def test_store_changes_database_value(self):
         self.i.year = 1987
-        self.i.store()
+        self.lib.store(self.i)
         new_year = self.lib.conn.execute('select year from items where '
             'title="Boracay"').fetchone()['year']
         self.assertEqual(new_year, 1987)
@@ -83,14 +83,14 @@ class StoreTest(unittest.TestCase):
     def test_store_only_writes_dirty_fields(self):
         original_genre = self.i.genre
         self.i.record['genre'] = 'beatboxing' # change value w/o dirtying
-        self.i.store()
+        self.lib.store(self.i)
         new_genre = self.lib.conn.execute('select genre from items where '
             'title="Boracay"').fetchone()['genre']
         self.assertEqual(new_genre, original_genre)
     
     def test_store_clears_dirty_flags(self):
         self.i.composer = 'tvp'
-        self.i.store()
+        self.lib.store(self.i)
         self.assertTrue(not self.i.dirty['composer'])
 
 class AddTest(unittest.TestCase):
@@ -101,7 +101,7 @@ class AddTest(unittest.TestCase):
         self.lib.conn.close()
     
     def test_item_add_inserts_row(self):
-        self.i.add()
+        self.lib.add(self.i)
         new_grouping = self.lib.conn.execute('select grouping from items '
             'where composer="the composer"').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
@@ -121,7 +121,7 @@ class RemoveTest(unittest.TestCase):
         self.lib.conn.close()
     
     def test_remove_deletes_from_db(self):
-        self.i.remove()
+        self.lib.remove(self.i)
         c = self.lib.conn.execute('select * from items where id=3')
         self.assertEqual(c.fetchone(), None)
 

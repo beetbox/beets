@@ -199,46 +199,6 @@ class Item(object):
             super(Item, self).__setattr__(key, value)
     
     
-    #### interaction with the database ####
-    
-    def load(self, load_id=None):
-        """Refresh the item's metadata from the library database. If fetch_id
-        is not specified, use the item's current id.
-        """
-        if not self.library:
-            raise LibraryError('no library to store to')
-        self.library.load(self, load_id)
-    
-    def store(self, store_id=None, store_all=False):
-        """Save the item's metadata into the library database. If store_id is
-        specified, use it instead of the item's current id. If store_all is
-        true, save the entire record instead of just the dirty fields.
-        """
-        if not self.library:
-            raise LibraryError('no library to store to')
-        self.library.store(self, store_id, store_all)
-        self._clear_dirty()
-
-    def add(self, library=None, copy=False):
-        """Add the item as a new object to the library database. The id field
-        will be updated; the new id is returned. If library is specified, set
-        the item's library before adding.
-        """
-        if library:
-            self.library = library
-        if not self.library:
-            raise LibraryError('no library to add to')
-        self.library.add(self, copy)
-        return self.id
-            
-    def remove(self):
-        """Removes the item from the database (leaving the file on disk).
-        """
-        if not self.library:
-            raise LibraryError('no library to remove from')
-        self.library.remove(self)
-    
-    
     #### interaction with files' metadata ####
     
     def read(self, read_path=None):
@@ -747,6 +707,7 @@ class Library(BaseLibrary):
         subvars.append(item.id)
 
         self.conn.execute(query, subvars)
+        item._clear_dirty()
 
     def remove(self, item):
         self.conn.execute('DELETE FROM items WHERE id=?', (item.id,))

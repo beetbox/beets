@@ -96,9 +96,8 @@ def tag_album(items, lib):
     autotag.apply_metadata(items, info)
     for item in items:
         item.move(lib, True)
-        item.add()
+        lib.add(item)
         item.write()
-
 
 
 class BeetsApp(cmdln.Cmdln):
