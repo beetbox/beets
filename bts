@@ -108,6 +108,8 @@ class BeetsApp(cmdln.Cmdln):
         parser = cmdln.Cmdln.get_optparser(self)
         parser.add_option('-l', '--library', dest='libpath',
                           help='the library database file to use')
+        parser.add_option('-d', '--device', dest='device',
+                          help="the name of the device library to use")
         return parser
     
     def postoptparse(self):
@@ -119,13 +121,17 @@ class BeetsApp(cmdln.Cmdln):
                 self.config.add_section(sec)
         
         # Open library file.
-        libpath = self.options.libpath or self.config.get('beets', 'library')
-        directory = self.config.get('beets', 'directory')
-        path_format = self.config.get('beets', 'path_format')
-        
-        self.lib = Library(os.path.expanduser(libpath),
-                           directory,
-                           path_format)
+        if self.options.device:
+            from beets.device import PodLibrary
+            self.lib = PodLibrary.by_name(self.options.device)
+        else:
+            libpath = self.options.libpath or \
+                      self.config.get('beets', 'library')
+            directory = self.config.get('beets', 'directory')
+            path_format = self.config.get('beets', 'path_format')
+            self.lib = Library(os.path.expanduser(libpath),
+                               directory,
+                               path_format)
     
     @cmdln.alias("imp", "im")
     def do_import(self, subcmd, opts, *paths):

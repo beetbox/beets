@@ -33,19 +33,19 @@ FIELD_MAP = {
     'tracks':   'tracktotal',
 }
 
+def track_to_item(track):
+    data = {}
+    for dname, bname in FIELD_MAP.items():
+        data[bname] = track[dname]
+    data['length'] = float(track['tracklen']) / 1000
+    data['path'] = track.ipod_filename()
+    return Item(data)
+
 class PodLibrary(BaseLibrary):
     def __init__(self, path):
         self.db = gpod.Database(path)
         self.syncing = False
-    # Browsing convenience.
-    def artists(self, query=None):
-        raise NotImplementedError
-
-    def albums(self, artist=None, query=None):
-        raise NotImplementedError
-
-    def items(self, artist=None, album=None, title=None, query=None):
-        raise NotImplementedError
+    
     @classmethod
     def by_name(cls, name):
         return cls(os.path.join(os.path.expanduser('~'), '.gvfs', name))
@@ -65,7 +65,7 @@ class PodLibrary(BaseLibrary):
         if hasattr(gpod, 'itdb_stop_sync'):
             gpod.itdb_stop_sync(self.db._itdb)
         self.syncing = False
-    
+
     def add(self, item):
         self._start_sync()
         track = self.db.new_Track()
@@ -82,7 +82,11 @@ class PodLibrary(BaseLibrary):
         self.db.copy_delayed_files()
 
     def get(self, query=None):
-        raise NotImplementedError
+        query = self._get_query(query)
+        for track in self.db:
+            item = track_to_item(track)
+            if query.match(item):
+                yield item
 
     def save(self):
         self._stop_sync()

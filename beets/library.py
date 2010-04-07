@@ -267,6 +267,12 @@ class Query(object):
         """
         raise NotImplementedError
 
+    def match(self, item):
+        """Check whether this query matches a given Item. Can be used to
+        perform queries on arbitrary sets of Items.
+        """
+        raise NotImplementedError
+
     def statement(self, columns='*'):
         """Returns (query, subvals) where clause is a sqlite SELECT statement
         to enact this query and subvals is a list of values to substitute in
@@ -298,7 +304,6 @@ class FieldQuery(Query):
     """An abstract query that searches in a specific field for a
     pattern.
     """
-    
     def __init__(self, field, pattern):
         if field not in item_keys:
             raise InvalidFieldError(field + ' is not an item key')
@@ -307,13 +312,14 @@ class FieldQuery(Query):
         
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
-    
     def clause(self):
         return self.field + " = ?", [self.pattern]
 
+    def match(self, item):
+        return self.pattern == getattr(item, self.field)
+
 class SubstringQuery(FieldQuery):
     """A query that matches a substring in a specific item field."""
-    
     def clause(self):
         search = '%' + (self.pattern.replace('\\','\\\\').replace('%','\\%')
                             .replace('_','\\_')) + '%'
@@ -321,11 +327,13 @@ class SubstringQuery(FieldQuery):
         subvals = [search]
         return clause, subvals
 
+    def match(self, item):
+        return self.pattern.lower() in getattr(item, self.field).lower()
+
 class CollectionQuery(Query):
     """An abstract query class that aggregates other queries. Can be indexed
     like a list to access the sub-queries.
     """
-    
     def __init__(self, subqueries = ()):
         self.subqueries = subqueries
     
@@ -404,8 +412,8 @@ class CollectionQuery(Query):
 
 class AnySubstringQuery(CollectionQuery):
     """A query that matches a substring in any metadata field. """
-
     def __init__(self, pattern):
+        self.pattern = pattern
         subqueries = []
         for field in metadata_rw_keys:
             subqueries.append(SubstringQuery(field, pattern))
@@ -413,6 +421,17 @@ class AnySubstringQuery(CollectionQuery):
 
     def clause(self):
         return self.clause_with_joiner('or')
+
+    def match(self, item):
+        for fld in metadata_rw_keys:
+            try:
+                val = getattr(item, fld)
+            except KeyError:
+                continue
+            if isinstance(val, basestring) and \
+               self.pattern.lower() in val.lower():
+                return True
+        return False
 
 class MutableCollectionQuery(CollectionQuery):
     """A collection query whose subqueries may be modified after the query is
@@ -426,10 +445,16 @@ class AndQuery(MutableCollectionQuery):
     def clause(self):
         return self.clause_with_joiner('and')
 
+    def match(self, item):
+        return all([q.match(item) for q in self.subqueries])
+
 class TrueQuery(Query):
     """A query that always matches."""
     def clause(self):
         return '1', ()
+
+    def match(self, item):
+        return True
 
 class ResultIterator(object):
     """An iterator into an item query result set."""
