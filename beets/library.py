@@ -19,6 +19,7 @@ import os
 import operator
 import re
 import shutil
+import sys
 from string import Template
 import logging
 from beets.mediafile import MediaFile, FileTypeError
@@ -131,6 +132,11 @@ def _components(path):
     
     return comps
 
+def _unicode_path(path):
+    """Ensures that a path string is in Unicode."""
+    if isinstance(path, unicode):
+        return path
+    return path.decode(sys.getfilesystemencoding())
 
 
 
@@ -146,7 +152,7 @@ class Item(object):
         """Creates a new item from the media file at the specified path.
         """
         i = cls({})
-        i.read(path)
+        i.read(_unicode_path(path))
         return i
 
     def _fill_record(self, values):
@@ -588,6 +594,7 @@ class BaseLibrary(object):
     ### convenience methods ###
 
     def add_path(self, path, copy=False):
+        path = _unicode_path(path)
         items = []
         for f in _walk_files(path):
             try:

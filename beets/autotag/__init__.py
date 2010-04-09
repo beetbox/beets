@@ -70,6 +70,7 @@ def albums_in_dir(path):
     of lists of items where each list is probably an album.
     Specifically, any folder containing any media files is an album.
     """
+    path = library._unicode_path(path)
     for root, dirs, files in os.walk(path):
         # Get a list of items in the directory.
         items = []

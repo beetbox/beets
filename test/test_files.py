@@ -125,6 +125,11 @@ class AddTest(unittest.TestCase):
     def test_library_add_path_copies(self):
         self.lib.add_path(os.path.join('rsrc', 'full.mp3'), copy=True)
         self.assertTrue(os.path.isfile(os.path.join(self.dir, 'item.mp3')))
+
+    def test_add_path_enforces_unicode_pathnames(self):
+        self.lib.add_path(os.path.join('rsrc', 'full.mp3'))
+        item = self.lib.get().next()
+        self.assertTrue(isinstance(item.path, unicode))
     
 class HelperTest(unittest.TestCase):
     def test_ancestry_works_on_file(self):
