@@ -107,9 +107,13 @@ class BeetsApp(cmdln.Cmdln):
         # Add global options to the command.
         parser = cmdln.Cmdln.get_optparser(self)
         parser.add_option('-l', '--library', dest='libpath',
-                          help='the library database file to use')
-        parser.add_option('-d', '--device', dest='device',
-                          help="the name of the device library to use")
+                          help='library database file to use')
+        parser.add_option('-d', '--directory', dest='directory',
+                          help="destination music directory")
+        parser.add_option('-p', '--pathformat', dest='path_format',
+                          help="destination path format string")
+        parser.add_option('-i', '--device', dest='device',
+                          help="name of the device library to use")
         return parser
     
     def postoptparse(self):
@@ -127,8 +131,10 @@ class BeetsApp(cmdln.Cmdln):
         else:
             libpath = self.options.libpath or \
                       self.config.get('beets', 'library')
-            directory = self.config.get('beets', 'directory')
-            path_format = self.config.get('beets', 'path_format')
+            directory = self.options.directory or \
+                        self.config.get('beets', 'directory')
+            path_format = self.options.path_format or \
+                          self.config.get('beets', 'path_format')
             self.lib = Library(os.path.expanduser(libpath),
                                directory,
                                path_format)
