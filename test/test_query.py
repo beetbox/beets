@@ -23,6 +23,29 @@ import beets.library
 
 parse_query = beets.library.CollectionQuery._parse_query
 
+some_item = beets.library.Item({
+    'title':      u'the title',
+    'artist':     u'the artist',
+    'album':      u'the album',
+    'genre':      u'the genre',
+    'composer':   u'the composer',
+    'grouping':   u'the grouping',
+    'year':       1,
+    'month':      2,
+    'day':        3,
+    'track':      4,
+    'tracktotal': 5,
+    'disc':       6,
+    'disctotal':  7,
+    'lyrics':     u'the lyrics',
+    'comments':   u'the comments',
+    'bpm':        8,
+    'comp':       True,
+    'path':       'somepath',
+    'length':     60.0,
+    'bitrate':    128000,
+})
+
 class QueryParseTest(unittest.TestCase):
     def test_one_basic_term(self):
         q = 'test'
@@ -59,10 +82,26 @@ class QueryParseTest(unittest.TestCase):
         r = [((None), 'test:val')]
         self.assertEqual(parse_query(q), r)
 
-class GetTest(unittest.TestCase):
+class AnySubstringQueryTest(unittest.TestCase):
     def setUp(self):
-        self.lib = beets.library.Library('rsrc' + os.sep + 'test.blb')
-    
+        self.lib = beets.library.Library(':memory:')
+        self.lib.add(some_item)
+
+    def test_no_restriction(self):
+        q = beets.library.AnySubstringQuery('title')
+        self.assertEqual(self.lib.get(q).next().title, 'the title')
+
+    def test_restriction_completeness(self):
+        q = beets.library.AnySubstringQuery('title', ['title'])
+        self.assertEqual(self.lib.get(q).next().title, 'the title')
+        
+    def test_restriction_soundness(self):
+        q = beets.library.AnySubstringQuery('title', ['artist'])
+        self.assertRaises(StopIteration, self.lib.get(q).next)
+
+
+# Convenient asserts for matching items.
+class AssertsMixin(object):
     def assert_matched(self, result_iterator, title):
         self.assertEqual(result_iterator.next().title, title)
     def assert_done(self, result_iterator):
@@ -74,6 +113,10 @@ class GetTest(unittest.TestCase):
         self.assert_matched(result_iterator, 'Take Pills')
         self.assert_done(result_iterator)
     
+class GetTest(unittest.TestCase, AssertsMixin):
+    def setUp(self):
+        self.lib = beets.library.Library('rsrc' + os.sep + 'test.blb')
+
     def test_get_empty(self):
         q = ''
         results = self.lib.get(q)
@@ -145,6 +188,60 @@ class GetTest(unittest.TestCase):
         self.assert_matched(results, 'Lovers Who Uncover')
         self.assert_matched(results, 'Boracay')
         self.assert_done(results)
+
+class BrowseTest(unittest.TestCase, AssertsMixin):
+    def setUp(self):
+        self.lib = beets.library.Library('rsrc' + os.sep + 'test.blb')
+
+    def test_artist_list(self):
+        artists = list(self.lib.artists())
+        self.assertEqual(artists, ['Lily Allen', 'Panda Bear',
+                                   'The Little Ones'])
+
+    def test_album_list(self):
+        albums = list(self.lib.albums())
+        self.assertEqual(albums, [
+            ('Lily Allen', 'Alright, Still'),
+            ('Panda Bear', 'Person Pitch'),
+            ('The Little Ones', 'Sing Song'),
+            ('The Little Ones', 'Terry Tales & Fallen Gates EP'),
+        ])
+
+    def test_item_list(self):
+        items = self.lib.items()
+        self.assert_matched(items, 'Littlest Things')
+        self.assert_matched(items, 'Take Pills')
+        self.assert_matched(items, 'Lovers Who Uncover')
+        self.assert_matched(items, 'Boracay')
+        self.assert_done(items)
+
+    def test_artists_matches_artist(self):
+        artists = list(self.lib.artists(query='panda'))
+        self.assertEqual(artists, ['Panda Bear'])
+        
+    def test_artists_does_not_match_album(self):
+        artists = list(self.lib.artists(query='alright'))
+        self.assertEqual(artists, [])
+
+    def test_albums_matches_album(self):
+        albums = list(self.lib.albums(query='person'))
+        self.assertEqual(albums, [('Panda Bear', 'Person Pitch')])
+        
+    def test_albums_does_not_match_title(self):
+        albums = list(self.lib.albums(query='boracay'))
+        self.assertEqual(albums, [])
+
+    def test_items_matches_title(self):
+        items = self.lib.items(query='boracay')
+        self.assert_matched(items, 'Boracay')
+        self.assert_done(items)
+
+    def test_items_does_not_match_year(self):
+        items = self.lib.items(query='2007')
+        self.assert_done(items)
+
+    #FIXME Haven't tested explicit (non-query) criteria.
+        
         
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

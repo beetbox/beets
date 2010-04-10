@@ -24,7 +24,7 @@ import beets.library
 def lib(): return beets.library.Library('rsrc' + os.sep + 'test.blb')
 def boracay(l): return beets.library.Item(l.conn.execute('select * from items '
     'where id=3').fetchone())
-def item(lib=None): return beets.library.Item({
+def item(): return beets.library.Item({
     'title':      u'the title',
     'artist':     u'the artist',
     'album':      u'the album',
@@ -96,7 +96,7 @@ class StoreTest(unittest.TestCase):
 class AddTest(unittest.TestCase):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
-        self.i = item(self.lib)
+        self.i = item()
     def tearDown(self):
         self.lib.conn.close()
     
@@ -147,7 +147,7 @@ class GetSetTest(unittest.TestCase):
 class DestinationTest(unittest.TestCase):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
-        self.i = item(self.lib)
+        self.i = item()
     def tearDown(self):
         self.lib.conn.close()
     

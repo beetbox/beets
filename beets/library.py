@@ -62,6 +62,11 @@ metadata_rw_keys = map(operator.itemgetter(0), metadata_rw_fields)
 metadata_keys = map(operator.itemgetter(0), metadata_fields)
 item_keys = map(operator.itemgetter(0), item_fields)
 
+# Default search fields for various granularities.
+ARTIST_DEFAULT_FIELDS = ('artist',)
+ALBUM_DEFAULT_FIELDS = ARTIST_DEFAULT_FIELDS + ('album', 'genre')
+ITEM_DEFAULT_FIELDS = ALBUM_DEFAULT_FIELDS + ('title', 'comments')
+
 # Logger.
 log = logging.getLogger('beets')
 log.setLevel(logging.DEBUG)
@@ -404,12 +409,16 @@ class CollectionQuery(Query):
         return out
 
     @classmethod
-    def from_string(cls, query_string):
-        """Creates a query from a string in the format used by _parse_query."""
+    def from_string(cls, query_string, default_fields=None):
+        """Creates a query from a string in the format used by
+        _parse_query. If default_fields are specified, they are the
+        fields to be searched by unqualified search terms. Otherwise,
+        all fields are searched for those terms.
+        """
         subqueries = []
         for key, pattern in cls._parse_query(query_string):
             if key is None: # no key specified; match any field
-                subqueries.append(AnySubstringQuery(pattern))
+                subqueries.append(AnySubstringQuery(pattern, default_fields))
             elif key.lower() in item_keys: # ignore unrecognized keys
                 subqueries.append(SubstringQuery(key.lower(), pattern))
         if not subqueries: # no terms in query
@@ -417,11 +426,19 @@ class CollectionQuery(Query):
         return cls(subqueries)
 
 class AnySubstringQuery(CollectionQuery):
-    """A query that matches a substring in any metadata field. """
-    def __init__(self, pattern):
+    """A query that matches a substring in any of a list of metadata
+    fields.
+    """
+    def __init__(self, pattern, fields=None):
+        """Create a query for pattern over the sequence of fields
+        given. If no fields are given, all available fields are
+        used.
+        """
         self.pattern = pattern
+        self.fields = fields or metadata_rw_keys
+
         subqueries = []
-        for field in metadata_rw_keys:
+        for field in self.fields:
             subqueries.append(SubstringQuery(field, pattern))
         super(AnySubstringQuery, self).__init__(subqueries)
 
@@ -429,7 +446,7 @@ class AnySubstringQuery(CollectionQuery):
         return self.clause_with_joiner('or')
 
     def match(self, item):
-        for fld in metadata_rw_keys:
+        for fld in self.fields:
             try:
                 val = getattr(item, fld)
             except KeyError:
@@ -453,7 +470,16 @@ class AndQuery(MutableCollectionQuery):
 
     def match(self, item):
         return all([q.match(item) for q in self.subqueries])
-
+def assert_matched(self, result_iterator, title):
+    self.assertEqual(result_iterator.next().title, title)
+def assert_done(self, result_iterator):
+    self.assertRaises(StopIteration, result_iterator.next)
+def assert_matched_all(self, result_iterator):
+    self.assert_matched(result_iterator, 'Littlest Things')
+    self.assert_matched(result_iterator, 'Lovers Who Uncover')
+    self.assert_matched(result_iterator, 'Boracay')
+    self.assert_matched(result_iterator, 'Take Pills')
+    self.assert_done(result_iterator)
 class TrueQuery(Query):
     """A query that always matches."""
     def clause(self):
@@ -493,14 +519,16 @@ class BaseLibrary(object):
     ### helpers ###
 
     @classmethod
-    def _get_query(cls, val=None):
-        """Takes a value which may be None, a query string, or a Query object,
-        and returns a suitable Query object.
+    def _get_query(cls, val=None, default_fields=None):
+        """Takes a value which may be None, a query string, or a Query
+        object, and returns a suitable Query object. If default_fields
+        is specified, then it restricts the list of fields to search
+        for unqualified terms in query strings.
         """
         if val is None:
             return TrueQuery()
         elif isinstance(val, basestring):
-            return AndQuery.from_string(val)
+            return AndQuery.from_string(val, default_fields)
         elif isinstance(val, Query):
             return val
         elif not isinstance(query, Query):
@@ -516,9 +544,11 @@ class BaseLibrary(object):
         """
         raise NotImplementedError
 
-    def get(self, query=None):
-        """Returns a sequence of the items matching query, which may be
-        None (match the entire library), a Query object, or a query string.
+    def get(self, query=None, default_fields=None):
+        """Returns a sequence of the items matching query, which may
+        be None (match the entire library), a Query object, or a query
+        string. If default_fields is specified, it restricts the fields
+        that may be matched by unqualified query string terms.
         """
         raise NotImplementedError
 
@@ -552,20 +582,23 @@ class BaseLibrary(object):
     # overridden if a better implementation exists.
 
     def artists(self, query=None):
-        """Returns a sorted sequence of artists in the database, possibly
-        filtered by a query (in the same sense as get()).
+        """Returns a sorted sequence of artists in the database,
+        possibly filtered by a query. Unqualified query string terms
+        only match the artist field.
         """
         out = set()
-        for item in self.get(query):
+        for item in self.get(query, ARTIST_DEFAULT_FIELDS):
             out.add(item.artist)
         return sorted(out)
 
     def albums(self, artist=None, query=None):
-        """Returns a sorted list of (artist, album) pairs, possibly filtered
-        by an artist name or an arbitrary query.
+        """Returns a sorted list of (artist, album) pairs, possibly
+        filtered by an artist name or an arbitrary query. Unqualified
+        query string terms only match fields that apply at an album
+        granularity: artist, album, and genre.
         """
         out = set()
-        for item in self.get(query):
+        for item in self.get(query, ALBUM_DEFAULT_FIELDS):
             if artist is None or item.artist == artist:
                 out.add((item.artist, item.album))
         return sorted(out)
@@ -573,10 +606,12 @@ class BaseLibrary(object):
     def items(self, artist=None, album=None, title=None, query=None):
         """Returns a sequence of the items matching the given artist,
         album, title, and query (if present). Sorts in such a way as to
-        group albums appropriately.
+        group albums appropriately. Unqualified query string terms only
+        match intuitively relevant fields: artist, album, genre, title,
+        and comments.
         """
         out = []
-        for item in self.get(query):
+        for item in self.get(query, ITEM_DEFAULT_FIELDS):
             if (artist is None or item.artist == artist) and \
                (album is None  or item.album == album) and \
                (title is None  or item.title == title):
@@ -745,7 +780,8 @@ class Library(BaseLibrary):
     ### browsing ###
 
     def artists(self, query=None):
-        where, subvals = self._get_query(query).clause()
+        query = self._get_query(query, ARTIST_DEFAULT_FIELDS)
+        where, subvals = query.clause()
         sql = "SELECT DISTINCT artist FROM items " + \
               "WHERE " + where + \
               " ORDER BY artist"
@@ -753,7 +789,7 @@ class Library(BaseLibrary):
         return [res[0] for res in c.fetchall()]
 
     def albums(self, artist=None, query=None):
-        query = self._get_query(query)
+        query = self._get_query(query, ALBUM_DEFAULT_FIELDS)
         if artist is not None:
             # "Add" the artist to the query.
             query = AndQuery((query, MatchQuery('artist', artist)))
@@ -765,7 +801,7 @@ class Library(BaseLibrary):
         return [(res[0], res[1]) for res in c.fetchall()]
 
     def items(self, artist=None, album=None, title=None, query=None):
-        queries = [self._get_query(query)]
+        queries = [self._get_query(query, ITEM_DEFAULT_FIELDS)]
         if artist is not None:
             queries.append(MatchQuery('artist', artist))
         if album is not None:
