@@ -44,18 +44,20 @@ def _print(txt):
     """Print the text encoded using UTF-8."""
     print txt.encode('utf-8')
 
-def _input_yn(prompt):
+def _input_yn(prompt, require=False):
     """Prompts user for a "yes" or "no" response where an empty response
     is treated as "yes". Keeps prompting until acceptable input is
-    given; returns a boolean.
+    given; returns a boolean. If require is True, then an empty response
+    is not accepted.
     """
-    resp = raw_input(prompt)
+    resp = raw_input(prompt).strip()
     while True:
-        if len(resp) == 0 or resp[0].lower() == 'y':
-            return True
-        elif len(resp) > 0 and resp[0].lower() == 'n':
-            return False
-        resp = raw_input("Type 'y' or 'n': ")
+        if resp or not require:
+            if not resp or resp[0].lower() == 'y':
+                return True
+            elif len(resp) > 0 and resp[0].lower() == 'n':
+                return False
+        resp = raw_input("Type 'y' or 'n': ").strip()
 
 
 def tag_album(items, lib):
@@ -172,7 +174,48 @@ class BeetsApp(cmdln.Cmdln):
             for item in self.lib.items(query=q):
                 _print(item.artist + ' - ' + item.album + ' - ' + item.title)
     
-    
+    @cmdln.alias("rm")
+    @cmdln.option("-d", "--delete", action="store_true",
+                  help="also remove files from disk")
+    @cmdln.option('-a', '--album', action='store_true',
+                  help='match albums instead of tracks')
+    def do_remove(self, subcmd, opts, *criteria):
+        """${cmd_name}: remove matching items from the library
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        q = ' '.join(criteria).strip() or None
+
+        # Get the matching items.
+        if opts.album:
+            items = []
+            for artist, album in self.lib.albums(query=q):
+                items += list(self.lib.items(artist=artist, album=album))
+        else:
+            items = list(self.lib.items(query=q))
+
+        # Show all the items.
+        for item in items:
+            _print(item.artist + ' - ' + item.album + ' - ' + item.title)
+
+        # Confirm with user.
+        print
+        if opts.delete:
+            prompt = 'Really DELETE %i files (y/n)? ' % len(items)
+        else:
+            prompt = 'Really remove %i items from the library (y/n)? ' % \
+                     len(items)
+        if not _input_yn(prompt, True):
+            return
+
+        # Remove and delete.
+        for item in items:
+            self.lib.remove(item)
+            if opts.delete:
+                os.unlink(item.path)
+        self.lib.save()
+
     def do_bpd(self, subcmd, opts, host=None, port=None):
         """${cmd_name}: run an MPD-compatible music player server
         
