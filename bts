@@ -31,6 +31,8 @@ CONFIG_DEFAULTS = {
     'library': 'library.blb',
     'directory': '~/Music',
     'path_format': '$artist/$album/$track $title',
+    'import_copy': 'yes',
+    'import_write': 'yes',
 
     # bpd
     'host': '',
@@ -60,7 +62,11 @@ def _input_yn(prompt, require=False):
         resp = raw_input("Type 'y' or 'n': ").strip()
 
 
-def tag_album(items, lib):
+def tag_album(items, lib, copy=True, write=True):
+    """Import items into lib, tagging them as an album. If copy, then
+    items are copied into the destination directory. If write, then
+    new metadata is written back to the files' tags.
+    """
     # Infer tags.
     try:
         items,(cur_artist,cur_album),info,dist = autotag.tag_album(items)
@@ -97,9 +103,11 @@ def tag_album(items, lib):
     # Change metadata and add to library.
     autotag.apply_metadata(items, info)
     for item in items:
-        item.move(lib, True)
+        if copy:
+            item.move(lib, True)
         lib.add(item)
-        item.write()
+        if write:
+            item.write()
 
 
 class BeetsApp(cmdln.Cmdln):
@@ -142,16 +150,33 @@ class BeetsApp(cmdln.Cmdln):
                                path_format)
     
     @cmdln.alias("imp", "im")
+    @cmdln.option('-c', '--copy', action='store_true', default=None,
+                  help="copy tracks into library directory (default)")
+    @cmdln.option('-C', '--nocopy', action='store_false', dest='copy',
+                  help="don't copy tracks (opposite of -c)")
+    @cmdln.option('-w', '--write', action='store_true', default=None,
+                  help="write new metadata to files' tags (default)")
+    @cmdln.option('-W', '--nowrite', action='store_false', dest='write',
+                  help="don't write metadata (opposite of -s)")
     def do_import(self, subcmd, opts, *paths):
         """${cmd_name}: import new music
         
         ${cmd_usage}
         ${cmd_option_list}
         """
+        copy  = opts.copy  if opts.copy  is not None else \
+                self.config.getboolean('beets', 'import_copy')
+        write = opts.write if opts.write is not None else \
+                self.config.getboolean('beets', 'import_write')
+
+        first = True
         for path in paths:
             for album in autotag.albums_in_dir(os.path.expanduser(path)):
-                print
-                tag_album(album, self.lib)
+                if not first:
+                    print
+                first = False
+
+                tag_album(album, self.lib, copy, write)
                 self.lib.save()
     
     @cmdln.alias("ls")
