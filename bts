@@ -109,6 +109,11 @@ def tag_album(items, lib, copy=True, write=True):
         if write:
             item.write()
 
+def make_query(criteria):
+    """Make  query string for the list of criteria."""
+    return ' '.join(criteria).strip() or None
+    
+
 
 class BeetsApp(cmdln.Cmdln):
     name = "bts"
@@ -188,10 +193,7 @@ class BeetsApp(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        q = ' '.join(criteria)
-        if not q.strip():
-            q = None    # no criteria => match anything
-            
+        q = make_query(criteria)
         if opts.album:
             for artist, album in self.lib.albums(query=q):
                 _print(artist + ' - ' + album)
@@ -210,7 +212,7 @@ class BeetsApp(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        q = ' '.join(criteria).strip() or None
+        q = make_query(criteria)
 
         # Get the matching items.
         if opts.album:
