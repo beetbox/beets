@@ -17,7 +17,7 @@
 # along with beets.  If not, see <http://www.gnu.org/licenses/>.
 
 import cmdln
-from ConfigParser import SafeConfigParser
+import ConfigParser
 import os
 import sys
 
@@ -27,20 +27,22 @@ from beets import Library
 from beets.mediafile import FileTypeError
 
 CONFIG_DEFAULTS = {
-    # beets
-    'library': 'library.blb',
-    'directory': '~/Music',
-    'path_format': '$artist/$album/$track $title',
-    'import_copy': 'yes',
-    'import_write': 'yes',
+    'beets': {
+        'library': 'library.blb',
+        'directory': '~/Music',
+        'path_format': '$artist/$album/$track $title',
+        'import_copy': True,
+        'import_write': True,
+    },
 
-    # bpd
-    'host': '',
-    'port': '6600',
-    'password': '',
+    'bpd': {
+        'host': '',
+        'port': '6600',
+        'password': '',
+    },
 }
 
-CONFIG_FILE = os.path.expanduser('~/.beetsrc')
+CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
 
 def _print(txt):
     """Print the text encoded using UTF-8."""
@@ -133,9 +135,9 @@ class BeetsApp(cmdln.Cmdln):
     
     def postoptparse(self):
         # Read defaults from config file.
-        self.config = SafeConfigParser(CONFIG_DEFAULTS)
+        self.config = ConfigParser.SafeConfigParser()
         self.config.read(CONFIG_FILE)
-        for sec in ('beets', 'bpd'):
+        for sec in CONFIG_DEFAULTS:
             if not self.config.has_section(sec):
                 self.config.add_section(sec)
         
@@ -145,14 +147,23 @@ class BeetsApp(cmdln.Cmdln):
             self.lib = PodLibrary.by_name(self.options.device)
         else:
             libpath = self.options.libpath or \
-                      self.config.get('beets', 'library')
+                      self._cfg_get('beets', 'library')
             directory = self.options.directory or \
-                        self.config.get('beets', 'directory')
+                        self._cfg_get('beets', 'directory')
             path_format = self.options.path_format or \
-                          self.config.get('beets', 'path_format')
+                          self._cfg_get('beets', 'path_format')
             self.lib = Library(os.path.expanduser(libpath),
                                directory,
                                path_format)
+    
+    def _cfg_get(self, section, name, vtype=None):
+        try:
+            if vtype is bool:
+                return self.config.getboolean(section, name)
+            else:
+                return self.config.get(section, name)
+        except ConfigParser.NoOptionError:
+            return CONFIG_DEFAULTS[section][name]
     
     @cmdln.alias("imp", "im")
     @cmdln.option('-c', '--copy', action='store_true', default=None,
@@ -170,9 +181,9 @@ class BeetsApp(cmdln.Cmdln):
         ${cmd_option_list}
         """
         copy  = opts.copy  if opts.copy  is not None else \
-                self.config.getboolean('beets', 'import_copy')
+                self._cfg_get('beets', 'import_copy', bool)
         write = opts.write if opts.write is not None else \
-                self.config.getboolean('beets', 'import_write')
+                self._cfg_get('beets', 'import_write', bool)
 
         first = True
         for path in paths:
@@ -249,9 +260,9 @@ class BeetsApp(cmdln.Cmdln):
         ${cmd_usage}
         ${cmd_option_list}
         """
-        host = host or self.config.get('bpd', 'host')
-        port = port or self.config.get('bpd', 'port')
-        password = self.config.get('bpd', 'password')
+        host = host or self._cfg_get('bpd', 'host')
+        port = port or self._cfg_get('bpd', 'port')
+        password = self._cfg_get('bpd', 'password')
         
         from beets.player.bpd import Server
         Server(self.lib, host, int(port), password).run()
