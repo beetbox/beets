@@ -62,6 +62,7 @@ class GstPlayer(object):
         self.playing = False
         self.finished_callback = finished_callback
         self.cached_time = None
+        self._volume = 1.0
 
     def _get_state(self):
         """Returns the current state flag of the playbin."""
@@ -84,6 +85,18 @@ class GstPlayer(object):
             err, debug = message.parse_error()
             print "Error: " + str(err)
             self.playing = False
+
+    def _set_volume(self, volume):
+        """Set the volume level to a value in the range [0, 1.5]."""
+        # And the volume for the playbin.
+        self._volume = volume
+        self.player.set_property("volume", volume)
+
+    def _get_volume(self):
+        """Get the volume as a float in the range [0, 1.5]."""
+        return self._volume
+
+    volume = property(_get_volume, _set_volume)
 
     def play_file(self, path):
         """Immediately begin playing the audio file at the given

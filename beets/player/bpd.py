@@ -1087,3 +1087,11 @@ class Server(BaseServer):
         super(Server, self).cmd_seek(conn, index, pos)
         self.player.seek(pos)
 
+
+    # Volume control.
+
+    def cmd_setvol(self, conn, vol):
+        vol = cast_arg(int, vol)
+        super(Server, self).cmd_setvol(conn, vol)
+        self.player.volume = float(vol)/100
+
