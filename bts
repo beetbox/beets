@@ -63,6 +63,60 @@ def _input_yn(prompt, require=False):
                 return False
         resp = raw_input("Type 'y' or 'n': ").strip()
 
+def choose_candidate(items, cur_artist, cur_album, candidates):
+    """Given current metadata and a sorted list of
+    (distance, candidate) pairs, ask the user for a selection
+    of which candidate to use. Returns the selected candidate. If no
+    candidate is judged good enough, returns None.
+    """
+    # Is the change good enough?
+    THRESH = 0.1 #fixme
+    top_dist, top_info = candidates[0]
+    bypass_candidates = False
+    if top_dist <= THRESH:
+        dist, info = top_dist, top_info
+        bypass_candidates = True
+        
+    while True:
+        # Display and choose from candidates.
+        if not bypass_candidates:
+            print 'Candidates:'
+            for i, (dist, info) in enumerate(candidates):
+                print '%i. %s - %s (%f)' % (i+1, info['artist'],
+                                            info['album'], dist)
+            sel = None
+            while not sel:
+                # Ask the user for a choice.
+                inp = raw_input('Enter a number or "s" to skip: ')
+                inp = inp.strip()
+                if inp.lower().startswith('s'):
+                    return None
+                try:
+                    sel = int(inp)
+                except ValueError:
+                    pass
+                if not (1 <= sel <= len(candidates)):
+                    sel = None
+            dist, info = candidates[sel-1]
+        bypass_candidates = False
+    
+        # Show what we're about to do.
+        if cur_artist != info['artist'] or cur_album != info['album']:
+            print "Correcting tags from:"
+            print '     %s - %s' % (cur_artist, cur_album)
+            print "To:"
+            print '     %s - %s' % (info['artist'], info['album'])
+        else:
+            print "Tagging: %s - %s" % (info['artist'], info['album'])
+        print '(Distance: %f)' % dist
+        for item, track_data in zip(items, info['tracks']):
+            if item.title != track_data['title']:
+                print " * %s -> %s" % (item.title, track_data['title'])
+    
+        # Warn if change is significant.
+        if dist > 0.0:
+            if not _input_yn("Apply change ([y]/n)? "):
+                continue
 
 def tag_album(items, lib, copy=True, write=True):
     """Import items into lib, tagging them as an album. If copy, then
@@ -71,27 +125,15 @@ def tag_album(items, lib, copy=True, write=True):
     """
     # Infer tags.
     try:
-        items,(cur_artist,cur_album),info,dist = autotag.tag_album(items)
+        items,(cur_artist,cur_album),candidates = autotag.tag_album(items)
     except autotag.AutotagError:
         print "Untaggable album:", os.path.dirname(items[0].path)
         return
     
-    # Show what we're about to do.
-    if cur_artist != info['artist'] or cur_album != info['album']:
-        print "Correcting tags from:"
-        print '     %s - %s' % (cur_artist, cur_album)
-        print "To:"
-        print '     %s - %s' % (info['artist'], info['album'])
-    else:
-        print "Tagging: %s - %s" % (info['artist'], info['album'])
-    for item, track_data in zip(items, info['tracks']):
-        if item.title != track_data['title']:
-            print " * %s -> %s" % (item.title, track_data['title'])
-    
-    # Warn if change is significant.
-    if dist > 0.0:
-        if not _input_yn("Apply change ([y]/n)? "):
-            return
+    # Choose which tags to use.
+    info = choose_candidate(items, cur_artist, cur_album, candidates)
+    if not info:
+        return
     
     # Ensure that we don't have the album already.
     q = library.AndQuery((library.MatchQuery('artist', info['artist']),

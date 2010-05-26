@@ -283,8 +283,9 @@ def tag_album(items):
     and a little bit more:
         - The list of items, possibly reordered.
         - The current metadata: an (artist, album) tuple.
-        - The inferred metadata dictionary.
-        - The distance between the current and new metadata.
+        - A list of (distance, info) tuples where info is a dictionary
+          containing the inferred tags. The list is sorted by
+          distance (i.e., best match first).
     May raise an AutotagError if existing metadata is insufficient.
     """
     # Get current and candidate metadata.
@@ -293,10 +294,9 @@ def tag_album(items):
         raise InsufficientMetadataError()
     candidates = mb.match_album(cur_artist, cur_album, len(items))
     
-    best = None
-    best_dist = None
+    # Get the distance to each candidate.
+    dist_and_cands = []
     for info in _first_n(candidates, MAX_CANDIDATES):
-
         # Make sure the album has the correct number of tracks.
         if len(items) != len(info['tracks']):
             continue
@@ -309,16 +309,13 @@ def tag_album(items):
         # Get the change distance.
         dist = distance(items, info)
 
-        # Compare this to the best.
-        if best_dist is None or dist < best_dist:
-            best_dist = dist
-            best = info
-
-    # No suitable candidates.
-    if best is None or best_dist > GIVEUP_DIST:
-        #fixme Remove restriction on track numbers then requery for
-        # diagnosis.
-        raise UnknownAlbumError()
+        dist_and_cands.append((dist, info))
     
-    return items, (cur_artist, cur_album), best, best_dist
+    if not dist_and_cands:
+        raise UnknownAlbumError('so feasible matches found')
+    
+    # Sort by distance.
+    dist_and_cands.sort()
+    
+    return items, (cur_artist, cur_album), dist_and_cands
 
