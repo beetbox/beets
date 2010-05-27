@@ -44,11 +44,14 @@ def _input_yn(prompt, require=False):
 
 # Autotagging interface.
 
+CHOICE_SKIP = 'CHOICE_SKIP'
+CHOICE_ASIS = 'CHOICE_ASIS'
 def choose_candidate(items, cur_artist, cur_album, candidates):
     """Given current metadata and a sorted list of
     (distance, candidate) pairs, ask the user for a selection
-    of which candidate to use. Returns the selected candidate. If no
-    candidate is judged good enough, returns None.
+    of which candidate to use. Returns the selected candidate.
+    If user chooses, to skip or use as-is, returns CHOICE_SKIP or
+    CHOICE_ASIS.
     """
     # Is the change good enough?
     THRESH = 0.1 #fixme
@@ -68,10 +71,14 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
             sel = None
             while not sel:
                 # Ask the user for a choice.
-                inp = raw_input('Number or Skip? ')
-                inp = inp.strip()
-                if inp.lower().startswith('s'):
-                    return None
+                inp = raw_input('# selection, Skip, or Use as-is? ')
+                inp = inp.strip().lower()
+                if inp.startswith('s'):
+                    # Skip.
+                    return CHOICE_SKIP
+                if inp.startswith('u'):
+                    # Use as-is.
+                    return CHOICE_ASIS
                 try:
                     sel = int(inp)
                 except ValueError:
@@ -79,7 +86,7 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
                 if not (1 <= sel <= len(candidates)):
                     sel = None
                 if not sel:
-                    print 'Please enter a numerical selection or S.'
+                    print 'Please enter a numerical selection, S, or U.'
             dist, info = candidates[sel-1]
         bypass_candidates = False
     
@@ -102,19 +109,22 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
         
         # Ask for confirmation.
         while True:
-            inp = raw_input('[A]pply, More candidates, or Skip? ')
-            inp = inp.strip()
-            if inp.lower().startswith('a') or inp == '':
+            inp = raw_input('[A]pply, More candidates, Skip, or Use as-is? ')
+            inp = inp.strip().lower()
+            if inp.startswith('a') or inp == '':
                 # Apply.
                 return info
-            if inp.lower().startswith('m'):
+            elif inp.startswith('m'):
                 # More choices.
                 break
-            if inp.lower().startswith('s'):
+            elif inp.startswith('s'):
                 # Skip.
-                return None
+                return CHOICE_SKIP
+            elif inp.startswith('u'):
+                # Use as-is.
+                return CHOICE_ASIS
             # Invalid selection.
-            print "Please enter A, M, or S."
+            print "Please enter A, M, S, or U."
 
 def tag_album(items, lib, copy=True, write=True):
     """Import items into lib, tagging them as an album. If copy, then
@@ -130,25 +140,32 @@ def tag_album(items, lib, copy=True, write=True):
     
     # Choose which tags to use.
     info = choose_candidate(items, cur_artist, cur_album, candidates)
-    if not info:
+    if info is CHOICE_SKIP:
         return
     
     # Ensure that we don't have the album already.
-    q = library.AndQuery((library.MatchQuery('artist', info['artist']),
-                          library.MatchQuery('album',  info['album'])))
+    if info is CHOICE_ASIS:
+        artist = cur_artist
+        album = cur_album
+    else:
+        artist = info['artist']
+        album = info['album']
+    q = library.AndQuery((library.MatchQuery('artist', artist),
+                          library.MatchQuery('album',  album)))
     count, _ = q.count(lib)
     if count >= 1:
         print "This album (%s - %s) is already in the library!" % \
-              (info['artist'], info['album'])
+              (artist, album)
         return
     
     # Change metadata and add to library.
-    autotag.apply_metadata(items, info)
+    if info is not CHOICE_ASIS:
+        autotag.apply_metadata(items, info)
     for item in items:
         if copy:
             item.move(lib, True)
         lib.add(item)
-        if write:
+        if write and info is not CHOICE_ASIS:
             item.write()
 
 
