@@ -68,7 +68,7 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
             sel = None
             while not sel:
                 # Ask the user for a choice.
-                inp = raw_input('Enter a number or "s" to skip: ')
+                inp = raw_input('Number or Skip? ')
                 inp = inp.strip()
                 if inp.lower().startswith('s'):
                     return None
@@ -78,6 +78,8 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
                     pass
                 if not (1 <= sel <= len(candidates)):
                     sel = None
+                if not sel:
+                    print 'Please enter a numerical selection or S.'
             dist, info = candidates[sel-1]
         bypass_candidates = False
     
@@ -94,10 +96,25 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
             if item.title != track_data['title']:
                 print " * %s -> %s" % (item.title, track_data['title'])
     
-        # Warn if change is significant.
-        if dist > 0.0:
-            if _input_yn("Apply change ([y]/n)? "):
+        # Exact match => tag automatically.
+        if dist == 0.0:
+            return info
+        
+        # Ask for confirmation.
+        while True:
+            inp = raw_input('[A]pply, More candidates, or Skip? ')
+            inp = inp.strip()
+            if inp.lower().startswith('a') or inp == '':
+                # Apply.
                 return info
+            if inp.lower().startswith('m'):
+                # More choices.
+                break
+            if inp.lower().startswith('s'):
+                # Skip.
+                return None
+            # Invalid selection.
+            print "Please enter A, M, or S."
 
 def tag_album(items, lib, copy=True, write=True):
     """Import items into lib, tagging them as an album. If copy, then
