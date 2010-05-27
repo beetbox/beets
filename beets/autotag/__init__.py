@@ -53,8 +53,6 @@ class InsufficientMetadataError(AutotagError):
     pass
 class UnknownAlbumError(AutotagError):
     pass
-class UnorderedTracksError(AutotagError):
-    pass
 
 def _first_n(it, n):
     """Takes an iterator and returns another iterator, trunacted to
@@ -277,7 +275,7 @@ def apply_metadata(items, info):
         
         #fixme Set MusicBrainz IDs
 
-def tag_album(items):
+def tag_album(items, search_artist=None, search_album=None):
     """Bundles together the functionality used to infer tags for a
     set of items comprised by an album. Returns everything relevant
     and a little bit more:
@@ -286,13 +284,23 @@ def tag_album(items):
         - A list of (distance, info) tuples where info is a dictionary
           containing the inferred tags. The list is sorted by
           distance (i.e., best match first).
-    May raise an AutotagError if existing metadata is insufficient.
+    If search_artist and search_album are provided, then they are used
+    as search terms in place of the current metadata.
+    May raise an AutotagError if existing metadata is insufficient or
+    an UnknownAlbumError if no match is found.
     """
-    # Get current and candidate metadata.
+    # Get current metadata.
     cur_artist, cur_album = current_metadata(items)
-    if not cur_artist or not cur_album:
+    
+    # Search terms.
+    if not (search_artist and search_album):
+        # No explicit search terms -- use current metadata.
+        search_artist, search_album = cur_artist, cur_album
+    
+    # Get candidate metadata.
+    if not search_artist or not search_album:
         raise InsufficientMetadataError()
-    candidates = mb.match_album(cur_artist, cur_album, len(items))
+    candidates = mb.match_album(search_artist, search_album, len(items))
     
     # Get the distance to each candidate.
     dist_and_cands = []
