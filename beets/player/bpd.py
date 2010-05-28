@@ -69,6 +69,10 @@ log = logging.getLogger('beets.player.bpd')
 log.addHandler(logging.StreamHandler())
 
 
+# Gstreamer import error (counterpart of identical class in gstplayer).
+class NoGstreamerError(Exception): pass
+
+
 # Error-handling, exceptions, parameter parsing.
 
 class BPDError(Exception):
@@ -732,10 +736,17 @@ class Server(BaseServer):
     """
 
     def __init__(self, library, host='', port=DEFAULT_PORT, password=''):
-        from beets.player.gstplayer import GstPlayer
+        try:
+            from beets.player import gstplayer
+        except ImportError, e:
+            # This is a little hacky, but it's the best I know for now.
+            if e.args[0].endswith(' gst'):
+                raise NoGstreamerError()
+            else:
+                raise
         super(Server, self).__init__(host, port, password)
         self.lib = library
-        self.player = GstPlayer(self.play_finished)
+        self.player = gstplayer.GstPlayer(self.play_finished)
     
     def run(self):
         self.player.run()

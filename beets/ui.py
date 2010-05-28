@@ -20,6 +20,7 @@ import logging
 from beets import autotag
 from beets import library
 from beets.mediafile import FileTypeError
+from beets.player import bpd
 
 # Utilities.
 
@@ -291,10 +292,15 @@ def device_add(lib, query, name):
 
 def start_bpd(lib, host, port, password, debug):
     """Starts a BPD server."""
-    from beets.player.bpd import Server
     log = logging.getLogger('beets.player.bpd')
     if debug:
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.WARNING)
-    Server(lib, host, port, password).run()
+    try:
+        bpd.Server(lib, host, port, password).run()    
+    except bpd.NoGstreamerError:
+        print 'Gstreamer Python bindings not found.'
+        print 'Install "python-gst0.10", "py26-gst-python", or similar ' \
+              'package to use BPD.'
+        return
