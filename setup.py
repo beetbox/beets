@@ -40,7 +40,7 @@ setup(name='beets',
                 'beets.autotag',
                 'beets.player',
       ],
-      scripts=['bts'],
+      scripts=['beet'],
 
       provides=['beets'],
       requires=['sqlite3',

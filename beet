@@ -45,7 +45,7 @@ def make_query(criteria):
     return ' '.join(criteria).strip() or None
     
 class BeetsApp(cmdln.Cmdln):
-    name = "bts"
+    name = "beet"
     
     def get_optparser(self):
         # Add global options to the command.
