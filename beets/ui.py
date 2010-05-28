@@ -207,11 +207,12 @@ def tag_album(items, lib, copy=True, write=True):
 
 # Top-level commands.
 
-def import_files(lib, paths, copy=True, write=True):
+def import_files(lib, paths, copy=True, write=True, autot=True):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
-    files themselves.
+    files themselves. If not autot, then just import the files
+    without attempting to tag.
     """
     first = True
     for path in paths:
@@ -220,7 +221,15 @@ def import_files(lib, paths, copy=True, write=True):
                 print
             first = False
 
-            tag_album(album, lib, copy, write)
+            if autot:
+                # Infer tags.
+                tag_album(album, lib, copy, write)
+            else:
+                # Leave tags as-is.
+                for item in album:
+                    if copy:
+                        item.move(lib, True)
+                    lib.add(item)
             lib.save()
 
 def list_items(lib, query, album):

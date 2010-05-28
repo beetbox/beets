@@ -103,6 +103,10 @@ class BeetsApp(cmdln.Cmdln):
                   help="write new metadata to files' tags (default)")
     @cmdln.option('-W', '--nowrite', action='store_false', dest='write',
                   help="don't write metadata (opposite of -s)")
+    @cmdln.option('-a', '--autotag', action='store_true', dest='autotag',
+                  help="infer tags for imported files (default)")
+    @cmdln.option('-A', '--noautotag', action='store_false', dest='autotag',
+                  help="don't infer tags for imported files (opposite of -a)")
     def do_import(self, subcmd, opts, *paths):
         """${cmd_name}: import new music
         
@@ -113,7 +117,8 @@ class BeetsApp(cmdln.Cmdln):
                 self._cfg_get('beets', 'import_copy', bool)
         write = opts.write if opts.write is not None else \
                 self._cfg_get('beets', 'import_write', bool)
-        ui.import_files(self.lib, paths, copy, write)
+        autot = opts.autotag if opts.autotag is not None else True
+        ui.import_files(self.lib, paths, copy, write, autot)
         
     @cmdln.alias("ls")
     @cmdln.option('-a', '--album', action='store_true',
