@@ -15,6 +15,7 @@
 # along with beets.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import logging
 
 from beets import autotag
 from beets import library
@@ -288,7 +289,12 @@ def device_add(lib, query, name):
         pod.add(item)
     pod.save()
 
-def start_bpd(lib, host, port, password):
+def start_bpd(lib, host, port, password, debug):
     """Starts a BPD server."""
     from beets.player.bpd import Server
+    log = logging.getLogger('beets.player.bpd')
+    if debug:
+        log.setLevel(logging.DEBUG)
+    else:
+        log.setLevel(logging.WARNING)
     Server(lib, host, port, password).run()

@@ -146,6 +146,8 @@ class BeetsApp(cmdln.Cmdln):
         ui.remove_items(self.lib, make_query(criteria),
                         opts.album, opts.delete)
 
+    @cmdln.option('-d', '--debug', action='store_true',
+                  help='dump all MPD traffic to stdout')
     def do_bpd(self, subcmd, opts, host=None, port=None):
         """${cmd_name}: run an MPD-compatible music player server
         
@@ -155,7 +157,8 @@ class BeetsApp(cmdln.Cmdln):
         host = host or self._cfg_get('bpd', 'host')
         port = port or self._cfg_get('bpd', 'port')
         password = self._cfg_get('bpd', 'password')
-        ui.start_bpd(self.lib, host, int(port), password)
+        debug = opts.debug or False
+        ui.start_bpd(self.lib, host, int(port), password, debug)
 
     def do_dadd(self, subcmd, opts, name, *criteria):
         """${cmd_name}: add files to a device

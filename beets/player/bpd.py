@@ -65,8 +65,7 @@ SAFE_COMMANDS = (
 
 
 # Logger.
-log = logging.getLogger('bpd')
-log.setLevel(logging.DEBUG)
+log = logging.getLogger('beets.player.bpd')
 log.addHandler(logging.StreamHandler())
 
 
@@ -388,8 +387,6 @@ class BaseServer(object):
     
     def cmd_move(self, conn, idx_from, idx_to):
         """Move a track in the playlist."""
-        print idx_from, idx_to
-        print self.current_index, [i.title for i in self.playlist]
         idx_from = cast_arg(int, idx_from)
         idx_to = cast_arg(int, idx_to)
         try:
