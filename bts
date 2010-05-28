@@ -26,7 +26,7 @@ from beets import Library
 
 CONFIG_DEFAULTS = {
     'beets': {
-        'library': 'library.blb',
+        'library': '~/.beetsmusic.blb',
         'directory': '~/Music',
         'path_format': '$artist/$album/$track $title',
         'import_copy': True,
