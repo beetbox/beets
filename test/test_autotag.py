@@ -36,6 +36,7 @@ class AutotagTest(unittest.TestCase):
         self.assertEqual(l_artist, 'The Beatles')
         self.assertEqual(l_album, 'The White Album')
 
+def nullfun(): pass
 class MBQueryWaitTest(unittest.TestCase):
     def setup(self):
         # simulate startup
@@ -43,22 +44,22 @@ class MBQueryWaitTest(unittest.TestCase):
 
     def test_do_not_wait_initially(self):
         time1 = time.time()
-        mb._query_wait()
+        mb._query_wrap(nullfun)
         time2 = time.time()
         self.assertTrue(time2 - time1 < 1.0)
 
     def test_second_rapid_query_waits(self):
-        mb._query_wait()
+        mb._query_wrap(nullfun)
         time1 = time.time()
-        mb._query_wait()
+        mb._query_wrap(nullfun)
         time2 = time.time()
         self.assertTrue(time2 - time1 > 1.0)
 
     def test_second_distant_query_does_not_wait(self):
-        mb._query_wait()
+        mb._query_wrap(nullfun)
         time.sleep(1.0)
         time1 = time.time()
-        mb._query_wait()
+        mb._query_wrap(nullfun)
         time2 = time.time()
         self.assertTrue(time2 - time1 < 1.0)
 

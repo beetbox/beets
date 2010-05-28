@@ -30,22 +30,42 @@ import time
 import datetime
 import musicbrainz2.webservice as mbws
 
+class ServerBusyError(Exception): pass
+
 # MusicBrainz requires that a client does not query the server more
 # than once a second. This function enforces that limit using a
 # module-global variable to keep track of the last time a query was
 # sent.
+MAX_QUERY_RETRY = 8
 QUERY_WAIT_TIME = 1.0
 last_query_time = 0.0
-def _query_wait():
+def _query_wrap(fun, *args, **kwargs):
     """Wait until at least `QUERY_WAIT_TIME` seconds have passed since
-    the last invocation of this function. This should be called (by
-    this module) before any query is sent.
+    the last invocation of this function. Then call
+    fun(*args, **kwargs). If it fails due to a "server busy" message,
+    then try again. Tries up to `MAX_QUERY_RETRY` times before
+    giving up.
     """
     global last_query_time
-    since_last_query = time.time() - last_query_time
-    if since_last_query < QUERY_WAIT_TIME:
-        time.sleep(QUERY_WAIT_TIME - since_last_query)
-    last_query_time = time.time()
+    for i in range(MAX_QUERY_RETRY):
+        since_last_query = time.time() - last_query_time
+        if since_last_query < QUERY_WAIT_TIME:
+            time.sleep(QUERY_WAIT_TIME - since_last_query)
+        last_query_time = time.time()
+        try:
+            # Try the function.
+            res = fun(*args, **kwargs)
+        except mbws.WebServiceError, e:
+            # Server busy. Retry.
+            if 'Error 503' not in str(e.reason):
+                # This is not the error we're looking for.
+                raise
+        else:
+            # Success. Return the result.
+            return res
+    # Gave up.
+    raise ServerBusyError()
+    # FIXME exponential backoff?
 
 def _lucene_escape(text):
     """Escapes a string so it may be used verbatim in a Lucene query
@@ -75,8 +95,7 @@ def find_releases(criteria, limit=25):
     
     # Build the filter and send the query.
     filt = mbws.ReleaseFilter(limit=limit, query=query)
-    _query_wait()
-    return mbws.Query().getReleases(filter=filt)
+    return _query_wrap(mbws.Query().getReleases, filter=filt)
 
 def release_dict(release, tracks=None):
     """Takes a MusicBrainz `Release` object and returns a dictionary
@@ -124,8 +143,7 @@ def release_tracks(release_id):
     release. If the release is not found, returns an empty list.
     """
     inc = mbws.ReleaseIncludes(tracks=True)
-    _query_wait()
-    release = mbws.Query().getReleaseById(release_id, inc)
+    release = _query_wrap(mbws.Query().getReleaseById, release_id, inc)
     if release:
         return release.tracks
     else:
