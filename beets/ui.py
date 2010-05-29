@@ -149,6 +149,7 @@ def tag_album(items, lib, copy=True, write=True):
     """
     # Try to get candidate metadata.
     search_artist, search_album = None, None
+    chose_asis = False
     while True:
         # Infer tags.
         try:
@@ -157,19 +158,26 @@ def tag_album(items, lib, copy=True, write=True):
         except autotag.AutotagError:
             print "No match found for:", os.path.dirname(items[0].path)
             while True:
-                inp = raw_input("[E]nter manual search or Skip? ")
+                inp = raw_input("[U]se as-is, Skip, or Enter manual search? ")
                 inp = inp.strip().lower()
-                if inp.startswith('e') or not inp:
+                if inp.startswith('u') or not inp:
+                    # As-is.
+                    chose_asis = True
+                    break
+                elif inp.startswith('e'):
                     # Manual search.
                     search_artist, search_album = manual_search()
                     break
                 elif inp.startswith('s'):
                     # Skip.
                     return
-                print 'Please enter E or S.'
+                print 'Please enter U, S, or E.'
     
         # Choose which tags to use.
-        info = choose_candidate(items, cur_artist, cur_album, candidates)
+        if chose_asis:
+            info = CHOICE_ASIS
+        else:
+            info = choose_candidate(items, cur_artist, cur_album, candidates)
         if info is CHOICE_SKIP:
             # Skip entirely.
             return
@@ -181,19 +189,20 @@ def tag_album(items, lib, copy=True, write=True):
             break
     
     # Ensure that we don't have the album already.
-    if info is CHOICE_ASIS:
-        artist = cur_artist
-        album = cur_album
-    else:
-        artist = info['artist']
-        album = info['album']
-    q = library.AndQuery((library.MatchQuery('artist', artist),
-                          library.MatchQuery('album',  album)))
-    count, _ = q.count(lib)
-    if count >= 1:
-        print "This album (%s - %s) is already in the library!" % \
-              (artist, album)
-        return
+    if not chose_asis:
+        if info is CHOICE_ASIS:
+            artist = cur_artist
+            album = cur_album
+        else:
+            artist = info['artist']
+            album = info['album']
+        q = library.AndQuery((library.MatchQuery('artist', artist),
+                              library.MatchQuery('album',  album)))
+        count, _ = q.count(lib)
+        if count >= 1:
+            print "This album (%s - %s) is already in the library!" % \
+                  (artist, album)
+            return
     
     # Change metadata and add to library.
     if info is not CHOICE_ASIS:
