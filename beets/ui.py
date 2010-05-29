@@ -73,7 +73,7 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
             sel = None
             while not sel:
                 # Ask the user for a choice.
-                inp = raw_input('# selection, Skip, Use as-is, or '
+                inp = raw_input('# selection (default 1), Skip, Use as-is, or '
                                 'Enter manual search? ')
                 inp = inp.strip().lower()
                 if inp.startswith('s'):
@@ -85,10 +85,15 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
                 elif inp.startswith('e'):
                     # Manual search.
                     return CHOICE_MANUAL
-                try:
-                    sel = int(inp)
-                except ValueError:
-                    pass
+                elif not inp:
+                    # Default to choice 1.
+                    sel = 1
+                else:
+                    # Attempt to parse as other candidate number.
+                    try:
+                        sel = int(inp)
+                    except ValueError:
+                        pass
                 if not (1 <= sel <= len(candidates)):
                     sel = None
                 if not sel:
