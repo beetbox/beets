@@ -90,6 +90,10 @@ def _ie_dist(str1, str2):
     str1 = re.sub(r'[^a-z0-9]', '', str1.lower())
     str2 = re.sub(r'[^a-z0-9]', '', str2.lower())
     
+    # Avoid divide-by-zero. Two emptry strings are identical.
+    if not str1 and not str2:
+        return 0
+    
     # Here's a nice DP edit distance implementation from Wikibooks:
     # http://en.wikibooks.org/wiki/Algorithm_implementation/Strings/
     # Levenshtein_distance#Python
