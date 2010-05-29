@@ -58,7 +58,7 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
     THRESH = 0.1 #fixme
     top_dist, top_info = candidates[0]
     bypass_candidates = False
-    if top_dist <= THRESH:
+    if top_dist <= THRESH or len(candidates) <= 1:
         dist, info = top_dist, top_info
         bypass_candidates = True
         
