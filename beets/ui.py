@@ -65,6 +65,7 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
     while True:
         # Display and choose from candidates.
         if not bypass_candidates:
+            print 'Finding tags for "%s - %s".' % (cur_artist, cur_album)
             print 'Candidates:'
             for i, (dist, info) in enumerate(candidates):
                 print '%i. %s - %s (%f)' % (i+1, info['artist'],
