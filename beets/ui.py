@@ -55,10 +55,10 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
     CHOICE_SKIP, CHOICE_ASIS, or CHOICE_MANUAL.
     """
     # Is the change good enough?
-    THRESH = 0.1 #fixme
+    MIN_ASSUME_THRESH = 0.2 #fixme
     top_dist, top_info = candidates[0]
     bypass_candidates = False
-    if top_dist <= THRESH or len(candidates) <= 1:
+    if top_dist <= MIN_ASSUME_THRESH or len(candidates) <= 1:
         dist, info = top_dist, top_info
         bypass_candidates = True
         
@@ -115,7 +115,8 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
                 print " * %s -> %s" % (item.title, track_data['title'])
     
         # Exact match => tag automatically.
-        if dist == 0.0:
+        MIN_ACCEPT_DIST = 0.05 #fixme
+        if dist <= MIN_ACCEPT_DIST:
             return info
         
         # Ask for confirmation.
