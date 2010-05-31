@@ -193,32 +193,33 @@ class AlbumsInDirTest(unittest.TestCase):
                 self.assertEqual(len(album), 1)
 
 class OrderingTest(unittest.TestCase):
-    def test_metaorder_fails_on_duplicated_tracknum(self):
+    def test_order_corrects_metadata(self):
         items = []
-        items.append(Item({'title': 'two', 'track': 2}))
         items.append(Item({'title': 'one', 'track': 1}))
-        items.append(Item({'title': 'twoagain', 'track': 2}))
-        ordered = autotag._order_items_meta(items)
-        self.assertEqual(ordered, None)
-    
-    def test_metaorder_fails_on_too_high_tracknum(self):
-        items = []
-        items.append(Item({'title': 'four', 'track': 4}))
-        items.append(Item({'title': 'one', 'track': 1}))
-        items.append(Item({'title': 'two', 'track': 2}))
-        ordered = autotag._order_items_meta(items)
-        self.assertEqual(ordered, None)
-        
-    def test_metaorder_correct(self):
-        items = []
-        items.append(Item({'title': 'three', 'track': 3}))
-        items.append(Item({'title': 'one', 'track': 1}))
-        items.append(Item({'title': 'two', 'track': 2}))
-        ordered = autotag._order_items_meta(items)
+        items.append(Item({'title': 'three', 'track': 2}))
+        items.append(Item({'title': 'two', 'track': 3}))
+        trackinfo = []
+        trackinfo.append({'title': 'one', 'track': 1})
+        trackinfo.append({'title': 'two', 'track': 2})
+        trackinfo.append({'title': 'three', 'track': 3})
+        ordered = autotag.order_items(items, trackinfo)
         self.assertEqual(ordered[0].title, 'one')
         self.assertEqual(ordered[1].title, 'two')
         self.assertEqual(ordered[2].title, 'three')
-    
+
+    def test_order_works_with_incomplete_metadata(self):
+        items = []
+        items.append(Item({'title': 'one', 'track': 1}))
+        items.append(Item({'title': 'three', 'track': 1}))
+        items.append(Item({'title': 'two', 'track': 1}))
+        trackinfo = []
+        trackinfo.append({'title': 'one', 'track': 1})
+        trackinfo.append({'title': 'two', 'track': 2})
+        trackinfo.append({'title': 'three', 'track': 3})
+        ordered = autotag.order_items(items, trackinfo)
+        self.assertEqual(ordered[0].title, 'one')
+        self.assertEqual(ordered[1].title, 'two')
+        self.assertEqual(ordered[2].title, 'three')
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

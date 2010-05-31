@@ -31,9 +31,16 @@ MAX_CANDIDATES = 5
 # Distance parameters.
 # Text distance weights: proportions on the normalized intuitive edit
 # distance.
-ARTIST_WEIGHT = 3.0 * 3.0
-ALBUM_WEIGHT = 3.0 * 3.0
-TRACK_TITLE_WEIGHT = 1.0 * 3.0
+ARTIST_WEIGHT = 3.0
+ALBUM_WEIGHT = 3.0
+# The weight of the entire distance calculated for a given track.
+TRACK_WEIGHT = 1.0
+# These distances are components of the track distance (that is, they
+# compete against each other but not ARTIST_WEIGHT and ALBUM_WEIGHT;
+# the overall TRACK_WEIGHT does that).
+TRACK_TITLE_WEIGHT = 3.0
+# Added when the indices of tracks don't match.
+TRACK_INDEX_WEIGHT = 0.0
 # Track length weights: no penalty before GRACE, maximum (WEIGHT)
 # penalty at GRACE+MAX discrepancy.
 TRACK_LENGTH_GRACE = 15
@@ -151,69 +158,60 @@ def current_metadata(items):
     
     return (likelies['artist'], likelies['album'])
 
-def _order_items_meta(items):
-    """Orders the items based on their existing metadata. Returns
-    False on failure.
-    """
-    ordered_items = [None]*len(items)
-    available_indices = set(range(len(items)))
-    
-    for item in items:
-        if item.track:
-            index = item.track - 1
-            
-            # Make sure the index is valid.
-            if index in available_indices:
-                available_indices.remove(index)
-            else:
-                # Same index used twice.
-                return None
-                
-            # Apply index.
-            ordered_items[index] = item
-            
-        else:
-            # If we have any item without an index, give up.
-            return None
-    
-    if available_indices:
-        # Not all indices were used.
-        return None
-    
-    return ordered_items
-
-def _order_items_match(items, trackinfo):
+def order_items(items, trackinfo):
     """Orders the items based on how they match some canonical track
     information. This always produces a result if the numbers of tracks
-    match. However, it is compuationally expensive: the core algorithm
-    (for min-cost bipartite matching) is somewhere between O(n^2) and
-    O(n^3); also, the cost matrix has to calculate edit distances n^2
-    times. So this should be used as a fallback.
+    match.
     """
     # Construct the cost matrix.
     costs = []
     for cur_item in items:
         row = []
-        for canon_item in trackinfo:
-            row.append(_ie_dist(cur_item.title, canon_item['title']))
+        for i, canon_item in enumerate(trackinfo):
+            row.append(track_distance(cur_item, canon_item, i+1))
         costs.append(row)
     
     # Find a minimum-cost bipartite matching.
     matching = Munkres().compute(costs)
-    
+
     # Order items based on the matching.
     ordered_items = [None]*len(items)
     for cur_idx, canon_idx in matching:
         ordered_items[canon_idx] = items[cur_idx]
     return ordered_items
 
-def order_items(items, trackinfo):
-    """Given a list of items, put them in album order.
+def track_distance(item, track_data, track_index=None):
+    """Determines the significance of a track metadata change. Returns
+    a float in [0.0,1.0]. `track_index` is the track number of the
+    `track_data` metadata set. If `track_index` is provided and
+    item.track is set, then these indices are used as a component of
+    the distance calculation.
     """
-    # Try using metadata, using matching as a fallback.
-    ordered = _order_items_meta(items)
-    if ordered: return ordered
-    return _order_items_match(items, trackinfo)
+    # Distance and normalization accumulators.
+    dist, dist_max = 0.0, 0.0
+
+    # Check track length.
+    if 'length' not in track_data:
+        # If there's no length to check, assume the worst.
+        dist += TRACK_LENGTH_WEIGHT
+    else:
+        diff = abs(item.length - track_data['length'])
+        diff = max(diff - TRACK_LENGTH_GRACE, 0.0)
+        diff = min(diff, TRACK_LENGTH_MAX)
+        dist += (diff / TRACK_LENGTH_MAX) * TRACK_LENGTH_WEIGHT
+    dist_max += TRACK_LENGTH_WEIGHT
+    
+    # Track title.
+    dist += _ie_dist(item.title, track_data['title']) * TRACK_TITLE_WEIGHT
+    dist_max += TRACK_TITLE_WEIGHT
+
+    # Track index.
+    if track_index and item.track:
+        if track_index != item.track:
+            dist += TRACK_INDEX_WEIGHT
+        dist_max += TRACK_INDEX_WEIGHT
+
+    return dist / dist_max
 
 def distance(items, info):
     """Determines how "significant" an album metadata change would be.
@@ -233,22 +231,9 @@ def distance(items, info):
     dist_max += ALBUM_WEIGHT
     
     # Track distances.
-    for item, track_data in zip(items, info['tracks']):
-
-        # Check track length.
-        if 'length' not in track_data:
-            # If there's no length to check, assume the worst.
-            dist += TRACK_LENGTH_WEIGHT
-        else:
-            diff = abs(item.length - track_data['length'])
-            diff = max(diff - TRACK_LENGTH_GRACE, 0.0)
-            diff = min(diff, TRACK_LENGTH_MAX)
-            dist += (diff / TRACK_LENGTH_MAX) * TRACK_LENGTH_WEIGHT
-        dist_max += TRACK_LENGTH_WEIGHT
-        
-        # Track title.
-        dist += _ie_dist(item.title, track_data['title']) * TRACK_TITLE_WEIGHT
-        dist_max += TRACK_TITLE_WEIGHT
+    for i, (item, track_data) in enumerate(zip(items, info['tracks'])):
+        dist += track_distance(item, track_data, i+1) * TRACK_WEIGHT
+        dist_max += TRACK_WEIGHT
 
     # Normalize distance, avoiding divide-by-zero.
     if dist_max == 0.0:
@@ -279,13 +264,13 @@ def apply_metadata(items, info):
 
 def tag_album(items, search_artist=None, search_album=None):
     """Bundles together the functionality used to infer tags for a
-    set of items comprised by an album. Returns everything relevant
-    and a little bit more:
-        - The list of items, possibly reordered.
-        - The current metadata: an (artist, album) tuple.
-        - A list of (distance, info) tuples where info is a dictionary
-          containing the inferred tags. The list is sorted by
-          distance (i.e., best match first).
+    set of items comprised by an album. Returns everything relevant:
+        - The current artist.
+        - The current album.
+        - A list of (distance, items, info) tuples where info is a
+          dictionary containing the inferred tags and items is a
+          reordered version of the input items list. The candidates are
+          sorted by distance (i.e., best match first).
     If search_artist and search_album are provided, then they are used
     as search terms in place of the current metadata.
     May raise an AutotagError if existing metadata is insufficient or
@@ -305,27 +290,27 @@ def tag_album(items, search_artist=None, search_album=None):
     candidates = mb.match_album(search_artist, search_album, len(items))
     
     # Get the distance to each candidate.
-    dist_and_cands = []
+    dist_ordered_cands = []
     for info in _first_n(candidates, MAX_CANDIDATES):
         # Make sure the album has the correct number of tracks.
         if len(items) != len(info['tracks']):
             continue
     
         # Put items in order.
-        items = order_items(items, info['tracks'])
+        ordered = order_items(items, info['tracks'])
         if not items:
             continue
     
         # Get the change distance.
-        dist = distance(items, info)
+        dist = distance(ordered, info)
 
-        dist_and_cands.append((dist, info))
+        dist_ordered_cands.append((dist, ordered, info))
     
-    if not dist_and_cands:
+    if not dist_ordered_cands:
         raise UnknownAlbumError('so feasible matches found')
     
     # Sort by distance.
-    dist_and_cands.sort()
+    dist_ordered_cands.sort()
     
-    return items, (cur_artist, cur_album), dist_and_cands
+    return cur_artist, cur_album, dist_ordered_cands
 

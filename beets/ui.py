@@ -47,7 +47,7 @@ def _input_yn(prompt, require=False):
 CHOICE_SKIP = 'CHOICE_SKIP'
 CHOICE_ASIS = 'CHOICE_ASIS'
 CHOICE_MANUAL = 'CHOICE_MANUAL'
-def choose_candidate(items, cur_artist, cur_album, candidates):
+def choose_candidate(cur_artist, cur_album, candidates):
     """Given current metadata and a sorted list of
     (distance, candidate) pairs, ask the user for a selection
     of which candidate to use. Returns the selected candidate.
@@ -56,10 +56,10 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
     """
     # Is the change good enough?
     MIN_ASSUME_THRESH = 0.2 #fixme
-    top_dist, top_info = candidates[0]
+    top_dist, _, _ = candidates[0]
     bypass_candidates = False
     if top_dist <= MIN_ASSUME_THRESH or len(candidates) <= 1:
-        dist, info = top_dist, top_info
+        dist, items, info = candidates[0]
         bypass_candidates = True
         
     while True:
@@ -67,7 +67,7 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
         if not bypass_candidates:
             print 'Finding tags for "%s - %s".' % (cur_artist, cur_album)
             print 'Candidates:'
-            for i, (dist, info) in enumerate(candidates):
+            for i, (dist, items, info) in enumerate(candidates):
                 print '%i. %s - %s (%f)' % (i+1, info['artist'],
                                             info['album'], dist)
             sel = None
@@ -98,7 +98,7 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
                     sel = None
                 if not sel:
                     print 'Please enter a numerical selection, S, U, or E.'
-            dist, info = candidates[sel-1]
+            dist, items, info = candidates[sel-1]
         bypass_candidates = False
     
         # Show what we're about to do.
@@ -115,7 +115,7 @@ def choose_candidate(items, cur_artist, cur_album, candidates):
                 print " * %s -> %s" % (item.title, track_data['title'])
     
         # Exact match => tag automatically.
-        MIN_ACCEPT_DIST = 0.05 #fixme
+        MIN_ACCEPT_DIST = 0.03 #fixme
         if dist <= MIN_ACCEPT_DIST:
             return info
         
@@ -159,7 +159,7 @@ def tag_album(items, lib, copy=True, write=True):
     while True:
         # Infer tags.
         try:
-            items, (cur_artist, cur_album), candidates = \
+            cur_artist, cur_album, candidates = \
                     autotag.tag_album(items, search_artist, search_album)
         except autotag.AutotagError:
             print "No match found for:", os.path.dirname(items[0].path)
@@ -183,7 +183,7 @@ def tag_album(items, lib, copy=True, write=True):
         if chose_asis:
             info = CHOICE_ASIS
         else:
-            info = choose_candidate(items, cur_artist, cur_album, candidates)
+            info = choose_candidate(cur_artist, cur_album, candidates)
         if info is CHOICE_SKIP:
             # Skip entirely.
             return
