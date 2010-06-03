@@ -56,9 +56,13 @@ def choose_candidate(cur_artist, cur_album, candidates):
     """
     # Is the change good enough?
     MIN_ASSUME_THRESH = 0.2 #fixme
+    MIN_ASSUME_DIFFERENCE = 0.3 #fixme
     top_dist, _, _ = candidates[0]
     bypass_candidates = False
-    if top_dist <= MIN_ASSUME_THRESH or len(candidates) <= 1:
+    if top_dist <= MIN_ASSUME_THRESH or \
+       len(candidates) <= 1 or \
+       (len(candidates) >= 2 and candidates[1][0] - candidates[0][0] >=
+                                 MIN_ASSUME_DIFFERENCE):
         dist, items, info = candidates[0]
         bypass_candidates = True
         
