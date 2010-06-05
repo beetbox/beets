@@ -26,21 +26,6 @@ def _print(txt):
     """Print the text encoded using UTF-8."""
     print txt.encode('utf-8')
 
-def _input_yn(prompt, require=False):
-    """Prompts user for a "yes" or "no" response where an empty response
-    is treated as "yes". Keeps prompting until acceptable input is
-    given; returns a boolean. If require is True, then an empty response
-    is not accepted.
-    """
-    resp = raw_input(prompt).strip()
-    while True:
-        if resp or not require:
-            if not resp or resp[0].lower() == 'y':
-                return True
-            elif len(resp) > 0 and resp[0].lower() == 'n':
-                return False
-        resp = raw_input("Type 'y' or 'n': ").strip()
-
 def _input_options(prompt, options, default=None,
                    fallback_prompt=None, numrange=None):
     """Prompts a user for input. The input must be one of the single
@@ -75,12 +60,27 @@ def _input_options(prompt, options, default=None,
                     resp = None
         
         # Try a normal letter input.
-        resp = resp[0]
-        if resp in options:
-            return resp
+        if resp:
+            resp = resp[0]
+            if resp in options:
+                return resp
         
         # Prompt for new input.
         resp = raw_input(fallback_prompt + ' ')
+
+def _input_yn(prompt, require=False):
+    """Prompts user for a "yes" or "no" response where an empty response
+    is treated as "yes". Keeps prompting until acceptable input is
+    given; returns a boolean. If require is True, then an empty response
+    is not accepted.
+    """
+    sel = _input_options(
+        prompt,
+        ('y', 'n'),
+        None if require else 'y',
+        "Type 'y' or 'n':"
+    )
+    return (sel == 'y')
 
 # Autotagging interface.
 
