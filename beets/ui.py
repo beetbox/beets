@@ -295,6 +295,10 @@ def remove_items(lib, query, album, delete=False):
     else:
         items = list(lib.items(query=query))
 
+    if not items:
+        print 'No matching items found.'
+        return
+
     # Show all the items.
     for item in items:
         _print(item.artist + ' - ' + item.album + ' - ' + item.title)
