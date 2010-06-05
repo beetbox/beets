@@ -61,8 +61,6 @@ class AutotagError(Exception):
     pass
 class InsufficientMetadataError(AutotagError):
     pass
-class UnknownAlbumError(AutotagError):
-    pass
 
 def _first_n(it, n):
     """Takes an iterator and returns another iterator, trunacted to
@@ -223,6 +221,8 @@ def distance(items, info):
     Returns a float in [0.0,1.0]. The list of items must be ordered.
     """
     cur_artist, cur_album = current_metadata(items)
+    cur_artist = cur_artist or ''
+    cur_album = cur_album or ''
     
     # These accumulate the possible distance components. The final
     # distance will be dist/dist_max.
@@ -282,8 +282,7 @@ def tag_album(items, search_artist=None, search_album=None):
           be reached.
     If search_artist and search_album are provided, then they are used
     as search terms in place of the current metadata.
-    May raise an AutotagError if existing metadata is insufficient or
-    an UnknownAlbumError if no match is found.
+    May raise an AutotagError if existing metadata is insufficient.
     """
     # Get current metadata.
     cur_artist, cur_album = current_metadata(items)
@@ -307,7 +306,7 @@ def tag_album(items, search_artist=None, search_album=None):
     
         # Put items in order.
         ordered = order_items(items, info['tracks'])
-        if not items:
+        if not ordered:
             continue
     
         # Get the change distance.
@@ -315,29 +314,30 @@ def tag_album(items, search_artist=None, search_album=None):
 
         dist_ordered_cands.append((dist, ordered, info))
     
-    if not dist_ordered_cands:
-        raise UnknownAlbumError('so feasible matches found')
-    
     # Sort by distance.
     dist_ordered_cands.sort()
     
     # Make a recommendation.
-    min_dist = dist_ordered_cands[0][0]
-    if min_dist < STRONG_REC_THRESH:
-        # Strong recommendation level.
-        rec = RECOMMEND_STRONG
-    elif len(dist_ordered_cands) == 1:
-        # Only a single candidate. Medium recommendation.
-        rec = RECOMMEND_MEDIUM
-    elif min_dist < MEDIUM_REC_THRESH:
-        # Medium recommendation level.
-        rec = RECOMMEND_MEDIUM
-    elif dist_ordered_cands[1][0] - min_dist <= REC_GAP_THREH:
-        # Gap between first two candidates is large.
-        rec = RECOMMEND_MEDIUM
-    else:
-        # No conclusion.
+    if not dist_ordered_cands:
+        # No candidates: no recommendation.
         rec = RECOMMEND_NONE
+    else:
+        min_dist = dist_ordered_cands[0][0]
+        if min_dist < STRONG_REC_THRESH:
+            # Strong recommendation level.
+            rec = RECOMMEND_STRONG
+        elif len(dist_ordered_cands) == 1:
+            # Only a single candidate. Medium recommendation.
+            rec = RECOMMEND_MEDIUM
+        elif min_dist < MEDIUM_REC_THRESH:
+            # Medium recommendation level.
+            rec = RECOMMEND_MEDIUM
+        elif dist_ordered_cands[1][0] - min_dist <= REC_GAP_THREH:
+            # Gap between first two candidates is large.
+            rec = RECOMMEND_MEDIUM
+        else:
+            # No conclusion.
+            rec = RECOMMEND_NONE
     
     return cur_artist, cur_album, dist_ordered_cands, rec
 

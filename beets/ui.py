@@ -91,7 +91,7 @@ def show_change(cur_artist, cur_album, items, info, dist):
     """
     if cur_artist != info['artist'] or cur_album != info['album']:
         print "Correcting tags from:"
-        print '     %s - %s' % (cur_artist, cur_album)
+        print '     %s - %s' % (cur_artist or '', cur_album or '')
         print "To:"
         print '     %s - %s' % (info['artist'], info['album'])
     else:
@@ -190,6 +190,16 @@ def tag_album(items, lib, copy=True, write=True):
             cur_artist, cur_album, candidates, rec = \
                     autotag.tag_album(items, search_artist, search_album)
         except autotag.AutotagError:
+            cur_artist, cur_album, candidates, rec = None, None, None, None
+            info = None
+        else:
+            if candidates:
+                info = choose_candidate(cur_artist, cur_album, candidates, rec)
+            else:
+                info = None
+        
+        # Fallback: if either an error ocurred or no matches found.
+        if not info:
             print "No match found for:", os.path.dirname(items[0].path)
             sel = _input_options(
                 "[U]se as-is, Skip, or Enter manual search?",
@@ -202,8 +212,6 @@ def tag_album(items, lib, copy=True, write=True):
                 info = CHOICE_MANUAL
             elif sel == 's':
                 info = CHOICE_SKIP
-        else:
-            info = choose_candidate(cur_artist, cur_album, candidates, rec)
     
         # Choose which tags to use.
         if info is CHOICE_SKIP:
