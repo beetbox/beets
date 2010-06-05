@@ -41,8 +41,65 @@ def _input_yn(prompt, require=False):
                 return False
         resp = raw_input("Type 'y' or 'n': ").strip()
 
+def _input_options(prompt, options, default=None,
+                   fallback_prompt=None, numrange=None):
+    """Prompts a user for input. The input must be one of the single
+    letters in options, a list of single-letter strings, or an integer
+    in numrange, which is a (low, high) tuple. If nothing is entered,
+    assume the input is default (if provided). Returns the value
+    entered, a single-letter string or an integer. If an incorrect
+    input occurs, fallback_prompt is used (by default identical to
+    the initial prompt).
+    """
+    fallback_prompt = fallback_prompt or prompt
+    
+    resp = raw_input(prompt + ' ')
+    while True:
+        resp = resp.strip().lower()
+        
+        # Try default option.
+        if default is not None and not resp:
+            resp = default
+        
+        # Try an integer input if available.
+        if numrange is not None:
+            try:
+                resp = int(resp)
+            except ValueError:
+                pass
+            else:
+                low, high = numrange
+                if low <= resp <= high:
+                    return resp
+                else:
+                    resp = None
+        
+        # Try a normal letter input.
+        resp = resp[0]
+        if resp in options:
+            return resp
+        
+        # Prompt for new input.
+        resp = raw_input(fallback_prompt + ' ')
 
 # Autotagging interface.
+
+def show_change(cur_artist, cur_album, items, info, dist):
+    """Print out a representation of the changes that will be made if
+    tags are changed from (cur_artist, cur_album, items) to info with
+    distance dist.
+    """
+    if cur_artist != info['artist'] or cur_album != info['album']:
+        print "Correcting tags from:"
+        print '     %s - %s' % (cur_artist, cur_album)
+        print "To:"
+        print '     %s - %s' % (info['artist'], info['album'])
+    else:
+        print "Tagging: %s - %s" % (info['artist'], info['album'])
+    print '(Distance: %f)' % dist
+    for item, track_data in zip(items, info['tracks']):
+        if item.title != track_data['title']:
+            print " * %s -> %s" % (item.title, track_data['title'])
 
 CHOICE_SKIP = 'CHOICE_SKIP'
 CHOICE_ASIS = 'CHOICE_ASIS'
@@ -69,76 +126,49 @@ def choose_candidate(cur_artist, cur_album, candidates, rec):
             for i, (dist, items, info) in enumerate(candidates):
                 print '%i. %s - %s (%f)' % (i+1, info['artist'],
                                             info['album'], dist)
-            sel = None
-            while not sel:
-                # Ask the user for a choice.
-                inp = raw_input('# selection (default 1), Skip, Use as-is, or '
-                                'Enter manual search? ')
-                inp = inp.strip().lower()
-                if inp.startswith('s'):
-                    # Skip.
-                    return CHOICE_SKIP
-                elif inp.startswith('u'):
-                    # Use as-is.
-                    return CHOICE_ASIS
-                elif inp.startswith('e'):
-                    # Manual search.
-                    return CHOICE_MANUAL
-                elif not inp:
-                    # Default to choice 1.
-                    sel = 1
-                else:
-                    # Attempt to parse as other candidate number.
-                    try:
-                        sel = int(inp)
-                    except ValueError:
-                        pass
-                if not (1 <= sel <= len(candidates)):
-                    sel = None
-                if not sel:
-                    print 'Please enter a numerical selection, S, U, or E.'
-            dist, items, info = candidates[sel-1]
+                                            
+            # Ask the user for a choice.
+            sel = _input_options(
+                '# selection (default 1), Skip, Use as-is, or '
+                'Enter manual search?',
+                ('s', 'u', 'e'), '1',
+                'Enter a numerical selection, S, U, or E:',
+                (1, len(candidates))
+            )
+            if sel == 's':
+                return CHOICE_SKIP
+            elif sel == 'u':
+                return CHOICE_ASIS
+            elif sel == 'e':
+                return CHOICE_MANUAL
+            else: # Numerical selection.
+                dist, items, info = candidates[sel-1]
         bypass_candidates = False
     
         # Show what we're about to do.
-        if cur_artist != info['artist'] or cur_album != info['album']:
-            print "Correcting tags from:"
-            print '     %s - %s' % (cur_artist, cur_album)
-            print "To:"
-            print '     %s - %s' % (info['artist'], info['album'])
-        else:
-            print "Tagging: %s - %s" % (info['artist'], info['album'])
-        print '(Distance: %f)' % dist
-        for item, track_data in zip(items, info['tracks']):
-            if item.title != track_data['title']:
-                print " * %s -> %s" % (item.title, track_data['title'])
+        show_change(cur_artist, cur_album, items, info, dist)
     
         # Exact match => tag automatically.
         if rec == autotag.RECOMMEND_STRONG:
             return info
         
         # Ask for confirmation.
-        while True:
-            inp = raw_input('[A]pply, More candidates, Skip, '
-                            'Use as-is, or Enter manual search? ')
-            inp = inp.strip().lower()
-            if inp.startswith('a') or inp == '':
-                # Apply.
-                return info
-            elif inp.startswith('m'):
-                # More choices.
-                break
-            elif inp.startswith('s'):
-                # Skip.
-                return CHOICE_SKIP
-            elif inp.startswith('u'):
-                # Use as-is.
-                return CHOICE_ASIS
-            elif inp.startswith('e'):
-                # Manual search.
-                return CHOICE_MANUAL
-            # Invalid selection.
-            print "Please enter A, M, S, U, or E."
+        sel = _input_options(
+            '[A]pply, More candidates, Skip, Use as-is, or '
+            'Enter manual search? ',
+            ('a', 'm', 's', 'u', 'e'), 'a',
+            'Enter A, M, S, U, or E:'
+        )
+        if sel == 'a':
+            return info
+        elif sel == 'm':
+            pass
+        elif sel == 's':
+            return CHOICE_SKIP
+        elif sel == 'u':
+            return CHOICE_ASIS
+        elif sel == 'e':
+            return CHOICE_MANUAL
 
 def manual_search():
     """Input an artist and album for manual search."""
@@ -161,21 +191,17 @@ def tag_album(items, lib, copy=True, write=True):
                     autotag.tag_album(items, search_artist, search_album)
         except autotag.AutotagError:
             print "No match found for:", os.path.dirname(items[0].path)
-            while True:
-                inp = raw_input("[U]se as-is, Skip, or Enter manual search? ")
-                inp = inp.strip().lower()
-                if inp.startswith('u') or not inp:
-                    # As-is.
-                    chose_asis = True
-                    break
-                elif inp.startswith('e'):
-                    # Manual search.
-                    search_artist, search_album = manual_search()
-                    break
-                elif inp.startswith('s'):
-                    # Skip.
-                    return
-                print 'Please enter U, S, or E.'
+            sel = _input_options(
+                "[U]se as-is, Skip, or Enter manual search?",
+                ('u', 's', 'e'), 'u',
+                'Enter U, S, or E:'
+            )
+            if sel == 'u':
+                chose_asis = True
+            elif sel == 'e':
+                search_artist, search_album = manual_search()
+            elif sel == 's':
+                return
     
         # Choose which tags to use.
         if chose_asis:
