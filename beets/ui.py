@@ -183,7 +183,7 @@ def tag_album(items, lib, copy=True, write=True):
     """
     # Try to get candidate metadata.
     search_artist, search_album = None, None
-    chose_asis = False
+    cur_artist, cur_album = None, None
     while True:
         # Infer tags.
         try:
@@ -197,17 +197,15 @@ def tag_album(items, lib, copy=True, write=True):
                 'Enter U, S, or E:'
             )
             if sel == 'u':
-                chose_asis = True
+                info = CHOICE_ASIS
             elif sel == 'e':
-                search_artist, search_album = manual_search()
+                info = CHOICE_MANUAL
             elif sel == 's':
-                return
-    
-        # Choose which tags to use.
-        if chose_asis:
-            info = CHOICE_ASIS
+                info = CHOICE_SKIP
         else:
             info = choose_candidate(cur_artist, cur_album, candidates, rec)
+    
+        # Choose which tags to use.
         if info is CHOICE_SKIP:
             # Skip entirely.
             return
@@ -215,11 +213,11 @@ def tag_album(items, lib, copy=True, write=True):
             # Try again with manual search terms.
             search_artist, search_album = manual_search()
         else:
-            # Got a candidate. Continue tagging.
+            # Either ASIS or we have a candidate. Continue tagging.
             break
     
     # Ensure that we don't have the album already.
-    if not chose_asis:
+    if info is not CHOICE_ASIS or cur_artist is not None:
         if info is CHOICE_ASIS:
             artist = cur_artist
             album = cur_album
