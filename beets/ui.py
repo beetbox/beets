@@ -47,7 +47,7 @@ def _input_yn(prompt, require=False):
 CHOICE_SKIP = 'CHOICE_SKIP'
 CHOICE_ASIS = 'CHOICE_ASIS'
 CHOICE_MANUAL = 'CHOICE_MANUAL'
-def choose_candidate(cur_artist, cur_album, candidates):
+def choose_candidate(cur_artist, cur_album, candidates, rec):
     """Given current metadata and a sorted list of
     (distance, candidate) pairs, ask the user for a selection
     of which candidate to use. Returns the selected candidate.
@@ -55,14 +55,9 @@ def choose_candidate(cur_artist, cur_album, candidates):
     CHOICE_SKIP, CHOICE_ASIS, or CHOICE_MANUAL.
     """
     # Is the change good enough?
-    MIN_ASSUME_THRESH = 0.2 #fixme
-    MIN_ASSUME_DIFFERENCE = 0.3 #fixme
     top_dist, _, _ = candidates[0]
     bypass_candidates = False
-    if top_dist <= MIN_ASSUME_THRESH or \
-       len(candidates) <= 1 or \
-       (len(candidates) >= 2 and candidates[1][0] - candidates[0][0] >=
-                                 MIN_ASSUME_DIFFERENCE):
+    if rec != autotag.RECOMMEND_NONE:
         dist, items, info = candidates[0]
         bypass_candidates = True
         
@@ -119,8 +114,7 @@ def choose_candidate(cur_artist, cur_album, candidates):
                 print " * %s -> %s" % (item.title, track_data['title'])
     
         # Exact match => tag automatically.
-        MIN_ACCEPT_DIST = 0.03 #fixme
-        if dist <= MIN_ACCEPT_DIST:
+        if rec == autotag.RECOMMEND_STRONG:
             return info
         
         # Ask for confirmation.
@@ -163,7 +157,7 @@ def tag_album(items, lib, copy=True, write=True):
     while True:
         # Infer tags.
         try:
-            cur_artist, cur_album, candidates = \
+            cur_artist, cur_album, candidates, rec = \
                     autotag.tag_album(items, search_artist, search_album)
         except autotag.AutotagError:
             print "No match found for:", os.path.dirname(items[0].path)
@@ -187,7 +181,7 @@ def tag_album(items, lib, copy=True, write=True):
         if chose_asis:
             info = CHOICE_ASIS
         else:
-            info = choose_candidate(cur_artist, cur_album, candidates)
+            info = choose_candidate(cur_artist, cur_album, candidates, rec)
         if info is CHOICE_SKIP:
             # Skip entirely.
             return

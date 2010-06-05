@@ -47,9 +47,14 @@ TRACK_LENGTH_GRACE = 15
 TRACK_LENGTH_MAX = 30
 TRACK_LENGTH_WEIGHT = 1.0
 
-# Distances greater than this are "hopeless cases": almost certainly
-# not correct and should be discarded.
-GIVEUP_DIST = 0.5
+# Recommendation constants.
+RECOMMEND_STRONG = 'RECOMMEND_STRONG'
+RECOMMEND_MEDIUM = 'RECOMMEND_MEDIUM'
+RECOMMEND_NONE = 'RECOMMEND_NONE'
+# Thresholds for recommendations.
+STRONG_REC_THRESH = 0.03
+MEDIUM_REC_THRESH = 0.2
+REC_GAP_THREH = 0.3
 
 # Autotagging exceptions.
 class AutotagError(Exception):
@@ -271,6 +276,10 @@ def tag_album(items, search_artist=None, search_album=None):
           dictionary containing the inferred tags and items is a
           reordered version of the input items list. The candidates are
           sorted by distance (i.e., best match first).
+        - A recommendation, one of RECOMMEND_STRONG, RECOMMEND_MEDIUM,
+          or RECOMMEND_NONE; indicating that the first candidate is
+          very likely, it is somewhat likely, or no conclusion could
+          be reached.
     If search_artist and search_album are provided, then they are used
     as search terms in place of the current metadata.
     May raise an AutotagError if existing metadata is insufficient or
@@ -312,5 +321,23 @@ def tag_album(items, search_artist=None, search_album=None):
     # Sort by distance.
     dist_ordered_cands.sort()
     
-    return cur_artist, cur_album, dist_ordered_cands
+    # Make a recommendation.
+    min_dist = dist_ordered_cands[0][0]
+    if min_dist < STRONG_REC_THRESH:
+        # Strong recommendation level.
+        rec = RECOMMEND_STRONG
+    elif len(dist_ordered_cands) == 1:
+        # Only a single candidate. Medium recommendation.
+        rec = RECOMMEND_MEDIUM
+    elif min_dist < MEDIUM_REC_THRESH:
+        # Medium recommendation level.
+        rec = RECOMMEND_MEDIUM
+    elif dist_ordered_cands[1][0] - min_dist <= REC_GAP_THREH:
+        # Gap between first two candidates is large.
+        rec = RECOMMEND_MEDIUM
+    else:
+        # No conclusion.
+        rec = RECOMMEND_NONE
+    
+    return cur_artist, cur_album, dist_ordered_cands, rec
 
