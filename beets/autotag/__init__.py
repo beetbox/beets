@@ -54,7 +54,7 @@ RECOMMEND_NONE = 'RECOMMEND_NONE'
 # Thresholds for recommendations.
 STRONG_REC_THRESH = 0.03
 MEDIUM_REC_THRESH = 0.2
-REC_GAP_THREH = 0.3
+REC_GAP_THRESH = 0.25
 
 # Autotagging exceptions.
 class AutotagError(Exception):
@@ -329,10 +329,10 @@ def tag_album(items, search_artist=None, search_album=None):
         elif len(dist_ordered_cands) == 1:
             # Only a single candidate. Medium recommendation.
             rec = RECOMMEND_MEDIUM
-        elif min_dist < MEDIUM_REC_THRESH:
+        elif min_dist <= MEDIUM_REC_THRESH:
             # Medium recommendation level.
             rec = RECOMMEND_MEDIUM
-        elif dist_ordered_cands[1][0] - min_dist <= REC_GAP_THREH:
+        elif dist_ordered_cands[1][0] - min_dist >= REC_GAP_THRESH:
             # Gap between first two candidates is large.
             rec = RECOMMEND_MEDIUM
         else:
