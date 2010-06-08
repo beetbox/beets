@@ -155,7 +155,7 @@ def choose_candidate(cur_artist, cur_album, candidates, rec):
         # Ask for confirmation.
         sel = _input_options(
             '[A]pply, More candidates, Skip, Use as-is, or '
-            'Enter manual search? ',
+            'Enter manual search?',
             ('a', 'm', 's', 'u', 'e'), 'a',
             'Enter A, M, S, U, or E:'
         )
@@ -312,9 +312,9 @@ def remove_items(lib, query, album, delete=False):
     # Confirm with user.
     print
     if delete:
-        prompt = 'Really DELETE %i files (y/n)? ' % len(items)
+        prompt = 'Really DELETE %i files (y/n)?' % len(items)
     else:
-        prompt = 'Really remove %i items from the library (y/n)? ' % \
+        prompt = 'Really remove %i items from the library (y/n)?' % \
                  len(items)
     if not _input_yn(prompt, True):
         return
