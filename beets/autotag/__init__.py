@@ -71,13 +71,39 @@ def _first_n(it, n):
             break
         yield v
 
+def _sorted_walk(path):
+    """Like os.walk, but yields things in sorted, breadth-first
+    order.
+    """
+    # Get all the directories and files at this level.
+    dirs = []
+    files = []
+    for base in os.listdir(path):
+        cur = os.path.join(path, base)
+        if os.path.isdir(cur):
+            dirs.append(base)
+        else:
+            files.append(base)
+
+    # Sort lists and yield the current level.
+    dirs.sort()
+    files.sort()
+    yield (path, dirs, files)
+
+    # Recurse into directories.
+    for base in dirs:
+        cur = os.path.join(path, base)
+        # yield from _sorted_walk(cur)
+        for res in _sorted_walk(cur):
+            yield res
+
 def albums_in_dir(path):
     """Recursively searches the given directory and returns an iterable
     of lists of items where each list is probably an album.
     Specifically, any folder containing any media files is an album.
     """
     path = library._unicode_path(path)
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in _sorted_walk(path):
         # Get a list of items in the directory.
         items = []
         for filename in files:
