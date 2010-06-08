@@ -30,13 +30,13 @@ DEFAULT_PORT = 6600
 PROTOCOL_VERSION = '0.13.0'
 BUFSIZE = 1024
 
-HELLO = u'OK MPD %s' % PROTOCOL_VERSION
-CLIST_BEGIN = u'command_list_begin'
-CLIST_VERBOSE_BEGIN = u'command_list_ok_begin'
-CLIST_END = u'command_list_end'
-RESP_OK = u'OK'
-RESP_CLIST_VERBOSE = u'list_OK'
-RESP_ERR = u'ACK'
+HELLO = 'OK MPD %s' % PROTOCOL_VERSION
+CLIST_BEGIN = 'command_list_begin'
+CLIST_VERBOSE_BEGIN = 'command_list_ok_begin'
+CLIST_END = 'command_list_end'
+RESP_OK = 'OK'
+RESP_CLIST_VERBOSE = 'list_OK'
+RESP_ERR = 'ACK'
 
 NEWLINE = u"\n"
 
@@ -563,12 +563,13 @@ class Connection(object):
     
     def send(self, *lines):
         """Send lines, which are strings, to the client. A newline is
-        added after every string. `data` may be None, in which case
-        nothing is sent.
+        added after every string.
         """
         out = NEWLINE.join(lines) + NEWLINE
         log.debug(out[:-1]) # Don't log trailing newline.
-        self.client.sendall(out.encode('utf-8'))
+        if isinstance(out, unicode):
+            out = out.encode('utf8')
+        self.client.sendall(out)
     
     line_re = re.compile(r'([^\r\n]*)(?:\r\n|\n\r|\n|\r)')
     def lines(self):
@@ -662,7 +663,7 @@ class Command(object):
         # Attempt to get correct command function.
         func_name = 'cmd_' + self.name
         if not hasattr(conn.server, func_name):
-            raise BPDError(ERROR_UNKNOWN, 'unknown command', self.name)
+            raise BPDError(ERROR_UNKNOWN, u'unknown command', self.name)
         func = getattr(conn.server, func_name)
         
         # Ensure we have permission for this command.
