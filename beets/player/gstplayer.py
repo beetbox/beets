@@ -23,6 +23,7 @@ import gobject
 import thread
 import os
 import copy
+import urllib
 
 class GstPlayer(object):
     """A music player abstracting GStreamer's Playbin element.
@@ -101,7 +102,10 @@ class GstPlayer(object):
         path.
         """
         self.player.set_state(gst.STATE_NULL)
-        self.player.set_property("uri", ("file://" + path).encode('utf-8'))
+        if isinstance(path, unicode):
+            path = path.encode('utf8')
+        uri = 'file://' + urllib.quote(path)
+        self.player.set_property("uri", uri)
         self.player.set_state(gst.STATE_PLAYING)
         self.playing = True
 
