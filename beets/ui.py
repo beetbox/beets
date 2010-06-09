@@ -284,15 +284,19 @@ def tag_album(items, lib, copy=True, write=True):
                   (artist, album)
             return
     
-    # Change metadata and add to library.
+    # Change metadata, move, and copy.
     if info is not CHOICE_ASIS:
         autotag.apply_metadata(items, info)
     for item in items:
         if copy:
             item.move(lib, True)
-        lib.add(item)
         if write and info is not CHOICE_ASIS:
             item.write()
+
+    # Add items to library. We consolidate this at the end to avoid
+    # locking while we do the copying and tag updates.
+    for item in items:
+        lib.add(item)
 
 
 # Top-level commands.
