@@ -17,23 +17,24 @@
 from distutils.core import setup
 
 setup(name='beets',
-      version='0.1',
-      description='music library manager',
+      version='1.0b1',
+      description='music tagger and library organizer',
       author='Adrian Sampson',
       author_email='adrian@radbox.org',
-      url='http://code.google.com/p/beets/',
-      license='GPL',
+      url='http://beets.radbox.org/',
+      license='MIT',
       platforms='ALL',
-      long_description="""Beets is a system for managing your music
-      collection.
+      long_description="""Beets is a media library management system
+      for obsessive-compulsive music geeks.
+
+      The purpose of beets is to get your music collection right once
+      and for all. It catalogs your collection, automatically
+      improving its metadata as it goes. It then provides a set of
+      tools for manipulating and accessing your music.
       
-      It catalogs a collection in a sqlite database. This allows batch
-      correction of file tags and reorganization into a custom
-      directory structure.
-      
-      It also includes a music player that reimplements the
-      `MPD <http://musicpd.org/>`_ protocol in order to play music from
-      the database.
+      Beets also includes a music player that implements the MPD
+      protocol, so you can play music in your beets library using any
+      MPD client.
       """,
 
       packages=['beets',
@@ -48,7 +49,7 @@ setup(name='beets',
                 'musicbrainz2 (>=0.7.0)',
                 'munkres',
                 'cmdln',
-                'eventlet (>=0.8)',
+                'eventlet (>=0.9.3)',
       ],
 )
 
