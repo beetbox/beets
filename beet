@@ -166,6 +166,14 @@ class BeetsApp(cmdln.Cmdln):
         """
         ui.device_add(self.lib, make_query(criteria), name)
 
+    def do_stats(self, subcmd, opts, *criteria):
+        """${cmd_name}: show statistics about the library or a query
+
+        ${cmd_usage}
+        ${cmd_option_list}
+        """
+        ui.show_stats(self.lib, make_query(criteria))
+
 if __name__ == '__main__':
     app = BeetsApp()
     sys.exit(app.main())

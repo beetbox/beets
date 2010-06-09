@@ -82,6 +82,41 @@ def _input_yn(prompt, require=False):
     )
     return (sel == 'y')
 
+def _human_bytes(size):
+    """Formats size, a number of bytes, in a human-readable way."""
+    suffices = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB', 'HB']
+    for suffix in suffices:
+        if size < 1024:
+            return "%3.1f %s" % (size, suffix)
+        size /= 1024.0
+    return "big"
+
+def _human_seconds(interval):
+    """Formats interval, a number of seconds, as a human-readable time
+    interval.
+    """
+    units = [
+        (1, 'second'),
+        (60, 'minute'),
+        (60, 'hour'),
+        (24, 'day'),
+        (7, 'week'),
+        (52, 'year'),
+        (10, 'decade'),
+    ]
+    for i in range(len(units)-1):
+        increment, suffix = units[i]
+        next_increment, _ = units[i+1]
+        interval /= float(increment)
+        if interval < next_increment:
+            break
+    else:
+        # Last unit.
+        increment, suffix = units[-1]
+        interval /= float(increment)
+
+    return "%3.1f %ss" % (interval, suffix)
+
 # Autotagging interface.
 
 def show_change(cur_artist, cur_album, items, info, dist):
@@ -330,7 +365,7 @@ def device_add(lib, query, name):
     """Add items matching query from lib to a device with the given
     name.
     """
-    items = self.lib.items(query=query)
+    items = lib.items(query=query)
 
     from beets import device
     pod = device.PodLibrary.by_name(name)
@@ -352,3 +387,36 @@ def start_bpd(lib, host, port, password, debug):
         print 'Install "python-gst0.10", "py26-gst-python", or similar ' \
               'package to use BPD.'
         return
+
+def show_stats(lib, query):
+    """Shows some statistics about the matched items."""
+    items = lib.items(query=query)
+
+    total_size = 0
+    total_time = 0.0
+    total_items = 0
+    artists = set()
+    albums = set()
+
+    for item in items:
+        #fixme This is approximate, so people might complain that
+        # this total size doesn't match "du -sh". Could fix this
+        # by putting total file size in the database.
+        total_size += int(item.length * item.bitrate / 8)
+        total_time += item.length
+        total_items += 1
+        artists.add(item.artist)
+        albums.add(item.album)
+
+    print """Tracks: %i
+Total time: %s
+Total size: %s
+Artists: %i
+Albums: %i""" % (
+        total_items,
+        _human_seconds(total_time),
+        _human_bytes(total_size),
+        len(artists), len(albums)
+    )
+
+
