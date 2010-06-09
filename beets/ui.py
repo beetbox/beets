@@ -117,6 +117,7 @@ def _human_seconds(interval):
 
     return "%3.1f %ss" % (interval, suffix)
 
+
 # Autotagging interface.
 
 def show_change(cur_artist, cur_album, items, info, dist):
@@ -132,9 +133,17 @@ def show_change(cur_artist, cur_album, items, info, dist):
     else:
         print "Tagging: %s - %s" % (info['artist'], info['album'])
     print '(Distance: %f)' % dist
-    for item, track_data in zip(items, info['tracks']):
-        if item.title != track_data['title']:
+    for i, (item, track_data) in enumerate(zip(items, info['tracks'])):
+        cur_track = item.track
+        new_track = i+1
+        if item.title != track_data['title'] and cur_track != new_track:
+            print " * %s (%i) -> %s (%i)" % (
+                item.title, cur_track, track_data['title'], new_track
+            )
+        elif item.title != track_data['title']:
             print " * %s -> %s" % (item.title, track_data['title'])
+        elif cur_track != new_track:
+            print " * %s (%i -> %i)" % (item.title, cur_track, new_track)
 
 CHOICE_SKIP = 'CHOICE_SKIP'
 CHOICE_ASIS = 'CHOICE_ASIS'
