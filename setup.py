@@ -14,7 +14,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from distutils.core import setup
+from setuptools import setup
 
 setup(name='beets',
       version='1.0b1',
@@ -37,19 +37,22 @@ setup(name='beets',
       MPD client.
       """,
 
-      packages=['beets',
-                'beets.autotag',
-                'beets.player',
+      packages=[
+          'beets',
+          'beets.autotag',
+          'beets.player',
       ],
       scripts=['beet'],
 
-      provides=['beets'],
-      requires=['sqlite3',
-                'mutagen',
-                'musicbrainz2 (>=0.7.0)',
-                'munkres',
-                'cmdln',
-                'eventlet (>=0.9.3)',
+      install_requires=[
+          'mutagen',
+          'python-musicbrainz2 >= 0.7.0',
+          'munkres',
+          'cmdln',
+          'eventlet >= 0.9.3',
       ],
+
+      # The munkres module doesn't have any working download links.
+      dependency_links=['http://beets.radbox.org/packages/'],
 )
 
