@@ -3,5 +3,5 @@
 prune test
 
 # Include documentation.
-include *.txt
+include LICENSE NEWS README
 
