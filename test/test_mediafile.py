@@ -254,13 +254,19 @@ class EdgeTest(unittest.TestCase):
         f = beets.mediafile.MediaFile(os.path.join('rsrc', 'bpm.mp3'))
         self.assertEqual(f.bpm, 128)
 
+test_files = {
+    'm4a': ['full', 'partial', 'min'],
+    'mp3': ['full', 'partial', 'min'],
+    'flac': ['full', 'partial', 'min'],
+    'ogg': ['full'],
+}
 
 def suite():
     s = unittest.TestSuite()
     
     # General tests.
-    for kind in ('m4a', 'mp3', 'flac'):
-        for tagset in ('full', 'partial', 'min'):
+    for kind, tagsets in test_files.items():
+        for tagset in tagsets:
             path = os.path.join('rsrc', tagset + '.' + kind)
             correct_dict = correct_dicts[tagset]
             s.addTest(suite_for_file(path, correct_dict))

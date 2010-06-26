@@ -192,53 +192,52 @@ class MediaField(object):
             ):
             
         self.out_type = out_type
-        if not set(['mp3', 'mp4', 'flac']) == set(kwargs):
+        if not set(['mp3', 'mp4', 'etc']) == set(kwargs):
             raise TypeError('MediaField constructor must have keyword '
-                            'arguments mp3, mp4, and flac only')
+                            'arguments mp3, mp4, and etc')
         self.styles = kwargs
     
-    def _fetchdata(self, obj):
-        """Get the value associated with this descriptor's key (and id3_desc if
-        present) from the mutagen tag dict. Unwraps from a list if
-        necessary.
+    def _fetchdata(self, obj, style):
+        """Get the value associated with this descriptor's field stored
+        with the given StorageStyle. Unwraps from a list if necessary.
         """
-        style = self._style(obj)
-        
-        try:
-            # fetch the value, which may be a scalar or a list
-            if obj.type == 'mp3':
-                if style.id3_desc is not None: # also match on 'desc' field
-                    frames = obj.mgfile.tags.getall(style.key)
-                    entry = None
-                    for frame in frames:
-                        if frame.desc == style.id3_desc:
-                            entry = frame.text
-                            break
-                    if entry is None: # no desc match
-                        return None
-                else:
-                    entry = obj.mgfile[style.key].text
-            else:
-                entry = obj.mgfile[style.key]
-            
-            # possibly index the list
-            if style.list_elem:
-                if entry: # List must have at least one value.
-                    return entry[0]
-                else:
+        # fetch the value, which may be a scalar or a list
+        if obj.type == 'mp3':
+            if style.id3_desc is not None: # also match on 'desc' field
+                frames = obj.mgfile.tags.getall(style.key)
+                entry = None
+                for frame in frames:
+                    if frame.desc == style.id3_desc:
+                        entry = frame.text
+                        break
+                if entry is None: # no desc match
                     return None
             else:
-                return entry
-
-        except KeyError: # the tag isn't present
-            return None
-    
-    def _storedata(self, obj, val):
-        """Store val for this descriptor's key in the tag dictionary. Store it
-        as a single-item list if necessary. Uses id3_desc if present.
-        """
-        style = self._style(obj)
+                try:
+                    entry = obj.mgfile[style.key].text
+                except KeyError:
+                    return None
         
+        else: # Not MP3.
+            try:
+                entry = obj.mgfile[style.key]
+            except KeyError:
+                return None
+        
+        # possibly index the list
+        if style.list_elem:
+            if entry: # List must have at least one value.
+                return entry[0]
+            else:
+                return None
+        else:
+            return entry
+    
+    def _storedata(self, obj, val, style):
+        """Store val for this descriptor's field in the tag dictionary
+        according to the provided StorageStyle. Store it as a single-item list
+        if necessary.
+        """
         # wrap as a list if necessary
         if style.list_elem: out = [val]
         else:               out = val
@@ -264,16 +263,33 @@ class MediaField(object):
             else: # no match on desc; just replace based on key
                 frame = mutagen.id3.Frames[style.key](encoding=3, text=val)
                 obj.mgfile.tags.setall(style.key, [frame])
-        else:
+        
+        else: # Not MP3.
             obj.mgfile[style.key] = out
     
-    def _style(self, obj): return self.styles[obj.type]
+    def _styles(self, obj):
+        if obj.type in ('mp3', 'mp4'):
+            styles = self.styles[obj.type]
+        else:
+            styles = self.styles['etc'] # sane styles
+            
+        # Make sure we always return a list of styles, even when given
+        # a single style for convenience.
+        if isinstance(styles, StorageStyle):
+            return [styles]
+        else:
+            return styles
     
     def __get__(self, obj, owner):
         """Retrieve the value of this metadata field.
         """
-        style = self._style(obj)
-        out = self._fetchdata(obj)
+        # Fetch the data using the various StorageStyles.
+        styles = self._styles(obj)
+        for style in styles:
+            # Use the first style that returns a reasonable value.
+            out = self._fetchdata(obj, style)
+            if out:
+                break
         
         if style.packing:
             out = Packed(out, style.packing)[style.pack_pos]
@@ -311,46 +327,49 @@ class MediaField(object):
     def __set__(self, obj, val):
         """Set the value of this metadata field.
         """
-        style = self._style(obj)
+        # Store using every StorageStyle available.
+        styles = self._styles(obj)
+        for style in styles:
         
-        if style.packing:
-            p = Packed(self._fetchdata(obj), style.packing)
-            p[style.pack_pos] = val
-            out = p.items
+            if style.packing:
+                p = Packed(self._fetchdata(obj, style), style.packing)
+                p[style.pack_pos] = val
+                out = p.items
                 
-        else: # unicode, integer, or boolean scalar
-            out = val
+            else: # unicode, integer, or boolean scalar
+                out = val
         
-            # deal with Nones according to abstract type if present
-            if out is None:
-                if self.out_type == int:
-                    out = 0
-                elif self.out_type == bool:
-                    out = False
-                elif self.out_type == unicode:
-                    out = u''
-                # We trust that packed values are handled above.
-        
-            # convert to correct storage type (irrelevant for packed values)
-            if style.as_type == unicode:
+                # deal with Nones according to abstract type if present
                 if out is None:
-                    out = u''
-                else:
-                    if self.out_type == bool:
-                        # store bools as 1,0 instead of True,False
-                        out = unicode(int(out))
+                    if self.out_type == int:
+                        out = 0
+                    elif self.out_type == bool:
+                        out = False
+                    elif self.out_type == unicode:
+                        out = u''
+                    # We trust that packed values are handled above.
+        
+                # convert to correct storage type (irrelevant for
+                # packed values)
+                if style.as_type == unicode:
+                    if out is None:
+                        out = u''
                     else:
-                        out = unicode(out)
-            elif style.as_type == int:
-                if out is None:
-                    out = 0
-                else:
-                    out = int(out)
-            elif style.as_type == bool:
-                out = bool(out)
+                        if self.out_type == bool:
+                            # store bools as 1,0 instead of True,False
+                            out = unicode(int(out))
+                        else:
+                            out = unicode(out)
+                elif style.as_type == int:
+                    if out is None:
+                        out = 0
+                    else:
+                        out = int(out)
+                elif style.as_type == bool:
+                    out = bool(out)
         
-        # store the data
-        self._storedata(obj, out)
+            # store the data
+            self._storedata(obj, out, style)
 
 class CompositeDateField(object):
     """A MediaFile field for conveniently accessing the year, month, and day
@@ -413,8 +432,11 @@ class MediaFile(object):
             self.type = 'mp3'
         elif type(self.mgfile).__name__ == 'FLAC':
             self.type = 'flac'
+        elif type(self.mgfile).__name__ == 'OggVorbis':
+            self.type = 'ogg'
         else:
-            raise FileTypeError('file type unsupported by MediaFile')
+            raise FileTypeError('file type %s unsupported by MediaFile' %
+                                type(self.mgfile).__name__)
         
         # add a set of tags if it's missing
         if not self.mgfile.tags:
@@ -427,128 +449,130 @@ class MediaFile(object):
     #### field definitions ####
     
     title = MediaField(
-                mp3  = StorageStyle('TIT2'),
-                mp4  = StorageStyle("\xa9nam"), 
-                flac = StorageStyle('title')
+                mp3 = StorageStyle('TIT2'),
+                mp4 = StorageStyle("\xa9nam"), 
+                etc = StorageStyle('title'),
             )
     artist = MediaField(
-                mp3  = StorageStyle('TPE1'),
-                mp4  = StorageStyle("\xa9ART"), 
-                flac = StorageStyle('artist')
+                mp3 = StorageStyle('TPE1'),
+                mp4 = StorageStyle("\xa9ART"), 
+                etc = StorageStyle('artist'),
             )     
     album = MediaField(
-                mp3  = StorageStyle('TALB'),
-                mp4  = StorageStyle("\xa9alb"), 
-                flac = StorageStyle('album')
+                mp3 = StorageStyle('TALB'),
+                mp4 = StorageStyle("\xa9alb"), 
+                etc = StorageStyle('album'),
             )
     genre = MediaField(
-                mp3  = StorageStyle('TCON'),
-                mp4  = StorageStyle("\xa9gen"), 
-                flac = StorageStyle('genre')
+                mp3 = StorageStyle('TCON'),
+                mp4 = StorageStyle("\xa9gen"), 
+                etc = StorageStyle('genre'),
             )
     composer = MediaField(
-                mp3  = StorageStyle('TCOM'),
-                mp4  = StorageStyle("\xa9wrt"), 
-                flac = StorageStyle('composer')
+                mp3 = StorageStyle('TCOM'),
+                mp4 = StorageStyle("\xa9wrt"), 
+                etc = StorageStyle('composer'),
             )
     grouping = MediaField(
-                mp3  = StorageStyle('TIT1'),
-                mp4  = StorageStyle("\xa9grp"), 
-                flac = StorageStyle('grouping')
+                mp3 = StorageStyle('TIT1'),
+                mp4 = StorageStyle("\xa9grp"), 
+                etc = StorageStyle('grouping'),
             )
     year = MediaField(out_type=int,
-                mp3  = StorageStyle('TDRC',
+                mp3 = StorageStyle('TDRC',
                                     packing = packing.DATE,
                                     pack_pos = 0),
-                mp4  = StorageStyle("\xa9day",
+                mp4 = StorageStyle("\xa9day",
                                     packing = packing.DATE,
                                     pack_pos = 0), 
-                flac = StorageStyle('date',
-                                    packing = packing.DATE,
-                                    pack_pos = 0)
+                etc = [StorageStyle('date',
+                                     packing = packing.DATE,
+                                     pack_pos = 0),
+                       StorageStyle('year')]
             )
     month = MediaField(out_type=int,
-                mp3  = StorageStyle('TDRC',
+                mp3 = StorageStyle('TDRC',
                                     packing = packing.DATE,
                                     pack_pos = 1),
-                mp4  = StorageStyle("\xa9day",
+                mp4 = StorageStyle("\xa9day",
                                     packing = packing.DATE,
                                     pack_pos = 1), 
-                flac = StorageStyle('date',
+                etc = StorageStyle('date',
                                     packing = packing.DATE,
                                     pack_pos = 1)
             )
     day = MediaField(out_type=int,
-                mp3  = StorageStyle('TDRC',
+                mp3 = StorageStyle('TDRC',
                                     packing = packing.DATE,
                                     pack_pos = 2),
-                mp4  = StorageStyle("\xa9day",
+                mp4 = StorageStyle("\xa9day",
                                     packing = packing.DATE,
                                     pack_pos = 2), 
-                flac = StorageStyle('date',
+                etc = StorageStyle('date',
                                     packing = packing.DATE,
                                     pack_pos = 2)
             )
     date = CompositeDateField(year, month, day)
     track = MediaField(out_type = int,
-                mp3  = StorageStyle('TRCK',
+                mp3 = StorageStyle('TRCK',
                                     packing = packing.SLASHED,
                                     pack_pos = 0),
-                mp4  = StorageStyle('trkn',
+                mp4 = StorageStyle('trkn',
                                     packing = packing.TUPLE,
                                     pack_pos = 0),
-                flac = StorageStyle('tracknumber')
+                etc = StorageStyle('tracknumber')
             )
     tracktotal = MediaField(out_type = int,
-                mp3  = StorageStyle('TRCK',
+                mp3 = StorageStyle('TRCK',
                                     packing = packing.SLASHED,
                                     pack_pos = 1),
-                mp4  = StorageStyle('trkn',
+                mp4 = StorageStyle('trkn',
                                     packing = packing.TUPLE,
                                     pack_pos = 1),
-                flac = StorageStyle('tracktotal')
+                etc = StorageStyle('tracktotal')
             )
     disc = MediaField(out_type = int,
-                mp3  = StorageStyle('TPOS',
+                mp3 = StorageStyle('TPOS',
                                     packing = packing.SLASHED,
                                     pack_pos = 0),
-                mp4  = StorageStyle('disk',
+                mp4 = StorageStyle('disk',
                                     packing = packing.TUPLE,
                                     pack_pos = 0),
-                flac = StorageStyle('disc')
+                etc = StorageStyle('disc')
             )
     disctotal = MediaField(out_type = int,
-                mp3  = StorageStyle('TPOS',
+                mp3 = StorageStyle('TPOS',
                                     packing = packing.SLASHED,
                                     pack_pos = 1),
-                mp4  = StorageStyle('disk',
+                mp4 = StorageStyle('disk',
                                     packing = packing.TUPLE,
                                     pack_pos = 1),
-                flac = StorageStyle('disctotal')
+                etc = StorageStyle('disctotal')
             )
     lyrics = MediaField(
-                mp3  = StorageStyle('USLT',
+                mp3 = StorageStyle('USLT',
                                     list_elem = False,
                                     id3_desc = u''),
-                mp4  = StorageStyle("\xa9lyr"), 
-                flac = StorageStyle('lyrics')
+                mp4 = StorageStyle("\xa9lyr"), 
+                etc = StorageStyle('lyrics')
             )
     comments = MediaField(
-                mp3  = StorageStyle('COMM', id3_desc = u''),
-                mp4  = StorageStyle("\xa9cmt"), 
-                flac = StorageStyle('description')
+                mp3 = StorageStyle('COMM', id3_desc = u''),
+                mp4 = StorageStyle("\xa9cmt"), 
+                etc = [StorageStyle('description'),
+                       StorageStyle('comment')]
             )
     bpm = MediaField(out_type = int,
-                mp3  = StorageStyle('TBPM'),
-                mp4  = StorageStyle('tmpo', as_type = int), 
-                flac = StorageStyle('bpm')
+                mp3 = StorageStyle('TBPM'),
+                mp4 = StorageStyle('tmpo', as_type = int), 
+                etc = StorageStyle('bpm')
             )
     comp = MediaField(out_type = bool,
-                mp3  = StorageStyle('TCMP'),
-                mp4  = StorageStyle('cpil',
+                mp3 = StorageStyle('TCMP'),
+                mp4 = StorageStyle('cpil',
                                     list_elem = False,
                                     as_type = bool), 
-                flac = StorageStyle('compilation')
+                etc = StorageStyle('compilation')
             )
 
     @property
