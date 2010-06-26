@@ -1,4 +1,9 @@
+1.0b2
+-----
+* Support for Ogg Vorbis and Monkey's Audio files and their tags.
+  (This support should be considered preliminary: I haven't tested it
+  heavily because I don't use either of these formats regularly.)
+
 1.0b1
 -----
 First public release.
-
