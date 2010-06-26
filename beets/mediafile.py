@@ -434,6 +434,8 @@ class MediaFile(object):
             self.type = 'flac'
         elif type(self.mgfile).__name__ == 'OggVorbis':
             self.type = 'ogg'
+        elif type(self.mgfile).__name__ == 'MonkeysAudio':
+            self.type = 'ape'
         else:
             raise FileTypeError('file type %s unsupported by MediaFile' %
                                 type(self.mgfile).__name__)
@@ -520,7 +522,8 @@ class MediaFile(object):
                 mp4 = StorageStyle('trkn',
                                     packing = packing.TUPLE,
                                     pack_pos = 0),
-                etc = StorageStyle('tracknumber')
+                etc = [StorageStyle('track'),
+                       StorageStyle('tracknumber')]
             )
     tracktotal = MediaField(out_type = int,
                 mp3 = StorageStyle('TRCK',

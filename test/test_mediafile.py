@@ -267,6 +267,7 @@ test_files = {
     'mp3': ['full', 'partial', 'min'],
     'flac': ['full', 'partial', 'min'],
     'ogg': ['full'],
+    'ape': ['full'],
 }
 
 def suite():
