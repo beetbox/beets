@@ -207,6 +207,16 @@ read_only_correct_dicts = {
         'length': 1.0,
         'bitrate': 64000,
     },
+    
+    'full.ogg': {
+        'length': 1.0,
+        'bitrate': 48000,
+    },
+    
+    'full.ape': {
+        'length': 1.0,
+        'bitrate': 705600,
+    },
 
 }
 

@@ -589,7 +589,9 @@ class MediaFile(object):
 
     @property
     def bitrate(self):
-        if self.type == 'flac':
+        if self.type in ('flac', 'ape'):
+            # Simulate bitrate for lossless formats.
+            #fixme: The utility of this guess is questionable.
             return self.mgfile.info.sample_rate * \
                    self.mgfile.info.bits_per_sample
         else:
