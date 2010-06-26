@@ -538,7 +538,8 @@ class MediaFile(object):
                 mp4 = StorageStyle('disk',
                                     packing = packing.TUPLE,
                                     pack_pos = 0),
-                etc = StorageStyle('disc')
+                etc = [StorageStyle('disc'),
+                       StorageStyle('discnumber')]
             )
     disctotal = MediaField(out_type = int,
                 mp3 = StorageStyle('TPOS',
@@ -547,7 +548,8 @@ class MediaFile(object):
                 mp4 = StorageStyle('disk',
                                     packing = packing.TUPLE,
                                     pack_pos = 1),
-                etc = StorageStyle('disctotal')
+                etc = [StorageStyle('disctotal'),
+                       StorageStyle('discc')]
             )
     lyrics = MediaField(
                 mp3 = StorageStyle('USLT',

@@ -253,6 +253,14 @@ class EdgeTest(unittest.TestCase):
         # rather than just a number.
         f = beets.mediafile.MediaFile(os.path.join('rsrc', 'bpm.mp3'))
         self.assertEqual(f.bpm, 128)
+    
+    def test_discc_alternate_field(self):
+        # Different taggers use different vorbis comments to reflect
+        # the disc and disc count fields: ensure that the alternative
+        # style works.
+        f = beets.mediafile.MediaFile(os.path.join('rsrc', 'discc.ogg'))
+        self.assertEqual(f.disc, 4)
+        self.assertEqual(f.disctotal, 5)
 
 test_files = {
     'm4a': ['full', 'partial', 'min'],
@@ -291,6 +299,7 @@ def suite():
     s.addTest(EdgeTest('test_release_time_with_t'))
     s.addTest(EdgeTest('test_release_time_with_space'))
     s.addTest(EdgeTest('test_tempo_with_bpm'))
+    s.addTest(EdgeTest('test_discc_alternate_field'))
     
     return s
 
