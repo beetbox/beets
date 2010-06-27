@@ -105,6 +105,8 @@ class BeetsApp(cmdln.Cmdln):
                   help="infer tags for imported files (default)")
     @cmdln.option('-A', '--noautotag', action='store_false', dest='autotag',
                   help="don't infer tags for imported files (opposite of -a)")
+    @cmdln.option('-l', '--log', dest='logpath',
+                  help='file to log untaggable albums for later review')
     def do_import(self, subcmd, opts, *paths):
         """${cmd_name}: import new music
         
@@ -116,7 +118,7 @@ class BeetsApp(cmdln.Cmdln):
         write = opts.write if opts.write is not None else \
                 self._cfg_get('beets', 'import_write', bool)
         autot = opts.autotag if opts.autotag is not None else True
-        ui.import_files(self.lib, paths, copy, write, autot)
+        ui.import_files(self.lib, paths, copy, write, autot, opts.logpath)
         
     @cmdln.alias("ls")
     @cmdln.option('-a', '--album', action='store_true',

@@ -220,10 +220,19 @@ def manual_search():
     album = raw_input('Album: ')
     return artist.strip(), album.strip()
 
-def tag_album(items, lib, copy=True, write=True):
+def tag_log(logfile, status, items):
+    """Log a message about a given album to logfile. The status should
+    reflect the reason the album couldn't be tagged.
+    """
+    path = os.path.commonprefix([item.path for item in items])
+    print >>logfile, status, os.path.dirname(path)
+
+def tag_album(items, lib, copy=True, write=True, logfile=None):
     """Import items into lib, tagging them as an album. If copy, then
     items are copied into the destination directory. If write, then
-    new metadata is written back to the files' tags.
+    new metadata is written back to the files' tags. If logfile is
+    provided, then a log message will be added there if the album is
+    untaggable.
     """
     # Try to get candidate metadata.
     search_artist, search_album = None, None
@@ -260,6 +269,7 @@ def tag_album(items, lib, copy=True, write=True):
         # Choose which tags to use.
         if info is CHOICE_SKIP:
             # Skip entirely.
+            tag_log(logfile, 'skip', items)
             return
         elif info is CHOICE_MANUAL:
             # Try again with manual search terms.
@@ -273,6 +283,7 @@ def tag_album(items, lib, copy=True, write=True):
         if info is CHOICE_ASIS:
             artist = cur_artist
             album = cur_album
+            tag_log(logfile, 'asis', items)
         else:
             artist = info['artist']
             album = info['album']
@@ -301,13 +312,17 @@ def tag_album(items, lib, copy=True, write=True):
 
 # Top-level commands.
 
-def import_files(lib, paths, copy=True, write=True, autot=True):
+def import_files(lib, paths, copy=True, write=True, autot=True, logpath=None):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
     files themselves. If not autot, then just import the files
-    without attempting to tag.
+    without attempting to tag. If logpath is provided, then untaggable
+    albums will be logged there.
     """
+    if logpath:
+        logfile = open(logpath, 'w')
+    
     first = True
     for path in paths:
         for album in autotag.albums_in_dir(os.path.expanduser(path)):
@@ -317,7 +332,7 @@ def import_files(lib, paths, copy=True, write=True, autot=True):
 
             if autot:
                 # Infer tags.
-                tag_album(album, lib, copy, write)
+                tag_album(album, lib, copy, write, logfile)
             else:
                 # Leave tags as-is.
                 for item in album:
@@ -325,6 +340,9 @@ def import_files(lib, paths, copy=True, write=True, autot=True):
                         item.move(lib, True)
                     lib.add(item)
             lib.save()
+        
+    if logpath:
+        logfile.close()
 
 def list_items(lib, query, album):
     """Print out items in lib matching query. If album, then search for
