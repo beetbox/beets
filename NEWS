@@ -3,6 +3,13 @@
 * Support for Ogg Vorbis and Monkey's Audio files and their tags.
   (This support should be considered preliminary: I haven't tested it
   heavily because I don't use either of these formats regularly.)
+* Add an option to the "beet import" command for logging albums that
+  are untaggable (i.e., are skipped or taken "as-is"). Use
+  "beet import -l LOGFILE PATHS". The log format is very simple: it's
+  just a status (either "skip" or "asis") followed by the path to the
+  album in question. The idea is that you can tag a large collection
+  and automatically keep track of the albums that weren't found in
+  MusicBrainz so you can come back and look at them later.
 
 1.0b1
 -----
