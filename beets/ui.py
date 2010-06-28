@@ -14,6 +14,7 @@
 
 import os
 import logging
+import locale
 
 from beets import autotag
 from beets import library
@@ -23,8 +24,14 @@ from beets.player import bpd
 # Utilities.
 
 def _print(txt):
-    """Print the text encoded using UTF-8."""
-    print txt.encode('utf-8')
+    """Like print, but rather than raising an error when a character
+    is not in the terminal's encoding's character set, just silently
+    replaces it.
+    """
+    if isinstance(txt, unicode):
+        encoding = locale.getdefaultlocale()[1]
+        txt = txt.encode(encoding, 'replace')
+    print txt
 
 def _input_options(prompt, options, default=None,
                    fallback_prompt=None, numrange=None):
@@ -126,24 +133,24 @@ def show_change(cur_artist, cur_album, items, info, dist):
     distance dist.
     """
     if cur_artist != info['artist'] or cur_album != info['album']:
-        print "Correcting tags from:"
-        print '     %s - %s' % (cur_artist or '', cur_album or '')
-        print "To:"
-        print '     %s - %s' % (info['artist'], info['album'])
+        _print("Correcting tags from:")
+        _print('     %s - %s' % (cur_artist or '', cur_album or ''))
+        _print("To:")
+        _print('     %s - %s' % (info['artist'], info['album']))
     else:
-        print "Tagging: %s - %s" % (info['artist'], info['album'])
-    print '(Distance: %f)' % dist
+        _print("Tagging: %s - %s" % (info['artist'], info['album']))
+    _print('(Distance: %f)' % dist)
     for i, (item, track_data) in enumerate(zip(items, info['tracks'])):
         cur_track = item.track
         new_track = i+1
         if item.title != track_data['title'] and cur_track != new_track:
-            print " * %s (%i) -> %s (%i)" % (
+            _print(" * %s (%i) -> %s (%i)" % (
                 item.title, cur_track, track_data['title'], new_track
-            )
+            ))
         elif item.title != track_data['title']:
-            print " * %s -> %s" % (item.title, track_data['title'])
+            _print(" * %s -> %s" % (item.title, track_data['title']))
         elif cur_track != new_track:
-            print " * %s (%i -> %i)" % (item.title, cur_track, new_track)
+            _print(" * %s (%i -> %i)" % (item.title, cur_track, new_track))
 
 CHOICE_SKIP = 'CHOICE_SKIP'
 CHOICE_ASIS = 'CHOICE_ASIS'
@@ -165,11 +172,11 @@ def choose_candidate(cur_artist, cur_album, candidates, rec):
     while True:
         # Display and choose from candidates.
         if not bypass_candidates:
-            print 'Finding tags for "%s - %s".' % (cur_artist, cur_album)
-            print 'Candidates:'
+            _print('Finding tags for "%s - %s".' % (cur_artist, cur_album))
+            _print('Candidates:')
             for i, (dist, items, info) in enumerate(candidates):
-                print '%i. %s - %s (%f)' % (i+1, info['artist'],
-                                            info['album'], dist)
+                _print('%i. %s - %s (%f)' % (i+1, info['artist'],
+                                             info['album'], dist))
                                             
             # Ask the user for a choice.
             sel = _input_options(
@@ -253,7 +260,7 @@ def tag_album(items, lib, copy=True, write=True, logfile=None):
         
         # Fallback: if either an error ocurred or no matches found.
         if not info:
-            print "No match found for:", os.path.dirname(items[0].path)
+            _print("No match found for:", os.path.dirname(items[0].path))
             sel = _input_options(
                 "[U]se as-is, Skip, or Enter manual search?",
                 ('u', 's', 'e'), 'u',
@@ -291,8 +298,8 @@ def tag_album(items, lib, copy=True, write=True, logfile=None):
                               library.MatchQuery('album',  album)))
         count, _ = q.count(lib)
         if count >= 1:
-            print "This album (%s - %s) is already in the library!" % \
-                  (artist, album)
+            _print("This album (%s - %s) is already in the library!" %
+                   (artist, album))
             return
     
     # Change metadata, move, and copy.
@@ -329,7 +336,7 @@ def import_files(lib, paths, copy=True, write=True, autot=True, logpath=None):
     for path in paths:
         for album in autotag.albums_in_dir(os.path.expanduser(path)):
             if not first:
-                print
+                _print()
             first = False
 
             if autot:
@@ -370,7 +377,7 @@ def remove_items(lib, query, album, delete=False):
         items = list(lib.items(query=query))
 
     if not items:
-        print 'No matching items found.'
+        _print('No matching items found.')
         return
 
     # Show all the items.
@@ -378,7 +385,7 @@ def remove_items(lib, query, album, delete=False):
         _print(item.artist + ' - ' + item.album + ' - ' + item.title)
 
     # Confirm with user.
-    print
+    _print()
     if delete:
         prompt = 'Really DELETE %i files (y/n)?' % len(items)
     else:
@@ -416,9 +423,9 @@ def start_bpd(lib, host, port, password, debug):
     try:
         bpd.Server(lib, host, port, password).run()    
     except bpd.NoGstreamerError:
-        print 'Gstreamer Python bindings not found.'
-        print 'Install "python-gst0.10", "py26-gst-python", or similar ' \
-              'package to use BPD.'
+        _print('Gstreamer Python bindings not found.')
+        _print('Install "python-gst0.10", "py26-gst-python", or similar ' \
+               'package to use BPD.')
         return
 
 def show_stats(lib, query):
@@ -441,7 +448,7 @@ def show_stats(lib, query):
         artists.add(item.artist)
         albums.add(item.album)
 
-    print """Tracks: %i
+    _print("""Tracks: %i
 Total time: %s
 Total size: %s
 Artists: %i
@@ -450,6 +457,4 @@ Albums: %i""" % (
         _human_seconds(total_time),
         _human_bytes(total_size),
         len(artists), len(albums)
-    )
-
-
+    ))

@@ -10,6 +10,8 @@
   album in question. The idea is that you can tag a large collection
   and automatically keep track of the albums that weren't found in
   MusicBrainz so you can come back and look at them later.
+* Fix UnicodeEncodeError on terminals that don't (or don't claim to)
+  support UTF-8.
 
 1.0b1
 -----
