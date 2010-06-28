@@ -322,6 +322,8 @@ def import_files(lib, paths, copy=True, write=True, autot=True, logpath=None):
     """
     if logpath:
         logfile = open(logpath, 'w')
+    else:
+        logfile = None
     
     first = True
     for path in paths:
@@ -341,7 +343,7 @@ def import_files(lib, paths, copy=True, write=True, autot=True, logpath=None):
                     lib.add(item)
             lib.save()
         
-    if logpath:
+    if logfile:
         logfile.close()
 
 def list_items(lib, query, album):
