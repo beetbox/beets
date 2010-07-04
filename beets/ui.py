@@ -23,7 +23,7 @@ from beets.player import bpd
 
 # Utilities.
 
-def _print(txt):
+def _print(txt=''):
     """Like print, but rather than raising an error when a character
     is not in the terminal's encoding's character set, just silently
     replaces it.
@@ -332,24 +332,41 @@ def import_files(lib, paths, copy=True, write=True, autot=True, logpath=None):
     else:
         logfile = None
     
-    first = True
-    for path in paths:
-        for album in autotag.albums_in_dir(os.path.expanduser(path)):
-            if not first:
-                _print()
-            first = False
+    if autot:
+        # Crawl albums and tag them.
+        first = True
+        for path in paths:
+            for album in autotag.albums_in_dir(os.path.expanduser(path)):
+                if not first:
+                    _print()
+                first = False
 
-            if autot:
                 # Infer tags.
                 tag_album(album, lib, copy, write, logfile)
-            else:
-                # Leave tags as-is.
-                for item in album:
+                
+                # Write the database after each album.
+                lib.save()
+    else:
+        # No autotagging. Find all files in the paths.
+        for path in paths:
+            for root, dirs, files in autotag._sorted_walk(path):
+                for filename in files:
+                    filepath = os.path.join(root, filename)
+                    try:
+                        item = library.Item.from_path(filepath)
+                    except FileTypeError:
+                        continue
+                    
+                    # Add the item to the library, copying if requested.
                     if copy:
                         item.move(lib, True)
+                    # Don't write tags because nothing changed.
                     lib.add(item)
-            lib.save()
         
+        # Save when completely finished.
+        lib.save()
+    
+    # If we were logging, close the file.
     if logfile:
         logfile.close()
 
