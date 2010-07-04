@@ -12,6 +12,8 @@
   MusicBrainz so you can come back and look at them later.
 * Fix UnicodeEncodeError on terminals that don't (or don't claim to)
   support UTF-8.
+* Importing without autotagging ("beet import -A") is now faster and
+  doesn't print out a bunch of whitespace.
 
 1.0b1
 -----

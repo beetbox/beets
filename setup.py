@@ -17,7 +17,7 @@
 from setuptools import setup
 
 setup(name='beets',
-      version='1.0b1',
+      version='1.0b2',
       description='music tagger and library organizer',
       author='Adrian Sampson',
       author_email='adrian@radbox.org',
