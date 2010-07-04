@@ -18,8 +18,11 @@ import locale
 
 from beets import autotag
 from beets import library
-from beets.mediafile import FileTypeError
+from beets.mediafile import UnreadableFileError, FileTypeError
 from beets.player import bpd
+
+# Global logger.
+log = logging.getLogger('beets')
 
 # Utilities.
 
@@ -356,9 +359,9 @@ def import_files(lib, paths, copy=True, write=True, autot=True, logpath=None):
                         item = library.Item.from_path(filepath)
                     except FileTypeError:
                         continue
-                    except mediafile.UnreadableFileError:
-                        #FIXME log an error
-                        pass
+                    except UnreadableFileError:
+                        log.warn('unreadable file: ' + filepath)
+                        continue
                     
                     # Add the item to the library, copying if requested.
                     if copy:

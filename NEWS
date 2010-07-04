@@ -14,6 +14,8 @@
   support UTF-8.
 * Importing without autotagging ("beet import -A") is now faster and
   doesn't print out a bunch of whitespace.
+* The importer now logs an error instead of crashing when it attempts
+  to read a corrupt file.
 
 1.0b1
 -----

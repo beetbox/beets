@@ -21,6 +21,7 @@ from beets.autotag import mb
 import re
 from munkres import Munkres
 from beets import library, mediafile
+import logging
 
 # Try 5 releases. In the future, this should be more dynamic: let the
 # probability of continuing to the next release be inversely
@@ -61,6 +62,9 @@ class AutotagError(Exception):
     pass
 class InsufficientMetadataError(AutotagError):
     pass
+
+# Global logger.
+log = logging.getLogger('beets')
 
 def _first_n(it, n):
     """Takes an iterator and returns another iterator, trunacted to
@@ -112,8 +116,7 @@ def albums_in_dir(path):
             except mediafile.FileTypeError:
                 pass
             except mediafile.UnreadableFileError:
-                #FIXME log an error
-                pass
+                log.warn('unreadable file: ' + filename)
             else:
                 items.append(i)
         
