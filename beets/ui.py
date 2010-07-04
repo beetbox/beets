@@ -335,7 +335,14 @@ def import_files(lib, paths, copy=True, write=True, autot=True, logpath=None):
     else:
         logfile = None
     
-    if autot:
+    if autot:        
+        # Make sure we have only directories.
+        for path in paths:
+            if not os.path.isdir(path):
+                #fixme should show command usage
+                _print('not a directory: ' + path)
+                return
+        
         # Crawl albums and tag them.
         first = True
         for path in paths:
@@ -349,25 +356,36 @@ def import_files(lib, paths, copy=True, write=True, autot=True, logpath=None):
                 
                 # Write the database after each album.
                 lib.save()
+    
     else:
-        # No autotagging. Find all files in the paths.
+        # No autotagging. Just walk the paths.
         for path in paths:
-            for root, dirs, files in autotag._sorted_walk(path):
-                for filename in files:
-                    filepath = os.path.join(root, filename)
-                    try:
-                        item = library.Item.from_path(filepath)
-                    except FileTypeError:
-                        continue
-                    except UnreadableFileError:
-                        log.warn('unreadable file: ' + filepath)
-                        continue
-                    
-                    # Add the item to the library, copying if requested.
-                    if copy:
-                        item.move(lib, True)
-                    # Don't write tags because nothing changed.
-                    lib.add(item)
+            if os.path.isdir(path):
+                # Find all files in the directory.
+                filepaths = []
+                for root, dirs, files in autotag._sorted_walk(path):
+                    for filename in files:
+                        filepaths.append(os.path.join(root, filename))
+            else:
+                # Just add the file.
+                filepaths = [path]
+            
+            # Add all the files.
+            for filepath in filepaths:
+                try:
+                    item = library.Item.from_path(filepath)
+                except FileTypeError:
+                    continue
+                except UnreadableFileError:
+                    log.warn('unreadable file: ' + filepath)
+                    continue
+                
+            
+                # Add the item to the library, copying if requested.
+                if copy:
+                    item.move(lib, True)
+                # Don't write tags because nothing changed.
+                lib.add(item)
         
         # Save when completely finished.
         lib.save()
