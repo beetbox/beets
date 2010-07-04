@@ -61,6 +61,33 @@ class EdgeTest(unittest.TestCase):
         self.assertEqual(f.disc, 4)
         self.assertEqual(f.disctotal, 5)
 
+class SafetyTest(unittest.TestCase):
+    def _exccheck(self, fn, exc):
+        fn = os.path.join('rsrc', fn)
+        open(fn, 'a').close() # create an empty file (a la touch)
+        self.assertRaises(exc, beets.mediafile.MediaFile, fn)
+        os.unlink(fn) # delete the temporary file
+    
+    def test_corrupt_mp3_raises_unreadablefileerror(self):
+        # Make sure we catch Mutagen reading errors appropriately.
+        self._exccheck('corrupt.mp3', beets.mediafile.UnreadableFileError)
+    
+    def test_corrupt_mp4_raises_unreadablefileerror(self):
+        self._exccheck('corrupt.m4a', beets.mediafile.UnreadableFileError)
+    
+    def test_corrupt_flac_raises_unreadablefileerror(self):
+        self._exccheck('corrupt.flac', beets.mediafile.UnreadableFileError)
+    
+    def test_corrupt_ogg_raises_unreadablefileerror(self):
+        self._exccheck('corrupt.ogg', beets.mediafile.UnreadableFileError)
+    
+    def test_corrupt_monkeys_raises_unreadablefileerror(self):
+        self._exccheck('corrupt.ape', beets.mediafile.UnreadableFileError)
+    
+    def test_invalid_extension_raises_filetypeerror(self):
+        self._exccheck('something.unknown', beets.mediafile.FileTypeError)
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

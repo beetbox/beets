@@ -111,6 +111,9 @@ def albums_in_dir(path):
                 i = library.Item.from_path(os.path.join(root, filename))
             except mediafile.FileTypeError:
                 pass
+            except mediafile.UnreadableFileError:
+                #FIXME log an error
+                pass
             else:
                 items.append(i)
         

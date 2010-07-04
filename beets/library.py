@@ -20,7 +20,7 @@ import shutil
 import sys
 from string import Template
 import logging
-from beets.mediafile import MediaFile, FileTypeError
+from beets.mediafile import MediaFile, UnreadableFileError, FileTypeError
 
 MAX_FILENAME_LENGTH = 200
 
@@ -634,6 +634,8 @@ class BaseLibrary(object):
                 item = Item.from_path(_normpath(f))
             except FileTypeError:
                 log.warn(f + ' of unknown type, skipping')
+            except UnreadableFileError:
+                log.error(f + ' is unreadable, skipping')
             self.add(item, copy)
 
 

@@ -356,6 +356,9 @@ def import_files(lib, paths, copy=True, write=True, autot=True, logpath=None):
                         item = library.Item.from_path(filepath)
                     except FileTypeError:
                         continue
+                    except mediafile.UnreadableFileError:
+                        #FIXME log an error
+                        pass
                     
                     # Add the item to the library, copying if requested.
                     if copy:

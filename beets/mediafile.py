@@ -30,15 +30,25 @@ or the empty string).
 """
 
 import mutagen
+import mutagen.mp3
+import mutagen.flac
+import mutagen.monkeysaudio
 import datetime
 import re
 
 __all__ = ['FileTypeError', 'MediaFile']
 
 # Currently allowed values for type:
-# mp3, mp4
-class FileTypeError(IOError):
+# mp3, mp4, flac, ogg, ape
+
+# Raised for any file MediaFile can't read.
+class UnreadableFileError(IOError):
     pass
+
+# Raised for files that don't seem to have a type MediaFile supports.
+class FileTypeError(UnreadableFileError):
+    pass
+
 
 
 
@@ -417,10 +427,18 @@ class MediaFile(object):
     """
     
     def __init__(self, path):
+        """Constructs a new MediaFile reflecting the file at path. May
+        throw UnreadableFileError.
+        """
+        unreadable_exc = (
+            mutagen.mp3.HeaderNotFoundError,
+            mutagen.flac.FLACNoHeaderError,
+            mutagen.monkeysaudio.MonkeysAudioHeaderError,
+        )
         try:
             self.mgfile = mutagen.File(path)
-        except mutagen.mp3.HeaderNotFoundError:
-            raise FileTypeError('Mutagen could not read file')
+        except unreadable_exc:
+            raise UnreadableFileError('Mutagen could not read file')
 
         if self.mgfile is None: # Mutagen couldn't guess the type
             raise FileTypeError('file type unsupported by Mutagen')
