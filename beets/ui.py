@@ -144,13 +144,15 @@ class Subcommand(object):
     """A subcommand of a root command-line application that may be
     invoked by a SubcommandOptionParser.
     """
-    def __init__(self, name, parser, help='', aliases=()):
+    def __init__(self, name, parser=None, help='', aliases=()):
         """Creates a new subcommand. name is the primary way to invoke
         the subcommand; aliases are alternate names. parser is an
         OptionParser responsible for parsing the subcommand's options.
-        help is a short description of the command."""
+        help is a short description of the command. If no parser is
+        given, it defaults to a new, empty OptionParser.
+        """
         self.name = name
-        self.parser = parser
+        self.parser = parser or optparse.OptionParser()
         self.aliases = aliases
         self.help = help
 
@@ -697,8 +699,8 @@ def make_query(criteria):
 
 default_subcommands = []
 
-import_cmd = Subcommand('import', optparse.OptionParser(),
-    'import new music', ('imp', 'im'))
+import_cmd = Subcommand('import', help='import new music',
+    aliases=('imp', 'im'))
 import_cmd.parser.add_option('-c', '--copy', action='store_true',
     default=None, help="copy tracks into library directory (default)")
 import_cmd.parser.add_option('-C', '--nocopy', action='store_false',
@@ -724,8 +726,7 @@ def import_func(lib, config, opts, args):
 import_cmd.func = import_func
 default_subcommands.append(import_cmd)
 
-list_cmd = Subcommand('list', optparse.OptionParser(),
-    'query the library', ('ls',))
+list_cmd = Subcommand('list', help='query the library', aliases=('ls',))
 list_cmd.parser.add_option('-a', '--album', action='store_true',
     help='show matching albums instead of tracks')
 def list_func(lib, config, opts, args):
@@ -733,8 +734,8 @@ def list_func(lib, config, opts, args):
 list_cmd.func = list_func
 default_subcommands.append(list_cmd)
 
-remove_cmd = Subcommand('remove', optparse.OptionParser(),
-    'remove matching items from the library', ('rm',))
+remove_cmd = Subcommand('remove',
+    help='remove matching items from the library', aliases=('rm',))
 remove_cmd.parser.add_option("-d", "--delete", action="store_true",
     help="also remove files from disk")
 remove_cmd.parser.add_option('-a', '--album', action='store_true',
@@ -744,8 +745,7 @@ def remove_func(lib, config, opts, args):
 remove_cmd.func = remove_func
 default_subcommands.append(remove_cmd)
 
-bpd_cmd = Subcommand('bpd', optparse.OptionParser(),
-    'run an MPD-compatible music player server')
+bpd_cmd = Subcommand('bpd', help='run an MPD-compatible music player server')
 bpd_cmd.parser.add_option('-d', '--debug', action='store_true',
     help='dump all MPD traffic to stdout')
 def bpd_func(lib, config, opts, args):
@@ -757,8 +757,7 @@ def bpd_func(lib, config, opts, args):
 bpd_cmd.func = bpd_func
 default_subcommands.append(bpd_cmd)
 
-dadd_cmd = Subcommand('dadd', optparse.OptionParser(),
-    'add files to a device')
+dadd_cmd = Subcommand('dadd', help='add files to a device')
 def dadd_func(lib, config, opts, args):
     name = args.pop(0)
     # fixme require exactly one arg
@@ -766,8 +765,8 @@ def dadd_func(lib, config, opts, args):
 dadd_cmd.func = dadd_func
 default_subcommands.append(dadd_cmd)
 
-stats_cmd = Subcommand('stats', optparse.OptionParser(),
-    'show statistics about the library or a query')
+stats_cmd = Subcommand('stats',
+    help='show statistics about the library or a query')
 def stats_func(lib, config, opts, args):
     show_stats(lib, make_query(args))
 stats_cmd.func = stats_func
