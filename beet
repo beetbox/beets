@@ -14,168 +14,50 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-import cmdln
 import ConfigParser
 import os
 import sys
+import optparse
 
 from beets import ui
 from beets import Library
 
-CONFIG_DEFAULTS = {
-    'beets': {
-        'library': '~/.beetsmusic.blb',
-        'directory': '~/Music',
-        'path_format': '$artist/$album/$track $title',
-        'import_copy': True,
-        'import_write': True,
-    },
-
-    'bpd': {
-        'host': '',
-        'port': '6600',
-        'password': '',
-    },
-}
-
 CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
 
-def make_query(criteria):
-    """Make  query string for the list of criteria."""
-    return ' '.join(criteria).strip() or None
-    
-class BeetsApp(cmdln.Cmdln):
-    name = "beet"
-    
-    def get_optparser(self):
-        # Add global options to the command.
-        parser = cmdln.Cmdln.get_optparser(self)
-        parser.add_option('-l', '--library', dest='libpath',
-                          help='library database file to use')
-        parser.add_option('-d', '--directory', dest='directory',
-                          help="destination music directory")
-        parser.add_option('-p', '--pathformat', dest='path_format',
-                          help="destination path format string")
-        parser.add_option('-i', '--device', dest='device',
-                          help="name of the device library to use")
-        return parser
-    
-    def postoptparse(self):
-        # Read defaults from config file.
-        self.config = ConfigParser.SafeConfigParser()
-        self.config.read(CONFIG_FILE)
-        for sec in CONFIG_DEFAULTS:
-            if not self.config.has_section(sec):
-                self.config.add_section(sec)
-        
-        # Open library file.
-        if self.options.device:
-            from beets.device import PodLibrary
-            self.lib = PodLibrary.by_name(self.options.device)
-        else:
-            libpath = self.options.libpath or \
-                      self._cfg_get('beets', 'library')
-            directory = self.options.directory or \
-                        self._cfg_get('beets', 'directory')
-            path_format = self.options.path_format or \
-                          self._cfg_get('beets', 'path_format')
-            self.lib = Library(os.path.expanduser(libpath),
-                               directory,
-                               path_format)
-    
-    def _cfg_get(self, section, name, vtype=None):
-        try:
-            if vtype is bool:
-                return self.config.getboolean(section, name)
-            else:
-                return self.config.get(section, name)
-        except ConfigParser.NoOptionError:
-            return CONFIG_DEFAULTS[section][name]
-    
-    @cmdln.alias("imp", "im")
-    @cmdln.option('-c', '--copy', action='store_true', default=None,
-                  help="copy tracks into library directory (default)")
-    @cmdln.option('-C', '--nocopy', action='store_false', dest='copy',
-                  help="don't copy tracks (opposite of -c)")
-    @cmdln.option('-w', '--write', action='store_true', default=None,
-                  help="write new metadata to files' tags (default)")
-    @cmdln.option('-W', '--nowrite', action='store_false', dest='write',
-                  help="don't write metadata (opposite of -s)")
-    @cmdln.option('-a', '--autotag', action='store_true', dest='autotag',
-                  help="infer tags for imported files (default)")
-    @cmdln.option('-A', '--noautotag', action='store_false', dest='autotag',
-                  help="don't infer tags for imported files (opposite of -a)")
-    @cmdln.option('-l', '--log', dest='logpath',
-                  help='file to log untaggable albums for later review')
-    def do_import(self, subcmd, opts, *paths):
-        """${cmd_name}: import new music
-        
-        ${cmd_usage}
-        ${cmd_option_list}
-        """
-        copy  = opts.copy  if opts.copy  is not None else \
-                self._cfg_get('beets', 'import_copy', bool)
-        write = opts.write if opts.write is not None else \
-                self._cfg_get('beets', 'import_write', bool)
-        autot = opts.autotag if opts.autotag is not None else True
-        ui.import_files(self.lib, paths, copy, write, autot, opts.logpath)
-        
-    @cmdln.alias("ls")
-    @cmdln.option('-a', '--album', action='store_true',
-                  help='show matching albums instead of tracks')
-    def do_list(self, subcmd, opts, *criteria):
-        """${cmd_name}: query the library
-        
-        ${cmd_usage}
-        ${cmd_option_list}
-        """
-        ui.list_items(self.lib, make_query(criteria), opts.album)
-    
-    @cmdln.alias("rm")
-    @cmdln.option("-d", "--delete", action="store_true",
-                  help="also remove files from disk")
-    @cmdln.option('-a', '--album', action='store_true',
-                  help='match albums instead of tracks')
-    def do_remove(self, subcmd, opts, *criteria):
-        """${cmd_name}: remove matching items from the library
-
-        ${cmd_usage}
-        ${cmd_option_list}
-        """
-        q = make_query(criteria)
-        ui.remove_items(self.lib, make_query(criteria),
-                        opts.album, opts.delete)
-
-    @cmdln.option('-d', '--debug', action='store_true',
-                  help='dump all MPD traffic to stdout')
-    def do_bpd(self, subcmd, opts, host=None, port=None):
-        """${cmd_name}: run an MPD-compatible music player server
-        
-        ${cmd_usage}
-        ${cmd_option_list}
-        """
-        host = host or self._cfg_get('bpd', 'host')
-        port = port or self._cfg_get('bpd', 'port')
-        password = self._cfg_get('bpd', 'password')
-        debug = opts.debug or False
-        ui.start_bpd(self.lib, host, int(port), password, debug)
-
-    def do_dadd(self, subcmd, opts, name, *criteria):
-        """${cmd_name}: add files to a device
-        
-        ${cmd_usage}
-        ${cmd_option_list}
-        """
-        ui.device_add(self.lib, make_query(criteria), name)
-
-    def do_stats(self, subcmd, opts, *criteria):
-        """${cmd_name}: show statistics about the library or a query
-
-        ${cmd_usage}
-        ${cmd_option_list}
-        """
-        ui.show_stats(self.lib, make_query(criteria))
+parser = ui.SubcommandsOptionParser(subcommands=ui.default_subcommands)
+parser.add_option('-l', '--library', dest='libpath',
+                  help='library database file to use')
+parser.add_option('-d', '--directory', dest='directory',
+                  help="destination music directory")
+parser.add_option('-p', '--pathformat', dest='path_format',
+                  help="destination path format string")
+parser.add_option('-i', '--device', dest='device',
+                  help="name of the device library to use")
 
 if __name__ == '__main__':
-    app = BeetsApp()
-    sys.exit(app.main())
+    options, subcommand, suboptions, subargs = parser.parse_args()
+    
+    # Read defaults from config file.
+    config = ConfigParser.SafeConfigParser()
+    config.read(CONFIG_FILE)
+    for sec in ui.CONFIG_DEFAULTS:
+        if not config.has_section(sec):
+            config.add_section(sec)
+    
+    # Open library file.
+    if options.device:
+        from beets.device import PodLibrary
+        lib = PodLibrary.by_name(self.options.device)
+    else:
+        libpath = options.libpath or \
+                  ui._cfg_get(config, 'beets', 'library')
+        directory = options.directory or \
+                    ui._cfg_get(config, 'beets', 'directory')
+        path_format = options.path_format or \
+                      ui._cfg_get(config, 'beets', 'path_format')
+        lib = Library(os.path.expanduser(libpath),
+                      directory,
+                      path_format)
+    
+    # XXX
+    subcommand.func(lib, config, suboptions, subargs)

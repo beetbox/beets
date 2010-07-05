@@ -15,6 +15,9 @@
 import os
 import logging
 import locale
+import optparse
+import textwrap
+import ConfigParser
 
 from beets import autotag
 from beets import library
@@ -23,6 +26,7 @@ from beets.player import bpd
 
 # Global logger.
 log = logging.getLogger('beets')
+
 
 # Utilities.
 
@@ -126,6 +130,164 @@ def _human_seconds(interval):
         interval /= float(increment)
 
     return "%3.1f %ss" % (interval, suffix)
+
+
+# Subcommand parsing infrastructure.
+
+# This is a fairly generic subcommand parser for optparse. It is
+# maintained externally here:
+# http://gist.github.com/462717
+# There you will also find a better description of the code and a more
+# succinct example program.
+
+class Subcommand(object):
+    """A subcommand of a root command-line application that may be
+    invoked by a SubcommandOptionParser.
+    """
+    def __init__(self, name, parser, help='', aliases=()):
+        """Creates a new subcommand. name is the primary way to invoke
+        the subcommand; aliases are alternate names. parser is an
+        OptionParser responsible for parsing the subcommand's options.
+        help is a short description of the command."""
+        self.name = name
+        self.parser = parser
+        self.aliases = aliases
+        self.help = help
+
+class SubcommandsOptionParser(optparse.OptionParser):
+    """A variant of OptionParser that parses subcommands and their
+    arguments.
+    """
+    
+    # A singleton command used to give help on other subcommands.
+    _HelpSubcommand = Subcommand('help', optparse.OptionParser(),
+        help='give detailed help on a specific sub-command',
+        aliases=('?',))
+    
+    def __init__(self, *args, **kwargs):
+        """Create a new subcommand-aware option parser. All of the
+        options to OptionParser.__init__ are supported in addition
+        to subcommands, a sequence of Subcommand objects.
+        """
+        # The subcommand array, with the help command included.
+        self.subcommands = list(kwargs.pop('subcommands', []))
+        self.subcommands.append(self._HelpSubcommand)
+        
+        # A more helpful default usage.
+        if 'usage' not in kwargs:
+            kwargs['usage'] = """
+  %prog COMMAND [ARGS...]
+  %prog help COMMAND"""
+        
+        # Super constructor.
+        optparse.OptionParser.__init__(self, *args, **kwargs)
+        
+        # Adjust the help-visible name of each subcommand.
+        for subcommand in self.subcommands:
+            subcommand.parser.prog = '%s %s' % \
+                    (self.get_prog_name(), subcommand.name)
+        
+        # Our root parser needs to stop on the first unrecognized argument.  
+        self.disable_interspersed_args()
+    
+    # Add the list of subcommands to the help message.
+    def format_help(self, formatter=None):
+        # Get the original help message, to which we will append.
+        out = optparse.OptionParser.format_help(self, formatter)
+        if formatter is None:
+            formatter = self.formatter
+        
+        # Subcommands header.
+        result = ["\n"]
+        result.append(formatter.format_heading('Commands'))
+        formatter.indent()
+        
+        # Generate the display names (including aliases).
+        # Also determine the help position.
+        disp_names = []
+        help_position = 0
+        for subcommand in self.subcommands:
+            name = subcommand.name
+            if subcommand.aliases:
+                name += ' (%s)' % ', '.join(subcommand.aliases)
+            disp_names.append(name)
+                
+            # Set the help position based on the max width.
+            proposed_help_position = len(name) + formatter.current_indent + 2
+            if proposed_help_position <= formatter.max_help_position:
+                help_position = max(help_position, proposed_help_position)        
+        
+        # Add each subcommand to the output.
+        for subcommand, name in zip(self.subcommands, disp_names):
+            # Lifted directly from optparse.py.
+            name_width = help_position - formatter.current_indent - 2
+            if len(name) > name_width:
+                name = "%*s%s\n" % (formatter.current_indent, "", name)
+                indent_first = help_position
+            else:
+                name = "%*s%-*s  " % (formatter.current_indent, "",
+                                      name_width, name)
+                indent_first = 0
+            result.append(name)
+            help_width = formatter.width - help_position
+            help_lines = textwrap.wrap(subcommand.help, help_width)
+            result.append("%*s%s\n" % (indent_first, "", help_lines[0]))
+            result.extend(["%*s%s\n" % (help_position, "", line)
+                           for line in help_lines[1:]])
+        formatter.dedent()
+        
+        # Concatenate the original help message with the subcommand
+        # list.
+        return out + "".join(result)
+    
+    def _subcommand_for_name(self, name):
+        """Return the subcommand in self.subcommands matching the
+        given name. The name may either be the name of a subcommand or
+        an alias. If no subcommand matches, returns None.
+        """
+        for subcommand in self.subcommands:
+            if name == subcommand.name or \
+               name in subcommand.aliases:
+                return subcommand
+        return None
+    
+    def parse_args(self, a=None, v=None):
+        """Like OptionParser.parse_args, but returns these four items:
+        - options: the options passed to the root parser
+        - subcommand: the Subcommand object that was invoked
+        - suboptions: the options passed to the subcommand parser
+        - subargs: the positional arguments passed to the subcommand
+        """  
+        options, args = optparse.OptionParser.parse_args(self, a, v)
+        
+        if not args:
+            # No command given.
+            self.print_help()
+            self.exit()
+        else:
+            cmdname = args.pop(0)
+            if cmdname.startswith('-'):
+                parser.error('unknown option ' + cmdname)
+            else:
+                subcommand = self._subcommand_for_name(cmdname)
+                if not subcommand:
+                    parser.error('unknown command ' + cmdname)
+        
+        suboptions, subargs = subcommand.parser.parse_args(args)
+
+        if subcommand is self._HelpSubcommand:
+            if subargs:
+                # particular
+                cmdname = subargs[0]
+                helpcommand = self._subcommand_for_name(cmdname)
+                helpcommand.parser.print_help()
+                self.exit()
+            else:
+                # general
+                self.print_help()
+                self.exit()
+        
+        return options, subcommand, suboptions, subargs
 
 
 # Autotagging interface.
@@ -499,3 +661,114 @@ Albums: %i""" % (
         _human_bytes(total_size),
         len(artists), len(albums)
     ))
+
+
+# XXX
+CONFIG_DEFAULTS = {
+    'beets': {
+        'library': '~/.beetsmusic.blb',
+        'directory': '~/Music',
+        'path_format': '$artist/$album/$track $title',
+        'import_copy': True,
+        'import_write': True,
+    },
+
+    'bpd': {
+        'host': '',
+        'port': '6600',
+        'password': '',
+    },
+}
+def _cfg_get(config, section, name, vtype=None):
+    try:
+        if vtype is bool:
+            return config.getboolean(section, name)
+        else:
+            return config.get(section, name)
+    except ConfigParser.NoOptionError:
+        return CONFIG_DEFAULTS[section][name]
+def make_query(criteria):
+    """Make  query string for the list of criteria."""
+    return ' '.join(criteria).strip() or None
+
+
+
+# Default subcommands.
+
+default_subcommands = []
+
+import_cmd = Subcommand('import', optparse.OptionParser(),
+    'import new music', ('imp', 'im'))
+import_cmd.parser.add_option('-c', '--copy', action='store_true',
+    default=None, help="copy tracks into library directory (default)")
+import_cmd.parser.add_option('-C', '--nocopy', action='store_false',
+    dest='copy', help="don't copy tracks (opposite of -c)")
+import_cmd.parser.add_option('-w', '--write', action='store_true',
+    default=None, help="write new metadata to files' tags (default)")
+import_cmd.parser.add_option('-W', '--nowrite', action='store_false',
+    dest='write', help="don't write metadata (opposite of -s)")
+import_cmd.parser.add_option('-a', '--autotag', action='store_true',
+    dest='autotag', help="infer tags for imported files (default)")
+import_cmd.parser.add_option('-A', '--noautotag', action='store_false',
+    dest='autotag',
+    help="don't infer tags for imported files (opposite of -a)")
+import_cmd.parser.add_option('-l', '--log', dest='logpath',
+    help='file to log untaggable albums for later review')
+def import_func(lib, config, opts, args):
+    copy  = opts.copy  if opts.copy  is not None else \
+            self._cfg_get('beets', 'import_copy', bool)
+    write = opts.write if opts.write is not None else \
+            self._cfg_get('beets', 'import_write', bool)
+    autot = opts.autotag if opts.autotag is not None else True
+    import_files(lib, args, copy, write, autot, opts.logpath)
+import_cmd.func = import_func
+default_subcommands.append(import_cmd)
+
+list_cmd = Subcommand('list', optparse.OptionParser(),
+    'query the library', ('ls',))
+list_cmd.parser.add_option('-a', '--album', action='store_true',
+    help='show matching albums instead of tracks')
+def list_func(lib, config, opts, args):
+    list_items(lib, make_query(args), opts.album)
+list_cmd.func = list_func
+default_subcommands.append(list_cmd)
+
+remove_cmd = Subcommand('remove', optparse.OptionParser(),
+    'remove matching items from the library', ('rm',))
+remove_cmd.parser.add_option("-d", "--delete", action="store_true",
+    help="also remove files from disk")
+remove_cmd.parser.add_option('-a', '--album', action='store_true',
+    help='match albums instead of tracks')
+def remove_func(lib, config, opts, args):
+    remove_items(lib, make_query(args), opts.album, opts.delete)
+remove_cmd.func = remove_func
+default_subcommands.append(remove_cmd)
+
+bpd_cmd = Subcommand('bpd', optparse.OptionParser(),
+    'run an MPD-compatible music player server')
+bpd_cmd.parser.add_option('-d', '--debug', action='store_true',
+    help='dump all MPD traffic to stdout')
+def bpd_func(lib, config, opts, args):
+    host = args.pop(0) if args else _cfg_get(config, 'bpd', 'host')
+    port = args.pop(0) if args else _cfg_get(config, 'bpd', 'port')
+    password = _cfg_get(config, 'bpd', 'password')
+    debug = opts.debug or False
+    start_bpd(lib, host, int(port), password, debug)
+bpd_cmd.func = bpd_func
+default_subcommands.append(bpd_cmd)
+
+dadd_cmd = Subcommand('dadd', optparse.OptionParser(),
+    'add files to a device')
+def dadd_func(lib, config, opts, args):
+    name = args.pop(0)
+    # fixme require exactly one arg
+    device_add(lib, make_query(args), name)
+dadd_cmd.func = dadd_func
+default_subcommands.append(dadd_cmd)
+
+stats_cmd = Subcommand('stats', optparse.OptionParser(),
+    'show statistics about the library or a query')
+def stats_func(lib, config, opts, args):
+    show_stats(lib, make_query(args))
+stats_cmd.func = stats_func
+default_subcommands.append(stats_cmd)

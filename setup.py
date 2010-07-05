@@ -49,7 +49,6 @@ setup(name='beets',
           'mutagen',
           'python-musicbrainz2 >= 0.7.0',
           'munkres',
-          'cmdln',
           'eventlet >= 0.9.3',
       ],
 )
