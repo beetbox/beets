@@ -24,6 +24,24 @@ from beets import library
 from beets.mediafile import UnreadableFileError, FileTypeError
 from beets.player import bpd
 
+# Configuration file defaults.
+CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
+CONFIG_DEFAULTS = {
+    'beets': {
+        'library': '~/.beetsmusic.blb',
+        'directory': '~/Music',
+        'path_format': '$artist/$album/$track $title',
+        'import_copy': True,
+        'import_write': True,
+    },
+
+    'bpd': {
+        'host': '',
+        'port': '6600',
+        'password': '',
+    },
+}
+
 # Global logger.
 log = logging.getLogger('beets')
 
@@ -489,7 +507,7 @@ def tag_album(items, lib, copy=True, write=True, logfile=None):
         lib.add(item)
 
 
-# Top-level commands.
+# Other core functionality.
 
 def import_files(lib, paths, copy=True, write=True, autot=True, logpath=None):
     """Import the files in the given list of paths, tagging each leaf
@@ -670,38 +688,7 @@ Albums: %i""" % (
     ))
 
 
-# XXX
-CONFIG_DEFAULTS = {
-    'beets': {
-        'library': '~/.beetsmusic.blb',
-        'directory': '~/Music',
-        'path_format': '$artist/$album/$track $title',
-        'import_copy': True,
-        'import_write': True,
-    },
-
-    'bpd': {
-        'host': '',
-        'port': '6600',
-        'password': '',
-    },
-}
-def _cfg_get(config, section, name, vtype=None):
-    try:
-        if vtype is bool:
-            return config.getboolean(section, name)
-        else:
-            return config.get(section, name)
-    except ConfigParser.NoOptionError:
-        return CONFIG_DEFAULTS[section][name]
-def make_query(criteria):
-    """Make  query string for the list of criteria."""
-    return ' '.join(criteria).strip() or None
-
-
-# The root parser and its function.
-
-CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
+# The root parser and its main function.
 
 parser = SubcommandsOptionParser()
 parser.add_option('-l', '--library', dest='libpath',
@@ -714,6 +701,7 @@ parser.add_option('-i', '--device', dest='device',
                   help="name of the device library to use")
 
 def main():
+    """Run the main command-line interface for beets."""
     options, subcommand, suboptions, subargs = parser.parse_args()
     
     # Read defaults from config file.
@@ -729,17 +717,33 @@ def main():
         lib = PodLibrary.by_name(self.options.device)
     else:
         libpath = options.libpath or \
-                  _cfg_get(config, 'beets', 'library')
+                  config_val(config, 'beets', 'library')
         directory = options.directory or \
-                    _cfg_get(config, 'beets', 'directory')
+                    config_val(config, 'beets', 'directory')
         path_format = options.path_format or \
-                      _cfg_get(config, 'beets', 'path_format')
+                      config_val(config, 'beets', 'path_format')
         lib = library.Library(os.path.expanduser(libpath),
                               directory,
                               path_format)
     
-    # XXX
+    # Invoke the subcommand.
     subcommand.func(lib, config, suboptions, subargs)
+
+
+# Utilities for subcommands.
+
+def make_query(criteria):
+    """Make query string for the list of criteria."""
+    return ' '.join(criteria).strip() or None
+
+def config_val(config, section, name, vtype=None):
+    try:
+        if vtype is bool:
+            return config.getboolean(section, name)
+        else:
+            return config.get(section, name)
+    except ConfigParser.NoOptionError:
+        return CONFIG_DEFAULTS[section][name]
 
 
 # Default subcommands.
@@ -763,9 +767,9 @@ import_cmd.parser.add_option('-l', '--log', dest='logpath',
     help='file to log untaggable albums for later review')
 def import_func(lib, config, opts, args):
     copy  = opts.copy  if opts.copy  is not None else \
-            self._cfg_get('beets', 'import_copy', bool)
+            self.config_val('beets', 'import_copy', bool)
     write = opts.write if opts.write is not None else \
-            self._cfg_get('beets', 'import_write', bool)
+            self.config_val('beets', 'import_write', bool)
     autot = opts.autotag if opts.autotag is not None else True
     import_files(lib, args, copy, write, autot, opts.logpath)
 import_cmd.func = import_func
@@ -794,9 +798,9 @@ bpd_cmd = Subcommand('bpd', help='run an MPD-compatible music player server')
 bpd_cmd.parser.add_option('-d', '--debug', action='store_true',
     help='dump all MPD traffic to stdout')
 def bpd_func(lib, config, opts, args):
-    host = args.pop(0) if args else _cfg_get(config, 'bpd', 'host')
-    port = args.pop(0) if args else _cfg_get(config, 'bpd', 'port')
-    password = _cfg_get(config, 'bpd', 'password')
+    host = args.pop(0) if args else config_val(config, 'bpd', 'host')
+    port = args.pop(0) if args else config_val(config, 'bpd', 'port')
+    password = config_val(config, 'bpd', 'password')
     debug = opts.debug or False
     start_bpd(lib, host, int(port), password, debug)
 bpd_cmd.func = bpd_func
