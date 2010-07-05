@@ -14,50 +14,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-import ConfigParser
-import os
-import sys
-import optparse
-
-from beets import ui
-from beets import Library
-
-CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
-
-parser = ui.SubcommandsOptionParser(subcommands=ui.default_subcommands)
-parser.add_option('-l', '--library', dest='libpath',
-                  help='library database file to use')
-parser.add_option('-d', '--directory', dest='directory',
-                  help="destination music directory")
-parser.add_option('-p', '--pathformat', dest='path_format',
-                  help="destination path format string")
-parser.add_option('-i', '--device', dest='device',
-                  help="name of the device library to use")
+import beets.ui
 
 if __name__ == '__main__':
-    options, subcommand, suboptions, subargs = parser.parse_args()
-    
-    # Read defaults from config file.
-    config = ConfigParser.SafeConfigParser()
-    config.read(CONFIG_FILE)
-    for sec in ui.CONFIG_DEFAULTS:
-        if not config.has_section(sec):
-            config.add_section(sec)
-    
-    # Open library file.
-    if options.device:
-        from beets.device import PodLibrary
-        lib = PodLibrary.by_name(self.options.device)
-    else:
-        libpath = options.libpath or \
-                  ui._cfg_get(config, 'beets', 'library')
-        directory = options.directory or \
-                    ui._cfg_get(config, 'beets', 'directory')
-        path_format = options.path_format or \
-                      ui._cfg_get(config, 'beets', 'path_format')
-        lib = Library(os.path.expanduser(libpath),
-                      directory,
-                      path_format)
-    
-    # XXX
-    subcommand.func(lib, config, suboptions, subargs)
+    beets.ui.main()

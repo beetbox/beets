@@ -192,6 +192,11 @@ class SubcommandsOptionParser(optparse.OptionParser):
         # Our root parser needs to stop on the first unrecognized argument.  
         self.disable_interspersed_args()
     
+    def add_subcommand(self, cmd):
+        """Adds a Subcommand object to the parser's list of commands.
+        """
+        self.subcommands.append(cmd)
+    
     # Add the list of subcommands to the help message.
     def format_help(self, formatter=None):
         # Get the original help message, to which we will append.
@@ -694,10 +699,50 @@ def make_query(criteria):
     return ' '.join(criteria).strip() or None
 
 
+# The root parser and its function.
+
+CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
+
+parser = SubcommandsOptionParser()
+parser.add_option('-l', '--library', dest='libpath',
+                  help='library database file to use')
+parser.add_option('-d', '--directory', dest='directory',
+                  help="destination music directory")
+parser.add_option('-p', '--pathformat', dest='path_format',
+                  help="destination path format string")
+parser.add_option('-i', '--device', dest='device',
+                  help="name of the device library to use")
+
+def main():
+    options, subcommand, suboptions, subargs = parser.parse_args()
+    
+    # Read defaults from config file.
+    config = ConfigParser.SafeConfigParser()
+    config.read(CONFIG_FILE)
+    for sec in CONFIG_DEFAULTS:
+        if not config.has_section(sec):
+            config.add_section(sec)
+    
+    # Open library file.
+    if options.device:
+        from beets.device import PodLibrary
+        lib = PodLibrary.by_name(self.options.device)
+    else:
+        libpath = options.libpath or \
+                  _cfg_get(config, 'beets', 'library')
+        directory = options.directory or \
+                    _cfg_get(config, 'beets', 'directory')
+        path_format = options.path_format or \
+                      _cfg_get(config, 'beets', 'path_format')
+        lib = library.Library(os.path.expanduser(libpath),
+                              directory,
+                              path_format)
+    
+    # XXX
+    subcommand.func(lib, config, suboptions, subargs)
+
 
 # Default subcommands.
-
-default_subcommands = []
 
 import_cmd = Subcommand('import', help='import new music',
     aliases=('imp', 'im'))
@@ -724,7 +769,7 @@ def import_func(lib, config, opts, args):
     autot = opts.autotag if opts.autotag is not None else True
     import_files(lib, args, copy, write, autot, opts.logpath)
 import_cmd.func = import_func
-default_subcommands.append(import_cmd)
+parser.add_subcommand(import_cmd)
 
 list_cmd = Subcommand('list', help='query the library', aliases=('ls',))
 list_cmd.parser.add_option('-a', '--album', action='store_true',
@@ -732,7 +777,7 @@ list_cmd.parser.add_option('-a', '--album', action='store_true',
 def list_func(lib, config, opts, args):
     list_items(lib, make_query(args), opts.album)
 list_cmd.func = list_func
-default_subcommands.append(list_cmd)
+parser.add_subcommand(list_cmd)
 
 remove_cmd = Subcommand('remove',
     help='remove matching items from the library', aliases=('rm',))
@@ -743,7 +788,7 @@ remove_cmd.parser.add_option('-a', '--album', action='store_true',
 def remove_func(lib, config, opts, args):
     remove_items(lib, make_query(args), opts.album, opts.delete)
 remove_cmd.func = remove_func
-default_subcommands.append(remove_cmd)
+parser.add_subcommand(remove_cmd)
 
 bpd_cmd = Subcommand('bpd', help='run an MPD-compatible music player server')
 bpd_cmd.parser.add_option('-d', '--debug', action='store_true',
@@ -755,7 +800,7 @@ def bpd_func(lib, config, opts, args):
     debug = opts.debug or False
     start_bpd(lib, host, int(port), password, debug)
 bpd_cmd.func = bpd_func
-default_subcommands.append(bpd_cmd)
+parser.add_subcommand(bpd_cmd)
 
 dadd_cmd = Subcommand('dadd', help='add files to a device')
 def dadd_func(lib, config, opts, args):
@@ -763,11 +808,11 @@ def dadd_func(lib, config, opts, args):
     # fixme require exactly one arg
     device_add(lib, make_query(args), name)
 dadd_cmd.func = dadd_func
-default_subcommands.append(dadd_cmd)
+parser.add_subcommand(dadd_cmd)
 
 stats_cmd = Subcommand('stats',
     help='show statistics about the library or a query')
 def stats_func(lib, config, opts, args):
     show_stats(lib, make_query(args))
 stats_cmd.func = stats_func
-default_subcommands.append(stats_cmd)
+parser.add_subcommand(stats_cmd)
