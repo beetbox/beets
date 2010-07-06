@@ -26,23 +26,11 @@ import ConfigParser
 
 from beets import library
 
-# Configuration file defaults.
+# Constants.
 CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
-CONFIG_DEFAULTS = {
-    'beets': {
-        'library': '~/.beetsmusic.blb',
-        'directory': '~/Music',
-        'path_format': '$artist/$album/$track $title',
-        'import_copy': True,
-        'import_write': True,
-    },
-
-    'bpd': {
-        'host': '',
-        'port': '6600',
-        'password': '',
-    },
-}
+DEFAULT_LIBRARY = '~/.beetsmusic.blb'
+DEFAULT_DIRECTORY = '~/Music'
+DEFAULT_PATH_FORMAT = '$artist/$album/$track $title'
 
 
 # Utilities.
@@ -112,6 +100,27 @@ def input_yn(prompt, require=False):
         "Type 'y' or 'n':"
     )
     return (sel == 'y')
+
+def make_query(criteria):
+    """Make query string for the list of criteria."""
+    return ' '.join(criteria).strip() or None
+
+def config_val(config, section, name, default, vtype=None):
+    """Queries the configuration file for a value (given by the
+    section and name). If no value is present, returns default.
+    vtype optionally specifies the return type (although only bool
+    is supported for now).
+    """
+    if not config.has_section(section):
+        config.add_section(section)
+    
+    try:
+        if vtype is bool:
+            return config.getboolean(section, name)
+        else:
+            return config.get(section, name)
+    except ConfigParser.NoOptionError:
+        return default
 
 def human_bytes(size):
     """Formats size, a number of bytes, in a human-readable way."""
@@ -339,9 +348,6 @@ def main():
     # Read defaults from config file.
     config = ConfigParser.SafeConfigParser()
     config.read(CONFIG_FILE)
-    for sec in CONFIG_DEFAULTS:
-        if not config.has_section(sec):
-            config.add_section(sec)
     
     # Open library file.
     if options.device:
@@ -349,30 +355,14 @@ def main():
         lib = PodLibrary.by_name(self.options.device)
     else:
         libpath = options.libpath or \
-                  config_val(config, 'beets', 'library')
+            config_val(config, 'beets', 'library', DEFAULT_LIBRARY)
         directory = options.directory or \
-                    config_val(config, 'beets', 'directory')
+            config_val(config, 'beets', 'directory', DEFAULT_DIRECTORY)
         path_format = options.path_format or \
-                      config_val(config, 'beets', 'path_format')
+            config_val(config, 'beets', 'path_format', DEFAULT_PATH_FORMAT)
         lib = library.Library(os.path.expanduser(libpath),
                               directory,
                               path_format)
     
     # Invoke the subcommand.
     subcommand.func(lib, config, suboptions, subargs)
-
-
-# Utilities for subcommands.
-
-def make_query(criteria):
-    """Make query string for the list of criteria."""
-    return ' '.join(criteria).strip() or None
-
-def config_val(config, section, name, vtype=None):
-    try:
-        if vtype is bool:
-            return config.getboolean(section, name)
-        else:
-            return config.get(section, name)
-    except ConfigParser.NoOptionError:
-        return CONFIG_DEFAULTS[section][name]
