@@ -18,7 +18,6 @@ CLI commands are implemented in the ui.commands module.
 """
 
 import os
-import logging
 import locale
 import optparse
 import textwrap

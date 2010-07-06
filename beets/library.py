@@ -104,18 +104,6 @@ def _ancestry(path):
             out.insert(0, path)
     return out
 
-def _walk_files(path):
-    """Like os.walk, but only yields the files in the directory tree. The full
-    pathnames to the files (under path) are given. Also, if path is a file,
-    _walk_files just yields that.
-    """
-    if os.path.isfile(path):
-        yield path
-    else:
-        for root, dirs, files in os.walk(path):
-            for filebase in files:
-                yield os.path.join(root, filebase)
-
 def _components(path):
     """Return a list of the path components in path. For instance,
     _components('/a/b/c') == ['a', 'b', 'c'].
@@ -622,21 +610,6 @@ class BaseLibrary(object):
                    cmp(a.disc, b.disc) or \
                    cmp(a.track, b.track)
         return sorted(out, compare)
-
-
-    ### convenience methods ###
-
-    def add_path(self, path, copy=False):
-        path = _unicode_path(path)
-        items = []
-        for f in _walk_files(path):
-            try:
-                item = Item.from_path(_normpath(f))
-            except FileTypeError:
-                log.warn(f + ' of unknown type, skipping')
-            except UnreadableFileError:
-                log.error(f + ' is unreadable, skipping')
-            self.add(item, copy)
 
 
 class Library(BaseLibrary):

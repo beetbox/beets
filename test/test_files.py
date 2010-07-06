@@ -68,66 +68,6 @@ class MoveTest(unittest.TestCase):
     def test_move_changes_path(self):
         self.i.move(self.lib)
         self.assertEqual(self.i.path, beets.library._normpath(self.dest))
-
-class WalkTest(unittest.TestCase):
-    def setUp(self):
-        # create a directory structure for testing
-        self.base = join('rsrc', 'temp_walk')
-        os.mkdir(self.base)
-        mkfile(join(self.base, 'file'))
-        os.mkdir(join(self.base, 'dir1'))
-        mkfile(join(self.base, 'dir1', 'dir1f1'))
-        mkfile(join(self.base, 'dir1', 'dir1f2'))
-        os.mkdir(join(self.base, 'dir2'))
-        mkfile(join(self.base, 'dir2', 'dir2f'))
-        os.mkdir(join(self.base, 'dir2', 'dir2dir'))
-        mkfile(join(self.base, 'dir2', 'dir2dir', 'dir2dirf'))
-    def tearDown(self):
-        shutil.rmtree(self.base)
-    
-    def test_walk_single_file(self):
-        path = join(self.base, 'file')
-        s = set(beets.library._walk_files(path))
-        self.assertTrue(path in s)
-        s.remove(path)
-        self.assertTrue(not s) # s is empty (i.e., contains nothing else)
-    
-    def test_walk_flat_directory(self):
-        path = join(self.base, 'dir1')
-        s = set(beets.library._walk_files(path))
-        for f in (join(path, 'dir1f1'),
-                  join(path, 'dir1f2')):
-            self.assertTrue(f in s)
-            s.remove(f)
-        self.assertTrue(not s)
-    
-    def test_walk_hierarchy(self):
-        path = join(self.base, 'dir2')
-        s = set(beets.library._walk_files(path))
-        for f in (join(path, 'dir2f'),
-                  join(path, 'dir2dir', 'dir2dirf')):
-            self.assertTrue(f in s)
-            s.remove(f)
-        self.assertTrue(not s)
-
-class AddTest(unittest.TestCase):
-    def setUp(self):
-        self.dir = os.path.join('rsrc', 'test_lib')
-        self.lib = beets.library.Library(':memory:')
-        self.lib.directory = self.dir
-        self.lib.path_format = 'item'
-    def tearDown(self):
-        if os.path.exists(self.dir):
-            shutil.rmtree(self.dir)
-
-    def test_library_add_path_copies(self):
-        self.lib.add_path(os.path.join('rsrc', 'full.mp3'), copy=True)
-        self.assertTrue(os.path.isfile(os.path.join(self.dir, 'item.mp3')))
-
-    def test_add_path_enforces_unicode_pathnames(self):
-        self.lib.add_path(os.path.join('rsrc', 'full.mp3'))
-        item = self.lib.get().next()
-        self.assertTrue(isinstance(item.path, unicode))
     
 class HelperTest(unittest.TestCase):
     def test_ancestry_works_on_file(self):
