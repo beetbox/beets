@@ -50,6 +50,8 @@ def print_(*strings):
             txt = u' '.join(strings)
         else:
             txt = ' '.join(strings)
+    else:
+        txt = u''
     if isinstance(txt, unicode):
         encoding = locale.getdefaultlocale()[1]
         txt = txt.encode(encoding, 'replace')
