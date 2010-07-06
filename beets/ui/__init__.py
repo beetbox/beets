@@ -33,6 +33,12 @@ DEFAULT_DIRECTORY = '~/Music'
 DEFAULT_PATH_FORMAT = '$artist/$album/$track $title'
 
 
+# UI exception. Commands should throw this in order to display
+# nonrecoverable errors to the user.
+class UserError(Exception):
+    pass
+
+
 # Utilities.
 
 def print_(txt=''):
@@ -364,4 +370,8 @@ def main():
                               path_format)
     
     # Invoke the subcommand.
-    subcommand.func(lib, config, suboptions, subargs)
+    try:
+        subcommand.func(lib, config, suboptions, subargs)
+    except UserError, exc:
+        message = exc.args[0] if exc.args else None
+        subcommand.parser.error(message)
