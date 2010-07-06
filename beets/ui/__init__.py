@@ -311,12 +311,9 @@ class SubcommandsOptionParser(optparse.OptionParser):
             self.exit()
         else:
             cmdname = args.pop(0)
-            if cmdname.startswith('-'):
-                parser.error('unknown option ' + cmdname)
-            else:
-                subcommand = self._subcommand_for_name(cmdname)
-                if not subcommand:
-                    parser.error('unknown command ' + cmdname)
+            subcommand = self._subcommand_for_name(cmdname)
+            if not subcommand:
+                self.error('unknown command ' + cmdname)
         
         suboptions, subargs = subcommand.parser.parse_args(args)
 
