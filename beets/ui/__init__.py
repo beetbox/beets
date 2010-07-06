@@ -41,11 +41,16 @@ class UserError(Exception):
 
 # Utilities.
 
-def print_(txt=''):
+def print_(*strings):
     """Like print, but rather than raising an error when a character
     is not in the terminal's encoding's character set, just silently
     replaces it.
     """
+    if strings:
+        if isinstance(strings[0], unicode):
+            txt = u' '.join(strings)
+        else:
+            txt = ' '.join(strings)
     if isinstance(txt, unicode):
         encoding = locale.getdefaultlocale()[1]
         txt = txt.encode(encoding, 'replace')
