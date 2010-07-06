@@ -327,8 +327,11 @@ class SubcommandsOptionParser(optparse.OptionParser):
 
 def main():
     """Run the main command-line interface for beets."""
+    # Get the default subcommands.
+    from beets.ui.commands import default_commands
+    
     # Construct the root parser.
-    parser = SubcommandsOptionParser()
+    parser = SubcommandsOptionParser(subcommands=default_commands)
     parser.add_option('-l', '--library', dest='libpath',
                       help='library database file to use')
     parser.add_option('-d', '--directory', dest='directory',
@@ -337,10 +340,6 @@ def main():
                       help="destination path format string")
     parser.add_option('-i', '--device', dest='device',
                       help="name of the device library to use")
-
-    # Add default subcommands.
-    from beets.ui.commands import default_commands
-    parser.subcommands.extend(default_commands)
     
     # Parse the command-line!
     options, subcommand, suboptions, subargs = parser.parse_args()
