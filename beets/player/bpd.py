@@ -64,7 +64,6 @@ SAFE_COMMANDS = (
 
 # Logger.
 log = logging.getLogger('beets.player.bpd')
-log.addHandler(logging.StreamHandler())
 
 
 # Gstreamer import error (counterpart of identical class in gstplayer).
