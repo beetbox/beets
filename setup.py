@@ -40,6 +40,7 @@ setup(name='beets',
 
       packages=[
           'beets',
+          'beets.ui',
           'beets.autotag',
           'beets.player',
       ],
