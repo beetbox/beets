@@ -505,3 +505,4 @@ def stats_func(lib, config, opts, args):
     show_stats(lib, ui.make_query(args))
 stats_cmd.func = stats_func
 default_commands.append(stats_cmd)
+

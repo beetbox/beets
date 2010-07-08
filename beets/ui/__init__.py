@@ -24,6 +24,7 @@ import textwrap
 import ConfigParser
 
 from beets import library
+from beets import plugins
 
 # Constants.
 CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
@@ -340,7 +341,9 @@ def main():
     from beets.ui.commands import default_commands
     
     # Construct the root parser.
-    parser = SubcommandsOptionParser(subcommands=default_commands)
+    commands = list(default_commands)
+    commands += plugins.commands()
+    parser = SubcommandsOptionParser(subcommands=commands)
     parser.add_option('-l', '--library', dest='libpath',
                       help='library database file to use')
     parser.add_option('-d', '--directory', dest='directory',
@@ -378,3 +381,4 @@ def main():
     except UserError, exc:
         message = exc.args[0] if exc.args else None
         subcommand.parser.error(message)
+
