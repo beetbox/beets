@@ -14,7 +14,12 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+import os
 from setuptools import setup
+
+def _read(fn):
+    path = os.path.join(os.path.dirname(__file__), fn)
+    return open(path).read()
 
 setup(name='beets',
       version='1.0b2',
@@ -24,19 +29,7 @@ setup(name='beets',
       url='http://beets.radbox.org/',
       license='MIT',
       platforms='ALL',
-      long_description="""Beets is a media library management system
-      for obsessive-compulsive music geeks.
-
-      The purpose of beets is to get your music collection right once
-      and for all. It catalogs your collection, automatically
-      improving its metadata as it goes using the MusicBrainz database.
-      It then provides a set of tools for manipulating and accessing
-      your music.
-      
-      Beets also includes a music player that implements the MPD
-      protocol, so you can play music in your beets library using any
-      MPD client.
-      """,
+      long_description=_read('README'),
 
       packages=[
           'beets',
@@ -51,6 +44,14 @@ setup(name='beets',
           'python-musicbrainz2 >= 0.7.0',
           'munkres',
           'eventlet >= 0.9.3',
+      ],
+
+      classifiers=[
+          'Topic :: Multimedia :: Sound/Audio',
+          'Topic :: Multimedia :: Sound/Audio :: Players :: MP3',
+          'License :: OSI Approved :: MIT License',
+          'Environment :: Console',
+          'Development Status :: 4 - Beta',
       ],
 )
 
