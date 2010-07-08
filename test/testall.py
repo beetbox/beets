@@ -17,14 +17,20 @@
 import unittest
 import os
 import re
+import sys
+
+pkgpath = os.path.dirname(__file__)
+sys.path.append(pkgpath)
+os.chdir(pkgpath)
 
 def suite():
     s = unittest.TestSuite()
     # get the suite() of every module in this directory begining with test_
-    for fname in os.listdir('.'):
+    for fname in os.listdir(pkgpath):
         match = re.match(r'(test_\S+)\.py$', fname)
         if match:
-            s.addTest(__import__(match.group(1)).suite())
+            modname = match.group(1)
+            s.addTest(__import__(modname).suite())
     return s
 
 if __name__ == '__main__':

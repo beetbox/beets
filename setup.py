@@ -30,6 +30,7 @@ setup(name='beets',
       license='MIT',
       platforms='ALL',
       long_description=_read('README'),
+      test_suite='test.testall.suite',
 
       packages=[
           'beets',
