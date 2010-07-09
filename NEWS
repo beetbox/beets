@@ -1,3 +1,14 @@
+1.0b3
+-----
+* Plugin architecture. Add-on modules can now add new commands to the
+  beets command-line interface. The "bpd" and "dadd" commands were
+  removed from the beets core and turned into plugins; BPD is loaded
+  by default. To load the non-default plugins, use the "plugins" config
+  value (a space-separated list of plugin names). Plugins are just
+  Python modules under the "beetsplug" namespace package containing
+  subclasses of beets.plugins.BeetsPlugin. See the "beetsplug" directory
+  for examples.
+
 1.0b2
 -----
 * Support for Ogg Vorbis and Monkey's Audio files and their tags.
@@ -22,3 +33,4 @@
 1.0b1
 -----
 First public release.
+
