@@ -350,8 +350,6 @@ def main():
                       help="destination music directory")
     parser.add_option('-p', '--pathformat', dest='path_format',
                       help="destination path format string")
-    parser.add_option('-i', '--device', dest='device',
-                      help="name of the device library to use")
     
     # Parse the command-line!
     options, subcommand, suboptions, subargs = parser.parse_args()
@@ -361,19 +359,15 @@ def main():
     config.read(CONFIG_FILE)
     
     # Open library file.
-    if options.device:
-        from beets.device import PodLibrary
-        lib = PodLibrary.by_name(self.options.device)
-    else:
-        libpath = options.libpath or \
-            config_val(config, 'beets', 'library', DEFAULT_LIBRARY)
-        directory = options.directory or \
-            config_val(config, 'beets', 'directory', DEFAULT_DIRECTORY)
-        path_format = options.path_format or \
-            config_val(config, 'beets', 'path_format', DEFAULT_PATH_FORMAT)
-        lib = library.Library(os.path.expanduser(libpath),
-                              directory,
-                              path_format)
+    libpath = options.libpath or \
+        config_val(config, 'beets', 'library', DEFAULT_LIBRARY)
+    directory = options.directory or \
+        config_val(config, 'beets', 'directory', DEFAULT_DIRECTORY)
+    path_format = options.path_format or \
+        config_val(config, 'beets', 'path_format', DEFAULT_PATH_FORMAT)
+    lib = library.Library(os.path.expanduser(libpath),
+                          directory,
+                          path_format)
     
     # Invoke the subcommand.
     try:

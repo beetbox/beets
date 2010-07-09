@@ -20,13 +20,18 @@ use of the wide range of MPD clients.
 import eventlet
 import re
 from string import Template
-import beets
 import traceback
 import logging
 import time
 
+import beets
+from beets.plugins import BeetsPlugin
+import beets.ui
+
 
 DEFAULT_PORT = 6600
+DEFAULT_HOST = ''
+DEFAULT_PASSWORD = ''
 PROTOCOL_VERSION = '0.13.0'
 BUFSIZE = 1024
 
@@ -66,7 +71,7 @@ SAFE_COMMANDS = (
 log = logging.getLogger('beets.player.bpd')
 
 
-# Gstreamer import error (counterpart of identical class in gstplayer).
+# Gstreamer import error.
 class NoGstreamerError(Exception): pass
 
 
@@ -202,7 +207,8 @@ class BaseServer(object):
     This is a generic superclass and doesn't support many commands.
     """
     
-    def __init__(self, host='', port=DEFAULT_PORT, password=''):
+    def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT,
+                 password=DEFAULT_PASSWORD):
         """Create a new server bound to address `host` and listening
         on port `port`. If `password` is given, it is required to do
         anything significant on the server.
@@ -735,7 +741,7 @@ class Server(BaseServer):
 
     def __init__(self, library, host='', port=DEFAULT_PORT, password=''):
         try:
-            from beets.player import gstplayer
+            from beetsplug.bpd import gstplayer
         except ImportError, e:
             # This is a little hacky, but it's the best I know for now.
             if e.args[0].endswith(' gst'):
@@ -1100,4 +1106,45 @@ class Server(BaseServer):
         vol = cast_arg(int, vol)
         super(Server, self).cmd_setvol(conn, vol)
         self.player.volume = float(vol)/100
+
+
+# Beets plugin hooks.
+
+class BPDPlugin(BeetsPlugin):
+    """Provides the "beet bpd" command for running a music player
+    server.
+    """
+    def start_bpd(self, lib, host, port, password, debug):
+        """Starts a BPD server."""
+        if debug:
+            log.setLevel(logging.DEBUG)
+        else:
+            log.setLevel(logging.WARNING)
+        try:
+            Server(lib, host, port, password).run()
+        except NoGstreamerError:
+            beets.ui.print_('Gstreamer Python bindings not found.')
+            beets.ui.print_('Install "python-gst0.10", "py26-gst-python",'
+                            'or similar package to use BPD.')
+
+    def commands(self):
+        cmd = beets.ui.Subcommand('bpd',
+            help='run an MPD-compatible music player server')
+        cmd.parser.add_option('-d', '--debug', action='store_true',
+            help='dump all MPD traffic to stdout')
+
+        def func(lib, config, opts, args):
+            host = args.pop(0) if args else \
+                beets.ui.config_val(config, 'bpd', 'host', DEFAULT_HOST)
+            port = args.pop(0) if args else \
+                beets.ui.config_val(config, 'bpd', 'port', str(DEFAULT_PORT))
+            if args:
+                raise beets.ui.UserError('too many arguments')
+            password = beets.ui.config_val(config, 'bpd', 'password',
+                                           DEFAULT_PASSWORD)
+            debug = opts.debug or False
+            self.start_bpd(lib, host, int(port), password, debug)
+        
+        cmd.func = func
+        return [cmd]
 

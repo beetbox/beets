@@ -403,69 +403,6 @@ remove_cmd.func = remove_func
 default_commands.append(remove_cmd)
 
 
-# bpd: Run the built-in MPD-like music player.
-
-DEFAULT_BPD_HOST = ''
-DEFAULT_BPD_PORT = '6600'
-DEFAULT_BPD_PASSWORD = ''
-
-def start_bpd(lib, host, port, password, debug):
-    """Starts a BPD server."""
-    log = logging.getLogger('beets.player.bpd')
-    if debug:
-        log.setLevel(logging.DEBUG)
-    else:
-        log.setLevel(logging.WARNING)
-    try:
-        bpd.Server(lib, host, port, password).run()    
-    except bpd.NoGstreamerError:
-        print_('Gstreamer Python bindings not found.')
-        print_('Install "python-gst0.10", "py26-gst-python", or similar ' \
-               'package to use BPD.')
-        return
-
-bpd_cmd = ui.Subcommand('bpd',
-    help='run an MPD-compatible music player server')
-bpd_cmd.parser.add_option('-d', '--debug', action='store_true',
-    help='dump all MPD traffic to stdout')
-def bpd_func(lib, config, opts, args):
-    host = args.pop(0) if args else ui.config_val(config, 'bpd', 'host',
-                                                  DEFAULT_BPD_HOST)
-    port = args.pop(0) if args else ui.config_val(config, 'bpd', 'port',
-                                                  DEFAULT_BPD_PORT)
-    if args:
-        raise ui.UserError('too many arguments')
-    password = ui.config_val(config, 'bpd', 'password', DEFAULT_BPD_PASSWORD)
-    debug = opts.debug or False
-    start_bpd(lib, host, int(port), password, debug)
-bpd_cmd.func = bpd_func
-default_commands.append(bpd_cmd)
-
-
-# dadd: Add to device.
-
-def device_add(lib, query, name):
-    """Add items matching query from lib to a device with the given
-    name.
-    """
-    items = lib.items(query=query)
-
-    from beets import device
-    pod = device.PodLibrary.by_name(name)
-    for item in items:
-        pod.add(item)
-    pod.save()
-
-dadd_cmd = ui.Subcommand('dadd', help='add files to a device')
-def dadd_func(lib, config, opts, args):
-    if not args:
-        raise ui.UserError('no device name specified')
-    name = args.pop(0)
-    device_add(lib, ui.make_query(args), name)
-dadd_cmd.func = dadd_func
-default_commands.append(dadd_cmd)
-
-
 # stats: Show library/query statistics.
 
 def show_stats(lib, query):

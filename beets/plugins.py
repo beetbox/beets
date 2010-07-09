@@ -21,7 +21,7 @@ import itertools
 log = logging.getLogger('beets')
 
 PLUGIN_NAMESPACE = 'beetsplug'
-DEFAULT_PLUGINS = []
+DEFAULT_PLUGINS = ['bpd']
 
 class BeetsPlugin(object):
     """The base class for all beets plugins. Plugins provide
@@ -45,8 +45,12 @@ def load_plugins(names=()):
         modname = '%s.%s' % (PLUGIN_NAMESPACE, name)
         try:
             __import__(modname, None, None)
-        except:
-            log.warn('plugin %s not found' % name)
+        except ImportError, exc:
+            # Again, this is hacky:
+            if exc.args[0].endswith(modname):
+                log.warn('plugin %s not found' % name)
+            else:
+                raise
 
 _instances = {}
 def find_plugins():

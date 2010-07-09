@@ -17,7 +17,10 @@ import sys
 import socket
 import locale
 import gpod
+
 from beets.library import BaseLibrary, Item
+from beets.plugins import BeetsPlugin
+import beets.ui
 
 FIELD_MAP = {
     'artist':   'artist',
@@ -98,4 +101,23 @@ class PodLibrary(BaseLibrary):
 
     def remove(self, item):
         raise NotImplementedError
+
+
+# Plugin hook.
+
+class DevicePlugin(BeetsPlugin):
+    def commands(self):
+        cmd = beets.ui.Subcommand('dadd', help='add files to a device')
+        def func(lib, config, opts, args):
+            if not args:
+                raise beets.ui.UserError('no device name specified')
+            name = args.pop(0)
+            
+            items = lib.items(query=beets.ui.make_query(args))
+            pod = PodLibrary.by_name(name)
+            for item in items:
+                pod.add(item)
+            pod.save()
+        cmd.func = func
+        return [cmd]
 
