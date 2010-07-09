@@ -16,6 +16,7 @@
 
 import logging
 import itertools
+import traceback
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -44,13 +45,18 @@ def load_plugins(names=()):
     for name in itertools.chain(names, DEFAULT_PLUGINS):
         modname = '%s.%s' % (PLUGIN_NAMESPACE, name)
         try:
-            __import__(modname, None, None)
-        except ImportError, exc:
-            # Again, this is hacky:
-            if exc.args[0].endswith(modname):
-                log.warn('plugin %s not found' % name)
-            else:
-                raise
+            try:
+                __import__(modname, None, None)
+            except ImportError, exc:
+                # Again, this is hacky:
+                if exc.args[0].endswith(' ' + name):
+                    log.warn('** plugin %s not found' % name)
+                else:
+                    raise
+        except:
+            log.warn('** error loading plugin %s' % name)
+            log.warn(traceback.format_exc())
+
 
 _instances = {}
 def find_plugins():

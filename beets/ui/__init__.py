@@ -339,7 +339,15 @@ def main():
     """Run the main command-line interface for beets."""
     # Get the default subcommands.
     from beets.ui.commands import default_commands
-    
+
+    # Read defaults from config file.
+    config = ConfigParser.SafeConfigParser()
+    config.read(CONFIG_FILE)
+
+    # Load requested plugins.
+    plugnames = config_val(config, 'beets', 'plugins', '')
+    plugins.load_plugins(plugnames.split())
+
     # Construct the root parser.
     commands = list(default_commands)
     commands += plugins.commands()
@@ -353,10 +361,6 @@ def main():
     
     # Parse the command-line!
     options, subcommand, suboptions, subargs = parser.parse_args()
-    
-    # Read defaults from config file.
-    config = ConfigParser.SafeConfigParser()
-    config.read(CONFIG_FILE)
     
     # Open library file.
     libpath = options.libpath or \
