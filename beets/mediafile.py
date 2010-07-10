@@ -68,8 +68,8 @@ class StorageStyle(object):
      - key: The Mutagen key used to access the field's data.
      - list_elem: Store item as a single object or as first element
        of a list.
-     - as_type: Which type the value is stored as (unicode, int, or
-       bool).
+     - as_type: Which type the value is stored as (unicode, int,
+       bool, or str).
      - packing: If this value is packed in a multiple-value storage
        unit, which type of packing (in the packing enum). Otherwise,
        None. (Makes as_type irrelevant).
@@ -78,8 +78,8 @@ class StorageStyle(object):
      - ID3 storage only: match against this 'desc' field as well
        as the key.
     """
-    def __init__(self, key, list_elem = True, as_type = unicode, packing = None,
-                 pack_pos = 0, id3_desc = None):
+    def __init__(self, key, list_elem = True, as_type = unicode,
+                 packing = None, pack_pos = 0, id3_desc = None):
         self.key = key
         self.list_elem = list_elem
         self.as_type = as_type
@@ -214,10 +214,19 @@ class MediaField(object):
                 if entry is None: # no desc match
                     return None
             else:
+                # Get the metadata frame object.
                 try:
-                    entry = obj.mgfile[style.key].text
+                    frame = obj.mgfile[style.key]
                 except KeyError:
                     return None
+                
+                # For most frame types, the data is in the 'text' field.
+                # For UFID (used for the MusicBrainz track ID), it's in
+                # the 'data' field.
+                if isinstance(frame, mutagen.id3.UFID):
+                    entry = frame.data
+                else:
+                    entry = frame.text
         
         else: # Not MP3.
             try:
@@ -244,7 +253,8 @@ class MediaField(object):
         else:               out = val
         
         if obj.type == 'mp3':
-            if style.id3_desc is not None: # match on desc field
+            # Try to match on "desc" field.
+            if style.id3_desc is not None:
                 frames = obj.mgfile.tags.getall(style.key)
                 
                 # try modifying in place
@@ -258,10 +268,29 @@ class MediaField(object):
                 # need to make a new frame?
                 if not found:
                     frame = mutagen.id3.Frames[style.key](
-                                encoding=3, desc=style.id3_desc, text=val)
+                                encoding=3,
+                                desc=style.id3_desc,
+                                text=val
+                    )
                     obj.mgfile.tags.add(frame)
             
-            else: # no match on desc; just replace based on key
+            # Try to match on "owner" field.
+            elif style.key.startswith('UFID:'):
+                owner = style.key.split(':', 1)[1]
+                frames = obj.mgfile.tags.getall(style.key)
+                
+                for frame in frames:
+                    # Replace existing frame data.
+                    if frame.owner == owner:
+                        frame.data = out
+                else:
+                    # New frame.
+                    frame = mutagen.id3.UFID(owner=owner, data=val)
+                    obj.mgfile.tags.setall('UFID', [frame])
+                    
+            # Just replace based on key.
+            else:
+                
                 frame = mutagen.id3.Frames[style.key](encoding=3, text=val)
                 obj.mgfile.tags.setall(style.key, [frame])
         
@@ -366,8 +395,8 @@ class MediaField(object):
                         out = 0
                     else:
                         out = int(out)
-                elif style.as_type == bool:
-                    out = bool(out)
+                elif style.as_type in (bool, str):
+                    out = style.as_type(out)
         
             # store the data
             self._storedata(obj, out, style)
@@ -592,6 +621,30 @@ class MediaFile(object):
                                     as_type = bool), 
                 etc = StorageStyle('compilation')
             )
+    
+    # MusicBrainz IDs.
+    mb_trackid = MediaField(
+                mp3 = StorageStyle('UFID:http://musicbrainz.org',
+                                   list_elem = False),
+                mp4 = StorageStyle(
+                    '----:com.apple.iTunes:MusicBrainz Track Id',
+                    as_type=str),
+                etc = StorageStyle('musicbrainz_trackid')
+            )
+    mb_albumid = MediaField(
+                mp3 = StorageStyle('TXXX', id3_desc='MusicBrainz Album Id'),
+                mp4 = StorageStyle(
+                    '----:com.apple.iTunes:MusicBrainz Album Id',
+                    as_type=str),
+                etc = StorageStyle('musicbrainz_albumid')
+    )
+    mb_artistid = MediaField(
+                mp3 = StorageStyle('TXXX', id3_desc='MusicBrainz Artist Id'),
+                mp4 = StorageStyle(
+                    '----:com.apple.iTunes:MusicBrainz Artist Id',
+                    as_type=str),
+                etc = StorageStyle('musicbrainz_artistid')
+    )
 
     @property
     def length(self):

@@ -66,6 +66,8 @@ def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
                 self.value = not correct_dict[field]
             elif type(correct_dict[field]) is datetime.date:
                 self.value = correct_dict[field] + datetime.timedelta(42)
+            elif type(correct_dict[field]) is str:
+                self.value = 'TestValue-' + str(field)
             else:
                 raise ValueError('unknown field type ' + \
                         str(type(correct_dict[field])))
@@ -141,16 +143,22 @@ correct_dicts = {
         'lyrics':     u'the lyrics',
         'comments':   u'the comments',
         'bpm':        6,
-        'comp':       True
+        'comp':       True,
+        'mb_trackid': '8b882575-08a5-4452-a7a7-cbb8a1531f9e',
+        'mb_albumid': '9e873859-8aa4-4790-b985-5a953e8ef628',
+        'mb_artistid':'7cf0ea9d-86b9-4dad-ba9e-2355a64899ea',
     },
 
     # Additional coverage for common cases when "total" fields are unset.
-    # Created with iTunes.
+    # Created with iTunes. (Also tests unset MusicBrainz fields.)
     'partial': {
         'track':      2,
         'tracktotal': 0,
         'disc':       4,
-        'disctotal':  0
+        'disctotal':  0,
+        'mb_trackid': '',
+        'mb_albumid': '',
+        'mb_artistid':'',
     },
     'min': {
         'track':      0,
@@ -178,7 +186,10 @@ correct_dicts = {
         'lyrics':     u'',
         'comments':   u'',
         'bpm':        0,
-        'comp':       False
+        'comp':       False,
+        'mb_trackid': u'',
+        'mb_albumid': u'',
+        'mb_artistid':u'',
     },
     
     # Full release date.
