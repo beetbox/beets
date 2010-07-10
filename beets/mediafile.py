@@ -13,8 +13,8 @@
 # included in all copies or substantial portions of the Software.
 
 """Handles low-level interfacing for files' tags. Wraps Mutagen to
-automatically detect file types and provide a unified interface for a useful
-subset of music files' tags.
+automatically detect file types and provide a unified interface for a
+useful subset of music files' tags.
 
 Usage:
 
@@ -24,9 +24,9 @@ Usage:
     >>> f.artist = 'The Beatles'
     >>> f.save()
 
-A field will always return a reasonable value of the correct type, even if no
-tag is present. If no value is available, the value will be false (e.g., zero
-or the empty string).
+A field will always return a reasonable value of the correct type, even
+if no tag is present. If no value is available, the value will be false
+(e.g., zero or the empty string).
 """
 
 import mutagen
@@ -36,10 +36,10 @@ import mutagen.monkeysaudio
 import datetime
 import re
 
-__all__ = ['FileTypeError', 'MediaFile']
+__all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
 
-# Currently allowed values for type:
-# mp3, mp4, flac, ogg, ape
+
+# Exceptions.
 
 # Raised for any file MediaFile can't read.
 class UnreadableFileError(IOError):
@@ -50,11 +50,7 @@ class FileTypeError(UnreadableFileError):
     pass
 
 
-
-
-
-
-#### flags used to define fields' behavior ####
+# Flags for encoding field behavior.
 
 class Enumeration(object):
     def __init__(self, *values):
@@ -67,25 +63,23 @@ packing = Enumeration('SLASHED', # pair delimited by /
                      )
 
 class StorageStyle(object):
-    """Parameterizes the storage behavior of a single field for a certain tag
-    format.
+    """Parameterizes the storage behavior of a single field for a
+    certain tag format.
+     - key: The Mutagen key used to access the field's data.
+     - list_elem: Store item as a single object or as first element
+       of a list.
+     - as_type: Which type the value is stored as (unicode, int, or
+       bool).
+     - packing: If this value is packed in a multiple-value storage
+       unit, which type of packing (in the packing enum). Otherwise,
+       None. (Makes as_type irrelevant).
+     - pack_pos: If the value is packed, in which position it is
+       stored.
+     - ID3 storage only: match against this 'desc' field as well
+       as the key.
     """
-    def __init__(self,
-                 # The Mutagen key used to access the data for this field.
-                 key,
-                 # Store item as a single object or as first element of a list.
-                 list_elem = True,
-                 # Which type the value is stored as (unicode, int, or bool).
-                 as_type = unicode,
-                 # If this value is packed in a multiple-value storage unit,
-                 # which type of packing (in the packing enum). Otherwise,
-                 # None. (Makes as_type irrelevant).
-                 packing = None,
-                 # If the value is packed, in which position it is stored.
-                 pack_pos = 0,
-                 # ID3 storage only: match against this 'desc' field as well
-                 # as the key.
-                 id3_desc = None):
+    def __init__(self, key, list_elem = True, as_type = unicode, packing = None,
+                 pack_pos = 0, id3_desc = None):
         self.key = key
         self.list_elem = list_elem
         self.as_type = as_type
@@ -94,21 +88,19 @@ class StorageStyle(object):
         self.id3_desc = id3_desc
 
 
-
-
-#### dealing with packings ####
+# Dealing with packings.
 
 class Packed(object):
-    """Makes a packed list of values subscriptable. To access the packed output
-    after making changes, use packed_thing.items.
+    """Makes a packed list of values subscriptable. To access the packed
+    output after making changes, use packed_thing.items.
     """
     
     def __init__(self, items, packstyle, none_val=0, out_type=int):
-        """Create a Packed object for subscripting the packed values in items.
-        The items are packed using packstyle, which is a value from the
-        packing enum. none_val is returned from a request when no suitable
-        value is found in the items. Vales are converted to out_type before
-        they are returned.
+        """Create a Packed object for subscripting the packed values in
+        items. The items are packed using packstyle, which is a value
+        from the packing enum. none_val is returned from a request when
+        no suitable value is found in the items. Vales are converted to
+        out_type before they are returned.
         """
         self.items = items
         self.packstyle = packstyle
@@ -165,8 +157,8 @@ class Packed(object):
             new_items.append(next_item)
     
         if self.packstyle == packing.DATE:
-            # Truncate the items wherever we reach an invalid (none) entry.
-            # This prevents dates like 2008-00-05.
+            # Truncate the items wherever we reach an invalid (none)
+            # entry. This prevents dates like 2008-00-05.
             for i, item in enumerate(new_items):
                 if item == self.none_val or item is None:
                     del(new_items[i:]) # truncate
@@ -184,23 +176,22 @@ class Packed(object):
             self.items = new_items
         
 
+# The field itself.
 
 class MediaField(object):
     """A descriptor providing access to a particular (abstract) metadata
-    field. out_type is the type that users of MediaFile should see and can
-    be unicode, int, or bool. id3, mp4, and flac are StorageStyle instances
-    parameterizing the field's storage for each type.
+    field. out_type is the type that users of MediaFile should see and
+    can be unicode, int, or bool. id3, mp4, and flac are StorageStyle
+    instances parameterizing the field's storage for each type.
     """
     
-    def __init__(self,
-            # The field's semantic (exterior) type.
-            out_type = unicode,
-            # A hash whose keys are 'mp3', 'mp4', and 'flac' and whose values
-            # are StorageStyle instances parameterizing the field's storage for
-            # each type.
-            **kwargs
-            ):
-            
+    def __init__(self, out_type = unicode, **kwargs):
+        """Creates a new MediaField.
+         - out_type: The field's semantic (exterior) type.
+         - kwargs: A hash whose keys are 'mp3', 'mp4', 'flac', 'ogg',
+           and 'ape' and whose values are StorageStyle instances
+           parameterizing the field's storage for each type.
+        """
         self.out_type = out_type
         if not set(['mp3', 'mp4', 'etc']) == set(kwargs):
             raise TypeError('MediaField constructor must have keyword '
@@ -245,8 +236,8 @@ class MediaField(object):
     
     def _storedata(self, obj, val, style):
         """Store val for this descriptor's field in the tag dictionary
-        according to the provided StorageStyle. Store it as a single-item list
-        if necessary.
+        according to the provided StorageStyle. Store it as a
+        single-item list if necessary.
         """
         # wrap as a list if necessary
         if style.list_elem: out = [val]
@@ -382,13 +373,13 @@ class MediaField(object):
             self._storedata(obj, out, style)
 
 class CompositeDateField(object):
-    """A MediaFile field for conveniently accessing the year, month, and day
-    fields as a datetime.date object. Allows both getting and setting of the
-    component fields.
+    """A MediaFile field for conveniently accessing the year, month, and
+    day fields as a datetime.date object. Allows both getting and
+    setting of the component fields.
     """
     def __init__(self, year_field, month_field, day_field):
-        """Create a new date field from the indicated MediaFields for the
-        component values.
+        """Create a new date field from the indicated MediaFields for
+        the component values.
         """
         self.year_field = year_field
         self.month_field = month_field
@@ -396,30 +387,31 @@ class CompositeDateField(object):
         
     def __get__(self, obj, owner):
         """Return a datetime.date object whose components indicating the
-        smallest valid date whose components are at least as large as the
-        three component fields (that is, if year == 1999, month == 0, and
-        day == 0, then date == datetime.date(1999, 1, 1)). If the components
-        indicate an invalid date (e.g., if month == 47), datetime.date.min is
-        returned.
+        smallest valid date whose components are at least as large as
+        the three component fields (that is, if year == 1999, month == 0,
+        and day == 0, then date == datetime.date(1999, 1, 1)). If the
+        components indicate an invalid date (e.g., if month == 47),
+        datetime.date.min is returned.
         """
         try:
-            return datetime.date(max(self.year_field.__get__(obj, owner),
-                                     datetime.MINYEAR),
-                                 max(self.month_field.__get__(obj, owner), 1),
-                                 max(self.day_field.__get__(obj, owner), 1)
-                                )
+            return datetime.date(
+                max(self.year_field.__get__(obj, owner), datetime.MINYEAR),
+                max(self.month_field.__get__(obj, owner), 1),
+                max(self.day_field.__get__(obj, owner), 1)
+            )
         except ValueError: # Out of range values.
             return datetime.date.min
     
     def __set__(self, obj, val):
-        """Set the year, month, and day fields to match the components of the
-        provided datetime.date object.
+        """Set the year, month, and day fields to match the components of
+        the provided datetime.date object.
         """
         self.year_field.__set__(obj, val.year)
         self.month_field.__set__(obj, val.month)
         self.day_field.__set__(obj, val.day)
 
 
+# The file (a collection of fields).
 
 class MediaFile(object):
     """Represents a multimedia file on disk and provides access to its

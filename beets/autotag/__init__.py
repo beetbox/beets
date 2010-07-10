@@ -67,7 +67,7 @@ class InsufficientMetadataError(AutotagError):
 log = logging.getLogger('beets')
 
 def _first_n(it, n):
-    """Takes an iterator and returns another iterator, trunacted to
+    """Takes an iterator and returns another iterator, truncated to
     yield only the first n elements.
     """
     for i, v in enumerate(it):
@@ -191,7 +191,7 @@ def current_metadata(items):
                 max_freq = freq
                 likelies[key] = tag
     
-    return (likelies['artist'], likelies['album'])
+    return likelies['artist'], likelies['album']
 
 def order_items(items, trackinfo):
     """Orders the items based on how they match some canonical track

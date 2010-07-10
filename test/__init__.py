@@ -1,2 +1,2 @@
-# placeholder
+# Make python -m testall.py work.
 
