@@ -517,7 +517,7 @@ class BaseLibrary(object):
             return AndQuery.from_string(val, default_fields)
         elif isinstance(val, Query):
             return val
-        elif not isinstance(query, Query):
+        elif not isinstance(val, Query):
             raise ValueError('query must be None or have type Query or str')
 
 
