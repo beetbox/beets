@@ -18,7 +18,7 @@
 import unittest
 import sys
 sys.path.append('..')
-from beets.player import bpd
+from beetsplug import bpd
 
 class FauxPathTest(unittest.TestCase):
         

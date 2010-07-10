@@ -24,7 +24,6 @@ from beets.ui import print_
 from beets import autotag
 from beets import library
 from beets.mediafile import UnreadableFileError, FileTypeError
-from beets.player import bpd
 
 # Global logger.
 log = logging.getLogger('beets')

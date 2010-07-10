@@ -68,7 +68,7 @@ SAFE_COMMANDS = (
 
 
 # Logger.
-log = logging.getLogger('beets.player.bpd')
+log = logging.getLogger('beets.bpd')
 
 
 # Gstreamer import error.
