@@ -311,6 +311,9 @@ def apply_metadata(items, info):
         item.mb_artistid = mb_artistid
 
 def match_by_id(items):
+    """If the items are tagged with a MusicBrainz album ID, returns an
+    info dict for the corresponding album. Otherwise, returns None.
+    """
     # Is there a consensus on the MB album ID?
     albumids = [item.mb_albumid for item in items if item.mb_albumid]
     if not albumids:
@@ -322,6 +325,10 @@ def match_by_id(items):
         return mb.album_for_id(albumid)
     else:
         return None
+    
+    #fixme In the future, at the expense of performance, we could use
+    # other IDs (i.e., track and artist) in case the album tag isn't
+    # present, but that event seems very unlikely.
 
 def tag_album(items, search_artist=None, search_album=None):
     """Bundles together the functionality used to infer tags for a
@@ -343,6 +350,24 @@ def tag_album(items, search_artist=None, search_album=None):
     # Get current metadata.
     cur_artist, cur_album = current_metadata(items)
     
+    # The output list of result tuples:
+    dist_ordered_cands = []
+    
+    # Try to find album indicated by MusicBrainz iDs.
+    id_info = match_by_id(items)
+    if id_info:
+        ordered = order_items(items, id_info['tracks'])
+        if ordered:
+            dist = distance(ordered, id_info)
+            dist_ordered_cands.append((dist, ordered, id_info))
+            # If we have a very good MBID match, don't bother
+            # continuing.
+            if dist < STRONG_REC_THRESH:
+                return (cur_artist, cur_album, dist_ordered_cands,
+                        RECOMMEND_STRONG)
+            # Otherwise, this match will compete against metadata-based
+            # matches.
+    
     # Search terms.
     if not (search_artist and search_album):
         # No explicit search terms -- use current metadata.
@@ -354,7 +379,6 @@ def tag_album(items, search_artist=None, search_album=None):
     candidates = mb.match_album(search_artist, search_album, len(items))
     
     # Get the distance to each candidate.
-    dist_ordered_cands = []
     for info in _first_n(candidates, MAX_CANDIDATES):
         # Make sure the album has the correct number of tracks.
         if len(items) != len(info['tracks']):
