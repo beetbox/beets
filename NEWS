@@ -8,6 +8,15 @@
   Python modules under the "beetsplug" namespace package containing
   subclasses of beets.plugins.BeetsPlugin. See the "beetsplug" directory
   for examples.
+* Support for MusicBrainz ID tags. The autotagger now keeps track of the
+  MusicBrainz track, album, and artist IDs it matched for each file. It
+  also looks for album IDs in new files it's importing and uses those to
+  look up data in MusicBrainz. Furthermore, track IDs are used as a
+  component of the tagger's distance metric now. Tangentially, change
+  required the database code to support a lightweight form of migrations
+  so that new columns could be added to old databases--this is a
+  delicate feature, so it would be very wise to make a backup of your
+  database before upgrading to this version.
 
 1.0b2
 -----
@@ -33,4 +42,3 @@
 1.0b1
 -----
 First public release.
-
