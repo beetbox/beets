@@ -47,6 +47,8 @@ TRACK_INDEX_WEIGHT = 0.0
 TRACK_LENGTH_GRACE = 15
 TRACK_LENGTH_MAX = 30
 TRACK_LENGTH_WEIGHT = 1.0
+# MusicBrainz track ID matches.
+TRACK_ID_WEIGHT = 5.0
 
 # Recommendation constants.
 RECOMMEND_STRONG = 'RECOMMEND_STRONG'
@@ -245,6 +247,12 @@ def track_distance(item, track_data, track_index=None):
         if track_index != item.track:
             dist += TRACK_INDEX_WEIGHT
         dist_max += TRACK_INDEX_WEIGHT
+    
+    # MusicBrainz track ID.
+    if item.mb_trackid:
+        if item.mb_trackid != track_data['id'].rsplit('/', 1)[1]:
+            dist += TRACK_ID_WEIGHT
+        dist_max += TRACK_ID_WEIGHT
 
     return dist / dist_max
 
