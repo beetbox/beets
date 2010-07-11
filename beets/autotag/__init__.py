@@ -282,11 +282,17 @@ def apply_metadata(items, info):
     """Set the items' metadata to match the data given in info. The
     list of items must be ordered.
     """
+    # Global MusicBrainz IDs (album and artist).
+    mb_albumid = info['album_id'].rsplit('/', 1)[1]
+    mb_artistid = info['artist_id'].rsplit('/', 1)[1]
+    
     for index, (item, track_data) in enumerate(zip(items,  info['tracks'])):
+        # Album, artist, track count.
         item.artist = info['artist']
         item.album = info['album']
         item.tracktotal = len(items)
         
+        # Release date.
         if 'year' in info:
             item.year = info['year']
         if 'month' in info:
@@ -294,10 +300,15 @@ def apply_metadata(items, info):
         if 'day' in info:
             item.day = info['day']
         
+        # Title and track index.
         item.title = track_data['title']
         item.track = index + 1
         
-        #fixme Set MusicBrainz IDs
+        # MusicBrainz track ID.
+        item.mb_trackid = track_data['id'].rsplit('/', 1)[1]
+        # Album and artist IDs.
+        item.mb_albumid = mb_albumid
+        item.mb_artistid = mb_artistid
 
 def tag_album(items, search_artist=None, search_album=None):
     """Bundles together the functionality used to infer tags for a
