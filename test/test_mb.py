@@ -127,19 +127,29 @@ class MBReleaseDictTest(unittest.TestCase):
 
 class MBWhiteBoxTest(unittest.TestCase):
     def test_match_album_finds_el_producto(self):
-        a = mb.match_album_single('the avalanches', 'el producto')
+        a = iter(mb.match_album('the avalanches', 'el producto')).next()
         self.assertEqual(a['album'], 'El Producto')
         self.assertEqual(a['artist'], 'The Avalanches')
         self.assertEqual(len(a['tracks']), 7)
 
     def test_match_album_tolerates_small_errors(self):
-        a = mb.match_album_single('mia', 'kala ')
+        a = iter(mb.match_album('mia', 'kala ')).next()
         self.assertEqual(a['artist'], 'M.I.A.')
         self.assertEqual(a['album'], 'Kala')
+
+class ByIDTest(unittest.TestCase):
+    def test_match_found(self):
+        a = mb.album_for_id('73677f81-86e6-4087-9255-9ee81b8e3dd3')
+        self.assertEqual(a['artist'], 'Paul Simon')
+        self.assertEqual(a['album'], 'Graceland')
+        self.assertTrue(len(a['tracks']) > 0)
+    
+    def test_no_match_returns_none(self):
+        a = mb.album_for_id('bogus-id')
+        self.assertEqual(a, None)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
-

@@ -170,14 +170,14 @@ def match_album(artist, album, tracks=None):
         tracks = release_tracks(release.id)
         yield release_dict(release, tracks)
 
-def match_album_single(artist, album, tracks=None):
-    """Behaves like match_album but, instead of returning an iterator,
-    tries to get just a single result. Returns an info dictionary or
-    None if no suitable match.
+def album_for_id(albumid):
+    """Fetches an album by its MusicBrainz ID and returns an
+    information dictionary. If no match is found, returns None.
     """
-    it = match_album(artist, album, tracks)
+    query = mbws.Query()
+    inc = mbws.ReleaseIncludes(artist=True, tracks=True)
     try:
-        return it.next()
-    except StopIteration:
+        album = _query_wrap(query.getReleaseById, albumid, inc)
+    except mbws.ResourceNotFoundError:
         return None
-
+    return release_dict(album, album.tracks)

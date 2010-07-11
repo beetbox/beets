@@ -310,6 +310,19 @@ def apply_metadata(items, info):
         item.mb_albumid = mb_albumid
         item.mb_artistid = mb_artistid
 
+def match_by_id(items):
+    # Is there a consensus on the MB album ID?
+    albumids = [item.mb_albumid for item in items if item.mb_albumid]
+    if not albumids:
+        return None
+    
+    # If all album IDs are equal, look up the album.
+    if bool(reduce(lambda x,y: x if x==y else (), albumids)):
+        albumid = albumids[0]
+        return mb.album_for_id(albumid)
+    else:
+        return None
+
 def tag_album(items, search_artist=None, search_album=None):
     """Bundles together the functionality used to infer tags for a
     set of items comprised by an album. Returns everything relevant:
@@ -383,4 +396,3 @@ def tag_album(items, search_artist=None, search_album=None):
             rec = RECOMMEND_NONE
     
     return cur_artist, cur_album, dist_ordered_cands, rec
-
