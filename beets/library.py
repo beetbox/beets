@@ -30,23 +30,26 @@ MAX_FILENAME_LENGTH = 200
 # metadata, all metadata (inlcuding read-only attributes), and all
 # fields (i.e., including non-metadata attributes).
 metadata_rw_fields = [
-    ('title',      'text'),
-    ('artist',     'text'),
-    ('album',      'text'),
-    ('genre',      'text'),
-    ('composer',   'text'),
-    ('grouping',   'text'),
-    ('year',       'int'),
-    ('month',      'int'),
-    ('day',        'int'),
-    ('track',      'int'),
-    ('tracktotal', 'int'),
-    ('disc',       'int'),
-    ('disctotal',  'int'),
-    ('lyrics',     'text'),
-    ('comments',   'text'),
-    ('bpm',        'int'),
-    ('comp',       'bool'),
+    ('title',       'text'),
+    ('artist',      'text'),
+    ('album',       'text'),
+    ('genre',       'text'),
+    ('composer',    'text'),
+    ('grouping',    'text'),
+    ('year',        'int'),
+    ('month',       'int'),
+    ('day',         'int'),
+    ('track',       'int'),
+    ('tracktotal',  'int'),
+    ('disc',        'int'),
+    ('disctotal',   'int'),
+    ('lyrics',      'text'),
+    ('comments',    'text'),
+    ('bpm',         'int'),
+    ('comp',        'bool'),
+    ('mb_trackid',  'text'),
+    ('mb_albumid',  'text'),
+    ('mb_artistid', 'text'),
 ]
 metadata_fields = [
     ('length',  'real'),
@@ -649,14 +652,15 @@ class Library(BaseLibrary):
             
         else:
             # Table exists but is missing fields.
+            setup_sql = ''
             for fname in field_names - current_fields:
                 for field in fields:
                     if field[0] == fname:
                         break
                 else:
                     assert False
-                setup_sql =  'ALTER TABLE items ADD COLUMN ' + \
-                             ' '.join(field) + ';'
+                setup_sql += 'ALTER TABLE items ADD COLUMN ' + \
+                             ' '.join(field) + ';\n'
         
         self.conn.executescript(setup_sql)
         self.conn.commit()

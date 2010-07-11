@@ -18,31 +18,11 @@
 import unittest, sys, os
 sys.path.append('..')
 import beets.library
+import test_db
 
 parse_query = beets.library.CollectionQuery._parse_query
 
-some_item = beets.library.Item({
-    'title':      u'the title',
-    'artist':     u'the artist',
-    'album':      u'the album',
-    'genre':      u'the genre',
-    'composer':   u'the composer',
-    'grouping':   u'the grouping',
-    'year':       1,
-    'month':      2,
-    'day':        3,
-    'track':      4,
-    'tracktotal': 5,
-    'disc':       6,
-    'disctotal':  7,
-    'lyrics':     u'the lyrics',
-    'comments':   u'the comments',
-    'bpm':        8,
-    'comp':       True,
-    'path':       'somepath',
-    'length':     60.0,
-    'bitrate':    128000,
-})
+some_item = test_db.item()
 
 class QueryParseTest(unittest.TestCase):
     def test_one_basic_term(self):

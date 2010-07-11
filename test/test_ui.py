@@ -21,6 +21,7 @@ sys.path.append('..')
 from beets import library
 from beets import ui
 from beets.ui import commands
+import test_db
 
 # Dummy printing so we can get the commands' output.
 outbuffer = []
@@ -37,28 +38,7 @@ class ListTest(unittest.TestCase):
     def setUp(self):
         clear_buffer()
         self.lib = library.Library(':memory:')
-        i = library.Item({
-            'title':      u'the title',
-            'artist':     u'the artist',
-            'album':      u'the album',
-            'genre':      u'the genre',
-            'composer':   u'the composer',
-            'grouping':   u'the grouping',
-            'year':       1,
-            'month':      2,
-            'day':        3,
-            'track':      4,
-            'tracktotal': 5,
-            'disc':       6,
-            'disctotal':  7,
-            'lyrics':     u'the lyrics',
-            'comments':   u'the comments',
-            'bpm':        8,
-            'comp':       True,
-            'path':       'somepath',
-            'length':     60.0,
-            'bitrate':    128000,
-        })
+        i = test_db.item()
         self.lib.add(i)
         
     def test_list_outputs_item(self):

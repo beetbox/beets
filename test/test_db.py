@@ -23,26 +23,29 @@ def lib(): return beets.library.Library('rsrc' + os.sep + 'test.blb')
 def boracay(l): return beets.library.Item(l.conn.execute('select * from items '
     'where id=3').fetchone())
 def item(): return beets.library.Item({
-    'title':      u'the title',
-    'artist':     u'the artist',
-    'album':      u'the album',
-    'genre':      u'the genre',
-    'composer':   u'the composer',
-    'grouping':   u'the grouping',
-    'year':       1,
-    'month':      2,
-    'day':        3,
-    'track':      4,
-    'tracktotal': 5,
-    'disc':       6,
-    'disctotal':  7,
-    'lyrics':     u'the lyrics',
-    'comments':   u'the comments',
-    'bpm':        8,
-    'comp':       True,
-    'path':       'somepath',
-    'length':     60.0,
-    'bitrate':    128000,
+    'title':       u'the title',
+    'artist':      u'the artist',
+    'album':       u'the album',
+    'genre':       u'the genre',
+    'composer':    u'the composer',
+    'grouping':    u'the grouping',
+    'year':        1,
+    'month':       2,
+    'day':         3,
+    'track':       4,
+    'tracktotal':  5,
+    'disc':        6,
+    'disctotal':   7,
+    'lyrics':      u'the lyrics',
+    'comments':    u'the comments',
+    'bpm':         8,
+    'comp':        True,
+    'path':        'somepath',
+    'length':      60.0,
+    'bitrate':     128000,
+    'mb_trackid':  'someID-1',
+    'mb_albumid':  'someID-2',
+    'mb_artistid': 'someID-3',
 })
 np = beets.library._normpath
 
@@ -216,6 +219,7 @@ class MigrationTest(unittest.TestCase):
         self.older_fields = [('field_one', 'int')]
         self.old_fields = self.older_fields + [('field_two', 'int')]
         self.new_fields = self.old_fields + [('field_three', 'int')]
+        self.newer_fields = self.new_fields + [('field_four', 'int')]
         
         # Set up a library with old_fields.
         self.libfile = os.path.join('rsrc', 'templib.blb')
@@ -250,6 +254,13 @@ class MigrationTest(unittest.TestCase):
         c.execute("select * from items")
         row = c.fetchone()
         self.assertEqual(len(row), len(self.old_fields))
+    
+    def test_open_with_multiple_new_fields(self):
+        new_lib = beets.library.Library(self.libfile, fields=self.newer_fields)
+        c = new_lib.conn.cursor()
+        c.execute("select * from items")
+        row = c.fetchone()
+        self.assertEqual(len(row), len(self.newer_fields))
         
 
 def suite():
