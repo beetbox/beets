@@ -73,8 +73,6 @@ log.addHandler(logging.StreamHandler())
 
 #### exceptions ####
 
-class LibraryError(Exception):
-    pass
 class InvalidFieldError(Exception):
     pass
 
@@ -616,7 +614,8 @@ class Library(BaseLibrary):
     """A music library using an SQLite database as a metadata store."""
     def __init__(self, path='library.blb',
                        directory='~/Music',
-                       path_format='$artist/$album/$track $title'):
+                       path_format='$artist/$album/$track $title',
+                       fields=item_fields):
         self.path = path
         self.directory = directory
         self.path_format = path_format
@@ -625,13 +624,39 @@ class Library(BaseLibrary):
         self.conn.row_factory = sqlite3.Row
             # this way we can access our SELECT results like dictionaries
         
-        self._setup()
+        self._setup(fields)
     
-    def _setup(self):
-        """Set up the schema of the library file."""
-        setup_sql =  'CREATE TABLE IF NOT EXISTS items ('
-        setup_sql += ', '.join([' '.join(f) for f in item_fields])
-        setup_sql += ');'
+    def _setup(self, fields):
+        """Set up the schema of the library file. fields is a list
+        of (name, type) pairs indicating all the fields that should
+        be present in the table. Columns are added if necessary.
+        """
+        # Get current schema.
+        cur = self.conn.cursor()
+        cur.execute('PRAGMA table_info(items)')
+        current_fields = set([row[1] for row in cur])
+        
+        field_names = set([f[0] for f in fields])
+        if current_fields.issuperset(field_names):
+            # Table exists and has all the required columns.
+            return
+            
+        if not current_fields:
+            # No table exists.        
+            setup_sql =  'CREATE TABLE items ('
+            setup_sql += ', '.join([' '.join(f) for f in fields])
+            setup_sql += ');'
+            
+        else:
+            # Table exists but is missing fields.
+            for fname in field_names - current_fields:
+                for field in fields:
+                    if field[0] == fname:
+                        break
+                else:
+                    assert False
+                setup_sql =  'ALTER TABLE items ADD COLUMN ' + \
+                             ' '.join(field) + ';'
         
         self.conn.executescript(setup_sql)
         self.conn.commit()

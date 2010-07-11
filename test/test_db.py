@@ -111,7 +111,6 @@ class AddTest(unittest.TestCase):
             'where composer="the composer"').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
         
-
 class RemoveTest(unittest.TestCase):
     def setUp(self):
         self.lib = lib()
@@ -207,7 +206,52 @@ class DestinationTest(unittest.TestCase):
         self.i.path = 'something.extn'
         dest = self.lib.destination(self.i)
         self.assertEqual(dest[-5:], '.extn')
+
+class MigrationTest(unittest.TestCase):
+    """Tests the ability to change the database schema between
+    versions.
+    """
+    def setUp(self):
+        # Three different "schema versions".
+        self.older_fields = [('field_one', 'int')]
+        self.old_fields = self.older_fields + [('field_two', 'int')]
+        self.new_fields = self.old_fields + [('field_three', 'int')]
         
+        # Set up a library with old_fields.
+        self.libfile = os.path.join('rsrc', 'templib.blb')
+        old_lib = beets.library.Library(self.libfile, fields=self.old_fields)
+        # Add an item to the old library.
+        old_lib.conn.execute(
+            'insert into items (field_one, field_two) values (4, 2)'
+        )
+        old_lib.save()
+        del old_lib
+        
+    def tearDown(self):
+        os.unlink(self.libfile)
+    
+    def test_open_with_same_fields_leaves_untouched(self):
+        new_lib = beets.library.Library(self.libfile, fields=self.old_fields)
+        c = new_lib.conn.cursor()
+        c.execute("select * from items")
+        row = c.fetchone()
+        self.assertEqual(len(row), len(self.old_fields))
+    
+    def test_open_with_new_field_adds_column(self):
+        new_lib = beets.library.Library(self.libfile, fields=self.new_fields)
+        c = new_lib.conn.cursor()
+        c.execute("select * from items")
+        row = c.fetchone()
+        self.assertEqual(len(row), len(self.new_fields))
+    
+    def test_open_with_fewer_fields_leaves_untouched(self):
+        new_lib = beets.library.Library(self.libfile, fields=self.older_fields)
+        c = new_lib.conn.cursor()
+        c.execute("select * from items")
+        row = c.fetchone()
+        self.assertEqual(len(row), len(self.old_fields))
+        
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
