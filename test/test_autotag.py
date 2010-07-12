@@ -77,11 +77,17 @@ class AlbumsInDirTest(unittest.TestCase):
                 self.assertEqual(len(album), 1)
 
 class OrderingTest(unittest.TestCase):
+    def item(self, title, track):
+        return Item({
+            'title': title, 'track': track,
+            'mb_trackid': '', 'mb_albumid': '', 'mb_artistid': '',
+        })
+    
     def test_order_corrects_metadata(self):
         items = []
-        items.append(Item({'title': 'one', 'track': 1}))
-        items.append(Item({'title': 'three', 'track': 2}))
-        items.append(Item({'title': 'two', 'track': 3}))
+        items.append(self.item('one', 1))
+        items.append(self.item('three', 2))
+        items.append(self.item('two', 3))
         trackinfo = []
         trackinfo.append({'title': 'one', 'track': 1})
         trackinfo.append({'title': 'two', 'track': 2})
@@ -93,9 +99,9 @@ class OrderingTest(unittest.TestCase):
 
     def test_order_works_with_incomplete_metadata(self):
         items = []
-        items.append(Item({'title': 'one', 'track': 1}))
-        items.append(Item({'title': 'three', 'track': 1}))
-        items.append(Item({'title': 'two', 'track': 1}))
+        items.append(self.item('one', 1))
+        items.append(self.item('three', 1))
+        items.append(self.item('two', 1))
         trackinfo = []
         trackinfo.append({'title': 'one', 'track': 1})
         trackinfo.append({'title': 'two', 'track': 2})
