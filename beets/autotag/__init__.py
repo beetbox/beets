@@ -361,7 +361,7 @@ def tag_album(items, search_artist=None, search_album=None):
     # The output list of result tuples:
     dist_ordered_cands = []
     
-    # Try to find album indicated by MusicBrainz iDs.
+    # Try to find album indicated by MusicBrainz IDs.
     id_info = match_by_id(items)
     if id_info:
         ordered = order_items(items, id_info['tracks'])
@@ -388,6 +388,10 @@ def tag_album(items, search_artist=None, search_album=None):
     
     # Get the distance to each candidate.
     for info in _first_n(candidates, MAX_CANDIDATES):
+        # Don't duplicate the MusicBrainz match.
+        if id_info and id_info['album_id'] == info['album_id']:
+            continue
+        
         # Make sure the album has the correct number of tracks.
         if len(items) != len(info['tracks']):
             continue
