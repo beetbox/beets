@@ -133,9 +133,11 @@ def _unicode_path(path):
 
 # Note: POSIX actually supports \ and : -- I just think they're
 # a pain.
-SPECIAL_CHARS_UNIX = re.compile(r'[\\/:]|^\.')
-SPECIAL_CHARS_WINDOWS = re.compile('[\\/:"\*\?<>\|]|^\.|\.$')
-SANITIZE_CHAR = u'_'
+CHAR_REPLACE = [
+    (re.compile(r'[\\/]|^\.'), u'_'),
+    (re.compile(r':'), u'-'),
+]
+CHAR_REPLACE_WINDOWS = re.compile('["\*\?<>\|]|^\.|\.$'), u'_u'
 def _sanitize_path(path, plat=None):
     """Takes a path and makes sure that it is legal for the specified
     platform (as returned by platform.system()). Returns a new path.
@@ -144,11 +146,11 @@ def _sanitize_path(path, plat=None):
     comps = _components(path)
     for i, comp in enumerate(comps):
         # Replace special characters.
+        for regex, repl in CHAR_REPLACE:
+            comp = regex.sub(repl, comp)
         if plat == 'Windows':
-            regex = SPECIAL_CHARS_WINDOWS
-        else:
-            regex = SPECIAL_CHARS_UNIX
-        comp = regex.sub(SANITIZE_CHAR, comp)
+            regex, repl = CHAR_REPLACE_WINDOWS
+            comp = regex.sub(repl, comp)
         
         # Truncate each component.
         if len(comp) > MAX_FILENAME_LENGTH:

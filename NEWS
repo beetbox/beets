@@ -17,6 +17,8 @@
   so that new columns could be added to old databases--this is a
   delicate feature, so it would be very wise to make a backup of your
   database before upgrading to this version.
+* Fixed some bugs with encoding paths on Windows. Also, :s are now
+  replaced with -s in path names (instead of _s) for readability.
 
 1.0b2
 -----

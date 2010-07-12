@@ -239,6 +239,10 @@ class DestinationTest(unittest.TestCase):
         self.assertFalse('<' in p)
         self.assertFalse('>' in p)
         self.assertFalse('|' in p)
+    
+    def test_sanitize_replaces_colon_with_dash(self):
+        p = beets.library._sanitize_path(u':', 'Darwin')
+        self.assertEqual(p, u'-')
 
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
