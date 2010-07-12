@@ -108,6 +108,7 @@ def release_dict(release, tracks=None):
            'album_id':  release.id,
            'artist':    release.artist.name,
            'artist_id': release.artist.id,
+           'asin':      release.asin,
           }
 
     # Release date.
