@@ -20,6 +20,7 @@ import shutil
 import sys
 from string import Template
 import logging
+import platform
 from beets.mediafile import MediaFile, UnreadableFileError, FileTypeError
 
 MAX_FILENAME_LENGTH = 200
@@ -130,6 +131,31 @@ def _unicode_path(path):
         return path
     return path.decode(sys.getfilesystemencoding())
 
+# Note: POSIX actually supports \ and : -- I just think they're
+# a pain.
+SPECIAL_CHARS_UNIX = re.compile(r'[\\/:]|^\.')
+SPECIAL_CHARS_WINDOWS = re.compile('[\\/:"\*\?<>\|]|^\.|\.$')
+SANITIZE_CHAR = u'_'
+def _sanitize_path(path, plat=None):
+    """Takes a path and makes sure that it is legal for the specified
+    platform (as returned by platform.system()). Returns a new path.
+    """
+    plat = plat or platform.system()
+    comps = _components(path)
+    for i, comp in enumerate(comps):
+        # Replace special characters.
+        if plat == 'Windows':
+            regex = SPECIAL_CHARS_WINDOWS
+        else:
+            regex = SPECIAL_CHARS_UNIX
+        comp = regex.sub(SANITIZE_CHAR, comp)
+        
+        # Truncate each component.
+        if len(comp) > MAX_FILENAME_LENGTH:
+            comp = comp[:MAX_FILENAME_LENGTH]
+                
+        comps[i] = comp
+    return os.path.join(*comps)
 
 
 
@@ -680,8 +706,7 @@ class Library(BaseLibrary):
             # sanitize the value for inclusion in a path:
             # replace / and leading . with _
             if isinstance(value, basestring):
-                value.replace(os.sep, '_')
-                value = re.sub(r'[\\/:]|^\.', '_', value)
+                value = value.replace(os.sep, '_')
             elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
                 # pad with zeros
                 value = '%02i' % value
@@ -692,12 +717,8 @@ class Library(BaseLibrary):
         # Perform substitution.
         subpath = subpath_tmpl.substitute(mapping)
         
-        # Truncate path components.
-        comps = _components(subpath)
-        for i, comp in enumerate(comps):
-            if len(comp) > MAX_FILENAME_LENGTH:
-                comps[i] = comp[:MAX_FILENAME_LENGTH]
-        subpath = os.path.join(*comps)
+        # Truncate components and remove forbidden characters.
+        subpath = _sanitize_path(subpath)
         
         # Preserve extension.
         _, extension = os.path.splitext(item.path)

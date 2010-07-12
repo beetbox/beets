@@ -198,6 +198,18 @@ class DestinationTest(unittest.TestCase):
         self.assertTrue('two' in dest)
         self.assertFalse('one/two' in dest)
     
+    def test_destination_escapes_leading_dot(self):
+        self.i.album = '.something'
+        dest = self.lib.destination(self.i)
+        self.assertTrue('something' in dest)
+        self.assertFalse('/.' in dest)
+    
+    def test_destination_preserves_legitimate_slashes(self):
+        self.i.artist = 'one'
+        self.i.album = 'two'
+        dest = self.lib.destination(self.i)
+        self.assertTrue(os.path.join('one', 'two') in dest)
+    
     def test_destination_long_names_truncated(self):
         self.i.title = 'X'*300
         self.i.artist = 'Y'*300
@@ -209,6 +221,24 @@ class DestinationTest(unittest.TestCase):
         self.i.path = 'something.extn'
         dest = self.lib.destination(self.i)
         self.assertEqual(dest[-5:], '.extn')
+    
+    def test_sanitize_unix_replaces_leading_dot(self):
+        p = beets.library._sanitize_path('one/.two/three', 'Darwin')
+        self.assertFalse('.' in p)
+    
+    def test_sanitize_windows_replaces_trailing_dot(self):
+        p = beets.library._sanitize_path('one/two./three', 'Windows')
+        self.assertFalse('.' in p)
+    
+    def test_sanitize_windows_replaces_illegal_chars(self):
+        p = beets.library._sanitize_path(':*?"<>|', 'Windows')
+        self.assertFalse(':' in p)
+        self.assertFalse('*' in p)
+        self.assertFalse('?' in p)
+        self.assertFalse('"' in p)
+        self.assertFalse('<' in p)
+        self.assertFalse('>' in p)
+        self.assertFalse('|' in p)
 
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
