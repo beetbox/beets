@@ -58,9 +58,9 @@ ITEM_FIELDS = [
     ('length',      'real', False, True),
     ('bitrate',     'int',  False, True),
 ]
-METADATA_RW_KEYS = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
-METADATA_KEYS = [f[0] for f in ITEM_FIELDS if f[3]]
-ITEM_KEYS = [f[0] for f in ITEM_FIELDS]
+ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
+ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
+ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 
 # Default search fields for various granularities.
 ARTIST_DEFAULT_FIELDS = ('artist',)
@@ -229,7 +229,7 @@ class Item(object):
             read_path = self.path
         f = MediaFile(read_path)
 
-        for key in METADATA_KEYS:
+        for key in ITEM_KEYS_META:
             setattr(self, key, getattr(f, key))
         self.path = read_path
     
@@ -237,7 +237,7 @@ class Item(object):
         """Writes the item's metadata to the associated file.
         """
         f = MediaFile(self.path)
-        for key in METADATA_RW_KEYS:
+        for key in ITEM_KEYS_WRITABLE:
             setattr(f, key, getattr(self, key))
         f.save()
     
@@ -448,7 +448,7 @@ class AnySubstringQuery(CollectionQuery):
         used.
         """
         self.pattern = pattern
-        self.fields = fields or METADATA_RW_KEYS
+        self.fields = fields or ITEM_KEYS_WRITABLE
 
         subqueries = []
         for field in self.fields:
@@ -701,7 +701,7 @@ class Library(BaseLibrary):
         # build the mapping for substitution in the path template, beginning
         # with the values from the database
         mapping = {}
-        for key in METADATA_KEYS:
+        for key in ITEM_KEYS_META:
             value = getattr(item, key)
             # sanitize the value for inclusion in a path:
             # replace / and leading . with _
