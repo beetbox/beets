@@ -62,6 +62,14 @@ ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
 ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 
+# Database fields for the "albums" table.
+ALBUM_FIELDS = [
+    ('id',      'integer primary key'),
+    ('artist',  'text'),
+    ('album',   'text'),
+    ('artpath', 'text'),
+]
+
 # Default search fields for various granularities.
 ARTIST_DEFAULT_FIELDS = ('artist',)
 ALBUM_DEFAULT_FIELDS = ARTIST_DEFAULT_FIELDS + ('album', 'genre')
@@ -644,7 +652,8 @@ class Library(BaseLibrary):
     def __init__(self, path='library.blb',
                        directory='~/Music',
                        path_format='$artist/$album/$track $title',
-                       fields=ITEM_FIELDS):
+                       item_fields=ITEM_FIELDS,
+                       album_fields=ALBUM_FIELDS):
         self.path = path
         self.directory = directory
         self.path_format = path_format
@@ -653,16 +662,17 @@ class Library(BaseLibrary):
         self.conn.row_factory = sqlite3.Row
             # this way we can access our SELECT results like dictionaries
         
-        self._setup(fields)
+        self._make_table('items', item_fields)
+        self._make_table('albums', album_fields)
     
-    def _setup(self, fields):
-        """Set up the schema of the library file. fields is a list
-        of all the fields that should be present in the table. Columns
-        are added if necessary.
+    def _make_table(self, table, fields):
+        """Set up the schema of the library file. fields is a list of
+        all the fields that should be present in the indicated table.
+        Columns are added if necessary.
         """
         # Get current schema.
         cur = self.conn.cursor()
-        cur.execute('PRAGMA table_info(items)')
+        cur.execute('PRAGMA table_info(%s)' % table)
         current_fields = set([row[1] for row in cur])
         
         field_names = set([f[0] for f in fields])
@@ -672,7 +682,7 @@ class Library(BaseLibrary):
             
         if not current_fields:
             # No table exists.        
-            setup_sql =  'CREATE TABLE items ('
+            setup_sql =  'CREATE TABLE %s (' % table
             setup_sql += ', '.join(['%s %s' % f[:2] for f in fields])
             setup_sql += ');'
             
@@ -685,8 +695,8 @@ class Library(BaseLibrary):
                         break
                 else:
                     assert False
-                setup_sql += 'ALTER TABLE items ADD COLUMN ' \
-                             '%s %s;\n' % field[:2]
+                setup_sql += 'ALTER TABLE %s ' % table
+                setup_sql += 'ADD COLUMN %s %s;\n' % field[:2]
         
         self.conn.executescript(setup_sql)
         self.conn.commit()

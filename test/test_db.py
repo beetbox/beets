@@ -15,7 +15,10 @@
 """Tests for non-query database functions of Item.
 """
 
-import unittest, sys, os
+import unittest
+import sys
+import os
+import sqlite3
 sys.path.append('..')
 import beets.library
 
@@ -257,7 +260,8 @@ class MigrationTest(unittest.TestCase):
         
         # Set up a library with old_fields.
         self.libfile = os.path.join('rsrc', 'templib.blb')
-        old_lib = beets.library.Library(self.libfile, fields=self.old_fields)
+        old_lib = beets.library.Library(self.libfile,
+                                        item_fields=self.old_fields)
         # Add an item to the old library.
         old_lib.conn.execute(
             'insert into items (field_one, field_two) values (4, 2)'
@@ -269,36 +273,57 @@ class MigrationTest(unittest.TestCase):
         os.unlink(self.libfile)
     
     def test_open_with_same_fields_leaves_untouched(self):
-        new_lib = beets.library.Library(self.libfile, fields=self.old_fields)
+        new_lib = beets.library.Library(self.libfile,
+                                        item_fields=self.old_fields)
         c = new_lib.conn.cursor()
         c.execute("select * from items")
         row = c.fetchone()
         self.assertEqual(len(row), len(self.old_fields))
     
     def test_open_with_new_field_adds_column(self):
-        new_lib = beets.library.Library(self.libfile, fields=self.new_fields)
+        new_lib = beets.library.Library(self.libfile,
+                                        item_fields=self.new_fields)
         c = new_lib.conn.cursor()
         c.execute("select * from items")
         row = c.fetchone()
         self.assertEqual(len(row), len(self.new_fields))
     
     def test_open_with_fewer_fields_leaves_untouched(self):
-        new_lib = beets.library.Library(self.libfile, fields=self.older_fields)
+        new_lib = beets.library.Library(self.libfile,
+                                        item_fields=self.older_fields)
         c = new_lib.conn.cursor()
         c.execute("select * from items")
         row = c.fetchone()
         self.assertEqual(len(row), len(self.old_fields))
     
     def test_open_with_multiple_new_fields(self):
-        new_lib = beets.library.Library(self.libfile, fields=self.newer_fields)
+        new_lib = beets.library.Library(self.libfile,
+                                        item_fields=self.newer_fields)
         c = new_lib.conn.cursor()
         c.execute("select * from items")
         row = c.fetchone()
         self.assertEqual(len(row), len(self.newer_fields))
-        
+
+    def test_open_old_db_adds_album_table(self):
+        conn = sqlite3.connect(self.libfile)
+        conn.execute('drop table albums')
+        conn.close()
+
+        conn = sqlite3.connect(self.libfile)
+        self.assertRaises(sqlite3.OperationalError, conn.execute,
+                         'select * from albums')
+        conn.close()
+
+        new_lib = beets.library.Library(self.libfile,
+                                        item_fields=self.newer_fields)
+        try:
+            new_lib.conn.execute("select * from albums")
+        except sqlite3.OperationalError:
+            self.fail("select failed")
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
+
