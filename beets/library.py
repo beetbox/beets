@@ -14,7 +14,6 @@
 
 import sqlite3
 import os
-import operator
 import re
 import shutil
 import sys
@@ -25,44 +24,43 @@ from beets.mediafile import MediaFile, UnreadableFileError, FileTypeError
 
 MAX_FILENAME_LENGTH = 200
 
-# Fields in the "items" table; all the metadata available for items in the
-# library. These are used directly in SQL; they are vulnerable to injection if
-# accessible to the user. The fields are divided into read-write
-# metadata, all metadata (inlcuding read-only attributes), and all
-# fields (i.e., including non-metadata attributes).
-metadata_rw_fields = [
-    ('title',       'text'),
-    ('artist',      'text'),
-    ('album',       'text'),
-    ('genre',       'text'),
-    ('composer',    'text'),
-    ('grouping',    'text'),
-    ('year',        'int'),
-    ('month',       'int'),
-    ('day',         'int'),
-    ('track',       'int'),
-    ('tracktotal',  'int'),
-    ('disc',        'int'),
-    ('disctotal',   'int'),
-    ('lyrics',      'text'),
-    ('comments',    'text'),
-    ('bpm',         'int'),
-    ('comp',        'bool'),
-    ('mb_trackid',  'text'),
-    ('mb_albumid',  'text'),
-    ('mb_artistid', 'text'),
+# Fields in the "items" database table; all the metadata available for
+# items in the library. These are used directly in SQL; they are
+# vulnerable to injection if accessible to the user.
+# Each tuple has the following values:
+# - The name of the field.
+# - The (SQLite) type of the field.
+# - Is the field writable?
+# - Does the field reflect an attribute of a MediaFile?
+ITEM_FIELDS = [
+    ('id',          'integer primary key', False, False),
+    ('path',        'text', False, False),
+    ('title',       'text', True,  True),
+    ('artist',      'text', True,  True),
+    ('album',       'text', True,  True),
+    ('genre',       'text', True,  True),
+    ('composer',    'text', True,  True),
+    ('grouping',    'text', True,  True),
+    ('year',        'int',  True,  True),
+    ('month',       'int',  True,  True),
+    ('day',         'int',  True,  True),
+    ('track',       'int',  True,  True),
+    ('tracktotal',  'int',  True,  True),
+    ('disc',        'int',  True,  True),
+    ('disctotal',   'int',  True,  True),
+    ('lyrics',      'text', True,  True),
+    ('comments',    'text', True,  True),
+    ('bpm',         'int',  True,  True),
+    ('comp',        'bool', True,  True),
+    ('mb_trackid',  'text', True,  True),
+    ('mb_albumid',  'text', True,  True),
+    ('mb_artistid', 'text', True,  True),
+    ('length',      'real', False, True),
+    ('bitrate',     'int',  False, True),
 ]
-metadata_fields = [
-    ('length',  'real'),
-    ('bitrate', 'int'),
-] + metadata_rw_fields
-item_fields = [
-    ('id',      'integer primary key'),
-    ('path',    'text'),
-] + metadata_fields
-metadata_rw_keys = map(operator.itemgetter(0), metadata_rw_fields)
-metadata_keys = map(operator.itemgetter(0), metadata_fields)
-item_keys = map(operator.itemgetter(0), item_fields)
+METADATA_RW_KEYS = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
+METADATA_KEYS = [f[0] for f in ITEM_FIELDS if f[3]]
+ITEM_KEYS = [f[0] for f in ITEM_FIELDS]
 
 # Default search fields for various granularities.
 ARTIST_DEFAULT_FIELDS = ('artist',)
@@ -177,7 +175,7 @@ class Item(object):
 
     def _fill_record(self, values):
         self.record = {}
-        for key in item_keys:
+        for key in ITEM_KEYS:
             try:
                 setattr(self, key, values[key])
             except KeyError:
@@ -185,7 +183,7 @@ class Item(object):
 
     def _clear_dirty(self):
         self.dirty = {}
-        for key in item_keys:
+        for key in ITEM_KEYS:
             self.dirty[key] = False
 
     def __repr__(self):
@@ -199,7 +197,7 @@ class Item(object):
         returns the record entry for that key. Otherwise, performs an ordinary
         getattr.
         """
-        if key in item_keys:
+        if key in ITEM_KEYS:
             return self.record[key]
         else:
             raise AttributeError(key + ' is not a valid item field')
@@ -212,7 +210,7 @@ class Item(object):
         
         Otherwise, performs an ordinary setattr.
         """
-        if key in item_keys:
+        if key in ITEM_KEYS:
             if (not (key in self.record)) or (self.record[key] != value):
                 # don't dirty if value unchanged
                 self.record[key] = value
@@ -231,7 +229,7 @@ class Item(object):
             read_path = self.path
         f = MediaFile(read_path)
 
-        for key in metadata_keys:
+        for key in METADATA_KEYS:
             setattr(self, key, getattr(f, key))
         self.path = read_path
     
@@ -239,7 +237,7 @@ class Item(object):
         """Writes the item's metadata to the associated file.
         """
         f = MediaFile(self.path)
-        for key in metadata_rw_keys:
+        for key in METADATA_RW_KEYS:
             setattr(f, key, getattr(self, key))
         f.save()
     
@@ -331,7 +329,7 @@ class FieldQuery(Query):
     pattern.
     """
     def __init__(self, field, pattern):
-        if field not in item_keys:
+        if field not in ITEM_KEYS:
             raise InvalidFieldError(field + ' is not an item key')
         self.field = field
         self.pattern = pattern
@@ -434,7 +432,7 @@ class CollectionQuery(Query):
         for key, pattern in cls._parse_query(query_string):
             if key is None: # no key specified; match any field
                 subqueries.append(AnySubstringQuery(pattern, default_fields))
-            elif key.lower() in item_keys: # ignore unrecognized keys
+            elif key.lower() in ITEM_KEYS: # ignore unrecognized keys
                 subqueries.append(SubstringQuery(key.lower(), pattern))
         if not subqueries: # no terms in query
             subqueries = [TrueQuery()]
@@ -450,7 +448,7 @@ class AnySubstringQuery(CollectionQuery):
         used.
         """
         self.pattern = pattern
-        self.fields = fields or metadata_rw_keys
+        self.fields = fields or METADATA_RW_KEYS
 
         subqueries = []
         for field in self.fields:
@@ -646,7 +644,7 @@ class Library(BaseLibrary):
     def __init__(self, path='library.blb',
                        directory='~/Music',
                        path_format='$artist/$album/$track $title',
-                       fields=item_fields):
+                       fields=ITEM_FIELDS):
         self.path = path
         self.directory = directory
         self.path_format = path_format
@@ -659,8 +657,8 @@ class Library(BaseLibrary):
     
     def _setup(self, fields):
         """Set up the schema of the library file. fields is a list
-        of (name, type) pairs indicating all the fields that should
-        be present in the table. Columns are added if necessary.
+        of all the fields that should be present in the table. Columns
+        are added if necessary.
         """
         # Get current schema.
         cur = self.conn.cursor()
@@ -675,7 +673,7 @@ class Library(BaseLibrary):
         if not current_fields:
             # No table exists.        
             setup_sql =  'CREATE TABLE items ('
-            setup_sql += ', '.join([' '.join(f) for f in fields])
+            setup_sql += ', '.join(['%s %s' % f[:2] for f in fields])
             setup_sql += ');'
             
         else:
@@ -687,8 +685,8 @@ class Library(BaseLibrary):
                         break
                 else:
                     assert False
-                setup_sql += 'ALTER TABLE items ADD COLUMN ' + \
-                             ' '.join(field) + ';\n'
+                setup_sql += 'ALTER TABLE items ADD COLUMN ' \
+                             '%s %s;\n' % field[:2]
         
         self.conn.executescript(setup_sql)
         self.conn.commit()
@@ -703,7 +701,7 @@ class Library(BaseLibrary):
         # build the mapping for substitution in the path template, beginning
         # with the values from the database
         mapping = {}
-        for key in metadata_keys:
+        for key in METADATA_KEYS:
             value = getattr(item, key)
             # sanitize the value for inclusion in a path:
             # replace / and leading . with _
@@ -737,10 +735,10 @@ class Library(BaseLibrary):
             item.move(self, copy=True)
 
         # build essential parts of query
-        columns = ','.join([key for key in item_keys if key != 'id'])
-        values = ','.join( ['?'] * (len(item_keys)-1) )
+        columns = ','.join([key for key in ITEM_KEYS if key != 'id'])
+        values = ','.join( ['?'] * (len(ITEM_KEYS)-1) )
         subvars = []
-        for key in item_keys:
+        for key in ITEM_KEYS:
             if key != 'id':
                 subvars.append(getattr(item, key))
         
@@ -780,7 +778,7 @@ class Library(BaseLibrary):
         # build assignments for query
         assignments = ''
         subvars = []
-        for key in item_keys:
+        for key in ITEM_KEYS:
             if (key != 'id') and (item.dirty[key] or store_all):
                 assignments += key + '=?,'
                 subvars.append(getattr(item, key))
