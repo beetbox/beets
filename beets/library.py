@@ -66,13 +66,16 @@ ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
 ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 
 # Database fields for the "albums" table.
+# The third entry in each tuple indicates whether the field reflects an
+# identically-named field in the items table.
 ALBUM_FIELDS = [
-    ('id',      'integer primary key'),
-    ('artist',  'text'),
-    ('album',   'text'),
-    ('artpath', 'text'),
+    ('id',      'integer primary key', False),
+    ('artist',  'text', True),
+    ('album',   'text', True),
+    ('artpath', 'text', False),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
+ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
 
 # Default search fields for various granularities.
 ARTIST_DEFAULT_FIELDS = ('artist',)
@@ -875,6 +878,7 @@ class Library(BaseLibrary):
             self._id = album_id
 
         def __getattr__(self, key):
+            """Get the value for an album attribute."""
             if key == 'id':
                 return self._id
             elif key in ALBUM_KEYS:
@@ -882,14 +886,32 @@ class Library(BaseLibrary):
                 c = self._library.conn.execute(sql, (self._id,))
                 return c.fetchone()[0]
             else:
-                return getattr(self, key)
+                object.__getattr__(self, key)
 
         def __setattr__(self, key, value):
-            if key in ALBUM_KEYS:
+            """Set the value of an album attribute."""
+            if key == 'id':
+                raise AttributeError("can't modify album id")
+            elif key in ALBUM_KEYS:
                 sql = 'UPDATE albums SET %s=? WHERE id=?' % key
                 self._library.conn.execute(sql, (value, self._id))
+                if key in ALBUM_KEYS_ITEM:
+                    # Make modification on items as well.
+                    for item in self.items():
+                        setattr(item, key, value)
+                    self._library.store(item)
             else:
                 object.__setattr__(self, key, value)
+
+        def items(self):
+            """Returns an iterable over the items associated with this
+            album.
+            """
+            c = self._library.conn.execute(
+                'SELECT * FROM items WHERE album_id=?',
+                (self._id,)
+            )
+            return ResultIterator(c, self._library)
 
     def get_album(self, item_or_id):
         """Given an album ID or an item associated with an album,

@@ -363,6 +363,20 @@ class AlbumInfoTest(unittest.TestCase):
         ai = self.lib.get_album(self.i.id)
         self.assertNotEqual(ai, None)
 
+    def test_album_items_consistent(self):
+        ai = self.lib.get_album(self.i)
+        for item in ai.items():
+            if item.id == self.i.id:
+                break
+        else:
+            self.fail("item not found")
+
+    def test_albuminfo_changes_affect_items(self):
+        ai = self.lib.get_album(self.i)
+        ai.album = 'myNewAlbum'
+        i = self.lib.items().next()
+        self.assertEqual(i.album, 'myNewAlbum')
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
