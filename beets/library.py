@@ -681,12 +681,11 @@ class BaseLibrary(object):
     # granularity. AlbumInfo proxy objects are used to access fields;
     # they invoke _album_get and _album_set.
 
-    def albuminfo(self, artist, album):
+    def albuminfo(self, item):
         """Given an artist and album name, return an AlbumInfo proxy
-        object whose attributes correspond to information about the
-        album.
+        object for the given item's album.
         """
-        return AlbumInfo(self, artist, album)
+        return AlbumInfo(self, item.artist, item.album)
 
     def _album_get(self, artist, album, key):
         """For the album specified, returns the value associated with
@@ -903,4 +902,26 @@ class Library(BaseLibrary):
               " ORDER BY artist, album, disc, track"
         c = self.conn.execute(sql, subvals)
         return ResultIterator(c, self)
+    
+    
+    # Album information.
 
+    def albuminfo(self, item):
+        # Lazily create a row in the albums table if one doesn't
+        # exist.
+        sql = 'SELECT id FROM albums WHERE artist=? AND album=?'
+        c = self.conn.execute(sql, (item.artist, item.album))
+        row = c.fetchone()
+        if not row:
+            sql = 'INSERT INTO albums (artist, album) VALUES (?, ?)'
+            self.conn.execute(sql, (item.artist, item.album))
+        return super(Library, self).albuminfo(item)
+
+    def _album_get(self, artist, album, key):
+        sql = 'SELECT %s FROM albums WHERE artist=? AND album=?' % key
+        c = self.conn.execute(sql, (artist, album))
+        return c.fetchone()[0]
+
+    def _album_set(self, artist, album, key, value):
+        sql = 'UPDATE albums SET %s=? WHERE artist=? AND album=?' % key
+        self.conn.execute(sql, (value, artist, album))
