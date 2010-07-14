@@ -38,9 +38,10 @@ default_commands = []
 
 # import: Autotagger and importer.
 
-DEFAULT_IMPORT_COPY = True
+DEFAULT_IMPORT_COPY  = True
 DEFAULT_IMPORT_WRITE = True
 DEFAULT_IMPORT_AUTOT = True
+DEFAULT_IMPORT_ART   = True
 
 def show_change(cur_artist, cur_album, items, info, dist):
     """Print out a representation of the changes that will be made if
@@ -328,10 +329,12 @@ import_cmd.parser.add_option('-a', '--autotag', action='store_true',
 import_cmd.parser.add_option('-A', '--noautotag', action='store_false',
     dest='autotag',
     help="don't infer tags for imported files (opposite of -a)")
-import_cmd.parser.add_option('-l', '--log', dest='logpath',
-    help='file to log untaggable albums for later review')
 import_cmd.parser.add_option('-r', '--art', action='store_true',
     default=None, help="try to download album art")
+import_cmd.parser.add_option('-R', '--noart', action='store_false',
+    dest='art', help="don't album art (opposite of -r)")
+import_cmd.parser.add_option('-l', '--log', dest='logpath',
+    help='file to log untaggable albums for later review')
 def import_func(lib, config, opts, args):
     copy  = opts.copy  if opts.copy  is not None else \
         ui.config_val(config, 'beets', 'import_copy',
@@ -340,7 +343,10 @@ def import_func(lib, config, opts, args):
         ui.config_val(config, 'beets', 'import_write',
             DEFAULT_IMPORT_WRITE, bool)
     autot = opts.autotag if opts.autotag is not None else DEFAULT_IMPORT_AUTOT
-    import_files(lib, args, copy, write, autot, opts.logpath, opts.art)
+    art = opts.art if opts.art is not None else \
+        ui.config_val(config, 'beets', 'import_art',
+            DEFAULT_IMPORT_ART, bool)
+    import_files(lib, args, copy, write, autot, opts.logpath, art)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 
