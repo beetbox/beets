@@ -948,14 +948,15 @@ class Library(BaseLibrary):
             album art moves along with them.
             """
             # Move items.
-            for item in self.items():
+            items = list(self.items())
+            for item in items:
                 item.move(self._library, copy)
-                self._library.store(item)
+            newdir = os.path.dirname(items[0].path)
 
             # Move art.
             old_art = self.artpath
             if old_art:
-                new_art = self.art_destination(old_art)
+                new_art = self.art_destination(old_art, newdir)
                 if new_art != old_art:
                     if copy:
                         shutil.copy(old_art, new_art)
@@ -963,16 +964,23 @@ class Library(BaseLibrary):
                         shutil.move(old_art, new_art)
                     self.artpath = new_art
 
-        def art_destination(self, image):
+            # Store new item paths. We do this at the end to avoid
+            # locking the database for too long while files are copied.
+            for item in items:
+                self._library.store(item)
+
+        def art_destination(self, image, item_dir=None):
             """Returns a path to the destination for the album art image
             for the album. `image` is the path of the image that will be
             moved there (used for its extension).
 
             The path construction uses the existing path of the album's
-            items, so the album must contain at least one item.
+            items, so the album must contain at least one item or
+            item_dir must be provided.
             """
-            item = self.items().next()
-            item_dir = os.path.dirname(item.path)
+            if item_dir is None:
+                item = self.items().next()
+                item_dir = os.path.dirname(item.path)
             _, ext = os.path.splitext(image)
             dest = os.path.join(item_dir, self._library.art_filename + ext)
             return dest
