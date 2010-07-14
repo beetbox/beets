@@ -24,6 +24,7 @@ from beets.ui import print_
 from beets import autotag
 from beets import library
 from beets.mediafile import UnreadableFileError, FileTypeError
+import beets.autotag.art
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -35,9 +36,10 @@ default_commands = []
 
 # import: Autotagger and importer.
 
-DEFAULT_IMPORT_COPY = True
+DEFAULT_IMPORT_COPY  = True
 DEFAULT_IMPORT_WRITE = True
 DEFAULT_IMPORT_AUTOT = True
+DEFAULT_IMPORT_ART   = True
 
 def show_change(cur_artist, cur_album, items, info, dist):
     """Print out a representation of the changes that will be made if
@@ -147,12 +149,13 @@ def tag_log(logfile, status, items):
         path = os.path.commonprefix([item.path for item in items])
         print >>logfile, status, os.path.dirname(path)
 
-def tag_album(items, lib, copy=True, write=True, logfile=None):
+def tag_album(items, lib, copy=True, write=True, logfile=None, art=True):
     """Import items into lib, tagging them as an album. If copy, then
     items are copied into the destination directory. If write, then
     new metadata is written back to the files' tags. If logfile is
     provided, then a log message will be added there if the album is
-    untaggable.
+    untaggable. If art, then attempt to download cover art for the
+    album.
     """
     # Try to get candidate metadata.
     search_artist, search_album = None, None
@@ -229,13 +232,20 @@ def tag_album(items, lib, copy=True, write=True, logfile=None):
     for item in items:
         lib.add(item)
 
-def import_files(lib, paths, copy=True, write=True, autot=True, logpath=None):
+    # Get album art if requested.
+    if art:
+        #fixme
+        beets.autotag.art.art_for_album(info)
+
+def import_files(lib, paths, copy=True, write=True, autot=True,
+                 logpath=None, art=True):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
     files themselves. If not autot, then just import the files
     without attempting to tag. If logpath is provided, then untaggable
-    albums will be logged there.
+    albums will be logged there. If art, then attempt to download
+    cover art for each album.
     """
     if logpath:
         logfile = open(logpath, 'w')
@@ -257,7 +267,7 @@ def import_files(lib, paths, copy=True, write=True, autot=True, logpath=None):
                 first = False
 
                 # Infer tags.
-                tag_album(album, lib, copy, write, logfile)
+                tag_album(album, lib, copy, write, logfile, art)
                 
                 # Write the database after each album.
                 lib.save()
@@ -314,6 +324,10 @@ import_cmd.parser.add_option('-a', '--autotag', action='store_true',
 import_cmd.parser.add_option('-A', '--noautotag', action='store_false',
     dest='autotag',
     help="don't infer tags for imported files (opposite of -a)")
+import_cmd.parser.add_option('-r', '--art', action='store_true',
+    default=None, help="try to download album art")
+import_cmd.parser.add_option('-R', '--noart', action='store_false',
+    dest='art', help="don't album art (opposite of -r)")
 import_cmd.parser.add_option('-l', '--log', dest='logpath',
     help='file to log untaggable albums for later review')
 def import_func(lib, config, opts, args):
@@ -324,7 +338,10 @@ def import_func(lib, config, opts, args):
         ui.config_val(config, 'beets', 'import_write',
             DEFAULT_IMPORT_WRITE, bool)
     autot = opts.autotag if opts.autotag is not None else DEFAULT_IMPORT_AUTOT
-    import_files(lib, args, copy, write, autot, opts.logpath)
+    art = opts.art if opts.art is not None else \
+        ui.config_val(config, 'beets', 'import_art',
+            DEFAULT_IMPORT_ART, bool)
+    import_files(lib, args, copy, write, autot, opts.logpath, art)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 

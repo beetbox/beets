@@ -895,7 +895,7 @@ class Library(BaseLibrary):
                 c = self._library.conn.execute(sql, (self._id,))
                 return c.fetchone()[0]
             else:
-                object.__getattr__(self, key)
+                raise AttributeError('no such field %s' % key)
 
         def __setattr__(self, key, value):
             """Set the value of an album attribute."""

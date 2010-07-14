@@ -478,6 +478,23 @@ class ArtFileTest(unittest.TestCase):
         ai.set_art(newart)
         self.assertTrue(os.path.exists(ai.artpath))
 
+class ArtDestinationTest(unittest.TestCase):
+    def setUp(self):
+        self.lib = beets.library.Library(':memory:')
+        self.i = item()
+        self.i.path = self.lib.destination(self.i)
+        self.lib.art_filename = 'artimage'
+        self.ai = self.lib.add_album(self.i.artist, self.i.album, (self.i,))
+        
+    def test_art_filename_respects_setting(self):
+        art = self.ai.art_destination('something.jpg')
+        self.assert_('/artimage.jpg' in art)
+        
+    def test_art_path_in_item_dir(self):
+        art = self.ai.art_destination('something.jpg')
+        track = self.lib.destination(self.i)
+        self.assertEqual(os.path.dirname(art), os.path.dirname(track))
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
