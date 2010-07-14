@@ -533,22 +533,21 @@ class ResultIterator(object):
 class AlbumInfo(object):
     """Provides access to information about albums stored in a library.
     """
-    def __init__(self, library, album, artist):
+    def __init__(self, library, ident):
         self._library = library
-        self._album = album
-        self._artist = artist
+        self._ident = ident
 
     def __getattr__(self, key):
         """Get an album field's value."""
         if key in ALBUM_KEYS:
-            return self._library._album_get(self._album, self._artist, key)
+            return self._library._album_get(self._ident, key)
         else:
             return getattr(self, key)
 
     def __setattr__(self, key, value):
         """Set an album field."""
         if key in ALBUM_KEYS:
-            self._library._album_set(self._album, self._artist, key, value)
+            self._library._album_set(self._ident, key, value)
         else:
             super(AlbumInfo, self).__setattr__(key, value)
 
@@ -685,14 +684,14 @@ class BaseLibrary(object):
         """Given an artist and album name, return an AlbumInfo proxy
         object for the given item's album.
         """
-        return AlbumInfo(self, item.artist, item.album)
+        return AlbumInfo(self, (item.artist, item.album))
 
-    def _album_get(self, artist, album, key):
+    def _album_get(self, ident, key):
         """For the album specified, returns the value associated with
         the key."""
         raise NotImplementedError()
 
-    def _album_set(self, artist, album, key, value):
+    def _album_set(self, ident, key, value):
         """Sets the indicated album's value for key."""
         raise NotImplementedError()
 
@@ -912,16 +911,19 @@ class Library(BaseLibrary):
         sql = 'SELECT id FROM albums WHERE artist=? AND album=?'
         c = self.conn.execute(sql, (item.artist, item.album))
         row = c.fetchone()
-        if not row:
+        if row:
+            album_id = row[0]
+        else:
             sql = 'INSERT INTO albums (artist, album) VALUES (?, ?)'
-            self.conn.execute(sql, (item.artist, item.album))
-        return super(Library, self).albuminfo(item)
+            c = self.conn.execute(sql, (item.artist, item.album))
+            album_id = c.lastrowid
+        return AlbumInfo(self, album_id)
 
-    def _album_get(self, artist, album, key):
-        sql = 'SELECT %s FROM albums WHERE artist=? AND album=?' % key
-        c = self.conn.execute(sql, (artist, album))
+    def _album_get(self, album_id, key):
+        sql = 'SELECT %s FROM albums WHERE id=?' % key
+        c = self.conn.execute(sql, (album_id,))
         return c.fetchone()[0]
 
-    def _album_set(self, artist, album, key, value):
-        sql = 'UPDATE albums SET %s=? WHERE artist=? AND album=?' % key
-        self.conn.execute(sql, (value, artist, album))
+    def _album_set(self, album_id, key, value):
+        sql = 'UPDATE albums SET %s=? WHERE id=?' % key
+        self.conn.execute(sql, (value, album_id))
