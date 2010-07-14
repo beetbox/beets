@@ -716,6 +716,8 @@ class Library(BaseLibrary):
         
         self._make_table('items', item_fields)
         self._make_table('albums', album_fields)
+        
+        self._make_triggers()
     
     def _make_table(self, table, fields):
         """Set up the schema of the library file. fields is a list of
@@ -751,6 +753,31 @@ class Library(BaseLibrary):
                 setup_sql += 'ADD COLUMN %s %s;\n' % field[:2]
         
         self.conn.executescript(setup_sql)
+        self.conn.commit()
+
+    def _make_triggers(self):
+        """Setup triggers for the database to keep the tables
+        consistent.
+        """
+        # Set up triggers for dropping album info rows when no longer
+        # needed.
+        trigger_sql = """
+        WHEN
+          ((SELECT id FROM items WHERE album=OLD.album AND artist=OLD.artist)
+          IS NULL)
+        BEGIN
+          DELETE FROM albums WHERE
+          album=OLD.album AND artist=OLD.artist;
+        END;
+        """
+        self.conn.execute("""
+        CREATE TRIGGER IF NOT EXISTS delete_album
+        AFTER DELETE ON items
+        """ + trigger_sql)
+        self.conn.execute("""
+        CREATE TRIGGER IF NOT EXISTS change_album
+        AFTER UPDATE OF album, artist ON items
+        """ + trigger_sql)
         self.conn.commit()
 
     def destination(self, item):
