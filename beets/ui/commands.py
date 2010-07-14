@@ -411,9 +411,7 @@ def remove_items(lib, query, album, delete=False):
 
     # Remove and delete.
     for item in items:
-        lib.remove(item)
-        if delete:
-            os.unlink(item.path)
+        lib.remove(item, delete)
     lib.save()
 
 remove_cmd = ui.Subcommand('remove',

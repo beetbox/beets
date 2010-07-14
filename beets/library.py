@@ -115,6 +115,13 @@ def _ancestry(path):
             out.insert(0, path)
     return out
 
+def _mkdirall(path):
+    """Like mkdir -p, make directories for the entire ancestry of path.
+    """
+    for ancestor in _ancestry(path):
+        if not os.path.isdir(ancestor):
+            os.mkdir(ancestor)
+
 def _components(path):
     """Return a list of the path components in path. For instance:
        >>> _components('/a/b/c')
@@ -273,12 +280,9 @@ class Item(object):
         """
         dest = library.destination(self)
         
-        # Create necessary ancestry for the move. Like os.renames but only
-        # halfway.
-        for ancestor in _ancestry(dest):
-            if not os.path.isdir(ancestor):
-                os.mkdir(ancestor)
-        
+        # Create necessary ancestry for the move.
+        _mkdirall(dest)
+
         if copy:
             shutil.copy(self.path, dest)
         else:
@@ -717,8 +721,6 @@ class Library(BaseLibrary):
         
         self._make_table('items', item_fields)
         self._make_table('albums', album_fields)
-        
-        self._make_triggers()
     
     def _make_table(self, table, fields):
         """Set up the schema of the library file. fields is a list of
@@ -754,31 +756,6 @@ class Library(BaseLibrary):
                 setup_sql += 'ADD COLUMN %s %s;\n' % field[:2]
         
         self.conn.executescript(setup_sql)
-        self.conn.commit()
-
-    def _make_triggers(self):
-        """Setup triggers for the database to keep the tables
-        consistent.
-        """
-        # Set up triggers for dropping album info rows when no longer
-        # needed.
-        trigger_sql = """
-        WHEN
-          ((SELECT id FROM items WHERE album=OLD.album AND artist=OLD.artist)
-          IS NULL)
-        BEGIN
-          DELETE FROM albums WHERE
-          album=OLD.album AND artist=OLD.artist;
-        END;
-        """
-        self.conn.execute("""
-        CREATE TRIGGER IF NOT EXISTS delete_album
-        AFTER DELETE ON items
-        """ + trigger_sql)
-        self.conn.execute("""
-        CREATE TRIGGER IF NOT EXISTS change_album
-        AFTER UPDATE OF album, artist ON items
-        """ + trigger_sql)
         self.conn.commit()
 
     def destination(self, item):
@@ -879,16 +856,25 @@ class Library(BaseLibrary):
         # build assignments for query
         assignments = ''
         subvars = []
+        album_changed = False
         for key in ITEM_KEYS:
             if (key != 'id') and (item.dirty[key] or store_all):
                 assignments += key + '=?,'
                 subvars.append(getattr(item, key))
+                if key in ('artist', 'album'):
+                    album_changed = True
         
         if not assignments:
             # nothing to store (i.e., nothing was dirty)
             return
         
         assignments = assignments[:-1] # knock off last ,
+
+        # Get old artist and album for cleanup.
+        old_artist, old_album = self.conn.execute(
+            'SELECT artist, album FROM items WHERE id=?',
+            (item.id,)
+        ).fetchone()
 
         # finish the query
         query = 'UPDATE items SET ' + assignments + ' WHERE id=?'
@@ -897,9 +883,45 @@ class Library(BaseLibrary):
         self.conn.execute(query, subvars)
         item._clear_dirty()
 
-    def remove(self, item):
-        self.conn.execute('DELETE FROM items WHERE id=?', (item.id,))
+        # Clean up album.
+        album_row = self._cleanup_album(old_artist, old_album)
 
+    def remove(self, item, delete=False):
+        # Get album and artist so we can clean up the album entry.
+        artist, album = self.conn.execute(
+            'SELECT artist, album FROM items WHERE id=?',
+            (item.id,)
+        ).fetchone()
+
+        self.conn.execute('DELETE FROM items WHERE id=?', (item.id,))
+        if delete:
+            os.unlink(item.path)
+
+        # Clean up album.
+        album_row = self._cleanup_album(artist, album)
+        if delete and album_row and album_row['artpath']:
+            # When deleting items, delete their art as well.
+            os.unlink(album_row['artpath'])
+
+    def _cleanup_album(self, artist, album):
+        """If there are no items with the album specified, then removes
+        the corresponding album entry and returns it. Otherwise, returns
+        None.
+        """
+        c = self.conn.execute(
+            'SELECT id FROM items WHERE artist=? AND album=?',
+            (artist, album)
+        )
+        if c.fetchone() is None:
+            album_row = self.conn.execute(
+                'SELECT * FROM albums WHERE artist=? AND album=?',
+                (artist, album)
+            ).fetchone()
+            self.conn.execute(
+                'DELETE FROM albums WHERE artist=? AND album=?',
+                (artist, album)
+            )
+            return album_row
 
     # Browsing.
 
@@ -972,3 +994,4 @@ class Library(BaseLibrary):
     def _album_set(self, album_id, key, value):
         sql = 'UPDATE albums SET %s=? WHERE id=?' % key
         self.conn.execute(sql, (value, album_id))
+

@@ -19,6 +19,7 @@ import unittest
 import sys
 import os
 import sqlite3
+import shutil
 sys.path.append('..')
 import beets.library
 
@@ -262,6 +263,45 @@ class ArtDestinationTest(unittest.TestCase):
         art = self.lib.art_path(self.i, 'something.jpg')
         track = self.i.path
         self.assertEqual(os.path.dirname(art), os.path.dirname(track))
+
+class ArtFileTest(unittest.TestCase):
+    def _touch(self, path):
+        # Create file if it doesn't exist.
+        open(path, 'a').close()
+
+    def setUp(self):
+        # Make library and item.
+        self.lib = beets.library.Library(':memory:')
+        self.libdir = os.path.join('rsrc', 'testlibdir')
+        self.lib.directory = self.libdir
+        self.i = item()
+        self.i.path = self.lib.destination(self.i)
+        # Make a file.
+        beets.library._mkdirall(self.i.path)
+        self._touch(self.i.path)
+        self.lib.add(self.i)
+        # Make an art file too.
+        self.art = self.lib.art_path(self.i, 'something.jpg')
+        self._touch(self.art)
+        self.lib.albuminfo(self.i).artpath = self.art
+    def tearDown(self):
+        if os.path.exists(self.libdir):
+            shutil.rmtree(self.libdir)
+
+    def test_art_deleted_when_items_deleted(self):
+        self.assertTrue(os.path.exists(self.art))
+        self.lib.remove(self.i, True)
+        self.assertFalse(os.path.exists(self.art))
+
+    def test_art_moves_with_last_album(self):
+        self.assertTrue(os.path.exists(self.art))
+        oldpath = self.i.path
+        self.i.artist = 'newArtist'
+        self.i.move(self.lib)
+        self.assertNotEqual(self.i.path, oldpath)
+        self.assertFalse(os.path.exists(self.art))
+        newart = self.lib.art_path(self.i)
+        self.assertTrue(os.path.exists(newart))
 
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
