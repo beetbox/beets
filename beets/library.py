@@ -121,6 +121,14 @@ def _ancestry(path):
             out.insert(0, path)
     return out
 
+def _mkdirall(path):
+    """Make all the enclosing directories of path (like mkdir -p on the
+    parent).
+    """
+    for ancestor in _ancestry(path):
+        if not os.path.isdir(ancestor):
+            os.mkdir(ancestor)
+
 def _components(path):
     """Return a list of the path components in path. For instance:
        >>> _components('/a/b/c')
@@ -282,11 +290,8 @@ class Item(object):
         """
         dest = library.destination(self)
         
-        # Create necessary ancestry for the move. Like os.renames but only
-        # halfway.
-        for ancestor in _ancestry(dest):
-            if not os.path.isdir(ancestor):
-                os.mkdir(ancestor)
+        # Create necessary ancestry for the move.
+        _mkdirall(dest)
         
         if copy:
             shutil.copy(self.path, dest)
@@ -667,11 +672,13 @@ class Library(BaseLibrary):
     def __init__(self, path='library.blb',
                        directory='~/Music',
                        path_format='$artist/$album/$track $title',
+                       art_filename='cover',
                        item_fields=ITEM_FIELDS,
                        album_fields=ALBUM_FIELDS):
         self.path = path
         self.directory = directory
         self.path_format = path_format
+        self.art_filename = art_filename
         
         self.conn = sqlite3.connect(self.path)
         self.conn.row_factory = sqlite3.Row
@@ -822,8 +829,10 @@ class Library(BaseLibrary):
         self.conn.execute(query, subvars)
         item._clear_dirty()
 
-    def remove(self, item):
+    def remove(self, item, delete=False):
         self.conn.execute('DELETE FROM items WHERE id=?', (item.id,))
+        if delete:
+            os.unlink(item.path)
 
 
     # Browsing.
@@ -912,6 +921,61 @@ class Library(BaseLibrary):
                 (self._id,)
             )
             return ResultIterator(c, self._library)
+
+        def remove(self, delete=False):
+            """Removes this album and all its associated items from the
+            library. If delete, then the items' files are also deleted
+            from disk, along with any album art.
+            """
+            # Remove items.
+            for item in self.items():
+                self._library.remove(item, delete)
+            
+            # Delete art.
+            if delete:
+                artpath = self.artpath
+                if artpath:
+                    os.unlink(artpath)
+            
+            # Remove album.
+            self._library.conn.execute(
+                'DELETE FROM albums WHERE id=?',
+                (self._id,)
+            )
+
+        def move(self, copy=False):
+            """Moves (or copies) all items to their destination. Any
+            album art moves along with them.
+            """
+            # Move items.
+            for item in self.items():
+                item.move(self._library, copy)
+                self._library.store(item)
+
+            # Move art.
+            old_art = self.artpath
+            if old_art:
+                new_art = self.art_destination(old_art)
+                if new_art != old_art:
+                    if copy:
+                        shutil.copy(old_art, new_art)
+                    else:
+                        shutil.move(old_art, new_art)
+                    self.artpath = new_art
+
+        def art_destination(self, image):
+            """Returns a path to the destination for the album art image
+            for the album. `image` is the path of the image that will be
+            moved there (used for its extension).
+
+            The path construction uses the existing path of the album's
+            items, so the album must contain at least one item.
+            """
+            item = self.items().next()
+            item_dir = os.path.dirname(item.path)
+            _, ext = os.path.splitext(image)
+            dest = os.path.join(item_dir, self._library.art_filename + ext)
+            return dest
 
     def get_album(self, item_or_id):
         """Given an album ID or an item associated with an album,
