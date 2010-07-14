@@ -69,6 +69,7 @@ ALBUM_FIELDS = [
     ('album',   'text'),
     ('artpath', 'text'),
 ]
+ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 
 # Default search fields for various granularities.
 ARTIST_DEFAULT_FIELDS = ('artist',)
@@ -206,8 +207,7 @@ class Item(object):
 
     def __getattr__(self, key):
         """If key is an item attribute (i.e., a column in the database),
-        returns the record entry for that key. Otherwise, performs an
-        ordinary getattr.
+        returns the record entry for that key.
         """
         if key in ITEM_KEYS:
             return self.record[key]
@@ -528,6 +528,31 @@ class ResultIterator(object):
         return Item(row)
 
 
+# Album information proxy objects.
+
+class AlbumInfo(object):
+    """Provides access to information about albums stored in a library.
+    """
+    def __init__(self, library, album, artist):
+        self._library = library
+        self._album = album
+        self._artist = artist
+
+    def __getattr__(self, key):
+        """Get an album field's value."""
+        if key in ALBUM_KEYS:
+            return self._library._album_get(self._album, self._artist, key)
+        else:
+            return getattr(self, key)
+
+    def __setattr__(self, key, value):
+        """Set an album field."""
+        if key in ALBUM_KEYS:
+            self._library._album_set(self._album, self._artist, key, value)
+        else:
+            super(AlbumInfo, self).__setattr__(key, value)
+
+
 # An abstract library.
 
 class BaseLibrary(object):
@@ -649,6 +674,28 @@ class BaseLibrary(object):
                    cmp(a.disc, b.disc) or \
                    cmp(a.track, b.track)
         return sorted(out, compare)
+
+
+    # Album information.
+    # Provides access to information about items at an album
+    # granularity. AlbumInfo proxy objects are used to access fields;
+    # they invoke _album_get and _album_set.
+
+    def albuminfo(self, artist, album):
+        """Given an artist and album name, return an AlbumInfo proxy
+        object whose attributes correspond to information about the
+        album.
+        """
+        return AlbumInfo(self, artist, album)
+
+    def _album_get(self, artist, album, key):
+        """For the album specified, returns the value associated with
+        the key."""
+        raise NotImplementedError()
+
+    def _album_set(self, artist, album, key, value):
+        """Sets the indicated album's value for key."""
+        raise NotImplementedError()
 
 
 # Concrete DB-backed library.

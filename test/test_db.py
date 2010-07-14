@@ -321,6 +321,23 @@ class MigrationTest(unittest.TestCase):
         except sqlite3.OperationalError:
             self.fail("select failed")
 
+class AlbumInfoTest(unittest.TestCase):
+    def setUp(self):
+        self.lib = beets.library.Library(':memory:')
+        self.i = item()
+        self.lib.add(self.i)
+
+    def test_albuminfo_reflects_metadata(self):
+        ai = self.lib.albuminfo(self.i.artist, self.i.album)
+        self.assertEqual(ai.artist, self.i.artist)
+        self.assertEqual(ai.album, self.i.album)
+
+    def test_albuminfo_stores_art(self):
+        ai = self.lib.albuminfo(self.i.artist, self.i.album)
+        ai.artpath = '/my/great/art'
+        new_ai = self.lib.albuminfo(self.i.artist, self.i.album)
+        self.assertEqual(new_ai.artpath, '/my/great/art')
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
