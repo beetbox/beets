@@ -409,6 +409,11 @@ class AlbumInfoTest(unittest.TestCase):
         # Cursor should only return one row.
         self.assertNotEqual(c.fetchone(), None)
         self.assertEqual(c.fetchone(), None)
+    
+    def test_albuminfo_by_albumid(self):
+        ai = self.lib.albuminfo(self.i)
+        ai = self.lib.albuminfo(ai.id)
+        self.assertEqual(ai.artist, self.i.artist)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

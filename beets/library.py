@@ -945,17 +945,23 @@ class Library(BaseLibrary):
     # Album information.
 
     def albuminfo(self, item):
-        # Lazily create a row in the albums table if one doesn't
-        # exist.
-        sql = 'SELECT id FROM albums WHERE artist=? AND album=?'
-        c = self.conn.execute(sql, (item.artist, item.album))
-        row = c.fetchone()
-        if row:
-            album_id = row[0]
+        """Get an album info proxy object given either an item or an
+        album id.
+        """
+        if isinstance(item, int):
+            album_id = item
         else:
-            sql = 'INSERT INTO albums (artist, album) VALUES (?, ?)'
+            # Lazily create a row in the albums table if one doesn't
+            # exist.
+            sql = 'SELECT id FROM albums WHERE artist=? AND album=?'
             c = self.conn.execute(sql, (item.artist, item.album))
-            album_id = c.lastrowid
+            row = c.fetchone()
+            if row:
+                album_id = row[0]
+            else:
+                sql = 'INSERT INTO albums (artist, album) VALUES (?, ?)'
+                c = self.conn.execute(sql, (item.artist, item.album))
+                album_id = c.lastrowid
         return AlbumInfo(self, album_id)
 
     def _album_get(self, album_id, key):
