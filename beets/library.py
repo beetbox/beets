@@ -703,11 +703,13 @@ class Library(BaseLibrary):
     def __init__(self, path='library.blb',
                        directory='~/Music',
                        path_format='$artist/$album/$track $title',
+                       art_filename='cover',
                        item_fields=ITEM_FIELDS,
                        album_fields=ALBUM_FIELDS):
         self.path = path
         self.directory = directory
         self.path_format = path_format
+        self.art_filename = art_filename
         
         self.conn = sqlite3.connect(self.path)
         self.conn.row_factory = sqlite3.Row
@@ -786,8 +788,8 @@ class Library(BaseLibrary):
         libpath = self.directory
         subpath_tmpl = Template(self.path_format)
         
-        # build the mapping for substitution in the path template, beginning
-        # with the values from the database
+        # Build the mapping for substitution in the path template,
+        # beginning with the values from the database.
         mapping = {}
         for key in ITEM_KEYS_META:
             value = getattr(item, key)
@@ -814,6 +816,15 @@ class Library(BaseLibrary):
         
         return _normpath(os.path.join(libpath, subpath))   
 
+    def art_path(self, item, image):
+        """Returns a path to the destination for the album art image
+        for the item's album. `image` is the path of the image that
+        will be moved there (used for its extension).
+        """
+        item_dir = os.path.dirname(self.destination(item))
+        _, ext = os.path.splitext(image)
+        dest = os.path.join(item_dir, self.art_filename + ext)
+        return dest
     
     # Main interface.
 

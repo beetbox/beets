@@ -31,6 +31,7 @@ CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
 DEFAULT_LIBRARY = '~/.beetsmusic.blb'
 DEFAULT_DIRECTORY = '~/Music'
 DEFAULT_PATH_FORMAT = '$artist/$album/$track $title'
+DEFAULT_ART_FILENAME = 'cover'
 
 
 # UI exception. Commands should throw this in order to display
@@ -369,9 +370,12 @@ def main():
         config_val(config, 'beets', 'directory', DEFAULT_DIRECTORY)
     path_format = options.path_format or \
         config_val(config, 'beets', 'path_format', DEFAULT_PATH_FORMAT)
+    art_filename = \
+        config_val(config, 'beets', 'art_filename', DEFAULT_ART_FILENAME)
     lib = library.Library(os.path.expanduser(libpath),
                           directory,
-                          path_format)
+                          path_format,
+                          art_filename)
     
     # Invoke the subcommand.
     try:

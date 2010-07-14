@@ -247,6 +247,21 @@ class DestinationTest(unittest.TestCase):
         p = beets.library._sanitize_path(u':', 'Darwin')
         self.assertEqual(p, u'-')
 
+class ArtDestinationTest(unittest.TestCase):
+    def setUp(self):
+        self.lib = beets.library.Library(':memory:')
+        self.i = item()
+        self.lib.art_filename = 'artimage'
+        
+    def test_art_filename_respects_setting(self):
+        art = self.lib.art_path(self.i, 'something.jpg')
+        self.assert_('/artimage.jpg' in art)
+        
+    def test_art_path_in_item_dir(self):
+        art = self.lib.art_path(self.i, 'something.jpg')
+        track = self.lib.destination(self.i)
+        self.assertEqual(os.path.dirname(art), os.path.dirname(track))
+
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
     versions.
@@ -399,4 +414,3 @@ def suite():
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
-
