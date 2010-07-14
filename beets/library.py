@@ -81,23 +81,25 @@ log.setLevel(logging.DEBUG)
 log.addHandler(logging.StreamHandler())
 
 
-#### exceptions ####
+# Exceptions.
 
 class InvalidFieldError(Exception):
     pass
 
 
-#### utility functions ####
+# Utility functions.
 
 def _normpath(path):
-    """Provide the canonical form of the path suitable for storing in the
-    database.
+    """Provide the canonical form of the path suitable for storing in
+    the database.
     """
     return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
 
 def _ancestry(path):
-    """Return a list consisting of path's parent directory, its grandparent,
-    and so on. For instance, _ancestry('/a/b/c') == ['/', '/a', '/a/b'].
+    """Return a list consisting of path's parent directory, its
+    grandparent, and so on. For instance:
+       >>> _ancestry('/a/b/c')
+       ['/', '/a', '/a/b']
     """
     out = []
     last_path = None
@@ -113,8 +115,9 @@ def _ancestry(path):
     return out
 
 def _components(path):
-    """Return a list of the path components in path. For instance,
-    _components('/a/b/c') == ['a', 'b', 'c'].
+    """Return a list of the path components in path. For instance:
+       >>> _components('/a/b/c')
+       ['a', 'b', 'c']
     """
     comps = []
     ances = _ancestry(path)
@@ -166,6 +169,7 @@ def _sanitize_path(path, plat=None):
     return os.path.join(*comps)
 
 
+# Library items (songs).
 
 class Item(object):
     def __init__(self, values):
@@ -198,12 +202,12 @@ class Item(object):
         return 'Item(' + repr(self.record) + ')'
 
 
-    #### item field accessors ####
+    # Item field accessors.
 
     def __getattr__(self, key):
         """If key is an item attribute (i.e., a column in the database),
-        returns the record entry for that key. Otherwise, performs an ordinary
-        getattr.
+        returns the record entry for that key. Otherwise, performs an
+        ordinary getattr.
         """
         if key in ITEM_KEYS:
             return self.record[key]
@@ -211,10 +215,10 @@ class Item(object):
             raise AttributeError(key + ' is not a valid item field')
 
     def __setattr__(self, key, value):
-        """If key is an item attribute (i.e., a column in the database), sets
-        the record entry for that key to value. Note that to change the
-        attribute in the database or in the file's tags, one must call store()
-        or write().
+        """If key is an item attribute (i.e., a column in the database),
+        sets the record entry for that key to value. Note that to change
+        the attribute in the database or in the file's tags, one must
+        call store() or write().
         
         Otherwise, performs an ordinary setattr.
         """
@@ -227,7 +231,7 @@ class Item(object):
             super(Item, self).__setattr__(key, value)
     
     
-    #### interaction with files' metadata ####
+    # Interaction with file metadata.
     
     def read(self, read_path=None):
         """Read the metadata from the associated file. If read_path is
@@ -250,21 +254,22 @@ class Item(object):
         f.save()
     
     
-    #### dealing with files themselves ####
+    # Dealing with files themselves.
     
     def move(self, library, copy=False):
         """Move the item to its designated location within the library
-        directory (provided by destination()). Subdirectories are created as
-        needed. If the operation succeeds, the item's path field is updated to
-        reflect the new location.
+        directory (provided by destination()). Subdirectories are
+        created as needed. If the operation succeeds, the item's path
+        field is updated to reflect the new location.
         
         If copy is True, moving the file is copied rather than moved.
         
-        Passes on appropriate exceptions if directories cannot be created or
-        moving/copying fails.
+        Passes on appropriate exceptions if directories cannot be created
+        or moving/copying fails.
         
-        Note that one should almost certainly call store() and library.save()
-        after this method in order to keep on-disk data consistent.
+        Note that one should almost certainly call store() and
+        library.save() after this method in order to keep on-disk data
+        consistent.
         """
         dest = library.destination(self)
         
@@ -283,19 +288,15 @@ class Item(object):
         self.path = dest
 
 
-
-
-
-
-
-
+# Library queries.
 
 class Query(object):
-    """An abstract class representing a query into the item database."""
+    """An abstract class representing a query into the item database.
+    """
     def clause(self):
-        """Returns (clause, subvals) where clause is a valid sqlite WHERE
-        clause implementing the query and subvals is a list of items to be
-        substituted for ?s in the clause.
+        """Returns (clause, subvals) where clause is a valid sqlite
+        WHERE clause implementing the query and subvals is a list of
+        items to be substituted for ?s in the clause.
         """
         raise NotImplementedError
 
@@ -306,9 +307,9 @@ class Query(object):
         raise NotImplementedError
 
     def statement(self, columns='*'):
-        """Returns (query, subvals) where clause is a sqlite SELECT statement
-        to enact this query and subvals is a list of values to substitute in
-        for ?s in the query.
+        """Returns (query, subvals) where clause is a sqlite SELECT
+        statement to enact this query and subvals is a list of values
+        to substitute in for ?s in the query.
         """
         clause, subvals = self.clause()
         return ('SELECT ' + columns + ' FROM items WHERE ' + clause, subvals)
@@ -363,8 +364,8 @@ class SubstringQuery(FieldQuery):
         return self.pattern.lower() in getattr(item, self.field).lower()
 
 class CollectionQuery(Query):
-    """An abstract query class that aggregates other queries. Can be indexed
-    like a list to access the sub-queries.
+    """An abstract query class that aggregates other queries. Can be
+    indexed like a list to access the sub-queries.
     """
     def __init__(self, subqueries = ()):
         self.subqueries = subqueries
@@ -376,8 +377,8 @@ class CollectionQuery(Query):
     def __contains__(self, item): item in self.subqueries
 
     def clause_with_joiner(self, joiner):
-        """Returns a clause created by joining together the clauses of all
-        subqueries with the string joiner (padded by spaces).
+        """Returns a clause created by joining together the clauses of
+        all subqueries with the string joiner (padded by spaces).
         """
         clause_parts = []
         subvals = []
@@ -390,8 +391,8 @@ class CollectionQuery(Query):
     
     @classmethod
     def from_dict(cls, matches):
-        """Construct a query from a dictionary, matches, whose keys are item
-        field names and whose values are substring patterns.
+        """Construct a query from a dictionary, matches, whose keys are
+        item field names and whose values are substring patterns.
         """
         subqueries = []
         for key, pattern in matches.iteritems():
@@ -412,10 +413,10 @@ class CollectionQuery(Query):
                            re.I)            # case-insensitive
     @classmethod
     def _parse_query(cls, query_string):
-        """Takes a query in the form of a whitespace-separated list of search
-        terms that may be preceded with a key followed by a colon. Returns a
-        list of pairs (key, term) where key is None if the search term has no
-        key.
+        """Takes a query in the form of a whitespace-separated list of
+        search terms that may be preceded with a key followed by a
+        colon. Returns a list of pairs (key, term) where key is None if
+        the search term has no key.
 
         For instance,
         parse_query('stapler color:red') ==
@@ -478,8 +479,8 @@ class AnySubstringQuery(CollectionQuery):
         return False
 
 class MutableCollectionQuery(CollectionQuery):
-    """A collection query whose subqueries may be modified after the query is
-    initialized.
+    """A collection query whose subqueries may be modified after the
+    query is initialized.
     """
     def __setitem__(self, key, value): self.subqueries[key] = value
     def __delitem__(self, key): del self.subqueries[key]
@@ -527,7 +528,7 @@ class ResultIterator(object):
         return Item(row)
 
 
-
+# An abstract library.
 
 class BaseLibrary(object):
     """Abstract base class for music libraries, which are loosely
@@ -537,7 +538,7 @@ class BaseLibrary(object):
         raise NotImplementedError
 
 
-    ### helpers ###
+    # Helpers.
 
     @classmethod
     def _get_query(cls, val=None, default_fields=None):
@@ -556,12 +557,13 @@ class BaseLibrary(object):
             raise ValueError('query must be None or have type Query or str')
 
 
-    ### basic operations ###
+    # Basic operations.
 
     def add(self, item, copy=False): #FIXME copy should default to true
-        """Add the item as a new object to the library database. The id field
-        will be updated; the new id is returned. If copy, then each item is
-        copied to the destination location before it is added.
+        """Add the item as a new object to the library database. The id
+        field will be updated; the new id is returned. If copy, then
+        each item is copied to the destination location before it is
+        added.
         """
         raise NotImplementedError
 
@@ -580,25 +582,27 @@ class BaseLibrary(object):
         pass
 
     def load(self, item, load_id=None):
-        """Refresh the item's metadata from the library database. If fetch_id
-        is not specified, use the item's current id.
+        """Refresh the item's metadata from the library database. If
+        fetch_id is not specified, use the item's current id.
         """
         raise NotImplementedError
 
     def store(self, item, store_id=None, store_all=False):
-        """Save the item's metadata into the library database. If store_id is
-        specified, use it instead of the item's current id. If store_all is
-        true, save the entire record instead of just the dirty fields.
+        """Save the item's metadata into the library database. If
+        store_id is specified, use it instead of the item's current id.
+        If store_all is true, save the entire record instead of just
+        the dirty fields.
         """
         raise NotImplementedError
 
     def remove(self, item):
-        """Removes the item from the database (leaving the file on disk).
+        """Removes the item from the database (leaving the file on
+        disk).
         """
         raise NotImplementedError
 
 
-    ### browsing operations ###
+    # Browsing operations.
     # Naive implementations are provided, but these methods should be
     # overridden if a better implementation exists.
 
@@ -646,6 +650,8 @@ class BaseLibrary(object):
                    cmp(a.track, b.track)
         return sorted(out, compare)
 
+
+# Concrete DB-backed library.
 
 class Library(BaseLibrary):
     """A music library using an SQLite database as a metadata store."""
@@ -736,8 +742,9 @@ class Library(BaseLibrary):
         
         return _normpath(os.path.join(libpath, subpath))   
 
-    #### main interface ####
     
+    # Main interface.
+
     def add(self, item, copy=False):
         #FIXME make a deep copy of the item?
         item.library = self
@@ -810,7 +817,7 @@ class Library(BaseLibrary):
         self.conn.execute('DELETE FROM items WHERE id=?', (item.id,))
 
 
-    ### browsing ###
+    # Browsing.
 
     def artists(self, query=None):
         query = self._get_query(query, ARTIST_DEFAULT_FIELDS)
@@ -849,6 +856,4 @@ class Library(BaseLibrary):
               " ORDER BY artist, album, disc, track"
         c = self.conn.execute(sql, subvals)
         return ResultIterator(c, self)
-
-
 
