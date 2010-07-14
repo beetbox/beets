@@ -234,13 +234,17 @@ def tag_album(items, lib, copy=True, write=True, logfile=None, art=False):
         lib.add(item)
     
     # Get album art.
-    if art:
-        artpath = autotag.art.art_for_album(info)
-        if artpath:
-            artdest = lib.art_path(items[0], artpath)
-            #fixme -- move if possible?
-            shutil.copy(artpath, artdest)
-            lib.albuminfo(items[0]).artpath = artdest
+    if info is not CHOICE_ASIS:
+        if art:
+            artpath = autotag.art.art_for_album(info)
+            if artpath:
+                artdest = lib.art_path(items[0], artpath)
+                #fixme -- move if possible?
+                shutil.copy(artpath, artdest)
+                lib.albuminfo(items[0]).artpath = artdest
+            else:
+                log.info('no album art found for %s - %s' %
+                         (info['artist'], info['album']))
 
 def import_files(lib, paths, copy=True, write=True, autot=True,
                  logpath=None, art=False):
