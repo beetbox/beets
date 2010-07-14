@@ -251,6 +251,7 @@ class ArtDestinationTest(unittest.TestCase):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
         self.i = item()
+        self.i.path = '/some/music/file.mp3'
         self.lib.art_filename = 'artimage'
         
     def test_art_filename_respects_setting(self):
@@ -259,7 +260,7 @@ class ArtDestinationTest(unittest.TestCase):
         
     def test_art_path_in_item_dir(self):
         art = self.lib.art_path(self.i, 'something.jpg')
-        track = self.lib.destination(self.i)
+        track = self.i.path
         self.assertEqual(os.path.dirname(art), os.path.dirname(track))
 
 class MigrationTest(unittest.TestCase):

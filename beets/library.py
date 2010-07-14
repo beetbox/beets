@@ -821,10 +821,11 @@ class Library(BaseLibrary):
         for the item's album. `image` is the path of the image that
         will be moved there (used for its extension).
         """
-        item_dir = os.path.dirname(self.destination(item))
+        item_dir = os.path.dirname(item.path)
         _, ext = os.path.splitext(image)
         dest = os.path.join(item_dir, self.art_filename + ext)
         return dest
+    
     
     # Main interface.
 
