@@ -49,6 +49,7 @@ def item(): return beets.library.Item({
     'mb_trackid':  'someID-1',
     'mb_albumid':  'someID-2',
     'mb_artistid': 'someID-3',
+    'album_id':    None,
 })
 np = beets.library._normpath
 
@@ -325,74 +326,42 @@ class AlbumInfoTest(unittest.TestCase):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
         self.i = item()
-        self.lib.add(self.i)
+        self.lib.add_album(self.i.artist, self.i.album, (self.i,))
 
     def test_albuminfo_reflects_metadata(self):
-        ai = self.lib.albuminfo(self.i)
+        ai = self.lib.get_album(self.i)
         self.assertEqual(ai.artist, self.i.artist)
         self.assertEqual(ai.album, self.i.album)
 
     def test_albuminfo_stores_art(self):
-        ai = self.lib.albuminfo(self.i)
+        ai = self.lib.get_album(self.i)
         ai.artpath = '/my/great/art'
-        new_ai = self.lib.albuminfo(self.i)
+        new_ai = self.lib.get_album(self.i)
         self.assertEqual(new_ai.artpath, '/my/great/art')
-    
-    def test_albuminfo_removed_when_last_item_removed(self):
-        self.lib.albuminfo(self.i)
-        c = self.lib.conn.cursor()
-        c.execute('select * from albums where album=?', (self.i.album,))
-        self.assertNotEqual(c.fetchone(), None)
-        
-        self.lib.remove(self.i)
-        
-        c = self.lib.conn.cursor()
-        c.execute('select * from albums where album=?', (self.i.album,))
-        self.assertEqual(c.fetchone(), None)
-    
-    def test_albuminfo_changes_when_item_field_changes(self):
-        self.lib.albuminfo(self.i)
-        self.i.album = 'anotherAlbum'
-        self.lib.store(self.i)
-        
-        ai = self.lib.albuminfo(self.i)
-        self.assertEqual(ai.album, 'anotherAlbum')
-    
-    def test_old_albuminfo_removed_when_last_item_changes(self):
-        oldalbum = self.i.album
-        self.lib.albuminfo(self.i)
-        self.i.album = 'anotherAlbum'
-        self.lib.store(self.i)
-        
-        c = self.lib.conn.cursor()
-        c.execute('select * from albums where album=?', (oldalbum,))
-        self.assertEqual(c.fetchone(), None)
-    
-    def test_splitting_album_leaves_albuminfo_for_both(self):
-        i2 = item()
-        self.lib.add(i2)
-        self.lib.albuminfo(self.i)
-        self.lib.albuminfo(i2)
-        
-        i2.artist = 'anotherArtist'
-        self.lib.store(i2)
-        
-        ai = self.lib.albuminfo(self.i)
-        self.assertEqual(ai.artist, self.i.artist)
-        ai = self.lib.albuminfo(i2)
-        self.assertEqual(ai.artist, 'anotherArtist')
     
     def test_albuminfo_for_two_items_doesnt_duplicate_row(self):
         i2 = item()
         self.lib.add(i2)
-        self.lib.albuminfo(self.i)
-        self.lib.albuminfo(i2)
+        self.lib.get_album(self.i)
+        self.lib.get_album(i2)
         
         c = self.lib.conn.cursor()
         c.execute('select * from albums where album=?', (self.i.album,))
         # Cursor should only return one row.
         self.assertNotEqual(c.fetchone(), None)
         self.assertEqual(c.fetchone(), None)
+
+    def test_individual_tracks_have_no_albuminfo(self):
+        i2 = item()
+        i2.album = 'aTotallyDifferentAlbum'
+        self.lib.add(i2)
+        ai = self.lib.get_album(i2)
+        self.assertEqual(ai, None)
+
+    def test_get_album_by_id(self):
+        ai = self.lib.get_album(self.i)
+        ai = self.lib.get_album(self.i.id)
+        self.assertNotEqual(ai, None)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

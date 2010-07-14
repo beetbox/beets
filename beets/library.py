@@ -35,6 +35,8 @@ MAX_FILENAME_LENGTH = 200
 ITEM_FIELDS = [
     ('id',          'integer primary key', False, False),
     ('path',        'text', False, False),
+    ('album_id',    'int',  False, False),
+
     ('title',       'text', True,  True),
     ('artist',      'text', True,  True),
     ('album',       'text', True,  True),
@@ -55,6 +57,7 @@ ITEM_FIELDS = [
     ('mb_trackid',  'text', True,  True),
     ('mb_albumid',  'text', True,  True),
     ('mb_artistid', 'text', True,  True),
+
     ('length',      'real', False, True),
     ('bitrate',     'int',  False, True),
 ]
@@ -182,7 +185,10 @@ class Item(object):
     def from_path(cls, path):
         """Creates a new item from the media file at the specified path.
         """
-        i = cls({})
+        # Initiate with values that aren't read from files.
+        i = cls({
+            'album_id': None,
+        })
         i.read(_unicode_path(path))
         return i
 
@@ -528,30 +534,6 @@ class ResultIterator(object):
         return Item(row)
 
 
-# Album information proxy objects.
-
-class AlbumInfo(object):
-    """Provides access to information about albums stored in a library.
-    """
-    def __init__(self, library, ident):
-        self._library = library
-        self._ident = ident
-
-    def __getattr__(self, key):
-        """Get an album field's value."""
-        if key in ALBUM_KEYS:
-            return self._library._album_get(self._ident, key)
-        else:
-            return getattr(self, key)
-
-    def __setattr__(self, key, value):
-        """Set an album field."""
-        if key in ALBUM_KEYS:
-            self._library._album_set(self._ident, key, value)
-        else:
-            super(AlbumInfo, self).__setattr__(key, value)
-
-
 # An abstract library.
 
 class BaseLibrary(object):
@@ -673,27 +655,6 @@ class BaseLibrary(object):
                    cmp(a.disc, b.disc) or \
                    cmp(a.track, b.track)
         return sorted(out, compare)
-
-
-    # Album information.
-    # Provides access to information about items at an album
-    # granularity. AlbumInfo proxy objects are used to access fields;
-    # they invoke _album_get and _album_set.
-
-    def albuminfo(self, item):
-        """Given an artist and album name, return an AlbumInfo proxy
-        object for the given item's album.
-        """
-        return AlbumInfo(self, (item.artist, item.album))
-
-    def _album_get(self, ident, key):
-        """For the album specified, returns the value associated with
-        the key."""
-        raise NotImplementedError()
-
-    def _album_set(self, ident, key, value):
-        """Sets the indicated album's value for key."""
-        raise NotImplementedError()
 
 
 # Concrete DB-backed library.
@@ -903,27 +864,59 @@ class Library(BaseLibrary):
         return ResultIterator(c, self)
     
     
-    # Album information.
+    # Album-level data.
 
-    def albuminfo(self, item):
-        # Lazily create a row in the albums table if one doesn't
-        # exist.
-        sql = 'SELECT id FROM albums WHERE artist=? AND album=?'
-        c = self.conn.execute(sql, (item.artist, item.album))
-        row = c.fetchone()
-        if row:
-            album_id = row[0]
+    class _AlbumInfo(object):
+        """Provides access to information about albums stored in a
+        library.
+        """
+        def __init__(self, library, album_id):
+            self._library = library
+            self._id = album_id
+
+        def __getattr__(self, key):
+            if key == 'id':
+                return self._id
+            elif key in ALBUM_KEYS:
+                sql = 'SELECT %s FROM albums WHERE id=?' % key
+                c = self._library.conn.execute(sql, (self._id,))
+                return c.fetchone()[0]
+            else:
+                return getattr(self, key)
+
+        def __setattr__(self, key, value):
+            if key in ALBUM_KEYS:
+                sql = 'UPDATE albums SET %s=? WHERE id=?' % key
+                self._library.conn.execute(sql, (value, self._id))
+            else:
+                object.__setattr__(self, key, value)
+
+    def get_album(self, item_or_id):
+        """Given an album ID or an item associated with an album,
+        return an _AlbumInfo object for the album.
+        """
+        if isinstance(item_or_id, int):
+            album_id = item_or_id
         else:
-            sql = 'INSERT INTO albums (artist, album) VALUES (?, ?)'
-            c = self.conn.execute(sql, (item.artist, item.album))
-            album_id = c.lastrowid
-        return AlbumInfo(self, album_id)
+            album_id = item_or_id.album_id
+        if album_id is None:
+            return None
+        return self._AlbumInfo(self, album_id)
 
-    def _album_get(self, album_id, key):
-        sql = 'SELECT %s FROM albums WHERE id=?' % key
-        c = self.conn.execute(sql, (album_id,))
-        return c.fetchone()[0]
+    def add_album(self, artist, album, items=()):
+        """Create a new album in the database with the given metadata.
+        If items are provided, they are also added and associated with
+        the album. Returns an _AlbumInfo object.
+        """
+        c = self.conn.execute(
+            'INSERT INTO albums (artist, album) VALUES (?, ?)',
+            (artist, album)
+        )
+        albuminfo = self._AlbumInfo(self, c.lastrowid)
 
-    def _album_set(self, album_id, key, value):
-        sql = 'UPDATE albums SET %s=? WHERE id=?' % key
-        self.conn.execute(sql, (value, album_id))
+        for item in items:
+            item.album_id = albuminfo.id
+            self.add(item)
+
+        return albuminfo
+
