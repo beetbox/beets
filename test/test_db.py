@@ -438,15 +438,14 @@ class ArtFileTest(unittest.TestCase):
         self.lib.directory = self.libdir
         self.i = item()
         self.i.path = self.lib.destination(self.i)
-        # Make a file.
+        # Make a music file.
         beets.library._mkdirall(self.i.path)
         _touch(self.i.path)
-        self.lib.add_album(self.i.artist, self.i.album, (self.i,))
+        # Make an album.
+        self.ai = self.lib.add_album(self.i.artist, self.i.album, (self.i,))
         # Make an art file too.
         self.art = self.lib.get_album(self.i).art_destination('something.jpg')
         _touch(self.art)
-        # Make an album.
-        self.ai = self.lib.get_album(self.i)
         self.ai.artpath = self.art
     def tearDown(self):
         if os.path.exists(self.libdir):
@@ -468,6 +467,16 @@ class ArtFileTest(unittest.TestCase):
         self.assertFalse(os.path.exists(self.art))
         newart = self.lib.get_album(self.i).art_destination(self.art)
         self.assertTrue(os.path.exists(newart))
+
+    def test_setart_copies_image(self):
+        newart = os.path.join(self.libdir, 'newart.jpg')
+        _touch(newart)
+        i2 = item()
+        i2.artist = 'someArtist'
+        ai = self.lib.add_album(i2.artist, i2.album, (i2,))
+        self.assertEqual(ai.artpath, None)
+        ai.set_art(newart)
+        self.assertTrue(os.path.exists(ai.artpath))
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

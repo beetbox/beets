@@ -976,6 +976,18 @@ class Library(BaseLibrary):
             _, ext = os.path.splitext(image)
             dest = os.path.join(item_dir, self._library.art_filename + ext)
             return dest
+        
+        def set_art(self, path):
+            """Sets the album's cover art to the image at the given path.
+            The image is copied into place, replacing any existing art.
+            """
+            oldart = self.artpath
+            artdest = self.art_destination(path)
+            if oldart == artdest:
+                os.unlink(oldart)
+
+            shutil.copy(path, artdest)
+            self.artpath = artdest
 
     def get_album(self, item_or_id):
         """Given an album ID or an item associated with an album,
