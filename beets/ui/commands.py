@@ -247,62 +247,36 @@ def import_files(lib, paths, copy=True, write=True, autot=True,
     albums will be logged there. If art, then attempt to download
     cover art for each album.
     """
+    # Open the log.
     if logpath:
         logfile = open(logpath, 'w')
     else:
         logfile = None
     
-    if autot:        
-        # Make sure we have only directories.
-        for path in paths:
-            if not os.path.isdir(path):
-                raise ui.UserError('not a directory: ' + path)
-        
-        # Crawl albums and tag them.
-        first = True
-        for path in paths:
-            for album in autotag.albums_in_dir(os.path.expanduser(path)):
+    # Make sure we have only directories.
+    for path in paths:
+        if not os.path.isdir(path):
+            raise ui.UserError('not a directory: ' + path)
+    
+    # Crawl albums and (optionally) tag them.
+    first = True
+    for path in paths:
+        for items in autotag.albums_in_dir(os.path.expanduser(path)):
+            if autot:
+                # Infer tags.
                 if not first:
                     print_()
                 first = False
-
-                # Infer tags.
-                tag_album(album, lib, copy, write, logfile, art)
-                
-                # Write the database after each album.
-                lib.save()
-    
-    else:
-        # No autotagging. Just walk the paths.
-        for path in paths:
-            if os.path.isdir(path):
-                # Find all files in the directory.
-                filepaths = []
-                for root, dirs, files in autotag._sorted_walk(path):
-                    for filename in files:
-                        filepaths.append(os.path.join(root, filename))
+                tag_album(items, lib, copy, write, logfile, art)
             else:
-                # Just add the file.
-                filepaths = [path]
-            
-            # Add all the files.
-            for filepath in filepaths:
-                try:
-                    item = library.Item.from_path(filepath)
-                except FileTypeError:
-                    continue
-                except UnreadableFileError:
-                    log.warn('unreadable file: ' + filepath)
-                    continue
-                
-                # Add the item to the library, copying if requested.
+                # No autotagging. Just add the album.
                 if copy:
-                    item.move(lib, True)
-                # Don't write tags because nothing changed.
-                lib.add(item)
-        
-        # Save when completely finished.
-        lib.save()
+                    for item in items:
+                        item.move(lib, True)
+                lib.add_album(items)
+
+            # Write the database after each album.
+            lib.save()
     
     # If we were logging, close the file.
     if logfile:
