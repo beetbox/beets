@@ -1,5 +1,12 @@
 1.0b3
 -----
+* Album art. The tagger now, by default, downloads album art from
+  Amazon that is referenced in the MusicBrainz database. It places the
+  album art alongside the audio files in a file called (for example)
+  "cover.jpg". The "import_art" config option controls this behavior,
+  as do the -r and -R options to the import command. You can set the
+  name (minus extension) of the album art file with the
+  "art_filename" config option.
 * Plugin architecture. Add-on modules can now add new commands to the
   beets command-line interface. The "bpd" and "dadd" commands were
   removed from the beets core and turned into plugins; BPD is loaded
@@ -17,6 +24,11 @@
   so that new columns could be added to old databases--this is a
   delicate feature, so it would be very wise to make a backup of your
   database before upgrading to this version.
+* As a consequence of adding album art, the database was significantly
+  refactored to keep track of some information at an album (rather than
+  item) granularity. Databases created with earlier versions of beets
+  should work fine, but they won't have any "albums" in them--they'll
+  just be a bag of items.
 * Fixed some bugs with encoding paths on Windows. Also, :s are now
   replaced with -s in path names (instead of _s) for readability.
 
