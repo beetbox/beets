@@ -69,10 +69,20 @@ ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 # The third entry in each tuple indicates whether the field reflects an
 # identically-named field in the items table.
 ALBUM_FIELDS = [
-    ('id',      'integer primary key', False),
-    ('artist',  'text', True),
-    ('album',   'text', True),
+    ('id', 'integer primary key', False),
     ('artpath', 'text', False),
+
+    ('artist',      'text', True),
+    ('album',       'text', True),
+    ('genre',       'text', True),
+    ('year',        'int',  True),
+    ('month',       'int',  True),
+    ('day',         'int',  True),
+    ('tracktotal',  'int',  True),
+    ('disctotal',   'int',  True),
+    ('comp',        'bool', True),
+    ('mb_albumid',  'text', True),
+    ('mb_artistid', 'text', True),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]

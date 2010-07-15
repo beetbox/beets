@@ -337,6 +337,7 @@ class AlbumInfoTest(unittest.TestCase):
         ai = self.lib.get_album(self.i)
         self.assertEqual(ai.artist, self.i.artist)
         self.assertEqual(ai.album, self.i.album)
+        self.assertEqual(ai.year, self.i.year)
 
     def test_albuminfo_stores_art(self):
         ai = self.lib.get_album(self.i)
