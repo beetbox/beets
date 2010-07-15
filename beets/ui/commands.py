@@ -229,13 +229,13 @@ def tag_album(items, lib, copy=True, write=True, logfile=None, art=True):
 
     # Add items to library. We consolidate this at the end to avoid
     # locking while we do the copying and tag updates.
-    for item in items:
-        lib.add(item)
+    albuminfo = lib.add_album(artist, album, items)
 
     # Get album art if requested.
     if art:
-        #fixme
-        beets.autotag.art.art_for_album(info)
+        artpath = beets.autotag.art.art_for_album(info)
+        if artpath:
+            albuminfo.set_art(artpath)
 
 def import_files(lib, paths, copy=True, write=True, autot=True,
                  logpath=None, art=True):
@@ -295,7 +295,6 @@ def import_files(lib, paths, copy=True, write=True, autot=True,
                     log.warn('unreadable file: ' + filepath)
                     continue
                 
-            
                 # Add the item to the library, copying if requested.
                 if copy:
                     item.move(lib, True)
@@ -458,4 +457,3 @@ def stats_func(lib, config, opts, args):
     show_stats(lib, ui.make_query(args))
 stats_cmd.func = stats_func
 default_commands.append(stats_cmd)
-
