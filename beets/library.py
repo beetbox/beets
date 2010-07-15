@@ -1009,20 +1009,23 @@ class Library(BaseLibrary):
             return None
         return self._AlbumInfo(self, album_id)
 
-    def add_album(self, artist, album, items=()):
-        """Create a new album in the database with the given metadata.
-        If items are provided, they are also added and associated with
-        the album. Returns an _AlbumInfo object.
+    def add_album(self, items):
+        """Create a new album in the database with metadata derived
+        from its items. The items are added to the database. Returns
+        an _AlbumInfo object.
         """
-        c = self.conn.execute(
-            'INSERT INTO albums (artist, album) VALUES (?, ?)',
-            (artist, album)
-        )
+        # Set the metadata from the first item.
+        #fixme: check for consensus?
+        sql = 'INSERT INTO albums (%s) VALUES (%s)' % \
+              (', '.join(ALBUM_KEYS_ITEM),
+               ', '.join(['?'] * len(ALBUM_KEYS_ITEM)))
+        subvals = [getattr(items[0], key) for key in ALBUM_KEYS_ITEM]
+        c = self.conn.execute(sql, subvals)
         albuminfo = self._AlbumInfo(self, c.lastrowid)
 
+        # Add the items to the library.
         for item in items:
             item.album_id = albuminfo.id
             self.add(item)
 
         return albuminfo
-

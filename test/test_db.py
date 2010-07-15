@@ -331,7 +331,7 @@ class AlbumInfoTest(unittest.TestCase):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
         self.i = item()
-        self.lib.add_album(self.i.artist, self.i.album, (self.i,))
+        self.lib.add_album((self.i,))
 
     def test_albuminfo_reflects_metadata(self):
         ai = self.lib.get_album(self.i)
@@ -400,7 +400,7 @@ class AlbumFileTest(unittest.TestCase):
         beets.library._mkdirall(self.i.path)
         _touch(self.i.path)
         # Make an album.
-        self.ai = self.lib.add_album(self.i.artist, self.i.album, (self.i,))
+        self.ai = self.lib.add_album((self.i,))
     def tearDown(self):
         if os.path.exists(self.libdir):
             shutil.rmtree(self.libdir)
@@ -442,7 +442,7 @@ class ArtFileTest(unittest.TestCase):
         beets.library._mkdirall(self.i.path)
         _touch(self.i.path)
         # Make an album.
-        self.ai = self.lib.add_album(self.i.artist, self.i.album, (self.i,))
+        self.ai = self.lib.add_album((self.i,))
         # Make an art file too.
         self.art = self.lib.get_album(self.i).art_destination('something.jpg')
         _touch(self.art)
@@ -473,7 +473,7 @@ class ArtFileTest(unittest.TestCase):
         _touch(newart)
         i2 = item()
         i2.artist = 'someArtist'
-        ai = self.lib.add_album(i2.artist, i2.album, (i2,))
+        ai = self.lib.add_album((i2,))
         self.assertEqual(ai.artpath, None)
         ai.set_art(newart)
         self.assertTrue(os.path.exists(ai.artpath))
@@ -484,7 +484,7 @@ class ArtDestinationTest(unittest.TestCase):
         self.i = item()
         self.i.path = self.lib.destination(self.i)
         self.lib.art_filename = 'artimage'
-        self.ai = self.lib.add_album(self.i.artist, self.i.album, (self.i,))
+        self.ai = self.lib.add_album((self.i,))
         
     def test_art_filename_respects_setting(self):
         art = self.ai.art_destination('something.jpg')

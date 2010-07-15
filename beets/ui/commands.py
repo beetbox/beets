@@ -229,7 +229,7 @@ def tag_album(items, lib, copy=True, write=True, logfile=None, art=True):
 
     # Add items to library. We consolidate this at the end to avoid
     # locking while we do the copying and tag updates.
-    albuminfo = lib.add_album(artist, album, items)
+    albuminfo = lib.add_album(items)
 
     # Get album art if requested.
     if art:
