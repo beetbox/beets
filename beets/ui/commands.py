@@ -232,7 +232,7 @@ def tag_album(items, lib, copy=True, write=True, logfile=None, art=True):
     albuminfo = lib.add_album(items)
 
     # Get album art if requested.
-    if art:
+    if art and info is not CHOICE_ASIS:
         artpath = beets.autotag.art.art_for_album(info)
         if artpath:
             albuminfo.set_art(artpath)
