@@ -19,7 +19,6 @@ import unittest
 import sys
 import os
 import sqlite3
-import shutil
 sys.path.append('..')
 import beets.library
 
@@ -53,10 +52,6 @@ def item(): return beets.library.Item({
     'album_id':    None,
 })
 np = beets.library._normpath
-
-def _touch(path):
-    # Create file if it doesn't exist.
-    open(path, 'a').close()
 
 class LoadTest(unittest.TestCase):
     def setUp(self):
@@ -388,96 +383,6 @@ class AlbumInfoTest(unittest.TestCase):
         self.lib.get_album(self.i).remove()
         c = self.lib.conn.execute('SELECT id FROM items WHERE id=?', (item_id,))
         self.assertEqual(c.fetchone(), None)
-
-class AlbumFileTest(unittest.TestCase):
-    def setUp(self):
-        # Make library and item.
-        self.lib = beets.library.Library(':memory:')
-        self.libdir = os.path.join('rsrc', 'testlibdir')
-        self.lib.directory = self.libdir
-        self.i = item()
-        # Make a file for the item.
-        self.i.path = self.lib.destination(self.i)
-        beets.library._mkdirall(self.i.path)
-        _touch(self.i.path)
-        # Make an album.
-        self.ai = self.lib.add_album((self.i,))
-    def tearDown(self):
-        if os.path.exists(self.libdir):
-            shutil.rmtree(self.libdir)
-
-    def test_albuminfo_move_changes_paths(self):
-        self.ai.album = 'newAlbumName'
-        self.ai.move()
-        self.lib.load(self.i)
-
-        self.assert_('newAlbumName' in self.i.path)
-
-    def test_albuminfo_move_moves_file(self):
-        oldpath = self.i.path
-        self.ai.album = 'newAlbumName'
-        self.ai.move()
-        self.lib.load(self.i)
-
-        self.assertFalse(os.path.exists(oldpath))
-        self.assertTrue(os.path.exists(self.i.path))
-
-    def test_albuminfo_move_copies_file(self):
-        oldpath = self.i.path
-        self.ai.album = 'newAlbumName'
-        self.ai.move(True)
-        self.lib.load(self.i)
-
-        self.assertTrue(os.path.exists(oldpath))
-        self.assertTrue(os.path.exists(self.i.path))
-
-class ArtFileTest(unittest.TestCase):
-    def setUp(self):
-        # Make library and item.
-        self.lib = beets.library.Library(':memory:')
-        self.libdir = os.path.join('rsrc', 'testlibdir')
-        self.lib.directory = self.libdir
-        self.i = item()
-        self.i.path = self.lib.destination(self.i)
-        # Make a music file.
-        beets.library._mkdirall(self.i.path)
-        _touch(self.i.path)
-        # Make an album.
-        self.ai = self.lib.add_album((self.i,))
-        # Make an art file too.
-        self.art = self.lib.get_album(self.i).art_destination('something.jpg')
-        _touch(self.art)
-        self.ai.artpath = self.art
-    def tearDown(self):
-        if os.path.exists(self.libdir):
-            shutil.rmtree(self.libdir)
-
-    def test_art_deleted_when_items_deleted(self):
-        self.assertTrue(os.path.exists(self.art))
-        self.ai.remove(True)
-        self.assertFalse(os.path.exists(self.art))
-
-    def test_art_moves_with_album(self):
-        self.assertTrue(os.path.exists(self.art))
-        oldpath = self.i.path
-        self.ai.artist = 'newArtist'
-        self.ai.move()
-        self.lib.load(self.i)
-
-        self.assertNotEqual(self.i.path, oldpath)
-        self.assertFalse(os.path.exists(self.art))
-        newart = self.lib.get_album(self.i).art_destination(self.art)
-        self.assertTrue(os.path.exists(newart))
-
-    def test_setart_copies_image(self):
-        newart = os.path.join(self.libdir, 'newart.jpg')
-        _touch(newart)
-        i2 = item()
-        i2.artist = 'someArtist'
-        ai = self.lib.add_album((i2,))
-        self.assertEqual(ai.artpath, None)
-        ai.set_art(newart)
-        self.assertTrue(os.path.exists(ai.artpath))
 
 class ArtDestinationTest(unittest.TestCase):
     def setUp(self):
