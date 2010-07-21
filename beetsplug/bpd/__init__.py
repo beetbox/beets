@@ -849,7 +849,7 @@ class Server(BaseServer):
         if not album:
             for a in self.lib.albums(artist or None):
                 parts = (album.artist, album.album)
-                conn.send(u'directory: ' + seq_to_path(a, PATH_PH))
+                conn.send(u'directory: ' + seq_to_path(parts, PATH_PH))
 
         # tracks
         items = self.lib.items(artist or None, album or None)

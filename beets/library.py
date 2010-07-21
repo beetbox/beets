@@ -646,16 +646,22 @@ class BaseLibrary(object):
         string terms only match fields that apply at an album
         granularity: artist, album, and genre.
         """
-        # Gather the unique album/artist names.
-        pairs = set()
+        # Gather the unique album/artist names and associated example
+        # Items.
+        specimens = set()
         for item in self.get(query, ALBUM_DEFAULT_FIELDS):
-            if artist is None or item.artist == artist:
-                pairs.add((item.artist, item.album))
-        pairs = list(pairs)
-        pairs.sort()
+            if (artist is None or item.artist == artist):
+                key = (item.artist, item.album)
+                if key not in specimens:
+                    specimens[key] = item
 
         # Build album objects.
-        return [BaseAlbum(self, artist, album) for artist, album in pairs]
+        for k in sorted(specimens.keys()):
+            item = specimens[k]
+            record = {}
+            for key in ALBUM_KEYS_ITEM:
+                record[key] = getattr(item, key)
+            yield BaseAlbum(self, record)
 
     def items(self, artist=None, album=None, title=None, query=None):
         """Returns a sequence of the items matching the given artist,
@@ -684,27 +690,18 @@ class BaseAlbum(object):
     collection of items in the library.
 
     This base version just reflects the metadata of the album's items
-    and therefore isn't particularly useful. Implementations can add
+    and therefore isn't particularly useful. The items are referenced
+    by the record's album and artist fields. Implementations can add
     album-level metadata or use distinct backing stores.
     """
-    def __init__(self, library, artist, album):
+    def __init__(self, library, record):
         self._library = library
-        self._artist = artist
-        self._album = album
+        self._record = record
 
     def __getattr__(self, key):
         """Get the value for an album attribute."""
-        if key == 'artist':
-            return self._artist
-        elif key == 'album':
-            return self._album
-        elif key in ALBUM_KEYS_ITEM:
-            items = self._library.items(artist=self._artist, album=self._album)
-            try:
-                item = iter(items).next()
-            except StopIteration:
-                return None
-            return getattr(item, key)
+        if key in self._record:
+            return self._record[key]
         else:
             raise AttributeError('no such field %s' % key)
 
@@ -712,17 +709,25 @@ class BaseAlbum(object):
         """Set the value of an album attribute, modifying each of the
         album's items.
         """
-        if key in ALBUM_KEYS_ITEM:
-            items = self._library.items(artist=self._artist, album=self._album)
-            for item in items:
-                setattr(item, key, value)
+        if key in self._record:
+            # Reflect change in this object.
+            self._record[key] = value
+            # Modify items.
+            if key in ALBUM_KEYS_ITEM:
+                items = self._library.items(artist=self.artist, album=self.album)
+                for item in items:
+                    setattr(item, key, value)
                 self._library.store(item)
-            if key == 'artist':
-                self._artist = artist
-            elif key == 'album':
-                self._album = album
         else:
             object.__setattr__(self, key, value)
+
+    def load(self):
+        """Refresh this album's cached metadata from the library.
+        """
+        items = self._library.items(artist=self.artist, album=self.album)
+        item = iter(items).next()
+        for key in ALBUM_KEYS_ITEM:
+            self._record[key] = getattr(item, key)
 
 
 # Concrete DB-backed library.
@@ -912,11 +917,11 @@ class Library(BaseLibrary):
             # "Add" the artist to the query.
             query = AndQuery((query, MatchQuery('artist', artist)))
         where, subvals = query.clause()
-        sql = "SELECT id FROM albums " + \
+        sql = "SELECT * FROM albums " + \
               "WHERE " + where + \
               " ORDER BY artist, album"
         c = self.conn.execute(sql, subvals)
-        return [Album(self, res[0]) for res in c.fetchall()]
+        return [Album(self, dict(res)) for res in c.fetchall()]
 
     def items(self, artist=None, album=None, title=None, query=None):
         queries = [self._get_query(query, ITEM_DEFAULT_FIELDS)]
@@ -950,7 +955,8 @@ class Library(BaseLibrary):
     
     def get_album(self, item_or_id):
         """Given an album ID or an item associated with an album,
-        return an Album object for the album.
+        return an Album object for the album. If no such album exists,
+        returns None.
         """
         if isinstance(item_or_id, int):
             album_id = item_or_id
@@ -958,7 +964,13 @@ class Library(BaseLibrary):
             album_id = item_or_id.album_id
         if album_id is None:
             return None
-        return Album(self, album_id)
+
+        record = self.conn.execute(
+            'SELECT * FROM albums WHERE id=?',
+            (album_id,)
+        ).fetchone()
+        if record:
+            return Album(self, dict(record))
 
     def add_album(self, items):
         """Create a new album in the database with metadata derived
@@ -972,47 +984,46 @@ class Library(BaseLibrary):
                ', '.join(['?'] * len(ALBUM_KEYS_ITEM)))
         subvals = [getattr(items[0], key) for key in ALBUM_KEYS_ITEM]
         c = self.conn.execute(sql, subvals)
-        albuminfo = Album(self, c.lastrowid)
+        album_id = c.lastrowid
+
+        # Construct the new Album object.
+        record = {}
+        for key in ALBUM_KEYS:
+            if key in ALBUM_KEYS_ITEM:
+                record[key] = getattr(items[0], key)
+            else:
+                # Non-item fields default to None.
+                record[key] = None
+        record['id'] = album_id
+        album = Album(self, record)
 
         # Add the items to the library.
         for item in items:
-            item.album_id = albuminfo.id
+            item.album_id = album_id
             if item.id is None:
                 self.add(item)
             else:
                 self.store(item)
 
-        return albuminfo
+        return album
 
-class Album(object):
+class Album(BaseAlbum):
     """Provides access to information about albums stored in a
     library. Reflects the library's "albums" table, including album
     art.
     """
-    def __init__(self, library, album_id):
-        self._library = library
-        self._id = album_id
-
-    def __getattr__(self, key):
-        """Get the value for an album attribute."""
-        if key == 'id':
-            return self._id
-        elif key in ALBUM_KEYS:
-            sql = 'SELECT %s FROM albums WHERE id=?' % key
-            c = self._library.conn.execute(sql, (self._id,))
-            return c.fetchone()[0]
-        else:
-            raise AttributeError('no such field %s' % key)
-
     def __setattr__(self, key, value):
         """Set the value of an album attribute."""
         if key == 'id':
             raise AttributeError("can't modify album id")
         elif key in ALBUM_KEYS:
+            # Reflect change in this object.
+            self._record[key] = value
+            # Change album table.
             sql = 'UPDATE albums SET %s=? WHERE id=?' % key
-            self._library.conn.execute(sql, (value, self._id))
+            self._library.conn.execute(sql, (value, self.id))
+            # Possibly make modification on items as well.
             if key in ALBUM_KEYS_ITEM:
-                # Make modification on items as well.
                 for item in self.items():
                     setattr(item, key, value)
                     self._library.store(item)
@@ -1025,7 +1036,7 @@ class Album(object):
         """
         c = self._library.conn.execute(
             'SELECT * FROM items WHERE album_id=?',
-            (self._id,)
+            (self.id,)
         )
         return ResultIterator(c, self._library)
 
@@ -1047,7 +1058,7 @@ class Album(object):
         # Remove album.
         self._library.conn.execute(
             'DELETE FROM albums WHERE id=?',
-            (self._id,)
+            (self.id,)
         )
 
     def move(self, copy=False):
