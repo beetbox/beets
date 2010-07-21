@@ -884,6 +884,19 @@ class Library(BaseLibrary):
               " ORDER BY artist, album, disc, track"
         c = self.conn.execute(sql, subvals)
         return ResultIterator(c, self)
+
+
+    # Convenience accessor.
+
+    def get_item(self, id):
+        """Fetch an Item by its ID. Returns None if no match is found.
+        """
+        c = self.conn.execute("SELECT * FROM items WHERE id=?", (id,))
+        it = ResultIterator(c, self)
+        try:
+            return it.next()
+        except StopIteration:
+            return None
     
     
     # Album-level data.
