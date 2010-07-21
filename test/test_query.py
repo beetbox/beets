@@ -178,12 +178,11 @@ class BrowseTest(unittest.TestCase, AssertsMixin):
 
     def test_album_list(self):
         albums = list(self.lib.albums())
-        self.assertEqual(albums, [
-            ('Lily Allen', 'Alright, Still'),
-            ('Panda Bear', 'Person Pitch'),
-            ('The Little Ones', 'Sing Song'),
-            ('The Little Ones', 'Terry Tales & Fallen Gates EP'),
-        ])
+        album_names = [a.album for a in albums]
+        for aname in ['Alright, Still', 'Person Pitch', 'Sing Song',
+                      'Terry Tales & Fallen Gates EP']:
+            self.assert_(aname in album_names)
+        self.assertEqual(len(albums), 4)
 
     def test_item_list(self):
         items = self.lib.items()
@@ -203,12 +202,8 @@ class BrowseTest(unittest.TestCase, AssertsMixin):
 
     def test_albums_matches_album(self):
         albums = list(self.lib.albums(query='person'))
-        self.assertEqual(albums, [('Panda Bear', 'Person Pitch')])
+        self.assertEqual(len(albums), 1)
         
-    def test_albums_does_not_match_title(self):
-        albums = list(self.lib.albums(query='boracay'))
-        self.assertEqual(albums, [])
-
     def test_items_matches_title(self):
         items = self.lib.items(query='boracay')
         self.assert_matched(items, 'Boracay')

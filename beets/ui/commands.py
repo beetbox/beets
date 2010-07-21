@@ -326,8 +326,8 @@ def list_items(lib, query, album):
     albums instead of single items.
     """
     if album:
-        for artist, album in lib.albums(query=query):
-            print_(artist + ' - ' + album)
+        for album in lib.albums(query=query):
+            print_(album.artist + ' - ' + album.album)
     else:
         for item in lib.items(query=query):
             print_(item.artist + ' - ' + item.album + ' - ' + item.title)
@@ -350,8 +350,8 @@ def remove_items(lib, query, album, delete=False):
     # Get the matching items.
     if album:
         items = []
-        for artist, album in lib.albums(query=query):
-            items += list(lib.items(artist=artist, album=album))
+        for album in lib.albums(query=query):
+            items += album.items()
     else:
         items = list(lib.items(query=query))
 

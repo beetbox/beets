@@ -826,7 +826,8 @@ class Server(BaseServer):
                 conn.send(u'directory: ' + seq_to_path((artist,), PATH_PH))
         elif album is None: # List all albums for an artist.
             for album in self.lib.albums(artist):
-                conn.send(u'directory: ' + seq_to_path(album, PATH_PH))
+                parts = (album.artist, album.album)
+                conn.send(u'directory: ' + seq_to_path(parts, PATH_PH))
         elif track is None: # List all tracks on an album.
             for item in self.lib.items(artist, album):
                 conn.send(*self._item_info(item))
@@ -847,6 +848,7 @@ class Server(BaseServer):
         # albums
         if not album:
             for a in self.lib.albums(artist or None):
+                parts = (album.artist, album.album)
                 conn.send(u'directory: ' + seq_to_path(a, PATH_PH))
 
         # tracks
