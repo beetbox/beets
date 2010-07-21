@@ -28,10 +28,11 @@
   refactored to keep track of some information at an album (rather than
   item) granularity. Databases created with earlier versions of beets
   should work fine, but they won't have any "albums" in them--they'll
-  just be a bag of items. One way to "upgrade" your database so it
-  contains albums is to remove your old database file and use
-  "beet import -A" to import without autotagging. This will use the
-  existing tags on the files but use their location in the directory
+  just be a bag of items. This means that commands like "beet ls -a"
+  and "beet rm -a" won't match anything. "One way to "upgrade" your
+  database so it contains albums is to remove your old database file
+  and use "beet import -A" to import without autotagging. This will use
+  the existing tags on the files but use their location in the directory
   tree to cluster items into albums.
 * Fixed some bugs with encoding paths on Windows. Also, :s are now
   replaced with -s in path names (instead of _s) for readability.
