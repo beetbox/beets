@@ -184,8 +184,10 @@ class ArtFileTest(unittest.TestCase):
         newart = os.path.join(self.libdir, 'newart.jpg')
         touch(newart)
         i2 = item()
+        i2.path = self.i.path
         i2.artist = 'someArtist'
         ai = self.lib.add_album((i2,))
+        i2.move(self.lib, True)
         self.assertEqual(ai.artpath, None)
         ai.set_art(newart)
         self.assertTrue(os.path.exists(ai.artpath))
