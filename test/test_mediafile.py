@@ -87,6 +87,15 @@ class SafetyTest(unittest.TestCase):
     def test_invalid_extension_raises_filetypeerror(self):
         self._exccheck('something.unknown', beets.mediafile.FileTypeError)
 
+class SideEffectsTest(unittest.TestCase):
+    def setUp(self):
+        self.empty = os.path.join('rsrc', 'empty.mp3')
+
+    def test_opening_tagless_file_leaves_untouched(self):
+        old_mtime = os.stat(self.empty).st_mtime
+        beets.mediafile.MediaFile(self.empty)
+        new_mtime = os.stat(self.empty).st_mtime
+        self.assertEqual(old_mtime, new_mtime)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
