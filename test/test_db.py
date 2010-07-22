@@ -46,6 +46,7 @@ def item(): return beets.library.Item({
     'path':        'somepath',
     'length':      60.0,
     'bitrate':     128000,
+    'format':      'FLAC',
     'mb_trackid':  'someID-1',
     'mb_albumid':  'someID-2',
     'mb_artistid': 'someID-3',
@@ -247,6 +248,11 @@ class DestinationTest(unittest.TestCase):
     def test_sanitize_replaces_colon_with_dash(self):
         p = beets.library._sanitize_path(u':', 'Darwin')
         self.assertEqual(p, u'-')
+    
+    def test_path_with_format(self):
+        self.lib.path_format = '$artist/$album ($format)'
+        p = self.lib.destination(self.i)
+        self.assert_('(FLAC)' in p)
 
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between

@@ -207,26 +207,31 @@ read_only_correct_dicts = {
     'full.mp3': {
         'length': 1.0,
         'bitrate': 80000,
+        'format': 'MP3',
     },
 
     'full.flac': {
         'length': 1.0,
         'bitrate': 705600,
+        'format': 'FLAC',
     },
 
     'full.m4a': {
         'length': 1.0,
         'bitrate': 64000,
+        'format': 'AAC',
     },
     
     'full.ogg': {
         'length': 1.0,
         'bitrate': 48000,
+        'format': 'OGG',
     },
     
     'full.ape': {
         'length': 1.0,
         'bitrate': 705600,
+        'format': 'APE',
     },
 
 }

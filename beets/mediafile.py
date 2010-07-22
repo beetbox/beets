@@ -50,6 +50,18 @@ class FileTypeError(UnreadableFileError):
     pass
 
 
+# Constants.
+
+# Human-readable type names.
+TYPES = {
+    'mp3':  'MP3',
+    'mp4':  'AAC',
+    'ogg':  'OGG',
+    'flac': 'FLAC',
+    'ape':  'APE',
+}
+
+
 # Flags for encoding field behavior.
 
 class Enumeration(object):
@@ -660,3 +672,6 @@ class MediaFile(object):
         else:
             return self.mgfile.info.bitrate
 
+    @property
+    def format(self):
+        return TYPES[self.type]

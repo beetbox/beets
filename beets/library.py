@@ -60,6 +60,7 @@ ITEM_FIELDS = [
 
     ('length',      'real', False, True),
     ('bitrate',     'int',  False, True),
+    ('format',      'text', False, True),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
