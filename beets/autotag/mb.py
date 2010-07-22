@@ -1,10 +1,5 @@
-# coding=utf-8
-#
 # This file is part of beets.
 # Copyright 2010, Adrian Sampson.
-#
-# Portions Copyright (C) 2006 Lukáš Lalinský
-# from the MusicBrainz Picard project.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -139,16 +134,17 @@ def release_dict(release, tracks=None):
 
     return out
 
-def release_tracks(release_id):
+def release_info(release_id):
     """Given a MusicBrainz release ID, fetch a list of tracks on the
-    release. If the release is not found, returns an empty list.
+    release and the release group ID. If the release is not found,
+    returns None.
     """
-    inc = mbws.ReleaseIncludes(tracks=True)
+    inc = mbws.ReleaseIncludes(tracks=True, releaseGroup=True)
     release = _query_wrap(mbws.Query().getReleaseById, release_id, inc)
     if release:
-        return release.tracks
+        return release.getTracks(), release.getReleaseGroup().getId()
     else:
-        return []
+        return None
 
 def match_album(artist, album, tracks=None):
     """Searches for a single album ("release" in MusicBrainz parlance)
@@ -168,7 +164,7 @@ def match_album(artist, album, tracks=None):
 
     for result in results:
         release = result.release
-        tracks = release_tracks(release.id)
+        tracks, _ = release_info(release.id)
         yield release_dict(release, tracks)
 
 def album_for_id(albumid):
