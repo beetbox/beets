@@ -34,8 +34,11 @@
   and use "beet import -A" to import without autotagging. This will use
   the existing tags on the files but use their location in the directory
   tree to cluster items into albums.
-* Fixed some bugs with encoding paths on Windows. Also, :s are now
-  replaced with -s in path names (instead of _s) for readability.
+* Fixed some bugs with encoding paths on Windows. Also, : is now
+  replaced with - in path names (instead of _) for readability.
+* MediaFiles now have a "format" attribute, so you can use $format in
+  your library path format strings like "$artist - $album ($format)"
+  to get directories with names like "Paul Simon - Graceland (FLAC)".
 
 1.0b2
 -----
