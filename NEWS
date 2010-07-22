@@ -29,11 +29,10 @@
   item) granularity. Databases created with earlier versions of beets
   should work fine, but they won't have any "albums" in them--they'll
   just be a bag of items. This means that commands like "beet ls -a"
-  and "beet rm -a" won't match anything. "One way to "upgrade" your
-  database so it contains albums is to remove your old database file
-  and use "beet import -A" to import without autotagging. This will use
-  the existing tags on the files but use their location in the directory
-  tree to cluster items into albums.
+  and "beet rm -a" won't match anything. To "upgrade" your database,
+  you can use the included "albumify" plugin. Running "beets albumify"
+  with the plugin activated will group all your items into albums,
+  making beets behave more or less as it did before.
 * Fixed some bugs with encoding paths on Windows. Also, : is now
   replaced with - in path names (instead of _) for readability.
 * MediaFiles now have a "format" attribute, so you can use $format in

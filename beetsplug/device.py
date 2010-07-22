@@ -120,4 +120,3 @@ class DevicePlugin(BeetsPlugin):
             pod.save()
         cmd.func = func
         return [cmd]
-
