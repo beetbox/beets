@@ -22,6 +22,7 @@ import locale
 import optparse
 import textwrap
 import ConfigParser
+import sys
 
 from beets import library
 from beets import plugins
@@ -345,6 +346,10 @@ def main():
     config = ConfigParser.SafeConfigParser()
     config.read(CONFIG_FILE)
 
+    # Add plugin paths.
+    plugpaths = config_val(config, 'beets', 'pluginpath', '')
+    for plugpath in plugpaths.split(':'):
+        sys.path.append(os.path.expanduser(plugpath))
     # Load requested plugins.
     plugnames = config_val(config, 'beets', 'plugins', '')
     plugins.load_plugins(plugnames.split())

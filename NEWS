@@ -11,10 +11,11 @@
   beets command-line interface. The "bpd" and "dadd" commands were
   removed from the beets core and turned into plugins; BPD is loaded
   by default. To load the non-default plugins, use the "plugins" config
-  value (a space-separated list of plugin names). Plugins are just
-  Python modules under the "beetsplug" namespace package containing
-  subclasses of beets.plugins.BeetsPlugin. See the "beetsplug" directory
-  for examples.
+  value (a space-separated list of plugin names). You can also set the
+  "pluginpath" config option to a colon-separated list of directories
+  to search for plugins. Plugins are just Python modules under the
+  "beetsplug" namespace package containing subclasses of
+  beets.plugins.BeetsPlugin. See the "beetsplug" directory for examples.
 * Support for MusicBrainz ID tags. The autotagger now keeps track of the
   MusicBrainz track, album, and artist IDs it matched for each file. It
   also looks for album IDs in new files it's importing and uses those to
