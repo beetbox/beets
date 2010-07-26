@@ -17,6 +17,7 @@
 
 import unittest
 import sys
+import os
 sys.path.append('..')
 from beets import library
 from beets import ui
@@ -27,8 +28,6 @@ import test_db
 outbuffer = []
 def buffer_append(*txt):
     outbuffer.extend(txt)
-ui.print_ = buffer_append
-commands.print_ = buffer_append
 def get_output():
     return u' '.join(outbuffer)
 def clear_buffer():
@@ -36,10 +35,18 @@ def clear_buffer():
 
 class ListTest(unittest.TestCase):
     def setUp(self):
+        self.old_print = ui.print_
+        ui.print_ = buffer_append
+        commands.print_ = buffer_append
+
         clear_buffer()
         self.lib = library.Library(':memory:')
         i = test_db.item()
         self.lib.add(i)
+
+    def tearDown(self):
+        ui.print_ = self.old_print
+        commands.print_ = self.old_print
         
     def test_list_outputs_item(self):
         commands.list_items(self.lib, '', False)
@@ -51,6 +58,30 @@ class ListTest(unittest.TestCase):
         out = get_output()
         self.assertTrue(u'the title' not in out)
     
+class PrintTest(unittest.TestCase):
+    def setUp(self):
+        class Devnull(object):
+            def write(self, d):
+                pass
+        self.stdout = sys.stdout
+        sys.stdout = Devnull()
+
+    def tearDown(self):
+        sys.stdout = self.stdout
+    
+    def test_print_without_locale(self):
+        lang = os.environ.get('LANG')
+        if lang:
+            del os.environ['LANG']
+
+        try:
+            ui.print_(u'something')
+        except TypeError:
+            self.fail('TypeError during print')
+
+        if lang:
+            os.environ['LANG'] = lang
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

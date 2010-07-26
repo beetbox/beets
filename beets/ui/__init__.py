@@ -56,7 +56,7 @@ def print_(*strings):
     else:
         txt = u''
     if isinstance(txt, unicode):
-        encoding = locale.getdefaultlocale()[1]
+        encoding = locale.getdefaultlocale()[1] or 'utf8'
         txt = txt.encode(encoding, 'replace')
     print txt
 
