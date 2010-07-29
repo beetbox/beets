@@ -1,3 +1,10 @@
+1.0b4
+-----
+* Fixed a bug where the CLI would fail completely if the LANG
+  environment variable was not set.
+* Fixed removal of albums (beet remove -a): previously, the album
+  record would stay around although the items were deleted.
+
 1.0b3
 -----
 * Album art. The tagger now, by default, downloads album art from
