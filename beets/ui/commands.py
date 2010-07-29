@@ -149,75 +149,55 @@ def tag_log(logfile, status, items):
         path = os.path.commonprefix([item.path for item in items])
         print >>logfile, status, os.path.dirname(path)
 
-def tag_album(items, lib, copy=True, write=True, logfile=None, art=True):
-    """Import items into lib, tagging them as an album. If copy, then
-    items are copied into the destination directory. If write, then
-    new metadata is written back to the files' tags. If logfile is
-    provided, then a log message will be added there if the album is
-    untaggable. If art, then attempt to download cover art for the
-    album.
+def choose_match(items, cur_artist, cur_album, candidates, rec):
+    """Given an initial autotagging of items, go through an interactive
+    dance with the user to ask for a choice of metadata. Returns an
+    info dictionary, CHOICE_ASIS, or CHOICE_SKIP.
     """
-    # Try to get candidate metadata.
-    search_artist, search_album = None, None
-    cur_artist, cur_album = None, None
+    # Loop until we have a choice.
     while True:
-        # Infer tags.
-        try:
-            cur_artist, cur_album, candidates, rec = \
-                    autotag.tag_album(items, search_artist, search_album)
-        except autotag.AutotagError:
-            cur_artist, cur_album, candidates, rec = None, None, None, None
-            info = None
+        # Choose from candidates, if available.
+        if candidates:
+            info = choose_candidate(cur_artist, cur_album, candidates, rec)
         else:
-            if candidates:
-                info = choose_candidate(cur_artist, cur_album, candidates, rec)
-            else:
-                info = None
-        
-        # Fallback: if either an error ocurred or no matches found.
-        if not info:
-            print_("No match found for:", os.path.dirname(items[0].path))
-            sel = ui.input_options(
-                "[U]se as-is, Skip, or Enter manual search?",
-                ('u', 's', 'e'), 'u',
-                'Enter U, S, or E:'
-            )
-            if sel == 'u':
-                info = CHOICE_ASIS
-            elif sel == 'e':
-                info = CHOICE_MANUAL
-            elif sel == 's':
-                info = CHOICE_SKIP
+            # Fallback: if either an error ocurred or no matches found.
+            if not info:
+                print_("No match found for:", os.path.dirname(items[0].path))
+                sel = ui.input_options(
+                    "[U]se as-is, Skip, or Enter manual search?",
+                    ('u', 's', 'e'), 'u',
+                    'Enter U, S, or E:'
+                )
+                if sel == 'u':
+                    info = CHOICE_ASIS
+                elif sel == 'e':
+                    info = CHOICE_MANUAL
+                elif sel == 's':
+                    info = CHOICE_SKIP
     
         # Choose which tags to use.
         if info is CHOICE_SKIP:
             # Skip entirely.
-            tag_log(logfile, 'skip', items)
-            return
+            return info
         elif info is CHOICE_MANUAL:
             # Try again with manual search terms.
             search_artist, search_album = manual_search()
         else:
-            # Either ASIS or we have a candidate. Continue tagging.
-            break
-    
-    # Ensure that we don't have the album already.
-    if info is not CHOICE_ASIS or cur_artist is not None:
-        if info is CHOICE_ASIS:
-            artist = cur_artist
-            album = cur_album
-            tag_log(logfile, 'asis', items)
-        else:
-            artist = info['artist']
-            album = info['album']
-        q = library.AndQuery((library.MatchQuery('artist', artist),
-                              library.MatchQuery('album',  album)))
-        count, _ = q.count(lib)
-        if count >= 1:
-            print_("This album (%s - %s) is already in the library!" %
-                   (artist, album))
-            return
-    
+            # Either ASIS or we have a candidate. Finish tagging.
+            return info
+        
+        # Search for entered terms.
+        try:
+            _, _, candidates, rec = \
+                    autotag.tag_album(items, search_artist, search_album)
+        except autotag.AutotagError:
+            candidates, rec = None, None
+
+def apply_choice(items, lib, info, copy=True, write=True, art=True):
+    """Applies the given info dict to the items, adding the items to
+    the library and possibly performing other actions according to the
+    copy, write, and art flags. info may also be CHOICE_ASIS.
+    """
     # Change metadata, move, and copy.
     if info is not CHOICE_ASIS:
         autotag.apply_metadata(items, info)
@@ -236,6 +216,50 @@ def tag_album(items, lib, copy=True, write=True, logfile=None, art=True):
         artpath = beets.autotag.art.art_for_album(info)
         if artpath:
             albuminfo.set_art(artpath)
+
+def tag_album(items, lib, copy=True, write=True, logfile=None, art=True):
+    """Import items into lib, tagging them as an album. If copy, then
+    items are copied into the destination directory. If write, then
+    new metadata is written back to the files' tags. If logfile is
+    provided, then a log message will be added there if the album is
+    untaggable. If art, then attempt to download cover art for the
+    album.
+    """
+    # Try to get initial candidate metadata.
+    try:
+        cur_artist, cur_album, candidates, rec = autotag.tag_album(items)
+    except autotag.AutotagError:
+        cur_artist, cur_album, candidates, rec = None, None, None, None
+
+    # Ask the user for a choice.
+    info = choose_match(items, cur_artist, cur_album, candidates, rec)
+
+    # The "give-up" options.
+    if info is CHOICE_ASIS:
+        tag_log(logfile, 'asis', items)
+    elif info is CHOICE_SKIP:
+        tag_log(logfile, 'skip', items)
+        # Stop tagging if we skipped.
+        return
+    
+    # Ensure that we don't have the album already.
+    if info is not CHOICE_ASIS or cur_artist is not None:
+        if info is CHOICE_ASIS:
+            artist = cur_artist
+            album = cur_album
+        else:
+            artist = info['artist']
+            album = info['album']
+        q = library.AndQuery((library.MatchQuery('artist', artist),
+                              library.MatchQuery('album',  album)))
+        count, _ = q.count(lib)
+        if count >= 1:
+            print_("This album (%s - %s) is already in the library!" %
+                   (artist, album))
+            return
+    
+    # Finally, apply the change.
+    apply_choice(items, lib, info, copy, write, art)
 
 def import_files(lib, paths, copy=True, write=True, autot=True,
                  logpath=None, art=True):
