@@ -373,9 +373,10 @@ def remove_items(lib, query, album, delete=False):
     """
     # Get the matching items.
     if album:
+        albums = list(lib.albums(query=query))
         items = []
-        for album in lib.albums(query=query):
-            items += album.items()
+        for al in albums:
+            items += al.items()
     else:
         items = list(lib.items(query=query))
 
@@ -397,11 +398,14 @@ def remove_items(lib, query, album, delete=False):
     if not ui.input_yn(prompt, True):
         return
 
-    # Remove and delete.
-    for item in items:
-        lib.remove(item)
-        if delete:
-            os.unlink(item.path)
+    # Remove (and possibly delete) items.
+    if album:
+        for al in albums:
+            al.remove(delete)
+    else:
+        for item in items:
+            lib.remove(item, delete)
+
     lib.save()
 
 remove_cmd = ui.Subcommand('remove',
