@@ -81,10 +81,13 @@ def _sorted_walk(path):
     """Like os.walk, but yields things in sorted, breadth-first
     order.
     """
+    path = library._unicode_path(path)
+
     # Get all the directories and files at this level.
     dirs = []
     files = []
     for base in os.listdir(path):
+        base = library._unicode_path(base)
         cur = os.path.join(path, base)
         if os.path.isdir(cur):
             dirs.append(base)
@@ -108,7 +111,6 @@ def albums_in_dir(path):
     of lists of items where each list is probably an album.
     Specifically, any folder containing any media files is an album.
     """
-    path = library._unicode_path(path)
     for root, dirs, files in _sorted_walk(path):
         # Get a list of items in the directory.
         items = []
