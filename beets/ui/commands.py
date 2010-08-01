@@ -46,6 +46,20 @@ DEFAULT_COLOR        = True
 
 # Autotagger utilities and support.
 
+def dist_string(dist, color):
+    """Formats a distance (a float) as a string. The string is
+    colorized if color is True.
+    """
+    out = str(dist)
+    if color:
+        if dist <= autotag.STRONG_REC_THRESH:
+            out = ui.colorize('green', out)
+        elif dist <= autotag.MEDIUM_REC_THRESH:
+            out = ui.colorize('yellow', out)
+        else:
+            out = ui.colorize('red', out)
+    return out
+
 def show_change(cur_artist, cur_album, items, info, dist, color=True):
     """Print out a representation of the changes that will be made if
     tags are changed from (cur_artist, cur_album, items) to info with
@@ -63,7 +77,7 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
         print_('     %s - %s' % (artist_r, album_r))
     else:
         print_("Tagging: %s - %s" % (info['artist'], info['album']))
-    print_('(Distance: %f)' % dist)
+    print_('(Distance: %s)' % dist_string(dist, color))
     for i, (item, track_data) in enumerate(zip(items, info['tracks'])):
         cur_track = str(item.track)
         new_track = str(i+1)
@@ -109,8 +123,8 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
             print_('Finding tags for "%s - %s".' % (cur_artist, cur_album))
             print_('Candidates:')
             for i, (dist, items, info) in enumerate(candidates):
-                print_('%i. %s - %s (%f)' % (i+1, info['artist'],
-                                             info['album'], dist))
+                print_('%i. %s - %s (%s)' % (i+1, info['artist'],
+                    info['album'], dist_string(dist, color)))
                                             
             # Ask the user for a choice.
             sel = ui.input_options(
