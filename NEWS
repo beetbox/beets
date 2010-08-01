@@ -1,5 +1,17 @@
 1.0b4
 -----
+* Parallel tagger. The autotagger has been reimplemented to use
+  multiple threads. This means that it can concurrently read files
+  from disk, talk to the user, communicate with MusicBrainz, and
+  write data back to disk. Not only does this make the tagger much
+  faster because independent work may be performed in parallel, but it
+  makes the tagging process much more pleasant for large imports. The
+  user can let albums queue up in the background while making a
+  decision rather than waiting for beets between each question it asks.
+  The parallel tagger is on by default but a sequential (single-
+  threaded) version is still available by setting the "threaded"
+  config value to "no" (because the parallel version is still quite
+  experimental).
 * Fixed a bug where the CLI would fail completely if the LANG
   environment variable was not set.
 * Fixed removal of albums (beet remove -a): previously, the album

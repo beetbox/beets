@@ -240,7 +240,7 @@ def initial_lookup():
             cur_artist, cur_album, candidates, rec = autotag.tag_album(items)
         except autotag.AutotagError:
             cur_artist, cur_album, candidates, rec = None, None, None, None
-        items = yield (items, cur_artist, cur_album, candidates, rec)
+        items = yield items, cur_artist, cur_album, candidates, rec
 
 def user_query(lib, logfile=None):
     """A coroutine for interfacing with the user about the tagging
@@ -254,9 +254,11 @@ def user_query(lib, logfile=None):
     indicating that the items should not be imported.
     """
     lib = _reopen_lib(lib)
-    items, cur_artist, cur_album, candidates, rec = yield
     first = True
+    out = None
     while True:
+        items, cur_artist, cur_album, candidates, rec = yield out
+        
         # Empty lines between albums.
         if not first:
             print_()
@@ -272,8 +274,7 @@ def user_query(lib, logfile=None):
             tag_log(logfile, 'skip', items)
             # Yield None, indicating that the pipeline should not
             # progress.
-            items, cur_artist, cur_album, candidates, rec = \
-                yield pipeline.BUBBLE
+            out = pipeline.BUBBLE
             continue
 
         # Ensure that we don't have the album already.
@@ -290,12 +291,11 @@ def user_query(lib, logfile=None):
             if count >= 1:
                 print_("This album (%s - %s) is already in the library!" %
                        (artist, album))
-                items, cur_artist, cur_album, candidates, rec = \
-                    yield pipeline.BUBBLE
+                out = pipeline.BUBBLE
                 continue
         
         # Yield the result and get the next chunk of work.
-        items, cur_artist, cur_album, candidates, rec = yield (items, info)
+        items, cur_artist, cur_album, candidates, rec = yield items, info
         
 def apply_choices(lib, copy, write, art):
     """A coroutine for applying changes to albums during the autotag
