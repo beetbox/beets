@@ -12,6 +12,12 @@
   threaded) version is still available by setting the "threaded"
   config value to "no" (because the parallel version is still quite
   experimental).
+* Colorized tagger output. The autotagger interface now makes it a
+  little easier to see what's going on at a glance by highlighting
+  changes with terminal colors. This feature is on by default, but you
+  can turn it off by setting "color" to "no" in your .beetsconfig (if,
+  for example, your terminal doesn't understand colors and garbles the
+  output).
 * Fixed a bug where the CLI would fail completely if the LANG
   environment variable was not set.
 * Fixed removal of albums (beet remove -a): previously, the album

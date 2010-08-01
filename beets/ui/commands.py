@@ -18,8 +18,6 @@ interface.
 
 import os
 import logging
-from threading import Thread
-from Queue import Queue
 
 from beets import ui
 from beets.ui import print_
@@ -44,38 +42,54 @@ DEFAULT_IMPORT_WRITE = True
 DEFAULT_IMPORT_AUTOT = True
 DEFAULT_IMPORT_ART   = True
 DEFAULT_THREADED     = True
+DEFAULT_COLOR        = True
 
 # Autotagger utilities and support.
 
-def show_change(cur_artist, cur_album, items, info, dist):
+def show_change(cur_artist, cur_album, items, info, dist, color=True):
     """Print out a representation of the changes that will be made if
     tags are changed from (cur_artist, cur_album, items) to info with
     distance dist.
     """
     if cur_artist != info['artist'] or cur_album != info['album']:
+        artist_l, artist_r = cur_artist or '', info['artist']
+        album_l,  album_r  = cur_album  or '', info['album']
+        if color:
+            artist_l, artist_r = ui.colordiff(artist_l, artist_r)
+            album_l, album_r   = ui.colordiff(album_l, album_r)
         print_("Correcting tags from:")
-        print_('     %s - %s' % (cur_artist or '', cur_album or ''))
+        print_('     %s - %s' % (artist_l, album_l))
         print_("To:")
-        print_('     %s - %s' % (info['artist'], info['album']))
+        print_('     %s - %s' % (artist_r, album_r))
     else:
         print_("Tagging: %s - %s" % (info['artist'], info['album']))
     print_('(Distance: %f)' % dist)
     for i, (item, track_data) in enumerate(zip(items, info['tracks'])):
-        cur_track = item.track
-        new_track = i+1
-        if item.title != track_data['title'] and cur_track != new_track:
-            print_(" * %s (%i) -> %s (%i)" % (
-                item.title, cur_track, track_data['title'], new_track
+        cur_track = str(item.track)
+        new_track = str(i+1)
+        cur_title = item.title
+        new_title = track_data['title']
+        
+        # Possibly colorize changes.
+        if color:
+            cur_title, new_title = ui.colordiff(cur_title, new_title)
+            if cur_track != new_track:
+                cur_track = ui.colorize('red', cur_track)
+                new_track = ui.colorize('red', new_track)
+        
+        if cur_title != new_title and cur_track != new_track:
+            print_(" * %s (%s) -> %s (%s)" % (
+                cur_title, cur_track, new_title, new_track
             ))
-        elif item.title != track_data['title']:
-            print_(" * %s -> %s" % (item.title, track_data['title']))
+        elif cur_title != new_title:
+            print_(" * %s -> %s" % (cur_title, new_title))
         elif cur_track != new_track:
-            print_(" * %s (%i -> %i)" % (item.title, cur_track, new_track))
+            print_(" * %s (%s -> %s)" % (item.title, cur_track, new_track))
 
 CHOICE_SKIP = 'CHOICE_SKIP'
 CHOICE_ASIS = 'CHOICE_ASIS'
 CHOICE_MANUAL = 'CHOICE_MANUAL'
-def choose_candidate(cur_artist, cur_album, candidates, rec):
+def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
     """Given current metadata and a sorted list of
     (distance, candidate) pairs, ask the user for a selection
     of which candidate to use. Returns the selected candidate.
@@ -117,7 +131,7 @@ def choose_candidate(cur_artist, cur_album, candidates, rec):
         bypass_candidates = False
     
         # Show what we're about to do.
-        show_change(cur_artist, cur_album, items, info, dist)
+        show_change(cur_artist, cur_album, items, info, dist, color)
     
         # Exact match => tag automatically.
         if rec == autotag.RECOMMEND_STRONG:
@@ -155,7 +169,7 @@ def tag_log(logfile, status, items):
         path = os.path.commonprefix([item.path for item in items])
         print >>logfile, status, os.path.dirname(path)
 
-def choose_match(items, cur_artist, cur_album, candidates, rec):
+def choose_match(items, cur_artist, cur_album, candidates, rec, color=True):
     """Given an initial autotagging of items, go through an interactive
     dance with the user to ask for a choice of metadata. Returns an
     info dictionary, CHOICE_ASIS, or CHOICE_SKIP.
@@ -164,7 +178,8 @@ def choose_match(items, cur_artist, cur_album, candidates, rec):
     while True:
         # Choose from candidates, if available.
         if candidates:
-            info = choose_candidate(cur_artist, cur_album, candidates, rec)
+            info = choose_candidate(cur_artist, cur_album, candidates, rec,
+                                    color)
         else:
             # Fallback: if either an error ocurred or no matches found.
             print_("No match found for:", os.path.dirname(items[0].path))
@@ -242,7 +257,7 @@ def initial_lookup():
             cur_artist, cur_album, candidates, rec = None, None, None, None
         items = yield items, cur_artist, cur_album, candidates, rec
 
-def user_query(lib, logfile=None):
+def user_query(lib, logfile=None, color=True):
     """A coroutine for interfacing with the user about the tagging
     process. lib is the Library to import into and logfile may be
     a file-like object for logging the import process. The coroutine
@@ -265,7 +280,8 @@ def user_query(lib, logfile=None):
         first = False
         
         # Ask the user for a choice.
-        info = choose_match(items, cur_artist, cur_album, candidates, rec)
+        info = choose_match(items, cur_artist, cur_album, candidates, rec,
+                            color)
 
         # The "give-up" options.
         if info is CHOICE_ASIS:
@@ -333,14 +349,17 @@ def apply_choices(lib, copy, write, art):
 
 # The import command.
 
-def import_files(lib, paths, copy, write, autot, logpath, art, threaded):
+def import_files(lib, paths, copy, write, autot, logpath,
+                 art, threaded, color):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
     files themselves. If not autot, then just import the files
     without attempting to tag. If logpath is provided, then untaggable
     albums will be logged there. If art, then attempt to download
-    cover art for each album.
+    cover art for each album. If threaded, then accelerate autotagging
+    imports by running them in multiple threads. If color, then
+    ANSI-colorize some terminal output.
     """
     # Open the log.
     if logpath:
@@ -354,7 +373,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded):
         pl = pipeline.Pipeline([
             read_albums(paths),
             initial_lookup(),
-            user_query(lib, logfile),
+            user_query(lib, logfile, color),
             apply_choices(lib, copy, write, art),
         ])
         if threaded:
@@ -408,7 +427,9 @@ def import_func(lib, config, opts, args):
             DEFAULT_IMPORT_ART, bool)
     threaded = ui.config_val(config, 'beets', 'threaded',
             DEFAULT_THREADED, bool)
-    import_files(lib, args, copy, write, autot, opts.logpath, art, threaded)
+    color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
+    import_files(lib, args, copy, write, autot,
+                 opts.logpath, art, threaded, color)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 

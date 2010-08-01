@@ -23,6 +23,7 @@ import optparse
 import textwrap
 import ConfigParser
 import sys
+from difflib import SequenceMatcher
 
 from beets import library
 from beets import plugins
@@ -171,6 +172,56 @@ def human_seconds(interval):
         interval /= float(increment)
 
     return "%3.1f %ss" % (interval, suffix)
+
+# ANSI terminal colorization code heavily inspired by pygments:
+# http://dev.pocoo.org/hg/pygments-main/file/b2deea5b5030/pygments/console.py
+# (pygments is by Tim Hatch, Armin Ronacher, et al.)
+COLOR_ESCAPE = "\x1b["
+DARK_COLORS  = ["black", "darkred", "darkgreen", "brown", "darkblue",
+                "purple", "teal", "lightgray"]
+LIGHT_COLORS = ["darkgray", "red", "green", "yellow", "blue",
+                "fuchsia", "turquoise", "white"]
+RESET_COLOR = COLOR_ESCAPE + "39;49;00m"
+def colorize(color, text):
+    """Returns a string that prints the given text in the given color
+    in a terminal that is ANSI color-aware. The color must be something
+    in DARK_COLORS or LIGHT_COLORS.
+    """
+    if color in DARK_COLORS:
+        escape = COLOR_ESCAPE + "%im" % (DARK_COLORS.index(color) + 30)
+    elif color in LIGHT_COLORS:
+        escape = COLOR_ESCAPE + "%i;01m" % (LIGHT_COLORS.index(color) + 30)
+    else:
+        raise ValueError('no such color %s', color)
+    return escape + text + RESET_COLOR
+
+def colordiff(a, b, highlight='red'):
+    """Given two strings, return the same pair of strings except with
+    their differences highlighted in the specified color.
+    """
+    a_out = []
+    b_out = []
+    
+    matcher = SequenceMatcher(lambda x: False, a, b)
+    for op, a_start, a_end, b_start, b_end in matcher.get_opcodes():
+        if op == 'equal':
+            # In both strings.
+            a_out.append(a[a_start:a_end])
+            b_out.append(b[b_start:b_end])
+        elif op == 'insert':
+            # Right only.
+            b_out.append(colorize(highlight, b[b_start:b_end]))
+        elif op == 'delete':
+            # Left only.
+            a_out.append(colorize(highlight, a[a_start:a_end]))
+        elif op == 'replace':
+            # Right and left differ.
+            a_out.append(colorize(highlight, a[a_start:a_end]))
+            b_out.append(colorize(highlight, b[b_start:b_end]))
+        else:
+            assert(False)
+    
+    return ''.join(a_out), ''.join(b_out)
 
 
 # Subcommand parsing infrastructure.
