@@ -15,9 +15,10 @@
 """This module provides the default commands for beets' command-line
 interface.
 """
-
+from __future__ import with_statement # Python 2.5
 import os
 import logging
+import pickle
 
 from beets import ui
 from beets.ui import print_
@@ -175,15 +176,15 @@ def manual_search():
     album = raw_input('Album: ')
     return artist.strip(), album.strip()
 
-def tag_log(logfile, status, items):
+def tag_log(logfile, status, path):
     """Log a message about a given album to logfile. The status should
     reflect the reason the album couldn't be tagged.
     """
     if logfile:
-        path = os.path.commonprefix([item.path for item in items])
         print >>logfile, status, os.path.dirname(path)
 
-def choose_match(items, cur_artist, cur_album, candidates, rec, color=True):
+def choose_match(path, items, cur_artist, cur_album, candidates,
+                 rec, color=True):
     """Given an initial autotagging of items, go through an interactive
     dance with the user to ask for a choice of metadata. Returns an
     info dictionary, CHOICE_ASIS, or CHOICE_SKIP.
@@ -196,7 +197,7 @@ def choose_match(items, cur_artist, cur_album, candidates, rec, color=True):
                                     color)
         else:
             # Fallback: if either an error ocurred or no matches found.
-            print_("No match found for:", os.path.dirname(items[0].path))
+            print_("No match found for:", path)
             sel = ui.input_options(
                 "[U]se as-is, Skip, or Enter manual search?",
                 ('u', 's', 'e'), 'u',
@@ -242,20 +243,81 @@ def _reopen_lib(lib):
     else:
         return lib
 
+# Utilities for reading and writing the beets progress file, which
+# allows long tagging tasks to be resumed when they pause (or crash).
+PROGRESS_KEY = 'tagprogress'
+def progress_set(toppath, path):
+    """Record that tagging for the given `toppath` was successful up to
+    `path`. If path is None, then clear the progress value (indicating
+    that the tagging completed).
+    """
+    try:
+        with open(ui.STATE_FILE) as f:
+            state = pickle.load(f)
+    except IOError:
+        state = {PROGRESS_KEY: {}}
+
+    if path is None:
+        # Remove progress from file.
+        if toppath in state[PROGRESS_KEY]:
+            del state[PROGRESS_KEY][toppath]
+    else:
+        state[PROGRESS_KEY][toppath] = path
+
+    with open(ui.STATE_FILE, 'w') as f:
+        pickle.dump(state, f)
+def progress_get(toppath):
+    """Get the last successfully tagged subpath of toppath. If toppath
+    has no progress information, returns None.
+    """
+    try:
+        with open(ui.STATE_FILE) as f:
+            state = pickle.load(f)
+    except IOError:
+        return None
+    return state[PROGRESS_KEY].get(toppath)
+
 # Core autotagger pipeline stages.
 
 def read_albums(paths):
     """A generator yielding all the albums (as sets of Items) found in
     the user-specified list of paths.
     """
-    # Make sure we have only directories.
+    # Check the user-specified directories.
     for path in paths:
         if not os.path.isdir(path):
             raise ui.UserError('not a directory: ' + path)
-    
+    # Look for saved progress.
+    resume_dirs = {}
     for path in paths:
-        for items in autotag.albums_in_dir(os.path.expanduser(path)):
-            yield items
+        resume_dir = progress_get(path)
+        if resume_dir:
+            resume = ui.input_yn("Tagging of the directory:\n%s"
+                                 "\nwas interrupted. Resume (Y/n)? " %
+                                 path)
+            if resume:
+                resume_dirs[path] = resume_dir
+            else:
+                # Clear progress; we're starting from the top.
+                progress_set(path, None)
+            ui.print_()
+    
+    for toppath in paths:
+        # Produce each path.
+        resume_dir = resume_dirs.get(toppath)
+        for path, items in autotag.albums_in_dir(os.path.expanduser(toppath)):
+            if resume_dir:
+                # We're fast-forwarding to resume a previous tagging.
+                if path == resume_dir:
+                    # We've hit the last good path! Turn off the
+                    # fast-forwarding.
+                    resume_dir = None
+                continue
+
+            yield toppath, path, items
+
+        # Indicate that the import completed.
+        progress_set(toppath, None)
 
 def initial_lookup():
     """A coroutine for performing the initial MusicBrainz lookup for an
@@ -263,13 +325,14 @@ def initial_lookup():
     (items, cur_artist, cur_album, candidates, rec) tuples. If no match
     is found, all of the yielded parameters (except items) are None.
     """
-    items = yield
+    toppath, path, items = yield
     while True:
         try:
             cur_artist, cur_album, candidates, rec = autotag.tag_album(items)
         except autotag.AutotagError:
             cur_artist, cur_album, candidates, rec = None, None, None, None
-        items = yield items, cur_artist, cur_album, candidates, rec
+        toppath, path, items = yield toppath, path, items, cur_artist, \
+                                     cur_album, candidates, rec
 
 def user_query(lib, logfile=None, color=True):
     """A coroutine for interfacing with the user about the tagging
@@ -286,7 +349,7 @@ def user_query(lib, logfile=None, color=True):
     first = True
     out = None
     while True:
-        items, cur_artist, cur_album, candidates, rec = yield out
+        toppath, path, items, cur_artist, cur_album, candidates, rec = yield out
         
         # Empty lines between albums.
         if not first:
@@ -294,14 +357,14 @@ def user_query(lib, logfile=None, color=True):
         first = False
         
         # Ask the user for a choice.
-        info = choose_match(items, cur_artist, cur_album, candidates, rec,
-                            color)
+        info = choose_match(path, items, cur_artist, cur_album, candidates,
+                            rec, color)
 
         # The "give-up" options.
         if info is CHOICE_ASIS:
-            tag_log(logfile, 'asis', items)
+            tag_log(logfile, 'asis', path)
         elif info is CHOICE_SKIP:
-            tag_log(logfile, 'skip', items)
+            tag_log(logfile, 'skip', path)
             # Yield None, indicating that the pipeline should not
             # progress.
             out = pipeline.BUBBLE
@@ -325,7 +388,7 @@ def user_query(lib, logfile=None, color=True):
                 continue
         
         # Yield the result and get the next chunk of work.
-        items, cur_artist, cur_album, candidates, rec = yield items, info
+        out = toppath, path, items, info
         
 def apply_choices(lib, copy, write, art):
     """A coroutine for applying changes to albums during the autotag
@@ -337,7 +400,7 @@ def apply_choices(lib, copy, write, art):
     lib = _reopen_lib(lib)
     while True:    
         # Get next chunk of work.
-        items, info = yield
+        toppath, path, items, info = yield
         
         # Change metadata, move, and copy.
         if info is not CHOICE_ASIS:
@@ -360,6 +423,9 @@ def apply_choices(lib, copy, write, art):
 
         # Write the database after each album.
         lib.save()
+
+        # Update progress.
+        progress_set(toppath, path)
 
 # The import command.
 

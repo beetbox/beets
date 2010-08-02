@@ -61,7 +61,7 @@ class AlbumsInDirTest(unittest.TestCase):
     
     def test_separates_contents(self):
         found = []
-        for album in autotag.albums_in_dir(self.base):
+        for _, album in autotag.albums_in_dir(self.base):
             found.append(re.search(r'album(.)song', album[0].path).group(1))
         self.assertTrue('1' in found)
         self.assertTrue('2' in found)
@@ -69,7 +69,7 @@ class AlbumsInDirTest(unittest.TestCase):
         self.assertTrue('4' in found)
     
     def test_finds_multiple_songs(self):
-        for album in autotag.albums_in_dir(self.base):
+        for _, album in autotag.albums_in_dir(self.base):
             n = re.search(r'album(.)song', album[0].path).group(1)
             if n == '1':
                 self.assertEqual(len(album), 2)

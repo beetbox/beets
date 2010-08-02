@@ -30,6 +30,7 @@ from beets import plugins
 
 # Constants.
 CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
+STATE_FILE = os.path.expanduser('~/.beetsstate')
 DEFAULT_LIBRARY = '~/.beetsmusic.blb'
 DEFAULT_DIRECTORY = '~/Music'
 DEFAULT_PATH_FORMAT = '$artist/$album/$track $title'

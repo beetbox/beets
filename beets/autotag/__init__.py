@@ -109,8 +109,9 @@ def _sorted_walk(path):
 
 def albums_in_dir(path):
     """Recursively searches the given directory and returns an iterable
-    of lists of items where each list is probably an album.
-    Specifically, any folder containing any media files is an album.
+    of (path, items) where path is a containing directory and items is
+    a list of Items that is probably an album. Specifically, any folder
+    containing any media files is an album.
     """
     for root, dirs, files in _sorted_walk(path):
         # Get a list of items in the directory.
@@ -127,7 +128,7 @@ def albums_in_dir(path):
         
         # If it's nonempty, yield it.
         if items:
-            yield items
+            yield root, items
 
 def _ie_dist(str1, str2):
     """Gives an "intuitive" edit distance between two strings. This is
