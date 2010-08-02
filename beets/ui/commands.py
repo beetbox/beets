@@ -45,6 +45,11 @@ DEFAULT_IMPORT_ART   = True
 DEFAULT_THREADED     = True
 DEFAULT_COLOR        = True
 
+class ImportAbort(Exception):
+    """Raised when the user aborts the tagging operation.
+    """
+    pass
+
 # Autotagger utilities and support.
 
 def dist_string(dist, color):
@@ -129,10 +134,10 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
                                             
             # Ask the user for a choice.
             sel = ui.input_options(
-                '# selection (default 1), Skip, Use as-is, or '
-                'Enter manual search?',
-                ('s', 'u', 'e'), '1',
-                'Enter a numerical selection, S, U, or E:',
+                '# selection (default 1), Skip, Use as-is, '
+                'Enter search, or aBort?',
+                ('s', 'u', 'e', 'b'), '1',
+                'Enter a numerical selection, S, U, E, or B:',
                 (1, len(candidates))
             )
             if sel == 's':
@@ -141,6 +146,8 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
                 return CHOICE_ASIS
             elif sel == 'e':
                 return CHOICE_MANUAL
+            elif sel == 'b':
+                raise ImportAbort()
             else: # Numerical selection.
                 dist, items, info = candidates[sel-1]
         bypass_candidates = False
@@ -154,10 +161,10 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
         
         # Ask for confirmation.
         sel = ui.input_options(
-            '[A]pply, More candidates, Skip, Use as-is, or '
-            'Enter manual search?',
-            ('a', 'm', 's', 'u', 'e'), 'a',
-            'Enter A, M, S, U, or E:'
+            '[A]pply, More candidates, Skip, Use as-is, '
+            'Enter search, or aBort?',
+            ('a', 'm', 's', 'u', 'e', 'b'), 'a',
+            'Enter A, M, S, U, E, or B:'
         )
         if sel == 'a':
             return info
@@ -169,6 +176,8 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
             return CHOICE_ASIS
         elif sel == 'e':
             return CHOICE_MANUAL
+        elif sel == 'b':
+            raise ImportAbort()
 
 def manual_search():
     """Input an artist and album for manual search."""
@@ -199,9 +208,9 @@ def choose_match(path, items, cur_artist, cur_album, candidates,
             # Fallback: if either an error ocurred or no matches found.
             print_("No match found for:", path)
             sel = ui.input_options(
-                "[U]se as-is, Skip, or Enter manual search?",
+                "[U]se as-is, Skip, Enter manual search, or aBort?",
                 ('u', 's', 'e'), 'u',
-                'Enter U, S, or E:'
+                'Enter U, S, E, or B:'
             )
             if sel == 'u':
                 info = CHOICE_ASIS
@@ -209,6 +218,8 @@ def choose_match(path, items, cur_artist, cur_album, candidates,
                 info = CHOICE_MANUAL
             elif sel == 's':
                 info = CHOICE_SKIP
+            elif sel == 'b':
+                raise ImportAbort()
     
         # Choose which tags to use.
         if info is CHOICE_SKIP:
@@ -460,10 +471,16 @@ def import_files(lib, paths, copy, write, autot, logpath,
             user_query(lib, logfile, color),
             apply_choices(lib, copy, write, art),
         ])
-        if threaded:
-            pl.run_parallel()
-        else:
-            pl.run_sequential()
+
+        # Run the pipeline.
+        try:
+            if threaded:
+                pl.run_parallel()
+            else:
+                pl.run_sequential()
+        except ImportAbort:
+            # User aborted operation. Silently stop.
+            pass
     else:
         # Simple import without autotagging. Always sequential.
         for items in read_albums(paths):
