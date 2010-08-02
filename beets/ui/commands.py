@@ -342,8 +342,8 @@ def user_query(lib, logfile=None, color=True):
     items is a set of Items in the album to be tagged; the remaining
     parameters are the result of an initial lookup from MusicBrainz.
     The coroutine yields (items, info) pairs where info is either a
-    candidate info dict or CHOICE_ASIS. May also yield pipeline.BUBBLE,
-    indicating that the items should not be imported.
+    candidate info dict, CHOICE_ASIS, or None (indicating that the
+    album should not be tagged).
     """
     lib = _reopen_lib(lib)
     first = True
@@ -367,7 +367,7 @@ def user_query(lib, logfile=None, color=True):
             tag_log(logfile, 'skip', path)
             # Yield None, indicating that the pipeline should not
             # progress.
-            out = pipeline.BUBBLE
+            out = toppath, path, items, None
             continue
 
         # Ensure that we don't have the album already.
@@ -384,7 +384,7 @@ def user_query(lib, logfile=None, color=True):
             if count >= 1:
                 print_("This album (%s - %s) is already in the library!" %
                        (artist, album))
-                out = pipeline.BUBBLE
+                out = toppath, path, items, None
                 continue
         
         # Yield the result and get the next chunk of work.
@@ -402,27 +402,31 @@ def apply_choices(lib, copy, write, art):
         # Get next chunk of work.
         toppath, path, items, info = yield
         
-        # Change metadata, move, and copy.
-        if info is not CHOICE_ASIS:
-            autotag.apply_metadata(items, info)
-        for item in items:
-            if copy:
-                item.move(lib, True)
-            if write and info is not CHOICE_ASIS:
-                item.write()
+        # Only process the items if info is not None (indicating a
+        # skip).
+        if info is not None:
 
-        # Add items to library. We consolidate this at the end to avoid
-        # locking while we do the copying and tag updates.
-        albuminfo = lib.add_album(items)
+            # Change metadata, move, and copy.
+            if info is not CHOICE_ASIS:
+                autotag.apply_metadata(items, info)
+            for item in items:
+                if copy:
+                    item.move(lib, True)
+                if write and info is not CHOICE_ASIS:
+                    item.write()
 
-        # Get album art if requested.
-        if art and info is not CHOICE_ASIS:
-            artpath = beets.autotag.art.art_for_album(info)
-            if artpath:
-                albuminfo.set_art(artpath)
+            # Add items to library. We consolidate this at the end to avoid
+            # locking while we do the copying and tag updates.
+            albuminfo = lib.add_album(items)
 
-        # Write the database after each album.
-        lib.save()
+            # Get album art if requested.
+            if art and info is not CHOICE_ASIS:
+                artpath = beets.autotag.art.art_for_album(info)
+                if artpath:
+                    albuminfo.set_art(artpath)
+
+            # Write the database after each album.
+            lib.save()
 
         # Update progress.
         progress_set(toppath, path)
