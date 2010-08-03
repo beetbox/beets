@@ -31,6 +31,8 @@
   environment variable was not set.
 * Fixed removal of albums (beet remove -a): previously, the album
   record would stay around although the items were deleted.
+* The setup script now makes a beet.exe startup stub on Windows; 
+  Windows users can now just type "beet" at the prompt to run beets.
 
 1.0b3
 -----

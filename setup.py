@@ -40,7 +40,11 @@ setup(name='beets',
           'beetsplug.bpd',
       ],
       namespace_packages=['beetsplug'],
-      scripts=['beet'],
+      entry_points={
+          'console_scripts': [
+              'beet = beets.ui:main',
+          ],
+      },
 
       install_requires=[
           'mutagen',
