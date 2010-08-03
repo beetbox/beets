@@ -18,6 +18,15 @@
   can turn it off by setting "color" to "no" in your .beetsconfig (if,
   for example, your terminal doesn't understand colors and garbles the
   output).
+* Pause and resume imports. The "import" command now keeps track of its
+  progress, so if you're interrupted (beets crashes, you abort the
+  process, an alien devours your motherboard...), beets will try to
+  resume from the point where you left off. The next time you run
+  "import" on the same directory, it will ask if you want to resume. It
+  accomplishes this by "fast-forwarding" through the albums in the
+  directory until it encounters the last one it saw. (This means it
+  might fail if that album can't be found.) Also, you can now abort the
+  tagging process by entering "B" (for aBort) at any of the prompts.
 * Fixed a bug where the CLI would fail completely if the LANG
   environment variable was not set.
 * Fixed removal of albums (beet remove -a): previously, the album
