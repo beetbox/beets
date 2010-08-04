@@ -87,7 +87,16 @@ def _sorted_walk(path):
     dirs = []
     files = []
     for base in os.listdir(path):
-        base = library._unicode_path(base)
+        # While os.listdir() will try to give us unicode output (as
+        # we gave it unicode input), it may fail to decode some
+        # filenames.
+        try:
+            base = library._unicode_path(base)
+        except UnicodeError:
+            # Log and ignore undecodeable filenames.
+            log.error(u'invalid filename in %s' % path)
+            continue
+
         cur = os.path.join(path, base)
         if os.path.isdir(cur):
             dirs.append(base)
@@ -101,7 +110,6 @@ def _sorted_walk(path):
 
     # Recurse into directories.
     for base in dirs:
-        base = library._unicode_path(base)
         cur = os.path.join(path, base)
         # yield from _sorted_walk(cur)
         for res in _sorted_walk(cur):

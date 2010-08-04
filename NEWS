@@ -35,6 +35,8 @@
   Windows users can now just type "beet" at the prompt to run beets.
 * Fixed an occasional bug where Mutagen would complain that a tag was
   already present.
+* Fixed some errors with filenames that have badly encoded special
+  characters.
 
 1.0b3
 -----
