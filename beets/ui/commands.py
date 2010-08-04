@@ -290,6 +290,10 @@ def progress_get(toppath):
 
 # Core autotagger pipeline stages.
 
+# This sentinel is passed along as the "path" when a directory has finished
+# tagging.
+DONE_SENTINEL = '__IMPORT_DONE_SENTINEL__'
+
 def read_albums(paths):
     """A generator yielding all the albums (as sets of Items) found in
     the user-specified list of paths.
@@ -327,8 +331,8 @@ def read_albums(paths):
 
             yield toppath, path, items
 
-        # Indicate that the import completed.
-        progress_set(toppath, None)
+        # Indicate the directory is finished.
+        yield toppath, DONE_SENTINEL, None
 
 def initial_lookup():
     """A coroutine for performing the initial MusicBrainz lookup for an
@@ -338,10 +342,15 @@ def initial_lookup():
     """
     toppath, path, items = yield
     while True:
-        try:
-            cur_artist, cur_album, candidates, rec = autotag.tag_album(items)
-        except autotag.AutotagError:
+        if path is DONE_SENTINEL:
             cur_artist, cur_album, candidates, rec = None, None, None, None
+        else:
+            try:
+                cur_artist, cur_album, candidates, rec = \
+                        autotag.tag_album(items)
+            except autotag.AutotagError:
+                cur_artist, cur_album, candidates, rec = \
+                        None, None, None, None
         toppath, path, items = yield toppath, path, items, cur_artist, \
                                      cur_album, candidates, rec
 
@@ -361,6 +370,10 @@ def user_query(lib, logfile=None, color=True):
     out = None
     while True:
         toppath, path, items, cur_artist, cur_album, candidates, rec = yield out
+
+        if path is DONE_SENTINEL:
+            out = toppath, path, None, None
+            continue
         
         # Empty lines between albums.
         if not first:
@@ -412,6 +425,12 @@ def apply_choices(lib, copy, write, art):
     while True:    
         # Get next chunk of work.
         toppath, path, items, info = yield
+
+        # Check for "path finished" message.
+        if path is DONE_SENTINEL:
+            # Mark path as complete.
+            progress_set(toppath, None)
+            continue
         
         # Only process the items if info is not None (indicating a
         # skip).
