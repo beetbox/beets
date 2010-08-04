@@ -165,18 +165,7 @@ def _unicode_path(path):
     if isinstance(path, unicode):
         return path
     encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
-    try:
-        out = path.decode(encoding)
-    except UnicodeError:
-        # This is of course extremely hacky, but I've received several
-        # reports of filesystems misrepresenting their encoding as
-        # UTF-8 and actually providing Latin-1 strings. This helps
-        # handle those cases. All this is the cost of dealing
-        # exclusively with Unicode pathnames internally (which
-        # simplifies their construction from metadata and storage in
-        # SQLite).
-        out = path.decode('latin1')
-    return out
+    return path.decode(encoding)
 
 # Note: POSIX actually supports \ and : -- I just think they're
 # a pain. And ? has caused problems for some.
