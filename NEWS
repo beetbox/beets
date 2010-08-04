@@ -33,6 +33,8 @@
   record would stay around although the items were deleted.
 * The setup script now makes a beet.exe startup stub on Windows; 
   Windows users can now just type "beet" at the prompt to run beets.
+* Fixed an occasional bug where Mutagen would complain that a tag was
+  already present.
 
 1.0b3
 -----

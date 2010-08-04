@@ -492,7 +492,7 @@ class MediaFile(object):
                                 type(self.mgfile).__name__)
         
         # add a set of tags if it's missing
-        if not self.mgfile.tags:
+        if self.mgfile.tags is None:
             self.mgfile.add_tags()
     
     def save(self):
