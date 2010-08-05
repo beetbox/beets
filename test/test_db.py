@@ -407,6 +407,47 @@ class ArtDestinationTest(unittest.TestCase):
         track = self.lib.destination(self.i)
         self.assertEqual(os.path.dirname(art), os.path.dirname(track))
 
+class PathStringTest(unittest.TestCase):
+    def setUp(self):
+        self.lib = beets.library.Library(':memory:')
+        self.i = item()
+        self.lib.add(self.i)
+
+    def test_item_path_is_bytestring(self):
+        self.assert_(isinstance(self.i.path, str))
+
+    def test_fetched_item_path_is_bytestring(self):
+        i = list(self.lib.items())[0]
+        self.assert_(isinstance(i.path, str))
+
+    def test_unicode_path_becomes_bytestring(self):
+        self.i.path = u'unicodepath'
+        self.assert_(isinstance(self.i.path, str))
+
+    def test_unicode_in_database_becomes_bytestring(self):
+        self.lib.conn.execute("""
+        update items set path=? where id=?
+        """, (self.i.id, u'somepath'))
+        i = list(self.lib.items())[0]
+        self.assert_(isinstance(i.path, str))
+
+    def test_special_chars_preserved_in_database(self):
+        path = 'b\xe1r'
+        self.i.path = path
+        self.lib.store(self.i)
+        i = list(self.lib.items())[0]
+        self.assertEqual(i.path, path)
+
+    def test_special_char_path_added_to_database(self):
+        self.lib.remove(self.i)
+        path = 'b\xe1r'
+        i = item()
+        i.path = path
+        self.lib.add(i)
+        i = list(self.lib.items())[0]
+        self.assertEqual(i.path, path)
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

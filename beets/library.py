@@ -34,7 +34,7 @@ MAX_FILENAME_LENGTH = 200
 # - Does the field reflect an attribute of a MediaFile?
 ITEM_FIELDS = [
     ('id',          'integer primary key', False, False),
-    ('path',        'text', False, False),
+    ('path',        'blob', False, False),
     ('album_id',    'int',  False, False),
 
     ('title',       'text', True,  True),
@@ -160,12 +160,20 @@ def _components(path):
     
     return comps
 
-def _unicode_path(path):
-    """Ensures that a path string is in Unicode."""
-    if isinstance(path, unicode):
+def _bytestring_path(path):
+    """Given a path, which is either a str or a unicode, returns a str
+    path (ensuring that we never deal with Unicode pathnames).
+    """
+    # Pass through bytestrings.
+    if isinstance(path, str):
         return path
+
+    # Try to encode with default encodings, but fall back to UTF8.
     encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
-    return path.decode(encoding)
+    try:
+        return path.encode(encoding)
+    except UnicodeError:
+        return path.encode('utf8')
 
 # Note: POSIX actually supports \ and : -- I just think they're
 # a pain. And ? has caused problems for some.
@@ -212,7 +220,7 @@ class Item(object):
         i = cls({
             'album_id': None,
         })
-        i.read(_unicode_path(path))
+        i.read(path)
         return i
 
     def _fill_record(self, values):
@@ -251,6 +259,13 @@ class Item(object):
         
         Otherwise, performs an ordinary setattr.
         """
+        # Encode unicode paths and read buffers.
+        if key == 'path':
+            if isinstance(value, unicode):
+                value = _bytestring_path(value)
+            elif isinstance(value, buffer):
+                value = str(value)
+
         if key in ITEM_KEYS:
             if (not (key in self.record)) or (self.record[key] != value):
                 # don't dirty if value unchanged
@@ -372,7 +387,10 @@ class FieldQuery(Query):
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
     def clause(self):
-        return self.field + " = ?", [self.pattern]
+        pattern = self.pattern
+        if self.field == 'path' and isinstance(pattern, str):
+            pattern = buffer(pattern)
+        return self.field + " = ?", [pattern]
 
     def match(self, item):
         return self.pattern == getattr(item, self.field)
@@ -518,16 +536,7 @@ class AndQuery(MutableCollectionQuery):
 
     def match(self, item):
         return all([q.match(item) for q in self.subqueries])
-def assert_matched(self, result_iterator, title):
-    self.assertEqual(result_iterator.next().title, title)
-def assert_done(self, result_iterator):
-    self.assertRaises(StopIteration, result_iterator.next)
-def assert_matched_all(self, result_iterator):
-    self.assert_matched(result_iterator, 'Littlest Things')
-    self.assert_matched(result_iterator, 'Lovers Who Uncover')
-    self.assert_matched(result_iterator, 'Boracay')
-    self.assert_matched(result_iterator, 'Take Pills')
-    self.assert_done(result_iterator)
+
 class TrueQuery(Query):
     """A query that always matches."""
     def clause(self):
@@ -716,7 +725,8 @@ class BaseAlbum(object):
             self._record[key] = value
             # Modify items.
             if key in ALBUM_KEYS_ITEM:
-                items = self._library.items(artist=self.artist, album=self.album)
+                items = self._library.items(artist=self.artist,
+                                            album=self.album)
                 for item in items:
                     setattr(item, key, value)
                 self._library.store(item)
@@ -840,7 +850,10 @@ class Library(BaseLibrary):
         subvars = []
         for key in ITEM_KEYS:
             if key != 'id':
-                subvars.append(getattr(item, key))
+                value = getattr(item, key)
+                if key == 'path' and isinstance(value, str):
+                    value = buffer(value)
+                subvars.append(value)
         
         # issue query
         c = self.conn.cursor()
@@ -881,7 +894,12 @@ class Library(BaseLibrary):
         for key in ITEM_KEYS:
             if (key != 'id') and (item.dirty[key] or store_all):
                 assignments += key + '=?,'
-                subvars.append(getattr(item, key))
+                value = getattr(item, key)
+                # Wrap path strings in buffers so they get stored
+                # "in the raw".
+                if key == 'path' and isinstance(value, str):
+                    value = buffer(value)
+                subvars.append(value)
         
         if not assignments:
             # nothing to store (i.e., nothing was dirty)
