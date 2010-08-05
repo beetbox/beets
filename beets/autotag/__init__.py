@@ -203,6 +203,10 @@ def order_items(items, trackinfo):
     information. This always produces a result if the numbers of tracks
     match.
     """
+    # Make sure lengths match.
+    if len(items) != len(trackinfo):
+        return None
+
     # Construct the cost matrix.
     costs = []
     for cur_item in items:

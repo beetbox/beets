@@ -111,6 +111,15 @@ class OrderingTest(unittest.TestCase):
         self.assertEqual(ordered[1].title, 'two')
         self.assertEqual(ordered[2].title, 'three')
 
+    def test_order_returns_none_for_length_mismatch(self):
+        items = []
+        items.append(self.item('one', 1))
+        items.append(self.item('two', 2))
+        trackinfo = []
+        trackinfo.append({'title': 'one', 'track': 1})
+        ordered = autotag.order_items(items, trackinfo)
+        self.assertEqual(ordered, None)
+
 class ApplyTest(unittest.TestCase):
     def setUp(self):
         self.items = []
