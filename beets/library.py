@@ -752,10 +752,10 @@ class Library(BaseLibrary):
                        art_filename='cover',
                        item_fields=ITEM_FIELDS,
                        album_fields=ALBUM_FIELDS):
-        self.path = path
-        self.directory = directory
+        self.path = _bytestring_path(path)
+        self.directory = _bytestring_path(directory)
         self.path_format = path_format
-        self.art_filename = art_filename
+        self.art_filename = _bytestring_path(art_filename)
         
         self.conn = sqlite3.connect(self.path)
         self.conn.row_factory = sqlite3.Row
@@ -804,7 +804,6 @@ class Library(BaseLibrary):
         """Returns the path in the library directory designated for item
         item (i.e., where the file ought to be).
         """
-        libpath = self.directory
         subpath_tmpl = Template(self.path_format)
         
         # build the mapping for substitution in the path template, beginning
@@ -826,6 +825,11 @@ class Library(BaseLibrary):
         # Perform substitution.
         subpath = subpath_tmpl.substitute(mapping)
         
+        # Encode for the filesystem, dropping unencodable characters.
+        if isinstance(subpath, unicode):
+            encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
+            subpath = subpath.encode(encoding, 'replace')
+        
         # Truncate components and remove forbidden characters.
         subpath = _sanitize_path(subpath)
         
@@ -833,7 +837,7 @@ class Library(BaseLibrary):
         _, extension = os.path.splitext(item.path)
         subpath += extension
         
-        return _normpath(os.path.join(libpath, subpath))   
+        return _normpath(os.path.join(self.directory, subpath))   
 
     
     # Main interface.
@@ -1116,6 +1120,7 @@ class Album(BaseAlbum):
         items, so the album must contain at least one item or
         item_dir must be provided.
         """
+        image = _bytestring_path(image)
         if item_dir is None:
             item = self.items().next()
             item_dir = os.path.dirname(item.path)
@@ -1127,6 +1132,7 @@ class Album(BaseAlbum):
         """Sets the album's cover art to the image at the given path.
         The image is copied into place, replacing any existing art.
         """
+        path = _bytestring_path(path)
         oldart = self.artpath
         artdest = self.art_destination(path)
         if oldart == artdest:

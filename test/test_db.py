@@ -447,6 +447,17 @@ class PathStringTest(unittest.TestCase):
         i = list(self.lib.items())[0]
         self.assertEqual(i.path, path)
 
+    def test_destination_returns_bytestring(self):
+        self.i.artist = u'b\xe1r'
+        dest = self.lib.destination(self.i)
+        self.assert_(isinstance(dest, str))
+
+    def test_art_destination_returns_bytestring(self):
+        self.i.artist = u'b\xe1r'
+        alb = self.lib.add_album([self.i])
+        dest = alb.art_destination(u'image.jpg')
+        self.assert_(isinstance(dest, str))
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
