@@ -178,10 +178,10 @@ def _bytestring_path(path):
 # Note: POSIX actually supports \ and : -- I just think they're
 # a pain. And ? has caused problems for some.
 CHAR_REPLACE = [
-    (re.compile(r'[\\/\?]|^\.'), u'_'),
-    (re.compile(r':'), u'-'),
+    (re.compile(r'[\\/\?]|^\.'), '_'),
+    (re.compile(r':'), '-'),
 ]
-CHAR_REPLACE_WINDOWS = re.compile('["\*<>\|]|^\.|\.$'), u'_u'
+CHAR_REPLACE_WINDOWS = re.compile('["\*<>\|]|^\.|\.$'), '_'
 def _sanitize_path(path, plat=None):
     """Takes a path and makes sure that it is legal for the specified
     platform (as returned by platform.system()). Returns a new path.

@@ -465,6 +465,16 @@ class PathStringTest(unittest.TestCase):
         alb = self.lib.get_album(self.i)
         self.assertEqual(path, alb.artpath)
 
+    def test_sanitize_path_with_special_chars(self):
+        path = 'b\xe1r?'
+        new_path = beets.library._sanitize_path(path)
+        self.assert_(new_path.startswith('b\xe1r'))
+
+    def test_sanitize_path_returns_bytestring(self):
+        path = 'b\xe1r?'
+        new_path = beets.library._sanitize_path(path)
+        self.assert_(isinstance(new_path, str))
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
