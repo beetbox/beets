@@ -120,6 +120,54 @@ class OrderingTest(unittest.TestCase):
         ordered = autotag.order_items(items, trackinfo)
         self.assertEqual(ordered, None)
 
+    def test_order_corrects_when_track_names_are_entirely_wrong(self):
+        # A real-world test case contributed by a user.
+        def item(i, length):
+            return Item({
+                'artist': 'ben harper',
+                'album': 'burn to shine',
+                'title': 'ben harper - Burn to Shine ' + str(i),
+                'track': i,
+                'length': length,
+                'mb_trackid': '', 'mb_albumid': '', 'mb_artistid': '',
+            })
+        items = []
+        items.append(item(1, 241.37243007106997))
+        items.append(item(2, 342.27781704375036))
+        items.append(item(3, 245.95070222338137))
+        items.append(item(4, 472.87662515485437))
+        items.append(item(5, 279.1759535763187))
+        items.append(item(6, 270.33333768012))
+        items.append(item(7, 247.83435613222923))
+        items.append(item(8, 216.54504531525072))
+        items.append(item(9, 225.72775379800484))
+        items.append(item(10, 317.7643606963552))
+        items.append(item(11, 243.57001238834192))
+        items.append(item(12, 186.45916150485752))
+
+        def info(title, length):
+            return {
+                'title': title,
+                'length': length,
+            }
+        trackinfo = []
+        trackinfo.append(info('Alone', 238.893))
+        trackinfo.append(info('The Woman in You', 341.44))
+        trackinfo.append(info('Less', 245.59999999999999))
+        trackinfo.append(info('Two Hands of a Prayer', 470.49299999999999))
+        trackinfo.append(info('Please Bleed', 277.86599999999999))
+        trackinfo.append(info('Suzie Blue', 269.30599999999998))
+        trackinfo.append(info('Steal My Kisses', 245.36000000000001))
+        trackinfo.append(info('Burn to Shine', 214.90600000000001))
+        trackinfo.append(info('Show Me a Little Shame', 224.09299999999999))
+        trackinfo.append(info('Forgiven', 317.19999999999999))
+        trackinfo.append(info('Beloved One', 243.733))
+        trackinfo.append(info('In the Lord\'s Arms', 186.13300000000001))
+
+        ordered = autotag.order_items(items, trackinfo)
+        for i, item in enumerate(ordered):
+            self.assertEqual(i+1, item.track)
+
 class ApplyTest(unittest.TestCase):
     def setUp(self):
         self.items = []

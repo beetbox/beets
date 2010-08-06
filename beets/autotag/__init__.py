@@ -41,10 +41,10 @@ TRACK_WEIGHT = 1.0
 # the overall TRACK_WEIGHT does that).
 TRACK_TITLE_WEIGHT = 3.0
 # Added when the indices of tracks don't match.
-TRACK_INDEX_WEIGHT = 0.0
+TRACK_INDEX_WEIGHT = 1.0
 # Track length weights: no penalty before GRACE, maximum (WEIGHT)
 # penalty at GRACE+MAX discrepancy.
-TRACK_LENGTH_GRACE = 15
+TRACK_LENGTH_GRACE = 10
 TRACK_LENGTH_MAX = 30
 TRACK_LENGTH_WEIGHT = 2.0
 # MusicBrainz track ID matches.

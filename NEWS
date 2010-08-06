@@ -46,6 +46,8 @@
 * Fixed an occasional bug where Mutagen would complain that a tag was
   already present.
 * Fixed a bug with reading invalid integers from ID3 tags.
+* The tagger should now be a little more reluctant to reorder tracks
+  that already have indices.
 
 1.0b3
 -----
