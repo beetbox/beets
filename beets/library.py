@@ -805,13 +805,23 @@ class Library(BaseLibrary):
         item (i.e., where the file ought to be).
         """
         subpath_tmpl = Template(self.path_format)
+
+        # Get the item's Album if it has one.
+        album = self.get_album(item)
         
-        # build the mapping for substitution in the path template, beginning
-        # with the values from the database
+        # Build the mapping for substitution in the path template,
+        # beginning with the values from the database.
         mapping = {}
         for key in ITEM_KEYS_META:
-            value = getattr(item, key)
-            # sanitize the value for inclusion in a path:
+            # Get the values from either the item or its album.
+            if key in ALBUM_KEYS_ITEM and album is not None:
+                # From album.
+                value = getattr(album, key)
+            else:
+                # From Item.
+                value = getattr(item, key)
+
+            # Sanitize the value for inclusion in a path:
             # replace / and leading . with _
             if isinstance(value, basestring):
                 value = value.replace(os.sep, '_')

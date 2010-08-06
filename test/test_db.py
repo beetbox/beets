@@ -254,6 +254,14 @@ class DestinationTest(unittest.TestCase):
         p = self.lib.destination(self.i)
         self.assert_('(FLAC)' in p)
 
+    def test_heterogeneous_album_gets_single_directory(self):
+        i1, i2 = item(), item()
+        self.lib.add_album([i1, i2])
+        i1.year, i2.year = 2009, 2010
+        self.lib.path_format = '$album ($year)/$track $title'
+        dest1, dest2 = self.lib.destination(i1), self.lib.destination(i2)
+        self.assertEqual(os.path.dirname(dest1), os.path.dirname(dest2))
+
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
     versions.
