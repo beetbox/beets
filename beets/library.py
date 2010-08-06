@@ -71,7 +71,7 @@ ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 # identically-named field in the items table.
 ALBUM_FIELDS = [
     ('id', 'integer primary key', False),
-    ('artpath', 'text', False),
+    ('artpath', 'blob', False),
 
     ('artist',      'text', True),
     ('album',       'text', True),
@@ -1040,19 +1040,40 @@ class Album(BaseAlbum):
         """Set the value of an album attribute."""
         if key == 'id':
             raise AttributeError("can't modify album id")
+
         elif key in ALBUM_KEYS:
+            # Make sure paths are bytestrings.
+            if key == 'artpath' and isinstance(value, unicode):
+                value = _bytestring_path(value)
+
             # Reflect change in this object.
             self._record[key] = value
+
+            # Store art path as a buffer.
+            if key == 'artpath' and isinstance(value, str):
+                value = buffer(value)
+
             # Change album table.
             sql = 'UPDATE albums SET %s=? WHERE id=?' % key
             self._library.conn.execute(sql, (value, self.id))
+
             # Possibly make modification on items as well.
             if key in ALBUM_KEYS_ITEM:
                 for item in self.items():
                     setattr(item, key, value)
                     self._library.store(item)
+
         else:
             object.__setattr__(self, key, value)
+
+    def __getattr__(self, key):
+        value = super(Album, self).__getattr__(key)
+
+        # Unwrap art path from buffer object.
+        if key == 'artpath' and isinstance(value, buffer):
+            value = str(value)
+
+        return value
 
     def items(self):
         """Returns an iterable over the items associated with this

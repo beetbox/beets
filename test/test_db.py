@@ -458,6 +458,13 @@ class PathStringTest(unittest.TestCase):
         dest = alb.art_destination(u'image.jpg')
         self.assert_(isinstance(dest, str))
 
+    def test_artpath_stores_special_chars(self):
+        path = 'b\xe1r'
+        alb = self.lib.add_album([self.i])
+        alb.artpath = path
+        alb = self.lib.get_album(self.i)
+        self.assertEqual(path, alb.artpath)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

@@ -27,6 +27,10 @@
   directory until it encounters the last one it saw. (This means it
   might fail if that album can't be found.) Also, you can now abort the
   tagging process by entering "B" (for aBort) at any of the prompts.
+* Overhauled methods for handling fileystem paths to allow filenames
+  that have badly encoded special characters. These changes are pretty
+  fragile, so please report any bugs involving UnicodeErrors or SQLite
+  ProgrammingErrors with this version.
 * Fixed a bug where the CLI would fail completely if the LANG
   environment variable was not set.
 * Fixed removal of albums (beet remove -a): previously, the album
@@ -35,8 +39,6 @@
   Windows users can now just type "beet" at the prompt to run beets.
 * Fixed an occasional bug where Mutagen would complain that a tag was
   already present.
-* Fixed some errors with filenames that have badly encoded special
-  characters.
 
 1.0b3
 -----
