@@ -483,6 +483,20 @@ class PathStringTest(unittest.TestCase):
         new_path = beets.library._sanitize_path(path)
         self.assert_(isinstance(new_path, str))
 
+    def test_unicode_artpath_becomes_bytestring(self):
+        alb = self.lib.add_album([self.i])
+        alb.artpath = u'somep\xe1th'
+        self.assert_(isinstance(alb.artpath, str))
+
+    def test_unicode_artpath_in_database_decoded(self):
+        alb = self.lib.add_album([self.i])
+        self.lib.conn.execute(
+            "update albums set artpath=? where id=?",
+            (u'somep\xe1th', alb.id)
+        )
+        alb = self.lib.get_album(alb.id)
+        self.assert_(isinstance(alb.artpath, str))
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

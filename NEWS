@@ -31,6 +31,12 @@
   that have badly encoded special characters. These changes are pretty
   fragile, so please report any bugs involving UnicodeErrors or SQLite
   ProgrammingErrors with this version.
+* The destination paths (the library directory structure) now respects
+  album-level metadata. This means that if you have an album in which
+  two tracks have different album-level attributes (like year, for
+  instance), they will still wind up in the same directory together.
+  (There's currently not a very smart method for picking the "correct"
+  album-level metadata, but we'll fix that later.)
 * Fixed a bug where the CLI would fail completely if the LANG
   environment variable was not set.
 * Fixed removal of albums (beet remove -a): previously, the album

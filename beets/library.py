@@ -1046,6 +1046,12 @@ class Album(BaseAlbum):
     library. Reflects the library's "albums" table, including album
     art.
     """
+    def __init__(self, lib, record):
+        # Decode Unicode paths in database.
+        if 'artpath' in record and isinstance(record['artpath'], unicode):
+            record['artpath'] = _bytestring_path(record['artpath'])
+        super(Album, self).__init__(lib, record)
+
     def __setattr__(self, key, value):
         """Set the value of an album attribute."""
         if key == 'id':
