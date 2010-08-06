@@ -20,7 +20,7 @@
   output).
 * Pause and resume imports. The "import" command now keeps track of its
   progress, so if you're interrupted (beets crashes, you abort the
-  process, an alien devours your motherboard...), beets will try to
+  process, an alien devours your motherboard, etc.), beets will try to
   resume from the point where you left off. The next time you run
   "import" on the same directory, it will ask if you want to resume. It
   accomplishes this by "fast-forwarding" through the albums in the
@@ -31,7 +31,7 @@
   that have badly encoded special characters. These changes are pretty
   fragile, so please report any bugs involving UnicodeErrors or SQLite
   ProgrammingErrors with this version.
-* The destination paths (the library directory structure) now respects
+* The destination paths (the library directory structure) now respect
   album-level metadata. This means that if you have an album in which
   two tracks have different album-level attributes (like year, for
   instance), they will still wind up in the same directory together.
