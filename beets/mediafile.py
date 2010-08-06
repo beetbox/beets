@@ -62,6 +62,50 @@ TYPES = {
 }
 
 
+# Utility.
+
+def _safe_cast(out_type, val):
+    """Tries to covert val to out_type but will never raise an
+    exception. If the value can't be converted, then a sensible
+    default value is returned. out_type should be bool, int, or
+    unicode; otherwise, the value is just passed through.
+    """
+    if out_type == int:
+        if val is None:
+            return 0
+        elif isinstance(val, int) or isinstance(val, float):
+            # Just a number.
+            return int(val)
+        else:
+            # Process any other type as a string.
+            if not isinstance(val, basestring):
+                val = unicode(val)
+            # Get a number from the front of the string.
+            val = re.match('[0-9]*', val.strip()).group(0)
+            if not val:
+                return 0
+            else:
+                return int(val)
+
+    elif out_type == bool:
+        if val is None:
+            return False
+        else:
+            try:
+                # Should work for strings, bools, ints:
+                return bool(int(val)) 
+            except ValueError:
+                return False
+
+    elif out_type == unicode:
+        if val is None:
+            return u''
+        else:
+            return unicode(val)
+
+    else:
+        return val
+
 # Flags for encoding field behavior.
 
 class Enumeration(object):
@@ -146,9 +190,9 @@ class Packed(object):
             out = None
     
         if out is None or out == self.none_val or out == '':
-            return self.out_type(self.none_val)
+            return _safe_cast(self.out_type, self.none_val)
         else:
-            return self.out_type(out)
+            return _safe_cast(self.out_type, out)
     
     def __setitem__(self, index, value):
 
@@ -336,35 +380,7 @@ class MediaField(object):
         if style.packing:
             out = Packed(out, style.packing)[style.pack_pos]
         
-        # return the appropriate type
-        if self.out_type == int:
-            if out is None:
-                return 0
-            elif isinstance(out, int) or isinstance(out, float):
-                # Just a number.
-                return int(out)
-            else:
-                # Process any other type as a string.
-                if not isinstance(out, basestring):
-                    out = unicode(out)
-                # Get a number from the front of the string.
-                out = re.match('[0-9]*', out.strip()).group(0)
-                if not out:
-                    return 0
-                else:
-                    return int(out)
-        elif self.out_type == bool:
-            if out is None:
-                return False
-            else:
-                return bool(int(out)) # should work for strings, bools, ints
-        elif self.out_type == unicode:
-            if out is None:
-                return u''
-            else:
-                return unicode(out)
-        else:
-            return out
+        return _safe_cast(self.out_type, out)
     
     def __set__(self, obj, val):
         """Set the value of this metadata field.
