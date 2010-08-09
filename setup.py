@@ -29,7 +29,7 @@ setup(name='beets',
       url='http://beets.radbox.org/',
       license='MIT',
       platforms='ALL',
-      long_description=_read('README'),
+      long_description=_read('README.rst'),
       test_suite='test.testall.suite',
 
       packages=[

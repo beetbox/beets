@@ -3,5 +3,5 @@
 prune test
 
 # Include documentation.
-include LICENSE NEWS README
+include LICENSE NEWS README.rst
 
