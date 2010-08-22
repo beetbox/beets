@@ -502,7 +502,9 @@ def import_files(lib, paths, copy, write, autot, logpath,
             pass
     else:
         # Simple import without autotagging. Always sequential.
-        for items in read_albums(paths):
+        for _, _, items in read_albums(paths):
+            if items is None:
+                continue
             if copy:
                 for item in items:
                     item.move(lib, True)
