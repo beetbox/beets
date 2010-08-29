@@ -12,3 +12,20 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+#All the handlers for the event system.
+#Each key of the dictionary should contain a list of functions to be called
+#for any event. Functions will be called in the order they were added.
+handlers = { }
+
+def addEventListener(event, function):
+    """Adds an event listener to call function() when the specified event
+    (as a string) happens. The parameters passed to function will vary
+    depending on what event occured.
+
+    The function should respond to named parameters. function(**kwargs) will
+    trap all arguments in a dictionary."""
+    global handlers
+    
+    if event not in handlers:
+        handlers[event] = [ ] #Empty list to store the handlers
+    handlers[event].append(function)
