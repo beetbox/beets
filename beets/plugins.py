@@ -57,7 +57,6 @@ def load_plugins(names=()):
             log.warn('** error loading plugin %s' % name)
             log.warn(traceback.format_exc())
 
-
 _instances = {}
 def find_plugins():
     """Returns a list of BeetsPlugin subclass instances from all

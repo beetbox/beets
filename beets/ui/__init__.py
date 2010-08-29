@@ -27,6 +27,7 @@ from difflib import SequenceMatcher
 
 from beets import library
 from beets import plugins
+from beets import events
 
 # Constants.
 CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
@@ -405,6 +406,7 @@ def main():
     # Load requested plugins.
     plugnames = config_val(config, 'beets', 'plugins', '')
     plugins.load_plugins(plugnames.split())
+    events.send("pluginload")
 
     # Construct the root parser.
     commands = list(default_commands)
