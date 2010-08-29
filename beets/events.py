@@ -29,3 +29,28 @@ def addEventListener(event, function):
     if event not in handlers:
         handlers[event] = [ ] #Empty list to store the handlers
     handlers[event].append(function)
+
+def send(event, **arguments):
+    """Sends an event to all assigned event listeners. Event is the name of 
+    the event to send, all other named arguments go to the event handler(s).
+
+    Returns the number of handlers called."""
+
+    if event in handlers:
+        for handler in handlers[event]:
+            handler(**arguments)
+        return len(handlers[event])
+    else:
+        return 0
+
+def listen(event):
+    """Decorator method for creating an event listener.
+
+    @events.listen("imported")
+    def importListener(**kwargs):
+        pass"""
+    def helper(funct):
+        addEventListener(event, funct)
+        return funct
+
+    return helper
