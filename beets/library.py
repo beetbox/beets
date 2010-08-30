@@ -21,6 +21,7 @@ from string import Template
 import logging
 import platform
 from beets.mediafile import MediaFile, UnreadableFileError, FileTypeError
+from beets import plugins
 
 MAX_FILENAME_LENGTH = 200
 
@@ -884,9 +885,11 @@ class Library(BaseLibrary):
         return self._get_query(query).execute(self)
     
     def save(self):
-        """Writes the library to disk (completing a sqlite transaction).
+        """Writes the library to disk (completing an sqlite
+        transaction).
         """
         self.conn.commit()
+        plugins.send('save', lib=self)
 
     def load(self, item, load_id=None):
         if load_id is None:
