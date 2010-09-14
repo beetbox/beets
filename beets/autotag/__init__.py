@@ -165,37 +165,34 @@ def _ie_dist(str1, str2):
     
     return levenshtein(str1, str2) / float(max(len(str1), len(str2)))
 
+def _plurality(objs):
+    """Given a sequence of comparable objects, returns the object that
+    is most common in the set.
+    """
+    # Calculate frequencies.
+    freqs = defaultdict(int)
+    for obj in objs:
+        freqs[obj] += 1
+
+    # Find object with maximum frequency.
+    max_freq = 0
+    res = None
+    for obj, freq in freqs.items():
+        if freq > max_freq:
+            max_freq = freq
+            res = obj
+
+    return res
+
 def current_metadata(items):
     """Returns the most likely artist and album for a set of Items.
     Each is determined by tag reflected by the plurality of the Items.
     """
-    # The tags we'll try to determine.
     keys = 'artist', 'album'
-
-    # Make dictionaries in which to count the freqencies of different
-    # artist and album tags. We'll use this to find the most likely
-    # artist and album. Defaultdicts let the frequency default to zero.
-    freqs = {}
-    for key in keys:
-        freqs[key] = defaultdict(int)
-
-    # Count the frequencies.
-    for item in items:
-        for key in keys:
-            value = getattr(item, key)
-            if value: # Don't count empty tags.
-                freqs[key][value] += 1
-
-    # Find max-frequency tags.
     likelies = {}
     for key in keys:
-        max_freq = 0
-        likelies[key] = None
-        for tag, freq in freqs[key].items():
-            if freq > max_freq:
-                max_freq = freq
-                likelies[key] = tag
-    
+        values = [getattr(item, key) for item in items]
+        likelies[key] = _plurality(values)
     return likelies['artist'], likelies['album']
 
 def order_items(items, trackinfo):
@@ -291,6 +288,11 @@ def distance(items, info):
     for i, (item, track_data) in enumerate(zip(items, info['tracks'])):
         dist += track_distance(item, track_data, i+1) * TRACK_WEIGHT
         dist_max += TRACK_WEIGHT
+
+    # Plugin distances.
+    plugin_d, plugin_dm = plugins.album_distance(items, info)
+    dist += plugin_d
+    dist_max += plugin_dm
 
     # Normalize distance, avoiding divide-by-zero.
     if dist_max == 0.0:

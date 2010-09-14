@@ -64,7 +64,7 @@ class LastIdPlugin(BeetsPlugin):
 
         # Track title distance.
         dist += autotag._ie_dist(last_data['title'],
-                                info['title']) \
+                                 info['title']) \
                 * autotag.TRACK_TITLE_WEIGHT
         dist_max += autotag.TRACK_TITLE_WEIGHT
         
@@ -80,3 +80,30 @@ class LastIdPlugin(BeetsPlugin):
                   (str(last_data), dist/dist_max))
 
         return dist * DISTANCE_SCALE, dist_max * DISTANCE_SCALE
+
+    def album_distance(self, items, info):
+        # Get "fingerprinted" artists for each track.
+        artists = []
+        artist_ids = []
+        for item in items:
+            last_data = match(item.path)
+            if last_data:
+                artists.append(last_data['artist'])
+                if last_data['artist_mbid']:
+                    artist_ids.append(last_data['artist_mbid'])
+
+        # Vote on the most popular artist.
+        last_artist = autotag._plurality(artists)
+        last_artist_id = autotag._plurality(artist_ids)
+
+        # Compare artist to MusicBrainz metadata.
+        dist, dist_max = 0.0, 0.0
+        dist += autotag._ie_dist(last_artist, info['artist']) \
+                * autotag.ARTIST_WEIGHT
+        dist_max += autotag.ARTIST_WEIGHT
+
+        log.debug('Last artist (%s/%s) distance: %f' %
+                  (last_artist, info['artist'], dist/dist_max))
+
+        #fixme: artist MBID currently ignored (as in vanilla tagger)
+        return dist, dist_max
