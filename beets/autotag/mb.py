@@ -104,9 +104,9 @@ def release_dict(release, tracks=None):
     """
     # Basic info.
     out = {'album':     release.title,
-           'album_id':  release.id,
+           'album_id':  release.id.rsplit('/', 1)[1],
            'artist':    release.artist.name,
-           'artist_id': release.artist.id,
+           'artist_id': release.artist.id.rsplit('/', 1)[1],
            'asin':      release.asin,
           }
 
@@ -130,7 +130,7 @@ def release_dict(release, tracks=None):
         out['tracks'] = []
         for track in tracks:
             t = {'title': track.title,
-                 'id': track.id}
+                 'id': track.id.rsplit('/', 1)[1]}
             if track.duration is not None:
                 # Duration not always present.
                 t['length'] = track.duration/(1000.0)

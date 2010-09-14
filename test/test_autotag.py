@@ -176,22 +176,18 @@ class ApplyTest(unittest.TestCase):
         trackinfo = []
         trackinfo.append({
             'title': 'oneNew',
-            'id':    'http://musicbrainz.org/track/dfa939ec-118c-4d0f-'
-                     '84a0-60f3d1e6522c',
+            'id':    'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
         })
         trackinfo.append({
             'title':  'twoNew',
-            'id':     'http://musicbrainz.org/track/40130ed1-a27c-42fd-'
-                      'a328-1ebefb6caef4',
+            'id':     '40130ed1-a27c-42fd-a328-1ebefb6caef4',
         })
         self.info = {
             'tracks': trackinfo,
             'artist': 'artistNew',
             'album':  'albumNew',
-            'album_id': 'http://musicbrainz.org/release/7edb51cb-77d6-'
-                        '4416-a23c-3a8c2994a2c7',
-            'artist_id': 'http://musicbrainz.org/artist/a6623d39-2d8e-'
-                         '4f70-8242-0a9553b91e50',
+            'album_id': '7edb51cb-77d6-4416-a23c-3a8c2994a2c7',
+            'artist_id': 'a6623d39-2d8e-4f70-8242-0a9553b91e50',
         }
     
     def test_titles_applied(self):

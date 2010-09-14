@@ -257,7 +257,7 @@ def track_distance(item, track_data, track_index=None):
     
     # MusicBrainz track ID.
     if item.mb_trackid:
-        if item.mb_trackid != track_data['id'].rsplit('/', 1)[1]:
+        if item.mb_trackid != track_data['id']:
             dist += TRACK_ID_WEIGHT
         dist_max += TRACK_ID_WEIGHT
 
@@ -302,10 +302,6 @@ def apply_metadata(items, info):
     """Set the items' metadata to match the data given in info. The
     list of items must be ordered.
     """
-    # Global MusicBrainz IDs (album and artist).
-    mb_albumid = info['album_id'].rsplit('/', 1)[1]
-    mb_artistid = info['artist_id'].rsplit('/', 1)[1]
-    
     for index, (item, track_data) in enumerate(zip(items,  info['tracks'])):
         # Album, artist, track count.
         item.artist = info['artist']
@@ -324,11 +320,10 @@ def apply_metadata(items, info):
         item.title = track_data['title']
         item.track = index + 1
         
-        # MusicBrainz track ID.
-        item.mb_trackid = track_data['id'].rsplit('/', 1)[1]
-        # Album and artist IDs.
-        item.mb_albumid = mb_albumid
-        item.mb_artistid = mb_artistid
+        # MusicBrainz IDs.
+        item.mb_trackid = track_data['id']
+        item.mb_albumid = info['album_id']
+        item.mb_artistid = info['artist_id']
 
 def match_by_id(items):
     """If the items are tagged with a MusicBrainz album ID, returns an
