@@ -22,8 +22,9 @@ from beets import autotag
 import lastfp
 import logging
 
-log = logging.getLogger('beets')
 API_KEY = '2dc3914abf35f0d9c92d97d8f8e42b43'
+
+log = logging.getLogger('beets')
 
 _match_cache = {}
 def match(path, metadata=None):
@@ -54,10 +55,21 @@ class LastIdPlugin(BeetsPlugin):
             # Match failed.
             return 0.0, 0.0
 
-        dist = autotag._ie_dist(last_data['title'],
+        dist, dist_max = 0.0, 0.0
+
+        # Track title distance.
+        dist += autotag._ie_dist(last_data['title'],
                                 info['title']) \
-               * autotag.TRACK_TITLE_WEIGHT
-        dist_max = autotag.TRACK_TITLE_WEIGHT
+                * autotag.TRACK_TITLE_WEIGHT
+        dist_max += autotag.TRACK_TITLE_WEIGHT
+        
+        # MusicBrainz track ID.
+        if last_data['track_mbid']:
+            log.debug('Last track ID match: %s/%s' %
+                      (last_data['track_mbid'], track_data['id']))
+            if last_data['track_mbid'] != track_data['id']:
+                dist += autotag.TRACK_ID_WEIGHT
+            dist_max += autotag.TRACK_ID_WEIGHT
 
         log.debug('Last data: %s; distance: %f' %
                   (str(last_data), dist/dist_max))

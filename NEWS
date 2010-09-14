@@ -1,3 +1,18 @@
+1.0b5
+-----
+* A new plugin, "lastid", adds Last.fm acoustic fingerprinting support
+  to the autotagger. Similar to the PUIDs used by MusicBrainz Picard,
+  this system allows beets to recognize files that don't have any
+  metadata at all. (You'll need to install some dependencies for this
+  plugin to work; documentation is forthcoming.)
+* To support the above, there's also a new system for extending the
+  autotagger via plugins. Plugins can currently add components to the
+  track distance function.
+* New event system for plugins (thanks, Jeff!). Plugins can now get
+  callbacks from beets when certain events occur in the core.
+* Fixed bug that completely broke non-autotagged imports ("import -A").
+* A new "-v" command line switch enables debugging output.
+
 1.0b4
 -----
 * Parallel tagger. The autotagger has been reimplemented to use
