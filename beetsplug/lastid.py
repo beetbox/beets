@@ -24,6 +24,11 @@ import logging
 
 API_KEY = '2dc3914abf35f0d9c92d97d8f8e42b43'
 
+# The amplification factor for distances calculated from fingerprinted
+# data. With this set to 2.0, for instance, "fingerprinted" track titles
+# will be considered twice as important as track titles from ID3 tags.
+DISTANCE_SCALE = 2.0
+
 log = logging.getLogger('beets')
 
 _match_cache = {}
@@ -74,4 +79,4 @@ class LastIdPlugin(BeetsPlugin):
         log.debug('Last data: %s; distance: %f' %
                   (str(last_data), dist/dist_max))
 
-        return dist, dist_max
+        return dist * DISTANCE_SCALE, dist_max * DISTANCE_SCALE
