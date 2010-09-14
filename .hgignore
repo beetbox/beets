@@ -1,0 +1,3 @@
+^dist/
+^beets\.egg-info/
+^build/
