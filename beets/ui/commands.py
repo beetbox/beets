@@ -27,6 +27,7 @@ from beets import library
 from beets.mediafile import UnreadableFileError, FileTypeError
 import beets.autotag.art
 from beets.ui import pipeline
+from beets import plugins
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -514,6 +515,9 @@ def import_files(lib, paths, copy, write, autot, logpath,
     # If we were logging, close the file.
     if logfile:
         logfile.close()
+
+    # Emit event.
+    plugins.send('import', lib=lib, paths=paths)
 
 import_cmd = ui.Subcommand('import', help='import new music',
     aliases=('imp', 'im'))

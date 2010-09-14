@@ -406,6 +406,8 @@ def main():
     # Load requested plugins.
     plugnames = config_val(config, 'beets', 'plugins', '')
     plugins.load_plugins(plugnames.split())
+    plugins.load_listeners()
+    plugins.send("pluginload")
 
     # Construct the root parser.
     commands = list(default_commands)
