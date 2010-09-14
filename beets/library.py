@@ -95,7 +95,6 @@ ITEM_DEFAULT_FIELDS = ALBUM_DEFAULT_FIELDS + ('title', 'comments')
 
 # Logger.
 log = logging.getLogger('beets')
-log.setLevel(logging.DEBUG)
 log.addHandler(logging.StreamHandler())
 
 

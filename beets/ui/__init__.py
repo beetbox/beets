@@ -24,6 +24,7 @@ import textwrap
 import ConfigParser
 import sys
 from difflib import SequenceMatcher
+import logging
 
 from beets import library
 from beets import plugins
@@ -416,6 +417,8 @@ def main():
                       help="destination music directory")
     parser.add_option('-p', '--pathformat', dest='path_format',
                       help="destination path format string")
+    parser.add_option('-v', '--verbose', dest='verbose', action='store_true',
+                      help='print debugging information')
     
     # Parse the command-line!
     options, subcommand, suboptions, subargs = parser.parse_args()
@@ -433,6 +436,13 @@ def main():
                           directory,
                           path_format,
                           art_filename)
+    
+    # Configure the logger.
+    log = logging.getLogger('beets')
+    if options.verbose:
+        log.setLevel(logging.DEBUG)
+    else:
+        log.setLevel(logging.WARNING)
     
     # Invoke the subcommand.
     try:

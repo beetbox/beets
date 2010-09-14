@@ -33,7 +33,13 @@ class BeetsPlugin(object):
         """Should return a list of beets.ui.Subcommand objects for
         commands that should be added to beets' CLI.
         """
-        raise NotImplementedError
+        return ()
+
+    def track_distance(self, item, info):
+        """Should return a (distance, distance_max) pair to be added
+        to the distance value for every track comparison.
+        """
+        return 0.0, 0.0
 
 def load_plugins(names=()):
     """Imports the modules for a sequence of plugin names. Each name
@@ -81,3 +87,14 @@ def commands():
         out += plugin.commands()
     return out
 
+def track_distance(item, info):
+    """Gets the track distance calculated by all loaded plugins.
+    Returns a (distance, distance_max) pair.
+    """
+    dist = 0.0
+    dist_max = 0.0
+    for plugin in find_plugins():
+        d, dm = plugin.track_distance(item, info)
+        dist += d
+        dist_max += dm
+    return dist, dist_max

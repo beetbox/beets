@@ -20,7 +20,7 @@ from collections import defaultdict
 from beets.autotag import mb
 import re
 from munkres import Munkres
-from beets import library, mediafile
+from beets import library, mediafile, plugins
 import logging
 
 # Try 5 releases. In the future, this should be more dynamic: let the
@@ -260,6 +260,11 @@ def track_distance(item, track_data, track_index=None):
         if item.mb_trackid != track_data['id'].rsplit('/', 1)[1]:
             dist += TRACK_ID_WEIGHT
         dist_max += TRACK_ID_WEIGHT
+
+    # Plugin distances.
+    plugin_d, plugin_dm = plugins.track_distance(item, track_data)
+    dist += plugin_d
+    dist_max += plugin_dm
 
     return dist / dist_max
 
