@@ -347,6 +347,33 @@ def match_by_id(items):
     # other IDs (i.e., track and artist) in case the album tag isn't
     # present, but that event seems very unlikely.
 
+def recommendation(results):
+    """Given a sorted list of result tuples, returns a recommendation
+    flag (RECOMMEND_STRONG, RECOMMEND_MEDIUM, RECOMMEND_NONE) based
+    on the results' distances.
+    """
+    if not results:
+        # No candidates: no recommendation.
+        rec = RECOMMEND_NONE
+    else:
+        min_dist = results[0][0]
+        if min_dist < STRONG_REC_THRESH:
+            # Strong recommendation level.
+            rec = RECOMMEND_STRONG
+        elif len(results) == 1:
+            # Only a single candidate. Medium recommendation.
+            rec = RECOMMEND_MEDIUM
+        elif min_dist <= MEDIUM_REC_THRESH:
+            # Medium recommendation level.
+            rec = RECOMMEND_MEDIUM
+        elif results[1][0] - min_dist >= REC_GAP_THRESH:
+            # Gap between first two candidates is large.
+            rec = RECOMMEND_MEDIUM
+        else:
+            # No conclusion.
+            rec = RECOMMEND_NONE
+    return rec
+
 def tag_album(items, search_artist=None, search_album=None):
     """Bundles together the functionality used to infer tags for a
     set of items comprised by an album. Returns everything relevant:
@@ -367,8 +394,8 @@ def tag_album(items, search_artist=None, search_album=None):
     # Get current metadata.
     cur_artist, cur_album = current_metadata(items)
     
-    # The output list of result tuples:
-    dist_ordered_cands = []
+    # The output result tuples (keyed by MB album ID).
+    out_tuples = {}
     
     # Try to find album indicated by MusicBrainz IDs.
     id_info = match_by_id(items)
@@ -376,11 +403,11 @@ def tag_album(items, search_artist=None, search_album=None):
         ordered = order_items(items, id_info['tracks'])
         if ordered:
             dist = distance(ordered, id_info)
-            dist_ordered_cands.append((dist, ordered, id_info))
+            out_tuples[id_info['album_id']] = dist, ordered, id_info
             # If we have a very good MBID match, don't bother
             # continuing.
             if dist < STRONG_REC_THRESH:
-                return (cur_artist, cur_album, dist_ordered_cands,
+                return (cur_artist, cur_album, out_tuples.values(),
                         RECOMMEND_STRONG)
             # Otherwise, this match will compete against metadata-based
             # matches.
@@ -390,17 +417,21 @@ def tag_album(items, search_artist=None, search_album=None):
         # No explicit search terms -- use current metadata.
         search_artist, search_album = cur_artist, cur_album
     
-    # Get candidate metadata.
+    # Get candidate metadata from search.
     if not search_artist or not search_album:
         raise InsufficientMetadataError()
     candidates = mb.match_album(search_artist, search_album, len(items))
+    candidates = candidates[:MAX_CANDIDATES]
+
+    # Get candidates from plugins.
+    # candidates += plugins.candidates(items)
     
     # Get the distance to each candidate.
-    for info in _first_n(candidates, MAX_CANDIDATES):
-        # Don't duplicate the MusicBrainz match.
-        if id_info and id_info['album_id'] == info['album_id']:
+    for info in candidates:
+        # Don't duplicate.
+        if info['album_id'] in out_tuples:
             continue
-        
+
         # Make sure the album has the correct number of tracks.
         if len(items) != len(info['tracks']):
             continue
@@ -413,31 +444,11 @@ def tag_album(items, search_artist=None, search_album=None):
         # Get the change distance.
         dist = distance(ordered, info)
 
-        dist_ordered_cands.append((dist, ordered, info))
+        out_tuples[info['album_id']] = dist, ordered, info
     
     # Sort by distance.
-    dist_ordered_cands.sort()
+    out_tuples = out_tuples.values()
+    out_tuples.sort()
     
-    # Make a recommendation.
-    if not dist_ordered_cands:
-        # No candidates: no recommendation.
-        rec = RECOMMEND_NONE
-    else:
-        min_dist = dist_ordered_cands[0][0]
-        if min_dist < STRONG_REC_THRESH:
-            # Strong recommendation level.
-            rec = RECOMMEND_STRONG
-        elif len(dist_ordered_cands) == 1:
-            # Only a single candidate. Medium recommendation.
-            rec = RECOMMEND_MEDIUM
-        elif min_dist <= MEDIUM_REC_THRESH:
-            # Medium recommendation level.
-            rec = RECOMMEND_MEDIUM
-        elif dist_ordered_cands[1][0] - min_dist >= REC_GAP_THRESH:
-            # Gap between first two candidates is large.
-            rec = RECOMMEND_MEDIUM
-        else:
-            # No conclusion.
-            rec = RECOMMEND_NONE
-    
-    return cur_artist, cur_album, dist_ordered_cands, rec
+    rec = recommendation(out_tuples)
+    return cur_artist, cur_album, out_tuples, rec
