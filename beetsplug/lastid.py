@@ -128,7 +128,7 @@ class LastIdPlugin(BeetsPlugin):
         if last_artist_id:
             criteria['artistId'] = last_artist_id
         else:
-            criteria['artistName'] = last_artist_name
+            criteria['artistName'] = last_artist
 
         # Perform the search.
         cands = mb.get_releases(**criteria)

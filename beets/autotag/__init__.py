@@ -374,6 +374,36 @@ def recommendation(results):
             rec = RECOMMEND_NONE
     return rec
 
+def validate_candidate(items, tuple_dict, info):
+    """Given a candidate info dict, attempt to add the candidate to
+    the output dictionary of result tuples. This involves checking
+    the track count, ordering the items, checking for duplicates, and
+    calculating the distance.
+    """
+    log.debug('Candidate: %s - %s' % (info['artist'], info['album']))
+
+    # Don't duplicate.
+    if info['album_id'] in tuple_dict:
+        log.debug('Duplicate.')
+        return
+
+    # Make sure the album has the correct number of tracks.
+    if len(items) != len(info['tracks']):
+        log.debug('Track count mismatch.')
+        return
+
+    # Put items in order.
+    ordered = order_items(items, info['tracks'])
+    if not ordered:
+        log.debug('Not orderable.')
+        return
+
+    # Get the change distance.
+    dist = distance(ordered, info)
+    log.debug('Success. Distance: %f' % dist)
+
+    tuple_dict[info['album_id']] = dist, ordered, info
+
 def tag_album(items, search_artist=None, search_album=None):
     """Bundles together the functionality used to infer tags for a
     set of items comprised by an album. Returns everything relevant:
@@ -400,17 +430,15 @@ def tag_album(items, search_artist=None, search_album=None):
     # Try to find album indicated by MusicBrainz IDs.
     id_info = match_by_id(items)
     if id_info:
-        ordered = order_items(items, id_info['tracks'])
-        if ordered:
-            dist = distance(ordered, id_info)
-            out_tuples[id_info['album_id']] = dist, ordered, id_info
-            # If we have a very good MBID match, don't bother
-            # continuing.
-            if dist < STRONG_REC_THRESH:
-                return (cur_artist, cur_album, out_tuples.values(),
-                        RECOMMEND_STRONG)
+        validate_candidate(items, out_tuples, info)
+        if out_tuples:
+            # If we have a very good MBID match, return immediately.
             # Otherwise, this match will compete against metadata-based
             # matches.
+            rec = recommendation(out_tuples)
+            if rec == RECOMMEND_STRONG:
+                log.debug('ID match for %s - %s.' % (cur_artist, cur_album))
+                return cur_artist, cur_album, out_tuples.values(), rec
     
     # Search terms.
     if not (search_artist and search_album):
@@ -427,31 +455,9 @@ def tag_album(items, search_artist=None, search_album=None):
     candidates.extend(plugins.candidates(items))
     
     # Get the distance to each candidate.
-    log.debug('Evaluating %i candidates:' % len(candidates))
+    log.debug('Evaluating %i candidates.' % len(candidates))
     for info in candidates:
-        log.debug('Candidate: %s - %s' % (info['artist'], info['album']))
-
-        # Don't duplicate.
-        if info['album_id'] in out_tuples:
-            log.debug('Duplicate.')
-            continue
-
-        # Make sure the album has the correct number of tracks.
-        if len(items) != len(info['tracks']):
-            log.debug('Track count mismatch.')
-            continue
-    
-        # Put items in order.
-        ordered = order_items(items, info['tracks'])
-        if not ordered:
-            log.debug('Not orderable.')
-            continue
-    
-        # Get the change distance.
-        dist = distance(ordered, info)
-        log.debug('Success. Distance: %f' % dist)
-
-        out_tuples[info['album_id']] = dist, ordered, info
+        validate_candidate(items, out_tuples, info)
     
     # Sort by distance.
     out_tuples = out_tuples.values()
