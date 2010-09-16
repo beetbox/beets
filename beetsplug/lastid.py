@@ -19,6 +19,7 @@ Requires the pylastfp library.
 from __future__ import with_statement
 from beets.plugins import BeetsPlugin
 from beets import autotag
+from beets.autotag import mb
 import lastfp
 import logging
 
@@ -53,6 +54,27 @@ def match(path, metadata=None):
     _match_cache[path] = match
     return match
 
+def get_cur_artist(items):
+    """Given a sequence of items, returns the current artist and
+    artist ID that is most popular among the fingerprinted metadata
+    for the tracks.
+    """
+    # Get "fingerprinted" artists for each track.
+    artists = []
+    artist_ids = []
+    for item in items:
+        last_data = match(item.path)
+        if last_data:
+            artists.append(last_data['artist'])
+            if last_data['artist_mbid']:
+                artist_ids.append(last_data['artist_mbid'])
+
+    # Vote on the most popular artist.
+    artist = autotag._plurality(artists)
+    artist_id = autotag._plurality(artist_ids)
+
+    return artist, artist_id
+
 class LastIdPlugin(BeetsPlugin):
     def track_distance(self, item, info):
         last_data = match(item.path)
@@ -70,31 +92,19 @@ class LastIdPlugin(BeetsPlugin):
         
         # MusicBrainz track ID.
         if last_data['track_mbid']:
-            log.debug('Last track ID match: %s/%s' %
-                      (last_data['track_mbid'], track_data['id']))
+            # log.debug('Last track ID match: %s/%s' %
+            #           (last_data['track_mbid'], track_data['id']))
             if last_data['track_mbid'] != track_data['id']:
                 dist += autotag.TRACK_ID_WEIGHT
             dist_max += autotag.TRACK_ID_WEIGHT
 
-        log.debug('Last data: %s; distance: %f' %
-                  (str(last_data), dist/dist_max))
+        # log.debug('Last data: %s; distance: %f' %
+        #           (str(last_data), dist/dist_max))
 
         return dist * DISTANCE_SCALE, dist_max * DISTANCE_SCALE
 
     def album_distance(self, items, info):
-        # Get "fingerprinted" artists for each track.
-        artists = []
-        artist_ids = []
-        for item in items:
-            last_data = match(item.path)
-            if last_data:
-                artists.append(last_data['artist'])
-                if last_data['artist_mbid']:
-                    artist_ids.append(last_data['artist_mbid'])
-
-        # Vote on the most popular artist.
-        last_artist = autotag._plurality(artists)
-        last_artist_id = autotag._plurality(artist_ids)
+        last_artist, last_artist_id = get_cur_artist(items)
 
         # Compare artist to MusicBrainz metadata.
         dist, dist_max = 0.0, 0.0
@@ -107,3 +117,24 @@ class LastIdPlugin(BeetsPlugin):
 
         #fixme: artist MBID currently ignored (as in vanilla tagger)
         return dist, dist_max
+
+    def candidates(self, items):
+        last_artist, last_artist_id = get_cur_artist(items)
+
+        # Build the search criteria. Use the artist ID if we have one;
+        # otherwise use the artist name. Unfortunately, Last.fm doesn't
+        # give us album information.
+        criteria = {'trackCount': len(items)}
+        if last_artist_id:
+            criteria['artistId'] = last_artist_id
+        else:
+            criteria['artistName'] = last_artist_name
+
+        # Perform the search.
+        cands = mb.get_releases(**criteria)
+        cands = list(cands)[:autotag.MAX_CANDIDATES]
+
+        log.debug('Matched last candidates: %s' %
+                  ', '.join([cand['album'] for cand in cands]))
+
+        return cands

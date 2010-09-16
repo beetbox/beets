@@ -51,6 +51,12 @@ class BeetsPlugin(object):
         """
         return 0.0, 0.0
 
+    def candidates(self, items):
+        """Should return a sequence of MusicBrainz info dictionaries
+        that match the album whose items are provided.
+        """
+        return ()
+
     listeners = None
     @classmethod
     def listen(cls, event):
@@ -142,6 +148,14 @@ def album_distance(items, info):
         dist += d
         dist_max += dm
     return dist, dist_max
+
+def candidates(items):
+    """Gets MusicBrainz candidates for an album from each plugin.
+    """
+    out = []
+    for plugin in find_plugins():
+        out.extend(plugin.candidates(items))
+    return out
 
 
 # Event dispatch.

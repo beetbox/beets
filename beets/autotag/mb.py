@@ -27,6 +27,8 @@ import datetime
 import musicbrainz2.webservice as mbws
 from threading import Lock
 
+SEARCH_LIMIT = 10
+
 class ServerBusyError(Exception): pass
 
 # MusicBrainz requires that a client does not query the server more
@@ -66,6 +68,30 @@ def _query_wrap(fun, *args, **kwargs):
         raise ServerBusyError()
     # FIXME exponential backoff?
 
+def get_releases(**params):
+    """Given a list of parameters to ReleaseFilter, executes the
+    query and yields release dicts (complete with tracks).
+    """
+    filt = mbws.ReleaseFilter(**params)
+    results = _query_wrap(mbws.Query().getReleases, filter=filt)
+
+    for result in results:
+        release = result.release
+        tracks, _ = release_info(release.id)
+        yield release_dict(release, tracks)
+
+def release_info(release_id):
+    """Given a MusicBrainz release ID, fetch a list of tracks on the
+    release and the release group ID. If the release is not found,
+    returns None.
+    """
+    inc = mbws.ReleaseIncludes(tracks=True, releaseGroup=True)
+    release = _query_wrap(mbws.Query().getReleaseById, release_id, inc)
+    if release:
+        return release.getTracks(), release.getReleaseGroup().getId()
+    else:
+        return None
+
 def _lucene_escape(text):
     """Escapes a string so it may be used verbatim in a Lucene query
     string.
@@ -73,9 +99,8 @@ def _lucene_escape(text):
     # Regex stolen from MusicBrainz Picard.
     return re.sub(r'([+\-&|!(){}\[\]\^"~*?:\\])', r'\\\1', text)
 
-# Workings of this function more or less stolen from Picard.
-def find_releases(criteria, limit=25):
-    """Get a list of `ReleaseResult` objects from the MusicBrainz
+def find_releases(criteria, limit=SEARCH_LIMIT):
+    """Get a list of release dictionaries from the MusicBrainz
     database that match `criteria`. The latter is a dictionary whose
     keys are MusicBrainz field names and whose values are search terms
     for those fields.
@@ -93,8 +118,7 @@ def find_releases(criteria, limit=25):
     query = u' '.join(query_parts)
     
     # Build the filter and send the query.
-    filt = mbws.ReleaseFilter(limit=limit, query=query)
-    return _query_wrap(mbws.Query().getReleases, filter=filt)
+    return get_releases(limit=limit, query=query)
 
 def release_dict(release, tracks=None):
     """Takes a MusicBrainz `Release` object and returns a dictionary
@@ -138,18 +162,6 @@ def release_dict(release, tracks=None):
 
     return out
 
-def release_info(release_id):
-    """Given a MusicBrainz release ID, fetch a list of tracks on the
-    release and the release group ID. If the release is not found,
-    returns None.
-    """
-    inc = mbws.ReleaseIncludes(tracks=True, releaseGroup=True)
-    release = _query_wrap(mbws.Query().getReleaseById, release_id, inc)
-    if release:
-        return release.getTracks(), release.getReleaseGroup().getId()
-    else:
-        return None
-
 def match_album(artist, album, tracks=None):
     """Searches for a single album ("release" in MusicBrainz parlance)
     and returns an iterator over dictionaries of information (as
@@ -164,12 +176,7 @@ def match_album(artist, album, tracks=None):
         criteria['tracks'] = str(tracks)
 
     # Search for the release.
-    results = find_releases(criteria, 10)
-
-    for result in results:
-        release = result.release
-        tracks, _ = release_info(release.id)
-        yield release_dict(release, tracks)
+    return find_releases(criteria)
 
 def album_for_id(albumid):
     """Fetches an album by its MusicBrainz ID and returns an

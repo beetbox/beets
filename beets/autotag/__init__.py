@@ -421,28 +421,35 @@ def tag_album(items, search_artist=None, search_album=None):
     if not search_artist or not search_album:
         raise InsufficientMetadataError()
     candidates = mb.match_album(search_artist, search_album, len(items))
-    candidates = candidates[:MAX_CANDIDATES]
+    candidates = list(candidates)[:MAX_CANDIDATES]
 
     # Get candidates from plugins.
-    # candidates += plugins.candidates(items)
+    candidates.extend(plugins.candidates(items))
     
     # Get the distance to each candidate.
+    log.debug('Evaluating %i candidates:' % len(candidates))
     for info in candidates:
+        log.debug('Candidate: %s - %s' % (info['artist'], info['album']))
+
         # Don't duplicate.
         if info['album_id'] in out_tuples:
+            log.debug('Duplicate.')
             continue
 
         # Make sure the album has the correct number of tracks.
         if len(items) != len(info['tracks']):
+            log.debug('Track count mismatch.')
             continue
     
         # Put items in order.
         ordered = order_items(items, info['tracks'])
         if not ordered:
+            log.debug('Not orderable.')
             continue
     
         # Get the change distance.
         dist = distance(ordered, info)
+        log.debug('Success. Distance: %f' % dist)
 
         out_tuples[info['album_id']] = dist, ordered, info
     
