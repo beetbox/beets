@@ -11,6 +11,7 @@
 * New event system for plugins (thanks, Jeff!). Plugins can now get
   callbacks from beets when certain events occur in the core.
 * Fixed bug that completely broke non-autotagged imports ("import -A").
+* Fixed bug that logged the wrong paths when using "import -l".
 * A new "-v" command line switch enables debugging output.
 
 1.0b4

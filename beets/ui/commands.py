@@ -191,7 +191,7 @@ def tag_log(logfile, status, path):
     reflect the reason the album couldn't be tagged.
     """
     if logfile:
-        print >>logfile, status, os.path.dirname(path)
+        print >>logfile, '%s %s' % (status, path)
 
 def choose_match(path, items, cur_artist, cur_album, candidates,
                  rec, color=True):
