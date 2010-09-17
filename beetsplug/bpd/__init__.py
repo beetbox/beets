@@ -657,9 +657,19 @@ class Command(object):
         """
         command_match = self.command_re.match(s)
         self.name = command_match.group(1)
+
+        self.args = []
         arg_matches = self.arg_re.findall(s[command_match.end():])
-        self.args = [m[0] or m[1] for m in arg_matches]
-        self.args = [s.decode('utf8') for s in self.args]
+        for match in arg_matches:
+            if match[0]:
+                # Quoted argument.
+                arg = match[0]
+                arg = arg.replace('\\"', '"').replace('\\\\', '\\')
+            else:
+                # Unquoted argument.
+                arg = match[1]
+            arg = arg.decode('utf8')
+            self.args.append(arg)
         
     def run(self, conn):
         """Executes the command on the given connection.
