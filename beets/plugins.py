@@ -20,7 +20,7 @@ import traceback
 from collections import defaultdict
 
 PLUGIN_NAMESPACE = 'beetsplug'
-DEFAULT_PLUGINS = ['bpd']
+DEFAULT_PLUGINS = []
 
 # Global logger.
 log = logging.getLogger('beets')

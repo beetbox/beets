@@ -22,7 +22,7 @@ def _read(fn):
     return open(path).read()
 
 setup(name='beets',
-      version='1.0b4',
+      version='1.0b5',
       description='music tagger and library organizer',
       author='Adrian Sampson',
       author_email='adrian@radbox.org',
@@ -50,7 +50,6 @@ setup(name='beets',
           'mutagen',
           'python-musicbrainz2 >= 0.7.0',
           'munkres',
-          'eventlet >= 0.9.3',
       ],
 
       classifiers=[

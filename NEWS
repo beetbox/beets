@@ -10,6 +10,10 @@
   track distance function.
 * New event system for plugins (thanks, Jeff!). Plugins can now get
   callbacks from beets when certain events occur in the core.
+* The BPD plugin is now disabled by default. This greatly simplifies
+  installation of the beets core, which has no compiled dependencies
+  now. To use BPD, though, you'll need to set "plugins: bpd" in your
+  .beetsconfig.
 * Fixed bug that completely broke non-autotagged imports ("import -A").
 * Fixed bug that logged the wrong paths when using "import -l".
 * A new "-v" command line switch enables debugging output.
