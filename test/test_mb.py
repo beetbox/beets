@@ -148,6 +148,25 @@ class ByIDTest(unittest.TestCase):
         a = mb.album_for_id('bogus-id')
         self.assertEqual(a, None)
 
+class SpecialCaseTest(unittest.TestCase):
+    def test_chkchkchk_by_query(self):
+        a = iter(mb.find_releases({
+            'artist': '!!!',
+            'album': '!!!',
+            'tracks': '7',
+        })).next()
+        self.assertEqual(a['artist'], '!!!')
+        self.assertEqual(a['album'], '!!!')
+    
+    def test_chkchkchk_by_keys(self):
+        a = iter(mb.get_releases(
+            artistName='!!!',
+            title='!!!',
+            trackCount=7,
+        )).next()
+        self.assertEqual(a['artist'], '!!!')
+        self.assertEqual(a['album'], '!!!')
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

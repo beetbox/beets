@@ -31,6 +31,11 @@ SEARCH_LIMIT = 10
 
 class ServerBusyError(Exception): pass
 
+# We hard-code IDs for artists that can't easily be searched for.
+SPECIAL_CASE_ARTISTS = {
+    '!!!': 'f26c72d3-e52c-467b-b651-679c73d8e1a7',
+}
+
 # MusicBrainz requires that a client does not query the server more
 # than once a second. This function enforces that limit using a
 # module-global variable to keep track of the last time a query was
@@ -72,9 +77,18 @@ def get_releases(**params):
     """Given a list of parameters to ReleaseFilter, executes the
     query and yields release dicts (complete with tracks).
     """
+    # Replace special cases.
+    if 'artistName' in params:
+        artist = params['artistName']
+        if artist in SPECIAL_CASE_ARTISTS:
+            del params['artistName']
+            params['artistId'] = SPECIAL_CASE_ARTISTS[artist]
+    
+    # Issue query.
     filt = mbws.ReleaseFilter(**params)
     results = _query_wrap(mbws.Query().getReleases, filter=filt)
 
+    # Construct results.
     for result in results:
         release = result.release
         tracks, _ = release_info(release.id)
@@ -109,6 +123,13 @@ def find_releases(criteria, limit=SEARCH_LIMIT):
     is detailed here:
         http://wiki.musicbrainz.org/Text_Search_Syntax
     """
+    # Replace special cases.
+    if 'artist' in criteria:
+        artist = criteria['artist']
+        if artist in SPECIAL_CASE_ARTISTS:
+            del criteria['artist']
+            criteria['arid'] = SPECIAL_CASE_ARTISTS[artist]
+    
     # Build Lucene query (the MusicBrainz 'query' filter).
     query_parts = []
     for name, value in criteria.items():

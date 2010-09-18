@@ -16,6 +16,7 @@
   .beetsconfig.
 * Fixed bug that completely broke non-autotagged imports ("import -A").
 * Fixed bug that logged the wrong paths when using "import -l".
+* Fixed autotagging for the creatively-named band !!!.
 * A new "-v" command line switch enables debugging output.
 
 1.0b4
