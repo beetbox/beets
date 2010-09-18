@@ -131,8 +131,8 @@ class LastIdPlugin(BeetsPlugin):
             criteria['artistName'] = last_artist
 
         # Perform the search.
-        cands = mb.get_releases(**criteria)
-        cands = list(cands)[:autotag.MAX_CANDIDATES]
+        criteria['limit'] = autotag.MAX_CANDIDATES
+        cands = list(mb.get_releases(**criteria))
 
         log.debug('Matched last candidates: %s' %
                   ', '.join([cand['album'] for cand in cands]))

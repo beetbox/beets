@@ -183,7 +183,7 @@ def release_dict(release, tracks=None):
 
     return out
 
-def match_album(artist, album, tracks=None):
+def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
     """Searches for a single album ("release" in MusicBrainz parlance)
     and returns an iterator over dictionaries of information (as
     returned by `release_dict`).

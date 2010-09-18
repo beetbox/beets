@@ -17,6 +17,8 @@
 * Fixed bug that completely broke non-autotagged imports ("import -A").
 * Fixed bug that logged the wrong paths when using "import -l".
 * Fixed autotagging for the creatively-named band !!!.
+* Efficiency tweak should reduce the number of MusicBrainz queries per
+  autotagged album.
 * A new "-v" command line switch enables debugging output.
 
 1.0b4
