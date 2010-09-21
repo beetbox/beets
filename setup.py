@@ -48,7 +48,7 @@ setup(name='beets',
 
       install_requires=[
           'mutagen',
-          'python-musicbrainz2 >= 0.7.0',
+          'python-musicbrainz2 >= 0.7.2',
           'munkres',
       ],
 
