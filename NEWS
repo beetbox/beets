@@ -9,6 +9,12 @@
   autotagger via plugins. Plugins can currently add components to the
   track and album distance functions as well as augment the MusicBrainz
   search.
+* String comparisons in the autotagger have been augmented to act more
+  intuitively. Previously, if your album had the title "Something (EP)"
+  and it was officially called "Something", then beets would think this
+  was a fairly significant change. It now checks for and appropriately
+  reweights certain parts of each string. As another example, the title
+  "The Great Album" is considered equal to "Great Album, The".
 * New event system for plugins (thanks, Jeff!). Plugins can now get
   callbacks from beets when certain events occur in the core.
 * The BPD plugin is now disabled by default. This greatly simplifies

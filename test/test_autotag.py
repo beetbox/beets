@@ -242,6 +242,69 @@ class ApplyTest(unittest.TestCase):
             self.assertEqual(item.mb_artistid,
                              'a6623d39-2d8e-4f70-8242-0a9553b91e50')
 
+class StringDistanceTest(unittest.TestCase):
+    def test_equal_strings(self):
+        dist = autotag.string_dist('Some String', 'Some String')
+        self.assertEqual(dist, 0.0)
+    
+    def test_different_strings(self):
+        dist = autotag.string_dist('Some String', 'Totally Different')
+        self.assertNotEqual(dist, 0.0)
+    
+    def test_punctuation_ignored(self):
+        dist = autotag.string_dist('Some String', 'Some.String!')
+        self.assertEqual(dist, 0.0)
+    
+    def test_case_ignored(self):
+        dist = autotag.string_dist('Some String', 'sOME sTring')
+        self.assertEqual(dist, 0.0)
+    
+    def test_leading_the_has_lower_weight(self):    
+        dist1 = autotag.string_dist('XXX Band Name', 'Band Name')
+        dist2 = autotag.string_dist('The Band Name', 'Band Name')
+        self.assert_(dist2 < dist1)
+    
+    def test_parens_have_lower_weight(self):    
+        dist1 = autotag.string_dist('One .Two.', 'One')
+        dist2 = autotag.string_dist('One (Two)', 'One')
+        self.assert_(dist2 < dist1)
+    
+    def test_brackets_have_lower_weight(self):    
+        dist1 = autotag.string_dist('One .Two.', 'One')
+        dist2 = autotag.string_dist('One [Two]', 'One')
+        self.assert_(dist2 < dist1)
+    
+    def test_ep_label_has_zero_weight(self):    
+        dist = autotag.string_dist('My Song (EP)', 'My Song')
+        self.assertEqual(dist, 0.0)
+    
+    def test_featured_has_lower_weight(self):    
+        dist1 = autotag.string_dist('My Song blah Someone', 'My Song')
+        dist2 = autotag.string_dist('My Song feat Someone', 'My Song')
+        self.assert_(dist2 < dist1)
+    
+    def test_postfix_the(self):    
+        dist = autotag.string_dist('The Song Title', 'Song Title, The')
+        self.assertEqual(dist, 0.0)
+    
+    def test_postfix_a(self):    
+        dist = autotag.string_dist('A Song Title', 'Song Title, A')
+        self.assertEqual(dist, 0.0)
+    
+    def test_postfix_an(self):    
+        dist = autotag.string_dist('An Album Title', 'Album Title, An')
+        self.assertEqual(dist, 0.0)
+    
+    def test_empty_strings(self):
+        dist = autotag.string_dist('', '')
+        self.assertEqual(dist, 0.0)
+    
+    def test_solo_pattern(self):
+        # Just make sure these don't crash.
+        autotag.string_dist('The ', '')
+        autotag.string_dist('(EP)', '(EP)')
+        autotag.string_dist(', An', '')
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

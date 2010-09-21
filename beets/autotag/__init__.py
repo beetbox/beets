@@ -59,6 +59,18 @@ STRONG_REC_THRESH = 0.03
 MEDIUM_REC_THRESH = 0.2
 REC_GAP_THRESH = 0.25
 
+# Parameters for string distance function.
+# Words that can be moved to the end of a string using a comma.
+SD_END_WORDS = ['the', 'a', 'an']
+# Reduced weights for certain portions of the string.
+SD_PATTERNS = [
+    (r'^the ', 0.1),
+    (r'[\[\(]?(ep|single)[\]\)]?', 0.0),
+    (r'[\[\(]?(featuring|feat|ft)[\. :]', 0.3),
+    (r'\(.*?\)', 0.3),
+    (r'\[.*?\]', 0.3),
+]
+
 # Autotagging exceptions.
 class AutotagError(Exception):
     pass
@@ -67,15 +79,6 @@ class InsufficientMetadataError(AutotagError):
 
 # Global logger.
 log = logging.getLogger('beets')
-
-def _first_n(it, n):
-    """Takes an iterator and returns another iterator, truncated to
-    yield only the first n elements.
-    """
-    for i, v in enumerate(it):
-        if i >= n:
-            break
-        yield v
 
 def _sorted_walk(path):
     """Like os.walk, but yields things in sorted, breadth-first
@@ -129,41 +132,83 @@ def albums_in_dir(path):
         if items:
             yield root, items
 
-def _ie_dist(str1, str2):
-    """Gives an "intuitive" edit distance between two strings. This is
-    an edit distance, normalized by the string length, ignoring case
-    and nonalphanumeric characters.
+def _levenshtein(s1, s2):
+    """A nice DP edit distance implementation from Wikibooks:
+    http://en.wikibooks.org/wiki/Algorithm_implementation/Strings/
+    Levenshtein_distance#Python
     """
+    if len(s1) < len(s2):
+        return _levenshtein(s2, s1)
+    if not s1:
+        return len(s2)
+ 
+    previous_row = xrange(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+ 
+    return previous_row[-1]
+
+def _string_dist_basic(str1, str2):
+    """Basic edit distance between two strings, ignoring
+    non-alphanumeric characters and case. Normalized by string length.
+    """
+    if not str1 and not str2:
+        return 0.0
     str1 = re.sub(r'[^a-z0-9]', '', str1.lower())
     str2 = re.sub(r'[^a-z0-9]', '', str2.lower())
+    return _levenshtein(str1, str2) / float(max(len(str1), len(str2)))
+
+def string_dist(str1, str2):
+    """Gives an "intuitive" edit distance between two strings. This is
+    an edit distance, normalized by the string length, with a number of
+    tweaks that reflect intuition about text.
+    """
+    str1 = str1.lower()
+    str2 = str2.lower()
     
-    # Avoid divide-by-zero. Two emptry strings are identical.
-    if not str1 and not str2:
-        return 0
+    # Don't penalize strings that move certain words to the end. For
+    # example, "the something" should be considered equal to
+    # "something, the".
+    for word in SD_END_WORDS:
+        if str1.endswith(', %s' % word):
+            str1 = '%s %s' % (word, str1[:-len(word)-2])
+        if str2.endswith(', %s' % word):
+            str2 = '%s %s' % (word, str2[:-len(word)-2])
     
-    # Here's a nice DP edit distance implementation from Wikibooks:
-    # http://en.wikibooks.org/wiki/Algorithm_implementation/Strings/
-    # Levenshtein_distance#Python
-    # This should probably be written in a C module.
-    def levenshtein(s1, s2):
-        if len(s1) < len(s2):
-            return levenshtein(s2, s1)
-        if not s1:
-            return len(s2)
-     
-        previous_row = xrange(len(s2) + 1)
-        for i, c1 in enumerate(s1):
-            current_row = [i + 1]
-            for j, c2 in enumerate(s2):
-                insertions = previous_row[j + 1] + 1
-                deletions = current_row[j] + 1
-                substitutions = previous_row[j] + (c1 != c2)
-                current_row.append(min(insertions, deletions, substitutions))
-            previous_row = current_row
-     
-        return previous_row[-1]
+    # Change the weight for certain string portions matched by a set
+    # of regular expressions. We gradually change the strings and build
+    # up penalties associated with parts of the string that were
+    # deleted.
+    base_dist = _string_dist_basic(str1, str2)
+    penalty = 0.0
+    for pat, weight in SD_PATTERNS:
+        # Get strings that drop the pattern.
+        case_str1 = re.sub(pat, '', str1)
+        case_str2 = re.sub(pat, '', str2)
+        
+        if case_str1 != str1 or case_str2 != str2:
+            # If the pattern was present (i.e., it is deleted in the
+            # the current case), recalculate the distances for the
+            # modified strings.
+            case_dist = _string_dist_basic(case_str1, case_str2)
+            case_delta = max(0, base_dist - case_dist)
+            
+            # Shift our baseline strings down (to avoid rematching the
+            # same part of the string) and add a scaled distance
+            # amount to the penalties.
+            str1 = case_str1
+            str2 = case_str2
+            base_dist = case_dist
+            penalty += weight * case_delta
+    dist = base_dist + penalty
     
-    return levenshtein(str1, str2) / float(max(len(str1), len(str2)))
+    return dist
 
 def _plurality(objs):
     """Given a sequence of comparable objects, returns the object that
@@ -243,7 +288,7 @@ def track_distance(item, track_data, track_index=None):
     dist_max += TRACK_LENGTH_WEIGHT
     
     # Track title.
-    dist += _ie_dist(item.title, track_data['title']) * TRACK_TITLE_WEIGHT
+    dist += string_dist(item.title, track_data['title']) * TRACK_TITLE_WEIGHT
     dist_max += TRACK_TITLE_WEIGHT
 
     # Track index.
@@ -279,9 +324,9 @@ def distance(items, info):
     dist_max = 0.0
     
     # Artist/album metadata.
-    dist += _ie_dist(cur_artist, info['artist']) * ARTIST_WEIGHT
+    dist += string_dist(cur_artist, info['artist']) * ARTIST_WEIGHT
     dist_max += ARTIST_WEIGHT
-    dist += _ie_dist(cur_album,  info['album']) * ALBUM_WEIGHT
+    dist += string_dist(cur_album,  info['album']) * ALBUM_WEIGHT
     dist_max += ALBUM_WEIGHT
     
     # Track distances.
