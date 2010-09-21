@@ -448,8 +448,9 @@ def tag_album(items, search_artist=None, search_album=None):
     # Get candidate metadata from search.
     if not search_artist or not search_album:
         raise InsufficientMetadataError()
-    candidates = mb.match_album(search_artist, search_album, len(items))
-    candidates = list(candidates)[:MAX_CANDIDATES]
+    candidates = mb.match_album(search_artist, search_album,
+                                len(items), MAX_CANDIDATES)
+    candidates = list(candidates)
 
     # Get candidates from plugins.
     candidates.extend(plugins.candidates(items))
