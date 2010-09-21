@@ -39,12 +39,13 @@ default_commands = []
 
 # import: Autotagger and importer.
 
-DEFAULT_IMPORT_COPY  = True
-DEFAULT_IMPORT_WRITE = True
-DEFAULT_IMPORT_AUTOT = True
-DEFAULT_IMPORT_ART   = True
-DEFAULT_THREADED     = True
-DEFAULT_COLOR        = True
+DEFAULT_IMPORT_COPY   = True
+DEFAULT_IMPORT_WRITE  = True
+DEFAULT_IMPORT_DELETE = False
+DEFAULT_IMPORT_AUTOT  = True
+DEFAULT_IMPORT_ART    = True
+DEFAULT_THREADED      = True
+DEFAULT_COLOR         = True
 
 class ImportAbort(Exception):
     """Raised when the user aborts the tagging operation.
@@ -415,7 +416,7 @@ def user_query(lib, logfile=None, color=True):
         # Yield the result and get the next chunk of work.
         out = toppath, path, items, info
         
-def apply_choices(lib, copy, write, art):
+def apply_choices(lib, copy, write, art, delete):
     """A coroutine for applying changes to albums during the autotag
     process. The parameters to the generator control the behavior of
     the import. The coroutine accepts (items, info) pairs and yields
@@ -440,6 +441,8 @@ def apply_choices(lib, copy, write, art):
             # Change metadata, move, and copy.
             if info is not CHOICE_ASIS:
                 autotag.apply_metadata(items, info)
+            if copy and delete:
+                old_paths = [item.path for item in items]
             for item in items:
                 if copy:
                     item.move(lib, True)
@@ -459,13 +462,18 @@ def apply_choices(lib, copy, write, art):
             # Write the database after each album.
             lib.save()
 
+            # Finally, delete old files.
+            if copy and delete:
+                for old_path in old_paths:
+                    os.remove(old_path)
+
         # Update progress.
         progress_set(toppath, path)
 
 # The import command.
 
 def import_files(lib, paths, copy, write, autot, logpath,
-                 art, threaded, color):
+                 art, threaded, color, delete):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
@@ -489,7 +497,7 @@ def import_files(lib, paths, copy, write, autot, logpath,
             read_albums(paths),
             initial_lookup(),
             user_query(lib, logfile, color),
-            apply_choices(lib, copy, write, art),
+            apply_choices(lib, copy, write, art, delete),
         ])
 
         # Run the pipeline.
@@ -507,10 +515,15 @@ def import_files(lib, paths, copy, write, autot, logpath,
             if items is None:
                 continue
             if copy:
+                if delete:
+                    old_paths = [item.path for item in items]
                 for item in items:
                     item.move(lib, True)
             lib.add_album(items)
-            lib.save()
+            lib.save()            
+            if copy and delete:
+                for old_path in old_paths:
+                    os.remove(old_path)
     
     # If we were logging, close the file.
     if logfile:
@@ -547,6 +560,8 @@ def import_func(lib, config, opts, args):
     write = opts.write if opts.write is not None else \
         ui.config_val(config, 'beets', 'import_write',
             DEFAULT_IMPORT_WRITE, bool)
+    delete = ui.config_val(config, 'beets', 'import_delete',
+            DEFAULT_IMPORT_DELETE, bool)
     autot = opts.autotag if opts.autotag is not None else DEFAULT_IMPORT_AUTOT
     art = opts.art if opts.art is not None else \
         ui.config_val(config, 'beets', 'import_art',
@@ -555,7 +570,7 @@ def import_func(lib, config, opts, args):
             DEFAULT_THREADED, bool)
     color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
     import_files(lib, args, copy, write, autot,
-                 opts.logpath, art, threaded, color)
+                 opts.logpath, art, threaded, color, delete)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 
