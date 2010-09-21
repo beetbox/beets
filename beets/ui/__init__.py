@@ -408,6 +408,7 @@ def main():
     plugins.load_plugins(plugnames.split())
     plugins.load_listeners()
     plugins.send("pluginload")
+    plugins.configure(config)
 
     # Construct the root parser.
     commands = list(default_commands)
@@ -452,4 +453,3 @@ def main():
     except UserError, exc:
         message = exc.args[0] if exc.args else None
         subcommand.parser.error(message)
-

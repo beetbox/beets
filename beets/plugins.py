@@ -57,6 +57,12 @@ class BeetsPlugin(object):
         """
         return ()
 
+    def configure(self, config):
+        """This method is called with the ConfigParser object after
+        the CLI starts up.
+        """
+        pass
+
     listeners = None
     @classmethod
     def listen(cls, event):
@@ -117,7 +123,7 @@ def find_plugins():
     return plugins
 
 
-# Plugin commands.
+# Communication with plugins.
 
 def commands():
     """Returns a list of Subcommand objects from all loaded plugins.
@@ -156,6 +162,11 @@ def candidates(items):
     for plugin in find_plugins():
         out.extend(plugin.candidates(items))
     return out
+
+def configure(config):
+    """Sends the configuration object to each plugin."""
+    for plugin in find_plugins():
+        plugin.configure(config)
 
 
 # Event dispatch.

@@ -7,13 +7,17 @@
   plugin to work; documentation is forthcoming.)
 * To support the above, there's also a new system for extending the
   autotagger via plugins. Plugins can currently add components to the
-  track distance function.
+  track and album distance functions as well as augment the MusicBrainz
+  search.
 * New event system for plugins (thanks, Jeff!). Plugins can now get
   callbacks from beets when certain events occur in the core.
 * The BPD plugin is now disabled by default. This greatly simplifies
   installation of the beets core, which has no compiled dependencies
   now. To use BPD, though, you'll need to set "plugins: bpd" in your
   .beetsconfig.
+* There's a new "mpdupdate" plugin that will automatically update your
+  MPD index whenever your beets library changes. Documentation on this
+  is forthcoming as well.
 * Fixed bug that completely broke non-autotagged imports ("import -A").
 * Fixed bug that logged the wrong paths when using "import -l".
 * A new "-v" command line switch enables debugging output.
