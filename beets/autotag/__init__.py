@@ -55,8 +55,8 @@ RECOMMEND_STRONG = 'RECOMMEND_STRONG'
 RECOMMEND_MEDIUM = 'RECOMMEND_MEDIUM'
 RECOMMEND_NONE = 'RECOMMEND_NONE'
 # Thresholds for recommendations.
-STRONG_REC_THRESH = 0.03
-MEDIUM_REC_THRESH = 0.2
+STRONG_REC_THRESH = 0.04
+MEDIUM_REC_THRESH = 0.25
 REC_GAP_THRESH = 0.25
 
 # Parameters for string distance function.
@@ -66,9 +66,10 @@ SD_END_WORDS = ['the', 'a', 'an']
 SD_PATTERNS = [
     (r'^the ', 0.1),
     (r'[\[\(]?(ep|single)[\]\)]?', 0.0),
-    (r'[\[\(]?(featuring|feat|ft)[\. :]', 0.3),
+    (r'[\[\(]?(featuring|feat|ft)[\. :].+', 0.1),
     (r'\(.*?\)', 0.3),
     (r'\[.*?\]', 0.3),
+    (r'(, )?(pt\.|part) .+', 0.2),
 ]
 
 # Autotagging exceptions.
