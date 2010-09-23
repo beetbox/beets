@@ -210,7 +210,7 @@ def choose_match(path, items, cur_artist, cur_album, candidates,
             print_("No match found for:", path)
             sel = ui.input_options(
                 "[U]se as-is, Skip, Enter manual search, or aBort?",
-                ('u', 's', 'e'), 'u',
+                ('u', 's', 'e', 'b'), 'u',
                 'Enter U, S, E, or B:'
             )
             if sel == 'u':
