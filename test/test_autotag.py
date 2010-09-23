@@ -305,6 +305,10 @@ class StringDistanceTest(unittest.TestCase):
         autotag.string_dist('(EP)', '(EP)')
         autotag.string_dist(', An', '')
 
+    def test_heuristic_does_not_harm_distance(self):
+        dist = autotag.string_dist('Untitled', '[Untitled]')
+        self.assertEqual(dist, 0.0)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

@@ -198,7 +198,9 @@ def string_dist(str1, str2):
             # the current case), recalculate the distances for the
             # modified strings.
             case_dist = _string_dist_basic(case_str1, case_str2)
-            case_delta = max(0, base_dist - case_dist)
+            case_delta = max(0.0, base_dist - case_dist)
+            if case_delta == 0.0:
+                continue
             
             # Shift our baseline strings down (to avoid rematching the
             # same part of the string) and add a scaled distance
