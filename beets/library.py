@@ -283,6 +283,8 @@ class Item(object):
         """
         if read_path is None:
             read_path = self.path
+        else:
+            read_path = _normpath(read_path)
         f = MediaFile(read_path)
 
         for key in ITEM_KEYS_META:
