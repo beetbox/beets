@@ -75,8 +75,6 @@ SD_PATTERNS = [
 # Autotagging exceptions.
 class AutotagError(Exception):
     pass
-class InsufficientMetadataError(AutotagError):
-    pass
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -471,6 +469,7 @@ def tag_album(items, search_artist=None, search_album=None):
     """
     # Get current metadata.
     cur_artist, cur_album = current_metadata(items)
+    log.debug('Tagging %s - %s' % (cur_artist, cur_album))
     
     # The output result tuples (keyed by MB album ID).
     out_tuples = {}
@@ -485,20 +484,22 @@ def tag_album(items, search_artist=None, search_album=None):
             # matches.
             rec = recommendation(out_tuples)
             if rec == RECOMMEND_STRONG:
-                log.debug('ID match for %s - %s.' % (cur_artist, cur_album))
+                log.debug('ID match.')
                 return cur_artist, cur_album, out_tuples.values(), rec
     
     # Search terms.
     if not (search_artist and search_album):
         # No explicit search terms -- use current metadata.
         search_artist, search_album = cur_artist, cur_album
+    log.debug('Search terms: %s - %s' % (search_artist, search_album))
     
     # Get candidate metadata from search.
-    if not search_artist or not search_album:
-        raise InsufficientMetadataError()
-    candidates = mb.match_album(search_artist, search_album,
-                                len(items), MAX_CANDIDATES)
-    candidates = list(candidates)
+    if search_artist and search_album:
+        candidates = mb.match_album(search_artist, search_album,
+                                    len(items), MAX_CANDIDATES)
+        candidates = list(candidates)
+    else:
+        candidates = []
 
     # Get candidates from plugins.
     candidates.extend(plugins.candidates(items))
