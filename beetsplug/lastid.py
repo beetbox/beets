@@ -85,7 +85,7 @@ class LastIdPlugin(BeetsPlugin):
         dist, dist_max = 0.0, 0.0
 
         # Track title distance.
-        dist += autotag._ie_dist(last_data['title'],
+        dist += autotag.string_dist(last_data['title'],
                                  info['title']) \
                 * autotag.TRACK_TITLE_WEIGHT
         dist_max += autotag.TRACK_TITLE_WEIGHT
@@ -108,7 +108,7 @@ class LastIdPlugin(BeetsPlugin):
 
         # Compare artist to MusicBrainz metadata.
         dist, dist_max = 0.0, 0.0
-        dist += autotag._ie_dist(last_artist, info['artist']) \
+        dist += autotag.string_dist(last_artist, info['artist']) \
                 * autotag.ARTIST_WEIGHT
         dist_max += autotag.ARTIST_WEIGHT
 
