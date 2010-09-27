@@ -27,14 +27,15 @@ play music in your beets library using a staggering variety of interfaces.
 Read More
 ---------
 
-Learn more about beets at `its Web site`_.
+Learn more about beets at `its Web site`_. Follow `@b33ts`_ on Twitter for
+news and updates.
 
 Check out the `Getting Started`_ guide to learn about installing and using
 beets.
 
 .. _its Web site: http://beets.radbox.org/
 .. _Getting Started: http://code.google.com/p/beets/wiki/GettingStarted
-
+.. _@b33ts: http://twitter.com/b33ts/
 
 Authors
 -------

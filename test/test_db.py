@@ -19,6 +19,8 @@ import unittest
 import sys
 import os
 import sqlite3
+import ntpath
+import posixpath
 sys.path.append('..')
 import beets.library
 
@@ -227,16 +229,24 @@ class DestinationTest(unittest.TestCase):
         dest = self.lib.destination(self.i)
         self.assertEqual(dest[-5:], '.extn')
     
+    def test_distination_windows_removes_both_separators(self):
+        self.i.title = 'one \\ two / three.mp3'
+        p = self.lib.destination(self.i, ntpath)
+        self.assertFalse('one \\ two' in p)
+        self.assertFalse('one / two' in p)
+        self.assertFalse('two \\ three' in p)
+        self.assertFalse('two / three' in p)
+    
     def test_sanitize_unix_replaces_leading_dot(self):
-        p = beets.library._sanitize_path('one/.two/three', 'Darwin')
+        p = beets.library._sanitize_path('one/.two/three', posixpath)
         self.assertFalse('.' in p)
     
     def test_sanitize_windows_replaces_trailing_dot(self):
-        p = beets.library._sanitize_path('one/two./three', 'Windows')
+        p = beets.library._sanitize_path('one/two./three', ntpath)
         self.assertFalse('.' in p)
     
     def test_sanitize_windows_replaces_illegal_chars(self):
-        p = beets.library._sanitize_path(':*?"<>|', 'Windows')
+        p = beets.library._sanitize_path(':*?"<>|', ntpath)
         self.assertFalse(':' in p)
         self.assertFalse('*' in p)
         self.assertFalse('?' in p)
@@ -246,7 +256,7 @@ class DestinationTest(unittest.TestCase):
         self.assertFalse('|' in p)
     
     def test_sanitize_replaces_colon_with_dash(self):
-        p = beets.library._sanitize_path(u':', 'Darwin')
+        p = beets.library._sanitize_path(u':', posixpath)
         self.assertEqual(p, u'-')
     
     def test_path_with_format(self):

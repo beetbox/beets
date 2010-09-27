@@ -31,6 +31,7 @@
 * Fixed bug that logged the wrong paths when using "import -l".
 * Fixed autotagging for the creatively-named band !!!.
 * Fixed normalization of relative paths.
+* Fixed escaping of / characters in paths on Windows.
 * Efficiency tweak should reduce the number of MusicBrainz queries per
   autotagged album.
 * A new "-v" command line switch enables debugging output.

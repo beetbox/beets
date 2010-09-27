@@ -113,16 +113,17 @@ def _normpath(path):
     """
     return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
 
-def _ancestry(path):
+def _ancestry(path, pathmod=None):
     """Return a list consisting of path's parent directory, its
     grandparent, and so on. For instance:
        >>> _ancestry('/a/b/c')
        ['/', '/a', '/a/b']
     """
+    pathmod = pathmod or os.path
     out = []
     last_path = None
     while path:
-        path = os.path.dirname(path)
+        path = pathmod.dirname(path)
         
         if path == last_path:
             break
@@ -140,21 +141,22 @@ def _mkdirall(path):
         if not os.path.isdir(ancestor):
             os.mkdir(ancestor)
 
-def _components(path):
+def _components(path, pathmod=None):
     """Return a list of the path components in path. For instance:
        >>> _components('/a/b/c')
        ['a', 'b', 'c']
     """
+    pathmod = pathmod or os.path
     comps = []
-    ances = _ancestry(path)
+    ances = _ancestry(path, pathmod)
     for anc in ances:
-        comp = os.path.basename(anc)
+        comp = pathmod.basename(anc)
         if comp:
             comps.append(comp)
         else: # root
             comps.append(anc)
     
-    last = os.path.basename(path)
+    last = pathmod.basename(path)
     if last:
         comps.append(last)
     
@@ -182,17 +184,21 @@ CHAR_REPLACE = [
     (re.compile(r':'), '-'),
 ]
 CHAR_REPLACE_WINDOWS = re.compile('["\*<>\|]|^\.|\.$'), '_'
-def _sanitize_path(path, plat=None):
-    """Takes a path and makes sure that it is legal for the specified
-    platform (as returned by platform.system()). Returns a new path.
+def _sanitize_path(path, pathmod=None):
+    """Takes a path and makes sure that it is legal. Returns a new path.
+    Only works with fragments; won't work reliably on Windows when a
+    path begins with a drive letter. Path separators (including altsep!)
+    should already be cleaned from the path components.
     """
-    plat = plat or platform.system()
-    comps = _components(path)
+    pathmod = pathmod or os.path
+    windows = pathmod.__name__ == 'ntpath'
+    
+    comps = _components(path, pathmod)
     for i, comp in enumerate(comps):
         # Replace special characters.
         for regex, repl in CHAR_REPLACE:
             comp = regex.sub(repl, comp)
-        if plat == 'Windows':
+        if windows:
             regex, repl = CHAR_REPLACE_WINDOWS
             comp = regex.sub(repl, comp)
         
@@ -201,7 +207,7 @@ def _sanitize_path(path, plat=None):
             comp = comp[:MAX_FILENAME_LENGTH]
                 
         comps[i] = comp
-    return os.path.join(*comps)
+    return pathmod.join(*comps)
 
 
 # Library items (songs).
@@ -802,12 +808,13 @@ class Library(BaseLibrary):
         self.conn.executescript(setup_sql)
         self.conn.commit()
 
-    def destination(self, item):
+    def destination(self, item, pathmod=None):
         """Returns the path in the library directory designated for item
         item (i.e., where the file ought to be).
         """
+        pathmod = pathmod or os.path
         subpath_tmpl = Template(self.path_format)
-
+        
         # Get the item's Album if it has one.
         album = self.get_album(item)
         
@@ -823,10 +830,12 @@ class Library(BaseLibrary):
                 # From Item.
                 value = getattr(item, key)
 
-            # Sanitize the value for inclusion in a path:
-            # replace / and leading . with _
+            # Sanitize the value for inclusion in a path: replace
+            # separators with _, etc.
             if isinstance(value, basestring):
-                value = value.replace(os.sep, '_')
+                for sep in (pathmod.sep, pathmod.altsep):
+                    if sep:
+                        value = value.replace(sep, '_')
             elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
                 # pad with zeros
                 value = '%02i' % value
@@ -846,7 +855,7 @@ class Library(BaseLibrary):
         subpath = _sanitize_path(subpath)
         
         # Preserve extension.
-        _, extension = os.path.splitext(item.path)
+        _, extension = pathmod.splitext(item.path)
         subpath += extension
         
         return _normpath(os.path.join(self.directory, subpath))   
