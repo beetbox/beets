@@ -24,6 +24,8 @@
 * The "import" command can now remove original files when it copies
   items into your library. (This might be useful if you're low on disk
   space.) Set the "import_delete" option in your .beetsconfig to "yes".
+* Importing without autotagging ("beet import -A") now prints out album
+  names as it imports them to indicate progress.
 * There's a new "mpdupdate" plugin that will automatically update your
   MPD index whenever your beets library changes. Documentation on this
   is forthcoming as well.

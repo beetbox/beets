@@ -519,11 +519,12 @@ def import_files(lib, paths, copy, write, autot, logpath,
                     old_paths = [item.path for item in items]
                 for item in items:
                     item.move(lib, True)
-            lib.add_album(items)
+            album = lib.add_album(items)
             lib.save()            
             if copy and delete:
                 for old_path in old_paths:
                     os.remove(old_path)
+            log.info('added album: %s - %s' % (album.artist, album.album))
     
     # If we were logging, close the file.
     if logfile:

@@ -445,7 +445,7 @@ def main():
     if options.verbose:
         log.setLevel(logging.DEBUG)
     else:
-        log.setLevel(logging.WARNING)
+        log.setLevel(logging.INFO)
     
     # Invoke the subcommand.
     try:
