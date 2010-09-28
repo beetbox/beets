@@ -67,8 +67,9 @@ SAFE_COMMANDS = (
 )
 
 
-# Logger.
+# Loggers.
 log = logging.getLogger('beets.bpd')
+global_log = logging.getLogger('beets')
 
 
 # Gstreamer import error.
@@ -1135,9 +1136,9 @@ class BPDPlugin(BeetsPlugin):
         try:
             Server(lib, host, port, password).run()
         except NoGstreamerError:
-            beets.ui.print_('Gstreamer Python bindings not found.')
-            beets.ui.print_('Install "python-gst0.10", "py26-gst-python",'
-                            'or similar package to use BPD.')
+            global_log.error('Gstreamer Python bindings not found.')
+            global_log.error('Install "python-gst0.10", "py26-gst-python",'
+                             'or similar package to use BPD.')
 
     def commands(self):
         cmd = beets.ui.Subcommand('bpd',

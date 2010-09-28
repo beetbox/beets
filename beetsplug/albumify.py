@@ -18,9 +18,12 @@ not yet associated with albums into albums based on metadata.
 """
 
 from collections import defaultdict
+import logging
 
 from beets.plugins import BeetsPlugin
 import beets.ui
+
+log = logging.getLogger('beets')
 
 # Main functionality.
 def albumify(lib):
@@ -33,7 +36,7 @@ def albumify(lib):
     
     # Create an album for each group.
     for (artist, album), items in albums.items():
-        beets.ui.print_('%s - %s (%i tracks)' % (artist, album, len(items)))
+        log.info('%s - %s (%i tracks)' % (artist, album, len(items)))
         lib.add_album(items)
 
 # Plugin hook.
