@@ -477,7 +477,7 @@ def tag_album(items, search_artist=None, search_album=None):
     # Try to find album indicated by MusicBrainz IDs.
     id_info = match_by_id(items)
     if id_info:
-        validate_candidate(items, out_tuples, info)
+        validate_candidate(items, out_tuples, id_info)
         if out_tuples:
             # If we have a very good MBID match, return immediately.
             # Otherwise, this match will compete against metadata-based
