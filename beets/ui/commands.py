@@ -309,7 +309,7 @@ def read_albums(paths):
     for path in paths:
         resume_dir = progress_get(path)
         if resume_dir:
-            resume = ui.input_yn("Tagging of the directory:\n%s"
+            resume = ui.input_yn("Import of the directory:\n%s"
                                  "\nwas interrupted. Resume (Y/n)? " %
                                  path)
             if resume:
