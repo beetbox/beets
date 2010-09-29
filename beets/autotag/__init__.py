@@ -482,7 +482,7 @@ def tag_album(items, search_artist=None, search_album=None):
             # If we have a very good MBID match, return immediately.
             # Otherwise, this match will compete against metadata-based
             # matches.
-            rec = recommendation(out_tuples)
+            rec = recommendation(out_tuples.values())
             if rec == RECOMMEND_STRONG:
                 log.debug('ID match.')
                 return cur_artist, cur_album, out_tuples.values(), rec
