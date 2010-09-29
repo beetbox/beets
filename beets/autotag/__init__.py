@@ -157,10 +157,10 @@ def _string_dist_basic(str1, str2):
     """Basic edit distance between two strings, ignoring
     non-alphanumeric characters and case. Normalized by string length.
     """
-    if not str1 and not str2:
-        return 0.0
     str1 = re.sub(r'[^a-z0-9]', '', str1.lower())
     str2 = re.sub(r'[^a-z0-9]', '', str2.lower())
+    if not str1 and not str2:
+        return 0.0
     return _levenshtein(str1, str2) / float(max(len(str1), len(str2)))
 
 def string_dist(str1, str2):
