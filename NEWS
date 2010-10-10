@@ -1,5 +1,11 @@
 1.0b6
 -----
+* Fix a terrible and long-standing bug where track orderings were never
+  applied. This manifested when the tagger appeared to be applying a
+  reasonable ordering to the tracks but, later, the database reflects a
+  completely wrong association of track names to files. The order
+  applied was always just alphabetical by filename, which is frequently
+  but not always what you want.
 * Fix crash in lastid when the artist name is not available.
 
 1.0b5

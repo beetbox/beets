@@ -114,9 +114,11 @@ CHOICE_MANUAL = 'CHOICE_MANUAL'
 def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
     """Given current metadata and a sorted list of
     (distance, candidate) pairs, ask the user for a selection
-    of which candidate to use. Returns the selected candidate.
-    If user chooses to skip, use as-is, or search manually, returns
-    CHOICE_SKIP, CHOICE_ASIS, or CHOICE_MANUAL.
+    of which candidate to use. Returns a pair (candidate, ordered)
+    consisting of the the selected candidate and the associated track
+    ordering. If user chooses to skip, use as-is, or search manually,
+    returns CHOICE_SKIP, CHOICE_ASIS, or CHOICE_MANUAL instead of a
+    tuple.
     """
     # Is the change good enough?
     top_dist, _, _ = candidates[0]
@@ -159,7 +161,7 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
     
         # Exact match => tag automatically.
         if rec == autotag.RECOMMEND_STRONG:
-            return info
+            return info, items
         
         # Ask for confirmation.
         sel = ui.input_options(
@@ -169,7 +171,7 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
             'Enter A, M, S, U, E, or B:'
         )
         if sel == 'a':
-            return info
+            return info, items
         elif sel == 'm':
             pass
         elif sel == 's':
@@ -198,14 +200,14 @@ def choose_match(path, items, cur_artist, cur_album, candidates,
                  rec, color=True):
     """Given an initial autotagging of items, go through an interactive
     dance with the user to ask for a choice of metadata. Returns an
-    info dictionary, CHOICE_ASIS, or CHOICE_SKIP.
+    (info, items) pair, CHOICE_ASIS, or CHOICE_SKIP.
     """
     # Loop until we have a choice.
     while True:
         # Choose from candidates, if available.
         if candidates:
-            info = choose_candidate(cur_artist, cur_album, candidates, rec,
-                                    color)
+            choice = choose_candidate(cur_artist, cur_album, candidates, rec,
+                                      color)
         else:
             # Fallback: if either an error ocurred or no matches found.
             print_("No match found for:", path)
@@ -224,15 +226,16 @@ def choose_match(path, items, cur_artist, cur_album, candidates,
                 raise ImportAbort()
     
         # Choose which tags to use.
-        if info is CHOICE_SKIP:
-            # Skip entirely.
-            return info
-        elif info is CHOICE_MANUAL:
+        if choice in (CHOICE_SKIP, CHOICE_ASIS):
+            # Pass selection to main control flow.
+            return choice
+        elif choice is CHOICE_MANUAL:
             # Try again with manual search terms.
             search_artist, search_album = manual_search()
         else:
-            # Either ASIS or we have a candidate. Finish tagging.
-            return info
+            # We have a candidate! Finish tagging. Here, choice is
+            # an (info, items) pair as desired.
+            return choice
         
         # Search for entered terms.
         try:
@@ -363,9 +366,10 @@ def user_query(lib, logfile=None, color=True):
     accepts (items, cur_artist, cur_album, candidates, rec) tuples.
     items is a set of Items in the album to be tagged; the remaining
     parameters are the result of an initial lookup from MusicBrainz.
-    The coroutine yields (items, info) pairs where info is either a
-    candidate info dict, CHOICE_ASIS, or None (indicating that the
-    album should not be tagged).
+    The coroutine yields (toppath, path, items, info) pairs where info
+    is either a candidate info dict, CHOICE_ASIS, or None (indicating
+    that the album should not be tagged) and items are the constituent
+    Item objects, ordered in the case of successful tagging.
     """
     lib = _reopen_lib(lib)
     first = True
@@ -383,22 +387,26 @@ def user_query(lib, logfile=None, color=True):
         first = False
         
         # Ask the user for a choice.
-        info = choose_match(path, items, cur_artist, cur_album, candidates,
-                            rec, color)
+        choice = choose_match(path, items, cur_artist, cur_album, candidates,
+                              rec, color)
 
         # The "give-up" options.
-        if info is CHOICE_ASIS:
+        if choice is CHOICE_ASIS:
             tag_log(logfile, 'asis', path)
-        elif info is CHOICE_SKIP:
+        elif choice is CHOICE_SKIP:
             tag_log(logfile, 'skip', path)
             # Yield None, indicating that the pipeline should not
             # progress.
             out = toppath, path, items, None
             continue
+        else:
+            # We have a real candidate. Get the info dictionary and
+            # replace the items list with an ordered list.
+            info, items = choice
 
         # Ensure that we don't have the album already.
-        if info is not CHOICE_ASIS or cur_artist is not None:
-            if info is CHOICE_ASIS:
+        if choice is not CHOICE_ASIS or cur_artist is not None:
+            if choice is CHOICE_ASIS:
                 artist = cur_artist
                 album = cur_album
             else:
