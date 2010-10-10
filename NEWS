@@ -1,3 +1,7 @@
+1.0b6
+-----
+* Fix crash in lastid when the artist name is not available.
+
 1.0b5
 -----
 * A new plugin, "lastid", adds Last.fm acoustic fingerprinting support

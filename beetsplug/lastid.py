@@ -108,9 +108,10 @@ class LastIdPlugin(BeetsPlugin):
 
         # Compare artist to MusicBrainz metadata.
         dist, dist_max = 0.0, 0.0
-        dist += autotag.string_dist(last_artist, info['artist']) \
-                * autotag.ARTIST_WEIGHT
-        dist_max += autotag.ARTIST_WEIGHT
+        if last_artist:
+            dist += autotag.string_dist(last_artist, info['artist']) \
+                    * autotag.ARTIST_WEIGHT
+            dist_max += autotag.ARTIST_WEIGHT
 
         log.debug('Last artist (%s/%s) distance: %f' %
                   (last_artist, info['artist'], dist/dist_max))
