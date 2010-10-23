@@ -393,6 +393,7 @@ def user_query(lib, logfile=None, color=True):
         # The "give-up" options.
         if choice is CHOICE_ASIS:
             tag_log(logfile, 'asis', path)
+            info = CHOICE_ASIS
         elif choice is CHOICE_SKIP:
             tag_log(logfile, 'skip', path)
             # Yield None, indicating that the pipeline should not
