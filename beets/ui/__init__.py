@@ -59,7 +59,12 @@ def print_(*strings):
     else:
         txt = u''
     if isinstance(txt, unicode):
-        encoding = locale.getdefaultlocale()[1] or 'utf8'
+        try:
+            encoding = locale.getdefaultlocale()[1] or 'utf8'
+        except ValueError:
+            # Invalid locale environment variable setting. To avoid
+            # failing entirely for no good reason, assume UTF-8.
+            encoding = 'utf8'
         txt = txt.encode(encoding, 'replace')
     print txt
 

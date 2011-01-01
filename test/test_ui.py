@@ -78,9 +78,29 @@ class PrintTest(unittest.TestCase):
             ui.print_(u'something')
         except TypeError:
             self.fail('TypeError during print')
+        finally:
+            if lang:
+                os.environ['LANG'] = lang
 
-        if lang:
-            os.environ['LANG'] = lang
+    def test_print_with_invalid_locale(self):
+        old_lang = os.environ.get('LANG')
+        os.environ['LANG'] = ''
+        old_ctype = os.environ.get('LC_CTYPE')
+        os.environ['LC_CTYPE'] = 'UTF-8'
+
+        try:
+            ui.print_(u'something')
+        except ValueError:
+            self.fail('ValueError during print')
+        finally:
+            if old_lang:
+                os.environ['LANG'] = old_lang
+            else:
+                del os.environ['LANG']
+            if old_ctype:
+                os.environ['LC_CTYPE'] = old_ctype
+            else:
+                del os.environ['LC_CTYPE']
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
