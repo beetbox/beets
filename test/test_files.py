@@ -72,6 +72,18 @@ class MoveTest(unittest.TestCase):
     def test_move_changes_path(self):
         self.i.move(self.lib)
         self.assertEqual(self.i.path, beets.library._normpath(self.dest))
+
+    def test_copy_already_at_destination(self):
+        self.i.move(self.lib)
+        old_path = self.i.path
+        self.i.move(self.lib, copy=True)
+        self.assertEqual(self.i.path, old_path)
+
+    def test_move_already_at_destination(self):
+        self.i.move(self.lib)
+        old_path = self.i.path
+        self.i.move(self.lib, copy=False)
+        self.assertEqual(self.i.path, old_path)
     
 class HelperTest(unittest.TestCase):
     def test_ancestry_works_on_file(self):

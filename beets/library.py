@@ -328,10 +328,11 @@ class Item(object):
         # Create necessary ancestry for the move.
         _mkdirall(dest)
         
-        if copy:
-            shutil.copy(self.path, dest)
-        else:
-            shutil.move(self.path, dest)
+        if not shutil._samefile(self.path, dest):
+            if copy:
+                shutil.copy(self.path, dest)
+            else:
+                shutil.move(self.path, dest)
             
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest

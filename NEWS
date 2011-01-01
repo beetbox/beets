@@ -10,6 +10,8 @@
 * Fixed a spurious crash when LANG or a related environment variable is
   set to an invalid value (such as 'UTF-8' on some installations of Mac
   OS X).
+* Fixed an error when trying to copy a file that is already at its
+  destination.
 
 1.0b5
 -----
