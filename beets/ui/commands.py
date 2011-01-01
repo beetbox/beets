@@ -44,6 +44,7 @@ DEFAULT_IMPORT_WRITE  = True
 DEFAULT_IMPORT_DELETE = False
 DEFAULT_IMPORT_AUTOT  = True
 DEFAULT_IMPORT_ART    = True
+DEFAULT_IMPORT_QUIET  = False
 DEFAULT_THREADED      = True
 DEFAULT_COLOR         = True
 
@@ -197,11 +198,21 @@ def tag_log(logfile, status, path):
         print >>logfile, '%s %s' % (status, path)
 
 def choose_match(path, items, cur_artist, cur_album, candidates,
-                 rec, color=True):
+                 rec, color=True, quiet=False):
     """Given an initial autotagging of items, go through an interactive
     dance with the user to ask for a choice of metadata. Returns an
     (info, items) pair, CHOICE_ASIS, or CHOICE_SKIP.
     """
+    if quiet:
+        # No input; just make a decision.
+        if rec == autotag.RECOMMEND_STRONG:
+            dist, items, info = candidates[0]
+            show_change(cur_artist, cur_album, items, info, dist, color)
+            return info, items
+        else:
+            print_('Skipping: %s' % path)
+            return CHOICE_SKIP
+
     # Loop until we have a choice.
     while True:
         # Choose from candidates, if available.
@@ -359,7 +370,7 @@ def initial_lookup():
         toppath, path, items = yield toppath, path, items, cur_artist, \
                                      cur_album, candidates, rec
 
-def user_query(lib, logfile=None, color=True):
+def user_query(lib, logfile=None, color=True, quiet=False):
     """A coroutine for interfacing with the user about the tagging
     process. lib is the Library to import into and logfile may be
     a file-like object for logging the import process. The coroutine
@@ -388,7 +399,7 @@ def user_query(lib, logfile=None, color=True):
         
         # Ask the user for a choice.
         choice = choose_match(path, items, cur_artist, cur_album, candidates,
-                              rec, color)
+                              rec, color, quiet)
 
         # The "give-up" options.
         if choice is CHOICE_ASIS:
@@ -482,7 +493,7 @@ def apply_choices(lib, copy, write, art, delete):
 # The import command.
 
 def import_files(lib, paths, copy, write, autot, logpath,
-                 art, threaded, color, delete):
+                 art, threaded, color, delete, quiet):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
@@ -491,7 +502,10 @@ def import_files(lib, paths, copy, write, autot, logpath,
     albums will be logged there. If art, then attempt to download
     cover art for each album. If threaded, then accelerate autotagging
     imports by running them in multiple threads. If color, then
-    ANSI-colorize some terminal output.
+    ANSI-colorize some terminal output. If delete, then old files are
+    deleted when they are copied. If quiet, then the user is
+    never prompted for input; instead, the tagger just skips anything
+    it is not confident about.
     """
     # Open the log.
     if logpath:
@@ -505,7 +519,7 @@ def import_files(lib, paths, copy, write, autot, logpath,
         pl = pipeline.Pipeline([
             read_albums(paths),
             initial_lookup(),
-            user_query(lib, logfile, color),
+            user_query(lib, logfile, color, quiet),
             apply_choices(lib, copy, write, art, delete),
         ])
 
@@ -561,6 +575,8 @@ import_cmd.parser.add_option('-r', '--art', action='store_true',
     default=None, help="try to download album art")
 import_cmd.parser.add_option('-R', '--noart', action='store_false',
     dest='art', help="don't album art (opposite of -r)")
+import_cmd.parser.add_option('-q', '--quiet', action='store_true',
+    dest='quiet', help="never prompt for input: skip albums instead")
 import_cmd.parser.add_option('-l', '--log', dest='logpath',
     help='file to log untaggable albums for later review')
 def import_func(lib, config, opts, args):
@@ -579,8 +595,9 @@ def import_func(lib, config, opts, args):
     threaded = ui.config_val(config, 'beets', 'threaded',
             DEFAULT_THREADED, bool)
     color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
+    quiet = opts.quiet if opts.quiet is not None else DEFAULT_IMPORT_QUIET
     import_files(lib, args, copy, write, autot,
-                 opts.logpath, art, threaded, color, delete)
+                 opts.logpath, art, threaded, color, delete, quiet)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 

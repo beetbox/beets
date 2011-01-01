@@ -1,5 +1,8 @@
 1.0b6
 -----
+* A new "-q" command line switch for the import command suppresses all
+  prompts for input; it pessimistically skips all albums that the
+  importer is not completely confident about.
 * Fix a terrible and long-standing bug where track orderings were never
   applied. This manifested when the tagger appeared to be applying a
   reasonable ordering to the tracks but, later, the database reflects a
