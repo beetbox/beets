@@ -330,7 +330,10 @@ class Item(object):
         
         if not shutil._samefile(self.path, dest):
             if copy:
-                shutil.copy(self.path, dest)
+                # copyfile rather than copy will not copy permissions
+                # bits, thus possibly making the copy writable even when
+                # the original is read-only.
+                shutil.copyfile(self.path, dest)
             else:
                 shutil.move(self.path, dest)
             

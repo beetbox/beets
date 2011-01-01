@@ -19,6 +19,7 @@ import unittest
 import shutil
 import sys
 import os
+import stat
 from os.path import join
 sys.path.append('..')
 import beets.library
@@ -84,6 +85,18 @@ class MoveTest(unittest.TestCase):
         old_path = self.i.path
         self.i.move(self.lib, copy=False)
         self.assertEqual(self.i.path, old_path)
+
+    def test_read_only_file_copied_writable(self):
+        # Make the source file read-only.
+        os.chmod(self.path, 0444)
+
+        try:
+            self.i.move(self.lib, copy=True)
+            self.assertTrue(os.access(self.i.path, os.W_OK))
+        finally:
+            # Make everything writable so it can be cleaned up.
+            os.chmod(self.path, 0777)
+            os.chmod(self.i.path, 0777)
     
 class HelperTest(unittest.TestCase):
     def test_ancestry_works_on_file(self):
