@@ -59,6 +59,8 @@ TYPES = {
     'ogg':  'OGG',
     'flac': 'FLAC',
     'ape':  'APE',
+    'wv':   'WavPack',
+    'mpc':  'Musepack',
 }
 
 
@@ -244,8 +246,8 @@ class MediaField(object):
     def __init__(self, out_type = unicode, **kwargs):
         """Creates a new MediaField.
          - out_type: The field's semantic (exterior) type.
-         - kwargs: A hash whose keys are 'mp3', 'mp4', 'flac', 'ogg',
-           and 'ape' and whose values are StorageStyle instances
+         - kwargs: A hash whose keys are 'mp3', 'mp4', and 'etc'
+           and whose values are StorageStyle instances
            parameterizing the field's storage for each type.
         """
         self.out_type = out_type
@@ -503,6 +505,10 @@ class MediaFile(object):
             self.type = 'ogg'
         elif type(self.mgfile).__name__ == 'MonkeysAudio':
             self.type = 'ape'
+        elif type(self.mgfile).__name__ == 'WavPack':
+            self.type = 'wv'
+        elif type(self.mgfile).__name__ == 'Musepack':
+            self.type = 'mpc'
         else:
             raise FileTypeError('file type %s unsupported by MediaFile' %
                                 type(self.mgfile).__name__)
@@ -685,6 +691,9 @@ class MediaFile(object):
             #fixme: The utility of this guess is questionable.
             return self.mgfile.info.sample_rate * \
                    self.mgfile.info.bits_per_sample
+        elif self.type == 'wv':
+            # Mutagen doesn't provide enough information.
+            return 0
         else:
             return self.mgfile.info.bitrate
 

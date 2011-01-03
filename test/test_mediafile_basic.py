@@ -203,7 +203,6 @@ correct_dicts = {
 }
 
 read_only_correct_dicts = {
-    
     'full.mp3': {
         'length': 1.0,
         'bitrate': 80000,
@@ -234,6 +233,17 @@ read_only_correct_dicts = {
         'format': 'APE',
     },
 
+    'full.wv': {
+        'length': 1.0,
+        'bitrate': 0,
+        'format': 'WavPack',
+    },
+
+    'full.mpc': {
+        'length': 1.0,
+        'bitrate': 23,
+        'format': 'Musepack',
+    },
 }
 
 def suite_for_file(path, correct_dict, writing=True):
@@ -253,6 +263,8 @@ test_files = {
     'flac': ['full', 'partial', 'min'],
     'ogg': ['full'],
     'ape': ['full'],
+    'wv': ['full'],
+    'mpc': ['full'],
 }
 
 def suite():

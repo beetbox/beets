@@ -3,6 +3,11 @@
 * A new "-q" command line switch for the import command suppresses all
   prompts for input; it pessimistically skips all albums that the
   importer is not completely confident about.
+* Added support for the WavPack and Musepack formats. Unfortunately,
+  due to a limitation in the Mutagen library (used by beets for
+  metadata manipulation), Musepack SV8 is not yet supported. Here's
+  the upstream bug in question:
+  http://code.google.com/p/mutagen/issues/detail?id=7
 * BPD now uses a pure-Python socket library and no longer requires
   eventlet/greenlet (the latter of which is a C extension). For the
   curious, the socket library in question is called Bluelet:
