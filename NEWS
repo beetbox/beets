@@ -7,6 +7,8 @@
   eventlet/greenlet (the latter of which is a C extension). For the
   curious, the socket library in question is called Bluelet:
   https://github.com/sampsyo/bluelet
+* Non-autotagged imports are now resumable (just like autotagged
+  imports.)
 * Fix a terrible and long-standing bug where track orderings were never
   applied. This manifested when the tagger appeared to be applying a
   reasonable ordering to the tracks but, later, the database reflects a

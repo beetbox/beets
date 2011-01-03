@@ -490,6 +490,32 @@ def apply_choices(lib, copy, write, art, delete):
         # Update progress.
         progress_set(toppath, path)
 
+# Non-autotagged import (always sequential).
+
+def simple_import(lib, paths, copy, delete):
+    """Add files from the paths to the library without changing any
+    tags.
+    """
+    for toppath, path, items in read_albums(paths):
+        if items is None:
+            continue
+
+        if copy:
+            if delete:
+                old_paths = [item.path for item in items]
+            for item in items:
+                item.move(lib, True)
+
+        album = lib.add_album(items)
+        lib.save()            
+        progress_set(toppath, path)
+
+        if copy and delete:
+            for old_path in old_paths:
+                os.remove(old_path)
+
+        log.info('added album: %s - %s' % (album.artist, album.album))
+
 # The import command.
 
 def import_files(lib, paths, copy, write, autot, logpath,
@@ -534,20 +560,7 @@ def import_files(lib, paths, copy, write, autot, logpath,
             pass
     else:
         # Simple import without autotagging. Always sequential.
-        for _, _, items in read_albums(paths):
-            if items is None:
-                continue
-            if copy:
-                if delete:
-                    old_paths = [item.path for item in items]
-                for item in items:
-                    item.move(lib, True)
-            album = lib.add_album(items)
-            lib.save()            
-            if copy and delete:
-                for old_path in old_paths:
-                    os.remove(old_path)
-            log.info('added album: %s - %s' % (album.artist, album.album))
+        simple_import(lib, paths, copy, delete)
     
     # If we were logging, close the file.
     if logfile:
