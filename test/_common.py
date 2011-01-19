@@ -27,6 +27,14 @@ class Timecop(object):
         time.time = self.orig['time']
         time.sleep = self.orig['sleep']
 
+class InputException(Exception):
+    def __init__(self, output=None):
+        self.output = output
+    def __str__(self):
+        msg = "Attempt to read with no input provided."
+        if self.output is not None:
+            msg += " Output: %s" % repr(self.output)
+        return msg
 class DummyOut(object):
     encoding = 'utf8'
     def __init__(self):
@@ -39,19 +47,25 @@ class DummyOut(object):
         self.buf = []
 class DummyIn(object):
     encoding = 'utf8'
-    def __init__(self):
+    def __init__(self, out=None):
         self.buf = []
         self.reads = 0
+        self.out = out
     def add(self, s):
         self.buf.append(s + '\n')
     def readline(self):
+        if not self.buf:
+            if self.out:
+                raise InputException(self.out.get())
+            else:
+                raise InputException()
         self.reads += 1
         return self.buf.pop(0)
 class DummyIO(object):
     """Mocks input and output streams for testing UI code."""
     def __init__(self):
-        self.stdin = DummyIn()
         self.stdout = DummyOut()
+        self.stdin = DummyIn(self.stdout)
 
     def addinput(self, s):
         self.stdin.add(s)

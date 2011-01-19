@@ -23,6 +23,7 @@ sys.path.append('..')
 from beets import library
 from beets import ui
 from beets.ui import commands
+from beets import autotag
 import test_db
 
 class ListTest(unittest.TestCase):
@@ -86,6 +87,33 @@ class PrintTest(unittest.TestCase):
                 os.environ['LC_CTYPE'] = old_ctype
             else:
                 del os.environ['LC_CTYPE']
+
+class AutotagTest(unittest.TestCase):
+    def setUp(self):
+        self.io = _common.DummyIO()
+        self.io.install()
+    def tearDown(self):
+        self.io.restore()
+
+    def _no_candidates_test(self, result):
+        res = commands.choose_match(
+            'path',
+            [test_db.item()], # items
+            'artist',
+            'album',
+            [], # candidates
+            autotag.RECOMMEND_NONE
+        )
+        self.assertEqual(res, result)
+        self.assertTrue('No match' in self.io.getoutput())
+
+    def test_choose_match_with_no_candidates_skip(self):
+        self.io.addinput('s')
+        self._no_candidates_test(commands.CHOICE_SKIP)
+
+    def test_choose_match_with_no_candidates_asis(self):
+        self.io.addinput('u')
+        self._no_candidates_test(commands.CHOICE_ASIS)
 
 class InputTest(unittest.TestCase):
     def setUp(self):
