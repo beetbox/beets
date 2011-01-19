@@ -24,6 +24,7 @@ from beets.mediafile import MediaFile, UnreadableFileError, FileTypeError
 from beets import plugins
 
 MAX_FILENAME_LENGTH = 200
+MAX_WINDOWS_FILENAME_LENGTH = 30
 
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
@@ -203,8 +204,9 @@ def _sanitize_path(path, pathmod=None):
             comp = regex.sub(repl, comp)
         
         # Truncate each component.
-        if len(comp) > MAX_FILENAME_LENGTH:
-            comp = comp[:MAX_FILENAME_LENGTH]
+        maxlen = MAX_WINDOWS_FILENAME_LENGTH if windows else MAX_FILENAME_LENGTH
+        if len(comp) > maxlen:
+            comp = comp[:maxlen]
                 
         comps[i] = comp
     return pathmod.join(*comps)
