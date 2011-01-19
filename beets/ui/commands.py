@@ -19,6 +19,7 @@ from __future__ import with_statement # Python 2.5
 import os
 import logging
 import pickle
+import sys
 
 from beets import ui
 from beets.ui import print_
@@ -186,8 +187,8 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
 
 def manual_search():
     """Input an artist and album for manual search."""
-    artist = raw_input('Artist: ')
-    album = raw_input('Album: ')
+    artist = raw_input('Artist: ').decode(sys.stdin.encoding)
+    album = raw_input('Album: ').decode(sys.stdin.encoding)
     return artist.strip(), album.strip()
 
 def tag_log(logfile, status, path):

@@ -102,6 +102,19 @@ class PrintTest(unittest.TestCase):
             else:
                 del os.environ['LC_CTYPE']
 
+class InputTest(unittest.TestCase):
+    def setUp(self):
+        def my_input(prompt=None):
+            return '\xc3\x82me'
+        commands.raw_input = my_input
+    def tearDown(self):
+        commands.raw_input = raw_input
+
+    def test_manual_search_gets_unicode(self):
+        artist, album = commands.manual_search()
+        self.assertEqual(artist, u'\xc2me')
+        self.assertEqual(album, u'\xc2me')
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

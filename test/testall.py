@@ -19,7 +19,7 @@ import os
 import re
 import sys
 
-pkgpath = os.path.dirname(__file__)
+pkgpath = os.path.dirname(__file__) or '.'
 sys.path.append(pkgpath)
 os.chdir(pkgpath)
 
@@ -35,4 +35,3 @@ def suite():
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
-
