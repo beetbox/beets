@@ -18,56 +18,41 @@
 import unittest
 import sys
 import os
+import _common
 sys.path.append('..')
 from beets import library
 from beets import ui
 from beets.ui import commands
 import test_db
 
-# Dummy printing so we can get the commands' output.
-outbuffer = []
-def buffer_append(*txt):
-    outbuffer.extend(txt)
-def get_output():
-    return u' '.join(outbuffer)
-def clear_buffer():
-    outbuffer[:]
-
 class ListTest(unittest.TestCase):
     def setUp(self):
-        self.old_print = ui.print_
-        ui.print_ = buffer_append
-        commands.print_ = buffer_append
+        self.io = _common.DummyIO()
+        self.io.install()
 
-        clear_buffer()
         self.lib = library.Library(':memory:')
         i = test_db.item()
         self.lib.add(i)
 
     def tearDown(self):
-        ui.print_ = self.old_print
-        commands.print_ = self.old_print
+        self.io.restore()
         
     def test_list_outputs_item(self):
         commands.list_items(self.lib, '', False)
-        out = get_output()
+        out = self.io.getoutput()
         self.assertTrue(u'the title' in out)
     
     def test_list_album_omits_title(self):
         commands.list_items(self.lib, '', True)
-        out = get_output()
+        out = self.io.getoutput()
         self.assertTrue(u'the title' not in out)
     
 class PrintTest(unittest.TestCase):
     def setUp(self):
-        class Devnull(object):
-            def write(self, d):
-                pass
-        self.stdout = sys.stdout
-        sys.stdout = Devnull()
-
+        self.io = _common.DummyIO()
+        self.io.install()
     def tearDown(self):
-        sys.stdout = self.stdout
+        self.io.restore()
     
     def test_print_without_locale(self):
         lang = os.environ.get('LANG')
@@ -104,13 +89,14 @@ class PrintTest(unittest.TestCase):
 
 class InputTest(unittest.TestCase):
     def setUp(self):
-        def my_input(prompt=None):
-            return '\xc3\x82me'
-        commands.raw_input = my_input
+        self.io = _common.DummyIO()
+        self.io.install()
     def tearDown(self):
-        commands.raw_input = raw_input
+        self.io.restore()
 
     def test_manual_search_gets_unicode(self):
+        self.io.addinput('\xc3\x82me')
+        self.io.addinput('\xc3\x82me')
         artist, album = commands.manual_search()
         self.assertEqual(artist, u'\xc2me')
         self.assertEqual(album, u'\xc2me')

@@ -19,16 +19,16 @@ import sys
 
 sys.path.append('..')
 from beets import library
-from beets import ui
 from beetsplug.albumify import albumify
+import _common
 
 from test_db import item
 
-# Silence UI output.
-ui.print_ = lambda s: None
-
 class AlbumifyTest(unittest.TestCase):
     def setUp(self):
+        self.io = _common.DummyIO()
+        self.io.install()
+
         self.lib = library.Library(':memory:')
         i1, i2, i3 = item(), item(), item()
         i1.album = 'album1'
@@ -37,6 +37,9 @@ class AlbumifyTest(unittest.TestCase):
         self.lib.add(i1)
         self.lib.add(i2)
         self.lib.add(i3)
+
+    def tearDown(self):
+        self.io.restore()
 
     def test_albumify_creates_albums(self):
         albumify(self.lib)
