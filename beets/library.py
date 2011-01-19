@@ -209,7 +209,7 @@ CHAR_REPLACE = [
     (re.compile(r'[\\/\?]|^\.'), '_'),
     (re.compile(r':'), '-'),
 ]
-CHAR_REPLACE_WINDOWS = re.compile('["\*<>\|]|^\.|\.$'), '_'
+CHAR_REPLACE_WINDOWS = re.compile('["\*<>\|]|^\.|\.$| +$'), '_'
 def _sanitize_path(path, pathmod=None):
     """Takes a path and makes sure that it is legal. Returns a new path.
     Only works with fragments; won't work reliably on Windows when a

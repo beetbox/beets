@@ -283,6 +283,10 @@ class DestinationTest(unittest.TestCase):
         outpath = beets.library._syspath(path, posixpath)
         self.assertEqual(path, outpath)
 
+    def test_sanitize_windows_replaces_trailing_space(self):
+        p = beets.library._sanitize_path('one/two /three', ntpath)
+        self.assertFalse(' ' in p)
+
 
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between

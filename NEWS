@@ -20,7 +20,8 @@
   completely wrong association of track names to files. The order
   applied was always just alphabetical by filename, which is frequently
   but not always what you want.
-* We now use Windows' "long filename" support.
+* We now use Windows' "long filename" support. Filenames on Windows now
+  also never end in spaces.
 * Fix crash in lastid when the artist name is not available.
 * Fixed a spurious crash when LANG or a related environment variable is
   set to an invalid value (such as 'UTF-8' on some installations of Mac
