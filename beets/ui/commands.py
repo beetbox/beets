@@ -228,11 +228,11 @@ def choose_match(path, items, cur_artist, cur_album, candidates,
                 'Enter U, S, E, or B:'
             )
             if sel == 'u':
-                info = CHOICE_ASIS
+                choice = CHOICE_ASIS
             elif sel == 'e':
-                info = CHOICE_MANUAL
+                choice = CHOICE_MANUAL
             elif sel == 's':
-                info = CHOICE_SKIP
+                choice = CHOICE_SKIP
             elif sel == 'b':
                 raise ImportAbort()
     

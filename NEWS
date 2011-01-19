@@ -28,6 +28,7 @@
   destination.
 * When copying read-only files, the importer now tries to make the copy
   writable. (Previously, this would just crash the import.)
+* Fixed an UnboundLocalError when no matches are found during autotag.
 
 1.0b5
 -----
