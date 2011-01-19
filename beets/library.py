@@ -24,7 +24,6 @@ from beets.mediafile import MediaFile, UnreadableFileError, FileTypeError
 from beets import plugins
 
 MAX_FILENAME_LENGTH = 200
-MAX_WINDOWS_FILENAME_LENGTH = 30
 
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
@@ -178,6 +177,32 @@ def _bytestring_path(path):
     except UnicodeError:
         return path.encode('utf8')
 
+def _syspath(path, pathmod=None):
+    """Convert a path for use by the operating system. In particular,
+    paths on Windows must receive a magic prefix and must be converted
+    to unicode before they are sent to the OS.
+    """
+    pathmod = pathmod or os.path
+    windows = pathmod.__name__ == 'ntpath'
+
+    # Don't do anything if we're not on windows
+    if not windows:
+        return path
+
+    if not isinstance(path, unicode):
+        # Try to decode with default encodings, but fall back to UTF8.
+        encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
+        try:
+            path = path.decode(encoding, 'replace')
+        except UnicodeError:
+            path = path.decode('utf8', 'replace')
+
+    # Add the magic prefix if it isn't already there
+    if not path.startswith(u'\\\\?\\'):
+        path = u'\\\\?\\' + path
+
+    return path
+
 # Note: POSIX actually supports \ and : -- I just think they're
 # a pain. And ? has caused problems for some.
 CHAR_REPLACE = [
@@ -204,9 +229,7 @@ def _sanitize_path(path, pathmod=None):
             comp = regex.sub(repl, comp)
         
         # Truncate each component.
-        maxlen = MAX_WINDOWS_FILENAME_LENGTH if windows else MAX_FILENAME_LENGTH
-        if len(comp) > maxlen:
-            comp = comp[:maxlen]
+        comp = comp[:MAX_FILENAME_LENGTH]
                 
         comps[i] = comp
     return pathmod.join(*comps)
@@ -293,7 +316,7 @@ class Item(object):
             read_path = self.path
         else:
             read_path = _normpath(read_path)
-        f = MediaFile(read_path)
+        f = MediaFile(_syspath(read_path))
 
         for key in ITEM_KEYS_META:
             setattr(self, key, getattr(f, key))
@@ -302,7 +325,7 @@ class Item(object):
     def write(self):
         """Writes the item's metadata to the associated file.
         """
-        f = MediaFile(self.path)
+        f = MediaFile(_syspath(self.path))
         for key in ITEM_KEYS_WRITABLE:
             setattr(f, key, getattr(self, key))
         f.save()
@@ -330,14 +353,14 @@ class Item(object):
         # Create necessary ancestry for the move.
         _mkdirall(dest)
         
-        if not shutil._samefile(self.path, dest):
+        if not shutil._samefile(_syspath(self.path), _syspath(dest)):
             if copy:
                 # copyfile rather than copy will not copy permissions
                 # bits, thus possibly making the copy writable even when
                 # the original is read-only.
-                shutil.copyfile(self.path, dest)
+                shutil.copyfile(_syspath(self.path), _syspath(dest))
             else:
-                shutil.move(self.path, dest)
+                shutil.move(_syspath(self.path), _syspath(dest))
             
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
@@ -1133,7 +1156,7 @@ class Album(BaseAlbum):
         if delete:
             artpath = self.artpath
             if artpath:
-                os.unlink(artpath)
+                os.unlink(_syspath(artpath))
         
         # Remove album.
         self._library.conn.execute(
@@ -1157,9 +1180,9 @@ class Album(BaseAlbum):
             new_art = self.art_destination(old_art, newdir)
             if new_art != old_art:
                 if copy:
-                    shutil.copy(old_art, new_art)
+                    shutil.copy(_syspath(old_art), _syspath(new_art))
                 else:
-                    shutil.move(old_art, new_art)
+                    shutil.move(_syspath(old_art), _syspath(new_art))
                 self.artpath = new_art
 
         # Store new item paths. We do this at the end to avoid
@@ -1192,7 +1215,7 @@ class Album(BaseAlbum):
         oldart = self.artpath
         artdest = self.art_destination(path)
         if oldart == artdest:
-            os.unlink(oldart)
+            os.unlink(_syspath(oldart))
 
-        shutil.copy(path, artdest)
+        shutil.copy(_syspath(path), _syspath(artdest))
         self.artpath = artdest

@@ -259,14 +259,6 @@ class DestinationTest(unittest.TestCase):
         p = beets.library._sanitize_path(u':', posixpath)
         self.assertEqual(p, u'-')
     
-    def test_sanitize_windows_uses_very_short_names(self):
-        p = beets.library._sanitize_path('X'*300 + '/' + 'Y'*200, ntpath)
-        self.assertLessEqual(len(p), 100)
-
-    def test_sanitize_unix_uses_longer_names(self):
-        p = beets.library._sanitize_path('X'*300 + '/' + 'Y'*200, posixpath)
-        self.assertGreaterEqual(len(p), 100)
-
     def test_path_with_format(self):
         self.lib.path_format = '$artist/$album ($format)'
         p = self.lib.destination(self.i)
@@ -279,6 +271,18 @@ class DestinationTest(unittest.TestCase):
         self.lib.path_format = '$album ($year)/$track $title'
         dest1, dest2 = self.lib.destination(i1), self.lib.destination(i2)
         self.assertEqual(os.path.dirname(dest1), os.path.dirname(dest2))
+
+    def test_syspath_windows_format(self):
+        path = ntpath.join('a', 'b', 'c')
+        outpath = beets.library._syspath(path, ntpath)
+        self.assertTrue(isinstance(outpath, unicode))
+        self.assertTrue(outpath.startswith(u'\\\\?\\'))
+
+    def test_syspath_posix_unchanged(self):
+        path = posixpath.join('a', 'b', 'c')
+        outpath = beets.library._syspath(path, posixpath)
+        self.assertEqual(path, outpath)
+
 
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
