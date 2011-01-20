@@ -33,6 +33,7 @@
 * Fixed an UnboundLocalError when no matches are found during autotag.
 * Fixed a Unicode encoding error when entering special characters into
   the "manual search" prompt.
+* New command "beet version" just shows the current version.
 
 1.0b5
 -----

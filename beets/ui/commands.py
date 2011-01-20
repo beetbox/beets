@@ -735,3 +735,13 @@ def stats_func(lib, config, opts, args):
     show_stats(lib, ui.make_query(args))
 stats_cmd.func = stats_func
 default_commands.append(stats_cmd)
+
+
+# version: Show current beets version.
+
+def show_version(lib, config, opts, args):
+    print 'beets version %s' % beets.__version__
+version_cmd = ui.Subcommand('version',
+    help='output version information')
+version_cmd.func = show_version
+default_commands.append(version_cmd)
