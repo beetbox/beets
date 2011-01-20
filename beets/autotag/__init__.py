@@ -91,7 +91,7 @@ def _sorted_walk(path):
     files = []
     for base in os.listdir(path):
         cur = os.path.join(path, base)
-        if os.path.isdir(cur):
+        if os.path.isdir(library._syspath(cur)):
             dirs.append(base)
         else:
             files.append(base)

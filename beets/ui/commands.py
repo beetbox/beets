@@ -315,9 +315,12 @@ def read_albums(paths):
     """A generator yielding all the albums (as sets of Items) found in
     the user-specified list of paths.
     """
+    # Use absolute paths.
+    paths = [library._normpath(path) for path in paths]
+
     # Check the user-specified directories.
     for path in paths:
-        if not os.path.isdir(path):
+        if not os.path.isdir(library._syspath(path)):
             raise ui.UserError('not a directory: ' + path)
     # Look for saved progress.
     resume_dirs = {}
@@ -486,7 +489,7 @@ def apply_choices(lib, copy, write, art, delete):
             # Finally, delete old files.
             if copy and delete:
                 for old_path in old_paths:
-                    os.remove(old_path)
+                    os.remove(library._syspath(old_path))
 
         # Update progress.
         progress_set(toppath, path)
@@ -513,7 +516,7 @@ def simple_import(lib, paths, copy, delete):
 
         if copy and delete:
             for old_path in old_paths:
-                os.remove(old_path)
+                os.remove(library._syspath(old_path))
 
         log.info('added album: %s - %s' % (album.artist, album.album))
 

@@ -171,7 +171,7 @@ class ArtFileTest(unittest.TestCase):
     def setUp(self):
         # Make library and item.
         self.lib = beets.library.Library(':memory:')
-        self.libdir = os.path.join('rsrc', 'testlibdir')
+        self.libdir = os.path.abspath(os.path.join('rsrc', 'testlibdir'))
         self.lib.directory = self.libdir
         self.i = item()
         self.i.path = self.lib.destination(self.i)

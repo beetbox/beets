@@ -138,8 +138,8 @@ def _mkdirall(path):
     parent).
     """
     for ancestor in _ancestry(path):
-        if not os.path.isdir(ancestor):
-            os.mkdir(ancestor)
+        if not os.path.isdir(_syspath(ancestor)):
+            os.mkdir(_syspath(ancestor))
 
 def _components(path, pathmod=None):
     """Return a list of the path components in path. For instance:
@@ -973,7 +973,7 @@ class Library(BaseLibrary):
     def remove(self, item, delete=False):
         self.conn.execute('DELETE FROM items WHERE id=?', (item.id,))
         if delete:
-            os.unlink(item.path)
+            os.unlink(_syspath(item.path))
 
 
     # Browsing.
