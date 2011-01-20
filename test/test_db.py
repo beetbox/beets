@@ -434,7 +434,7 @@ class ArtDestinationTest(unittest.TestCase):
         
     def test_art_filename_respects_setting(self):
         art = self.ai.art_destination('something.jpg')
-        self.assert_('/artimage.jpg' in art)
+        self.assert_('%sartimage.jpg' % os.path.sep in art)
         
     def test_art_path_in_item_dir(self):
         art = self.ai.art_destination('something.jpg')

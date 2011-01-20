@@ -53,7 +53,7 @@ def _mkmp3(path):
 class AlbumsInDirTest(unittest.TestCase):
     def setUp(self):
         # create a directory structure for testing
-        self.base = os.path.join('rsrc', 'temp_albumsindir')
+        self.base = os.path.abspath(os.path.join('rsrc', 'temp_albumsindir'))
         os.mkdir(self.base)
         
         os.mkdir(os.path.join(self.base, 'album1'))
