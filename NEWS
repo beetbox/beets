@@ -1,3 +1,7 @@
+1.0b7
+-----
+* Fix a bug where some files would be erroneously interpreted as MP4.
+
 1.0b6
 -----
 * A new "-q" command line switch for the import command suppresses all

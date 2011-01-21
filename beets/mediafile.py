@@ -31,6 +31,7 @@ if no tag is present. If no value is available, the value will be false
 
 import mutagen
 import mutagen.mp3
+import mutagen.mp4
 import mutagen.flac
 import mutagen.monkeysaudio
 import datetime
@@ -485,6 +486,7 @@ class MediaFile(object):
             mutagen.mp3.HeaderNotFoundError,
             mutagen.flac.FLACNoHeaderError,
             mutagen.monkeysaudio.MonkeysAudioHeaderError,
+            mutagen.mp4.MP4StreamInfoError,
         )
         try:
             self.mgfile = mutagen.File(path)

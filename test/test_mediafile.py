@@ -88,11 +88,14 @@ class InvalidValueToleranceTest(unittest.TestCase):
         self.assertEqual(_sc(bool, '5'), True)
 
 class SafetyTest(unittest.TestCase):
-    def _exccheck(self, fn, exc):
+    def _exccheck(self, fn, exc, data=''):
         fn = os.path.join('rsrc', fn)
-        open(fn, 'a').close() # create an empty file (a la touch)
-        self.assertRaises(exc, beets.mediafile.MediaFile, fn)
-        os.unlink(fn) # delete the temporary file
+        with open(fn, 'w') as f:
+            f.write(data)
+        try:
+            self.assertRaises(exc, beets.mediafile.MediaFile, fn)
+        finally:
+            os.unlink(fn) # delete the temporary file
     
     def test_corrupt_mp3_raises_unreadablefileerror(self):
         # Make sure we catch Mutagen reading errors appropriately.
@@ -112,6 +115,10 @@ class SafetyTest(unittest.TestCase):
     
     def test_invalid_extension_raises_filetypeerror(self):
         self._exccheck('something.unknown', beets.mediafile.FileTypeError)
+
+    def test_magic_xml_raises_unreadablefileerror(self):
+        self._exccheck('nothing.xml', beets.mediafile.UnreadableFileError,
+                       "ftyp")
 
 class SideEffectsTest(unittest.TestCase):
     def setUp(self):
