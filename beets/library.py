@@ -1216,6 +1216,6 @@ class Album(BaseAlbum):
         artdest = self.art_destination(path)
         if oldart == artdest:
             os.unlink(_syspath(oldart))
-
-        shutil.copy(_syspath(path), _syspath(artdest))
+        
+        shutil.copyfile(_syspath(path), _syspath(artdest))
         self.artpath = artdest

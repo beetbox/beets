@@ -213,9 +213,32 @@ class ArtFileTest(unittest.TestCase):
         i2.artist = 'someArtist'
         ai = self.lib.add_album((i2,))
         i2.move(self.lib, True)
+        
         self.assertEqual(ai.artpath, None)
         ai.set_art(newart)
         self.assertTrue(os.path.exists(ai.artpath))
+    
+    def test_setart_sets_permissions(self):
+        newart = os.path.join(self.libdir, 'newart.jpg')
+        touch(newart)
+        os.chmod(newart, 0400) # read-only
+        
+        try:
+            i2 = item()
+            i2.path = self.i.path
+            i2.artist = 'someArtist'
+            ai = self.lib.add_album((i2,))
+            i2.move(self.lib, True)
+            ai.set_art(newart)
+            
+            mode = stat.S_IMODE(os.stat(ai.artpath).st_mode)
+            self.assertTrue(mode & stat.S_IRGRP)
+            self.assertTrue(os.access(ai.artpath, os.W_OK))
+            
+        finally:
+            # Make everything writable so it can be cleaned up.
+            os.chmod(newart, 0777)
+            os.chmod(ai.artpath, 0777)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

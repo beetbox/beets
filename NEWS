@@ -1,6 +1,7 @@
 1.0b7
 -----
 * Fix a bug where some files would be erroneously interpreted as MP4.
+* Fix permission bits applied to album art files.
 
 1.0b6
 -----

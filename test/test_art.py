@@ -49,7 +49,7 @@ class AmazonArtTest(unittest.TestCase):
         artpath = art.art_for_album(album)
         self.assertEqual(artpath, 'anotherpath')
 
-    def test_main_interface_returns_none_for_missin_asin(self):
+    def test_main_interface_returns_none_for_missing_asin(self):
         album = {'asin': None}
         artpath = art.art_for_album(album)
         self.assertEqual(artpath, None)
@@ -59,4 +59,3 @@ def suite():
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
-

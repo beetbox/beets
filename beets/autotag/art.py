@@ -71,4 +71,3 @@ if __name__ == '__main__':
             print len(open(fn).read())/1024
         else:
             print 'no art found'
-
