@@ -274,6 +274,13 @@ class DestinationTest(unittest.TestCase):
         dest1, dest2 = self.lib.destination(i1), self.lib.destination(i2)
         self.assertEqual(os.path.dirname(dest1), os.path.dirname(dest2))
     
+    def test_default_path_for_non_compilations(self):
+        self.i.comp = False
+        self.lib.directory = 'one'
+        self.lib.path_formats = {'default': 'two',
+                                 'comp': 'three'}
+        self.assertEqual(self.lib.destination(self.i), np('one/two'))
+
     def test_comp_path(self):
         self.i.comp = True
         self.lib.directory = 'one'
@@ -304,6 +311,24 @@ class DestinationTest(unittest.TestCase):
     def test_component_sanitize_pads_with_zero(self):
         name = beets.library._sanitize_for_path(1, posixpath, 'track')
         self.assertTrue(name.startswith('0'))
+
+    def test_artist_falls_back_to_albumartist(self):
+        self.i.artist = ''
+        self.i.albumartist = 'something'
+        self.lib.path_formats = {'default': '$artist'}
+        p = self.lib.destination(self.i)
+        self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'something')
+
+    def test_artist_overrides_albumartist(self):
+        self.i.artist = 'theartist'
+        self.i.albumartist = 'something'
+        self.lib.path_formats = {'default': '$artist'}
+        p = self.lib.destination(self.i)
+        self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'theartist')
+
+    def test_sanitize_path_works_on_empty_string(self):
+        p = beets.library._sanitize_path('', posixpath)
+        self.assertEqual(p, '')
 
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between

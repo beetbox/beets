@@ -34,7 +34,10 @@ CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
 STATE_FILE = os.path.expanduser('~/.beetsstate')
 DEFAULT_LIBRARY = '~/.beetsmusic.blb'
 DEFAULT_DIRECTORY = '~/Music'
-DEFAULT_PATH_FORMAT = '$artist/$album/$track $title'
+DEFAULT_PATH_FORMATS = {
+    'default': '$albumartist/$album/$track $title',
+    'comp': 'Compilations/$album/$track $title',
+}
 DEFAULT_ART_FILENAME = 'cover'
 
 
@@ -440,10 +443,7 @@ def main():
         # If given, -p overrides all path format settings
         path_formats = {'default': options.path_format}
     else:
-        path_formats = {
-            'default': config_val(config, 'beets', 'path_format',
-                                  DEFAULT_PATH_FORMAT)
-        }
+        path_formats = DEFAULT_PATH_FORMATS
         if config.has_section('paths'):
             path_formats.update(config.items('paths'))
     art_filename = \

@@ -225,6 +225,8 @@ def _sanitize_path(path, pathmod=None):
     windows = pathmod.__name__ == 'ntpath'
     
     comps = _components(path, pathmod)
+    if not comps:
+        return ''
     for i, comp in enumerate(comps):
         # Replace special characters.
         for regex, repl in CHAR_REPLACE:
@@ -898,9 +900,9 @@ class Library(BaseLibrary):
                 value = getattr(item, key)
             mapping[key] = _sanitize_for_path(value, pathmod, key)
         
-        # Use the track's artist if it differs
-        if item.albumartist and item.albumartist != item.artist:
-            mapping['artist'] = _sanitize_for_path(item.artist, pathmod)
+        # Use the album artist if the track artist is not set.
+        if not mapping['artist']:
+            mapping['artist'] = mapping['albumartist']
         
         # Perform substitution.
         subpath = subpath_tmpl.substitute(mapping)
