@@ -424,7 +424,7 @@ class Query(object):
         statement = 'SELECT COUNT(id), SUM(length) FROM items WHERE ' + clause
         c = library.conn.cursor()
         result = c.execute(statement, subvals).fetchone()
-        return (result[0], result[1])
+        return (result[0], result[1] or 0.0)
 
     def execute(self, library):
         """Runs the query in the specified library, returning a

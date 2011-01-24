@@ -215,6 +215,22 @@ class BrowseTest(unittest.TestCase, AssertsMixin):
 
     #FIXME Haven't tested explicit (non-query) criteria.
         
+class CountTest(unittest.TestCase):
+    def setUp(self):
+        self.lib = beets.library.Library(':memory:')
+        self.item = some_item
+        self.lib.add(self.item)
+
+    def test_count_gets_single_item(self):
+        songs, totaltime = beets.library.TrueQuery().count(self.lib)
+        self.assertEqual(songs, 1)
+        self.assertEqual(totaltime, self.item.length)
+
+    def test_count_works_for_empty_library(self):
+        self.lib.remove(self.item)
+        songs, totaltime = beets.library.TrueQuery().count(self.lib)
+        self.assertEqual(songs, 0)
+        self.assertEqual(totaltime, 0.0)
         
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
