@@ -379,6 +379,34 @@ class MigrationTest(unittest.TestCase):
         except sqlite3.OperationalError:
             self.fail("select failed")
 
+    def test_album_data_preserved(self):
+        conn = sqlite3.connect(self.libfile)
+        conn.execute('drop table albums')
+        conn.execute('create table albums (id primary key, album)')
+        conn.execute("insert into albums values (1, 'blah')")
+        conn.commit()
+        conn.close()
+
+        new_lib = beets.library.Library(self.libfile,
+                                        item_fields=self.newer_fields)
+        albums = new_lib.conn.execute('select * from albums').fetchall()
+        self.assertEqual(len(albums), 1)
+        self.assertEqual(albums[0][1], 'blah')
+
+    def test_move_artist_to_albumartist(self):
+        conn = sqlite3.connect(self.libfile)
+        conn.execute('drop table albums')
+        conn.execute('create table albums (id primary key, artist)')
+        conn.execute("insert into albums values (1, 'theartist')")
+        conn.commit()
+        conn.close()
+
+        new_lib = beets.library.Library(self.libfile,
+                                        item_fields=self.newer_fields)
+        c = new_lib.conn.execute("select * from albums")
+        album = c.fetchone()
+        self.assertEqual(album['albumartist'], 'theartist')
+
 class AlbumInfoTest(unittest.TestCase):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
@@ -546,4 +574,3 @@ def suite():
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
-

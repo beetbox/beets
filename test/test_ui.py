@@ -34,6 +34,7 @@ class ListTest(unittest.TestCase):
         self.lib = library.Library(':memory:')
         i = test_db.item()
         self.lib.add(i)
+        self.lib.add_album([i])
 
     def tearDown(self):
         self.io.restore()
@@ -42,12 +43,29 @@ class ListTest(unittest.TestCase):
         commands.list_items(self.lib, '', False)
         out = self.io.getoutput()
         self.assertTrue(u'the title' in out)
+
+    def test_list_album_outputs_something(self):
+        commands.list_items(self.lib, '', True)
+        out = self.io.getoutput()
+        self.assertGreater(len(out), 0)
     
     def test_list_album_omits_title(self):
         commands.list_items(self.lib, '', True)
         out = self.io.getoutput()
         self.assertTrue(u'the title' not in out)
+
+    def test_list_uses_track_artist(self):
+        commands.list_items(self.lib, '', False)
+        out = self.io.getoutput()
+        self.assertTrue(u'the artist' in out)
+        self.assertTrue(u'the album artist' not in out)
     
+    def test_list_album_uses_album_artist(self):
+        commands.list_items(self.lib, '', True)
+        out = self.io.getoutput()
+        self.assertTrue(u'the artist' not in out)
+        self.assertTrue(u'the album artist' in out)
+
 class PrintTest(unittest.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()

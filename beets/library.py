@@ -845,7 +845,7 @@ class Library(BaseLibrary):
             # No table exists.        
             setup_sql =  'CREATE TABLE %s (' % table
             setup_sql += ', '.join(['%s %s' % f[:2] for f in fields])
-            setup_sql += ');'
+            setup_sql += ');\n'
             
         else:
             # Table exists but is missing fields.
@@ -858,6 +858,13 @@ class Library(BaseLibrary):
                     assert False
                 setup_sql += 'ALTER TABLE %s ' % table
                 setup_sql += 'ADD COLUMN %s %s;\n' % field[:2]
+
+        # Special case. If we're moving from a version without
+        # albumartist, copy all the "artist" values to "albumartist"
+        # values on the album data structure.
+        if table == 'albums' and 'artist' in current_fields and \
+                    'albumartist' not in current_fields:
+            setup_sql += "UPDATE ALBUMS SET albumartist=artist;\n"
         
         self.conn.executescript(setup_sql)
         self.conn.commit()

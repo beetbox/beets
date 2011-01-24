@@ -627,10 +627,10 @@ def list_items(lib, query, album):
     """
     if album:
         for album in lib.albums(query=query):
-            print_(album.artist + ' - ' + album.album)
+            print_(album.albumartist + u' - ' + album.album)
     else:
         for item in lib.items(query=query):
-            print_(item.artist + ' - ' + item.album + ' - ' + item.title)
+            print_(item.artist + u' - ' + item.album + u' - ' + item.title)
 
 list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
 list_cmd.parser.add_option('-a', '--album', action='store_true',
