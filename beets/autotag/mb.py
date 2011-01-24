@@ -172,9 +172,9 @@ def release_dict(release, tracks=None):
           }
 
     # Release type not always populated.
-    for type in release.types:
-        if type in RELEASE_TYPES:
-            out['albumtype'] = type.split('#')[1].lower()
+    for releasetype in release.types:
+        if releasetype in RELEASE_TYPES:
+            out['albumtype'] = releasetype.split('#')[1].lower()
             break
 
     # Release date.

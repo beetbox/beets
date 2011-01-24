@@ -657,17 +657,23 @@ class MediaFile(object):
                                     as_type = bool), 
                 etc = StorageStyle('compilation')
             )
-
-    # Album Artist
-    album_artist = MediaField(
+    albumartist = MediaField(
                 mp3 = StorageStyle('TXXX', id3_desc='Album Artist'),
                 mp4 = StorageStyle(
                     '----:com.apple.iTunes:Album Artist',
                     as_type=str),
-                etc = StorageStyle('album_artist')
+                etc = [StorageStyle('album artist'),
+                       StorageStyle('albumartist')]
+            )
+    albumtype = MediaField(
+                mp3 = StorageStyle('TXXX', id3_desc='MusicBrainz Album Type'),
+                mp4 = StorageStyle(
+                    '----:com.apple.iTunes:MusicBrainz Album Type',
+                    as_type=str),
+                etc = StorageStyle('musicbrainz_albumtype')
             )
 
-    # MusicBrainz fields
+    # MusicBrainz IDs.
     mb_trackid = MediaField(
                 mp3 = StorageStyle('UFID:http://musicbrainz.org',
                                    list_elem = False),
@@ -691,18 +697,12 @@ class MediaFile(object):
                 etc = StorageStyle('musicbrainz_artistid')
             )
     mb_albumartistid = MediaField(
-                mp3 = StorageStyle('TXXX', id3_desc='MusicBrainz Album Artist Id'),
+                mp3 = StorageStyle('TXXX',
+                                   id3_desc='MusicBrainz Album Artist Id'),
                 mp4 = StorageStyle(
                     '----:com.apple.iTunes:MusicBrainz Album Artist Id',
                     as_type=str),
                 etc = StorageStyle('musicbrainz_albumartistid')
-            )
-    mb_albumtype = MediaField(
-                mp3 = StorageStyle('TXXX', id3_desc='MusicBrainz Album Type'),
-                mp4 = StorageStyle(
-                    '----:com.apple.iTunes:MusicBrainz Album Type',
-                    as_type=str),
-                etc = StorageStyle('musicbrainz_albumtype')
             )
 
     @property

@@ -129,7 +129,8 @@ class AlbumFileTest(unittest.TestCase):
     def setUp(self):
         # Make library and item.
         self.lib = beets.library.Library(':memory:')
-        self.lib.path_formats = {'default': join('$album_artist', '$album', '$title')}
+        self.lib.path_formats = \
+            {'default': join('$albumartist', '$album', '$title')}
         self.libdir = os.path.join('rsrc', 'testlibdir')
         self.lib.directory = self.libdir
         self.i = item()
@@ -197,7 +198,7 @@ class ArtFileTest(unittest.TestCase):
     def test_art_moves_with_album(self):
         self.assertTrue(os.path.exists(self.art))
         oldpath = self.i.path
-        self.ai.artist = 'newArtist'
+        self.ai.album = 'newAlbum'
         self.ai.move()
         self.lib.load(self.i)
 

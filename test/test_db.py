@@ -30,7 +30,7 @@ def boracay(l): return beets.library.Item(l.conn.execute('select * from items '
 def item(): return beets.library.Item({
     'title':            u'the title',
     'artist':           u'the artist',
-    'album_artist':     u'the album artist',
+    'albumartist':      u'the album artist',
     'album':            u'the album',
     'genre':            u'the genre',
     'composer':         u'the composer',
@@ -379,8 +379,8 @@ class AlbumInfoTest(unittest.TestCase):
 
     def test_albuminfo_reflects_metadata(self):
         ai = self.lib.get_album(self.i)
-        self.assertEqual(ai.mb_artistid, self.i.mb_albumartistid)
-        self.assertEqual(ai.artist, self.i.album_artist)
+        self.assertEqual(ai.mb_albumartistid, self.i.mb_albumartistid)
+        self.assertEqual(ai.albumartist, self.i.albumartist)
         self.assertEqual(ai.album, self.i.album)
         self.assertEqual(ai.year, self.i.year)
 

@@ -441,7 +441,8 @@ def main():
         path_formats = {'default': options.path_format}
     else:
         path_formats = {
-            'default': config_val(config, 'beets', 'path_format', DEFAULT_PATH_FORMAT)
+            'default': config_val(config, 'beets', 'path_format',
+                                  DEFAULT_PATH_FORMAT)
         }
         if config.has_section('paths'):
             path_formats.update(config.items('paths'))

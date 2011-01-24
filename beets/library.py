@@ -41,7 +41,7 @@ ITEM_FIELDS = [
     ('title',            'text', True,  True),
     ('artist',           'text', True,  True),
     ('album',            'text', True,  True),
-    ('album_artist',     'text', True,  True),
+    ('albumartist',      'text', True,  True),
     ('genre',            'text', True,  True),
     ('composer',         'text', True,  True),
     ('grouping',         'text', True,  True),
@@ -60,7 +60,7 @@ ITEM_FIELDS = [
     ('mb_albumid',       'text', True,  True),
     ('mb_artistid',      'text', True,  True),
     ('mb_albumartistid', 'text', True,  True),
-    ('mb_albumtype',     'text', True,  True),
+    ('albumtype',        'text', True,  True),
 
     ('length',      'real', False, True),
     ('bitrate',     'int',  False, True),
@@ -71,38 +71,33 @@ ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
 ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 
 # Database fields for the "albums" table.
-# The third entry in each tuple indicates whether the field reflects a
-# field in the items table.
+# The third entry in each tuple indicates whether the field reflects an
+# identically-named field in the items table.
 ALBUM_FIELDS = [
     ('id',      'integer primary key', False),
     ('artpath', 'blob',                False),
 
-    ('artist',       'text', True),
-    ('album',        'text', True),
-    ('genre',        'text', True),
-    ('year',         'int',  True),
-    ('month',        'int',  True),
-    ('day',          'int',  True),
-    ('tracktotal',   'int',  True),
-    ('disctotal',    'int',  True),
-    ('comp',         'bool', True),
-    ('mb_albumid',   'text', True),
-    ('mb_artistid',  'text', True),
-    ('mb_albumtype', 'text', True),
+    ('albumartist',      'text', True),
+    ('album',            'text', True),
+    ('genre',            'text', True),
+    ('year',             'int',  True),
+    ('month',            'int',  True),
+    ('day',              'int',  True),
+    ('tracktotal',       'int',  True),
+    ('disctotal',        'int',  True),
+    ('comp',             'bool', True),
+    ('mb_albumid',       'text', True),
+    ('mb_albumartistid', 'text', True),
+    ('albumtype',        'text', True),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
-# Mapping between album field names and item field names, where they
-# differ.
-ALBUM_KEYS_ITEM_MAP = {
-    'artist': 'album_artist',
-    'mb_artistid': 'mb_albumartistid',
-}
 
 # Default search fields for various granularities.
 ARTIST_DEFAULT_FIELDS = ('artist',)
 ALBUM_DEFAULT_FIELDS = ARTIST_DEFAULT_FIELDS + ('album', 'genre')
-ITEM_DEFAULT_FIELDS = ALBUM_DEFAULT_FIELDS + ('album_artist', 'title', 'comments')
+ITEM_DEFAULT_FIELDS = ALBUM_DEFAULT_FIELDS + \
+    ('albumartist', 'title', 'comments')
 
 # Logger.
 log = logging.getLogger('beets')
@@ -718,7 +713,7 @@ class BaseLibrary(object):
             item = specimens[k]
             record = {}
             for key in ALBUM_KEYS_ITEM:
-                record[key] = getattr(item, ALBUM_KEYS_ITEM_MAP.get(key, key))
+                record[key] = getattr(item, key)
             yield BaseAlbum(self, record)
 
     def items(self, artist=None, album=None, title=None, query=None):
@@ -772,10 +767,10 @@ class BaseAlbum(object):
             self._record[key] = value
             # Modify items.
             if key in ALBUM_KEYS_ITEM:
-                items = self._library.items(album_artist=self.artist,
+                items = self._library.items(albumartist=self.albumartist,
                                             album=self.album)
                 for item in items:
-                    setattr(item, ALBUM_KEYS_ITEM_MAP.get(key, key), value)
+                    setattr(item, key, value)
                 self._library.store(item)
         else:
             object.__setattr__(self, key, value)
@@ -786,7 +781,7 @@ class BaseAlbum(object):
         items = self._library.items(artist=self.artist, album=self.album)
         item = iter(items).next()
         for key in ALBUM_KEYS_ITEM:
-            self._record[key] = getattr(item, ALBUM_KEYS_ITEM_MAP.get(key, key))
+            self._record[key] = getattr(item, key)
 
 
 # Concrete DB-backed library.
@@ -896,7 +891,7 @@ class Library(BaseLibrary):
             mapping[key] = self._sanitize_for_path(value, pathmod, key)
         
         # Use the track's artist if it differs
-        if album is not None and item.artist != album.artist:
+        if item.albumartist and item.albumartist != item.artist:
             mapping['artist'] = self._sanitize_for_path(item.artist, pathmod)
         
         # Perform substitution.
@@ -1018,11 +1013,11 @@ class Library(BaseLibrary):
         query = self._get_query(query, ALBUM_DEFAULT_FIELDS)
         if artist is not None:
             # "Add" the artist to the query.
-            query = AndQuery((query, MatchQuery('artist', artist)))
+            query = AndQuery((query, MatchQuery('albumartist', artist)))
         where, subvals = query.clause()
         sql = "SELECT * FROM albums " + \
               "WHERE " + where + \
-              " ORDER BY artist, album"
+              " ORDER BY albumartist, album"
         c = self.conn.execute(sql, subvals)
         return [Album(self, dict(res)) for res in c.fetchall()]
 
@@ -1085,8 +1080,7 @@ class Library(BaseLibrary):
         sql = 'INSERT INTO albums (%s) VALUES (%s)' % \
               (', '.join(ALBUM_KEYS_ITEM),
                ', '.join(['?'] * len(ALBUM_KEYS_ITEM)))
-        subvals = [getattr(items[0], ALBUM_KEYS_ITEM_MAP.get(key, key))
-                   for key in ALBUM_KEYS_ITEM]
+        subvals = [getattr(items[0], key) for key in ALBUM_KEYS_ITEM]
         c = self.conn.execute(sql, subvals)
         album_id = c.lastrowid
 
@@ -1094,8 +1088,7 @@ class Library(BaseLibrary):
         record = {}
         for key in ALBUM_KEYS:
             if key in ALBUM_KEYS_ITEM:
-                record[key] = getattr(items[0],
-                                      ALBUM_KEYS_ITEM_MAP.get(key, key))
+                record[key] = getattr(items[0], key)
             else:
                 # Non-item fields default to None.
                 record[key] = None
@@ -1147,7 +1140,7 @@ class Album(BaseAlbum):
             # Possibly make modification on items as well.
             if key in ALBUM_KEYS_ITEM:
                 for item in self.items():
-                    setattr(item, ALBUM_KEYS_ITEM_MAP.get(key, key), value)
+                    setattr(item, key, value)
                     self._library.store(item)
 
         else:

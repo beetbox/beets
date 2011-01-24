@@ -359,7 +359,7 @@ def apply_metadata(items, info):
             item.artist = track_data['artist']
         else:
             item.artist = info['artist']
-        item.album_artist = info['artist']
+        item.albumartist = info['artist']
         item.album = info['album']
         item.tracktotal = len(items)
         
@@ -383,7 +383,7 @@ def apply_metadata(items, info):
         else:
             item.mb_artistid = info['artist_id']
         item.mb_albumartistid = info['artist_id']
-        item.mb_albumtype = info['albumtype']
+        item.albumtype = info['albumtype']
         
         # Compilation flag.
         item.comp = (info['artist_id'] == VARIOUS_ARTISTS_ID)
