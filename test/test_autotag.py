@@ -204,6 +204,7 @@ class ApplyTest(unittest.TestCase):
             'album_id': '7edb51cb-77d6-4416-a23c-3a8c2994a2c7',
             'artist_id': 'a6623d39-2d8e-4f70-8242-0a9553b91e50',
             'albumtype': 'album',
+            'va': False,
         }
     
     def test_titles_applied(self):
@@ -273,6 +274,7 @@ class ApplyCompilationTest(unittest.TestCase):
             'album_id': '3b69ea40-39b8-487f-8818-04b6eff8c21a',
             'artist_id': '89ad4ac3-39f7-470e-963a-56509c546377',
             'albumtype': 'compilation',
+            'va': False,
         }
 
     def test_album_and_track_artists_separate(self):
@@ -282,12 +284,24 @@ class ApplyCompilationTest(unittest.TestCase):
         self.assertEqual(self.items[0].albumartist, 'variousNew')
         self.assertEqual(self.items[1].albumartist, 'variousNew')
 
-    def test_mb_albumartistid__applied(self):
+    def test_mb_albumartistid_applied(self):
         autotag.apply_metadata(self.items, self.info)
         self.assertEqual(self.items[0].mb_albumartistid, '89ad4ac3-39f7-470e-963a-56509c546377')
         self.assertEqual(self.items[1].mb_albumartistid, '89ad4ac3-39f7-470e-963a-56509c546377')
         self.assertEqual(self.items[0].mb_artistid, 'a05686fc-9db2-4c23-b99e-77f5db3e5282')
         self.assertEqual(self.items[1].mb_artistid, '80b3cf5e-18fe-4c59-98c7-e5bb87210710')
+
+    def test_va_flag_cleared_does_not_set_comp(self):
+        autotag.apply_metadata(self.items, self.info)
+        self.assertFalse(self.items[0].comp)
+        self.assertFalse(self.items[1].comp)
+
+    def test_va_flag_sets_comp(self):
+        va_info = dict(self.info) # make a copy
+        va_info['va'] = True
+        autotag.apply_metadata(self.items, va_info)
+        self.assertTrue(self.items[0].comp)
+        self.assertTrue(self.items[1].comp)
 
 class StringDistanceTest(unittest.TestCase):
     def test_equal_strings(self):
@@ -361,4 +375,3 @@ def suite():
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
-

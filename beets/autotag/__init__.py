@@ -20,7 +20,6 @@ from collections import defaultdict
 from beets.autotag import mb
 import re
 from munkres import Munkres
-from musicbrainz2.model import VARIOUS_ARTISTS_ID
 from beets import library, mediafile, plugins
 import logging
 
@@ -72,8 +71,6 @@ SD_PATTERNS = [
     (r'\[.*?\]', 0.3),
     (r'(, )?(pt\.|part) .+', 0.2),
 ]
-
-VARIOUS_ARTISTS_ID = VARIOUS_ARTISTS_ID.rsplit('/', 1)[1]
 
 # Autotagging exceptions.
 class AutotagError(Exception):
@@ -386,7 +383,7 @@ def apply_metadata(items, info):
         item.albumtype = info['albumtype']
         
         # Compilation flag.
-        item.comp = (info['artist_id'] == VARIOUS_ARTISTS_ID)
+        item.comp = info['va']
 
 def match_by_id(items):
     """If the items are tagged with a MusicBrainz album ID, returns an

@@ -131,6 +131,17 @@ class MBReleaseDictTest(unittest.TestCase):
         self.assertFalse('month' in d)
         self.assertFalse('day' in d)
 
+    def test_various_artists_defaults_false(self):
+        release = self._make_release(None)
+        d = mb.release_dict(release)
+        self.assertFalse(d['va'])
+
+    def test_detect_various_artists(self):
+        release = self._make_release(None)
+        release.artist.id = musicbrainz2.model.VARIOUS_ARTISTS_ID
+        d = mb.release_dict(release)
+        self.assertTrue(d['va'])
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

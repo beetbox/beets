@@ -23,12 +23,13 @@ principal interface is the function `match_album`.
 from __future__ import with_statement # for Python 2.5
 import re
 import time
-import datetime
 import musicbrainz2.webservice as mbws
 from musicbrainz2.model import Release
 from threading import Lock
+from musicbrainz2.model import VARIOUS_ARTISTS_ID
 
 SEARCH_LIMIT = 10
+VARIOUS_ARTISTS_ID = VARIOUS_ARTISTS_ID.rsplit('/', 1)[1]
 
 class ServerBusyError(Exception): pass
 
@@ -170,6 +171,7 @@ def release_dict(release, tracks=None):
            'asin':      release.asin,
            'albumtype': '',
           }
+    out['va'] = out['artist_id'] == VARIOUS_ARTISTS_ID
 
     # Release type not always populated.
     for releasetype in release.types:
