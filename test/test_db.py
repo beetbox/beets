@@ -296,6 +296,14 @@ class DestinationTest(unittest.TestCase):
         p = beets.library._sanitize_path('one/two /three', ntpath)
         self.assertFalse(' ' in p)
 
+    def test_component_sanitize_replaces_separators(self):
+        name = posixpath.join('a', 'b')
+        newname = beets.library._sanitize_for_path(name, posixpath)
+        self.assertNotEqual(name, newname)
+
+    def test_component_sanitize_pads_with_zero(self):
+        name = beets.library._sanitize_for_path(1, posixpath, 'track')
+        self.assertTrue(name.startswith('0'))
 
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between

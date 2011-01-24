@@ -239,6 +239,22 @@ def _sanitize_path(path, pathmod=None):
         comps[i] = comp
     return pathmod.join(*comps)
 
+def _sanitize_for_path(value, pathmod, key=None):
+    """Sanitize the value for inclusion in a path: replace separators
+    with _, etc. Doesn't guarantee that the whole path will be valid;
+    you should still call _sanitize_path on the complete path.
+    """
+    if isinstance(value, basestring):
+        for sep in (pathmod.sep, pathmod.altsep):
+            if sep:
+                value = value.replace(sep, '_')
+    elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
+        # pad with zeros
+        value = '%02i' % value
+    else:
+        value = str(value)
+    return value
+
 
 # Library items (songs).
 
@@ -846,21 +862,6 @@ class Library(BaseLibrary):
         self.conn.executescript(setup_sql)
         self.conn.commit()
     
-    def _sanitize_for_path(self, value, pathmod, key=None):
-        """Sanitize the value for inclusion in a path: replace separators
-        with _, etc.
-        """
-        if isinstance(value, basestring):
-            for sep in (pathmod.sep, pathmod.altsep):
-                if sep:
-                    value = value.replace(sep, '_')
-        elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
-            # pad with zeros
-            value = '%02i' % value
-        else:
-            value = str(value)
-        return value
-
     def destination(self, item, pathmod=None):
         """Returns the path in the library directory designated for item
         item (i.e., where the file ought to be).
@@ -888,11 +889,11 @@ class Library(BaseLibrary):
             else:
                 # From Item.
                 value = getattr(item, key)
-            mapping[key] = self._sanitize_for_path(value, pathmod, key)
+            mapping[key] = _sanitize_for_path(value, pathmod, key)
         
         # Use the track's artist if it differs
         if item.albumartist and item.albumartist != item.artist:
-            mapping['artist'] = self._sanitize_for_path(item.artist, pathmod)
+            mapping['artist'] = _sanitize_for_path(item.artist, pathmod)
         
         # Perform substitution.
         subpath = subpath_tmpl.substitute(mapping)
