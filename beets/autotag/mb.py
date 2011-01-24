@@ -25,6 +25,7 @@ import re
 import time
 import datetime
 import musicbrainz2.webservice as mbws
+from musicbrainz2.model import Release
 from threading import Lock
 
 SEARCH_LIMIT = 10
@@ -35,6 +36,20 @@ class ServerBusyError(Exception): pass
 SPECIAL_CASE_ARTISTS = {
     '!!!': 'f26c72d3-e52c-467b-b651-679c73d8e1a7',
 }
+
+RELEASE_TYPES = [
+    Release.TYPE_ALBUM,
+    Release.TYPE_SINGLE, 
+    Release.TYPE_EP,
+    Release.TYPE_COMPILATION, 
+    Release.TYPE_SOUNDTRACK,
+    Release.TYPE_SPOKENWORD,
+    Release.TYPE_INTERVIEW,
+    Release.TYPE_AUDIOBOOK,
+    Release.TYPE_LIVE,
+    Release.TYPE_REMIX,
+    Release.TYPE_OTHER
+]
 
 # MusicBrainz requires that a client does not query the server more
 # than once a second. This function enforces that limit using a
@@ -153,7 +168,14 @@ def release_dict(release, tracks=None):
            'artist':    release.artist.name,
            'artist_id': release.artist.id.rsplit('/', 1)[1],
            'asin':      release.asin,
+           'albumtype': '',
           }
+
+    # Release type not always populated.
+    for type in release.types:
+        if type in RELEASE_TYPES:
+            out['albumtype'] = type.split('#')[1].lower()
+            break
 
     # Release date.
     try:
@@ -176,6 +198,11 @@ def release_dict(release, tracks=None):
         for track in tracks:
             t = {'title': track.title,
                  'id': track.id.rsplit('/', 1)[1]}
+            if track.artist is not None:
+                # Track artists will only be present for releases with
+                # multiple artists.
+                t['artist'] = track.artist.name
+                t['artist_id'] = track.artist.id.rsplit('/', 1)[1]
             if track.duration is not None:
                 # Duration not always present.
                 t['length'] = track.duration/(1000.0)

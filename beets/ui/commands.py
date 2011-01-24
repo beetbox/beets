@@ -265,7 +265,7 @@ def _reopen_lib(lib):
         return library.Library(
             lib.path,
             lib.directory,
-            lib.path_format,
+            lib.path_formats,
             lib.art_filename,
         )
     else:
@@ -482,7 +482,7 @@ def apply_choices(lib, copy, write, art, delete):
                 artpath = beets.autotag.art.art_for_album(info)
                 if artpath:
                     albuminfo.set_art(artpath)
-
+            
             # Write the database after each album.
             lib.save()
 

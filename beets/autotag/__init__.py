@@ -20,6 +20,7 @@ from collections import defaultdict
 from beets.autotag import mb
 import re
 from munkres import Munkres
+from musicbrainz2.model import VARIOUS_ARTISTS_ID
 from beets import library, mediafile, plugins
 import logging
 
@@ -71,6 +72,8 @@ SD_PATTERNS = [
     (r'\[.*?\]', 0.3),
     (r'(, )?(pt\.|part) .+', 0.2),
 ]
+
+VARIOUS_ARTISTS_ID = VARIOUS_ARTISTS_ID.rsplit('/', 1)[1]
 
 # Autotagging exceptions.
 class AutotagError(Exception):
@@ -350,9 +353,13 @@ def apply_metadata(items, info):
     """Set the items' metadata to match the data given in info. The
     list of items must be ordered.
     """
-    for index, (item, track_data) in enumerate(zip(items,  info['tracks'])):
+    for index, (item, track_data) in enumerate(zip(items, info['tracks'])):
         # Album, artist, track count.
-        item.artist = info['artist']
+        if 'artist' in track_data:
+            item.artist = track_data['artist']
+        else:
+            item.artist = info['artist']
+        item.album_artist = info['artist']
         item.album = info['album']
         item.tracktotal = len(items)
         
@@ -371,7 +378,15 @@ def apply_metadata(items, info):
         # MusicBrainz IDs.
         item.mb_trackid = track_data['id']
         item.mb_albumid = info['album_id']
-        item.mb_artistid = info['artist_id']
+        if 'artist_id' in track_data:
+            item.mb_artistid = track_data['artist_id']
+        else:
+            item.mb_artistid = info['artist_id']
+        item.mb_albumartistid = info['artist_id']
+        item.mb_albumtype = info['albumtype']
+        
+        # Compilation flag.
+        item.comp = (info['artist_id'] == VARIOUS_ARTISTS_ID)
 
 def match_by_id(items):
     """If the items are tagged with a MusicBrainz album ID, returns an

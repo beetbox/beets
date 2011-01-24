@@ -60,6 +60,8 @@ class MBReleaseDictTest(unittest.TestCase):
         release = musicbrainz2.model.Release()
         release.title = 'ALBUM TITLE'
         release.id = 'domain/ALBUM ID'
+        release.addType(musicbrainz2.model.Release.TYPE_ALBUM)
+        release.addType(musicbrainz2.model.Release.TYPE_OFFICIAL)
         release.artist = musicbrainz2.model.Artist()
         release.artist.name = 'ARTIST NAME'
         release.artist.id = 'domain/ARTIST ID'
@@ -84,6 +86,7 @@ class MBReleaseDictTest(unittest.TestCase):
         d = mb.release_dict(release)
         self.assertEqual(d['album'], 'ALBUM TITLE')
         self.assertEqual(d['album_id'], 'ALBUM ID')
+        self.assertEqual(d['albumtype'], 'album')
         self.assertEqual(d['artist'], 'ARTIST NAME')
         self.assertEqual(d['artist_id'], 'ARTIST ID')
         self.assertEqual(d['year'], 1984)

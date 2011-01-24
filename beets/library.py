@@ -38,26 +38,29 @@ ITEM_FIELDS = [
     ('path',        'blob', False, False),
     ('album_id',    'int',  False, False),
 
-    ('title',       'text', True,  True),
-    ('artist',      'text', True,  True),
-    ('album',       'text', True,  True),
-    ('genre',       'text', True,  True),
-    ('composer',    'text', True,  True),
-    ('grouping',    'text', True,  True),
-    ('year',        'int',  True,  True),
-    ('month',       'int',  True,  True),
-    ('day',         'int',  True,  True),
-    ('track',       'int',  True,  True),
-    ('tracktotal',  'int',  True,  True),
-    ('disc',        'int',  True,  True),
-    ('disctotal',   'int',  True,  True),
-    ('lyrics',      'text', True,  True),
-    ('comments',    'text', True,  True),
-    ('bpm',         'int',  True,  True),
-    ('comp',        'bool', True,  True),
-    ('mb_trackid',  'text', True,  True),
-    ('mb_albumid',  'text', True,  True),
-    ('mb_artistid', 'text', True,  True),
+    ('title',            'text', True,  True),
+    ('artist',           'text', True,  True),
+    ('album',            'text', True,  True),
+    ('album_artist',     'text', True,  True),
+    ('genre',            'text', True,  True),
+    ('composer',         'text', True,  True),
+    ('grouping',         'text', True,  True),
+    ('year',             'int',  True,  True),
+    ('month',            'int',  True,  True),
+    ('day',              'int',  True,  True),
+    ('track',            'int',  True,  True),
+    ('tracktotal',       'int',  True,  True),
+    ('disc',             'int',  True,  True),
+    ('disctotal',        'int',  True,  True),
+    ('lyrics',           'text', True,  True),
+    ('comments',         'text', True,  True),
+    ('bpm',              'int',  True,  True),
+    ('comp',             'bool', True,  True),
+    ('mb_trackid',       'text', True,  True),
+    ('mb_albumid',       'text', True,  True),
+    ('mb_artistid',      'text', True,  True),
+    ('mb_albumartistid', 'text', True,  True),
+    ('mb_albumtype',     'text', True,  True),
 
     ('length',      'real', False, True),
     ('bitrate',     'int',  False, True),
@@ -68,31 +71,38 @@ ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
 ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 
 # Database fields for the "albums" table.
-# The third entry in each tuple indicates whether the field reflects an
-# identically-named field in the items table.
+# The third entry in each tuple indicates whether the field reflects a
+# field in the items table.
 ALBUM_FIELDS = [
-    ('id', 'integer primary key', False),
-    ('artpath', 'blob', False),
+    ('id',      'integer primary key', False),
+    ('artpath', 'blob',                False),
 
-    ('artist',      'text', True),
-    ('album',       'text', True),
-    ('genre',       'text', True),
-    ('year',        'int',  True),
-    ('month',       'int',  True),
-    ('day',         'int',  True),
-    ('tracktotal',  'int',  True),
-    ('disctotal',   'int',  True),
-    ('comp',        'bool', True),
-    ('mb_albumid',  'text', True),
-    ('mb_artistid', 'text', True),
+    ('artist',       'text', True),
+    ('album',        'text', True),
+    ('genre',        'text', True),
+    ('year',         'int',  True),
+    ('month',        'int',  True),
+    ('day',          'int',  True),
+    ('tracktotal',   'int',  True),
+    ('disctotal',    'int',  True),
+    ('comp',         'bool', True),
+    ('mb_albumid',   'text', True),
+    ('mb_artistid',  'text', True),
+    ('mb_albumtype', 'text', True),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
+# Mapping between album field names and item field names, where they
+# differ.
+ALBUM_KEYS_ITEM_MAP = {
+    'artist': 'album_artist',
+    'mb_artistid': 'mb_albumartistid',
+}
 
 # Default search fields for various granularities.
 ARTIST_DEFAULT_FIELDS = ('artist',)
 ALBUM_DEFAULT_FIELDS = ARTIST_DEFAULT_FIELDS + ('album', 'genre')
-ITEM_DEFAULT_FIELDS = ALBUM_DEFAULT_FIELDS + ('title', 'comments')
+ITEM_DEFAULT_FIELDS = ALBUM_DEFAULT_FIELDS + ('album_artist', 'title', 'comments')
 
 # Logger.
 log = logging.getLogger('beets')
@@ -708,7 +718,7 @@ class BaseLibrary(object):
             item = specimens[k]
             record = {}
             for key in ALBUM_KEYS_ITEM:
-                record[key] = getattr(item, key)
+                record[key] = getattr(item, ALBUM_KEYS_ITEM_MAP.get(key, key))
             yield BaseAlbum(self, record)
 
     def items(self, artist=None, album=None, title=None, query=None):
@@ -762,10 +772,10 @@ class BaseAlbum(object):
             self._record[key] = value
             # Modify items.
             if key in ALBUM_KEYS_ITEM:
-                items = self._library.items(artist=self.artist,
+                items = self._library.items(album_artist=self.artist,
                                             album=self.album)
                 for item in items:
-                    setattr(item, key, value)
+                    setattr(item, ALBUM_KEYS_ITEM_MAP.get(key, key), value)
                 self._library.store(item)
         else:
             object.__setattr__(self, key, value)
@@ -776,7 +786,7 @@ class BaseAlbum(object):
         items = self._library.items(artist=self.artist, album=self.album)
         item = iter(items).next()
         for key in ALBUM_KEYS_ITEM:
-            self._record[key] = getattr(item, key)
+            self._record[key] = getattr(item, ALBUM_KEYS_ITEM_MAP.get(key, key))
 
 
 # Concrete DB-backed library.
@@ -785,13 +795,17 @@ class Library(BaseLibrary):
     """A music library using an SQLite database as a metadata store."""
     def __init__(self, path='library.blb',
                        directory='~/Music',
-                       path_format='$artist/$album/$track $title',
+                       path_formats=None,
                        art_filename='cover',
                        item_fields=ITEM_FIELDS,
                        album_fields=ALBUM_FIELDS):
         self.path = _bytestring_path(path)
         self.directory = _bytestring_path(directory)
-        self.path_format = path_format
+        if path_formats is None:
+            path_formats = {'default': '$artist/$album/$track $title'}
+        elif isinstance(path_formats, basestring):
+            path_formats = {'default': path_formats}
+        self.path_formats = path_formats
         self.art_filename = _bytestring_path(art_filename)
         
         self.conn = sqlite3.connect(self.path)
@@ -836,13 +850,34 @@ class Library(BaseLibrary):
         
         self.conn.executescript(setup_sql)
         self.conn.commit()
+    
+    def _sanitize_for_path(self, value, pathmod, key=None):
+        """Sanitize the value for inclusion in a path: replace separators
+        with _, etc.
+        """
+        if isinstance(value, basestring):
+            for sep in (pathmod.sep, pathmod.altsep):
+                if sep:
+                    value = value.replace(sep, '_')
+        elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
+            # pad with zeros
+            value = '%02i' % value
+        else:
+            value = str(value)
+        return value
 
     def destination(self, item, pathmod=None):
         """Returns the path in the library directory designated for item
         item (i.e., where the file ought to be).
         """
         pathmod = pathmod or os.path
-        subpath_tmpl = Template(self.path_format)
+        
+        # Use a path format based on the album type, if available.
+        if item.comp and 'comp' in self.path_formats:
+            path_format = self.path_formats['comp']
+        else:
+            path_format = self.path_formats['default']
+        subpath_tmpl = Template(path_format)
         
         # Get the item's Album if it has one.
         album = self.get_album(item)
@@ -858,19 +893,11 @@ class Library(BaseLibrary):
             else:
                 # From Item.
                 value = getattr(item, key)
-
-            # Sanitize the value for inclusion in a path: replace
-            # separators with _, etc.
-            if isinstance(value, basestring):
-                for sep in (pathmod.sep, pathmod.altsep):
-                    if sep:
-                        value = value.replace(sep, '_')
-            elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
-                # pad with zeros
-                value = '%02i' % value
-            else:
-                value = str(value)
-            mapping[key] = value
+            mapping[key] = self._sanitize_for_path(value, pathmod, key)
+        
+        # Use the track's artist if it differs
+        if album is not None and item.artist != album.artist:
+            mapping['artist'] = self._sanitize_for_path(item.artist, pathmod)
         
         # Perform substitution.
         subpath = subpath_tmpl.substitute(mapping)
@@ -1058,7 +1085,8 @@ class Library(BaseLibrary):
         sql = 'INSERT INTO albums (%s) VALUES (%s)' % \
               (', '.join(ALBUM_KEYS_ITEM),
                ', '.join(['?'] * len(ALBUM_KEYS_ITEM)))
-        subvals = [getattr(items[0], key) for key in ALBUM_KEYS_ITEM]
+        subvals = [getattr(items[0], ALBUM_KEYS_ITEM_MAP.get(key, key))
+                   for key in ALBUM_KEYS_ITEM]
         c = self.conn.execute(sql, subvals)
         album_id = c.lastrowid
 
@@ -1066,7 +1094,8 @@ class Library(BaseLibrary):
         record = {}
         for key in ALBUM_KEYS:
             if key in ALBUM_KEYS_ITEM:
-                record[key] = getattr(items[0], key)
+                record[key] = getattr(items[0],
+                                      ALBUM_KEYS_ITEM_MAP.get(key, key))
             else:
                 # Non-item fields default to None.
                 record[key] = None
@@ -1118,7 +1147,7 @@ class Album(BaseAlbum):
             # Possibly make modification on items as well.
             if key in ALBUM_KEYS_ITEM:
                 for item in self.items():
-                    setattr(item, key, value)
+                    setattr(item, ALBUM_KEYS_ITEM_MAP.get(key, key), value)
                     self._library.store(item)
 
         else:

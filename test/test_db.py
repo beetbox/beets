@@ -28,31 +28,33 @@ def lib(): return beets.library.Library('rsrc' + os.sep + 'test.blb')
 def boracay(l): return beets.library.Item(l.conn.execute('select * from items '
     'where id=3').fetchone())
 def item(): return beets.library.Item({
-    'title':       u'the title',
-    'artist':      u'the artist',
-    'album':       u'the album',
-    'genre':       u'the genre',
-    'composer':    u'the composer',
-    'grouping':    u'the grouping',
-    'year':        1,
-    'month':       2,
-    'day':         3,
-    'track':       4,
-    'tracktotal':  5,
-    'disc':        6,
-    'disctotal':   7,
-    'lyrics':      u'the lyrics',
-    'comments':    u'the comments',
-    'bpm':         8,
-    'comp':        True,
-    'path':        'somepath',
-    'length':      60.0,
-    'bitrate':     128000,
-    'format':      'FLAC',
-    'mb_trackid':  'someID-1',
-    'mb_albumid':  'someID-2',
-    'mb_artistid': 'someID-3',
-    'album_id':    None,
+    'title':            u'the title',
+    'artist':           u'the artist',
+    'album_artist':     u'the album artist',
+    'album':            u'the album',
+    'genre':            u'the genre',
+    'composer':         u'the composer',
+    'grouping':         u'the grouping',
+    'year':             1,
+    'month':            2,
+    'day':              3,
+    'track':            4,
+    'tracktotal':       5,
+    'disc':             6,
+    'disctotal':        7,
+    'lyrics':           u'the lyrics',
+    'comments':         u'the comments',
+    'bpm':              8,
+    'comp':             True,
+    'path':             'somepath',
+    'length':           60.0,
+    'bitrate':          128000,
+    'format':           'FLAC',
+    'mb_trackid':       'someID-1',
+    'mb_albumid':       'someID-2',
+    'mb_artistid':      'someID-3',
+    'mb_albumartistid': 'someID-4',
+    'album_id':         None,
 })
 np = beets.library._normpath
 
@@ -161,17 +163,17 @@ class DestinationTest(unittest.TestCase):
     
     def test_directory_works_with_trailing_slash(self):
         self.lib.directory = 'one/'
-        self.lib.path_format = 'two'
+        self.lib.path_formats = {'default': 'two'}
         self.assertEqual(self.lib.destination(self.i), np('one/two'))
     
     def test_directory_works_without_trailing_slash(self):
         self.lib.directory = 'one'
-        self.lib.path_format = 'two'
+        self.lib.path_formats = {'default': 'two'}
         self.assertEqual(self.lib.destination(self.i), np('one/two'))
     
     def test_destination_substitues_metadata_values(self):
         self.lib.directory = 'base'
-        self.lib.path_format = '$album/$artist $title'
+        self.lib.path_formats = {'default': '$album/$artist $title'}
         self.i.title = 'three'
         self.i.artist = 'two'
         self.i.album = 'one'
@@ -180,15 +182,15 @@ class DestinationTest(unittest.TestCase):
     
     def test_destination_preserves_extension(self):
         self.lib.directory = 'base'
-        self.lib.path_format = '$title'
+        self.lib.path_formats = {'default': '$title'}
         self.i.path = 'hey.audioFormat'
         self.assertEqual(self.lib.destination(self.i),
                          np('base/the title.audioFormat'))
     
     def test_destination_pads_some_indices(self):
         self.lib.directory = 'base'
-        self.lib.path_format = '$track $tracktotal ' \
-            '$disc $disctotal $bpm $year'
+        self.lib.path_formats = {'default': '$track $tracktotal ' \
+            '$disc $disctotal $bpm $year'}
         self.i.track = 1
         self.i.tracktotal = 2
         self.i.disc = 3
@@ -260,7 +262,7 @@ class DestinationTest(unittest.TestCase):
         self.assertEqual(p, u'-')
     
     def test_path_with_format(self):
-        self.lib.path_format = '$artist/$album ($format)'
+        self.lib.path_formats = {'default': '$artist/$album ($format)'}
         p = self.lib.destination(self.i)
         self.assert_('(FLAC)' in p)
 
@@ -268,9 +270,16 @@ class DestinationTest(unittest.TestCase):
         i1, i2 = item(), item()
         self.lib.add_album([i1, i2])
         i1.year, i2.year = 2009, 2010
-        self.lib.path_format = '$album ($year)/$track $title'
+        self.lib.path_formats = {'default': '$album ($year)/$track $title'}
         dest1, dest2 = self.lib.destination(i1), self.lib.destination(i2)
         self.assertEqual(os.path.dirname(dest1), os.path.dirname(dest2))
+    
+    def test_comp_path(self):
+        self.i.comp = True
+        self.lib.directory = 'one'
+        self.lib.path_formats = {'default': 'two',
+                                 'comp': 'three'}
+        self.assertEqual(self.lib.destination(self.i), np('one/three'))
 
     def test_syspath_windows_format(self):
         path = ntpath.join('a', 'b', 'c')
@@ -370,7 +379,8 @@ class AlbumInfoTest(unittest.TestCase):
 
     def test_albuminfo_reflects_metadata(self):
         ai = self.lib.get_album(self.i)
-        self.assertEqual(ai.artist, self.i.artist)
+        self.assertEqual(ai.mb_artistid, self.i.mb_albumartistid)
+        self.assertEqual(ai.artist, self.i.album_artist)
         self.assertEqual(ai.album, self.i.album)
         self.assertEqual(ai.year, self.i.year)
 
@@ -522,7 +532,6 @@ class PathStringTest(unittest.TestCase):
         )
         alb = self.lib.get_album(alb.id)
         self.assert_(isinstance(alb.artpath, str))
-
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

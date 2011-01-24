@@ -657,8 +657,17 @@ class MediaFile(object):
                                     as_type = bool), 
                 etc = StorageStyle('compilation')
             )
-    
-    # MusicBrainz IDs.
+
+    # Album Artist
+    album_artist = MediaField(
+                mp3 = StorageStyle('TXXX', id3_desc='Album Artist'),
+                mp4 = StorageStyle(
+                    '----:com.apple.iTunes:Album Artist',
+                    as_type=str),
+                etc = StorageStyle('album_artist')
+            )
+
+    # MusicBrainz fields
     mb_trackid = MediaField(
                 mp3 = StorageStyle('UFID:http://musicbrainz.org',
                                    list_elem = False),
@@ -673,14 +682,28 @@ class MediaFile(object):
                     '----:com.apple.iTunes:MusicBrainz Album Id',
                     as_type=str),
                 etc = StorageStyle('musicbrainz_albumid')
-    )
+            )
     mb_artistid = MediaField(
                 mp3 = StorageStyle('TXXX', id3_desc='MusicBrainz Artist Id'),
                 mp4 = StorageStyle(
                     '----:com.apple.iTunes:MusicBrainz Artist Id',
                     as_type=str),
                 etc = StorageStyle('musicbrainz_artistid')
-    )
+            )
+    mb_albumartistid = MediaField(
+                mp3 = StorageStyle('TXXX', id3_desc='MusicBrainz Album Artist Id'),
+                mp4 = StorageStyle(
+                    '----:com.apple.iTunes:MusicBrainz Album Artist Id',
+                    as_type=str),
+                etc = StorageStyle('musicbrainz_albumartistid')
+            )
+    mb_albumtype = MediaField(
+                mp3 = StorageStyle('TXXX', id3_desc='MusicBrainz Album Type'),
+                mp4 = StorageStyle(
+                    '----:com.apple.iTunes:MusicBrainz Album Type',
+                    as_type=str),
+                etc = StorageStyle('musicbrainz_albumtype')
+            )
 
     @property
     def length(self):

@@ -203,6 +203,7 @@ class ApplyTest(unittest.TestCase):
             'album':  'albumNew',
             'album_id': '7edb51cb-77d6-4416-a23c-3a8c2994a2c7',
             'artist_id': 'a6623d39-2d8e-4f70-8242-0a9553b91e50',
+            'albumtype': 'album',
         }
     
     def test_titles_applied(self):
@@ -241,6 +242,87 @@ class ApplyTest(unittest.TestCase):
                              '7edb51cb-77d6-4416-a23c-3a8c2994a2c7')
             self.assertEqual(item.mb_artistid,
                              'a6623d39-2d8e-4f70-8242-0a9553b91e50')
+
+    def test_comp_flag(self):
+        autotag.apply_metadata(self.items, self.info)
+        self.assertEqual(self.items[0].mb_albumtype, 'album')
+        self.assertEqual(self.items[1].mb_albumtype, 'album')
+        self.assertFalse(self.items[0].comp)
+        self.assertFalse(self.items[1].comp)
+
+class ApplyCompilationTest(unittest.TestCase):
+    def setUp(self):
+        self.items = []
+        self.items.append(Item({}))
+        self.items.append(Item({}))
+        trackinfo = []
+        trackinfo.append({
+            'title': 'oneNew',
+            'id':    'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
+            'artist': 'artistOneNew',
+            'artist_id': 'a05686fc-9db2-4c23-b99e-77f5db3e5282',
+        })
+        trackinfo.append({
+            'title':  'twoNew',
+            'id':     '40130ed1-a27c-42fd-a328-1ebefb6caef4',
+            'artist': 'artistTwoNew',
+            'artist_id': '80b3cf5e-18fe-4c59-98c7-e5bb87210710',
+        })
+        self.info = {
+            'tracks': trackinfo,
+            'artist': 'variousNew',
+            'album':  'albumNew',
+            'album_id': '3b69ea40-39b8-487f-8818-04b6eff8c21a',
+            'artist_id': '89ad4ac3-39f7-470e-963a-56509c546377',
+            'albumtype': 'compilation',
+        }
+
+    def test_titles_applied(self):
+        autotag.apply_metadata(self.items, self.info)
+        self.assertEqual(self.items[0].title, 'oneNew')
+        self.assertEqual(self.items[1].title, 'twoNew')
+
+    def test_album_and_artist_applied_to_all(self):
+        autotag.apply_metadata(self.items, self.info)
+        self.assertEqual(self.items[0].album, 'albumNew')
+        self.assertEqual(self.items[1].album, 'albumNew')
+        self.assertEqual(self.items[0].album_artist, 'variousNew')
+        self.assertEqual(self.items[1].album_artist, 'variousNew')
+        self.assertEqual(self.items[0].artist, 'artistOneNew')
+        self.assertEqual(self.items[1].artist, 'artistTwoNew')
+
+    def test_track_index_applied(self):
+        autotag.apply_metadata(self.items, self.info)
+        self.assertEqual(self.items[0].track, 1)
+        self.assertEqual(self.items[1].track, 2)
+
+    def test_track_total_applied(self):
+        autotag.apply_metadata(self.items, self.info)
+        self.assertEqual(self.items[0].tracktotal, 2)
+        self.assertEqual(self.items[1].tracktotal, 2)
+
+    def test_mb_trackid_applied(self):
+        autotag.apply_metadata(self.items, self.info)
+        self.assertEqual(self.items[0].mb_trackid,
+                         'dfa939ec-118c-4d0f-84a0-60f3d1e6522c')
+        self.assertEqual(self.items[1].mb_trackid,
+                         '40130ed1-a27c-42fd-a328-1ebefb6caef4')
+
+    def test_mb_albumid_and_artistid_applied(self):
+        autotag.apply_metadata(self.items, self.info)
+        self.assertEqual(self.items[0].mb_albumid, '3b69ea40-39b8-487f-8818-04b6eff8c21a')
+        self.assertEqual(self.items[1].mb_albumid, '3b69ea40-39b8-487f-8818-04b6eff8c21a')
+        self.assertEqual(self.items[0].mb_albumartistid, '89ad4ac3-39f7-470e-963a-56509c546377')
+        self.assertEqual(self.items[1].mb_albumartistid, '89ad4ac3-39f7-470e-963a-56509c546377')
+        self.assertEqual(self.items[0].mb_artistid, 'a05686fc-9db2-4c23-b99e-77f5db3e5282')
+        self.assertEqual(self.items[1].mb_artistid, '80b3cf5e-18fe-4c59-98c7-e5bb87210710')
+
+    def test_comp_flag(self):
+        autotag.apply_metadata(self.items, self.info)
+        self.assertEqual(self.items[0].mb_albumtype, 'compilation')
+        self.assertEqual(self.items[1].mb_albumtype, 'compilation')
+        self.assertTrue(self.items[0].comp)
+        self.assertTrue(self.items[1].comp)
 
 class StringDistanceTest(unittest.TestCase):
     def test_equal_strings(self):

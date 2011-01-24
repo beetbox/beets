@@ -436,13 +436,20 @@ def main():
         config_val(config, 'beets', 'library', DEFAULT_LIBRARY)
     directory = options.directory or \
         config_val(config, 'beets', 'directory', DEFAULT_DIRECTORY)
-    path_format = options.path_format or \
-        config_val(config, 'beets', 'path_format', DEFAULT_PATH_FORMAT)
+    if options.path_format:
+        # If given, -p overrides all path format settings
+        path_formats = {'default': options.path_format}
+    else:
+        path_formats = {
+            'default': config_val(config, 'beets', 'path_format', DEFAULT_PATH_FORMAT)
+        }
+        if config.has_section('paths'):
+            path_formats.update(config.items('paths'))
     art_filename = \
         config_val(config, 'beets', 'art_filename', DEFAULT_ART_FILENAME)
     lib = library.Library(os.path.expanduser(libpath),
                           directory,
-                          path_format,
+                          path_formats,
                           art_filename)
     
     # Configure the logger.
