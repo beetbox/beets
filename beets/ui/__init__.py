@@ -398,14 +398,17 @@ class SubcommandsOptionParser(optparse.OptionParser):
 
 # The root parser and its main function.
 
-def main():
+def main(args=None, configfh=None):
     """Run the main command-line interface for beets."""
     # Get the default subcommands.
     from beets.ui.commands import default_commands
 
     # Read defaults from config file.
     config = ConfigParser.SafeConfigParser()
-    config.read(CONFIG_FILE)
+    if configfh:
+        config.readfp(configfh)
+    else:
+        config.read(CONFIG_FILE)
 
     # Add plugin paths.
     plugpaths = config_val(config, 'beets', 'pluginpath', '')
@@ -432,18 +435,24 @@ def main():
                       help='print debugging information')
     
     # Parse the command-line!
-    options, subcommand, suboptions, subargs = parser.parse_args()
+    options, subcommand, suboptions, subargs = parser.parse_args(args)
     
     # Open library file.
     libpath = options.libpath or \
         config_val(config, 'beets', 'library', DEFAULT_LIBRARY)
     directory = options.directory or \
         config_val(config, 'beets', 'directory', DEFAULT_DIRECTORY)
+    legacy_path_format = config_val(config, 'beets', 'path_format', None)
     if options.path_format:
         # If given, -p overrides all path format settings
         path_formats = {'default': options.path_format}
     else:
-        path_formats = DEFAULT_PATH_FORMATS
+        if legacy_path_format:
+            # Old path formats override the default values.
+            path_formats = {'default': legacy_path_format}
+        else:
+            # If no legacy path format, use the defaults instead.
+            path_formats = DEFAULT_PATH_FORMATS
         if config.has_section('paths'):
             path_formats.update(config.items('paths'))
     art_filename = \

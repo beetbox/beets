@@ -18,6 +18,8 @@
 import unittest
 import sys
 import os
+import textwrap
+from StringIO import StringIO
 import _common
 sys.path.append('..')
 from beets import library
@@ -147,6 +149,46 @@ class InputTest(unittest.TestCase):
         self.assertEqual(artist, u'\xc2me')
         self.assertEqual(album, u'\xc2me')
 
+class ConfigTest(unittest.TestCase):
+    def setUp(self):
+        self.test_cmd = ui.Subcommand('test', help='test')
+        commands.default_commands.append(self.test_cmd)
+    def tearDown(self):
+        commands.default_commands.pop()
+    def _run_main(self, args, config, func):
+        self.test_cmd.func = func
+        ui.main(args + ['test'], StringIO(config))
+
+    def test_paths_section_respected(self):
+        def func(lib, config, opts, args):
+            self.assertEqual(lib.path_formats['x'], 'y')
+        self._run_main([], textwrap.dedent("""
+            [paths]
+            x=y"""), func)
+
+    def test_default_paths_preserved(self):
+        def func(lib, config, opts, args):
+            self.assertEqual(lib.path_formats['default'],
+                             ui.DEFAULT_PATH_FORMATS['default'])
+        self._run_main([], textwrap.dedent("""
+            [paths]
+            x=y"""), func)
+
+    def test_default_paths_overriden_by_legacy_path_format(self):
+        def func(lib, config, opts, args):
+            self.assertEqual(lib.path_formats['default'], 'x')
+            self.assertEqual(len(lib.path_formats), 1)
+        self._run_main([], textwrap.dedent("""
+            [beets]
+            path_format=x"""), func)
+
+    def test_paths_section_overriden_by_cli_switch(self):
+        def func(lib, config, opts, args):
+            self.assertEqual(lib.path_formats['default'], 'z')
+            self.assertEqual(len(lib.path_formats), 1)
+        self._run_main(['-p', 'z'], textwrap.dedent("""
+            [paths]
+            x=y"""), func)
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

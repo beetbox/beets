@@ -489,6 +489,19 @@ class AlbumInfoTest(unittest.TestCase):
         i = self.lib.items().next()
         self.assertEqual(i.album, 'myNewAlbum')
 
+    def test_albuminfo_change_albumartist_changes_items(self):
+        ai = self.lib.get_album(self.i)
+        ai.albumartist = 'myNewArtist'
+        i = self.lib.items().next()
+        self.assertEqual(i.albumartist, 'myNewArtist')
+        self.assertNotEqual(i.artist, 'myNewArtist')
+
+    def test_albuminfo_change_artist_does_not_change_items(self):
+        ai = self.lib.get_album(self.i)
+        ai.artist = 'myNewArtist'
+        i = self.lib.items().next()
+        self.assertNotEqual(i.artist, 'myNewArtist')
+
     def test_albuminfo_remove_removes_items(self):
         item_id = self.i.id
         self.lib.get_album(self.i).remove()

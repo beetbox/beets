@@ -86,10 +86,14 @@ class MBReleaseDictTest(unittest.TestCase):
         d = mb.release_dict(release)
         self.assertEqual(d['album'], 'ALBUM TITLE')
         self.assertEqual(d['album_id'], 'ALBUM ID')
-        self.assertEqual(d['albumtype'], 'album')
         self.assertEqual(d['artist'], 'ARTIST NAME')
         self.assertEqual(d['artist_id'], 'ARTIST ID')
         self.assertEqual(d['year'], 1984)
+
+    def test_parse_release_type(self):
+        release = self._make_release('1984')
+        d = mb.release_dict(release)
+        self.assertEqual(d['albumtype'], 'album')
 
     def test_parse_release_full_date(self):
         release = self._make_release('1987-03-31')
