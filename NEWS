@@ -13,6 +13,8 @@
   default path formats have been changed to use $albumartist instead
   of $artist. More information about this change is available on the
   wiki.
+* A new "albumtype" field reflects the release type as specified by
+  MusicBrainz: http://wiki.musicbrainz.org/ReleaseType
 * Fix a bug where some files would be erroneously interpreted as MP4.
 * Fix permission bits applied to album art files.
 * The old "albumify" plugin for upgrading databases was removed.

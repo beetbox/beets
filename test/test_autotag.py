@@ -249,6 +249,22 @@ class ApplyTest(unittest.TestCase):
         self.assertEqual(self.items[0].albumtype, 'album')
         self.assertEqual(self.items[1].albumtype, 'album')
 
+    def test_album_artist_overrides_empty_track_artist(self):
+        my_info = dict(self.info)
+        my_info['tracks'] = [dict(t) for t in self.info['tracks']]
+        autotag.apply_metadata(self.items, my_info)
+        self.assertEqual(self.items[0].artist, 'artistNew')
+        self.assertEqual(self.items[0].artist, 'artistNew')
+
+    def test_album_artist_overriden_by_nonempty_track_artist(self):
+        my_info = dict(self.info)
+        my_info['tracks'] = [dict(t) for t in self.info['tracks']]
+        my_info['tracks'][0]['artist'] = 'artist1!'
+        my_info['tracks'][1]['artist'] = 'artist2!'
+        autotag.apply_metadata(self.items, my_info)
+        self.assertEqual(self.items[0].artist, 'artist1!')
+        self.assertEqual(self.items[1].artist, 'artist2!')
+
 class ApplyCompilationTest(unittest.TestCase):
     def setUp(self):
         self.items = []
