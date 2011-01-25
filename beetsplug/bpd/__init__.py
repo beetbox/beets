@@ -845,7 +845,7 @@ class Server(BaseServer):
         # albums
         if not album:
             for a in self.lib.albums(artist or None):
-                parts = a.artist, a.album
+                parts = a.albumartist, a.album
                 yield u'directory: ' + seq_to_path(parts, PATH_PH)
 
         # tracks
