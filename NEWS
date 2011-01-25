@@ -1,7 +1,21 @@
 1.0b7
 -----
+* "Various artists" releases are handled much more gracefully. The
+  autotagger now sets the "comp" flag on albums whenever the album is
+  identified as a "various artists" release by MusicBrainz. Also,
+  there is now a distinction between the "album artist" and the "track
+  artist", the latter of which is never "Various Artists" or other such
+  bogus stand-in.
+* The directory hierarchy can now be customized based on release type.
+  In particular, the "path_format" setting in .beetsconfig has been
+  replaced with a new [paths] section, which allows you to specify
+  different path formats for normal and "compilation" releases. The
+  default path formats have been changed to use $albumartist instead
+  of $artist. More information about this change is available on the
+  wiki.
 * Fix a bug where some files would be erroneously interpreted as MP4.
 * Fix permission bits applied to album art files.
+* The old "albumify" plugin for upgrading databases was removed.
 
 1.0b6
 -----
