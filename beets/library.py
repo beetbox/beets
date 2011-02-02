@@ -766,8 +766,10 @@ class BaseAlbum(object):
     album-level metadata or use distinct backing stores.
     """
     def __init__(self, library, record):
-        self._library = library
-        self._record = record
+        # Need to use object.__setattr__ here, since we're overriding
+        # it for this class
+        object.__setattr__(self, '_library', library)
+        object.__setattr__(self, '_record', record)
 
     def __getattr__(self, key):
         """Get the value for an album attribute."""
