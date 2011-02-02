@@ -466,7 +466,7 @@ def apply_choices(lib, copy, write, art, delete):
             if info is not CHOICE_ASIS:
                 autotag.apply_metadata(items, info)
             if copy and delete:
-                old_paths = [item.path for item in items]
+                old_paths = [os.path.realpath(item.path) for item in items]
             for item in items:
                 if copy:
                     item.move(lib, True)
@@ -488,8 +488,11 @@ def apply_choices(lib, copy, write, art, delete):
 
             # Finally, delete old files.
             if copy and delete:
+                new_paths = [os.path.realpath(item.path) for item in items]
                 for old_path in old_paths:
-                    os.remove(library._syspath(old_path))
+                    if old_path not in new_paths:
+                        os.remove(library._syspath(old_path))
+                        os.remove(library._syspath(old_path))
 
         # Update progress.
         progress_set(toppath, path)
@@ -506,7 +509,7 @@ def simple_import(lib, paths, copy, delete):
 
         if copy:
             if delete:
-                old_paths = [item.path for item in items]
+                old_paths = [os.path.realpath(item.path) for item in items]
             for item in items:
                 item.move(lib, True)
 
@@ -515,8 +518,12 @@ def simple_import(lib, paths, copy, delete):
         progress_set(toppath, path)
 
         if copy and delete:
+            new_paths = [os.path.realpath(item.path) for item in items]
             for old_path in old_paths:
-                os.remove(library._syspath(old_path))
+                # Only delete the path if it isn't a file we just created.
+                if old_path not in new_paths:
+                    os.remove(library._syspath(old_path))
+
 
         log.info('added album: %s - %s' % (album.artist, album.album))
 
