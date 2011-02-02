@@ -525,7 +525,7 @@ def simple_import(lib, paths, copy, delete):
                     os.remove(library._syspath(old_path))
 
 
-        log.info('added album: %s - %s' % (album.artist, album.album))
+        log.info('added album: %s - %s' % (album.albumartist, album.album))
 
 # The import command.
 
