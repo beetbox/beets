@@ -508,6 +508,15 @@ class AlbumInfoTest(unittest.TestCase):
         c = self.lib.conn.execute('SELECT id FROM items WHERE id=?', (item_id,))
         self.assertEqual(c.fetchone(), None)
 
+class BaseAlbumTest(unittest.TestCase):
+    def test_field_access(self):
+        album = beets.library.BaseAlbum(None, {'fld1':'foo'})
+        self.assertEqual(album.fld1, 'foo')
+
+    def test_field_access_unset_values(self):
+        album = beets.library.BaseAlbum(None, {})
+        self.assertRaises(AttributeError, getattr, album, 'field')
+
 class ArtDestinationTest(unittest.TestCase):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
