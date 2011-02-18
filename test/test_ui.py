@@ -18,6 +18,7 @@
 import unittest
 import sys
 import os
+import shutil
 import textwrap
 from StringIO import StringIO
 import _common
@@ -26,7 +27,85 @@ from beets import library
 from beets import ui
 from beets.ui import commands
 from beets import autotag
+from beets import mediafile
 import test_db
+
+class ImportTest(unittest.TestCase):
+    def setUp(self):
+        self.io = _common.DummyIO()
+        self.io.install()
+
+        self.lib = library.Library(':memory:')
+        self.libdir = os.path.join('rsrc', 'testlibdir')
+        self.lib.directory = self.libdir
+        self.lib.path_formats = {'default': os.path.join('$artist', '$album', '$title')}
+
+        self.srcdir = os.path.join('rsrc', 'testsrcdir')
+
+    def tearDown(self):
+        self.io.restore()
+        if os.path.exists(self.libdir):
+            shutil.rmtree(self.libdir)
+        if os.path.exists(self.srcdir):
+            shutil.rmtree(self.srcdir)
+
+    def create_test_file(self, filepath, metadata):
+        """
+        Creates an mp3 file at the given path within self.srcdir. filepath is
+        given as an array of folder names, ending with the file name. Sets the
+        file's metadata from the provided dict. Returns the full, real path to
+        the file.
+        """
+        realpath = os.path.join(self.srcdir, *filepath)
+        if not os.path.exists(os.path.dirname(realpath)):
+            os.makedirs(os.path.dirname(realpath))
+        realpath = os.path.join(self.srcdir, *filepath)
+        shutil.copy(os.path.join('rsrc', 'full.mp3'), realpath)
+        f = mediafile.MediaFile(realpath)
+        for attr in metadata:
+            setattr(f, attr, metadata[attr])
+        f.save()
+        return realpath
+
+    def test_import_copy_arrives(self):
+        track_names = ['The Opener', 'The Second Track', 'The Last Track']
+
+        for i, title in enumerate(track_names):
+            path = self.create_test_file(['the_album', 'track_%s.mp3' % (i+1)], {
+                'track': (i+1),
+                'artist': 'The Artist',
+                'album': 'The Album',
+                'title': title})
+
+        sources = [os.path.dirname(path)]
+
+        commands.import_files(
+                lib=self.lib,
+                paths=sources,
+                copy=True,
+                write=True,
+                autot=False,
+                logpath=None,
+                art=False,
+                threaded=False,
+                color=False,
+                delete=False,
+                quiet=True)
+
+        albums = self.lib.albums()
+        self.assertEqual(len(albums), 1)
+        self.assertEqual(albums[0].albumartist, 'The Artist')
+
+        artist_folder = os.path.join(self.libdir, 'The Artist')
+        album_folder = os.path.join(artist_folder, 'The Album')
+        self.assertEqual(len(os.listdir(artist_folder)), 1)
+        self.assertEqual(len(os.listdir(album_folder)), 3)
+
+        files = sorted(os.listdir(album_folder))
+        names = sorted(track_names)
+        for file, name in zip(files, names):
+            self.assertEqual(file, name + ".mp3")
+
 
 class ListTest(unittest.TestCase):
     def setUp(self):
