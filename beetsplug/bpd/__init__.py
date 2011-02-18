@@ -823,7 +823,7 @@ class Server(BaseServer):
                 yield u'directory: ' + seq_to_path((artist,), PATH_PH)
         elif album is None: # List all albums for an artist.
             for album in self.lib.albums(artist):
-                parts = (album.artist, album.album)
+                parts = (album.albumartist, album.album)
                 yield u'directory: ' + seq_to_path(parts, PATH_PH)
         elif track is None: # List all tracks on an album.
             for item in self.lib.items(artist, album):
