@@ -311,7 +311,7 @@ def progress_get(toppath):
 # tagging.
 DONE_SENTINEL = '__IMPORT_DONE_SENTINEL__'
 
-def read_albums(paths):
+def read_albums(paths, progress):
     """A generator yielding all the albums (as sets of Items) found in
     the user-specified list of paths.
     """
@@ -322,26 +322,29 @@ def read_albums(paths):
     for path in paths:
         if not os.path.isdir(library._syspath(path)):
             raise ui.UserError('not a directory: ' + path)
+
     # Look for saved progress.
-    resume_dirs = {}
-    for path in paths:
-        resume_dir = progress_get(path)
-        if resume_dir:
-            resume = ui.input_yn("Import of the directory:\n%s"
-                                 "\nwas interrupted. Resume (Y/n)? " %
-                                 path)
-            if resume:
-                resume_dirs[path] = resume_dir
-            else:
-                # Clear progress; we're starting from the top.
-                progress_set(path, None)
-            ui.print_()
+    if progress:
+        resume_dirs = {}
+        for path in paths:
+            resume_dir = progress_get(path)
+            if resume_dir:
+                resume = ui.input_yn("Import of the directory:\n%s"
+                                     "\nwas interrupted. Resume (Y/n)? " %
+                                     path)
+                if resume:
+                    resume_dirs[path] = resume_dir
+                else:
+                    # Clear progress; we're starting from the top.
+                    progress_set(path, None)
+                ui.print_()
     
     for toppath in paths:
         # Produce each path.
-        resume_dir = resume_dirs.get(toppath)
+        if progress:
+            resume_dir = resume_dirs.get(toppath)
         for path, items in autotag.albums_in_dir(os.path.expanduser(toppath)):
-            if resume_dir:
+            if progress and resume_dir:
                 # We're fast-forwarding to resume a previous tagging.
                 if path == resume_dir:
                     # We've hit the last good path! Turn off the
@@ -440,7 +443,7 @@ def user_query(lib, logfile=None, color=True, quiet=False):
         # Yield the result and get the next chunk of work.
         out = toppath, path, items, info
         
-def apply_choices(lib, copy, write, art, delete):
+def apply_choices(lib, copy, write, art, delete, progress):
     """A coroutine for applying changes to albums during the autotag
     process. The parameters to the generator control the behavior of
     the import. The coroutine accepts (items, info) pairs and yields
@@ -454,8 +457,9 @@ def apply_choices(lib, copy, write, art, delete):
 
         # Check for "path finished" message.
         if path is DONE_SENTINEL:
-            # Mark path as complete.
-            progress_set(toppath, None)
+            if progress:
+                # Mark path as complete.
+                progress_set(toppath, None)
             continue
         
         # Only process the items if info is not None (indicating a
@@ -496,15 +500,16 @@ def apply_choices(lib, copy, write, art, delete):
                         os.remove(library._syspath(old_path))
 
         # Update progress.
-        progress_set(toppath, path)
+        if progress:
+            progress_set(toppath, path)
 
 # Non-autotagged import (always sequential).
 
-def simple_import(lib, paths, copy, delete):
+def simple_import(lib, paths, copy, delete, progress):
     """Add files from the paths to the library without changing any
     tags.
     """
-    for toppath, path, items in read_albums(paths):
+    for toppath, path, items in read_albums(paths, progress):
         if items is None:
             continue
 
@@ -516,7 +521,8 @@ def simple_import(lib, paths, copy, delete):
 
         album = lib.add_album(items)
         lib.save()            
-        progress_set(toppath, path)
+        if progress:
+            progress_set(toppath, path)
 
         if copy and delete:
             new_paths = [os.path.realpath(item.path) for item in items]
@@ -530,7 +536,7 @@ def simple_import(lib, paths, copy, delete):
 # The import command.
 
 def import_files(lib, paths, copy, write, autot, logpath,
-                 art, threaded, color, delete, quiet):
+                 art, threaded, color, delete, quiet, progress=True):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
@@ -542,7 +548,8 @@ def import_files(lib, paths, copy, write, autot, logpath,
     ANSI-colorize some terminal output. If delete, then old files are
     deleted when they are copied. If quiet, then the user is
     never prompted for input; instead, the tagger just skips anything
-    it is not confident about.
+    it is not confident about. If progress, then state is saved in
+    case an import is interrupted.
     """
     # Open the log.
     if logpath:
@@ -554,10 +561,10 @@ def import_files(lib, paths, copy, write, autot, logpath,
     if autot:
         # Autotag. Set up the pipeline.
         pl = pipeline.Pipeline([
-            read_albums(paths),
+            read_albums(paths, progress),
             initial_lookup(),
             user_query(lib, logfile, color, quiet),
-            apply_choices(lib, copy, write, art, delete),
+            apply_choices(lib, copy, write, art, delete, progress),
         ])
 
         # Run the pipeline.
@@ -571,7 +578,7 @@ def import_files(lib, paths, copy, write, autot, logpath,
             pass
     else:
         # Simple import without autotagging. Always sequential.
-        simple_import(lib, paths, copy, delete)
+        simple_import(lib, paths, copy, delete, progress)
     
     # If we were logging, close the file.
     if logfile:
