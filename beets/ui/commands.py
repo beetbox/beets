@@ -479,7 +479,7 @@ def apply_choices(lib, copy, write, art, delete, progress):
 
             # Add items to library. We consolidate this at the end to avoid
             # locking while we do the copying and tag updates.
-            albuminfo = lib.add_album(items)
+            albuminfo = lib.add_album(items, infer_aa = (info is CHOICE_ASIS))
 
             # Get album art if requested.
             if art and info is not CHOICE_ASIS:
@@ -519,7 +519,7 @@ def simple_import(lib, paths, copy, delete, progress):
             for item in items:
                 item.move(lib, True)
 
-        album = lib.add_album(items)
+        album = lib.add_album(items, True)
         lib.save()            
         if progress:
             progress_set(toppath, path)
