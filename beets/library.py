@@ -1080,18 +1080,25 @@ class Library(BaseLibrary):
         if record:
             return Album(self, dict(record))
 
-    def add_album(self, items):
+    def add_album(self, items, infer_aa=False):
         """Create a new album in the database with metadata derived
         from its items. The items are added to the database if they
-        don't yet have an ID. Returns an Album object.
+        don't yet have an ID. Returns an Album object. If the
+        infer_aa flag is set, then the album artist field will be
+        guessed from artist fields when not present.
         """
         # Set the metadata from the first item.
         #fixme: check for consensus?
         item_values = dict(
             (key, getattr(items[0], key)) for key in ALBUM_KEYS_ITEM)
-        if not item_values['albumartist']:
-            item_values['albumartist'] = getattr(items[0], 'artist')
-
+        if infer_aa:
+            namemap = {
+                'albumartist': 'artist',
+                'mb_albumartistid': 'mb_artistid',
+            }
+            for field, itemfield in namemap.iteritems():
+                if not item_values[field]:
+                    item_values[field] = getattr(items[0], itemfield)
 
         sql = 'INSERT INTO albums (%s) VALUES (%s)' % \
               (', '.join(ALBUM_KEYS_ITEM),
@@ -1104,7 +1111,7 @@ class Library(BaseLibrary):
         record = {}
         for key in ALBUM_KEYS:
             if key in ALBUM_KEYS_ITEM:
-                record[key] = getattr(items[0], key)
+                record[key] = item_values[key]
             else:
                 # Non-item fields default to None.
                 record[key] = None

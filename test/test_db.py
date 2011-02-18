@@ -445,6 +445,27 @@ class AlbumInfoTest(unittest.TestCase):
         self.assertEqual(ai.album, self.i.album)
         self.assertEqual(ai.year, self.i.year)
 
+    def test_infer_aa_gets_artist_and_id(self):
+        i = item()
+        i.albumartist = ''
+        i.mb_albumartistid = ''
+        ai = self.lib.add_album((i,), infer_aa=True)
+        self.assertEqual(ai.albumartist, i.artist)
+        self.assertEqual(ai.mb_albumartistid, i.mb_artistid)
+
+    def test_no_infer_aa_sets_blank_artist_and_id(self):
+        i = item()
+        i.albumartist = ''
+        i.mb_albumartistid = ''
+        ai = self.lib.add_album((i,), infer_aa=False)
+        self.assertEqual(ai.albumartist, '')
+        self.assertEqual(ai.mb_albumartistid, '')
+
+    def test_infer_aa_lets_album_values_override(self):
+        ai = self.lib.add_album((self.i,), infer_aa=True)
+        self.assertEqual(ai.albumartist, self.i.albumartist)
+        self.assertEqual(ai.mb_albumartistid, self.i.mb_albumartistid)
+
     def test_albuminfo_stores_art(self):
         ai = self.lib.get_album(self.i)
         ai.artpath = '/my/great/art'
