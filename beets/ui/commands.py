@@ -490,6 +490,7 @@ def apply_choices(lib, copy, write, art, delete):
             if copy and delete:
                 new_paths = [os.path.realpath(item.path) for item in items]
                 for old_path in old_paths:
+                    # Only delete files that were actually moved.
                     if old_path not in new_paths:
                         os.remove(library._syspath(old_path))
                         os.remove(library._syspath(old_path))
@@ -520,10 +521,9 @@ def simple_import(lib, paths, copy, delete):
         if copy and delete:
             new_paths = [os.path.realpath(item.path) for item in items]
             for old_path in old_paths:
-                # Only delete the path if it isn't a file we just created.
+                # Only delete files that were actually moved.
                 if old_path not in new_paths:
                     os.remove(library._syspath(old_path))
-
 
         log.info('added album: %s - %s' % (album.albumartist, album.album))
 
