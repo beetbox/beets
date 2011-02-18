@@ -766,10 +766,8 @@ class BaseAlbum(object):
     album-level metadata or use distinct backing stores.
     """
     def __init__(self, library, record):
-        # Need to use object.__setattr__ here, since we're overriding
-        # it for this class
-        object.__setattr__(self, '_library', library)
-        object.__setattr__(self, '_record', record)
+        super(BaseAlbum, self).__setattr__('_library', library)
+        super(BaseAlbum, self).__setattr__('_record', record)
 
     def __getattr__(self, key):
         """Get the value for an album attribute."""
@@ -793,7 +791,7 @@ class BaseAlbum(object):
                     setattr(item, key, value)
                 self._library.store(item)
         else:
-            object.__setattr__(self, key, value)
+            super(BaseAlbum, self).__setattr__(key, value)
 
     def load(self):
         """Refresh this album's cached metadata from the library.
