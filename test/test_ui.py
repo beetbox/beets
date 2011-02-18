@@ -21,6 +21,7 @@ import os
 import shutil
 import textwrap
 from StringIO import StringIO
+import logging
 import _common
 sys.path.append('..')
 from beets import library
@@ -35,6 +36,10 @@ class ImportTest(unittest.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
         self.io.install()
+
+        # Suppress logging output.
+        log = logging.getLogger('beets')
+        log.setLevel(logging.CRITICAL)
 
         self.lib = library.Library(':memory:')
         self.libdir = os.path.join('rsrc', 'testlibdir')
