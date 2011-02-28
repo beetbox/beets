@@ -127,7 +127,8 @@ def _lucene_escape(text):
     string.
     """
     # Regex stolen from MusicBrainz Picard.
-    return re.sub(r'([+\-&|!(){}\[\]\^"~*?:\\])', r'\\\1', text)
+    out = re.sub(r'([+\-&|!(){}\[\]\^"~*?:\\])', r'\\\1', text)
+    return out.replace('\x00', '')
 
 def find_releases(criteria, limit=SEARCH_LIMIT):
     """Get a list of release dictionaries from the MusicBrainz

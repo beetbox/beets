@@ -20,6 +20,7 @@
   copies afterward). This is fixed.
 * Fix a bug where some files would be erroneously interpreted as MP4.
 * Fix permission bits applied to album art files.
+* Fix malformed MusicBrainz queries caused by null characters.
 * The old "albumify" plugin for upgrading databases was removed.
 
 1.0b6

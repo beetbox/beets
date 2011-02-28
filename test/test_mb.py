@@ -146,6 +146,15 @@ class MBReleaseDictTest(unittest.TestCase):
         d = mb.release_dict(release)
         self.assertTrue(d['va'])
 
+class QuerySanitationTest(unittest.TestCase):
+    def test_special_char_escaped(self):
+        res = mb._lucene_escape('!')
+        self.assertEqual(res, '\\!')
+
+    def test_null_character_removed(self):
+        res = mb._lucene_escape('\0')
+        self.assertEqual(res, '')
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
