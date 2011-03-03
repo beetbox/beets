@@ -19,6 +19,7 @@ import unittest
 import sys
 import time
 import musicbrainz2.model
+import musicbrainz2.webservice as mbws
 import _common
 sys.path.append('..')
 from beets.autotag import mb
@@ -54,6 +55,41 @@ class MBQueryWaitTest(unittest.TestCase):
         mb._query_wrap(nullfun)
         time2 = time.time()
         self.assertTrue(time2 - time1 < 1.0)
+
+def raise_once_func(exc):
+    count = [0] # use a list to get a reference (avoid need for nonlocal)
+    def fun():
+        count[0] += 1
+        if count[0] == 1:
+            raise exc
+        else:
+            return 1
+    return fun
+def raise_func(exc):
+    def fun():
+        raise exc
+    return fun
+class MBQueryErrorTest(unittest.TestCase):
+    def setUp(self):
+        mb.last_query_time = 0.0
+
+    def test_503_error_retries(self):
+        exc = mbws.WebServiceError(reason=Exception('Error 503'))
+        mb._query_wrap(raise_once_func(exc))
+
+    def test_504_error_retries(self):
+        exc = mbws.WebServiceError(reason=Exception('Error 504'))
+        mb._query_wrap(raise_once_func(exc))
+
+    def test_999_error_passes_through(self):
+        exc = mbws.WebServiceError(reason=Exception('Error 999'))
+        with self.assertRaises(mbws.WebServiceError):
+            mb._query_wrap(raise_once_func(exc))
+
+    def test_repeated_error_raises_busy(self):
+        exc = mbws.WebServiceError(reason=Exception('Error 503'))
+        with self.assertRaises(mb.ServerBusyError):
+            mb._query_wrap(raise_func(exc))
 
 class MBReleaseDictTest(unittest.TestCase):
     def _make_release(self, date_str='2009'):

@@ -79,7 +79,11 @@ def _query_wrap(fun, *args, **kwargs):
                 res = fun(*args, **kwargs)
             except mbws.WebServiceError, e:
                 # Server busy. Retry.
-                if 'Error 503' not in str(e.reason):
+                message = str(e.reason)
+                for errnum in (503, 504):
+                    if 'Error %i' % errnum in message:
+                        break
+                else:
                     # This is not the error we're looking for.
                     raise
             else:
