@@ -21,7 +21,7 @@ import time
 import musicbrainz2.model
 import musicbrainz2.webservice as mbws
 import _common
-sys.path.append('..')
+sys.path.insert(0, '..')
 from beets.autotag import mb
 
 def nullfun(): pass

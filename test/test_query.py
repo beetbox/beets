@@ -16,7 +16,7 @@
 """
 
 import unittest, sys, os
-sys.path.append('..')
+sys.path.insert(0, '..')
 import beets.library
 import test_db
 

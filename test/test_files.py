@@ -21,7 +21,7 @@ import sys
 import os
 import stat
 from os.path import join
-sys.path.append('..')
+sys.path.insert(0, '..')
 import beets.library
 from test_db import item
 

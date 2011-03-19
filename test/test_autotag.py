@@ -20,7 +20,7 @@ import sys
 import os
 import shutil
 import re
-sys.path.append('..')
+sys.path.insert(0, '..')
 from beets import autotag
 from beets.library import Item
 

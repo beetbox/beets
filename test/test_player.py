@@ -17,7 +17,7 @@
 
 import unittest
 import sys
-sys.path.append('..')
+sys.path.insert(0, '..')
 from beetsplug import bpd
 
 class FauxPathTest(unittest.TestCase):
