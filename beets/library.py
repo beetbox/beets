@@ -1002,12 +1002,23 @@ class Library(BaseLibrary):
         self.conn.execute(query, subvars)
         item._clear_dirty()
 
-    def remove(self, item, delete=False):
+    def _remove(self, item, delete=False):
+        """Removes this item from the library. If delete, then item's file
+        is also deleted from disk.
+        """
         self.conn.execute('DELETE FROM items WHERE id=?', (item.id,))
         if delete:
             os.unlink(_syspath(item.path))
 
-
+    def remove(self, item, delete=False):
+        """Removes this item, and the associated album if the removed item
+        was the last associated item of the album.
+        """
+        album = self.get_album(item)
+        self._remove(item, delete)
+        if album and not album.items():
+            album._remove(delete)
+    
     # Browsing.
 
     def artists(self, query=None):
@@ -1188,6 +1199,27 @@ class Album(BaseAlbum):
         )
         return ResultIterator(c, self._library)
 
+    def _remove(self, delete=False):
+        """Removes this album from the library. If delete, then album
+        art is deleted from disk, and the directories are removed
+        recursively (if empty).
+        """
+        # Delete art and directory if empty.
+        if delete:
+            artpath = self.artpath
+            if artpath:
+                os.unlink(_syspath(artpath))
+                try:
+                    os.removedirs(_syspath(os.path.dirname(artpath)))
+                except OSError:
+                    pass
+        
+        # Remove album from database.
+        self._library.conn.execute(
+            'DELETE FROM albums WHERE id=?',
+            (self.id,)
+        )
+
     def remove(self, delete=False):
         """Removes this album and all its associated items from the
         library. If delete, then the items' files are also deleted
@@ -1195,19 +1227,10 @@ class Album(BaseAlbum):
         """
         # Remove items.
         for item in self.items():
-            self._library.remove(item, delete)
-        
-        # Delete art.
-        if delete:
-            artpath = self.artpath
-            if artpath:
-                os.unlink(_syspath(artpath))
+            self._library._remove(item, delete)
         
         # Remove album.
-        self._library.conn.execute(
-            'DELETE FROM albums WHERE id=?',
-            (self.id,)
-        )
+        self._remove(delete)
 
     def move(self, copy=False):
         """Moves (or copies) all items to their destination. Any
