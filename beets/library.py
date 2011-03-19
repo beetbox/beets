@@ -95,9 +95,9 @@ ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
 
 # Default search fields for various granularities.
 ARTIST_DEFAULT_FIELDS = ('artist',)
-ALBUM_DEFAULT_FIELDS = ARTIST_DEFAULT_FIELDS + ('album', 'genre')
-ITEM_DEFAULT_FIELDS = ALBUM_DEFAULT_FIELDS + \
-    ('albumartist', 'title', 'comments')
+ALBUM_DEFAULT_FIELDS = ('album', 'albumartist', 'genre')
+ITEM_DEFAULT_FIELDS = ARTIST_DEFAULT_FIELDS + ALBUM_DEFAULT_FIELDS + \
+    ('title', 'comments')
 
 # Logger.
 log = logging.getLogger('beets')
