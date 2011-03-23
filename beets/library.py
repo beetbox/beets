@@ -38,29 +38,29 @@ ITEM_FIELDS = [
     ('path',        'blob', False, False),
     ('album_id',    'int',  False, False),
 
-    ('title',            'text', True,  True),
-    ('artist',           'text', True,  True),
-    ('album',            'text', True,  True),
-    ('albumartist',      'text', True,  True),
-    ('genre',            'text', True,  True),
-    ('composer',         'text', True,  True),
-    ('grouping',         'text', True,  True),
-    ('year',             'int',  True,  True),
-    ('month',            'int',  True,  True),
-    ('day',              'int',  True,  True),
-    ('track',            'int',  True,  True),
-    ('tracktotal',       'int',  True,  True),
-    ('disc',             'int',  True,  True),
-    ('disctotal',        'int',  True,  True),
-    ('lyrics',           'text', True,  True),
-    ('comments',         'text', True,  True),
-    ('bpm',              'int',  True,  True),
-    ('comp',             'bool', True,  True),
-    ('mb_trackid',       'text', True,  True),
-    ('mb_albumid',       'text', True,  True),
-    ('mb_artistid',      'text', True,  True),
-    ('mb_albumartistid', 'text', True,  True),
-    ('albumtype',        'text', True,  True),
+    ('title',            'text', True, True),
+    ('artist',           'text', True, True),
+    ('album',            'text', True, True),
+    ('albumartist',      'text', True, True),
+    ('genre',            'text', True, True),
+    ('composer',         'text', True, True),
+    ('grouping',         'text', True, True),
+    ('year',             'int',  True, True),
+    ('month',            'int',  True, True),
+    ('day',              'int',  True, True),
+    ('track',            'int',  True, True),
+    ('tracktotal',       'int',  True, True),
+    ('disc',             'int',  True, True),
+    ('disctotal',        'int',  True, True),
+    ('lyrics',           'text', True, True),
+    ('comments',         'text', True, True),
+    ('bpm',              'int',  True, True),
+    ('comp',             'bool', True, True),
+    ('mb_trackid',       'text', True, True),
+    ('mb_albumid',       'text', True, True),
+    ('mb_artistid',      'text', True, True),
+    ('mb_albumartistid', 'text', True, True),
+    ('albumtype',        'text', True, True),
 
     ('length',      'real', False, True),
     ('bitrate',     'int',  False, True),
@@ -878,7 +878,9 @@ class Library(BaseLibrary):
         pathmod = pathmod or os.path
         
         # Use a path format based on the album type, if available.
-        if item.comp and 'comp' in self.path_formats:
+        if item.albumtype and item.albumtype in self.path_formats:
+            path_format = self.path_formats[item.albumtype]
+        elif item.comp and 'comp' in self.path_formats:
             path_format = self.path_formats['comp']
         else:
             path_format = self.path_formats['default']

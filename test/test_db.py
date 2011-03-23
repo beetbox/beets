@@ -288,6 +288,24 @@ class DestinationTest(unittest.TestCase):
                                  'comp': 'three'}
         self.assertEqual(self.lib.destination(self.i), np('one/three'))
 
+    def test_albumtype_path(self):
+        self.i.comp = True
+        self.i.albumtype = 'sometype'
+        self.lib.directory = 'one'
+        self.lib.path_formats = {'default': 'two',
+                                 'comp': 'three',
+                                 'sometype': 'four'}
+        self.assertEqual(self.lib.destination(self.i), np('one/four'))
+
+    def test_albumtype_path_fallback_to_comp(self):
+        self.i.comp = True
+        self.i.albumtype = 'sometype'
+        self.lib.directory = 'one'
+        self.lib.path_formats = {'default': 'two',
+                                 'comp': 'three',
+                                 'anothertype': 'four'}
+        self.assertEqual(self.lib.destination(self.i), np('one/three'))
+
     def test_syspath_windows_format(self):
         path = ntpath.join('a', 'b', 'c')
         outpath = beets.library._syspath(path, ntpath)
