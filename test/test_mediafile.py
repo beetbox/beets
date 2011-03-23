@@ -16,7 +16,7 @@
 """
 
 import unittest, sys, os, shutil, datetime
-sys.path.append('..')
+sys.path.insert(0, '..')
 import beets.mediafile
 
 class EdgeTest(unittest.TestCase):

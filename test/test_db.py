@@ -21,7 +21,7 @@ import os
 import sqlite3
 import ntpath
 import posixpath
-sys.path.append('..')
+sys.path.insert(0, '..')
 import beets.library
 
 def lib(): return beets.library.Library('rsrc' + os.sep + 'test.blb')

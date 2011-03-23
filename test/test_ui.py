@@ -23,7 +23,7 @@ import textwrap
 from StringIO import StringIO
 import logging
 import _common
-sys.path.append('..')
+sys.path.insert(0, '..')
 from beets import library
 from beets import ui
 from beets.ui import commands
