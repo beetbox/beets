@@ -24,7 +24,7 @@ sys.path.append('..')
 from beets import autotag
 from beets.library import Item
 
-class AutotagTest(unittest.TestCase):
+class PluralityTest(unittest.TestCase):
     def test_plurality_consensus(self):
         objs = [1, 1, 1, 1]
         obj = autotag._plurality(objs)
@@ -47,6 +47,77 @@ class AutotagTest(unittest.TestCase):
         l_artist, l_album = autotag.current_metadata(items)
         self.assertEqual(l_artist, 'The Beatles')
         self.assertEqual(l_album, 'The White Album')
+
+class AlbumDistanceTest(unittest.TestCase):
+    def item(self, title, track, artist='some artist'):
+        return Item({
+            'title': title, 'track': track,
+            'artist': artist, 'album': 'some album',
+            'length': 1,
+            'mb_trackid': '', 'mb_albumid': '', 'mb_artistid': '',
+        })
+
+    def trackinfo(self):
+        ti = []
+        ti.append({'title': 'one', 'artist': 'some artist',
+                   'track': 1, 'length': 1})
+        ti.append({'title': 'two', 'artist': 'some artist', 
+                   'track': 2, 'length': 1})
+        ti.append({'title': 'three', 'artist': 'some artist',
+                   'track': 3, 'length': 1})
+        return ti
+    
+    def test_identical_albums(self):
+        items = []
+        items.append(self.item('one', 1))
+        items.append(self.item('two', 2))
+        items.append(self.item('three', 3))
+        info = {
+            'artist': 'some artist',
+            'album': 'some album',
+            'tracks': self.trackinfo(),
+            'va': False,
+        }
+        self.assertEqual(autotag.distance(items, info), 0)
+
+    def test_global_artists_differ(self):
+        items = []
+        items.append(self.item('one', 1))
+        items.append(self.item('two', 2))
+        items.append(self.item('three', 3))
+        info = {
+            'artist': 'someone else',
+            'album': 'some album',
+            'tracks': self.trackinfo(),
+            'va': False,
+        }
+        self.assertNotEqual(autotag.distance(items, info), 0)
+
+    def test_comp_track_artists_match(self):
+        items = []
+        items.append(self.item('one', 1))
+        items.append(self.item('two', 2))
+        items.append(self.item('three', 3))
+        info = {
+            'artist': 'should be ignored',
+            'album': 'some album',
+            'tracks': self.trackinfo(),
+            'va': True,
+        }
+        self.assertEqual(autotag.distance(items, info), 0)
+
+    def test_comp_track_artists_do_not_match(self):
+        items = []
+        items.append(self.item('one', 1))
+        items.append(self.item('two', 2, 'someone else'))
+        items.append(self.item('three', 3))
+        info = {
+            'artist': 'some artist',
+            'album': 'some album',
+            'tracks': self.trackinfo(),
+            'va': True,
+        }
+        self.assertNotEqual(autotag.distance(items, info), 0)
 
 def _mkmp3(path):
     shutil.copyfile(os.path.join('rsrc', 'min.mp3'), path)

@@ -40,6 +40,8 @@ TRACK_WEIGHT = 1.0
 # compete against each other but not ARTIST_WEIGHT and ALBUM_WEIGHT;
 # the overall TRACK_WEIGHT does that).
 TRACK_TITLE_WEIGHT = 3.0
+# Used instead of a global artist penalty for various-artist matches.
+TRACK_ARTIST_WEIGHT = 2.0
 # Added when the indices of tracks don't match.
 TRACK_INDEX_WEIGHT = 1.0
 # Track length weights: no penalty before GRACE, maximum (WEIGHT)
@@ -267,12 +269,14 @@ def order_items(items, trackinfo):
         ordered_items[canon_idx] = items[cur_idx]
     return ordered_items
 
-def track_distance(item, track_data, track_index=None):
+def track_distance(item, track_data, track_index=None, incl_artist=False):
     """Determines the significance of a track metadata change. Returns
     a float in [0.0,1.0]. `track_index` is the track number of the
     `track_data` metadata set. If `track_index` is provided and
     item.track is set, then these indices are used as a component of
-    the distance calculation.
+    the distance calculation. `incl_artist` indicates that a distance
+    component should be included for the track artist (i.e., for
+    various-artist releases).
     """
     # Distance and normalization accumulators.
     dist, dist_max = 0.0, 0.0
@@ -291,6 +295,12 @@ def track_distance(item, track_data, track_index=None):
     # Track title.
     dist += string_dist(item.title, track_data['title']) * TRACK_TITLE_WEIGHT
     dist_max += TRACK_TITLE_WEIGHT
+
+    # Track artist, if included.
+    if incl_artist:
+        dist += string_dist(item.artist, track_data['artist']) * \
+                TRACK_ARTIST_WEIGHT
+        dist_max += TRACK_ARTIST_WEIGHT
 
     # Track index.
     if track_index and item.track:
@@ -325,14 +335,16 @@ def distance(items, info):
     dist_max = 0.0
     
     # Artist/album metadata.
-    dist += string_dist(cur_artist, info['artist']) * ARTIST_WEIGHT
-    dist_max += ARTIST_WEIGHT
+    if not info['va']:
+        dist += string_dist(cur_artist, info['artist']) * ARTIST_WEIGHT
+        dist_max += ARTIST_WEIGHT
     dist += string_dist(cur_album,  info['album']) * ALBUM_WEIGHT
     dist_max += ALBUM_WEIGHT
     
     # Track distances.
     for i, (item, track_data) in enumerate(zip(items, info['tracks'])):
-        dist += track_distance(item, track_data, i+1) * TRACK_WEIGHT
+        dist += track_distance(item, track_data, i+1, info['va']) * \
+                TRACK_WEIGHT
         dist_max += TRACK_WEIGHT
 
     # Plugin distances.
