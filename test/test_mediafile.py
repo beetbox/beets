@@ -109,6 +109,10 @@ class SafetyTest(unittest.TestCase):
     
     def test_corrupt_ogg_raises_unreadablefileerror(self):
         self._exccheck('corrupt.ogg', beets.mediafile.UnreadableFileError)
+
+    def test_invalid_ogg_header_raises_unreadablefileerror(self):
+        self._exccheck('corrupt.ogg', beets.mediafile.UnreadableFileError,
+                       'OggS\x01vorbis')
     
     def test_corrupt_monkeys_raises_unreadablefileerror(self):
         self._exccheck('corrupt.ape', beets.mediafile.UnreadableFileError)

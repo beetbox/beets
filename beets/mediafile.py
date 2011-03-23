@@ -31,6 +31,7 @@ if no tag is present. If no value is available, the value will be false
 
 import mutagen
 import mutagen.mp3
+import mutagen.oggvorbis
 import mutagen.mp4
 import mutagen.flac
 import mutagen.monkeysaudio
@@ -108,6 +109,7 @@ def _safe_cast(out_type, val):
 
     else:
         return val
+
 
 # Flags for encoding field behavior.
 
@@ -487,6 +489,7 @@ class MediaFile(object):
             mutagen.flac.FLACNoHeaderError,
             mutagen.monkeysaudio.MonkeysAudioHeaderError,
             mutagen.mp4.MP4StreamInfoError,
+            mutagen.oggvorbis.OggVorbisHeaderError,
         )
         try:
             self.mgfile = mutagen.File(path)
