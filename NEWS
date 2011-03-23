@@ -18,6 +18,7 @@
 * When importing with the "delete" option and importing files that are
   already at their destination, files could be deleted (leaving zero
   copies afterward). This is fixed.
+* "import -l" now logs duplicate albums.
 * Fix a bug where some files would be erroneously interpreted as MP4.
 * Fix permission bits applied to album art files.
 * Fix malformed MusicBrainz queries caused by null characters.

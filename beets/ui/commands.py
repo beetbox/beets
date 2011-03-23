@@ -435,6 +435,7 @@ def user_query(lib, logfile=None, color=True, quiet=False):
                                   library.MatchQuery('album',  album)))
             count, _ = q.count(lib)
             if count >= 1:
+                tag_log(logfile, 'duplicate', path)
                 print_("This album (%s - %s) is already in the library!" %
                        (artist, album))
                 out = toppath, path, items, None
