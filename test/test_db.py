@@ -519,6 +519,11 @@ class AlbumInfoTest(unittest.TestCase):
         c = self.lib.conn.execute('SELECT id FROM items WHERE id=?', (item_id,))
         self.assertEqual(c.fetchone(), None)
 
+    def test_removing_last_item_removes_album(self):
+        self.assertEqual(len(self.lib.albums()), 1)
+        self.lib.remove(self.i)
+        self.assertEqual(len(self.lib.albums()), 0)
+
 class BaseAlbumTest(unittest.TestCase):
     def test_field_access(self):
         album = beets.library.BaseAlbum(None, {'fld1':'foo'})

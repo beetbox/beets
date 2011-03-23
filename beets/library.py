@@ -1004,22 +1004,24 @@ class Library(BaseLibrary):
         self.conn.execute(query, subvars)
         item._clear_dirty()
 
-    def _remove(self, item, delete=False):
-        """Removes this item from the library. If delete, then item's file
-        is also deleted from disk.
+    def remove(self, item, delete=False, with_album=True):
+        """Removes this item. If delete, then the associated file is
+        removed from disk. If with_album, then the item's album (if any)
+        is removed if it the item was the last in the album.
         """
+        album = self.get_album(item) if with_album else None
+
         self.conn.execute('DELETE FROM items WHERE id=?', (item.id,))
         if delete:
             os.unlink(_syspath(item.path))
 
-    def remove(self, item, delete=False):
-        """Removes this item, and the associated album if the removed item
-        was the last associated item of the album.
-        """
-        album = self.get_album(item)
-        self._remove(item, delete)
-        if album and not album.items():
-            album._remove(delete)
+        if album:
+            item_iter = album.items()
+            try:
+                item_iter.next()
+            except StopIteration:
+                # Album is empty.
+                album.remove(delete, False)
     
     # Browsing.
 
@@ -1201,16 +1203,25 @@ class Album(BaseAlbum):
         )
         return ResultIterator(c, self._library)
 
-    def _remove(self, delete=False):
-        """Removes this album from the library. If delete, then album
-        art is deleted from disk, and the directories are removed
-        recursively (if empty).
+    def remove(self, delete=False, with_items=True):
+        """Removes this album and all its associated items from the
+        library. If delete, then the items' files are also deleted
+        from disk, along with any album art. The directories
+        containing the album are also removed (recursively) if empty.
+        Set with_items to False to avoid removing the album's items.
         """
-        # Delete art and directory if empty.
+        if with_items:
+            # Remove items.
+            for item in self.items():
+                self._library.remove(item, delete, False)
+        
         if delete:
+            # Delete art file.
             artpath = self.artpath
             if artpath:
                 os.unlink(_syspath(artpath))
+
+                # Prune directories.
                 try:
                     os.removedirs(_syspath(os.path.dirname(artpath)))
                 except OSError:
@@ -1221,18 +1232,6 @@ class Album(BaseAlbum):
             'DELETE FROM albums WHERE id=?',
             (self.id,)
         )
-
-    def remove(self, delete=False):
-        """Removes this album and all its associated items from the
-        library. If delete, then the items' files are also deleted
-        from disk, along with any album art.
-        """
-        # Remove items.
-        for item in self.items():
-            self._library._remove(item, delete)
-        
-        # Remove album.
-        self._remove(delete)
 
     def move(self, copy=False):
         """Moves (or copies) all items to their destination. Any

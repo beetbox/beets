@@ -5,7 +5,8 @@
   identified as a "various artists" release by MusicBrainz. Also,
   there is now a distinction between the "album artist" and the "track
   artist", the latter of which is never "Various Artists" or other such
-  bogus stand-in.
+  bogus stand-in. (Thanks to Jonathan Buchanan for the bulk of the
+  implementation!)
 * The directory hierarchy can now be customized based on release type.
   In particular, the "path_format" setting in .beetsconfig has been
   replaced with a new [paths] section, which allows you to specify
@@ -15,6 +16,9 @@
   wiki.
 * A new "albumtype" field reflects the release type as specified by
   MusicBrainz: http://wiki.musicbrainz.org/ReleaseType
+* When deleting files, beets now appropriately "prunes" the directory
+  tree -- empty directories are automatically cleaned up. (Thanks to
+  wlof on GitHub for this!)
 * When importing with the "delete" option and importing files that are
   already at their destination, files could be deleted (leaving zero
   copies afterward). This is fixed.

@@ -242,6 +242,44 @@ class ArtFileTest(unittest.TestCase):
             os.chmod(newart, 0777)
             os.chmod(ai.artpath, 0777)
 
+class RemoveTest(unittest.TestCase):
+    def setUp(self):
+        # Make library and item.
+        self.lib = beets.library.Library(':memory:')
+        self.libdir = os.path.abspath(os.path.join('rsrc', 'testlibdir'))
+        self.lib.directory = self.libdir
+        self.i = item()
+        self.i.path = self.lib.destination(self.i)
+        # Make a music file.
+        beets.library._mkdirall(self.i.path)
+        touch(self.i.path)
+        # Make an album with the item.
+        self.ai = self.lib.add_album((self.i,))
+    def tearDown(self):
+        if os.path.exists(self.libdir):
+            shutil.rmtree(self.libdir)
+
+    def test_removing_last_item_removes_album(self):
+        self.assertEqual(len(self.lib.albums()), 1)
+        self.lib.remove(self.i)
+        self.assertEqual(len(self.lib.albums()), 0)
+
+    def test_removing_last_item_removes_empty_dir(self):
+        parent = os.path.dirname(self.i.path)
+        self.assertTrue(os.path.exists(parent))
+        self.lib.remove(self.i)
+        self.assertFalse(os.path.exists(parent))
+
+    def test_removing_last_item_preserves_nonempty_dir(self):
+        parent = os.path.dirname(self.i.path)
+        touch(os.path.join(parent, 'dummy.txt'))
+        self.lib.remove(self.i)
+        self.assertTrue(os.path.exists(parent))
+
+    def test_removing_last_item_preserves_library_dir(self):
+        self.lib.remove(self.i)
+        self.assertTrue(os.path.exists(self.libdir))
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
