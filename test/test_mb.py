@@ -72,6 +72,11 @@ def raise_func(exc):
 class MBQueryErrorTest(unittest.TestCase):
     def setUp(self):
         mb.last_query_time = 0.0
+        self.cop = _common.Timecop()
+        self.cop.install()
+
+    def tearDown(self):
+        self.cop.restore()
 
     def test_503_error_retries(self):
         exc = mbws.WebServiceError(reason=Exception('Error 503'))
