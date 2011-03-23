@@ -203,6 +203,10 @@ class BrowseTest(unittest.TestCase, AssertsMixin):
     def test_albums_matches_album(self):
         albums = list(self.lib.albums(query='person'))
         self.assertEqual(len(albums), 1)
+
+    def test_albums_matches_albumartist(self):
+        albums = list(self.lib.albums(query='panda'))
+        self.assertEqual(len(albums), 1)
         
     def test_items_matches_title(self):
         items = self.lib.items(query='boracay')
