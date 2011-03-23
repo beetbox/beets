@@ -211,7 +211,7 @@ def choose_match(path, items, cur_artist, cur_album, candidates,
             show_change(cur_artist, cur_album, items, info, dist, color)
             return info, items
         else:
-            print_('Skipping: %s' % path)
+            print_('Skipping.')
             return CHOICE_SKIP
 
     # Loop until we have a choice.
@@ -222,7 +222,7 @@ def choose_match(path, items, cur_artist, cur_album, candidates,
                                       color)
         else:
             # Fallback: if either an error ocurred or no matches found.
-            print_("No match found for:", path)
+            print_("No match found.")
             sel = ui.input_options(
                 "[U]se as-is, Skip, Enter manual search, or aBort?",
                 ('u', 's', 'e', 'b'), 'u',
@@ -330,7 +330,7 @@ def read_albums(paths, progress):
             resume_dir = progress_get(path)
             if resume_dir:
                 resume = ui.input_yn("Import of the directory:\n%s"
-                                     "\nwas interrupted. Resume (Y/n)? " %
+                                     "\nwas interrupted. Resume (Y/n)?" %
                                      path)
                 if resume:
                     resume_dirs[path] = resume_dir
@@ -403,6 +403,8 @@ def user_query(lib, logfile=None, color=True, quiet=False):
         if not first:
             print_()
         first = False
+        # Show current album path.
+        print_(path)
         
         # Ask the user for a choice.
         choice = choose_match(path, items, cur_artist, cur_album, candidates,
