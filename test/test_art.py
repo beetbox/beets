@@ -15,9 +15,8 @@
 """Tests for the album art fetchers."""
 
 import unittest
-import sys
 
-sys.path.insert(0, '..')
+import _common
 from beets.autotag import art
 
 class MockHeaders(object):

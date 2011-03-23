@@ -17,13 +17,13 @@
 
 import unittest
 import shutil
-import sys
 import os
 import stat
 from os.path import join
-sys.path.insert(0, '..')
+
+import _common
+from _common import item
 import beets.library
-from test_db import item
 
 def touch(path):
     open(path, 'a').close()

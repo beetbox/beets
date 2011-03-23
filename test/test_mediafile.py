@@ -15,8 +15,10 @@
 """Specific, edge-case tests for the MediaFile metadata layer.
 """
 
-import unittest, sys, os, shutil, datetime
-sys.path.insert(0, '..')
+import unittest
+import os
+
+import _common
 import beets.mediafile
 
 class EdgeTest(unittest.TestCase):

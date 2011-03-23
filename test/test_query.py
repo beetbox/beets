@@ -15,14 +15,15 @@
 """Various tests for querying the library database.
 """
 
-import unittest, sys, os
-sys.path.insert(0, '..')
+import unittest
+import os
+
+import _common
 import beets.library
-import test_db
 
 parse_query = beets.library.CollectionQuery._parse_query
 
-some_item = test_db.item()
+some_item = _common.item()
 
 class QueryParseTest(unittest.TestCase):
     def test_one_basic_term(self):

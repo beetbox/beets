@@ -16,8 +16,8 @@
 """
 
 import unittest
-import sys
-sys.path.insert(0, '..')
+
+import _common
 from beetsplug import bpd
 
 class FauxPathTest(unittest.TestCase):

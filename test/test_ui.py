@@ -16,20 +16,18 @@
 """
 
 import unittest
-import sys
 import os
 import shutil
 import textwrap
 from StringIO import StringIO
 import logging
+
 import _common
-sys.path.insert(0, '..')
 from beets import library
 from beets import ui
 from beets.ui import commands
 from beets import autotag
 from beets import mediafile
-import test_db
 
 TEST_TITLES = ('The Opener','The Second Track','The Last Track')
 class ImportTest(unittest.TestCase):
@@ -126,7 +124,7 @@ class ListTest(unittest.TestCase):
         self.io.install()
 
         self.lib = library.Library(':memory:')
-        i = test_db.item()
+        i = _common.item()
         self.lib.add(i)
         self.lib.add_album([i])
 
@@ -210,7 +208,7 @@ class AutotagTest(unittest.TestCase):
     def _no_candidates_test(self, result):
         res = commands.choose_match(
             'path',
-            [test_db.item()], # items
+            [_common.item()], # items
             'artist',
             'album',
             [], # candidates

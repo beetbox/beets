@@ -20,7 +20,8 @@ import sys
 import os
 import shutil
 import re
-sys.path.insert(0, '..')
+
+import _common
 from beets import autotag
 from beets.library import Item
 

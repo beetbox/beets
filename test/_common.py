@@ -2,6 +2,44 @@
 import time
 import sys
 
+# Mangle the search path to include the beets sources.
+sys.path.insert(0, '..')
+import beets.library
+
+# Dummy item creation.
+def item(): return beets.library.Item({
+    'title':            u'the title',
+    'artist':           u'the artist',
+    'albumartist':      u'the album artist',
+    'album':            u'the album',
+    'genre':            u'the genre',
+    'composer':         u'the composer',
+    'grouping':         u'the grouping',
+    'year':             1,
+    'month':            2,
+    'day':              3,
+    'track':            4,
+    'tracktotal':       5,
+    'disc':             6,
+    'disctotal':        7,
+    'lyrics':           u'the lyrics',
+    'comments':         u'the comments',
+    'bpm':              8,
+    'comp':             True,
+    'path':             'somepath',
+    'length':           60.0,
+    'bitrate':          128000,
+    'format':           'FLAC',
+    'mb_trackid':       'someID-1',
+    'mb_albumid':       'someID-2',
+    'mb_artistid':      'someID-3',
+    'mb_albumartistid': 'someID-4',
+    'album_id':         None,
+})
+
+
+# Mock timing.
+
 class Timecop(object):
     """Mocks the timing system (namely time() and sleep()) for testing.
     Inspired by the Ruby timecop library.
@@ -26,6 +64,9 @@ class Timecop(object):
     def restore(self):
         time.time = self.orig['time']
         time.sleep = self.orig['sleep']
+
+
+# Mock I/O.
 
 class InputException(Exception):
     def __init__(self, output=None):

@@ -16,46 +16,18 @@
 """
 
 import unittest
-import sys
 import os
 import sqlite3
 import ntpath
 import posixpath
-sys.path.insert(0, '..')
+
+import _common
+from _common import item
 import beets.library
 
 def lib(): return beets.library.Library('rsrc' + os.sep + 'test.blb')
 def boracay(l): return beets.library.Item(l.conn.execute('select * from items '
     'where id=3').fetchone())
-def item(): return beets.library.Item({
-    'title':            u'the title',
-    'artist':           u'the artist',
-    'albumartist':      u'the album artist',
-    'album':            u'the album',
-    'genre':            u'the genre',
-    'composer':         u'the composer',
-    'grouping':         u'the grouping',
-    'year':             1,
-    'month':            2,
-    'day':              3,
-    'track':            4,
-    'tracktotal':       5,
-    'disc':             6,
-    'disctotal':        7,
-    'lyrics':           u'the lyrics',
-    'comments':         u'the comments',
-    'bpm':              8,
-    'comp':             True,
-    'path':             'somepath',
-    'length':           60.0,
-    'bitrate':          128000,
-    'format':           'FLAC',
-    'mb_trackid':       'someID-1',
-    'mb_albumid':       'someID-2',
-    'mb_artistid':      'someID-3',
-    'mb_albumartistid': 'someID-4',
-    'album_id':         None,
-})
 np = beets.library._normpath
 
 class LoadTest(unittest.TestCase):

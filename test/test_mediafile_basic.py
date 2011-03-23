@@ -16,8 +16,12 @@
 layer.
 """
 
-import unittest, sys, os, shutil, datetime
-sys.path.insert(0, '..')
+import unittest
+import os
+import shutil
+import datetime
+
+import _common
 import beets.mediafile
 
 
