@@ -19,8 +19,7 @@ import shutil
 import sys
 from string import Template
 import logging
-import platform
-from beets.mediafile import MediaFile, UnreadableFileError, FileTypeError
+from beets.mediafile import MediaFile
 from beets import plugins
 
 MAX_FILENAME_LENGTH = 200
@@ -165,7 +164,7 @@ def _prune_dirs(path, root):
         ancestors.reverse()
         for directory in ancestors:
             try:
-                os.rmdir(directory)
+                os.rmdir(_syspath(directory))
             except OSError:
                 break
 
