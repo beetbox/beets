@@ -1012,8 +1012,6 @@ class Library(BaseLibrary):
         album = self.get_album(item) if with_album else None
 
         self.conn.execute('DELETE FROM items WHERE id=?', (item.id,))
-        if delete:
-            os.unlink(_syspath(item.path))
 
         if album:
             item_iter = album.items()
@@ -1022,7 +1020,18 @@ class Library(BaseLibrary):
             except StopIteration:
                 # Album is empty.
                 album.remove(delete, False)
-    
+
+        if delete:
+            os.unlink(_syspath(item.path))
+
+            # Prune directories.
+            try:
+                os.removedirs(_syspath(os.path.dirname(item.path)))
+            except OSError:
+                # print os.listdir(os.path.dirname(item.path))
+                pass
+
+
     # Browsing.
 
     def artists(self, query=None):
@@ -1220,12 +1229,6 @@ class Album(BaseAlbum):
             artpath = self.artpath
             if artpath:
                 os.unlink(_syspath(artpath))
-
-                # Prune directories.
-                try:
-                    os.removedirs(_syspath(os.path.dirname(artpath)))
-                except OSError:
-                    pass
         
         # Remove album from database.
         self._library.conn.execute(

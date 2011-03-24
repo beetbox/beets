@@ -259,26 +259,32 @@ class RemoveTest(unittest.TestCase):
         if os.path.exists(self.libdir):
             shutil.rmtree(self.libdir)
 
-    def test_removing_last_item_removes_album(self):
-        self.assertEqual(len(self.lib.albums()), 1)
-        self.lib.remove(self.i)
-        self.assertEqual(len(self.lib.albums()), 0)
-
     def test_removing_last_item_removes_empty_dir(self):
         parent = os.path.dirname(self.i.path)
         self.assertTrue(os.path.exists(parent))
-        self.lib.remove(self.i)
+        self.lib.remove(self.i, True)
         self.assertFalse(os.path.exists(parent))
 
     def test_removing_last_item_preserves_nonempty_dir(self):
         parent = os.path.dirname(self.i.path)
         touch(os.path.join(parent, 'dummy.txt'))
-        self.lib.remove(self.i)
+        self.lib.remove(self.i, True)
         self.assertTrue(os.path.exists(parent))
 
-    def test_removing_last_item_preserves_library_dir(self):
+    def test_removing_without_delete_leaves_file(self):
+        path = self.i.path
         self.lib.remove(self.i)
+        self.assertTrue(os.path.exists(path))
+
+    def test_removing_last_item_preserves_library_dir(self):
+        self.lib.remove(self.i, True)
         self.assertTrue(os.path.exists(self.libdir))
+
+    def test_removing_item_outside_of_library_deletes_nothing(self):
+        self.lib.directory = os.path.abspath(os.path.join('rsrc', 'xxx'))
+        parent = os.path.dirname(self.i.path)
+        self.lib.remove(self.i, True)
+        self.assertTrue(os.path.exists(parent))
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
