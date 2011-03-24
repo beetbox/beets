@@ -146,6 +146,29 @@ def _mkdirall(path):
         if not os.path.isdir(_syspath(ancestor)):
             os.mkdir(_syspath(ancestor))
 
+def _prune_dirs(path, root):
+    """If path is an empty directory, then remove it. Recursively
+    remove path's ancestry up to root (which is never removed) where
+    there are empty directories. If path is not contained in root, then
+    nothing is removed.
+    """
+    path = _normpath(path)
+    root = _normpath(root)
+
+    ancestors = _ancestry(path)
+    if root in ancestors:
+        # Only remove directories below the root.
+        ancestors = ancestors[ancestors.index(root)+1:]
+
+        # Traverse upward from path.
+        ancestors.append(path)
+        ancestors.reverse()
+        for directory in ancestors:
+            try:
+                os.rmdir(directory)
+            except OSError:
+                break
+
 def _components(path, pathmod=None):
     """Return a list of the path components in path. For instance:
        >>> _components('/a/b/c')
@@ -1023,13 +1046,7 @@ class Library(BaseLibrary):
 
         if delete:
             os.unlink(_syspath(item.path))
-
-            # Prune directories.
-            try:
-                os.removedirs(_syspath(os.path.dirname(item.path)))
-            except OSError:
-                # print os.listdir(os.path.dirname(item.path))
-                pass
+            _prune_dirs(os.path.dirname(item.path), self.directory)
 
 
     # Browsing.
