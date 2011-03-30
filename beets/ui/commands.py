@@ -620,12 +620,12 @@ import_cmd.parser.add_option('-a', '--autotag', action='store_true',
 import_cmd.parser.add_option('-A', '--noautotag', action='store_false',
     dest='autotag',
     help="don't infer tags for imported files (opposite of -a)")
-import_cmd.parser.add_option('-r', '--art', action='store_true',
-    default=None, help="try to download album art")
 import_cmd.parser.add_option('-p', '--resume', action='store_true',
     default=None, help="resume importing if interrupted")
 import_cmd.parser.add_option('-P', '--noresume', action='store_false',
     dest='resume', help="do not try to resume importing")
+import_cmd.parser.add_option('-r', '--art', action='store_true',
+    default=None, help="try to download album art")
 import_cmd.parser.add_option('-R', '--noart', action='store_false',
     dest='art', help="don't album art (opposite of -r)")
 import_cmd.parser.add_option('-q', '--quiet', action='store_true',
