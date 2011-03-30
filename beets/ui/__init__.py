@@ -262,7 +262,6 @@ class SubcommandsOptionParser(optparse.OptionParser):
     """A variant of OptionParser that parses subcommands and their
     arguments.
     """
-    
     # A singleton command used to give help on other subcommands.
     _HelpSubcommand = Subcommand('help', optparse.OptionParser(),
         help='give detailed help on a specific sub-command',

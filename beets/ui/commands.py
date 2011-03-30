@@ -565,7 +565,7 @@ def import_files(lib, paths, copy, write, autot, logpath,
     if autot:
         # Autotag. Set up the pipeline.
         pl = pipeline.Pipeline([
-            read_albums(paths, progress),
+            read_albums(paths, progress and not quiet),
             initial_lookup(),
             user_query(lib, logfile, color, quiet),
             apply_choices(lib, copy, write, art, delete, progress),

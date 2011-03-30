@@ -26,6 +26,8 @@
 * "import -l" now logs duplicate albums.
 * A new "import_progress" option can be used to disable the importer's
   resuming feature.
+* Resuming is automatically disabled when the importer is in quiet (-q)
+  mode. Progress is still saved, however.
 * Fix a bug where some files would be erroneously interpreted as MP4.
 * Fix permission bits applied to album art files.
 * Fix malformed MusicBrainz queries caused by null characters.
