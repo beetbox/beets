@@ -32,6 +32,9 @@
   be used to force resuming.
 * The BEETSCONFIG environment variable can now be used to specify the
   location of the config file that is at ~/.beetsconfig by default.
+* A new "import_quiet_fallback" specifies what should happen in quiet
+  mode when there is no strong recommendation. The options are "skip"
+  (the default) and "asis".
 * Fix a bug where some files would be erroneously interpreted as MP4.
 * Fix permission bits applied to album art files.
 * Fix malformed MusicBrainz queries caused by null characters.

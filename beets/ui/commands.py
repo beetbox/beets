@@ -40,15 +40,16 @@ default_commands = []
 
 # import: Autotagger and importer.
 
-DEFAULT_IMPORT_COPY     = True
-DEFAULT_IMPORT_WRITE    = True
-DEFAULT_IMPORT_DELETE   = False
-DEFAULT_IMPORT_AUTOT    = True
-DEFAULT_IMPORT_ART      = True
-DEFAULT_IMPORT_QUIET    = False
-DEFAULT_IMPORT_PROGRESS = True
-DEFAULT_THREADED        = True
-DEFAULT_COLOR           = True
+DEFAULT_IMPORT_COPY           = True
+DEFAULT_IMPORT_WRITE          = True
+DEFAULT_IMPORT_DELETE         = False
+DEFAULT_IMPORT_AUTOT          = True
+DEFAULT_IMPORT_ART            = True
+DEFAULT_IMPORT_QUIET          = False
+DEFAULT_IMPORT_QUIET_FALLBACK = 'skip'
+DEFAULT_IMPORT_PROGRESS       = True
+DEFAULT_THREADED              = True
+DEFAULT_COLOR                 = True
 
 class ImportAbort(Exception):
     """Raised when the user aborts the tagging operation.
@@ -200,7 +201,7 @@ def tag_log(logfile, status, path):
         print >>logfile, '%s %s' % (status, path)
 
 def choose_match(path, items, cur_artist, cur_album, candidates,
-                 rec, color=True, quiet=False):
+                 rec, color, quiet, quiet_fallback):
     """Given an initial autotagging of items, go through an interactive
     dance with the user to ask for a choice of metadata. Returns an
     (info, items) pair, CHOICE_ASIS, or CHOICE_SKIP.
@@ -212,8 +213,13 @@ def choose_match(path, items, cur_artist, cur_album, candidates,
             show_change(cur_artist, cur_album, items, info, dist, color)
             return info, items
         else:
-            print_('Skipping.')
-            return CHOICE_SKIP
+            if quiet_fallback == CHOICE_SKIP:
+                print_('Skipping.')
+            elif quiet_fallback == CHOICE_ASIS:
+                print_('Importing as-is.')
+            else:
+                assert(False)
+            return quiet_fallback
 
     # Loop until we have a choice.
     while True:
@@ -392,7 +398,7 @@ def initial_lookup():
         toppath, path, items = yield toppath, path, items, cur_artist, \
                                      cur_album, candidates, rec
 
-def user_query(lib, logfile=None, color=True, quiet=False):
+def user_query(lib, logfile, color, quiet, quiet_fallback):
     """A coroutine for interfacing with the user about the tagging
     process. lib is the Library to import into and logfile may be
     a file-like object for logging the import process. The coroutine
@@ -423,7 +429,7 @@ def user_query(lib, logfile=None, color=True, quiet=False):
         
         # Ask the user for a choice.
         choice = choose_match(path, items, cur_artist, cur_album, candidates,
-                              rec, color, quiet)
+                              rec, color, quiet, quiet_fallback)
 
         # The "give-up" options.
         if choice is CHOICE_ASIS:
@@ -554,7 +560,7 @@ def simple_import(lib, paths, copy, delete, progress, resume):
 # The import command.
 
 def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
-                 color, delete, quiet, progress, resume):
+                 color, delete, quiet, progress, resume, quiet_fallback):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
@@ -567,7 +573,10 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
     deleted when they are copied. If quiet, then the user is
     never prompted for input; instead, the tagger just skips anything
     it is not confident about. If progress, then state is saved in
-    case an import is interrupted.
+    case an import is interrupted. resume, if provided, indicates
+    whether interrupted imports should be resumed. quiet_fallback
+    should be either CHOICE_ASIS or CHOICE_SKIP and indicates what
+    should happen in quiet mode when the recommendation is not strong.
     """
     # Open the log.
     if logpath:
@@ -581,7 +590,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
         pl = pipeline.Pipeline([
             read_albums(paths, progress and not quiet, resume),
             initial_lookup(),
-            user_query(lib, logfile, color, quiet),
+            user_query(lib, logfile, color, quiet, quiet_fallback),
             apply_choices(lib, copy, write, art, delete, progress),
         ])
 
@@ -652,8 +661,14 @@ def import_func(lib, config, opts, args):
     color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
     resume = opts.resume # May be None.
     quiet = opts.quiet if opts.quiet is not None else DEFAULT_IMPORT_QUIET
+    quiet_fallback_str = ui.config_val(config, 'beets', 'import_quiet_fallback',
+            DEFAULT_IMPORT_QUIET_FALLBACK)
+    if quiet_fallback_str == 'asis':
+        quiet_fallback = CHOICE_ASIS
+    else:
+        quiet_fallback = CHOICE_SKIP
     import_files(lib, args, copy, write, autot, opts.logpath, art, threaded,
-                 color, delete, quiet, progress, resume)
+                 color, delete, quiet, progress, resume, quiet_fallback)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 

@@ -100,6 +100,7 @@ class ImportTest(unittest.TestCase):
                 quiet=True,
                 progress=False,
                 resume=None,
+                quiet_fallback='skip',
         )
 
     def test_album_created_with_track_artist(self):
@@ -213,7 +214,8 @@ class AutotagTest(unittest.TestCase):
             'artist',
             'album',
             [], # candidates
-            autotag.RECOMMEND_NONE
+            autotag.RECOMMEND_NONE,
+            True, False, commands.CHOICE_SKIP
         )
         self.assertEqual(res, result)
         self.assertTrue('No match' in self.io.getoutput())
