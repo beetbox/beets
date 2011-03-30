@@ -312,9 +312,14 @@ def progress_get(toppath):
 # tagging.
 DONE_SENTINEL = '__IMPORT_DONE_SENTINEL__'
 
-def read_albums(paths, progress):
+def read_albums(paths, progress, resume):
     """A generator yielding all the albums (as sets of Items) found in
-    the user-specified list of paths.
+    the user-specified list of paths. `progress` specifies whether
+    the resuming feature should be used. `resume` may be None or a
+    boolean. If it is False, then progress is disabled (overriding
+    `progress`); if it is True, then progress is enabled and the import
+    is resumed if possible; if it is None, then the user is prompted
+    (the default behavior).
     """
     # Use absolute paths.
     paths = [library._normpath(path) for path in paths]
@@ -325,20 +330,29 @@ def read_albums(paths, progress):
             raise ui.UserError('not a directory: ' + path)
 
     # Look for saved progress.
-    if progress:
+    if progress or resume is not None:
         resume_dirs = {}
         for path in paths:
             resume_dir = progress_get(path)
             if resume_dir:
-                resume = ui.input_yn("Import of the directory:\n%s"
-                                     "\nwas interrupted. Resume (Y/n)?" %
-                                     path)
-                if resume:
+
+                # Either accept immediately or prompt for input to decide.
+                if resume is not None:
+                    do_resume = resume
+                    if do_resume:
+                        ui.print_('Resuming interrupted import of %s' % path)
+                        ui.print_()
+                else:
+                    do_resume = ui.input_yn("Import of the directory:\n%s"
+                                            "\nwas interrupted. Resume (Y/n)?" %
+                                            path)
+                    ui.print_()
+
+                if do_resume:
                     resume_dirs[path] = resume_dir
                 else:
                     # Clear progress; we're starting from the top.
                     progress_set(path, None)
-                ui.print_()
     
     for toppath in paths:
         # Produce each path.
@@ -509,11 +523,11 @@ def apply_choices(lib, copy, write, art, delete, progress):
 
 # Non-autotagged import (always sequential).
 
-def simple_import(lib, paths, copy, delete, progress):
+def simple_import(lib, paths, copy, delete, progress, resume):
     """Add files from the paths to the library without changing any
     tags.
     """
-    for toppath, path, items in read_albums(paths, progress):
+    for toppath, path, items in read_albums(paths, progress, resume):
         if items is None:
             continue
 
@@ -539,8 +553,8 @@ def simple_import(lib, paths, copy, delete, progress):
 
 # The import command.
 
-def import_files(lib, paths, copy, write, autot, logpath,
-                 art, threaded, color, delete, quiet, progress):
+def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
+                 color, delete, quiet, progress, resume):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
@@ -565,7 +579,7 @@ def import_files(lib, paths, copy, write, autot, logpath,
     if autot:
         # Autotag. Set up the pipeline.
         pl = pipeline.Pipeline([
-            read_albums(paths, progress and not quiet),
+            read_albums(paths, progress and not quiet, resume),
             initial_lookup(),
             user_query(lib, logfile, color, quiet),
             apply_choices(lib, copy, write, art, delete, progress),
@@ -582,7 +596,7 @@ def import_files(lib, paths, copy, write, autot, logpath,
             pass
     else:
         # Simple import without autotagging. Always sequential.
-        simple_import(lib, paths, copy, delete, progress)
+        simple_import(lib, paths, copy, delete, progress, resume)
     
     # If we were logging, close the file.
     if logfile:
@@ -608,6 +622,10 @@ import_cmd.parser.add_option('-A', '--noautotag', action='store_false',
     help="don't infer tags for imported files (opposite of -a)")
 import_cmd.parser.add_option('-r', '--art', action='store_true',
     default=None, help="try to download album art")
+import_cmd.parser.add_option('-p', '--resume', action='store_true',
+    default=None, help="resume importing if interrupted")
+import_cmd.parser.add_option('-P', '--noresume', action='store_false',
+    dest='resume', help="do not try to resume importing")
 import_cmd.parser.add_option('-R', '--noart', action='store_false',
     dest='art', help="don't album art (opposite of -r)")
 import_cmd.parser.add_option('-q', '--quiet', action='store_true',
@@ -632,9 +650,10 @@ def import_func(lib, config, opts, args):
     threaded = ui.config_val(config, 'beets', 'threaded',
             DEFAULT_THREADED, bool)
     color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
+    resume = opts.resume # May be None.
     quiet = opts.quiet if opts.quiet is not None else DEFAULT_IMPORT_QUIET
-    import_files(lib, args, copy, write, autot,
-                 opts.logpath, art, threaded, color, delete, quiet, progress)
+    import_files(lib, args, copy, write, autot, opts.logpath, art, threaded,
+                 color, delete, quiet, progress, resume)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 

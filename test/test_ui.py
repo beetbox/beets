@@ -99,6 +99,7 @@ class ImportTest(unittest.TestCase):
                 delete=False,
                 quiet=True,
                 progress=False,
+                resume=None,
         )
 
     def test_album_created_with_track_artist(self):
