@@ -24,6 +24,8 @@
   copies afterward). This is fixed.
 * Always show album directory in tagger output.
 * "import -l" now logs duplicate albums.
+* A new "import_progress" option can be used to disable the importer's
+  resuming feature.
 * Fix a bug where some files would be erroneously interpreted as MP4.
 * Fix permission bits applied to album art files.
 * Fix malformed MusicBrainz queries caused by null characters.

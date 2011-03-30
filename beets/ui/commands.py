@@ -40,14 +40,15 @@ default_commands = []
 
 # import: Autotagger and importer.
 
-DEFAULT_IMPORT_COPY   = True
-DEFAULT_IMPORT_WRITE  = True
-DEFAULT_IMPORT_DELETE = False
-DEFAULT_IMPORT_AUTOT  = True
-DEFAULT_IMPORT_ART    = True
-DEFAULT_IMPORT_QUIET  = False
-DEFAULT_THREADED      = True
-DEFAULT_COLOR         = True
+DEFAULT_IMPORT_COPY     = True
+DEFAULT_IMPORT_WRITE    = True
+DEFAULT_IMPORT_DELETE   = False
+DEFAULT_IMPORT_AUTOT    = True
+DEFAULT_IMPORT_ART      = True
+DEFAULT_IMPORT_QUIET    = False
+DEFAULT_IMPORT_PROGRESS = True
+DEFAULT_THREADED        = True
+DEFAULT_COLOR           = True
 
 class ImportAbort(Exception):
     """Raised when the user aborts the tagging operation.
@@ -539,7 +540,7 @@ def simple_import(lib, paths, copy, delete, progress):
 # The import command.
 
 def import_files(lib, paths, copy, write, autot, logpath,
-                 art, threaded, color, delete, quiet, progress=True):
+                 art, threaded, color, delete, quiet, progress):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
@@ -626,12 +627,14 @@ def import_func(lib, config, opts, args):
     art = opts.art if opts.art is not None else \
         ui.config_val(config, 'beets', 'import_art',
             DEFAULT_IMPORT_ART, bool)
+    progress = ui.config_val(config, 'beets', 'import_progress',
+            DEFAULT_IMPORT_PROGRESS, bool)
     threaded = ui.config_val(config, 'beets', 'threaded',
             DEFAULT_THREADED, bool)
     color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
     quiet = opts.quiet if opts.quiet is not None else DEFAULT_IMPORT_QUIET
     import_files(lib, args, copy, write, autot,
-                 opts.logpath, art, threaded, color, delete, quiet)
+                 opts.logpath, art, threaded, color, delete, quiet, progress)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 
