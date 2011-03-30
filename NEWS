@@ -30,6 +30,8 @@
 * Resuming is automatically disabled when the importer is in quiet (-q)
   mode. Progress is still saved, however, and the -q flag (above) can
   be used to force resuming.
+* The BEETSCONFIG environment variable can now be used to specify the
+  location of the config file that is at ~/.beetsconfig by default.
 * Fix a bug where some files would be erroneously interpreted as MP4.
 * Fix permission bits applied to album art files.
 * Fix malformed MusicBrainz queries caused by null characters.

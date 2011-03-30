@@ -30,7 +30,8 @@ from beets import library
 from beets import plugins
 
 # Constants.
-CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
+CONFIG_PATH_VAR = 'BEETSCONFIG'
+DEFAULT_CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
 STATE_FILE = os.path.expanduser('~/.beetsstate')
 DEFAULT_LIBRARY = '~/.beetsmusic.blb'
 DEFAULT_DIRECTORY = '~/Music'
@@ -405,9 +406,12 @@ def main(args=None, configfh=None):
     # Read defaults from config file.
     config = ConfigParser.SafeConfigParser()
     if configfh:
-        config.readfp(configfh)
+        pass
+    elif CONFIG_PATH_VAR in os.environ:
+        configfh = open(os.path.expanduser(os.environ[CONFIG_PATH_VAR]))
     else:
-        config.read(CONFIG_FILE)
+        configfh = open(DEFAULT_CONFIG_FILE)
+    config.readfp(configfh)
 
     # Add plugin paths.
     plugpaths = config_val(config, 'beets', 'pluginpath', '')
