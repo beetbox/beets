@@ -24,9 +24,11 @@
   copies afterward). This is fixed.
 * Always show album directory in tagger output.
 * "import -l" now logs duplicate albums.
-* A new "import_progress" option can be used to disable the importer's
-  resuming feature. Also, the -p and -P flags can force the importer to
-  resume or not resume, skipping the prompt.
+* A new "import_resume" option can be used to disable the importer's
+  resuming feature or force it to resume without asking. This option
+  may be either "yes", "no", or "ask", with the obvious meanings. The
+  -p and -P command-line flags override this setting and correspond to
+  the "yes" and "no" settings.
 * Resuming is automatically disabled when the importer is in quiet (-q)
   mode. Progress is still saved, however, and the -q flag (above) can
   be used to force resuming.

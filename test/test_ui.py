@@ -98,8 +98,7 @@ class ImportTest(unittest.TestCase):
                 color=False,
                 delete=False,
                 quiet=True,
-                progress=False,
-                resume=None,
+                resume=False,
                 quiet_fallback='skip',
         )
 

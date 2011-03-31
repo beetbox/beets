@@ -47,7 +47,7 @@ DEFAULT_IMPORT_AUTOT          = True
 DEFAULT_IMPORT_ART            = True
 DEFAULT_IMPORT_QUIET          = False
 DEFAULT_IMPORT_QUIET_FALLBACK = 'skip'
-DEFAULT_IMPORT_PROGRESS       = True
+DEFAULT_IMPORT_RESUME         = None # "ask"
 DEFAULT_THREADED              = True
 DEFAULT_COLOR                 = True
 
@@ -318,14 +318,11 @@ def progress_get(toppath):
 # tagging.
 DONE_SENTINEL = '__IMPORT_DONE_SENTINEL__'
 
-def read_albums(paths, progress, resume):
+def read_albums(paths, resume):
     """A generator yielding all the albums (as sets of Items) found in
     the user-specified list of paths. `progress` specifies whether
-    the resuming feature should be used. `resume` may be None or a
-    boolean. If it is False, then progress is disabled (overriding
-    `progress`); if it is True, then progress is enabled and the import
-    is resumed if possible; if it is None, then the user is prompted
-    (the default behavior).
+    the resuming feature should be used. It may be True (resume if
+    possible), False (never resume), or None (ask).
     """
     # Use absolute paths.
     paths = [library._normpath(path) for path in paths]
@@ -336,23 +333,22 @@ def read_albums(paths, progress, resume):
             raise ui.UserError('not a directory: ' + path)
 
     # Look for saved progress.
-    if progress or resume is not None:
+    progress = resume is not False
+    if progress:
         resume_dirs = {}
         for path in paths:
             resume_dir = progress_get(path)
             if resume_dir:
 
                 # Either accept immediately or prompt for input to decide.
-                if resume is not None:
-                    do_resume = resume
-                    if do_resume:
-                        ui.print_('Resuming interrupted import of %s' % path)
-                        ui.print_()
+                if resume:
+                    do_resume = True
+                    ui.print_('Resuming interrupted import of %s' % path)
                 else:
                     do_resume = ui.input_yn("Import of the directory:\n%s"
                                             "\nwas interrupted. Resume (Y/n)?" %
                                             path)
-                    ui.print_()
+                ui.print_()
 
                 if do_resume:
                     resume_dirs[path] = resume_dir
@@ -529,11 +525,11 @@ def apply_choices(lib, copy, write, art, delete, progress):
 
 # Non-autotagged import (always sequential).
 
-def simple_import(lib, paths, copy, delete, progress, resume):
+def simple_import(lib, paths, copy, delete, resume):
     """Add files from the paths to the library without changing any
     tags.
     """
-    for toppath, path, items in read_albums(paths, progress, resume):
+    for toppath, path, items in read_albums(paths, resume):
         if items is None:
             continue
 
@@ -545,7 +541,7 @@ def simple_import(lib, paths, copy, delete, progress, resume):
 
         album = lib.add_album(items, True)
         lib.save()            
-        if progress:
+        if resume is not False:
             progress_set(toppath, path)
 
         if copy and delete:
@@ -560,7 +556,7 @@ def simple_import(lib, paths, copy, delete, progress, resume):
 # The import command.
 
 def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
-                 color, delete, quiet, progress, resume, quiet_fallback):
+                 color, delete, quiet, resume, quiet_fallback):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
@@ -572,26 +568,30 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
     ANSI-colorize some terminal output. If delete, then old files are
     deleted when they are copied. If quiet, then the user is
     never prompted for input; instead, the tagger just skips anything
-    it is not confident about. If progress, then state is saved in
-    case an import is interrupted. resume, if provided, indicates
-    whether interrupted imports should be resumed. quiet_fallback
-    should be either CHOICE_ASIS or CHOICE_SKIP and indicates what
-    should happen in quiet mode when the recommendation is not strong.
+    it is not confident about. resume indicates whether interrupted
+    imports can be resumed and is either a boolean or None.
+    quiet_fallback should be either CHOICE_ASIS or CHOICE_SKIP and
+    indicates what should happen in quiet mode when the recommendation
+    is not strong.
     """
     # Open the log.
     if logpath:
         logfile = open(logpath, 'w')
     else:
         logfile = None
+
+    # Never ask for input in quiet mode.
+    if resume is None and quiet:
+        resume = False
     
     # Perform the import.
     if autot:
         # Autotag. Set up the pipeline.
         pl = pipeline.Pipeline([
-            read_albums(paths, progress and not quiet, resume),
+            read_albums(paths, resume),
             initial_lookup(),
             user_query(lib, logfile, color, quiet, quiet_fallback),
-            apply_choices(lib, copy, write, art, delete, progress),
+            apply_choices(lib, copy, write, art, delete, resume is not False),
         ])
 
         # Run the pipeline.
@@ -605,7 +605,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
             pass
     else:
         # Simple import without autotagging. Always sequential.
-        simple_import(lib, paths, copy, delete, progress, resume)
+        simple_import(lib, paths, copy, delete, resume)
     
     # If we were logging, close the file.
     if logfile:
@@ -654,21 +654,30 @@ def import_func(lib, config, opts, args):
     art = opts.art if opts.art is not None else \
         ui.config_val(config, 'beets', 'import_art',
             DEFAULT_IMPORT_ART, bool)
-    progress = ui.config_val(config, 'beets', 'import_progress',
-            DEFAULT_IMPORT_PROGRESS, bool)
     threaded = ui.config_val(config, 'beets', 'threaded',
             DEFAULT_THREADED, bool)
     color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
-    resume = opts.resume # May be None.
     quiet = opts.quiet if opts.quiet is not None else DEFAULT_IMPORT_QUIET
     quiet_fallback_str = ui.config_val(config, 'beets', 'import_quiet_fallback',
             DEFAULT_IMPORT_QUIET_FALLBACK)
+
+    # Resume has three options: yes, no, and "ask" (None).
+    resume = opts.resume if opts.resume is not None else \
+        ui.config_val(config, 'beets', 'import_resume', DEFAULT_IMPORT_RESUME)
+    if isinstance(resume, basestring):
+        if resume.lower() in ('yes', 'true', 't', 'y', '1'):
+            resume = True
+        elif resume.lower() in ('no', 'false', 'f', 'n', '0'):
+            resume = False
+        else:
+            resume = None
+
     if quiet_fallback_str == 'asis':
         quiet_fallback = CHOICE_ASIS
     else:
         quiet_fallback = CHOICE_SKIP
     import_files(lib, args, copy, write, autot, opts.logpath, art, threaded,
-                 color, delete, quiet, progress, resume, quiet_fallback)
+                 color, delete, quiet, resume, quiet_fallback)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 
