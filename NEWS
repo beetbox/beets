@@ -10,10 +10,10 @@
 * The directory hierarchy can now be customized based on release type.
   In particular, the "path_format" setting in .beetsconfig has been
   replaced with a new [paths] section, which allows you to specify
-  different path formats for normal and "compilation" releases. The
-  default path formats have been changed to use $albumartist instead
-  of $artist. More information about this change is available on the
-  wiki.
+  different path formats for normal releases, "compilation" releases,
+  and every release type (see below). The default path formats have
+  been changed to use $albumartist instead of $artist. More information
+  about this change is available on the wiki.
 * A new "albumtype" field reflects the release type as specified by
   MusicBrainz: http://wiki.musicbrainz.org/ReleaseType
 * When deleting files, beets now appropriately "prunes" the directory
@@ -30,13 +30,13 @@
   -p and -P command-line flags override this setting and correspond to
   the "yes" and "no" settings.
 * Resuming is automatically disabled when the importer is in quiet (-q)
-  mode. Progress is still saved, however, and the -q flag (above) can
+  mode. Progress is still saved, however, and the -p flag (above) can
   be used to force resuming.
 * The BEETSCONFIG environment variable can now be used to specify the
   location of the config file that is at ~/.beetsconfig by default.
-* A new "import_quiet_fallback" specifies what should happen in quiet
-  mode when there is no strong recommendation. The options are "skip"
-  (the default) and "asis".
+* A new "import_quiet_fallback" option specifies what should happen in
+  quiet mode when there is no strong recommendation. The options are
+  "skip" (the default) and "asis".
 * Fix a bug where some files would be erroneously interpreted as MP4.
 * Fix permission bits applied to album art files.
 * Fix malformed MusicBrainz queries caused by null characters.
