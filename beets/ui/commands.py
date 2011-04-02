@@ -804,6 +804,15 @@ default_commands.append(stats_cmd)
 
 def show_version(lib, config, opts, args):
     print 'beets version %s' % beets.__version__
+    # Show plugins.
+    names = []
+    for plugin in plugins.find_plugins():
+        modname = plugin.__module__
+        names.append(modname.split('.')[-1])
+    if names:
+        print 'plugins:', ', '.join(names)
+    else:
+        print 'no plugins loaded'
 version_cmd = ui.Subcommand('version',
     help='output version information')
 version_cmd.func = show_version
