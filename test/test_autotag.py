@@ -28,26 +28,39 @@ from beets.library import Item
 class PluralityTest(unittest.TestCase):
     def test_plurality_consensus(self):
         objs = [1, 1, 1, 1]
-        obj = autotag._plurality(objs)
+        obj, consensus = autotag._plurality(objs)
         self.assertEqual(obj, 1)
+        self.assertTrue(consensus)
 
     def test_plurality_near_consensus(self):
         objs = [1, 1, 2, 1]
-        obj = autotag._plurality(objs)
+        obj, consensus = autotag._plurality(objs)
         self.assertEqual(obj, 1)
+        self.assertFalse(consensus)
 
     def test_plurality_conflict(self):
         objs = [1, 1, 2, 2, 3]
-        obj = autotag._plurality(objs)
+        obj, consensus = autotag._plurality(objs)
         self.assert_(obj in (1, 2))
+        self.assertFalse(consensus)
 
     def test_current_metadata_finds_pluralities(self):
         items = [Item({'artist': 'The Beetles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'Teh White Album'})]
-        l_artist, l_album = autotag.current_metadata(items)
+        l_artist, l_album, artist_consensus = autotag.current_metadata(items)
         self.assertEqual(l_artist, 'The Beatles')
         self.assertEqual(l_album, 'The White Album')
+        self.assertFalse(artist_consensus)
+
+    def test_current_metadata_artist_consensus(self):
+        items = [Item({'artist': 'The Beatles', 'album': 'The White Album'}),
+                 Item({'artist': 'The Beatles', 'album': 'The White Album'}),
+                 Item({'artist': 'The Beatles', 'album': 'Teh White Album'})]
+        l_artist, l_album, artist_consensus = autotag.current_metadata(items)
+        self.assertEqual(l_artist, 'The Beatles')
+        self.assertEqual(l_album, 'The White Album')
+        self.assertTrue(artist_consensus)
 
 class AlbumDistanceTest(unittest.TestCase):
     def item(self, title, track, artist='some artist'):
