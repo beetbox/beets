@@ -301,7 +301,9 @@ def track_distance(item, track_data, track_index=None, incl_artist=False):
     dist_max += TRACK_TITLE_WEIGHT
 
     # Track artist, if included.
-    if incl_artist:
+    # Attention: MB DB does not have artist info for all compilations,
+    # so only check artist distance if there is actually an artist in the MB track data
+    if incl_artist and 'artist' in track_data:
         dist += string_dist(item.artist, track_data['artist']) * \
                 TRACK_ARTIST_WEIGHT
         dist_max += TRACK_ARTIST_WEIGHT
