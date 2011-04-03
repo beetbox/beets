@@ -73,22 +73,23 @@ class ImportTest(unittest.TestCase):
 
         return realpath
 
-    def _run_import(self, titles=TEST_TITLES):
+    def _run_import(self, titles=TEST_TITLES, delete=False):
         # Make a bunch of tracks to import.
+        paths = []
         for i, title in enumerate(titles):
-            path = self._create_test_file(
+            paths.append(self._create_test_file(
                 ['the_album', 'track_%s.mp3' % (i+1)],
                 {
                     'track': (i+1),
                     'artist': 'The Artist',
                     'album': 'The Album',
                     'title': title,
-                })
+                }))
 
         # Run the UI "beet import" command!
         commands.import_files(
                 lib=self.lib,
-                paths=[os.path.dirname(path)],
+                paths=[os.path.dirname(paths[0])],
                 copy=True,
                 write=True,
                 autot=False,
@@ -96,11 +97,13 @@ class ImportTest(unittest.TestCase):
                 art=False,
                 threaded=False,
                 color=False,
-                delete=False,
+                delete=delete,
                 quiet=True,
                 resume=False,
                 quiet_fallback='skip',
         )
+
+        return paths
 
     def test_album_created_with_track_artist(self):
         self._run_import()
@@ -118,6 +121,57 @@ class ImportTest(unittest.TestCase):
         filenames = set(os.listdir(album_folder))
         destinations = set('%s.mp3' % title for title in TEST_TITLES)
         self.assertEqual(filenames, destinations)
+
+    def test_import_no_delete(self):
+        paths = self._run_import(['sometrack'], delete=False)
+        self.assertTrue(os.path.exists(paths[0]))
+
+    def test_import_with_delete(self):
+        paths = self._run_import(['sometrack'], delete=True)
+        self.assertFalse(os.path.exists(paths[0]))
+
+class ImportApplyTest(unittest.TestCase):
+    def setUp(self):
+        self.libdir = os.path.join('rsrc', 'testlibdir')
+        os.mkdir(self.libdir)
+        self.lib = library.Library(':memory:', self.libdir)
+
+        self.srcpath = os.path.join(self.libdir, 'srcfile.mp3')
+        shutil.copy(os.path.join('rsrc', 'full.mp3'), self.srcpath)
+        self.i = library.Item.from_path(self.srcpath)
+
+        trackinfo = {'title': 'one', 'artist': 'some artist',
+                     'track': 1, 'length': 1, 'id': 'trackid'}
+        self.info = {
+            'artist': 'some artist',
+            'album': 'some album',
+            'tracks': [trackinfo],
+            'va': False,
+            'album_id': 'albumid',
+            'artist_id': 'artistid',
+            'albumtype': 'soundtrack',
+        }
+
+    def tearDown(self):
+        shutil.rmtree(self.libdir)
+
+    def call_apply(self, coro, items, info):
+        coro.send((None, None, # Only used for progress.
+                   items, info))
+
+    def test_apply_no_delete(self):
+        coro = commands.apply_choices(self.lib, True, False, False,
+                                      False, False)
+        coro.next() # Prime coroutine.
+        self.call_apply(coro, [self.i], self.info)
+        self.assertTrue(os.path.exists(self.srcpath))
+
+    def test_apply_with_delete(self):
+        coro = commands.apply_choices(self.lib, True, False, False,
+                                      True, False)
+        coro.next() # Prime coroutine.
+        self.call_apply(coro, [self.i], self.info)
+        self.assertFalse(os.path.exists(self.srcpath))
 
 class ListTest(unittest.TestCase):
     def setUp(self):
@@ -158,6 +212,37 @@ class ListTest(unittest.TestCase):
         out = self.io.getoutput()
         self.assertTrue(u'the artist' not in out)
         self.assertTrue(u'the album artist' in out)
+
+class RemoveTest(unittest.TestCase):
+    def setUp(self):
+        self.io = _common.DummyIO()
+        self.io.install()
+
+        self.libdir = os.path.join('rsrc', 'testlibdir')
+        os.mkdir(self.libdir)
+
+        # Copy a file into the library.
+        self.lib = library.Library(':memory:', self.libdir)
+        self.i = library.Item.from_path(os.path.join('rsrc', 'full.mp3'))
+        self.lib.add(self.i, True)
+
+    def tearDown(self):
+        self.io.restore()
+        shutil.rmtree(self.libdir)
+
+    def test_remove_items_no_delete(self):
+        self.io.addinput('y')
+        commands.remove_items(self.lib, '', False, False)
+        items = self.lib.items()
+        self.assertEqual(len(list(items)), 0)
+        self.assertTrue(os.path.exists(self.i.path))
+
+    def test_remove_items_with_delete(self):
+        self.io.addinput('y')
+        commands.remove_items(self.lib, '', False, True)
+        items = self.lib.items()
+        self.assertEqual(len(list(items)), 0)
+        self.assertFalse(os.path.exists(self.i.path))
 
 class PrintTest(unittest.TestCase):
     def setUp(self):
@@ -281,6 +366,7 @@ class ConfigTest(unittest.TestCase):
         self._run_main(['-p', 'z'], textwrap.dedent("""
             [paths]
             x=y"""), func)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
