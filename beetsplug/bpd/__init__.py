@@ -819,7 +819,10 @@ class Server(BaseServer):
         artist, album, track = self._parse_path(path)
         
         if artist is None: # List all artists.
-            for artist in self.lib.artists():
+            artists = set()
+            for album in self.lib.albums():
+                artists.add(album.albumartist)
+            for artist in sorted(artists):
                 yield u'directory: ' + seq_to_path((artist,), PATH_PH)
         elif album is None: # List all albums for an artist.
             for album in self.lib.albums(artist):
@@ -874,15 +877,26 @@ class Server(BaseServer):
         components = path_to_list(path, PATH_PH)
         
         if len(components) <= 3:
-            # Add a single track.
-            found_an_item = None
-            for item in self.lib.items(*components):
-                found_an_item = True
+            items = []
+            if len(components) <= 2:
+                # Whole artist or album.
+                for album in self.lib.albums(*components[:2]):
+                    items += album.items()
+            else:
+                # Single item.
+                albums = list(self.lib.albums(*components[:2]))
+                if albums:
+                    for item in albums.items():
+                        if item.title == components[2]:
+                            items.append(item)
+                            break
+                
+            for item in items:
                 self.playlist.append(item)
                 if send_id:
                     yield u'Id: ' + unicode(item.id)
-                
-            if not found_an_item:
+
+            if not items:
                 # No items matched.
                 raise ArgumentNotFoundError()
             
