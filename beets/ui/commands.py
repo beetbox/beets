@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -25,7 +25,6 @@ from beets import ui
 from beets.ui import print_
 from beets import autotag
 from beets import library
-from beets.mediafile import UnreadableFileError, FileTypeError
 import beets.autotag.art
 from beets.ui import pipeline
 from beets import plugins
@@ -50,6 +49,9 @@ DEFAULT_IMPORT_QUIET_FALLBACK = 'skip'
 DEFAULT_IMPORT_RESUME         = None # "ask"
 DEFAULT_THREADED              = True
 DEFAULT_COLOR                 = True
+
+QUEUE_SIZE = 128
+VARIOUS_ARTISTS = u'Various Artists'
 
 class ImportAbort(Exception):
     """Raised when the user aborts the tagging operation.
@@ -77,16 +79,28 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
     tags are changed from (cur_artist, cur_album, items) to info with
     distance dist.
     """
-    if cur_artist != info['artist'] or cur_album != info['album']:
+    def show_album(artist, album):
+        if artist:
+            print_('     %s - %s' % (artist, album))
+        else:
+            print_('     %s' % album)
+
+    if cur_artist != info['artist'] or \
+            (cur_album != info['album'] and info['album'] != VARIOUS_ARTISTS):
         artist_l, artist_r = cur_artist or '', info['artist']
         album_l,  album_r  = cur_album  or '', info['album']
+        if artist_r == VARIOUS_ARTISTS:
+            # Hide artists for VA releases.
+            artist_l, artist_r = u'', u''
+
         if color:
             artist_l, artist_r = ui.colordiff(artist_l, artist_r)
             album_l, album_r   = ui.colordiff(album_l, album_r)
+
         print_("Correcting tags from:")
-        print_('     %s - %s' % (artist_l, album_l))
+        show_album(artist_l, album_l)
         print_("To:")
-        print_('     %s - %s' % (artist_r, album_r))
+        show_album(artist_r, album_r)
     else:
         print_("Tagging: %s - %s" % (info['artist'], info['album']))
     print_('(Distance: %s)' % dist_string(dist, color))
@@ -381,6 +395,7 @@ def initial_lookup():
     is found, all of the yielded parameters (except items) are None.
     """
     toppath, path, items = yield
+    log.debug('Looking up: %s' % path)
     while True:
         if path is DONE_SENTINEL:
             cur_artist, cur_album, candidates, rec = None, None, None, None
@@ -597,7 +612,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
         # Run the pipeline.
         try:
             if threaded:
-                pl.run_parallel()
+                pl.run_parallel(QUEUE_SIZE)
             else:
                 pl.run_sequential()
         except ImportAbort:

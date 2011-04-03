@@ -74,6 +74,9 @@ SD_PATTERNS = [
     (r'(, )?(pt\.|part) .+', 0.2),
 ]
 
+# Artist signals that indicate "various artists".
+VA_ARTISTS = (u'', u'various artists', u'va', u'unknown')
+
 # Autotagging exceptions.
 class AutotagError(Exception):
     pass
@@ -230,7 +233,7 @@ def _plurality(objs):
             max_freq = freq
             res = obj
 
-    return res
+    return res, len(freqs) <= 1
 
 def current_metadata(items):
     """Returns the most likely artist and album for a set of Items.
@@ -238,10 +241,11 @@ def current_metadata(items):
     """
     keys = 'artist', 'album'
     likelies = {}
+    consensus = {}
     for key in keys:
         values = [getattr(item, key) for item in items]
-        likelies[key] = _plurality(values)
-    return likelies['artist'], likelies['album']
+        likelies[key], consensus[key] = _plurality(values)
+    return likelies['artist'], likelies['album'], consensus['artist']
 
 def order_items(items, trackinfo):
     """Orders the items based on how they match some canonical track
@@ -325,7 +329,7 @@ def distance(items, info):
     """Determines how "significant" an album metadata change would be.
     Returns a float in [0.0,1.0]. The list of items must be ordered.
     """
-    cur_artist, cur_album = current_metadata(items)
+    cur_artist, cur_album, _ = current_metadata(items)
     cur_artist = cur_artist or ''
     cur_album = cur_album or ''
     
@@ -492,7 +496,7 @@ def tag_album(items, search_artist=None, search_album=None):
     May raise an AutotagError if existing metadata is insufficient.
     """
     # Get current metadata.
-    cur_artist, cur_album = current_metadata(items)
+    cur_artist, cur_album, artist_consensus = current_metadata(items)
     log.debug('Tagging %s - %s' % (cur_artist, cur_album))
     
     # The output result tuples (keyed by MB album ID).
@@ -524,6 +528,14 @@ def tag_album(items, search_artist=None, search_album=None):
         candidates = list(candidates)
     else:
         candidates = []
+
+    # Possibly add "various artists" search.
+    if search_album and ((not artist_consensus) or \
+                         (search_artist.lower() in VA_ARTISTS) or \
+                         any(item.comp for item in items)):
+        log.debug('Possibly Various Artists; adding matches.')
+        candidates.extend(mb.match_album(None, search_album, len(items),
+                                         MAX_CANDIDATES))
 
     # Get candidates from plugins.
     candidates.extend(plugins.candidates(items))
