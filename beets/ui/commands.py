@@ -50,6 +50,8 @@ DEFAULT_IMPORT_RESUME         = None # "ask"
 DEFAULT_THREADED              = True
 DEFAULT_COLOR                 = True
 
+VARIOUS_ARTISTS = u'Various Artists'
+
 class ImportAbort(Exception):
     """Raised when the user aborts the tagging operation.
     """
@@ -76,16 +78,28 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
     tags are changed from (cur_artist, cur_album, items) to info with
     distance dist.
     """
-    if cur_artist != info['artist'] or cur_album != info['album']:
+    def show_album(artist, album):
+        if artist:
+            print_('     %s - %s' % (artist, album))
+        else:
+            print_('     %s' % album)
+
+    if cur_artist != info['artist'] or \
+            (cur_album != info['album'] and info['album'] != VARIOUS_ARTISTS):
         artist_l, artist_r = cur_artist or '', info['artist']
         album_l,  album_r  = cur_album  or '', info['album']
+        if artist_r == VARIOUS_ARTISTS:
+            # Hide artists for VA releases.
+            artist_l, artist_r = u'', u''
+
         if color:
             artist_l, artist_r = ui.colordiff(artist_l, artist_r)
             album_l, album_r   = ui.colordiff(album_l, album_r)
+
         print_("Correcting tags from:")
-        print_('     %s - %s' % (artist_l, album_l))
+        show_album(artist_l, album_l)
         print_("To:")
-        print_('     %s - %s' % (artist_r, album_r))
+        show_album(artist_r, album_r)
     else:
         print_("Tagging: %s - %s" % (info['artist'], info['album']))
     print_('(Distance: %s)' % dist_string(dist, color))
