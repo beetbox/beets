@@ -41,6 +41,7 @@
 * Fix a bug where some files would be erroneously interpreted as MP4.
 * Fix permission bits applied to album art files.
 * Fix malformed MusicBrainz queries caused by null characters.
+# Fix a bug with old versions of the Monkey's Audio format.
 * Retry in more cases when MusicBrainz servers are slow/overloaded.
 * The old "albumify" plugin for upgrading databases was removed.
 

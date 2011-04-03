@@ -715,10 +715,14 @@ class MediaFile(object):
     @property
     def bitrate(self):
         if self.type in ('flac', 'ape'):
-            # Simulate bitrate for lossless formats.
-            #fixme: The utility of this guess is questionable.
-            return self.mgfile.info.sample_rate * \
-                   self.mgfile.info.bits_per_sample
+            if hasattr(self.mgfile.info, 'bits_per_sample'):
+                # Simulate bitrate for lossless formats.
+                #fixme: The utility of this guess is questionable.
+                return self.mgfile.info.sample_rate * \
+                       self.mgfile.info.bits_per_sample
+            else:
+                # Old APE file format.
+                return 0
         elif self.type == 'wv':
             # Mutagen doesn't provide enough information.
             return 0

@@ -63,6 +63,10 @@ class EdgeTest(unittest.TestCase):
         self.assertEqual(f.disc, 4)
         self.assertEqual(f.disctotal, 5)
 
+    def test_old_ape_version_bitrate(self):
+        f = beets.mediafile.MediaFile(os.path.join('rsrc', 'oldape.ape'))
+        self.assertEqual(f.bitrate, 0)
+
 _sc = beets.mediafile._safe_cast
 class InvalidValueToleranceTest(unittest.TestCase):
     def test_packed_integer_with_extra_chars(self):
