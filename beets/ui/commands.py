@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -50,6 +50,7 @@ DEFAULT_IMPORT_RESUME         = None # "ask"
 DEFAULT_THREADED              = True
 DEFAULT_COLOR                 = True
 
+QUEUE_SIZE = 128
 VARIOUS_ARTISTS = u'Various Artists'
 
 class ImportAbort(Exception):
@@ -394,6 +395,7 @@ def initial_lookup():
     is found, all of the yielded parameters (except items) are None.
     """
     toppath, path, items = yield
+    log.debug('Looking up: %s' % path)
     while True:
         if path is DONE_SENTINEL:
             cur_artist, cur_album, candidates, rec = None, None, None, None
@@ -610,7 +612,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
         # Run the pipeline.
         try:
             if threaded:
-                pl.run_parallel()
+                pl.run_parallel(QUEUE_SIZE)
             else:
                 pl.run_sequential()
         except ImportAbort:
