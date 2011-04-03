@@ -495,6 +495,8 @@ class MediaFile(object):
             self.mgfile = mutagen.File(path)
         except unreadable_exc:
             raise UnreadableFileError('Mutagen could not read file')
+        except IOError:
+            raise UnreadableFileError('could not read file')
 
         if self.mgfile is None: # Mutagen couldn't guess the type
             raise FileTypeError('file type unsupported by Mutagen')

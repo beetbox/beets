@@ -130,6 +130,15 @@ class SafetyTest(unittest.TestCase):
         self._exccheck('nothing.xml', beets.mediafile.UnreadableFileError,
                        "ftyp")
 
+    def test_broken_symlink(self):
+        fn = os.path.join('rsrc', 'brokenlink')
+        os.symlink('does_not_exist', fn)
+        try:
+            self.assertRaises(beets.mediafile.UnreadableFileError,
+                              beets.mediafile.MediaFile, fn)
+        finally:
+            os.unlink(fn)
+
 class SideEffectsTest(unittest.TestCase):
     def setUp(self):
         self.empty = os.path.join('rsrc', 'empty.mp3')
