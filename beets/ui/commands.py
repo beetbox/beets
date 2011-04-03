@@ -292,6 +292,24 @@ def _reopen_lib(lib):
     else:
         return lib
 
+def _duplicate_check(lib, choice, info, cur_artist, cur_album):
+    """Check whether the match already exists in the library."""
+    if choice is CHOICE_ASIS and cur_artist is None:
+        return False
+
+    if choice is CHOICE_ASIS:
+        artist = cur_artist
+        album = cur_album
+    else:
+        artist = info['artist']
+        album = info['album']
+
+    for album_cand in lib.albums(artist):
+        if album_cand.album == album:
+            return True
+    return False
+
+
 # Utilities for reading and writing the beets progress file, which
 # allows long tagging tasks to be resumed when they pause (or crash).
 PROGRESS_KEY = 'tagprogress'
@@ -458,23 +476,12 @@ def user_query(lib, logfile, color, quiet, quiet_fallback):
             info, items = choice
 
         # Ensure that we don't have the album already.
-        if choice is not CHOICE_ASIS or cur_artist is not None:
-            if choice is CHOICE_ASIS:
-                artist = cur_artist
-                album = cur_album
-            else:
-                artist = info['artist']
-                album = info['album']
-            q = library.AndQuery((library.MatchQuery('artist', artist),
-                                  library.MatchQuery('album',  album)))
-            count, _ = q.count(lib)
-            if count >= 1:
-                tag_log(logfile, 'duplicate', path)
-                print_("This album (%s - %s) is already in the library!" %
-                       (artist, album))
-                out = toppath, path, items, None
-                continue
-        
+        if _duplicate_check(lib, choice, info, cur_artist, cur_album):
+            tag_log(logfile, 'duplicate', path)
+            print_("This album is already in the library!")
+            out = toppath, path, items, None
+            continue
+
         # Yield the result and get the next chunk of work.
         out = toppath, path, items, info
         
