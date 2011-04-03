@@ -120,6 +120,23 @@ class AlbumDistanceTest(unittest.TestCase):
         }
         self.assertEqual(autotag.distance(items, info), 0)
 
+    def test_comp_no_track_artists(self):
+        # Some VA releases don't have track artists (incomplete metadata).
+        items = []
+        items.append(self.item('one', 1))
+        items.append(self.item('two', 2))
+        items.append(self.item('three', 3))
+        info = {
+            'artist': 'should be ignored',
+            'album': 'some album',
+            'tracks': self.trackinfo(),
+            'va': True,
+        }
+        del info['tracks'][0]['artist']
+        del info['tracks'][1]['artist']
+        del info['tracks'][2]['artist']
+        self.assertEqual(autotag.distance(items, info), 0)
+
     def test_comp_track_artists_do_not_match(self):
         items = []
         items.append(self.item('one', 1))
