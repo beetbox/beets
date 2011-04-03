@@ -532,7 +532,6 @@ def apply_choices(lib, copy, write, art, delete, progress):
                     # Only delete files that were actually moved.
                     if old_path not in new_paths:
                         os.remove(library._syspath(old_path))
-                        os.remove(library._syspath(old_path))
 
         # Update progress.
         if progress:
