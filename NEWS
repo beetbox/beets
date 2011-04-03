@@ -38,6 +38,7 @@
   quiet mode when there is no strong recommendation. The options are
   "skip" (the default) and "asis".
 * The "version" command now lists all the loaded plugins.
+* A new plugin, called "info", just prints out audio file metadata.
 * Fix a bug where some files would be erroneously interpreted as MP4.
 * Fix permission bits applied to album art files.
 * Fix malformed MusicBrainz queries caused by null characters.

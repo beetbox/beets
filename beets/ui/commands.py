@@ -25,7 +25,6 @@ from beets import ui
 from beets.ui import print_
 from beets import autotag
 from beets import library
-from beets.mediafile import UnreadableFileError, FileTypeError
 import beets.autotag.art
 from beets.ui import pipeline
 from beets import plugins
