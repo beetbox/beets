@@ -173,6 +173,33 @@ class ImportApplyTest(unittest.TestCase):
         self.call_apply(coro, [self.i], self.info)
         self.assertFalse(os.path.exists(self.srcpath))
 
+class DuplicateCheckTest(unittest.TestCase):
+    def setUp(self):
+        self.lib = library.Library(':memory:')
+        self.i = _common.item()
+        self.album = self.lib.add_album([self.i], True)
+
+    def test_duplicate_album(self):
+        info = {'artist': self.i.albumartist, 'album': self.i.album}
+        res = commands._duplicate_check(self.lib, None, info, None, None)
+        self.assertTrue(res)
+
+    def test_different_album(self):
+        info = {'artist': 'xxx', 'album': 'yyy'}
+        res = commands._duplicate_check(self.lib, None, info, None, None)
+        self.assertFalse(res)
+
+    def test_duplicate_asis(self):
+        res = commands._duplicate_check(self.lib, commands.CHOICE_ASIS,
+                                        None, self.i.albumartist, self.i.album)
+        self.assertTrue(res)
+
+    def test_duplicate_va_album(self):
+        self.album.albumartist = 'an album artist'
+        info = {'artist': 'an album artist', 'album': self.i.album}
+        res = commands._duplicate_check(self.lib, None, info, None, None)
+        self.assertTrue(res)
+
 class ListTest(unittest.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
