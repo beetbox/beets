@@ -70,8 +70,8 @@ def get_cur_artist(items):
                 artist_ids.append(last_data['artist_mbid'])
 
     # Vote on the most popular artist.
-    artist = autotag._plurality(artists)
-    artist_id = autotag._plurality(artist_ids)
+    artist, _ = autotag._plurality(artists)
+    artist_id, _ = autotag._plurality(artist_ids)
 
     return artist, artist_id
 

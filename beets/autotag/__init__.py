@@ -218,7 +218,7 @@ def string_dist(str1, str2):
 
 def _plurality(objs):
     """Given a sequence of comparable objects, returns the object that
-    is most common in the set.
+    is most common in the set and if it is the only object is the set.
     """
     # Calculate frequencies.
     freqs = defaultdict(int)
