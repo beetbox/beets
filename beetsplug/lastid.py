@@ -99,7 +99,7 @@ class LastIdPlugin(BeetsPlugin):
             dist_max += autotag.TRACK_ID_WEIGHT
 
         # log.debug('Last data: %s; distance: %f' %
-        #           (str(last_data), dist/dist_max))
+        #           (str(last_data), dist/dist_max if dist_max > 0.0 else 0.0))
 
         return dist * DISTANCE_SCALE, dist_max * DISTANCE_SCALE
 
@@ -114,7 +114,7 @@ class LastIdPlugin(BeetsPlugin):
             dist_max += autotag.ARTIST_WEIGHT
 
         log.debug('Last artist (%s/%s) distance: %f' %
-                  (last_artist, info['artist'], dist/dist_max))
+                  (last_artist, info['artist'], dist/dist_max if dist_max > 0.0 else 0.0))
 
         #fixme: artist MBID currently ignored (as in vanilla tagger)
         return dist, dist_max
