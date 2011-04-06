@@ -60,4 +60,3 @@ setup(name='beets',
           'Development Status :: 4 - Beta',
       ],
 )
-

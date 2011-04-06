@@ -741,7 +741,7 @@ class BaseLibrary(object):
         """
         # Gather the unique album/artist names and associated example
         # Items.
-        specimens = set()
+        specimens = {}
         for item in self.get(query, ALBUM_DEFAULT_FIELDS):
             if (artist is None or item.artist == artist):
                 key = (item.artist, item.album)
