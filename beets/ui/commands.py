@@ -133,6 +133,7 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
 
 CHOICE_SKIP = 'CHOICE_SKIP'
 CHOICE_ASIS = 'CHOICE_ASIS'
+CHOICE_TRACKS = 'CHOICE_TRACKS'
 CHOICE_MANUAL = 'CHOICE_MANUAL'
 def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
     """Given current metadata and a sorted list of
@@ -140,8 +141,8 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
     of which candidate to use. Returns a pair (candidate, ordered)
     consisting of the the selected candidate and the associated track
     ordering. If user chooses to skip, use as-is, or search manually,
-    returns CHOICE_SKIP, CHOICE_ASIS, or CHOICE_MANUAL instead of a
-    tuple.
+    returns CHOICE_SKIP, CHOICE_ASIS, CHOICE_TRACKS, or CHOICE_MANUAL
+    instead of a tuple.
     """
     # Is the change good enough?
     top_dist, _, _ = candidates[0]
@@ -161,10 +162,10 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
                                             
             # Ask the user for a choice.
             sel = ui.input_options(
-                '# selection (default 1), Skip, Use as-is, '
+                '# selection (default 1), Skip, Use as-is, as Tracks, '
                 'Enter search, or aBort?',
-                ('s', 'u', 'e', 'b'), '1',
-                'Enter a numerical selection, S, U, E, or B:',
+                ('s', 'u', 't', 'e', 'b'), '1',
+                'Enter a numerical selection, S, U, T, E, or B:',
                 (1, len(candidates))
             )
             if sel == 's':
@@ -173,6 +174,8 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
                 return CHOICE_ASIS
             elif sel == 'e':
                 return CHOICE_MANUAL
+            elif sel == 't':
+                return CHOICE_TRACKS
             elif sel == 'b':
                 raise ImportAbort()
             else: # Numerical selection.
@@ -188,10 +191,10 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
         
         # Ask for confirmation.
         sel = ui.input_options(
-            '[A]pply, More candidates, Skip, Use as-is, '
+            '[A]pply, More candidates, Skip, Use as-is, as Tracks, '
             'Enter search, or aBort?',
-            ('a', 'm', 's', 'u', 'e', 'b'), 'a',
-            'Enter A, M, S, U, E, or B:'
+            ('a', 'm', 's', 'u', 't', 'e', 'b'), 'a',
+            'Enter A, M, S, U, T, E, or B:'
         )
         if sel == 'a':
             return info, items
@@ -201,6 +204,8 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
             return CHOICE_SKIP
         elif sel == 'u':
             return CHOICE_ASIS
+        elif sel == 't':
+            return CHOICE_TRACKS
         elif sel == 'e':
             return CHOICE_MANUAL
         elif sel == 'b':
@@ -250,12 +255,14 @@ def choose_match(path, items, cur_artist, cur_album, candidates,
             # Fallback: if either an error ocurred or no matches found.
             print_("No match found.")
             sel = ui.input_options(
-                "[U]se as-is, Skip, Enter manual search, or aBort?",
-                ('u', 's', 'e', 'b'), 'u',
-                'Enter U, S, E, or B:'
+                "[U]se as-is, as Tracks, Skip, Enter manual search, or aBort?",
+                ('u', 't', 's', 'e', 'b'), 'u',
+                'Enter U, T, S, E, or B:'
             )
             if sel == 'u':
                 choice = CHOICE_ASIS
+            elif sel == 't':
+                choice = CHOICE_TRACKS
             elif sel == 'e':
                 choice = CHOICE_MANUAL
             elif sel == 's':
@@ -264,7 +271,7 @@ def choose_match(path, items, cur_artist, cur_album, candidates,
                 raise ImportAbort()
     
         # Choose which tags to use.
-        if choice in (CHOICE_SKIP, CHOICE_ASIS):
+        if choice in (CHOICE_SKIP, CHOICE_ASIS, CHOICE_TRACKS):
             # Pass selection to main control flow.
             return choice
         elif choice is CHOICE_MANUAL:
@@ -299,6 +306,9 @@ def _reopen_lib(lib):
 
 def _duplicate_check(lib, choice, info, cur_artist, cur_album):
     """Check whether the match already exists in the library."""
+    if choice is CHOICE_TRACKS:
+        #TODO currently no track-level duplicate detection.
+        return False
     if choice is CHOICE_ASIS and cur_artist is None:
         return False
 
@@ -440,9 +450,10 @@ def user_query(lib, logfile, color, quiet, quiet_fallback):
     items is a set of Items in the album to be tagged; the remaining
     parameters are the result of an initial lookup from MusicBrainz.
     The coroutine yields (toppath, path, items, info) pairs where info
-    is either a candidate info dict, CHOICE_ASIS, or None (indicating
-    that the album should not be tagged) and items are the constituent
-    Item objects, ordered in the case of successful tagging.
+    is either a candidate info dict, CHOICE_ASIS, CHOICE_TRACKS, or
+    None (indicating that the album should not be tagged) and items are
+    the constituent Item objects, ordered in the case of successful
+    tagging.
     """
     lib = _reopen_lib(lib)
     first = True
@@ -469,6 +480,8 @@ def user_query(lib, logfile, color, quiet, quiet_fallback):
         if choice is CHOICE_ASIS:
             tag_log(logfile, 'asis', path)
             info = CHOICE_ASIS
+        elif choice is CHOICE_TRACKS:
+            info = CHOICE_TRACKS
         elif choice is CHOICE_SKIP:
             tag_log(logfile, 'skip', path)
             # Yield None, indicating that the pipeline should not
@@ -495,7 +508,7 @@ def apply_choices(lib, copy, write, art, delete, progress):
     process. The parameters to the generator control the behavior of
     the import. The coroutine accepts (items, info) pairs and yields
     nothing. items the set of Items to import; info is either a
-    candidate info dictionary or CHOICE_ASIS.
+    candidate info dictionary, CHOICE_ASIS, or CHOICE_TRACKS.
     """
     lib = _reopen_lib(lib)
     while True:    
@@ -514,22 +527,32 @@ def apply_choices(lib, copy, write, art, delete, progress):
         if info is not None:
 
             # Change metadata, move, and copy.
-            if info is not CHOICE_ASIS:
+            if info not in (CHOICE_ASIS, CHOICE_TRACKS):
                 autotag.apply_metadata(items, info)
             if copy and delete:
                 old_paths = [os.path.realpath(item.path) for item in items]
             for item in items:
                 if copy:
                     item.move(lib, True)
-                if write and info is not CHOICE_ASIS:
+                if write and info not in (CHOICE_ASIS, CHOICE_TRACKS):
                     item.write()
 
             # Add items to library. We consolidate this at the end to avoid
             # locking while we do the copying and tag updates.
-            albuminfo = lib.add_album(items, infer_aa = (info is CHOICE_ASIS))
+            if info == CHOICE_TRACKS:
+                # Add tracks.
+                is_album = False
+                for item in items:
+                    lib.add(item)
+
+            else:
+                # Add an album.
+                is_album = True
+                albuminfo = lib.add_album(items, infer_aa =
+                                          (info is CHOICE_ASIS))
 
             # Get album art if requested.
-            if art and info is not CHOICE_ASIS:
+            if is_album and art and info is not CHOICE_ASIS:
                 artpath = beets.autotag.art.art_for_album(info)
                 if artpath:
                     albuminfo.set_art(artpath)
@@ -538,7 +561,11 @@ def apply_choices(lib, copy, write, art, delete, progress):
             lib.save()
 
             # Announce that we've added an album.
-            plugins.send('album_imported', album=albuminfo)
+            if is_album:
+                plugins.send('album_imported', album=albuminfo)
+            else:
+                for item in items:
+                    plugins.send('item_imported', lib=lib, item=item)
 
             # Finally, delete old files.
             if copy and delete:

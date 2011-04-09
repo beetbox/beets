@@ -1,7 +1,9 @@
 1.0b8
 -----
 * Better support for singleton (non-album) tracks. The "singleton" path
-  format can be used to customize where these tracks are stored.
+  format can be used to customize where these tracks are stored. While
+  importing, you can choose the "as Tracks" (T) option to add
+  singletons to your library.
 * The "distance" number, which quantifies how different an album's
   current and proposed metadata are, is now displayed as "similarity"
   instead. This should be less noisy and confusing; you'll now see
