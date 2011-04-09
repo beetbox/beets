@@ -248,13 +248,33 @@ class DestinationTest(unittest.TestCase):
     
     def test_default_path_for_non_compilations(self):
         self.i.comp = False
+        self.lib.add_album([self.i])
         self.lib.directory = 'one'
         self.lib.path_formats = {'default': 'two',
                                  'comp': 'three'}
         self.assertEqual(self.lib.destination(self.i), np('one/two'))
 
+    def test_singleton_path(self):
+        i = item()
+        self.lib.directory = 'one'
+        self.lib.path_formats = {'default': 'two',
+                                 'comp': 'three',
+                                 'singleton': 'four'}
+        self.assertEqual(self.lib.destination(i), np('one/four'))
+
+    def test_singleton_track_falls_back_to_default(self):
+        i = item()
+        i.comp = True
+        i.albumtype = 'atype'
+        self.lib.directory = 'one'
+        self.lib.path_formats = {'default': 'two',
+                                 'comp': 'three',
+                                 'atype': 'four'}
+        self.assertEqual(self.lib.destination(i), np('one/two'))
+
     def test_comp_path(self):
         self.i.comp = True
+        self.lib.add_album([self.i])
         self.lib.directory = 'one'
         self.lib.path_formats = {'default': 'two',
                                  'comp': 'three'}
@@ -262,6 +282,7 @@ class DestinationTest(unittest.TestCase):
 
     def test_albumtype_path(self):
         self.i.comp = True
+        self.lib.add_album([self.i])
         self.i.albumtype = 'sometype'
         self.lib.directory = 'one'
         self.lib.path_formats = {'default': 'two',
@@ -271,6 +292,7 @@ class DestinationTest(unittest.TestCase):
 
     def test_albumtype_path_fallback_to_comp(self):
         self.i.comp = True
+        self.lib.add_album([self.i])
         self.i.albumtype = 'sometype'
         self.lib.directory = 'one'
         self.lib.path_formats = {'default': 'two',

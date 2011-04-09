@@ -900,7 +900,13 @@ class Library(BaseLibrary):
         pathmod = pathmod or os.path
         
         # Use a path format based on the album type, if available.
-        if item.albumtype and item.albumtype in self.path_formats:
+        if not item.album_id:
+            # Singleton track. Never use the "album" formats.
+            if 'singleton' in self.path_formats:
+                path_format = self.path_formats['singleton']
+            else:
+                path_format = self.path_formats['default']
+        elif item.albumtype and item.albumtype in self.path_formats:
             path_format = self.path_formats[item.albumtype]
         elif item.comp and 'comp' in self.path_formats:
             path_format = self.path_formats['comp']

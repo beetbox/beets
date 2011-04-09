@@ -38,6 +38,7 @@ DEFAULT_DIRECTORY = '~/Music'
 DEFAULT_PATH_FORMATS = {
     'default': '$albumartist/$album/$track $title',
     'comp': 'Compilations/$album/$track $title',
+    'singleton': 'Non-Album/$artist/$title',
 }
 DEFAULT_ART_FILENAME = 'cover'
 
