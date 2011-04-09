@@ -1,6 +1,10 @@
 1.0b8
 -----
-* Added a new plugin event, "imported_album", which is called every
+* The "distance" number, which quantifies how different an album's
+  current and proposed metadata are, is now displayed as "similarity"
+  instead. This should be less noisy and confusing; you'll now see
+  99.5% instead of 0.00489323.
+* Added a new plugin event, "album_imported", which is called every
   time an album is added to the library. (Thanks, Lugoues!)
 * A new plugin method, register_listener, is an imperative alternative
   to the @listen decorator (Thanks again, Lugoues!)

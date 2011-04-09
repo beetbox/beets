@@ -61,10 +61,10 @@ class ImportAbort(Exception):
 # Autotagger utilities and support.
 
 def dist_string(dist, color):
-    """Formats a distance (a float) as a string. The string is
-    colorized if color is True.
+    """Formats a distance (a float) as a similarity percentage string.
+    The string is colorized if color is True.
     """
-    out = str(dist)
+    out = '%.1f%%' % ((1 - dist) * 100)
     if color:
         if dist <= autotag.STRONG_REC_THRESH:
             out = ui.colorize('green', out)
@@ -85,6 +85,7 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
         else:
             print_('     %s' % album)
 
+    # Identify the album in question.
     if cur_artist != info['artist'] or \
             (cur_album != info['album'] and info['album'] != VARIOUS_ARTISTS):
         artist_l, artist_r = cur_artist or '', info['artist']
@@ -103,7 +104,11 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
         show_album(artist_r, album_r)
     else:
         print_("Tagging: %s - %s" % (info['artist'], info['album']))
-    print_('(Distance: %s)' % dist_string(dist, color))
+
+    # Distance/similarity.
+    print_('(Similarity: %s)' % dist_string(dist, color))
+
+    # Tracks.
     for i, (item, track_data) in enumerate(zip(items, info['tracks'])):
         cur_track = str(item.track)
         new_track = str(i+1)
