@@ -202,6 +202,7 @@ def send(event, **arguments):
 
     Returns the number of handlers called.
     """
+    log.debug('Sending event: %s' % event)
     handlers = _event_handlers[event]
     for handler in handlers:
         handler(**arguments)
