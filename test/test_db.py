@@ -309,12 +309,26 @@ class DestinationTest(unittest.TestCase):
         p = self.lib.destination(self.i)
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'something')
 
+    def test_albumartist_falls_back_to_artist(self):
+        self.i.artist = 'trackartist'
+        self.i.albumartist = ''
+        self.lib.path_formats = {'default': '$albumartist'}
+        p = self.lib.destination(self.i)
+        self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'trackartist')
+
     def test_artist_overrides_albumartist(self):
         self.i.artist = 'theartist'
         self.i.albumartist = 'something'
         self.lib.path_formats = {'default': '$artist'}
         p = self.lib.destination(self.i)
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'theartist')
+
+    def test_albumartist_overrides_artist(self):
+        self.i.artist = 'theartist'
+        self.i.albumartist = 'something'
+        self.lib.path_formats = {'default': '$albumartist'}
+        p = self.lib.destination(self.i)
+        self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'something')
 
     def test_sanitize_path_works_on_empty_string(self):
         p = beets.library._sanitize_path('', posixpath)

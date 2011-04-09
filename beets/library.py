@@ -924,9 +924,12 @@ class Library(BaseLibrary):
                 value = getattr(item, key)
             mapping[key] = _sanitize_for_path(value, pathmod, key)
         
-        # Use the album artist if the track artist is not set.
+        # Use the album artist if the track artist is not set and
+        # vice-versa.
         if not mapping['artist']:
             mapping['artist'] = mapping['albumartist']
+        if not mapping['albumartist']:
+            mapping['albumartist'] = mapping['artist']
         
         # Perform substitution.
         subpath = subpath_tmpl.substitute(mapping)

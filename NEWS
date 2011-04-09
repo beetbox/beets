@@ -1,5 +1,7 @@
 1.0b8
 -----
+* In path formats, $albumartist now falls back to $artist (as well as
+  the other way around).
 * Fix adding individual tracks in BPD.
 
 1.0b7
