@@ -168,6 +168,29 @@ class GetTest(unittest.TestCase, AssertsMixin):
         self.assert_matched(results, 'Boracay')
         self.assert_done(results)
 
+class MemoryGetTest(unittest.TestCase, AssertsMixin):
+    def setUp(self):
+        self.album_item = _common.item()
+        self.album_item.title = 'album item'
+        self.single_item = _common.item()
+        self.single_item.title = 'singleton item'
+
+        self.lib = beets.library.Library(':memory:')
+        self.lib.add(self.single_item)
+        self.lib.add_album([self.album_item])
+
+    def test_singleton_true(self):
+        q = 'singleton:true'
+        results = self.lib.get(q)
+        self.assert_matched(results, 'singleton item')
+        self.assert_done(results)
+
+    def test_singleton_false(self):
+        q = 'singleton:false'
+        results = self.lib.get(q)
+        self.assert_matched(results, 'album item')
+        self.assert_done(results)
+
 class BrowseTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
         self.lib = beets.library.Library('rsrc' + os.sep + 'test.blb')

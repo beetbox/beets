@@ -279,6 +279,13 @@ def _sanitize_for_path(value, pathmod, key=None):
         value = str(value)
     return value
 
+def _bool(value):
+    """Returns a boolean reflecting a human-entered string."""
+    if value.lower() in ('yes', '1', 'true', 't', 'y'):
+        return True
+    else:
+        return False
+
 
 # Library items (songs).
 
@@ -453,7 +460,9 @@ class Query(object):
         ResultIterator.
         """
         c = library.conn.cursor()
-        c.execute(*self.statement())
+        stmt, subs = self.statement()
+        log.debug('Executing query: %s' % stmt)
+        c.execute(stmt, subs)
         return ResultIterator(c, library)
 
 class FieldQuery(Query):
@@ -489,6 +498,20 @@ class SubstringQuery(FieldQuery):
     def match(self, item):
         return self.pattern.lower() in getattr(item, self.field).lower()
 
+class SingletonQuery(Query):
+    """Matches either singleton or non-singleton items."""
+    def __init__(self, sense):
+        self.sense = sense
+
+    def clause(self):
+        if self.sense:
+            return "album_id ISNULL", ()
+        else:
+            return "NOT album_id ISNULL", ()
+
+    def match(self, item):
+        return (not item.album_id) == self.sense
+
 class CollectionQuery(Query):
     """An abstract query class that aggregates other queries. Can be
     indexed like a list to access the sub-queries.
@@ -514,16 +537,6 @@ class CollectionQuery(Query):
             subvals += subq_subvals
         clause = (' ' + joiner + ' ').join(clause_parts)
         return clause, subvals
-    
-    @classmethod
-    def from_dict(cls, matches):
-        """Construct a query from a dictionary, matches, whose keys are
-        item field names and whose values are substring patterns.
-        """
-        subqueries = []
-        for key, pattern in matches.iteritems():
-            subqueries.append(SubstringQuery(key, pattern))
-        return cls(subqueries)
     
     # regular expression for _parse_query, below
     _pq_regex = re.compile(r'(?:^|(?<=\s))' # zero-width match for whitespace
@@ -569,6 +582,8 @@ class CollectionQuery(Query):
                 subqueries.append(AnySubstringQuery(pattern, default_fields))
             elif key.lower() in ITEM_KEYS: # ignore unrecognized keys
                 subqueries.append(SubstringQuery(key.lower(), pattern))
+            elif key.lower() == 'singleton':
+                subqueries.append(SingletonQuery(_bool(pattern)))
         if not subqueries: # no terms in query
             subqueries = [TrueQuery()]
         return cls(subqueries)
@@ -1094,6 +1109,7 @@ class Library(BaseLibrary):
         sql = "SELECT * FROM items " + \
               "WHERE " + where + \
               " ORDER BY artist, album, disc, track"
+        log.debug('Getting items with SQL: %s' % sql)
         c = self.conn.execute(sql, subvals)
         return ResultIterator(c, self)
 
