@@ -64,12 +64,16 @@ class BeetsPlugin(object):
         pass
 
     listeners = None
-	 
-    def register_listener(self, event, func):
-        if self.listeners is None:
-            self.listeners = defaultdict(list)
-        self.listeners[event].append(func)
-		  
+
+    @classmethod
+    def register_listener(cls, event, func):
+        """Add a function as a listener for the specified event. (An
+        imperative alternative to the @listen decorator.)
+        """
+        if cls.listeners is None:
+            cls.listeners = defaultdict(list)
+        cls.listeners[event].append(func)
+
     @classmethod
     def listen(cls, event):
         """Decorator that adds a function as an event handler for the

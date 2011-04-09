@@ -1,5 +1,9 @@
 1.0b8
 -----
+* Added a new plugin event, "imported_album", which is called every
+  time an album is added to the library. (Thanks, Lugoues!)
+* A new plugin method, register_listener, is an imperative alternative
+  to the @listen decorator (Thanks again, Lugoues!)
 * In path formats, $albumartist now falls back to $artist (as well as
   the other way around).
 * Fix adding individual tracks in BPD.
