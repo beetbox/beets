@@ -886,7 +886,7 @@ class Server(BaseServer):
                 # Single item.
                 albums = list(self.lib.albums(*components[:2]))
                 if albums:
-                    for item in albums.items():
+                    for item in albums[0].items():
                         if item.title == components[2]:
                             items.append(item)
                             break
