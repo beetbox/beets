@@ -532,6 +532,9 @@ def apply_choices(lib, copy, write, art, delete, progress):
             # Write the database after each album.
             lib.save()
 
+				#annouce that we added an album
+            plugins.send('album_imported', album=albuminfo)
+				
             # Finally, delete old files.
             if copy and delete:
                 new_paths = [os.path.realpath(item.path) for item in items]
@@ -562,6 +565,10 @@ def simple_import(lib, paths, copy, delete, resume):
 
         album = lib.add_album(items, True)
         lib.save()            
+		  
+		  #annouce that we added an album
+        plugins.send('album_imported', album=album)
+		  
         if resume is not False:
             progress_set(toppath, path)
 
