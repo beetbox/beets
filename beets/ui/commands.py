@@ -563,7 +563,7 @@ def apply_choices(lib, copy, write, art, delete, progress):
                              for item in task.items]
             for item in task.items:
                 if copy:
-                    item.move(lib, True)
+                    item.move(lib, True, task.choice_flag != CHOICE_TRACKS)
                 if write and task.choice_flag == CHOICE_ALBUM:
                     item.write()
 
@@ -621,7 +621,7 @@ def simple_import(lib, paths, copy, delete, resume):
             if delete:
                 old_paths = [os.path.realpath(item.path) for item in task.items]
             for item in task.items:
-                item.move(lib, True)
+                item.move(lib, True, True)
 
         album = lib.add_album(task.items, True)
         lib.save()            

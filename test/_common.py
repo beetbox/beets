@@ -1,6 +1,7 @@
 """Some common functionality for beets' test cases."""
 import time
 import sys
+import os
 
 # Mangle the search path to include the beets sources.
 sys.path.insert(0, '..')
@@ -126,3 +127,15 @@ class DummyIO(object):
     def restore(self):
         sys.stdin = sys.__stdin__
         sys.stdout = sys.__stdout__
+
+
+# Mixin for additional assertions.
+
+class ExtraAsserts(object):
+    def assertExists(self, path):
+        self.assertTrue(os.path.exists(path),
+                        'file does not exist: %s' % path)
+
+    def assertNotExists(self, path):
+        self.assertFalse(os.path.exists(path),
+                        'file exists: %s' % path)

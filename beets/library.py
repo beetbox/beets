@@ -385,7 +385,7 @@ class Item(object):
     
     # Dealing with files themselves.
     
-    def move(self, library, copy=False):
+    def move(self, library, copy=False, in_album=False):
         """Move the item to its designated location within the library
         directory (provided by destination()). Subdirectories are
         created as needed. If the operation succeeds, the item's path
@@ -393,6 +393,11 @@ class Item(object):
         
         If copy is True, moving the file is copied rather than moved.
         
+        If in_album is True, then the track is treated as part of an
+        album even if it does not yet have an album_id associated with
+        it. (This allows items to be moved before they are added to the
+        database, a performance optimization.)
+
         Passes on appropriate exceptions if directories cannot be created
         or moving/copying fails.
         
@@ -400,7 +405,7 @@ class Item(object):
         library.save() after this method in order to keep on-disk data
         consistent.
         """
-        dest = library.destination(self)
+        dest = library.destination(self, in_album=in_album)
         
         # Create necessary ancestry for the move.
         _mkdirall(dest)
@@ -908,14 +913,15 @@ class Library(BaseLibrary):
         self.conn.executescript(setup_sql)
         self.conn.commit()
     
-    def destination(self, item, pathmod=None):
+    def destination(self, item, pathmod=None, in_album=False):
         """Returns the path in the library directory designated for item
-        item (i.e., where the file ought to be).
+        item (i.e., where the file ought to be). in_album forces the
+        item to be treated as part of an album.
         """
         pathmod = pathmod or os.path
         
         # Use a path format based on the album type, if available.
-        if not item.album_id:
+        if not item.album_id and not in_album:
             # Singleton track. Never use the "album" formats.
             if 'singleton' in self.path_formats:
                 path_format = self.path_formats['singleton']

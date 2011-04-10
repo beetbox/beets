@@ -130,15 +130,21 @@ class ImportTest(unittest.TestCase):
         paths = self._run_import(['sometrack'], delete=True)
         self.assertFalse(os.path.exists(paths[0]))
 
-class ImportApplyTest(unittest.TestCase):
+class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
     def setUp(self):
         self.libdir = os.path.join('rsrc', 'testlibdir')
         os.mkdir(self.libdir)
         self.lib = library.Library(':memory:', self.libdir)
+        self.lib.path_formats = {
+            'default': 'one',
+            'comp': 'two',
+            'singleton': 'three',
+        }
 
         self.srcpath = os.path.join(self.libdir, 'srcfile.mp3')
         shutil.copy(os.path.join('rsrc', 'full.mp3'), self.srcpath)
         self.i = library.Item.from_path(self.srcpath)
+        self.i.comp = False
 
         trackinfo = {'title': 'one', 'artist': 'some artist',
                      'track': 1, 'length': 1, 'id': 'trackid'}
@@ -155,24 +161,56 @@ class ImportApplyTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.libdir)
 
-    def call_apply(self, coro, items, info):
+    def _call_apply(self, coro, items, info):
         task = commands.ImportTask(None, None, None)
         task.set_choice((info, items))
+        coro.send(task)
+
+    def _call_apply_choice(self, coro, items, choice):
+        task = commands.ImportTask(None, None, items)
+        task.set_choice(choice)
         coro.send(task)
 
     def test_apply_no_delete(self):
         coro = commands.apply_choices(self.lib, True, False, False,
                                       False, False)
         coro.next() # Prime coroutine.
-        self.call_apply(coro, [self.i], self.info)
-        self.assertTrue(os.path.exists(self.srcpath))
+        self._call_apply(coro, [self.i], self.info)
+        self.assertExists(self.srcpath)
 
     def test_apply_with_delete(self):
         coro = commands.apply_choices(self.lib, True, False, False,
                                       True, False)
         coro.next() # Prime coroutine.
-        self.call_apply(coro, [self.i], self.info)
-        self.assertFalse(os.path.exists(self.srcpath))
+        self._call_apply(coro, [self.i], self.info)
+        self.assertNotExists(self.srcpath)
+
+    def test_apply_asis_uses_album_path(self):
+        coro = commands.apply_choices(self.lib, True, False, False,
+                                      False, False)
+        coro.next() # Prime coroutine.
+        self._call_apply_choice(coro, [self.i], commands.CHOICE_ASIS)
+        self.assertExists(
+            os.path.join(self.libdir, self.lib.path_formats['default']+'.mp3')
+        )
+
+    def test_apply_match_uses_album_path(self):
+        coro = commands.apply_choices(self.lib, True, False, False,
+                                      False, False)
+        coro.next() # Prime coroutine.
+        self._call_apply(coro, [self.i], self.info)
+        self.assertExists(
+            os.path.join(self.libdir, self.lib.path_formats['default']+'.mp3')
+        )
+
+    def test_apply_as_tracks_uses_singleton_path(self):
+        coro = commands.apply_choices(self.lib, True, False, False,
+                                      False, False)
+        coro.next() # Prime coroutine.
+        self._call_apply_choice(coro, [self.i], commands.CHOICE_TRACKS)
+        self.assertExists(
+            os.path.join(self.libdir, self.lib.path_formats['singleton']+'.mp3')
+        )
 
 class DuplicateCheckTest(unittest.TestCase):
     def setUp(self):
