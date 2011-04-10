@@ -140,13 +140,15 @@ class StorageStyle(object):
        as the key.
     """
     def __init__(self, key, list_elem = True, as_type = unicode,
-                 packing = None, pack_pos = 0, id3_desc = None):
+                 packing = None, pack_pos = 0, id3_desc = None,
+                 id3_frame_field = u'text'):
         self.key = key
         self.list_elem = list_elem
         self.as_type = as_type
         self.packing = packing
         self.pack_pos = pack_pos
         self.id3_desc = id3_desc
+        self.id3_frame_field = id3_frame_field
 
 
 # Dealing with packings.
@@ -270,7 +272,7 @@ class MediaField(object):
                 entry = None
                 for frame in frames:
                     if frame.desc == style.id3_desc:
-                        entry = frame.text
+                        entry = getattr(frame, style.id3_frame_field)
                         break
                 if entry is None: # no desc match
                     return None
@@ -281,13 +283,7 @@ class MediaField(object):
                 except KeyError:
                     return None
                 
-                # For most frame types, the data is in the 'text' field.
-                # For UFID (used for the MusicBrainz track ID), it's in
-                # the 'data' field.
-                if isinstance(frame, mutagen.id3.UFID):
-                    entry = frame.data
-                else:
-                    entry = frame.text
+                entry = getattr(frame, style.id3_frame_field)
         
         else: # Not MP3.
             try:
@@ -322,20 +318,21 @@ class MediaField(object):
                 found = False
                 for frame in frames:
                     if frame.desc == style.id3_desc:
-                        frame.text = out
+                        setattr(frame, style.id3_frame_field, out)
                         found = True
                         break
                 
                 # need to make a new frame?
                 if not found:
                     frame = mutagen.id3.Frames[style.key](
-                                encoding=3,
-                                desc=style.id3_desc,
-                                text=val
+                        encoding=3,
+                        desc=style.id3_desc,
+                        **{style.id3_frame_field: val}
                     )
                     obj.mgfile.tags.add(frame)
             
             # Try to match on "owner" field.
+            #TODO reduce redundancy here
             elif style.key.startswith('UFID:'):
                 owner = style.key.split(':', 1)[1]
                 frames = obj.mgfile.tags.getall(style.key)
@@ -343,16 +340,17 @@ class MediaField(object):
                 for frame in frames:
                     # Replace existing frame data.
                     if frame.owner == owner:
-                        frame.data = out
+                        setattr(frame, style.id3_frame_field, val)
                 else:
                     # New frame.
-                    frame = mutagen.id3.UFID(owner=owner, data=val)
+                    frame = mutagen.id3.UFID(owner=owner, 
+                        **{style.id3_frame_field: val})
                     obj.mgfile.tags.setall('UFID', [frame])
                     
             # Just replace based on key.
             else:
-                
-                frame = mutagen.id3.Frames[style.key](encoding=3, text=val)
+                frame = mutagen.id3.Frames[style.key](encoding = 3,
+                    **{style.id3_frame_field: val})
                 obj.mgfile.tags.setall(style.key, [frame])
         
         else: # Not MP3.
@@ -677,14 +675,14 @@ class MediaFile(object):
                     as_type=str),
                 etc = StorageStyle('musicbrainz_albumtype')
             )
-    albumart = MediaField(
-                mp3 = StorageStyle('APIC', id3_desc=u'Cover'),
-            )
     albumart_mime = MediaField(
-                mp3 = StorageStyle('APIC', mime=u''),
+                mp3 = StorageStyle('APIC', id3_desc=u'Cover',
+                                   id3_frame_field=u'mime'),
+                mp4 = None,
+                etc = None
             )
     albumart_data = MediaField(
-                mp3 = StorageStyle('APIC', data=u''),
+                mp3 = StorageStyle('APIC', id3_frame_field=u'data'),
                 mp4 = StorageStyle('covr', as_type=str),
                 etc = StorageStyle('picture')
             )
@@ -692,7 +690,8 @@ class MediaFile(object):
     # MusicBrainz IDs.
     mb_trackid = MediaField(
                 mp3 = StorageStyle('UFID:http://musicbrainz.org',
-                                   list_elem = False),
+                                   list_elem = False,
+                                   id3_frame_field = u'data'),
                 mp4 = StorageStyle(
                     '----:com.apple.iTunes:MusicBrainz Track Id',
                     as_type=str),
