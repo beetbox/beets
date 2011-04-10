@@ -144,6 +144,28 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
     returns CHOICE_SKIP, CHOICE_ASIS, CHOICE_TRACKS, or CHOICE_MANUAL
     instead of a tuple.
     """
+    # Zero candidates.
+    if not candidates:
+        # Fallback: if either an error ocurred or no matches found.
+        print_("No match found.")
+        sel = ui.input_options(
+            "[U]se as-is, as Tracks, Skip, Enter manual search, or aBort?",
+            ('u', 't', 's', 'e', 'b'), 'u',
+            'Enter U, T, S, E, or B:'
+        )
+        if sel == 'u':
+            return CHOICE_ASIS
+        elif sel == 't':
+            return CHOICE_TRACKS
+        elif sel == 'e':
+            return CHOICE_MANUAL
+        elif sel == 's':
+            return CHOICE_SKIP
+        elif sel == 'b':
+            raise ImportAbort()
+        else:
+            assert False
+
     # Is the change good enough?
     top_dist, _, _ = candidates[0]
     bypass_candidates = False
@@ -247,28 +269,8 @@ def choose_match(path, items, cur_artist, cur_album, candidates,
 
     # Loop until we have a choice.
     while True:
-        # Choose from candidates, if available.
-        if candidates:
-            choice = choose_candidate(cur_artist, cur_album, candidates, rec,
-                                      color)
-        else:
-            # Fallback: if either an error ocurred or no matches found.
-            print_("No match found.")
-            sel = ui.input_options(
-                "[U]se as-is, as Tracks, Skip, Enter manual search, or aBort?",
-                ('u', 't', 's', 'e', 'b'), 'u',
-                'Enter U, T, S, E, or B:'
-            )
-            if sel == 'u':
-                choice = CHOICE_ASIS
-            elif sel == 't':
-                choice = CHOICE_TRACKS
-            elif sel == 'e':
-                choice = CHOICE_MANUAL
-            elif sel == 's':
-                choice = CHOICE_SKIP
-            elif sel == 'b':
-                raise ImportAbort()
+        # Ask for a choice from the user.
+        choice = choose_candidate(cur_artist, cur_album, candidates, rec, color)
     
         # Choose which tags to use.
         if choice in (CHOICE_SKIP, CHOICE_ASIS, CHOICE_TRACKS):
@@ -277,17 +279,15 @@ def choose_match(path, items, cur_artist, cur_album, candidates,
         elif choice is CHOICE_MANUAL:
             # Try again with manual search terms.
             search_artist, search_album = manual_search()
+            try:
+                _, _, candidates, rec = \
+                    autotag.tag_album(items, search_artist, search_album)
+            except autotag.AutotagError:
+                candidates, rec = None, None
         else:
             # We have a candidate! Finish tagging. Here, choice is
             # an (info, items) pair as desired.
             return choice
-        
-        # Search for entered terms.
-        try:
-            _, _, candidates, rec = \
-                    autotag.tag_album(items, search_artist, search_album)
-        except autotag.AutotagError:
-            candidates, rec = None, None
 
 def _reopen_lib(lib):
     """Because of limitations in SQLite, a given Library is bound to
