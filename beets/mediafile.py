@@ -675,16 +675,16 @@ class MediaFile(object):
                     as_type=str),
                 etc = StorageStyle('musicbrainz_albumtype')
             )
+    albumart = MediaField(
+                mp3 = StorageStyle('APIC', id3_frame_field=u'data'),
+                mp4 = StorageStyle('covr', as_type=str),
+                etc = StorageStyle('picture')
+            )
     albumart_mime = MediaField(
                 mp3 = StorageStyle('APIC', id3_desc=u'Cover',
                                    id3_frame_field=u'mime'),
                 mp4 = None,
                 etc = None
-            )
-    albumart_data = MediaField(
-                mp3 = StorageStyle('APIC', id3_frame_field=u'data'),
-                mp4 = StorageStyle('covr', as_type=str),
-                etc = StorageStyle('picture')
             )
 
     # MusicBrainz IDs.

@@ -40,7 +40,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     if "mp3" in item.type:
                         f.albumart_mime = mime_type
                     
-                    f.albumart_data = albumart_raw
+                    f.albumart = albumart_raw
                     f.save()
-             else:
+            else:
                 log.error('Sorry, a file of type %s is not allowed as coverart.' % mime_img)
