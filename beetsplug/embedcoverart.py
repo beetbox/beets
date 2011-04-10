@@ -9,8 +9,8 @@ log = logging.getLogger('beets')
 log.addHandler(logging.StreamHandler())
 
 
-class EmbedAlbumartPlugin(BeetsPlugin):
-    '''Allows albumart to be embedded into the actual files'''
+class EmbedCoverArtPlugin(BeetsPlugin):
+    '''Allows albumart to be embedded into the actual files.'''
 
     def __init__(self):
         self.register_listener('loaded', self.loaded)
@@ -43,4 +43,4 @@ class EmbedAlbumartPlugin(BeetsPlugin):
                     f.albumart_data = albumart_raw
                     f.save()
              else:
-                log.error('Sorry, a file of type %s is not allowed as a coverart' % mime_img)
+                log.error('Sorry, a file of type %s is not allowed as coverart.' % mime_img)
