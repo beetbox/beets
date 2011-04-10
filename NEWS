@@ -5,6 +5,8 @@
   importing, you can choose the "as Tracks" (T) option to add
   singletons to your library. The query "singleton:true" matches only
   singleton tracks; "singleton:false" matches only album tracks.
+* Support for album art embedded in files. The "embedcoverart" plugin
+  provides this functionality. (Thanks, daenney!)
 * The "distance" number, which quantifies how different an album's
   current and proposed metadata are, is now displayed as "similarity"
   instead. This should be less noisy and confusing; you'll now see

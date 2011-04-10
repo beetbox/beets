@@ -681,10 +681,10 @@ class MediaFile(object):
                 mp3 = StorageStyle('APIC', id3_desc=u'Cover'),
             )
     albumart_mime = MediaField(
-                mp3 = StorageStyple('APIC', mime=u''),
+                mp3 = StorageStyle('APIC', mime=u''),
             )
     albumart_data = MediaField(
-                mp3 = StorageStyple('APIC', data=u''),
+                mp3 = StorageStyle('APIC', data=u''),
                 mp4 = StorageStyle('covr', as_type=str),
                 etc = StorageStyle('picture')
             )
