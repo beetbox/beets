@@ -34,12 +34,13 @@ class EmbedAlbumartPlugin(BeetsPlugin):
             if mime_img in ALLOWED_MIMES:
                 mime_type = 'image/%s' % mime_img
 
-            for item in album.items():
-                f = mediafile.MediaFile(item)
-                
-                if "mp3" in item.type:
-                    f.albumart_mime = mime_type
-                
-                f.albumart_data = albumart_raw
-                f.save()
-
+                for item in album.items():
+                    f = mediafile.MediaFile(item)
+                    
+                    if "mp3" in item.type:
+                        f.albumart_mime = mime_type
+                    
+                    f.albumart_data = albumart_raw
+                    f.save()
+             else:
+                log.error('Sorry, a file of type %s is not allowed as a coverart' % mime_img)
