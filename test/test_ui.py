@@ -156,8 +156,9 @@ class ImportApplyTest(unittest.TestCase):
         shutil.rmtree(self.libdir)
 
     def call_apply(self, coro, items, info):
-        coro.send((None, None, # Only used for progress.
-                   items, info))
+        task = commands.ImportTask(None, None, None)
+        task.set_choice((info, items))
+        coro.send(task)
 
     def test_apply_no_delete(self):
         coro = commands.apply_choices(self.lib, True, False, False,
@@ -180,24 +181,18 @@ class DuplicateCheckTest(unittest.TestCase):
         self.album = self.lib.add_album([self.i], True)
 
     def test_duplicate_album(self):
-        info = {'artist': self.i.albumartist, 'album': self.i.album}
-        res = commands._duplicate_check(self.lib, None, info, None, None)
+        res = commands._duplicate_check(self.lib, self.i.albumartist,
+                                        self.i.album)
         self.assertTrue(res)
 
     def test_different_album(self):
-        info = {'artist': 'xxx', 'album': 'yyy'}
-        res = commands._duplicate_check(self.lib, None, info, None, None)
+        res = commands._duplicate_check(self.lib, 'xxx', 'yyy')
         self.assertFalse(res)
-
-    def test_duplicate_asis(self):
-        res = commands._duplicate_check(self.lib, commands.CHOICE_ASIS,
-                                        None, self.i.albumartist, self.i.album)
-        self.assertTrue(res)
 
     def test_duplicate_va_album(self):
         self.album.albumartist = 'an album artist'
-        info = {'artist': 'an album artist', 'album': self.i.album}
-        res = commands._duplicate_check(self.lib, None, info, None, None)
+        res = commands._duplicate_check(self.lib, 'an album artist',
+                                        self.i.album)
         self.assertTrue(res)
 
 class ListTest(unittest.TestCase):
