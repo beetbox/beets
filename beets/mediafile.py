@@ -663,7 +663,7 @@ class MediaFile(object):
                 etc = StorageStyle('compilation')
             )
     albumartist = MediaField(
-                mp3 = StorageStyle('TXXX', id3_desc='Album Artist'),
+                mp3 = StorageStyle('TXXX', id3_desc=u'Album Artist'),
                 mp4 = StorageStyle(
                     '----:com.apple.iTunes:Album Artist',
                     as_type=str),
@@ -671,11 +671,22 @@ class MediaFile(object):
                        StorageStyle('albumartist')]
             )
     albumtype = MediaField(
-                mp3 = StorageStyle('TXXX', id3_desc='MusicBrainz Album Type'),
+                mp3 = StorageStyle('TXXX', id3_desc=u'MusicBrainz Album Type'),
                 mp4 = StorageStyle(
                     '----:com.apple.iTunes:MusicBrainz Album Type',
                     as_type=str),
                 etc = StorageStyle('musicbrainz_albumtype')
+            )
+    albumart = MediaField(
+                mp3 = StorageStyle('APIC', id3_desc=u'Cover'),
+            )
+    albumart_mime = MediaField(
+                mp3 = StorageStyple('APIC', mime=u''),
+            )
+    albumart_data = MediaField(
+                mp3 = StorageStyple('APIC', data=u''),
+                mp4 = StorageStyle('covr'),
+                etc = StorageStyle('picture')
             )
 
     # MusicBrainz IDs.
@@ -688,14 +699,14 @@ class MediaFile(object):
                 etc = StorageStyle('musicbrainz_trackid')
             )
     mb_albumid = MediaField(
-                mp3 = StorageStyle('TXXX', id3_desc='MusicBrainz Album Id'),
+                mp3 = StorageStyle('TXXX', id3_desc=u'MusicBrainz Album Id'),
                 mp4 = StorageStyle(
                     '----:com.apple.iTunes:MusicBrainz Album Id',
                     as_type=str),
                 etc = StorageStyle('musicbrainz_albumid')
             )
     mb_artistid = MediaField(
-                mp3 = StorageStyle('TXXX', id3_desc='MusicBrainz Artist Id'),
+                mp3 = StorageStyle('TXXX', id3_desc=u'MusicBrainz Artist Id'),
                 mp4 = StorageStyle(
                     '----:com.apple.iTunes:MusicBrainz Artist Id',
                     as_type=str),
@@ -703,7 +714,7 @@ class MediaFile(object):
             )
     mb_albumartistid = MediaField(
                 mp3 = StorageStyle('TXXX',
-                                   id3_desc='MusicBrainz Album Artist Id'),
+                                   id3_desc=u'MusicBrainz Album Artist Id'),
                 mp4 = StorageStyle(
                     '----:com.apple.iTunes:MusicBrainz Album Artist Id',
                     as_type=str),
