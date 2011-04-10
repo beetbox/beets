@@ -685,7 +685,7 @@ class MediaFile(object):
             )
     albumart_data = MediaField(
                 mp3 = StorageStyple('APIC', data=u''),
-                mp4 = StorageStyle('covr'),
+                mp4 = StorageStyle('covr', as_type=str),
                 etc = StorageStyle('picture')
             )
 
