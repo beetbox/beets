@@ -21,6 +21,7 @@ from beets.autotag import mb
 import re
 from munkres import Munkres
 from beets import library, mediafile, plugins
+from beets.util import syspath, bytestring_path, levenshtein
 import logging
 
 # Try 5 releases. In the future, this should be more dynamic: let the
@@ -89,14 +90,14 @@ def _sorted_walk(path):
     order.
     """
     # Make sure the path isn't a Unicode string.
-    path = library._bytestring_path(path)
+    path = bytestring_path(path)
 
     # Get all the directories and files at this level.
     dirs = []
     files = []
     for base in os.listdir(path):
         cur = os.path.join(path, base)
-        if os.path.isdir(library._syspath(cur)):
+        if os.path.isdir(syspath(cur)):
             dirs.append(base)
         else:
             files.append(base)
@@ -136,28 +137,6 @@ def albums_in_dir(path):
         if items:
             yield root, items
 
-def _levenshtein(s1, s2):
-    """A nice DP edit distance implementation from Wikibooks:
-    http://en.wikibooks.org/wiki/Algorithm_implementation/Strings/
-    Levenshtein_distance#Python
-    """
-    if len(s1) < len(s2):
-        return _levenshtein(s2, s1)
-    if not s1:
-        return len(s2)
- 
-    previous_row = xrange(len(s2) + 1)
-    for i, c1 in enumerate(s1):
-        current_row = [i + 1]
-        for j, c2 in enumerate(s2):
-            insertions = previous_row[j + 1] + 1
-            deletions = current_row[j] + 1
-            substitutions = previous_row[j] + (c1 != c2)
-            current_row.append(min(insertions, deletions, substitutions))
-        previous_row = current_row
- 
-    return previous_row[-1]
-
 def _string_dist_basic(str1, str2):
     """Basic edit distance between two strings, ignoring
     non-alphanumeric characters and case. Normalized by string length.
@@ -166,7 +145,7 @@ def _string_dist_basic(str1, str2):
     str2 = re.sub(r'[^a-z0-9]', '', str2.lower())
     if not str1 and not str2:
         return 0.0
-    return _levenshtein(str1, str2) / float(max(len(str1), len(str2)))
+    return levenshtein(str1, str2) / float(max(len(str1), len(str2)))
 
 def string_dist(str1, str2):
     """Gives an "intuitive" edit distance between two strings. This is

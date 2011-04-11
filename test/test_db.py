@@ -24,11 +24,12 @@ import posixpath
 import _common
 from _common import item
 import beets.library
+from beets import util
 
 def lib(): return beets.library.Library('rsrc' + os.sep + 'test.blb')
 def boracay(l): return beets.library.Item(l.conn.execute('select * from items '
     'where id=3').fetchone())
-np = beets.library._normpath
+np = util.normpath
 
 class LoadTest(unittest.TestCase):
     def setUp(self):
@@ -212,15 +213,15 @@ class DestinationTest(unittest.TestCase):
         self.assertFalse('two / three' in p)
     
     def test_sanitize_unix_replaces_leading_dot(self):
-        p = beets.library._sanitize_path('one/.two/three', posixpath)
+        p = util.sanitize_path('one/.two/three', posixpath)
         self.assertFalse('.' in p)
     
     def test_sanitize_windows_replaces_trailing_dot(self):
-        p = beets.library._sanitize_path('one/two./three', ntpath)
+        p = util.sanitize_path('one/two./three', ntpath)
         self.assertFalse('.' in p)
     
     def test_sanitize_windows_replaces_illegal_chars(self):
-        p = beets.library._sanitize_path(':*?"<>|', ntpath)
+        p = util.sanitize_path(':*?"<>|', ntpath)
         self.assertFalse(':' in p)
         self.assertFalse('*' in p)
         self.assertFalse('?' in p)
@@ -230,7 +231,7 @@ class DestinationTest(unittest.TestCase):
         self.assertFalse('|' in p)
     
     def test_sanitize_replaces_colon_with_dash(self):
-        p = beets.library._sanitize_path(u':', posixpath)
+        p = util.sanitize_path(u':', posixpath)
         self.assertEqual(p, u'-')
     
     def test_path_with_format(self):
@@ -302,26 +303,26 @@ class DestinationTest(unittest.TestCase):
 
     def test_syspath_windows_format(self):
         path = ntpath.join('a', 'b', 'c')
-        outpath = beets.library._syspath(path, ntpath)
+        outpath = util.syspath(path, ntpath)
         self.assertTrue(isinstance(outpath, unicode))
         self.assertTrue(outpath.startswith(u'\\\\?\\'))
 
     def test_syspath_posix_unchanged(self):
         path = posixpath.join('a', 'b', 'c')
-        outpath = beets.library._syspath(path, posixpath)
+        outpath = util.syspath(path, posixpath)
         self.assertEqual(path, outpath)
 
     def test_sanitize_windows_replaces_trailing_space(self):
-        p = beets.library._sanitize_path('one/two /three', ntpath)
+        p = util.sanitize_path('one/two /three', ntpath)
         self.assertFalse(' ' in p)
 
     def test_component_sanitize_replaces_separators(self):
         name = posixpath.join('a', 'b')
-        newname = beets.library._sanitize_for_path(name, posixpath)
+        newname = util.sanitize_for_path(name, posixpath)
         self.assertNotEqual(name, newname)
 
     def test_component_sanitize_pads_with_zero(self):
-        name = beets.library._sanitize_for_path(1, posixpath, 'track')
+        name = util.sanitize_for_path(1, posixpath, 'track')
         self.assertTrue(name.startswith('0'))
 
     def test_artist_falls_back_to_albumartist(self):
@@ -353,7 +354,7 @@ class DestinationTest(unittest.TestCase):
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'something')
 
     def test_sanitize_path_works_on_empty_string(self):
-        p = beets.library._sanitize_path('', posixpath)
+        p = util.sanitize_path('', posixpath)
         self.assertEqual(p, '')
 
 class MigrationTest(unittest.TestCase):
@@ -646,12 +647,12 @@ class PathStringTest(unittest.TestCase):
 
     def test_sanitize_path_with_special_chars(self):
         path = 'b\xe1r?'
-        new_path = beets.library._sanitize_path(path)
+        new_path = util.sanitize_path(path)
         self.assert_(new_path.startswith('b\xe1r'))
 
     def test_sanitize_path_returns_bytestring(self):
         path = 'b\xe1r?'
-        new_path = beets.library._sanitize_path(path)
+        new_path = util.sanitize_path(path)
         self.assert_(isinstance(new_path, str))
 
     def test_unicode_artpath_becomes_bytestring(self):

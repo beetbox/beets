@@ -25,6 +25,7 @@ from beets import library
 import beets.autotag.art
 from beets import plugins
 from beets.util import pipeline
+from beets.util import syspath, normpath
 
 CHOICE_SKIP = 'CHOICE_SKIP'
 CHOICE_ASIS = 'CHOICE_ASIS'
@@ -238,7 +239,7 @@ def read_albums(config):
     possible), False (never resume), or None (ask).
     """
     # Use absolute paths.
-    paths = [library._normpath(path) for path in config.paths]
+    paths = [normpath(path) for path in config.paths]
 
     # Look for saved progress.
     progress = config.resume is not False
@@ -394,7 +395,7 @@ def apply_choices(config):
             for old_path in old_paths:
                 # Only delete files that were actually moved.
                 if old_path not in new_paths:
-                    os.remove(library._syspath(old_path))
+                    os.remove(syspath(old_path))
 
         # Update progress.
         if config.resume is not False:
@@ -433,7 +434,7 @@ def simple_import(config):
             for old_path in old_paths:
                 # Only delete files that were actually moved.
                 if old_path not in new_paths:
-                    os.remove(library._syspath(old_path))
+                    os.remove(syspath(old_path))
 
         log.info('added album: %s - %s' % (album.albumartist, album.album))
 

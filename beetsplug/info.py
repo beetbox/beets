@@ -19,6 +19,7 @@ from beets.plugins import BeetsPlugin
 from beets import library
 from beets import ui
 from beets import mediafile
+from beets import util
 
 def info(paths):
     # Set up fields to output.
@@ -34,7 +35,7 @@ def info(paths):
         if not first:
             ui.print_()
 
-        path = library._normpath(path)
+        path = util.normpath(path)
         ui.print_(path)
         try:
             mf = mediafile.MediaFile(path)

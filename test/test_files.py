@@ -24,6 +24,7 @@ from os.path import join
 import _common
 from _common import item
 import beets.library
+from beets import util
 
 def touch(path):
     open(path, 'a').close()
@@ -72,7 +73,7 @@ class MoveTest(unittest.TestCase):
     
     def test_move_changes_path(self):
         self.i.move(self.lib)
-        self.assertEqual(self.i.path, beets.library._normpath(self.dest))
+        self.assertEqual(self.i.path, util.normpath(self.dest))
 
     def test_copy_already_at_destination(self):
         self.i.move(self.lib)
@@ -102,28 +103,28 @@ class HelperTest(unittest.TestCase):
     def test_ancestry_works_on_file(self):
         p = '/a/b/c'
         a =  ['/','/a','/a/b']
-        self.assertEqual(beets.library._ancestry(p), a)
+        self.assertEqual(util.ancestry(p), a)
     def test_ancestry_works_on_dir(self):
         p = '/a/b/c/'
         a = ['/', '/a', '/a/b', '/a/b/c']
-        self.assertEqual(beets.library._ancestry(p), a)
+        self.assertEqual(util.ancestry(p), a)
     def test_ancestry_works_on_relative(self):
         p = 'a/b/c'
         a = ['a', 'a/b']
-        self.assertEqual(beets.library._ancestry(p), a)
+        self.assertEqual(util.ancestry(p), a)
     
     def test_components_works_on_file(self):
         p = '/a/b/c'
         a =  ['/', 'a', 'b', 'c']
-        self.assertEqual(beets.library._components(p), a)
+        self.assertEqual(util.components(p), a)
     def test_components_works_on_dir(self):
         p = '/a/b/c/'
         a =  ['/', 'a', 'b', 'c']
-        self.assertEqual(beets.library._components(p), a)
+        self.assertEqual(util.components(p), a)
     def test_components_works_on_relative(self):
         p = 'a/b/c'
         a =  ['a', 'b', 'c']
-        self.assertEqual(beets.library._components(p), a)
+        self.assertEqual(util.components(p), a)
 
 class AlbumFileTest(unittest.TestCase):
     def setUp(self):
@@ -136,7 +137,7 @@ class AlbumFileTest(unittest.TestCase):
         self.i = item()
         # Make a file for the item.
         self.i.path = self.lib.destination(self.i)
-        beets.library._mkdirall(self.i.path)
+        util.mkdirall(self.i.path)
         touch(self.i.path)
         # Make an album.
         self.ai = self.lib.add_album((self.i,))
@@ -178,7 +179,7 @@ class ArtFileTest(unittest.TestCase):
         self.i = item()
         self.i.path = self.lib.destination(self.i)
         # Make a music file.
-        beets.library._mkdirall(self.i.path)
+        util.mkdirall(self.i.path)
         touch(self.i.path)
         # Make an album.
         self.ai = self.lib.add_album((self.i,))
@@ -251,7 +252,7 @@ class RemoveTest(unittest.TestCase):
         self.i = item()
         self.i.path = self.lib.destination(self.i)
         # Make a music file.
-        beets.library._mkdirall(self.i.path)
+        util.mkdirall(self.i.path)
         touch(self.i.path)
         # Make an album with the item.
         self.ai = self.lib.add_album((self.i,))

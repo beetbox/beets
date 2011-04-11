@@ -202,7 +202,6 @@ class Packed(object):
             return _safe_cast(self.out_type, out)
     
     def __setitem__(self, index, value):
-
         if self.packstyle in (packing.SLASHED, packing.TUPLE):
             # SLASHED and TUPLE are always two-item packings
             length = 2

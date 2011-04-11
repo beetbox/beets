@@ -26,7 +26,7 @@ from beets import autotag
 import beets.autotag.art
 from beets import plugins
 from beets import importer
-from beets import library
+from beets.util import syspath
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -304,7 +304,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
     """
     # Check the user-specified directories.
     for path in paths:
-        if not os.path.isdir(library._syspath(path)):
+        if not os.path.isdir(syspath(path)):
             raise ui.UserError('not a directory: ' + path)
 
     # Open the log.

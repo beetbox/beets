@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -21,6 +21,8 @@ from string import Template
 import logging
 from beets.mediafile import MediaFile
 from beets import plugins
+from beets import util
+from beets.util import bytestring_path, syspath, normpath
 
 MAX_FILENAME_LENGTH = 200
 
@@ -109,184 +111,6 @@ class InvalidFieldError(Exception):
     pass
 
 
-# Utility functions.
-
-def _normpath(path):
-    """Provide the canonical form of the path suitable for storing in
-    the database.
-    """
-    return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
-
-def _ancestry(path, pathmod=None):
-    """Return a list consisting of path's parent directory, its
-    grandparent, and so on. For instance:
-       >>> _ancestry('/a/b/c')
-       ['/', '/a', '/a/b']
-    """
-    pathmod = pathmod or os.path
-    out = []
-    last_path = None
-    while path:
-        path = pathmod.dirname(path)
-        
-        if path == last_path:
-            break
-        last_path = path
-    
-        if path: # don't yield ''
-            out.insert(0, path)
-    return out
-
-def _mkdirall(path):
-    """Make all the enclosing directories of path (like mkdir -p on the
-    parent).
-    """
-    for ancestor in _ancestry(path):
-        if not os.path.isdir(_syspath(ancestor)):
-            os.mkdir(_syspath(ancestor))
-
-def _prune_dirs(path, root):
-    """If path is an empty directory, then remove it. Recursively
-    remove path's ancestry up to root (which is never removed) where
-    there are empty directories. If path is not contained in root, then
-    nothing is removed.
-    """
-    path = _normpath(path)
-    root = _normpath(root)
-
-    ancestors = _ancestry(path)
-    if root in ancestors:
-        # Only remove directories below the root.
-        ancestors = ancestors[ancestors.index(root)+1:]
-
-        # Traverse upward from path.
-        ancestors.append(path)
-        ancestors.reverse()
-        for directory in ancestors:
-            try:
-                os.rmdir(_syspath(directory))
-            except OSError:
-                break
-
-def _components(path, pathmod=None):
-    """Return a list of the path components in path. For instance:
-       >>> _components('/a/b/c')
-       ['a', 'b', 'c']
-    """
-    pathmod = pathmod or os.path
-    comps = []
-    ances = _ancestry(path, pathmod)
-    for anc in ances:
-        comp = pathmod.basename(anc)
-        if comp:
-            comps.append(comp)
-        else: # root
-            comps.append(anc)
-    
-    last = pathmod.basename(path)
-    if last:
-        comps.append(last)
-    
-    return comps
-
-def _bytestring_path(path):
-    """Given a path, which is either a str or a unicode, returns a str
-    path (ensuring that we never deal with Unicode pathnames).
-    """
-    # Pass through bytestrings.
-    if isinstance(path, str):
-        return path
-
-    # Try to encode with default encodings, but fall back to UTF8.
-    encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
-    try:
-        return path.encode(encoding)
-    except UnicodeError:
-        return path.encode('utf8')
-
-def _syspath(path, pathmod=None):
-    """Convert a path for use by the operating system. In particular,
-    paths on Windows must receive a magic prefix and must be converted
-    to unicode before they are sent to the OS.
-    """
-    pathmod = pathmod or os.path
-    windows = pathmod.__name__ == 'ntpath'
-
-    # Don't do anything if we're not on windows
-    if not windows:
-        return path
-
-    if not isinstance(path, unicode):
-        # Try to decode with default encodings, but fall back to UTF8.
-        encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
-        try:
-            path = path.decode(encoding, 'replace')
-        except UnicodeError:
-            path = path.decode('utf8', 'replace')
-
-    # Add the magic prefix if it isn't already there
-    if not path.startswith(u'\\\\?\\'):
-        path = u'\\\\?\\' + path
-
-    return path
-
-# Note: POSIX actually supports \ and : -- I just think they're
-# a pain. And ? has caused problems for some.
-CHAR_REPLACE = [
-    (re.compile(r'[\\/\?]|^\.'), '_'),
-    (re.compile(r':'), '-'),
-]
-CHAR_REPLACE_WINDOWS = re.compile('["\*<>\|]|^\.|\.$| +$'), '_'
-def _sanitize_path(path, pathmod=None):
-    """Takes a path and makes sure that it is legal. Returns a new path.
-    Only works with fragments; won't work reliably on Windows when a
-    path begins with a drive letter. Path separators (including altsep!)
-    should already be cleaned from the path components.
-    """
-    pathmod = pathmod or os.path
-    windows = pathmod.__name__ == 'ntpath'
-    
-    comps = _components(path, pathmod)
-    if not comps:
-        return ''
-    for i, comp in enumerate(comps):
-        # Replace special characters.
-        for regex, repl in CHAR_REPLACE:
-            comp = regex.sub(repl, comp)
-        if windows:
-            regex, repl = CHAR_REPLACE_WINDOWS
-            comp = regex.sub(repl, comp)
-        
-        # Truncate each component.
-        comp = comp[:MAX_FILENAME_LENGTH]
-                
-        comps[i] = comp
-    return pathmod.join(*comps)
-
-def _sanitize_for_path(value, pathmod, key=None):
-    """Sanitize the value for inclusion in a path: replace separators
-    with _, etc. Doesn't guarantee that the whole path will be valid;
-    you should still call _sanitize_path on the complete path.
-    """
-    if isinstance(value, basestring):
-        for sep in (pathmod.sep, pathmod.altsep):
-            if sep:
-                value = value.replace(sep, '_')
-    elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
-        # pad with zeros
-        value = '%02i' % value
-    else:
-        value = str(value)
-    return value
-
-def _bool(value):
-    """Returns a boolean reflecting a human-entered string."""
-    if value.lower() in ('yes', '1', 'true', 't', 'y'):
-        return True
-    else:
-        return False
-
-
 # Library items (songs).
 
 class Item(object):
@@ -345,7 +169,7 @@ class Item(object):
         # Encode unicode paths and read buffers.
         if key == 'path':
             if isinstance(value, unicode):
-                value = _bytestring_path(value)
+                value = bytestring_path(value)
             elif isinstance(value, buffer):
                 value = str(value)
 
@@ -367,8 +191,8 @@ class Item(object):
         if read_path is None:
             read_path = self.path
         else:
-            read_path = _normpath(read_path)
-        f = MediaFile(_syspath(read_path))
+            read_path = normpath(read_path)
+        f = MediaFile(syspath(read_path))
 
         for key in ITEM_KEYS_META:
             setattr(self, key, getattr(f, key))
@@ -377,7 +201,7 @@ class Item(object):
     def write(self):
         """Writes the item's metadata to the associated file.
         """
-        f = MediaFile(_syspath(self.path))
+        f = MediaFile(syspath(self.path))
         for key in ITEM_KEYS_WRITABLE:
             setattr(f, key, getattr(self, key))
         f.save()
@@ -408,16 +232,16 @@ class Item(object):
         dest = library.destination(self, in_album=in_album)
         
         # Create necessary ancestry for the move.
-        _mkdirall(dest)
+        util.mkdirall(dest)
         
-        if not shutil._samefile(_syspath(self.path), _syspath(dest)):
+        if not shutil._samefile(syspath(self.path), syspath(dest)):
             if copy:
                 # copyfile rather than copy will not copy permissions
                 # bits, thus possibly making the copy writable even when
                 # the original is read-only.
-                shutil.copyfile(_syspath(self.path), _syspath(dest))
+                shutil.copyfile(syspath(self.path), syspath(dest))
             else:
-                shutil.move(_syspath(self.path), _syspath(dest))
+                shutil.move(syspath(self.path), syspath(dest))
             
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
@@ -588,7 +412,7 @@ class CollectionQuery(Query):
             elif key.lower() in ITEM_KEYS: # ignore unrecognized keys
                 subqueries.append(SubstringQuery(key.lower(), pattern))
             elif key.lower() == 'singleton':
-                subqueries.append(SingletonQuery(_bool(pattern)))
+                subqueries.append(SingletonQuery(util.str2bool(pattern)))
         if not subqueries: # no terms in query
             subqueries = [TrueQuery()]
         return cls(subqueries)
@@ -854,14 +678,14 @@ class Library(BaseLibrary):
                        art_filename='cover',
                        item_fields=ITEM_FIELDS,
                        album_fields=ALBUM_FIELDS):
-        self.path = _bytestring_path(path)
-        self.directory = _bytestring_path(directory)
+        self.path = bytestring_path(path)
+        self.directory = bytestring_path(directory)
         if path_formats is None:
             path_formats = {'default': '$artist/$album/$track $title'}
         elif isinstance(path_formats, basestring):
             path_formats = {'default': path_formats}
         self.path_formats = path_formats
-        self.art_filename = _bytestring_path(art_filename)
+        self.art_filename = bytestring_path(art_filename)
         
         self.conn = sqlite3.connect(self.path)
         self.conn.row_factory = sqlite3.Row
@@ -949,7 +773,7 @@ class Library(BaseLibrary):
             else:
                 # From Item.
                 value = getattr(item, key)
-            mapping[key] = _sanitize_for_path(value, pathmod, key)
+            mapping[key] = util.sanitize_for_path(value, pathmod, key)
         
         # Use the album artist if the track artist is not set and
         # vice-versa.
@@ -967,13 +791,13 @@ class Library(BaseLibrary):
             subpath = subpath.encode(encoding, 'replace')
         
         # Truncate components and remove forbidden characters.
-        subpath = _sanitize_path(subpath)
+        subpath = util.sanitize_path(subpath)
         
         # Preserve extension.
         _, extension = pathmod.splitext(item.path)
         subpath += extension
         
-        return _normpath(os.path.join(self.directory, subpath))   
+        return normpath(os.path.join(self.directory, subpath))   
 
     
     # Main interface.
@@ -1074,8 +898,8 @@ class Library(BaseLibrary):
                 album.remove(delete, False)
 
         if delete:
-            os.unlink(_syspath(item.path))
-            _prune_dirs(os.path.dirname(item.path), self.directory)
+            os.unlink(syspath(item.path))
+            util.prune_dirs(os.path.dirname(item.path), self.directory)
 
 
     # Browsing.
@@ -1207,7 +1031,7 @@ class Album(BaseAlbum):
     def __init__(self, lib, record):
         # Decode Unicode paths in database.
         if 'artpath' in record and isinstance(record['artpath'], unicode):
-            record['artpath'] = _bytestring_path(record['artpath'])
+            record['artpath'] = bytestring_path(record['artpath'])
         super(Album, self).__init__(lib, record)
 
     def __setattr__(self, key, value):
@@ -1218,7 +1042,7 @@ class Album(BaseAlbum):
         elif key in ALBUM_KEYS:
             # Make sure paths are bytestrings.
             if key == 'artpath' and isinstance(value, unicode):
-                value = _bytestring_path(value)
+                value = bytestring_path(value)
 
             # Reflect change in this object.
             self._record[key] = value
@@ -1275,7 +1099,7 @@ class Album(BaseAlbum):
             # Delete art file.
             artpath = self.artpath
             if artpath:
-                os.unlink(_syspath(artpath))
+                os.unlink(syspath(artpath))
         
         # Remove album from database.
         self._library.conn.execute(
@@ -1299,9 +1123,9 @@ class Album(BaseAlbum):
             new_art = self.art_destination(old_art, newdir)
             if new_art != old_art:
                 if copy:
-                    shutil.copy(_syspath(old_art), _syspath(new_art))
+                    shutil.copy(syspath(old_art), syspath(new_art))
                 else:
-                    shutil.move(_syspath(old_art), _syspath(new_art))
+                    shutil.move(syspath(old_art), syspath(new_art))
                 self.artpath = new_art
 
         # Store new item paths. We do this at the end to avoid
@@ -1318,7 +1142,7 @@ class Album(BaseAlbum):
         items, so the album must contain at least one item or
         item_dir must be provided.
         """
-        image = _bytestring_path(image)
+        image = bytestring_path(image)
         if item_dir is None:
             item = self.items().next()
             item_dir = os.path.dirname(item.path)
@@ -1330,11 +1154,11 @@ class Album(BaseAlbum):
         """Sets the album's cover art to the image at the given path.
         The image is copied into place, replacing any existing art.
         """
-        path = _bytestring_path(path)
+        path = bytestring_path(path)
         oldart = self.artpath
         artdest = self.art_destination(path)
         if oldart == artdest:
-            os.unlink(_syspath(oldart))
+            os.unlink(syspath(oldart))
         
-        shutil.copyfile(_syspath(path), _syspath(artdest))
+        shutil.copyfile(syspath(path), syspath(artdest))
         self.artpath = artdest
