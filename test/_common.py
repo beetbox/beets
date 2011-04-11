@@ -55,6 +55,8 @@ def iconfig(lib, **kwargs):
         delete = False,
         choose_match_func = lambda x, y: importer.CHOICE_SKIP,
         should_resume_func = lambda _: False,
+        threaded = False,
+        autot = True,
     )
     for k, v in kwargs.items():
         setattr(config, k, v)

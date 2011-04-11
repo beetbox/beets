@@ -24,7 +24,6 @@ from beets import ui
 from beets.ui import print_
 from beets import autotag
 import beets.autotag.art
-from beets.ui import pipeline
 from beets import plugins
 from beets import importer
 from beets import library
@@ -318,11 +317,11 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
     if resume is None and quiet:
         resume = False
 
-    # Set up import configuration.
-    config = importer.ImportConfig(
+    # Perform the import.
+    importer.run_import(
+        lib = lib,
         paths = paths,
         resume = resume,
-        lib = lib,
         logfile = logfile,
         color = color,
         quiet = quiet,
@@ -331,32 +330,11 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
         write = write,
         art = art,
         delete = delete,
+        threaded = threaded,
+        autot = autot,
         choose_match_func = choose_match,
         should_resume_func = should_resume,
     )
-    
-    # Perform the import.
-    if autot:
-        # Autotag. Set up the pipeline.
-        pl = pipeline.Pipeline([
-            importer.read_albums(config),
-            importer.initial_lookup(config),
-            importer.user_query(config),
-            importer.apply_choices(config),
-        ])
-
-        # Run the pipeline.
-        try:
-            if threaded:
-                pl.run_parallel(importer.QUEUE_SIZE)
-            else:
-                pl.run_sequential()
-        except importer.ImportAbort:
-            # User aborted operation. Silently stop.
-            pass
-    else:
-        # Simple import without autotagging. Always sequential.
-        importer.simple_import(config)
     
     # If we were logging, close the file.
     if logfile:

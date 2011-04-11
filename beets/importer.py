@@ -24,6 +24,7 @@ from beets import autotag
 from beets import library
 import beets.autotag.art
 from beets import plugins
+from beets.ui import pipeline
 
 CHOICE_SKIP = 'CHOICE_SKIP'
 CHOICE_ASIS = 'CHOICE_ASIS'
@@ -122,7 +123,8 @@ class ImportConfig(object):
     """
     __slots__ = ['lib', 'paths', 'resume', 'logfile', 'color', 'quiet',
                  'quiet_fallback', 'copy', 'write', 'art', 'delete',
-                 'choose_match_func', 'should_resume_func']
+                 'choose_match_func', 'should_resume_func', 'threaded',
+                 'autot']
     def __init__(self, **kwargs):
         for slot in self.__slots__:
             setattr(self, slot, kwargs[slot])
@@ -434,3 +436,31 @@ def simple_import(config):
                     os.remove(library._syspath(old_path))
 
         log.info('added album: %s - %s' % (album.albumartist, album.album))
+
+
+# Main driver.
+
+def run_import(**kwargs):
+    config = ImportConfig(**kwargs)
+    
+    if config.autot:
+        # Autotag. Set up the pipeline.
+        pl = pipeline.Pipeline([
+            read_albums(config),
+            initial_lookup(config),
+            user_query(config),
+            apply_choices(config),
+        ])
+
+        # Run the pipeline.
+        try:
+            if config.threaded:
+                pl.run_parallel(QUEUE_SIZE)
+            else:
+                pl.run_sequential()
+        except ImportAbort:
+            # User aborted operation. Silently stop.
+            pass
+    else:
+        # Simple import without autotagging. Always sequential.
+        simple_import(config)
