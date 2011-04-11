@@ -676,9 +676,10 @@ class MediaFile(object):
                 etc = StorageStyle('musicbrainz_albumtype')
             )
     albumart = MediaField(
-                mp3 = StorageStyle('APIC', id3_frame_field=u'data'),
+                mp3 = StorageStyle('APIC', id3_frame_field=u'data',
+                                   as_type=str),
                 mp4 = StorageStyle('covr', as_type=str),
-                etc = StorageStyle('picture')
+                etc = StorageStyle('picture', as_type=str)
             )
     albumart_mime = MediaField(
                 mp3 = StorageStyle('APIC', id3_desc=u'Cover',

@@ -404,6 +404,49 @@ class ImportTask(object):
             self.info = info
             self.choice_flag = CHOICE_ALBUM # Implicit choice.
 
+    def save_progress(self):
+        """Updates the progress state to indicate that this album has
+        finished.
+        """
+        if self.sentinel:
+            progress_set(self.toppath, None)
+        else:
+            progress_set(self.toppath, self.path)
+
+    def should_create_album(self):
+        """Should an album structure be created for these items?"""
+        if self.choice_flag in (CHOICE_ALBUM, CHOICE_ASIS):
+            return True
+        elif self.choice_flag in (CHOICE_TRACKS, CHOICE_SKIP):
+            return False
+        else:
+            assert False
+    def should_write_tags(self):
+        """Should new info be written to the files' metadata?"""
+        if self.choice_flag == CHOICE_ALBUM:
+            return True
+        elif self.choice_flag in (CHOICE_ASIS, CHOICE_TRACKS, CHOICE_SKIP):
+            return False
+        else:
+            assert False
+    def should_fetch_art(self):
+        """Should album art be downloaded for this album?"""
+        return self.should_write_tags()
+    def should_infer_aa(self):
+        """When creating an album structure, should the album artist
+        field be inferred from the plurality of track artists?
+        """
+        assert self.should_create_album()
+        if self.choice_flag == CHOICE_ALBUM:
+            # Album artist comes from the info dictionary.
+            return False
+        elif self.choice_flag == CHOICE_ASIS:
+            # As-is imports likely don't have an album artist.
+            return True
+        else:
+            assert False
+
+
 # Core autotagger pipeline stages.
 
 def read_albums(paths, resume):
@@ -545,26 +588,19 @@ def apply_choices(lib, copy, write, art, delete, progress):
     while True:    
         task = yield
 
-        # Check for "path finished" message.
-        if task.sentinel:
-            if progress:
-                # Mark path as complete.
-                progress_set(task.toppath, None)
-            continue
-        
-        # Only process the items if we're not skipping.
-        if task.choice_flag != CHOICE_SKIP:
+        # Only process the items if we're not skipping and we're not done.
+        if task.choice_flag != CHOICE_SKIP and not task.sentinel:
 
             # Change metadata, move, and copy.
-            if task.choice_flag == CHOICE_ALBUM:
+            if task.should_write_tags():
                 autotag.apply_metadata(task.items, task.info)
             if copy and delete:
                 old_paths = [os.path.realpath(item.path)
                              for item in task.items]
             for item in task.items:
                 if copy:
-                    item.move(lib, True, task.choice_flag != CHOICE_TRACKS)
-                if write and task.choice_flag == CHOICE_ALBUM:
+                    item.move(lib, True, task.should_create_album())
+                if write and task.should_write_tags():
                     item.write()
 
             # Add items to library. We consolidate this at the end to avoid
@@ -577,10 +613,10 @@ def apply_choices(lib, copy, write, art, delete, progress):
             else:
                 # Add an album.
                 albuminfo = lib.add_album(task.items,
-                                  infer_aa = (task.choice_flag == CHOICE_ASIS))
+                                          infer_aa = task.should_infer_aa())
 
             # Get album art if requested.
-            if art and task.choice_flag == CHOICE_ALBUM:
+            if art and task.should_fetch_art():
                 artpath = beets.autotag.art.art_for_album(task.info)
                 if artpath:
                     albuminfo.set_art(artpath)
@@ -589,7 +625,7 @@ def apply_choices(lib, copy, write, art, delete, progress):
             lib.save()
 
             # Announce that we've added an album.
-            if task.choice_flag in (CHOICE_ALBUM, CHOICE_ASIS):
+            if task.should_create_album():
                 plugins.send('album_imported', album=albuminfo)
             else:
                 for item in task.items:
@@ -605,7 +641,7 @@ def apply_choices(lib, copy, write, art, delete, progress):
 
         # Update progress.
         if progress:
-            progress_set(task.toppath, task.path)
+            task.save_progress()
 
 # Non-autotagged import (always sequential).
 
@@ -615,6 +651,7 @@ def simple_import(lib, paths, copy, delete, resume):
     """
     for task in read_albums(paths, resume):
         if task.sentinel:
+            task.save_progress()
             continue
 
         if copy:
@@ -630,7 +667,7 @@ def simple_import(lib, paths, copy, delete, resume):
         plugins.send('album_imported', album=album)
 
         if resume is not False:
-            progress_set(task.toppath, task.path)
+            task.save_progress()
 
         if copy and delete:
             new_paths = [os.path.realpath(item.path) for item in task.items]
