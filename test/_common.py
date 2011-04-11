@@ -6,6 +6,7 @@ import os
 # Mangle the search path to include the beets sources.
 sys.path.insert(0, '..')
 import beets.library
+from beets import importer
 
 # Dummy item creation.
 def item(): return beets.library.Item({
@@ -38,6 +39,25 @@ def item(): return beets.library.Item({
     'album_id':         None,
 })
 
+# Dummy import stuff.
+def iconfig(lib, **kwargs):
+    config = importer.ImportConfig(
+        lib = lib,
+        paths = None,
+        resume = False,
+        logfile = None,
+        color = False,
+        quiet = True,
+        quiet_fallback = importer.CHOICE_SKIP,
+        copy = True,
+        write = False,
+        art = False,
+        delete = False,
+        choose_match_func = lambda x, y: importer.CHOICE_SKIP,
+    )
+    for k, v in kwargs.items():
+        setattr(config, k, v)
+    return config
 
 # Mock timing.
 

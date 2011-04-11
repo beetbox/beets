@@ -249,15 +249,13 @@ class AutotagTest(unittest.TestCase):
         self.io.restore()
 
     def _no_candidates_test(self, result):
-        res = commands.choose_match(
+        task = importer.ImportTask(
+            'toppath',
             'path',
-            [_common.item()], # items
-            'artist',
-            'album',
-            [], # candidates
-            autotag.RECOMMEND_NONE,
-            True, False, importer.CHOICE_SKIP
+            [_common.item()],
         )
+        task.set_match('artist', 'album', [], autotag.RECOMMEND_NONE)
+        res = commands.choose_match(task, _common.iconfig(None, quiet=False))
         self.assertEqual(res, result)
         self.assertTrue('No match' in self.io.getoutput())
 

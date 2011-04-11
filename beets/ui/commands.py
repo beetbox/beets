@@ -227,31 +227,32 @@ def manual_search():
     album = raw_input('Album: ').decode(sys.stdin.encoding)
     return artist.strip(), album.strip()
 
-def choose_match(path, items, cur_artist, cur_album, candidates,
-                 rec, color, quiet, quiet_fallback):
+def choose_match(task, config):
     """Given an initial autotagging of items, go through an interactive
     dance with the user to ask for a choice of metadata. Returns an
     (info, items) pair, CHOICE_ASIS, or CHOICE_SKIP.
     """
-    if quiet:
+    if config.quiet:
         # No input; just make a decision.
-        if rec == autotag.RECOMMEND_STRONG:
-            dist, items, info = candidates[0]
-            show_change(cur_artist, cur_album, items, info, dist, color)
+        if task.rec == autotag.RECOMMEND_STRONG:
+            dist, items, info = task.candidates[0]
+            show_change(task.cur_artist, task.cur_album, items, info, dist,
+                        config.color)
             return info, items
         else:
-            if quiet_fallback == importer.CHOICE_SKIP:
+            if config.quiet_fallback == importer.CHOICE_SKIP:
                 print_('Skipping.')
-            elif quiet_fallback == importer.CHOICE_ASIS:
+            elif config.quiet_fallback == importer.CHOICE_ASIS:
                 print_('Importing as-is.')
             else:
                 assert(False)
-            return quiet_fallback
+            return config.quiet_fallback
 
     # Loop until we have a choice.
     while True:
         # Ask for a choice from the user.
-        choice = choose_candidate(cur_artist, cur_album, candidates, rec, color)
+        choice = choose_candidate(task.cur_artist, task.cur_album,
+                                  task.candidates, task.rec, config.color)
     
         # Choose which tags to use.
         if choice in (importer.CHOICE_SKIP, importer.CHOICE_ASIS,
@@ -301,15 +302,31 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
     # Never ask for input in quiet mode.
     if resume is None and quiet:
         resume = False
+
+    # Set up import configuration.
+    config = importer.ImportConfig(
+        paths = paths,
+        resume = resume,
+        lib = lib,
+        logfile = logfile,
+        color = color,
+        quiet = quiet,
+        quiet_fallback = quiet_fallback,
+        copy = copy,
+        write = write,
+        art = art,
+        delete = delete,
+        choose_match_func = choose_match,
+    )
     
     # Perform the import.
     if autot:
         # Autotag. Set up the pipeline.
         pl = pipeline.Pipeline([
-            importer.read_albums(paths, resume),
-            importer.initial_lookup(),
-            importer.user_query(lib, logfile, color, quiet, quiet_fallback),
-            importer.apply_choices(lib, copy, write, art, delete, resume is not False),
+            importer.read_albums(config),
+            importer.initial_lookup(config),
+            importer.user_query(config),
+            importer.apply_choices(config),
         ])
 
         # Run the pipeline.
@@ -323,7 +340,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
             pass
     else:
         # Simple import without autotagging. Always sequential.
-        importer.simple_import(lib, paths, copy, delete, resume)
+        importer.simple_import(config)
     
     # If we were logging, close the file.
     if logfile:

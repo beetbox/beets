@@ -26,7 +26,6 @@ from beets import autotag
 from beets import library
 import beets.autotag.art
 from beets import plugins
-from beets.ui import commands
 
 CHOICE_SKIP = 'CHOICE_SKIP'
 CHOICE_ASIS = 'CHOICE_ASIS'
@@ -113,6 +112,21 @@ def progress_get(toppath):
     except IOError:
         return None
     return state[PROGRESS_KEY].get(toppath)
+
+
+# The configuration structure.
+
+class ImportConfig(object):
+    """Contains all the settings used during an import session. Should
+    be used in a "write-once" way -- everything is set up initially and
+    then never touched again.
+    """
+    __slots__ = ['lib', 'paths', 'resume', 'logfile', 'color', 'quiet',
+                 'quiet_fallback', 'copy', 'write', 'art', 'delete',
+                 'choose_match_func']
+    def __init__(self, **kwargs):
+        for slot in self.__slots__:
+            setattr(self, slot, kwargs[slot])
 
 
 # The importer task class.
@@ -216,14 +230,14 @@ class ImportTask(object):
 
 # Core autotagger pipeline stages.
 
-def read_albums(paths, resume):
+def read_albums(config):
     """A generator yielding all the albums (as ImportTask objects) found
     in the user-specified list of paths. `progress` specifies whether
     the resuming feature should be used. It may be True (resume if
     possible), False (never resume), or None (ask).
     """
     # Use absolute paths.
-    paths = [library._normpath(path) for path in paths]
+    paths = [library._normpath(path) for path in config.paths]
 
     # Check the user-specified directories.
     for path in paths:
@@ -231,7 +245,7 @@ def read_albums(paths, resume):
             raise ui.UserError('not a directory: ' + path)
 
     # Look for saved progress.
-    progress = resume is not False
+    progress = config.resume is not False
     if progress:
         resume_dirs = {}
         for path in paths:
@@ -239,7 +253,7 @@ def read_albums(paths, resume):
             if resume_dir:
 
                 # Either accept immediately or prompt for input to decide.
-                if resume:
+                if config.resume:
                     do_resume = True
                     ui.print_('Resuming interrupted import of %s' % path)
                 else:
@@ -272,7 +286,7 @@ def read_albums(paths, resume):
         # Indicate the directory is finished.
         yield ImportTask.done_sentinel(toppath)
 
-def initial_lookup():
+def initial_lookup(config):
     """A coroutine for performing the initial MusicBrainz lookup for an
     album. It accepts lists of Items and yields
     (items, cur_artist, cur_album, candidates, rec) tuples. If no match
@@ -291,13 +305,13 @@ def initial_lookup():
             task.set_null_match()
         task = yield task
 
-def user_query(lib, logfile, color, quiet, quiet_fallback):
+def user_query(config):
     """A coroutine for interfacing with the user about the tagging
     process. lib is the Library to import into and logfile may be
     a file-like object for logging the import process. The coroutine
     accepts and yields ImportTask objects.
     """
-    lib = _reopen_lib(lib)
+    lib = _reopen_lib(config.lib)
     first = True
     task = None
     while True:
@@ -313,16 +327,14 @@ def user_query(lib, logfile, color, quiet, quiet_fallback):
         print_(task.path)
         
         # Ask the user for a choice.
-        choice = commands.choose_match(task.path, task.items, task.cur_artist,
-                                       task.cur_album, task.candidates,
-                                       task.rec, color, quiet, quiet_fallback)
+        choice = config.choose_match_func(task, config)
         task.set_choice(choice)
 
         # Log certain choices.
         if choice is CHOICE_ASIS:
-            tag_log(logfile, 'asis', task.path)
+            tag_log(config.logfile, 'asis', task.path)
         elif choice is CHOICE_SKIP:
-            tag_log(logfile, 'skip', task.path)
+            tag_log(config.logfile, 'skip', task.path)
 
         # Check for duplicates if we have a match.
         if choice == CHOICE_ASIS or isinstance(choice, tuple):
@@ -333,35 +345,35 @@ def user_query(lib, logfile, color, quiet, quiet_fallback):
                 artist = task.info['artist']
                 album = task.info['album']
             if _duplicate_check(lib, artist, album):
-                tag_log(logfile, 'duplicate', task.path)
+                tag_log(config.logfile, 'duplicate', task.path)
                 print_("This album is already in the library!")
                 task.set_choice(CHOICE_SKIP)
         
-def apply_choices(lib, copy, write, art, delete, progress):
+def apply_choices(config):
     """A coroutine for applying changes to albums during the autotag
     process. The parameters to the generator control the behavior of
     the import. The coroutine accepts ImportTask objects and yields
     nothing.
     """
-    lib = _reopen_lib(lib)
+    lib = _reopen_lib(config.lib)
     while True:    
         task = yield
         # Don't do anything if we're skipping the album or we're done.
         if task.choice_flag == CHOICE_SKIP or task.sentinel:
-            if progress:
+            if config.resume is not False:
                 task.save_progress()
             continue
 
         # Change metadata, move, and copy.
         if task.should_write_tags():
             autotag.apply_metadata(task.items, task.info)
-        if copy and delete:
+        if config.copy and config.delete:
             old_paths = [os.path.realpath(item.path)
                          for item in task.items]
         for item in task.items:
-            if copy:
+            if config.copy:
                 item.move(lib, True, task.should_create_album())
-            if write and task.should_write_tags():
+            if config.write and task.should_write_tags():
                 item.write()
 
         # Add items to library. We consolidate this at the end to avoid
@@ -376,7 +388,7 @@ def apply_choices(lib, copy, write, art, delete, progress):
                 lib.add(item)
 
         # Get album art if requested.
-        if art and task.should_fetch_art():
+        if config.art and task.should_fetch_art():
             artpath = beets.autotag.art.art_for_album(task.info)
             if artpath:
                 albuminfo.set_art(artpath)
@@ -392,7 +404,7 @@ def apply_choices(lib, copy, write, art, delete, progress):
                 plugins.send('item_imported', lib=lib, item=item)
 
         # Finally, delete old files.
-        if copy and delete:
+        if config.copy and config.delete:
             new_paths = [os.path.realpath(item.path) for item in task.items]
             for old_path in old_paths:
                 # Only delete files that were actually moved.
@@ -400,38 +412,38 @@ def apply_choices(lib, copy, write, art, delete, progress):
                     os.remove(library._syspath(old_path))
 
         # Update progress.
-        if progress:
+        if config.resume is not False:
             task.save_progress()
 
 
 # Non-autotagged import (always sequential).
 #TODO probably no longer necessary; use the same machinery?
 
-def simple_import(lib, paths, copy, delete, resume):
+def simple_import(config):
     """Add files from the paths to the library without changing any
     tags.
     """
-    for task in read_albums(paths, resume):
+    for task in read_albums(config):
         if task.sentinel:
             task.save_progress()
             continue
 
-        if copy:
-            if delete:
+        if config.copy:
+            if config.delete:
                 old_paths = [os.path.realpath(item.path) for item in task.items]
             for item in task.items:
-                item.move(lib, True, True)
+                item.move(config.lib, True, True)
 
-        album = lib.add_album(task.items, True)
-        lib.save()            
+        album = config.lib.add_album(task.items, True)
+        config.lib.save()            
 
         # Announce that we added an album.
         plugins.send('album_imported', album=album)
 
-        if resume is not False:
+        if config.resume is not False:
             task.save_progress()
 
-        if copy and delete:
+        if config.copy and config.delete:
             new_paths = [os.path.realpath(item.path) for item in task.items]
             for old_path in old_paths:
                 # Only delete files that were actually moved.

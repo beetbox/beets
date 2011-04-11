@@ -64,22 +64,19 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         coro.send(task)
 
     def test_apply_no_delete(self):
-        coro = importer.apply_choices(self.lib, True, False, False,
-                                      False, False)
+        coro = importer.apply_choices(_common.iconfig(self.lib, delete=False))
         coro.next() # Prime coroutine.
         self._call_apply(coro, [self.i], self.info)
         self.assertExists(self.srcpath)
 
     def test_apply_with_delete(self):
-        coro = importer.apply_choices(self.lib, True, False, False,
-                                      True, False)
+        coro = importer.apply_choices(_common.iconfig(self.lib, delete=True))
         coro.next() # Prime coroutine.
         self._call_apply(coro, [self.i], self.info)
         self.assertNotExists(self.srcpath)
 
     def test_apply_asis_uses_album_path(self):
-        coro = importer.apply_choices(self.lib, True, False, False,
-                                      False, False)
+        coro = importer.apply_choices(_common.iconfig(self.lib))
         coro.next() # Prime coroutine.
         self._call_apply_choice(coro, [self.i], importer.CHOICE_ASIS)
         self.assertExists(
@@ -87,8 +84,7 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         )
 
     def test_apply_match_uses_album_path(self):
-        coro = importer.apply_choices(self.lib, True, False, False,
-                                      False, False)
+        coro = importer.apply_choices(_common.iconfig(self.lib))
         coro.next() # Prime coroutine.
         self._call_apply(coro, [self.i], self.info)
         self.assertExists(
@@ -96,8 +92,7 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         )
 
     def test_apply_as_tracks_uses_singleton_path(self):
-        coro = importer.apply_choices(self.lib, True, False, False,
-                                      False, False)
+        coro = importer.apply_choices(_common.iconfig(self.lib))
         coro.next() # Prime coroutine.
         self._call_apply_choice(coro, [self.i], importer.CHOICE_TRACKS)
         self.assertExists(
