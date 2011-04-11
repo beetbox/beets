@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,7 +14,6 @@
 
 """Tests for the command-line interface.
 """
-
 import unittest
 import os
 import shutil
@@ -28,6 +27,7 @@ from beets import ui
 from beets.ui import commands
 from beets import autotag
 from beets import mediafile
+from beets import importer
 
 TEST_TITLES = ('The Opener','The Second Track','The Last Track')
 class ImportTest(unittest.TestCase):
@@ -129,109 +129,6 @@ class ImportTest(unittest.TestCase):
     def test_import_with_delete(self):
         paths = self._run_import(['sometrack'], delete=True)
         self.assertFalse(os.path.exists(paths[0]))
-
-class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
-    def setUp(self):
-        self.libdir = os.path.join('rsrc', 'testlibdir')
-        os.mkdir(self.libdir)
-        self.lib = library.Library(':memory:', self.libdir)
-        self.lib.path_formats = {
-            'default': 'one',
-            'comp': 'two',
-            'singleton': 'three',
-        }
-
-        self.srcpath = os.path.join(self.libdir, 'srcfile.mp3')
-        shutil.copy(os.path.join('rsrc', 'full.mp3'), self.srcpath)
-        self.i = library.Item.from_path(self.srcpath)
-        self.i.comp = False
-
-        trackinfo = {'title': 'one', 'artist': 'some artist',
-                     'track': 1, 'length': 1, 'id': 'trackid'}
-        self.info = {
-            'artist': 'some artist',
-            'album': 'some album',
-            'tracks': [trackinfo],
-            'va': False,
-            'album_id': 'albumid',
-            'artist_id': 'artistid',
-            'albumtype': 'soundtrack',
-        }
-
-    def tearDown(self):
-        shutil.rmtree(self.libdir)
-
-    def _call_apply(self, coro, items, info):
-        task = commands.ImportTask(None, None, None)
-        task.set_choice((info, items))
-        coro.send(task)
-
-    def _call_apply_choice(self, coro, items, choice):
-        task = commands.ImportTask(None, None, items)
-        task.set_choice(choice)
-        coro.send(task)
-
-    def test_apply_no_delete(self):
-        coro = commands.apply_choices(self.lib, True, False, False,
-                                      False, False)
-        coro.next() # Prime coroutine.
-        self._call_apply(coro, [self.i], self.info)
-        self.assertExists(self.srcpath)
-
-    def test_apply_with_delete(self):
-        coro = commands.apply_choices(self.lib, True, False, False,
-                                      True, False)
-        coro.next() # Prime coroutine.
-        self._call_apply(coro, [self.i], self.info)
-        self.assertNotExists(self.srcpath)
-
-    def test_apply_asis_uses_album_path(self):
-        coro = commands.apply_choices(self.lib, True, False, False,
-                                      False, False)
-        coro.next() # Prime coroutine.
-        self._call_apply_choice(coro, [self.i], commands.CHOICE_ASIS)
-        self.assertExists(
-            os.path.join(self.libdir, self.lib.path_formats['default']+'.mp3')
-        )
-
-    def test_apply_match_uses_album_path(self):
-        coro = commands.apply_choices(self.lib, True, False, False,
-                                      False, False)
-        coro.next() # Prime coroutine.
-        self._call_apply(coro, [self.i], self.info)
-        self.assertExists(
-            os.path.join(self.libdir, self.lib.path_formats['default']+'.mp3')
-        )
-
-    def test_apply_as_tracks_uses_singleton_path(self):
-        coro = commands.apply_choices(self.lib, True, False, False,
-                                      False, False)
-        coro.next() # Prime coroutine.
-        self._call_apply_choice(coro, [self.i], commands.CHOICE_TRACKS)
-        self.assertExists(
-            os.path.join(self.libdir, self.lib.path_formats['singleton']+'.mp3')
-        )
-
-class DuplicateCheckTest(unittest.TestCase):
-    def setUp(self):
-        self.lib = library.Library(':memory:')
-        self.i = _common.item()
-        self.album = self.lib.add_album([self.i], True)
-
-    def test_duplicate_album(self):
-        res = commands._duplicate_check(self.lib, self.i.albumartist,
-                                        self.i.album)
-        self.assertTrue(res)
-
-    def test_different_album(self):
-        res = commands._duplicate_check(self.lib, 'xxx', 'yyy')
-        self.assertFalse(res)
-
-    def test_duplicate_va_album(self):
-        self.album.albumartist = 'an album artist'
-        res = commands._duplicate_check(self.lib, 'an album artist',
-                                        self.i.album)
-        self.assertTrue(res)
 
 class ListTest(unittest.TestCase):
     def setUp(self):
@@ -359,18 +256,18 @@ class AutotagTest(unittest.TestCase):
             'album',
             [], # candidates
             autotag.RECOMMEND_NONE,
-            True, False, commands.CHOICE_SKIP
+            True, False, importer.CHOICE_SKIP
         )
         self.assertEqual(res, result)
         self.assertTrue('No match' in self.io.getoutput())
 
     def test_choose_match_with_no_candidates_skip(self):
         self.io.addinput('s')
-        self._no_candidates_test(commands.CHOICE_SKIP)
+        self._no_candidates_test(importer.CHOICE_SKIP)
 
     def test_choose_match_with_no_candidates_asis(self):
         self.io.addinput('u')
-        self._no_candidates_test(commands.CHOICE_ASIS)
+        self._no_candidates_test(importer.CHOICE_ASIS)
 
 class InputTest(unittest.TestCase):
     def setUp(self):
