@@ -32,7 +32,6 @@ from beets import plugins
 # Constants.
 CONFIG_PATH_VAR = 'BEETSCONFIG'
 DEFAULT_CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
-STATE_FILE = os.path.expanduser('~/.beetsstate')
 DEFAULT_LIBRARY = '~/.beetsmusic.blb'
 DEFAULT_DIRECTORY = '~/Music'
 DEFAULT_PATH_FORMATS = {

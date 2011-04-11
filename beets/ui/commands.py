@@ -18,6 +18,7 @@ interface.
 from __future__ import with_statement # Python 2.5
 import logging
 import sys
+import os
 
 from beets import ui
 from beets.ui import print_
@@ -26,6 +27,7 @@ import beets.autotag.art
 from beets.ui import pipeline
 from beets import plugins
 from beets import importer
+from beets import library
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -122,6 +124,10 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
             print_(" * %s -> %s" % (cur_title, new_title))
         elif cur_track != new_track:
             print_(" * %s (%s -> %s)" % (item.title, cur_track, new_track))
+
+def should_resume(config, path):
+    return ui.input_yn("Import of the directory:\n%s"
+                       "\nwas interrupted. Resume (Y/n)?" % path)
 
 def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
     """Given current metadata and a sorted list of
@@ -232,6 +238,10 @@ def choose_match(task, config):
     dance with the user to ask for a choice of metadata. Returns an
     (info, items) pair, CHOICE_ASIS, or CHOICE_SKIP.
     """
+    # Show what we're tagging.
+    print_()
+    print_(task.path)
+
     if config.quiet:
         # No input; just make a decision.
         if task.rec == autotag.RECOMMEND_STRONG:
@@ -293,6 +303,11 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
     indicates what should happen in quiet mode when the recommendation
     is not strong.
     """
+    # Check the user-specified directories.
+    for path in paths:
+        if not os.path.isdir(library._syspath(path)):
+            raise ui.UserError('not a directory: ' + path)
+
     # Open the log.
     if logpath:
         logfile = open(logpath, 'w')
@@ -317,6 +332,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
         art = art,
         delete = delete,
         choose_match_func = choose_match,
+        should_resume_func = should_resume,
     )
     
     # Perform the import.

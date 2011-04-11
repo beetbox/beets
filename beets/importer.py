@@ -20,8 +20,6 @@ import os
 import logging
 import pickle
 
-from beets import ui
-from beets.ui import print_
 from beets import autotag
 from beets import library
 import beets.autotag.art
@@ -34,6 +32,7 @@ CHOICE_MANUAL = 'CHOICE_MANUAL'
 CHOICE_ALBUM = 'CHOICE_ALBUM'
 
 QUEUE_SIZE = 128
+STATE_FILE = os.path.expanduser('~/.beetsstate')
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -88,7 +87,7 @@ def progress_set(toppath, path):
     that the tagging completed).
     """
     try:
-        with open(ui.STATE_FILE) as f:
+        with open(STATE_FILE) as f:
             state = pickle.load(f)
     except IOError:
         state = {PROGRESS_KEY: {}}
@@ -100,14 +99,14 @@ def progress_set(toppath, path):
     else:
         state[PROGRESS_KEY][toppath] = path
 
-    with open(ui.STATE_FILE, 'w') as f:
+    with open(STATE_FILE, 'w') as f:
         pickle.dump(state, f)
 def progress_get(toppath):
     """Get the last successfully tagged subpath of toppath. If toppath
     has no progress information, returns None.
     """
     try:
-        with open(ui.STATE_FILE) as f:
+        with open(STATE_FILE) as f:
             state = pickle.load(f)
     except IOError:
         return None
@@ -123,7 +122,7 @@ class ImportConfig(object):
     """
     __slots__ = ['lib', 'paths', 'resume', 'logfile', 'color', 'quiet',
                  'quiet_fallback', 'copy', 'write', 'art', 'delete',
-                 'choose_match_func']
+                 'choose_match_func', 'should_resume_func']
     def __init__(self, **kwargs):
         for slot in self.__slots__:
             setattr(self, slot, kwargs[slot])
@@ -239,11 +238,6 @@ def read_albums(config):
     # Use absolute paths.
     paths = [library._normpath(path) for path in config.paths]
 
-    # Check the user-specified directories.
-    for path in paths:
-        if not os.path.isdir(library._syspath(path)):
-            raise ui.UserError('not a directory: ' + path)
-
     # Look for saved progress.
     progress = config.resume is not False
     if progress:
@@ -255,12 +249,9 @@ def read_albums(config):
                 # Either accept immediately or prompt for input to decide.
                 if config.resume:
                     do_resume = True
-                    ui.print_('Resuming interrupted import of %s' % path)
+                    log.warn('Resuming interrupted import of %s' % path)
                 else:
-                    do_resume = ui.input_yn("Import of the directory:\n%s"
-                                            "\nwas interrupted. Resume (Y/n)?" %
-                                            path)
-                ui.print_()
+                    do_resume = config.should_resume_func(config, path)
 
                 if do_resume:
                     resume_dirs[path] = resume_dir
@@ -312,19 +303,11 @@ def user_query(config):
     accepts and yields ImportTask objects.
     """
     lib = _reopen_lib(config.lib)
-    first = True
     task = None
     while True:
         task = yield task
         if task.sentinel:
             continue
-        
-        # Empty lines between albums.
-        if not first:
-            print_()
-        first = False
-        # Show current album path.
-        print_(task.path)
         
         # Ask the user for a choice.
         choice = config.choose_match_func(task, config)
@@ -346,7 +329,7 @@ def user_query(config):
                 album = task.info['album']
             if _duplicate_check(lib, artist, album):
                 tag_log(config.logfile, 'duplicate', task.path)
-                print_("This album is already in the library!")
+                log.warn("This album is already in the library!")
                 task.set_choice(CHOICE_SKIP)
         
 def apply_choices(config):
