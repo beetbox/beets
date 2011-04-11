@@ -9,7 +9,7 @@ Here's an example of beets' brainy tag corrector doing its thing::
 
   $ beet import ~/music/ladytron
   Tagging: Ladytron - Witching Hour
-  (Distance: 0.016165)
+  (Similarity: 98.4%)
    * Last One Standing -> The Last One Standing
    * Beauty -> Beauty*2
    * White Light Generation -> Whitelightgenerator
