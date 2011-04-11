@@ -380,7 +380,7 @@ def apply_choices(config):
 
         # Announce that we've added an album.
         if task.should_create_album():
-            plugins.send('album_imported', album=albuminfo)
+            plugins.send('album_imported', lib=lib, album=albuminfo)
         else:
             for item in task.items:
                 plugins.send('item_imported', lib=lib, item=item)
@@ -420,7 +420,7 @@ def simple_import(config):
         config.lib.save()            
 
         # Announce that we added an album.
-        plugins.send('album_imported', album=album)
+        plugins.send('album_imported', lib=config.lib, album=album)
 
         if config.resume is not False:
             task.save_progress()
