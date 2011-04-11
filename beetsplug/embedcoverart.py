@@ -22,7 +22,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
     def loaded(self):
         pass
 
-    def album_imported(self, album):
+    def album_imported(self, lib, album):
         albumart = album.artpath
         ALLOWED_MIMES = ('jpeg','png')
 
