@@ -99,10 +99,10 @@ class FirstPipelineThread(PipelineThread):
                 return
             
             # Send it to the next stage.
-            self.out_queue.put(msg)
             if msg is BUBBLE:
                 continue
-        
+            self.out_queue.put(msg)
+
         # Generator finished; shut down the pipeline.
         self.out_queue.put(POISON)
     
