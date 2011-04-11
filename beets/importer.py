@@ -122,12 +122,11 @@ class ImportConfig(object):
     be used in a "write-once" way -- everything is set up initially and
     then never touched again.
     """
-    __slots__ = ['lib', 'paths', 'resume', 'logfile', 'color', 'quiet',
-                 'quiet_fallback', 'copy', 'write', 'art', 'delete',
-                 'choose_match_func', 'should_resume_func', 'threaded',
-                 'autot']
+    _fields = ['lib', 'paths', 'resume', 'logfile', 'color', 'quiet',
+               'quiet_fallback', 'copy', 'write', 'art', 'delete',
+               'choose_match_func', 'should_resume_func', 'threaded', 'autot']
     def __init__(self, **kwargs):
-        for slot in self.__slots__:
+        for slot in self._fields:
             setattr(self, slot, kwargs[slot])
 
 
@@ -137,9 +136,6 @@ class ImportTask(object):
     """Represents a single directory to be imported along with its
     intermediate state.
     """
-    __slots__ = ['toppath', 'path', 'items', 'sentinel',
-                 'cur_artist', 'cur_album', 'candidates', 'rec',
-                 'choice_flag', 'info']
     def __init__(self, toppath, path=None, items=None):
         self.toppath = toppath
         self.path = path
