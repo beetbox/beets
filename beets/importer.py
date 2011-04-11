@@ -341,7 +341,7 @@ def apply_choices(config):
     while True:    
         task = yield
         # Don't do anything if we're skipping the album or we're done.
-        if task.choice_flag == action.SKIP or task.sentinel:
+        if task.sentinel or task.choice_flag == action.SKIP:
             if config.resume is not False:
                 task.save_progress()
             continue

@@ -99,6 +99,12 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
             os.path.join(self.libdir, self.lib.path_formats['singleton']+'.mp3')
         )
 
+    def test_apply_sentinel(self):
+        coro = importer.apply_choices(_common.iconfig(self.lib))
+        coro.next()
+        coro.send(importer.ImportTask.done_sentinel('toppath'))
+        # Just test no exception for now.
+
 class DuplicateCheckTest(unittest.TestCase):
     def setUp(self):
         self.lib = library.Library(':memory:')
