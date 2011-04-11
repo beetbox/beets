@@ -587,57 +587,59 @@ def apply_choices(lib, copy, write, art, delete, progress):
     lib = _reopen_lib(lib)
     while True:    
         task = yield
+        # Don't do anything if we're skipping the album or we're done.
+        if task.choice_flag == CHOICE_SKIP or task.sentinel:
+            if progress:
+                task.save_progress()
+            continue
 
-        # Only process the items if we're not skipping and we're not done.
-        if task.choice_flag != CHOICE_SKIP and not task.sentinel:
+        # Change metadata, move, and copy.
+        if task.should_write_tags():
+            autotag.apply_metadata(task.items, task.info)
+        if copy and delete:
+            old_paths = [os.path.realpath(item.path)
+                         for item in task.items]
+        for item in task.items:
+            if copy:
+                item.move(lib, True, task.should_create_album())
+            if write and task.should_write_tags():
+                item.write()
 
-            # Change metadata, move, and copy.
-            if task.should_write_tags():
-                autotag.apply_metadata(task.items, task.info)
-            if copy and delete:
-                old_paths = [os.path.realpath(item.path)
-                             for item in task.items]
+        # Add items to library. We consolidate this at the end to avoid
+        # locking while we do the copying and tag updates.
+        if task.should_create_album():
+            # Add an album.
+            albuminfo = lib.add_album(task.items,
+                                      infer_aa = task.should_infer_aa())
+        else:
+            # Add tracks.
             for item in task.items:
-                if copy:
-                    item.move(lib, True, task.should_create_album())
-                if write and task.should_write_tags():
-                    item.write()
+                lib.add(item)
 
-            # Add items to library. We consolidate this at the end to avoid
-            # locking while we do the copying and tag updates.
-            if task.choice_flag == CHOICE_TRACKS:
-                # Add tracks.
-                for item in task.items:
-                    lib.add(item)
 
-            else:
-                # Add an album.
-                albuminfo = lib.add_album(task.items,
-                                          infer_aa = task.should_infer_aa())
+        # Get album art if requested.
+        if art and task.should_fetch_art():
+            artpath = beets.autotag.art.art_for_album(task.info)
+            if artpath:
+                albuminfo.set_art(artpath)
+        
+        # Write the database after each album.
+        lib.save()
 
-            # Get album art if requested.
-            if art and task.should_fetch_art():
-                artpath = beets.autotag.art.art_for_album(task.info)
-                if artpath:
-                    albuminfo.set_art(artpath)
-            
-            # Write the database after each album.
-            lib.save()
+        # Announce that we've added an album.
+        if task.should_create_album():
+            plugins.send('album_imported', album=albuminfo)
+        else:
+            for item in task.items:
+                plugins.send('item_imported', lib=lib, item=item)
 
-            # Announce that we've added an album.
-            if task.should_create_album():
-                plugins.send('album_imported', album=albuminfo)
-            else:
-                for item in task.items:
-                    plugins.send('item_imported', lib=lib, item=item)
-
-            # Finally, delete old files.
-            if copy and delete:
-                new_paths = [os.path.realpath(item.path) for item in task.items]
-                for old_path in old_paths:
-                    # Only delete files that were actually moved.
-                    if old_path not in new_paths:
-                        os.remove(library._syspath(old_path))
+        # Finally, delete old files.
+        if copy and delete:
+            new_paths = [os.path.realpath(item.path) for item in task.items]
+            for old_path in old_paths:
+                # Only delete files that were actually moved.
+                if old_path not in new_paths:
+                    os.remove(library._syspath(old_path))
 
         # Update progress.
         if progress:
