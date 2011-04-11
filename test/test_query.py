@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -174,6 +174,7 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
         self.album_item.title = 'album item'
         self.single_item = _common.item()
         self.single_item.title = 'singleton item'
+        self.single_item.comp = False
 
         self.lib = beets.library.Library(':memory:')
         self.lib.add(self.single_item)
@@ -189,6 +190,18 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
         q = 'singleton:false'
         results = self.lib.get(q)
         self.assert_matched(results, 'album item')
+        self.assert_done(results)
+
+    def test_compilation_true(self):
+        q = 'comp:true'
+        results = self.lib.get(q)
+        self.assert_matched(results, 'album item')
+        self.assert_done(results)
+
+    def test_compilation_false(self):
+        q = 'comp:false'
+        results = self.lib.get(q)
+        self.assert_matched(results, 'singleton item')
         self.assert_done(results)
 
 class BrowseTest(unittest.TestCase, AssertsMixin):

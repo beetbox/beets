@@ -327,6 +327,16 @@ class SubstringQuery(FieldQuery):
     def match(self, item):
         return self.pattern.lower() in getattr(item, self.field).lower()
 
+class BooleanQuery(MatchQuery):
+    """Matches a boolean field. Pattern should either be a boolean or a
+    string reflecting a boolean.
+    """
+    def __init__(self, field, pattern):
+        super(BooleanQuery, self).__init__(field, pattern)
+        if isinstance(pattern, basestring):
+            self.pattern = util.str2bool(pattern)
+        self.pattern = int(self.pattern)
+
 class SingletonQuery(Query):
     """Matches either singleton or non-singleton items."""
     def __init__(self, sense):
@@ -409,6 +419,8 @@ class CollectionQuery(Query):
         for key, pattern in cls._parse_query(query_string):
             if key is None: # no key specified; match any field
                 subqueries.append(AnySubstringQuery(pattern, default_fields))
+            elif key.lower() == 'comp': # a boolean field
+                subqueries.append(BooleanQuery(key.lower(), pattern))
             elif key.lower() in ITEM_KEYS: # ignore unrecognized keys
                 subqueries.append(SubstringQuery(key.lower(), pattern))
             elif key.lower() == 'singleton':
