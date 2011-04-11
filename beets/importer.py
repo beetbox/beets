@@ -24,7 +24,7 @@ from beets import autotag
 from beets import library
 import beets.autotag.art
 from beets import plugins
-from beets.ui import pipeline
+from beets.util import pipeline
 
 CHOICE_SKIP = 'CHOICE_SKIP'
 CHOICE_ASIS = 'CHOICE_ASIS'
@@ -405,7 +405,7 @@ def apply_choices(config):
 #TODO probably no longer necessary; use the same machinery?
 
 def simple_import(config):
-    """Add files from the paths to the library without changing any
+    """Add albums from the paths to the library without changing any
     tags.
     """
     for task in read_albums(config):
