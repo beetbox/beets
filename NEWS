@@ -5,6 +5,8 @@
   importing, you can choose the "as Tracks" (T) option to add
   singletons to your library. The query "singleton:true" matches only
   singleton tracks; "singleton:false" matches only album tracks.
+* The importer/autotagger system has been heavily refactored. If
+  anything breaks as a result, please let me know.
 * Support for album art embedded in files. The "embedcoverart" plugin
   provides this functionality. (Thanks, daenney!)
 * The "distance" number, which quantifies how different an album's
