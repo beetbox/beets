@@ -37,6 +37,7 @@ import mutagen.flac
 import mutagen.monkeysaudio
 import datetime
 import re
+from beets.util.enumeration import enum
 
 __all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
 
@@ -113,15 +114,11 @@ def _safe_cast(out_type, val):
 
 # Flags for encoding field behavior.
 
-class Enumeration(object):
-    def __init__(self, *values):
-        for value, equiv in zip(values, range(1, len(values)+1)):
-            setattr(self, value, equiv)
-# determine style of packing if any
-packing = Enumeration('SLASHED', # pair delimited by /
-                      'TUPLE',   # a python tuple of 2 items
-                      'DATE'     # YYYY-MM-DD
-                     )
+# Determine style of packing, if any.
+packing = enum('SLASHED', # pair delimited by /
+               'TUPLE',   # a python tuple of 2 items
+               'DATE',    # YYYY-MM-DD
+               name='packing')
 
 class StorageStyle(object):
     """Parameterizes the storage behavior of a single field for a

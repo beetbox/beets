@@ -134,8 +134,7 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
     of which candidate to use. Returns a pair (candidate, ordered)
     consisting of the the selected candidate and the associated track
     ordering. If user chooses to skip, use as-is, or search manually,
-    returns CHOICE_SKIP, CHOICE_ASIS, CHOICE_TRACKS, or CHOICE_MANUAL
-    instead of a tuple.
+    returns SKIP, ASIS, TRACKS, or MANUAL instead of a tuple.
     """
     # Zero candidates.
     if not candidates:
@@ -147,13 +146,13 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
             'Enter U, T, S, E, or B:'
         )
         if sel == 'u':
-            return importer.CHOICE_ASIS
+            return importer.action.ASIS
         elif sel == 't':
-            return importer.CHOICE_TRACKS
+            return importer.action.TRACKS
         elif sel == 'e':
-            return importer.CHOICE_MANUAL
+            return importer.action.MANUAL
         elif sel == 's':
-            return importer.CHOICE_SKIP
+            return importer.action.SKIP
         elif sel == 'b':
             raise importer.ImportAbort()
         else:
@@ -184,13 +183,13 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
                 (1, len(candidates))
             )
             if sel == 's':
-                return importer.CHOICE_SKIP
+                return importer.action.SKIP
             elif sel == 'u':
-                return importer.CHOICE_ASIS
+                return importer.action.ASIS
             elif sel == 'e':
-                return importer.CHOICE_MANUAL
+                return importer.action.MANUAL
             elif sel == 't':
-                return importer.CHOICE_TRACKS
+                return importer.action.TRACKS
             elif sel == 'b':
                 raise importer.ImportAbort()
             else: # Numerical selection.
@@ -216,13 +215,13 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
         elif sel == 'm':
             pass
         elif sel == 's':
-            return importer.CHOICE_SKIP
+            return importer.action.SKIP
         elif sel == 'u':
-            return importer.CHOICE_ASIS
+            return importer.action.ASIS
         elif sel == 't':
-            return importer.CHOICE_TRACKS
+            return importer.action.TRACKS
         elif sel == 'e':
-            return importer.CHOICE_MANUAL
+            return importer.action.MANUAL
         elif sel == 'b':
             raise importer.ImportAbort()
 
@@ -235,7 +234,7 @@ def manual_search():
 def choose_match(task, config):
     """Given an initial autotagging of items, go through an interactive
     dance with the user to ask for a choice of metadata. Returns an
-    (info, items) pair, CHOICE_ASIS, or CHOICE_SKIP.
+    (info, items) pair, ASIS, or SKIP.
     """
     # Show what we're tagging.
     print_()
@@ -249,9 +248,9 @@ def choose_match(task, config):
                         config.color)
             return info, items
         else:
-            if config.quiet_fallback == importer.CHOICE_SKIP:
+            if config.quiet_fallback == importer.action.SKIP:
                 print_('Skipping.')
-            elif config.quiet_fallback == importer.CHOICE_ASIS:
+            elif config.quiet_fallback == importer.action.ASIS:
                 print_('Importing as-is.')
             else:
                 assert(False)
@@ -264,11 +263,11 @@ def choose_match(task, config):
                                   task.candidates, task.rec, config.color)
     
         # Choose which tags to use.
-        if choice in (importer.CHOICE_SKIP, importer.CHOICE_ASIS,
-                      importer.CHOICE_TRACKS):
+        if choice in (importer.action.SKIP, importer.action.ASIS,
+                      importer.action.TRACKS):
             # Pass selection to main control flow.
             return choice
-        elif choice is importer.CHOICE_MANUAL:
+        elif choice is importer.action.MANUAL:
             # Try again with manual search terms.
             search_artist, search_album = manual_search()
             try:
@@ -298,9 +297,8 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
     never prompted for input; instead, the tagger just skips anything
     it is not confident about. resume indicates whether interrupted
     imports can be resumed and is either a boolean or None.
-    quiet_fallback should be either CHOICE_ASIS or CHOICE_SKIP and
-    indicates what should happen in quiet mode when the recommendation
-    is not strong.
+    quiet_fallback should be either ASIS or SKIP and indicates what
+    should happen in quiet mode when the recommendation is not strong.
     """
     # Check the user-specified directories.
     for path in paths:
@@ -402,9 +400,9 @@ def import_func(lib, config, opts, args):
             resume = None
 
     if quiet_fallback_str == 'asis':
-        quiet_fallback = importer.CHOICE_ASIS
+        quiet_fallback = importer.action.ASIS
     else:
-        quiet_fallback = importer.CHOICE_SKIP
+        quiet_fallback = importer.action.SKIP
     import_files(lib, args, copy, write, autot, opts.logpath, art, threaded,
                  color, delete, quiet, resume, quiet_fallback)
 import_cmd.func = import_func

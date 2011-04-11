@@ -26,12 +26,12 @@ import beets.autotag.art
 from beets import plugins
 from beets.util import pipeline
 from beets.util import syspath, normpath
+from beets.util.enumeration import enum
 
-CHOICE_SKIP = 'CHOICE_SKIP'
-CHOICE_ASIS = 'CHOICE_ASIS'
-CHOICE_TRACKS = 'CHOICE_TRACKS'
-CHOICE_MANUAL = 'CHOICE_MANUAL'
-CHOICE_ALBUM = 'CHOICE_ALBUM'
+action = enum(
+    'SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'ALBUM',
+    name='action'
+)
 
 QUEUE_SIZE = 128
 STATE_FILE = os.path.expanduser('~/.beetsstate')
@@ -165,23 +165,23 @@ class ImportTask(object):
         self.set_match(None, None, None, None)
 
     def set_choice(self, choice):
-        """Given either an (info, items) tuple or a CHOICE_ constant,
+        """Given either an (info, items) tuple or an action constant,
         indicates that an action has been selected by the user (or
         automatically).
         """
         assert not self.sentinel
-        assert choice != CHOICE_MANUAL # Not part of the task structure.
-        assert choice != CHOICE_ALBUM # Only used internally.
-        if choice in (CHOICE_SKIP, CHOICE_ASIS, CHOICE_TRACKS):
+        assert choice != action.MANUAL # Not part of the task structure.
+        assert choice != action.ALBUM # Only used internally.
+        if choice in (action.SKIP, action.ASIS, action.TRACKS):
             self.choice_flag = choice
             self.info = None
-            if choice == CHOICE_SKIP:
+            if choice == action.SKIP:
                 self.items = None # Items no longer needed.
         else:
             info, items = choice
             self.items = items # Reordered items list.
             self.info = info
-            self.choice_flag = CHOICE_ALBUM # Implicit choice.
+            self.choice_flag = action.ALBUM # Implicit choice.
 
     def save_progress(self):
         """Updates the progress state to indicate that this album has
@@ -194,17 +194,17 @@ class ImportTask(object):
 
     def should_create_album(self):
         """Should an album structure be created for these items?"""
-        if self.choice_flag in (CHOICE_ALBUM, CHOICE_ASIS):
+        if self.choice_flag in (action.ALBUM, action.ASIS):
             return True
-        elif self.choice_flag in (CHOICE_TRACKS, CHOICE_SKIP):
+        elif self.choice_flag in (action.TRACKS, action.SKIP):
             return False
         else:
             assert False
     def should_write_tags(self):
         """Should new info be written to the files' metadata?"""
-        if self.choice_flag == CHOICE_ALBUM:
+        if self.choice_flag == action.ALBUM:
             return True
-        elif self.choice_flag in (CHOICE_ASIS, CHOICE_TRACKS, CHOICE_SKIP):
+        elif self.choice_flag in (action.ASIS, action.TRACKS, action.SKIP):
             return False
         else:
             assert False
@@ -216,10 +216,10 @@ class ImportTask(object):
         field be inferred from the plurality of track artists?
         """
         assert self.should_create_album()
-        if self.choice_flag == CHOICE_ALBUM:
+        if self.choice_flag == action.ALBUM:
             # Album artist comes from the info dictionary.
             return False
-        elif self.choice_flag == CHOICE_ASIS:
+        elif self.choice_flag == action.ASIS:
             # As-is imports likely don't have an album artist.
             return True
         else:
@@ -313,14 +313,14 @@ def user_query(config):
         task.set_choice(choice)
 
         # Log certain choices.
-        if choice is CHOICE_ASIS:
+        if choice is action.ASIS:
             tag_log(config.logfile, 'asis', task.path)
-        elif choice is CHOICE_SKIP:
+        elif choice is action.SKIP:
             tag_log(config.logfile, 'skip', task.path)
 
         # Check for duplicates if we have a match.
-        if choice == CHOICE_ASIS or isinstance(choice, tuple):
-            if choice == CHOICE_ASIS:
+        if choice == action.ASIS or isinstance(choice, tuple):
+            if choice == action.ASIS:
                 artist = task.cur_artist
                 album = task.cur_album
             else:
@@ -329,7 +329,7 @@ def user_query(config):
             if _duplicate_check(lib, artist, album):
                 tag_log(config.logfile, 'duplicate', task.path)
                 log.warn("This album is already in the library!")
-                task.set_choice(CHOICE_SKIP)
+                task.set_choice(action.SKIP)
         
 def apply_choices(config):
     """A coroutine for applying changes to albums during the autotag
@@ -341,7 +341,7 @@ def apply_choices(config):
     while True:    
         task = yield
         # Don't do anything if we're skipping the album or we're done.
-        if task.choice_flag == CHOICE_SKIP or task.sentinel:
+        if task.choice_flag == action.SKIP or task.sentinel:
             if config.resume is not False:
                 task.save_progress()
             continue

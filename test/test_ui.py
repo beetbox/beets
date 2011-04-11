@@ -261,11 +261,11 @@ class AutotagTest(unittest.TestCase):
 
     def test_choose_match_with_no_candidates_skip(self):
         self.io.addinput('s')
-        self._no_candidates_test(importer.CHOICE_SKIP)
+        self._no_candidates_test(importer.action.SKIP)
 
     def test_choose_match_with_no_candidates_asis(self):
         self.io.addinput('u')
-        self._no_candidates_test(importer.CHOICE_ASIS)
+        self._no_candidates_test(importer.action.ASIS)
 
 class InputTest(unittest.TestCase):
     def setUp(self):

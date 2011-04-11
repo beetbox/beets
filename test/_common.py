@@ -1,4 +1,18 @@
 """Some common functionality for beets' test cases."""
+# This file is part of beets.
+# Copyright 2011, Adrian Sampson.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+# 
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+
 import time
 import sys
 import os
@@ -48,12 +62,12 @@ def iconfig(lib, **kwargs):
         logfile = None,
         color = False,
         quiet = True,
-        quiet_fallback = importer.CHOICE_SKIP,
+        quiet_fallback = importer.action.SKIP,
         copy = True,
         write = False,
         art = False,
         delete = False,
-        choose_match_func = lambda x, y: importer.CHOICE_SKIP,
+        choose_match_func = lambda x, y: importer.action.SKIP,
         should_resume_func = lambda _: False,
         threaded = False,
         autot = True,
