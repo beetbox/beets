@@ -590,7 +590,7 @@ def apply_choices(lib, copy, write, art, delete, progress):
 
             # Announce that we've added an album.
             if task.choice_flag in (CHOICE_ALBUM, CHOICE_ASIS):
-                plugins.send('album_imported', album=albuminfo)
+                plugins.send('album_imported', lib=lib, album=albuminfo)
             else:
                 for item in task.items:
                     plugins.send('item_imported', lib=lib, item=item)
@@ -627,7 +627,7 @@ def simple_import(lib, paths, copy, delete, resume):
         lib.save()            
 
         # Announce that we added an album.
-        plugins.send('album_imported', album=album)
+        plugins.send('album_imported', lib=lib, album=album)
 
         if resume is not False:
             progress_set(task.toppath, task.path)
