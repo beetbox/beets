@@ -17,7 +17,6 @@
 import unittest
 import os
 import shutil
-import logging
 
 import _common
 from beets import library
@@ -29,10 +28,6 @@ class NonAutotaggedImportTest(unittest.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
         #self.io.install()
-
-        # Suppress logging output.
-        log = logging.getLogger('beets')
-        log.setLevel(logging.CRITICAL)
 
         self.libdb = os.path.join(_common.RSRC, 'testlib.blb')
         self.lib = library.Library(self.libdb)

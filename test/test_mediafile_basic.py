@@ -122,7 +122,8 @@ def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
                         os.path.basename(path))
                 
         def tearDown(self):
-            os.remove(self.tpath)
+            if os.path.exists(self.tpath):
+                os.remove(self.tpath)
     
     return WritingTest
 
@@ -279,16 +280,19 @@ def suite():
         for tagset in tagsets:
             path = os.path.join(_common.RSRC, tagset + '.' + kind)
             correct_dict = correct_dicts[tagset]
-            s.addTest(suite_for_file(path, correct_dict))
+            for test in suite_for_file(path, correct_dict):
+                s.addTest(test)
     
     # Special test for missing ID3 tag.
-    s.addTest(suite_for_file(os.path.join(_common.RSRC, 'empty.mp3'),
-                             correct_dicts['empty'],
-                             writing=False))
+    for test in suite_for_file(os.path.join(_common.RSRC, 'empty.mp3'),
+                               correct_dicts['empty'],
+                               writing=False):
+        s.addTest(test)
     
     # Special test for advanced release date.
-    s.addTest(suite_for_file(os.path.join(_common.RSRC, 'date.mp3'),
-                             correct_dicts['date']))
+    for test in suite_for_file(os.path.join(_common.RSRC, 'date.mp3'),
+                               correct_dicts['date']):
+        s.addTest(test)
 
     # Read-only attribute tests.
     for fname, correct_dict in read_only_correct_dicts.iteritems():
@@ -297,6 +301,10 @@ def suite():
             s.addTest(MakeReadOnlyTest(path, field, value)())
     
     return s
+
+def test_nose_suite():
+    for test in suite():
+        yield test
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

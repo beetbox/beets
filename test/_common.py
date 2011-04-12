@@ -16,11 +16,16 @@
 import time
 import sys
 import os
+import logging
 
 # Mangle the search path to include the beets sources.
 sys.path.insert(0, '..')
 import beets.library
 from beets import importer
+
+# Suppress logging output.
+log = logging.getLogger('beets')
+log.setLevel(logging.CRITICAL)
 
 # Test resources/sandbox path.
 RSRC = os.path.join(os.path.dirname(__file__), 'rsrc')
