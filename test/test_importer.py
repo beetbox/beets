@@ -17,10 +17,118 @@
 import unittest
 import os
 import shutil
+import logging
 
 import _common
 from beets import library
 from beets import importer
+from beets import mediafile
+
+TEST_TITLES = ('The Opener','The Second Track','The Last Track')
+class NonAutotaggedImportTest(unittest.TestCase):
+    def setUp(self):
+        self.io = _common.DummyIO()
+        #self.io.install()
+
+        # Suppress logging output.
+        log = logging.getLogger('beets')
+        log.setLevel(logging.CRITICAL)
+
+        self.libdb = os.path.join('rsrc', 'testlib.blb')
+        self.lib = library.Library(self.libdb)
+        self.libdir = os.path.join('rsrc', 'testlibdir')
+        self.lib.directory = self.libdir
+        self.lib.path_formats = {
+            'default': os.path.join('$artist', '$album', '$title')
+        }
+
+        self.srcdir = os.path.join('rsrc', 'testsrcdir')
+
+    def tearDown(self):
+        self.io.restore()
+        if os.path.exists(self.libdb):
+            os.remove(self.libdb)
+        if os.path.exists(self.libdir):
+            shutil.rmtree(self.libdir)
+        if os.path.exists(self.srcdir):
+            shutil.rmtree(self.srcdir)
+
+    def _create_test_file(self, filepath, metadata):
+        """Creates an mp3 file at the given path within self.srcdir.
+        filepath is given as an array of folder names, ending with the
+        file name. Sets the file's metadata from the provided dict.
+        Returns the full, real path to the file.
+        """
+        realpath = os.path.join(self.srcdir, *filepath)
+        if not os.path.exists(os.path.dirname(realpath)):
+            os.makedirs(os.path.dirname(realpath))
+        shutil.copy(os.path.join('rsrc', 'full.mp3'), realpath)
+
+        f = mediafile.MediaFile(realpath)
+        for attr in metadata:
+            setattr(f, attr, metadata[attr])
+        f.save()
+
+        return realpath
+
+    def _run_import(self, titles=TEST_TITLES, delete=False):
+        # Make a bunch of tracks to import.
+        paths = []
+        for i, title in enumerate(titles):
+            paths.append(self._create_test_file(
+                ['the_album', 'track_%s.mp3' % (i+1)],
+                {
+                    'track': (i+1),
+                    'artist': 'The Artist',
+                    'album': 'The Album',
+                    'title': title,
+                }))
+
+        # Run the UI "beet import" command!
+        importer.run_import(
+                lib=self.lib,
+                paths=[os.path.dirname(paths[0])],
+                copy=True,
+                write=True,
+                autot=False,
+                logfile=None,
+                art=False,
+                threaded=False,
+                color=False,
+                delete=delete,
+                quiet=True,
+                resume=False,
+                quiet_fallback='skip',
+                choose_match_func = None,
+                should_resume_func = None,
+        )
+
+        return paths
+
+    def test_album_created_with_track_artist(self):
+        self._run_import()
+        albums = self.lib.albums()
+        self.assertEqual(len(albums), 1)
+        self.assertEqual(albums[0].albumartist, 'The Artist')
+
+    def test_import_copy_arrives(self):
+        self._run_import()
+        artist_folder = os.path.join(self.libdir, 'The Artist')
+        album_folder = os.path.join(artist_folder, 'The Album')
+        self.assertEqual(len(os.listdir(artist_folder)), 1)
+        self.assertEqual(len(os.listdir(album_folder)), 3)
+
+        filenames = set(os.listdir(album_folder))
+        destinations = set('%s.mp3' % title for title in TEST_TITLES)
+        self.assertEqual(filenames, destinations)
+
+    def test_import_no_delete(self):
+        paths = self._run_import(['sometrack'], delete=False)
+        self.assertTrue(os.path.exists(paths[0]))
+
+    def test_import_with_delete(self):
+        paths = self._run_import(['sometrack'], delete=True)
+        self.assertFalse(os.path.exists(paths[0]))
 
 class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
     def setUp(self):
