@@ -33,13 +33,14 @@ TEST_TITLES = ('The Opener','The Second Track','The Last Track')
 class ImportTest(unittest.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
-        self.io.install()
+        #self.io.install()
 
         # Suppress logging output.
         log = logging.getLogger('beets')
         log.setLevel(logging.CRITICAL)
 
-        self.lib = library.Library(':memory:')
+        self.libdb = os.path.join('rsrc', 'testlib.blb')
+        self.lib = library.Library(self.libdb)
         self.libdir = os.path.join('rsrc', 'testlibdir')
         self.lib.directory = self.libdir
         self.lib.path_formats = {
@@ -50,6 +51,8 @@ class ImportTest(unittest.TestCase):
 
     def tearDown(self):
         self.io.restore()
+        if os.path.exists(self.libdb):
+            os.remove(self.libdb)
         if os.path.exists(self.libdir):
             shutil.rmtree(self.libdir)
         if os.path.exists(self.srcdir):

@@ -235,7 +235,7 @@ class Pipeline(object):
         coros = [stage[0] for stage in self.stages]
 
         # "Prime" the coroutines.
-        for coro in coros:
+        for coro in coros[1:]:
             coro.next()
         
         # Begin the pipeline.
@@ -257,7 +257,6 @@ class Pipeline(object):
         # Set up first stage.
         for coro in self.stages[0]:
             threads.append(FirstPipelineThread(coro, queues[0], threads))
-
 
         # Middle stages.
         for i in range(1, len(self.stages)-1):

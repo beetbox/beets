@@ -282,18 +282,18 @@ def initial_lookup(config):
     (items, cur_artist, cur_album, candidates, rec) tuples. If no match
     is found, all of the yielded parameters (except items) are None.
     """
-    task = yield
-    log.debug('Looking up: %s' % task.path)
+    task = None
     while True:
+        task = yield task
         if task.sentinel:
             task = yield task
             continue
 
+        log.debug('Looking up: %s' % task.path)
         try:
             task.set_match(*autotag.tag_album(task.items))
         except autotag.AutotagError:
             task.set_null_match()
-        task = yield task
 
 def user_query(config):
     """A coroutine for interfacing with the user about the tagging
@@ -330,6 +330,23 @@ def user_query(config):
                 tag_log(config.logfile, 'duplicate', task.path)
                 log.warn("This album is already in the library!")
                 task.set_choice(action.SKIP)
+
+def show_progress(config):
+    """This stage replaces the initial_lookup and user_query stages
+    when the importer is run without autotagging. It displays the album
+    name and artist as the files are added.
+    """
+    task = None
+    while True:
+        task = yield task
+        if task.sentinel:
+            continue
+
+        log.info(task.path)
+
+        # Behave as if ASIS were selected.
+        task.set_null_match()
+        task.set_choice(action.ASIS)
         
 def apply_choices(config):
     """A coroutine for applying changes to albums during the autotag
@@ -398,66 +415,32 @@ def apply_choices(config):
             task.save_progress()
 
 
-# Non-autotagged import (always sequential).
-#TODO probably no longer necessary; use the same machinery?
-
-def simple_import(config):
-    """Add albums from the paths to the library without changing any
-    tags.
-    """
-    for task in read_albums(config):
-        if task.sentinel:
-            task.save_progress()
-            continue
-
-        if config.copy:
-            if config.delete:
-                old_paths = [os.path.realpath(item.path) for item in task.items]
-            for item in task.items:
-                item.move(config.lib, True, True)
-
-        album = config.lib.add_album(task.items, True)
-        config.lib.save()            
-
-        # Announce that we added an album.
-        plugins.send('album_imported', lib=config.lib, album=album)
-
-        if config.resume is not False:
-            task.save_progress()
-
-        if config.copy and config.delete:
-            new_paths = [os.path.realpath(item.path) for item in task.items]
-            for old_path in old_paths:
-                # Only delete files that were actually moved.
-                if old_path not in new_paths:
-                    os.remove(syspath(old_path))
-
-        log.info('added album: %s - %s' % (album.albumartist, album.album))
-
 
 # Main driver.
 
 def run_import(**kwargs):
+    """Run an import. The keyword arguments are the same as those to
+    ImportConfig.
+    """
     config = ImportConfig(**kwargs)
     
+    # Set up the pipeline.
+    stages = [read_albums(config)]
     if config.autot:
-        # Autotag. Set up the pipeline.
-        pl = pipeline.Pipeline([
-            read_albums(config),
-            initial_lookup(config),
-            user_query(config),
-            apply_choices(config),
-        ])
-
-        # Run the pipeline.
-        try:
-            if config.threaded:
-                pl.run_parallel(QUEUE_SIZE)
-            else:
-                pl.run_sequential()
-        except ImportAbort:
-            # User aborted operation. Silently stop.
-            pass
+        # Only look up and query the user when autotagging.
+        stages += [initial_lookup(config), user_query(config)]
     else:
-        # Simple import without autotagging. Always sequential.
-        simple_import(config)
+        # When not autotagging, just display progress.
+        stages += [show_progress(config)]
+    stages += [apply_choices(config)]
+    pl = pipeline.Pipeline(stages)
+
+    # Run the pipeline.
+    try:
+        if config.threaded:
+            pl.run_parallel(QUEUE_SIZE)
+        else:
+            pl.run_sequential()
+    except ImportAbort:
+        # User aborted operation. Silently stop.
+        pass
