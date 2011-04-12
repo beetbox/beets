@@ -27,7 +27,7 @@ class EdgeTest(unittest.TestCase):
         # This is very hard to produce, so this is just the first 8192
         # bytes of a file found "in the wild".
         emptylist = beets.mediafile.MediaFile(
-                                os.path.join('rsrc', 'emptylist.mp3'))
+                                os.path.join(_common.RSRC, 'emptylist.mp3'))
         genre = emptylist.genre
         self.assertEqual(genre, '')
 
@@ -35,7 +35,7 @@ class EdgeTest(unittest.TestCase):
         # Ensures that release times delimited by spaces are ignored.
         # Amie Street produces such files.
         space_time = beets.mediafile.MediaFile(
-                                os.path.join('rsrc', 'space_time.mp3'))
+                                os.path.join(_common.RSRC, 'space_time.mp3'))
         self.assertEqual(space_time.year, 2009)
         self.assertEqual(space_time.month, 9)
         self.assertEqual(space_time.day, 4)
@@ -44,7 +44,7 @@ class EdgeTest(unittest.TestCase):
         # Ensures that release times delimited by Ts are ignored.
         # The iTunes Store produces such files.
         t_time = beets.mediafile.MediaFile(
-                                os.path.join('rsrc', 't_time.m4a'))
+                                os.path.join(_common.RSRC, 't_time.m4a'))
         self.assertEqual(t_time.year, 1987)
         self.assertEqual(t_time.month, 3)
         self.assertEqual(t_time.day, 31)
@@ -52,19 +52,19 @@ class EdgeTest(unittest.TestCase):
     def test_tempo_with_bpm(self):
         # Some files have a string like "128 BPM" in the tempo field
         # rather than just a number.
-        f = beets.mediafile.MediaFile(os.path.join('rsrc', 'bpm.mp3'))
+        f = beets.mediafile.MediaFile(os.path.join(_common.RSRC, 'bpm.mp3'))
         self.assertEqual(f.bpm, 128)
     
     def test_discc_alternate_field(self):
         # Different taggers use different vorbis comments to reflect
         # the disc and disc count fields: ensure that the alternative
         # style works.
-        f = beets.mediafile.MediaFile(os.path.join('rsrc', 'discc.ogg'))
+        f = beets.mediafile.MediaFile(os.path.join(_common.RSRC, 'discc.ogg'))
         self.assertEqual(f.disc, 4)
         self.assertEqual(f.disctotal, 5)
 
     def test_old_ape_version_bitrate(self):
-        f = beets.mediafile.MediaFile(os.path.join('rsrc', 'oldape.ape'))
+        f = beets.mediafile.MediaFile(os.path.join(_common.RSRC, 'oldape.ape'))
         self.assertEqual(f.bitrate, 0)
 
 _sc = beets.mediafile._safe_cast
@@ -95,7 +95,7 @@ class InvalidValueToleranceTest(unittest.TestCase):
 
 class SafetyTest(unittest.TestCase):
     def _exccheck(self, fn, exc, data=''):
-        fn = os.path.join('rsrc', fn)
+        fn = os.path.join(_common.RSRC, fn)
         with open(fn, 'w') as f:
             f.write(data)
         try:
@@ -131,7 +131,7 @@ class SafetyTest(unittest.TestCase):
                        "ftyp")
 
     def test_broken_symlink(self):
-        fn = os.path.join('rsrc', 'brokenlink')
+        fn = os.path.join(_common.RSRC, 'brokenlink')
         os.symlink('does_not_exist', fn)
         try:
             self.assertRaises(beets.mediafile.UnreadableFileError,
@@ -141,7 +141,7 @@ class SafetyTest(unittest.TestCase):
 
 class SideEffectsTest(unittest.TestCase):
     def setUp(self):
-        self.empty = os.path.join('rsrc', 'empty.mp3')
+        self.empty = os.path.join(_common.RSRC, 'empty.mp3')
 
     def test_opening_tagless_file_leaves_untouched(self):
         old_mtime = os.stat(self.empty).st_mtime

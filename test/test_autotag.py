@@ -16,7 +16,6 @@
 """
 
 import unittest
-import sys
 import os
 import shutil
 import re
@@ -151,11 +150,11 @@ class AlbumDistanceTest(unittest.TestCase):
         self.assertNotEqual(autotag.distance(items, info), 0)
 
 def _mkmp3(path):
-    shutil.copyfile(os.path.join('rsrc', 'min.mp3'), path)
+    shutil.copyfile(os.path.join(_common.RSRC, 'min.mp3'), path)
 class AlbumsInDirTest(unittest.TestCase):
     def setUp(self):
         # create a directory structure for testing
-        self.base = os.path.abspath(os.path.join('rsrc', 'temp_albumsindir'))
+        self.base = os.path.abspath(os.path.join(_common.RSRC, 'tempdir'))
         os.mkdir(self.base)
         
         os.mkdir(os.path.join(self.base, 'album1'))

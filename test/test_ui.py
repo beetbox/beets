@@ -72,12 +72,12 @@ class RemoveTest(unittest.TestCase):
         self.io = _common.DummyIO()
         self.io.install()
 
-        self.libdir = os.path.join('rsrc', 'testlibdir')
+        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
         os.mkdir(self.libdir)
 
         # Copy a file into the library.
         self.lib = library.Library(':memory:', self.libdir)
-        self.i = library.Item.from_path(os.path.join('rsrc', 'full.mp3'))
+        self.i = library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
         self.lib.add(self.i, True)
 
     def tearDown(self):

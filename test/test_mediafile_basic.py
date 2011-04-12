@@ -277,22 +277,22 @@ def suite():
     # General tests.
     for kind, tagsets in test_files.items():
         for tagset in tagsets:
-            path = os.path.join('rsrc', tagset + '.' + kind)
+            path = os.path.join(_common.RSRC, tagset + '.' + kind)
             correct_dict = correct_dicts[tagset]
             s.addTest(suite_for_file(path, correct_dict))
     
     # Special test for missing ID3 tag.
-    s.addTest(suite_for_file(os.path.join('rsrc', 'empty.mp3'),
+    s.addTest(suite_for_file(os.path.join(_common.RSRC, 'empty.mp3'),
                              correct_dicts['empty'],
                              writing=False))
     
     # Special test for advanced release date.
-    s.addTest(suite_for_file(os.path.join('rsrc', 'date.mp3'),
+    s.addTest(suite_for_file(os.path.join(_common.RSRC, 'date.mp3'),
                              correct_dicts['date']))
 
     # Read-only attribute tests.
     for fname, correct_dict in read_only_correct_dicts.iteritems():
-        path = os.path.join('rsrc', fname)
+        path = os.path.join(_common.RSRC, fname)
         for field, value in correct_dict.iteritems():
             s.addTest(MakeReadOnlyTest(path, field, value)())
     

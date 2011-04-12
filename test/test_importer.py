@@ -34,15 +34,15 @@ class NonAutotaggedImportTest(unittest.TestCase):
         log = logging.getLogger('beets')
         log.setLevel(logging.CRITICAL)
 
-        self.libdb = os.path.join('rsrc', 'testlib.blb')
+        self.libdb = os.path.join(_common.RSRC, 'testlib.blb')
         self.lib = library.Library(self.libdb)
-        self.libdir = os.path.join('rsrc', 'testlibdir')
+        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
         self.lib.directory = self.libdir
         self.lib.path_formats = {
             'default': os.path.join('$artist', '$album', '$title')
         }
 
-        self.srcdir = os.path.join('rsrc', 'testsrcdir')
+        self.srcdir = os.path.join(_common.RSRC, 'testsrcdir')
 
     def tearDown(self):
         self.io.restore()
@@ -62,7 +62,7 @@ class NonAutotaggedImportTest(unittest.TestCase):
         realpath = os.path.join(self.srcdir, *filepath)
         if not os.path.exists(os.path.dirname(realpath)):
             os.makedirs(os.path.dirname(realpath))
-        shutil.copy(os.path.join('rsrc', 'full.mp3'), realpath)
+        shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), realpath)
 
         f = mediafile.MediaFile(realpath)
         for attr in metadata:
@@ -137,7 +137,7 @@ class NonAutotaggedImportTest(unittest.TestCase):
 
 class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
     def setUp(self):
-        self.libdir = os.path.join('rsrc', 'testlibdir')
+        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
         os.mkdir(self.libdir)
         self.lib = library.Library(':memory:', self.libdir)
         self.lib.path_formats = {
@@ -147,7 +147,7 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         }
 
         self.srcpath = os.path.join(self.libdir, 'srcfile.mp3')
-        shutil.copy(os.path.join('rsrc', 'full.mp3'), self.srcpath)
+        shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.srcpath)
         self.i = library.Item.from_path(self.srcpath)
         self.i.comp = False
 

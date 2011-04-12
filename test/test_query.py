@@ -94,7 +94,9 @@ class AssertsMixin(object):
     
 class GetTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
-        self.lib = beets.library.Library('rsrc' + os.sep + 'test.blb')
+        self.lib = beets.library.Library(
+            os.path.join(_common.RSRC, 'test.blb')
+        )
 
     def test_get_empty(self):
         q = ''
@@ -206,7 +208,9 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
 
 class BrowseTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
-        self.lib = beets.library.Library('rsrc' + os.sep + 'test.blb')
+        self.lib = beets.library.Library(
+            os.path.join(_common.RSRC, 'test.blb')
+        )
 
     def test_artist_list(self):
         artists = list(self.lib.artists())

@@ -22,6 +22,9 @@ sys.path.insert(0, '..')
 import beets.library
 from beets import importer
 
+# Test resources/sandbox path.
+RSRC = os.path.join(os.path.dirname(__file__), 'rsrc')
+
 # Dummy item creation.
 def item(): return beets.library.Item({
     'title':            u'the title',

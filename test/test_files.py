@@ -32,8 +32,8 @@ def touch(path):
 class MoveTest(unittest.TestCase):
     def setUp(self):
         # make a temporary file
-        self.path = join('rsrc', 'temp.mp3')
-        shutil.copy(join('rsrc', 'full.mp3'), self.path)
+        self.path = join(_common.RSRC, 'temp.mp3')
+        shutil.copy(join(_common.RSRC, 'full.mp3'), self.path)
         
         # add it to a temporary library
         self.lib = beets.library.Library(':memory:')
@@ -41,7 +41,7 @@ class MoveTest(unittest.TestCase):
         self.lib.add(self.i)
         
         # set up the destination
-        self.libdir = join('rsrc', 'testlibdir')
+        self.libdir = join(_common.RSRC, 'testlibdir')
         self.lib.directory = self.libdir
         self.lib.path_formats = {'default': join('$artist', '$album', '$title')}
         self.i.artist = 'one'
@@ -132,7 +132,7 @@ class AlbumFileTest(unittest.TestCase):
         self.lib = beets.library.Library(':memory:')
         self.lib.path_formats = \
             {'default': join('$albumartist', '$album', '$title')}
-        self.libdir = os.path.join('rsrc', 'testlibdir')
+        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
         self.lib.directory = self.libdir
         self.i = item()
         # Make a file for the item.
@@ -174,7 +174,7 @@ class ArtFileTest(unittest.TestCase):
     def setUp(self):
         # Make library and item.
         self.lib = beets.library.Library(':memory:')
-        self.libdir = os.path.abspath(os.path.join('rsrc', 'testlibdir'))
+        self.libdir = os.path.abspath(os.path.join(_common.RSRC, 'testlibdir'))
         self.lib.directory = self.libdir
         self.i = item()
         self.i.path = self.lib.destination(self.i)
@@ -247,7 +247,7 @@ class RemoveTest(unittest.TestCase):
     def setUp(self):
         # Make library and item.
         self.lib = beets.library.Library(':memory:')
-        self.libdir = os.path.abspath(os.path.join('rsrc', 'testlibdir'))
+        self.libdir = os.path.abspath(os.path.join(_common.RSRC, 'testlibdir'))
         self.lib.directory = self.libdir
         self.i = item()
         self.i.path = self.lib.destination(self.i)
@@ -282,7 +282,7 @@ class RemoveTest(unittest.TestCase):
         self.assertTrue(os.path.exists(self.libdir))
 
     def test_removing_item_outside_of_library_deletes_nothing(self):
-        self.lib.directory = os.path.abspath(os.path.join('rsrc', 'xxx'))
+        self.lib.directory = os.path.abspath(os.path.join(_common.RSRC, 'xxx'))
         parent = os.path.dirname(self.i.path)
         self.lib.remove(self.i, True)
         self.assertTrue(os.path.exists(parent))

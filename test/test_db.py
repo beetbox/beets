@@ -26,7 +26,8 @@ from _common import item
 import beets.library
 from beets import util
 
-def lib(): return beets.library.Library('rsrc' + os.sep + 'test.blb')
+def lib():
+    return beets.library.Library(os.path.join(_common.RSRC, 'test.blb'))
 def boracay(l): return beets.library.Item(l.conn.execute('select * from items '
     'where id=3').fetchone())
 np = util.normpath
@@ -90,7 +91,7 @@ class AddTest(unittest.TestCase):
         self.assertEqual(new_grouping, self.i.grouping)
     
     def test_library_add_path_inserts_row(self):
-        i = beets.library.Item.from_path(os.path.join('rsrc', 'full.mp3'))
+        i = beets.library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
         self.lib.add(i)
         new_grouping = self.lib.conn.execute('select grouping from items '
             'where composer="the composer"').fetchone()['grouping']
@@ -369,7 +370,7 @@ class MigrationTest(unittest.TestCase):
         self.newer_fields = self.new_fields + [('field_four', 'int')]
         
         # Set up a library with old_fields.
-        self.libfile = os.path.join('rsrc', 'templib.blb')
+        self.libfile = os.path.join(_common.RSRC, 'templib.blb')
         old_lib = beets.library.Library(self.libfile,
                                         item_fields=self.old_fields)
         # Add an item to the old library.
