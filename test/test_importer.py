@@ -96,7 +96,7 @@ class NonAutotaggedImportTest(unittest.TestCase):
                 quiet_fallback='skip',
                 choose_match_func = None,
                 should_resume_func = None,
-                items=False,
+                singletons=False,
         )
 
         return paths

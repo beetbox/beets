@@ -125,7 +125,7 @@ class ImportConfig(object):
     _fields = ['lib', 'paths', 'resume', 'logfile', 'color', 'quiet',
                'quiet_fallback', 'copy', 'write', 'art', 'delete',
                'choose_match_func', 'should_resume_func', 'threaded',
-               'autot', 'items']
+               'autot', 'singletons']
     def __init__(self, **kwargs):
         for slot in self._fields:
             setattr(self, slot, kwargs[slot])
@@ -457,7 +457,7 @@ def apply_choices(config):
             task.save_progress()
 
 
-# Individual-item pipeline stages.
+# Singleton pipeline stages.
 
 def read_items(config):
     """Reads individual items by recursively descending into a set of
@@ -497,8 +497,8 @@ def run_import(**kwargs):
     config = ImportConfig(**kwargs)
     
     # Set up the pipeline.
-    if config.items:
-        # Individual item importer.
+    if config.singletons:
+        # Singleton importer.
         stages = [read_items(config), item_lookup(config), item_query(config)]
         #TODO non-autotagged
     else:
