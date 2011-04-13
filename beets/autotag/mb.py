@@ -134,6 +134,17 @@ def _lucene_escape(text):
     out = re.sub(r'([+\-&|!(){}\[\]\^"~*?:\\])', r'\\\1', text)
     return out.replace('\x00', '')
 
+def _lucene_query(criteria):
+    """Given a dictionary containing search criteria, produce a string
+    that may be used as a MusicBrainz search query.
+    """
+    query_parts = []
+    for name, value in criteria.items():
+        value = _lucene_escape(value).strip().lower()
+        if value:
+            query_parts.append(u'%s:(%s)' % (name, value))
+    return u' '.join(query_parts)
+
 def find_releases(criteria, limit=SEARCH_LIMIT):
     """Get a list of release dictionaries from the MusicBrainz
     database that match `criteria`. The latter is a dictionary whose
@@ -151,16 +162,36 @@ def find_releases(criteria, limit=SEARCH_LIMIT):
             del criteria['artist']
             criteria['arid'] = SPECIAL_CASE_ARTISTS[artist]
     
-    # Build Lucene query (the MusicBrainz 'query' filter).
-    query_parts = []
-    for name, value in criteria.items():
-        value = _lucene_escape(value).strip().lower()
-        if value:
-            query_parts.append(u'%s:(%s)' % (name, value))
-    query = u' '.join(query_parts)
-    
     # Build the filter and send the query.
+    query = _lucene_query(criteria)
     return get_releases(limit=limit, query=query)
+
+def find_tracks(criteria, limit=SEARCH_LIMIT):
+    """Get a sequence of track dictionaries from MusicBrainz that match
+    `criteria`, a search term dictionary similar to the one passed to
+    `find_releases`.
+    """
+    query = _lucene_query(criteria)
+    filt = mbws.TrackFilter(limit=limit, query=query)
+    results = _query_wrap(mbws.Query().getTracks, filter=filt)
+    for result in results:
+        track = result.track
+        yield track_dict(track)
+
+def track_dict(track):
+    """Produces a dictionary summarizing a MusicBrainz `Track` object.
+    """
+    t = {'title': track.title,
+         'id': track.id.rsplit('/', 1)[1]}
+    if track.artist is not None:
+        # Track artists will only be present for releases with
+        # multiple artists.
+        t['artist'] = track.artist.name
+        t['artist_id'] = track.artist.id.rsplit('/', 1)[1]
+    if track.duration is not None:
+        # Duration not always present.
+        t['length'] = track.duration/(1000.0)
+    return t
 
 def release_dict(release, tracks=None):
     """Takes a MusicBrainz `Release` object and returns a dictionary
@@ -200,20 +231,8 @@ def release_dict(release, tracks=None):
                     out[key] = int(date_parts.pop(0))
 
     # Tracks.
-    if tracks:
-        out['tracks'] = []
-        for track in tracks:
-            t = {'title': track.title,
-                 'id': track.id.rsplit('/', 1)[1]}
-            if track.artist is not None:
-                # Track artists will only be present for releases with
-                # multiple artists.
-                t['artist'] = track.artist.name
-                t['artist_id'] = track.artist.id.rsplit('/', 1)[1]
-            if track.duration is not None:
-                # Duration not always present.
-                t['length'] = track.duration/(1000.0)
-            out['tracks'].append(t)
+    if tracks is not None:
+        out['tracks'] = map(track_dict, tracks)
 
     return out
 
@@ -238,6 +257,15 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
     # Search for the release.
     return find_releases(criteria)
 
+def match_track(artist, title):
+    """Searches for a single track and returns an iterable of track
+    info dictionaries (as returned by `track_dict`).
+    """
+    return find_tracks({
+        'artist': artist,
+        'title': title,
+    })
+
 def album_for_id(albumid):
     """Fetches an album by its MusicBrainz ID and returns an
     information dictionary. If no match is found, returns None.
@@ -246,6 +274,17 @@ def album_for_id(albumid):
     inc = mbws.ReleaseIncludes(artist=True, tracks=True)
     try:
         album = _query_wrap(query.getReleaseById, albumid, inc)
-    except mbws.ResourceNotFoundError:
+    except (mbws.ResourceNotFoundError, mbws.RequestError):
         return None
     return release_dict(album, album.tracks)
+
+def track_for_id(trackid):
+    """Fetches a track by its MusicBrainz ID. Returns a track info
+    dictionary or None if no track is found.
+    """
+    query = mbws.Query()
+    try:
+        track = _query_wrap(query.getTrackById, trackid)
+    except (mbws.ResourceNotFoundError, mbws.RequestError):
+        return None
+    return track_dict(track)
