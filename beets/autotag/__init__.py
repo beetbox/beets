@@ -252,7 +252,8 @@ def track_distance(item, track_data, track_index=None, incl_artist=False):
 
     # Track artist, if included.
     # Attention: MB DB does not have artist info for all compilations,
-    # so only check artist distance if there is actually an artist in the MB track data
+    # so only check artist distance if there is actually an artist in
+    # the MB track data.
     if incl_artist and 'artist' in track_data:
         dist += string_dist(item.artist, track_data['artist']) * \
                 TRACK_ARTIST_WEIGHT
@@ -503,3 +504,37 @@ def tag_album(items, search_artist=None, search_album=None):
     
     rec = recommendation(out_tuples)
     return cur_artist, cur_album, out_tuples, rec
+
+def tag_item(item):
+    """Attempts to find metadata for a single track. Returns a
+    `(candidates, recommendation)` pair where `candidates` is a list
+    of `(distance, track_info)` pairs.
+    """
+    candidates = []
+
+    # First, try matching by MusicBrainz ID.
+    trackid = item.mb_trackid
+    if trackid:
+        track_info = mb.track_by_id(item.mb_trackid)
+        if track_info:
+            dist = track_distance(item, track_info, incl_artist=True)
+            candidates.append((dist, track_info))
+            # If this is a good match, then don't keep searching.
+            rec = recommendation(candidates)
+            if rec == RECOMMEND_STRONG:
+                log.debug('Track ID match.')
+                return candidates, rec
+
+    # Candidate metadata from search.
+    for track_info in mb.match_track(item.artist, item.title):
+        dist = track_distance(item, track_info)
+        candidates.append((dist, track_info))
+
+    # Add candidates from plugins.
+    #TODO
+    # candidates.extend(plugins.item_candidates(item))
+
+    # Sort by distance and return with recommendation.
+    candidates.sort()
+    rec = recommendation(candidates)
+    return candidates, rec
