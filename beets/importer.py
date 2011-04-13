@@ -29,7 +29,7 @@ from beets.util import syspath, normpath
 from beets.util.enumeration import enum
 
 action = enum(
-    'SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'ALBUM',
+    'SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'APPLY',
     name='action'
 )
 
@@ -124,7 +124,8 @@ class ImportConfig(object):
     """
     _fields = ['lib', 'paths', 'resume', 'logfile', 'color', 'quiet',
                'quiet_fallback', 'copy', 'write', 'art', 'delete',
-               'choose_match_func', 'should_resume_func', 'threaded', 'autot']
+               'choose_match_func', 'should_resume_func', 'threaded',
+               'autot', 'items']
     def __init__(self, **kwargs):
         for slot in self._fields:
             setattr(self, slot, kwargs[slot])
@@ -185,8 +186,13 @@ class ImportTask(object):
         one for each item.
         """
         assert len(self.items) == len(item_matches)
-        self.item_candidates = item_matches
+        self.item_matches = item_matches
         self.is_album = False
+
+    def set_item_match(self, candidates, rec):
+        """Set the match for a single-item task."""
+        assert len(self.items) == 1
+        self.item_matches = [(candidates, rec)]
 
     def set_null_item_match(self):
         """For single-item tasks, mark the item as having no matches.
@@ -202,7 +208,7 @@ class ImportTask(object):
         """
         assert not self.sentinel
         assert choice != action.MANUAL # Not part of the task structure.
-        assert choice != action.ALBUM # Only used internally.
+        assert choice != action.APPLY # Only used internally.
         if choice in (action.SKIP, action.ASIS, action.TRACKS):
             self.choice_flag = choice
             self.info = None
@@ -212,7 +218,7 @@ class ImportTask(object):
             info, items = choice
             self.items = items # Reordered items list.
             self.info = info
-            self.choice_flag = action.ALBUM # Implicit choice.
+            self.choice_flag = action.APPLY # Implicit choice.
 
     def save_progress(self):
         """Updates the progress state to indicate that this album has
@@ -226,8 +232,9 @@ class ImportTask(object):
     # Logical decisions.
     def should_create_album(self):
         """Should an album structure be created for these items?"""
-        assert self.is_album
-        if self.choice_flag in (action.ALBUM, action.ASIS):
+        if not self.is_album:
+            return False
+        elif self.choice_flag in (action.APPLY, action.ASIS):
             return True
         elif self.choice_flag in (action.TRACKS, action.SKIP):
             return False
@@ -235,7 +242,7 @@ class ImportTask(object):
             assert False
     def should_write_tags(self):
         """Should new info be written to the files' metadata?"""
-        if self.choice_flag == action.ALBUM:
+        if self.choice_flag == action.APPLY:
             return True
         elif self.choice_flag in (action.ASIS, action.TRACKS, action.SKIP):
             return False
@@ -248,8 +255,9 @@ class ImportTask(object):
         """When creating an album structure, should the album artist
         field be inferred from the plurality of track artists?
         """
+        assert self.is_album
         assert self.should_create_album()
-        if self.choice_flag == action.ALBUM:
+        if self.choice_flag == action.APPLY:
             # Album artist comes from the info dictionary.
             return False
         elif self.choice_flag == action.ASIS:
@@ -395,7 +403,11 @@ def apply_choices(config):
 
         # Change metadata, move, and copy.
         if task.should_write_tags():
-            autotag.apply_metadata(task.items, task.info)
+            if task.is_album:
+                autotag.apply_metadata(task.items, task.info)
+            else:
+                for item, info in zip(task.items, task.info):
+                    autotag.apply_item_metadata(item, info)
         if config.copy and config.delete:
             old_paths = [os.path.realpath(item.path)
                          for item in task.items]
@@ -445,7 +457,7 @@ def apply_choices(config):
             task.save_progress()
 
 
-# Single-item pipeline stages.
+# Individual-item pipeline stages.
 
 def read_items(config):
     """Reads individual items by recursively descending into a set of
@@ -464,7 +476,7 @@ def item_lookup(config):
     task = None
     while True:
         task = yield task
-        task.set_null_item_match() #TODO
+        task.set_item_match(*autotag.tag_item(task.items[0]))
 
 def item_query(config):
     """A coroutine that queries the user for input on single-item
@@ -473,7 +485,7 @@ def item_query(config):
     task = None
     while True:
         task = yield task
-        task.set_choice(action.ASIS) # TODO
+        task.set_choice(action.ASIS) #TODO actually query user
 
 
 # Main driver.
@@ -485,13 +497,19 @@ def run_import(**kwargs):
     config = ImportConfig(**kwargs)
     
     # Set up the pipeline.
-    stages = [read_albums(config)]
-    if config.autot:
-        # Only look up and query the user when autotagging.
-        stages += [initial_lookup(config), user_query(config)]
+    if config.items:
+        # Individual item importer.
+        stages = [read_items(config), item_lookup(config), item_query(config)]
+        #TODO non-autotagged
     else:
-        # When not autotagging, just display progress.
-        stages += [show_progress(config)]
+        # Whole-album importer.
+        stages = [read_albums(config)]
+        if config.autot:
+            # Only look up and query the user when autotagging.
+            stages += [initial_lookup(config), user_query(config)]
+        else:
+            # When not autotagging, just display progress.
+            stages += [show_progress(config)]
     stages += [apply_choices(config)]
     pl = pipeline.Pipeline(stages)
 

@@ -315,6 +315,16 @@ def distance(items, info):
     else:
         return dist/dist_max
 
+def apply_item_metadata(item, track_data):
+    """Set an item's metadata from its matched info dictionary.
+    """
+    item.artist = track_data['artist']
+    item.title = track_data['title']
+    item.mb_trackid = track_data['id']
+    if 'artist_id' in track_data:
+        item.mb_artistid = track_data['artist_id']
+    #TODO clear out other data?
+
 def apply_metadata(items, info):
     """Set the items' metadata to match the data given in info. The
     list of items must be ordered.
@@ -535,6 +545,7 @@ def tag_item(item):
     # candidates.extend(plugins.item_candidates(item))
 
     # Sort by distance and return with recommendation.
+    log.debug('Found %i candidates.' % len(candidates))
     candidates.sort()
     rec = recommendation(candidates)
     return candidates, rec

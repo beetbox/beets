@@ -283,7 +283,7 @@ def choose_match(task, config):
 # The import command.
 
 def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
-                 color, delete, quiet, resume, quiet_fallback):
+                 color, delete, quiet, resume, quiet_fallback, items):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
@@ -332,6 +332,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
         autot = autot,
         choose_match_func = choose_match,
         should_resume_func = should_resume,
+        items = items,
     )
     
     # If we were logging, close the file.
@@ -368,6 +369,8 @@ import_cmd.parser.add_option('-q', '--quiet', action='store_true',
     dest='quiet', help="never prompt for input: skip albums instead")
 import_cmd.parser.add_option('-l', '--log', dest='logpath',
     help='file to log untaggable albums for later review')
+import_cmd.parser.add_option('-i', '--items', dest='items',
+    help='import individual tracks instead of full albums')
 def import_func(lib, config, opts, args):
     copy  = opts.copy  if opts.copy  is not None else \
         ui.config_val(config, 'beets', 'import_copy',
@@ -387,6 +390,7 @@ def import_func(lib, config, opts, args):
     quiet = opts.quiet if opts.quiet is not None else DEFAULT_IMPORT_QUIET
     quiet_fallback_str = ui.config_val(config, 'beets', 'import_quiet_fallback',
             DEFAULT_IMPORT_QUIET_FALLBACK)
+    items = opts.items
 
     # Resume has three options: yes, no, and "ask" (None).
     resume = opts.resume if opts.resume is not None else \
@@ -404,7 +408,7 @@ def import_func(lib, config, opts, args):
     else:
         quiet_fallback = importer.action.SKIP
     import_files(lib, args, copy, write, autot, opts.logpath, art, threaded,
-                 color, delete, quiet, resume, quiet_fallback)
+                 color, delete, quiet, resume, quiet_fallback, items)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 

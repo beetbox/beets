@@ -27,7 +27,7 @@ TEST_TITLES = ('The Opener','The Second Track','The Last Track')
 class NonAutotaggedImportTest(unittest.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
-        #self.io.install()
+        self.io.install()
 
         self.libdb = os.path.join(_common.RSRC, 'testlib.blb')
         self.lib = library.Library(self.libdb)
@@ -96,6 +96,7 @@ class NonAutotaggedImportTest(unittest.TestCase):
                 quiet_fallback='skip',
                 choose_match_func = None,
                 should_resume_func = None,
+                items=False,
         )
 
         return paths

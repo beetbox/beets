@@ -79,6 +79,7 @@ def iconfig(lib, **kwargs):
         should_resume_func = lambda _: False,
         threaded = False,
         autot = True,
+        items = False,
     )
     for k, v in kwargs.items():
         setattr(config, k, v)
