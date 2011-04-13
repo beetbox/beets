@@ -21,7 +21,7 @@ from beets.autotag import mb
 import re
 from munkres import Munkres
 from beets import library, mediafile, plugins
-from beets.util import syspath, bytestring_path, levenshtein
+from beets.util import levenshtein, sorted_walk
 import logging
 
 # Try 5 releases. In the future, this should be more dynamic: let the
@@ -85,42 +85,13 @@ class AutotagError(Exception):
 # Global logger.
 log = logging.getLogger('beets')
 
-def _sorted_walk(path):
-    """Like os.walk, but yields things in sorted, breadth-first
-    order.
-    """
-    # Make sure the path isn't a Unicode string.
-    path = bytestring_path(path)
-
-    # Get all the directories and files at this level.
-    dirs = []
-    files = []
-    for base in os.listdir(path):
-        cur = os.path.join(path, base)
-        if os.path.isdir(syspath(cur)):
-            dirs.append(base)
-        else:
-            files.append(base)
-
-    # Sort lists and yield the current level.
-    dirs.sort()
-    files.sort()
-    yield (path, dirs, files)
-
-    # Recurse into directories.
-    for base in dirs:
-        cur = os.path.join(path, base)
-        # yield from _sorted_walk(cur)
-        for res in _sorted_walk(cur):
-            yield res
-
 def albums_in_dir(path):
     """Recursively searches the given directory and returns an iterable
     of (path, items) where path is a containing directory and items is
     a list of Items that is probably an album. Specifically, any folder
     containing any media files is an album.
     """
-    for root, dirs, files in _sorted_walk(path):
+    for root, dirs, files in sorted_walk(path):
         # Get a list of items in the directory.
         items = []
         for filename in files:

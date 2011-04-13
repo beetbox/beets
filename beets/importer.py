@@ -129,14 +129,18 @@ class ImportConfig(object):
         for slot in self._fields:
             setattr(self, slot, kwargs[slot])
 
+        # Normalize the paths.
+        if self.paths:
+            self.paths = map(normpath, self.paths)
+
 
 # The importer task class.
 
 class ImportTask(object):
-    """Represents a single directory to be imported along with its
-    intermediate state.
+    """Represents a single set of items to be imported along with its
+    intermediate state. May represent an album or just a set of items.
     """
-    def __init__(self, toppath, path=None, items=None):
+    def __init__(self, toppath=None, path=None, items=None):
         self.toppath = toppath
         self.path = path
         self.items = items
@@ -151,18 +155,45 @@ class ImportTask(object):
         obj.sentinel = True
         return obj
 
+    @classmethod
+    def item_task(cls, item):
+        """Creates an ImportTask for a single item."""
+        obj = cls()
+        obj.items = [item]
+        obj.is_album = False
+        return obj
+
     def set_match(self, cur_artist, cur_album, candidates, rec):
-        """Sets the candidates matched by the autotag.tag_album method.
+        """Sets the candidates for this album matched by the
+        `autotag.tag_album` method.
         """
         assert not self.sentinel
         self.cur_artist = cur_artist
         self.cur_album = cur_album
         self.candidates = candidates
         self.rec = rec
+        self.is_album = True
 
     def set_null_match(self):
-        """Set the candidate to indicate no match was found."""
+        """Set the candidates to indicate no album match was found.
+        """
         self.set_match(None, None, None, None)
+
+    def set_item_matches(self, item_matches):
+        """Sets the candidates for this set of items after an initial
+        match. `item_matches` should be a list of match tuples,
+        one for each item.
+        """
+        assert len(self.items) == len(item_matches)
+        self.item_candidates = item_matches
+        self.is_album = False
+
+    def set_null_item_match(self):
+        """For single-item tasks, mark the item as having no matches.
+        """
+        assert len(self.items) == 1
+        assert not self.is_album
+        self.item_matches = [None]
 
     def set_choice(self, choice):
         """Given either an (info, items) tuple or an action constant,
@@ -192,8 +223,10 @@ class ImportTask(object):
         else:
             progress_set(self.toppath, self.path)
 
+    # Logical decisions.
     def should_create_album(self):
         """Should an album structure be created for these items?"""
+        assert self.is_album
         if self.choice_flag in (action.ALBUM, action.ASIS):
             return True
         elif self.choice_flag in (action.TRACKS, action.SKIP):
@@ -210,7 +243,7 @@ class ImportTask(object):
             assert False
     def should_fetch_art(self):
         """Should album art be downloaded for this album?"""
-        return self.should_write_tags()
+        return self.should_write_tags() and self.is_album
     def should_infer_aa(self):
         """When creating an album structure, should the album artist
         field be inferred from the plurality of track artists?
@@ -226,7 +259,7 @@ class ImportTask(object):
             assert False
 
 
-# Core autotagger pipeline stages.
+# Full-album pipeline stages.
 
 def read_albums(config):
     """A generator yielding all the albums (as ImportTask objects) found
@@ -234,14 +267,11 @@ def read_albums(config):
     the resuming feature should be used. It may be True (resume if
     possible), False (never resume), or None (ask).
     """
-    # Use absolute paths.
-    paths = [normpath(path) for path in config.paths]
-
     # Look for saved progress.
     progress = config.resume is not False
     if progress:
         resume_dirs = {}
-        for path in paths:
+        for path in config.paths:
             resume_dir = progress_get(path)
             if resume_dir:
 
@@ -258,11 +288,11 @@ def read_albums(config):
                     # Clear progress; we're starting from the top.
                     progress_set(path, None)
     
-    for toppath in paths:
+    for toppath in config.paths:
         # Produce each path.
         if progress:
             resume_dir = resume_dirs.get(toppath)
-        for path, items in autotag.albums_in_dir(os.path.expanduser(toppath)):
+        for path, items in autotag.albums_in_dir(toppath):
             if progress and resume_dir:
                 # We're fast-forwarding to resume a previous tagging.
                 if path == resume_dir:
@@ -414,6 +444,36 @@ def apply_choices(config):
         if config.resume is not False:
             task.save_progress()
 
+
+# Single-item pipeline stages.
+
+def read_items(config):
+    """Reads individual items by recursively descending into a set of
+    directories. Generates ImportTask objects, each of which contains
+    a single item.
+    """
+    for toppath in config.paths:
+        for path, items in autotag.albums_in_dir(toppath):
+            for item in items:
+                yield ImportTask.item_task(item)
+
+def item_lookup(config):
+    """A coroutine used to perform the initial MusicBrainz lookup for
+    an item task.
+    """
+    task = None
+    while True:
+        task = yield task
+        task.set_null_item_match() #TODO
+
+def item_query(config):
+    """A coroutine that queries the user for input on single-item
+    lookups.
+    """
+    task = None
+    while True:
+        task = yield task
+        task.set_choice(action.ASIS) # TODO
 
 
 # Main driver.

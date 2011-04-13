@@ -163,11 +163,13 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
 
     def _call_apply(self, coro, items, info):
         task = importer.ImportTask(None, None, None)
+        task.is_album = True
         task.set_choice((info, items))
         coro.send(task)
 
     def _call_apply_choice(self, coro, items, choice):
         task = importer.ImportTask(None, None, items)
+        task.is_album = True
         task.set_choice(choice)
         coro.send(task)
 

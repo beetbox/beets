@@ -45,6 +45,35 @@ def ancestry(path, pathmod=None):
             out.insert(0, path)
     return out
 
+def sorted_walk(path):
+    """Like os.walk, but yields things in sorted, breadth-first
+    order.
+    """
+    # Make sure the path isn't a Unicode string.
+    path = bytestring_path(path)
+
+    # Get all the directories and files at this level.
+    dirs = []
+    files = []
+    for base in os.listdir(path):
+        cur = os.path.join(path, base)
+        if os.path.isdir(syspath(cur)):
+            dirs.append(base)
+        else:
+            files.append(base)
+
+    # Sort lists and yield the current level.
+    dirs.sort()
+    files.sort()
+    yield (path, dirs, files)
+
+    # Recurse into directories.
+    for base in dirs:
+        cur = os.path.join(path, base)
+        # yield from _sorted_walk(cur)
+        for res in sorted_walk(cur):
+            yield res
+
 def mkdirall(path):
     """Make all the enclosing directories of path (like mkdir -p on the
     parent).
