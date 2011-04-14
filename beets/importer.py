@@ -75,7 +75,9 @@ def _duplicate_check(lib, artist, album):
         # As-is import with no artist. Skip check.
         return False
 
-    for album_cand in lib.albums(artist):
+    with lib.conn: # Read albums in a transaction.
+        albums = lib.albums(artist)
+    for album_cand in albums:
         if album_cand.album == album:
             return True
     return False
@@ -427,14 +429,13 @@ def apply_choices(config):
             # Add tracks.
             for item in task.items:
                 lib.add(item)
+        lib.save()
 
         # Get album art if requested.
         if config.art and task.should_fetch_art():
             artpath = beets.autotag.art.art_for_album(task.info)
             if artpath:
                 albuminfo.set_art(artpath)
-        
-        # Write the database after each album.
         lib.save()
 
         # Announce that we've added an album.
