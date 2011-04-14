@@ -23,6 +23,7 @@ principal interface is the function `match_album`.
 from __future__ import with_statement # for Python 2.5
 import re
 import time
+import logging
 import musicbrainz2.webservice as mbws
 from musicbrainz2.model import Release
 from threading import Lock
@@ -32,6 +33,8 @@ SEARCH_LIMIT = 10
 VARIOUS_ARTISTS_ID = VARIOUS_ARTISTS_ID.rsplit('/', 1)[1]
 
 class ServerBusyError(Exception): pass
+
+log = logging.getLogger('beets')
 
 # We hard-code IDs for artists that can't easily be searched for.
 SPECIAL_CASE_ARTISTS = {
@@ -164,6 +167,7 @@ def find_releases(criteria, limit=SEARCH_LIMIT):
     
     # Build the filter and send the query.
     query = _lucene_query(criteria)
+    log.debug('album query: %s' % query)
     return get_releases(limit=limit, query=query)
 
 def find_tracks(criteria, limit=SEARCH_LIMIT):
@@ -172,6 +176,7 @@ def find_tracks(criteria, limit=SEARCH_LIMIT):
     `find_releases`.
     """
     query = _lucene_query(criteria)
+    log.debug('track query: %s' % query)
     filt = mbws.TrackFilter(limit=limit, query=query)
     results = _query_wrap(mbws.Query().getTracks, filter=filt)
     for result in results:
@@ -263,7 +268,7 @@ def match_track(artist, title):
     """
     return find_tracks({
         'artist': artist,
-        'title': title,
+        'track': title,
     })
 
 def album_for_id(albumid):

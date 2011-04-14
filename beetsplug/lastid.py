@@ -157,7 +157,7 @@ class LastIdPlugin(BeetsPlugin):
         # Do a full search.
         criteria = {
             'artist': last_data['artist'],
-            'title': last_data['title'],
+            'track': last_data['title'],
         }
         if last_data['artist_mbid']:
             criteria['artistid'] = last_data['artist_mbid']
