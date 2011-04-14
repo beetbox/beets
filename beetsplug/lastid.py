@@ -114,7 +114,8 @@ class LastIdPlugin(BeetsPlugin):
             dist_max += autotag.ARTIST_WEIGHT
 
         log.debug('Last artist (%s/%s) distance: %f' %
-                  (last_artist, info['artist'], dist/dist_max if dist_max > 0.0 else 0.0))
+                  (last_artist, info['artist'],
+                   dist/dist_max if dist_max > 0.0 else 0.0))
 
         #fixme: artist MBID currently ignored (as in vanilla tagger)
         return dist, dist_max
@@ -137,5 +138,31 @@ class LastIdPlugin(BeetsPlugin):
 
         log.debug('Matched last candidates: %s' %
                   ', '.join([cand['album'] for cand in cands]))
+        return cands
 
+    def item_candidates(self, item):
+        last_data = match(item.path)
+        if not last_data:
+            return ()
+
+        # Have a MusicBrainz track ID?
+        if last_data['track_mbid']:
+            log.debug('Have a track ID from last.fm: %s' %
+                      last_data['track_mbid'])
+            id_track = mb.track_for_id(last_data['track_mbid'])
+            if id_track:
+                log.debug('Matched by track ID.')
+                return (id_track,)
+
+        # Do a full search.
+        criteria = {
+            'artist': last_data['artist'],
+            'title': last_data['title'],
+        }
+        if last_data['artist_mbid']:
+            criteria['artistid'] = last_data['artist_mbid']
+        cands = list(mb.find_tracks(criteria))
+
+        log.debug('Matched last track candidates: %s' %
+                  ', '.join([cand['title'] for cand in cands]))
         return cands

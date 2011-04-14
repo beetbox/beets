@@ -537,12 +537,13 @@ def tag_item(item):
 
     # Candidate metadata from search.
     for track_info in mb.match_track(item.artist, item.title):
-        dist = track_distance(item, track_info)
+        dist = track_distance(item, track_info, incl_artist=True)
         candidates.append((dist, track_info))
 
     # Add candidates from plugins.
-    #TODO
-    # candidates.extend(plugins.item_candidates(item))
+    for track_info in plugins.item_candidates(item):
+        dist = track_distance(item, track_info, incl_artist=True)
+        candidates.append((dist, track_info))
 
     # Sort by distance and return with recommendation.
     log.debug('Found %i candidates.' % len(candidates))

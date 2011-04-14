@@ -57,6 +57,12 @@ class BeetsPlugin(object):
         """
         return ()
 
+    def item_candidates(self, item):
+        """Should return a sequence of MusicBrainz track info
+        dictionaries that match the item provided.
+        """
+        return ()
+
     def configure(self, config):
         """This method is called with the ConfigParser object after
         the CLI starts up.
@@ -171,6 +177,14 @@ def candidates(items):
     out = []
     for plugin in find_plugins():
         out.extend(plugin.candidates(items))
+    return out
+
+def item_candidates(item):
+    """Gets MusicBrainz candidates for an item from the plugins.
+    """
+    out = []
+    for plugin in find_plugins():
+        out.extend(plugin.item_candidates(item))
     return out
 
 def configure(config):

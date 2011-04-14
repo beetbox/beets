@@ -4,7 +4,10 @@
   format can be used to customize where these tracks are stored. While
   importing, you can choose the "as Tracks" (T) option to add
   singletons to your library. The query "singleton:true" matches only
-  singleton tracks; "singleton:false" matches only album tracks.
+  singleton tracks; "singleton:false" matches only album tracks. The
+  importer and autotagger can also import singleton tracks, either
+  using the -s command-line flag or interactively. The lastid plugin
+  has been extended to support matching individual items as well.
 * The importer/autotagger system has been heavily refactored. If
   anything breaks as a result, please let me know.
 * Support for album art embedded in files. The "embedcoverart" plugin
