@@ -287,6 +287,25 @@ class RemoveTest(unittest.TestCase):
         self.lib.remove(self.i, True)
         self.assertTrue(os.path.exists(parent))
 
+# Tests that we can "delete" nonexistent files.
+class SoftRemoveTest(unittest.TestCase, _common.ExtraAsserts):
+    def setUp(self):
+        self.path = os.path.join(_common.RSRC, 'testfile')
+        touch(self.path)
+    def tearDown(self):
+        if os.path.exists(self.path):
+            os.remove(self.path)
+
+    def test_soft_remove_deletes_file(self):
+        util.soft_remove(self.path)
+        self.assertNotExists(self.path)
+
+    def test_soft_remove_silent_on_no_file(self):
+        try:
+            util.soft_remove(self.path + 'XXX')
+        except OSError:
+            self.fail('OSError when removing path')
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

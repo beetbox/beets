@@ -910,7 +910,7 @@ class Library(BaseLibrary):
                 album.remove(delete, False)
 
         if delete:
-            os.unlink(syspath(item.path))
+            util.soft_remove(item.path)
             util.prune_dirs(os.path.dirname(item.path), self.directory)
 
 
@@ -1111,7 +1111,7 @@ class Album(BaseAlbum):
             # Delete art file.
             artpath = self.artpath
             if artpath:
-                os.unlink(syspath(artpath))
+                util.soft_remove(artpath)
         
         # Remove album from database.
         self._library.conn.execute(
@@ -1170,7 +1170,7 @@ class Album(BaseAlbum):
         oldart = self.artpath
         artdest = self.art_destination(path)
         if oldart == artdest:
-            os.unlink(syspath(oldart))
+            os.soft_remove(oldart)
         
         shutil.copyfile(syspath(path), syspath(artdest))
         self.artpath = artdest

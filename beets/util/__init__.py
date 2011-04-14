@@ -167,6 +167,12 @@ def syspath(path, pathmod=None):
 
     return path
 
+def soft_remove(path):
+    """Remove the file if it exists."""
+    path = syspath(path)
+    if os.path.exists(path):
+        os.remove(path)
+
 # Note: POSIX actually supports \ and : -- I just think they're
 # a pain. And ? has caused problems for some.
 CHAR_REPLACE = [
