@@ -488,6 +488,18 @@ def item_query(config):
         task = yield task
         task.set_choice(action.ASIS) #TODO actually query user
 
+def item_progress(config):
+    """Skips the lookup and query stages in a non-autotagged singleton
+    import. Just shows progress.
+    """
+    task = None
+    log.info('Importing items:')
+    while True:
+        task = yield task
+        log.info(task.items[0].path)
+        task.set_null_item_match()
+        task.set_choice(action.ASIS)
+
 
 # Main driver.
 
@@ -500,8 +512,11 @@ def run_import(**kwargs):
     # Set up the pipeline.
     if config.singletons:
         # Singleton importer.
-        stages = [read_items(config), item_lookup(config), item_query(config)]
-        #TODO non-autotagged
+        stages = [read_items(config)]
+        if config.autot:
+            stages += [item_lookup(config), item_query(config)]
+        else:
+            stages += [item_progress(config)]
     else:
         # Whole-album importer.
         stages = [read_albums(config)]
