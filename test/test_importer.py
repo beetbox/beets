@@ -97,6 +97,7 @@ class NonAutotaggedImportTest(unittest.TestCase):
                 choose_match_func = None,
                 should_resume_func = None,
                 singletons=False,
+                choose_item_func = None,
         )
 
         return paths

@@ -80,6 +80,7 @@ def iconfig(lib, **kwargs):
         threaded = False,
         autot = True,
         singletons = False,
+        choose_item_func = lambda x, y: importer.action.SKIP,
     )
     for k, v in kwargs.items():
         setattr(config, k, v)

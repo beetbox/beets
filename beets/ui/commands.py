@@ -74,9 +74,9 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
     """
     def show_album(artist, album):
         if artist:
-            print_('     %s - %s' % (artist, album))
+            print_('    %s - %s' % (artist, album))
         else:
-            print_('     %s' % album)
+            print_('    %s' % album)
 
     # Identify the album in question.
     if cur_artist != info['artist'] or \
@@ -124,9 +124,43 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
         elif cur_track != new_track:
             print_(" * %s (%s -> %s)" % (item.title, cur_track, new_track))
 
+def show_item_change(item, info, dist, color):
+    """Print out the change that would occur by tagging `item` with the
+    metadata from `info`.
+    """
+    cur_artist, new_artist = item.artist, info['artist']
+    cur_title, new_title = item.title, info['title']
+
+    if cur_artist != new_artist or cur_title != new_title:
+        if color:
+            cur_artist, new_artist = ui.colordiff(cur_artist, new_artist)
+            cur_title, new_title = ui.colordiff(cur_title, new_title)
+
+        print_("Correcting track tags from:")
+        print_("    %s - %s" % (cur_artist, cur_title))
+        print_("To:")
+        print_("    %s - %s" % (new_artist, new_title))
+
+    else:
+        print_("Tagging track: %s - %s" % (cur_artist, cur_title))
+
+    print_('(Similarity: %s)' % dist_string(dist, color))
+
 def should_resume(config, path):
     return ui.input_yn("Import of the directory:\n%s"
                        "\nwas interrupted. Resume (Y/n)?" % path)
+
+def _quiet_fall_back(config):
+    """Show the user that the default action is being taken because
+    we're in quiet mode and the recommendation is not strong.
+    """
+    if config.quiet_fallback == importer.action.SKIP:
+        print_('Skipping.')
+    elif config.quiet_fallback == importer.action.ASIS:
+        print_('Importing as-is.')
+    else:
+        assert(False)
+    return config.quiet_fallback
 
 def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
     """Given current metadata and a sorted list of
@@ -248,13 +282,7 @@ def choose_match(task, config):
                         config.color)
             return info, items
         else:
-            if config.quiet_fallback == importer.action.SKIP:
-                print_('Skipping.')
-            elif config.quiet_fallback == importer.action.ASIS:
-                print_('Importing as-is.')
-            else:
-                assert(False)
-            return config.quiet_fallback
+            return _quiet_fall_back(config)
 
     # Loop until we have a choice.
     while True:
@@ -279,6 +307,33 @@ def choose_match(task, config):
             # We have a candidate! Finish tagging. Here, choice is
             # an (info, items) pair as desired.
             return choice
+
+def choose_item(task, config):
+    """Ask the user for a choice about tagging a set of items. Returns
+    either an action constant or a track info dictionary.
+    """
+    print_()
+    print_(task.items[0].path)
+
+    #TODO multiple items.
+    candidates, rec = task.item_matches[0]
+
+    if config.quiet:
+        # Quiet mode; make a decision.
+        if task.rec == autotag.RECOMMEND_STRONG:
+            dist, track_info = candidates[0]
+            show_item_change(task.items[0], track_info, dist, config.color)
+            return track_info
+        else:
+            return _quiet_fall_back(config)
+
+    else:
+        # Ask for a choice.
+        #TODO
+        dist, track_info = candidates[0]
+        show_item_change(task.items[0], track_info, dist, config.color)
+        return importer.action.ASIS
+
 
 # The import command.
 
@@ -333,6 +388,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
         choose_match_func = choose_match,
         should_resume_func = should_resume,
         singletons = singletons,
+        choose_item_func = choose_item,
     )
     
     # If we were logging, close the file.

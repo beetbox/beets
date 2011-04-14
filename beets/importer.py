@@ -127,7 +127,7 @@ class ImportConfig(object):
     _fields = ['lib', 'paths', 'resume', 'logfile', 'color', 'quiet',
                'quiet_fallback', 'copy', 'write', 'art', 'delete',
                'choose_match_func', 'should_resume_func', 'threaded',
-               'autot', 'singletons']
+               'autot', 'singletons', 'choose_item_func']
     def __init__(self, **kwargs):
         for slot in self._fields:
             setattr(self, slot, kwargs[slot])
@@ -486,7 +486,8 @@ def item_query(config):
     task = None
     while True:
         task = yield task
-        task.set_choice(action.ASIS) #TODO actually query user
+        choice = config.choose_item_func(task, config)
+        task.set_choice(choice)
 
 def item_progress(config):
     """Skips the lookup and query stages in a non-autotagged singleton
