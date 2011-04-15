@@ -28,6 +28,7 @@ import logging
 
 from beets import library
 from beets import plugins
+from beets import util
 
 # Constants.
 CONFIG_PATH_VAR = 'BEETSCONFIG'
@@ -406,12 +407,19 @@ def main(args=None, configfh=None):
     # Read defaults from config file.
     config = ConfigParser.SafeConfigParser()
     if configfh:
-        pass
+        configpath = None
     elif CONFIG_PATH_VAR in os.environ:
-        configfh = open(os.path.expanduser(os.environ[CONFIG_PATH_VAR]))
+        configpath = os.path.expanduser(os.environ[CONFIG_PATH_VAR])
     else:
-        configfh = open(DEFAULT_CONFIG_FILE)
-    config.readfp(configfh)
+        configpath = DEFAULT_CONFIG_FILE
+    if configpath:
+        configpath = util.syspath(configpath)
+        if os.path.exists(util.syspath(configpath)):
+            configfh = open(configpath)
+        else:
+            configfh = None
+    if configfh:
+        config.readfp(configfh)
 
     # Add plugin paths.
     plugpaths = config_val(config, 'beets', 'pluginpath', '')

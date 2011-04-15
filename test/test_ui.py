@@ -180,9 +180,12 @@ class InputTest(unittest.TestCase):
 
 class ConfigTest(unittest.TestCase):
     def setUp(self):
+        self.io = _common.DummyIO()
+        self.io.install()
         self.test_cmd = ui.Subcommand('test', help='test')
         commands.default_commands.append(self.test_cmd)
     def tearDown(self):
+        self.io.restore()
         commands.default_commands.pop()
     def _run_main(self, args, config, func):
         self.test_cmd.func = func
@@ -218,6 +221,10 @@ class ConfigTest(unittest.TestCase):
         self._run_main(['-p', 'z'], textwrap.dedent("""
             [paths]
             x=y"""), func)
+
+    def test_nonexistant_config_file(self):
+        os.environ['BEETSCONFIG'] = '/xxxxx'
+        ui.main(['version'])
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
