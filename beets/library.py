@@ -102,7 +102,8 @@ ITEM_DEFAULT_FIELDS = ARTIST_DEFAULT_FIELDS + ALBUM_DEFAULT_FIELDS + \
 
 # Logger.
 log = logging.getLogger('beets')
-log.addHandler(logging.StreamHandler())
+if not log.handlers:
+    log.addHandler(logging.StreamHandler())
 
 
 # Exceptions.

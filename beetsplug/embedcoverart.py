@@ -1,12 +1,11 @@
 from beets.plugins import BeetsPlugin
 from beets import mediafile
 
-import os, logging
+import logging
 
 from email.mime.image import MIMEImage
 
 log = logging.getLogger('beets')
-log.addHandler(logging.StreamHandler())
 
 
 class EmbedCoverArtPlugin(BeetsPlugin):
