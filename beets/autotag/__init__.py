@@ -482,7 +482,7 @@ def tag_album(items, search_artist=None, search_album=None):
     if not (search_artist and search_album):
         # No explicit search terms -- use current metadata.
         search_artist, search_album = cur_artist, cur_album
-    log.debug('Search terms: %s - %s' % (search_artist, search_album))
+    log.debug(u'Search terms: %s - %s' % (search_artist, search_album))
     
     # Get candidate metadata from search.
     if search_artist and search_album:
@@ -496,7 +496,7 @@ def tag_album(items, search_artist=None, search_album=None):
     if search_album and ((not artist_consensus) or \
                          (search_artist.lower() in VA_ARTISTS) or \
                          any(item.comp for item in items)):
-        log.debug('Possibly Various Artists; adding matches.')
+        log.debug(u'Possibly Various Artists; adding matches.')
         candidates.extend(mb.match_album(None, search_album, len(items),
                                          MAX_CANDIDATES))
 
@@ -504,7 +504,7 @@ def tag_album(items, search_artist=None, search_album=None):
     candidates.extend(plugins.candidates(items))
     
     # Get the distance to each candidate.
-    log.debug('Evaluating %i candidates.' % len(candidates))
+    log.debug(u'Evaluating %i candidates.' % len(candidates))
     for info in candidates:
         validate_candidate(items, out_tuples, info)
     
@@ -515,10 +515,12 @@ def tag_album(items, search_artist=None, search_album=None):
     rec = recommendation(out_tuples)
     return cur_artist, cur_album, out_tuples, rec
 
-def tag_item(item):
+def tag_item(item, search_artist=None, search_title=None):
     """Attempts to find metadata for a single track. Returns a
     `(candidates, recommendation)` pair where `candidates` is a list
-    of `(distance, track_info)` pairs.
+    of `(distance, track_info)` pairs. `search_artist` and 
+    `search_title` may be used to override the current metadata for
+    the purposes of the MusicBrainz category.
     """
     candidates = []
 
@@ -534,9 +536,14 @@ def tag_item(item):
             if rec == RECOMMEND_STRONG:
                 log.debug('Track ID match.')
                 return candidates, rec
+    
+    # Search terms.
+    if not (search_artist and search_title):
+        search_artist, search_title = item.artist, item.title
+    log.debug(u'Item search terms: %s - %s' % (search_artist, search_title))
 
     # Candidate metadata from search.
-    for track_info in mb.match_track(item.artist, item.title):
+    for track_info in mb.match_track(search_artist, search_title):
         dist = track_distance(item, track_info, incl_artist=True)
         candidates.append((dist, track_info))
 

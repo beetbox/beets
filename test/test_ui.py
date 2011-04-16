@@ -174,7 +174,7 @@ class InputTest(unittest.TestCase):
     def test_manual_search_gets_unicode(self):
         self.io.addinput('\xc3\x82me')
         self.io.addinput('\xc3\x82me')
-        artist, album = commands.manual_search()
+        artist, album = commands.manual_search(False)
         self.assertEqual(artist, u'\xc2me')
         self.assertEqual(album, u'\xc2me')
 

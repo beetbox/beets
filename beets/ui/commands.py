@@ -294,11 +294,14 @@ def choose_candidate(candidates, singleton, rec, color,
         elif sel == 'b':
             raise importer.ImportAbort()
 
-def manual_search():
-    """Input an artist and album for manual search."""
+def manual_search(singleton):
+    """Input either an artist and album (for full albums) or artist and
+    track name (for singletons) for manual search.
+    """
     artist = raw_input('Artist: ').decode(sys.stdin.encoding)
-    album = raw_input('Album: ').decode(sys.stdin.encoding)
-    return artist.strip(), album.strip()
+    name = raw_input('Track: ' if singleton else 'Album: ') \
+           .decode(sys.stdin.encoding)
+    return artist.strip(), name.strip()
 
 def choose_match(task, config):
     """Given an initial autotagging of items, go through an interactive
@@ -332,7 +335,7 @@ def choose_match(task, config):
             return choice
         elif choice is importer.action.MANUAL:
             # Try again with manual search terms.
-            search_artist, search_album = manual_search()
+            search_artist, search_album = manual_search(False)
             try:
                 _, _, candidates, rec = \
                     autotag.tag_album(items, search_artist, search_album)
@@ -341,6 +344,7 @@ def choose_match(task, config):
         else:
             # We have a candidate! Finish tagging. Here, choice is
             # an (info, items) pair as desired.
+            assert not isinstance(choice, importer.action)
             return choice
 
 def choose_item(task, config):
@@ -362,10 +366,24 @@ def choose_item(task, config):
         else:
             return _quiet_fall_back(config)
 
-    else:
+    while True:
         # Ask for a choice.
-        return choose_candidate(candidates, True, rec, config.color,
-                                item=task.items[0])
+        choice = choose_candidate(candidates, True, rec, config.color,
+                                  item=task.items[0])
+
+        if choice in (importer.action.SKIP, importer.action.ASIS):
+            return choice
+        elif choice == importer.action.TRACKS:
+            assert False # TRACKS is only legal for albums.
+        elif choice == importer.action.MANUAL:
+            # Continue in the loop with a new set of candidates.
+            search_artist, search_title = manual_search(False)
+            candidates, rec = autotag.tag_item(task.items[0], search_artist,
+                                               search_title)
+        else:
+            # Chose a candidate.
+            assert not isinstance(choice, importer.action)
+            return choice
 
 # The import command.
 
