@@ -217,8 +217,12 @@ class ImportTask(object):
             if choice == action.SKIP:
                 self.items = None # Items no longer needed.
         else:
-            info, items = choice
-            self.items = items # Reordered items list.
+            assert not isinstance(choice, action)
+            if self.is_album:
+                info, items = choice
+                self.items = items # Reordered items list.
+            else:
+                info = choice
             self.info = info
             self.choice_flag = action.APPLY # Implicit choice.
 
@@ -487,7 +491,7 @@ def item_query(config):
     while True:
         task = yield task
         choice = config.choose_item_func(task, config)
-        task.set_choice(choice)
+        task.set_choice([choice])
 
 def item_progress(config):
     """Skips the lookup and query stages in a non-autotagged singleton

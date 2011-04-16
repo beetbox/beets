@@ -219,7 +219,7 @@ def choose_candidate(candidates, singleton, rec, color,
             # Display list of candidates.
             if singleton:
                 print_('Finding tags for track "%s - %s".' %
-                       (item.artist, item.album))
+                       (item.artist, item.title))
                 print_('Candidates:')
                 for i, (dist, info) in enumerate(candidates):
                     print_('%i. %s - %s (%s)' % (i+1, info['artist'],
