@@ -185,11 +185,15 @@ def choose_candidate(candidates, singleton, rec, color,
     # Zero candidates.
     if not candidates:
         print_("No match found.")
-        sel = ui.input_options(('Use as-is', 'as Tracks', 'Skip',
-                                'Enter search', 'aBort'))
+        if singleton:
+            opts = ('Use as-is', 'Skip', 'Enter search', 'aBort')
+        else:
+            opts = ('Use as-is', 'as Tracks', 'Skip', 'Enter search', 'aBort')
+        sel = ui.input_options(opts)
         if sel == 'u':
             return importer.action.ASIS
         elif sel == 't':
+            assert not singleton
             return importer.action.TRACKS
         elif sel == 'e':
             return importer.action.MANUAL
@@ -229,8 +233,12 @@ def choose_candidate(candidates, singleton, rec, color,
                         info['album'], dist_string(dist, color)))
                                             
             # Ask the user for a choice.
-            sel = ui.input_options(('Skip', 'Use as-is', 'as Tracks', 
-                    'Enter search', 'aBort'), numrange=(1, len(candidates)))
+            if singleton:
+                opts = ('Skip', 'Use as-is', 'Enter search', 'aBort')
+            else:
+                opts = ('Skip', 'Use as-is', 'as Tracks', 'Enter search',
+                        'aBort')
+            sel = ui.input_options(opts, numrange=(1, len(candidates)))
             if sel == 's':
                 return importer.action.SKIP
             elif sel == 'u':
@@ -238,6 +246,7 @@ def choose_candidate(candidates, singleton, rec, color,
             elif sel == 'e':
                 return importer.action.MANUAL
             elif sel == 't':
+                assert not singleton
                 return importer.action.TRACKS
             elif sel == 'b':
                 raise importer.ImportAbort()
@@ -262,8 +271,13 @@ def choose_candidate(candidates, singleton, rec, color,
                 return info, items
         
         # Ask for confirmation.
-        sel = ui.input_options('Apply', 'More candidates', 'Skip', 'Use as-is',
-                               'as Tracks', 'Enter search', 'aBort')
+        if singleton:
+            opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
+                    'Enter search', 'aBort')
+        else:
+            opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
+                    'as Tracks', 'Enter search', 'aBort')
+        sel = ui.input_options(opts)
         if sel == 'a':
             if singleton:
                 return info
@@ -276,6 +290,7 @@ def choose_candidate(candidates, singleton, rec, color,
         elif sel == 'u':
             return importer.action.ASIS
         elif sel == 't':
+            assert not singleton
             return importer.action.TRACKS
         elif sel == 'e':
             return importer.action.MANUAL
