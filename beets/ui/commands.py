@@ -162,20 +162,31 @@ def _quiet_fall_back(config):
         assert(False)
     return config.quiet_fallback
 
-def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
-    """Given current metadata and a sorted list of
-    (distance, candidate) pairs, ask the user for a selection
-    of which candidate to use. Returns a pair (candidate, ordered)
-    consisting of the the selected candidate and the associated track
-    ordering. If user chooses to skip, use as-is, or search manually,
-    returns SKIP, ASIS, TRACKS, or MANUAL instead of a tuple.
+def choose_candidate(candidates, singleton, rec, color,
+                     cur_artist=None, cur_album=None, item=None):
+    """Given a sorted list of candidates, ask the user for a selection
+    of which candidate to use. Applies to both full albums and 
+    singletons  (tracks). For albums, the candidates are `(dist, items,
+    info)` triples and `cur_artist` and `cur_album` must be provided.
+    For singletons, the candidates are `(dist, info)` pairs and `item`
+    must be provided.
+
+    Returns the result of the choice, which may SKIP, ASIS, TRACKS, or
+    MANUAL or a candidate. For albums, a candidate is a `(info, items)`
+    pair; for items, it is just an `info` dictionary.
     """
+    # Sanity check.
+    if singleton:
+        assert item is not None
+    else:
+        assert cur_artist is not None
+        assert cur_album is not None
+
     # Zero candidates.
     if not candidates:
-        # Fallback: if either an error ocurred or no matches found.
         print_("No match found.")
         sel = ui.input_options(
-            "[U]se as-is, as Tracks, Skip, Enter manual search, or aBort?",
+            "[U]se as-is, as Tracks, Skip, Enter search, or aBort?",
             ('u', 't', 's', 'e', 'b'), 'u',
             'Enter U, T, S, E, or B:'
         )
@@ -193,20 +204,32 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
             assert False
 
     # Is the change good enough?
-    top_dist, _, _ = candidates[0]
     bypass_candidates = False
     if rec != autotag.RECOMMEND_NONE:
-        dist, items, info = candidates[0]
+        if singleton:
+            dist, info = candidates[0]
+        else:
+            dist, items, info = candidates[0]
         bypass_candidates = True
         
     while True:
         # Display and choose from candidates.
         if not bypass_candidates:
-            print_('Finding tags for "%s - %s".' % (cur_artist, cur_album))
-            print_('Candidates:')
-            for i, (dist, items, info) in enumerate(candidates):
-                print_('%i. %s - %s (%s)' % (i+1, info['artist'],
-                    info['album'], dist_string(dist, color)))
+            # Display list of candidates.
+            if singleton:
+                print_('Finding tags for track "%s - %s".' %
+                       (item.artist, item.album))
+                print_('Candidates:')
+                for i, (dist, info) in enumerate(candidates):
+                    print_('%i. %s - %s (%s)' % (i+1, info['artist'],
+                           info['title'], dist_string(dist, color)))
+            else:
+                print_('Finding tags for album "%s - %s".' %
+                       (cur_artist, cur_album))
+                print_('Candidates:')
+                for i, (dist, items, info) in enumerate(candidates):
+                    print_('%i. %s - %s (%s)' % (i+1, info['artist'],
+                        info['album'], dist_string(dist, color)))
                                             
             # Ask the user for a choice.
             sel = ui.input_options(
@@ -227,15 +250,24 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
             elif sel == 'b':
                 raise importer.ImportAbort()
             else: # Numerical selection.
-                dist, items, info = candidates[sel-1]
+                if singleton:
+                    dist, info = candidates[sel-1]
+                else:
+                    dist, items, info = candidates[sel-1]
         bypass_candidates = False
     
         # Show what we're about to do.
-        show_change(cur_artist, cur_album, items, info, dist, color)
+        if singleton:
+            show_item_change(item, info, dist, color)
+        else:
+            show_change(cur_artist, cur_album, items, info, dist, color)
     
         # Exact match => tag automatically.
         if rec == autotag.RECOMMEND_STRONG:
-            return info, items
+            if singleton:
+                return info
+            else:
+                return info, items
         
         # Ask for confirmation.
         sel = ui.input_options(
@@ -245,7 +277,10 @@ def choose_candidate(cur_artist, cur_album, candidates, rec, color=True):
             'Enter A, M, S, U, T, E, or B:'
         )
         if sel == 'a':
-            return info, items
+            if singleton:
+                return info
+            else:
+                return info, items
         elif sel == 'm':
             pass
         elif sel == 's':
@@ -287,8 +322,8 @@ def choose_match(task, config):
     # Loop until we have a choice.
     while True:
         # Ask for a choice from the user.
-        choice = choose_candidate(task.cur_artist, task.cur_album,
-                                  task.candidates, task.rec, config.color)
+        choice = choose_candidate(task.candidates, False, task.rec,
+                                  config.color, task.cur_artist, task.cur_album)
     
         # Choose which tags to use.
         if choice in (importer.action.SKIP, importer.action.ASIS,
@@ -329,11 +364,8 @@ def choose_item(task, config):
 
     else:
         # Ask for a choice.
-        #TODO
-        dist, track_info = candidates[0]
-        show_item_change(task.items[0], track_info, dist, config.color)
-        return importer.action.ASIS
-
+        return choose_candidate(candidates, True, rec, config.color,
+                                item=task.items[0])
 
 # The import command.
 
