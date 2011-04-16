@@ -185,11 +185,8 @@ def choose_candidate(candidates, singleton, rec, color,
     # Zero candidates.
     if not candidates:
         print_("No match found.")
-        sel = ui.input_options(
-            "[U]se as-is, as Tracks, Skip, Enter search, or aBort?",
-            ('u', 't', 's', 'e', 'b'), 'u',
-            'Enter U, T, S, E, or B:'
-        )
+        sel = ui.input_options(('Use as-is', 'as Tracks', 'Skip',
+                                'Enter search', 'aBort'))
         if sel == 'u':
             return importer.action.ASIS
         elif sel == 't':
@@ -232,13 +229,8 @@ def choose_candidate(candidates, singleton, rec, color,
                         info['album'], dist_string(dist, color)))
                                             
             # Ask the user for a choice.
-            sel = ui.input_options(
-                '# selection (default 1), Skip, Use as-is, as Tracks, '
-                'Enter search, or aBort?',
-                ('s', 'u', 't', 'e', 'b'), '1',
-                'Enter a numerical selection, S, U, T, E, or B:',
-                (1, len(candidates))
-            )
+            sel = ui.input_options(('Skip', 'Use as-is', 'as Tracks', 
+                    'Enter search', 'aBort'), numrange=(1, len(candidates)))
             if sel == 's':
                 return importer.action.SKIP
             elif sel == 'u':
@@ -270,12 +262,8 @@ def choose_candidate(candidates, singleton, rec, color,
                 return info, items
         
         # Ask for confirmation.
-        sel = ui.input_options(
-            '[A]pply, More candidates, Skip, Use as-is, as Tracks, '
-            'Enter search, or aBort?',
-            ('a', 'm', 's', 'u', 't', 'e', 'b'), 'a',
-            'Enter A, M, S, U, T, E, or B:'
-        )
+        sel = ui.input_options('Apply', 'More candidates', 'Skip', 'Use as-is',
+                               'as Tracks', 'Enter search', 'aBort')
         if sel == 'a':
             if singleton:
                 return info

@@ -73,18 +73,91 @@ def print_(*strings):
         txt = txt.encode(encoding, 'replace')
     print txt
 
-def input_options(prompt, options, default=None,
-                  fallback_prompt=None, numrange=None):
-    """Prompts a user for input. The input must be one of the single
-    letters in options, a list of single-letter strings, or an integer
-    in numrange, which is a (low, high) tuple. If nothing is entered,
-    assume the input is default (if provided). Returns the value
-    entered, a single-letter string or an integer. If an incorrect
-    input occurs, fallback_prompt is used (by default identical to
-    the initial prompt).
+def input_options(options, require=False, prompt=None, fallback_prompt=None,
+                  numrange=None, default=None):
+    """Prompts a user for input. The sequence of `options` defines the
+    choices the user has. A single-letter shortcut is inferred for each
+    option; the user's choice is returned as that single, lower-case
+    letter. The options should be provided as lower-case strings unless
+    a particular shortcut is desired; in that case, only that letter
+    should be capitalized.
+
+    By default, the first option is the default. If `require` is
+    provided, then there is no default. `default` can be provided to
+    override this. The prompt and fallback prompt are also inferred but
+    can be overridden.
+
+    If numrange is provided, it is a pair of `(high, low)` (both ints)
+    indicating that, in addition to `options`, the user may enter an
+    integer in that inclusive range.
     """
-    fallback_prompt = fallback_prompt or prompt
+    # Assign single letters to each option. Also capitalize the options
+    # to indicate the letter.
+    letters = {}
+    display_letters = []
+    capitalized = []
+    first = True
+    for option in options:
+        # Is a letter already capitalized?
+        for letter in option:
+            if letter.isalpha() and letter.upper() == letter:
+                found_letter = letter
+                break
+        else:
+            # Infer a letter.
+            for letter in option:
+                if not letter.isalpha():
+                    continue # Don't use punctuation.
+                if letter not in letters:
+                    found_letter = letter
+                    break
+            else:
+                raise ValueError('no unambiguous lettering found')
+
+        letters[found_letter.lower()] = option
+        index = option.index(found_letter)
+        if (default is None and not numrange and first) \
+           or (isinstance(default, basestring) and 
+               found_letter.lower() == default.lower()):
+            # The first option is the default; mark it.
+            show_letter = '[%s]' % found_letter.upper()
+        else:
+            show_letter = found_letter.upper()
+        capitalized.append(
+            option[:index] + show_letter + option[index+1:]
+        )
+        display_letters.append(found_letter.upper())
+
+        first = False
+
+    # The default is just the first option if unspecified.
+    if default is None:
+        if require:
+            default = None
+        elif numrange:
+            default = numrange[0]
+        else:
+            default = display_letters[0].lower()
     
+    # Make a prompt if one is not provided.
+    if not prompt:
+        if numrange:
+            if isinstance(default, int):
+                prompt = '# selection (default %i), ' % default
+            else:
+                prompt = '# selection, '
+        else:
+            prompt = ''
+        prompt += ', '.join(capitalized) + '?'
+
+    # Make a fallback prompt too. This is displayed if the user enters
+    # something that is not recognized.
+    if not fallback_prompt:
+        fallback_prompt = 'Enter one of '
+        if numrange:
+            fallback_prompt += '%i-%i, ' % numrange
+        fallback_prompt += ', '.join(display_letters) + ':'
+
     resp = raw_input(prompt + ' ')
     while True:
         resp = resp.strip().lower()
@@ -94,7 +167,7 @@ def input_options(prompt, options, default=None,
             resp = default
         
         # Try an integer input if available.
-        if numrange is not None:
+        if numrange:
             try:
                 resp = int(resp)
             except ValueError:
@@ -109,25 +182,20 @@ def input_options(prompt, options, default=None,
         # Try a normal letter input.
         if resp:
             resp = resp[0]
-            if resp in options:
+            if resp in letters:
                 return resp
         
         # Prompt for new input.
         resp = raw_input(fallback_prompt + ' ')
 
 def input_yn(prompt, require=False):
-    """Prompts user for a "yes" or "no" response where an empty response
-    is treated as "yes". Keeps prompting until acceptable input is
-    given; returns a boolean. If require is True, then an empty response
-    is not accepted.
+    """Prompts the user for a "yes" or "no" response. The default is
+    "yes" unless `require` is `True`, in which case there is no default.
     """
     sel = input_options(
-        prompt,
-        ('y', 'n'),
-        None if require else 'y',
-        "Type 'y' or 'n':"
+        ('y', 'n'), require, prompt, 'Enter Y or N:'
     )
-    return (sel == 'y')
+    return sel == 'y'
 
 def make_query(criteria):
     """Make query string for the list of criteria."""
