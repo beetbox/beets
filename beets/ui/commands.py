@@ -351,20 +351,18 @@ def choose_match(task, config):
             return choice
 
 def choose_item(task, config):
-    """Ask the user for a choice about tagging a set of items. Returns
+    """Ask the user for a choice about tagging a single item. Returns
     either an action constant or a track info dictionary.
     """
     print_()
-    print_(task.items[0].path)
-
-    #TODO multiple items.
-    candidates, rec = task.item_matches[0]
+    print_(task.item.path)
+    candidates, rec = task.item_match
 
     if config.quiet:
         # Quiet mode; make a decision.
         if task.rec == autotag.RECOMMEND_STRONG:
             dist, track_info = candidates[0]
-            show_item_change(task.items[0], track_info, dist, config.color)
+            show_item_change(task.item.color)
             return track_info
         else:
             return _quiet_fall_back(config)
@@ -372,7 +370,7 @@ def choose_item(task, config):
     while True:
         # Ask for a choice.
         choice = choose_candidate(candidates, True, rec, config.color,
-                                  item=task.items[0])
+                                  item=task.item)
 
         if choice in (importer.action.SKIP, importer.action.ASIS):
             return choice
@@ -381,7 +379,7 @@ def choose_item(task, config):
         elif choice == importer.action.MANUAL:
             # Continue in the loop with a new set of candidates.
             search_artist, search_title = manual_search(False)
-            candidates, rec = autotag.tag_item(task.items[0], search_artist,
+            candidates, rec = autotag.tag_item(task.item, search_artist,
                                                search_title)
         else:
             # Chose a candidate.

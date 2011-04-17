@@ -141,7 +141,7 @@ class ImportConfig(object):
 
 class ImportTask(object):
     """Represents a single set of items to be imported along with its
-    intermediate state. May represent an album or just a set of items.
+    intermediate state. May represent an album or a single item.
     """
     def __init__(self, toppath=None, path=None, items=None):
         self.toppath = toppath
@@ -162,7 +162,7 @@ class ImportTask(object):
     def item_task(cls, item):
         """Creates an ImportTask for a single item."""
         obj = cls()
-        obj.items = [item]
+        obj.item = item
         obj.is_album = False
         return obj
 
@@ -182,26 +182,18 @@ class ImportTask(object):
         """
         self.set_match(None, None, None, None)
 
-    def set_item_matches(self, item_matches):
-        """Sets the candidates for this set of items after an initial
-        match. `item_matches` should be a list of match tuples,
-        one for each item.
-        """
-        assert len(self.items) == len(item_matches)
-        self.item_matches = item_matches
-        self.is_album = False
-
     def set_item_match(self, candidates, rec):
         """Set the match for a single-item task."""
-        assert len(self.items) == 1
-        self.item_matches = [(candidates, rec)]
+        assert not self.is_album
+        assert self.item is not None
+        self.item_match = (candidates, rec)
 
     def set_null_item_match(self):
         """For single-item tasks, mark the item as having no matches.
         """
-        assert len(self.items) == 1
         assert not self.is_album
-        self.item_matches = [None]
+        assert self.item is not None
+        self.item_match = None
 
     def set_choice(self, choice):
         """Given either an (info, items) tuple or an action constant,
@@ -215,7 +207,11 @@ class ImportTask(object):
             self.choice_flag = choice
             self.info = None
             if choice == action.SKIP:
-                self.items = None # Items no longer needed.
+                # Items are no longer needed.
+                if self.is_album:
+                    self.items = None
+                else:
+                    self.item = None
         else:
             assert not isinstance(choice, action)
             if self.is_album:
@@ -412,12 +408,11 @@ def apply_choices(config):
             if task.is_album:
                 autotag.apply_metadata(task.items, task.info)
             else:
-                for item, info in zip(task.items, task.info):
-                    autotag.apply_item_metadata(item, info)
+                autotag.apply_item_metadata(task.item, task.info)
+        items = task.items if task.is_album else [task.item]
         if config.copy and config.delete:
-            old_paths = [os.path.realpath(item.path)
-                         for item in task.items]
-        for item in task.items:
+            old_paths = [os.path.realpath(syspath(item.path)) for item in items]
+        for item in items:
             if config.copy:
                 item.move(lib, True, task.should_create_album())
             if config.write and task.should_write_tags():
@@ -431,7 +426,7 @@ def apply_choices(config):
                                       infer_aa = task.should_infer_aa())
         else:
             # Add tracks.
-            for item in task.items:
+            for item in items:
                 lib.add(item)
         lib.save()
 
@@ -446,12 +441,11 @@ def apply_choices(config):
         if task.should_create_album():
             plugins.send('album_imported', lib=lib, album=albuminfo)
         else:
-            for item in task.items:
-                plugins.send('item_imported', lib=lib, item=item)
+            plugins.send('item_imported', lib=lib, item=task.item)
 
         # Finally, delete old files.
         if config.copy and config.delete:
-            new_paths = [os.path.realpath(item.path) for item in task.items]
+            new_paths = [os.path.realpath(item.path) for item in items]
             for old_path in old_paths:
                 # Only delete files that were actually moved.
                 if old_path not in new_paths:
@@ -481,7 +475,7 @@ def item_lookup(config):
     task = None
     while True:
         task = yield task
-        task.set_item_match(*autotag.tag_item(task.items[0]))
+        task.set_item_match(*autotag.tag_item(task.item))
 
 def item_query(config):
     """A coroutine that queries the user for input on single-item
@@ -491,7 +485,7 @@ def item_query(config):
     while True:
         task = yield task
         choice = config.choose_item_func(task, config)
-        task.set_choice([choice])
+        task.set_choice(choice)
 
 def item_progress(config):
     """Skips the lookup and query stages in a non-autotagged singleton
@@ -501,7 +495,7 @@ def item_progress(config):
     log.info('Importing items:')
     while True:
         task = yield task
-        log.info(task.items[0].path)
+        log.info(task.item.path)
         task.set_null_item_match()
         task.set_choice(action.ASIS)
 
