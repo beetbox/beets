@@ -44,6 +44,23 @@ def _exc_work(num=3):
             raise TestException()
         i *= 2
 
+# A worker that yields a bubble.
+def _bub_work(num=3):
+    i = None
+    while True:
+        i = yield i
+        if i == num:
+            i = pipeline.BUBBLE
+        else:
+            i *= 2
+
+# Yet another worker that yields multiple messages.
+def _multi_work():
+    i = None
+    while True:
+        i = yield i
+        i = pipeline.multiple([i, -i])
+
 class SimplePipelineTest(unittest.TestCase):
     def setUp(self):
         self.l = []
@@ -116,6 +133,34 @@ class ConstrainedThreadedPipelineTest(unittest.TestCase):
         ))
         pl.run_parallel(1)
         self.assertEqual(set(l), set(i*2 for i in range(1000)))
+
+class BubbleTest(unittest.TestCase):
+    def setUp(self):
+        self.l = []
+        self.pl = pipeline.Pipeline((_produce(), _bub_work(), _consume(self.l)))
+
+    def test_run_sequential(self):
+        self.pl.run_sequential()
+        self.assertEqual(self.l, [0,2,4,8])
+
+    def test_run_parallel(self):
+        self.pl.run_parallel()
+        self.assertEqual(self.l, [0,2,4,8])
+
+class MultiMessageTest(unittest.TestCase):
+    def setUp(self):
+        self.l = []
+        self.pl = pipeline.Pipeline((
+            _produce(), _multi_work(), _consume(self.l)
+        ))
+
+    def test_run_sequential(self):
+        self.pl.run_sequential()
+        self.assertEqual(self.l, [0,0,1,-1,2,-2,3,-3,4,-4])
+
+    def test_run_parallel(self):
+        self.pl.run_parallel()
+        self.assertEqual(self.l, [0,0,1,-1,2,-2,3,-3,4,-4])
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
