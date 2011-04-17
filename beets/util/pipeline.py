@@ -41,17 +41,23 @@ POISON = '__PIPELINE_POISON__'
 
 DEFAULT_QUEUE_SIZE = 16
 
-def invalidate_queue(q):
+def _invalidate_queue(q, val=None, sync=True):
     """Breaks a Queue such that it never blocks, always has size 1,
-    and has no maximum size.
+    and has no maximum size. get()ing from the queue returns `val`,
+    which defaults to None. `sync` controls whether a lock is
+    required (because it's not reentrant!).
     """
     def _qsize(len=len):
         return 1
     def _put(item):
         pass
     def _get():
-        return None
-    with q.mutex:
+        return val
+
+    if sync:
+        q.mutex.acquire()
+
+    try:
         q.maxsize = 0
         q._qsize = _qsize
         q._put = _put
@@ -59,13 +65,80 @@ def invalidate_queue(q):
         q.not_empty.notify()
         q.not_full.notify()
 
-class PipelineError(object):
-    """An indication that an exception occurred in the pipeline. The
-    object is passed through the pipeline to shut down all threads
-    before it is raised again in the main thread.
+    finally:
+        if sync:
+            q.mutex.release()
+
+class CountedQueue(Queue.Queue):
+    """A queue that keeps track of the number of threads that are
+    still feeding into it. The queue is poisoned when all threads are
+    finished with the queue.
     """
-    def __init__(self, exc_info):
-        self.exc_info = exc_info
+    def __init__(self, maxsize=0):
+        Queue.Queue.__init__(self, maxsize)
+        self.nthreads = 0
+        self.poisoned = False
+
+    def acquire(self):
+        """Indicate that a thread will start putting into this queue.
+        Should not be called after the queue is already poisoned.
+        """
+        with self.mutex:
+            assert not self.poisoned
+            assert self.nthreads >= 0
+            self.nthreads += 1
+
+    def release(self):
+        """Indicate that a thread that was putting into this queue has
+        exited. If this is the last thread using the queue, the queue
+        is poisoned.
+        """
+        with self.mutex:
+            self.nthreads -= 1
+            assert self.nthreads >= 0
+            if self.nthreads == 0:
+                # All threads are done adding to this queue. Poison it
+                # when it becomes empty.
+                self.poisoned = True
+
+                # Replacement _get invalidates when no items remain.
+                _old_get = self._get
+                def _get():
+                    out = _old_get()
+                    if not self.queue:
+                        _invalidate_queue(self, POISON, False)
+                    return out
+
+                if self.queue:
+                    # Items remain.
+                    self._get = _get
+                else:
+                    # No items. Invalidate immediately.
+                    _invalidate_queue(self, POISON, False)
+
+class MultiMessage(object):
+    """A message yielded by a pipeline stage encapsulating multiple
+    values to be sent to the next stage.
+    """
+    def __init__(self, messages):
+        self.messages = messages
+def multiple(messages):
+    """Yield multiple([message, ..]) from a pipeline stage to send
+    multiple values to the next pipeline stage.
+    """
+    return MultiMessage(messages)
+
+def _allmsgs(obj):
+    """Returns a list of all the messages encapsulated in obj. If obj
+    is a MultiMessage, returns its enclosed messages. If obj is BUBBLE,
+    returns an empty list. Otherwise, returns a list containing obj.
+    """
+    if isinstance(obj, MultiMessage):
+        return obj.messages
+    elif obj == BUBBLE:
+        return []
+    else:
+        return [obj]
 
 class PipelineThread(Thread):
     """Abstract base class for pipeline-stage threads."""
@@ -84,9 +157,9 @@ class PipelineThread(Thread):
 
             # Ensure that we are not blocking on a queue read or write.
             if hasattr(self, 'in_queue'):
-                invalidate_queue(self.in_queue)
+                _invalidate_queue(self.in_queue)
             if hasattr(self, 'out_queue'):
-                invalidate_queue(self.out_queue)
+                _invalidate_queue(self.out_queue)
 
     def abort_all(self, exc_info):
         """Abort all other threads in the system for an exception.
@@ -103,6 +176,7 @@ class FirstPipelineThread(PipelineThread):
         super(FirstPipelineThread, self).__init__(all_threads)
         self.coro = coro
         self.out_queue = out_queue
+        self.out_queue.acquire()
         
         self.abort_lock = Lock()
         self.abort_flag = False
@@ -110,7 +184,6 @@ class FirstPipelineThread(PipelineThread):
     def run(self):
         try:
             while True:
-                # Time to abort?
                 with self.abort_lock:
                     if self.abort_flag:
                         return
@@ -121,17 +194,19 @@ class FirstPipelineThread(PipelineThread):
                 except StopIteration:
                     break
                 
-                # Send it to the next stage.
-                if msg is BUBBLE:
-                    continue
-                self.out_queue.put(msg)
+                # Send messages to the next stage.
+                for msg in _allmsgs(msg):
+                    with self.abort_lock:
+                        if self.abort_flag:
+                            return
+                    self.out_queue.put(msg)
 
         except:
             self.abort_all(sys.exc_info())
             return
 
         # Generator finished; shut down the pipeline.
-        self.out_queue.put(POISON)
+        self.out_queue.release()
     
 class MiddlePipelineThread(PipelineThread):
     """A thread running any stage in the pipeline except the first or
@@ -142,6 +217,7 @@ class MiddlePipelineThread(PipelineThread):
         self.coro = coro
         self.in_queue = in_queue
         self.out_queue = out_queue
+        self.out_queue.acquire()
 
     def run(self):
         try:
@@ -165,18 +241,19 @@ class MiddlePipelineThread(PipelineThread):
                 # Invoke the current stage.
                 out = self.coro.send(msg)
                 
-                # Send message to next stage.
-                if out is BUBBLE:
-                    continue
-                self.out_queue.put(out)
+                # Send messages to next stage.
+                for msg in _allmsgs(out):
+                    with self.abort_lock:
+                        if self.abort_flag:
+                            return
+                    self.out_queue.put(msg)
 
         except:
             self.abort_all(sys.exc_info())
             return
         
         # Pipeline is shutting down normally.
-        self.in_queue.put(POISON)
-        self.out_queue.put(POISON)
+        self.out_queue.release()
 
 class LastPipelineThread(PipelineThread):
     """A thread running the last stage in a pipeline. The coroutine
@@ -212,9 +289,6 @@ class LastPipelineThread(PipelineThread):
         except:
             self.abort_all(sys.exc_info())
             return
-        
-        # Pipeline is shutting down normally.
-        self.in_queue.put(POISON)
 
 class Pipeline(object):
     """Represents a staged pattern of work. Each stage in the pipeline
@@ -247,19 +321,21 @@ class Pipeline(object):
             coro.next()
         
         # Begin the pipeline.
-        for msg in coros[0]:
+        for out in coros[0]:
+            msgs = _allmsgs(out)
             for coro in coros[1:]:
-                msg = coro.send(msg)
-                if msg is BUBBLE:
-                    # Don't continue to the next stage.
-                    break
+                next_msgs = []
+                for msg in msgs:
+                    out = coro.send(msg)
+                    next_msgs.extend(_allmsgs(out))
+                msgs = next_msgs
     
     def run_parallel(self, queue_size=DEFAULT_QUEUE_SIZE):
         """Run the pipeline in parallel using one thread per stage. The
         messages between the stages are stored in queues of the given
         size.
         """
-        queues = [Queue.Queue(queue_size) for i in range(len(self.stages)-1)]
+        queues = [CountedQueue(queue_size) for i in range(len(self.stages)-1)]
         threads = []
 
         # Set up first stage.
