@@ -352,15 +352,28 @@ def user_query(config):
         choice = config.choose_match_func(task, config)
         task.set_choice(choice)
 
+        # As-tracks: transition to singleton workflow.
+        if choice is action.TRACKS:
+            # Set up a little pipeline for dealing with the singletons.
+            item_tasks = []
+            def collector():
+                while True:
+                    item_task = yield
+                    item_tasks.append(item_task)
+            ipl = pipeline.Pipeline((iter(task.items), item_lookup(config), 
+                                     item_query(config), collector()))
+            ipl.run_sequential()
+            task = pipeline.multiple(item_tasks)
+
         # Log certain choices.
         if choice is action.ASIS:
             tag_log(config.logfile, 'asis', task.path)
         elif choice is action.SKIP:
             tag_log(config.logfile, 'skip', task.path)
 
-        # Check for duplicates if we have a match.
-        if choice == action.ASIS or isinstance(choice, tuple):
-            if choice == action.ASIS:
+        # Check for duplicates if we have a match (or ASIS).
+        if choice is action.ASIS or isinstance(choice, tuple):
+            if choice is action.ASIS:
                 artist = task.cur_artist
                 album = task.cur_album
             else:
