@@ -356,11 +356,14 @@ def user_query(config):
         if choice is action.TRACKS:
             # Set up a little pipeline for dealing with the singletons.
             item_tasks = []
+            def emitter():
+                for item in task.items:
+                    yield ImportTask.item_task(item)
             def collector():
                 while True:
                     item_task = yield
                     item_tasks.append(item_task)
-            ipl = pipeline.Pipeline((iter(task.items), item_lookup(config), 
+            ipl = pipeline.Pipeline((emitter(), item_lookup(config), 
                                      item_query(config), collector()))
             ipl.run_sequential()
             task = pipeline.multiple(item_tasks)
