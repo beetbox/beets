@@ -41,23 +41,80 @@ POISON = '__PIPELINE_POISON__'
 
 DEFAULT_QUEUE_SIZE = 16
 
-def invalidate_queue(q):
+def invalidate_queue(q, val=None, sync=True):
     """Breaks a Queue such that it never blocks, always has size 1,
-    and has no maximum size.
+    and has no maximum size. get()ing from the queue returns `val`,
+    which defaults to None. `sync` controls whether a lock is
+    required (because it's not reentrant!).
     """
     def _qsize(len=len):
         return 1
     def _put(item):
         pass
     def _get():
-        return None
-    with q.mutex:
+        return val
+
+    if sync:
+        q.mutex.acquire()
+
+    try:
         q.maxsize = 0
         q._qsize = _qsize
         q._put = _put
         q._get = _get
         q.not_empty.notify()
         q.not_full.notify()
+
+    finally:
+        if sync:
+            q.mutex.release()
+
+class CountedQueue(Queue.Queue):
+    """A queue that keeps track of the number of threads that are
+    still feeding into it. The queue is poisoned when all threads are
+    finished with the queue.
+    """
+    def __init__(self, maxsize=0):
+        Queue.Queue.__init__(self, maxsize)
+        self.nthreads = 0
+        self.poisoned = False
+
+    def acquire(self):
+        """Indicate that a thread will start putting into this queue.
+        Should not be called after the queue is already poisoned.
+        """
+        with self.mutex:
+            assert not self.poisoned
+            assert self.nthreads >= 0
+            self.nthreads += 1
+
+    def release(self):
+        """Indicate that a thread that was putting into this queue has
+        exited. If this is the last thread using the queue, the queue
+        is poisoned.
+        """
+        with self.mutex:
+            self.nthreads -= 1
+            assert self.nthreads >= 0
+            if self.nthreads == 0:
+                # All threads are done adding to this queue. Poison it
+                # when it becomes empty.
+                self.poisoned = True
+
+                # Replacement _get invalidates when no items remain.
+                _old_get = self._get
+                def _get():
+                    out = _old_get()
+                    if not self.queue:
+                        invalidate_queue(self, POISON, False)
+                    return out
+
+                if self.queue:
+                    # Items remain.
+                    self._get = _get
+                else:
+                    # No items. Invalidate immediately.
+                    invalidate_queue(self, POISON, False)
 
 class PipelineError(object):
     """An indication that an exception occurred in the pipeline. The
@@ -103,6 +160,7 @@ class FirstPipelineThread(PipelineThread):
         super(FirstPipelineThread, self).__init__(all_threads)
         self.coro = coro
         self.out_queue = out_queue
+        self.out_queue.acquire()
         
         self.abort_lock = Lock()
         self.abort_flag = False
@@ -131,7 +189,7 @@ class FirstPipelineThread(PipelineThread):
             return
 
         # Generator finished; shut down the pipeline.
-        self.out_queue.put(POISON)
+        self.out_queue.release()
     
 class MiddlePipelineThread(PipelineThread):
     """A thread running any stage in the pipeline except the first or
@@ -142,6 +200,7 @@ class MiddlePipelineThread(PipelineThread):
         self.coro = coro
         self.in_queue = in_queue
         self.out_queue = out_queue
+        self.out_queue.acquire()
 
     def run(self):
         try:
@@ -175,8 +234,7 @@ class MiddlePipelineThread(PipelineThread):
             return
         
         # Pipeline is shutting down normally.
-        self.in_queue.put(POISON)
-        self.out_queue.put(POISON)
+        self.out_queue.release()
 
 class LastPipelineThread(PipelineThread):
     """A thread running the last stage in a pipeline. The coroutine
@@ -212,9 +270,6 @@ class LastPipelineThread(PipelineThread):
         except:
             self.abort_all(sys.exc_info())
             return
-        
-        # Pipeline is shutting down normally.
-        self.in_queue.put(POISON)
 
 class Pipeline(object):
     """Represents a staged pattern of work. Each stage in the pipeline
@@ -259,7 +314,7 @@ class Pipeline(object):
         messages between the stages are stored in queues of the given
         size.
         """
-        queues = [Queue.Queue(queue_size) for i in range(len(self.stages)-1)]
+        queues = [CountedQueue(queue_size) for i in range(len(self.stages)-1)]
         threads = []
 
         # Set up first stage.
