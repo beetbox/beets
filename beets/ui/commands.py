@@ -326,9 +326,10 @@ def choose_match(task, config):
             return _quiet_fall_back(config)
 
     # Loop until we have a choice.
+    candidates, rec = task.candidates, task.rec
     while True:
         # Ask for a choice from the user.
-        choice = choose_candidate(task.candidates, False, task.rec,
+        choice = choose_candidate(candidates, False, rec,
                                   config.color, task.cur_artist, task.cur_album)
     
         # Choose which tags to use.
@@ -341,7 +342,7 @@ def choose_match(task, config):
             search_artist, search_album = manual_search(False)
             try:
                 _, _, candidates, rec = \
-                    autotag.tag_album(items, search_artist, search_album)
+                    autotag.tag_album(task.items, search_artist, search_album)
             except autotag.AutotagError:
                 candidates, rec = None, None
         else:
