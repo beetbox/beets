@@ -127,7 +127,7 @@ class ImportConfig(object):
     _fields = ['lib', 'paths', 'resume', 'logfile', 'color', 'quiet',
                'quiet_fallback', 'copy', 'write', 'art', 'delete',
                'choose_match_func', 'should_resume_func', 'threaded',
-               'autot', 'singletons', 'choose_item_func']
+               'autot', 'singletons', 'interactive_autotag', 'choose_item_func']
     def __init__(self, **kwargs):
         for slot in self._fields:
             setattr(self, slot, kwargs[slot])

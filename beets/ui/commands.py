@@ -42,6 +42,7 @@ DEFAULT_IMPORT_COPY           = True
 DEFAULT_IMPORT_WRITE          = True
 DEFAULT_IMPORT_DELETE         = False
 DEFAULT_IMPORT_AUTOT          = True
+DEFAULT_IMPORT_INT_AUTOT      = False
 DEFAULT_IMPORT_ART            = True
 DEFAULT_IMPORT_QUIET          = False
 DEFAULT_IMPORT_QUIET_FALLBACK = 'skip'
@@ -162,7 +163,7 @@ def _quiet_fall_back(config):
         assert(False)
     return config.quiet_fallback
 
-def choose_candidate(candidates, singleton, rec, color,
+def choose_candidate(candidates, singleton, rec, color, interactive_autotag,
                      cur_artist=None, cur_album=None, item=None):
     """Given a sorted list of candidates, ask the user for a selection
     of which candidate to use. Applies to both full albums and 
@@ -263,8 +264,8 @@ def choose_candidate(candidates, singleton, rec, color,
         else:
             show_change(cur_artist, cur_album, items, info, dist, color)
     
-        # Exact match => tag automatically.
-        if rec == autotag.RECOMMEND_STRONG:
+        # Exact match => tag automatically if no interactive tagging is requested.
+        if rec == autotag.RECOMMEND_STRONG and not interactive_autotag :
             if singleton:
                 return info
             else:
@@ -329,8 +330,9 @@ def choose_match(task, config):
     candidates, rec = task.candidates, task.rec
     while True:
         # Ask for a choice from the user.
-        choice = choose_candidate(candidates, False, rec,
-                                  config.color, task.cur_artist, task.cur_album)
+        choice = choose_candidate(candidates, False, rec, config.color, 
+                                  config.interactive_autotag,
+                                  task.cur_artist, task.cur_album)
     
         # Choose which tags to use.
         if choice in (importer.action.SKIP, importer.action.ASIS,
@@ -371,7 +373,7 @@ def choose_item(task, config):
     while True:
         # Ask for a choice.
         choice = choose_candidate(candidates, True, rec, config.color,
-                                  item=task.item)
+                                  config.interactive_autotag, item=task.item)
 
         if choice in (importer.action.SKIP, importer.action.ASIS):
             return choice
@@ -390,7 +392,8 @@ def choose_item(task, config):
 # The import command.
 
 def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
-                 color, delete, quiet, resume, quiet_fallback, singletons):
+                 color, delete, quiet, resume, quiet_fallback, singletons,
+                 interactive_autotag):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
@@ -440,6 +443,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
         choose_match_func = choose_match,
         should_resume_func = should_resume,
         singletons = singletons,
+        interactive_autotag = interactive_autotag,
         choose_item_func = choose_item,
     )
     
@@ -479,6 +483,10 @@ import_cmd.parser.add_option('-l', '--log', dest='logpath',
     help='file to log untaggable albums for later review')
 import_cmd.parser.add_option('-s', '--singletons', action='store_true',
     help='import individual tracks instead of full albums')
+import_cmd.parser.add_option('-i', '--interactive-autotag', dest='interactive_autotag',
+    action='store_true', help='always ask user before tagging something - even if similarity is strong')
+import_cmd.parser.add_option('-I', '--nointeractive-autotag', dest='interactive_autotag',
+    action='store_false', help='don\'t ask user before tagging something with high similarity (default)')
 def import_func(lib, config, opts, args):
     copy  = opts.copy  if opts.copy  is not None else \
         ui.config_val(config, 'beets', 'import_copy',
@@ -499,6 +507,7 @@ def import_func(lib, config, opts, args):
     quiet_fallback_str = ui.config_val(config, 'beets', 'import_quiet_fallback',
             DEFAULT_IMPORT_QUIET_FALLBACK)
     singletons = opts.singletons
+    interactive_autotag = opts.interactive_autotag if opts.interactive_autotag is not None else DEFAULT_IMPORT_INT_AUTOT
 
     # Resume has three options: yes, no, and "ask" (None).
     resume = opts.resume if opts.resume is not None else \
@@ -516,7 +525,7 @@ def import_func(lib, config, opts, args):
     else:
         quiet_fallback = importer.action.SKIP
     import_files(lib, args, copy, write, autot, opts.logpath, art, threaded,
-                 color, delete, quiet, resume, quiet_fallback, singletons)
+                 color, delete, quiet, resume, quiet_fallback, singletons, interactive_autotag)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 
