@@ -326,7 +326,6 @@ def initial_lookup(config):
     while True:
         task = yield task
         if task.sentinel:
-            task = yield task
             continue
 
         log.debug('Looking up: %s' % task.path)
