@@ -204,10 +204,14 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
             os.path.join(self.libdir, self.lib.path_formats['default']+'.mp3')
         )
 
-    def test_apply_as_tracks_uses_singleton_path(self):
+    def test_apply_tracks_uses_singleton_path(self):
         coro = importer.apply_choices(_common.iconfig(self.lib))
         coro.next() # Prime coroutine.
-        self._call_apply_choice(coro, [self.i], importer.action.TRACKS)
+
+        task = importer.ImportTask.item_task(self.i)
+        task.set_choice(self.info['tracks'][0])
+        coro.send(task)
+
         self.assertExists(
             os.path.join(self.libdir, self.lib.path_formats['singleton']+'.mp3')
         )

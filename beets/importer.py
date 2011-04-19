@@ -232,16 +232,6 @@ class ImportTask(object):
             progress_set(self.toppath, self.path)
 
     # Logical decisions.
-    def should_create_album(self):
-        """Should an album structure be created for these items?"""
-        if not self.is_album:
-            return False
-        elif self.choice_flag in (action.APPLY, action.ASIS):
-            return True
-        elif self.choice_flag in (action.TRACKS, action.SKIP):
-            return False
-        else:
-            assert False
     def should_write_tags(self):
         """Should new info be written to the files' metadata?"""
         if self.choice_flag == action.APPLY:
@@ -258,7 +248,6 @@ class ImportTask(object):
         field be inferred from the plurality of track artists?
         """
         assert self.is_album
-        assert self.should_create_album()
         if self.choice_flag == action.APPLY:
             # Album artist comes from the info dictionary.
             return False
@@ -429,13 +418,13 @@ def apply_choices(config):
             old_paths = [os.path.realpath(syspath(item.path)) for item in items]
         for item in items:
             if config.copy:
-                item.move(lib, True, task.should_create_album())
+                item.move(lib, True, task.is_album)
             if config.write and task.should_write_tags():
                 item.write()
 
         # Add items to library. We consolidate this at the end to avoid
         # locking while we do the copying and tag updates.
-        if task.should_create_album():
+        if task.is_album:
             # Add an album.
             albuminfo = lib.add_album(task.items,
                                       infer_aa = task.should_infer_aa())
@@ -453,10 +442,11 @@ def apply_choices(config):
         lib.save()
 
         # Announce that we've added an album.
-        if task.should_create_album():
+        if task.is_album:
             plugins.send('album_imported', lib=lib, album=albuminfo)
         else:
-            plugins.send('item_imported', lib=lib, item=task.item)
+            for item in items:
+                plugins.send('item_imported', lib=lib, item=item)
 
         # Finally, delete old files.
         if config.copy and config.delete:
