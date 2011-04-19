@@ -127,7 +127,7 @@ class ImportConfig(object):
     _fields = ['lib', 'paths', 'resume', 'logfile', 'color', 'quiet',
                'quiet_fallback', 'copy', 'write', 'art', 'delete',
                'choose_match_func', 'should_resume_func', 'threaded',
-               'autot', 'singletons', 'interactive_autotag', 'choose_item_func']
+               'autot', 'singletons', 'timid', 'choose_item_func']
     def __init__(self, **kwargs):
         for slot in self._fields:
             setattr(self, slot, kwargs[slot])
@@ -330,7 +330,7 @@ def initial_lookup(config):
 
         log.debug('Looking up: %s' % task.path)
         try:
-            task.set_match(*autotag.tag_album(task.items, config))
+            task.set_match(*autotag.tag_album(task.items, config.timid))
         except autotag.AutotagError:
             task.set_null_match()
 
@@ -490,7 +490,7 @@ def item_lookup(config):
     task = None
     while True:
         task = yield task
-        task.set_item_match(*autotag.tag_item(task.item))
+        task.set_item_match(*autotag.tag_item(task.item, config.timid))
 
 def item_query(config):
     """A coroutine that queries the user for input on single-item

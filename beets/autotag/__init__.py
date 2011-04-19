@@ -441,7 +441,7 @@ def validate_candidate(items, tuple_dict, info):
 
     tuple_dict[info['album_id']] = dist, ordered, info
 
-def tag_album(items, config, search_artist=None, search_album=None):
+def tag_album(items, timid=False, search_artist=None, search_album=None):
     """Bundles together the functionality used to infer tags for a
     set of items comprised by an album. Returns everything relevant:
         - The current artist.
@@ -469,12 +469,12 @@ def tag_album(items, config, search_artist=None, search_album=None):
     id_info = match_by_id(items)
     if id_info:
         validate_candidate(items, out_tuples, id_info)
-        if out_tuples:
+        if out_tuples and not timid:
             # If we have a very good MBID match, return immediately.
             # Otherwise, this match will compete against metadata-based
             # matches.
             rec = recommendation(out_tuples.values())
-            if rec == RECOMMEND_STRONG and not config.interactive_autotag:
+            if rec == RECOMMEND_STRONG:
                 log.debug('ID match.')
                 return cur_artist, cur_album, out_tuples.values(), rec
     
@@ -515,7 +515,7 @@ def tag_album(items, config, search_artist=None, search_album=None):
     rec = recommendation(out_tuples)
     return cur_artist, cur_album, out_tuples, rec
 
-def tag_item(item, search_artist=None, search_title=None):
+def tag_item(item, timid=False, search_artist=None, search_title=None):
     """Attempts to find metadata for a single track. Returns a
     `(candidates, recommendation)` pair where `candidates` is a list
     of `(distance, track_info)` pairs. `search_artist` and 
@@ -533,7 +533,7 @@ def tag_item(item, search_artist=None, search_title=None):
             candidates.append((dist, track_info))
             # If this is a good match, then don't keep searching.
             rec = recommendation(candidates)
-            if rec == RECOMMEND_STRONG:
+            if rec == RECOMMEND_STRONG and not timid:
                 log.debug('Track ID match.')
                 return candidates, rec
     
