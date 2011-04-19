@@ -288,8 +288,9 @@ def track_for_id(trackid):
     dictionary or None if no track is found.
     """
     query = mbws.Query()
+    inc = mbws.TrackIncludes(artist=True)
     try:
-        track = _query_wrap(query.getTrackById, trackid)
+        track = _query_wrap(query.getTrackById, trackid, inc)
     except (mbws.ResourceNotFoundError, mbws.RequestError):
         return None
     return track_dict(track)
