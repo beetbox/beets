@@ -243,6 +243,15 @@ class DuplicateCheckTest(unittest.TestCase):
                                         self.i.album)
         self.assertTrue(res)
 
+    def test_duplicate_item(self):
+        res = importer._item_duplicate_check(self.lib, self.i.artist,
+                                             self.i.title)
+        self.assertTrue(res)
+
+    def test_different_item(self):
+        res = importer._item_duplicate_check(self.lib, 'xxx', 'yyy')
+        self.assertFalse(res)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

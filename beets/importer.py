@@ -79,7 +79,7 @@ def _reopen_lib(lib):
         return lib
 
 def _duplicate_check(lib, artist, album):
-    """Check whether the match already exists in the library."""
+    """Check whether an album already exists in the library."""
     if artist is None:
         # As-is import with no artist. Skip check.
         return False
@@ -90,6 +90,16 @@ def _duplicate_check(lib, artist, album):
         if album_cand.album == album:
             return True
     return False
+
+def _item_duplicate_check(lib, artist, title):
+    """Check whether an item already exists in the library."""
+    with lib.conn:
+        item_iter = lib.items(artist=artist, title=title)
+    try:
+        item_iter.next()
+    except StopIteration:
+        return False
+    return True
 
 # Utilities for reading and writing the beets progress file, which
 # allows long tagging tasks to be resumed when they pause (or crash).
@@ -484,12 +494,26 @@ def item_query(config):
     """A coroutine that queries the user for input on single-item
     lookups.
     """
+    lib = _reopen_lib(config.lib)
     task = None
     while True:
         task = yield task
         choice = config.choose_item_func(task, config)
         task.set_choice(choice)
         log_choice(config, task)
+
+        # Duplicate check.
+        if task.choice_flag in (action.ASIS, action.APPLY):
+            if choice is action.ASIS:
+                artist = task.item.artist
+                title = task.item.title
+            else:
+                artist = task.info['artist']
+                title = task.info['title']
+            if _item_duplicate_check(lib, artist, title):
+                tag_log(config.logfile, 'duplicate', task.item.path)
+                log.warn("This item is already in the library!")
+                task.set_choice(action.SKIP)
 
 def item_progress(config):
     """Skips the lookup and query stages in a non-autotagged singleton
