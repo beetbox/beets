@@ -164,6 +164,12 @@ class AutotagTest(unittest.TestCase):
         self.io.addinput('u')
         self._no_candidates_test(importer.action.ASIS)
 
+class ImportTest(unittest.TestCase):
+    def test_quiet_timid_disallowed(self):
+        self.assertRaises(ui.UserError, commands.import_files,
+                          None, [], False, False, False, None, False, False,
+                          False, False, True, False, None, False, True)
+
 class InputTest(unittest.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()

@@ -416,6 +416,10 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
         if not os.path.isdir(syspath(path)):
             raise ui.UserError('not a directory: ' + path)
 
+    # Check parameter consistency.
+    if quiet and timid:
+        raise ui.UserError("can't be both quiet and timid")
+
     # Open the log.
     if logpath:
         logfile = open(logpath, 'w')
