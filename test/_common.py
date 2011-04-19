@@ -81,6 +81,7 @@ def iconfig(lib, **kwargs):
         autot = True,
         singletons = False,
         choose_item_func = lambda x, y: importer.action.SKIP,
+        timid = False,
     )
     for k, v in kwargs.items():
         setattr(config, k, v)
