@@ -54,6 +54,15 @@ def tag_log(logfile, status, path):
     if logfile:
         print >>logfile, '%s %s' % (status, path)
 
+def log_choice(config, task):
+    """Logs the task's current choice if it should be logged.
+    """
+    path = task.path if task.is_album else task.item.path
+    if task.choice_flag is action.ASIS:
+        tag_log(config.logfile, 'asis', path)
+    elif task.choice_flag is action.SKIP:
+        tag_log(config.logfile, 'skip', path)
+
 def _reopen_lib(lib):
     """Because of limitations in SQLite, a given Library is bound to
     the thread in which it was created. This function reopens Library
@@ -206,12 +215,6 @@ class ImportTask(object):
         if choice in (action.SKIP, action.ASIS, action.TRACKS):
             self.choice_flag = choice
             self.info = None
-            if choice == action.SKIP:
-                # Items are no longer needed.
-                if self.is_album:
-                    self.items = None
-                else:
-                    self.item = None
         else:
             assert not isinstance(choice, action)
             if self.is_album:
@@ -339,6 +342,7 @@ def user_query(config):
         # Ask the user for a choice.
         choice = config.choose_match_func(task, config)
         task.set_choice(choice)
+        log_choice(config, task)
 
         # As-tracks: transition to singleton workflow.
         if choice is action.TRACKS:
@@ -355,12 +359,6 @@ def user_query(config):
                                      item_query(config), collector()))
             ipl.run_sequential()
             task = pipeline.multiple(item_tasks)
-
-        # Log certain choices.
-        if choice is action.ASIS:
-            tag_log(config.logfile, 'asis', task.path)
-        elif choice is action.SKIP:
-            tag_log(config.logfile, 'skip', task.path)
 
         # Check for duplicates if we have a match (or ASIS).
         if choice is action.ASIS or isinstance(choice, tuple):
@@ -491,6 +489,7 @@ def item_query(config):
         task = yield task
         choice = config.choose_item_func(task, config)
         task.set_choice(choice)
+        log_choice(config, task)
 
 def item_progress(config):
     """Skips the lookup and query stages in a non-autotagged singleton
