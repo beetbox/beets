@@ -527,7 +527,7 @@ def tag_item(item, timid=False, search_artist=None, search_title=None):
     # First, try matching by MusicBrainz ID.
     trackid = item.mb_trackid
     if trackid:
-        track_info = mb.track_by_id(item.mb_trackid)
+        track_info = mb.track_for_id(item.mb_trackid)
         if track_info:
             dist = track_distance(item, track_info, incl_artist=True)
             candidates.append((dist, track_info))
