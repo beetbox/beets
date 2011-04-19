@@ -344,7 +344,8 @@ def choose_match(task, config):
             search_artist, search_album = manual_search(False)
             try:
                 _, _, candidates, rec = \
-                    autotag.tag_album(task.items, search_artist, search_album)
+                    autotag.tag_album(task.items, config,
+                                      search_artist=search_artist, search_album=search_album)
             except autotag.AutotagError:
                 candidates, rec = None, None
         else:

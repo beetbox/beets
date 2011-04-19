@@ -441,7 +441,7 @@ def validate_candidate(items, tuple_dict, info):
 
     tuple_dict[info['album_id']] = dist, ordered, info
 
-def tag_album(items, search_artist=None, search_album=None):
+def tag_album(items, config, search_artist=None, search_album=None):
     """Bundles together the functionality used to infer tags for a
     set of items comprised by an album. Returns everything relevant:
         - The current artist.
@@ -474,7 +474,7 @@ def tag_album(items, search_artist=None, search_album=None):
             # Otherwise, this match will compete against metadata-based
             # matches.
             rec = recommendation(out_tuples.values())
-            if rec == RECOMMEND_STRONG:
+            if rec == RECOMMEND_STRONG and not config.interactive_autotag:
                 log.debug('ID match.')
                 return cur_artist, cur_album, out_tuples.values(), rec
     

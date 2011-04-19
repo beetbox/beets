@@ -330,7 +330,7 @@ def initial_lookup(config):
 
         log.debug('Looking up: %s' % task.path)
         try:
-            task.set_match(*autotag.tag_album(task.items))
+            task.set_match(*autotag.tag_album(task.items, config))
         except autotag.AutotagError:
             task.set_null_match()
 
