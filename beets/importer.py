@@ -178,6 +178,16 @@ class ImportTask(object):
         return obj
 
     @classmethod
+    def progress_sentinel(cls, toppath, path):
+        """Create a task indicating that a single directory in a larger
+        import has finished. This is only required for singleton
+        imports; progress is implied for album imports.
+        """
+        obj = cls(toppath, path)
+        obj.sentinel = True
+        return obj
+
+    @classmethod
     def item_task(cls, item):
         """Creates an ImportTask for a single item."""
         obj = cls()
@@ -239,9 +249,12 @@ class ImportTask(object):
         """Updates the progress state to indicate that this album has
         finished.
         """
-        if self.sentinel:
+        if self.sentinel and self.path is None:
+            # "Done" sentinel.
             progress_set(self.toppath, None)
-        else:
+        elif self.sentinel or self.is_album:
+            # "Directory progress" sentinel for singletons or a real
+            # album task, which implies the same.
             progress_set(self.toppath, self.path)
 
     # Logical decisions.
@@ -273,11 +286,9 @@ class ImportTask(object):
 
 # Full-album pipeline stages.
 
-def read_albums(config):
+def read_tasks(config):
     """A generator yielding all the albums (as ImportTask objects) found
-    in the user-specified list of paths. `progress` specifies whether
-    the resuming feature should be used. It may be True (resume if
-    possible), False (never resume), or None (ask).
+    in the user-specified list of paths.
     """
     # Look for saved progress.
     progress = config.resume is not False
@@ -313,7 +324,13 @@ def read_albums(config):
                     resume_dir = None
                 continue
 
-            yield ImportTask(toppath, path, items)
+            # Yield all the necessary tasks.
+            if config.singletons:
+                for item in items:
+                    yield ImportTask.item_task(item)
+                yield ImportTask.progress_sentinel(toppath, path)
+            else:
+                yield ImportTask(toppath, path, items)
 
         # Indicate the directory is finished.
         yield ImportTask.done_sentinel(toppath)
@@ -361,6 +378,7 @@ def user_query(config):
             def emitter():
                 for item in task.items:
                     yield ImportTask.item_task(item)
+                yield ImportTask.progress_sentinel(task.toppath, task.path)
             def collector():
                 while True:
                     item_task = yield
@@ -471,16 +489,6 @@ def apply_choices(config):
 
 # Singleton pipeline stages.
 
-def read_items(config):
-    """Reads individual items by recursively descending into a set of
-    directories. Generates ImportTask objects, each of which contains
-    a single item.
-    """
-    for toppath in config.paths:
-        for path, items in autotag.albums_in_dir(toppath):
-            for item in items:
-                yield ImportTask.item_task(item)
-
 def item_lookup(config):
     """A coroutine used to perform the initial MusicBrainz lookup for
     an item task.
@@ -488,6 +496,9 @@ def item_lookup(config):
     task = None
     while True:
         task = yield task
+        if task.sentinel:
+            continue
+
         task.set_item_match(*autotag.tag_item(task.item, config.timid))
 
 def item_query(config):
@@ -498,6 +509,9 @@ def item_query(config):
     task = None
     while True:
         task = yield task
+        if task.sentinel:
+            continue
+
         choice = config.choose_item_func(task, config)
         task.set_choice(choice)
         log_choice(config, task)
@@ -537,16 +551,15 @@ def run_import(**kwargs):
     config = ImportConfig(**kwargs)
     
     # Set up the pipeline.
+    stages = [read_tasks(config)]
     if config.singletons:
         # Singleton importer.
-        stages = [read_items(config)]
         if config.autot:
             stages += [item_lookup(config), item_query(config)]
         else:
             stages += [item_progress(config)]
     else:
         # Whole-album importer.
-        stages = [read_albums(config)]
         if config.autot:
             # Only look up and query the user when autotagging.
             stages += [initial_lookup(config), user_query(config)]
