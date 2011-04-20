@@ -328,7 +328,6 @@ class MediaField(object):
                     obj.mgfile.tags.add(frame)
             
             # Try to match on "owner" field.
-            #TODO reduce redundancy here
             elif style.key.startswith('UFID:'):
                 owner = style.key.split(':', 1)[1]
                 frames = obj.mgfile.tags.getall(style.key)

@@ -323,7 +323,8 @@ def apply_item_metadata(item, track_data):
     item.mb_trackid = track_data['id']
     if 'artist_id' in track_data:
         item.mb_artistid = track_data['artist_id']
-    #TODO clear out other data?
+    # At the moment, the other metadata is left intact (including album
+    # and track number). Perhaps these should be emptied?
 
 def apply_metadata(items, info):
     """Set the items' metadata to match the data given in info. The
