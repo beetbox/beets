@@ -73,6 +73,7 @@ class GstPlayer(object):
         """Callback for status updates from GStreamer."""
         if message.type == gst.MESSAGE_EOS:
             # file finished playing
+            self.player.set_state(gst.STATE_NULL)
             self.playing = False
             self.cached_time = None
             if self.finished_callback:
