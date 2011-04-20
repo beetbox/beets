@@ -74,6 +74,10 @@ SD_PATTERNS = [
     (r'\[.*?\]', 0.3),
     (r'(, )?(pt\.|part) .+', 0.2),
 ]
+# Replacements to use before testing distance.
+SD_REPLACE = [
+    (r'&', 'and'),
+]
 
 # Artist signals that indicate "various artists".
 VA_ARTISTS = (u'', u'various artists', u'va', u'unknown')
@@ -134,6 +138,11 @@ def string_dist(str1, str2):
             str1 = '%s %s' % (word, str1[:-len(word)-2])
         if str2.endswith(', %s' % word):
             str2 = '%s %s' % (word, str2[:-len(word)-2])
+
+    # Perform a couple of basic normalizing substitutions.
+    for pat, repl in SD_REPLACE:
+        str1 = re.sub(pat, repl, str1)
+        str2 = re.sub(pat, repl, str2)
     
     # Change the weight for certain string portions matched by a set
     # of regular expressions. We gradually change the strings and build

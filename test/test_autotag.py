@@ -403,10 +403,14 @@ class ApplyCompilationTest(unittest.TestCase):
 
     def test_mb_albumartistid_applied(self):
         autotag.apply_metadata(self.items, self.info)
-        self.assertEqual(self.items[0].mb_albumartistid, '89ad4ac3-39f7-470e-963a-56509c546377')
-        self.assertEqual(self.items[1].mb_albumartistid, '89ad4ac3-39f7-470e-963a-56509c546377')
-        self.assertEqual(self.items[0].mb_artistid, 'a05686fc-9db2-4c23-b99e-77f5db3e5282')
-        self.assertEqual(self.items[1].mb_artistid, '80b3cf5e-18fe-4c59-98c7-e5bb87210710')
+        self.assertEqual(self.items[0].mb_albumartistid,
+                         '89ad4ac3-39f7-470e-963a-56509c546377')
+        self.assertEqual(self.items[1].mb_albumartistid,
+                         '89ad4ac3-39f7-470e-963a-56509c546377')
+        self.assertEqual(self.items[0].mb_artistid,
+                         'a05686fc-9db2-4c23-b99e-77f5db3e5282')
+        self.assertEqual(self.items[1].mb_artistid,
+                         '80b3cf5e-18fe-4c59-98c7-e5bb87210710')
 
     def test_va_flag_cleared_does_not_set_comp(self):
         autotag.apply_metadata(self.items, self.info)
@@ -485,6 +489,10 @@ class StringDistanceTest(unittest.TestCase):
 
     def test_heuristic_does_not_harm_distance(self):
         dist = autotag.string_dist('Untitled', '[Untitled]')
+        self.assertEqual(dist, 0.0)
+
+    def test_ampersand_expansion(self):
+        dist = autotag.string_dist('And', '&')
         self.assertEqual(dist, 0.0)
 
 def suite():

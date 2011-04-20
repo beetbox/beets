@@ -33,6 +33,7 @@
   to the @listen decorator (Thanks again, Lugoues!)
 * In path formats, $albumartist now falls back to $artist (as well as
   the other way around).
+* When autotagging, "and" is considered equal to "&".
 * Fix some crashes when deleting files that don't exist.
 * Fix adding individual tracks in BPD.
 * Fix crash when ~/.beetsconfig does not exist.
