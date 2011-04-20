@@ -76,8 +76,10 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
     def show_album(artist, album):
         if artist:
             print_('    %s - %s' % (artist, album))
-        else:
+        elif album:
             print_('    %s' % album)
+        else:
+            print_('    (unknown album)')
 
     # Identify the album in question.
     if cur_artist != info['artist'] or \
