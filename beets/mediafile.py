@@ -492,6 +492,21 @@ class ImageField(object):
                 # Unsupported image type.
                 return None
 
+        elif obj.type == 'mp4':
+            if 'covr' in obj.mgfile:
+                covers = obj.mgfile['covr']
+                if covers:
+                    cover = covers[0]
+                    if cover.format == cover.FORMAT_JPEG:
+                        kind = imagekind.JPEG
+                    else:
+                        kind = imagekind.PNG
+                    # cover is an MP4Cover, which is a subclass of str.
+                    return (cover, kind)
+
+            # No cover found.
+            return None
+
         else:
             raise NotImplementedError()
 
@@ -520,6 +535,17 @@ class ImageField(object):
                 data = data,
             )
             obj.mgfile['APIC'] = picframe
+
+        elif obj.type == 'mp4':
+            if val is None and 'covr' in obj.mgfile:
+                del obj.mgfile['covr']
+            else:
+                if kind == imagekind.JPEG:
+                    fmt = mutagen.mp4.MP4Cover.FORMAT_JPEG
+                else:
+                    fmt = mutagen.mp4.MP4Cover.FORMAT_PNG
+                cover = mutagen.mp4.MP4Cover(data, fmt)
+                obj.mgfile['covr'] = [cover]
 
         else:
             raise NotImplementedError()
