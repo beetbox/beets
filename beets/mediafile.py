@@ -511,8 +511,22 @@ class ImageField(object):
             # Here we're assuming everything but MP3 and MPEG-4 uses
             # the Xiph/Vorbis Comments standard. This may not be valid.
             # http://wiki.xiph.org/VorbisComment#Cover_art
-            #TODO read legacy COVERART tags
+
             if 'metadata_block_picture' not in obj.mgfile:
+                # Try legacy COVERART tags.
+                if 'coverart' in obj.mgfile and obj.mgfile['coverart']:
+                    data = base64.b64decode(obj.mgfile['coverart'][0])
+                    if 'coverartmime' in obj.mgfile and \
+                            obj.mgfile['coverartmime']:
+                        mime = obj.mgfile['coverartmime'][0]
+                        if mime in mime2kind:
+                            kind = mime2kind[mime]
+                        else:
+                            return None
+                    else:
+                        # Default to JPEG.
+                        kind = imagekind.JPEG
+                    return (data, kind)
                 return None
 
             for data in obj.mgfile["metadata_block_picture"]:
@@ -568,10 +582,19 @@ class ImageField(object):
                 obj.mgfile['covr'] = [cover]
 
         else:
-            # Again, assuming Vorbis Comments.
-            if val is None and 'metadata_block_picture' in obj.mgfile:
-                del obj.mgfile['metadata_block_picture']
-            else:
+            # Again, assuming Vorbis Comments standard.
+
+            # Strip all art, including legacy COVERART.
+            if 'metadata_block_picture' in obj.mgfile:
+                if 'metadata_block_picture' in obj.mgfile:
+                    del obj.mgfile['metadata_block_picture']
+                if 'coverart' in obj.mgfile:
+                    del obj.mgfile['coverart']
+                if 'coverartmime' in obj.mgfile:
+                    del obj.mgfile['coverartmime']
+
+            # Add new art if provided.
+            if val is not None:
                 mime = 'image/jpeg' if kind == imagekind.JPEG else 'image/png'
                 pic = mutagen.flac.Picture()
                 pic.data = data
