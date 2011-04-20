@@ -465,6 +465,65 @@ class CompositeDateField(object):
         self.month_field.__set__(obj, val.month)
         self.day_field.__set__(obj, val.day)
 
+imagekind = enum('JPEG', 'PNG', name='imagekind')
+
+class ImageField(object):
+    """A descriptor providing access to a file's embedded album art.
+    Returns a `(data, kind)` pair where `data` is a bytesting and `kind`
+    is an `imagekind` (either JPEG or PNG). If no album art is present,
+    returns `None` instead of a tuple.
+    """
+    def __get__(self, obj, owner):
+        if obj.type == 'mp3':
+            # Look for APIC frames.
+            for frame in obj.mgfile.tags.values():
+                if frame.FrameID == 'APIC':
+                    picframe = frame
+                    break
+            else:
+                # No APIC frame.
+                return None
+
+            if picframe.mime == 'image/jpeg':
+                return (picframe.data, imagekind.JPEG)
+            elif picframe.mime == 'image/png':
+                return (picframe.data, imagekind.PNG)
+            else:
+                # Unsupported image type.
+                return None
+
+        else:
+            raise NotImplementedError()
+
+    def __set__(self, obj, val):
+        if val is not None:
+            try:
+                data, kind = val
+            except (TypeError, ValueError):
+                raise ValueError('value must be a (data, kind) pair')
+            if not isinstance(kind, imagekind):
+                raise ValueError('kind must be an imagekind')
+
+        if obj.type == 'mp3':
+            # Clear all APIC frames.
+            obj.mgfile.tags.delall('APIC')
+            if val is None:
+                # If we're clearing the image, we're done.
+                return
+
+            mime = 'image/jpeg' if kind == imagekind.JPEG else 'image/png'
+            picframe = mutagen.id3.APIC(
+                encoding = 3,
+                mime = mime,
+                type = 3, # front cover
+                desc = u'',
+                data = data,
+            )
+            obj.mgfile['APIC'] = picframe
+
+        else:
+            raise NotImplementedError()
+
 
 # The file (a collection of fields).
 
@@ -670,18 +729,9 @@ class MediaFile(object):
                     as_type=str),
                 etc = StorageStyle('musicbrainz_albumtype')
             )
-    albumart = MediaField(
-                mp3 = StorageStyle('APIC', id3_frame_field=u'data',
-                                   as_type=str),
-                mp4 = StorageStyle('covr', as_type=str),
-                etc = StorageStyle('picture', as_type=str)
-            )
-    albumart_mime = MediaField(
-                mp3 = StorageStyle('APIC', id3_desc=u'Cover',
-                                   id3_frame_field=u'mime'),
-                mp4 = None,
-                etc = None
-            )
+
+    # Album art.
+    art = ImageField()
 
     # MusicBrainz IDs.
     mb_trackid = MediaField(
