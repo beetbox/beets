@@ -37,6 +37,7 @@ import mutagen.flac
 import mutagen.monkeysaudio
 import datetime
 import re
+import base64
 from beets.util.enumeration import enum
 
 __all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
@@ -466,6 +467,7 @@ class CompositeDateField(object):
         self.day_field.__set__(obj, val.day)
 
 imagekind = enum('JPEG', 'PNG', name='imagekind')
+mime2kind = {'image/jpeg': imagekind.JPEG, 'image/png': imagekind.PNG}
 
 class ImageField(object):
     """A descriptor providing access to a file's embedded album art.
@@ -484,10 +486,8 @@ class ImageField(object):
                 # No APIC frame.
                 return None
 
-            if picframe.mime == 'image/jpeg':
-                return (picframe.data, imagekind.JPEG)
-            elif picframe.mime == 'image/png':
-                return (picframe.data, imagekind.PNG)
+            if picframe.mime in mime2kind:
+                return (picframe.data, mime2kind[picframe.mime])
             else:
                 # Unsupported image type.
                 return None
@@ -508,7 +508,27 @@ class ImageField(object):
             return None
 
         else:
-            raise NotImplementedError()
+            # Here we're assuming everything but MP3 and MPEG-4 uses
+            # the Xiph/Vorbis Comments standard. This may not be valid.
+            # http://wiki.xiph.org/VorbisComment#Cover_art
+            #TODO read legacy COVERART tags
+            if 'metadata_block_picture' not in obj.mgfile:
+                return None
+
+            for data in obj.mgfile["metadata_block_picture"]:
+                try:
+                    pic = mutagen.flac.Picture(base64.b64decode(data))
+                    break
+                except TypeError:
+                    pass
+            else:
+                return None
+
+            if pic.mime in mime2kind:
+                return (pic.data, mime2kind[pic.mime])
+            else:
+                # Unsupported.
+                return None
 
     def __set__(self, obj, val):
         if val is not None:
@@ -548,7 +568,17 @@ class ImageField(object):
                 obj.mgfile['covr'] = [cover]
 
         else:
-            raise NotImplementedError()
+            # Again, assuming Vorbis Comments.
+            if val is None and 'metadata_block_picture' in obj.mgfile:
+                del obj.mgfile['metadata_block_picture']
+            else:
+                mime = 'image/jpeg' if kind == imagekind.JPEG else 'image/png'
+                pic = mutagen.flac.Picture()
+                pic.data = data
+                pic.mime = mime
+                obj.mgfile['metadata_block_picture'] = [
+                    base64.b64encode(pic.write())
+                ]
 
 
 # The file (a collection of fields).
