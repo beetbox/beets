@@ -1,5 +1,5 @@
 import logging
-from email.mime.image import MIMEImage
+import imghdr
 from beets.plugins import BeetsPlugin
 from beets import mediafile
 
@@ -14,16 +14,15 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 def album_imported(lib, album):
     if album.artpath:
         data = open(album.artpath, 'rb').read()
-        img = MIMEImage(data)
-        mime_img = img.get_content_subtype()
+        kindstr = imghdr.what(None, data)
 
-        if mime_img == 'jpeg':
+        if kindstr == 'jpeg':
             kind = mediafile.imagekind.JPEG
-        elif mime_img == 'png':
+        elif kindstr == 'png':
             kind = mediafile.imagekind.PNG
         else:
             log.error('A file of type %s is not allowed as coverart.'
-                        % mime_img)
+                        % kindstr)
             return
 
         # Add art to each file.
