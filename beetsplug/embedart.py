@@ -84,7 +84,12 @@ def extract(lib, outpath, query):
     # Extract the art.
     print syspath(item.path)
     mf = mediafile.MediaFile(syspath(item.path))
-    data, kind = mf.art
+    art = mf.art
+    if not art:
+        log.error('No album art present in %s - %s.' %
+                  (item.artist, item.title))
+        return
+    data, kind = art
 
     # Add an extension to the filename.
     if kind == mediafile.imagekind.JPEG:
