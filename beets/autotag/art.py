@@ -35,6 +35,7 @@ def art_for_asin(asin):
         # Fetch the image.
         url = AMAZON_URL % (asin, index)
         try:
+            log.debug('Downloading art: %s' % url)
             fn, headers = urllib.urlretrieve(url)
         except IOError:
             log.debug('error fetching art at URL %s' % url)
@@ -42,6 +43,7 @@ def art_for_asin(asin):
             
         # Make sure it's actually an image.
         if headers.gettype() == AMAZON_CONTENT_TYPE:
+            log.debug('Downloaded art to: %s' % fn)
             return fn
 
 
@@ -52,8 +54,10 @@ def art_for_album(album):
     to downloaded art for the album (or None if no art is found).
     """
     if album['asin']:
+        log.debug('Fetching album art for ASIN %s.' % album['asin'])
         return art_for_asin(album['asin'])
     else:
+        log.debug('No ASIN available: no art found.')
         return None
 
 
