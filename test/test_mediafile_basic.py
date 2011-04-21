@@ -62,7 +62,9 @@ def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
             shutil.copy(path, self.tpath)
             
             # generate the new value we'll try storing
-            if type(correct_dict[field]) is unicode:
+            if field == 'art':
+                self.value = ('xxx', beets.mediafile.imagekind.PNG)
+            elif type(correct_dict[field]) is unicode:
                 self.value = u'TestValue: ' + field
             elif type(correct_dict[field]) is int:
                 self.value = correct_dict[field] + 42
@@ -152,6 +154,7 @@ correct_dicts = {
         'mb_trackid': '8b882575-08a5-4452-a7a7-cbb8a1531f9e',
         'mb_albumid': '9e873859-8aa4-4790-b985-5a953e8ef628',
         'mb_artistid':'7cf0ea9d-86b9-4dad-ba9e-2355a64899ea',
+        'art':        None,
     },
 
     # Additional coverage for common cases when "total" fields are unset.
