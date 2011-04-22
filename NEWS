@@ -42,6 +42,7 @@
 * Fix some crashes when deleting files that don't exist.
 * Fix adding individual tracks in BPD.
 * Fix crash when ~/.beetsconfig does not exist.
+* Fix occasional BPD crashes with "broken pipe" errors.
 
 1.0b7
 -----

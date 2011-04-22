@@ -9,6 +9,8 @@ import socket
 import select
 import sys
 import types
+import errno
+import traceback
 
 
 # Basic events used for thread scheduling.
@@ -162,8 +164,19 @@ def run(root_coro):
             # Wait and fire.
             event2coro = dict((v,k) for k,v in threads.iteritems())
             for event in _event_select(threads.values()):
-                value = event.fire()
-                advance_thread(event2coro[event], value)
+                try:
+                    value = event.fire()
+                except socket.error, exc:
+                    if isinstance(exc.args, tuple) and \
+                            exc.args[0] == errno.EPIPE:
+                        # Broken pipe. Remote host disconnected.
+                        pass
+                    else:
+                        traceback.print_exc()
+                    # Abort the coroutine.
+                    threads[event2coro[event]] = ReturnEvent(None)
+                else:
+                    advance_thread(event2coro[event], value)
     
         except ThreadException, te:
             # Exception raised from inside a thread.
