@@ -43,6 +43,7 @@
 * Fix adding individual tracks in BPD.
 * Fix crash when ~/.beetsconfig does not exist.
 * Fix occasional BPD crashes with "broken pipe" errors.
+* Fix memory leak in BPD (really a leak in Bluelet).
 
 1.0b7
 -----
