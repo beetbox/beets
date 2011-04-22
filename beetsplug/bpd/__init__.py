@@ -550,6 +550,12 @@ class BaseServer(object):
         index = self._id_to_index(track_id)
         return self.cmd_seek(conn, index, pos)
 
+    def cmd_profile(self, conn):
+        """Memory profiling for debugging."""
+        from guppy import hpy
+        heap = hpy().heap()
+        print heap
+
 class Connection(object):
     """A connection between a client and the server. Handles input and
     output from and to the client.
