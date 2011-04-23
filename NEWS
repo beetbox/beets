@@ -26,7 +26,7 @@
 * A new "timid mode" in the importer asks the user every time, even
   when it makes a match with very high confidence. The "-t" flag on
   the command line and the "import_timid" config option control this
-  mode.
+  mode. (Thanks to mdecker on GitHub!)
 * The multithreaded importer should now abort (either by selecting
   aBort or by typing ^C) much more quickly. Previously, it would try
   to get a lot of work done before quitting; now it gives up as soon
