@@ -59,14 +59,14 @@ class Enumeration(type):
     def __init__(cls, name, bases, dic):
         super(Enumeration, cls).__init__(name, bases, dic)
         
-        if not hasattr(cls, 'values'):
+        if 'values' not in dic:
             # Do nothing if no values are provided (i.e., with
             # Enumerated itself).
             return
         
         # May be called with a single string, in which case we split on
         # whitespace for convenience.
-        values = cls.values
+        values = dic['values']
         if isinstance(values, basestring):
             values = values.split()
         
