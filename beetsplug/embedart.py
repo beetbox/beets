@@ -54,7 +54,14 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             extract(lib, outpath, ui.make_query(args))
         extract_cmd.func = extract_func
 
-        return [embed_cmd, extract_cmd]
+        # Clear command.
+        clear_cmd = ui.Subcommand('clearart',
+                                  help='remove images from file metadata')
+        def clear_func(lib, config, opts, args):
+            clear(lib, ui.make_query(args))
+        clear_cmd.func = clear_func
+
+        return [embed_cmd, extract_cmd, clear_cmd]
 
 # "embedart" command.
 def embed(lib, imagepath, query):
@@ -81,7 +88,6 @@ def extract(lib, outpath, query):
         return
 
     # Extract the art.
-    print syspath(item.path)
     mf = mediafile.MediaFile(syspath(item.path))
     art = mf.art
     if not art:
@@ -101,6 +107,15 @@ def extract(lib, outpath, query):
              (item.artist, item.title, outpath))
     with open(syspath(outpath), 'wb') as f:
         f.write(art)
+
+# "clearart" command.
+def clear(lib, query):
+    log.info('Clearing album art from items:')
+    for item in lib.items(query=query):
+        log.info(u'%s - %s' % (item.artist, item.title))
+        mf = mediafile.MediaFile(syspath(item.path))
+        mf.art = None
+        mf.save()
 
 # Automatically embed art into imported albums.
 @EmbedCoverArtPlugin.listen('album_imported')
