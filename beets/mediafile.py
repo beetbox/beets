@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -38,6 +38,7 @@ import mutagen.monkeysaudio
 import datetime
 import re
 import base64
+import imghdr
 from beets.util.enumeration import enum
 
 __all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
@@ -466,15 +467,35 @@ class CompositeDateField(object):
         self.month_field.__set__(obj, val.month)
         self.day_field.__set__(obj, val.day)
 
-imagekind = enum('JPEG', 'PNG', name='imagekind')
-mime2kind = {'image/jpeg': imagekind.JPEG, 'image/png': imagekind.PNG}
-
 class ImageField(object):
     """A descriptor providing access to a file's embedded album art.
-    Returns a `(data, kind)` pair where `data` is a bytesting and `kind`
-    is an `imagekind` (either JPEG or PNG). If no album art is present,
-    returns `None` instead of a tuple.
+    Holds a bytestring reflecting the image data. The image should
+    either be a JPEG or a PNG for cross-format compatibility. It's
+    probably a bad idea to use anything but these two formats.
     """
+    @classmethod
+    def _mime(cls, data):
+        """Return the MIME type (either image/png or image/jpeg) of the
+        image data (a bytestring).
+        """
+        kind = imghdr.what(None, h=data)
+        if kind == 'png':
+            return 'image/png'
+        else:
+            # Currently just fall back to JPEG.
+            return 'image/jpeg'
+
+    @classmethod
+    def _mp4kind(cls, data):
+        """Return the MPEG-4 image type code of the data. If the image
+        is not a PNG or JPEG, JPEG is assumed.
+        """
+        kind = imghdr.what(None, h=data)
+        if kind == 'png':
+            return mutagen.mp4.MP4Cover.FORMAT_PNG
+        else:
+            return mutagen.mp4.MP4Cover.FORMAT_JPEG
+
     def __get__(self, obj, owner):
         if obj.type == 'mp3':
             # Look for APIC frames.
@@ -486,23 +507,15 @@ class ImageField(object):
                 # No APIC frame.
                 return None
 
-            if picframe.mime in mime2kind:
-                return (picframe.data, mime2kind[picframe.mime])
-            else:
-                # Unsupported image type.
-                return None
+            return picframe.data
 
         elif obj.type == 'mp4':
             if 'covr' in obj.mgfile:
                 covers = obj.mgfile['covr']
                 if covers:
                     cover = covers[0]
-                    if cover.format == cover.FORMAT_JPEG:
-                        kind = imagekind.JPEG
-                    else:
-                        kind = imagekind.PNG
                     # cover is an MP4Cover, which is a subclass of str.
-                    return (cover, kind)
+                    return cover
 
             # No cover found.
             return None
@@ -515,18 +528,7 @@ class ImageField(object):
             if 'metadata_block_picture' not in obj.mgfile:
                 # Try legacy COVERART tags.
                 if 'coverart' in obj.mgfile and obj.mgfile['coverart']:
-                    data = base64.b64decode(obj.mgfile['coverart'][0])
-                    if 'coverartmime' in obj.mgfile and \
-                            obj.mgfile['coverartmime']:
-                        mime = obj.mgfile['coverartmime'][0]
-                        if mime in mime2kind:
-                            kind = mime2kind[mime]
-                        else:
-                            return None
-                    else:
-                        # Default to JPEG.
-                        kind = imagekind.JPEG
-                    return (data, kind)
+                    return base64.b64decode(obj.mgfile['coverart'][0])
                 return None
 
             for data in obj.mgfile["metadata_block_picture"]:
@@ -538,20 +540,12 @@ class ImageField(object):
             else:
                 return None
 
-            if pic.mime in mime2kind:
-                return (pic.data, mime2kind[pic.mime])
-            else:
-                # Unsupported.
-                return None
+            return pic.data
 
     def __set__(self, obj, val):
         if val is not None:
-            try:
-                data, kind = val
-            except (TypeError, ValueError):
-                raise ValueError('value must be a (data, kind) pair')
-            if not isinstance(kind, imagekind):
-                raise ValueError('kind must be an imagekind')
+            if not isinstance(val, str):
+                raise ValueError('value must be a byte string or None')
 
         if obj.type == 'mp3':
             # Clear all APIC frames.
@@ -560,25 +554,21 @@ class ImageField(object):
                 # If we're clearing the image, we're done.
                 return
 
-            mime = 'image/jpeg' if kind == imagekind.JPEG else 'image/png'
             picframe = mutagen.id3.APIC(
                 encoding = 3,
-                mime = mime,
+                mime = self._mime(val),
                 type = 3, # front cover
                 desc = u'',
-                data = data,
+                data = val,
             )
             obj.mgfile['APIC'] = picframe
 
         elif obj.type == 'mp4':
-            if val is None and 'covr' in obj.mgfile:
-                del obj.mgfile['covr']
+            if val is None:
+                if 'covr' in obj.mgfile:
+                    del obj.mgfile['covr']
             else:
-                if kind == imagekind.JPEG:
-                    fmt = mutagen.mp4.MP4Cover.FORMAT_JPEG
-                else:
-                    fmt = mutagen.mp4.MP4Cover.FORMAT_PNG
-                cover = mutagen.mp4.MP4Cover(data, fmt)
+                cover = mutagen.mp4.MP4Cover(val, self._mp4kind(val))
                 obj.mgfile['covr'] = [cover]
 
         else:
@@ -595,10 +585,9 @@ class ImageField(object):
 
             # Add new art if provided.
             if val is not None:
-                mime = 'image/jpeg' if kind == imagekind.JPEG else 'image/png'
                 pic = mutagen.flac.Picture()
-                pic.data = data
-                pic.mime = mime
+                pic.data = val
+                pic.mime = self._mime(val)
                 obj.mgfile['metadata_block_picture'] = [
                     base64.b64encode(pic.write())
                 ]
