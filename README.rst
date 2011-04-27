@@ -15,14 +15,24 @@ Here's an example of beets' brainy tag corrector doing its thing::
    * White Light Generation -> Whitelightgenerator
    * All the Way -> All the Way...
 
-Because beets is designed as a library, you can easily write Python programs
-that manipulate your music for you. Report tracks encoded at less than
-192kbps? Done. Find albums you're missing from bands you like? Convert
-everything to Title Case once and for all? Done and done.
+Because beets is designed as a library, it can do almost anything you can
+imagine for your music collection. Via `plugins`_, beets becomes a panacea:
 
-Beets also includes a music player that speaks the MPD protocol, so you can
-play music in your beets library using a staggering variety of interfaces.
+- Embed and extract album art from files' metadata.
+- Listen to your library with a music player that speaks the `MPD`_ protocol
+  and works with a staggering variety of interfaces.
+- Fetch lyrics for all your songs from databases on the Web.
+- Manage your `MusicBrainz music collection`_.
+- Analyze music files' metadata from the command line.
 
+If beets doesn't do what you want yet, `writing your own plugin`_ is
+shockingly simple if you know a little Python.
+
+.. _plugins: http://code.google.com/p/beets/wiki/Plugins
+.. _MPD: http://mpd.wikia.com/
+.. _MusicBrainz music collection: http://musicbrainz.org/show/collection/
+.. _writing your own plugin:
+    http://code.google.com/p/beets/wiki/Plugins#Writing_Plugins
 
 Read More
 ---------
