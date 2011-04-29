@@ -63,7 +63,7 @@ def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
             
             # generate the new value we'll try storing
             if field == 'art':
-                self.value = ('xxx', beets.mediafile.imagekind.PNG)
+                self.value = 'xxx'
             elif type(correct_dict[field]) is unicode:
                 self.value = u'TestValue: ' + field
             elif type(correct_dict[field]) is int:

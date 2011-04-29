@@ -450,22 +450,26 @@ def apply_choices(config):
 
         # Add items to library. We consolidate this at the end to avoid
         # locking while we do the copying and tag updates.
-        if task.is_album:
-            # Add an album.
-            albuminfo = lib.add_album(task.items,
-                                      infer_aa = task.should_infer_aa())
-        else:
-            # Add tracks.
-            for item in items:
-                lib.add(item)
-        lib.save()
+        try:
+            if task.is_album:
+                # Add an album.
+                albuminfo = lib.add_album(task.items,
+                                          infer_aa = task.should_infer_aa())
+            else:
+                # Add tracks.
+                for item in items:
+                    lib.add(item)
+        finally:
+            lib.save()
 
         # Get album art if requested.
         if config.art and task.should_fetch_art():
             artpath = beets.autotag.art.art_for_album(task.info)
             if artpath:
-                albuminfo.set_art(artpath)
-        lib.save()
+                try:
+                    albuminfo.set_art(artpath)
+                finally:
+                    lib.save()
 
         # Announce that we've added an album.
         if task.is_album:

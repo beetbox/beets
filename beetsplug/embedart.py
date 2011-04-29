@@ -13,12 +13,7 @@ def _embed(path, items):
     """
     data = open(syspath(path), 'rb').read()
     kindstr = imghdr.what(None, data)
-
-    if kindstr == 'jpeg':
-        kind = mediafile.imagekind.JPEG
-    elif kindstr == 'png':
-        kind = mediafile.imagekind.PNG
-    else:
+    if kindstr not in ('jpeg', 'png'):
         log.error('A file of type %s is not allowed as coverart.' % kindstr)
         return
 
@@ -26,7 +21,7 @@ def _embed(path, items):
     log.debug('Embedding album art.')
     for item in items:
         f = mediafile.MediaFile(syspath(item.path))
-        f.art = (data, kind)
+        f.art = data
         f.save()
 
 options = {
@@ -59,7 +54,14 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             extract(lib, outpath, ui.make_query(args))
         extract_cmd.func = extract_func
 
-        return [embed_cmd, extract_cmd]
+        # Clear command.
+        clear_cmd = ui.Subcommand('clearart',
+                                  help='remove images from file metadata')
+        def clear_func(lib, config, opts, args):
+            clear(lib, ui.make_query(args))
+        clear_cmd.func = clear_func
+
+        return [embed_cmd, extract_cmd, clear_cmd]
 
 # "embedart" command.
 def embed(lib, imagepath, query):
@@ -86,26 +88,34 @@ def extract(lib, outpath, query):
         return
 
     # Extract the art.
-    print syspath(item.path)
     mf = mediafile.MediaFile(syspath(item.path))
     art = mf.art
     if not art:
         log.error('No album art present in %s - %s.' %
                   (item.artist, item.title))
         return
-    data, kind = art
 
     # Add an extension to the filename.
-    if kind == mediafile.imagekind.JPEG:
-        outpath += '.jpg'
-    else:
-        outpath += '.png'
+    ext = imghdr.what(None, h=art)
+    if not ext:
+        log.error('Unknown image type.')
+        return
+    outpath += '.' + ext
 
     log.info('Extracting album art from: %s - %s\n'
              'To: %s' % \
              (item.artist, item.title, outpath))
     with open(syspath(outpath), 'wb') as f:
-        f.write(data)
+        f.write(art)
+
+# "clearart" command.
+def clear(lib, query):
+    log.info('Clearing album art from items:')
+    for item in lib.items(query=query):
+        log.info(u'%s - %s' % (item.artist, item.title))
+        mf = mediafile.MediaFile(syspath(item.path))
+        mf.art = None
+        mf.save()
 
 # Automatically embed art into imported albums.
 @EmbedCoverArtPlugin.listen('album_imported')
