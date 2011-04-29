@@ -385,8 +385,8 @@ def choose_item(task, config):
         elif choice == importer.action.MANUAL:
             # Continue in the loop with a new set of candidates.
             search_artist, search_title = manual_search(False)
-            candidates, rec = autotag.tag_item(task.item, search_artist,
-                                               search_title)
+            candidates, rec = autotag.tag_item(task.item, config.timid,
+                                               search_artist, search_title)
         else:
             # Chose a candidate.
             assert not isinstance(choice, importer.action)
