@@ -1171,7 +1171,7 @@ class Album(BaseAlbum):
         oldart = self.artpath
         artdest = self.art_destination(path)
         if oldart == artdest:
-            os.soft_remove(oldart)
+            util.soft_remove(oldart)
         
         shutil.copyfile(syspath(path), syspath(artdest))
         self.artpath = artdest
