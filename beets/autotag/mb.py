@@ -166,22 +166,24 @@ def find_releases(criteria, limit=SEARCH_LIMIT):
             criteria['arid'] = SPECIAL_CASE_ARTISTS[artist]
     
     # Build the filter and send the query.
-    query = _lucene_query(criteria)
-    log.debug('album query: %s' % query)
-    return get_releases(limit=limit, query=query)
+    if any(criteria.itervalues()):
+        query = _lucene_query(criteria)
+        log.debug('album query: %s' % query)
+        return get_releases(limit=limit, query=query)
 
 def find_tracks(criteria, limit=SEARCH_LIMIT):
     """Get a sequence of track dictionaries from MusicBrainz that match
     `criteria`, a search term dictionary similar to the one passed to
     `find_releases`.
     """
-    query = _lucene_query(criteria)
-    log.debug('track query: %s' % query)
-    filt = mbws.TrackFilter(limit=limit, query=query)
-    results = _query_wrap(mbws.Query().getTracks, filter=filt)
-    for result in results:
-        track = result.track
-        yield track_dict(track)
+    if any(criteria.itervalues()):
+        query = _lucene_query(criteria)
+        log.debug('track query: %s' % query)
+        filt = mbws.TrackFilter(limit=limit, query=query)
+        results = _query_wrap(mbws.Query().getTracks, filter=filt)
+        for result in results:
+            track = result.track
+            yield track_dict(track)
 
 def track_dict(track):
     """Produces a dictionary summarizing a MusicBrainz `Track` object.

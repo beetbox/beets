@@ -1,5 +1,6 @@
 1.0b9
 -----
+* Fix crash when autotagging files with no metadata.
 
 1.0b8
 -----
