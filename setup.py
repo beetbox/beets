@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -22,7 +22,7 @@ def _read(fn):
     return open(path).read()
 
 setup(name='beets',
-      version='1.0b8',
+      version='1.0b9',
       description='music tagger and library organizer',
       author='Adrian Sampson',
       author_email='adrian@radbox.org',
