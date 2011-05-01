@@ -27,7 +27,10 @@ def info(paths):
     for name, _, _, mffield in library.ITEM_FIELDS:
         if mffield:
             fields.append(name)
-    maxwidth = max(len(name) for name in fields)
+
+    # Line format.
+    other_fields = ['album art']
+    maxwidth = max(len(name) for name in fields + other_fields)
     lineformat = u'{{:>{0}}}: {{}}'.format(maxwidth)
 
     first = True
@@ -42,8 +45,13 @@ def info(paths):
         except mediafile.UnreadableFileError:
             ui.print_('cannot read file')
             continue
+
+        # Basic fields.
         for name in fields:
             ui.print_(lineformat.format(name, getattr(mf, name)))
+        # Extra stuff.
+        ui.print_(lineformat.format('album art', mf.art is not None))
+
 
         first = False
 
