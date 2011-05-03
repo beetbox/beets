@@ -2,6 +2,10 @@
 -----
 * Prompts in the importer interface are now colorized for easy
   reading. The default option is always highlighted.
+* The import logger has been improved for "always-on" use. First,
+  it is now possible to specify a log file in .beetsconfig. Also,
+  logs are now appended rather than overwritten and contain
+  timestamps.
 * Fix crash when autotagging files with no metadata.
 
 1.0b8

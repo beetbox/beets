@@ -19,6 +19,7 @@ from __future__ import with_statement # Python 2.5
 import logging
 import sys
 import os
+import time
 
 from beets import ui
 from beets.ui import print_
@@ -426,7 +427,8 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
     # Open the log.
     if logpath:
         logpath = normpath(logpath)
-        logfile = open(syspath(logpath), 'w')
+        logfile = open(syspath(logpath), 'a')
+        print >>logfile, 'import started', time.asctime()
     else:
         logfile = None
 
@@ -458,6 +460,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
     
     # If we were logging, close the file.
     if logfile:
+        print >>logfile, ''
         logfile.close()
 
     # Emit event.
