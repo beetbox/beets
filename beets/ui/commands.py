@@ -26,7 +26,7 @@ from beets import autotag
 import beets.autotag.art
 from beets import plugins
 from beets import importer
-from beets.util import syspath
+from beets.util import syspath, normpath
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -425,7 +425,8 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
 
     # Open the log.
     if logpath:
-        logfile = open(logpath, 'w')
+        logpath = normpath(logpath)
+        logfile = open(syspath(logpath), 'w')
     else:
         logfile = None
 
@@ -516,6 +517,8 @@ def import_func(lib, config, opts, args):
     timid = opts.timid if opts.timid is not None else \
         ui.config_val(config, 'beets', 'import_timid',
             DEFAULT_IMPORT_TIMID, bool)
+    logpath = opts.logpath if opts.logpath is not None else \
+        ui.config_val(config, 'beets', 'import_log', None)
 
     # Resume has three options: yes, no, and "ask" (None).
     resume = opts.resume if opts.resume is not None else \
@@ -532,7 +535,7 @@ def import_func(lib, config, opts, args):
         quiet_fallback = importer.action.ASIS
     else:
         quiet_fallback = importer.action.SKIP
-    import_files(lib, args, copy, write, autot, opts.logpath, art, threaded,
+    import_files(lib, args, copy, write, autot, logpath, art, threaded,
                  color, delete, quiet, resume, quiet_fallback, singletons,
                  timid)
 import_cmd.func = import_func
