@@ -282,6 +282,11 @@ class ImportTask(object):
             return True
         else:
             assert False
+    def should_skip(self):
+        """After a choice has been made, returns True if this is a
+        sentinel or it has been marked for skipping.
+        """
+        return self.sentinel or self.choice_flag == action.SKIP
 
 
 # Full-album pipeline stages.
@@ -420,17 +425,13 @@ def show_progress(config):
         
 def apply_choices(config):
     """A coroutine for applying changes to albums during the autotag
-    process. The parameters to the generator control the behavior of
-    the import. The coroutine accepts ImportTask objects and yields
-    nothing.
+    process.
     """
     lib = _reopen_lib(config.lib)
+    task = None
     while True:    
-        task = yield
-        # Don't do anything if we're skipping the album or we're done.
-        if task.sentinel or task.choice_flag == action.SKIP:
-            if config.resume is not False:
-                task.save_progress()
+        task = yield task
+        if task.should_skip():
             continue
 
         # Change metadata, move, and copy.
@@ -441,7 +442,8 @@ def apply_choices(config):
                 autotag.apply_item_metadata(task.item, task.info)
         items = task.items if task.is_album else [task.item]
         if config.copy and config.delete:
-            old_paths = [os.path.realpath(syspath(item.path)) for item in items]
+            task.old_paths = [os.path.realpath(syspath(item.path))
+                              for item in items]
         for item in items:
             if config.copy:
                 item.move(lib, True, task.is_album)
@@ -453,8 +455,9 @@ def apply_choices(config):
         try:
             if task.is_album:
                 # Add an album.
-                albuminfo = lib.add_album(task.items,
-                                          infer_aa = task.should_infer_aa())
+                album = lib.add_album(task.items,
+                                      infer_aa = task.should_infer_aa())
+                task.album_id = album.id
             else:
                 # Add tracks.
                 for item in items:
@@ -462,18 +465,47 @@ def apply_choices(config):
         finally:
             lib.save()
 
-        # Get album art if requested.
-        if config.art and task.should_fetch_art():
+def fetch_art(config):
+    """A coroutine that fetches and applies album art for albums where
+    appropriate.
+    """
+    lib = _reopen_lib(config.lib)
+    task = None
+    while True:
+        task = yield task
+        if task.should_skip():
+            continue
+
+        if task.should_fetch_art():
             artpath = beets.autotag.art.art_for_album(task.info)
+
+            # Save the art if any was found.
             if artpath:
                 try:
-                    albuminfo.set_art(artpath)
+                    album = lib.get_album(task.album_id)
+                    album.set_art(artpath)
                 finally:
                     lib.save()
 
+def finalize(config):
+    """A coroutine that finishes up importer tasks. In particular, the
+    coroutine sends plugin events, deletes old files, and saves
+    progress. This is a "terminal" coroutine (it yields None).
+    """
+    lib = _reopen_lib(config.lib)
+    while True:
+        task = yield
+        if task.should_skip():
+            if config.resume is not False:
+                task.save_progress()
+            continue
+
+        items = task.items if task.is_album else [task.item]
+
         # Announce that we've added an album.
         if task.is_album:
-            plugins.send('album_imported', lib=lib, album=albuminfo)
+            album = lib.get_album(task.album_id)
+            plugins.send('album_imported', lib=lib, album=album)
         else:
             for item in items:
                 plugins.send('item_imported', lib=lib, item=item)
@@ -481,7 +513,7 @@ def apply_choices(config):
         # Finally, delete old files.
         if config.copy and config.delete:
             new_paths = [os.path.realpath(item.path) for item in items]
-            for old_path in old_paths:
+            for old_path in task.old_paths:
                 # Only delete files that were actually moved.
                 if old_path not in new_paths:
                     os.remove(syspath(old_path))
@@ -571,6 +603,9 @@ def run_import(**kwargs):
             # When not autotagging, just display progress.
             stages += [show_progress(config)]
     stages += [apply_choices(config)]
+    if config.art:
+        stages += [fetch_art(config)]
+    stages += [finalize(config)]
     pl = pipeline.Pipeline(stages)
 
     # Run the pipeline.

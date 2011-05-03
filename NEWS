@@ -6,6 +6,10 @@
   it is now possible to specify a log file in .beetsconfig. Also,
   logs are now appended rather than overwritten and contain
   timestamps.
+* Album art fetching and plugin events are each now run in separate
+  pipeline stages during imports. This should bring additional
+  performance when using album art plugins like embedart or
+  beets-lyrics.
 * Fix crash when autotagging files with no metadata.
 
 1.0b8

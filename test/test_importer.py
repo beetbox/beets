@@ -164,11 +164,14 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
     def tearDown(self):
         shutil.rmtree(self.libdir)
 
-    def _call_apply(self, coro, items, info):
+    def _call_apply(self, coros, items, info):
         task = importer.ImportTask(None, None, None)
         task.is_album = True
         task.set_choice((info, items))
-        coro.send(task)
+        if not isinstance(coros, list):
+            coros = [coros]
+        for coro in coros:
+            task = coro.send(task)
 
     def _call_apply_choice(self, coro, items, choice):
         task = importer.ImportTask(None, None, items)
@@ -176,16 +179,22 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         task.set_choice(choice)
         coro.send(task)
 
-    def test_apply_no_delete(self):
-        coro = importer.apply_choices(_common.iconfig(self.lib, delete=False))
-        coro.next() # Prime coroutine.
-        self._call_apply(coro, [self.i], self.info)
+    def test_finalize_no_delete(self):
+        config = _common.iconfig(self.lib, delete=False)
+        applyc = importer.apply_choices(config)
+        applyc.next()
+        finalize = importer.finalize(config)
+        finalize.next()
+        self._call_apply([applyc, finalize], [self.i], self.info)
         self.assertExists(self.srcpath)
 
-    def test_apply_with_delete(self):
-        coro = importer.apply_choices(_common.iconfig(self.lib, delete=True))
-        coro.next() # Prime coroutine.
-        self._call_apply(coro, [self.i], self.info)
+    def test_finalize_with_delete(self):
+        config = _common.iconfig(self.lib, delete=True)
+        applyc = importer.apply_choices(config)
+        applyc.next()
+        finalize = importer.finalize(config)
+        finalize.next()
+        self._call_apply([applyc, finalize], [self.i], self.info)
         self.assertNotExists(self.srcpath)
 
     def test_apply_asis_uses_album_path(self):
