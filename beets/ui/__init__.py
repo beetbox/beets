@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -16,7 +16,6 @@
 interface. To invoke the CLI, just call beets.ui.main(). The actual
 CLI commands are implemented in the ui.commands module.
 """
-
 import os
 import locale
 import optparse
@@ -74,7 +73,7 @@ def print_(*strings):
     print txt
 
 def input_options(options, require=False, prompt=None, fallback_prompt=None,
-                  numrange=None, default=None):
+                  numrange=None, default=None, color=False):
     """Prompts a user for input. The sequence of `options` defines the
     choices the user has. A single-letter shortcut is inferred for each
     option; the user's choice is returned as that single, lower-case
@@ -116,13 +115,24 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
 
         letters[found_letter.lower()] = option
         index = option.index(found_letter)
+
+        # Mark the option's shortcut letter for display.
         if (default is None and not numrange and first) \
            or (isinstance(default, basestring) and 
                found_letter.lower() == default.lower()):
             # The first option is the default; mark it.
             show_letter = '[%s]' % found_letter.upper()
+            is_default = True
         else:
             show_letter = found_letter.upper()
+            is_default = False
+
+        # Possibly colorize the letter shortcut.
+        if color:
+            color = 'turquoise' if is_default else 'blue'
+            show_letter = colorize(color, show_letter)
+
+        # Insert the highlighted letter back into the word.
         capitalized.append(
             option[:index] + show_letter + option[index+1:]
         )
@@ -143,7 +153,10 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
     if not prompt:
         if numrange:
             if isinstance(default, int):
-                prompt = '# selection (default %i), ' % default
+                default_name = str(default)
+                if color:
+                    default_name = colorize('turquoise', default_name)
+                prompt = '# selection (default %s), ' % default_name
             else:
                 prompt = '# selection, '
         else:
@@ -158,7 +171,9 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
             fallback_prompt += '%i-%i, ' % numrange
         fallback_prompt += ', '.join(display_letters) + ':'
 
-    resp = raw_input(prompt + ' ')
+    # (raw_input(prompt) was causing problems with colors.)
+    print prompt,
+    resp = raw_input()
     while True:
         resp = resp.strip().lower()
         
@@ -186,14 +201,15 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
                 return resp
         
         # Prompt for new input.
-        resp = raw_input(fallback_prompt + ' ')
+        print fallback_prompt,
+        resp = raw_input()
 
-def input_yn(prompt, require=False):
+def input_yn(prompt, require=False, color=False):
     """Prompts the user for a "yes" or "no" response. The default is
     "yes" unless `require` is `True`, in which case there is no default.
     """
     sel = input_options(
-        ('y', 'n'), require, prompt, 'Enter Y or N:'
+        ('y', 'n'), require, prompt, 'Enter Y or N:', color=color
     )
     return sel == 'y'
 

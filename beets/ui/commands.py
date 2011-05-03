@@ -192,7 +192,7 @@ def choose_candidate(candidates, singleton, rec, color, timid,
             opts = ('Use as-is', 'Skip', 'Enter search', 'aBort')
         else:
             opts = ('Use as-is', 'as Tracks', 'Skip', 'Enter search', 'aBort')
-        sel = ui.input_options(opts)
+        sel = ui.input_options(opts, color=color)
         if sel == 'u':
             return importer.action.ASIS
         elif sel == 't':
@@ -241,7 +241,8 @@ def choose_candidate(candidates, singleton, rec, color, timid,
             else:
                 opts = ('Skip', 'Use as-is', 'as Tracks', 'Enter search',
                         'aBort')
-            sel = ui.input_options(opts, numrange=(1, len(candidates)))
+            sel = ui.input_options(opts, numrange=(1, len(candidates)),
+                                   color=color)
             if sel == 's':
                 return importer.action.SKIP
             elif sel == 'u':
@@ -280,7 +281,7 @@ def choose_candidate(candidates, singleton, rec, color, timid,
         else:
             opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
                     'as Tracks', 'Enter search', 'aBort')
-        sel = ui.input_options(opts)
+        sel = ui.input_options(opts, color=color)
         if sel == 'a':
             if singleton:
                 return info
