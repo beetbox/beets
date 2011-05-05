@@ -757,10 +757,12 @@ class Library(BaseLibrary):
         self.conn.executescript(setup_sql)
         self.conn.commit()
     
-    def destination(self, item, pathmod=None, in_album=False):
+    def destination(self, item, pathmod=None, in_album=False, noroot=False):
         """Returns the path in the library directory designated for item
         item (i.e., where the file ought to be). in_album forces the
-        item to be treated as part of an album.
+        item to be treated as part of an album. noroot makes this
+        method return just the path fragment underneath the root library
+        directory.
         """
         pathmod = pathmod or os.path
         
@@ -817,7 +819,10 @@ class Library(BaseLibrary):
         _, extension = pathmod.splitext(item.path)
         subpath += extension
         
-        return normpath(os.path.join(self.directory, subpath))   
+        if noroot:
+            return subpath
+        else:
+            return normpath(os.path.join(self.directory, subpath))   
 
     
     # Main interface.
