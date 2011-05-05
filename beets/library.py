@@ -281,8 +281,9 @@ class Query(object):
         """
         clause, subvals = self.clause()
         statement = 'SELECT COUNT(id), SUM(length) FROM items WHERE ' + clause
-        c = library.conn.cursor()
-        result = c.execute(statement, subvals).fetchone()
+        c = library.conn.execute(statement, subvals)
+        result = c.fetchone()
+        c.close()
         return (result[0], result[1] or 0.0)
 
     def execute(self, library):
@@ -500,6 +501,12 @@ class ResultIterator(object):
             self.cursor.close()
             raise
         return Item(row)
+
+    def close(self):
+        self.cursor.close()
+
+    def __del__(self):
+        self.close()
 
 
 # An abstract library.
@@ -981,10 +988,12 @@ class Library(BaseLibrary):
         if album_id is None:
             return None
 
-        record = self.conn.execute(
+        c = self.conn.execute(
             'SELECT * FROM albums WHERE id=?',
             (album_id,)
-        ).fetchone()
+        )
+        record = c.fetchone()
+        c.close()
         if record:
             return Album(self, dict(record))
 
