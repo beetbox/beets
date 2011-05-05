@@ -78,27 +78,46 @@ def _reopen_lib(lib):
     else:
         return lib
 
-def _duplicate_check(lib, artist, album):
-    """Check whether an album already exists in the library."""
+def _duplicate_check(lib, artist, album, recent=None):
+    """Check whether an album already exists in the library. `recent`
+    should be a set of (artist, album) pairs that will be built up
+    with every call to this function and checked along with the
+    library.
+    """
     if artist is None:
         # As-is import with no artist. Skip check.
         return False
 
-    with lib.conn: # Read albums in a transaction.
-        albums = lib.albums(artist)
-    for album_cand in albums:
+    # Try the recent albums.
+    if recent is not None:
+        if (artist, album) in recent:
+            return True
+        recent.add((artist, album))
+
+    # Look in the library.
+    for album_cand in lib.albums(artist):
         if album_cand.album == album:
             return True
+
     return False
 
-def _item_duplicate_check(lib, artist, title):
+def _item_duplicate_check(lib, artist, title, recent=None):
     """Check whether an item already exists in the library."""
-    with lib.conn:
-        item_iter = lib.items(artist=artist, title=title)
+    # Try recent items.
+    if recent is not None:
+        if (artist, title) in recent:
+            return True
+        recent.add((artist, title))
+
+    # Check the library.
+    item_iter = lib.items(artist=artist, title=title)
     try:
         item_iter.next()
     except StopIteration:
         return False
+    finally:
+        item_iter.close()
+
     return True
 
 # Utilities for reading and writing the beets progress file, which
@@ -365,6 +384,7 @@ def user_query(config):
     accepts and yields ImportTask objects.
     """
     lib = _reopen_lib(config.lib)
+    recent = set()
     task = None
     while True:
         task = yield task
@@ -401,7 +421,7 @@ def user_query(config):
             else:
                 artist = task.info['artist']
                 album = task.info['album']
-            if _duplicate_check(lib, artist, album):
+            if _duplicate_check(lib, artist, album, recent):
                 tag_log(config.logfile, 'duplicate', task.path)
                 log.warn("This album is already in the library!")
                 task.set_choice(action.SKIP)
@@ -543,6 +563,7 @@ def item_query(config):
     """
     lib = _reopen_lib(config.lib)
     task = None
+    recent = set()
     while True:
         task = yield task
         if task.sentinel:
@@ -560,7 +581,7 @@ def item_query(config):
             else:
                 artist = task.info['artist']
                 title = task.info['title']
-            if _item_duplicate_check(lib, artist, title):
+            if _item_duplicate_check(lib, artist, title, recent):
                 tag_log(config.logfile, 'duplicate', task.item.path)
                 log.warn("This item is already in the library!")
                 task.set_choice(action.SKIP)

@@ -10,6 +10,8 @@
   pipeline stages during imports. This should bring additional
   performance when using album art plugins like embedart or
   beets-lyrics.
+* Fixed a problem where duplicate albums or items imported at the same
+  time would fail to be detected.
 * Fix crash when autotagging files with no metadata.
 
 1.0b8

@@ -261,6 +261,18 @@ class DuplicateCheckTest(unittest.TestCase):
         res = importer._item_duplicate_check(self.lib, 'xxx', 'yyy')
         self.assertFalse(res)
 
+    def test_recent_item(self):
+        recent = set()
+        importer._item_duplicate_check(self.lib, 'xxx', 'yyy', recent)
+        res = importer._item_duplicate_check(self.lib, 'xxx', 'yyy', recent)
+        self.assertTrue(res)
+
+    def test_recent_album(self):
+        recent = set()
+        importer._duplicate_check(self.lib, 'xxx', 'yyy', recent)
+        res = importer._duplicate_check(self.lib, 'xxx', 'yyy', recent)
+        self.assertTrue(res)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
