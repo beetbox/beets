@@ -757,12 +757,13 @@ class Library(BaseLibrary):
         self.conn.executescript(setup_sql)
         self.conn.commit()
     
-    def destination(self, item, pathmod=None, in_album=False, noroot=False):
+    def destination(self, item, pathmod=None, in_album=False, fragment=False):
         """Returns the path in the library directory designated for item
         item (i.e., where the file ought to be). in_album forces the
-        item to be treated as part of an album. noroot makes this
+        item to be treated as part of an album. fragment makes this
         method return just the path fragment underneath the root library
-        directory.
+        directory; the path is also returned as Unicode instead of
+        encoded as a bytestring.
         """
         pathmod = pathmod or os.path
         
@@ -808,7 +809,7 @@ class Library(BaseLibrary):
         subpath = subpath_tmpl.substitute(mapping)
         
         # Encode for the filesystem, dropping unencodable characters.
-        if isinstance(subpath, unicode):
+        if isinstance(subpath, unicode) and not fragment:
             encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
             subpath = subpath.encode(encoding, 'replace')
         
@@ -819,7 +820,7 @@ class Library(BaseLibrary):
         _, extension = pathmod.splitext(item.path)
         subpath += extension
         
-        if noroot:
+        if fragment:
             return subpath
         else:
             return normpath(os.path.join(self.directory, subpath))   

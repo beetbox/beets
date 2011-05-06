@@ -12,6 +12,11 @@
   beets-lyrics.
 * Fixed a problem where duplicate albums or items imported at the same
   time would fail to be detected.
+* BPD now uses a persistent "virtual filesystem" in order to fake a
+  directory structure. This means that your path format settings are
+  respected in BPD's browsing hierarchy. This may come at a performance
+  cost, however. The virtual filesystem used by BPD is available for
+  reuse by plugins (e.g., the FUSE plugin).
 * Fix crash when autotagging files with no metadata.
 
 1.0b8

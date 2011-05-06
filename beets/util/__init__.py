@@ -209,17 +209,17 @@ def sanitize_path(path, pathmod=None):
 def sanitize_for_path(value, pathmod, key=None):
     """Sanitize the value for inclusion in a path: replace separators
     with _, etc. Doesn't guarantee that the whole path will be valid;
-    you should still call _sanitize_path on the complete path.
+    you should still call sanitize_path on the complete path.
     """
     if isinstance(value, basestring):
         for sep in (pathmod.sep, pathmod.altsep):
             if sep:
-                value = value.replace(sep, '_')
+                value = value.replace(sep, u'_')
     elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
         # pad with zeros
-        value = '%02i' % value
+        value = u'%02i' % value
     else:
-        value = str(value)
+        value = unicode(value)
     return value
 
 def str2bool(value):
