@@ -417,8 +417,10 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
     """
     # Check the user-specified directories.
     for path in paths:
-        if not os.path.isdir(syspath(path)):
+        if not singletons and not os.path.isdir(syspath(path)):
             raise ui.UserError('not a directory: ' + path)
+        elif singletons and not os.path.exists(syspath(path)):
+            raise ui.UserError('no such file: ' + path)
 
     # Check parameter consistency.
     if quiet and timid:

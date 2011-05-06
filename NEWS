@@ -17,6 +17,8 @@
   respected in BPD's browsing hierarchy. This may come at a performance
   cost, however. The virtual filesystem used by BPD is available for
   reuse by plugins (e.g., the FUSE plugin).
+* Singleton imports ("beet import -s") can now take individual files as
+  arguments as well as directories.
 * Fix crash when autotagging files with no metadata.
 * Fix a rare deadlock when finishing the import pipeline.
 

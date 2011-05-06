@@ -312,7 +312,8 @@ class ImportTask(object):
 
 def read_tasks(config):
     """A generator yielding all the albums (as ImportTask objects) found
-    in the user-specified list of paths.
+    in the user-specified list of paths. In the case of a singleton
+    import, yields single-item tasks instead.
     """
     # Look for saved progress.
     progress = config.resume is not False
@@ -336,7 +337,13 @@ def read_tasks(config):
                     progress_set(path, None)
     
     for toppath in config.paths:
-        # Produce each path.
+        # Check whether the path is to a file.
+        if config.singletons and not os.path.isdir(syspath(toppath)):
+            item = library.Item.from_path(toppath)
+            yield ImportTask.item_task(item)
+            continue
+        
+        # Produce paths under this directory.
         if progress:
             resume_dir = resume_dirs.get(toppath)
         for path, items in autotag.albums_in_dir(toppath):
