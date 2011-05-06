@@ -62,8 +62,8 @@ def _invalidate_queue(q, val=None, sync=True):
         q._qsize = _qsize
         q._put = _put
         q._get = _get
-        q.not_empty.notify()
-        q.not_full.notify()
+        q.not_empty.notifyAll()
+        q.not_full.notifyAll()
 
     finally:
         if sync:

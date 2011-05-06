@@ -18,6 +18,7 @@
   cost, however. The virtual filesystem used by BPD is available for
   reuse by plugins (e.g., the FUSE plugin).
 * Fix crash when autotagging files with no metadata.
+* Fix a rare deadlock when finishing the import pipeline.
 
 1.0b8
 -----
