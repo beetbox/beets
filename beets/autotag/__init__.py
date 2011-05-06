@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,15 +14,16 @@
 
 """Facilities for automatically determining files' correct metadata.
 """
-
 import os
+import logging
 from collections import defaultdict
-from beets.autotag import mb
 import re
 from munkres import Munkres
+from unidecode import unidecode
+
+from beets.autotag import mb
 from beets import library, mediafile, plugins
 from beets.util import levenshtein, sorted_walk
-import logging
 
 # Try 5 releases. In the future, this should be more dynamic: let the
 # probability of continuing to the next release be inversely
@@ -114,8 +115,12 @@ def albums_in_dir(path):
 
 def _string_dist_basic(str1, str2):
     """Basic edit distance between two strings, ignoring
-    non-alphanumeric characters and case. Normalized by string length.
+    non-alphanumeric characters and case. Comparisons are based on a
+    transliteration/lowering to ASCII characters. Normalized by string
+    length.
     """
+    str1 = unidecode(str1)
+    str2 = unidecode(str2)
     str1 = re.sub(r'[^a-z0-9]', '', str1.lower())
     str2 = re.sub(r'[^a-z0-9]', '', str2.lower())
     if not str1 and not str2:

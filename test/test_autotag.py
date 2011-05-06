@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,7 +14,6 @@
 
 """Tests for autotagging functionality.
 """
-
 import unittest
 import os
 import shutil
@@ -493,6 +492,10 @@ class StringDistanceTest(unittest.TestCase):
 
     def test_ampersand_expansion(self):
         dist = autotag.string_dist('And', '&')
+        self.assertEqual(dist, 0.0)
+
+    def test_accented_characters(self):
+        dist = autotag.string_dist(u'\xe9\xe1\xf1', u'ean')
         self.assertEqual(dist, 0.0)
 
 def suite():

@@ -51,6 +51,7 @@ setup(name='beets',
           'mutagen',
           'python-musicbrainz2 >= 0.7.2',
           'munkres',
+          'unidecode',
       ],
 
       classifiers=[
