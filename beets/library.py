@@ -917,7 +917,7 @@ class Library(BaseLibrary):
 
     # Querying.
 
-    def albums(self, artist=None, query=None):
+    def albums(self, query=None, artist=None):
         query = self._get_query(query, ALBUM_DEFAULT_FIELDS)
         if artist is not None:
             # "Add" the artist to the query.
@@ -929,7 +929,7 @@ class Library(BaseLibrary):
         c = self.conn.execute(sql, subvals)
         return [Album(self, dict(res)) for res in c.fetchall()]
 
-    def items(self, artist=None, album=None, title=None, query=None):
+    def items(self, query=None, artist=None, album=None, title=None):
         queries = [self._get_query(query, ITEM_DEFAULT_FIELDS)]
         if artist is not None:
             queries.append(MatchQuery('artist', artist))

@@ -966,7 +966,7 @@ class Server(BaseServer):
         query = self._metadata_query(beets.library.SubstringQuery,
                                      beets.library.AnySubstringQuery,
                                      kv)
-        for item in self.lib.items(query=query):
+        for item in self.lib.items(query):
             yield self._item_info(item)
     
     def cmd_find(self, conn, *kv):
@@ -974,7 +974,7 @@ class Server(BaseServer):
         query = self._metadata_query(beets.library.MatchQuery,
                                      None,
                                      kv)
-        for item in self.lib.items(query=query):
+        for item in self.lib.items(query):
             yield self._item_info(item)
     
     def cmd_list(self, conn, show_tag, *kv):

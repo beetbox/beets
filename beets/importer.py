@@ -95,7 +95,7 @@ def _duplicate_check(lib, artist, album, recent=None):
         recent.add((artist, album))
 
     # Look in the library.
-    for album_cand in lib.albums(artist):
+    for album_cand in lib.albums(artist=artist):
         if album_cand.album == album:
             return True
 

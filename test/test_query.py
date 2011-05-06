@@ -68,15 +68,15 @@ class AnySubstringQueryTest(unittest.TestCase):
 
     def test_no_restriction(self):
         q = beets.library.AnySubstringQuery('title')
-        self.assertEqual(self.lib.items(query=q).next().title, 'the title')
+        self.assertEqual(self.lib.items(q).next().title, 'the title')
 
     def test_restriction_completeness(self):
         q = beets.library.AnySubstringQuery('title', ['title'])
-        self.assertEqual(self.lib.items(query=q).next().title, 'the title')
+        self.assertEqual(self.lib.items(q).next().title, 'the title')
         
     def test_restriction_soundness(self):
         q = beets.library.AnySubstringQuery('title', ['artist'])
-        self.assertRaises(StopIteration, self.lib.items(query=q).next)
+        self.assertRaises(StopIteration, self.lib.items(q).next)
 
 
 # Convenient asserts for matching items.
@@ -100,57 +100,57 @@ class GetTest(unittest.TestCase, AssertsMixin):
 
     def test_get_empty(self):
         q = ''
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_matched_all(results)
     
     def test_get_none(self):
         q = None
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_matched_all(results)
     
     def test_get_one_keyed_term(self):
         q = 'artist:Lil'
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_matched(results, 'Littlest Things')
         self.assert_done(results)
     
     def test_get_one_unkeyed_term(self):
         q = 'Terry'
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_matched(results, 'Boracay')
         self.assert_done(results)
     
     def test_get_no_matches(self):
         q = 'popebear'
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_done(results)
     
     def test_invalid_key(self):
         q = 'pope:bear'
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_matched_all(results)
     
     def test_term_case_insensitive(self):
         q = 'UNCoVER'
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_matched(results, 'Lovers Who Uncover')
         self.assert_done(results)
     
     def test_term_case_insensitive_with_key(self):
         q = 'album:stiLL'
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_matched(results, 'Littlest Things')
         self.assert_done(results)
     
     def test_key_case_insensitive(self):
         q = 'ArTiST:Allen'
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_matched(results, 'Littlest Things')
         self.assert_done(results)
     
     def test_unkeyed_term_matches_multiple_columns(self):
         q = 'little'
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_matched(results, 'Littlest Things')
         self.assert_matched(results, 'Lovers Who Uncover')
         self.assert_matched(results, 'Boracay')
@@ -158,14 +158,14 @@ class GetTest(unittest.TestCase, AssertsMixin):
     
     def test_keyed_term_matches_only_one_column(self):
         q = 'artist:little'
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_matched(results, 'Lovers Who Uncover')
         self.assert_matched(results, 'Boracay')
         self.assert_done(results)
     
     def test_mulitple_terms_narrow_search(self):
         q = 'little ones'
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_matched(results, 'Lovers Who Uncover')
         self.assert_matched(results, 'Boracay')
         self.assert_done(results)
@@ -184,25 +184,25 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
 
     def test_singleton_true(self):
         q = 'singleton:true'
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_matched(results, 'singleton item')
         self.assert_done(results)
 
     def test_singleton_false(self):
         q = 'singleton:false'
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_matched(results, 'album item')
         self.assert_done(results)
 
     def test_compilation_true(self):
         q = 'comp:true'
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_matched(results, 'album item')
         self.assert_done(results)
 
     def test_compilation_false(self):
         q = 'comp:false'
-        results = self.lib.items(query=q)
+        results = self.lib.items(q)
         self.assert_matched(results, 'singleton item')
         self.assert_done(results)
 
@@ -229,20 +229,20 @@ class BrowseTest(unittest.TestCase, AssertsMixin):
         self.assert_done(items)
 
     def test_albums_matches_album(self):
-        albums = list(self.lib.albums(query='person'))
+        albums = list(self.lib.albums('person'))
         self.assertEqual(len(albums), 1)
 
     def test_albums_matches_albumartist(self):
-        albums = list(self.lib.albums(query='panda'))
+        albums = list(self.lib.albums('panda'))
         self.assertEqual(len(albums), 1)
         
     def test_items_matches_title(self):
-        items = self.lib.items(query='boracay')
+        items = self.lib.items('boracay')
         self.assert_matched(items, 'Boracay')
         self.assert_done(items)
 
     def test_items_does_not_match_year(self):
-        items = self.lib.items(query='2007')
+        items = self.lib.items('2007')
         self.assert_done(items)
 
     #FIXME Haven't tested explicit (non-query) criteria.

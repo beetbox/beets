@@ -552,10 +552,10 @@ def list_items(lib, query, album):
     albums instead of single items.
     """
     if album:
-        for album in lib.albums(query=query):
+        for album in lib.albums(query):
             print_(album.albumartist + u' - ' + album.album)
     else:
-        for item in lib.items(query=query):
+        for item in lib.items(query):
             print_(item.artist + u' - ' + item.album + u' - ' + item.title)
 
 list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
@@ -575,12 +575,12 @@ def remove_items(lib, query, album, delete=False):
     """
     # Get the matching items.
     if album:
-        albums = list(lib.albums(query=query))
+        albums = list(lib.albums(query))
         items = []
         for al in albums:
             items += al.items()
     else:
-        items = list(lib.items(query=query))
+        items = list(lib.items(query))
 
     if not items:
         print_('No matching items found.')
@@ -626,7 +626,7 @@ default_commands.append(remove_cmd)
 
 def show_stats(lib, query):
     """Shows some statistics about the matched items."""
-    items = lib.items(query=query)
+    items = lib.items(query)
 
     total_size = 0
     total_time = 0.0

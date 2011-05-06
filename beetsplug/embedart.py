@@ -65,7 +65,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
 # "embedart" command.
 def embed(lib, imagepath, query):
-    albums = lib.albums(query=query)
+    albums = lib.albums(query)
     for i_album in albums:
         album = i_album
         break
@@ -79,7 +79,7 @@ def embed(lib, imagepath, query):
 
 # "extractart" command.
 def extract(lib, outpath, query):
-    items = lib.items(query=query)
+    items = lib.items(query)
     for i_item in items:
         item = i_item
         break
@@ -111,7 +111,7 @@ def extract(lib, outpath, query):
 # "clearart" command.
 def clear(lib, query):
     log.info('Clearing album art from items:')
-    for item in lib.items(query=query):
+    for item in lib.items(query):
         log.info(u'%s - %s' % (item.artist, item.title))
         mf = mediafile.MediaFile(syspath(item.path))
         mf.art = None
