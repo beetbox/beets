@@ -548,14 +548,6 @@ class BaseLibrary(object):
         """
         raise NotImplementedError
 
-    def get(self, query=None, default_fields=None):
-        """Returns a sequence of the items matching query, which may
-        be None (match the entire library), a Query object, or a query
-        string. If default_fields is specified, it restricts the fields
-        that may be matched by unqualified query string terms.
-        """
-        raise NotImplementedError
-
     def save(self):
         """Ensure that the library is consistent on disk. A no-op by
         default.
@@ -587,15 +579,13 @@ class BaseLibrary(object):
     # Naive implementations are provided, but these methods should be
     # overridden if a better implementation exists.
 
-    def artists(self, query=None):
-        """Returns a sorted sequence of artists in the database,
-        possibly filtered by a query. Unqualified query string terms
-        only match the artist field.
+    def _get(self, query=None, default_fields=None):
+        """Returns a sequence of the items matching query, which may
+        be None (match the entire library), a Query object, or a query
+        string. If default_fields is specified, it restricts the fields
+        that may be matched by unqualified query string terms.
         """
-        out = set()
-        for item in self.get(query, ARTIST_DEFAULT_FIELDS):
-            out.add(item.artist)
-        return sorted(out)
+        raise NotImplementedError
 
     def albums(self, artist=None, query=None):
         """Returns a sorted list of BaseAlbum objects, possibly filtered
@@ -606,7 +596,7 @@ class BaseLibrary(object):
         # Gather the unique album/artist names and associated example
         # Items.
         specimens = {}
-        for item in self.get(query, ALBUM_DEFAULT_FIELDS):
+        for item in self._get(query, ALBUM_DEFAULT_FIELDS):
             if (artist is None or item.artist == artist):
                 key = (item.artist, item.album)
                 if key not in specimens:
@@ -628,7 +618,7 @@ class BaseLibrary(object):
         and comments.
         """
         out = []
-        for item in self.get(query, ITEM_DEFAULT_FIELDS):
+        for item in self._get(query, ITEM_DEFAULT_FIELDS):
             if (artist is None or item.artist == artist) and \
                (album is None  or item.album == album) and \
                (title is None  or item.title == title):
@@ -856,9 +846,6 @@ class Library(BaseLibrary):
         item.id = new_id
         return new_id
     
-    def get(self, query=None):
-        return self._get_query(query).execute(self)
-    
     def save(self):
         """Writes the library to disk (completing an sqlite
         transaction).
@@ -928,16 +915,7 @@ class Library(BaseLibrary):
             util.prune_dirs(os.path.dirname(item.path), self.directory)
 
 
-    # Browsing.
-
-    def artists(self, query=None):
-        query = self._get_query(query, ARTIST_DEFAULT_FIELDS)
-        where, subvals = query.clause()
-        sql = "SELECT DISTINCT artist FROM items " + \
-              "WHERE " + where + \
-              " ORDER BY artist"
-        c = self.conn.execute(sql, subvals)
-        return [res[0] for res in c.fetchall()]
+    # Querying.
 
     def albums(self, artist=None, query=None):
         query = self._get_query(query, ALBUM_DEFAULT_FIELDS)
