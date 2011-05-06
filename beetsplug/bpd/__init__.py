@@ -889,8 +889,9 @@ class Server(BaseServer):
 
         statement = 'SELECT COUNT(DISTINCT artist), ' \
                            'COUNT(DISTINCT album) FROM items'
-        c = self.lib.conn.cursor()
-        result = c.execute(statement).fetchone()
+        c = self.lib.conn.execute(statement)
+        result = c.fetchone()
+        c.close()
         artists, albums = result[0], result[1]
 
         yield (u'artists: ' + unicode(artists),

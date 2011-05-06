@@ -959,6 +959,8 @@ class Library(BaseLibrary):
             return it.next()
         except StopIteration:
             return None
+        finally:
+            it.close()
     
     def get_album(self, item_or_id):
         """Given an album ID or an item associated with an album,
@@ -976,8 +978,10 @@ class Library(BaseLibrary):
             'SELECT * FROM albums WHERE id=?',
             (album_id,)
         )
-        record = c.fetchone()
-        c.close()
+        try:
+            record = c.fetchone()
+        finally:
+            c.close()
         if record:
             return Album(self, dict(record))
 
