@@ -843,7 +843,7 @@ class Server(BaseServer):
             for name, itemid in sorted(node.files.iteritems()):
                 # "yield from"
                 for v in self._all_items(itemid): yield v
-            for name, subdir in sorted(node.files.iteritems()):
+            for name, subdir in sorted(node.dirs.iteritems()):
                 for v in self._all_items(subdir): yield v
     
     def _add(self, path, send_id=False):
@@ -854,6 +854,7 @@ class Server(BaseServer):
             self.playlist.append(item)
             if send_id:
                 yield u'Id: ' + unicode(item.id)
+        self.playlist_version += 1
         
     def cmd_add(self, conn, path):
         """Adds a track or directory to the playlist, specified by a
