@@ -1143,6 +1143,13 @@ class Album(BaseAlbum):
         for item in items:
             self._library.store(item)
 
+    def item_dir(self):
+        """Returns the directory containing the album's first item,
+        provided that such an item exists.
+        """
+        item = self.items().next()
+        return os.path.dirname(item.path)
+
     def art_destination(self, image, item_dir=None):
         """Returns a path to the destination for the album art image
         for the album. `image` is the path of the image that will be
@@ -1153,9 +1160,7 @@ class Album(BaseAlbum):
         item_dir must be provided.
         """
         image = bytestring_path(image)
-        if item_dir is None:
-            item = self.items().next()
-            item_dir = os.path.dirname(item.path)
+        item_dir = item_dir or self.item_dir()
         _, ext = os.path.splitext(image)
         dest = os.path.join(item_dir, self._library.art_filename + ext)
         return dest

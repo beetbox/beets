@@ -2,6 +2,9 @@
 -----
 * Prompts in the importer interface are now colorized for easy
   reading. The default option is always highlighted.
+* The "list" command now accepts a "-p" switch that causes it to show
+  paths instead of titles. This makes the output of "beet ls -p"
+  suitable for piping into another command such as xargs.
 * The import logger has been improved for "always-on" use. First,
   it is now possible to specify a log file in .beetsconfig. Also,
   logs are now appended rather than overwritten and contain

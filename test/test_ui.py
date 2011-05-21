@@ -34,6 +34,7 @@ class ListTest(unittest.TestCase):
 
         self.lib = library.Library(':memory:')
         i = _common.item()
+        i.path = 'xxx/yyy'
         self.lib.add(i)
         self.lib.add_album([i])
 
@@ -41,28 +42,38 @@ class ListTest(unittest.TestCase):
         self.io.restore()
         
     def test_list_outputs_item(self):
-        commands.list_items(self.lib, '', False)
+        commands.list_items(self.lib, '', False, False)
         out = self.io.getoutput()
         self.assertTrue(u'the title' in out)
 
+    def test_list_item_path(self):
+        commands.list_items(self.lib, '', False, True)
+        out = self.io.getoutput()
+        self.assertEqual(out.strip(), u'xxx/yyy')
+
     def test_list_album_outputs_something(self):
-        commands.list_items(self.lib, '', True)
+        commands.list_items(self.lib, '', True, False)
         out = self.io.getoutput()
         self.assertGreater(len(out), 0)
+
+    def test_list_album_path(self):
+        commands.list_items(self.lib, '', True, True)
+        out = self.io.getoutput()
+        self.assertEqual(out.strip(), u'xxx')
     
     def test_list_album_omits_title(self):
-        commands.list_items(self.lib, '', True)
+        commands.list_items(self.lib, '', True, False)
         out = self.io.getoutput()
         self.assertTrue(u'the title' not in out)
 
     def test_list_uses_track_artist(self):
-        commands.list_items(self.lib, '', False)
+        commands.list_items(self.lib, '', False, False)
         out = self.io.getoutput()
         self.assertTrue(u'the artist' in out)
         self.assertTrue(u'the album artist' not in out)
     
     def test_list_album_uses_album_artist(self):
-        commands.list_items(self.lib, '', True)
+        commands.list_items(self.lib, '', True, False)
         out = self.io.getoutput()
         self.assertTrue(u'the artist' not in out)
         self.assertTrue(u'the album artist' in out)

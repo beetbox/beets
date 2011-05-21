@@ -549,22 +549,31 @@ default_commands.append(import_cmd)
 
 # list: Query and show library contents.
 
-def list_items(lib, query, album):
+def list_items(lib, query, album, path):
     """Print out items in lib matching query. If album, then search for
-    albums instead of single items.
+    albums instead of single items. If path, print the matched objects'
+    paths instead of human-readable information about them.
     """
     if album:
         for album in lib.albums(query):
-            print_(album.albumartist + u' - ' + album.album)
+            if path:
+                print_(album.item_dir())
+            else:
+                print_(album.albumartist + u' - ' + album.album)
     else:
         for item in lib.items(query):
-            print_(item.artist + u' - ' + item.album + u' - ' + item.title)
+            if path:
+                print_(item.path)
+            else:
+                print_(item.artist + u' - ' + item.album + u' - ' + item.title)
 
 list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
 list_cmd.parser.add_option('-a', '--album', action='store_true',
     help='show matching albums instead of tracks')
+list_cmd.parser.add_option('-p', '--path', action='store_true',
+    help='print paths for matched items or albums')
 def list_func(lib, config, opts, args):
-    list_items(lib, ui.make_query(args), opts.album)
+    list_items(lib, ui.make_query(args), opts.album, opts.path)
 list_cmd.func = list_func
 default_commands.append(list_cmd)
 
