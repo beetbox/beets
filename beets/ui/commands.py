@@ -368,9 +368,9 @@ def choose_item(task, config):
 
     if config.quiet:
         # Quiet mode; make a decision.
-        if task.rec == autotag.RECOMMEND_STRONG:
+        if rec == autotag.RECOMMEND_STRONG:
             dist, track_info = candidates[0]
-            show_item_change(task.item.color)
+            show_item_change(task.item, track_info, dist, config.color)
             return track_info
         else:
             return _quiet_fall_back(config)

@@ -23,7 +23,7 @@ from beets import library
 from beets import importer
 from beets import mediafile
 
-TEST_TITLES = ('The Opener','The Second Track','The Last Track')
+TEST_TITLES = ('The Opener', 'The Second Track', 'The Last Track')
 class NonAutotaggedImportTest(unittest.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
@@ -66,7 +66,8 @@ class NonAutotaggedImportTest(unittest.TestCase):
 
         return realpath
 
-    def _run_import(self, titles=TEST_TITLES, delete=False, threaded=False):
+    def _run_import(self, titles=TEST_TITLES, delete=False, threaded=False,
+                    singletons=False):
         # Make a bunch of tracks to import.
         paths = []
         for i, title in enumerate(titles):
@@ -96,7 +97,7 @@ class NonAutotaggedImportTest(unittest.TestCase):
                 quiet_fallback='skip',
                 choose_match_func = None,
                 should_resume_func = None,
-                singletons=False,
+                singletons = singletons,
                 choose_item_func = None,
                 timid = False,
         )
@@ -132,6 +133,10 @@ class NonAutotaggedImportTest(unittest.TestCase):
     def test_import_with_delete(self):
         paths = self._run_import(['sometrack'], delete=True)
         self.assertFalse(os.path.exists(paths[0]))
+
+    def test_import_singleton(self):
+        paths = self._run_import(['sometrack'], singletons=True)
+        self.assertTrue(os.path.exists(paths[0]))
 
 class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
     def setUp(self):

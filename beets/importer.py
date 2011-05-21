@@ -601,6 +601,9 @@ def item_progress(config):
     log.info('Importing items:')
     while True:
         task = yield task
+        if task.sentinel:
+            continue
+
         log.info(task.item.path)
         task.set_null_item_match()
         task.set_choice(action.ASIS)
