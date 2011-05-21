@@ -477,7 +477,7 @@ import_cmd.parser.add_option('-C', '--nocopy', action='store_false',
 import_cmd.parser.add_option('-w', '--write', action='store_true',
     default=None, help="write new metadata to files' tags (default)")
 import_cmd.parser.add_option('-W', '--nowrite', action='store_false',
-    dest='write', help="don't write metadata (opposite of -s)")
+    dest='write', help="don't write metadata (opposite of -w)")
 import_cmd.parser.add_option('-a', '--autotag', action='store_true',
     dest='autotag', help="infer tags for imported files (default)")
 import_cmd.parser.add_option('-A', '--noautotag', action='store_false',
