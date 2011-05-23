@@ -73,7 +73,7 @@ def print_(*strings):
     print txt
 
 def input_options(options, require=False, prompt=None, fallback_prompt=None,
-                  numrange=None, default=None, color=False):
+                  numrange=None, default=None, color=False, max_width=72):
     """Prompts a user for input. The sequence of `options` defines the
     choices the user has. A single-letter shortcut is inferred for each
     option; the user's choice is returned as that single, lower-case
@@ -89,6 +89,9 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
     If numrange is provided, it is a pair of `(high, low)` (both ints)
     indicating that, in addition to `options`, the user may enter an
     integer in that inclusive range.
+
+    `max_width` specifies the maximum number of columns in the
+    automatically generated prompt string.
     """
     # Assign single letters to each option. Also capitalize the options
     # to indicate the letter.
@@ -151,17 +154,46 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
     
     # Make a prompt if one is not provided.
     if not prompt:
+        prompt_parts = []
+        prompt_part_lengths = []
         if numrange:
             if isinstance(default, int):
                 default_name = str(default)
                 if color:
                     default_name = colorize('turquoise', default_name)
-                prompt = '# selection (default %s), ' % default_name
+                tmpl = '# selection (default %s)'
+                prompt_parts.append(tmpl % default_name)
+                prompt_part_lengths.append(len(tmpl % str(default)))
             else:
-                prompt = '# selection, '
-        else:
-            prompt = ''
-        prompt += ', '.join(capitalized) + '?'
+                prompt_parts.append('# selection')
+                prompt_part_lengths.append(prompt_parts[-1])
+        prompt_parts += capitalized
+        prompt_part_lengths += [len(s) for s in options]
+
+        # Wrap the query text.
+        prompt = ''
+        line_length = 0
+        for i, (part, length) in enumerate(zip(prompt_parts,
+                                               prompt_part_lengths)):
+            # Add punctuation.
+            if i == len(prompt_parts) - 1:
+                part += '?'
+            else:
+                part += ','
+            length += 1
+
+            # Choose either the current line or the beginning of the next.
+            if line_length + length + 1 > max_width:
+                prompt += '\n'
+                line_length = 0
+
+            if line_length != 0:
+                # Not the beginning of the line; need a space.
+                part = ' ' + part
+                length += 1
+
+            prompt += part
+            line_length += length
 
     # Make a fallback prompt too. This is displayed if the user enters
     # something that is not recognized.
