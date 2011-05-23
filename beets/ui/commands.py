@@ -190,9 +190,11 @@ def choose_candidate(candidates, singleton, rec, color, timid,
     if not candidates:
         print_("No match found.")
         if singleton:
-            opts = ('Use as-is', 'Skip', 'Enter search', 'aBort')
+            opts = ('Use as-is', 'Skip', 'Enter search', 'enter Id',
+                    'aBort')
         else:
-            opts = ('Use as-is', 'as Tracks', 'Skip', 'Enter search', 'aBort')
+            opts = ('Use as-is', 'as Tracks', 'Skip', 'Enter search',
+                    'enter Id', 'aBort')
         sel = ui.input_options(opts, color=color)
         if sel == 'u':
             return importer.action.ASIS
@@ -205,6 +207,8 @@ def choose_candidate(candidates, singleton, rec, color, timid,
             return importer.action.SKIP
         elif sel == 'b':
             raise importer.ImportAbort()
+        elif sel == 'i':
+            return importer.action.MANUAL_ID
         else:
             assert False
 
@@ -238,10 +242,11 @@ def choose_candidate(candidates, singleton, rec, color, timid,
                                             
             # Ask the user for a choice.
             if singleton:
-                opts = ('Skip', 'Use as-is', 'Enter search', 'aBort')
+                opts = ('Skip', 'Use as-is', 'Enter search', 'enter Id',
+                        'aBort')
             else:
                 opts = ('Skip', 'Use as-is', 'as Tracks', 'Enter search',
-                        'aBort')
+                        'enter Id', 'aBort')
             sel = ui.input_options(opts, numrange=(1, len(candidates)),
                                    color=color)
             if sel == 's':
@@ -255,6 +260,8 @@ def choose_candidate(candidates, singleton, rec, color, timid,
                 return importer.action.TRACKS
             elif sel == 'b':
                 raise importer.ImportAbort()
+            elif sel == 'i':
+                return importer.action.MANUAL_ID
             else: # Numerical selection.
                 if singleton:
                     dist, info = candidates[sel-1]
@@ -278,10 +285,10 @@ def choose_candidate(candidates, singleton, rec, color, timid,
         # Ask for confirmation.
         if singleton:
             opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
-                    'Enter search', 'aBort')
+                    'Enter search', 'enter Id', 'aBort')
         else:
             opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
-                    'as Tracks', 'Enter search', 'aBort')
+                    'as Tracks', 'Enter search', 'enter Id', 'aBort')
         sel = ui.input_options(opts, color=color)
         if sel == 'a':
             if singleton:
@@ -301,6 +308,8 @@ def choose_candidate(candidates, singleton, rec, color, timid,
             return importer.action.MANUAL
         elif sel == 'b':
             raise importer.ImportAbort()
+        elif sel == 'i':
+            return importer.action.MANUAL_ID
 
 def manual_search(singleton):
     """Input either an artist and album (for full albums) or artist and
@@ -310,6 +319,12 @@ def manual_search(singleton):
     name = raw_input('Track: ' if singleton else 'Album: ') \
            .decode(sys.stdin.encoding)
     return artist.strip(), name.strip()
+
+def manual_id(singleton):
+    """Input a MusicBrainz ID, either for an album or a track.
+    """
+    prompt = 'Enter MusicBrainz %s ID: ' % ('track' if singleton else 'album')
+    return raw_input(prompt).decode(sys.stdin.encoding).strip()
 
 def choose_match(task, config):
     """Given an initial autotagging of items, go through an interactive
@@ -352,6 +367,15 @@ def choose_match(task, config):
                                       search_album)
             except autotag.AutotagError:
                 candidates, rec = None, None
+        elif choice is importer.action.MANUAL_ID:
+            # Try a manually-entered ID.
+            search_id = manual_id(False)
+            try:
+                _, _, candidates, rec = \
+                    autotag.tag_album(task.items, config.timid,
+                                      search_id=search_id)
+            except autotag.AutotagError:
+                candidates, rec = None, None
         else:
             # We have a candidate! Finish tagging. Here, choice is
             # an (info, items) pair as desired.
@@ -386,9 +410,14 @@ def choose_item(task, config):
             assert False # TRACKS is only legal for albums.
         elif choice == importer.action.MANUAL:
             # Continue in the loop with a new set of candidates.
-            search_artist, search_title = manual_search(False)
+            search_artist, search_title = manual_search(True)
             candidates, rec = autotag.tag_item(task.item, config.timid,
                                                search_artist, search_title)
+        elif choice == importer.action.MANUAL_ID:
+            # Ask for a track ID.
+            search_id = manual_id(True)
+            candidates, rec = autotag.tag_item(task.item, config.timid,
+                                               search_id=search_id)
         else:
             # Chose a candidate.
             assert not isinstance(choice, importer.action)

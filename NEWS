@@ -5,6 +5,9 @@
 * The "list" command now accepts a "-p" switch that causes it to show
   paths instead of titles. This makes the output of "beet ls -p"
   suitable for piping into another command such as xargs.
+* The importer now provides the option to specify a MusicBrainz ID
+  manually if the built-in searching isn't working for a particular
+  album or track.
 * The import logger has been improved for "always-on" use. First,
   it is now possible to specify a log file in .beetsconfig. Also,
   logs are now appended rather than overwritten and contain

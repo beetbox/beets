@@ -29,7 +29,7 @@ from beets.util import syspath, normpath
 from beets.util.enumeration import enum
 
 action = enum(
-    'SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'APPLY',
+    'SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'APPLY', 'MANUAL_ID',
     name='action'
 )
 
@@ -249,7 +249,8 @@ class ImportTask(object):
         automatically).
         """
         assert not self.sentinel
-        assert choice != action.MANUAL # Not part of the task structure.
+        # Not part of the task structure:
+        assert choice not in (action.MANUAL, action.MANUAL_ID)
         assert choice != action.APPLY # Only used internally.
         if choice in (action.SKIP, action.ASIS, action.TRACKS):
             self.choice_flag = choice

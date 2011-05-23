@@ -386,13 +386,16 @@ def match_by_id(items):
     # Is there a consensus on the MB album ID?
     albumids = [item.mb_albumid for item in items if item.mb_albumid]
     if not albumids:
+        log.debug('No album IDs found.')
         return None
     
     # If all album IDs are equal, look up the album.
     if bool(reduce(lambda x,y: x if x==y else (), albumids)):
         albumid = albumids[0]
+        log.debug('Searching for discovered album ID: ' + albumid)
         return mb.album_for_id(albumid)
     else:
+        log.debug('No album ID consensus.')
         return None
     
     #fixme In the future, at the expense of performance, we could use
@@ -456,7 +459,8 @@ def validate_candidate(items, tuple_dict, info):
 
     tuple_dict[info['album_id']] = dist, ordered, info
 
-def tag_album(items, timid=False, search_artist=None, search_album=None):
+def tag_album(items, timid=False, search_artist=None, search_album=None,
+              search_id=None):
     """Bundles together the functionality used to infer tags for a
     set of items comprised by an album. Returns everything relevant:
         - The current artist.
@@ -469,8 +473,8 @@ def tag_album(items, timid=False, search_artist=None, search_album=None):
           or RECOMMEND_NONE; indicating that the first candidate is
           very likely, it is somewhat likely, or no conclusion could
           be reached.
-    If search_artist and search_album are provided, then they are used
-    as search terms in place of the current metadata.
+    If search_artist and search_album or search_id are provided, then
+    they are used as search terms in place of the current metadata.
     May raise an AutotagError if existing metadata is insufficient.
     """
     # Get current metadata.
@@ -481,17 +485,29 @@ def tag_album(items, timid=False, search_artist=None, search_album=None):
     out_tuples = {}
     
     # Try to find album indicated by MusicBrainz IDs.
-    id_info = match_by_id(items)
+    if search_id:
+        log.debug('Searching for album ID: ' + search_id)
+        id_info = mb.album_for_id(search_id)
+    else:
+        id_info = match_by_id(items)
     if id_info:
         validate_candidate(items, out_tuples, id_info)
+        rec = recommendation(out_tuples.values())
+        log.debug('Album ID match recommendation is ' + str(rec))
         if out_tuples and not timid:
             # If we have a very good MBID match, return immediately.
             # Otherwise, this match will compete against metadata-based
             # matches.
-            rec = recommendation(out_tuples.values())
             if rec == RECOMMEND_STRONG:
                 log.debug('ID match.')
                 return cur_artist, cur_album, out_tuples.values(), rec
+
+    # If searching by ID, don't continue to metadata search.
+    if search_id is not None:
+        if out_tuples:
+            return cur_artist, cur_album, out_tuples.values(), rec
+        else:
+            return cur_artist, cur_album, [], RECOMMEND_NONE
     
     # Search terms.
     if not (search_artist and search_album):
@@ -530,19 +546,21 @@ def tag_album(items, timid=False, search_artist=None, search_album=None):
     rec = recommendation(out_tuples)
     return cur_artist, cur_album, out_tuples, rec
 
-def tag_item(item, timid=False, search_artist=None, search_title=None):
+def tag_item(item, timid=False, search_artist=None, search_title=None,
+             search_id=None):
     """Attempts to find metadata for a single track. Returns a
     `(candidates, recommendation)` pair where `candidates` is a list
     of `(distance, track_info)` pairs. `search_artist` and 
     `search_title` may be used to override the current metadata for
-    the purposes of the MusicBrainz category.
+    the purposes of the MusicBrainz title; likewise `search_id`.
     """
     candidates = []
 
     # First, try matching by MusicBrainz ID.
-    trackid = item.mb_trackid
+    trackid = search_id or item.mb_trackid
     if trackid:
-        track_info = mb.track_for_id(item.mb_trackid)
+        log.debug('Searching for track ID: ' + trackid)
+        track_info = mb.track_for_id(trackid)
         if track_info:
             dist = track_distance(item, track_info, incl_artist=True)
             candidates.append((dist, track_info))
@@ -551,6 +569,13 @@ def tag_item(item, timid=False, search_artist=None, search_title=None):
             if rec == RECOMMEND_STRONG and not timid:
                 log.debug('Track ID match.')
                 return candidates, rec
+
+    # If we're searching by ID, don't proceed.
+    if search_id is not None:
+        if candidates:
+            return candidates, rec
+        else:
+            return [], RECOMMEND_NONE
     
     # Search terms.
     if not (search_artist and search_title):

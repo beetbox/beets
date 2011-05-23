@@ -281,7 +281,8 @@ def album_for_id(albumid):
     inc = mbws.ReleaseIncludes(artist=True, tracks=True)
     try:
         album = _query_wrap(query.getReleaseById, albumid, inc)
-    except (mbws.ResourceNotFoundError, mbws.RequestError):
+    except (mbws.ResourceNotFoundError, mbws.RequestError), exc:
+        log.debug('Album ID match failed: ' + str(exc))
         return None
     return release_dict(album, album.tracks)
 
@@ -293,6 +294,7 @@ def track_for_id(trackid):
     inc = mbws.TrackIncludes(artist=True)
     try:
         track = _query_wrap(query.getTrackById, trackid, inc)
-    except (mbws.ResourceNotFoundError, mbws.RequestError):
+    except (mbws.ResourceNotFoundError, mbws.RequestError), exc:
+        log.debug('Track ID match failed: ' + str(exc))
         return None
     return track_dict(track)
