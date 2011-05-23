@@ -846,12 +846,13 @@ class Library(BaseLibrary):
         item.id = new_id
         return new_id
     
-    def save(self):
+    def save(self, event=True):
         """Writes the library to disk (completing an sqlite
         transaction).
         """
         self.conn.commit()
-        plugins.send('save', lib=self)
+        if event:
+            plugins.send('save', lib=self)
 
     def load(self, item, load_id=None):
         if load_id is None:

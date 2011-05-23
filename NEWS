@@ -32,6 +32,7 @@
 * Fix crasher in quiet singleton imports (import -qs).
 * Fix crash when autotagging files with no metadata.
 * Fix a rare deadlock when finishing the import pipeline.
+* Fix an issue that was causing mpdupdate to run twice for every album.
 
 1.0b8
 -----

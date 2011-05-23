@@ -513,7 +513,7 @@ def fetch_art(config):
                     album = lib.get_album(task.album_id)
                     album.set_art(artpath)
                 finally:
-                    lib.save()
+                    lib.save(False)
 
 def finalize(config):
     """A coroutine that finishes up importer tasks. In particular, the
