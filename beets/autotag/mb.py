@@ -55,6 +55,10 @@ RELEASE_TYPES = [
     Release.TYPE_OTHER
 ]
 
+RELEASE_INCLUDES = mbws.ReleaseIncludes(artist=True, tracks=True,
+                                        releaseEvents=True, labels=True)
+TRACK_INCLUDES = mbws.TrackIncludes(artist=True)
+
 # MusicBrainz requires that a client does not query the server more
 # than once a second. This function enforces that limit using a
 # module-global variable to keep track of the last time a query was
@@ -122,8 +126,8 @@ def release_info(release_id):
     release and the release group ID. If the release is not found,
     returns None.
     """
-    inc = mbws.ReleaseIncludes(tracks=True, releaseGroup=True)
-    release = _query_wrap(mbws.Query().getReleaseById, release_id, inc)
+    release = _query_wrap(mbws.Query().getReleaseById, release_id,
+                          RELEASE_INCLUDES)
     if release:
         return release.getTracks(), release.getReleaseGroup().getId()
     else:
@@ -286,10 +290,8 @@ def album_for_id(albumid):
     information dictionary. If no match is found, returns None.
     """
     query = mbws.Query()
-    inc = mbws.ReleaseIncludes(artist=True, tracks=True, releaseEvents=True,
-                               labels=True)
     try:
-        album = _query_wrap(query.getReleaseById, albumid, inc)
+        album = _query_wrap(query.getReleaseById, albumid, RELEASE_INCLUDES)
     except (mbws.ResourceNotFoundError, mbws.RequestError), exc:
         log.debug('Album ID match failed: ' + str(exc))
         return None
@@ -300,9 +302,8 @@ def track_for_id(trackid):
     dictionary or None if no track is found.
     """
     query = mbws.Query()
-    inc = mbws.TrackIncludes(artist=True)
     try:
-        track = _query_wrap(query.getTrackById, trackid, inc)
+        track = _query_wrap(query.getTrackById, trackid, TRACK_INCLUDES)
     except (mbws.ResourceNotFoundError, mbws.RequestError), exc:
         log.debug('Track ID match failed: ' + str(exc))
         return None
