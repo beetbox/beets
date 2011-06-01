@@ -222,20 +222,28 @@ def release_dict(release, tracks=None):
             out['albumtype'] = releasetype.split('#')[1].lower()
             break
 
-    # Release date.
+    # Release date and label.
     try:
-        date_str = release.getEarliestReleaseDate()
+        event = release.getEarliestReleaseEvent()
     except:
         # The python-musicbrainz2 module has a bug that will raise an
         # exception when there is no release date to be found. In this
         # case, we just skip adding a release date to the dict.
         pass
     else:
-        if date_str:
-            date_parts = date_str.split('-')
-            for key in ('year', 'month', 'day'):
-                if date_parts:
-                    out[key] = int(date_parts.pop(0))
+        if event:
+            # Release date.
+            date_str = event.getDate()
+            if date_str:
+                date_parts = date_str.split('-')
+                for key in ('year', 'month', 'day'):
+                    if date_parts:
+                        out[key] = int(date_parts.pop(0))
+
+            # Label name.
+            label = event.getLabel()
+            if label:
+                out['label'] = label.getName()
 
     # Tracks.
     if tracks is not None:
@@ -278,7 +286,8 @@ def album_for_id(albumid):
     information dictionary. If no match is found, returns None.
     """
     query = mbws.Query()
-    inc = mbws.ReleaseIncludes(artist=True, tracks=True, releaseEvents=True)
+    inc = mbws.ReleaseIncludes(artist=True, tracks=True, releaseEvents=True,
+                               labels=True)
     try:
         album = _query_wrap(query.getReleaseById, albumid, inc)
     except (mbws.ResourceNotFoundError, mbws.RequestError), exc:
