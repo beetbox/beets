@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -278,7 +278,7 @@ def album_for_id(albumid):
     information dictionary. If no match is found, returns None.
     """
     query = mbws.Query()
-    inc = mbws.ReleaseIncludes(artist=True, tracks=True)
+    inc = mbws.ReleaseIncludes(artist=True, tracks=True, releaseEvents=True)
     try:
         album = _query_wrap(query.getReleaseById, albumid, inc)
     except (mbws.ResourceNotFoundError, mbws.RequestError), exc:
