@@ -56,7 +56,8 @@ RELEASE_TYPES = [
 ]
 
 RELEASE_INCLUDES = mbws.ReleaseIncludes(artist=True, tracks=True,
-                                        releaseEvents=True, labels=True)
+                                        releaseEvents=True, labels=True,
+                                        releaseGroup=True)
 TRACK_INCLUDES = mbws.TrackIncludes(artist=True)
 
 # MusicBrainz requires that a client does not query the server more
