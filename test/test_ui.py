@@ -243,6 +243,15 @@ class ConfigTest(unittest.TestCase):
         os.environ['BEETSCONFIG'] = '/xxxxx'
         ui.main(['version'])
 
+    def test_nonexistant_db(self):
+        def func(lib, config, opts, args):
+            pass
+        with self.assertRaises(ui.UserError):
+            self._run_main([], textwrap.dedent("""
+                [beets]
+                library: /xxx/yyy/not/a/real/path
+            """), func)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

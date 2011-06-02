@@ -24,6 +24,7 @@ import ConfigParser
 import sys
 from difflib import SequenceMatcher
 import logging
+import sqlite3
 
 from beets import library
 from beets import plugins
@@ -584,10 +585,14 @@ def main(args=None, configfh=None):
             path_formats.update(config.items('paths'))
     art_filename = \
         config_val(config, 'beets', 'art_filename', DEFAULT_ART_FILENAME)
-    lib = library.Library(os.path.expanduser(libpath),
-                          directory,
-                          path_formats,
-                          art_filename)
+    db_path = os.path.expanduser(libpath)
+    try:
+        lib = library.Library(db_path,
+                              directory,
+                              path_formats,
+                              art_filename)
+    except sqlite3.OperationalError:
+        raise UserError("database file %s could not be opened" % db_path)
     
     # Configure the logger.
     log = logging.getLogger('beets')

@@ -34,6 +34,7 @@
 * Fix a rare deadlock when finishing the import pipeline.
 * Fix an issue that was causing mpdupdate to run twice for every album.
 * Fix a bug that caused release dates/years not to be fetched.
+* A better error message is given when the database file is unopenable.
 
 1.0b8
 -----
