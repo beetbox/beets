@@ -140,7 +140,7 @@ class StorageStyle(object):
     """
     def __init__(self, key, list_elem = True, as_type = unicode,
                  packing = None, pack_pos = 0, id3_desc = None,
-                 id3_frame_field = u'text'):
+                 id3_frame_field = 'text'):
         self.key = key
         self.list_elem = list_elem
         self.as_type = as_type
@@ -322,6 +322,7 @@ class MediaField(object):
                 
                 # need to make a new frame?
                 if not found:
+                    assert isinstance(style.id3_frame_field, str) # Keyword.
                     frame = mutagen.id3.Frames[style.key](
                         encoding=3,
                         desc=style.id3_desc,
@@ -340,12 +341,14 @@ class MediaField(object):
                         setattr(frame, style.id3_frame_field, val)
                 else:
                     # New frame.
+                    assert isinstance(style.id3_frame_field, str) # Keyword.
                     frame = mutagen.id3.UFID(owner=owner, 
                         **{style.id3_frame_field: val})
                     obj.mgfile.tags.setall('UFID', [frame])
                     
             # Just replace based on key.
             else:
+                assert isinstance(style.id3_frame_field, str) # Keyword.
                 frame = mutagen.id3.Frames[style.key](encoding = 3,
                     **{style.id3_frame_field: val})
                 obj.mgfile.tags.setall(style.key, [frame])
@@ -805,7 +808,7 @@ class MediaFile(object):
     mb_trackid = MediaField(
                 mp3 = StorageStyle('UFID:http://musicbrainz.org',
                                    list_elem = False,
-                                   id3_frame_field = u'data'),
+                                   id3_frame_field = 'data'),
                 mp4 = StorageStyle(
                     '----:com.apple.iTunes:MusicBrainz Track Id',
                     as_type=str),
