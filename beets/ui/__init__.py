@@ -25,6 +25,7 @@ import sys
 from difflib import SequenceMatcher
 import logging
 import sqlite3
+import errno
 
 from beets import library
 from beets import plugins
@@ -607,3 +608,9 @@ def main(args=None, configfh=None):
     except UserError, exc:
         message = exc.args[0] if exc.args else None
         subcommand.parser.error(message)
+    except IOError, exc:
+        if exc.errno == errno.EPIPE:
+            # "Broken pipe". End silently.
+            pass
+        else:
+            raise

@@ -35,6 +35,7 @@
 * Fix an issue that was causing mpdupdate to run twice for every album.
 * Fix a bug that caused release dates/years not to be fetched.
 * Fix a crasher when setting MBIDs on MP3s file metadata.
+* Fix a "broken pipe" error when piping beets' standard output.
 * A better error message is given when the database file is unopenable.
 
 1.0b8
