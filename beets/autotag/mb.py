@@ -33,6 +33,7 @@ SEARCH_LIMIT = 10
 VARIOUS_ARTISTS_ID = VARIOUS_ARTISTS_ID.rsplit('/', 1)[1]
 
 class ServerBusyError(Exception): pass
+class BadResponseError(Exception): pass
 
 log = logging.getLogger('beets')
 
@@ -94,6 +95,13 @@ def _query_wrap(fun, *args, **kwargs):
                 else:
                     # This is not the error we're looking for.
                     raise
+            except mbws.ConnectionError:
+                # Typically a timeout.
+                pass
+            except mbws.ResponseError, exc:
+                # Malformed response from server.
+                log.error('Bad response from MusicBrainz: ' + str(exc))
+                raise BadResponseError()
             else:
                 # Success. Return the result.
                 return res
@@ -114,7 +122,10 @@ def get_releases(**params):
     
     # Issue query.
     filt = mbws.ReleaseFilter(**params)
-    results = _query_wrap(mbws.Query().getReleases, filter=filt)
+    try:
+        results = _query_wrap(mbws.Query().getReleases, filter=filt)
+    except BadResponseError:
+        results = ()
 
     # Construct results.
     for result in results:
@@ -127,8 +138,12 @@ def release_info(release_id):
     release and the release group ID. If the release is not found,
     returns None.
     """
-    release = _query_wrap(mbws.Query().getReleaseById, release_id,
-                          RELEASE_INCLUDES)
+    try:
+        release = _query_wrap(mbws.Query().getReleaseById, release_id,
+                              RELEASE_INCLUDES)
+    except BadResponseError:
+        release = None
+
     if release:
         return release.getTracks(), release.getReleaseGroup().getId()
     else:
@@ -185,7 +200,10 @@ def find_tracks(criteria, limit=SEARCH_LIMIT):
         query = _lucene_query(criteria)
         log.debug('track query: %s' % query)
         filt = mbws.TrackFilter(limit=limit, query=query)
-        results = _query_wrap(mbws.Query().getTracks, filter=filt)
+        try:
+            results = _query_wrap(mbws.Query().getTracks, filter=filt)
+        except BadResponseError:
+            results = ()
         for result in results:
             track = result.track
             yield track_dict(track)
@@ -293,6 +311,8 @@ def album_for_id(albumid):
     query = mbws.Query()
     try:
         album = _query_wrap(query.getReleaseById, albumid, RELEASE_INCLUDES)
+    except BadResponseError:
+        return None
     except (mbws.ResourceNotFoundError, mbws.RequestError), exc:
         log.debug('Album ID match failed: ' + str(exc))
         return None
@@ -305,6 +325,8 @@ def track_for_id(trackid):
     query = mbws.Query()
     try:
         track = _query_wrap(query.getTrackById, trackid, TRACK_INCLUDES)
+    except BadResponseError:
+        return None
     except (mbws.ResourceNotFoundError, mbws.RequestError), exc:
         log.debug('Track ID match failed: ' + str(exc))
         return None

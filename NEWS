@@ -37,6 +37,7 @@
 * Fix a crasher when setting MBIDs on MP3s file metadata.
 * Fix a "broken pipe" error when piping beets' standard output.
 * A better error message is given when the database file is unopenable.
+* Suppress errors due to timeouts and bad responses from MusicBrainz.
 
 1.0b8
 -----
