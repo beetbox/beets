@@ -22,6 +22,9 @@
   more fairly by the autotagger. For example, if you're missing the
   acute accent on the "e" in "cafe", that change won't be penalized.
   This introduces a new dependency on the "unidecode" Python module.
+* The bitrate of lossless files is now calculated from their file size
+  (rather than being fixed at 0 or reflecting the uncompressed audio
+  bitrate).
 * Fixed a problem where duplicate albums or items imported at the same
   time would fail to be detected.
 * BPD now uses a persistent "virtual filesystem" in order to fake a

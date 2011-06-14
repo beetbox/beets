@@ -28,7 +28,6 @@ A field will always return a reasonable value of the correct type, even
 if no tag is present. If no value is available, the value will be false
 (e.g., zero or the empty string).
 """
-
 import mutagen
 import mutagen.mp3
 import mutagen.oggvorbis
@@ -39,6 +38,7 @@ import datetime
 import re
 import base64
 import imghdr
+import os
 from beets.util.enumeration import enum
 
 __all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
@@ -607,6 +607,8 @@ class MediaFile(object):
         """Constructs a new MediaFile reflecting the file at path. May
         throw UnreadableFileError.
         """
+        self.path = path
+        
         unreadable_exc = (
             mutagen.mp3.HeaderNotFoundError,
             mutagen.flac.FLACNoHeaderError,
@@ -843,20 +845,14 @@ class MediaFile(object):
 
     @property
     def bitrate(self):
-        if self.type in ('flac', 'ape'):
-            if hasattr(self.mgfile.info, 'bits_per_sample'):
-                # Simulate bitrate for lossless formats.
-                #fixme: The utility of this guess is questionable.
-                return self.mgfile.info.sample_rate * \
-                       self.mgfile.info.bits_per_sample
-            else:
-                # Old APE file format.
-                return 0
-        elif self.type == 'wv':
-            # Mutagen doesn't provide enough information.
-            return 0
-        else:
+        if hasattr(self.mgfile.info, 'bitrate'):
+            # Many formats provide it explicitly.
             return self.mgfile.info.bitrate
+        else:
+            # Otherwise, we calculate bitrate from the file size. (This
+            # is the case for all of the lossless formats.)
+            size = os.path.getsize(self.path)
+            return int(size * 8 / self.length)
 
     @property
     def format(self):

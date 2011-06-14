@@ -219,7 +219,7 @@ read_only_correct_dicts = {
 
     'full.flac': {
         'length': 1.0,
-        'bitrate': 705600,
+        'bitrate': 175120,
         'format': 'FLAC',
     },
 
@@ -237,13 +237,13 @@ read_only_correct_dicts = {
     
     'full.ape': {
         'length': 1.0,
-        'bitrate': 705600,
+        'bitrate': 111640,
         'format': 'APE',
     },
 
     'full.wv': {
         'length': 1.0,
-        'bitrate': 0,
+        'bitrate': 108344,
         'format': 'WavPack',
     },
 
