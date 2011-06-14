@@ -43,6 +43,7 @@
 * Fix a "broken pipe" error when piping beets' standard output.
 * A better error message is given when the database file is unopenable.
 * Suppress errors due to timeouts and bad responses from MusicBrainz.
+* Fix a crash on album queries with item-only field names.
 
 1.0b8
 -----

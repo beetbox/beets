@@ -180,7 +180,7 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
 
         self.lib = beets.library.Library(':memory:')
         self.lib.add(self.single_item)
-        self.lib.add_album([self.album_item])
+        self.album = self.lib.add_album([self.album_item])
 
     def test_singleton_true(self):
         q = 'singleton:true'
@@ -205,6 +205,26 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
         results = self.lib.items(q)
         self.assert_matched(results, 'singleton item')
         self.assert_done(results)
+
+    def test_unknown_field_name_ignored(self):
+        q = 'xyzzy:nonsense'
+        results = self.lib.items(q)
+        titles = [i.title for i in results]
+        self.assertTrue('singleton item' in titles)
+        self.assertTrue('album item' in titles)
+        self.assertEqual(len(titles), 2)
+
+    def test_unknown_field_name_ignored_in_album_query(self):
+        q = 'xyzzy:nonsense'
+        results = self.lib.albums(q)
+        names = [a.album for a in results]
+        self.assertEqual(names, ['the album'])
+
+    def test_item_field_name_ignored_in_album_query(self):
+        q = 'format:nonsense'
+        results = self.lib.albums(q)
+        names = [a.album for a in results]
+        self.assertEqual(names, ['the album'])
 
 class BrowseTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
