@@ -326,6 +326,10 @@ class DestinationTest(unittest.TestCase):
         name = util.sanitize_for_path(1, posixpath, 'track')
         self.assertTrue(name.startswith('0'))
 
+    def test_component_sanitize_uses_kbps_bitrate(self):
+        val = util.sanitize_for_path(12345, posixpath, 'bitrate')
+        self.assertEqual(val, u'12kbps')
+
     def test_artist_falls_back_to_albumartist(self):
         self.i.artist = ''
         self.i.albumartist = 'something'

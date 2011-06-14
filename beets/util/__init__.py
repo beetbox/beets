@@ -218,6 +218,9 @@ def sanitize_for_path(value, pathmod, key=None):
     elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
         # pad with zeros
         value = u'%02i' % value
+    elif key == 'bitrate':
+        # Bitrate gets formatted as kbps.
+        value = u'%ikbps' % (value / 1000)
     else:
         value = unicode(value)
     return value

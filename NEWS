@@ -8,6 +8,8 @@
 * The importer now provides the option to specify a MusicBrainz ID
   manually if the built-in searching isn't working for a particular
   album or track.
+* $bitrate in path formats is now formatted as a human-readable kbps
+  value instead of a raw integer.
 * The import logger has been improved for "always-on" use. First,
   it is now possible to specify a log file in .beetsconfig. Also,
   logs are now appended rather than overwritten and contain
