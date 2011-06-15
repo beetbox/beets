@@ -427,6 +427,8 @@ class CollectionQuery(Query):
                 subqueries.append(SubstringQuery(key.lower(), pattern))
             elif key.lower() == 'singleton':
                 subqueries.append(SingletonQuery(util.str2bool(pattern)))
+            elif key.lower() == 'path':
+                subqueries.append(PathQuery(pattern))
         if not subqueries: # no terms in query
             subqueries = [TrueQuery()]
         return cls(subqueries)
@@ -484,6 +486,20 @@ class TrueQuery(Query):
 
     def match(self, item):
         return True
+
+class PathQuery(Query):
+    """A query that matches all items under a given path."""
+    def __init__(self, path):
+        self.file_path = normpath(path) # As a file.
+        self.dir_path = os.path.join(path, '') # As a directory (prefix).
+
+    def match(self, item):
+        return (item.path == self.file_path) or \
+               item.path.startswith(self.dir_path)
+
+    def clause(self):
+        dir_pat = self.dir_path + '%'
+        return '(path = ?) || (path LIKE ?)', (self.file_path, dir_pat)
 
 class ResultIterator(object):
     """An iterator into an item query result set."""

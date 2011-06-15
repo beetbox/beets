@@ -14,7 +14,6 @@
 
 """Various tests for querying the library database.
 """
-
 import unittest
 import os
 
@@ -225,6 +224,38 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
         results = self.lib.albums(q)
         names = [a.album for a in results]
         self.assertEqual(names, ['the album'])
+
+class PathQueryTest(unittest.TestCase, AssertsMixin):
+    def setUp(self):
+        self.lib = beets.library.Library(':memory:')
+
+        path_item = _common.item()
+        path_item.path = '/a/b/c.mp3'
+        path_item.title = 'path item'
+        self.lib.add(path_item)
+
+    def test_path_exact_match(self):
+        q = 'path:/a/b/c.mp3'
+        results = self.lib.items(q)
+        self.assert_matched(results, 'path item')
+        self.assert_done(results)
+
+    def test_parent_directory_no_slash(self):
+        q = 'path:/a'
+        results = self.lib.items(q)
+        self.assert_matched(results, 'path item')
+        self.assert_done(results)
+
+    def test_parent_directory_with_slash(self):
+        q = 'path:/a/'
+        results = self.lib.items(q)
+        self.assert_matched(results, 'path item')
+        self.assert_done(results)
+
+    def test_no_match(self):
+        q = 'path:/xyzzy/'
+        results = self.lib.items(q)
+        self.assert_done(results)
 
 class BrowseTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
