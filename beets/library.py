@@ -425,12 +425,12 @@ class CollectionQuery(Query):
                 subqueries.append(AnySubstringQuery(pattern, default_fields))
             elif key.lower() == 'comp': # a boolean field
                 subqueries.append(BooleanQuery(key.lower(), pattern))
+            elif key.lower() == 'path':
+                subqueries.append(PathQuery(pattern))
             elif key.lower() in all_keys: # ignore unrecognized keys
                 subqueries.append(SubstringQuery(key.lower(), pattern))
             elif key.lower() == 'singleton':
                 subqueries.append(SingletonQuery(util.str2bool(pattern)))
-            elif key.lower() == 'path':
-                subqueries.append(PathQuery(pattern))
         if not subqueries: # no terms in query
             subqueries = [TrueQuery()]
         return cls(subqueries)
@@ -492,8 +492,10 @@ class TrueQuery(Query):
 class PathQuery(Query):
     """A query that matches all items under a given path."""
     def __init__(self, path):
-        self.file_path = normpath(path) # As a file.
-        self.dir_path = os.path.join(path, '') # As a directory (prefix).
+        # Match the path as a single file.
+        self.file_path = normpath(path)
+        # As a directory (prefix).
+        self.dir_path = os.path.join(self.file_path, '') 
 
     def match(self, item):
         return (item.path == self.file_path) or \
@@ -501,7 +503,8 @@ class PathQuery(Query):
 
     def clause(self):
         dir_pat = self.dir_path + '%'
-        return '(path = ?) || (path LIKE ?)', (self.file_path, dir_pat)
+        file_blob = buffer(bytestring_path(self.file_path))
+        return '(path = ?) || (path LIKE ?)', (file_blob, dir_pat)
 
 class ResultIterator(object):
     """An iterator into an item query result set."""

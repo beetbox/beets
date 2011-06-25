@@ -256,6 +256,17 @@ class PathQueryTest(unittest.TestCase, AssertsMixin):
         q = 'path:/xyzzy/'
         results = self.lib.items(q)
         self.assert_done(results)
+    
+    def test_fragment_no_match(self):
+        q = 'path:/b/'
+        results = self.lib.items(q)
+        self.assert_done(results)
+
+    def test_nonnorm_path(self):
+        q = 'path:/x/../a/b'
+        results = self.lib.items(q)
+        self.assert_matched(results, 'path item')
+        self.assert_done(results)
 
 class BrowseTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
