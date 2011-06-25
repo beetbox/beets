@@ -4,6 +4,8 @@
   imported directories when available.
 * The release label for albums and tracks is now fetched from
   MusicBrainz, written to files, and stored in the database.
+* Release year and label are now shown in the candidate selection
+  list to help disambiguate different releases of the same album.
 * Prompts in the importer interface are now colorized for easy
   reading. The default option is always highlighted.
 * The "list" command now accepts a "-p" switch that causes it to show

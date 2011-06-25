@@ -237,8 +237,24 @@ def choose_candidate(candidates, singleton, rec, color, timid,
                        (cur_artist, cur_album))
                 print_('Candidates:')
                 for i, (dist, items, info) in enumerate(candidates):
-                    print_('%i. %s - %s (%s)' % (i+1, info['artist'],
-                        info['album'], dist_string(dist, color)))
+                    line = '%i. %s - %s' % (i+1, info['artist'],
+                                            info['album'])
+
+                    # Label and year disambiguation, if available.
+                    label, year = None, None
+                    if 'label' in info:
+                        label = info['label']
+                    if 'year' in info and info['year']:
+                        year = unicode(info['year'])
+                    if label and year:
+                        line += u' [%s, %s]' % (label, year)
+                    elif label:
+                        line += u' [%s]' % label
+                    elif year:
+                        line += u' [%s]' % year
+
+                    line += ' (%s)' % dist_string(dist, color)
+                    print_(line)
                                             
             # Ask the user for a choice.
             if singleton:

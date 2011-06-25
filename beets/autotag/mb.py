@@ -266,7 +266,9 @@ def release_dict(release, tracks=None):
             # Label name.
             label = event.getLabel()
             if label:
-                out['label'] = label.getName()
+                name = label.getName()
+                if name and name != '[no label]':
+                    out['label'] = name
 
     # Tracks.
     if tracks is not None:
