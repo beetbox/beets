@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -155,6 +155,7 @@ correct_dicts = {
         'mb_albumid': '9e873859-8aa4-4790-b985-5a953e8ef628',
         'mb_artistid':'7cf0ea9d-86b9-4dad-ba9e-2355a64899ea',
         'art':        None,
+        'label':      u'the label',
     },
 
     # Additional coverage for common cases when "total" fields are unset.
@@ -198,6 +199,8 @@ correct_dicts = {
         'mb_trackid': u'',
         'mb_albumid': u'',
         'mb_artistid':u'',
+        'art':        None,
+        'label':      u'',
     },
     
     # Full release date.
@@ -237,13 +240,13 @@ read_only_correct_dicts = {
     
     'full.ape': {
         'length': 1.0,
-        'bitrate': 111640,
+        'bitrate': 112040,
         'format': 'APE',
     },
 
     'full.wv': {
         'length': 1.0,
-        'bitrate': 108344,
+        'bitrate': 108744,
         'format': 'WavPack',
     },
 

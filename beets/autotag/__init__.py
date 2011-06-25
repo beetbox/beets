@@ -375,6 +375,8 @@ def apply_metadata(items, info):
             item.mb_artistid = info['artist_id']
         item.mb_albumartistid = info['artist_id']
         item.albumtype = info['albumtype']
+        if 'label' in info:
+            item.label = info['label']
         
         # Compilation flag.
         item.comp = info['va']

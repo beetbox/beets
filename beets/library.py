@@ -62,6 +62,7 @@ ITEM_FIELDS = [
     ('mb_artistid',      'text', True, True),
     ('mb_albumartistid', 'text', True, True),
     ('albumtype',        'text', True, True),
+    ('label',            'text', True, True),
 
     ('length',      'real', False, True),
     ('bitrate',     'int',  False, True),
@@ -90,6 +91,7 @@ ALBUM_FIELDS = [
     ('mb_albumid',       'text', True),
     ('mb_albumartistid', 'text', True),
     ('albumtype',        'text', True),
+    ('label',            'text', True),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
@@ -837,7 +839,7 @@ class Library(BaseLibrary):
         else:
             return normpath(os.path.join(self.directory, subpath))   
 
-    
+
     # Main interface.
 
     def add(self, item, copy=False):
