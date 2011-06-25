@@ -60,7 +60,6 @@ def art_in_path(path):
 
     # Find all files that look like images in the directory.
     images = []
-    print path, os.listdir(path)
     for fn in os.listdir(path):
         for ext in IMAGE_EXTENSIONS:
             if fn.lower().endswith('.' + ext):
