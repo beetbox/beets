@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -18,6 +18,8 @@ import unittest
 
 import _common
 from beets.autotag import art
+import os
+import shutil
 
 class MockHeaders(object):
     def __init__(self, typeval):
@@ -52,6 +54,29 @@ class AmazonArtTest(unittest.TestCase):
         album = {'asin': None}
         artpath = art.art_for_album(album)
         self.assertEqual(artpath, None)
+
+class FSArtTest(unittest.TestCase):
+    def setUp(self):
+        self.dpath = os.path.join(_common.RSRC, 'arttest')
+        os.mkdir(self.dpath)
+    def tearDown(self):
+        shutil.rmtree(self.dpath)
+
+    def test_finds_jpg_in_directory(self):
+        _common.touch(os.path.join(self.dpath, 'a.jpg'))
+        fn = art.art_in_path(self.dpath)
+        self.assertEqual(fn, os.path.join(self.dpath, 'a.jpg'))
+
+    def test_appropriately_named_file_takes_precedence(self):
+        _common.touch(os.path.join(self.dpath, 'a.jpg'))
+        _common.touch(os.path.join(self.dpath, 'cover.jpg'))
+        fn = art.art_in_path(self.dpath)
+        self.assertEqual(fn, os.path.join(self.dpath, 'cover.jpg'))
+
+    def test_non_image_file_not_identified(self):
+        _common.touch(os.path.join(self.dpath, 'a.txt'))
+        fn = art.art_in_path(self.dpath)
+        self.assertEqual(fn, None)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

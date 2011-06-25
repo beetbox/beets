@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -17,8 +17,12 @@
 import urllib
 import sys
 import logging
+import os
 
 from beets.autotag.mb import album_for_id
+
+IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
+COVER_NAMES = ['cover', 'front', 'art', 'album', 'folder']
 
 # The common logger.
 log = logging.getLogger('beets')
@@ -45,6 +49,34 @@ def art_for_asin(asin):
         if headers.gettype() == AMAZON_CONTENT_TYPE:
             log.debug('Downloaded art to: %s' % fn)
             return fn
+
+
+# Art from the filesystem.
+
+def art_in_path(path):
+    """Look for album art files in a specified directory."""
+    if not os.path.isdir(path):
+        return
+
+    # Find all files that look like images in the directory.
+    images = []
+    print path, os.listdir(path)
+    for fn in os.listdir(path):
+        for ext in IMAGE_EXTENSIONS:
+            if fn.lower().endswith('.' + ext):
+                images.append(fn)
+
+    # Look for "preferred" filenames.
+    for fn in images:
+        for name in COVER_NAMES:
+            if fn.lower().startswith(name):
+                log.debug('Using well-named art file %s' % fn)
+                return os.path.join(path, fn)
+
+    # Fall back to any image in the folder.
+    if images:
+        log.debug('Using fallback art file %s' % images[0])
+        return os.path.join(path, images[0])
 
 
 # Main interface.

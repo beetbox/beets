@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -22,12 +22,9 @@ import stat
 from os.path import join
 
 import _common
-from _common import item
+from _common import item, touch
 import beets.library
 from beets import util
-
-def touch(path):
-    open(path, 'a').close()
 
 class MoveTest(unittest.TestCase):
     def setUp(self):

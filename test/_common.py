@@ -187,3 +187,8 @@ class ExtraAsserts(object):
     def assertNotExists(self, path):
         self.assertFalse(os.path.exists(path),
                         'file exists: %s' % path)
+
+# Utility.
+
+def touch(path):
+    open(path, 'a').close()
