@@ -44,17 +44,6 @@ class AmazonArtTest(unittest.TestCase):
         artpath = art.art_for_asin('xxxx')
         self.assertEqual(artpath, 'somepath')
 
-    def test_main_interface_returns_amazon_art(self):
-        art.urllib.urlretrieve = MockUrlRetrieve('anotherpath', 'image/jpeg')
-        album = {'asin': 'xxxx'}
-        artpath = art.art_for_album(album)
-        self.assertEqual(artpath, 'anotherpath')
-
-    def test_main_interface_returns_none_for_missing_asin(self):
-        album = {'asin': None}
-        artpath = art.art_for_album(album)
-        self.assertEqual(artpath, None)
-
 class FSArtTest(unittest.TestCase):
     def setUp(self):
         self.dpath = os.path.join(_common.RSRC, 'arttest')
@@ -77,6 +66,37 @@ class FSArtTest(unittest.TestCase):
         _common.touch(os.path.join(self.dpath, 'a.txt'))
         fn = art.art_in_path(self.dpath)
         self.assertEqual(fn, None)
+
+class CombinedTest(unittest.TestCase):
+    def setUp(self):
+        self.dpath = os.path.join(_common.RSRC, 'arttest')
+        os.mkdir(self.dpath)
+    def tearDown(self):
+        shutil.rmtree(self.dpath)
+
+    def test_main_interface_returns_amazon_art(self):
+        art.urllib.urlretrieve = MockUrlRetrieve('anotherpath', 'image/jpeg')
+        album = {'asin': 'xxxx'}
+        artpath = art.art_for_album(album, None)
+        self.assertEqual(artpath, 'anotherpath')
+
+    def test_main_interface_returns_none_for_missing_asin_and_path(self):
+        album = {'asin': None}
+        artpath = art.art_for_album(album, None)
+        self.assertEqual(artpath, None)
+
+    def test_main_interface_gives_precedence_to_fs_art(self):
+        _common.touch(os.path.join(self.dpath, 'a.jpg'))
+        art.urllib.urlretrieve = MockUrlRetrieve('anotherpath', 'image/jpeg')
+        album = {'asin': 'xxxx'}
+        artpath = art.art_for_album(album, self.dpath)
+        self.assertEqual(artpath, os.path.join(self.dpath, 'a.jpg'))
+
+    def test_main_interface_falls_back_to_amazon(self):
+        art.urllib.urlretrieve = MockUrlRetrieve('anotherpath', 'image/jpeg')
+        album = {'asin': 'xxxx'}
+        artpath = art.art_for_album(album, self.dpath)
+        self.assertEqual(artpath, 'anotherpath')
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

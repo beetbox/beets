@@ -505,7 +505,7 @@ def fetch_art(config):
             continue
 
         if task.should_fetch_art():
-            artpath = beets.autotag.art.art_for_album(task.info)
+            artpath = beets.autotag.art.art_for_album(task.info, task.path)
 
             # Save the art if any was found.
             if artpath:

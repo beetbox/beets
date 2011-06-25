@@ -1,5 +1,7 @@
 1.0b9
 -----
+* Album art is now automatically discovered and copied from the
+  imported directories when available.
 * Prompts in the importer interface are now colorized for easy
   reading. The default option is always highlighted.
 * The "list" command now accepts a "-p" switch that causes it to show

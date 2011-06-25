@@ -81,10 +81,15 @@ def art_in_path(path):
 
 # Main interface.
 
-def art_for_album(album):
+def art_for_album(album, path):
     """Given an album info dictionary from MusicBrainz, returns a path
     to downloaded art for the album (or None if no art is found).
     """
+    if isinstance(path, basestring):
+        out = art_in_path(path)
+        if out:
+            return out
+
     if album['asin']:
         log.debug('Fetching album art for ASIN %s.' % album['asin'])
         return art_for_asin(album['asin'])
@@ -101,7 +106,7 @@ if __name__ == '__main__':
     if not album:
         print 'album not found'
     else:
-        fn = art_for_album(album)
+        fn = art_for_album(album, None)
         if fn:
             print fn
             print len(open(fn).read())/1024
