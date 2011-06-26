@@ -9,6 +9,11 @@
   now matches the entire phrase. To match in specified fields, use
   a construction like this:
     beet ls "artist:the knife"
+* Queries can match items from the library by directory. A 'path:'
+  prefix is optional; any query containing a path separator (/ on
+  POSIX systems) is assumed to be a path query. Running
+  "beet ls path/to/music" will show all the music in your library
+  under the specified directory.
 * Album art is now automatically discovered and copied from the
   imported directories when available.
 * The release label for albums and tracks is now fetched from

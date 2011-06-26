@@ -420,8 +420,14 @@ class CollectionQuery(Query):
             if not res:
                 continue
             key, pattern = res
-            if key is None: # no key specified; match any field
-                subqueries.append(AnySubstringQuery(pattern, default_fields))
+            if key is None: # No key specified.
+                if os.sep in pattern:
+                    # This looks like a path.
+                    subqueries.append(PathQuery(pattern))
+                else:
+                    # Match any field.
+                    subqueries.append(AnySubstringQuery(pattern,
+                                                        default_fields))
             elif key.lower() == 'comp': # a boolean field
                 subqueries.append(BooleanQuery(key.lower(), pattern))
             elif key.lower() == 'path':

@@ -258,6 +258,22 @@ class PathQueryTest(unittest.TestCase, AssertsMixin):
         self.assert_matched(results, 'path item')
         self.assert_done(results)
 
+    def test_slashed_query_matches_path(self):
+        q = '/a/b'
+        results = self.lib.items(q)
+        self.assert_matched(results, 'path item')
+        self.assert_done(results)
+
+    def test_non_slashed_does_not_match_path(self):
+        q = 'c.mp3'
+        results = self.lib.items(q)
+        self.assert_done(results)
+
+    def test_slashes_in_explicit_field_does_not_match_path(self):
+        q = 'title:/a/b'
+        results = self.lib.items(q)
+        self.assert_done(results)
+
 class BrowseTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
         self.lib = beets.library.Library(
