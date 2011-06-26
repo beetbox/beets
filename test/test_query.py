@@ -20,45 +20,35 @@ import os
 import _common
 import beets.library
 
-parse_query = beets.library.CollectionQuery._parse_query
+pqp = beets.library.CollectionQuery._parse_query_part
 
 some_item = _common.item()
 
 class QueryParseTest(unittest.TestCase):
     def test_one_basic_term(self):
         q = 'test'
-        r = [(None, 'test')]
-        self.assertEqual(parse_query(q), r)
-    
-    def test_three_basic_terms(self):
-        q = 'test one two'
-        r = [(None, 'test'), (None, 'one'), (None, 'two')]
-        self.assertEqual(parse_query(q), r)
+        r = (None, 'test')
+        self.assertEqual(pqp(q), r)
     
     def test_one_keyed_term(self):
         q = 'test:val'
-        r = [('test', 'val')]
-        self.assertEqual(parse_query(q), r)
-    
-    def test_one_keyed_one_basic(self):
-        q = 'test:val one'
-        r = [('test', 'val'), (None, 'one')]
-        self.assertEqual(parse_query(q), r)
-    
+        r = ('test', 'val')
+        self.assertEqual(pqp(q), r)
+
     def test_colon_at_end(self):
         q = 'test:'
-        r = [(None, 'test:')]
-        self.assertEqual(parse_query(q), r)
+        r = (None, 'test:')
+        self.assertEqual(pqp(q), r)
     
     def test_colon_at_start(self):
         q = ':test'
-        r = [(None, ':test')]
-        self.assertEqual(parse_query(q), r)
+        r = (None, ':test')
+        self.assertEqual(pqp(q), r)
     
     def test_escaped_colon(self):
         q = r'test\:val'
-        r = [((None), 'test:val')]
-        self.assertEqual(parse_query(q), r)
+        r = (None, 'test:val')
+        self.assertEqual(pqp(q), r)
 
 class AnySubstringQueryTest(unittest.TestCase):
     def setUp(self):

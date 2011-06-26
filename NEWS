@@ -1,5 +1,14 @@
 1.0b9
 -----
+* Queries can now contain whitespace. Spaces passed as shell
+  arguments are now preserved, so you can use your shell's escaping
+  syntax to include spaces in queries. For example, typing this:
+    beet ls "the knife"
+  or this:
+    beet ls the\ knife
+  now matches the entire phrase. To match in specified fields, use
+  a construction like this:
+    beet ls "artist:the knife"
 * Album art is now automatically discovered and copied from the
   imported directories when available.
 * The release label for albums and tracks is now fetched from
@@ -70,7 +79,7 @@
   "embedart", implements this functionality. Enable the plugin to
   automatically embed downloaded album art into your music files'
   metadata. The plugin also provides the "embedart" and "extractart"
-  commands for moving image files in and out of metadata. See the
+  commands for moving image files in and247ca93696d3 out of metadata. See the
   wiki for more details. (Thanks, daenney!)
 * The "distance" number, which quantifies how different an album's
   current and proposed metadata are, is now displayed as "similarity"

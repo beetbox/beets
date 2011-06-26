@@ -618,7 +618,7 @@ list_cmd.parser.add_option('-a', '--album', action='store_true',
 list_cmd.parser.add_option('-p', '--path', action='store_true',
     help='print paths for matched items or albums')
 def list_func(lib, config, opts, args):
-    list_items(lib, ui.make_query(args), opts.album, opts.path)
+    list_items(lib, args, opts.album, opts.path)
 list_cmd.func = list_func
 default_commands.append(list_cmd)
 
@@ -673,7 +673,7 @@ remove_cmd.parser.add_option("-d", "--delete", action="store_true",
 remove_cmd.parser.add_option('-a', '--album', action='store_true',
     help='match albums instead of tracks')
 def remove_func(lib, config, opts, args):
-    remove_items(lib, ui.make_query(args), opts.album, opts.delete)
+    remove_items(lib, args, opts.album, opts.delete)
 remove_cmd.func = remove_func
 default_commands.append(remove_cmd)
 
@@ -714,7 +714,7 @@ Albums: %i""" % (
 stats_cmd = ui.Subcommand('stats',
     help='show statistics about the library or a query')
 def stats_func(lib, config, opts, args):
-    show_stats(lib, ui.make_query(args))
+    show_stats(lib, args)
 stats_cmd.func = stats_func
 default_commands.append(stats_cmd)
 

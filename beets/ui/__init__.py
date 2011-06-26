@@ -247,10 +247,6 @@ def input_yn(prompt, require=False, color=False):
     )
     return sel == 'y'
 
-def make_query(criteria):
-    """Make query string for the list of criteria."""
-    return ' '.join(criteria).strip() or None
-
 def config_val(config, section, name, default, vtype=None):
     """Queries the configuration file for a value (given by the
     section and name). If no value is present, returns default.

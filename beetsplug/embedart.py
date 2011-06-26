@@ -41,7 +41,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             if not args:
                 raise ui.UserError('specify an image file')
             imagepath = normpath(args.pop(0))
-            embed(lib, imagepath, ui.make_query(args))
+            embed(lib, imagepath, args)
         embed_cmd.func = embed_func
 
         # Extract command.
@@ -51,14 +51,14 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                                       help='image output file')
         def extract_func(lib, config, opts, args):
             outpath = normpath(opts.outpath or 'cover')
-            extract(lib, outpath, ui.make_query(args))
+            extract(lib, outpath, args)
         extract_cmd.func = extract_func
 
         # Clear command.
         clear_cmd = ui.Subcommand('clearart',
                                   help='remove images from file metadata')
         def clear_func(lib, config, opts, args):
-            clear(lib, ui.make_query(args))
+            clear(lib, args)
         clear_cmd.func = clear_func
 
         return [embed_cmd, extract_cmd, clear_cmd]

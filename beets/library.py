@@ -381,46 +381,45 @@ class CollectionQuery(Query):
         clause = (' ' + joiner + ' ').join(clause_parts)
         return clause, subvals
     
-    # regular expression for _parse_query, below
-    _pq_regex = re.compile(r'(?:^|(?<=\s))' # zero-width match for whitespace
-                                            # or beginning of string
-       
-                           # non-grouping optional segment for the keyword
+    # regular expression for _parse_query_part, below
+    _pq_regex = re.compile(# non-grouping optional segment for the keyword
                            r'(?:'
                                 r'(\S+?)'   # the keyword
                                 r'(?<!\\):' # unescaped :
                            r')?'
-       
-                           r'(\S+)',        # the term itself
+                           r'(.+)',        # the term itself
                            re.I)            # case-insensitive
     @classmethod
-    def _parse_query(cls, query_string):
-        """Takes a query in the form of a whitespace-separated list of
-        search terms that may be preceded with a key followed by a
-        colon. Returns a list of pairs (key, term) where key is None if
-        the search term has no key.
+    def _parse_query_part(cls, part):
+        """Takes a query in the form of a key/value pair separated by a
+        colon. Returns pair (key, term) where key is None if the search
+        term has no key.
 
         For instance,
-        parse_query('stapler color:red') ==
-            [(None, 'stapler'), ('color', 'red')]
+        parse_query('stapler') == (None, 'stapler')
+        parse_query('color:red') == ('color', 'red')
 
         Colons may be 'escaped' with a backslash to disable the keying
         behavior.
         """
-        out = []
-        for match in cls._pq_regex.finditer(query_string):
-            out.append((match.group(1), match.group(2).replace(r'\:',':')))
-        return out
+        part = part.strip()
+        match = cls._pq_regex.match(part)
+        if match:
+            return match.group(1), match.group(2).replace(r'\:', ':')
 
     @classmethod
-    def from_string(cls, query_string, default_fields=None, all_keys=ITEM_KEYS):
-        """Creates a query from a string in the format used by
-        _parse_query. If default_fields are specified, they are the
+    def from_strings(cls, query_parts, default_fields=None, all_keys=ITEM_KEYS):
+        """Creates a query from a list of strings in the format used by
+        _parse_query_part. If default_fields are specified, they are the
         fields to be searched by unqualified search terms. Otherwise,
         all fields are searched for those terms.
         """
         subqueries = []
-        for key, pattern in cls._parse_query(query_string):
+        for part in query_parts:
+            res = cls._parse_query_part(part)
+            if not res:
+                continue
+            key, pattern = res
             if key is None: # no key specified; match any field
                 subqueries.append(AnySubstringQuery(pattern, default_fields))
             elif key.lower() == 'comp': # a boolean field
@@ -544,9 +543,10 @@ class BaseLibrary(object):
 
     @classmethod
     def _get_query(cls, val=None, album=False):
-        """Takes a value which may be None, a query string, or a Query
-        object, and returns a suitable Query object. album determines
-        whether the query is to match items or albums.
+        """Takes a value which may be None, a query string, a query
+        string list, or a Query object, and returns a suitable Query
+        object. album determines whether the query is to match items
+        or albums.
         """
         if album:
             default_fields = ALBUM_DEFAULT_FIELDS
@@ -555,10 +555,15 @@ class BaseLibrary(object):
             default_fields = ITEM_DEFAULT_FIELDS
             all_keys = ITEM_KEYS
 
+        # Convert a single string into a list of space-separated
+        # criteria.
+        if isinstance(val, basestring):
+            val = val.split()
+
         if val is None:
             return TrueQuery()
-        elif isinstance(val, basestring):
-            return AndQuery.from_string(val, default_fields, all_keys)
+        elif isinstance(val, list) or isinstance(val, tuple):
+            return AndQuery.from_strings(val, default_fields, all_keys)
         elif isinstance(val, Query):
             return val
         elif not isinstance(val, Query):
