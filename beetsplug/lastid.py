@@ -20,6 +20,7 @@ from __future__ import with_statement
 from beets.plugins import BeetsPlugin
 from beets import autotag
 from beets.autotag import mb
+from beets.util import plurality
 import lastfp
 import logging
 
@@ -70,8 +71,8 @@ def get_cur_artist(items):
                 artist_ids.append(last_data['artist_mbid'])
 
     # Vote on the most popular artist.
-    artist, _ = autotag._plurality(artists)
-    artist_id, _ = autotag._plurality(artist_ids)
+    artist, _ = plurality(artists)
+    artist_id, _ = plurality(artist_ids)
 
     return artist, artist_id
 

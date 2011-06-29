@@ -25,7 +25,7 @@ from beets import library
 import beets.autotag.art
 from beets import plugins
 from beets.util import pipeline
-from beets.util import syspath, normpath
+from beets.util import syspath, normpath, plurality
 from beets.util.enumeration import enum
 
 action = enum(
@@ -35,6 +35,8 @@ action = enum(
 
 QUEUE_SIZE = 128
 STATE_FILE = os.path.expanduser('~/.beetsstate')
+SINGLE_ARTIST_THRESH = 0.25
+VARIOUS_ARTISTS = u'Various Artists'
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -119,6 +121,37 @@ def _item_duplicate_check(lib, artist, title, recent=None):
         item_iter.close()
 
     return True
+
+def _infer_album_fields(album, task):
+    """Given an album and an associated import task, massage the
+    album-level metadata. This ensures that the album artist is set
+    and that the "compilation" flag is set automatically.
+    """
+    assert task.is_album
+
+    if task.choice_flag == action.ASIS:
+        # Taking metadata "as-is". Guess whether this album is VA.
+        plur_artist, freq = plurality([i.artist for i in task.items])
+        if freq > 1 and float(freq) / len(task.items) >= SINGLE_ARTIST_THRESH:
+            # Single-artist album.
+            album.albumartist = plur_artist
+            album.comp = False
+        else:
+            # VA.
+            album.albumartist = VARIOUS_ARTISTS
+            album.comp = True
+
+    elif task.choice_flag == action.APPLY:
+        # Applying autotagged metadata. Just get AA from the first
+        # item.
+        if not album.albumartist:
+            album.albumartist = task.items[0].artist
+        if not album.mb_albumartistid:
+            album.mb_albumartistid = task.items[0].mb_artistid
+
+    else:
+        assert False
+
 
 # Utilities for reading and writing the beets progress file, which
 # allows long tagging tasks to be resumed when they pause (or crash).
@@ -289,19 +322,6 @@ class ImportTask(object):
     def should_fetch_art(self):
         """Should album art be downloaded for this album?"""
         return self.should_write_tags() and self.is_album
-    def should_infer_aa(self):
-        """When creating an album structure, should the album artist
-        field be inferred from the plurality of track artists?
-        """
-        assert self.is_album
-        if self.choice_flag == action.APPLY:
-            # Album artist comes from the info dictionary.
-            return False
-        elif self.choice_flag == action.ASIS:
-            # As-is imports likely don't have an album artist.
-            return True
-        else:
-            assert False
     def should_skip(self):
         """After a choice has been made, returns True if this is a
         sentinel or it has been marked for skipping.
@@ -462,12 +482,14 @@ def apply_choices(config):
         if task.should_skip():
             continue
 
-        # Change metadata, move, and copy.
+        # Change metadata.
         if task.should_write_tags():
             if task.is_album:
                 autotag.apply_metadata(task.items, task.info)
             else:
                 autotag.apply_item_metadata(task.item, task.info)
+
+        # Move/copy files.
         items = task.items if task.is_album else [task.item]
         if config.copy and config.delete:
             task.old_paths = [os.path.realpath(syspath(item.path))
@@ -483,8 +505,8 @@ def apply_choices(config):
         try:
             if task.is_album:
                 # Add an album.
-                album = lib.add_album(task.items,
-                                      infer_aa = task.should_infer_aa())
+                album = lib.add_album(task.items)
+                _infer_album_fields(album, task)
                 task.album_id = album.id
             else:
                 # Add tracks.
