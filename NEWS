@@ -42,6 +42,8 @@
   more fairly by the autotagger. For example, if you're missing the
   acute accent on the "e" in "cafe", that change won't be penalized.
   This introduces a new dependency on the "unidecode" Python module.
+* When tagging a track with no title set, the track's filename is now
+  shown (instead of nothing at all).
 * The bitrate of lossless files is now calculated from their file size
   (rather than being fixed at 0 or reflecting the uncompressed audio
   bitrate).

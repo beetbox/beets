@@ -118,6 +118,10 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
             if cur_track != new_track:
                 cur_track = ui.colorize('red', cur_track)
                 new_track = ui.colorize('red', new_track)
+
+        # Show filename (non-colorized) when title is not set.
+        if not item.title.strip():
+            cur_title = os.path.basename(item.path)
         
         if cur_title != new_title and cur_track != new_track:
             print_(" * %s (%s) -> %s (%s)" % (
