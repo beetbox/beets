@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -109,16 +109,19 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
     for i, (item, track_data) in enumerate(zip(items, info['tracks'])):
         cur_track = str(item.track)
         new_track = str(i+1)
-        cur_title = item.title
+        if item hasattr title:
+            cur_title = item.title
+        else:
+            cur_title = os.path.basename(item.path)
         new_title = track_data['title']
-        
+
         # Possibly colorize changes.
         if color:
             cur_title, new_title = ui.colordiff(cur_title, new_title)
             if cur_track != new_track:
                 cur_track = ui.colorize('red', cur_track)
                 new_track = ui.colorize('red', new_track)
-        
+
         if cur_title != new_title and cur_track != new_track:
             print_(" * %s (%s) -> %s (%s)" % (
                 cur_title, cur_track, new_title, new_track
@@ -169,7 +172,7 @@ def _quiet_fall_back(config):
 def choose_candidate(candidates, singleton, rec, color, timid,
                      cur_artist=None, cur_album=None, item=None):
     """Given a sorted list of candidates, ask the user for a selection
-    of which candidate to use. Applies to both full albums and 
+    of which candidate to use. Applies to both full albums and
     singletons  (tracks). For albums, the candidates are `(dist, items,
     info)` triples and `cur_artist` and `cur_album` must be provided.
     For singletons, the candidates are `(dist, info)` pairs and `item`
@@ -220,7 +223,7 @@ def choose_candidate(candidates, singleton, rec, color, timid,
         else:
             dist, items, info = candidates[0]
         bypass_candidates = True
-        
+
     while True:
         # Display and choose from candidates.
         if not bypass_candidates:
@@ -255,7 +258,7 @@ def choose_candidate(candidates, singleton, rec, color, timid,
 
                     line += ' (%s)' % dist_string(dist, color)
                     print_(line)
-                                            
+
             # Ask the user for a choice.
             if singleton:
                 opts = ('Skip', 'Use as-is', 'Enter search', 'enter Id',
@@ -284,20 +287,20 @@ def choose_candidate(candidates, singleton, rec, color, timid,
                 else:
                     dist, items, info = candidates[sel-1]
         bypass_candidates = False
-    
+
         # Show what we're about to do.
         if singleton:
             show_item_change(item, info, dist, color)
         else:
             show_change(cur_artist, cur_album, items, info, dist, color)
-    
+
         # Exact match => tag automatically if we're not in timid mode.
         if rec == autotag.RECOMMEND_STRONG and not timid:
             if singleton:
                 return info
             else:
                 return info, items
-        
+
         # Ask for confirmation.
         if singleton:
             opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
@@ -365,10 +368,10 @@ def choose_match(task, config):
     candidates, rec = task.candidates, task.rec
     while True:
         # Ask for a choice from the user.
-        choice = choose_candidate(candidates, False, rec, config.color, 
+        choice = choose_candidate(candidates, False, rec, config.color,
                                   config.timid, task.cur_artist,
                                   task.cur_album)
-    
+
         # Choose which tags to use.
         if choice in (importer.action.SKIP, importer.action.ASIS,
                       importer.action.TRACKS):
@@ -504,7 +507,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
         timid = timid,
         choose_item_func = choose_item,
     )
-    
+
     # If we were logging, close the file.
     if logfile:
         print >>logfile, ''
