@@ -4,6 +4,7 @@ import imghdr
 from beets.plugins import BeetsPlugin
 from beets import mediafile
 from beets import ui
+from beets.ui import decargs
 from beets.util import syspath, normpath
 
 log = logging.getLogger('beets')
@@ -41,7 +42,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             if not args:
                 raise ui.UserError('specify an image file')
             imagepath = normpath(args.pop(0))
-            embed(lib, imagepath, args)
+            embed(lib, imagepath, decargs(args))
         embed_cmd.func = embed_func
 
         # Extract command.
@@ -51,14 +52,14 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                                       help='image output file')
         def extract_func(lib, config, opts, args):
             outpath = normpath(opts.outpath or 'cover')
-            extract(lib, outpath, args)
+            extract(lib, outpath, decargs(args))
         extract_cmd.func = extract_func
 
         # Clear command.
         clear_cmd = ui.Subcommand('clearart',
                                   help='remove images from file metadata')
         def clear_func(lib, config, opts, args):
-            clear(lib, args)
+            clear(lib, decargs(args))
         clear_cmd.func = clear_func
 
         return [embed_cmd, extract_cmd, clear_cmd]

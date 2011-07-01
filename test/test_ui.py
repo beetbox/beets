@@ -37,6 +37,7 @@ class ListTest(unittest.TestCase):
         i.path = 'xxx/yyy'
         self.lib.add(i)
         self.lib.add_album([i])
+        self.item = i
 
     def tearDown(self):
         self.io.restore()
@@ -45,6 +46,15 @@ class ListTest(unittest.TestCase):
         commands.list_items(self.lib, '', False, False)
         out = self.io.getoutput()
         self.assertTrue(u'the title' in out)
+
+    def test_list_unicode_query(self):
+        self.item.title = u'na\xefve'
+        self.lib.store(self.item)
+        self.lib.save()
+
+        commands.list_items(self.lib, [u'na\xefve'], False, False)
+        out = self.io.getoutput()
+        self.assertTrue(u'na\xefve' in out.decode(self.io.stdout.encoding))
 
     def test_list_item_path(self):
         commands.list_items(self.lib, '', False, True)

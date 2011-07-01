@@ -215,6 +215,16 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
         names = [a.album for a in results]
         self.assertEqual(names, ['the album'])
 
+    def test_unicode_query(self):
+        self.single_item.title = u'caf\xe9'
+        self.lib.store(self.single_item)
+        self.lib.save()
+
+        q = u'title:caf\xe9'
+        results = self.lib.items(q)
+        self.assert_matched(results, u'caf\xe9')
+        self.assert_done(results)
+
 class PathQueryTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
