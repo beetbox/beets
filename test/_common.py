@@ -1,4 +1,3 @@
-"""Some common functionality for beets' test cases."""
 # This file is part of beets.
 # Copyright 2011, Adrian Sampson.
 #
@@ -13,6 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+"""Some common functionality for beets' test cases."""
 import time
 import sys
 import os

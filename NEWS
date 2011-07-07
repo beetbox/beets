@@ -62,6 +62,7 @@
   reuse by plugins (e.g., the FUSE plugin).
 * Singleton imports ("beet import -s") can now take individual files as
   arguments as well as directories.
+* Fix Unicode queries given on the command line.
 * Fix crasher in quiet singleton imports (import -qs).
 * Fix crash when autotagging files with no metadata.
 * Fix a rare deadlock when finishing the import pipeline.

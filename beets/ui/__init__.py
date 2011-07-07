@@ -52,6 +52,21 @@ class UserError(Exception):
 
 # Utilities.
 
+def _encoding():
+    """Tries to guess the encoding uses by the terminal."""
+    try:
+        return locale.getdefaultlocale()[1] or 'utf8'
+    except ValueError:
+        # Invalid locale environment variable setting. To avoid
+        # failing entirely for no good reason, assume UTF-8.
+        return 'utf8'
+
+def decargs(arglist):
+    """Given a list of command-line argument bytestrings, attempts to
+    decode them to Unicode strings.
+    """
+    return [s.decode(_encoding()) for s in arglist]
+
 def print_(*strings):
     """Like print, but rather than raising an error when a character
     is not in the terminal's encoding's character set, just silently
@@ -65,13 +80,7 @@ def print_(*strings):
     else:
         txt = u''
     if isinstance(txt, unicode):
-        try:
-            encoding = locale.getdefaultlocale()[1] or 'utf8'
-        except ValueError:
-            # Invalid locale environment variable setting. To avoid
-            # failing entirely for no good reason, assume UTF-8.
-            encoding = 'utf8'
-        txt = txt.encode(encoding, 'replace')
+        txt = txt.encode(_encoding(), 'replace')
     print txt
 
 def input_options(options, require=False, prompt=None, fallback_prompt=None,
