@@ -22,25 +22,26 @@ import re
 import _common
 from beets import autotag
 from beets.library import Item
+from beets.util import plurality
 
 class PluralityTest(unittest.TestCase):
     def test_plurality_consensus(self):
         objs = [1, 1, 1, 1]
-        obj, consensus = autotag._plurality(objs)
+        obj, freq = plurality(objs)
         self.assertEqual(obj, 1)
-        self.assertTrue(consensus)
+        self.assertEqual(freq, 4)
 
     def test_plurality_near_consensus(self):
         objs = [1, 1, 2, 1]
-        obj, consensus = autotag._plurality(objs)
+        obj, freq = plurality(objs)
         self.assertEqual(obj, 1)
-        self.assertFalse(consensus)
+        self.assertEqual(freq, 3)
 
     def test_plurality_conflict(self):
         objs = [1, 1, 2, 2, 3]
-        obj, consensus = autotag._plurality(objs)
+        obj, freq = plurality(objs)
         self.assert_(obj in (1, 2))
-        self.assertFalse(consensus)
+        self.assertEqual(freq, 2)
 
     def test_current_metadata_finds_pluralities(self):
         items = [Item({'artist': 'The Beetles', 'album': 'The White Album'}),

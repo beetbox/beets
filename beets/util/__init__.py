@@ -16,6 +16,7 @@
 import os
 import sys
 import re
+from collections import defaultdict
 
 MAX_FILENAME_LENGTH = 200
 
@@ -253,3 +254,22 @@ def levenshtein(s1, s2):
         previous_row = current_row
  
     return previous_row[-1]
+
+def plurality(objs):
+    """Given a sequence of comparable objects, returns the object that
+    is most common in the set and the frequency of that object.
+    """
+    # Calculate frequencies.
+    freqs = defaultdict(int)
+    for obj in objs:
+        freqs[obj] += 1
+
+    # Find object with maximum frequency.
+    max_freq = 0
+    res = None
+    for obj, freq in freqs.items():
+        if freq > max_freq:
+            max_freq = freq
+            res = obj
+
+    return res, max_freq

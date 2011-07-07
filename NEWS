@@ -16,6 +16,12 @@
   under the specified directory.
 * Album art is now automatically discovered and copied from the
   imported directories when available.
+* When choosing the "as-is" import album (or doing a non-autotagged
+  import), every album either has an "album artist" set or is
+  marked as a compilation (Various Artists). The choice is made
+  based on the homogeneity of the tracks' artists. This prevents
+  compilations that are imported as-is from being scattered across
+  many directories after they are imported.
 * The release label for albums and tracks is now fetched from
   MusicBrainz, written to files, and stored in the database.
 * Release year and label are now shown in the candidate selection

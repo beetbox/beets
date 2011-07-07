@@ -16,14 +16,13 @@
 """
 import os
 import logging
-from collections import defaultdict
 import re
 from munkres import Munkres
 from unidecode import unidecode
 
 from beets.autotag import mb
 from beets import library, mediafile, plugins
-from beets.util import levenshtein, sorted_walk
+from beets.util import levenshtein, sorted_walk, plurality
 
 # Try 5 releases. In the future, this should be more dynamic: let the
 # probability of continuing to the next release be inversely
@@ -180,25 +179,6 @@ def string_dist(str1, str2):
     
     return dist
 
-def _plurality(objs):
-    """Given a sequence of comparable objects, returns the object that
-    is most common in the set and if it is the only object is the set.
-    """
-    # Calculate frequencies.
-    freqs = defaultdict(int)
-    for obj in objs:
-        freqs[obj] += 1
-
-    # Find object with maximum frequency.
-    max_freq = 0
-    res = None
-    for obj, freq in freqs.items():
-        if freq > max_freq:
-            max_freq = freq
-            res = obj
-
-    return res, len(freqs) <= 1
-
 def current_metadata(items):
     """Returns the most likely artist and album for a set of Items.
     Each is determined by tag reflected by the plurality of the Items.
@@ -208,7 +188,8 @@ def current_metadata(items):
     consensus = {}
     for key in keys:
         values = [getattr(item, key) for item in items]
-        likelies[key], consensus[key] = _plurality(values)
+        likelies[key], freq = plurality(values)
+        consensus[key] = (freq == len(values))
     return likelies['artist'], likelies['album'], consensus['artist']
 
 def order_items(items, trackinfo):
