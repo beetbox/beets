@@ -122,35 +122,43 @@ def _item_duplicate_check(lib, artist, title, recent=None):
 
     return True
 
-def _infer_album_fields(album, task):
+def _infer_album_fields(task):
     """Given an album and an associated import task, massage the
     album-level metadata. This ensures that the album artist is set
     and that the "compilation" flag is set automatically.
     """
     assert task.is_album
+    assert task.items
+
+    changes = {}
 
     if task.choice_flag == action.ASIS:
         # Taking metadata "as-is". Guess whether this album is VA.
         plur_artist, freq = plurality([i.artist for i in task.items])
         if freq > 1 and float(freq) / len(task.items) >= SINGLE_ARTIST_THRESH:
             # Single-artist album.
-            album.albumartist = plur_artist
-            album.comp = False
+            changes['albumartist'] = plur_artist
+            changes['comp'] = False
         else:
             # VA.
-            album.albumartist = VARIOUS_ARTISTS
-            album.comp = True
+            changes['albumartist'] = VARIOUS_ARTISTS
+            changes['comp'] = True
 
     elif task.choice_flag == action.APPLY:
         # Applying autotagged metadata. Just get AA from the first
         # item.
-        if not album.albumartist:
-            album.albumartist = task.items[0].artist
-        if not album.mb_albumartistid:
-            album.mb_albumartistid = task.items[0].mb_artistid
+        if not task.items[0].albumartist:
+            changes['albumartist'] = task.items[0].artist
+        if not task.items[0].mb_albumartistid:
+            changes['mb_albumartistid'] = task.items[0].mb_artistid
 
     else:
         assert False
+
+    # Apply new metadata.
+    for item in task.items:
+        for k, v in changes.iteritems():
+            setattr(item, k, v)
 
 
 # Utilities for reading and writing the beets progress file, which
@@ -489,6 +497,10 @@ def apply_choices(config):
             else:
                 autotag.apply_item_metadata(task.item, task.info)
 
+        # Infer album-level fields.
+        if task.is_album:
+            _infer_album_fields(task)
+
         # Move/copy files.
         items = task.items if task.is_album else [task.item]
         if config.copy and config.delete:
@@ -506,7 +518,6 @@ def apply_choices(config):
             if task.is_album:
                 # Add an album.
                 album = lib.add_album(task.items)
-                _infer_album_fields(album, task)
                 task.album_id = album.id
             else:
                 # Add tracks.

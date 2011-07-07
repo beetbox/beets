@@ -285,8 +285,6 @@ class AsIsApplyTest(unittest.TestCase):
 
 class InferAlbumDataTest(unittest.TestCase):
     def setUp(self):
-        self.lib = library.Library(':memory:')
-
         i1 = _common.item()
         i2 = _common.item()
         i3 = _common.item()
@@ -298,56 +296,68 @@ class InferAlbumDataTest(unittest.TestCase):
         i1.mb_albumartistid = i2.mb_albumartistid = i3.mb_albumartistid = ''
         self.items = [i1, i2, i3]
 
-        self.album = self.lib.add_album(self.items)
         self.task = importer.ImportTask(path='a path', toppath='top path',
                                         items=self.items)
         self.task.set_null_match()
 
+    def _infer(self):
+        importer._infer_album_fields(self.task)
+
     def test_asis_homogenous_single_artist(self):
         self.task.set_choice(importer.action.ASIS)
-        importer._infer_album_fields(self.album, self.task)
-        self.assertFalse(self.album.comp)
-        self.assertEqual(self.album.albumartist, self.items[2].artist)
+        self._infer()
+        self.assertFalse(self.items[0].comp)
+        self.assertEqual(self.items[0].albumartist, self.items[2].artist)
 
     def test_asis_heterogenous_va(self):
         self.items[0].artist = 'another artist'
         self.items[1].artist = 'some other artist'
-        self.lib.save()
         self.task.set_choice(importer.action.ASIS)
 
-        importer._infer_album_fields(self.album, self.task)
+        self._infer()
 
-        self.assertTrue(self.album.comp)
-        self.assertEqual(self.album.albumartist, 'Various Artists')
+        self.assertTrue(self.items[0].comp)
+        self.assertEqual(self.items[0].albumartist, 'Various Artists')
+
+    def test_asis_comp_applied_to_all_items(self):
+        self.items[0].artist = 'another artist'
+        self.items[1].artist = 'some other artist'
+        self.task.set_choice(importer.action.ASIS)
+
+        self._infer()
+
+        for item in self.items:
+            self.assertTrue(item.comp)
+            self.assertEqual(item.albumartist, 'Various Artists')
 
     def test_asis_majority_artist_single_artist(self):
         self.items[0].artist = 'another artist'
-        self.lib.save()
         self.task.set_choice(importer.action.ASIS)
 
-        importer._infer_album_fields(self.album, self.task)
+        self._infer()
 
-        self.assertFalse(self.album.comp)
-        self.assertEqual(self.album.albumartist, self.items[2].artist)
+        self.assertFalse(self.items[0].comp)
+        self.assertEqual(self.items[0].albumartist, self.items[2].artist)
 
     def test_apply_gets_artist_and_id(self):
         self.task.set_choice(({}, self.items)) # APPLY
 
-        importer._infer_album_fields(self.album, self.task)
+        self._infer()
 
-        self.assertEqual(self.album.albumartist, self.items[0].artist)
-        self.assertEqual(self.album.mb_albumartistid, self.items[0].mb_artistid)
+        self.assertEqual(self.items[0].albumartist, self.items[0].artist)
+        self.assertEqual(self.items[0].mb_albumartistid, self.items[0].mb_artistid)
 
     def test_apply_lets_album_values_override(self):
-        self.album.albumartist = 'some album artist'
-        self.album.mb_albumartistid = 'some album artist id'
+        for item in self.items:
+            item.albumartist = 'some album artist'
+            item.mb_albumartistid = 'some album artist id'
         self.task.set_choice(({}, self.items)) # APPLY
 
-        importer._infer_album_fields(self.album, self.task)
+        self._infer()
 
-        self.assertEqual(self.album.albumartist,
+        self.assertEqual(self.items[0].albumartist,
                          'some album artist')
-        self.assertEqual(self.album.mb_albumartistid,
+        self.assertEqual(self.items[0].mb_albumartistid,
                          'some album artist id')
 
 
