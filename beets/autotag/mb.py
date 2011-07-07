@@ -86,6 +86,13 @@ def _query_wrap(fun, *args, **kwargs):
             try:
                 # Try the function.
                 res = fun(*args, **kwargs)
+            except mbws.ConnectionError:
+                # Typically a timeout.
+                pass
+            except mbws.ResponseError, exc:
+                # Malformed response from server.
+                log.error('Bad response from MusicBrainz: ' + str(exc))
+                raise BadResponseError()
             except mbws.WebServiceError, e:
                 # Server busy. Retry.
                 message = str(e.reason)
@@ -95,13 +102,6 @@ def _query_wrap(fun, *args, **kwargs):
                 else:
                     # This is not the error we're looking for.
                     raise
-            except mbws.ConnectionError:
-                # Typically a timeout.
-                pass
-            except mbws.ResponseError, exc:
-                # Malformed response from server.
-                log.error('Bad response from MusicBrainz: ' + str(exc))
-                raise BadResponseError()
             else:
                 # Success. Return the result.
                 return res
