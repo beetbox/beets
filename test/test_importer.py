@@ -360,6 +360,12 @@ class InferAlbumDataTest(unittest.TestCase):
         self.assertEqual(self.items[0].mb_albumartistid,
                          'some album artist id')
 
+    def test_small_single_artist_album(self):
+        self.items = [self.items[0]]
+        self.task.items = self.items
+        self.task.set_choice(importer.action.ASIS)
+        self._infer()
+        self.assertFalse(self.items[0].comp)
 
 class DuplicateCheckTest(unittest.TestCase):
     def setUp(self):
