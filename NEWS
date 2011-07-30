@@ -1,6 +1,7 @@
 1.0b10
 ------
 * Fix a missing __future__ import in embedart on Python 2.5.
+* Fix Unicode encoding of album artist, album type, and label.
 
 1.0b9
 -----
