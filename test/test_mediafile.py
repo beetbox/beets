@@ -17,6 +17,7 @@
 
 import unittest
 import os
+import shutil
 
 import _common
 import beets.mediafile
@@ -148,6 +149,23 @@ class SideEffectsTest(unittest.TestCase):
         beets.mediafile.MediaFile(self.empty)
         new_mtime = os.stat(self.empty).st_mtime
         self.assertEqual(old_mtime, new_mtime)
+
+class EncodingTest(unittest.TestCase):
+    def setUp(self):
+        src = os.path.join(_common.RSRC, 'full.m4a')
+        self.path = os.path.join(_common.RSRC, 'test.m4a')
+        shutil.copy(src, self.path)
+
+        self.mf = beets.mediafile.MediaFile(self.path)
+
+    def tearDown(self):
+        os.remove(self.path)
+
+    def test_unicode_label_in_m4a(self):
+        self.mf.label = u'foo\xe8bar'
+        self.mf.save()
+        new_mf = beets.mediafile.MediaFile(self.path)
+        self.assertEqual(new_mf.label, u'foo\xe8bar')
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

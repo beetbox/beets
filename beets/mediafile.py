@@ -382,6 +382,11 @@ class MediaField(object):
         
         if style.packing:
             out = Packed(out, style.packing)[style.pack_pos]
+
+        # MPEG-4 freeform frames are (should be?) encoded as UTF-8.
+        if obj.type == 'mp4' and style.key.startswith('----:') and \
+                isinstance(out, str):
+            out = out.decode('utf8')
         
         return _safe_cast(self.out_type, out)
     
@@ -410,8 +415,8 @@ class MediaField(object):
                         out = u''
                     # We trust that packed values are handled above.
         
-                # convert to correct storage type (irrelevant for
-                # packed values)
+                # Convert to correct storage type (irrelevant for
+                # packed values).
                 if style.as_type == unicode:
                     if out is None:
                         out = u''
@@ -429,7 +434,13 @@ class MediaField(object):
                 elif style.as_type in (bool, str):
                     out = style.as_type(out)
         
-            # store the data
+            # MPEG-4 "freeform" (----) frames must be encoded as UTF-8
+            # byte strings.
+            if obj.type == 'mp4' and style.key.startswith('----:') and \
+                    isinstance(out, unicode):
+                out = out.encode('utf8')
+
+            # Store the data.
             self._storedata(obj, out, style)
 
 class CompositeDateField(object):
