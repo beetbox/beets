@@ -627,6 +627,51 @@ list_cmd.func = list_func
 default_commands.append(list_cmd)
 
 
+# update: Query and update library contents.
+
+def update_items(lib, query, album, path):
+    """Print out items in lib matching query. If album, then search for
+    albums instead of single items. If path, print the matched objects'
+    paths instead of human-readable information about them.
+    """
+    # Get the matching items.
+    if album:
+        albums = list(lib.albums(query))
+        items = []
+        for al in albums:
+            items += al.items()
+    else:
+        items = list(lib.items(query))
+
+    if not items:
+        print_('No matching items found.')
+        return
+
+    # Show all the items.
+    for item in items:
+        print_(item.artist + ' - ' + item.album + ' - ' + item.title)
+
+    # Remove (and possibly delete) items.
+    if album:
+        for al in albums:
+            al.update()
+    else:
+        for item in items:
+            lib.update(item)
+
+    lib.save()
+
+update_cmd = ui.Subcommand('update', help='update the library', aliases=('upd','up',))
+update_cmd.parser.add_option('-a', '--album', action='store_true',
+    help='show matching albums instead of tracks')
+update_cmd.parser.add_option('-p', '--path', action='store_true',
+    help='print paths for matched items or albums')
+def update_func(lib, config, opts, args):
+    update_items(lib, decargs(args), opts.album, opts.path)
+update_cmd.func = update_func
+default_commands.append(update_cmd)
+
+
 # remove: Remove items from library, delete files.
 
 def remove_items(lib, query, album, delete=False):
