@@ -726,8 +726,11 @@ class Library(BaseLibrary):
                        art_filename='cover',
                        item_fields=ITEM_FIELDS,
                        album_fields=ALBUM_FIELDS):
-        self.path = bytestring_path(path)
-        self.directory = bytestring_path(directory)
+        if path == ':memory:':
+            self.path = path
+        else:
+            self.path = bytestring_path(normpath(path))
+        self.directory = bytestring_path(normpath(directory))
         if path_formats is None:
             path_formats = {'default': '$artist/$album/$track $title'}
         elif isinstance(path_formats, basestring):

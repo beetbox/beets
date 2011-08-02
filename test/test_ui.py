@@ -119,6 +119,85 @@ class RemoveTest(unittest.TestCase):
         self.assertEqual(len(list(items)), 0)
         self.assertFalse(os.path.exists(self.i.path))
 
+class ModifyTest(unittest.TestCase):
+    def setUp(self):
+        self.io = _common.DummyIO()
+        self.io.install()
+
+        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
+        os.mkdir(self.libdir)
+
+        # Copy a file into the library.
+        self.lib = library.Library(':memory:', self.libdir)
+        self.i = library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
+        self.lib.add(self.i, True)
+        self.album = self.lib.add_album([self.i])
+
+    def tearDown(self):
+        self.io.restore()
+        shutil.rmtree(self.libdir)
+
+    def _modify(self, mods, query=(), write=False, move=False, album=False):
+        self.io.addinput('y')
+        commands.modify_items(self.lib, mods, query,
+                              write, move, album, True)
+
+    def test_modify_item_dbdata(self):
+        self._modify(["title=newTitle"])
+        item = self.lib.items().next()
+        self.assertEqual(item.title, 'newTitle')
+
+    def test_modify_album_dbdata(self):
+        self._modify(["album=newAlbum"], album=True)
+        album = self.lib.albums()[0]
+        self.assertEqual(album.album, 'newAlbum')
+
+    def test_modify_item_tag_unmodified(self):
+        self._modify(["title=newTitle"], write=False)
+        item = self.lib.items().next()
+        item.read()
+        self.assertEqual(item.title, 'full')
+
+    def test_modify_album_tag_unmodified(self):
+        self._modify(["album=newAlbum"], write=False, album=True)
+        item = self.lib.items().next()
+        item.read()
+        self.assertEqual(item.album, 'the album')
+
+    def test_modify_item_tag(self):
+        self._modify(["title=newTitle"], write=True)
+        item = self.lib.items().next()
+        item.read()
+        self.assertEqual(item.title, 'newTitle')
+
+    def test_modify_album_tag(self):
+        self._modify(["album=newAlbum"], write=True, album=True)
+        item = self.lib.items().next()
+        item.read()
+        self.assertEqual(item.album, 'newAlbum')
+
+    def test_item_move(self):
+        self._modify(["title=newTitle"], move=True)
+        item = self.lib.items().next()
+        self.assertTrue('newTitle' in item.path)
+
+    def test_album_move(self):
+        self._modify(["album=newAlbum"], move=True, album=True)
+        item = self.lib.items().next()
+        item.read()
+        self.assertTrue('newAlbum' in item.path)
+
+    def test_item_not_move(self):
+        self._modify(["title=newTitle"], move=False)
+        item = self.lib.items().next()
+        self.assertFalse('newTitle' in item.path)
+
+    def test_album_not_move(self):
+        self._modify(["album=newAlbum"], move=False, album=True)
+        item = self.lib.items().next()
+        item.read()
+        self.assertFalse('newAlbum' in item.path)
+
 class PrintTest(unittest.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()

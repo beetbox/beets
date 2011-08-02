@@ -20,6 +20,7 @@ import logging
 import sys
 import os
 import time
+import itertools
 
 from beets import ui
 from beets.ui import print_, decargs
@@ -27,7 +28,8 @@ from beets import autotag
 import beets.autotag.art
 from beets import plugins
 from beets import importer
-from beets.util import syspath, normpath
+from beets.util import syspath, normpath, ancestry
+from beets import library
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -35,6 +37,32 @@ log = logging.getLogger('beets')
 # The list of default subcommands. This is populated with Subcommand
 # objects that can be fed to a SubcommandsOptionParser.
 default_commands = []
+
+# Utility.
+def _do_query(lib, query, album, also_items=True):
+    """For commands that operate on matched items, performs a query
+    and returns a list of matching items and a list of matching
+    albums. (The latter is only nonempty when album is True.) Raises
+    a UserError if no items match. also_items controls whether, when
+    fetching albums, the associated items should be fetched also.
+    """
+    if album:
+        albums = list(lib.albums(query))
+        items = []
+        if also_items:
+            for al in albums:
+                items += al.items()
+
+    else:
+        albums = []
+        items = list(lib.items(query))
+
+    if album and not albums:
+        raise ui.UserError('No matching albums found.')
+    elif not album and not items:
+        raise ui.UserError('No matching items found.')
+    
+    return items, albums
 
 
 # import: Autotagger and importer.
@@ -634,17 +662,7 @@ def remove_items(lib, query, album, delete=False):
     remove whole albums. If delete, also remove files from disk.
     """
     # Get the matching items.
-    if album:
-        albums = list(lib.albums(query))
-        items = []
-        for al in albums:
-            items += al.items()
-    else:
-        items = list(lib.items(query))
-
-    if not items:
-        print_('No matching items found.')
-        return
+    items, albums = _do_query(lib, query, album)
 
     # Show all the items.
     for item in items:
@@ -740,3 +758,93 @@ version_cmd = ui.Subcommand('version',
     help='output version information')
 version_cmd.func = show_version
 default_commands.append(version_cmd)
+
+
+# modify: Declaratively change metadata.
+
+def modify_items(lib, mods, query, write, move, album, color):
+    """Modifies matching items according to key=value assignments."""
+    # Parse key=value specifications into a dictionary.
+    allowed_keys = library.ALBUM_KEYS if album else library.ITEM_KEYS_WRITABLE
+    fsets = {}
+    for mod in mods:
+        key, value = mod.split('=', 1)
+        if key not in allowed_keys:
+            raise ui.UserError('"%s" is not a valid field' % key)
+        fsets[key] = value
+
+    # Get the items to modify.
+    items, albums = _do_query(lib, query, album, False)
+    objs = albums if album else items
+
+    # Preview change.
+    print_('Modifying %i %ss.' % (len(objs), 'album' if album else 'item'))
+    for obj in objs:
+        # Identify the changed object.
+        if album:
+            print_(u'* %s - %s' % (obj.albumartist, obj.album))
+        else:
+            print_(u'* %s - %s' % (obj.artist, obj.title))
+
+        # Show each change.
+        for field, value in fsets.iteritems():
+            curval = getattr(obj, field)
+            if curval != value:
+                if color:
+                    curval, value = ui.colordiff(curval, value)
+                print_(u'  %s: %s -> %s' % (field, curval, value))
+
+    # Confirm.
+    extra = ' and write tags' if write else ''
+    if not ui.input_yn('Really modify%s (Y/n)?' % extra):
+        return
+
+    # Apply changes to database.
+    for obj in objs:
+        for field, value in fsets.iteritems():
+            setattr(obj, field, value)
+
+        if move:
+            cur_path = obj.item_dir() if album else obj.path
+            if lib.directory in ancestry(cur_path): # In library?
+                log.debug('moving object %s' % cur_path)
+                if album:
+                    obj.move()
+                else:
+                    obj.move(lib)
+
+        # When modifying items, we have to store them to the database.
+        if not album:
+            lib.store(obj)
+    lib.save()
+
+    # Apply tags if requested.
+    if write:
+        if album:
+            items = itertools.chain(*(a.items() for a in albums))
+        for item in items:
+            item.write()
+
+modify_cmd = ui.Subcommand('modify',
+    help='change metadata fields', aliases=('mod',))
+modify_cmd.parser.add_option('-M', '--nomove', action='store_false',
+    default=True, dest='move', help="don't move files in library")
+modify_cmd.parser.add_option('-w', '--write', action='store_true',
+    default=None, help="write new metadata to files' tags (default)")
+modify_cmd.parser.add_option('-W', '--nowrite', action='store_false',
+    dest='write', help="don't write metadata (opposite of -w)")
+modify_cmd.parser.add_option('-a', '--album', action='store_true',
+    help='modify whole albums instead of tracks')
+def modify_func(lib, config, opts, args):
+    args = decargs(args)
+    mods = [a for a in args if '=' in a]
+    query = [a for a in args if '=' not in a]
+    if not mods:
+        raise ui.UserError('no modifications specified')
+    write = opts.write if opts.write is not None else \
+        ui.config_val(config, 'beets', 'import_write',
+            DEFAULT_IMPORT_WRITE, bool)
+    color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
+    modify_items(lib, mods, query, write, opts.move, opts.album, color)
+modify_cmd.func = modify_func
+default_commands.append(modify_cmd)
