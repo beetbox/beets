@@ -20,6 +20,7 @@ import logging
 import sys
 import os
 import time
+import copy
 
 from beets import ui
 from beets.ui import print_, decargs
@@ -28,6 +29,7 @@ import beets.autotag.art
 from beets import plugins
 from beets import importer
 from beets.util import syspath, normpath
+from beets.library import ITEM_MODIFIED, ITEM_DELETED
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -153,6 +155,21 @@ def show_item_change(item, info, dist, color):
         print_("Tagging track: %s - %s" % (cur_artist, cur_title))
 
     print_('(Similarity: %s)' % dist_string(dist, color))
+
+def show_item_update(old_item, new_item, color=True):
+    """Print out the changes detected on an existing item."""
+    old_artist, new_artist = old_item.artist, new_item.artist
+    old_title, new_title = old_item.title, new_item.title
+    
+    if old_artist != new_artist or old_title != new_title:
+        if color:
+            old_artist, new_artist = ui.colordiff(old_artist, new_artist)
+            old_title, new_title = ui.colordiff(old_title, new_title)
+        
+        print_("Updated: %s - %s -> %s - %s" % (old_artist, old_title, new_artist, new_title))
+    
+    else:
+        print_("Updated: %s - %s (secondary tags)" % (old_artist, old_title))
 
 def should_resume(config, path):
     return ui.input_yn("Import of the directory:\n%s"
@@ -648,8 +665,8 @@ def update_items(lib, query, album, path):
         return
 
     # Show all the items.
-    for item in items:
-        print_(item.artist + ' - ' + item.album + ' - ' + item.title)
+    #for item in items:
+    #    print_(item.artist + ' - ' + item.album + ' - ' + item.title)
 
     # Remove (and possibly delete) items.
     if album:
@@ -657,7 +674,12 @@ def update_items(lib, query, album, path):
             al.update()
     else:
         for item in items:
-            lib.update(item)
+            old_item = copy.deepcopy(item)
+            ret = lib.update(item)
+            if ret == ITEM_MODIFIED:
+                show_item_update(old_item, item)
+            elif ret == ITEM_DELETED:
+                print_("Deleted: %s - %s" % (item.artist, item.title))
 
     lib.save()
 

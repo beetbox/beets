@@ -19,12 +19,15 @@ import shutil
 import sys
 from string import Template
 import logging
-from beets.mediafile import MediaFile
+from beets.mediafile import MediaFile, UnreadableFileError
 from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath
 
 MAX_FILENAME_LENGTH = 200
+
+ITEM_MODIFIED = 1
+ITEM_DELETED = 2
 
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
@@ -957,23 +960,38 @@ class Library(BaseLibrary):
         """Reads the item's metadata from file, and updates the library. If
         move, then the files will be moved to reflect the changes.
         """
+        modified = False
+        deleted = False
+        
         old_album = self.get_album(item)
         
-        item.read()
-        
-        new_album = self.get_album_by_item_properties(item)
-        if new_album is None:
-            # No existing album matching the new metadata, so we create one
-            new_album = self.add_album((item,))
-            if move and old_album and old_album.artpath:
-                new_album.set_art(old_album.artpath)
-        item.album_id = new_album.id
-        
-        old_path = item.path
-        if move:
-            item.move(self)
-        
-        self.store(item)
+        try:
+            item.read()
+        except UnreadableFileError:
+            # File no longer exists
+            deleted = True
+            self.remove(item, False)
+        else:
+            # Has the metadata been modified?
+            for key in ITEM_KEYS:
+                if (key != 'id') and item.dirty[key]:
+                    modified = True
+                    break
+                
+            if modified:
+                new_album = self.get_album_by_item_properties(item)
+                if new_album is None:
+                    # No existing album matching the new metadata, so we create one
+                    new_album = self.add_album((item,))
+                    if move and old_album and old_album.artpath:
+                        new_album.set_art(old_album.artpath)
+                item.album_id = new_album.id
+                
+                old_path = item.path
+                if move:
+                    item.move(self)
+            
+                self.store(item)
         
         # Delete old album if it's empty
         if move and old_album:
@@ -984,6 +1002,11 @@ class Library(BaseLibrary):
                 # Album is empty.
                 old_album.remove(True, False)
                 util.prune_dirs(os.path.dirname(old_path), self.directory)
+        
+        if deleted:
+            return ITEM_DELETED
+        if modified:
+            return ITEM_MODIFIED
 
     # Querying.
 
