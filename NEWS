@@ -1,5 +1,6 @@
 1.0b10
 ------
+* Handle exceptions thrown when running Mutagen.
 * Fix a missing __future__ import in embedart on Python 2.5.
 * Fix ID3 and MPEG-4 tag names for the album-artist field.
 * Fix Unicode encoding of album artist, album type, and label.

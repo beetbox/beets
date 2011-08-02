@@ -39,9 +39,15 @@ import re
 import base64
 import imghdr
 import os
+import logging
+import traceback
 from beets.util.enumeration import enum
 
 __all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
+
+
+# Logger.
+log = logging.getLogger('beets')
 
 
 # Exceptions.
@@ -630,9 +636,14 @@ class MediaFile(object):
         try:
             self.mgfile = mutagen.File(path)
         except unreadable_exc:
+            log.warn('header parsing failed')
             raise UnreadableFileError('Mutagen could not read file')
         except IOError:
             raise UnreadableFileError('could not read file')
+        except:
+            # Hide bugs in Mutagen.
+            log.error('uncaught Mutagen exception:\n' + traceback.format_exc())
+            raise UnreadableFileError('Mutagen raised an exception')
 
         if self.mgfile is None: # Mutagen couldn't guess the type
             raise FileTypeError('file type unsupported by Mutagen')
