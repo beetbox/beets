@@ -247,7 +247,12 @@ class Item(object):
                 shutil.move(syspath(self.path), syspath(dest))
             
         # Either copying or moving succeeded, so update the stored path.
+        old_path = self.path
         self.path = dest
+
+        # Prune vacated directory.
+        if not copy:
+            util.prune_dirs(os.path.dirname(old_path), library.directory)
 
 
 # Library queries.
@@ -1169,6 +1174,9 @@ class Album(BaseAlbum):
                 else:
                     shutil.move(syspath(old_art), syspath(new_art))
                 self.artpath = new_art
+            if not copy: # Prune old path.
+                util.prune_dirs(os.path.dirname(old_art),
+                                self._library.directory)
 
         # Store new item paths. We do this at the end to avoid
         # locking the database for too long while files are copied.
