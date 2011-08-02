@@ -140,7 +140,7 @@ class ModifyTest(unittest.TestCase):
     def _modify(self, mods, query=(), write=False, move=False, album=False):
         self.io.addinput('y')
         commands.modify_items(self.lib, mods, query,
-                              write, move, album, True)
+                              write, move, album, True, True)
 
     def test_modify_item_dbdata(self):
         self._modify(["title=newTitle"])

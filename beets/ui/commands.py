@@ -762,7 +762,7 @@ default_commands.append(version_cmd)
 
 # modify: Declaratively change metadata.
 
-def modify_items(lib, mods, query, write, move, album, color):
+def modify_items(lib, mods, query, write, move, album, color, confirm):
     """Modifies matching items according to key=value assignments."""
     # Parse key=value specifications into a dictionary.
     allowed_keys = library.ALBUM_KEYS if album else library.ITEM_KEYS_WRITABLE
@@ -795,9 +795,10 @@ def modify_items(lib, mods, query, write, move, album, color):
                 print_(u'  %s: %s -> %s' % (field, curval, value))
 
     # Confirm.
-    extra = ' and write tags' if write else ''
-    if not ui.input_yn('Really modify%s (Y/n)?' % extra):
-        return
+    if confirm:
+        extra = ' and write tags' if write else ''
+        if not ui.input_yn('Really modify%s (Y/n)?' % extra):
+            return
 
     # Apply changes to database.
     for obj in objs:
@@ -835,6 +836,8 @@ modify_cmd.parser.add_option('-W', '--nowrite', action='store_false',
     dest='write', help="don't write metadata (opposite of -w)")
 modify_cmd.parser.add_option('-a', '--album', action='store_true',
     help='modify whole albums instead of tracks')
+modify_cmd.parser.add_option('-y', '--yes', action='store_true',
+    help='skip confirmation')
 def modify_func(lib, config, opts, args):
     args = decargs(args)
     mods = [a for a in args if '=' in a]
@@ -845,6 +848,7 @@ def modify_func(lib, config, opts, args):
         ui.config_val(config, 'beets', 'import_write',
             DEFAULT_IMPORT_WRITE, bool)
     color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
-    modify_items(lib, mods, query, write, opts.move, opts.album, color)
+    modify_items(lib, mods, query, write, opts.move, opts.album, color,
+                 not opts.yes)
 modify_cmd.func = modify_func
 default_commands.append(modify_cmd)
