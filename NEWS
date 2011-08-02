@@ -1,5 +1,8 @@
 1.0b10
 ------
+* A new "beet modify" command enables manual, command-line-based
+  modification of music metadata. Pass it a query along with
+  field=value that specify the changes you want to make.
 * Handle exceptions thrown when running Mutagen.
 * Fix a missing __future__ import in embedart on Python 2.5.
 * Fix ID3 and MPEG-4 tag names for the album-artist field.
