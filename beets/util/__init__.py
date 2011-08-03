@@ -16,6 +16,7 @@
 import os
 import sys
 import re
+import shutil
 from collections import defaultdict
 
 MAX_FILENAME_LENGTH = 200
@@ -83,11 +84,12 @@ def mkdirall(path):
         if not os.path.isdir(syspath(ancestor)):
             os.mkdir(syspath(ancestor))
 
-def prune_dirs(path, root):
+def prune_dirs(path, root, clutter=('.DS_Store', 'Thumbs.db')):
     """If path is an empty directory, then remove it. Recursively
     remove path's ancestry up to root (which is never removed) where
     there are empty directories. If path is not contained in root, then
-    nothing is removed.
+    nothing is removed. Filenames in clutter are ignored when
+    determining emptiness.
     """
     path = normpath(path)
     root = normpath(root)
@@ -101,9 +103,14 @@ def prune_dirs(path, root):
         ancestors.append(path)
         ancestors.reverse()
         for directory in ancestors:
-            try:
-                os.rmdir(syspath(directory))
-            except OSError:
+            directory = syspath(directory)
+            if all(fn in clutter for fn in os.listdir(directory)):
+                # Directory contains only clutter (or nothing).
+                try:
+                    shutil.rmtree(directory)
+                except OSError:
+                    break
+            else:
                 break
 
 def components(path, pathmod=None):

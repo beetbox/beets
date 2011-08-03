@@ -8,6 +8,9 @@
   program to edit tags on files, remove files and directories, etc.,
   and then run "beet update" to make sure your beets library is in
   sync. This will also rename files to reflect their new metadata.
+* When pruning directories, "clutter" files such as .DS_Store and
+  Thumbs.db are ignored (and removed with otherwise-empty
+  directories).
 * Handle exceptions thrown when running Mutagen.
 * Fix a missing __future__ import in embedart on Python 2.5.
 * Fix ID3 and MPEG-4 tag names for the album-artist field.

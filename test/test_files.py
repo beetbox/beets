@@ -250,7 +250,7 @@ class ArtFileTest(unittest.TestCase):
             os.chmod(newart, 0777)
             os.chmod(ai.artpath, 0777)
 
-class RemoveTest(unittest.TestCase):
+class RemoveTest(unittest.TestCase, _common.ExtraAsserts):
     def setUp(self):
         # Make library and item.
         self.lib = beets.library.Library(':memory:')
@@ -269,30 +269,46 @@ class RemoveTest(unittest.TestCase):
 
     def test_removing_last_item_prunes_empty_dir(self):
         parent = os.path.dirname(self.i.path)
-        self.assertTrue(os.path.exists(parent))
+        self.assertExists(parent)
         self.lib.remove(self.i, True)
-        self.assertFalse(os.path.exists(parent))
+        self.assertNotExists(parent)
 
     def test_removing_last_item_preserves_nonempty_dir(self):
         parent = os.path.dirname(self.i.path)
         touch(os.path.join(parent, 'dummy.txt'))
         self.lib.remove(self.i, True)
-        self.assertTrue(os.path.exists(parent))
+        self.assertExists(parent)
+
+    def test_removing_last_item_prunes_dir_with_blacklisted_file(self):
+        parent = os.path.dirname(self.i.path)
+        touch(os.path.join(parent, '.DS_Store'))
+        self.lib.remove(self.i, True)
+        self.assertNotExists(parent)
 
     def test_removing_without_delete_leaves_file(self):
         path = self.i.path
         self.lib.remove(self.i)
-        self.assertTrue(os.path.exists(path))
+        self.assertExists(path)
 
     def test_removing_last_item_preserves_library_dir(self):
         self.lib.remove(self.i, True)
-        self.assertTrue(os.path.exists(self.libdir))
+        self.assertExists(self.libdir)
 
     def test_removing_item_outside_of_library_deletes_nothing(self):
         self.lib.directory = os.path.abspath(os.path.join(_common.RSRC, 'xxx'))
         parent = os.path.dirname(self.i.path)
         self.lib.remove(self.i, True)
-        self.assertTrue(os.path.exists(parent))
+        self.assertExists(parent)
+
+    def test_removing_last_item_in_album_with_albumart_prunes_dir(self):
+        artfile = os.path.join(_common.RSRC, 'testart.jpg')
+        touch(artfile)
+        self.ai.set_art(artfile)
+        os.remove(artfile)
+
+        parent = os.path.dirname(self.i.path)
+        self.lib.remove(self.i, True)
+        self.assertNotExists(parent)
 
 # Tests that we can "delete" nonexistent files.
 class SoftRemoveTest(unittest.TestCase, _common.ExtraAsserts):
