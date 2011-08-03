@@ -39,9 +39,15 @@ import re
 import base64
 import imghdr
 import os
+import logging
+import traceback
 from beets.util.enumeration import enum
 
 __all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
+
+
+# Logger.
+log = logging.getLogger('beets')
 
 
 # Exceptions.
@@ -382,6 +388,11 @@ class MediaField(object):
         
         if style.packing:
             out = Packed(out, style.packing)[style.pack_pos]
+
+        # MPEG-4 freeform frames are (should be?) encoded as UTF-8.
+        if obj.type == 'mp4' and style.key.startswith('----:') and \
+                isinstance(out, str):
+            out = out.decode('utf8')
         
         return _safe_cast(self.out_type, out)
     
@@ -410,8 +421,8 @@ class MediaField(object):
                         out = u''
                     # We trust that packed values are handled above.
         
-                # convert to correct storage type (irrelevant for
-                # packed values)
+                # Convert to correct storage type (irrelevant for
+                # packed values).
                 if style.as_type == unicode:
                     if out is None:
                         out = u''
@@ -429,7 +440,13 @@ class MediaField(object):
                 elif style.as_type in (bool, str):
                     out = style.as_type(out)
         
-            # store the data
+            # MPEG-4 "freeform" (----) frames must be encoded as UTF-8
+            # byte strings.
+            if obj.type == 'mp4' and style.key.startswith('----:') and \
+                    isinstance(out, unicode):
+                out = out.encode('utf8')
+
+            # Store the data.
             self._storedata(obj, out, style)
 
 class CompositeDateField(object):
@@ -619,9 +636,14 @@ class MediaFile(object):
         try:
             self.mgfile = mutagen.File(path)
         except unreadable_exc:
+            log.warn('header parsing failed')
             raise UnreadableFileError('Mutagen could not read file')
         except IOError:
             raise UnreadableFileError('could not read file')
+        except:
+            # Hide bugs in Mutagen.
+            log.error('uncaught Mutagen exception:\n' + traceback.format_exc())
+            raise UnreadableFileError('Mutagen raised an exception')
 
         if self.mgfile is None: # Mutagen couldn't guess the type
             raise FileTypeError('file type unsupported by Mutagen')
@@ -788,9 +810,8 @@ class MediaFile(object):
                 etc = StorageStyle('compilation')
             )
     albumartist = MediaField(
-                mp3 = StorageStyle('TXXX', id3_desc=u'Album Artist'),
-                mp4 = StorageStyle(
-                    '----:com.apple.iTunes:Album Artist'),
+                mp3 = StorageStyle('TPE2'),
+                mp4 = StorageStyle('aART'),
                 etc = [StorageStyle('album artist'),
                        StorageStyle('albumartist')]
             )

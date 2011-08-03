@@ -26,7 +26,7 @@ from _common import item, touch
 import beets.library
 from beets import util
 
-class MoveTest(unittest.TestCase):
+class MoveTest(unittest.TestCase, _common.ExtraAsserts):
     def setUp(self):
         # make a temporary file
         self.path = join(_common.RSRC, 'temp.mp3')
@@ -54,19 +54,29 @@ class MoveTest(unittest.TestCase):
     
     def test_move_arrives(self):
         self.i.move(self.lib)
-        self.assertTrue(os.path.exists(self.dest))
+        self.assertExists(self.dest)
     
     def test_move_departs(self):
         self.i.move(self.lib)
-        self.assertTrue(not os.path.exists(self.path))
+        self.assertNotExists(self.path)
+
+    def test_move_in_lib_prunes_empty_dir(self):
+        self.i.move(self.lib)
+        old_path = self.i.path
+        self.assertExists(old_path)
+
+        self.i.artist = 'newArtist'
+        self.i.move(self.lib)
+        self.assertNotExists(old_path)
+        self.assertNotExists(os.path.dirname(old_path))
     
     def test_copy_arrives(self):
         self.i.move(self.lib, copy=True)
-        self.assertTrue(os.path.exists(self.dest))
+        self.assertExists(self.dest)
     
     def test_copy_does_not_depart(self):
         self.i.move(self.lib, copy=True)
-        self.assertTrue(os.path.exists(self.path))
+        self.assertExists(self.path)
     
     def test_move_changes_path(self):
         self.i.move(self.lib)
@@ -257,7 +267,7 @@ class RemoveTest(unittest.TestCase):
         if os.path.exists(self.libdir):
             shutil.rmtree(self.libdir)
 
-    def test_removing_last_item_removes_empty_dir(self):
+    def test_removing_last_item_prunes_empty_dir(self):
         parent = os.path.dirname(self.i.path)
         self.assertTrue(os.path.exists(parent))
         self.lib.remove(self.i, True)
