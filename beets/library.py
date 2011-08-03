@@ -19,15 +19,12 @@ import shutil
 import sys
 from string import Template
 import logging
-from beets.mediafile import MediaFile, UnreadableFileError
+from beets.mediafile import MediaFile
 from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath
 
 MAX_FILENAME_LENGTH = 200
-
-ITEM_MODIFIED = 1
-ITEM_DELETED = 2
 
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
@@ -963,58 +960,7 @@ class Library(BaseLibrary):
         if delete:
             util.soft_remove(item.path)
             util.prune_dirs(os.path.dirname(item.path), self.directory)
-    
-    def update(self, item, move=True):
-        """Reads the item's metadata from file, and updates the library. If
-        move, then the files will be moved to reflect the changes.
-        """
-        modified = False
-        deleted = False
-        
-        old_album = self.get_album(item)
-        
-        try:
-            item.read()
-        except UnreadableFileError:
-            # File no longer exists
-            deleted = True
-            self.remove(item, False)
-        else:
-            # Has the metadata been modified?
-            for key in ITEM_KEYS:
-                if (key != 'id') and item.dirty[key]:
-                    modified = True
-                    break
-                
-            if modified:
-                new_album = self.get_album_by_item_properties(item)
-                if new_album is None:
-                    # No existing album matching the new metadata, so we create one
-                    new_album = self.add_album((item,))
-                    if move and old_album and old_album.artpath:
-                        new_album.set_art(old_album.artpath)
-                item.album_id = new_album.id
-                
-                old_path = item.path
-                if move:
-                    item.move(self)
-            
-                self.store(item)
-        
-        # Delete old album if it's empty
-        if move and old_album:
-            item_iter = old_album.items()
-            try:
-                item_iter.next()
-            except StopIteration:
-                # Album is empty.
-                old_album.remove(True, False)
-                util.prune_dirs(os.path.dirname(old_path), self.directory)
-        
-        if deleted:
-            return ITEM_DELETED
-        if modified:
-            return ITEM_MODIFIED
+
 
     # Querying.
 
@@ -1123,30 +1069,6 @@ class Library(BaseLibrary):
                 self.store(item)
 
         return album
-    
-    def get_album_by_item_properties(self, item):
-        """Given an item, return an Album object that matches all the item's
-        fields listed in ALBUM_KEYS_ITEM. If no such album exists, returns
-        None."""
-        item_values = dict(
-            (key, getattr(item, key)) for key in ALBUM_KEYS_ITEM)
-        
-        queries = []
-        for key in ALBUM_KEYS_ITEM:
-            queries.append(MatchQuery(key, item_values[key]))
-        super_query = AndQuery(queries)
-        where, subvals = super_query.clause()
-
-        sql = "SELECT * FROM albums " + \
-              "WHERE " + where + \
-              " ORDER BY albumartist, album"
-        c = self.conn.execute(sql, subvals)
-        try:
-            record = c.fetchone()
-        finally:
-            c.close()
-        if record:
-            return Album(self, dict(record))
 
 class Album(BaseAlbum):
     """Provides access to information about albums stored in a
@@ -1231,10 +1153,6 @@ class Album(BaseAlbum):
             'DELETE FROM albums WHERE id=?',
             (self.id,)
         )
-    
-    def update(self):
-        for item in self.items():
-            self._library.update(item)
 
     def move(self, copy=False):
         """Moves (or copies) all items to their destination. Any

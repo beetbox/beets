@@ -20,7 +20,6 @@ import logging
 import sys
 import os
 import time
-import copy
 import itertools
 
 from beets import ui
@@ -29,7 +28,6 @@ from beets import autotag
 import beets.autotag.art
 from beets import plugins
 from beets import importer
-from beets.library import ITEM_MODIFIED, ITEM_DELETED
 from beets.util import syspath, normpath, ancestry
 from beets import library
 
@@ -41,6 +39,7 @@ log = logging.getLogger('beets')
 default_commands = []
 
 # Utility.
+
 def _do_query(lib, query, album, also_items=True):
     """For commands that operate on matched items, performs a query
     and returns a list of matching items and a list of matching
@@ -65,6 +64,13 @@ def _do_query(lib, query, album, also_items=True):
         raise ui.UserError('No matching items found.')
     
     return items, albums
+
+def _showdiff(field, oldval, newval, color):
+    """Prints out a human-readable field difference line."""
+    if newval != oldval:
+        if color:
+            oldval, newval = ui.colordiff(oldval, newval)
+        print_(u'  %s: %s -> %s' % (field, oldval, newval))
 
 
 # import: Autotagger and importer.
@@ -183,21 +189,6 @@ def show_item_change(item, info, dist, color):
         print_("Tagging track: %s - %s" % (cur_artist, cur_title))
 
     print_('(Similarity: %s)' % dist_string(dist, color))
-
-def show_item_update(old_item, new_item, color=True):
-    """Print out the changes detected on an existing item."""
-    old_artist, new_artist = old_item.artist, new_item.artist
-    old_title, new_title = old_item.title, new_item.title
-    
-    if old_artist != new_artist or old_title != new_title:
-        if color:
-            old_artist, new_artist = ui.colordiff(old_artist, new_artist)
-            old_title, new_title = ui.colordiff(old_title, new_title)
-        
-        print_("Updated: %s - %s -> %s - %s" % (old_artist, old_title, new_artist, new_title))
-    
-    else:
-        print_("Updated: %s - %s (secondary tags)" % (old_artist, old_title))
 
 def should_resume(config, path):
     return ui.input_yn("Import of the directory:\n%s"
@@ -672,52 +663,76 @@ list_cmd.func = list_func
 default_commands.append(list_cmd)
 
 
-# update: Query and update library contents.
+# update: Update library contents according to on-disk tags.
 
-def update_items(lib, query, album, path):
-    """Print out items in lib matching query. If album, then search for
-    albums instead of single items. If path, print the matched objects'
-    paths instead of human-readable information about them.
+def update_items(lib, query, album, move, color):
+    """For all the items matched by the query, update the library to
+    reflect the item's embedded tags.
     """
-    # Get the matching items.
-    if album:
-        albums = list(lib.albums(query))
-        items = []
-        for al in albums:
-            items += al.items()
-    else:
-        items = list(lib.items(query))
+    items, _ = _do_query(lib, query, album)
 
-    if not items:
-        print_('No matching items found.')
-        return
+    # Walk through the items and pick up their changes.
+    affected_albums = set()
+    for item in items:
+        # Item deleted?
+        if not os.path.exists(syspath(item.path)):
+            print_(u'X %s - %s' % (item.artist, item.title))
+            lib.remove(item, True)
+            affected_albums.add(item.album_id)
+            continue
 
-    # Show all the items.
-    #for item in items:
-    #    print_(item.artist + ' - ' + item.album + ' - ' + item.title)
+        # Read new data.
+        old_data = dict(item.record)
+        item.read()
 
-    # Remove (and possibly delete) items.
-    if album:
-        for al in albums:
-            al.update()
-    else:
-        for item in items:
-            old_item = copy.deepcopy(item)
-            ret = lib.update(item)
-            if ret == ITEM_MODIFIED:
-                show_item_update(old_item, item)
-            elif ret == ITEM_DELETED:
-                print_("Deleted: %s - %s" % (item.artist, item.title))
+        # Get and save metadata changes.
+        changes = {}
+        for key in library.ITEM_KEYS_META:
+            if item.dirty[key]:
+                changes[key] = old_data[key], getattr(item, key)
+        if changes:
+            # Something changed.
+            print_(u'* %s - %s' % (item.artist, item.title))
+            for key, (oldval, newval) in changes.iteritems():
+                _showdiff(key, oldval, newval, color)
+
+            # Move the item if it's in the library.
+            if move and lib.directory in ancestry(item.path):
+                item.move(lib)
+
+            lib.store(item)
+            affected_albums.add(item.album_id)
+
+    # Modify affected albums to reflect changes in their items.
+    for album_id in affected_albums:
+        if album_id is None: # Singletons.
+            continue
+        album = lib.get_album(album_id)
+        if not album: # Empty albums have already been removed.
+            log.debug('emptied album %i' % album_id)
+            continue
+        al_items = list(album.items())
+
+        # Update album structure to reflect an item in it.
+        for key in library.ALBUM_KEYS_ITEM:
+            setattr(album, key, getattr(al_items[0], key))
+
+        # Move album art (and any inconsistent items).
+        if move and lib.directory in ancestry(al_items[0].path):
+            log.debug('moving album %i' % album_id)
+            album.move()
 
     lib.save()
 
-update_cmd = ui.Subcommand('update', help='update the library', aliases=('upd','up',))
+update_cmd = ui.Subcommand('update',
+    help='update the library', aliases=('upd','up',))
 update_cmd.parser.add_option('-a', '--album', action='store_true',
     help='show matching albums instead of tracks')
-update_cmd.parser.add_option('-p', '--path', action='store_true',
-    help='print paths for matched items or albums')
+update_cmd.parser.add_option('-M', '--nomove', action='store_false',
+    default=True, dest='move', help="don't move files in library")
 def update_func(lib, config, opts, args):
-    update_items(lib, decargs(args), opts.album, opts.path)
+    color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
+    update_items(lib, decargs(args), opts.album, opts.move, color)
 update_cmd.func = update_func
 default_commands.append(update_cmd)
 
@@ -856,10 +871,7 @@ def modify_items(lib, mods, query, write, move, album, color, confirm):
         # Show each change.
         for field, value in fsets.iteritems():
             curval = getattr(obj, field)
-            if curval != value:
-                if color:
-                    curval, value = ui.colordiff(curval, value)
-                print_(u'  %s: %s -> %s' % (field, curval, value))
+            _showdiff(field, curval, value, color)
 
     # Confirm.
     if confirm:

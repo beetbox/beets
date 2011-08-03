@@ -26,6 +26,7 @@ from beets import ui
 from beets.ui import commands
 from beets import autotag
 from beets import importer
+from beets.mediafile import MediaFile
 
 class ListTest(unittest.TestCase):
     def setUp(self):
@@ -197,6 +198,94 @@ class ModifyTest(unittest.TestCase):
         item = self.lib.items().next()
         item.read()
         self.assertFalse('newAlbum' in item.path)
+
+class UpdateTest(unittest.TestCase, _common.ExtraAsserts):
+    def setUp(self):
+        self.io = _common.DummyIO()
+        self.io.install()
+
+        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
+        os.mkdir(self.libdir)
+
+        # Copy a file into the library.
+        self.lib = library.Library(':memory:', self.libdir)
+        self.i = library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
+        self.lib.add(self.i, True)
+        self.album = self.lib.add_album([self.i])
+
+        # Album art.
+        artfile = os.path.join(_common.RSRC, 'testart.jpg')
+        _common.touch(artfile)
+        self.album.set_art(artfile)
+        os.remove(artfile)
+
+    def tearDown(self):
+        self.io.restore()
+        shutil.rmtree(self.libdir)
+
+    def _update(self, query=(), album=False, move=False):
+        self.io.addinput('y')
+        commands.update_items(self.lib, query, album, move, True)
+
+    def test_delete_removes_item(self):
+        self.assertTrue(list(self.lib.items()))
+        os.remove(self.i.path)
+        self._update()
+        self.assertFalse(list(self.lib.items()))
+
+    def test_delete_removes_album(self):
+        self.assertTrue(self.lib.albums())
+        os.remove(self.i.path)
+        self._update()
+        self.assertFalse(self.lib.albums())
+
+    def test_delete_removes_album_art(self):
+        artpath = self.album.artpath
+        self.assertExists(artpath)
+        os.remove(self.i.path)
+        self._update()
+        self.assertNotExists(artpath)
+
+    def test_modified_metadata_detected(self):
+        mf = MediaFile(self.i.path)
+        mf.title = 'differentTitle'
+        mf.save()
+        self._update()
+        item = self.lib.items().next()
+        self.assertEqual(item.title, 'differentTitle')
+
+    def test_modified_metadata_moved(self):
+        mf = MediaFile(self.i.path)
+        mf.title = 'differentTitle'
+        mf.save()
+        self._update(move=True)
+        item = self.lib.items().next()
+        self.assertTrue('differentTitle' in item.path)
+
+    def test_modified_metadata_not_moved(self):
+        mf = MediaFile(self.i.path)
+        mf.title = 'differentTitle'
+        mf.save()
+        self._update(move=False)
+        item = self.lib.items().next()
+        self.assertTrue('differentTitle' not in item.path)
+
+    def test_modified_album_metadata_moved(self):
+        mf = MediaFile(self.i.path)
+        mf.album = 'differentAlbum'
+        mf.save()
+        self._update(move=True)
+        item = self.lib.items().next()
+        self.assertTrue('differentAlbum' in item.path)
+
+    def test_modified_album_metadata_art_moved(self):
+        artpath = self.album.artpath
+        mf = MediaFile(self.i.path)
+        mf.album = 'differentAlbum'
+        mf.save()
+        self._update(move=True)
+        album = self.lib.albums()[0]
+        self.assertNotEqual(artpath, album.artpath)
 
 class PrintTest(unittest.TestCase):
     def setUp(self):
