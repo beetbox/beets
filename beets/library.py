@@ -1187,7 +1187,10 @@ class Album(BaseAlbum):
         """Returns the directory containing the album's first item,
         provided that such an item exists.
         """
-        item = self.items().next()
+        try:
+            item = self.items().next()
+        except StopIteration:
+            raise ValueError('empty album')
         return os.path.dirname(item.path)
 
     def art_destination(self, image, item_dir=None):

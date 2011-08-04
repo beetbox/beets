@@ -442,6 +442,17 @@ class ApplyExistingItemsTest(unittest.TestCase, _common.ExtraAsserts):
         item = self.lib.items().next()
         self.assertExists(item.path)
 
+    def test_same_album_does_not_duplicate(self):
+        # With the -L flag, exactly the same item (with the same ID)
+        # is re-imported. This test simulates that situation.
+        self._apply_asis([self.i])
+        item = self.lib.items().next()
+        self._apply_asis([item])
+
+        # Should not be duplicated.
+        self.assertEqual(len(list(self.lib.items())), 1)
+        self.assertEqual(len(list(self.lib.albums())), 1)
+
 class InferAlbumDataTest(unittest.TestCase):
     def setUp(self):
         i1 = _common.item()

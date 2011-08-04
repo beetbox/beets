@@ -446,6 +446,8 @@ def query_tasks(config):
         # Search for albums.
         albums = lib.albums(config.query)
         for album in albums:
+            log.debug('yielding album %i: %s - %s' %
+                      (album.id, album.albumartist, album.album))
             items = list(album.items())
             yield ImportTask(None, album.item_dir(), items)
 
@@ -536,7 +538,11 @@ def apply_choices(config):
         task = yield task
         if task.should_skip():
             continue
+
         items = task.items if task.is_album else [task.item]
+        # Clear IDs in case the items are being re-tagged.
+        for item in items:
+            item.id = None
 
         # Change metadata.
         if task.should_write_tags():
@@ -555,11 +561,13 @@ def apply_choices(config):
         replaced_items = defaultdict(list)
         for item in items:
             dup_items = list(lib.items(
-                                library.MatchQuery('path', item.path)
+                            library.MatchQuery('path', item.path)
                         ))
             for dup_item in dup_items:
-                if dup_item.id != item.id:
-                    replaced_items[item].append(dup_item)
+                replaced_items[item].append(dup_item)
+                log.debug('replacing item %i: %s' % (dup_item.id, item.path))
+        log.debug('%i of %i items replaced' % (len(replaced_items),
+                                               len(items)))
 
         # Move/copy files.
         task.old_paths = [item.path for item in items]
@@ -575,7 +583,12 @@ def apply_choices(config):
         # Add items to library. We consolidate this at the end to avoid
         # locking while we do the copying and tag updates.
         try:
-            # Add new items.
+            # Remove old items.
+            for replaced in replaced_items.itervalues():
+                for item in replaced:
+                    lib.remove(item)
+
+            # Add new ones.
             if task.is_album:
                 # Add an album.
                 album = lib.add_album(task.items)
@@ -584,11 +597,6 @@ def apply_choices(config):
                 # Add tracks.
                 for item in items:
                     lib.add(item)
-
-            # Remove old ones.
-            for replaced in replaced_items.itervalues():
-                for item in replaced:
-                    lib.remove(item)
         finally:
             lib.save()
 
