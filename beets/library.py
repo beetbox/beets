@@ -1212,8 +1212,17 @@ class Album(BaseAlbum):
         path = bytestring_path(path)
         oldart = self.artpath
         artdest = self.art_destination(path)
+
+        if oldart and shutil._samefile(syspath(path), syspath(oldart)):
+            # Art already set.
+            return
+        elif shutil._samefile(syspath(path), syspath(artdest)):
+            # Art already in place.
+            self.artpath = path
+            return
+
+        # Normal operation.
         if oldart == artdest:
             util.soft_remove(oldart)
-        
         shutil.copyfile(syspath(path), syspath(artdest))
         self.artpath = artdest

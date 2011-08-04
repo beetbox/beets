@@ -228,6 +228,38 @@ class ArtFileTest(unittest.TestCase):
         ai.set_art(newart)
         self.assertTrue(os.path.exists(ai.artpath))
     
+    def test_setart_to_existing_art_works(self):
+        # Original art.
+        newart = os.path.join(self.libdir, 'newart.jpg')
+        touch(newart)
+        i2 = item()
+        i2.path = self.i.path
+        i2.artist = 'someArtist'
+        ai = self.lib.add_album((i2,))
+        i2.move(self.lib, True)
+        ai.set_art(newart)
+
+        # Set the art again.
+        ai.set_art(ai.artpath)
+        self.assertTrue(os.path.exists(ai.artpath))
+
+    def test_setart_to_existing_but_unset_art_works(self):
+        newart = os.path.join(self.libdir, 'newart.jpg')
+        touch(newart)
+        i2 = item()
+        i2.path = self.i.path
+        i2.artist = 'someArtist'
+        ai = self.lib.add_album((i2,))
+        i2.move(self.lib, True)
+
+        # Copy the art to the destination.
+        artdest = ai.art_destination(newart)
+        shutil.copy(newart, artdest)
+
+        # Set the art again.
+        ai.set_art(artdest)
+        self.assertTrue(os.path.exists(ai.artpath))
+
     def test_setart_sets_permissions(self):
         newart = os.path.join(self.libdir, 'newart.jpg')
         touch(newart)
