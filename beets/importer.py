@@ -106,8 +106,14 @@ def _duplicate_check(lib, task, recent=None):
         recent.add((artist, album))
 
     # Look in the library.
+    cur_paths = set(i.path for i in task.items)
     for album_cand in lib.albums(artist=artist):
         if album_cand.album == album:
+            # Check whether the album is identical in contents, in which
+            # case it is not a duplicate (will be replaced).
+            other_paths = set(i.path for i in album_cand.items())
+            if other_paths == cur_paths:
+                continue
             return True
 
     return False
@@ -132,13 +138,14 @@ def _item_duplicate_check(lib, task, recent=None):
     # Check the library.
     item_iter = lib.items(artist=artist, title=title)
     try:
-        item_iter.next()
-    except StopIteration:
-        return False
+        for other_item in item_iter:
+            # Existing items not considered duplicates.
+            if other_item.path == task.item.path:
+                continue
+            return True
     finally:
         item_iter.close()
-
-    return True
+    return False
 
 def _infer_album_fields(task):
     """Given an album and an associated import task, massage the

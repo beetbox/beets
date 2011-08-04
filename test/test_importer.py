@@ -434,27 +434,35 @@ class DuplicateCheckTest(unittest.TestCase):
         self.i = _common.item()
         self.album = self.lib.add_album([self.i])
 
-    def _album_task(self, asis, artist=None, album=None):
-        artist = artist or self.i.albumartist
-        album = album or self.i.album
+    def _album_task(self, asis, artist=None, album=None, existing=False):
+        if existing:
+            item = self.i
+        else:
+            item = _common.item()
+        artist = artist or item.albumartist
+        album = album or item.album
 
         task = importer.ImportTask(path='a path', toppath='top path',
-                                   items=[self.i])
+                                   items=[item])
         task.set_match(artist, album, None, None)
         if asis:
             task.set_choice(importer.action.ASIS)
         else:
-            task.set_choice(({'artist': artist, 'album': album}, [self.i]))
+            task.set_choice(({'artist': artist, 'album': album}, [item]))
         return task
 
-    def _item_task(self, asis, artist=None, title=None):
-        artist = artist or self.i.artist
-        title = title or self.i.title
+    def _item_task(self, asis, artist=None, title=None, existing=False):
+        if existing:
+            item = self.i
+        else:
+            item = _common.item()
+        artist = artist or item.artist
+        title = title or item.title
 
-        task = importer.ImportTask.item_task(self.i)
+        task = importer.ImportTask.item_task(item)
         if asis:
-            self.i.artist = artist
-            self.i.title = title
+            item.artist = artist
+            item.title = title
             task.set_choice(importer.action.ASIS)
         else:
             task.set_choice({'artist': artist, 'title': title})
@@ -523,6 +531,16 @@ class DuplicateCheckTest(unittest.TestCase):
                                   self._album_task(False, 'xxx', 'yyy'), 
                                   recent)
         self.assertTrue(res)
+
+    def test_duplicate_album_existing(self):
+        res = importer._duplicate_check(self.lib,
+                                        self._album_task(False, existing=True))
+        self.assertFalse(res)
+
+    def test_duplicate_item_existing(self):
+        res = importer._item_duplicate_check(self.lib, 
+                                        self._item_task(False, existing=True))
+        self.assertFalse(res)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
