@@ -100,6 +100,7 @@ class NonAutotaggedImportTest(unittest.TestCase):
                 singletons = singletons,
                 choose_item_func = None,
                 timid = False,
+                query = None,
         )
 
         return paths

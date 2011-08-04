@@ -483,7 +483,7 @@ def choose_item(task, config):
 
 def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
                  color, delete, quiet, resume, quiet_fallback, singletons,
-                 timid):
+                 timid, query):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
@@ -543,6 +543,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
         singletons = singletons,
         timid = timid,
         choose_item_func = choose_item,
+        query = query,
     )
     
     # If we were logging, close the file.
@@ -584,6 +585,8 @@ import_cmd.parser.add_option('-s', '--singletons', action='store_true',
     help='import individual tracks instead of full albums')
 import_cmd.parser.add_option('-t', '--timid', dest='timid',
     action='store_true', help='always confirm all actions')
+import_cmd.parser.add_option('-L', '--library', dest='library',
+    action='store_true', help='retag items matching a query')
 def import_func(lib, config, opts, args):
     copy  = opts.copy  if opts.copy  is not None else \
         ui.config_val(config, 'beets', 'import_copy',
@@ -625,9 +628,17 @@ def import_func(lib, config, opts, args):
         quiet_fallback = importer.action.ASIS
     else:
         quiet_fallback = importer.action.SKIP
-    import_files(lib, args, copy, write, autot, logpath, art, threaded,
+
+    if opts.library:
+        query = args
+        paths = []
+    else:
+        query = None
+        paths = args
+
+    import_files(lib, paths, copy, write, autot, logpath, art, threaded,
                  color, delete, quiet, resume, quiet_fallback, singletons,
-                 timid)
+                 timid, query)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 

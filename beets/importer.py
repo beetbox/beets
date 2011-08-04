@@ -233,7 +233,8 @@ class ImportConfig(object):
     _fields = ['lib', 'paths', 'resume', 'logfile', 'color', 'quiet',
                'quiet_fallback', 'copy', 'write', 'art', 'delete',
                'choose_match_func', 'should_resume_func', 'threaded',
-               'autot', 'singletons', 'timid', 'choose_item_func']
+               'autot', 'singletons', 'timid', 'choose_item_func',
+               'query']
     def __init__(self, **kwargs):
         for slot in self._fields:
             setattr(self, slot, kwargs[slot])
@@ -241,6 +242,12 @@ class ImportConfig(object):
         # Normalize the paths.
         if self.paths:
             self.paths = map(normpath, self.paths)
+
+        # When based on a query instead of directories, never
+        # save progress or try to resume.
+        if self.query is not None:
+            self.paths = None
+            self.resume = False
 
 
 # The importer task class.
@@ -421,6 +428,26 @@ def read_tasks(config):
 
         # Indicate the directory is finished.
         yield ImportTask.done_sentinel(toppath)
+
+def query_tasks(config):
+    """A generator that works as a drop-in-replacement for read_tasks.
+    Instead of finding files from the filesystem, a query is used to
+    match items from the library.
+    """
+    lib = _reopen_lib(config.lib)
+
+    if config.singletons:
+        # Search for items.
+        items = list(lib.items(config.query))
+        for item in items:
+            yield ImportTask.item_task(item)
+
+    else:
+        # Search for albums.
+        albums = lib.albums(config.query)
+        for album in albums:
+            items = list(album.items())
+            yield ImportTask(None, album.item_dir(), items)
 
 def initial_lookup(config):
     """A coroutine for performing the initial MusicBrainz lookup for an
@@ -684,7 +711,10 @@ def run_import(**kwargs):
     config = ImportConfig(**kwargs)
     
     # Set up the pipeline.
-    stages = [read_tasks(config)]
+    if config.query is None:
+        stages = [read_tasks(config)]
+    else:
+        stages = [query_tasks(config)]
     if config.singletons:
         # Singleton importer.
         if config.autot:
