@@ -147,9 +147,11 @@ def _call_apply(coros, items, info):
         coros = [coros]
     for coro in coros:
         task = coro.send(task)
-def _call_apply_choice(coro, items, choice):
+def _call_apply_choice(coro, items, choice, album=True):
     task = importer.ImportTask(None, None, items)
-    task.is_album = True
+    task.is_album = album
+    if not album:
+        task.item = items[0]
     task.set_choice(choice)
     coro.send(task)
 
@@ -283,6 +285,64 @@ class AsIsApplyTest(unittest.TestCase):
         self.assertFalse(alb.comp)
         self.assertEqual(alb.albumartist, self.items[2].artist)
 
+class ApplyExistingItemsTest(unittest.TestCase):
+    def setUp(self):
+        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
+        os.mkdir(self.libdir)
+
+        self.dbpath = os.path.join(_common.RSRC, 'templib.blb')
+        self.lib = library.Library(self.dbpath, self.libdir)
+        self.lib.path_formats = {
+            'default': '$artist/$title',
+        }
+        self.config = _common.iconfig(self.lib, write=False, copy=False)
+
+        self.srcpath = os.path.join(self.libdir, 'srcfile.mp3')
+        shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.srcpath)
+        self.i = library.Item.from_path(self.srcpath)
+        self.i.comp = False
+
+    def tearDown(self):
+        os.remove(self.dbpath)
+        shutil.rmtree(self.libdir)
+
+    def _apply_asis(self, items, album=True):
+        """Run the "apply" coroutine."""
+        coro = importer.apply_choices(self.config)
+        coro.next()
+        _call_apply_choice(coro, items, importer.action.ASIS, album)
+
+    def test_apply_existing_album_does_not_duplicate_item(self):
+        # First, import an item to add it to the library.
+        self._apply_asis([self.i])
+
+        # Get the item's path and import it again.
+        item = self.lib.items().next()
+        new_item = library.Item.from_path(item.path)
+        self._apply_asis([new_item])
+
+        # Should not be duplicated.
+        self.assertEqual(len(list(self.lib.items())), 1)
+
+    def test_apply_existing_album_does_not_duplicate_album(self):
+        # As above.
+        self._apply_asis([self.i])
+        item = self.lib.items().next()
+        new_item = library.Item.from_path(item.path)
+        self._apply_asis([new_item])
+
+        # Should not be duplicated.
+        self.assertEqual(len(list(self.lib.albums())), 1)
+
+    def test_apply_existing_singleton_does_not_duplicate_album(self):
+        self._apply_asis([self.i])
+        item = self.lib.items().next()
+        new_item = library.Item.from_path(item.path)
+        self._apply_asis([new_item], False)
+
+        # Should not be duplicated.
+        self.assertEqual(len(list(self.lib.items())), 1)
+
 class InferAlbumDataTest(unittest.TestCase):
     def setUp(self):
         i1 = _common.item()
@@ -345,7 +405,8 @@ class InferAlbumDataTest(unittest.TestCase):
         self._infer()
 
         self.assertEqual(self.items[0].albumartist, self.items[0].artist)
-        self.assertEqual(self.items[0].mb_albumartistid, self.items[0].mb_artistid)
+        self.assertEqual(self.items[0].mb_albumartistid,
+                         self.items[0].mb_artistid)
 
     def test_apply_lets_album_values_override(self):
         for item in self.items:

@@ -516,6 +516,7 @@ def apply_choices(config):
         # Add items to library. We consolidate this at the end to avoid
         # locking while we do the copying and tag updates.
         try:
+            # Add new items.
             if task.is_album:
                 # Add an album.
                 album = lib.add_album(task.items)
@@ -524,6 +525,17 @@ def apply_choices(config):
                 # Add tracks.
                 for item in items:
                     lib.add(item)
+
+            # Remove old entries if we're re-importing old items. Old
+            # album structures are automatically cleaned up when the
+            # last item is removed.
+            for item in items:
+                dup_items = list(lib.items(
+                                    library.MatchQuery('path', item.path)
+                            ))
+                for dup_item in dup_items:
+                    if dup_item.id != item.id:
+                        lib.remove(dup_item)
         finally:
             lib.save()
 

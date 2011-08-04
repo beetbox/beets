@@ -31,35 +31,39 @@ log.setLevel(logging.CRITICAL)
 RSRC = os.path.join(os.path.dirname(__file__), 'rsrc')
 
 # Dummy item creation.
-def item(): return beets.library.Item({
-    'title':            u'the title',
-    'artist':           u'the artist',
-    'albumartist':      u'the album artist',
-    'album':            u'the album',
-    'genre':            u'the genre',
-    'composer':         u'the composer',
-    'grouping':         u'the grouping',
-    'year':             1,
-    'month':            2,
-    'day':              3,
-    'track':            4,
-    'tracktotal':       5,
-    'disc':             6,
-    'disctotal':        7,
-    'lyrics':           u'the lyrics',
-    'comments':         u'the comments',
-    'bpm':              8,
-    'comp':             True,
-    'path':             'somepath',
-    'length':           60.0,
-    'bitrate':          128000,
-    'format':           'FLAC',
-    'mb_trackid':       'someID-1',
-    'mb_albumid':       'someID-2',
-    'mb_artistid':      'someID-3',
-    'mb_albumartistid': 'someID-4',
-    'album_id':         None,
-})
+_item_ident = 0
+def item():
+    global _item_ident
+    _item_ident += 1
+    return beets.library.Item({
+        'title':            u'the title',
+        'artist':           u'the artist',
+        'albumartist':      u'the album artist',
+        'album':            u'the album',
+        'genre':            u'the genre',
+        'composer':         u'the composer',
+        'grouping':         u'the grouping',
+        'year':             1,
+        'month':            2,
+        'day':              3,
+        'track':            4,
+        'tracktotal':       5,
+        'disc':             6,
+        'disctotal':        7,
+        'lyrics':           u'the lyrics',
+        'comments':         u'the comments',
+        'bpm':              8,
+        'comp':             True,
+        'path':             'somepath' + str(_item_ident),
+        'length':           60.0,
+        'bitrate':          128000,
+        'format':           'FLAC',
+        'mb_trackid':       'someID-1',
+        'mb_albumid':       'someID-2',
+        'mb_artistid':      'someID-3',
+        'mb_albumartistid': 'someID-4',
+        'album_id':         None,
+    })
 
 # Dummy import stuff.
 def iconfig(lib, **kwargs):
