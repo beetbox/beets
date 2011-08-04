@@ -80,12 +80,21 @@ def _reopen_lib(lib):
     else:
         return lib
 
-def _duplicate_check(lib, artist, album, recent=None):
+def _duplicate_check(lib, task, recent=None):
     """Check whether an album already exists in the library. `recent`
     should be a set of (artist, album) pairs that will be built up
     with every call to this function and checked along with the
     library.
     """
+    if task.choice_flag is action.ASIS:
+        artist = task.cur_artist
+        album = task.cur_album
+    elif task.choice_flag is action.APPLY:
+        artist = task.info['artist']
+        album = task.info['album']
+    else:
+        return False
+
     if artist is None:
         # As-is import with no artist. Skip check.
         return False
@@ -103,8 +112,17 @@ def _duplicate_check(lib, artist, album, recent=None):
 
     return False
 
-def _item_duplicate_check(lib, artist, title, recent=None):
+def _item_duplicate_check(lib, task, recent=None):
     """Check whether an item already exists in the library."""
+    if task.choice_flag is action.ASIS:
+        artist = task.item.artist
+        title = task.item.title
+    elif task.choice_flag is action.APPLY:
+        artist = task.info['artist']
+        title = task.info['title']
+    else:
+        return False
+
     # Try recent items.
     if recent is not None:
         if (artist, title) in recent:
@@ -451,17 +469,10 @@ def user_query(config):
             task = pipeline.multiple(item_tasks)
 
         # Check for duplicates if we have a match (or ASIS).
-        if choice is action.ASIS or isinstance(choice, tuple):
-            if choice is action.ASIS:
-                artist = task.cur_artist
-                album = task.cur_album
-            else:
-                artist = task.info['artist']
-                album = task.info['album']
-            if _duplicate_check(lib, artist, album, recent):
-                tag_log(config.logfile, 'duplicate', task.path)
-                log.warn("This album is already in the library!")
-                task.set_choice(action.SKIP)
+        if _duplicate_check(lib, task, recent):
+            tag_log(config.logfile, 'duplicate', task.path)
+            log.warn("This album is already in the library!")
+            task.set_choice(action.SKIP)
 
 def show_progress(config):
     """This stage replaces the initial_lookup and user_query stages
@@ -628,17 +639,10 @@ def item_query(config):
         log_choice(config, task)
 
         # Duplicate check.
-        if task.choice_flag in (action.ASIS, action.APPLY):
-            if choice is action.ASIS:
-                artist = task.item.artist
-                title = task.item.title
-            else:
-                artist = task.info['artist']
-                title = task.info['title']
-            if _item_duplicate_check(lib, artist, title, recent):
-                tag_log(config.logfile, 'duplicate', task.item.path)
-                log.warn("This item is already in the library!")
-                task.set_choice(action.SKIP)
+        if _item_duplicate_check(lib, task, recent):
+            tag_log(config.logfile, 'duplicate', task.item.path)
+            log.warn("This item is already in the library!")
+            task.set_choice(action.SKIP)
 
 def item_progress(config):
     """Skips the lookup and query stages in a non-autotagged singleton

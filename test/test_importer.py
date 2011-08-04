@@ -434,40 +434,94 @@ class DuplicateCheckTest(unittest.TestCase):
         self.i = _common.item()
         self.album = self.lib.add_album([self.i])
 
-    def test_duplicate_album(self):
-        res = importer._duplicate_check(self.lib, self.i.albumartist,
-                                        self.i.album)
+    def _album_task(self, asis, artist=None, album=None):
+        artist = artist or self.i.albumartist
+        album = album or self.i.album
+
+        task = importer.ImportTask(path='a path', toppath='top path',
+                                   items=[self.i])
+        task.set_match(artist, album, None, None)
+        if asis:
+            task.set_choice(importer.action.ASIS)
+        else:
+            task.set_choice(({'artist': artist, 'album': album}, [self.i]))
+        return task
+
+    def _item_task(self, asis, artist=None, title=None):
+        artist = artist or self.i.artist
+        title = title or self.i.title
+
+        task = importer.ImportTask.item_task(self.i)
+        if asis:
+            self.i.artist = artist
+            self.i.title = title
+            task.set_choice(importer.action.ASIS)
+        else:
+            task.set_choice({'artist': artist, 'title': title})
+        return task
+
+    def test_duplicate_album_apply(self):
+        res = importer._duplicate_check(self.lib, self._album_task(False))
         self.assertTrue(res)
 
-    def test_different_album(self):
-        res = importer._duplicate_check(self.lib, 'xxx', 'yyy')
+    def test_different_album_apply(self):
+        res = importer._duplicate_check(self.lib,
+                                        self._album_task(False, 'xxx', 'yyy'))
+        self.assertFalse(res)
+
+    def test_duplicate_album_asis(self):
+        res = importer._duplicate_check(self.lib, self._album_task(True))
+        self.assertTrue(res)
+
+    def test_different_album_asis(self):
+        res = importer._duplicate_check(self.lib,
+                                        self._album_task(True, 'xxx', 'yyy'))
         self.assertFalse(res)
 
     def test_duplicate_va_album(self):
         self.album.albumartist = 'an album artist'
-        res = importer._duplicate_check(self.lib, 'an album artist',
-                                        self.i.album)
+        res = importer._duplicate_check(self.lib,
+                    self._album_task(False, 'an album artist'))
         self.assertTrue(res)
 
-    def test_duplicate_item(self):
-        res = importer._item_duplicate_check(self.lib, self.i.artist,
-                                             self.i.title)
+    def test_duplicate_item_apply(self):
+        res = importer._item_duplicate_check(self.lib, 
+                                             self._item_task(False))
         self.assertTrue(res)
 
-    def test_different_item(self):
-        res = importer._item_duplicate_check(self.lib, 'xxx', 'yyy')
+    def test_different_item_apply(self):
+        res = importer._item_duplicate_check(self.lib, 
+                                    self._item_task(False, 'xxx', 'yyy'))
+        self.assertFalse(res)
+
+    def test_duplicate_item_asis(self):
+        res = importer._item_duplicate_check(self.lib, 
+                                             self._item_task(True))
+        self.assertTrue(res)
+
+    def test_different_item_asis(self):
+        res = importer._item_duplicate_check(self.lib, 
+                                    self._item_task(True, 'xxx', 'yyy'))
         self.assertFalse(res)
 
     def test_recent_item(self):
         recent = set()
-        importer._item_duplicate_check(self.lib, 'xxx', 'yyy', recent)
-        res = importer._item_duplicate_check(self.lib, 'xxx', 'yyy', recent)
+        importer._item_duplicate_check(self.lib, 
+                                       self._item_task(False, 'xxx', 'yyy'), 
+                                       recent)
+        res = importer._item_duplicate_check(self.lib, 
+                                       self._item_task(False, 'xxx', 'yyy'), 
+                                       recent)
         self.assertTrue(res)
 
     def test_recent_album(self):
         recent = set()
-        importer._duplicate_check(self.lib, 'xxx', 'yyy', recent)
-        res = importer._duplicate_check(self.lib, 'xxx', 'yyy', recent)
+        importer._duplicate_check(self.lib, 
+                                  self._album_task(False, 'xxx', 'yyy'), 
+                                  recent)
+        res = importer._duplicate_check(self.lib, 
+                                  self._album_task(False, 'xxx', 'yyy'), 
+                                  recent)
         self.assertTrue(res)
 
 def suite():
