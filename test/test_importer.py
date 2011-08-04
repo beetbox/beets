@@ -285,7 +285,7 @@ class AsIsApplyTest(unittest.TestCase):
         self.assertFalse(alb.comp)
         self.assertEqual(alb.albumartist, self.items[2].artist)
 
-class ApplyExistingItemsTest(unittest.TestCase):
+class ApplyExistingItemsTest(unittest.TestCase, _common.ExtraAsserts):
     def setUp(self):
         self.libdir = os.path.join(_common.RSRC, 'testlibdir')
         os.mkdir(self.libdir)
@@ -342,6 +342,36 @@ class ApplyExistingItemsTest(unittest.TestCase):
 
         # Should not be duplicated.
         self.assertEqual(len(list(self.lib.items())), 1)
+
+    def test_apply_existing_item_new_metadata_does_not_duplicate(self):
+        # We want to copy the item to a new location.
+        self.config.copy = True
+
+        # Import with existing metadata.
+        self._apply_asis([self.i])
+
+        # Import again with new metadata.
+        item = self.lib.items().next()
+        new_item = library.Item.from_path(item.path)
+        new_item.title = 'differentTitle'
+        self._apply_asis([new_item])
+
+        # Should not be duplicated.
+        self.assertEqual(len(list(self.lib.items())), 1)
+        self.assertEqual(len(list(self.lib.albums())), 1)
+
+    def test_apply_existing_item_new_metadata_moves_files(self):
+        # As above, import with old metadata and then reimport with new.
+        self.config.copy = True
+        self._apply_asis([self.i])
+        item = self.lib.items().next()
+        new_item = library.Item.from_path(item.path)
+        new_item.title = 'differentTitle'
+        self._apply_asis([new_item])
+
+        item = self.lib.items().next()
+        self.assertTrue('differentTitle' in item.path)
+        self.assertExists(item.path)
 
 class InferAlbumDataTest(unittest.TestCase):
     def setUp(self):

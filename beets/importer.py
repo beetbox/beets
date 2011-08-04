@@ -522,9 +522,7 @@ def apply_choices(config):
 
         # Move/copy files.
         items = task.items if task.is_album else [task.item]
-        if config.copy and config.delete:
-            task.old_paths = [os.path.realpath(syspath(item.path))
-                              for item in items]
+        task.old_paths = [item.path for item in items]
         for item in items:
             if config.copy:
                 item.move(lib, True, task.is_album)
@@ -547,9 +545,9 @@ def apply_choices(config):
             # Remove old entries if we're re-importing old items. Old
             # album structures are automatically cleaned up when the
             # last item is removed.
-            for item in items:
+            for item, old_path in zip(items, task.old_paths):
                 dup_items = list(lib.items(
-                                    library.MatchQuery('path', item.path)
+                                    library.MatchQuery('path', old_path)
                             ))
                 for dup_item in dup_items:
                     if dup_item.id != item.id:
