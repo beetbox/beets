@@ -543,6 +543,7 @@ def apply_choices(config):
         # Clear IDs in case the items are being re-tagged.
         for item in items:
             item.id = None
+            item.album_id = None
 
         # Change metadata.
         if task.should_write_tags():
