@@ -373,6 +373,74 @@ class ApplyExistingItemsTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertTrue('differentTitle' in item.path)
         self.assertExists(item.path)
 
+    def test_apply_existing_item_new_metadata_copy_disabled(self):
+        # Import *without* copying to ensure that the path does *not* change.
+        self.config.copy = False
+        self._apply_asis([self.i])
+        item = self.lib.items().next()
+        new_item = library.Item.from_path(item.path)
+        new_item.title = 'differentTitle'
+        self._apply_asis([new_item])
+
+        item = self.lib.items().next()
+        self.assertFalse('differentTitle' in item.path)
+        self.assertExists(item.path)
+
+    def test_apply_existing_item_new_metadata_removes_old_files(self):
+        self.config.copy = True
+        self._apply_asis([self.i])
+        item = self.lib.items().next()
+        oldpath = item.path
+        new_item = library.Item.from_path(item.path)
+        new_item.title = 'differentTitle'
+        self._apply_asis([new_item])
+
+        item = self.lib.items().next()
+        self.assertNotExists(oldpath)
+
+    def test_apply_existing_item_new_metadata_delete_enabled(self):
+        # The "delete" flag should be ignored -- only the "copy" flag
+        # controls whether files move.
+        self.config.copy = True
+        self.config.delete = True # !
+        self._apply_asis([self.i])
+        item = self.lib.items().next()
+        oldpath = item.path
+        new_item = library.Item.from_path(item.path)
+        new_item.title = 'differentTitle'
+        self._apply_asis([new_item])
+
+        item = self.lib.items().next()
+        self.assertNotExists(oldpath)
+        self.assertTrue('differentTitle' in item.path)
+        self.assertExists(item.path)
+
+    def test_apply_existing_item_preserves_file(self):
+        # With copying enabled, import the item twice with same metadata.
+        self.config.copy = True
+        self._apply_asis([self.i])
+        item = self.lib.items().next()
+        oldpath = item.path
+        new_item = library.Item.from_path(item.path)
+        self._apply_asis([new_item])
+
+        self.assertEqual(len(list(self.lib.items())), 1)
+        item = self.lib.items().next()
+        self.assertEqual(oldpath, item.path)
+        self.assertExists(oldpath)
+
+    def test_apply_existing_item_preserves_file_delete_enabled(self):
+        self.config.copy = True
+        self.config.delete = True # !
+        self._apply_asis([self.i])
+        item = self.lib.items().next()
+        new_item = library.Item.from_path(item.path)
+        self._apply_asis([new_item])
+
+        self.assertEqual(len(list(self.lib.items())), 1)
+        item = self.lib.items().next()
+        self.assertExists(item.path)
+
 class InferAlbumDataTest(unittest.TestCase):
     def setUp(self):
         i1 = _common.item()

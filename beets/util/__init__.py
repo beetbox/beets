@@ -175,6 +175,10 @@ def syspath(path, pathmod=None):
 
     return path
 
+def samefile(p1, p2):
+    """Safer equality for paths."""
+    return shutil._samefile(syspath(p1), syspath(p2))
+
 def soft_remove(path):
     """Remove the file if it exists."""
     path = syspath(path)

@@ -19,6 +19,7 @@ from __future__ import with_statement # Python 2.5
 import os
 import logging
 import pickle
+from collections import defaultdict
 
 from beets import autotag
 from beets import library
@@ -508,6 +509,7 @@ def apply_choices(config):
         task = yield task
         if task.should_skip():
             continue
+        items = task.items if task.is_album else [task.item]
 
         # Change metadata.
         if task.should_write_tags():
@@ -520,12 +522,26 @@ def apply_choices(config):
         if task.is_album:
             _infer_album_fields(task)
 
+        # Find existing item entries that these are replacing. Old
+        # album structures are automatically cleaned up when the
+        # last item is removed.
+        replaced_items = defaultdict(list)
+        for item in items:
+            dup_items = list(lib.items(
+                                library.MatchQuery('path', item.path)
+                        ))
+            for dup_item in dup_items:
+                if dup_item.id != item.id:
+                    replaced_items[item].append(dup_item)
+
         # Move/copy files.
-        items = task.items if task.is_album else [task.item]
         task.old_paths = [item.path for item in items]
         for item in items:
             if config.copy:
-                item.move(lib, True, task.is_album)
+                # If we're replacing an item, then move rather than
+                # copying.
+                do_copy = not bool(replaced_items[item])
+                item.move(lib, do_copy, task.is_album)
             if config.write and task.should_write_tags():
                 item.write()
 
@@ -542,16 +558,10 @@ def apply_choices(config):
                 for item in items:
                     lib.add(item)
 
-            # Remove old entries if we're re-importing old items. Old
-            # album structures are automatically cleaned up when the
-            # last item is removed.
-            for item, old_path in zip(items, task.old_paths):
-                dup_items = list(lib.items(
-                                    library.MatchQuery('path', old_path)
-                            ))
-                for dup_item in dup_items:
-                    if dup_item.id != item.id:
-                        lib.remove(dup_item)
+            # Remove old ones.
+            for replaced in replaced_items.itervalues():
+                for item in replaced:
+                    lib.remove(item)
         finally:
             lib.save()
 

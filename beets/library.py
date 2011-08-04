@@ -22,7 +22,7 @@ import logging
 from beets.mediafile import MediaFile
 from beets import plugins
 from beets import util
-from beets.util import bytestring_path, syspath, normpath
+from beets.util import bytestring_path, syspath, normpath, samefile
 
 MAX_FILENAME_LENGTH = 200
 
@@ -237,7 +237,7 @@ class Item(object):
         # Create necessary ancestry for the move.
         util.mkdirall(dest)
         
-        if not shutil._samefile(syspath(self.path), syspath(dest)):
+        if not samefile(self.path, dest):
             if copy:
                 # copyfile rather than copy will not copy permissions
                 # bits, thus possibly making the copy writable even when
@@ -1213,10 +1213,10 @@ class Album(BaseAlbum):
         oldart = self.artpath
         artdest = self.art_destination(path)
 
-        if oldart and shutil._samefile(syspath(path), syspath(oldart)):
+        if oldart and samefile(path, oldart):
             # Art already set.
             return
-        elif shutil._samefile(syspath(path), syspath(artdest)):
+        elif samefile(path, artdest):
             # Art already in place.
             self.artpath = path
             return
