@@ -212,7 +212,7 @@ class Item(object):
     
     # Dealing with files themselves.
     
-    def move(self, library, copy=False, in_album=False):
+    def move(self, library, copy=False, in_album=False, basedir=None):
         """Move the item to its designated location within the library
         directory (provided by destination()). Subdirectories are
         created as needed. If the operation succeeds, the item's path
@@ -225,14 +225,17 @@ class Item(object):
         it. (This allows items to be moved before they are added to the
         database, a performance optimization.)
 
-        Passes on appropriate exceptions if directories cannot be created
-        or moving/copying fails.
+        basedir overrides the library base directory for the
+        destination.
+
+        Passes on appropriate exceptions if directories cannot be
+        created or moving/copying fails.
         
         Note that one should almost certainly call store() and
         library.save() after this method in order to keep on-disk data
         consistent.
         """
-        dest = library.destination(self, in_album=in_album)
+        dest = library.destination(self, in_album=in_album, basedir=basedir)
         
         # Create necessary ancestry for the move.
         util.mkdirall(dest)
@@ -793,13 +796,15 @@ class Library(BaseLibrary):
         self.conn.executescript(setup_sql)
         self.conn.commit()
     
-    def destination(self, item, pathmod=None, in_album=False, fragment=False):
+    def destination(self, item, pathmod=None, in_album=False,
+                    fragment=False, basedir=None):
         """Returns the path in the library directory designated for item
         item (i.e., where the file ought to be). in_album forces the
         item to be treated as part of an album. fragment makes this
         method return just the path fragment underneath the root library
         directory; the path is also returned as Unicode instead of
-        encoded as a bytestring.
+        encoded as a bytestring. basedir can override the library's base
+        directory for the destination.
         """
         pathmod = pathmod or os.path
         
@@ -859,7 +864,8 @@ class Library(BaseLibrary):
         if fragment:
             return subpath
         else:
-            return normpath(os.path.join(self.directory, subpath))   
+            basedir = basedir or self.directory
+            return normpath(os.path.join(basedir, subpath))   
 
 
     # Main interface.
@@ -1154,14 +1160,17 @@ class Album(BaseAlbum):
             (self.id,)
         )
 
-    def move(self, copy=False):
+    def move(self, copy=False, basedir=None):
         """Moves (or copies) all items to their destination. Any
-        album art moves along with them.
+        album art moves along with them. basedir overrides the library
+        base directory for the destination.
         """
+        basedir = basedir or self._library.directory
+
         # Move items.
         items = list(self.items())
         for item in items:
-            item.move(self._library, copy)
+            item.move(self._library, copy, basedir=basedir)
         newdir = os.path.dirname(items[0].path)
 
         # Move art.

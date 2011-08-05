@@ -958,13 +958,13 @@ def move_items(lib, dest, query, copy, album):
     entity = 'album' if album else 'item'
     logging.info('%s %i %ss.' % (action, len(objs), entity))
     for obj in objs:
-        old_path = obj.item_path() if album else obj.path
+        old_path = obj.item_dir() if album else obj.path
         logging.debug('moving: %s' % old_path)
 
         if album:
-            obj.move(copy)
+            obj.move(copy, basedir=dest)
         else:
-            obj.move(lib, copy)
+            obj.move(lib, copy, basedir=dest)
             lib.store(obj)
     lib.save()
 

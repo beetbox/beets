@@ -45,16 +45,24 @@ class MoveTest(unittest.TestCase, _common.ExtraAsserts):
         self.i.album = 'two'
         self.i.title = 'three'
         self.dest = join(self.libdir, 'one', 'two', 'three.mp3')
+
+        self.otherdir = join(_common.RSRC, 'testotherdir')
         
     def tearDown(self):
         if os.path.exists(self.path):
             os.remove(self.path)
         if os.path.exists(self.libdir):
             shutil.rmtree(self.libdir)
+        if os.path.exists(self.otherdir):
+            shutil.rmtree(self.otherdir)
     
     def test_move_arrives(self):
         self.i.move(self.lib)
         self.assertExists(self.dest)
+    
+    def test_move_to_custom_dir(self):
+        self.i.move(self.lib, basedir=self.otherdir)
+        self.assertExists(join(self.otherdir, 'one', 'two', 'three.mp3'))
     
     def test_move_departs(self):
         self.i.move(self.lib)
@@ -148,9 +156,13 @@ class AlbumFileTest(unittest.TestCase):
         touch(self.i.path)
         # Make an album.
         self.ai = self.lib.add_album((self.i,))
+        # Alternate destination dir.
+        self.otherdir = os.path.join(_common.RSRC, 'testotherdir')
     def tearDown(self):
         if os.path.exists(self.libdir):
             shutil.rmtree(self.libdir)
+        if os.path.exists(self.otherdir):
+            shutil.rmtree(self.otherdir)
 
     def test_albuminfo_move_changes_paths(self):
         self.ai.album = 'newAlbumName'
@@ -177,7 +189,12 @@ class AlbumFileTest(unittest.TestCase):
         self.assertTrue(os.path.exists(oldpath))
         self.assertTrue(os.path.exists(self.i.path))
 
-class ArtFileTest(unittest.TestCase):
+    def test_albuminfo_move_to_custom_dir(self):
+        self.ai.move(basedir=self.otherdir)
+        self.lib.load(self.i)
+        self.assert_('testotherdir' in self.i.path)
+
+class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
     def setUp(self):
         # Make library and item.
         self.lib = beets.library.Library(':memory:')
@@ -194,9 +211,13 @@ class ArtFileTest(unittest.TestCase):
         self.art = self.lib.get_album(self.i).art_destination('something.jpg')
         touch(self.art)
         self.ai.artpath = self.art
+        # Alternate destination dir.
+        self.otherdir = os.path.join(_common.RSRC, 'testotherdir')
     def tearDown(self):
         if os.path.exists(self.libdir):
             shutil.rmtree(self.libdir)
+        if os.path.exists(self.otherdir):
+            shutil.rmtree(self.otherdir)
 
     def test_art_deleted_when_items_deleted(self):
         self.assertTrue(os.path.exists(self.art))
@@ -214,6 +235,17 @@ class ArtFileTest(unittest.TestCase):
         self.assertFalse(os.path.exists(self.art))
         newart = self.lib.get_album(self.i).art_destination(self.art)
         self.assertTrue(os.path.exists(newart))
+
+    def test_art_moves_with_album_to_custom_dir(self):
+        # Move the album to another directory.
+        self.ai.move(basedir=self.otherdir)
+        self.lib.load(self.i)
+
+        # Art should be in new directory.
+        self.assertNotExists(self.art)
+        newart = self.lib.get_album(self.i).artpath
+        self.assertExists(newart)
+        self.assertTrue('testotherdir' in newart)
 
     def test_setart_copies_image(self):
         newart = os.path.join(self.libdir, 'newart.jpg')
