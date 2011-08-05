@@ -8,6 +8,8 @@
   program to edit tags on files, remove files and directories, etc.,
   and then run "beet update" to make sure your beets library is in
   sync. This will also rename files to reflect their new metadata.
+* A new "beet move" command can copy or move files into your library
+  directory or to another specified directory.
 * When importing files that are already in the library database,
   the items are no longer duplicated -- instead, the library is
   updated to reflect the new metadata. This way, the import command
