@@ -20,6 +20,9 @@ import beets.library
 import flask
 from flask import g
 
+
+# Utilities.
+
 def _rep(obj):
     if isinstance(obj, beets.library.Item):
         out = dict(obj.record)
@@ -30,6 +33,9 @@ def _rep(obj):
         del out['artpath']
         out['items'] = [_rep(item) for item in obj.items()]
         return out
+
+
+# Flask setup.
 
 app = flask.Flask(__name__)
 
@@ -89,6 +95,13 @@ def album_query(query):
 def album_art(album_id):
     album = g.lib.get_album(album_id)
     return flask.send_file(album.artpath)
+
+
+# UI.
+
+@app.route('/')
+def home():
+    return flask.render_template('index.html')
 
 
 # Plugin hook.

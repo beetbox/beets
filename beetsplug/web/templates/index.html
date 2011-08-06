@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>beets</title>
+
+        <script src="{{ url_for('static', filename='jquery.js') }}"></script>
+        <script src="{{ url_for('static', filename='underscore.js') }}">
+        </script>
+        <script src="{{ url_for('static', filename='backbone.js') }}"></script>
+        <script src="{{ url_for('static', filename='beets.js') }}"></script>
+    </head>
+    <body>
+        <h1>beets</h1>
+        <form id="queryForm">
+            <input type="search" id="query">
+        </form>
+        <ul id="results">
+        </ul>
+
+        <!-- Templates. -->
+        <script type="text/template" id="item-entry-template">
+            <%= artist %> - <%= title %>
+            <a href="/item/<%= id %>/file">download</a>
+        </script>
+    </body>
+</html>

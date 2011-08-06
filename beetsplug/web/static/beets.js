@@ -1,0 +1,66 @@
+$(function() {
+
+// Routes.
+var BeetsRouter = Backbone.Router.extend({
+    routes: {
+        "item/query/:query": "itemQuery",
+    },
+    itemQuery: function(query) {
+        $.getJSON('/item/query/' + query, function(data) {
+            var models = _.map(
+                data['results'],
+                function(d) { return new Item(d); }
+            );
+            var results = new Items(models);
+            app.showItems(results);
+        });
+    }
+});
+var router = new BeetsRouter();
+
+// Model.
+var Item = Backbone.Model.extend({
+    urlRoot: '/item'
+});
+var Items = Backbone.Collection.extend({
+    model: Item
+});
+
+// Item views.
+var ItemEntryView = Backbone.View.extend({
+    tagName: "li",
+    template: _.template($('#item-entry-template').html()),
+    render: function() {
+        $(this.el).html(this.template(this.model.toJSON()));
+        return this;
+    }
+});
+
+// Main app view.
+var AppView = Backbone.View.extend({
+    el: $('body'),
+    events: {
+        'submit #queryForm': 'querySubmit'
+    },
+    querySubmit: function(ev) {
+        ev.preventDefault();
+        router.navigate('item/query/' + escape($('#query').val()), true);
+    },
+    initialize: function() {
+        this.delegateEvents();
+    },
+    showItems: function(items) {
+        $('#results').empty();
+        console.log(items);
+        items.each(function(item) {
+            var view = new ItemEntryView({model: item});
+            $('#results').append(view.render().el);
+        });
+    }
+});
+var app = new AppView();
+
+// App setup.
+Backbone.history.start({pushState: false});
+
+});
