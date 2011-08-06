@@ -16,8 +16,20 @@
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets.importer import _reopen_lib
+import beets.library
 import flask
 from flask import g
+
+def _rep(obj):
+    if isinstance(obj, beets.library.Item):
+        out = dict(obj.record)
+        del out['path']
+        return out
+    elif isinstance(obj, beets.library.Album):
+        out = dict(obj._record)
+        del out['artpath']
+        out['items'] = [_rep(item) for item in obj.items()]
+        return out
 
 app = flask.Flask(__name__)
 
@@ -28,10 +40,13 @@ def before_request():
 def teardown_request(req):
     g.lib.conn.close()
 
+
+# Items.
+
 @app.route('/item/<int:item_id>')
 def single_item(item_id):
     item = g.lib.get_item(item_id)
-    return flask.jsonify(item.record)
+    return flask.jsonify(_rep(item))
 
 @app.route('/item/')
 def all_items():
@@ -44,11 +59,47 @@ def item_file(item_id):
     item = g.lib.get_item(item_id)
     return flask.send_file(item.path)
 
+@app.route('/item/query/<path:query>')
+def item_query(query):
+    parts = query.split('/')
+    items = g.lib.items(parts)
+    return flask.jsonify(results=[_rep(item) for item in items])
+
+
+# Albums.
+
+@app.route('/album/<int:album_id>')
+def single_album(album_id):
+    album = g.lib.get_album(album_id)
+    return flask.jsonify(_rep(album))
+
+@app.route('/album/')
+def all_albums():
+    c = g.lib.conn.execute("SELECT id FROM albums")
+    all_ids = [row[0] for row in c]
+    return flask.jsonify(album_ids=all_ids)
+
+@app.route('/album/query/<path:query>')
+def album_query(query):
+    parts = query.split('/')
+    albums = g.lib.albums(parts)
+    return flask.jsonify(results=[_rep(album) for album in albums])
+
+@app.route('/album/<int:album_id>/art')
+def album_art(album_id):
+    album = g.lib.get_album(album_id)
+    return flask.send_file(album.artpath)
+
+
+# Plugin hook.
+
 class WebPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand('web', help='start a Web interface')
+        cmd.parser.add_option('-d', '--debug', action='store_true',
+                              default=False, help='debug mode')
         def func(lib, config, opts, args):
             app.config['lib'] = lib
-            app.run(debug=True)
+            app.run(debug=opts.debug)
         cmd.func = func
         return [cmd]
