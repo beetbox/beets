@@ -3,6 +3,9 @@
     <head>
         <title>beets</title>
 
+        <link rel="stylesheet"
+        href="{{ url_for('static', filename='beets.css') }}" type="text/css"> 
+
         <script src="{{ url_for('static', filename='jquery.js') }}"></script>
         <script src="{{ url_for('static', filename='underscore.js') }}">
         </script>
@@ -10,17 +13,21 @@
         <script src="{{ url_for('static', filename='beets.js') }}"></script>
     </head>
     <body>
-        <h1>beets</h1>
-        <form id="queryForm">
-            <input type="search" id="query">
-        </form>
-        <ul id="results">
-        </ul>
+        <div id="header">
+            <h1>beets</h1>
+        </div>
+
+        <div id="entities">
+            <form id="queryForm">
+                <input type="search" id="query" placeholder="Query">
+            </form>
+            <ul id="results">
+            </ul>
+        </div>
 
         <!-- Templates. -->
         <script type="text/template" id="item-entry-template">
             <%= artist %> - <%= title %>
-            <a href="/item/<%= id %>/file">download</a>
         </script>
     </body>
 </html>
