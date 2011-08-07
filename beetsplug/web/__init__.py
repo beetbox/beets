@@ -113,6 +113,6 @@ class WebPlugin(BeetsPlugin):
                               default=False, help='debug mode')
         def func(lib, config, opts, args):
             app.config['lib'] = lib
-            app.run(host='', debug=opts.debug)
+            app.run(host='', debug=opts.debug, threaded=True)
         cmd.func = func
         return [cmd]

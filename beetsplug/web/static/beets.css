@@ -99,3 +99,19 @@ body {
 #detail .albumtitle {
     font-style: italic;
 }
+
+#detail dl dt, #detail dl dd {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+#detail dl dt {
+    width: 10em;
+    float: left;
+    text-align: right;
+    font-weight: bold;
+    clear: both;
+}
+#detail dl dd {
+    margin-left: 10.5em;
+}

@@ -41,6 +41,29 @@
             <span class="title"><%= title %></span>
             
             <a class="download" href="/item/<%= id %>/file">download</a>
+
+            <dl>
+                <dt>Track</dt>
+                <dd><%= track %>/<%= tracktotal %></dd>
+                <% if (disc) { %>
+                    <dt>Disc</dt>
+                    <dd><%= disc %>/<%= disctotal %></dd>
+                <% } %>
+                <% if (mb_trackid) { %>
+                    <dt>MuscBrainz entry</dt>
+                    <dd>
+                        <a href="http://musicbrainz.org/recording/<%= mb_trackid %>">view</a>
+                    </dd>
+                <% } %>
+                <% if (lyrics) { %>
+                    <dt>Lyrics</dt>
+                    <dd><%= lyrics %></dd>
+                <% } %>
+                <% if (comments) { %>
+                    <dt>Comments</dt>
+                    <dd><%= comments %></dd>
+                <% } %>
+            </dl>
         </script>
     </body>
 </html>
