@@ -30,6 +30,20 @@ var Items = Backbone.Collection.extend({
 var ItemEntryView = Backbone.View.extend({
     tagName: "li",
     template: _.template($('#item-entry-template').html()),
+    events: {
+        'click': 'select',
+    },
+    render: function() {
+        $(this.el).html(this.template(this.model.toJSON()));
+        return this;
+    },
+    select: function() {
+        app.selectItem(this);
+    }
+});
+var ItemDetailView = Backbone.View.extend({
+    tagName: "div",
+    template: _.template($('#item-detail-template').html()),
     render: function() {
         $(this.el).html(this.template(this.model.toJSON()));
         return this;
@@ -56,6 +70,15 @@ var AppView = Backbone.View.extend({
             var view = new ItemEntryView({model: item});
             $('#results').append(view.render().el);
         });
+    },
+    selectItem: function(view) {
+        // Mark row as selected.
+        $('#results li').removeClass("selected");
+        $(view.el).addClass("selected");
+
+        // Show detail.
+        var detailView = new ItemDetailView({model: view.model});
+        $('#detail').empty().append(detailView.render().el);
     }
 });
 var app = new AppView();

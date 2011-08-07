@@ -25,9 +25,19 @@
             </ul>
         </div>
 
+        <div id="detail">
+        </div>
+
         <!-- Templates. -->
         <script type="text/template" id="item-entry-template">
-            <%= artist %> - <%= title %>
+            <%= title %>
+        </script>
+        <script type="text/template" id="item-detail-template">
+            <span class="artist"><%= artist %></span>
+            <span class="album"><%= album %></span>
+            <span class="title"><%= title %></span>
+            
+            <a class="download" href="/item/<%= id %>/file">download</a>
         </script>
     </body>
 </html>

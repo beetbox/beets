@@ -19,11 +19,7 @@ body {
     /* background gradient */
     background: #0e0e0e;
     background: -moz-linear-gradient(top, #6b6b6b 0%, #0e0e0e 100%);
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#6b6b6b), color-stop(100%,#0e0e0e));
     background: -webkit-linear-gradient(top, #6b6b6b 0%,#0e0e0e 100%);
-    background: -o-linear-gradient(top, #6b6b6b 0%,#0e0e0e 100%);
-    background: -ms-linear-gradient(top, #6b6b6b 0%,#0e0e0e 100%);
-    background: linear-gradient(top, #6b6b6b 0%,#0e0e0e 100%);
 }
 #header h1 {
     font-size: 1em;
@@ -73,6 +69,27 @@ body {
 }
 #entities ul li {
     list-style: none;
-    margin: 0 8px 8px;
-    padding: 0;
+    padding: 4px 8px;
+    margin: 0;
+}
+#entities ul li.selected {
+    background: #7abcff;
+    background: -moz-linear-gradient(top, #7abcff 0%, #60abf8 44%, #4096ee 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#7abcff), color-stop(44%,#60abf8), color-stop(100%,#4096ee));
+    color: white;
+}
+
+#detail {
+    position: fixed;
+    top: 1.7em;
+    bottom: 0;
+    left: 17em;
+    margin: 1.0em 0 0 1.5em;
+}
+#detail .artist, #detail .album, #detail .title {
+    display: block;
+}
+#detail .title {
+    font-size: 1.3em;
+    font-weight: bold;
 }
