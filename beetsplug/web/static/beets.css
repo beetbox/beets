@@ -11,6 +11,8 @@ body {
     
     color: white;
     
+    cursor: default;
+
     /* shadowy border */
     box-shadow: 0 0 20px #999;
     -webkit-box-shadow: 0 0 20px #999;
@@ -71,6 +73,7 @@ body {
     list-style: none;
     padding: 4px 8px;
     margin: 0;
+    cursor: default;
 }
 #entities ul li.selected {
     background: #7abcff;
@@ -92,4 +95,7 @@ body {
 #detail .title {
     font-size: 1.3em;
     font-weight: bold;
+}
+#detail .albumtitle {
+    font-style: italic;
 }

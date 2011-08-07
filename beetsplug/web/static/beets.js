@@ -1,3 +1,14 @@
+// Simple selection disable for jQuery.
+// Cut-and-paste from:
+// http://stackoverflow.com/questions/2700000
+$.fn.disableSelection = function() {
+    $(this).attr('unselectable', 'on')
+           .css('-moz-user-select', 'none')
+           .each(function() { 
+               this.onselectstart = function() { return false; };
+            });
+};
+
 $(function() {
 
 // Routes.
@@ -85,5 +96,9 @@ var app = new AppView();
 
 // App setup.
 Backbone.history.start({pushState: false});
+
+// Disable selection on UI elements.
+$('#entities ul').disableSelection();
+$('#header').disableSelection();
 
 });
