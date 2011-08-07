@@ -10,11 +10,16 @@
         <script src="{{ url_for('static', filename='underscore.js') }}">
         </script>
         <script src="{{ url_for('static', filename='backbone.js') }}"></script>
+        <script src="{{ url_for('static', filename='audiojs/audio.js') }}">
+        </script>
         <script src="{{ url_for('static', filename='beets.js') }}"></script>
     </head>
     <body>
         <div id="header">
             <h1>beets</h1>
+            <div id="player">
+                <audio></audio>
+            </div>
         </div>
 
         <div id="entities">
@@ -41,6 +46,7 @@
             <span class="title"><%= title %></span>
             
             <a class="download" href="/item/<%= id %>/file">download</a>
+            <button class="play">play</button>
 
             <dl>
                 <dt>Track</dt>

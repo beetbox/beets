@@ -55,9 +55,15 @@ var ItemEntryView = Backbone.View.extend({
 var ItemDetailView = Backbone.View.extend({
     tagName: "div",
     template: _.template($('#item-detail-template').html()),
+    events: {
+        'click .play': 'play',
+    },
     render: function() {
         $(this.el).html(this.template(this.model.toJSON()));
         return this;
+    },
+    play: function() {
+        app.playItem(this.model);
     }
 });
 
@@ -76,7 +82,6 @@ var AppView = Backbone.View.extend({
     },
     showItems: function(items) {
         $('#results').empty();
-        console.log(items);
         items.each(function(item) {
             var view = new ItemEntryView({model: item});
             $('#results').append(view.render().el);
@@ -90,6 +95,12 @@ var AppView = Backbone.View.extend({
         // Show detail.
         var detailView = new ItemDetailView({model: view.model});
         $('#detail').empty().append(detailView.render().el);
+    },
+    playItem: function(item) {
+        var url = '/item/' + item.get('id') + '/file';
+        $(audio.wrapper).removeClass('unloaded');
+        audio.load(url);
+        audio.play();
     }
 });
 var app = new AppView();
@@ -100,5 +111,13 @@ Backbone.history.start({pushState: false});
 // Disable selection on UI elements.
 $('#entities ul').disableSelection();
 $('#header').disableSelection();
+
+// Audio player setup.
+var audio;
+audiojs.events.ready(function() {
+    var as = audiojs.createAll();
+    audio = as[0];
+    $(audio.wrapper).addClass('unloaded');
+});
 
 });

@@ -7,7 +7,7 @@ body {
     left: 0;
     right: 0;
     top: 0;
-    height: 1.7em;
+    height: 36px;
     
     color: white;
     
@@ -24,17 +24,17 @@ body {
     background: -webkit-linear-gradient(top, #6b6b6b 0%,#0e0e0e 100%);
 }
 #header h1 {
-    font-size: 1em;
+    font-size: 1.1em;
     font-weight: bold;
     color: white;
-    margin: 0.25em;
+    margin: 0.35em;
 }
 
 #entities {
     width: 17em;
     
     position: fixed;
-    top: 1.7em;
+    top: 36px;
     left: 0;
     bottom: 0;
     margin: 0;
@@ -60,10 +60,10 @@ body {
     width: 17em;
     
     position: fixed;
-    top: 4em;
+    top: 36px;
     left: 0;
     bottom: 0;
-    margin: 0;
+    margin: 2.2em 0 0 0;
     padding: 0;
 
     overflow-y: auto;
@@ -84,7 +84,7 @@ body {
 
 #detail {
     position: fixed;
-    top: 1.7em;
+    top: 36px;
     bottom: 0;
     left: 17em;
     margin: 1.0em 0 0 1.5em;
@@ -114,4 +114,27 @@ body {
 }
 #detail dl dd {
     margin-left: 10.5em;
+}
+
+.audiojs {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 340px;
+    height: 36px;
+
+    background: none;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    -o-box-shadow: none;
+    box-shadow: none;
+}
+.audiojs .play-pause {
+    border-left: 1px solid black;
+}
+.audiojs .time {
+    display: none;
+}
+.audiojs.unloaded .play-pause p {
+    display: none;
 }
