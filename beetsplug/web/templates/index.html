@@ -10,8 +10,6 @@
         <script src="{{ url_for('static', filename='underscore.js') }}">
         </script>
         <script src="{{ url_for('static', filename='backbone.js') }}"></script>
-        <script src="{{ url_for('static', filename='audiojs/audio.js') }}">
-        </script>
         <script src="{{ url_for('static', filename='beets.js') }}"></script>
     </head>
     <body>
@@ -19,6 +17,15 @@
             <h1>beets</h1>
             <div id="player">
                 <audio></audio>
+
+                <button class="disabled">&#9654;</button>
+                <button class="play">&#9654;</button>
+                <button class="pause" style="letter-spacing: 1px;">&#10073;&#10073;</button>
+
+                <span class="times">
+                    <span class="currentTime">
+                    </span>
+                </span>
             </div>
         </div>
 

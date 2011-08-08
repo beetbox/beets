@@ -1,3 +1,130 @@
+// jQuery extension encapsulating event hookups for audio element controls.
+$.fn.player = function(debug) {
+    // Selected element should contain an HTML5 Audio element.
+    var audio = $('audio', this).get(0);
+
+    // Control elements that may be present, identified by class.
+    var playBtn = $('.play', this);
+    var pauseBtn = $('.pause', this);
+    var disabledInd = $('.disabled', this);
+    var timesEl = $('.times', this);
+    var curTimeEl = $('.currentTime', this);
+    var totalTimeEl  = $('.totalTime', this);
+    var sliderPlayedEl = $('.slider .played', this);
+    var sliderLoadedEl = $('.slider .loaded', this);
+
+    // Button events.
+    playBtn.click(function() {
+        audio.play();
+    });
+    pauseBtn.click(function(ev) {
+        audio.pause();
+    });
+
+    // Utilities.
+    var timeFormat = function(secs) {
+        if (secs == undefined || isNaN(secs)) {
+            return '0:00';
+        }
+        secs = Math.round(secs);
+        var mins = '' + Math.round(secs / 60);
+        secs = '' + (secs % 60);
+        if (secs.length < 2) {
+            secs = '0' + secs;
+        }
+        return mins + ':' + secs;
+    }
+    var timePercent = function(cur, total) {
+        if (cur == undefined || isNaN(cur) ||
+                total == undefined || isNaN(total) || total == 0) {
+            return 0;
+        }
+        var ratio = cur / total;
+        if (ratio > 1.0) {
+            ratio = 1.0;
+        }
+        return (Math.round(ratio * 10000) / 100) + '%';
+    }
+
+    // Event helpers.
+    var dbg = function(msg) {
+        if (debug)
+            console.log(msg);
+    }
+    var showState = function() {
+        if (audio.duration == undefined || isNaN(audio.duration)) {
+            playBtn.hide();
+            pauseBtn.hide();
+            disabledInd.show();
+            timesEl.hide();
+        } else if (audio.paused) {
+            playBtn.show();
+            pauseBtn.hide();
+            disabledInd.hide();
+            timesEl.show();
+        } else {
+            playBtn.hide();
+            pauseBtn.show();
+            disabledInd.hide();
+            timesEl.show();
+        }
+    }
+    var showTimes = function() {
+        curTimeEl.text(timeFormat(audio.currentTime));
+        totalTimeEl.text(timeFormat(audio.duration));
+
+        sliderPlayedEl.css('width',
+                timePercent(audio.currentTime, audio.duration));
+
+        // last time buffered
+        var bufferEnd = 0;
+        for (var i = 0; i < audio.buffered.length; ++i) {
+            if (audio.buffered.end(i) > bufferEnd)
+                bufferEnd = audio.buffered.end(i);
+        }
+        sliderLoadedEl.css('width',
+                timePercent(bufferEnd, audio.duration));
+    }
+
+    // Initialize controls.
+    showState();
+    showTimes();
+
+    // Bind events.
+    $('audio', this).bind({
+        playing: function() {
+            dbg('playing');
+            showState();
+        },
+        pause: function() {
+            dbg('pause');
+            showState();
+        },
+        ended: function() {
+            dbg('ended');
+            showState();
+        },
+        progress: function() {
+            dbg('progress ' + audio.buffered);
+        },
+        timeupdate: function() {
+            dbg('timeupdate ' + audio.currentTime);
+            showTimes();
+        },
+        durationchange: function() {
+            dbg('durationchange ' + audio.duration);
+            showState();
+            showTimes();
+        },
+        loadeddata: function() {
+            dbg('loadeddata');
+        },
+        loadedmetadata: function() {
+            dbg('loadedmetadata');
+        }
+    });
+}
+
 // Simple selection disable for jQuery.
 // Cut-and-paste from:
 // http://stackoverflow.com/questions/2700000
@@ -98,9 +225,8 @@ var AppView = Backbone.View.extend({
     },
     playItem: function(item) {
         var url = '/item/' + item.get('id') + '/file';
-        $(audio.wrapper).removeClass('unloaded');
-        audio.load(url);
-        audio.play();
+        $('#player audio').attr('src', url);
+        $('#player audio').get(0).play();
     }
 });
 var app = new AppView();
@@ -113,11 +239,6 @@ $('#entities ul').disableSelection();
 $('#header').disableSelection();
 
 // Audio player setup.
-var audio;
-audiojs.events.ready(function() {
-    var as = audiojs.createAll();
-    audio = as[0];
-    $(audio.wrapper).addClass('unloaded');
-});
+$('#player').player();
 
 });

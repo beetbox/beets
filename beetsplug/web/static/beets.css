@@ -116,25 +116,27 @@ body {
     margin-left: 10.5em;
 }
 
-.audiojs {
+#player {
     position: fixed;
     right: 0;
     top: 0;
-    width: 340px;
+    width: 150px;
     height: 36px;
-
+}
+#player .play, #player .pause, #player .disabled {
+    -webkit-appearance: none;
+    font-size: 1em;
+    font-family: Helvetica, Arial, sans-serif;
     background: none;
-    -webkit-box-shadow: none;
-    -moz-box-shadow: none;
-    -o-box-shadow: none;
-    box-shadow: none;
+    border: none;
+    color: white;
+    padding: 5px;
+    margin: 0;
+    text-align: center;
+
+    width: 36px;
+    height: 36px;
 }
-.audiojs .play-pause {
-    border-left: 1px solid black;
-}
-.audiojs .time {
-    display: none;
-}
-.audiojs.unloaded .play-pause p {
-    display: none;
+#player .disabled {
+    color: #666;
 }
