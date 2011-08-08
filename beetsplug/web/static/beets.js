@@ -170,13 +170,28 @@ var ItemEntryView = Backbone.View.extend({
     template: _.template($('#item-entry-template').html()),
     events: {
         'click': 'select',
+        'dblclick': 'play'
+    },
+    initialize: function() {
+        this.playing = false;
     },
     render: function() {
         $(this.el).html(this.template(this.model.toJSON()));
+        this.setPlaying(this.playing);
         return this;
     },
     select: function() {
         app.selectItem(this);
+    },
+    play: function() {
+        app.playItem(this.model);
+    },
+    setPlaying: function(val) {
+        this.playing = val;
+        if (val)
+            this.$('.playing').show();
+        else
+            this.$('.playing').hide();
     }
 });
 var ItemDetailView = Backbone.View.extend({
@@ -198,19 +213,27 @@ var ItemDetailView = Backbone.View.extend({
 var AppView = Backbone.View.extend({
     el: $('body'),
     events: {
-        'submit #queryForm': 'querySubmit'
+        'submit #queryForm': 'querySubmit',
     },
     querySubmit: function(ev) {
         ev.preventDefault();
         router.navigate('item/query/' + escape($('#query').val()), true);
     },
     initialize: function() {
-        this.delegateEvents();
+        this.playingItem = null;
+
+        // Not sure why these events won't bind automatically.
+        this.$('audio').bind({
+            'play': _.bind(this.audioPlay, this),
+            'pause': _.bind(this.audioPause, this),
+            'ended': _.bind(this.audioEnded, this)
+        });
     },
     showItems: function(items) {
         $('#results').empty();
         items.each(function(item) {
             var view = new ItemEntryView({model: item});
+            item.entryView = view;
             $('#results').append(view.render().el);
         });
     },
@@ -227,6 +250,23 @@ var AppView = Backbone.View.extend({
         var url = '/item/' + item.get('id') + '/file';
         $('#player audio').attr('src', url);
         $('#player audio').get(0).play();
+
+        if (this.playingItem != null) {
+            this.playingItem.entryView.setPlaying(false);
+        }
+        item.entryView.setPlaying(true);
+        this.playingItem = item;
+    },
+
+    audioPause: function() {
+        this.playingItem.entryView.setPlaying(false);
+    },
+    audioPlay: function() {
+        if (this.playingItem != null)
+            this.playingItem.entryView.setPlaying(true);
+    },
+    audioEnded: function() {
+        this.playingItem.entryView.setPlaying(false);
     }
 });
 var app = new AppView();

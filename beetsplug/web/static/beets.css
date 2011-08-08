@@ -81,6 +81,10 @@ body {
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#7abcff), color-stop(44%,#60abf8), color-stop(100%,#4096ee));
     color: white;
 }
+#entities ul li .playing {
+    margin-left: 5px;
+    font-size: 0.9em;
+}
 
 #detail {
     position: fixed;
