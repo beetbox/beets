@@ -221,6 +221,7 @@ var AppView = Backbone.View.extend({
     },
     initialize: function() {
         this.playingItem = null;
+        this.shownItems = null;
 
         // Not sure why these events won't bind automatically.
         this.$('audio').bind({
@@ -230,6 +231,7 @@ var AppView = Backbone.View.extend({
         });
     },
     showItems: function(items) {
+        this.shownItems = items;
         $('#results').empty();
         items.each(function(item) {
             var view = new ItemEntryView({model: item});
@@ -267,6 +269,19 @@ var AppView = Backbone.View.extend({
     },
     audioEnded: function() {
         this.playingItem.entryView.setPlaying(false);
+
+        // Try to play the next track.
+        var idx = this.shownItems.indexOf(this.playingItem);
+        if (idx == -1) {
+            // Not in current list.
+            return;
+        }
+        var nextIdx = idx + 1;
+        if (nextIdx >= this.shownItems.size()) {
+            // End of  list.
+            return;
+        }
+        this.playItem(this.shownItems.at(nextIdx));
     }
 });
 var app = new AppView();
