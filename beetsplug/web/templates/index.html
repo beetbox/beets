@@ -53,8 +53,7 @@
             </span>
             <span class="title"><%= title %></span>
             
-            <a class="download" href="/item/<%= id %>/file">download</a>
-            <button class="play">play</button>
+            <button class="play">&#9654;</button>
 
             <dl>
                 <dt>Track</dt>
@@ -63,12 +62,22 @@
                     <dt>Disc</dt>
                     <dd><%= disc %>/<%= disctotal %></dd>
                 <% } %>
+                <dt>Length</dt>
+                <dd><%= timeFormat(length) %></dd>
+                <dt>Format</dt>
+                <dd><%= format %></dd>
+                <dt>Bitrate</dt>
+                <dd><%= Math.round(bitrate/1000) %> kbps</dd>
                 <% if (mb_trackid) { %>
                     <dt>MuscBrainz entry</dt>
                     <dd>
-                        <a href="http://musicbrainz.org/recording/<%= mb_trackid %>">view</a>
+                        <a target="_blank" href="http://musicbrainz.org/recording/<%= mb_trackid %>">view</a>
                     </dd>
                 <% } %>
+                <dt>File</dt>
+                <dd>
+                    <a target="_blank" class="download" href="/item/<%= id %>/file">download</a>
+                </dd>
                 <% if (lyrics) { %>
                     <dt>Lyrics</dt>
                     <dd><%= lyrics %></dd>

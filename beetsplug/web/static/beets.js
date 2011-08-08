@@ -1,3 +1,17 @@
+// Format times as minutes and seconds.
+var timeFormat = function(secs) {
+    if (secs == undefined || isNaN(secs)) {
+        return '0:00';
+    }
+    secs = Math.round(secs);
+    var mins = '' + Math.round(secs / 60);
+    secs = '' + (secs % 60);
+    if (secs.length < 2) {
+        secs = '0' + secs;
+    }
+    return mins + ':' + secs;
+}
+
 // jQuery extension encapsulating event hookups for audio element controls.
 $.fn.player = function(debug) {
     // Selected element should contain an HTML5 Audio element.
@@ -22,18 +36,6 @@ $.fn.player = function(debug) {
     });
 
     // Utilities.
-    var timeFormat = function(secs) {
-        if (secs == undefined || isNaN(secs)) {
-            return '0:00';
-        }
-        secs = Math.round(secs);
-        var mins = '' + Math.round(secs / 60);
-        secs = '' + (secs % 60);
-        if (secs.length < 2) {
-            secs = '0' + secs;
-        }
-        return mins + ':' + secs;
-    }
     var timePercent = function(cur, total) {
         if (cur == undefined || isNaN(cur) ||
                 total == undefined || isNaN(total) || total == 0) {
