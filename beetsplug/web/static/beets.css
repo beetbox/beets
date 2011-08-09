@@ -28,6 +28,7 @@ body {
     font-weight: bold;
     color: white;
     margin: 0.35em;
+    float: left;
 }
 
 #entities {
@@ -121,9 +122,7 @@ body {
 }
 
 #player {
-    position: fixed;
-    right: 0;
-    top: 0;
+    float: left;
     width: 150px;
     height: 36px;
 }
