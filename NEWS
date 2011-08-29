@@ -28,6 +28,7 @@
 * A new plugin, called "web", encapsulates a simple Web-based GUI for
   beets. The current iteration can browse the library and play music
   in browsers that support HTML5 Audio.
+* Files are no longer silently overwritten when moving and copying files.
 * Handle exceptions thrown when running Mutagen.
 * Fix a missing __future__ import in embedart on Python 2.5.
 * Fix ID3 and MPEG-4 tag names for the album-artist field.

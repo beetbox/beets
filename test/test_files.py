@@ -248,6 +248,8 @@ class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertTrue('testotherdir' in newart)
 
     def test_setart_copies_image(self):
+        os.remove(self.art)
+
         newart = os.path.join(self.libdir, 'newart.jpg')
         touch(newart)
         i2 = item()
@@ -261,6 +263,8 @@ class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertTrue(os.path.exists(ai.artpath))
     
     def test_setart_to_existing_art_works(self):
+        os.remove(self.art)
+
         # Original art.
         newart = os.path.join(self.libdir, 'newart.jpg')
         touch(newart)
@@ -293,6 +297,8 @@ class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertTrue(os.path.exists(ai.artpath))
 
     def test_setart_sets_permissions(self):
+        os.remove(self.art)
+
         newart = os.path.join(self.libdir, 'newart.jpg')
         touch(newart)
         os.chmod(newart, 0400) # read-only
@@ -392,6 +398,39 @@ class SoftRemoveTest(unittest.TestCase, _common.ExtraAsserts):
             util.soft_remove(self.path + 'XXX')
         except OSError:
             self.fail('OSError when removing path')
+
+class SafeMoveCopyTest(unittest.TestCase):
+    def setUp(self):
+        self.path = os.path.join(_common.RSRC, 'testfile')
+        touch(self.path)
+        self.otherpath = os.path.join(_common.RSRC, 'testfile2')
+        touch(self.otherpath)
+        self.dest = self.path + '.dest'
+    def tearDown(self):
+        if os.path.exists(self.path):
+            os.remove(self.path)
+        if os.path.exists(self.otherpath):
+            os.remove(self.otherpath)
+        if os.path.exists(self.dest):
+            os.remove(self.dest)
+
+    def test_existence_check(self):
+        with self.assertRaises(OSError):
+            util._assert_not_exists(self.path)
+
+    def test_successful_move(self):
+        util.move(self.path, self.dest)
+
+    def test_successful_copy(self):
+        util.copy(self.path, self.dest)
+
+    def test_unsuccessful_move(self):
+        with self.assertRaises(OSError):
+            util.move(self.path, self.otherpath)
+
+    def test_unsuccessful_copy(self):
+        with self.assertRaises(OSError):
+            util.copy(self.path, self.otherpath)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
