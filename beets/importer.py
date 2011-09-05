@@ -187,6 +187,18 @@ def _infer_album_fields(task):
         for k, v in changes.iteritems():
             setattr(item, k, v)
 
+def _open_state():
+    """Reads the state file, returning a dictionary."""
+    try:
+        with open(STATE_FILE) as f:
+            return pickle.load(f)
+    except IOError:
+        return {}
+def _save_state(state):
+    """Writes the state dictionary out to disk."""
+    with open(STATE_FILE, 'w') as f:
+        pickle.dump(state, f)
+
 
 # Utilities for reading and writing the beets progress file, which
 # allows long tagging tasks to be resumed when they pause (or crash).
@@ -196,11 +208,9 @@ def progress_set(toppath, path):
     `path`. If path is None, then clear the progress value (indicating
     that the tagging completed).
     """
-    try:
-        with open(STATE_FILE) as f:
-            state = pickle.load(f)
-    except IOError:
-        state = {PROGRESS_KEY: {}}
+    state = _open_state()
+    if PROGRESS_KEY not in state:
+        state[PROGRESS_KEY] = {}
 
     if path is None:
         # Remove progress from file.
@@ -209,18 +219,39 @@ def progress_set(toppath, path):
     else:
         state[PROGRESS_KEY][toppath] = path
 
-    with open(STATE_FILE, 'w') as f:
-        pickle.dump(state, f)
+    _save_state(state)
 def progress_get(toppath):
     """Get the last successfully tagged subpath of toppath. If toppath
     has no progress information, returns None.
     """
-    try:
-        with open(STATE_FILE) as f:
-            state = pickle.load(f)
-    except IOError:
+    state = _open_state()
+    if PROGRESS_KEY not in state:
         return None
     return state[PROGRESS_KEY].get(toppath)
+
+
+# Similarly, utilities for manipulating the "incremental" import log.
+# This keeps track of all directories that were ever imported, which
+# allows the importer to only import new stuff.
+HISTORY_KEY = 'taghistory'
+def history_add(path):
+    """Indicate that the import of `path` is completed and should not
+    be repeated in incremental imports.
+    """
+    state = _open_state()
+    if HISTORY_KEY not in state:
+        state[HISTORY_KEY] = set()
+
+    state[HISTORY_KEY].add(path)
+
+    _save_state(state)
+def history_get():
+    """Get the set of completed paths in incremental imports.
+    """
+    state = _open_state()
+    if HISTORY_KEY not in state:
+        return set()
+    return state[HISTORY_KEY]
 
 
 # The configuration structure.
@@ -234,7 +265,7 @@ class ImportConfig(object):
                'quiet_fallback', 'copy', 'write', 'art', 'delete',
                'choose_match_func', 'should_resume_func', 'threaded',
                'autot', 'singletons', 'timid', 'choose_item_func',
-               'query']
+               'query', 'incremental']
     def __init__(self, **kwargs):
         for slot in self._fields:
             setattr(self, slot, kwargs[slot])
@@ -243,11 +274,16 @@ class ImportConfig(object):
         if self.paths:
             self.paths = map(normpath, self.paths)
 
+        # Incremental and progress are mutually exclusive.
+        if self.incremental:
+            self.resume = False
+
         # When based on a query instead of directories, never
         # save progress or try to resume.
         if self.query is not None:
             self.paths = None
             self.resume = False
+            self.incremental = False
 
 
 # The importer task class.
@@ -352,6 +388,12 @@ class ImportTask(object):
             # album task, which implies the same.
             progress_set(self.toppath, self.path)
 
+    def save_history(self):
+        """Save the directory in the history for incremental imports.
+        """
+        if self.sentinel or self.is_album:
+            history_add(self.path)
+
     # Logical decisions.
     def should_write_tags(self):
         """Should new info be written to the files' metadata?"""
@@ -398,6 +440,10 @@ def read_tasks(config):
                 else:
                     # Clear progress; we're starting from the top.
                     progress_set(path, None)
+
+    # Look for saved incremental directories.
+    if config.incremental:
+        history_dirs = history_get()
     
     for toppath in config.paths:
         # Check whether the path is to a file.
@@ -410,12 +456,17 @@ def read_tasks(config):
         if progress:
             resume_dir = resume_dirs.get(toppath)
         for path, items in autotag.albums_in_dir(toppath):
+            # Skip according to progress.
             if progress and resume_dir:
                 # We're fast-forwarding to resume a previous tagging.
                 if path == resume_dir:
                     # We've hit the last good path! Turn off the
                     # fast-forwarding.
                     resume_dir = None
+                continue
+
+            # When incremental, skip paths in the history.
+            if config.incremental and path in history_dirs:
                 continue
 
             # Yield all the necessary tasks.
@@ -634,6 +685,8 @@ def finalize(config):
         if task.should_skip():
             if config.resume is not False:
                 task.save_progress()
+            if config.incremental:
+                task.save_history()
             continue
 
         items = task.items if task.is_album else [task.item]
@@ -657,6 +710,8 @@ def finalize(config):
         # Update progress.
         if config.resume is not False:
             task.save_progress()
+        if config.incremental:
+            task.save_history()
 
 
 # Singleton pipeline stages.

@@ -101,6 +101,7 @@ class NonAutotaggedImportTest(unittest.TestCase):
                 choose_item_func = None,
                 timid = False,
                 query = None,
+                incremental = False,
         )
 
         return paths

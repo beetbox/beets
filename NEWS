@@ -17,9 +17,18 @@
 * Relatedly, the -L flag to the "import" command makes it take a query
   as its argument instead of a list of directories. The matched albums
   (or items, depending on the -s flag) are then re-imported.
+* A new flag -i to the import command runs incremental imports, keeping
+  track of and skipping previously-imported directories. This has the
+  effect of making repeated import commands pick up only newly-added
+  directories. The "import_incremental" config option makes this the
+  default.
 * When pruning directories, "clutter" files such as .DS_Store and
   Thumbs.db are ignored (and removed with otherwise-empty
   directories).
+* A new plugin, called "web", encapsulates a simple Web-based GUI for
+  beets. The current iteration can browse the library and play music
+  in browsers that support HTML5 Audio.
+* Files are no longer silently overwritten when moving and copying files.
 * Handle exceptions thrown when running Mutagen.
 * Fix a missing __future__ import in embedart on Python 2.5.
 * Fix ID3 and MPEG-4 tag names for the album-artist field.

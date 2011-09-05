@@ -185,6 +185,32 @@ def soft_remove(path):
     if os.path.exists(path):
         os.remove(path)
 
+def _assert_not_exists(path, pathmod=None):
+    """Raises an OSError if the path exists."""
+    pathmod = pathmod or os.path
+    if pathmod.exists(path):
+        raise OSError('file exists: %s' % path)
+
+def copy(path, dest, replace=False, pathmod=None):
+    """Copy a plain file. Permissions are not copied. If dest already
+    exists, raises an OSError unless replace is True. Paths are
+    translated to system paths before the syscall.
+    """
+    path = syspath(path)
+    dest = syspath(dest)
+    _assert_not_exists(dest, pathmod)
+    return shutil.copyfile(path, dest)
+
+def move(path, dest, replace=False, pathmod=None):
+    """Rename a file. dest may not be a directory. If dest already
+    exists, raises an OSError unless replace is True. Paths are
+    translated to system paths.
+    """
+    path = syspath(path)
+    dest = syspath(dest)
+    _assert_not_exists(dest, pathmod)
+    return shutil.move(path, dest)
+
 # Note: POSIX actually supports \ and : -- I just think they're
 # a pain. And ? has caused problems for some.
 CHAR_REPLACE = [
