@@ -568,7 +568,7 @@ class Connection(object):
                     yield bluelet.call(self.do_command(Command(line)))
                 except BPDClose:
                     # Command indicates that the conn should close.
-                    self.client.close()
+                    self.sock.close()
                     return
     
     @classmethod
