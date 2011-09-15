@@ -68,6 +68,8 @@ def _do_query(lib, query, album, also_items=True):
 def _showdiff(field, oldval, newval, color):
     """Prints out a human-readable field difference line."""
     if newval != oldval:
+        oldval = unicode(newval)
+        newval = unicode(newval)
         if color:
             oldval, newval = ui.colordiff(oldval, newval)
         print_(u'  %s: %s -> %s' % (field, oldval, newval))

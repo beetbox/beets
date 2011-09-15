@@ -502,6 +502,28 @@ class ConfigTest(unittest.TestCase):
                 library: /xxx/yyy/not/a/real/path
             """), func)
 
+class UtilTest(unittest.TestCase):
+    def setUp(self):
+        self.io = _common.DummyIO()
+        self.io.install()
+    def tearDown(self):
+        self.io.restore()
+
+    def test_showdiff_strings(self):
+        commands._showdiff('field', 'old', 'new', True)
+        out = self.io.getoutput()
+        self.assertTrue('field' in out)
+
+    def test_showdiff_identical(self):
+        commands._showdiff('field', 'old', 'old', True)
+        out = self.io.getoutput()
+        self.assertFalse('field' in out)
+
+    def test_showdiff_ints(self):
+        commands._showdiff('field', 2, 3, True)
+        out = self.io.getoutput()
+        self.assertTrue('field' in out)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
