@@ -952,18 +952,21 @@ class Library(BaseLibrary):
         Passes on appropriate exceptions if directories cannot be
         created or moving/copying fails.
         
-        Note that one should almost certainly call store() and
-        library.save() after this method in order to keep on-disk data
-        consistent.
+        The item is stored to the database if it is in the database, so
+        any dirty fields prior to the move() call will be written as a
+        side effect. You probably want to call save() to commit the DB
+        transaction.
         """
         dest = self.destination(item, in_album=in_album, basedir=basedir)
         
         # Create necessary ancestry for the move.
         util.mkdirall(dest)
         
-        # Perform the move.
+        # Perform the move and store the change.
         old_path = item.path
         item.move(dest, copy)
+        if item.id is not None:
+            self.store(item)
 
         # Prune vacated directory.
         if not copy:
@@ -1188,11 +1191,6 @@ class Album(BaseAlbum):
             if not copy: # Prune old path.
                 util.prune_dirs(os.path.dirname(old_art),
                                 self._library.directory)
-
-        # Store new item paths. We do this at the end to avoid
-        # locking the database for too long while files are copied.
-        for item in items:
-            self._library.store(item)
 
     def item_dir(self):
         """Returns the directory containing the album's first item,
