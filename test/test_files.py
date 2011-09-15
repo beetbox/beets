@@ -399,7 +399,7 @@ class SoftRemoveTest(unittest.TestCase, _common.ExtraAsserts):
         except OSError:
             self.fail('OSError when removing path')
 
-class SafeMoveCopyTest(unittest.TestCase):
+class SafeMoveCopyTest(unittest.TestCase, _common.ExtraAsserts):
     def setUp(self):
         self.path = os.path.join(_common.RSRC, 'testfile')
         touch(self.path)
@@ -420,9 +420,13 @@ class SafeMoveCopyTest(unittest.TestCase):
 
     def test_successful_move(self):
         util.move(self.path, self.dest)
+        self.assertExists(self.dest)
+        self.assertNotExists(self.path)
 
     def test_successful_copy(self):
         util.copy(self.path, self.dest)
+        self.assertExists(self.dest)
+        self.assertExists(self.path)
 
     def test_unsuccessful_move(self):
         with self.assertRaises(OSError):
@@ -431,6 +435,14 @@ class SafeMoveCopyTest(unittest.TestCase):
     def test_unsuccessful_copy(self):
         with self.assertRaises(OSError):
             util.copy(self.path, self.otherpath)
+
+    def test_self_move(self):
+        util.move(self.path, self.path)
+        self.assertExists(self.path)
+
+    def test_self_copy(self):
+        util.copy(self.path, self.path)
+        self.assertExists(self.path)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

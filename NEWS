@@ -33,6 +33,7 @@
 * Fix a missing __future__ import in embedart on Python 2.5.
 * Fix ID3 and MPEG-4 tag names for the album-artist field.
 * Fix Unicode encoding of album artist, album type, and label.
+* Fix crash when "copying" an art file that's already in place.
 
 1.0b9
 -----
