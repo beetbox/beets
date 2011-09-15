@@ -209,6 +209,21 @@ class Item(object):
         f.save()
 
 
+    # Files themselves.
+
+    def move(self, dest, copy=False):
+        """Moves or copies the item's file, updating the path value if
+        the move succeeds.
+        """
+        if copy:
+            util.copy(self.path, dest)
+        else:
+            util.move(self.path, dest)
+            
+        # Either copying or moving succeeded, so update the stored path.
+        self.path = dest
+
+
 # Library queries.
 
 class Query(object):
@@ -946,14 +961,9 @@ class Library(BaseLibrary):
         # Create necessary ancestry for the move.
         util.mkdirall(dest)
         
-        if copy:
-            util.copy(item.path, dest)
-        else:
-            util.move(item.path, dest)
-            
-        # Either copying or moving succeeded, so update the stored path.
+        # Perform the move.
         old_path = item.path
-        item.path = dest
+        item.move(dest, copy)
 
         # Prune vacated directory.
         if not copy:
