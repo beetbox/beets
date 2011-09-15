@@ -207,51 +207,6 @@ class Item(object):
         for key in ITEM_KEYS_WRITABLE:
             setattr(f, key, getattr(self, key))
         f.save()
-    
-    
-    # Dealing with files themselves.
-    
-    def move(self, library, copy=False, in_album=False, basedir=None):
-        """Move the item to its designated location within the library
-        directory (provided by destination()). Subdirectories are
-        created as needed. If the operation succeeds, the item's path
-        field is updated to reflect the new location.
-        
-        If copy is True, moving the file is copied rather than moved.
-        
-        If in_album is True, then the track is treated as part of an
-        album even if it does not yet have an album_id associated with
-        it. (This allows items to be moved before they are added to the
-        database, a performance optimization.)
-
-        basedir overrides the library base directory for the
-        destination.
-
-        Passes on appropriate exceptions if directories cannot be
-        created or moving/copying fails.
-        
-        Note that one should almost certainly call store() and
-        library.save() after this method in order to keep on-disk data
-        consistent.
-        """
-        dest = library.destination(self, in_album=in_album, basedir=basedir)
-        
-        # Create necessary ancestry for the move.
-        util.mkdirall(dest)
-        
-        if not samefile(self.path, dest):
-            if copy:
-                util.copy(self.path, dest)
-            else:
-                util.move(self.path, dest)
-            
-        # Either copying or moving succeeded, so update the stored path.
-        old_path = self.path
-        self.path = dest
-
-        # Prune vacated directory.
-        if not copy:
-            util.prune_dirs(os.path.dirname(old_path), library.directory)
 
 
 # Library queries.
@@ -864,13 +819,13 @@ class Library(BaseLibrary):
             return normpath(os.path.join(basedir, subpath))   
 
 
-    # Main interface.
+    # Item manipulation.
 
     def add(self, item, copy=False):
         #FIXME make a deep copy of the item?
         item.library = self
         if copy:
-            item.move(self, copy=True)
+            self.move(item, copy=True)
 
         # build essential parts of query
         columns = ','.join([key for key in ITEM_KEYS if key != 'id'])
@@ -962,6 +917,47 @@ class Library(BaseLibrary):
         if delete:
             util.soft_remove(item.path)
             util.prune_dirs(os.path.dirname(item.path), self.directory)
+    
+    def move(self, item, copy=False, in_album=False, basedir=None):
+        """Move the item to its designated location within the library
+        directory (provided by destination()). Subdirectories are
+        created as needed. If the operation succeeds, the item's path
+        field is updated to reflect the new location.
+        
+        If copy is True, moving the file is copied rather than moved.
+        
+        If in_album is True, then the track is treated as part of an
+        album even if it does not yet have an album_id associated with
+        it. (This allows items to be moved before they are added to the
+        database, a performance optimization.)
+
+        basedir overrides the library base directory for the
+        destination.
+
+        Passes on appropriate exceptions if directories cannot be
+        created or moving/copying fails.
+        
+        Note that one should almost certainly call store() and
+        library.save() after this method in order to keep on-disk data
+        consistent.
+        """
+        dest = self.destination(item, in_album=in_album, basedir=basedir)
+        
+        # Create necessary ancestry for the move.
+        util.mkdirall(dest)
+        
+        if copy:
+            util.copy(item.path, dest)
+        else:
+            util.move(item.path, dest)
+            
+        # Either copying or moving succeeded, so update the stored path.
+        old_path = item.path
+        item.path = dest
+
+        # Prune vacated directory.
+        if not copy:
+            util.prune_dirs(os.path.dirname(old_path), self.directory)
 
 
     # Querying.
@@ -1166,7 +1162,7 @@ class Album(BaseAlbum):
         # Move items.
         items = list(self.items())
         for item in items:
-            item.move(self._library, copy, basedir=basedir)
+            self._library.move(item, copy, basedir=basedir)
         newdir = os.path.dirname(items[0].path)
 
         # Move art.

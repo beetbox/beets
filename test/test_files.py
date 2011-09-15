@@ -57,49 +57,49 @@ class MoveTest(unittest.TestCase, _common.ExtraAsserts):
             shutil.rmtree(self.otherdir)
     
     def test_move_arrives(self):
-        self.i.move(self.lib)
+        self.lib.move(self.i)
         self.assertExists(self.dest)
     
     def test_move_to_custom_dir(self):
-        self.i.move(self.lib, basedir=self.otherdir)
+        self.lib.move(self.i, basedir=self.otherdir)
         self.assertExists(join(self.otherdir, 'one', 'two', 'three.mp3'))
     
     def test_move_departs(self):
-        self.i.move(self.lib)
+        self.lib.move(self.i)
         self.assertNotExists(self.path)
 
     def test_move_in_lib_prunes_empty_dir(self):
-        self.i.move(self.lib)
+        self.lib.move(self.i)
         old_path = self.i.path
         self.assertExists(old_path)
 
         self.i.artist = 'newArtist'
-        self.i.move(self.lib)
+        self.lib.move(self.i)
         self.assertNotExists(old_path)
         self.assertNotExists(os.path.dirname(old_path))
     
     def test_copy_arrives(self):
-        self.i.move(self.lib, copy=True)
+        self.lib.move(self.i, copy=True)
         self.assertExists(self.dest)
     
     def test_copy_does_not_depart(self):
-        self.i.move(self.lib, copy=True)
+        self.lib.move(self.i, copy=True)
         self.assertExists(self.path)
     
     def test_move_changes_path(self):
-        self.i.move(self.lib)
+        self.lib.move(self.i)
         self.assertEqual(self.i.path, util.normpath(self.dest))
 
     def test_copy_already_at_destination(self):
-        self.i.move(self.lib)
+        self.lib.move(self.i)
         old_path = self.i.path
-        self.i.move(self.lib, copy=True)
+        self.lib.move(self.i, copy=True)
         self.assertEqual(self.i.path, old_path)
 
     def test_move_already_at_destination(self):
-        self.i.move(self.lib)
+        self.lib.move(self.i)
         old_path = self.i.path
-        self.i.move(self.lib, copy=False)
+        self.lib.move(self.i, copy=False)
         self.assertEqual(self.i.path, old_path)
 
     def test_read_only_file_copied_writable(self):
@@ -107,7 +107,7 @@ class MoveTest(unittest.TestCase, _common.ExtraAsserts):
         os.chmod(self.path, 0444)
 
         try:
-            self.i.move(self.lib, copy=True)
+            self.lib.move(self.i, copy=True)
             self.assertTrue(os.access(self.i.path, os.W_OK))
         finally:
             # Make everything writable so it can be cleaned up.
@@ -256,7 +256,7 @@ class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
         i2.path = self.i.path
         i2.artist = 'someArtist'
         ai = self.lib.add_album((i2,))
-        i2.move(self.lib, True)
+        self.lib.move(i2, True)
         
         self.assertEqual(ai.artpath, None)
         ai.set_art(newart)
@@ -272,7 +272,7 @@ class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
         i2.path = self.i.path
         i2.artist = 'someArtist'
         ai = self.lib.add_album((i2,))
-        i2.move(self.lib, True)
+        self.lib.move(i2, True)
         ai.set_art(newart)
 
         # Set the art again.
@@ -286,7 +286,7 @@ class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
         i2.path = self.i.path
         i2.artist = 'someArtist'
         ai = self.lib.add_album((i2,))
-        i2.move(self.lib, True)
+        self.lib.move(i2, True)
 
         # Copy the art to the destination.
         artdest = ai.art_destination(newart)
@@ -308,7 +308,7 @@ class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
             i2.path = self.i.path
             i2.artist = 'someArtist'
             ai = self.lib.add_album((i2,))
-            i2.move(self.lib, True)
+            self.lib.move(i2, True)
             ai.set_art(newart)
             
             mode = stat.S_IMODE(os.stat(ai.artpath).st_mode)

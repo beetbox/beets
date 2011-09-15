@@ -718,7 +718,7 @@ def update_items(lib, query, album, move, color):
 
             # Move the item if it's in the library.
             if move and lib.directory in ancestry(item.path):
-                item.move(lib)
+                lib.move(item)
 
             lib.store(item)
             affected_albums.add(item.album_id)
@@ -911,7 +911,7 @@ def modify_items(lib, mods, query, write, move, album, color, confirm):
                 if album:
                     obj.move()
                 else:
-                    obj.move(lib)
+                    lib.move(obj)
 
         # When modifying items, we have to store them to the database.
         if not album:
@@ -973,7 +973,7 @@ def move_items(lib, dest, query, copy, album):
         if album:
             obj.move(copy, basedir=dest)
         else:
-            obj.move(lib, copy, basedir=dest)
+            lib.move(obj, copy, basedir=dest)
             lib.store(obj)
     lib.save()
 
