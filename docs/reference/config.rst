@@ -1,0 +1,4 @@
+.beetsconfig
+============
+
+Config
