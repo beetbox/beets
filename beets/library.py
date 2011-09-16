@@ -933,7 +933,8 @@ class Library(BaseLibrary):
             util.soft_remove(item.path)
             util.prune_dirs(os.path.dirname(item.path), self.directory)
     
-    def move(self, item, copy=False, in_album=False, basedir=None):
+    def move(self, item, copy=False, in_album=False, basedir=None,
+             with_album=True):
         """Move the item to its designated location within the library
         directory (provided by destination()). Subdirectories are
         created as needed. If the operation succeeds, the item's path
@@ -949,8 +950,9 @@ class Library(BaseLibrary):
         basedir overrides the library base directory for the
         destination.
 
-        Passes on appropriate exceptions if directories cannot be
-        created or moving/copying fails.
+        If the item is in an album, the album is given an opportunity to
+        move its art. (This can be disabled by passing
+        with_album=False.)
         
         The item is stored to the database if it is in the database, so
         any dirty fields prior to the move() call will be written as a
@@ -967,6 +969,12 @@ class Library(BaseLibrary):
         item.move(dest, copy)
         if item.id is not None:
             self.store(item)
+
+        # If this item is in an album, move its art.
+        if with_album:
+            album = self.get_album(item)
+            if album:
+                album.move_art(copy)
 
         # Prune vacated directory.
         if not copy:
@@ -1165,32 +1173,44 @@ class Album(BaseAlbum):
             (self.id,)
         )
 
+    def move_art(self, copy=False):
+        """Move or copy any existing album art so that it remains in the
+        same directory as the items.
+        """
+        old_art = self.artpath
+        if not old_art:
+            return
+
+        new_art = self.art_destination(old_art)
+        if new_art == old_art:
+            return
+
+        log.debug('moving album art %s to %s' % (old_art, new_art))
+        if copy:
+            util.copy(old_art, new_art)
+        else:
+            util.move(old_art, new_art)
+        self.artpath = new_art
+
+        # Prune old path when moving.
+        if not copy: 
+            util.prune_dirs(os.path.dirname(old_art),
+                            self._library.directory)
+
     def move(self, copy=False, basedir=None):
-        """Moves (or copies) all items to their destination. Any
-        album art moves along with them. basedir overrides the library
-        base directory for the destination.
+        """Moves (or copies) all items to their destination.  Any album
+        art moves along with them. basedir overrides the library base
+        directory for the destination.
         """
         basedir = basedir or self._library.directory
 
         # Move items.
         items = list(self.items())
         for item in items:
-            self._library.move(item, copy, basedir=basedir)
-        newdir = os.path.dirname(items[0].path)
+            self._library.move(item, copy, basedir=basedir, with_album=False)
 
         # Move art.
-        old_art = self.artpath
-        if old_art:
-            new_art = self.art_destination(old_art, newdir)
-            if new_art != old_art:
-                if copy:
-                    util.copy(old_art, new_art)
-                else:
-                    util.move(old_art, new_art)
-                self.artpath = new_art
-            if not copy: # Prune old path.
-                util.prune_dirs(os.path.dirname(old_art),
-                                self._library.directory)
+        self.move_art(copy)
 
     def item_dir(self):
         """Returns the directory containing the album's first item,
