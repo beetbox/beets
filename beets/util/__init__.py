@@ -104,6 +104,10 @@ def prune_dirs(path, root, clutter=('.DS_Store', 'Thumbs.db')):
         ancestors.reverse()
         for directory in ancestors:
             directory = syspath(directory)
+            if not os.path.exists(directory):
+                # Directory gone already.
+                continue
+
             if all(fn in clutter for fn in os.listdir(directory)):
                 # Directory contains only clutter (or nothing).
                 try:

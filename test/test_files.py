@@ -192,7 +192,7 @@ class AlbumFileTest(unittest.TestCase):
     def test_albuminfo_move_to_custom_dir(self):
         self.ai.move(basedir=self.otherdir)
         self.lib.load(self.i)
-        self.assert_('testotherdir' in self.i.path)
+        self.assertTrue('testotherdir' in self.i.path)
 
 class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
     def setUp(self):
@@ -320,6 +320,35 @@ class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
             os.chmod(newart, 0777)
             os.chmod(ai.artpath, 0777)
 
+    def test_move_last_file_moves_albumart(self):
+        oldartpath = self.lib.albums()[0].artpath
+        self.assertExists(oldartpath)
+
+        self.ai.album = 'different_album'
+        self.lib.move(self.i)
+
+        artpath = self.lib.albums()[0].artpath
+        self.assertTrue('different_album' in artpath)
+        self.assertExists(artpath)
+        self.assertNotExists(oldartpath)
+
+    def test_move_not_last_file_does_not_move_albumart(self):
+        i2 = item()
+        i2.albumid = self.ai.id
+        self.lib.add(i2)
+
+        oldartpath = self.lib.albums()[0].artpath
+        self.assertExists(oldartpath)
+
+        self.i.album = 'different_album'
+        self.i.album_id = None # detach from album
+        self.lib.move(self.i)
+
+        artpath = self.lib.albums()[0].artpath
+        self.assertFalse('different_album' in artpath)
+        self.assertEqual(artpath, oldartpath)
+        self.assertExists(oldartpath)
+
 class RemoveTest(unittest.TestCase, _common.ExtraAsserts):
     def setUp(self):
         # Make library and item.
@@ -443,6 +472,26 @@ class SafeMoveCopyTest(unittest.TestCase, _common.ExtraAsserts):
     def test_self_copy(self):
         util.copy(self.path, self.path)
         self.assertExists(self.path)
+
+class PruneTest(unittest.TestCase, _common.ExtraAsserts):
+    def setUp(self):
+        self.base = os.path.join(_common.RSRC, 'testdir')
+        os.mkdir(self.base)
+        self.sub = os.path.join(self.base, 'subdir')
+        os.mkdir(self.sub)
+    def tearDown(self):
+        if os.path.exists(self.base):
+            shutil.rmtree(self.base)
+
+    def test_prune_existent_directory(self):
+        util.prune_dirs(self.sub, self.base)
+        self.assertExists(self.base)
+        self.assertNotExists(self.sub)
+
+    def test_prune_nonexistent_directory(self):
+        util.prune_dirs(os.path.join(self.sub, 'another'), self.base)
+        self.assertExists(self.base)
+        self.assertNotExists(self.sub)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
