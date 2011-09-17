@@ -11,3 +11,4 @@ Contents
 
    guides/index
    reference/index
+   plugins/index

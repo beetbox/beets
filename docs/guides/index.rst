@@ -1,5 +1,5 @@
-Introduction
-============
+Guides
+======
 
 Tutorial stuff
 
