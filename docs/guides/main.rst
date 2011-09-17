@@ -219,8 +219,8 @@ built-in player that integrates tightly with your beets database.
 Keep Playing
 ------------
 
-:doc:`Usage` page has more detailed description of all of beets' functionality.
-(Like deleting music! That's important.) Start exploring!
+The :doc:`/reference/cli` page has more detailed description of all of beets'
+functionality.  (Like deleting music! That's important.) Start exploring!
 
 Also, check out :ref:`included-plugins` as well as :ref:`other-plugins`.  The
 real power of beets is in its extensibility---with plugins, beets can do almost
