@@ -3,7 +3,13 @@ Command-Line Interface
 
 **beet** is the command-line interface to beets.
 
-TODO: global flags
+You invoke beets by specifying a *command*, like so::
+
+    beet COMMAND [ARGS...]
+
+The rest of this document describes the available commands. If you ever need a
+quick list of what's available, just type ``beet help`` or ``beet help COMMAND``
+or help with a specific command.
 
 import
 ------

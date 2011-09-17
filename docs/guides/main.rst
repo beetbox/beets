@@ -1,7 +1,10 @@
 Getting Started
 ===============
 
-TODO Intro Text
+Welcome to `beets`_! This guide will help you begin using it to make your music
+collection better.
+
+.. _beets: http://beets.radbox.org/
 
 Installing
 ----------
