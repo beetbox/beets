@@ -49,7 +49,7 @@ Other Plugins
 
 Here are a few of the plugins written by the beets community:
 
-* `beets-replaygain`_ can analyze and store !ReplayGain normalization
+* `beets-replaygain`_ can analyze and store ReplayGain normalization
   information.
 
 * `beets-lyrics`_ searches Web repositories for song lyrics and adds them to your files.
@@ -58,7 +58,7 @@ Here are a few of the plugins written by the beets community:
   (Might be out of date.)
 
 * `Beet-MusicBrainz-Collection`_ lets you add albums from your library to your
-  !MusicBrainz `"music collection"`_.
+  MusicBrainz `"music collection"`_.
 
 * `A cmus plugin`_ integrates with the `cmus`_ console music player.
 

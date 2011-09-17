@@ -76,7 +76,7 @@ Reimporting
 
 The ``import`` command can also be used to "reimport" music that you've already
 added to your library. This is useful for updating tags as they are fixed in the
-!MusicBrainz database, for when you change your mind about some selections you
+MusicBrainz database, for when you change your mind about some selections you
 made during the initial import, or if you prefer to import everything "as-is"
 and then correct tags later.
 

@@ -28,7 +28,7 @@ Run the Server
 Then just type ``beet web`` to start the server and go to
 http://localhost:8337/. This is what it looks like:
 
-http://wiki.beets.googlecode.com/hg/images/beetsweb.png
+.. image:: beetsweb.png
 
 You can also specify the hostname and port number used by the Web server. These
 can be specified on the command line or in the ``[web]`` section of your
