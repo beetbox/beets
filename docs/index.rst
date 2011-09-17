@@ -29,3 +29,8 @@ Contents
    guides/index
    reference/index
    plugins/index
+
+.. toctree::
+   :maxdepth: 1
+
+   changelog
