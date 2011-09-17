@@ -40,6 +40,7 @@ disabled by default, but you can turn them on as described above:
    bpd
    mpdupdate
    embedart
+   web
 
 .. _other-plugins:
 
