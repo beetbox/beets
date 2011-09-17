@@ -23,7 +23,7 @@ below) and added to a library database (see below). The command is interactive
 and will try to get you to verify MusicBrainz tags that it thinks are suspect.
 (This means that importing a large amount of music is therefore very tedious
 right now; this is something we need to work on. Read the
-:doc:`autotagging guide </starting/tagger>` if you need help.)
+:doc:`autotagging guide </guides/tagger>` if you need help.)
 
 * By default, the command copies files your the library directory and
   updates the ID3 tags on your music. If you'd like to leave your music

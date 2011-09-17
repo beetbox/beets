@@ -9,5 +9,5 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   starting/index
+   guides/index
    reference/index

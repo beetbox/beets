@@ -10,7 +10,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 project = u'beets'
-copyright = u'2011, %s' % AUTHOR
+copyright = u'2011, Adrian Sampson'
 
 version = '1.0'
 release = '1.0b10'
