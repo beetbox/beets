@@ -530,6 +530,16 @@ class UtilTest(unittest.TestCase):
         self.assertTrue('old' in out)
         self.assertTrue('new' in out)
 
+    def test_showdiff_floats_close_to_identical(self):
+        commands._showdiff('field', 1.999, 2.001, True)
+        out = self.io.getoutput()
+        self.assertFalse('field' in out)
+
+    def test_showdiff_floats_differenct(self):
+        commands._showdiff('field', 1.999, 4.001, True)
+        out = self.io.getoutput()
+        self.assertTrue('field' in out)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

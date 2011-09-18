@@ -65,8 +65,15 @@ def _do_query(lib, query, album, also_items=True):
     
     return items, albums
 
+FLOAT_EPSILON = 0.01
 def _showdiff(field, oldval, newval, color):
     """Prints out a human-readable field difference line."""
+    # Considering floats incomparable for perfect equality, introduce
+    # an epsilon tolerance.
+    if isinstance(oldval, float) and isinstance(newval, float) and \
+            abs(oldval - newval) < FLOAT_EPSILON:
+        return
+
     if newval != oldval:
         oldval = unicode(oldval)
         newval = unicode(newval)
