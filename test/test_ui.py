@@ -524,6 +524,11 @@ class UtilTest(unittest.TestCase):
         out = self.io.getoutput()
         self.assertTrue('field' in out)
 
+    def test_showdiff_ints_no_color(self):
+        commands._showdiff('field', 2, 3, False)
+        out = self.io.getoutput()
+        self.assertTrue('field' in out)
+
     def test_showdiff_shows_both(self):
         commands._showdiff('field', 'old', 'new', True)
         out = self.io.getoutput()
@@ -539,6 +544,15 @@ class UtilTest(unittest.TestCase):
         commands._showdiff('field', 1.999, 4.001, True)
         out = self.io.getoutput()
         self.assertTrue('field' in out)
+
+    def test_showdiff_ints_colorizing_is_not_stringwise(self):
+        commands._showdiff('field', 222, 333, True)
+        complete_diff = self.io.getoutput().split()[1]
+
+        commands._showdiff('field', 222, 232, True)
+        partial_diff = self.io.getoutput().split()[1]
+
+        self.assertEqual(complete_diff, partial_diff)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

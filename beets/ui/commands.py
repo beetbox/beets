@@ -75,10 +75,10 @@ def _showdiff(field, oldval, newval, color):
         return
 
     if newval != oldval:
-        oldval = unicode(oldval)
-        newval = unicode(newval)
         if color:
             oldval, newval = ui.colordiff(oldval, newval)
+        else:
+            oldval, newval = unicode(oldval), unicode(newval)
         print_(u'  %s: %s -> %s' % (field, oldval, newval))
 
 

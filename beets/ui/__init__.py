@@ -331,9 +331,20 @@ def colorize(color, text):
     return escape + text + RESET_COLOR
 
 def colordiff(a, b, highlight='red'):
-    """Given two strings, return the same pair of strings except with
-    their differences highlighted in the specified color.
+    """Given two values, return the same pair of strings except with
+    their differences highlighted in the specified color. Strings are
+    highlighted intelligently to show differences; other values are
+    stringified and highlighted in their entirety.
     """
+    if not isinstance(a, basestring) or not isinstance(b, basestring):
+        # Non-strings: use ordinary equality.
+        a = unicode(a)
+        b = unicode(b)
+        if a == b:
+            return a, b
+        else:
+            return colorize(highlight, a), colorize(highlight, b)
+
     a_out = []
     b_out = []
     
@@ -356,7 +367,7 @@ def colordiff(a, b, highlight='red'):
         else:
             assert(False)
     
-    return ''.join(a_out), ''.join(b_out)
+    return u''.join(a_out), u''.join(b_out)
 
 
 # Subcommand parsing infrastructure.
