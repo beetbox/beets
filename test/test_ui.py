@@ -524,6 +524,12 @@ class UtilTest(unittest.TestCase):
         out = self.io.getoutput()
         self.assertTrue('field' in out)
 
+    def test_showdiff_shows_both(self):
+        commands._showdiff('field', 'old', 'new', True)
+        out = self.io.getoutput()
+        self.assertTrue('old' in out)
+        self.assertTrue('new' in out)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
