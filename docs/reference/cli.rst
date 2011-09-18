@@ -180,6 +180,10 @@ This will scan all the matched files and read their tags, populating the
 database with the new values. By default, files will be renamed according to
 their new metadata; disable this with ``-M``.
 
+To perform a "dry run" an update, just use the ``-p`` (for "pretend") flag. This
+will show you all the proposed changes but won't actually change anything on
+disk.
+
 stats
 -----
 ::

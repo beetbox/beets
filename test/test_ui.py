@@ -296,7 +296,7 @@ class UpdateTest(unittest.TestCase, _common.ExtraAsserts):
 
     def _update(self, query=(), album=False, move=False):
         self.io.addinput('y')
-        commands.update_items(self.lib, query, album, move, True)
+        commands.update_items(self.lib, query, album, move, True, False)
 
     def test_delete_removes_item(self):
         self.assertTrue(list(self.lib.items()))

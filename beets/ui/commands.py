@@ -692,7 +692,7 @@ default_commands.append(list_cmd)
 
 # update: Update library contents according to on-disk tags.
 
-def update_items(lib, query, album, move, color):
+def update_items(lib, query, album, move, color, pretend):
     """For all the items matched by the query, update the library to
     reflect the item's embedded tags.
     """
@@ -704,7 +704,8 @@ def update_items(lib, query, album, move, color):
         # Item deleted?
         if not os.path.exists(syspath(item.path)):
             print_(u'X %s - %s' % (item.artist, item.title))
-            lib.remove(item, True)
+            if not pretend:
+                lib.remove(item, True)
             affected_albums.add(item.album_id)
             continue
 
@@ -731,12 +732,20 @@ def update_items(lib, query, album, move, color):
             for key, (oldval, newval) in changes.iteritems():
                 _showdiff(key, oldval, newval, color)
 
+            # If we're just pretending, then don't move or save.
+            if pretend:
+                continue
+
             # Move the item if it's in the library.
             if move and lib.directory in ancestry(item.path):
                 lib.move(item)
 
             lib.store(item)
             affected_albums.add(item.album_id)
+
+    # Skip album changes while pretending.
+    if pretend:
+        return
 
     # Modify affected albums to reflect changes in their items.
     for album_id in affected_albums:
@@ -765,9 +774,11 @@ update_cmd.parser.add_option('-a', '--album', action='store_true',
     help='show matching albums instead of tracks')
 update_cmd.parser.add_option('-M', '--nomove', action='store_false',
     default=True, dest='move', help="don't move files in library")
+update_cmd.parser.add_option('-p', '--pretend', action='store_true',
+    help="show all changes but do nothing")
 def update_func(lib, config, opts, args):
     color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
-    update_items(lib, decargs(args), opts.album, opts.move, color)
+    update_items(lib, decargs(args), opts.album, opts.move, color, opts.pretend)
 update_cmd.func = update_func
 default_commands.append(update_cmd)
 
