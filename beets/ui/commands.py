@@ -705,6 +705,14 @@ def update_items(lib, query, album, move, color):
         old_data = dict(item.record)
         item.read()
 
+        # Special-case album artist when it matches track artist. (Hacky
+        # but necessary for preserving album-level metadata for non-
+        # autotagged imports.)
+        if not item.albumartist and \
+                old_data['albumartist'] == old_data['artist'] == item.artist:
+            item.albumartist = old_data['albumartist']
+            item.dirty['albumartist'] = False
+
         # Get and save metadata changes.
         changes = {}
         for key in library.ITEM_KEYS_META:
