@@ -628,7 +628,7 @@ def apply_choices(config):
                 # If we're replacing an item, then move rather than
                 # copying.
                 do_copy = not bool(replaced_items[item])
-                item.move(lib, do_copy, task.is_album)
+                lib.move(item, do_copy, task.is_album)
             if config.write and task.should_write_tags():
                 item.write()
 

@@ -119,7 +119,7 @@ class ThreadException(Exception):
         
 def run(root_coro):
     # The "threads" dictionary keeps track of all the currently-
-    # executing coroutines. It maps coroutines to their currenly
+    # executing coroutines. It maps coroutines to their currently
     # "blocking" event.
     threads = {root_coro: ValueEvent(None)}
 

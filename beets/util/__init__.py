@@ -104,6 +104,10 @@ def prune_dirs(path, root, clutter=('.DS_Store', 'Thumbs.db')):
         ancestors.reverse()
         for directory in ancestors:
             directory = syspath(directory)
+            if not os.path.exists(directory):
+                # Directory gone already.
+                continue
+
             if all(fn in clutter for fn in os.listdir(directory)):
                 # Directory contains only clutter (or nothing).
                 try:
@@ -193,9 +197,12 @@ def _assert_not_exists(path, pathmod=None):
 
 def copy(path, dest, replace=False, pathmod=None):
     """Copy a plain file. Permissions are not copied. If dest already
-    exists, raises an OSError unless replace is True. Paths are
-    translated to system paths before the syscall.
+    exists, raises an OSError unless replace is True. Has no effect if
+    path is the same as dest. Paths are translated to system paths
+    before the syscall.
     """
+    if samefile(path, dest):
+        return
     path = syspath(path)
     dest = syspath(dest)
     _assert_not_exists(dest, pathmod)
@@ -203,9 +210,11 @@ def copy(path, dest, replace=False, pathmod=None):
 
 def move(path, dest, replace=False, pathmod=None):
     """Rename a file. dest may not be a directory. If dest already
-    exists, raises an OSError unless replace is True. Paths are
-    translated to system paths.
+    exists, raises an OSError unless replace is True. Hos no effect if
+    path is the same as dest. Paths are translated to system paths.
     """
+    if samefile(path, dest):
+        return
     path = syspath(path)
     dest = syspath(dest)
     _assert_not_exists(dest, pathmod)

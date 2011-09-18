@@ -502,6 +502,58 @@ class ConfigTest(unittest.TestCase):
                 library: /xxx/yyy/not/a/real/path
             """), func)
 
+class UtilTest(unittest.TestCase):
+    def setUp(self):
+        self.io = _common.DummyIO()
+        self.io.install()
+    def tearDown(self):
+        self.io.restore()
+
+    def test_showdiff_strings(self):
+        commands._showdiff('field', 'old', 'new', True)
+        out = self.io.getoutput()
+        self.assertTrue('field' in out)
+
+    def test_showdiff_identical(self):
+        commands._showdiff('field', 'old', 'old', True)
+        out = self.io.getoutput()
+        self.assertFalse('field' in out)
+
+    def test_showdiff_ints(self):
+        commands._showdiff('field', 2, 3, True)
+        out = self.io.getoutput()
+        self.assertTrue('field' in out)
+
+    def test_showdiff_ints_no_color(self):
+        commands._showdiff('field', 2, 3, False)
+        out = self.io.getoutput()
+        self.assertTrue('field' in out)
+
+    def test_showdiff_shows_both(self):
+        commands._showdiff('field', 'old', 'new', True)
+        out = self.io.getoutput()
+        self.assertTrue('old' in out)
+        self.assertTrue('new' in out)
+
+    def test_showdiff_floats_close_to_identical(self):
+        commands._showdiff('field', 1.999, 2.001, True)
+        out = self.io.getoutput()
+        self.assertFalse('field' in out)
+
+    def test_showdiff_floats_differenct(self):
+        commands._showdiff('field', 1.999, 4.001, True)
+        out = self.io.getoutput()
+        self.assertTrue('field' in out)
+
+    def test_showdiff_ints_colorizing_is_not_stringwise(self):
+        commands._showdiff('field', 222, 333, True)
+        complete_diff = self.io.getoutput().split()[1]
+
+        commands._showdiff('field', 222, 232, True)
+        partial_diff = self.io.getoutput().split()[1]
+
+        self.assertEqual(complete_diff, partial_diff)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

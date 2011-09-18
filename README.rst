@@ -28,11 +28,11 @@ imagine for your music collection. Via `plugins`_, beets becomes a panacea:
 If beets doesn't do what you want yet, `writing your own plugin`_ is
 shockingly simple if you know a little Python.
 
-.. _plugins: http://code.google.com/p/beets/wiki/Plugins
+.. _plugins: http://beets.readthedocs.org/en/latest/plugins/
 .. _MPD: http://mpd.wikia.com/
 .. _MusicBrainz music collection: http://musicbrainz.org/show/collection/
 .. _writing your own plugin:
-    http://code.google.com/p/beets/wiki/Plugins#Writing_Plugins
+    http://beets.readthedocs.org/en/latest/plugins/#writing-plugins
 
 Read More
 ---------
@@ -44,7 +44,7 @@ Check out the `Getting Started`_ guide to learn about installing and using
 beets.
 
 .. _its Web site: http://beets.radbox.org/
-.. _Getting Started: http://code.google.com/p/beets/wiki/GettingStarted
+.. _Getting Started: http://beets.readthedocs.org/en/latest/guides/main.html
 .. _@b33ts: http://twitter.com/b33ts/
 
 Authors

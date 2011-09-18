@@ -65,11 +65,20 @@ def _do_query(lib, query, album, also_items=True):
     
     return items, albums
 
+FLOAT_EPSILON = 0.01
 def _showdiff(field, oldval, newval, color):
     """Prints out a human-readable field difference line."""
+    # Considering floats incomparable for perfect equality, introduce
+    # an epsilon tolerance.
+    if isinstance(oldval, float) and isinstance(newval, float) and \
+            abs(oldval - newval) < FLOAT_EPSILON:
+        return
+
     if newval != oldval:
         if color:
             oldval, newval = ui.colordiff(oldval, newval)
+        else:
+            oldval, newval = unicode(oldval), unicode(newval)
         print_(u'  %s: %s -> %s' % (field, oldval, newval))
 
 
@@ -703,6 +712,14 @@ def update_items(lib, query, album, move, color):
         old_data = dict(item.record)
         item.read()
 
+        # Special-case album artist when it matches track artist. (Hacky
+        # but necessary for preserving album-level metadata for non-
+        # autotagged imports.)
+        if not item.albumartist and \
+                old_data['albumartist'] == old_data['artist'] == item.artist:
+            item.albumartist = old_data['albumartist']
+            item.dirty['albumartist'] = False
+
         # Get and save metadata changes.
         changes = {}
         for key in library.ITEM_KEYS_META:
@@ -716,7 +733,7 @@ def update_items(lib, query, album, move, color):
 
             # Move the item if it's in the library.
             if move and lib.directory in ancestry(item.path):
-                item.move(lib)
+                lib.move(item)
 
             lib.store(item)
             affected_albums.add(item.album_id)
@@ -909,7 +926,7 @@ def modify_items(lib, mods, query, write, move, album, color, confirm):
                 if album:
                     obj.move()
                 else:
-                    obj.move(lib)
+                    lib.move(obj)
 
         # When modifying items, we have to store them to the database.
         if not album:
@@ -971,7 +988,7 @@ def move_items(lib, dest, query, copy, album):
         if album:
             obj.move(copy, basedir=dest)
         else:
-            obj.move(lib, copy, basedir=dest)
+            lib.move(obj, copy, basedir=dest)
             lib.store(obj)
     lib.save()
 
