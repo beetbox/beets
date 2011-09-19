@@ -19,6 +19,7 @@ import unittest
 import time
 import musicbrainz2.model
 import musicbrainz2.webservice as mbws
+import httplib
 
 import _common
 from beets.autotag import mb
@@ -83,6 +84,10 @@ class MBQueryErrorTest(unittest.TestCase):
 
     def test_504_error_retries(self):
         exc = mbws.WebServiceError(reason=Exception('Error 504'))
+        mb._query_wrap(raise_once_func(exc))
+
+    def test_status_line_error_retries(self):
+        exc = httplib.BadStatusLine('dummy')
         mb._query_wrap(raise_once_func(exc))
 
     def test_999_error_passes_through(self):

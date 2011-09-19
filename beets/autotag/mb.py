@@ -25,6 +25,7 @@ import re
 import time
 import logging
 import musicbrainz2.webservice as mbws
+import httplib
 from musicbrainz2.model import Release
 from threading import Lock
 from musicbrainz2.model import VARIOUS_ARTISTS_ID
@@ -93,6 +94,8 @@ def _query_wrap(fun, *args, **kwargs):
                 # Malformed response from server.
                 log.error('Bad response from MusicBrainz: ' + str(exc))
                 raise BadResponseError()
+            except httplib.BadStatusLine:
+                log.warn('Bad HTTP status line from MusicBrainz')
             except mbws.WebServiceError, e:
                 # Server busy. Retry.
                 message = str(e.reason)
