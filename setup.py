@@ -39,6 +39,7 @@ setup(name='beets',
           'beets.util',
           'beetsplug',
           'beetsplug.bpd',
+          'beetsplug.web',
       ],
       namespace_packages=['beetsplug'],
       entry_points={
