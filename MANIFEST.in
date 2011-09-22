@@ -5,3 +5,6 @@ prune test
 # Include documentation.
 include LICENSE NEWS README.rst
 
+# Resources for web plugin.
+recursive-include beetsplug/web/templates *
+recursive-include beetsplug/web/static *
