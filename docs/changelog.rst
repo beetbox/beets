@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.0b10 (September XX, 2011)
+1.0b10 (September 22, 2011)
 ---------------------------
 
 This version of beets focuses on making it easier to manage your metadata
