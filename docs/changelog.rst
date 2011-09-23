@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.0b11 (In Development)
+-----------------------
+
+* The new :doc:`/plugins/lastgenre` automatically assigns genres to imported
+  albums and items based on Last.fm tags.
+
 1.0b10 (September 22, 2011)
 ---------------------------
 

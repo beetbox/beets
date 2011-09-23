@@ -41,6 +41,7 @@ disabled by default, but you can turn them on as described above:
    mpdupdate
    embedart
    web
+   lastgenre
 
 .. _other-plugins:
 
