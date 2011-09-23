@@ -18,10 +18,10 @@
 import logging
 import pylast
 
-from beets.plugins import BeetsPlugin
+from beets import plugins
 
 log = logging.getLogger('beets')
-LASTFM = pylast.LastFMNetwork(api_key='2dc3914abf35f0d9c92d97d8f8e42b43')
+LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 WEIGHT_THRESH = 50
 
 def _tags_for(obj):
@@ -52,7 +52,7 @@ def _tags_to_genre(tags):
         return None
     return tags[0].title()
 
-class LastGenrePlugin(BeetsPlugin):
+class LastGenrePlugin(plugins.BeetsPlugin):
     pass
 
 @LastGenrePlugin.listen('album_imported')

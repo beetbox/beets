@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -17,14 +17,12 @@ Requires the pylastfp library.
 """
 
 from __future__ import with_statement
-from beets.plugins import BeetsPlugin
+from beets import plugins
 from beets import autotag
 from beets.autotag import mb
 from beets.util import plurality
 import lastfp
 import logging
-
-API_KEY = '2dc3914abf35f0d9c92d97d8f8e42b43'
 
 # The amplification factor for distances calculated from fingerprinted
 # data. With this set to 2.0, for instance, "fingerprinted" track titles
@@ -45,7 +43,7 @@ def match(path, metadata=None):
 
     # Actually perform fingerprinting and lookup.
     try:
-        xml = lastfp.gst_match(API_KEY, path, metadata)
+        xml = lastfp.gst_match(plugins.LASTFM_KEY, path, metadata)
         matches = lastfp.parse_metadata(xml)
     except lastfp.FingerprintError:
         # Fail silently and cache the failure.
@@ -76,7 +74,7 @@ def get_cur_artist(items):
 
     return artist, artist_id
 
-class LastIdPlugin(BeetsPlugin):
+class LastIdPlugin(plugins.BeetsPlugin):
     def track_distance(self, item, info):
         last_data = match(item.path)
         if not last_data:
