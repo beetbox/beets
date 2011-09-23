@@ -198,6 +198,9 @@ currently available are:
 * *album_imported*: called with an ``Album`` object every time the ``import``
   command finishes adding an album to the library
 
+* *item_imported*: called with an ``Item`` object every time the importer adds a
+  singleton to the library (not called for full-album imports)
+
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 
 Extend the Autotagger

@@ -22,7 +22,7 @@ def _read(fn):
     return open(path).read()
 
 setup(name='beets',
-      version='1.0b10',
+      version='1.0b11',
       description='music tagger and library organizer',
       author='Adrian Sampson',
       author_email='adrian@radbox.org',
