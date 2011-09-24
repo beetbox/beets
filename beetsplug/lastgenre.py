@@ -65,7 +65,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def configure(self, config):
         genres_whitelist = ui.config_val(config, 'lastgenre',
                                          'genres_whitelist', None)
-        options['genres_whitelist'] = genres_whitelist.lower().split(',')
+        if genres_whitelist :
+            genres_whitelist = genres_whitelist.lower().split(',')
+        options['genres_whitelist'] = genres_whitelist
         
 @LastGenrePlugin.listen('album_imported')
 def album_imported(lib, album):
