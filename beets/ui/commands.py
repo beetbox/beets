@@ -21,6 +21,7 @@ import sys
 import os
 import time
 import itertools
+import re
 
 from beets import ui
 from beets.ui import print_, decargs
@@ -387,10 +388,20 @@ def manual_search(singleton):
     return artist.strip(), name.strip()
 
 def manual_id(singleton):
-    """Input a MusicBrainz ID, either for an album or a track.
+    """Input a MusicBrainz ID, either for an album ("release") or a
+    track ("recording"). If no valid ID is entered, returns None.
     """
-    prompt = 'Enter MusicBrainz %s ID: ' % ('track' if singleton else 'album')
-    return raw_input(prompt).decode(sys.stdin.encoding).strip()
+    prompt = 'Enter MusicBrainz %s ID: ' % \
+             ('recording' if singleton else 'release')
+    entry = raw_input(prompt).decode(sys.stdin.encoding).strip()
+
+    # Find the first thing that looks like a UUID/MBID.
+    match = re.search('[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', entry)
+    if match:
+       return match.group()
+    else:
+        log.error('Invalid MBID.')
+        return None
 
 def choose_match(task, config):
     """Given an initial autotagging of items, go through an interactive
@@ -436,12 +447,13 @@ def choose_match(task, config):
         elif choice is importer.action.MANUAL_ID:
             # Try a manually-entered ID.
             search_id = manual_id(False)
-            try:
-                _, _, candidates, rec = \
-                    autotag.tag_album(task.items, config.timid,
-                                      search_id=search_id)
-            except autotag.AutotagError:
-                candidates, rec = None, None
+            if search_id:
+                try:
+                    _, _, candidates, rec = \
+                        autotag.tag_album(task.items, config.timid,
+                                        search_id=search_id)
+                except autotag.AutotagError:
+                    candidates, rec = None, None
         else:
             # We have a candidate! Finish tagging. Here, choice is
             # an (info, items) pair as desired.
@@ -482,8 +494,9 @@ def choose_item(task, config):
         elif choice == importer.action.MANUAL_ID:
             # Ask for a track ID.
             search_id = manual_id(True)
-            candidates, rec = autotag.tag_item(task.item, config.timid,
-                                               search_id=search_id)
+            if search_id:
+                candidates, rec = autotag.tag_item(task.item, config.timid,
+                                                search_id=search_id)
         else:
             # Chose a candidate.
             assert not isinstance(choice, importer.action)

@@ -18,15 +18,17 @@ import unittest
 import os
 import shutil
 import textwrap
+import logging
 from StringIO import StringIO
 
-import _common
 from beets import library
 from beets import ui
 from beets.ui import commands
 from beets import autotag
 from beets import importer
 from beets.mediafile import MediaFile
+
+import _common
 
 class ListTest(unittest.TestCase):
     def setUp(self):
@@ -502,7 +504,7 @@ class ConfigTest(unittest.TestCase):
                 library: /xxx/yyy/not/a/real/path
             """), func)
 
-class UtilTest(unittest.TestCase):
+class ShowdiffTest(unittest.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
         self.io.install()
@@ -553,6 +555,30 @@ class UtilTest(unittest.TestCase):
         partial_diff = self.io.getoutput().split()[1]
 
         self.assertEqual(complete_diff, partial_diff)
+
+AN_ID = "28e32c71-1450-463e-92bf-e0a46446fc11"
+class ManualIDTest(unittest.TestCase):
+    def setUp(self):
+        _common.log.setLevel(logging.CRITICAL)
+        self.io = _common.DummyIO()
+        self.io.install()
+    def tearDown(self):
+        self.io.restore()
+
+    def test_id_accepted(self):
+        self.io.addinput(AN_ID)
+        out = commands.manual_id(False)
+        self.assertEqual(out, AN_ID)
+
+    def test_non_id_returns_none(self):
+        self.io.addinput("blah blah")
+        out = commands.manual_id(False)
+        self.assertEqual(out, None)
+
+    def test_url_finds_id(self):
+        self.io.addinput("http://musicbrainz.org/entity/%s?something" % AN_ID)
+        out = commands.manual_id(False)
+        self.assertEqual(out, AN_ID)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

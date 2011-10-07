@@ -7,6 +7,9 @@ Changelog
 * The new :doc:`/plugins/lastgenre` automatically assigns genres to imported
   albums and items based on Last.fm tags and an internal whitelist. (Thanks to
   `KraYmer`_.)
+* When entering an ID manually during tagging, beets now searches for anything
+  that looks like an MBID in the entered string. This means that full
+  MusicBrainz URLs now work as IDs at the prompt. (Thanks to derwin.)
 
 .. _KraYmer: https://github.com/KraYmer
 
