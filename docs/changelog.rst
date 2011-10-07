@@ -5,7 +5,10 @@ Changelog
 -----------------------
 
 * The new :doc:`/plugins/lastgenre` automatically assigns genres to imported
-  albums and items based on Last.fm tags.
+  albums and items based on Last.fm tags and an internal whitelist. (Thanks to
+  `KraYmer`_.)
+
+.. _KraYmer: https://github.com/KraYmer
 
 1.0b10 (September 22, 2011)
 ---------------------------

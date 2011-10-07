@@ -31,7 +31,7 @@ setup(name='beets',
       platforms='ALL',
       long_description=_read('README.rst'),
       test_suite='test.testall.suite',
-      include_package_data=True, # Install web plugin resources.
+      include_package_data=True, # Install plugin resources.
 
       packages=[
           'beets',
@@ -41,6 +41,7 @@ setup(name='beets',
           'beetsplug',
           'beetsplug.bpd',
           'beetsplug.web',
+          'beetsplug.lastgenre',
       ],
       namespace_packages=['beetsplug'],
       entry_points={
