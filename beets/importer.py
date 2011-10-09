@@ -555,6 +555,7 @@ def user_query(config):
                                      item_query(config), collector()))
             ipl.run_sequential()
             task = pipeline.multiple(item_tasks)
+            continue
 
         # Check for duplicates if we have a match (or ASIS).
         if _duplicate_check(lib, task, recent):
