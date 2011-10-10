@@ -1,0 +1,426 @@
+- blues:
+    - african blues
+    - blues rock:
+        - punk blues
+    - country blues
+    - british blues
+    - classic female blues
+    - country blues:
+        - delta blues:
+            - electric blues:
+                - blues rock
+        - east coast blues
+        - hill country blues
+        - jump blues
+        - swamp blues
+        - new orleans blues
+    - dirty blues
+    - fife and drum blues
+    - gospel blues
+    - harmonica blues
+    - indian blues
+    - piano blues:
+        - boogie-woogie:
+            - boogie rock
+    - soul blues
+    - west coast blues
+- country:
+    - alternative country:
+        - americana
+        - blues country
+        - cowpunk
+        - country rock
+        - country folk
+        - country rap:
+            - country crunk:
+                - country psycrunk
+        - deathcountry
+        - gothic americana
+        - hellbilly
+        - nashville sound:
+            - country pop
+        - outlaw country
+        - psychobilly
+        - punkabilly
+        - psydeco
+        - red dirt
+        - rockabilly
+        - rock country
+        - soul country
+        - techno-country
+        - texas country:
+            - progressive country
+    - bakersfield sound
+    - bluegrass:
+        - heavy metal bluegrass
+        - nu-grass
+        - old-time bluegrass
+        - progressive bluegrass
+        - reactionary bluegrass
+    - christian country music
+    - neotraditional country
+    - western music:
+        - honky tonk
+- easy listening:
+    - background music
+    - beautiful music
+    - elevator music
+    - furniture music
+    - lounge music
+- electronic:
+    - ambient:
+        - ambient house
+        - ambient techno
+        - dark ambient
+        - drone music
+        - illbient
+        - isolationism
+        - lowercase
+    - breakbeat:
+        - acid breaks
+        - baltimore club
+        - big beat
+        - breakbeat hardcore
+        - broken beat
+        - florida breaks
+        - nu skool breaks
+        - 4-beat
+    - dance:
+        - eurodance
+        - hi-nrg
+        - house:
+            - acid house
+            - autumn house
+            - chicago house
+            - deep house
+            - diva house
+            - fidget house
+            - french house
+            - freestyle house
+            - funky house
+            - ghetto house
+            - hardbag
+            - hip house
+            - italo house
+            - latin house
+            - minimal house
+            - microhouse
+            - rave music
+            - swing house
+            - tech house
+            - tribal house
+            - uk hard house
+            - us garage
+            - vocal house
+    - electronica:
+        - berlin school
+        - bitpop
+        - chip
+        - chillwave
+        - downtempo:
+            - acid jazz
+            - balearic beat
+            - chill out
+            - dubtronica
+            - ethnic electronica
+            - moombahton
+            - new age music
+            - nu jazz
+            - trip hop
+        - folktronica
+        - glitch
+        - idm
+        - plinkerpop
+    - hardcore techno:
+        - bouncy house
+        - bouncy techno
+        - breakcore
+        - darkcore
+        - digital hardcore
+        - doomcore
+        - gabba
+        - happy hardcore
+        - hardstyle
+        - jumpstyle
+        - makina
+        - speedcore
+        - terrorcore
+        - uk hardcore
+    - jungle:
+        - drum and bass:
+            - clownstep
+            - darkcore
+            - darkstep
+            - drumfunk
+            - drumstep
+            - hardstep
+            - intelligent drum and bass
+            - jump-up
+            - liquid funk
+            - neurofunk
+            - oldschool jungle:
+                - darkside jungle
+                - ragga-jungle
+            - raggacore
+            - sambass
+            - trancestep
+    - progressive:
+        - progressive breaks
+        - progressive drum & bass
+        - progressive house:
+            - disco house
+            - dream house
+            - space house
+        - progressive techno
+    - techno:
+        - acid techno
+        - detroit techno
+        - free tekno
+        - ghettotech
+        - minimal
+        - nortec
+        - rotterdam techno
+        - schranz / hardtechno
+        - symphonic techno
+        - tecno brega
+        - techno-dnb
+        - techstep
+        - toytown techno
+    - trance:
+        - acid trance
+        - classic trance
+        - dream trance
+        - euro-trance
+        - goa trance:
+            - dark psytrance
+            - full on
+            - psyprog
+            - psybient
+            - psybreaks
+        - hard trance
+        - neo-trance
+        - tech trance
+        - uplifting trance:
+            - orchestral uplifting
+        - vocal trance:
+            - nightcore
+    - uk garage:
+        - 2-step
+        - 4x4
+        - bassline
+        - breakstep
+        - dubstep
+        - funky
+        - grime
+        - speed garage
+- folk:
+    - folk punk
+    - indie folk
+    - neofolk
+    - progressive folk
+    - anti-folk
+- hip hop & rap:
+    - hip hop:
+        - alternative hip hop:
+            - jazz rap
+            - abstract hip hop
+        - british hip hop:
+            - grime
+        - political hip hop
+        - turntablism
+        - us hip hop:
+            - east coast hip hop:
+                - conscious rap
+            - midwest hip hop:
+                - ghetto house
+                - ghettotech
+                - horrorcore
+            - southern hip hop:
+                - snap music
+                - bounce music
+                - crunk
+                - chopped and screwed
+            - west coast hip hop:
+                - gangsta rap:
+                    - g-funk
+                - latin rap
+                - g-funk
+                - hyphy
+                - jerkin'
+    - rap:
+        - bass rap
+        - dirty rap
+        - hardcore rap
+        - mafioso rap
+        - party rap
+        - porn rap
+        - rap metal
+        - rap rock
+        - rapcore
+- latin:
+    - bachata
+    - brazilian music:
+        - samba:
+            - bossa nova:
+                - tropicalismo
+    - calypso
+    - chutney:
+        - chutney soca
+    - cuban music:
+        - salsa
+        - son cubano
+    - cumbia
+    - kompa
+    - mambo:
+        - cha-cha-cha
+        - pachanga
+    - merengue
+    - salsa
+    - soca
+    - tejano
+    - zouk
+- pop:
+    - electro pop
+    - new romantic
+    - operatic pop
+    - pop rap
+    - psychedelic pop
+    - sunshine pop
+    - surf pop
+    - synthpop
+    - teen pop
+    - traditional pop music
+    - turkish pop
+    - world:
+        - europop
+        - indian pop
+        - latin pop
+- r&b:
+    - contemporary r&b
+    - doo wop
+    - funkd:
+        - deep funk
+        - disco:
+            - eurodisco
+            - disco polo
+            - post disco
+            - space disco
+            - boogie
+        - go-go
+        - nu-funk
+        - p-funk
+    - new jack swing
+    - soul:
+        - blue-eyed soul
+        - brown-eyed soul
+        - hip hop soul
+        - motown sound
+        - neo soul
+        - northern soul
+        - psychedelic soul
+        - smooth soul
+        - quiet storm
+- rock:
+    - alternative rock:
+        - britpop:
+            - post-britpop
+        - dream pop
+        - grunge:
+            - post-grunge
+        - indie pop
+        - indie rock
+        - industrial rock
+        - noise pop
+        - post-rock
+        - shoegazer
+        - slowcore
+    - blues-rock
+    - chinese rock
+    - dark cabaret
+    - desert rock
+    - electronic rock
+    - folk rock
+    - garage rock
+    - glam rock
+    - hard rock
+    - heavy metal:
+        - black metal
+        - christian metal
+        - death metal:
+            - brutal death metal
+            - melodic death metal
+            - technical death metal
+            - progressive death metal
+        - doom metal
+        - drone metal
+        - folk metal
+        - funk metal
+        - glam metal
+        - gothic metal
+        - grindcore
+        - groove metal
+        - industrial metal
+        - metalcore:
+            - deathcore
+            - mathcore
+            - melodic metalcore
+            - djent
+        - nu metal
+        - power metal
+        - progressive metal
+        - rap metal
+        - sludge metal
+        - speed metal
+        - stoner rock
+        - symphonic metal
+        - thrash metal:
+            - crossover thrash metal
+            - thrashcore
+            - weld
+        - unblack metal
+    - jazz-rock
+    - j-rock
+    - math rock
+    - new wave:
+        - world fusion
+    - paisley underground
+    - pop rock
+    - power pop
+    - progressive rock:
+        - new prog
+        - space rock
+    - psychedelic rock:
+        - acid rock
+    - punk rock:
+        - anarcho punk:
+            - crust punk
+        - deathrock
+        - hardcore punk:
+            - post-hardcore
+            - emo:
+                - screamo
+        - pop punk
+        - post-punk:
+            - gothic rock
+        - psychobilly
+    - rap rock:
+        - rapcore
+    - rock and roll
+    - soft rock
+    - southern rock
+    - surf rock
+- ska:
+    - 2 tone
+    - reggae:
+        - early reggae
+        - dub:
+            - dub poetry
+            - afro-dub
+        - rockers
+        - lovers rock
+        - dancehall:
+            - ragga
+            - reggaeton
+        - raggamuffin
+        - roots reggae
+    - rocksteady

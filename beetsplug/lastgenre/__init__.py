@@ -29,14 +29,17 @@ from __future__ import with_statement
 import logging
 import pylast
 import os
+from yaml import load
 
 from beets import plugins
 from beets import ui
 from beets.util import normpath
 
 log = logging.getLogger('beets')
+
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 DEFAULT_WHITELIST = os.path.join(os.path.dirname(__file__), 'genres.txt')
+C14N_TREE = os.path.join(os.path.dirname(__file__), 'genres-tree.yaml')
 
 def _tags_for(obj):
     """Given a pylast entity (album or track), returns a list of
@@ -67,9 +70,47 @@ def _tags_to_genre(tags):
         return tags[0].title()
     
     for tag in tags:
-        if tag.lower() in options['whitelist']:
-            return tag.title()
+        genre = find_allowed(
+            find_parents(tag.lower(), options['branches']))
+        if genre:
+            return genre
     
+    return None
+
+def flatten_tree(elem, path, branches):
+    """Flatten nested lists/dictionaries into lists of strings (branches).
+    """
+    if not path:
+        path = []
+
+    if isinstance(elem, dict):
+        for (k, v) in elem.items() :
+            flatten_tree(v, path + [k], branches)
+    elif isinstance(elem, list):
+        for sub in elem:
+            flatten_tree(sub, path, branches)
+    else:
+        branches.append(path + [elem])
+
+def find_parents(candidate, branches):
+    """Find parents genre of a given genre, ordered from the closest to the
+    further parent.
+    """
+    for branch in branches:
+        try:
+            idx = branch.index(candidate)
+            return list(reversed(branch[:idx+1]))
+        except ValueError:
+            continue
+    return [candidate]
+
+def find_allowed(genres):
+    """Returns the first genre that is present in the genre whitelist or
+    None if no genre is suitable.
+    """
+    for g in list(genres):
+        if g in options['whitelist']:
+            return g.title()
     return None
 
 options = {
@@ -92,6 +133,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 if line:
                     whitelist.add(line)
         options['whitelist'] = whitelist
+
+        # Read the genres tree for canonicalization
+        genres_tree = load(open(C14N_TREE, 'r'))
+        branches = []
+        flatten_tree(genres_tree, [], branches) 
+        options['branches'] = branches 
+        
         
 @LastGenrePlugin.listen('album_imported')
 def album_imported(lib, album):
