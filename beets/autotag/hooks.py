@@ -12,7 +12,11 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Classes used by metadata sources and the matching logic."""
+"""Glue between metadata sources and the matching logic."""
+
+from . import mb
+
+# Classes used to represent candidate options.
 
 class AlbumInfo(object):
     """Describes a canonical release that may be used to match a release
@@ -68,3 +72,18 @@ class TrackInfo(object):
         self.artist = artist
         self.artist_id = artist
         self.length = length
+
+
+# Aggregation of sources.
+
+def _album_for_id(album_id):
+    return mb.album_for_id(album_id)
+
+def _match_album(artist, album, tracks):
+    return mb.match_album(artist, album, tracks)
+
+def _track_for_id(track_id):
+    return mb.track_for_id(track_id)
+
+def _match_track(artist, title):
+    return mb.match_track(artist, title)

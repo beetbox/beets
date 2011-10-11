@@ -18,15 +18,16 @@ import os
 
 from beets import library, mediafile
 from beets.util import sorted_walk
+from . import mb
 
 # Parts of external interface.
-from .model import AlbumInfo, TrackInfo
+from .hooks import AlbumInfo, TrackInfo
 from .match import tag_item, tag_album
 from .match import RECOMMEND_STRONG, RECOMMEND_MEDIUM, RECOMMEND_NONE
 from .match import STRONG_REC_THRESH, MEDIUM_REC_THRESH, REC_GAP_THRESH
 
 
-# Main interface.
+# Additional utilities for the main interface.
 
 def albums_in_dir(path):
     """Recursively searches the given directory and returns an iterable

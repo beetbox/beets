@@ -20,9 +20,9 @@ import re
 from munkres import Munkres
 from unidecode import unidecode
 
-from beets.autotag import mb
 from beets import plugins
 from beets.util import levenshtein, plurality
+from beets.autotag import hooks
 
 # Distance parameters.
 # Text distance weights: proportions on the normalized intuitive edit
@@ -63,12 +63,6 @@ SD_PATTERNS = [
 SD_REPLACE = [
     (r'&', 'and'),
 ]
-
-# Try 5 releases. In the future, this should be more dynamic: let the
-# probability of continuing to the next release be inversely
-# proportional to how good our current best is and how long we've
-# already taken.
-MAX_CANDIDATES = 5
 
 # Recommendation constants.
 RECOMMEND_STRONG = 'RECOMMEND_STRONG'
@@ -304,7 +298,7 @@ def match_by_id(items):
     if bool(reduce(lambda x,y: x if x==y else (), albumids)):
         albumid = albumids[0]
         log.debug('Searching for discovered album ID: ' + albumid)
-        return mb.album_for_id(albumid)
+        return hooks._album_for_id(albumid)
     else:
         log.debug('No album ID consensus.')
         return None
@@ -398,7 +392,7 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
     # Try to find album indicated by MusicBrainz IDs.
     if search_id:
         log.debug('Searching for album ID: ' + search_id)
-        id_info = mb.album_for_id(search_id)
+        id_info = hooks._album_for_id(search_id)
     else:
         id_info = match_by_id(items)
     if id_info:
@@ -428,8 +422,8 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
     
     # Get candidate metadata from search.
     if search_artist and search_album:
-        candidates = mb.match_album(search_artist, search_album,
-                                    len(items), MAX_CANDIDATES)
+        candidates = hooks._match_album(search_artist, search_album,
+                                        len(items))
         candidates = list(candidates)
     else:
         candidates = []
@@ -439,8 +433,7 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
                          (search_artist.lower() in VA_ARTISTS) or \
                          any(item.comp for item in items)):
         log.debug(u'Possibly Various Artists; adding matches.')
-        candidates.extend(mb.match_album(None, search_album, len(items),
-                                         MAX_CANDIDATES))
+        candidates.extend(hooks._match_album(None, search_album, len(items)))
 
     # Get candidates from plugins.
     candidates.extend(plugins.candidates(items))
@@ -471,7 +464,7 @@ def tag_item(item, timid=False, search_artist=None, search_title=None,
     trackid = search_id or item.mb_trackid
     if trackid:
         log.debug('Searching for track ID: ' + trackid)
-        track_info = mb.track_for_id(trackid)
+        track_info = hooks._track_for_id(trackid)
         if track_info:
             dist = track_distance(item, track_info, incl_artist=True)
             candidates.append((dist, track_info))
@@ -494,7 +487,7 @@ def tag_item(item, timid=False, search_artist=None, search_title=None,
     log.debug(u'Item search terms: %s - %s' % (search_artist, search_title))
 
     # Candidate metadata from search.
-    for track_info in mb.match_track(search_artist, search_title):
+    for track_info in hooks._match_track(search_artist, search_title):
         dist = track_distance(item, track_info, incl_artist=True)
         candidates.append((dist, track_info))
 

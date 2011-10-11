@@ -30,8 +30,9 @@ from musicbrainz2.model import Release
 from threading import Lock
 from musicbrainz2.model import VARIOUS_ARTISTS_ID
 
-SEARCH_LIMIT = 10
+SEARCH_LIMIT = 5
 VARIOUS_ARTISTS_ID = VARIOUS_ARTISTS_ID.rsplit('/', 1)[1]
+
 
 class ServerBusyError(Exception): pass
 class BadResponseError(Exception): pass
@@ -298,7 +299,7 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
         criteria['tracks'] = str(tracks)
 
     # Search for the release.
-    return find_releases(criteria)
+    return find_releases(criteria, limit)
 
 def match_track(artist, title):
     """Searches for a single track and returns an iterable of track
