@@ -110,5 +110,5 @@ def item_imported(lib, item):
     if genre:
         log.debug(u'adding last.fm item genre: %s' % genre)
         item.genre = genre
+        lib.store(item)
         lib.save()
-
