@@ -21,6 +21,7 @@ import re
 
 import _common
 from beets import autotag
+from beets.autotag import match
 from beets.library import Item
 from beets.util import plurality
 
@@ -47,7 +48,7 @@ class PluralityTest(unittest.TestCase):
         items = [Item({'artist': 'The Beetles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'Teh White Album'})]
-        l_artist, l_album, artist_consensus = autotag.current_metadata(items)
+        l_artist, l_album, artist_consensus = match.current_metadata(items)
         self.assertEqual(l_artist, 'The Beatles')
         self.assertEqual(l_album, 'The White Album')
         self.assertFalse(artist_consensus)
@@ -56,7 +57,7 @@ class PluralityTest(unittest.TestCase):
         items = [Item({'artist': 'The Beatles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'Teh White Album'})]
-        l_artist, l_album, artist_consensus = autotag.current_metadata(items)
+        l_artist, l_album, artist_consensus = match.current_metadata(items)
         self.assertEqual(l_artist, 'The Beatles')
         self.assertEqual(l_album, 'The White Album')
         self.assertTrue(artist_consensus)
@@ -91,7 +92,7 @@ class AlbumDistanceTest(unittest.TestCase):
             'tracks': self.trackinfo(),
             'va': False,
         }
-        self.assertEqual(autotag.distance(items, info), 0)
+        self.assertEqual(match.distance(items, info), 0)
 
     def test_global_artists_differ(self):
         items = []
@@ -104,7 +105,7 @@ class AlbumDistanceTest(unittest.TestCase):
             'tracks': self.trackinfo(),
             'va': False,
         }
-        self.assertNotEqual(autotag.distance(items, info), 0)
+        self.assertNotEqual(match.distance(items, info), 0)
 
     def test_comp_track_artists_match(self):
         items = []
@@ -117,7 +118,7 @@ class AlbumDistanceTest(unittest.TestCase):
             'tracks': self.trackinfo(),
             'va': True,
         }
-        self.assertEqual(autotag.distance(items, info), 0)
+        self.assertEqual(match.distance(items, info), 0)
 
     def test_comp_no_track_artists(self):
         # Some VA releases don't have track artists (incomplete metadata).
@@ -134,7 +135,7 @@ class AlbumDistanceTest(unittest.TestCase):
         del info['tracks'][0]['artist']
         del info['tracks'][1]['artist']
         del info['tracks'][2]['artist']
-        self.assertEqual(autotag.distance(items, info), 0)
+        self.assertEqual(match.distance(items, info), 0)
 
     def test_comp_track_artists_do_not_match(self):
         items = []
@@ -147,7 +148,7 @@ class AlbumDistanceTest(unittest.TestCase):
             'tracks': self.trackinfo(),
             'va': True,
         }
-        self.assertNotEqual(autotag.distance(items, info), 0)
+        self.assertNotEqual(match.distance(items, info), 0)
 
 def _mkmp3(path):
     shutil.copyfile(os.path.join(_common.RSRC, 'min.mp3'), path)
@@ -208,7 +209,7 @@ class OrderingTest(unittest.TestCase):
         trackinfo.append({'title': 'one', 'track': 1})
         trackinfo.append({'title': 'two', 'track': 2})
         trackinfo.append({'title': 'three', 'track': 3})
-        ordered = autotag.order_items(items, trackinfo)
+        ordered = match.order_items(items, trackinfo)
         self.assertEqual(ordered[0].title, 'one')
         self.assertEqual(ordered[1].title, 'two')
         self.assertEqual(ordered[2].title, 'three')
@@ -222,7 +223,7 @@ class OrderingTest(unittest.TestCase):
         trackinfo.append({'title': 'one', 'track': 1})
         trackinfo.append({'title': 'two', 'track': 2})
         trackinfo.append({'title': 'three', 'track': 3})
-        ordered = autotag.order_items(items, trackinfo)
+        ordered = match.order_items(items, trackinfo)
         self.assertEqual(ordered[0].title, 'one')
         self.assertEqual(ordered[1].title, 'two')
         self.assertEqual(ordered[2].title, 'three')
@@ -233,7 +234,7 @@ class OrderingTest(unittest.TestCase):
         items.append(self.item('two', 2))
         trackinfo = []
         trackinfo.append({'title': 'one', 'track': 1})
-        ordered = autotag.order_items(items, trackinfo)
+        ordered = match.order_items(items, trackinfo)
         self.assertEqual(ordered, None)
 
     def test_order_corrects_when_track_names_are_entirely_wrong(self):
@@ -280,7 +281,7 @@ class OrderingTest(unittest.TestCase):
         trackinfo.append(info('Beloved One', 243.733))
         trackinfo.append(info('In the Lord\'s Arms', 186.13300000000001))
 
-        ordered = autotag.order_items(items, trackinfo)
+        ordered = match.order_items(items, trackinfo)
         for i, item in enumerate(ordered):
             self.assertEqual(i+1, item.track)
 
@@ -426,77 +427,77 @@ class ApplyCompilationTest(unittest.TestCase):
 
 class StringDistanceTest(unittest.TestCase):
     def test_equal_strings(self):
-        dist = autotag.string_dist('Some String', 'Some String')
+        dist = match.string_dist('Some String', 'Some String')
         self.assertEqual(dist, 0.0)
     
     def test_different_strings(self):
-        dist = autotag.string_dist('Some String', 'Totally Different')
+        dist = match.string_dist('Some String', 'Totally Different')
         self.assertNotEqual(dist, 0.0)
     
     def test_punctuation_ignored(self):
-        dist = autotag.string_dist('Some String', 'Some.String!')
+        dist = match.string_dist('Some String', 'Some.String!')
         self.assertEqual(dist, 0.0)
     
     def test_case_ignored(self):
-        dist = autotag.string_dist('Some String', 'sOME sTring')
+        dist = match.string_dist('Some String', 'sOME sTring')
         self.assertEqual(dist, 0.0)
     
     def test_leading_the_has_lower_weight(self):    
-        dist1 = autotag.string_dist('XXX Band Name', 'Band Name')
-        dist2 = autotag.string_dist('The Band Name', 'Band Name')
+        dist1 = match.string_dist('XXX Band Name', 'Band Name')
+        dist2 = match.string_dist('The Band Name', 'Band Name')
         self.assert_(dist2 < dist1)
     
     def test_parens_have_lower_weight(self):    
-        dist1 = autotag.string_dist('One .Two.', 'One')
-        dist2 = autotag.string_dist('One (Two)', 'One')
+        dist1 = match.string_dist('One .Two.', 'One')
+        dist2 = match.string_dist('One (Two)', 'One')
         self.assert_(dist2 < dist1)
     
     def test_brackets_have_lower_weight(self):    
-        dist1 = autotag.string_dist('One .Two.', 'One')
-        dist2 = autotag.string_dist('One [Two]', 'One')
+        dist1 = match.string_dist('One .Two.', 'One')
+        dist2 = match.string_dist('One [Two]', 'One')
         self.assert_(dist2 < dist1)
     
     def test_ep_label_has_zero_weight(self):    
-        dist = autotag.string_dist('My Song (EP)', 'My Song')
+        dist = match.string_dist('My Song (EP)', 'My Song')
         self.assertEqual(dist, 0.0)
     
     def test_featured_has_lower_weight(self):    
-        dist1 = autotag.string_dist('My Song blah Someone', 'My Song')
-        dist2 = autotag.string_dist('My Song feat Someone', 'My Song')
+        dist1 = match.string_dist('My Song blah Someone', 'My Song')
+        dist2 = match.string_dist('My Song feat Someone', 'My Song')
         self.assert_(dist2 < dist1)
     
     def test_postfix_the(self):    
-        dist = autotag.string_dist('The Song Title', 'Song Title, The')
+        dist = match.string_dist('The Song Title', 'Song Title, The')
         self.assertEqual(dist, 0.0)
     
     def test_postfix_a(self):    
-        dist = autotag.string_dist('A Song Title', 'Song Title, A')
+        dist = match.string_dist('A Song Title', 'Song Title, A')
         self.assertEqual(dist, 0.0)
     
     def test_postfix_an(self):    
-        dist = autotag.string_dist('An Album Title', 'Album Title, An')
+        dist = match.string_dist('An Album Title', 'Album Title, An')
         self.assertEqual(dist, 0.0)
     
     def test_empty_strings(self):
-        dist = autotag.string_dist('', '')
+        dist = match.string_dist('', '')
         self.assertEqual(dist, 0.0)
     
     def test_solo_pattern(self):
         # Just make sure these don't crash.
-        autotag.string_dist('The ', '')
-        autotag.string_dist('(EP)', '(EP)')
-        autotag.string_dist(', An', '')
+        match.string_dist('The ', '')
+        match.string_dist('(EP)', '(EP)')
+        match.string_dist(', An', '')
 
     def test_heuristic_does_not_harm_distance(self):
-        dist = autotag.string_dist('Untitled', '[Untitled]')
+        dist = match.string_dist('Untitled', '[Untitled]')
         self.assertEqual(dist, 0.0)
 
     def test_ampersand_expansion(self):
-        dist = autotag.string_dist('And', '&')
+        dist = match.string_dist('And', '&')
         self.assertEqual(dist, 0.0)
 
     def test_accented_characters(self):
-        dist = autotag.string_dist(u'\xe9\xe1\xf1', u'ean')
+        dist = match.string_dist(u'\xe9\xe1\xf1', u'ean')
         self.assertEqual(dist, 0.0)
 
 def suite():
