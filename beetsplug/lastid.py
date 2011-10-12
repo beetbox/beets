@@ -18,8 +18,8 @@ Requires the pylastfp library.
 
 from __future__ import with_statement
 from beets import plugins
-from beets import autotag
 from beets.autotag import mb
+from beets.autotag import match
 from beets.util import plurality
 import lastfp
 import logging
@@ -32,7 +32,7 @@ DISTANCE_SCALE = 2.0
 log = logging.getLogger('beets')
 
 _match_cache = {}
-def match(path, metadata=None):
+def last_match(path, metadata=None):
     """Gets the metadata from Last.fm for the indicated track. Returns
     a dictionary with these keys: rank, artist, artist_mbid, title,
     track_mbid. May return None if fingerprinting or lookup fails.
@@ -48,10 +48,10 @@ def match(path, metadata=None):
     except lastfp.FingerprintError:
         # Fail silently and cache the failure.
         matches = None
-    match = matches[0] if matches else None
+    top_match = matches[0] if matches else None
 
-    _match_cache[path] = match
-    return match
+    _match_cache[path] = top_match
+    return top_match
 
 def get_cur_artist(items):
     """Given a sequence of items, returns the current artist and
@@ -62,7 +62,7 @@ def get_cur_artist(items):
     artists = []
     artist_ids = []
     for item in items:
-        last_data = match(item.path)
+        last_data = last_match(item.path)
         if last_data:
             artists.append(last_data['artist'])
             if last_data['artist_mbid']:
@@ -76,7 +76,7 @@ def get_cur_artist(items):
 
 class LastIdPlugin(plugins.BeetsPlugin):
     def track_distance(self, item, info):
-        last_data = match(item.path)
+        last_data = last_match(item.path)
         if not last_data:
             # Match failed.
             return 0.0, 0.0
@@ -84,18 +84,18 @@ class LastIdPlugin(plugins.BeetsPlugin):
         dist, dist_max = 0.0, 0.0
 
         # Track title distance.
-        dist += autotag.string_dist(last_data['title'],
-                                 info['title']) \
-                * autotag.TRACK_TITLE_WEIGHT
-        dist_max += autotag.TRACK_TITLE_WEIGHT
+        dist += match.string_dist(last_data['title'],
+                                  info['title']) \
+                * match.TRACK_TITLE_WEIGHT
+        dist_max += match.TRACK_TITLE_WEIGHT
         
         # MusicBrainz track ID.
         if last_data['track_mbid']:
             # log.debug('Last track ID match: %s/%s' %
             #           (last_data['track_mbid'], track_data['id']))
-            if last_data['track_mbid'] != track_data['id']:
-                dist += autotag.TRACK_ID_WEIGHT
-            dist_max += autotag.TRACK_ID_WEIGHT
+            if last_data['track_mbid'] != last_data['id']:
+                dist += match.TRACK_ID_WEIGHT
+            dist_max += match.TRACK_ID_WEIGHT
 
         # log.debug('Last data: %s; distance: %f' %
         #           (str(last_data), dist/dist_max if dist_max > 0.0 else 0.0))
@@ -108,9 +108,9 @@ class LastIdPlugin(plugins.BeetsPlugin):
         # Compare artist to MusicBrainz metadata.
         dist, dist_max = 0.0, 0.0
         if last_artist:
-            dist += autotag.string_dist(last_artist, info['artist']) \
-                    * autotag.ARTIST_WEIGHT
-            dist_max += autotag.ARTIST_WEIGHT
+            dist += match.string_dist(last_artist, info['artist']) \
+                    * match.ARTIST_WEIGHT
+            dist_max += match.ARTIST_WEIGHT
 
         log.debug('Last artist (%s/%s) distance: %f' %
                   (last_artist, info['artist'],
@@ -132,7 +132,7 @@ class LastIdPlugin(plugins.BeetsPlugin):
             criteria['artistName'] = last_artist
 
         # Perform the search.
-        criteria['limit'] = autotag.MAX_CANDIDATES
+        criteria['limit'] = mb.SEARCH_LIMIT
         cands = list(mb.get_releases(**criteria))
 
         log.debug('Matched last candidates: %s' %
@@ -140,7 +140,7 @@ class LastIdPlugin(plugins.BeetsPlugin):
         return cands
 
     def item_candidates(self, item):
-        last_data = match(item.path)
+        last_data = last_match(item.path)
         if not last_data:
             return ()
 
