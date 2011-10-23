@@ -122,18 +122,8 @@ class LastIdPlugin(plugins.BeetsPlugin):
     def candidates(self, items):
         last_artist, last_artist_id = get_cur_artist(items)
 
-        # Build the search criteria. Use the artist ID if we have one;
-        # otherwise use the artist name. Unfortunately, Last.fm doesn't
-        # give us album information.
-        criteria = {'trackCount': len(items)}
-        if last_artist_id:
-            criteria['artistId'] = last_artist_id
-        else:
-            criteria['artistName'] = last_artist
-
-        # Perform the search.
-        criteria['limit'] = mb.SEARCH_LIMIT
-        cands = list(mb.get_releases(**criteria))
+        # Search MusicBrainz based on Last.fm metadata.
+        cands = list(mb.match_album(last_artist, '', len(items)))
 
         log.debug('Matched last candidates: %s' %
                   ', '.join([cand['album'] for cand in cands]))
@@ -144,23 +134,9 @@ class LastIdPlugin(plugins.BeetsPlugin):
         if not last_data:
             return ()
 
-        # Have a MusicBrainz track ID?
-        if last_data['track_mbid']:
-            log.debug('Have a track ID from last.fm: %s' %
-                      last_data['track_mbid'])
-            id_track = mb.track_for_id(last_data['track_mbid'])
-            if id_track:
-                log.debug('Matched by track ID.')
-                return (id_track,)
-
-        # Do a full search.
-        criteria = {
-            'artist': last_data['artist'],
-            'track': last_data['title'],
-        }
-        if last_data['artist_mbid']:
-            criteria['artistid'] = last_data['artist_mbid']
-        cands = list(mb.find_tracks(criteria))
+        # Search MusicBrainz.
+        cands = list(mb.match_track(last_data['artist'],
+                                    last_data['track']))
 
         log.debug('Matched last track candidates: %s' %
                   ', '.join([cand['title'] for cand in cands]))
