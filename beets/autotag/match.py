@@ -420,23 +420,15 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
         search_artist, search_album = cur_artist, cur_album
     log.debug(u'Search terms: %s - %s' % (search_artist, search_album))
     
-    # Get candidate metadata from search.
-    if search_artist and search_album:
-        candidates = hooks._match_album(search_artist, search_album,
-                                        len(items))
-        candidates = list(candidates)
-    else:
-        candidates = []
+    # Is this album likely to be a "various artist" release?
+    va_likely = ((not artist_consensus) or
+                 (search_artist.lower() in VA_ARTISTS) or
+                 any(item.comp for item in items))
+    log.debug(u'Album might be VA: %s' % str(va_likely))
 
-    # Possibly add "various artists" search.
-    if search_album and ((not artist_consensus) or \
-                         (search_artist.lower() in VA_ARTISTS) or \
-                         any(item.comp for item in items)):
-        log.debug(u'Possibly Various Artists; adding matches.')
-        candidates.extend(hooks._match_album(None, search_album, len(items)))
-
-    # Get candidates from plugins.
-    candidates.extend(plugins.candidates(items))
+    # Get the results from the data sources.
+    candidates = hooks._album_candidates(items, search_artist, search_album,
+                                         va_likely)
     
     # Get the distance to each candidate.
     log.debug(u'Evaluating %i candidates.' % len(candidates))
@@ -486,13 +478,8 @@ def tag_item(item, timid=False, search_artist=None, search_title=None,
         search_artist, search_title = item.artist, item.title
     log.debug(u'Item search terms: %s - %s' % (search_artist, search_title))
 
-    # Candidate metadata from search.
-    for track_info in hooks._match_track(search_artist, search_title):
-        dist = track_distance(item, track_info, incl_artist=True)
-        candidates.append((dist, track_info))
-
-    # Add candidates from plugins.
-    for track_info in plugins.item_candidates(item):
+    # Get and evaluate candidate metadata.
+    for track_info in hooks._item_candidates(item, search_artist, search_title):
         dist = track_distance(item, track_info, incl_artist=True)
         candidates.append((dist, track_info))
 

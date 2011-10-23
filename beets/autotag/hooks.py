@@ -14,6 +14,7 @@
 
 """Glue between metadata sources and the matching logic."""
 
+from beets import plugins
 from . import mb
 
 # Classes used to represent candidate options.
@@ -77,13 +78,46 @@ class TrackInfo(object):
 # Aggregation of sources.
 
 def _album_for_id(album_id):
+    """Get an album corresponding to a MusicBrainz release ID."""
     return mb.album_for_id(album_id)
 
-def _match_album(artist, album, tracks):
-    return mb.match_album(artist, album, tracks)
-
 def _track_for_id(track_id):
+    """Get an item for a recording MBID."""
     return mb.track_for_id(track_id)
 
-def _match_track(artist, title):
-    return mb.match_track(artist, title)
+def _album_candidates(items, artist, album, va_likely):
+    """Search for album matches. ``items`` is a list of Item objects
+    that make up the album. ``artist`` and ``album`` are the respective
+    names (strings), which may be derived from the item list or may be
+    entered by the user. ``va_likely`` is a boolean indicating whether
+    the album is likely to be a "various artists" release.
+    """
+    out = []
+
+    # Base candidates if we have album and artist to match.
+    if artist and album:
+        out.extend(mb.match_album(artist, album, len(items)))
+
+    # Also add VA matches from MusicBrainz where appropriate.
+    if va_likely and album:
+        out.extend(mb.match_album(None, album, len(items)))
+
+    # Candidates from plugins.
+    out.extend(plugins.candidates(items))
+
+    return out
+
+def _item_candidates(item, artist, title):
+    """Search for item matches. ``item`` is the Item to be matched.
+    ``artist`` and ``title`` are strings and either reflect the item or
+    are specified by the user.
+    """
+    out = []
+
+    # MusicBrainz candidates.
+    out.extend(mb.match_track(artist, title))
+
+    # Plugin candidates.
+    out.extend(plugins.item_candidates(item))
+
+    return out
