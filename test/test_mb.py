@@ -100,7 +100,7 @@ class MBQueryErrorTest(unittest.TestCase):
         with self.assertRaises(mb.ServerBusyError):
             mb._query_wrap(raise_func(exc))
 
-class MBReleaseDictTest(unittest.TestCase):
+class MBAlbumInfoTest(unittest.TestCase):
     def _make_release(self, date_str='2009'):
         release = musicbrainz2.model.Release()
         release.title = 'ALBUM TITLE'
@@ -128,68 +128,68 @@ class MBReleaseDictTest(unittest.TestCase):
     
     def test_parse_release_with_year(self):
         release = self._make_release('1984')
-        d = mb.release_dict(release)
-        self.assertEqual(d['album'], 'ALBUM TITLE')
-        self.assertEqual(d['album_id'], 'ALBUM ID')
-        self.assertEqual(d['artist'], 'ARTIST NAME')
-        self.assertEqual(d['artist_id'], 'ARTIST ID')
-        self.assertEqual(d['year'], 1984)
+        d = mb.album_info(release, [])
+        self.assertEqual(d.album, 'ALBUM TITLE')
+        self.assertEqual(d.album_id, 'ALBUM ID')
+        self.assertEqual(d.artist, 'ARTIST NAME')
+        self.assertEqual(d.artist_id, 'ARTIST ID')
+        self.assertEqual(d.year, 1984)
 
     def test_parse_release_type(self):
         release = self._make_release('1984')
-        d = mb.release_dict(release)
-        self.assertEqual(d['albumtype'], 'album')
+        d = mb.album_info(release, [])
+        self.assertEqual(d.albumtype, 'album')
 
     def test_parse_release_full_date(self):
         release = self._make_release('1987-03-31')
-        d = mb.release_dict(release)
-        self.assertEqual(d['year'], 1987)
-        self.assertEqual(d['month'], 3)
-        self.assertEqual(d['day'], 31)
+        d = mb.album_info(release, [])
+        self.assertEqual(d.year, 1987)
+        self.assertEqual(d.month, 3)
+        self.assertEqual(d.day, 31)
 
     def test_parse_tracks(self):
         release = self._make_release()
         tracks = [self._make_track('TITLE ONE', 'dom/ID ONE', 100.0 * 1000.0),
                   self._make_track('TITLE TWO', 'dom/ID TWO', 200.0 * 1000.0)]
-        d = mb.release_dict(release, tracks)
-        t = d['tracks']
+        d = mb.album_info(release, tracks)
+        t = d.tracks
         self.assertEqual(len(t), 2)
-        self.assertEqual(t[0]['title'], 'TITLE ONE')
-        self.assertEqual(t[0]['id'], 'ID ONE')
-        self.assertEqual(t[0]['length'], 100.0)
-        self.assertEqual(t[1]['title'], 'TITLE TWO')
-        self.assertEqual(t[1]['id'], 'ID TWO')
-        self.assertEqual(t[1]['length'], 200.0)
+        self.assertEqual(t[0].title, 'TITLE ONE')
+        self.assertEqual(t[0].track_id, 'ID ONE')
+        self.assertEqual(t[0].length, 100.0)
+        self.assertEqual(t[1].title, 'TITLE TWO')
+        self.assertEqual(t[1].track_id, 'ID TWO')
+        self.assertEqual(t[1].length, 200.0)
 
     def test_parse_release_year_month_only(self):
         release = self._make_release('1987-03')
-        d = mb.release_dict(release)
-        self.assertEqual(d['year'], 1987)
-        self.assertEqual(d['month'], 3)
+        d = mb.album_info(release, [])
+        self.assertEqual(d.year, 1987)
+        self.assertEqual(d.month, 3)
     
     def test_no_durations(self):
         release = self._make_release()
         tracks = [self._make_track('TITLE', 'dom/ID', None)]
-        d = mb.release_dict(release, tracks)
-        self.assertFalse('length' in d['tracks'][0])
+        d = mb.album_info(release, tracks)
+        self.assertEqual(d.tracks[0].length, None)
 
     def test_no_release_date(self):
         release = self._make_release(None)
-        d = mb.release_dict(release)
-        self.assertFalse('year' in d)
-        self.assertFalse('month' in d)
-        self.assertFalse('day' in d)
+        d = mb.album_info(release, [])
+        self.assertFalse(d.year)
+        self.assertFalse(d.month)
+        self.assertFalse(d.day)
 
     def test_various_artists_defaults_false(self):
         release = self._make_release(None)
-        d = mb.release_dict(release)
-        self.assertFalse(d['va'])
+        d = mb.album_info(release, [])
+        self.assertFalse(d.va)
 
     def test_detect_various_artists(self):
         release = self._make_release(None)
         release.artist.id = musicbrainz2.model.VARIOUS_ARTISTS_ID
-        d = mb.release_dict(release)
-        self.assertTrue(d['va'])
+        d = mb.album_info(release, [])
+        self.assertTrue(d.va)
 
 class QuerySanitationTest(unittest.TestCase):
     def test_special_char_escaped(self):

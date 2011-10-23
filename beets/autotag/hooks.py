@@ -15,7 +15,7 @@
 """Glue between metadata sources and the matching logic."""
 
 from beets import plugins
-from . import mb
+from beets.autotag import mb
 
 # Classes used to represent candidate options.
 
@@ -40,7 +40,8 @@ class AlbumInfo(object):
     optional and may be None.
     """
     def __init__(self, album, album_id, artist, artist_id, tracks, asin=None,
-                 albumtype=None, va=False, year=None, month=None, day=None):
+                 albumtype=None, va=False, year=None, month=None, day=None,
+                 label=None):
         self.album = album
         self.album_id = album_id
         self.artist = artist
@@ -52,6 +53,7 @@ class AlbumInfo(object):
         self.year = year
         self.month = month
         self.day = day
+        self.label = label
 
 class TrackInfo(object):
     """Describes a canonical track present on a release. Appears as part
@@ -71,7 +73,7 @@ class TrackInfo(object):
         self.title = title
         self.track_id = track_id
         self.artist = artist
-        self.artist_id = artist
+        self.artist_id = artist_id
         self.length = length
 
 

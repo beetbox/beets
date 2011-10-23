@@ -89,9 +89,9 @@ def art_for_album(album, path):
         if out:
             return out
 
-    if album['asin']:
-        log.debug('Fetching album art for ASIN %s.' % album['asin'])
-        return art_for_asin(album['asin'])
+    if album.asin:
+        log.debug('Fetching album art for ASIN %s.' % album.asin)
+        return art_for_asin(album.asin)
     else:
         log.debug('No ASIN available: no art found.')
         return None

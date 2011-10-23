@@ -18,6 +18,7 @@ import unittest
 
 import _common
 from beets.autotag import art
+from beets.autotag import AlbumInfo
 import os
 import shutil
 
@@ -76,25 +77,25 @@ class CombinedTest(unittest.TestCase):
 
     def test_main_interface_returns_amazon_art(self):
         art.urllib.urlretrieve = MockUrlRetrieve('anotherpath', 'image/jpeg')
-        album = {'asin': 'xxxx'}
+        album = AlbumInfo(None, None, None, None, None, asin='xxxx')
         artpath = art.art_for_album(album, None)
         self.assertEqual(artpath, 'anotherpath')
 
     def test_main_interface_returns_none_for_missing_asin_and_path(self):
-        album = {'asin': None}
+        album = AlbumInfo(None, None, None, None, None, asin=None)
         artpath = art.art_for_album(album, None)
         self.assertEqual(artpath, None)
 
     def test_main_interface_gives_precedence_to_fs_art(self):
         _common.touch(os.path.join(self.dpath, 'a.jpg'))
         art.urllib.urlretrieve = MockUrlRetrieve('anotherpath', 'image/jpeg')
-        album = {'asin': 'xxxx'}
+        album = AlbumInfo(None, None, None, None, None, asin='xxxx')
         artpath = art.art_for_album(album, self.dpath)
         self.assertEqual(artpath, os.path.join(self.dpath, 'a.jpg'))
 
     def test_main_interface_falls_back_to_amazon(self):
         art.urllib.urlretrieve = MockUrlRetrieve('anotherpath', 'image/jpeg')
-        album = {'asin': 'xxxx'}
+        album = AlbumInfo(None, None, None, None, None, asin='xxxx')
         artpath = art.art_for_album(album, self.dpath)
         self.assertEqual(artpath, 'anotherpath')
 

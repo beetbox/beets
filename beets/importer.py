@@ -91,8 +91,8 @@ def _duplicate_check(lib, task, recent=None):
         artist = task.cur_artist
         album = task.cur_album
     elif task.choice_flag is action.APPLY:
-        artist = task.info['artist']
-        album = task.info['album']
+        artist = task.info.artist
+        album = task.info.album
     else:
         return False
 
@@ -125,8 +125,8 @@ def _item_duplicate_check(lib, task, recent=None):
         artist = task.item.artist
         title = task.item.title
     elif task.choice_flag is action.APPLY:
-        artist = task.info['artist']
-        title = task.info['title']
+        artist = task.info.artist
+        title = task.info.title
     else:
         return False
 

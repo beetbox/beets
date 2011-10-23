@@ -130,10 +130,10 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
             print_('    (unknown album)')
 
     # Identify the album in question.
-    if cur_artist != info['artist'] or \
-            (cur_album != info['album'] and info['album'] != VARIOUS_ARTISTS):
-        artist_l, artist_r = cur_artist or '', info['artist']
-        album_l,  album_r  = cur_album  or '', info['album']
+    if cur_artist != info.artist or \
+            (cur_album != info.album and info.album != VARIOUS_ARTISTS):
+        artist_l, artist_r = cur_artist or '', info.artist
+        album_l,  album_r  = cur_album  or '', info.album
         if artist_r == VARIOUS_ARTISTS:
             # Hide artists for VA releases.
             artist_l, artist_r = u'', u''
@@ -147,17 +147,17 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
         print_("To:")
         show_album(artist_r, album_r)
     else:
-        print_("Tagging: %s - %s" % (info['artist'], info['album']))
+        print_("Tagging: %s - %s" % (info.artist, info.album))
 
     # Distance/similarity.
     print_('(Similarity: %s)' % dist_string(dist, color))
 
     # Tracks.
-    for i, (item, track_data) in enumerate(zip(items, info['tracks'])):
+    for i, (item, track_info) in enumerate(zip(items, info.tracks)):
         cur_track = str(item.track)
         new_track = str(i+1)
         cur_title = item.title
-        new_title = track_data['title']
+        new_title = track_info.title
         
         # Possibly colorize changes.
         if color:
@@ -183,8 +183,8 @@ def show_item_change(item, info, dist, color):
     """Print out the change that would occur by tagging `item` with the
     metadata from `info`.
     """
-    cur_artist, new_artist = item.artist, info['artist']
-    cur_title, new_title = item.title, info['title']
+    cur_artist, new_artist = item.artist, info.artist
+    cur_title, new_title = item.title, info.title
 
     if cur_artist != new_artist or cur_title != new_title:
         if color:
@@ -228,7 +228,7 @@ def choose_candidate(candidates, singleton, rec, color, timid,
 
     Returns the result of the choice, which may SKIP, ASIS, TRACKS, or
     MANUAL or a candidate. For albums, a candidate is a `(info, items)`
-    pair; for items, it is just an `info` dictionary.
+    pair; for items, it is just a TrackInfo object.
     """
     # Sanity check.
     if singleton:
@@ -462,7 +462,7 @@ def choose_match(task, config):
 
 def choose_item(task, config):
     """Ask the user for a choice about tagging a single item. Returns
-    either an action constant or a track info dictionary.
+    either an action constant or a TrackInfo object.
     """
     print_()
     print_(task.item.path)

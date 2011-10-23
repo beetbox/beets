@@ -18,12 +18,14 @@ import unittest
 import os
 import shutil
 import re
+import copy
 
 import _common
 from beets import autotag
 from beets.autotag import match
 from beets.library import Item
 from beets.util import plurality
+from beets.autotag import AlbumInfo, TrackInfo
 
 class PluralityTest(unittest.TestCase):
     def test_plurality_consensus(self):
@@ -73,12 +75,9 @@ class AlbumDistanceTest(unittest.TestCase):
 
     def trackinfo(self):
         ti = []
-        ti.append({'title': 'one', 'artist': 'some artist',
-                   'track': 1, 'length': 1})
-        ti.append({'title': 'two', 'artist': 'some artist', 
-                   'track': 2, 'length': 1})
-        ti.append({'title': 'three', 'artist': 'some artist',
-                   'track': 3, 'length': 1})
+        ti.append(TrackInfo('one', None, 'some artist', length=1))
+        ti.append(TrackInfo('two', None, 'some artist', length=1))
+        ti.append(TrackInfo('three', None, 'some artist', length=1))
         return ti
     
     def test_identical_albums(self):
@@ -86,12 +85,13 @@ class AlbumDistanceTest(unittest.TestCase):
         items.append(self.item('one', 1))
         items.append(self.item('two', 2))
         items.append(self.item('three', 3))
-        info = {
-            'artist': 'some artist',
-            'album': 'some album',
-            'tracks': self.trackinfo(),
-            'va': False,
-        }
+        info = AlbumInfo(
+            artist = 'some artist',
+            album = 'some album',
+            tracks = self.trackinfo(),
+            va = False,
+            album_id = None, artist_id = None,
+        )
         self.assertEqual(match.distance(items, info), 0)
 
     def test_global_artists_differ(self):
@@ -99,12 +99,13 @@ class AlbumDistanceTest(unittest.TestCase):
         items.append(self.item('one', 1))
         items.append(self.item('two', 2))
         items.append(self.item('three', 3))
-        info = {
-            'artist': 'someone else',
-            'album': 'some album',
-            'tracks': self.trackinfo(),
-            'va': False,
-        }
+        info = AlbumInfo(
+            artist = 'someone else',
+            album = 'some album',
+            tracks = self.trackinfo(),
+            va = False,
+            album_id = None, artist_id = None,
+        )
         self.assertNotEqual(match.distance(items, info), 0)
 
     def test_comp_track_artists_match(self):
@@ -112,12 +113,13 @@ class AlbumDistanceTest(unittest.TestCase):
         items.append(self.item('one', 1))
         items.append(self.item('two', 2))
         items.append(self.item('three', 3))
-        info = {
-            'artist': 'should be ignored',
-            'album': 'some album',
-            'tracks': self.trackinfo(),
-            'va': True,
-        }
+        info = AlbumInfo(
+            artist = 'should be ignored',
+            album = 'some album',
+            tracks = self.trackinfo(),
+            va = True,
+            album_id = None, artist_id = None,
+        )
         self.assertEqual(match.distance(items, info), 0)
 
     def test_comp_no_track_artists(self):
@@ -126,15 +128,16 @@ class AlbumDistanceTest(unittest.TestCase):
         items.append(self.item('one', 1))
         items.append(self.item('two', 2))
         items.append(self.item('three', 3))
-        info = {
-            'artist': 'should be ignored',
-            'album': 'some album',
-            'tracks': self.trackinfo(),
-            'va': True,
-        }
-        del info['tracks'][0]['artist']
-        del info['tracks'][1]['artist']
-        del info['tracks'][2]['artist']
+        info = AlbumInfo(
+            artist = 'should be ignored',
+            album = 'some album',
+            tracks = self.trackinfo(),
+            va = True,
+            album_id = None, artist_id = None,
+        )
+        info.tracks[0].artist = None
+        info.tracks[1].artist = None
+        info.tracks[2].artist = None
         self.assertEqual(match.distance(items, info), 0)
 
     def test_comp_track_artists_do_not_match(self):
@@ -142,12 +145,13 @@ class AlbumDistanceTest(unittest.TestCase):
         items.append(self.item('one', 1))
         items.append(self.item('two', 2, 'someone else'))
         items.append(self.item('three', 3))
-        info = {
-            'artist': 'some artist',
-            'album': 'some album',
-            'tracks': self.trackinfo(),
-            'va': True,
-        }
+        info = AlbumInfo(
+            artist = 'some artist',
+            album = 'some album',
+            tracks = self.trackinfo(),
+            va = True,
+            album_id = None, artist_id = None,
+        )
         self.assertNotEqual(match.distance(items, info), 0)
 
 def _mkmp3(path):
@@ -206,9 +210,9 @@ class OrderingTest(unittest.TestCase):
         items.append(self.item('three', 2))
         items.append(self.item('two', 3))
         trackinfo = []
-        trackinfo.append({'title': 'one', 'track': 1})
-        trackinfo.append({'title': 'two', 'track': 2})
-        trackinfo.append({'title': 'three', 'track': 3})
+        trackinfo.append(TrackInfo('one', None))
+        trackinfo.append(TrackInfo('two', None))
+        trackinfo.append(TrackInfo('three', None))
         ordered = match.order_items(items, trackinfo)
         self.assertEqual(ordered[0].title, 'one')
         self.assertEqual(ordered[1].title, 'two')
@@ -220,9 +224,9 @@ class OrderingTest(unittest.TestCase):
         items.append(self.item('three', 1))
         items.append(self.item('two', 1))
         trackinfo = []
-        trackinfo.append({'title': 'one', 'track': 1})
-        trackinfo.append({'title': 'two', 'track': 2})
-        trackinfo.append({'title': 'three', 'track': 3})
+        trackinfo.append(TrackInfo('one', None))
+        trackinfo.append(TrackInfo('two', None))
+        trackinfo.append(TrackInfo('three', None))
         ordered = match.order_items(items, trackinfo)
         self.assertEqual(ordered[0].title, 'one')
         self.assertEqual(ordered[1].title, 'two')
@@ -233,7 +237,7 @@ class OrderingTest(unittest.TestCase):
         items.append(self.item('one', 1))
         items.append(self.item('two', 2))
         trackinfo = []
-        trackinfo.append({'title': 'one', 'track': 1})
+        trackinfo.append(TrackInfo('one', None))
         ordered = match.order_items(items, trackinfo)
         self.assertEqual(ordered, None)
 
@@ -263,10 +267,7 @@ class OrderingTest(unittest.TestCase):
         items.append(item(12, 186.45916150485752))
 
         def info(title, length):
-            return {
-                'title': title,
-                'length': length,
-            }
+            return TrackInfo(title, None, length=length)
         trackinfo = []
         trackinfo.append(info('Alone', 238.893))
         trackinfo.append(info('The Woman in You', 341.44))
@@ -291,23 +292,19 @@ class ApplyTest(unittest.TestCase):
         self.items.append(Item({}))
         self.items.append(Item({}))
         trackinfo = []
-        trackinfo.append({
-            'title': 'oneNew',
-            'id':    'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
-        })
-        trackinfo.append({
-            'title':  'twoNew',
-            'id':     '40130ed1-a27c-42fd-a328-1ebefb6caef4',
-        })
-        self.info = {
-            'tracks': trackinfo,
-            'artist': 'artistNew',
-            'album':  'albumNew',
-            'album_id': '7edb51cb-77d6-4416-a23c-3a8c2994a2c7',
-            'artist_id': 'a6623d39-2d8e-4f70-8242-0a9553b91e50',
-            'albumtype': 'album',
-            'va': False,
-        }
+        trackinfo.append(TrackInfo('oneNew',
+                                   'dfa939ec-118c-4d0f-84a0-60f3d1e6522c'))
+        trackinfo.append(TrackInfo('twoNew',
+                                   '40130ed1-a27c-42fd-a328-1ebefb6caef4'))
+        self.info = AlbumInfo(
+            tracks = trackinfo,
+            artist = 'artistNew',
+            album = 'albumNew',
+            album_id = '7edb51cb-77d6-4416-a23c-3a8c2994a2c7',
+            artist_id = 'a6623d39-2d8e-4f70-8242-0a9553b91e50',
+            albumtype = 'album',
+            va = False,
+        )
     
     def test_titles_applied(self):
         autotag.apply_metadata(self.items, self.info)
@@ -352,17 +349,15 @@ class ApplyTest(unittest.TestCase):
         self.assertEqual(self.items[1].albumtype, 'album')
 
     def test_album_artist_overrides_empty_track_artist(self):
-        my_info = dict(self.info)
-        my_info['tracks'] = [dict(t) for t in self.info['tracks']]
+        my_info = copy.deepcopy(self.info)
         autotag.apply_metadata(self.items, my_info)
         self.assertEqual(self.items[0].artist, 'artistNew')
         self.assertEqual(self.items[0].artist, 'artistNew')
 
     def test_album_artist_overriden_by_nonempty_track_artist(self):
-        my_info = dict(self.info)
-        my_info['tracks'] = [dict(t) for t in self.info['tracks']]
-        my_info['tracks'][0]['artist'] = 'artist1!'
-        my_info['tracks'][1]['artist'] = 'artist2!'
+        my_info = copy.deepcopy(self.info)
+        my_info.tracks[0].artist = 'artist1!'
+        my_info.tracks[1].artist = 'artist2!'
         autotag.apply_metadata(self.items, my_info)
         self.assertEqual(self.items[0].artist, 'artist1!')
         self.assertEqual(self.items[1].artist, 'artist2!')
@@ -373,27 +368,27 @@ class ApplyCompilationTest(unittest.TestCase):
         self.items.append(Item({}))
         self.items.append(Item({}))
         trackinfo = []
-        trackinfo.append({
-            'title': 'oneNew',
-            'id':    'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
-            'artist': 'artistOneNew',
-            'artist_id': 'a05686fc-9db2-4c23-b99e-77f5db3e5282',
-        })
-        trackinfo.append({
-            'title':  'twoNew',
-            'id':     '40130ed1-a27c-42fd-a328-1ebefb6caef4',
-            'artist': 'artistTwoNew',
-            'artist_id': '80b3cf5e-18fe-4c59-98c7-e5bb87210710',
-        })
-        self.info = {
-            'tracks': trackinfo,
-            'artist': 'variousNew',
-            'album':  'albumNew',
-            'album_id': '3b69ea40-39b8-487f-8818-04b6eff8c21a',
-            'artist_id': '89ad4ac3-39f7-470e-963a-56509c546377',
-            'albumtype': 'compilation',
-            'va': False,
-        }
+        trackinfo.append(TrackInfo(
+            'oneNew',
+            'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
+            'artistOneNew',
+            'a05686fc-9db2-4c23-b99e-77f5db3e5282',
+        ))
+        trackinfo.append(TrackInfo(
+            'twoNew',
+            '40130ed1-a27c-42fd-a328-1ebefb6caef4',
+            'artistTwoNew',
+            '80b3cf5e-18fe-4c59-98c7-e5bb87210710',
+        ))
+        self.info = AlbumInfo(
+            tracks = trackinfo,
+            artist = 'variousNew',
+            album = 'albumNew',
+            album_id = '3b69ea40-39b8-487f-8818-04b6eff8c21a',
+            artist_id = '89ad4ac3-39f7-470e-963a-56509c546377',
+            albumtype = 'compilation',
+            va = False,
+        )
 
     def test_album_and_track_artists_separate(self):
         autotag.apply_metadata(self.items, self.info)
@@ -419,8 +414,8 @@ class ApplyCompilationTest(unittest.TestCase):
         self.assertFalse(self.items[1].comp)
 
     def test_va_flag_sets_comp(self):
-        va_info = dict(self.info) # make a copy
-        va_info['va'] = True
+        va_info = copy.deepcopy(self.info)
+        va_info.va = True
         autotag.apply_metadata(self.items, va_info)
         self.assertTrue(self.items[0].comp)
         self.assertTrue(self.items[1].comp)

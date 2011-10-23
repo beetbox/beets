@@ -192,10 +192,10 @@ def order_items(items, trackinfo):
         ordered_items[canon_idx] = items[cur_idx]
     return ordered_items
 
-def track_distance(item, track_data, track_index=None, incl_artist=False):
+def track_distance(item, track_info, track_index=None, incl_artist=False):
     """Determines the significance of a track metadata change. Returns
     a float in [0.0,1.0]. `track_index` is the track number of the
-    `track_data` metadata set. If `track_index` is provided and
+    `track_info` metadata set. If `track_index` is provided and
     item.track is set, then these indices are used as a component of
     the distance calculation. `incl_artist` indicates that a distance
     component should be included for the track artist (i.e., for
@@ -205,26 +205,26 @@ def track_distance(item, track_data, track_index=None, incl_artist=False):
     dist, dist_max = 0.0, 0.0
 
     # Check track length.
-    if 'length' not in track_data:
+    if not track_info.length:
         # If there's no length to check, assume the worst.
         dist += TRACK_LENGTH_WEIGHT
     else:
-        diff = abs(item.length - track_data['length'])
+        diff = abs(item.length - track_info.length)
         diff = max(diff - TRACK_LENGTH_GRACE, 0.0)
         diff = min(diff, TRACK_LENGTH_MAX)
         dist += (diff / TRACK_LENGTH_MAX) * TRACK_LENGTH_WEIGHT
     dist_max += TRACK_LENGTH_WEIGHT
     
     # Track title.
-    dist += string_dist(item.title, track_data['title']) * TRACK_TITLE_WEIGHT
+    dist += string_dist(item.title, track_info.title) * TRACK_TITLE_WEIGHT
     dist_max += TRACK_TITLE_WEIGHT
 
     # Track artist, if included.
     # Attention: MB DB does not have artist info for all compilations,
     # so only check artist distance if there is actually an artist in
     # the MB track data.
-    if incl_artist and 'artist' in track_data:
-        dist += string_dist(item.artist, track_data['artist']) * \
+    if incl_artist and track_info.artist:
+        dist += string_dist(item.artist, track_info.artist) * \
                 TRACK_ARTIST_WEIGHT
         dist_max += TRACK_ARTIST_WEIGHT
 
@@ -236,18 +236,18 @@ def track_distance(item, track_data, track_index=None, incl_artist=False):
     
     # MusicBrainz track ID.
     if item.mb_trackid:
-        if item.mb_trackid != track_data['id']:
+        if item.mb_trackid != track_info.track_id:
             dist += TRACK_ID_WEIGHT
         dist_max += TRACK_ID_WEIGHT
 
     # Plugin distances.
-    plugin_d, plugin_dm = plugins.track_distance(item, track_data)
+    plugin_d, plugin_dm = plugins.track_distance(item, track_info)
     dist += plugin_d
     dist_max += plugin_dm
 
     return dist / dist_max
 
-def distance(items, info):
+def distance(items, album_info):
     """Determines how "significant" an album metadata change would be.
     Returns a float in [0.0,1.0]. The list of items must be ordered.
     """
@@ -261,20 +261,20 @@ def distance(items, info):
     dist_max = 0.0
     
     # Artist/album metadata.
-    if not info['va']:
-        dist += string_dist(cur_artist, info['artist']) * ARTIST_WEIGHT
+    if not album_info.va:
+        dist += string_dist(cur_artist, album_info.artist) * ARTIST_WEIGHT
         dist_max += ARTIST_WEIGHT
-    dist += string_dist(cur_album,  info['album']) * ALBUM_WEIGHT
+    dist += string_dist(cur_album,  album_info.album) * ALBUM_WEIGHT
     dist_max += ALBUM_WEIGHT
     
     # Track distances.
-    for i, (item, track_data) in enumerate(zip(items, info['tracks'])):
-        dist += track_distance(item, track_data, i+1, info['va']) * \
+    for i, (item, track_info) in enumerate(zip(items, album_info.tracks)):
+        dist += track_distance(item, track_info, i+1, album_info.va) * \
                 TRACK_WEIGHT
         dist_max += TRACK_WEIGHT
 
     # Plugin distances.
-    plugin_d, plugin_dm = plugins.album_distance(items, info)
+    plugin_d, plugin_dm = plugins.album_distance(items, album_info)
     dist += plugin_d
     dist_max += plugin_dm
 
@@ -340,20 +340,20 @@ def validate_candidate(items, tuple_dict, info):
     the track count, ordering the items, checking for duplicates, and
     calculating the distance.
     """
-    log.debug('Candidate: %s - %s' % (info['artist'], info['album']))
+    log.debug('Candidate: %s - %s' % (info.artist, info.album))
 
     # Don't duplicate.
-    if info['album_id'] in tuple_dict:
+    if info.album_id in tuple_dict:
         log.debug('Duplicate.')
         return
 
     # Make sure the album has the correct number of tracks.
-    if len(items) != len(info['tracks']):
+    if len(items) != len(info.tracks):
         log.debug('Track count mismatch.')
         return
 
     # Put items in order.
-    ordered = order_items(items, info['tracks'])
+    ordered = order_items(items, info.tracks)
     if not ordered:
         log.debug('Not orderable.')
         return
@@ -362,7 +362,7 @@ def validate_candidate(items, tuple_dict, info):
     dist = distance(ordered, info)
     log.debug('Success. Distance: %f' % dist)
 
-    tuple_dict[info['album_id']] = dist, ordered, info
+    tuple_dict[info.album_id] = dist, ordered, info
 
 def tag_album(items, timid=False, search_artist=None, search_album=None,
               search_id=None):

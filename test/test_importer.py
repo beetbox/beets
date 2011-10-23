@@ -22,6 +22,7 @@ import _common
 from beets import library
 from beets import importer
 from beets import mediafile
+from beets.autotag import AlbumInfo, TrackInfo
 
 TEST_TITLES = ('The Opener', 'The Second Track', 'The Last Track')
 class NonAutotaggedImportTest(unittest.TestCase):
@@ -173,17 +174,17 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         self.i = library.Item.from_path(self.srcpath)
         self.i.comp = False
 
-        trackinfo = {'title': 'one', 'artist': 'some artist',
-                     'track': 1, 'length': 1, 'id': 'trackid'}
-        self.info = {
-            'artist': 'some artist',
-            'album': 'some album',
-            'tracks': [trackinfo],
-            'va': False,
-            'album_id': 'albumid',
-            'artist_id': 'artistid',
-            'albumtype': 'soundtrack',
-        }
+        trackinfo = TrackInfo('one',  'trackid', 'some artist',
+                              'artistid', 1)
+        self.info = AlbumInfo(
+            artist = 'some artist',
+            album = 'some album',
+            tracks = [trackinfo],
+            va = False,
+            album_id = 'albumid',
+            artist_id = 'artistid',
+            albumtype = 'soundtrack',
+        )
 
     def tearDown(self):
         shutil.rmtree(self.libdir)
@@ -227,7 +228,7 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         coro.next() # Prime coroutine.
 
         task = importer.ImportTask.item_task(self.i)
-        task.set_choice(self.info['tracks'][0])
+        task.set_choice(self.info.tracks[0])
         coro.send(task)
 
         self.assertExists(
@@ -559,7 +560,10 @@ class DuplicateCheckTest(unittest.TestCase):
         if asis:
             task.set_choice(importer.action.ASIS)
         else:
-            task.set_choice(({'artist': artist, 'album': album}, [item]))
+            task.set_choice((
+                AlbumInfo(album, None, artist, None, None),
+                [item]
+            ))
         return task
 
     def _item_task(self, asis, artist=None, title=None, existing=False):
@@ -576,7 +580,7 @@ class DuplicateCheckTest(unittest.TestCase):
             item.title = title
             task.set_choice(importer.action.ASIS)
         else:
-            task.set_choice({'artist': artist, 'title': title})
+            task.set_choice(TrackInfo(title, None, artist))
         return task
 
     def test_duplicate_album_apply(self):

@@ -30,6 +30,8 @@ from musicbrainz2.model import Release
 from threading import Lock
 from musicbrainz2.model import VARIOUS_ARTISTS_ID
 
+import beets.autotag.hooks
+
 SEARCH_LIMIT = 5
 VARIOUS_ARTISTS_ID = VARIOUS_ARTISTS_ID.rsplit('/', 1)[1]
 
@@ -115,7 +117,7 @@ def _query_wrap(fun, *args, **kwargs):
 
 def get_releases(**params):
     """Given a list of parameters to ReleaseFilter, executes the
-    query and yields release dicts (complete with tracks).
+    query and yields AlbumInfo objects.
     """
     # Replace special cases.
     if 'artistName' in params:
@@ -135,7 +137,7 @@ def get_releases(**params):
     for result in results:
         release = result.release
         tracks, _ = release_info(release.id)
-        yield release_dict(release, tracks)
+        yield album_info(release, tracks)
 
 def release_info(release_id):
     """Given a MusicBrainz release ID, fetch a list of tracks on the
@@ -173,9 +175,9 @@ def _lucene_query(criteria):
     return u' '.join(query_parts)
 
 def find_releases(criteria, limit=SEARCH_LIMIT):
-    """Get a list of release dictionaries from the MusicBrainz
-    database that match `criteria`. The latter is a dictionary whose
-    keys are MusicBrainz field names and whose values are search terms
+    """Get a list of AlbumInfo objects from the MusicBrainz database
+    that match `criteria`. The latter is a dictionary whose keys are
+    MusicBrainz field names and whose values are search terms
     for those fields.
 
     The field names are from MusicBrainz's Lucene query syntax, which
@@ -196,7 +198,7 @@ def find_releases(criteria, limit=SEARCH_LIMIT):
         return get_releases(limit=limit, query=query)
 
 def find_tracks(criteria, limit=SEARCH_LIMIT):
-    """Get a sequence of track dictionaries from MusicBrainz that match
+    """Get a sequence of TrackInfo objects from MusicBrainz that match
     `criteria`, a search term dictionary similar to the one passed to
     `find_releases`.
     """
@@ -210,43 +212,44 @@ def find_tracks(criteria, limit=SEARCH_LIMIT):
             results = ()
         for result in results:
             track = result.track
-            yield track_dict(track)
+            yield track_info(track)
 
-def track_dict(track):
-    """Produces a dictionary summarizing a MusicBrainz `Track` object.
+def track_info(track):
+    """Translates a MusicBrainz ``Track`` object into a beets
+    ``TrackInfo`` object.
     """
-    t = {'title': track.title,
-         'id': track.id.rsplit('/', 1)[1]}
+    info = beets.autotag.hooks.TrackInfo(track.title,
+                                         track.id.rsplit('/', 1)[1])
     if track.artist is not None:
         # Track artists will only be present for releases with
         # multiple artists.
-        t['artist'] = track.artist.name
-        t['artist_id'] = track.artist.id.rsplit('/', 1)[1]
+        info.artist = track.artist.name
+        info.artist_id = track.artist.id.rsplit('/', 1)[1]
     if track.duration is not None:
         # Duration not always present.
-        t['length'] = track.duration/(1000.0)
-    return t
+        info.length = track.duration/(1000.0)
+    return info
 
-def release_dict(release, tracks=None):
-    """Takes a MusicBrainz `Release` object and returns a dictionary
-    containing the interesting data about that release. A list of
-    `Track` objects may also be provided as `tracks`; they are then
-    included in the resulting dictionary.
+def album_info(release, tracks):
+    """Takes a MusicBrainz ``Release`` object and returns a beets
+    AlbumInfo object containing the interesting data about that release.
+    ``tracks`` is a list of ``Track`` objects that make up the album.
     """
     # Basic info.
-    out = {'album':     release.title,
-           'album_id':  release.id.rsplit('/', 1)[1],
-           'artist':    release.artist.name,
-           'artist_id': release.artist.id.rsplit('/', 1)[1],
-           'asin':      release.asin,
-           'albumtype': '',
-          }
-    out['va'] = out['artist_id'] == VARIOUS_ARTISTS_ID
+    info = beets.autotag.hooks.AlbumInfo(
+        release.title,
+        release.id.rsplit('/', 1)[1],
+        release.artist.name,
+        release.artist.id.rsplit('/', 1)[1],
+        [track_info(track) for track in tracks],
+        release.asin
+    )
+    info.va = info.artist_id == VARIOUS_ARTISTS_ID
 
     # Release type not always populated.
     for releasetype in release.types:
         if releasetype in RELEASE_TYPES:
-            out['albumtype'] = releasetype.split('#')[1].lower()
+            info.albumtype = releasetype.split('#')[1].lower()
             break
 
     # Release date and label.
@@ -255,7 +258,7 @@ def release_dict(release, tracks=None):
     except:
         # The python-musicbrainz2 module has a bug that will raise an
         # exception when there is no release date to be found. In this
-        # case, we just skip adding a release date to the dict.
+        # case, we just skip adding a release date to the result.
         pass
     else:
         if event:
@@ -265,25 +268,20 @@ def release_dict(release, tracks=None):
                 date_parts = date_str.split('-')
                 for key in ('year', 'month', 'day'):
                     if date_parts:
-                        out[key] = int(date_parts.pop(0))
+                        setattr(info, key, int(date_parts.pop(0)))
 
             # Label name.
             label = event.getLabel()
             if label:
                 name = label.getName()
                 if name and name != '[no label]':
-                    out['label'] = name
+                    info.label = name
 
-    # Tracks.
-    if tracks is not None:
-        out['tracks'] = map(track_dict, tracks)
-
-    return out
+    return info
 
 def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
     """Searches for a single album ("release" in MusicBrainz parlance)
-    and returns an iterator over dictionaries of information (as
-    returned by `release_dict`).
+    and returns an iterator over AlbumInfo objects.
 
     The query consists of an artist name, an album name, and,
     optionally, a number of tracks on the album.
@@ -302,8 +300,8 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
     return find_releases(criteria, limit)
 
 def match_track(artist, title):
-    """Searches for a single track and returns an iterable of track
-    info dictionaries (as returned by `track_dict`).
+    """Searches for a single track and returns an iterable of TrackInfo
+    objects.
     """
     return find_tracks({
         'artist': artist,
@@ -311,8 +309,8 @@ def match_track(artist, title):
     })
 
 def album_for_id(albumid):
-    """Fetches an album by its MusicBrainz ID and returns an
-    information dictionary. If no match is found, returns None.
+    """Fetches an album by its MusicBrainz ID and returns an AlbumInfo
+    object or None if the album is not found.
     """
     query = mbws.Query()
     try:
@@ -322,11 +320,11 @@ def album_for_id(albumid):
     except (mbws.ResourceNotFoundError, mbws.RequestError), exc:
         log.debug('Album ID match failed: ' + str(exc))
         return None
-    return release_dict(album, album.tracks)
+    return album_info(album, album.tracks)
 
 def track_for_id(trackid):
-    """Fetches a track by its MusicBrainz ID. Returns a track info
-    dictionary or None if no track is found.
+    """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
+    or None if no track is found.
     """
     query = mbws.Query()
     try:
@@ -336,4 +334,4 @@ def track_for_id(trackid):
     except (mbws.ResourceNotFoundError, mbws.RequestError), exc:
         log.debug('Track ID match failed: ' + str(exc))
         return None
-    return track_dict(track)
+    return track_info(track)

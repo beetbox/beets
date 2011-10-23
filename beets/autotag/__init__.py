@@ -22,6 +22,7 @@ from beets.util import sorted_walk
 
 # Parts of external interface.
 from .hooks import AlbumInfo, TrackInfo
+from .match import AutotagError
 from .match import tag_item, tag_album
 from .match import RECOMMEND_STRONG, RECOMMEND_MEDIUM, RECOMMEND_NONE
 from .match import STRONG_REC_THRESH, MEDIUM_REC_THRESH, REC_GAP_THRESH
@@ -55,54 +56,54 @@ def albums_in_dir(path):
         if items:
             yield root, items
 
-def apply_item_metadata(item, track_data):
-    """Set an item's metadata from its matched info dictionary.
+def apply_item_metadata(item, track_info):
+    """Set an item's metadata from its matched TrackInfo object.
     """
-    item.artist = track_data['artist']
-    item.title = track_data['title']
-    item.mb_trackid = track_data['id']
-    if 'artist_id' in track_data:
-        item.mb_artistid = track_data['artist_id']
+    item.artist = track_info.artist
+    item.title = track_info.title
+    item.mb_trackid = track_info.track_id
+    if track_info.artist_id:
+        item.mb_artistid = track_info.artist_id
     # At the moment, the other metadata is left intact (including album
     # and track number). Perhaps these should be emptied?
 
-def apply_metadata(items, info):
-    """Set the items' metadata to match the data given in info. The
-    list of items must be ordered.
+def apply_metadata(items, album_info):
+    """Set the items' metadata to match an AlbumInfo object. The list
+    of items must be ordered.
     """
-    for index, (item, track_data) in enumerate(zip(items, info['tracks'])):
+    for index, (item, track_info) in enumerate(zip(items, album_info.tracks)):
         # Album, artist, track count.
-        if 'artist' in track_data:
-            item.artist = track_data['artist']
+        if track_info.artist:
+            item.artist = track_info.artist
         else:
-            item.artist = info['artist']
-        item.albumartist = info['artist']
-        item.album = info['album']
+            item.artist = album_info.artist
+        item.albumartist = album_info.artist
+        item.album = album_info.album
         item.tracktotal = len(items)
         
         # Release date.
-        if 'year' in info:
-            item.year = info['year']
-        if 'month' in info:
-            item.month = info['month']
-        if 'day' in info:
-            item.day = info['day']
+        if album_info.year:
+            item.year = album_info.year
+        if album_info.month:
+            item.month = album_info.month
+        if album_info.day:
+            item.day = album_info.day
         
         # Title and track index.
-        item.title = track_data['title']
+        item.title = track_info.title
         item.track = index + 1
         
         # MusicBrainz IDs.
-        item.mb_trackid = track_data['id']
-        item.mb_albumid = info['album_id']
-        if 'artist_id' in track_data:
-            item.mb_artistid = track_data['artist_id']
+        item.mb_trackid = track_info.track_id
+        item.mb_albumid = album_info.album_id
+        if track_info.artist_id:
+            item.mb_artistid = track_info.artist_id
         else:
-            item.mb_artistid = info['artist_id']
-        item.mb_albumartistid = info['artist_id']
-        item.albumtype = info['albumtype']
-        if 'label' in info:
-            item.label = info['label']
+            item.mb_artistid = album_info.artist_id
+        item.mb_albumartistid = album_info.artist_id
+        item.albumtype = album_info.albumtype
+        if album_info.label:
+            item.label = album_info.label
         
         # Compilation flag.
-        item.comp = info['va']
+        item.comp = album_info.va
