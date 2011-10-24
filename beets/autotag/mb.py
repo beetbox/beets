@@ -13,27 +13,14 @@
 # included in all copies or substantial portions of the Software.
 
 """Searches for albums in the MusicBrainz database.
-
-This is a thin layer over the official `python-musicbrainz2` module. It
-abstracts away that module's object model, the server's Lucene query
-syntax, and other uninteresting parts of using musicbrainz2. The
-principal interface is the function `match_album`.
 """
-
-from __future__ import with_statement # for Python 2.5
-import re
-import time
 import logging
-import musicbrainz2.webservice as mbws
-import httplib
-from musicbrainz2.model import Release
-from threading import Lock
-from musicbrainz2.model import VARIOUS_ARTISTS_ID
 
+from . import musicbrainz3
 import beets.autotag.hooks
 
 SEARCH_LIMIT = 5
-VARIOUS_ARTISTS_ID = VARIOUS_ARTISTS_ID.rsplit('/', 1)[1]
+VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 
 
 class ServerBusyError(Exception): pass
@@ -46,236 +33,66 @@ SPECIAL_CASE_ARTISTS = {
     '!!!': 'f26c72d3-e52c-467b-b651-679c73d8e1a7',
 }
 
-RELEASE_TYPES = [
-    Release.TYPE_ALBUM,
-    Release.TYPE_SINGLE, 
-    Release.TYPE_EP,
-    Release.TYPE_COMPILATION, 
-    Release.TYPE_SOUNDTRACK,
-    Release.TYPE_SPOKENWORD,
-    Release.TYPE_INTERVIEW,
-    Release.TYPE_AUDIOBOOK,
-    Release.TYPE_LIVE,
-    Release.TYPE_REMIX,
-    Release.TYPE_OTHER
-]
+RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
+                    'labels']
+TRACK_INCLUDES = ['artists']
 
-RELEASE_INCLUDES = mbws.ReleaseIncludes(artist=True, tracks=True,
-                                        releaseEvents=True, labels=True,
-                                        releaseGroup=True)
-TRACK_INCLUDES = mbws.TrackIncludes(artist=True)
-
-# MusicBrainz requires that a client does not query the server more
-# than once a second. This function enforces that limit using a
-# module-global variable to keep track of the last time a query was
-# sent.
-MAX_QUERY_RETRY = 8
-QUERY_WAIT_TIME = 1.0
-last_query_time = 0.0
-mb_lock = Lock()
-def _query_wrap(fun, *args, **kwargs):
-    """Wait until at least `QUERY_WAIT_TIME` seconds have passed since
-    the last invocation of this function. Then call
-    fun(*args, **kwargs). If it fails due to a "server busy" message,
-    then try again. Tries up to `MAX_QUERY_RETRY` times before
-    giving up.
-    """
-    with mb_lock:
-        global last_query_time
-        for i in range(MAX_QUERY_RETRY):
-            since_last_query = time.time() - last_query_time
-            if since_last_query < QUERY_WAIT_TIME:
-                time.sleep(QUERY_WAIT_TIME - since_last_query)
-            last_query_time = time.time()
-            try:
-                # Try the function.
-                res = fun(*args, **kwargs)
-            except mbws.ConnectionError:
-                # Typically a timeout.
-                pass
-            except mbws.ResponseError, exc:
-                # Malformed response from server.
-                log.error('Bad response from MusicBrainz: ' + str(exc))
-                raise BadResponseError()
-            except httplib.BadStatusLine:
-                log.warn('Bad HTTP status line from MusicBrainz')
-            except mbws.WebServiceError, e:
-                # Server busy. Retry.
-                message = str(e.reason)
-                for errnum in (503, 504):
-                    if 'Error %i' % errnum in message:
-                        break
-                else:
-                    # This is not the error we're looking for.
-                    raise
-            else:
-                # Success. Return the result.
-                return res
-        # Gave up.
-        raise ServerBusyError()
-    # FIXME exponential backoff?
-
-def get_releases(**params):
-    """Given a list of parameters to ReleaseFilter, executes the
-    query and yields AlbumInfo objects.
-    """
-    # Replace special cases.
-    if 'artistName' in params:
-        artist = params['artistName']
-        if artist in SPECIAL_CASE_ARTISTS:
-            del params['artistName']
-            params['artistId'] = SPECIAL_CASE_ARTISTS[artist]
-    
-    # Issue query.
-    filt = mbws.ReleaseFilter(**params)
-    try:
-        results = _query_wrap(mbws.Query().getReleases, filter=filt)
-    except BadResponseError:
-        results = ()
-
-    # Construct results.
-    for result in results:
-        release = result.release
-        tracks, _ = release_info(release.id)
-        yield album_info(release, tracks)
-
-def release_info(release_id):
-    """Given a MusicBrainz release ID, fetch a list of tracks on the
-    release and the release group ID. If the release is not found,
-    returns None.
-    """
-    try:
-        release = _query_wrap(mbws.Query().getReleaseById, release_id,
-                              RELEASE_INCLUDES)
-    except BadResponseError:
-        release = None
-
-    if release:
-        return release.getTracks(), release.getReleaseGroup().getId()
-    else:
-        return None
-
-def _lucene_escape(text):
-    """Escapes a string so it may be used verbatim in a Lucene query
-    string.
-    """
-    # Regex stolen from MusicBrainz Picard.
-    out = re.sub(r'([+\-&|!(){}\[\]\^"~*?:\\])', r'\\\1', text)
-    return out.replace('\x00', '')
-
-def _lucene_query(criteria):
-    """Given a dictionary containing search criteria, produce a string
-    that may be used as a MusicBrainz search query.
-    """
-    query_parts = []
-    for name, value in criteria.items():
-        value = _lucene_escape(value).strip().lower()
-        if value:
-            query_parts.append(u'%s:(%s)' % (name, value))
-    return u' '.join(query_parts)
-
-def find_releases(criteria, limit=SEARCH_LIMIT):
-    """Get a list of AlbumInfo objects from the MusicBrainz database
-    that match `criteria`. The latter is a dictionary whose keys are
-    MusicBrainz field names and whose values are search terms
-    for those fields.
-
-    The field names are from MusicBrainz's Lucene query syntax, which
-    is detailed here:
-        http://wiki.musicbrainz.org/Text_Search_Syntax
-    """
-    # Replace special cases.
-    if 'artist' in criteria:
-        artist = criteria['artist']
-        if artist in SPECIAL_CASE_ARTISTS:
-            del criteria['artist']
-            criteria['arid'] = SPECIAL_CASE_ARTISTS[artist]
-    
-    # Build the filter and send the query.
-    if any(criteria.itervalues()):
-        query = _lucene_query(criteria)
-        log.debug('album query: %s' % query)
-        return get_releases(limit=limit, query=query)
-
-def find_tracks(criteria, limit=SEARCH_LIMIT):
-    """Get a sequence of TrackInfo objects from MusicBrainz that match
-    `criteria`, a search term dictionary similar to the one passed to
-    `find_releases`.
-    """
-    if any(criteria.itervalues()):
-        query = _lucene_query(criteria)
-        log.debug('track query: %s' % query)
-        filt = mbws.TrackFilter(limit=limit, query=query)
-        try:
-            results = _query_wrap(mbws.Query().getTracks, filter=filt)
-        except BadResponseError:
-            results = ()
-        for result in results:
-            track = result.track
-            yield track_info(track)
-
-def track_info(track):
-    """Translates a MusicBrainz ``Track`` object into a beets
+def track_info(recording):
+    """Translates a MusicBrainz recording result dictionary into a beets
     ``TrackInfo`` object.
     """
-    info = beets.autotag.hooks.TrackInfo(track.title,
-                                         track.id.rsplit('/', 1)[1])
-    if track.artist is not None:
-        # Track artists will only be present for releases with
-        # multiple artists.
-        info.artist = track.artist.name
-        info.artist_id = track.artist.id.rsplit('/', 1)[1]
-    if track.duration is not None:
-        # Duration not always present.
-        info.length = track.duration/(1000.0)
+    info = beets.autotag.hooks.TrackInfo(recording['title'],
+                                         recording['id'])
+
+    if 'artist-credit' in recording: # XXX: when is this not included?
+        artist = recording['artist-credit'][0]['artist']
+        info.artist = artist['name']
+        info.artist_id = artist['id']
+
+    if recording.get('length'):
+        info.length = int(recording['length'])/(1000.0)
+
     return info
 
-def album_info(release, tracks):
-    """Takes a MusicBrainz ``Release`` object and returns a beets
+def album_info(release):
+    """Takes a MusicBrainz release result dictionary and returns a beets
     AlbumInfo object containing the interesting data about that release.
-    ``tracks`` is a list of ``Track`` objects that make up the album.
     """
     # Basic info.
+    artist = release['artist-credit'][0]['artist']
+    tracks = []
+    for medium in release['medium-list']:
+        tracks.extend(i['recording'] for i in medium['track-list'])
     info = beets.autotag.hooks.AlbumInfo(
-        release.title,
-        release.id.rsplit('/', 1)[1],
-        release.artist.name,
-        release.artist.id.rsplit('/', 1)[1],
+        release['title'],
+        release['id'],
+        artist['name'],
+        artist['id'],
         [track_info(track) for track in tracks],
-        release.asin
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
+    if 'asin' in release:
+        info.asin = release['asin']
 
     # Release type not always populated.
-    for releasetype in release.types:
-        if releasetype in RELEASE_TYPES:
-            info.albumtype = releasetype.split('#')[1].lower()
-            break
+    reltype = release['release-group']['type']
+    if reltype:
+        info.albumtype = reltype.lower()
 
-    # Release date and label.
-    try:
-        event = release.getEarliestReleaseEvent()
-    except:
-        # The python-musicbrainz2 module has a bug that will raise an
-        # exception when there is no release date to be found. In this
-        # case, we just skip adding a release date to the result.
-        pass
-    else:
-        if event:
-            # Release date.
-            date_str = event.getDate()
-            if date_str:
-                date_parts = date_str.split('-')
-                for key in ('year', 'month', 'day'):
-                    if date_parts:
-                        setattr(info, key, int(date_parts.pop(0)))
+    # Release date.
+    if 'date' in release: # XXX: when is this not included?
+        date_str = release['date']
+        if date_str:
+            date_parts = date_str.split('-')
+            for key in ('year', 'month', 'day'):
+                if date_parts:
+                    setattr(info, key, int(date_parts.pop(0)))
 
-            # Label name.
-            label = event.getLabel()
-            if label:
-                name = label.getName()
-                if name and name != '[no label]':
-                    info.label = name
+    # Label name.
+    if release.get('label-info-list'):
+        label = release['label-info-list'][0]['label']['name']
+        if label != '[no label]':
+            info.label = label
 
     return info
 
@@ -296,42 +113,39 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
     if tracks is not None:
         criteria['tracks'] = str(tracks)
 
-    # Search for the release.
-    return find_releases(criteria, limit)
+    res = musicbrainz3.release_search(limit=limit, **criteria)
+    for release in res['release-list']:
+        # The search result is missing some data (namely, the tracks),
+        # so we just use the ID and fetch the rest of the information.
+        yield album_for_id(release['id'])
 
-def match_track(artist, title):
+def match_track(artist, title, limit=SEARCH_LIMIT):
     """Searches for a single track and returns an iterable of TrackInfo
     objects.
     """
-    return find_tracks({
-        'artist': artist,
-        'track': title,
-    })
+    res = musicbrainz3.recording_search(artist=artist, recording=title,
+                                        limit=limit)
+    for recording in res['recording-list']:
+        yield track_info(recording)
 
 def album_for_id(albumid):
     """Fetches an album by its MusicBrainz ID and returns an AlbumInfo
     object or None if the album is not found.
     """
-    query = mbws.Query()
     try:
-        album = _query_wrap(query.getReleaseById, albumid, RELEASE_INCLUDES)
-    except BadResponseError:
+        res = musicbrainz3.get_release_by_id(albumid, RELEASE_INCLUDES)
+    except musicbrainz3.ResponseError:
+        log.debug('Album ID match failed.')
         return None
-    except (mbws.ResourceNotFoundError, mbws.RequestError), exc:
-        log.debug('Album ID match failed: ' + str(exc))
-        return None
-    return album_info(album, album.tracks)
+    return album_info(res['release'])
 
 def track_for_id(trackid):
     """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
     or None if no track is found.
     """
-    query = mbws.Query()
     try:
-        track = _query_wrap(query.getTrackById, trackid, TRACK_INCLUDES)
-    except BadResponseError:
+        res = musicbrainz3.get_recording_by_id(trackid, TRACK_INCLUDES)
+    except musicbrainz3.ResponseError:
+        log.debug('Track ID match failed.')
         return None
-    except (mbws.ResourceNotFoundError, mbws.RequestError), exc:
-        log.debug('Track ID match failed: ' + str(exc))
-        return None
-    return track_info(track)
+    return track_info(res['recording'])

@@ -4,6 +4,10 @@ Changelog
 1.0b11 (In Development)
 -----------------------
 
+* Beets now communicates with MusicBrainz via the new `Next Generation Schema`_
+  (NGS) service via `python-musicbrainz-ngs`_. The bindings are included with
+  this version of beets, but a future version will make them an external
+  dependency.
 * The new :doc:`/plugins/lastgenre` automatically assigns genres to imported
   albums and items based on Last.fm tags and an internal whitelist. (Thanks to
   `KraYmer`_.)
@@ -13,6 +17,8 @@ Changelog
 * Fix a crash after using the "as Tracks" option during import.
 
 .. _KraYmer: https://github.com/KraYmer
+.. _Next Generation Schema: http://musicbrainz.org/doc/XML_Web_Service/Version_2
+.. _python-musicbrainz-ngs: https://github.com/alastair/python-musicbrainz-ngs
 
 1.0b10 (September 22, 2011)
 ---------------------------
