@@ -18,10 +18,12 @@ import logging
 
 from . import musicbrainz3
 import beets.autotag.hooks
+import beets
 
 SEARCH_LIMIT = 5
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 
+musicbrainz3._useragent = 'beets/%s' % beets.__version__
 
 class ServerBusyError(Exception): pass
 class BadResponseError(Exception): pass
