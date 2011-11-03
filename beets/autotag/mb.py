@@ -39,6 +39,18 @@ RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels']
 TRACK_INCLUDES = ['artists']
 
+def _adapt_criteria(criteria):
+    """Special-case artists in a criteria dictionary before it is passed
+    to the MusicBrainz search server. The dictionary supplied is
+    mutated; nothing is returned.
+    """
+    if 'artist' in criteria:
+        for artist, artist_id in SPECIAL_CASE_ARTISTS.items():
+            if criteria['artist'] == artist:
+                criteria['arid'] = artist_id
+                del criteria['artist']
+                break
+
 def track_info(recording):
     """Translates a MusicBrainz recording result dictionary into a beets
     ``TrackInfo`` object.
@@ -115,6 +127,7 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
     if tracks is not None:
         criteria['tracks'] = str(tracks)
 
+    _adapt_criteria(criteria)
     res = musicbrainz3.release_search(limit=limit, **criteria)
     for release in res['release-list']:
         # The search result is missing some data (namely, the tracks),
@@ -125,8 +138,13 @@ def match_track(artist, title, limit=SEARCH_LIMIT):
     """Searches for a single track and returns an iterable of TrackInfo
     objects.
     """
-    res = musicbrainz3.recording_search(artist=artist, recording=title,
-                                        limit=limit)
+    criteria = {
+        'artist': artist,
+        'recording': title,
+    }
+
+    _adapt_criteria(criteria)
+    res = musicbrainz3.recording_search(limit=limit, **criteria)
     for recording in res['recording-list']:
         yield track_info(recording)
 
