@@ -8,6 +8,10 @@ Changelog
   (NGS) service via `python-musicbrainz-ngs`_. The bindings are included with
   this version of beets, but a future version will make them an external
   dependency.
+* The new :doc:`/plugins/chroma` uses the `Acoustid`_ open-source acoustic
+  fingerprinting service. This replaces the old ``lastid`` plugin, which used
+  Last.fm fingerprinting and is now deprecated. Fingerprinting with this library
+  should be faster and more reliable.
 * The new :doc:`/plugins/lastgenre` automatically assigns genres to imported
   albums and items based on Last.fm tags and an internal whitelist. (Thanks to
   `KraYmer`_.)
@@ -19,6 +23,7 @@ Changelog
 .. _KraYmer: https://github.com/KraYmer
 .. _Next Generation Schema: http://musicbrainz.org/doc/XML_Web_Service/Version_2
 .. _python-musicbrainz-ngs: https://github.com/alastair/python-musicbrainz-ngs
+.. _acoustid: http://acoustid.org/
 
 1.0b10 (September 22, 2011)
 ---------------------------

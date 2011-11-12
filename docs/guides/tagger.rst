@@ -50,10 +50,10 @@ all of these limitations.
   actually not a hard-and-fast rule: using the *E* option described below, it's
   entirely possible to search for a release to tag a given album.) This is
   because beets by default infers tags based on existing metadata. The
-  :doc:`LastID plugin </plugins/lastid>` extends the autotagger to use acoustic
-  fingerprinting to find information for arbitrary audio. Install that plugin if
-  you're willing to spend a little more CPU power to get tags for unidentified
-  albums.
+  :doc:`Acoustid plugin </plugins/chroma>` extends the autotagger to use
+  acoustic fingerprinting to find information for arbitrary audio. Install that
+  plugin if you're willing to spend a little more CPU power to get tags for
+  unidentified albums.
 
 * There isn't currently a good solution for multi-disc albums. Currently, every
   disc is treated as a separate release, so you'll see "69 Love Songs (disc 1)",
@@ -199,14 +199,12 @@ You may have noticed by now that beets' autotagger works pretty well for most
 files, but can get confused when files don't have any metadata (or have wildly
 incorrect metadata). In this case, you need *acoustic fingerprinting*, a
 technology that identifies songs from the audio itself. With fingerprinting,
-beets can autotag files that have very bad or missing tags. The :doc:`"lastid"
-plugin </plugins/lastid>`, distributed with beets, uses `Last.fm's open-source
-fingerprinting implementation`_, but it's disabled by default. That's because
-it's sort of tricky to install. See the :doc:`/plugins/lastid` page for a guide
+beets can autotag files that have very bad or missing tags. The :doc:`"chroma"
+plugin </plugins/chroma>`, distributed with beets, uses the `Chromaprint`_ open-source fingerprinting technology, but it's disabled by default. That's because
+it's sort of tricky to install. See the :doc:`/plugins/chroma` page for a guide
 to getting it set up.
 
-.. _Last.fm's open-source fingerprinting implementation:
-   http://github.com/lastfm/Fingerprinter 
+.. _Chromaprint: http://acoustid.org/chromaprint
 
 Missing Albums?
 ---------------

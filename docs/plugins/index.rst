@@ -36,12 +36,17 @@ disabled by default, but you can turn them on as described above:
 .. toctree::
    :maxdepth: 1
 
-   lastid
+   chroma
    bpd
    mpdupdate
    embedart
    web
    lastgenre
+
+.. toctree::
+   :hidden:
+
+   lastid
 
 .. _other-plugins:
 
@@ -208,7 +213,7 @@ Extend the Autotagger
 ^^^^^^^^^^^^^^^^^^^^^
 
 Plugins in 1.0b5 can also enhance the functionality of the autotagger. For a
-comprehensive example, try looking at the ``lastid`` plugin, which is included
+comprehensive example, try looking at the ``chroma`` plugin, which is included
 with beets.
 
 A plugin can extend three parts of the autotagger's process: the track distance
