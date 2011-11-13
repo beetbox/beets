@@ -580,6 +580,78 @@ class ManualIDTest(unittest.TestCase):
         out = commands.manual_id(False)
         self.assertEqual(out, AN_ID)
 
+class ShowChangeTest(unittest.TestCase):
+    def setUp(self):
+        self.io = _common.DummyIO()
+        self.io.install()
+    def tearDown(self):
+        self.io.restore()
+
+    def _items_and_info(self):
+        items = [_common.item()]
+        items[0].track = 1
+        items[0].path = '/path/to/file.mp3'
+        info = autotag.AlbumInfo(
+            'the album', 'album id', 'the artist', 'artist id', [
+                autotag.TrackInfo('the title', 'track id')
+        ])
+        return items, info
+
+    def test_null_change(self):
+        items, info = self._items_and_info()
+        commands.show_change('the artist', 'the album',
+                             items, info, 0.1, color=False)
+        msg = self.io.getoutput().lower()
+        self.assertTrue('similarity: 90' in msg)
+        self.assertTrue('tagging:' in msg)
+
+    def test_album_data_change(self):
+        items, info = self._items_and_info()
+        commands.show_change('another artist', 'another album',
+                             items, info, 0.1, color=False)
+        msg = self.io.getoutput().lower()
+        self.assertTrue('correcting tags from:' in msg)
+
+    def test_item_data_change(self):
+        items, info = self._items_and_info()
+        items[0].title = 'different'
+        commands.show_change('the artist', 'the album',
+                             items, info, 0.1, color=False)
+        msg = self.io.getoutput().lower()
+        self.assertTrue('different -> the title' in msg)
+
+    def test_item_data_change_with_unicode(self):
+        items, info = self._items_and_info()
+        items[0].title = u'caf\xe9'
+        commands.show_change('the artist', 'the album',
+                             items, info, 0.1, color=False)
+        msg = self.io.getoutput().lower()
+        self.assertTrue(u'caf\xe9 -> the title' in msg.decode('utf8'))
+
+    def test_album_data_change_with_unicode(self):
+        items, info = self._items_and_info()
+        commands.show_change(u'caf\xe9', u'another album',
+                             items, info, 0.1, color=False)
+        msg = self.io.getoutput().lower()
+        self.assertTrue('correcting tags from:' in msg)
+
+    def test_item_data_change_title_missing(self):
+        items, info = self._items_and_info()
+        items[0].title = ''
+        commands.show_change('the artist', 'the album',
+                             items, info, 0.1, color=False)
+        msg = self.io.getoutput().lower()
+        self.assertTrue('file.mp3 -> the title' in msg)
+
+    def test_item_data_change_title_missing_with_unicode_filename(self):
+        items, info = self._items_and_info()
+        items[0].title = ''
+        items[0].path = u'/path/to/caf\xe9.mp3'.encode('utf8')
+        commands.show_change('the artist', 'the album',
+                             items, info, 0.1, color=False)
+        msg = self.io.getoutput().lower()
+        self.assertTrue(u'caf\xe9.mp3 -> the title' in msg.decode('utf8'))
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

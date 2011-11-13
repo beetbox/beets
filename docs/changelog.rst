@@ -19,6 +19,7 @@ Changelog
   that looks like an MBID in the entered string. This means that full
   MusicBrainz URLs now work as IDs at the prompt. (Thanks to derwin.)
 * Fix a crash after using the "as Tracks" option during import.
+* Fix a Unicode error when tagging items with missing titles.
 
 .. _KraYmer: https://github.com/KraYmer
 .. _Next Generation Schema: http://musicbrainz.org/doc/XML_Web_Service/Version_2

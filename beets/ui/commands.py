@@ -29,7 +29,7 @@ from beets import autotag
 import beets.autotag.art
 from beets import plugins
 from beets import importer
-from beets.util import syspath, normpath, ancestry
+from beets.util import syspath, normpath, ancestry, displayable_path
 from beets import library
 
 # Global logger.
@@ -168,7 +168,7 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
 
         # Show filename (non-colorized) when title is not set.
         if not item.title.strip():
-            cur_title = os.path.basename(item.path)
+            cur_title = displayable_path(os.path.basename(item.path))
         
         if cur_title != new_title and cur_track != new_track:
             print_(u" * %s (%s) -> %s (%s)" % (

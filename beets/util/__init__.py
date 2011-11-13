@@ -150,8 +150,21 @@ def bytestring_path(path):
     encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
     try:
         return path.encode(encoding)
-    except UnicodeError:
+    except (UnicodeError, LookupError):
         return path.encode('utf8')
+
+def displayable_path(path):
+    """Attempts to decode a bytestring path to a unicode object for the
+    purpose of displaying it to the user.
+    """
+    if isinstance(path, unicode):
+        return path
+
+    encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
+    try:
+        return path.decode(encoding, 'ignore')
+    except (UnicodeError, LookupError):
+        return path.decode('utf8', 'ignore')
 
 def syspath(path, pathmod=None):
     """Convert a path for use by the operating system. In particular,
