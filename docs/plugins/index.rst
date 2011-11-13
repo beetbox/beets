@@ -42,6 +42,7 @@ disabled by default, but you can turn them on as described above:
    embedart
    web
    lastgenre
+   replaygain
 
 .. toctree::
    :hidden:
@@ -54,9 +55,6 @@ Other Plugins
 -------------
 
 Here are a few of the plugins written by the beets community:
-
-* `beets-replaygain`_ can analyze and store ReplayGain normalization
-  information.
 
 * `beets-lyrics`_ searches Web repositories for song lyrics and adds them to your files.
 

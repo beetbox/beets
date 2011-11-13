@@ -15,6 +15,9 @@ Changelog
 * The new :doc:`/plugins/lastgenre` automatically assigns genres to imported
   albums and items based on Last.fm tags and an internal whitelist. (Thanks to
   `KraYmer`_.)
+* The :doc:`/plugins/replaygain`, written by `Peter Brunner`_, has been merged
+  into the core beets distribution. Use it to analyze audio and adjust playback
+  levels in ReplayGain-aware music players.
 * When entering an ID manually during tagging, beets now searches for anything
   that looks like an MBID in the entered string. This means that full
   MusicBrainz URLs now work as IDs at the prompt. (Thanks to derwin.)
@@ -25,6 +28,7 @@ Changelog
 .. _Next Generation Schema: http://musicbrainz.org/doc/XML_Web_Service/Version_2
 .. _python-musicbrainz-ngs: https://github.com/alastair/python-musicbrainz-ngs
 .. _acoustid: http://acoustid.org/
+.. _Peter Brunner: https://github.com/Lugoues
 
 1.0b10 (September 22, 2011)
 ---------------------------
