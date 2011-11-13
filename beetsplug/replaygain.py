@@ -19,10 +19,6 @@
 #THE SOFTWARE.
 
 import logging
-import gobject
-import pygst
-pygst.require('0.10')
-import gst
 
 from rgain import rgcalc
 
@@ -32,17 +28,14 @@ from beets.mediafile import MediaFile, FileTypeError, UnreadableFileError
 from beets.util import syspath
 
 log = logging.getLogger('beets')
-log.addHandler(logging.StreamHandler())
 
 DEFAULT_REFERENCE_LOUDNESS = 89
-DEFAULT_MP3_FORMAT = 'fb2k'
 
 
 class ReplayGainPlugin(BeetsPlugin):
     '''Provides replay gain analysis for the Beets Music Manager'''
 
     ref_level = DEFAULT_REFERENCE_LOUDNESS
-    mp3_format = DEFAULT_MP3_FORMAT
     overwrite = False
 
     def __init__(self):
@@ -50,17 +43,6 @@ class ReplayGainPlugin(BeetsPlugin):
         self.register_listener('item_imported', self.item_imported)
 
     def configure(self, config):
-#disabled: this config value should not be set unless
-#          we are going to tag reference_loudness
-#        self.ref_level = ui.config_val(config,
-#                                       'replaygain',
-#                                       'reference_loundess',
-#                                       DEFAULT_REFERENCE_LOUDNESS,
-#                                       int)
-        self.mp3_format = ui.config_val(config,
-                                        'replaygain',
-                                        'mp3_format',
-                                        DEFAULT_MP3_FORMAT)
         self.overwrite = ui.config_val(config,
                                        'replaygain',
                                        'overwrite',
