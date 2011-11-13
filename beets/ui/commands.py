@@ -154,8 +154,8 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
 
     # Tracks.
     for i, (item, track_info) in enumerate(zip(items, info.tracks)):
-        cur_track = str(item.track)
-        new_track = str(i+1)
+        cur_track = unicode(item.track)
+        new_track = unicode(i+1)
         cur_title = item.title
         new_title = track_info.title
         
@@ -171,13 +171,13 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
             cur_title = os.path.basename(item.path)
         
         if cur_title != new_title and cur_track != new_track:
-            print_(" * %s (%s) -> %s (%s)" % (
+            print_(u" * %s (%s) -> %s (%s)" % (
                 cur_title, cur_track, new_title, new_track
             ))
         elif cur_title != new_title:
-            print_(" * %s -> %s" % (cur_title, new_title))
+            print_(u" * %s -> %s" % (cur_title, new_title))
         elif cur_track != new_track:
-            print_(" * %s (%s -> %s)" % (item.title, cur_track, new_track))
+            print_(u" * %s (%s -> %s)" % (item.title, cur_track, new_track))
 
 def show_item_change(item, info, dist, color):
     """Print out the change that would occur by tagging `item` with the
