@@ -32,9 +32,12 @@ def MakeReadingTest(path, correct_dict, field):
         def runTest(self):
             got = getattr(self.f, field)
             correct = correct_dict[field]
-            self.assertEqual(got, correct,
-                field + ' incorrect (expected ' + repr(correct) + ', got ' + \
-                repr(got) + ') when testing ' + os.path.basename(path))
+            if isinstance(correct, float):
+                self.assertAlmostEqual(got, correct)
+            else:
+                self.assertEqual(got, correct,
+                    field + ' incorrect (expected ' + repr(correct) + ', got ' +
+                    repr(got) + ') when testing ' + os.path.basename(path))
     return ReadingTest
 
 def MakeReadOnlyTest(path, field, value):
@@ -74,6 +77,8 @@ def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
                 self.value = correct_dict[field] + datetime.timedelta(42)
             elif type(correct_dict[field]) is str:
                 self.value = 'TestValue-' + str(field)
+            elif type(correct_dict[field]) is float:
+                self.value = 9.87
             else:
                 raise ValueError('unknown field type ' + \
                         str(type(correct_dict[field])))
@@ -91,10 +96,13 @@ def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
                 
                 # Make sure the modified field was changed correctly...
                 if readfield == field:
-                    self.assertEqual(got, self.value,
-                        field + ' modified incorrectly (changed to ' + \
-                        repr(self.value) + ' but read ' + repr(got) + \
-                        ') when testing ' + os.path.basename(path))
+                    if isinstance(self.value, float):
+                        self.assertAlmostEqual(got, self.value)
+                    else:
+                        self.assertEqual(got, self.value,
+                            field + ' modified incorrectly (changed to ' + \
+                            repr(self.value) + ' but read ' + repr(got) + \
+                            ') when testing ' + os.path.basename(path))
                 
                 # ... and that no other field was changed.
                 else:
@@ -117,11 +125,14 @@ def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
                     if field=='date' and readfield in ('year', 'month', 'day'):
                         correct = getattr(self.value, readfield)
                     
-                    self.assertEqual(got, correct,
-                        readfield + ' changed when it should not have'
-                        ' (expected ' + repr(correct) + ', got ' + \
-                        repr(got) + ') when modifying ' + field + ' in ' + \
-                        os.path.basename(path))
+                    if isinstance(correct, float):
+                        self.assertAlmostEqual(got, correct)
+                    else:
+                        self.assertEqual(got, correct,
+                            readfield + ' changed when it should not have'
+                            ' (expected ' + repr(correct) + ', got ' + \
+                            repr(got) + ') when modifying ' + field + ' in ' + \
+                            os.path.basename(path))
                 
         def tearDown(self):
             if os.path.exists(self.tpath):
@@ -156,6 +167,11 @@ correct_dicts = {
         'mb_artistid':'7cf0ea9d-86b9-4dad-ba9e-2355a64899ea',
         'art':        None,
         'label':      u'the label',
+
+        'rg_track_peak': 1.23,
+        'rg_track_gain': 1.34,
+        'rg_album_peak': 1.45,
+        'rg_album_gain': 1.56,
     },
 
     # Additional coverage for common cases when "total" fields are unset.

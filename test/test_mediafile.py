@@ -94,6 +94,18 @@ class InvalidValueToleranceTest(unittest.TestCase):
     def test_safe_cast_intstring_to_bool(self):
         self.assertEqual(_sc(bool, '5'), True)
 
+    def test_safe_cast_string_to_float(self):
+        self.assertAlmostEqual(_sc(float, '1.234'), 1.234)
+
+    def test_safe_cast_int_to_float(self):
+        self.assertAlmostEqual(_sc(float, 2), 2.0)
+
+    def test_safe_cast_string_with_cruft_to_float(self):
+        self.assertAlmostEqual(_sc(float, '1.234stuff'), 1.234)
+
+    def test_safe_cast_negative_string_to_float(self):
+        self.assertAlmostEqual(_sc(float, '-1.234'), -1.234)
+
 class SafetyTest(unittest.TestCase):
     def _exccheck(self, fn, exc, data=''):
         fn = os.path.join(_common.RSRC, fn)
