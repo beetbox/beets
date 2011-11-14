@@ -265,7 +265,7 @@ class ImportConfig(object):
                'quiet_fallback', 'copy', 'write', 'art', 'delete',
                'choose_match_func', 'should_resume_func', 'threaded',
                'autot', 'singletons', 'timid', 'choose_item_func',
-               'query', 'incremental']
+               'query', 'incremental', 'ignore']
     def __init__(self, **kwargs):
         for slot in self._fields:
             setattr(self, slot, kwargs[slot])
@@ -455,7 +455,7 @@ def read_tasks(config):
         # Produce paths under this directory.
         if progress:
             resume_dir = resume_dirs.get(toppath)
-        for path, items in autotag.albums_in_dir(toppath):
+        for path, items in autotag.albums_in_dir(toppath, config.ignore):
             # Skip according to progress.
             if progress and resume_dir:
                 # We're fast-forwarding to resume a previous tagging.

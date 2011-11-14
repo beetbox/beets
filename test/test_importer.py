@@ -103,6 +103,7 @@ class NonAutotaggedImportTest(unittest.TestCase):
                 timid = False,
                 query = None,
                 incremental = False,
+                ignore = [],
         )
 
         return paths

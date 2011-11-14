@@ -493,6 +493,46 @@ class PruneTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertExists(self.base)
         self.assertNotExists(self.sub)
 
+class WalkTest(unittest.TestCase):
+    def setUp(self):
+        self.base = os.path.join(_common.RSRC, 'testdir')
+        os.mkdir(self.base)
+        touch(os.path.join(self.base, 'y'))
+        touch(os.path.join(self.base, 'x'))
+        os.mkdir(os.path.join(self.base, 'd'))
+        touch(os.path.join(self.base, 'd', 'z'))
+    def tearDown(self):
+        if os.path.exists(self.base):
+            shutil.rmtree(self.base)
+
+    def test_sorted_files(self):
+        res = list(util.sorted_walk(self.base))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0],
+                         (self.base, ['d'], ['x', 'y']))
+        self.assertEqual(res[1],
+                         (os.path.join(self.base, 'd'), [], ['z']))
+
+    def test_ignore_file(self):
+        res = list(util.sorted_walk(self.base, ('x',)))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res[0],
+                         (self.base, ['d'], ['y']))
+        self.assertEqual(res[1],
+                         (os.path.join(self.base, 'd'), [], ['z']))
+
+    def test_ignore_directory(self):
+        res = list(util.sorted_walk(self.base, ('d',)))
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0],
+                         (self.base, [], ['x', 'y']))
+
+    def test_ignore_everything(self):
+        res = list(util.sorted_walk(self.base, ('*',)))
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0],
+                         (self.base, [], []))
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

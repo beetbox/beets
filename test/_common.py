@@ -88,6 +88,7 @@ def iconfig(lib, **kwargs):
         timid = False,
         query = None,
         incremental = False,
+        ignore = [],
     )
     for k, v in kwargs.items():
         setattr(config, k, v)

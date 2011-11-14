@@ -23,6 +23,9 @@ Changelog
 * When entering an ID manually during tagging, beets now searches for anything
   that looks like an MBID in the entered string. This means that full
   MusicBrainz URLs now work as IDs at the prompt. (Thanks to derwin.)
+* The importer now ignores certain "clutter" files like ``.AppleDouble``
+  directories and ``._*`` files. The list of ignored patterns is configurable
+  via the ``ignore`` setting; see :doc:`/reference/config`.
 * Fix a crash after using the "as Tracks" option during import.
 * Fix a Unicode error when tagging items with missing titles.
 

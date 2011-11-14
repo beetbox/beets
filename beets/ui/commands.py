@@ -97,6 +97,7 @@ DEFAULT_IMPORT_RESUME         = None # "ask"
 DEFAULT_IMPORT_INCREMENTAL    = False
 DEFAULT_THREADED              = True
 DEFAULT_COLOR                 = True
+DEFAULT_IGNORE                = ['.AppleDouble', '._*', '*~', '.DS_Store']
 
 VARIOUS_ARTISTS = u'Various Artists'
 
@@ -506,7 +507,7 @@ def choose_item(task, config):
 
 def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
                  color, delete, quiet, resume, quiet_fallback, singletons,
-                 timid, query, incremental):
+                 timid, query, incremental, ignore):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
@@ -568,6 +569,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
         choose_item_func = choose_item,
         query = query,
         incremental = incremental,
+        ignore = ignore,
     )
     
     # If we were logging, close the file.
@@ -641,6 +643,7 @@ def import_func(lib, config, opts, args):
     incremental = opts.incremental if opts.incremental is not None else \
         ui.config_val(config, 'beets', 'import_incremental',
             DEFAULT_IMPORT_INCREMENTAL, bool)
+    ignore = ui.config_val(config, 'beets', 'ignore', DEFAULT_IGNORE, list)
 
     # Resume has three options: yes, no, and "ask" (None).
     resume = opts.resume if opts.resume is not None else \
@@ -667,7 +670,7 @@ def import_func(lib, config, opts, args):
 
     import_files(lib, paths, copy, write, autot, logpath, art, threaded,
                  color, delete, quiet, resume, quiet_fallback, singletons,
-                 timid, query, incremental)
+                 timid, query, incremental, ignore)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 

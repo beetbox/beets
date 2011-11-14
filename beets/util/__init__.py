@@ -17,6 +17,7 @@ import os
 import sys
 import re
 import shutil
+import fnmatch
 from collections import defaultdict
 
 MAX_FILENAME_LENGTH = 200
@@ -47,9 +48,10 @@ def ancestry(path, pathmod=None):
             out.insert(0, path)
     return out
 
-def sorted_walk(path):
-    """Like os.walk, but yields things in sorted, breadth-first
-    order.
+def sorted_walk(path, ignore=()):
+    """Like ``os.walk``, but yields things in sorted, breadth-first
+    order.  Directory and file names matching any glob pattern in
+    ``ignore`` are skipped.
     """
     # Make sure the path isn't a Unicode string.
     path = bytestring_path(path)
@@ -58,6 +60,16 @@ def sorted_walk(path):
     dirs = []
     files = []
     for base in os.listdir(path):
+        # Skip ignored filenames.
+        skip = False
+        for pat in ignore:
+            if fnmatch.fnmatch(base, pat):
+                skip = True
+                break
+        if skip:
+            continue
+
+        # Add to output as either a file or a directory.
         cur = os.path.join(path, base)
         if os.path.isdir(syspath(cur)):
             dirs.append(base)

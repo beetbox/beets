@@ -53,6 +53,10 @@ must appear under the ``[beets]`` section header:
   By default, no log is written. This can be overridden with the ``-l`` flag to
   ``import``.
 
+* ``ignore``: a space-separated list of glob patterns specifying file and
+  directory names to be ignored when importing. Defaults to
+  ``.AppleDouble ._* *~ .DS_Store``.
+
 * ``art_filename``: when importing album art, the name of the file (without
   extension) where the cover art image should be placed. Defaults to ``cover``
   (i.e., images will be named ``cover.jpg`` or ``cover.png`` and placed in the
@@ -109,6 +113,7 @@ Here's an example file::
     import_quiet_fallback: skip
     import_timid: no
     import_log: beetslog.txt
+    ignore: .AppleDouble ._* *~ .DS_Store
     art_filename: albumart
     plugins: bpd
     pluginpath: ~/beets/myplugins
