@@ -24,11 +24,14 @@ class MBAlbumInfoTest(unittest.TestCase):
         release = {
             'title': 'ALBUM TITLE',
             'id': 'ALBUM ID',
-            'release-group': {'type': 'Album'},
+            'release-group': {
+                'type': 'Album',
+                'first-release-date': date_str,
+            },
             'artist-credit': [
                 {'artist': {'name': 'ARTIST NAME', 'id': 'ARTIST ID'}}
             ],
-            'date': date_str,
+            'date': '3001',
             'medium-list': [],
         }
         if tracks:

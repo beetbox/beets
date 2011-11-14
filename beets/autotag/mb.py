@@ -68,6 +68,16 @@ def track_info(recording):
 
     return info
 
+def _set_date_str(info, date_str):
+    """Given a (possibly partial) YYYY-MM-DD string and an AlbumInfo
+    object, set the object's release date fields appropriately.
+    """
+    if date_str:
+        date_parts = date_str.split('-')
+        for key in ('year', 'month', 'day'):
+            if date_parts:
+                setattr(info, key, int(date_parts.pop(0)))
+
 def album_info(release):
     """Takes a MusicBrainz release result dictionary and returns a beets
     AlbumInfo object containing the interesting data about that release.
@@ -94,13 +104,12 @@ def album_info(release):
         info.albumtype = reltype.lower()
 
     # Release date.
-    if 'date' in release: # XXX: when is this not included?
-        date_str = release['date']
-        if date_str:
-            date_parts = date_str.split('-')
-            for key in ('year', 'month', 'day'):
-                if date_parts:
-                    setattr(info, key, int(date_parts.pop(0)))
+    if 'first-release-date' in release['release-group']:
+        # Try earliest release date for the entire group first.
+        _set_date_str(info, release['release-group']['first-release-date'])
+    elif 'date' in release:
+        # Fall back to release-specific date.
+        _set_date_str(info, release['date'])
 
     # Label name.
     if release.get('label-info-list'):

@@ -18,6 +18,8 @@ Changelog
 * The :doc:`/plugins/replaygain`, written by `Peter Brunner`_, has been merged
   into the core beets distribution. Use it to analyze audio and adjust playback
   levels in ReplayGain-aware music players.
+* Albums are now tagged with their *original* release date rather than the date
+  of any reissue, remaster, "special edition", or the like.
 * When entering an ID manually during tagging, beets now searches for anything
   that looks like an MBID in the entered string. This means that full
   MusicBrainz URLs now work as IDs at the prompt. (Thanks to derwin.)
