@@ -36,7 +36,7 @@ SPECIAL_CASE_ARTISTS = {
 }
 
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
-                    'labels']
+                    'labels', 'artist-credits']
 TRACK_INCLUDES = ['artists']
 
 def _adapt_criteria(criteria):
