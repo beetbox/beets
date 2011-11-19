@@ -99,9 +99,10 @@ def album_info(release):
         info.asin = release['asin']
 
     # Release type not always populated.
-    reltype = release['release-group']['type']
-    if reltype:
-        info.albumtype = reltype.lower()
+    if 'type' in release['release-group']:
+        reltype = release['release-group']['type']
+        if reltype:
+            info.albumtype = reltype.lower()
 
     # Release date.
     if 'first-release-date' in release['release-group']:
