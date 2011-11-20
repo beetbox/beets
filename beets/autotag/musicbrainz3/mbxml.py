@@ -2,6 +2,9 @@ import xml.etree.ElementTree as ET
 import string
 import StringIO
 import logging
+
+_log = logging.getLogger('python-musicbrainz-ngs')
+
 try:
 	from ET import fixtag
 except:
@@ -52,7 +55,7 @@ def parse_elements(valid_els, element):
 		if t in valid_els:
 			result[t] = sub.text
 		else:
-			logging.debug("in <%s>, uncaught <%s>", fixtag(element.tag, NS_MAP)[0], t)
+			_log.debug("in <%s>, uncaught <%s>", fixtag(element.tag, NS_MAP)[0], t)
 	return result
 
 def parse_attributes(attributes, element):
@@ -67,7 +70,7 @@ def parse_attributes(attributes, element):
 		if attr in element.attrib:
 			result[attr] = element.attrib[attr]
 		else:
-			logging.debug("in <%s>, uncaught attribute %s", fixtag(element.tag, NS_MAP)[0], attr)
+			_log.debug("in <%s>, uncaught attribute %s", fixtag(element.tag, NS_MAP)[0], attr)
 	return result
 
 def parse_inner(inner_els, element):
@@ -97,7 +100,7 @@ def parse_inner(inner_els, element):
 			else:
 				result[t] = inner_result
 		else:
-			logging.debug("in <%s>, not delegating <%s>", fixtag(element.tag, NS_MAP)[0], t)
+			_log.debug("in <%s>, not delegating <%s>", fixtag(element.tag, NS_MAP)[0], t)
 	return result
 
 def parse_message(message):
