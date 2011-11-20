@@ -66,7 +66,10 @@ def acoustid_match(path, metadata=None):
         return None
     recording = result['recordings'][0]
     recording_id = recording['id']
-    release_ids = [rel['id'] for rel in recording['releases']]
+    if 'releases' in recording:
+        release_ids = [rel['id'] for rel in recording['releases']]
+    else:
+        release_ids = []
 
     return recording_id, release_ids
 
