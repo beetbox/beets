@@ -282,22 +282,21 @@ def choose_candidate(candidates, singleton, rec, color, timid,
                        (item.artist, item.title))
                 print_('Candidates:')
                 for i, (dist, info) in enumerate(candidates):
-                    print_('%i. %s - %s (%s)' % (i+1, info['artist'],
-                           info['title'], dist_string(dist, color)))
+                    print_('%i. %s - %s (%s)' % (i+1, info.artist,
+                           info.title, dist_string(dist, color)))
             else:
                 print_('Finding tags for album "%s - %s".' %
                        (cur_artist, cur_album))
                 print_('Candidates:')
                 for i, (dist, items, info) in enumerate(candidates):
-                    line = '%i. %s - %s' % (i+1, info['artist'],
-                                            info['album'])
+                    line = '%i. %s - %s' % (i+1, info.artist, info.album)
 
                     # Label and year disambiguation, if available.
                     label, year = None, None
-                    if 'label' in info:
-                        label = info['label']
-                    if 'year' in info and info['year']:
-                        year = unicode(info['year'])
+                    if info.label:
+                        label = info.label
+                    if info.year:
+                        year = unicode(info.year)
                     if label and year:
                         line += u' [%s, %s]' % (label, year)
                     elif label:
