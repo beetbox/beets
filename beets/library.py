@@ -66,6 +66,7 @@ ITEM_FIELDS = [
     ('length',      'real', False, True),
     ('bitrate',     'int',  False, True),
     ('format',      'text', False, True),
+    ('file_mtime',  'int', False, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
@@ -207,6 +208,9 @@ class Item(object):
         for key in ITEM_KEYS_WRITABLE:
             setattr(f, key, getattr(self, key))
         f.save()
+        
+        # Set file modified time, we now know when beets last changed this file
+        setattr(self, 'file_mtime', os.path.getmtime(syspath(self.path)))
 
 
     # Files themselves.
@@ -222,6 +226,9 @@ class Item(object):
             
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
+        
+        # Update file modified time in the library
+        setattr(self, 'file_mtime', os.path.getmtime(syspath(self.path)))
 
 
 # Library queries.

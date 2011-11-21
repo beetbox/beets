@@ -724,6 +724,10 @@ def update_items(lib, query, album, move, color, pretend):
             affected_albums.add(item.album_id)
             continue
 
+        # Did the item change since last checked?
+        if os.path.getmtime(syspath(item.path)) == getattr(item, 'file_mtime'):
+            continue
+            
         # Read new data.
         old_data = dict(item.record)
         item.read()
