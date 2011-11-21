@@ -761,7 +761,12 @@ def update_items(lib, query, album, move, color, pretend):
 
             lib.store(item)
             affected_albums.add(item.album_id)
-
+        else:
+            if not pretend:
+                # file_mtime is different, but no changes to the metadata.
+                # store the new mtime so we don't check this again in the future.
+                setattr(item, 'file_mtime', os.path.getmtime(syspath(item.path)))
+    
     # Skip album changes while pretending.
     if pretend:
         return
