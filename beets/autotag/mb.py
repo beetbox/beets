@@ -115,7 +115,7 @@ def album_info(release):
     # Label name.
     if release.get('label-info-list'):
         label_info = release['label-info-list'][0]
-        if label_info['label']:
+        if label_info.get('label'):
             label = label_info['label']['name']
             if label != '[no label]':
                 info.label = label
