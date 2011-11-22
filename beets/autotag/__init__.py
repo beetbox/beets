@@ -74,6 +74,8 @@ def apply_metadata(items, album_info):
     """
     for index, (item, track_info) in enumerate(zip(items, album_info.tracks)):
         # Album, artist, track count.
+        if not item:
+            continue
         if track_info.artist:
             item.artist = track_info.artist
         else:

@@ -365,7 +365,7 @@ def validate_candidate(items, tuple_dict, info):
         return
 
     # Make sure the album has the correct number of tracks.
-    if len(items) != len(info.tracks):
+    if len(items) > len(info.tracks):
         log.debug('Track count mismatch.')
         return
 
