@@ -94,6 +94,21 @@ class AlbumDistanceTest(unittest.TestCase):
         )
         self.assertEqual(match.distance(items, info), 0)
 
+    def test_incomplete_album(self):
+        items = []
+        items.append(self.item('one', 1))
+        items.append(self.item('three', 3))
+        info = AlbumInfo(
+            artist = 'some artist',
+            album = 'some album',
+            tracks = self.trackinfo(),
+            va = False,
+            album_id = None, artist_id = None,
+        )
+        self.assertNotEqual(match.distance(items, info), 0)
+        # Make sure the distance is not too great
+        self.assertTrue(match.distance(items, info) < 0.2)
+
     def test_global_artists_differ(self):
         items = []
         items.append(self.item('one', 1))
