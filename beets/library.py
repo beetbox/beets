@@ -66,7 +66,7 @@ ITEM_FIELDS = [
     ('length',      'real', False, True),
     ('bitrate',     'int',  False, True),
     ('format',      'text', False, True),
-    ('file_mtime',  'int', False, False),
+    ('mtime',       'int',  False, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
@@ -200,6 +200,10 @@ class Item(object):
         for key in ITEM_KEYS_META:
             setattr(self, key, getattr(f, key))
         self.path = read_path
+
+        # Database's mtime should now reflect the on-disk value.
+        if read_path == self.path:
+            self.mtime = self.current_mtime()
     
     def write(self):
         """Writes the item's metadata to the associated file.
@@ -208,9 +212,9 @@ class Item(object):
         for key in ITEM_KEYS_WRITABLE:
             setattr(f, key, getattr(self, key))
         f.save()
-        
-        # Set file modified time, we now know when beets last changed this file
-        setattr(self, 'file_mtime', os.path.getmtime(syspath(self.path)))
+
+        # The file has a new mtime.
+        self.mtime = self.current_mtime()
 
 
     # Files themselves.
@@ -226,9 +230,15 @@ class Item(object):
             
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
-        
-        # Update file modified time in the library
-        setattr(self, 'file_mtime', os.path.getmtime(syspath(self.path)))
+
+        # Update mtime to reflect the new file.
+        self.mtime = self.current_mtime()
+
+    def current_mtime(self):
+        """Returns the current mtime of the file, rounded to the nearest
+        integer.
+        """
+        return int(os.path.getmtime(syspath(self.path)))
 
 
 # Library queries.

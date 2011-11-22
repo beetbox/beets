@@ -26,6 +26,8 @@ Changelog
 * The importer now ignores certain "clutter" files like ``.AppleDouble``
   directories and ``._*`` files. The list of ignored patterns is configurable
   via the ``ignore`` setting; see :doc:`/reference/config`.
+* The database now keeps track of files' modification times so that, during
+  an ``update``, unmodified files can be skipped. (Thanks to Jos van der Til.)
 * Fix a crash after using the "as Tracks" option during import.
 * Fix a Unicode error when tagging items with missing titles.
 

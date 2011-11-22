@@ -725,9 +725,11 @@ def update_items(lib, query, album, move, color, pretend):
             continue
 
         # Did the item change since last checked?
-        if os.path.getmtime(syspath(item.path)) == getattr(item, 'file_mtime'):
+        if item.current_mtime() <= item.mtime:
+            log.debug(u'skipping %s because mtime is up to date (%i)' %
+                      (item.path, item.mtime))
             continue
-            
+
         # Read new data.
         old_data = dict(item.record)
         item.read()
@@ -761,12 +763,13 @@ def update_items(lib, query, album, move, color, pretend):
 
             lib.store(item)
             affected_albums.add(item.album_id)
-        else:
-            if not pretend:
-                # file_mtime is different, but no changes to the metadata.
-                # store the new mtime so we don't check this again in the future.
-                setattr(item, 'file_mtime', os.path.getmtime(syspath(item.path)))
-    
+        elif not pretend:
+            # The file's mtime was different, but there were no changes
+            # to the metadata. Store the new mtime, which is set in the
+            # call to read(), so we don't check this again in the
+            # future.
+            lib.store(item)
+
     # Skip album changes while pretending.
     if pretend:
         return
