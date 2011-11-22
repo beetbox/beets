@@ -174,8 +174,9 @@ def order_items(items, trackinfo):
     information. This always produces a result if the numbers of tracks
     match.
     """
-    # Make sure lengths match.
-    if len(items) != len(trackinfo):
+    # Make sure lengths match: If there is less items, it might just be that
+    # there is some tracks missing.
+    if len(items) > len(trackinfo):
         return None
 
     # Construct the cost matrix.
@@ -190,7 +191,7 @@ def order_items(items, trackinfo):
     matching = Munkres().compute(costs)
 
     # Order items based on the matching.
-    ordered_items = [None]*len(items)
+    ordered_items = [None]*len(trackinfo)
     for cur_idx, canon_idx in matching:
         ordered_items[canon_idx] = items[cur_idx]
     return ordered_items

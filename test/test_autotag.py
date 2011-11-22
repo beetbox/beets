@@ -251,10 +251,23 @@ class OrderingTest(unittest.TestCase):
         items = []
         items.append(self.item('one', 1))
         items.append(self.item('two', 2))
+        items.append(self.item('three', 3))
+        items.append(self.item('four',4))
         trackinfo = []
         trackinfo.append(TrackInfo('one', None))
         ordered = match.order_items(items, trackinfo)
         self.assertEqual(ordered, None)
+
+    def test_order_works_with_missing_tracks(self)
+        items = []
+        items.append(self.item('one', 1))
+        items.append(self.item('two', 2))
+        trackinfo = []
+        trackinfo.append(TrackInfo('one', None))
+        ordered = match.order_items(items, trackinfo)
+        self.assertEqual(ordered[0].title, 'one')
+        self.assertEqual(ordered[1].title, 'two')
+        self.assertEqual(ordered[2], None)
 
     def test_order_corrects_when_track_names_are_entirely_wrong(self):
         # A real-world test case contributed by a user.
