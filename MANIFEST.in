@@ -1,9 +1,14 @@
-# Exclude tests from the source distribution. They require resources
-# that make the distribution heavier than it needs to be.
+# Include tests (but avoid including *.pyc, etc.)
 prune test
+recursive-include test/rsrc *
+include test/*.py
 
-# Include documentation.
+# Include relevant text files.
 include LICENSE NEWS README.rst
+
+# Include the Sphinx documentation.
+recursive-include docs *.rst *.py Makefile *.png
+prune docs/_build
 
 # Resources for web plugin.
 recursive-include beetsplug/web/templates *
