@@ -2,9 +2,6 @@ import xml.etree.ElementTree as ET
 import string
 import StringIO
 import logging
-
-_log = logging.getLogger('python-musicbrainz-ngs')
-
 try:
 	from ET import fixtag
 except:
@@ -28,6 +25,7 @@ except:
 		return "%s:%s" % (prefix, tag), xmlns
 
 NS_MAP = {"http://musicbrainz.org/ns/mmd-2.0#": "ws2"}
+_log = logging.getLogger("python-musicbrainz-ngs")
 
 def make_artist_credit(artists):
 	names = []
@@ -158,10 +156,8 @@ def parse_collection_release_list(rl):
 
 def parse_artist_lifespan(lifespan):
 	parts = parse_elements(["begin", "end"], lifespan)
-	beginval = parts.get("begin", "")
-	endval = parts.get("end", "")
-		
-	return (beginval, endval)
+
+	return parts
 
 def parse_artist_list(al):
 	return [parse_artist(a) for a in al]

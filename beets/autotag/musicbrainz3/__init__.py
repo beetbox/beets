@@ -1,8 +1,3 @@
-# This is a copy of changeset e60b5af77 from the python-musicbrainz-ngs
-# project:
-# https://github.com/alastair/python-musicbrainz-ngs/
-# MIT license; by Alastair Porter and Adrian Sampson
-
 import urlparse
 import urllib2
 import urllib
@@ -12,6 +7,7 @@ import time
 import logging
 import httplib
 import xml.etree.ElementTree as etree
+from xml.parsers import expat
 
 from . import mbxml
 
@@ -378,6 +374,13 @@ def _safe_open(opener, req, body=None, max_retries=8, retry_delay_delta=2.0):
 	# Out of retries!
 	raise NetworkError("retried %i times" % max_retries, last_exc)
 
+# Get the XML parsing exceptions to catch. The behavior chnaged with Python 2.7
+# and ElementTree 1.3.
+if hasattr(etree, 'ParseError'):
+	ETREE_EXCEPTIONS = (etree.ParseError, expat.ExpatError)
+else:
+	ETREE_EXCEPTIONS = (expat.ExpatError)
+
 @_rate_limit
 def _mb_request(path, method='GET', auth_required=False, client_required=False,
 				args=None, data=None, body=None):
@@ -395,6 +398,11 @@ def _mb_request(path, method='GET', auth_required=False, client_required=False,
 						 "musicbrainz.set_client(\"client-version\")")
 	elif client_required:
 		args["client"] = _client
+
+	# Encode Unicode arguments using UTF-8.
+	for key, value in args.items():
+		if isinstance(value, unicode):
+			args[key] = value.encode('utf8')
 
 	# Construct the full URL for the request, including hostname and
 	# query string.
