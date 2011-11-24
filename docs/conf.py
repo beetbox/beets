@@ -33,7 +33,7 @@ latex_documents = [
 # -- Options for manual page output --------------------------------------------
 
 man_pages = [
-    ('reference/cli', 'beet', u'beets command-line interface',
+    ('reference/cli', 'beet', u'music tagger and library organizer',
      [AUTHOR], 1),
     ('reference/config', 'beetsconfig', u'beets configuration file',
      [AUTHOR], 5),

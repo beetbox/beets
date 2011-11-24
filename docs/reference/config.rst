@@ -2,80 +2,99 @@
 ============
 
 The ``beet`` command reads configuration information from ``~/.beetsconfig``.
-The file is in INI format, and the following options are available, all of which
-must appear under the ``[beets]`` section header:
+The file is in INI format.
 
-* ``library``: path to the beets library file. Defaults to
-  ``~/.beetsmusic.blb``.
+Options
+-------
 
-* ``directory``: the directory to which files will be copied/moved when adding
-  them to the library. Defaults to ``~/Music``.
+These options are available, all of which must appear under the ``[beets]``
+section header:
 
-* ``import_copy``: either ``yes`` or ``no``, indicating whether to copy files
-  into the library directory when using ``beet import``. Defaults to ``yes``.
-  Can be overridden with the ``-c`` and ``-C`` command-line options.
+``library``
+    Path to the beets library file. Defaults to ``~/.beetsmusic.blb``.
 
-* ``import_write``: either ``yes`` or ``no``, controlling whether metadata
-  (e.g., ID3) tags are written to files when using ``beet import``. Defaults to
-  ``yes``. The ``-w`` and ``-W`` command-line options override this setting.
+``directory``
+    The directory to which files will be copied/moved when adding them to the
+    library. Defaults to ``~/Music``.
 
-* ``import_delete``: either ``yes`` or ``no``. When enabled in conjunction with
-  ``import_copy``, deletes original files after they are copied into your
-  library. This might be useful, for example, if you're low on disk space -- but
-  it's risky! Defaults to ``no``.
+``import_copy``
+    Either ``yes`` or ``no``, indicating whether to copy files into the library
+    directory when using ``beet import``. Defaults to ``yes``.  Can be
+    overridden with the ``-c`` and ``-C`` command-line options.
 
-* ``import_resume``: either ``yes``, ``no``, or ``ask``. Controls whether
-  interrupted imports should be resumed. "Yes" means that imports are always
-  resumed when possible; "no" means resuming is disabled entirely; "ask" (the
-  default) means that the user should be prompted when resuming is possible. The
-  ``-p`` and ``-P`` flags correspond to the "yes" and "no" settings and override
-  this option.
+``import_write``
+    Either ``yes`` or ``no``, controlling whether metadata (e.g., ID3) tags are
+    written to files when using ``beet import``. Defaults to ``yes``. The ``-w``
+    and ``-W`` command-line options override this setting.
 
-* ``import_incremental``: either ``yes`` or ``no``, controlling whether imported
-  directories are recorded and whether these recorded directories are skipped.
-  This corresponds to the ``-i`` flag to ``beet import``.
+``import_delete``
+    Either ``yes`` or ``no``. When enabled in conjunction with ``import_copy``,
+    deletes original files after they are copied into your library. This might
+    be useful, for example, if you're low on disk space -- but it's risky!
+    Defaults to ``no``.
 
-* ``import_art``: either ``yes`` or ``no``, indicating whether the autotagger
-  should attempt to find and download album cover art for the files it imports.
-  Defaults to ``yes``. The ``-r`` and ``-R`` command-line options override this
-  setting.
+``import_resume``
+    Either ``yes``, ``no``, or ``ask``. Controls whether interrupted imports
+    should be resumed. "Yes" means that imports are always resumed when
+    possible; "no" means resuming is disabled entirely; "ask" (the default)
+    means that the user should be prompted when resuming is possible. The ``-p``
+    and ``-P`` flags correspond to the "yes" and "no" settings and override this
+    option.
 
-* ``import_quiet_fallback``: either ``skip`` (default) or ``asis``, specifying
-  what should happen in quiet mode (see the ``-q`` flag to ``import``, above)
-  when there is no strong recommendation.
+``import_incremental``
+    Either ``yes`` or ``no``, controlling whether imported directories are
+    recorded and whether these recorded directories are skipped.  This
+    corresponds to the ``-i`` flag to ``beet import``.
 
-* ``import_timid``: either ``yes`` or ``no``, controlling whether the importer
-  runs in *timid* mode, in which it asks for confirmation on every autotagging
-  match, even the ones that seem very close. Defaults to ``no``. The ``-t``
-  command-line flag controls the same setting.
+``import_art``
+    Either ``yes`` or ``no``, indicating whether the autotagger should attempt
+    to find and download album cover art for the files it imports.  Defaults to
+    ``yes``. The ``-r`` and ``-R`` command-line options override this setting.
 
-* ``import_log``: specifies a filename where the importer's log should be kept.
-  By default, no log is written. This can be overridden with the ``-l`` flag to
-  ``import``.
+``import_quiet_fallback``
+    Either ``skip`` (default) or ``asis``, specifying what should happen in
+    quiet mode (see the ``-q`` flag to ``import``, above) when there is no
+    strong recommendation.
 
-* ``ignore``: a space-separated list of glob patterns specifying file and
-  directory names to be ignored when importing. Defaults to
-  ``.AppleDouble ._* *~ .DS_Store``.
+``import_timid``
+    Either ``yes`` or ``no``, controlling whether the importer runs in *timid*
+    mode, in which it asks for confirmation on every autotagging match, even the
+    ones that seem very close. Defaults to ``no``. The ``-t`` command-line flag
+    controls the same setting.
 
-* ``art_filename``: when importing album art, the name of the file (without
-  extension) where the cover art image should be placed. Defaults to ``cover``
-  (i.e., images will be named ``cover.jpg`` or ``cover.png`` and placed in the
-  album's directory).
+``import_log``
+    Specifies a filename where the importer's log should be kept.  By default,
+    no log is written. This can be overridden with the ``-l`` flag to
+    ``import``.
 
-* ``plugins``: a space-separated list of plugin module names to load. For
-  instance, beets includes the [BPD BPD] plugin for playing music.
+``ignore``
+    A space-separated list of glob patterns specifying file and directory names
+    to be ignored when importing. Defaults to ``.AppleDouble ._* *~ .DS_Store``.
 
-* ``pluginpath``: a colon-separated list of directories to search for plugins.
-  These paths are just added to ``sys.path`` before the plugins are loaded. The
-  plugins still have to be contained in a ``beetsplug`` namespace package.
+``art_filename``
+    When importing album art, the name of the file (without extension) where the
+    cover art image should be placed. Defaults to ``cover`` (i.e., images will
+    be named ``cover.jpg`` or ``cover.png`` and placed in the album's
+    directory).
 
-* ``threaded``: either ``yes`` or ``no``, indicating whether the autotagger
-  should use multiple threads. This makes things faster but may behave
-  strangely. Defaults to ``yes``.
+``plugins``
+    A space-separated list of plugin module names to load. For instance, beets
+    includes the BPD plugin for playing music.
 
-* ``color``: either ``yes`` or ``no``; whether to use color in console output
-  (currently only in the ``import`` command). Turn this off if your terminal
-  doesn't support ANSI colors.
+``pluginpath``
+    A colon-separated list of directories to search for plugins.  These paths
+    are just added to ``sys.path`` before the plugins are loaded. The plugins
+    still have to be contained in a ``beetsplug`` namespace package.
+
+``threaded``
+    Either ``yes`` or ``no``, indicating whether the autotagger should use
+    multiple threads. This makes things faster but may behave strangely.
+    Defaults to ``yes``.
+
+``color``
+    Either ``yes`` or ``no``; whether to use color in console output (currently
+    only in the ``import`` command). Turn this off if your terminal doesn't
+    support ANSI colors.
 
 You can also configure the directory hierarchy beets uses to store music. That
 uses the ``[paths]`` section instead of the ``[beets]`` section. Each string is
@@ -99,6 +118,9 @@ will be well-organized. (For more about these format strings, see
     http://docs.python.org/library/string.html#template-strings 
 .. _MusicBrainz release type:
     http://wiki.musicbrainz.org/ReleaseType 
+
+Example
+-------
 
 Here's an example file::
 
@@ -134,6 +156,18 @@ Here's an example file::
 (That ``[bpd]`` section configures the optional :doc:`BPD </plugins/bpd>`
 plugin.)
 
-If you want to store your ``.beetsconfig`` file somewhere else for whatever
-reason, you can specify its path by setting the ``BEETSCONFIG`` environment
-variable.
+Location
+--------
+
+The configuration file is typically located at ``$HOME/.beetsconfig``. If you
+want to store your ``.beetsconfig`` file somewhere else for whatever reason, you
+can specify its path by setting the ``BEETSCONFIG`` environment variable.
+
+.. only:: man
+
+    See Also
+    --------
+
+    ``http://beets.readthedocs.org/``
+
+    :manpage:`beet(1)`

@@ -1,18 +1,31 @@
 Command-Line Interface
 ======================
 
-**beet** is the command-line interface to beets.
+.. only:: man
 
-You invoke beets by specifying a *command*, like so::
+    SYNOPSIS
+    --------
 
-    beet COMMAND [ARGS...]
+    | **beet** [*args*...] *command* [*args*...]
+    | **beet help** *command*
 
-The rest of this document describes the available commands. If you ever need a
-quick list of what's available, just type ``beet help`` or ``beet help COMMAND``
-or help with a specific command.
+.. only:: html
+
+    **beet** is the command-line interface to beets.
+
+    You invoke beets by specifying a *command*, like so::
+
+        beet COMMAND [ARGS...]
+
+    The rest of this document describes the available commands. If you ever need
+    a quick list of what's available, just type ``beet help`` or ``beet help
+    COMMAND`` or help with a specific command.
+
+Commands
+--------
 
 import
-------
+``````
 ::
 
     beet import [-CWAPRqst] [-l LOGPATH] DIR...
@@ -77,34 +90,37 @@ right now; this is something we need to work on. Read the
   instead want to import individual, non-album tracks, use the *singleton*
   mode by supplying the ``-s`` option.
 
-Reimporting
-^^^^^^^^^^^
+.. only:: html
 
-The ``import`` command can also be used to "reimport" music that you've already
-added to your library. This is useful for updating tags as they are fixed in the
-MusicBrainz database, for when you change your mind about some selections you
-made during the initial import, or if you prefer to import everything "as-is"
-and then correct tags later.
+    Reimporting
+    ^^^^^^^^^^^
 
-Just point the ``beet import`` command at a directory of files that are already
-catalogged in your library. Beets will automatically detect this situation and
-avoid duplicating any items. In this situation, the "copy files" option
-(``-c``/``-C`` on the command line or ``import_copy`` in the config file) has
-slightly different behavior: it causes files to be *moved*, rather than
-duplicated, if they're already in your library. That is, your directory
-structure will be updated to reflect the new tags if copying is enabled; you
-never end up with two copies of the file. That means that the "delete files"
-(``-d`` or ``import_delete``) option is ignored when re-importing as well.
+    The ``import`` command can also be used to "reimport" music that you've
+    already added to your library. This is useful for updating tags as they are
+    fixed in the MusicBrainz database, for when you change your mind about some
+    selections you made during the initial import, or if you prefer to import
+    everything "as-is" and then correct tags later.
 
-The ``-L`` (``--library``) flag is also useful for retagging. Instead of listing
-paths you want to import on the command line, specify a :doc:`query string
-<query>` that matches items from your library. In this case, the ``-s``
-(singleton) flag controls whether the query matches individual items or full
-albums. If you want to retag your whole library, just supply a null query, which
-matches everything: ``beet import -L``
+    Just point the ``beet import`` command at a directory of files that are
+    already catalogged in your library. Beets will automatically detect this
+    situation and avoid duplicating any items. In this situation, the "copy
+    files" option (``-c``/``-C`` on the command line or ``import_copy`` in the
+    config file) has slightly different behavior: it causes files to be *moved*,
+    rather than duplicated, if they're already in your library. That is, your
+    directory structure will be updated to reflect the new tags if copying is
+    enabled; you never end up with two copies of the file. That means that the
+    "delete files" (``-d`` or ``import_delete``) option is ignored when
+    re-importing as well.
+
+    The ``-L`` (``--library``) flag is also useful for retagging. Instead of
+    listing paths you want to import on the command line, specify a :doc:`query
+    string <query>` that matches items from your library. In this case, the
+    ``-s`` (singleton) flag controls whether the query matches individual items
+    or full albums. If you want to retag your whole library, just supply a null
+    query, which matches everything: ``beet import -L``
 
 list
-----
+````
 ::
 
     beet list [-ap] QUERY
@@ -122,7 +138,7 @@ commands (such as `xargs`_).
 .. _xargs: http://en.wikipedia.org/wiki/Xargs
 
 remove
-------
+``````
 ::
 
     beet remove [-ad] QUERY
@@ -135,7 +151,7 @@ By default, this just removes entries from the library database; it doesn't
 touch the files on disk. To actually delete the files, use ``beet remove -d``.
 
 modify
-------
+``````
 ::
 
     beet modify [-MWay] QUERY FIELD=VALUE...
@@ -154,7 +170,7 @@ Finally, this command politely asks for your permission before making any
 changes, but you can skip that prompt with the ``-y`` switch.
 
 move
-----
+````
 ::
 
     beet move [-ca] [-d DIR] QUERY
@@ -168,7 +184,7 @@ anywhere in your filesystem. The ``-c`` option copies files instead of moving
 them. As with other commands, the ``-a`` option matches albums instead of items.
 
 update
-------
+``````
 ::
 
     beet update [-aM] QUERY
@@ -185,10 +201,19 @@ will show you all the proposed changes but won't actually change anything on
 disk.
 
 stats
------
+`````
 ::
 
     beet stats [QUERY]
 
 Show some statistics on your entire library (if you don't provide a
 :doc:`query <query>` or the matched items (if you do).
+
+.. only:: man
+
+    See Also
+    --------
+
+    ``http://beets.readthedocs.org/``
+
+    :manpage:`beetsconfig(5)`
