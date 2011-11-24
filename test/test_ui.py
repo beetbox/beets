@@ -296,8 +296,11 @@ class UpdateTest(unittest.TestCase, _common.ExtraAsserts):
         self.io.restore()
         shutil.rmtree(self.libdir)
 
-    def _update(self, query=(), album=False, move=False):
+    def _update(self, query=(), album=False, move=False, reset_mtime=True):
         self.io.addinput('y')
+        if reset_mtime:
+            self.i.mtime = 0
+            self.lib.store(self.i)
         commands.update_items(self.lib, query, album, move, True, False)
 
     def test_delete_removes_item(self):
@@ -359,6 +362,19 @@ class UpdateTest(unittest.TestCase, _common.ExtraAsserts):
         self._update(move=True)
         album = self.lib.albums()[0]
         self.assertNotEqual(artpath, album.artpath)
+
+    def test_mtime_match_skips_update(self):
+        mf = MediaFile(self.i.path)
+        mf.title = 'differentTitle'
+        mf.save()
+
+        # Make in-memory mtime match on-disk mtime.
+        self.i.mtime = os.path.getmtime(self.i.path)
+        self.lib.store(self.i)
+
+        self._update(reset_mtime=False)
+        item = self.lib.items().next()
+        self.assertEqual(item.title, 'full')
 
 class PrintTest(unittest.TestCase):
     def setUp(self):
