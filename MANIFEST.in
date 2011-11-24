@@ -4,7 +4,7 @@ recursive-include test/rsrc *
 include test/*.py
 
 # Include relevant text files.
-include LICENSE NEWS README.rst
+include LICENSE README.rst
 
 # Include the Sphinx documentation.
 recursive-include docs *.rst *.py Makefile *.png
@@ -16,3 +16,6 @@ recursive-include beetsplug/web/static *
 
 # And for the lastgenre plugin.
 include beetsplug/lastgenre/genres.txt
+
+# Exclude junk.
+global-exclude .DS_Store
