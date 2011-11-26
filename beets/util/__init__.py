@@ -248,7 +248,7 @@ def move(path, dest, replace=False, pathmod=None):
 # Note: POSIX actually supports \ and : -- I just think they're
 # a pain. And ? has caused problems for some.
 CHAR_REPLACE = [
-    (re.compile(r'[\\/\?]|^\.'), '_'),
+    (re.compile(r'[\\/\?"]|^\.'), '_'),
     (re.compile(r':'), '-'),
 ]
 CHAR_REPLACE_WINDOWS = re.compile(r'["\*<>\|]|^\.|\.$| +$'), '_'
