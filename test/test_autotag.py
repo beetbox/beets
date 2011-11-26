@@ -197,6 +197,43 @@ class AlbumsInDirTest(unittest.TestCase):
             else:
                 self.assertEqual(len(album), 1)
 
+class MultiDiscAlbumsInDirTest(unittest.TestCase):
+    def setUp(self):
+        self.base = os.path.abspath(os.path.join(_common.RSRC, 'tempdir'))
+        os.mkdir(self.base)
+        
+        os.mkdir(os.path.join(self.base, 'album1'))
+        os.mkdir(os.path.join(self.base, 'album1', 'disc 1'))
+        os.mkdir(os.path.join(self.base, 'album1', 'disc 2'))
+
+        os.mkdir(os.path.join(self.base, 'dir2'))
+        os.mkdir(os.path.join(self.base, 'dir2', 'disc 1'))
+        os.mkdir(os.path.join(self.base, 'dir2', 'something'))
+        
+        _mkmp3(os.path.join(self.base, 'album1', 'disc 1', 'song1.mp3'))
+        _mkmp3(os.path.join(self.base, 'album1', 'disc 2', 'song2.mp3'))
+        _mkmp3(os.path.join(self.base, 'album1', 'disc 2', 'song3.mp3'))
+
+        _mkmp3(os.path.join(self.base, 'dir2', 'disc 1', 'song4.mp3'))
+        _mkmp3(os.path.join(self.base, 'dir2', 'something', 'song5.mp3'))
+
+    def tearDown(self):
+        shutil.rmtree(self.base)
+
+    def test_coalesce_multi_disc_album(self):
+        albums = list(autotag.albums_in_dir(self.base))
+        self.assertEquals(len(albums), 3)
+        root, items = albums[0]
+        self.assertEquals(root, os.path.join(self.base, 'album1'))
+        self.assertEquals(len(items), 3)
+
+    def test_separate_red_herring(self):
+        albums = list(autotag.albums_in_dir(self.base))
+        root, items = albums[1]
+        self.assertEquals(root, os.path.join(self.base, 'dir2', 'disc 1'))
+        root, items = albums[2]
+        self.assertEquals(root, os.path.join(self.base, 'dir2', 'something'))
+
 class OrderingTest(unittest.TestCase):
     def item(self, title, track):
         return Item({
