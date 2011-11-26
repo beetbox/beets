@@ -5,6 +5,9 @@ include test/*.py
 
 # Include relevant text files.
 include LICENSE README.rst
+# And generated manpages.
+include man/beet.1
+include man/beetsconfig.5
 
 # Include the Sphinx documentation.
 recursive-include docs *.rst *.py Makefile *.png

@@ -15,11 +15,28 @@
 # included in all copies or substantial portions of the Software.
 
 import os
+import sys
+import subprocess
+import shutil
 from setuptools import setup
 
 def _read(fn):
     path = os.path.join(os.path.dirname(__file__), fn)
     return open(path).read()
+
+# Build manpages if we're making a source distribution tarball.
+if 'sdist' in sys.argv:
+    # Go into the docs directory and build the manpage.
+    docdir = os.path.join(os.path.dirname(__file__), 'docs')
+    curdir = os.getcwd()
+    os.chdir(docdir)
+    try:
+        subprocess.check_call(['make', 'man'])
+    finally:
+        os.chdir(curdir)
+
+    # Copy resulting manpages.
+    shutil.copytree(os.path.join(docdir, '_build', 'man'), 'man')
 
 setup(name='beets',
       version='1.0b11',
