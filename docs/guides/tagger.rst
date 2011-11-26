@@ -44,7 +44,14 @@ all of these limitations.
   arbitrarily deep (like ``music/2010/hiphop/seattle/freshespresso/glamour``),
   but any directory with music files in it is interpreted as a separate album.
   This means that your flat directory of six thousand uncategorized MP3s won't
-  currently be autotaggable. This will change eventually.
+  currently be autotaggable. (This will change eventually.)
+
+  There is one exception to this rule: directories that look like separate parts
+  of a *multi-disc album* are tagged together as a single release. This
+  situation is detected by looking at the names of directories. If one directory
+  has sub-directories with, for example, "disc 1" and "disc 2" in their names,
+  they get lumped together as a single album. The marker words for this feature
+  are "part", "volume", "vol.", "disc", and "CD".
 
 * The music may have bad tags, but it's not completely untagged. (This is
   actually not a hard-and-fast rule: using the *E* option described below, it's
@@ -54,10 +61,6 @@ all of these limitations.
   acoustic fingerprinting to find information for arbitrary audio. Install that
   plugin if you're willing to spend a little more CPU power to get tags for
   unidentified albums.
-
-* There isn't currently a good solution for multi-disc albums. Currently, every
-  disc is treated as a separate release, so you'll see "69 Love Songs (disc 1)",
-  "69 Love Songs (disc 2)" and such. We should be more flexible about this.
 
 * Currently MP3, AAC, FLAC, Ogg Vorbis, Monkey's Audio, WavPack, and Musepack
   files are supported. (Do you use some other format?

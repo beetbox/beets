@@ -8,6 +8,11 @@ Changelog
   (NGS) service via `python-musicbrainz-ngs`_. The bindings are included with
   this version of beets, but a future version will make them an external
   dependency.
+* The importer now detects **multi-disc albums** and tags them together. Using a
+  heuristic based on the names of directories, certain structures are classified
+  as multi-disc albums: for example, if a directory contains subdirectories
+  labeled "disc 1" and "disc 2", these subdirectories will be coalesced into a
+  single album for tagging.
 * The new :doc:`/plugins/chroma` uses the `Acoustid`_ open-source acoustic
   fingerprinting service. This replaces the old ``lastid`` plugin, which used
   Last.fm fingerprinting and is now deprecated. Fingerprinting with this library
