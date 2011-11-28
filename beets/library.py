@@ -510,11 +510,6 @@ class ResultIterator(object):
         row = self.rowiter.next() # May raise StopIteration.
         return Item(row)
 
-    def close(self):
-        # No longer used. Previously, this method would close the
-        # cursor, but this is not necessary with the eager design.
-        pass
-
 
 # An abstract library.
 
@@ -1032,8 +1027,6 @@ class Library(BaseLibrary):
             return it.next()
         except StopIteration:
             return None
-        finally:
-            it.close()
     
     def get_album(self, item_or_id):
         """Given an album ID or an item associated with an album,

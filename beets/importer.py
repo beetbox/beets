@@ -137,15 +137,11 @@ def _item_duplicate_check(lib, task, recent=None):
         recent.add((artist, title))
 
     # Check the library.
-    item_iter = lib.items(artist=artist, title=title)
-    try:
-        for other_item in item_iter:
-            # Existing items not considered duplicates.
-            if other_item.path == task.item.path:
-                continue
-            return True
-    finally:
-        item_iter.close()
+    for other_item in lib.items(artist=artist, title=title):
+        # Existing items not considered duplicates.
+        if other_item.path == task.item.path:
+            continue
+        return True
     return False
 
 def _infer_album_fields(task):
@@ -489,14 +485,12 @@ def query_tasks(config):
 
     if config.singletons:
         # Search for items.
-        items = list(lib.items(config.query))
-        for item in items:
+        for item in lib.items(config.query):
             yield ImportTask.item_task(item)
 
     else:
         # Search for albums.
-        albums = lib.albums(config.query)
-        for album in albums:
+        for album in lib.albums(config.query):
             log.debug('yielding album %i: %s - %s' %
                       (album.id, album.albumartist, album.album))
             items = list(album.items())
@@ -613,9 +607,7 @@ def apply_choices(config):
         # last item is removed.
         replaced_items = defaultdict(list)
         for item in items:
-            dup_items = list(lib.items(
-                            library.MatchQuery('path', item.path)
-                        ))
+            dup_items = lib.items(library.MatchQuery('path', item.path))
             for dup_item in dup_items:
                 replaced_items[item].append(dup_item)
                 log.debug('replacing item %i: %s' % (dup_item.id, item.path))
