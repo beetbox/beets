@@ -279,16 +279,6 @@ class Query(object):
         c.close()
         return (result[0], result[1] or 0.0)
 
-    def execute(self, library):
-        """Runs the query in the specified library, returning a
-        ResultIterator.
-        """
-        c = library.conn.cursor()
-        stmt, subs = self.statement()
-        log.debug('Executing query: %s' % stmt)
-        c.execute(stmt, subs)
-        return ResultIterator(c, library)
-
 class FieldQuery(Query):
     """An abstract query that searches in a specific field for a
     pattern.
@@ -503,27 +493,27 @@ class PathQuery(Query):
         return '(path = ?) || (path LIKE ?)', (file_blob, dir_pat)
 
 class ResultIterator(object):
-    """An iterator into an item query result set."""
+    """An iterator into an item query result set. The iterator eagerly
+    fetches all of the results from the cursor but lazily constructs
+    Item objects that reflect them.
+    """
+    def __init__(self, cursor):
+        # Fetch all of the rows, closing the cursor (and unlocking the
+        # database).
+        self.rows = cursor.fetchall()
+        self.rowiter = iter(self.rows)
     
-    def __init__(self, cursor, library):
-        self.cursor = cursor
-        self.library = library
-    
-    def __iter__(self): return self
+    def __iter__(self):
+        return self
     
     def next(self):
-        try:
-            row = self.cursor.next()
-        except StopIteration:
-            self.cursor.close()
-            raise
+        row = self.rowiter.next() # May raise StopIteration.
         return Item(row)
 
     def close(self):
-        self.cursor.close()
-
-    def __del__(self):
-        self.close()
+        # No longer used. Previously, this method would close the
+        # cursor, but this is not necessary with the eager design.
+        pass
 
 
 # An abstract library.
@@ -1028,7 +1018,7 @@ class Library(BaseLibrary):
               " ORDER BY artist, album, disc, track"
         log.debug('Getting items with SQL: %s' % sql)
         c = self.conn.execute(sql, subvals)
-        return ResultIterator(c, self)
+        return ResultIterator(c)
 
 
     # Convenience accessors.
@@ -1037,7 +1027,7 @@ class Library(BaseLibrary):
         """Fetch an Item by its ID. Returns None if no match is found.
         """
         c = self.conn.execute("SELECT * FROM items WHERE id=?", (id,))
-        it = ResultIterator(c, self)
+        it = ResultIterator(c)
         try:
             return it.next()
         except StopIteration:
@@ -1164,7 +1154,7 @@ class Album(BaseAlbum):
             'SELECT * FROM items WHERE album_id=?',
             (self.id,)
         )
-        return ResultIterator(c, self._library)
+        return ResultIterator(c)
 
     def remove(self, delete=False, with_items=True):
         """Removes this album and all its associated items from the
