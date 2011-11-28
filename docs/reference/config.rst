@@ -1,7 +1,8 @@
 .beetsconfig
 ============
 
-The ``beet`` command reads configuration information from ``~/.beetsconfig``.
+The ``beet`` command reads configuration information from ``~/.beetsconfig`` on
+Unix-like OSes (inluding Mac OS X) and ``%APPDATA%\beetsconfig.ini`` on Windows.
 The file is in INI format.
 
 Options
@@ -11,7 +12,8 @@ These options are available, all of which must appear under the ``[beets]``
 section header:
 
 ``library``
-    Path to the beets library file. Defaults to ``~/.beetsmusic.blb``.
+    Path to the beets library file. Defaults to ``~/.beetsmusic.blb`` on Unix
+    and ``%APPDATA\beetsmusic.blb`` on Windows.
 
 ``directory``
     The directory to which files will be copied/moved when adding them to the

@@ -668,6 +668,36 @@ class ShowChangeTest(unittest.TestCase):
         msg = self.io.getoutput().lower()
         self.assertTrue(u'caf\xe9.mp3 -> the title' in msg.decode('utf8'))
 
+class DefaultPathTest(unittest.TestCase):
+    def setUp(self):
+        self.old_home = os.environ.get('HOME')
+        self.old_appdata = os.environ.get('APPDATA')
+        os.environ['HOME'] = 'xhome'
+        os.environ['APPDATA'] = 'xappdata'
+    def tearDown(self):
+        if self.old_home is None:
+            del os.environ['HOME']
+        else:
+            os.environ['HOME'] = self.old_home
+        if self.old_appdata is None:
+            del os.environ['APPDATA']
+        else:
+            os.environ['APPDATA'] = self.old_appdata
+
+    def test_unix_paths_in_home(self):
+        import posixpath
+        config, lib, libdir = ui.default_paths(posixpath)
+        self.assertEqual(config, 'xhome/.beetsconfig')
+        self.assertEqual(lib, 'xhome/.beetsmusic.blb')
+        self.assertEqual(libdir, 'xhome/Music')
+
+    def test_windows_paths_in_home_and_appdata(self):
+        import ntpath
+        config, lib, libdir = ui.default_paths(ntpath)
+        self.assertEqual(config, 'xappdata\\beetsconfig.ini')
+        self.assertEqual(lib, 'xappdata\\beetsmusic.blb')
+        self.assertEqual(libdir, 'xhome\\Music')
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

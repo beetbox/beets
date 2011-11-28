@@ -25,6 +25,11 @@ Changelog
   levels in ReplayGain-aware music players.
 * Albums are now tagged with their *original* release date rather than the date
   of any reissue, remaster, "special edition", or the like.
+* The config file and library databases are now given better names and locations
+  on Windows. Namely, both files now reside in ``%APPDATA%``; the config file is
+  named ``beetsconfig.ini`` and the database is called ``beetslibrary.blb``
+  (neither has a leading dot as on Unix). For backwards compatibility, beets
+  will check the old locations first.
 * When entering an ID manually during tagging, beets now searches for anything
   that looks like an MBID in the entered string. This means that full
   MusicBrainz URLs now work as IDs at the prompt. (Thanks to derwin.)

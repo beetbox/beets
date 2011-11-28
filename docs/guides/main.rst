@@ -85,9 +85,11 @@ trouble or you have more detail to contribute here, please `let me know`_.
 Configuring
 -----------
 
-You'll want to set a few basic options before you start using beets. To do this,
-create and edit the file ``~/.beetsconfig`` with your favorite text editor. This
-file will start out empty, but here's good place to start::
+You'll want to set a few basic options before you start using beets. The
+configuration is stored in a text file: on Unix-like OSes, the config file is at
+``~/.beetsconfig``; on Windows, it's at ``%APPDATA%\beetsconfig.ini``. Create
+and edit the appropriate file with your favorite text editor. This file will
+start out empty, but here's good place to start::
 
     [beets]
     directory: ~/music

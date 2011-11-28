@@ -33,9 +33,12 @@ from beets import util
 
 # Constants.
 CONFIG_PATH_VAR = 'BEETSCONFIG'
-DEFAULT_CONFIG_FILE = os.path.expanduser('~/.beetsconfig')
-DEFAULT_LIBRARY = '~/.beetsmusic.blb'
-DEFAULT_DIRECTORY = '~/Music'
+DEFAULT_CONFIG_FILENAME_UNIX = '.beetsconfig'
+DEFAULT_CONFIG_FILENAME_WINDOWS = 'beetsconfig.ini'
+DEFAULT_LIBRARY_FILENAME_UNIX = '.beetsmusic.blb'
+DEFAULT_LIBRARY_FILENAME_WINDOWS = 'beetsmusic.blb'
+DEFAULT_DIRECTORY_NAME = 'Music'
+WINDOWS_BASEDIR = os.environ.get('APPDATA') or '~'
 DEFAULT_PATH_FORMATS = {
     'default': '$albumartist/$album/$track $title',
     'comp': 'Compilations/$album/$track $title',
@@ -373,6 +376,33 @@ def colordiff(a, b, highlight='red'):
     
     return u''.join(a_out), u''.join(b_out)
 
+def default_paths(pathmod=None):
+    """Produces the appropriate default config, library, and directory
+    paths for the current system. On Unix, this is always in ~. On
+    Windows, tries ~ first and then $APPDATA for the config and library
+    files (for backwards compatibility).
+    """
+    pathmod = pathmod or os.path
+    windows = pathmod.__name__ == 'ntpath'
+    if windows:
+        windata = os.environ.get('APPDATA') or '~'
+
+    # Shorthand for joining paths.
+    def exp(*vals):
+        return pathmod.expanduser(pathmod.join(*vals))
+
+    config = exp('~', DEFAULT_CONFIG_FILENAME_UNIX)
+    if windows and not pathmod.exists(config):
+        config = exp(windata, DEFAULT_CONFIG_FILENAME_WINDOWS)
+
+    libpath = exp('~', DEFAULT_LIBRARY_FILENAME_UNIX)
+    if windows and not pathmod.exists(libpath):
+        libpath = exp(windata, DEFAULT_LIBRARY_FILENAME_WINDOWS)
+
+    libdir = exp('~', DEFAULT_DIRECTORY_NAME)
+
+    return config, libpath, libdir
+
 
 # Subcommand parsing infrastructure.
 
@@ -542,6 +572,9 @@ def main(args=None, configfh=None):
     # Get the default subcommands.
     from beets.ui.commands import default_commands
 
+    # Get default file paths.
+    default_config, default_libpath, default_dir = default_paths()
+
     # Read defaults from config file.
     config = ConfigParser.SafeConfigParser()
     if configfh:
@@ -549,7 +582,7 @@ def main(args=None, configfh=None):
     elif CONFIG_PATH_VAR in os.environ:
         configpath = os.path.expanduser(os.environ[CONFIG_PATH_VAR])
     else:
-        configpath = DEFAULT_CONFIG_FILE
+        configpath = default_config
     if configpath:
         configpath = util.syspath(configpath)
         if os.path.exists(util.syspath(configpath)):
@@ -588,9 +621,9 @@ def main(args=None, configfh=None):
     
     # Open library file.
     libpath = options.libpath or \
-        config_val(config, 'beets', 'library', DEFAULT_LIBRARY)
+        config_val(config, 'beets', 'library', default_libpath)
     directory = options.directory or \
-        config_val(config, 'beets', 'directory', DEFAULT_DIRECTORY)
+        config_val(config, 'beets', 'directory', default_dir)
     legacy_path_format = config_val(config, 'beets', 'path_format', None)
     if options.path_format:
         # If given, -p overrides all path format settings
@@ -621,6 +654,9 @@ def main(args=None, configfh=None):
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.INFO)
+    log.debug(u'config file: %s' % configpath)
+    log.debug(u'library database: %s' % lib.path)
+    log.debug(u'library directory: %s' % lib.directory)
     
     # Invoke the subcommand.
     try:
