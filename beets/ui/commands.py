@@ -727,7 +727,7 @@ def update_items(lib, query, album, move, color, pretend):
         # Did the item change since last checked?
         if item.current_mtime() <= item.mtime:
             log.debug(u'skipping %s because mtime is up to date (%i)' %
-                      (item.path, item.mtime))
+                      (displayable_path(item.path), item.mtime))
             continue
 
         # Read new data.
