@@ -72,7 +72,8 @@ def albums_in_dir(path, ignore=()):
             else:
                 # Collapse finished. Yield the collapsed directory and
                 # proceed to process the current one.
-                yield collapse_root, collapse_items
+                if collapse_items:
+                    yield collapse_root, collapse_items
                 collapse_root = collapse_items = None
 
         # Does the current directory look like a multi-disc album? If
@@ -98,7 +99,7 @@ def albums_in_dir(path, ignore=()):
             yield root, items
 
     # Clear out any unfinished collapse.
-    if collapse_root is not None:
+    if collapse_root is not None and collapse_items:
         yield collapse_root, collapse_items
 
 def apply_item_metadata(item, track_info):

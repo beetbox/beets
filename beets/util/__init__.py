@@ -328,12 +328,16 @@ def levenshtein(s1, s2):
 
 def plurality(objs):
     """Given a sequence of comparable objects, returns the object that
-    is most common in the set and the frequency of that object.
+    is most common in the set and the frequency of that object. The
+    sequence must contain at least one object.
     """
     # Calculate frequencies.
     freqs = defaultdict(int)
     for obj in objs:
         freqs[obj] += 1
+
+    if not freqs:
+        raise ValueError('sequence must be non-empty')
 
     # Find object with maximum frequency.
     max_freq = 0

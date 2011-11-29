@@ -46,6 +46,10 @@ class PluralityTest(unittest.TestCase):
         self.assert_(obj in (1, 2))
         self.assertEqual(freq, 2)
 
+    def test_plurality_empty_sequence_raises_error(self):
+        with self.assertRaises(ValueError):
+            plurality([])
+
     def test_current_metadata_finds_pluralities(self):
         items = [Item({'artist': 'The Beetles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'The White Album'}),
@@ -201,21 +205,27 @@ class MultiDiscAlbumsInDirTest(unittest.TestCase):
     def setUp(self):
         self.base = os.path.abspath(os.path.join(_common.RSRC, 'tempdir'))
         os.mkdir(self.base)
-        
-        os.mkdir(os.path.join(self.base, 'album1'))
-        os.mkdir(os.path.join(self.base, 'album1', 'disc 1'))
-        os.mkdir(os.path.join(self.base, 'album1', 'disc 2'))
 
-        os.mkdir(os.path.join(self.base, 'dir2'))
-        os.mkdir(os.path.join(self.base, 'dir2', 'disc 1'))
-        os.mkdir(os.path.join(self.base, 'dir2', 'something'))
-        
-        _mkmp3(os.path.join(self.base, 'album1', 'disc 1', 'song1.mp3'))
-        _mkmp3(os.path.join(self.base, 'album1', 'disc 2', 'song2.mp3'))
-        _mkmp3(os.path.join(self.base, 'album1', 'disc 2', 'song3.mp3'))
+        self.dirs = [
+            os.path.join(self.base, 'album1'),
+            os.path.join(self.base, 'album1', 'disc 1'),
+            os.path.join(self.base, 'album1', 'disc 2'),
+            os.path.join(self.base, 'dir2'),
+            os.path.join(self.base, 'dir2', 'disc 1'),
+            os.path.join(self.base, 'dir2', 'something'),
+        ]
+        self.files = [
+            os.path.join(self.base, 'album1', 'disc 1', 'song1.mp3'),
+            os.path.join(self.base, 'album1', 'disc 2', 'song2.mp3'),
+            os.path.join(self.base, 'album1', 'disc 2', 'song3.mp3'),
+            os.path.join(self.base, 'dir2', 'disc 1', 'song4.mp3'),
+            os.path.join(self.base, 'dir2', 'something', 'song5.mp3'),
+        ]
 
-        _mkmp3(os.path.join(self.base, 'dir2', 'disc 1', 'song4.mp3'))
-        _mkmp3(os.path.join(self.base, 'dir2', 'something', 'song5.mp3'))
+        for path in self.dirs:
+            os.mkdir(path)
+        for path in self.files:
+            _mkmp3(path)
 
     def tearDown(self):
         shutil.rmtree(self.base)
@@ -233,6 +243,14 @@ class MultiDiscAlbumsInDirTest(unittest.TestCase):
         self.assertEquals(root, os.path.join(self.base, 'dir2', 'disc 1'))
         root, items = albums[2]
         self.assertEquals(root, os.path.join(self.base, 'dir2', 'something'))
+
+    def test_do_not_yield_empty_album(self):
+        # Remove all the MP3s.
+        for path in self.files:
+            os.remove(path)
+
+        albums = list(autotag.albums_in_dir(self.base))
+        self.assertEquals(len(albums), 0)
 
 class OrderingTest(unittest.TestCase):
     def item(self, title, track):
