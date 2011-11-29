@@ -289,7 +289,7 @@ class MediaField(object):
                 frames = obj.mgfile.tags.getall(style.key)
                 entry = None
                 for frame in frames:
-                    if frame.desc == style.id3_desc:
+                    if frame.desc.lower() == style.id3_desc.lower():
                         entry = getattr(frame, style.id3_frame_field)
                         break
                 if entry is None: # no desc match
@@ -335,7 +335,7 @@ class MediaField(object):
                 # try modifying in place
                 found = False
                 for frame in frames:
-                    if frame.desc == style.id3_desc:
+                    if frame.desc.lower() == style.id3_desc.lower():
                         setattr(frame, style.id3_frame_field, out)
                         found = True
                         break
