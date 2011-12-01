@@ -26,7 +26,7 @@ from beets import library
 import beets.autotag.art
 from beets import plugins
 from beets.util import pipeline
-from beets.util import syspath, normpath, plurality
+from beets.util import syspath, normpath, plurality, displayable_path
 from beets.util.enumeration import enum
 
 action = enum(
@@ -610,7 +610,8 @@ def apply_choices(config):
             dup_items = lib.items(library.MatchQuery('path', item.path))
             for dup_item in dup_items:
                 replaced_items[item].append(dup_item)
-                log.debug('replacing item %i: %s' % (dup_item.id, item.path))
+                log.debug('replacing item %i: %s' %
+                          (dup_item.id, displayable_path(item.path)))
         log.debug('%i of %i items replaced' % (len(replaced_items),
                                                len(items)))
 
@@ -754,7 +755,7 @@ def item_progress(config):
         if task.sentinel:
             continue
 
-        log.info(task.item.path)
+        log.info(displayable_path(task.item.path))
         task.set_null_item_match()
         task.set_choice(action.ASIS)
 
