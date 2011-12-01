@@ -29,7 +29,6 @@ from __future__ import with_statement
 import logging
 import pylast
 import os
-from yaml import load
 
 from beets import plugins
 from beets import ui
@@ -69,36 +68,39 @@ def _tags_to_genre(tags):
     elif not options['whitelist']:
         return tags[0].title()
     
-    for tag in tags:
-        genre = find_allowed(
-            find_parents(tag.lower(), options['branches']))
-        if genre:
-            return genre
-    
-    return None
+    if options.get('c14n'):
+        # Use the canonicalization tree.
+        for tag in tags:
+            genre = find_allowed(find_parents(tag, options['branches']))
+            if genre:
+                return genre
+    else:
+        # Just use the flat whitelist.
+        return find_allowed(tags)
 
 def flatten_tree(elem, path, branches):
-    """Flatten nested lists/dictionaries into lists of strings (branches).
+    """Flatten nested lists/dictionaries into lists of strings
+    (branches).
     """
     if not path:
         path = []
 
     if isinstance(elem, dict):
-        for (k, v) in elem.items() :
+        for (k, v) in elem.items():
             flatten_tree(v, path + [k], branches)
     elif isinstance(elem, list):
         for sub in elem:
             flatten_tree(sub, path, branches)
     else:
-        branches.append(path + [elem])
+        branches.append(path + [unicode(elem)])
 
 def find_parents(candidate, branches):
-    """Find parents genre of a given genre, ordered from the closest to the
-    further parent.
+    """Find parents genre of a given genre, ordered from the closest to
+    the further parent.
     """
     for branch in branches:
         try:
-            idx = branch.index(candidate)
+            idx = branch.index(candidate.lower())
             return list(reversed(branch[:idx+1]))
         except ValueError:
             continue
@@ -108,13 +110,15 @@ def find_allowed(genres):
     """Returns the first genre that is present in the genre whitelist or
     None if no genre is suitable.
     """
-    for g in list(genres):
-        if g in options['whitelist']:
-            return g.title()
+    for genre in list(genres):
+        if genre.lower() in options['whitelist']:
+            return genre.title()
     return None
 
 options = {
     'whitelist': None,
+    'branches': None,
+    'c14n': False,
 }
 class LastGenrePlugin(plugins.BeetsPlugin):
     def configure(self, config):
@@ -134,12 +138,20 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     whitelist.add(line)
         options['whitelist'] = whitelist
 
-        # Read the genres tree for canonicalization
-        genres_tree = load(open(C14N_TREE, 'r'))
-        branches = []
-        flatten_tree(genres_tree, [], branches) 
-        options['branches'] = branches 
-        
+        # Read the genres tree for canonicalization if enabled.
+        c14n_filename = ui.config_val(config, 'lastgenre', 'canonical', None)
+        if c14n_filename is not None:
+            c14n_filename = c14n_filename.strip()
+            if not c14n_filename:
+                c14n_filename = C14N_TREE
+            c14n_filename = normpath(c14n_filename)
+
+            from yaml import load
+            genres_tree = load(open(c14n_filename, 'r'))
+            branches = []
+            flatten_tree(genres_tree, [], branches) 
+            options['branches'] = branches 
+            options['c14n'] = True
         
 @LastGenrePlugin.listen('album_imported')
 def album_imported(lib, album):
