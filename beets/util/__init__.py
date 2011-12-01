@@ -85,7 +85,7 @@ def sorted_walk(path, ignore=()):
     for base in dirs:
         cur = os.path.join(path, base)
         # yield from _sorted_walk(cur)
-        for res in sorted_walk(cur):
+        for res in sorted_walk(cur, ignore):
             yield res
 
 def mkdirall(path):
