@@ -58,9 +58,13 @@ def track_info(recording):
     info = beets.autotag.hooks.TrackInfo(recording['title'],
                                          recording['id'])
 
-    if 'artist-credit' in recording: # XXX: when is this not included?
+    # Get the name of the track artist.
+    if recording.get('artist-credit-phrase'):
+        info.artist = recording['artist-credit-phrase']
+
+    # Get the ID of the first artist.
+    if 'artist-credit' in recording:
         artist = recording['artist-credit'][0]['artist']
-        info.artist = artist['name']
         info.artist_id = artist['id']
 
     if recording.get('length'):
@@ -82,16 +86,24 @@ def album_info(release):
     """Takes a MusicBrainz release result dictionary and returns a beets
     AlbumInfo object containing the interesting data about that release.
     """
+    # Get artist name using join phrases.
+    artist_parts = []
+    for el in release['artist-credit']:
+        if isinstance(el, basestring):
+            artist_parts.append(el)
+        else:
+            artist_parts.append(el['artist']['name'])
+    artist_name = ''.join(artist_parts)
+
     # Basic info.
-    artist = release['artist-credit'][0]['artist']
     tracks = []
     for medium in release['medium-list']:
         tracks.extend(i['recording'] for i in medium['track-list'])
     info = beets.autotag.hooks.AlbumInfo(
         release['title'],
         release['id'],
-        artist['name'],
-        artist['id'],
+        artist_name,
+        release['artist-credit'][0]['artist']['id'],
         [track_info(track) for track in tracks],
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
