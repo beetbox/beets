@@ -637,7 +637,7 @@ def apply_choices(config):
             # Add new ones.
             if task.is_album:
                 # Add an album.
-                album = lib.add_album([i for i in task.items if i])
+                album = lib.add_album(items)
                 task.album_id = album.id
             else:
                 # Add tracks.

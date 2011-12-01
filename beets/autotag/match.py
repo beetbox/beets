@@ -33,7 +33,7 @@ ALBUM_WEIGHT = 3.0
 # The weight of the entire distance calculated for a given track.
 TRACK_WEIGHT = 1.0
 # The weight of a missing track.
-MISSING_WEIGHT = 0.3
+MISSING_WEIGHT = 0.9
 # These distances are components of the track distance (that is, they
 # compete against each other but not ARTIST_WEIGHT and ALBUM_WEIGHT;
 # the overall TRACK_WEIGHT does that).
@@ -171,8 +171,11 @@ def current_metadata(items):
 
 def order_items(items, trackinfo):
     """Orders the items based on how they match some canonical track
-    information. This always produces a result if the numbers of tracks
-    match.
+    information. Returns a list of Items whose length is equal to the
+    length of ``trackinfo``. This always produces a result if the
+    numbers of items is at most the number of TrackInfo objects
+    (otherwise, returns None). In the case of a partial match, the
+    returned list may contain None in some positions.
     """
     # Make sure lengths match: If there is less items, it might just be that
     # there is some tracks missing.
@@ -282,16 +285,7 @@ def distance(items, album_info):
             dist_max += MISSING_WEIGHT
 
     # Plugin distances.
-    # In order not to break compatibility, send purged lists
-    purged_items, purged_tracks = [], []
-    for i, t in zip(items, album_info.tracks):
-        if i:
-            purged_items.append(i)
-            purged_tracks.append(t)
-    purged_album_info = copy.copy(album_info)
-    purged_album_info.tracks = purged_tracks
-
-    plugin_d, plugin_dm = plugins.album_distance(purged_items, purged_album_info)
+    plugin_d, plugin_dm = plugins.album_distance(items, album_info)
     dist += plugin_d
     dist_max += plugin_dm
 
@@ -366,7 +360,8 @@ def validate_candidate(items, tuple_dict, info):
 
     # Make sure the album has the correct number of tracks.
     if len(items) > len(info.tracks):
-        log.debug('Track count mismatch.')
+        log.debug('Too many items to match: %i > %i.' %
+                  (len(items), len(info.tracks)))
         return
 
     # Put items in order.

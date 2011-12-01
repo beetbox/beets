@@ -103,7 +103,9 @@ class LastIdPlugin(plugins.BeetsPlugin):
         return dist * DISTANCE_SCALE, dist_max * DISTANCE_SCALE
 
     def album_distance(self, items, info):
-        last_artist, last_artist_id = get_cur_artist(items)
+        last_artist, last_artist_id = get_cur_artist(
+            [item for item in items if item]
+        )
 
         # Compare artist to MusicBrainz metadata.
         dist, dist_max = 0.0, 0.0

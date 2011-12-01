@@ -101,7 +101,7 @@ DEFAULT_IGNORE                = ['.AppleDouble', '._*', '*~', '.DS_Store']
 
 VARIOUS_ARTISTS = u'Various Artists'
 
-PARTIAL_MATCH_STRING = ui.colorize('green', u'(Partial match !)')
+PARTIAL_MATCH_MESSAGE = u'(partial match!)'
 
 # Importer utilities and support.
 
@@ -126,17 +126,24 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
     """
     def show_album(artist, album, partial=False):
         if artist:
-            album_description = '    %s - %s' % (artist, album)
+            album_description = u'    %s - %s' % (artist, album)
         elif album:
-            album_description = '    %s' % album
+            album_description = u'    %s' % album
         else:
-            album_description = '    (unknown album)'
+            album_description = u'    (unknown album)'
 
-        # Add a suffix indicating a partial match
+        # Add a suffix if this is a partial match.
         if partial:
-            print_('%s %s' % (album_description, PARTIAL_MATCH_STRING))
+            warning = PARTIAL_MATCH_MESSAGE
         else:
-            print_(album_description)
+            warning = None
+        if color and warning:
+            warning = ui.colorize('yellow', warning)
+
+        out = album_description
+        if warning:
+            out += u' ' + warning
+        print_(out)
 
     # Record if the match is partial or not.
     partial_match = None in items
@@ -158,11 +165,14 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
         show_album(artist_l, album_l)
         print_("To:")
         show_album(artist_r, album_r)
-    elif partial_match:
-        print_("Tagging: %s - %s %s" % (info.artist, info.album,
-                                        PARTIAL_MATCH_STRING))
     else:
-        print_("Tagging: %s - %s" % (info.artist, info.album))
+        message = u"Tagging: %s - %s" % (info.artist, info.album)
+        if partial_match:
+            warning = PARTIAL_MATCH_MESSAGE
+            if color:
+                warning = ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
+            message += u' ' + warning
+        print_(message)
 
     # Distance/similarity.
     print_('(Similarity: %s)' % dist_string(dist, color))
@@ -198,8 +208,10 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
         elif cur_track != new_track:
             print_(u" * %s (%s -> %s)" % (item.title, cur_track, new_track))
     for i, track_info in missing_tracks:
-        print_(ui.colorize('red', u' * Missing track:  %s (%d)' % \
-                           (track_info.title, i+1)))
+        line = u' * Missing track: %s (%d)' % (track_info.title, i+1)
+        if color:
+            line = ui.colorize('yellow', line)
+        print_(line)
 
 def show_item_change(item, info, dist, color):
     """Print out the change that would occur by tagging `item` with the
@@ -327,9 +339,12 @@ def choose_candidate(candidates, singleton, rec, color, timid,
 
                     line += ' (%s)' % dist_string(dist, color)
 
-                    # Pointing out the partial matches.
+                    # Point out the partial matches.
                     if None in items:
-                        line += ' %s' % PARTIAL_MATCH_STRING
+                        warning = PARTIAL_MATCH_MESSAGE
+                        if color:
+                            warning = ui.colorize('yellow', warning)
+                        line += u' %s' % warning
 
                     print_(line)
                                             
