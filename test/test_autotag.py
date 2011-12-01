@@ -98,6 +98,21 @@ class AlbumDistanceTest(unittest.TestCase):
         )
         self.assertEqual(match.distance(items, info), 0)
 
+    def test_incomplete_album(self):
+        items = []
+        items.append(self.item('one', 1))
+        items.append(self.item('three', 3))
+        info = AlbumInfo(
+            artist = 'some artist',
+            album = 'some album',
+            tracks = self.trackinfo(),
+            va = False,
+            album_id = None, artist_id = None,
+        )
+        self.assertNotEqual(match.distance(items, info), 0)
+        # Make sure the distance is not too great
+        self.assertTrue(match.distance(items, info) < 0.2)
+
     def test_global_artists_differ(self):
         items = []
         items.append(self.item('one', 1))
@@ -291,10 +306,23 @@ class OrderingTest(unittest.TestCase):
         items = []
         items.append(self.item('one', 1))
         items.append(self.item('two', 2))
+        items.append(self.item('three', 3))
+        items.append(self.item('four',4))
         trackinfo = []
         trackinfo.append(TrackInfo('one', None))
         ordered = match.order_items(items, trackinfo)
         self.assertEqual(ordered, None)
+
+    def test_order_works_with_missing_tracks(self)
+        items = []
+        items.append(self.item('one', 1))
+        items.append(self.item('two', 2))
+        trackinfo = []
+        trackinfo.append(TrackInfo('one', None))
+        ordered = match.order_items(items, trackinfo)
+        self.assertEqual(ordered[0].title, 'one')
+        self.assertEqual(ordered[1].title, 'two')
+        self.assertEqual(ordered[2], None)
 
     def test_order_corrects_when_track_names_are_entirely_wrong(self):
         # A real-world test case contributed by a user.

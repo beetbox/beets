@@ -101,6 +101,8 @@ DEFAULT_IGNORE                = ['.AppleDouble', '._*', '*~', '.DS_Store']
 
 VARIOUS_ARTISTS = u'Various Artists'
 
+PARTIAL_MATCH_STRING = ui.colorize('green', u'(Partial match !)')
+
 # Importer utilities and support.
 
 def dist_string(dist, color):
@@ -122,13 +124,22 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
     tags are changed from (cur_artist, cur_album, items) to info with
     distance dist.
     """
-    def show_album(artist, album):
+    def show_album(artist, album, partial=False):
         if artist:
-            print_('    %s - %s' % (artist, album))
+            album_description = '    %s - %s' % (artist, album)
         elif album:
-            print_('    %s' % album)
+            album_description = '    %s' % album
         else:
-            print_('    (unknown album)')
+            album_description = '    (unknown album)'
+
+        # Add a suffix indicating a partial match
+        if partial:
+            print_('%s %s' % (album_description, PARTIAL_MATCH_STRING))
+        else:
+            print_(album_description)
+
+    # Record if the match is partial or not.
+    partial_match = None in items
 
     # Identify the album in question.
     if cur_artist != info.artist or \
@@ -147,6 +158,9 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
         show_album(artist_l, album_l)
         print_("To:")
         show_album(artist_r, album_r)
+    elif partial_match:
+        print_("Tagging: %s - %s %s" % (info.artist, info.album,
+                                        PARTIAL_MATCH_STRING))
     else:
         print_("Tagging: %s - %s" % (info.artist, info.album))
 
@@ -154,7 +168,11 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
     print_('(Similarity: %s)' % dist_string(dist, color))
 
     # Tracks.
+    missing_tracks = []
     for i, (item, track_info) in enumerate(zip(items, info.tracks)):
+        if not item:
+            missing_tracks.append((i, track_info))
+            continue
         cur_track = unicode(item.track)
         new_track = unicode(i+1)
         cur_title = item.title
@@ -179,6 +197,9 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
             print_(u" * %s -> %s" % (cur_title, new_title))
         elif cur_track != new_track:
             print_(u" * %s (%s -> %s)" % (item.title, cur_track, new_track))
+    for i, track_info in missing_tracks:
+        print_(ui.colorize('red', u' * Missing track:  %s (%d)' % \
+                           (track_info.title, i+1)))
 
 def show_item_change(item, info, dist, color):
     """Print out the change that would occur by tagging `item` with the
@@ -305,6 +326,11 @@ def choose_candidate(candidates, singleton, rec, color, timid,
                         line += u' [%s]' % year
 
                     line += ' (%s)' % dist_string(dist, color)
+
+                    # Pointing out the partial matches.
+                    if None in items:
+                        line += ' %s' % PARTIAL_MATCH_STRING
+
                     print_(line)
                                             
             # Ask the user for a choice.
