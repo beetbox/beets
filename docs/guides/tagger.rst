@@ -218,15 +218,14 @@ If you're having trouble tagging a particular album with beets, you might want t
   site to make sure it's cataloged there. If not, anyone can edit
   MusicBrainz---so consider adding the data yourself.
 
-* Beets won't show you possibilities from MusicBrainz with a mismatched number
-  of tracks. That is, if your album is missing tracks or has additional tracks
-  beyond what the MB database reflects, then you'll never see a match for that
-  album. (This is because beets wouldn't know how to apply metadata to your
-  files in this case.) `Issue #33`_ proposes adding a system that automatically
-  detects and reports this situation.
+* Beets won't show you possibilities from MusicBrainz that have *fewer* tracks
+  than the current album. In other words, if you have extra tracks that aren't
+  included on the release, that candidate won't be displayed. (The tagger
+  should, on the other hand, show you candidates that have *more* tracks than
+  you do in the case that you're missing some of the album's songs. Beets will
+  warn you when any candidate is a partial match.)
 
 .. _the MusicBrainz database: http://musicbrainz.org/
-.. _Issue #33: http://code.google.com/p/beets/issues/detail?id=33
 
 If neither of these situations apply and you're still having trouble tagging
 something, please `file a bug report`_.

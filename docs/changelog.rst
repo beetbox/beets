@@ -17,6 +17,9 @@ Changelog
   fingerprinting service. This replaces the old ``lastid`` plugin, which used
   Last.fm fingerprinting and is now deprecated. Fingerprinting with this library
   should be faster and more reliable.
+* The importer can now perform **partial matches**. This means that, if you're
+  missing a few tracks from an album, beets can still tag the remaining tracks
+  as a single album. (Thanks to `Simon Chopin`_.)
 * The new :doc:`/plugins/lastgenre` automatically assigns genres to imported
   albums and items based on Last.fm tags and an internal whitelist. (Thanks to
   `KraYmer`_.)
@@ -46,6 +49,7 @@ Changelog
 .. _python-musicbrainz-ngs: https://github.com/alastair/python-musicbrainz-ngs
 .. _acoustid: http://acoustid.org/
 .. _Peter Brunner: https://github.com/Lugoues
+.. _Simon Chopin: https://github.com/laarmen
 
 1.0b10 (September 22, 2011)
 ---------------------------

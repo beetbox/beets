@@ -55,3 +55,6 @@ pyyaml``). Then set the ``canonical`` configuration value::
 Leaving this value blank will use a built-in canonicalization tree. You can also
 set it to a path, just like the ``whitelist`` config value, to use your own
 tree.
+
+.. _YAML: http://www.yaml.org/
+.. _pyyaml: http://pyyaml.org/
