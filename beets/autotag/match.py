@@ -17,6 +17,7 @@ releases and tracks.
 """
 import logging
 import re
+import copy
 from munkres import Munkres
 from unidecode import unidecode
 
@@ -31,6 +32,8 @@ ARTIST_WEIGHT = 3.0
 ALBUM_WEIGHT = 3.0
 # The weight of the entire distance calculated for a given track.
 TRACK_WEIGHT = 1.0
+# The weight of a missing track.
+MISSING_WEIGHT = 0.3
 # These distances are components of the track distance (that is, they
 # compete against each other but not ARTIST_WEIGHT and ALBUM_WEIGHT;
 # the overall TRACK_WEIGHT does that).
@@ -161,7 +164,7 @@ def current_metadata(items):
     likelies = {}
     consensus = {}
     for key in keys:
-        values = [getattr(item, key) for item in items]
+        values = [getattr(item, key) for item in items if item]
         likelies[key], freq = plurality(values)
         consensus[key] = (freq == len(values))
     return likelies['artist'], likelies['album'], consensus['artist']
@@ -171,8 +174,9 @@ def order_items(items, trackinfo):
     information. This always produces a result if the numbers of tracks
     match.
     """
-    # Make sure lengths match.
-    if len(items) != len(trackinfo):
+    # Make sure lengths match: If there is less items, it might just be that
+    # there is some tracks missing.
+    if len(items) > len(trackinfo):
         return None
 
     # Construct the cost matrix.
@@ -187,7 +191,7 @@ def order_items(items, trackinfo):
     matching = Munkres().compute(costs)
 
     # Order items based on the matching.
-    ordered_items = [None]*len(items)
+    ordered_items = [None]*len(trackinfo)
     for cur_idx, canon_idx in matching:
         ordered_items[canon_idx] = items[cur_idx]
     return ordered_items
@@ -269,12 +273,25 @@ def distance(items, album_info):
     
     # Track distances.
     for i, (item, track_info) in enumerate(zip(items, album_info.tracks)):
-        dist += track_distance(item, track_info, i+1, album_info.va) * \
-                TRACK_WEIGHT
-        dist_max += TRACK_WEIGHT
+        if item:
+            dist += track_distance(item, track_info, i+1, album_info.va) * \
+                    TRACK_WEIGHT
+            dist_max += TRACK_WEIGHT
+        else:
+            dist += MISSING_WEIGHT
+            dist_max += MISSING_WEIGHT
 
     # Plugin distances.
-    plugin_d, plugin_dm = plugins.album_distance(items, album_info)
+    # In order not to break compatibility, send purged lists
+    purged_items, purged_tracks = [], []
+    for i, t in zip(items, album_info.tracks):
+        if i:
+            purged_items.append(i)
+            purged_tracks.append(t)
+    purged_album_info = copy.copy(album_info)
+    purged_album_info.tracks = purged_tracks
+
+    plugin_d, plugin_dm = plugins.album_distance(purged_items, purged_album_info)
     dist += plugin_d
     dist_max += plugin_dm
 
@@ -348,7 +365,7 @@ def validate_candidate(items, tuple_dict, info):
         return
 
     # Make sure the album has the correct number of tracks.
-    if len(items) != len(info.tracks):
+    if len(items) > len(info.tracks):
         log.debug('Track count mismatch.')
         return
 

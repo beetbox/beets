@@ -107,7 +107,7 @@ def _duplicate_check(lib, task, recent=None):
         recent.add((artist, album))
 
     # Look in the library.
-    cur_paths = set(i.path for i in task.items)
+    cur_paths = set(i.path for i in task.items if i)
     for album_cand in lib.albums(artist=artist):
         if album_cand.album == album:
             # Check whether the album is identical in contents, in which
@@ -585,7 +585,7 @@ def apply_choices(config):
         if task.should_skip():
             continue
 
-        items = task.items if task.is_album else [task.item]
+        items = [i for i in task.items if i] if task.is_album else [task.item]
         # Clear IDs in case the items are being re-tagged.
         for item in items:
             item.id = None
@@ -637,7 +637,7 @@ def apply_choices(config):
             # Add new ones.
             if task.is_album:
                 # Add an album.
-                album = lib.add_album(task.items)
+                album = lib.add_album([i for i in task.items if i])
                 task.album_id = album.id
             else:
                 # Add tracks.
