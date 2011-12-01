@@ -96,15 +96,21 @@ def album_info(release):
     artist_name = ''.join(artist_parts)
 
     # Basic info.
-    tracks = []
+    track_infos = []
     for medium in release['medium-list']:
-        tracks.extend(i['recording'] for i in medium['track-list'])
+        for track in medium['track-list']:
+            ti = track_info(track['recording'])
+            if track.get('title'):
+                # Track title may be distinct from underling recording
+                # title.
+                ti.title = track['title']
+            track_infos.append(ti)
     info = beets.autotag.hooks.AlbumInfo(
         release['title'],
         release['id'],
         artist_name,
         release['artist-credit'][0]['artist']['id'],
-        [track_info(track) for track in tracks],
+        track_infos,
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
     if 'asin' in release:
