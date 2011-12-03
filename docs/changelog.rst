@@ -43,6 +43,8 @@ Changelog
   an ``update``, unmodified files can be skipped. (Thanks to Jos van der Til.)
 * Fix a crash after using the "as Tracks" option during import.
 * Fix a Unicode error when tagging items with missing titles.
+* Fix a crash when the state file (``~/.beetsstate``) became emptied or
+  corrupted.
 
 .. _KraYmer: https://github.com/KraYmer
 .. _Next Generation Schema: http://musicbrainz.org/doc/XML_Web_Service/Version_2
