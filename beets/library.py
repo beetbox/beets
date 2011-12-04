@@ -131,6 +131,7 @@ class Item(object):
             'album_id': None,
         })
         i.read(path)
+        i.mtime = i.current_mtime() # Initial mtime.
         return i
 
     def _fill_record(self, values):
@@ -177,10 +178,12 @@ class Item(object):
                 value = str(value)
 
         if key in ITEM_KEYS:
+            # If the value changed, mark the field as dirty.
             if (not (key in self.record)) or (self.record[key] != value):
-                # don't dirty if value unchanged
                 self.record[key] = value
                 self.dirty[key] = True
+                if key in ITEM_KEYS_WRITABLE:
+                    self.mtime = 0 # Reset mtime on dirty.
         else:
             super(Item, self).__setattr__(key, value)
     

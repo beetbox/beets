@@ -20,6 +20,7 @@ import os
 import sqlite3
 import ntpath
 import posixpath
+import shutil
 
 import _common
 from _common import item
@@ -652,6 +653,38 @@ class PathStringTest(unittest.TestCase):
         )
         alb = self.lib.get_album(alb.id)
         self.assert_(isinstance(alb.artpath, str))
+
+class MtimeTest(unittest.TestCase):
+    def setUp(self):
+        self.ipath = os.path.join(_common.RSRC, 'testfile.mp3')
+        shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.ipath)
+        self.i = beets.library.Item.from_path(self.ipath)
+        self.lib = beets.library.Library(':memory:')
+        self.lib.add(self.i)
+
+    def tearDown(self):
+        if os.path.exists(self.ipath):
+            os.remove(self.ipath)
+
+    def _mtime(self):
+        return os.path.getmtime(self.ipath)
+
+    def test_mtime_initially_up_to_date(self):
+        self.assertGreaterEqual(self.i.mtime, self._mtime())
+
+    def test_mtime_reset_on_db_modify(self):
+        self.i.title = 'something else'
+        self.assertLess(self.i.mtime, self._mtime())
+
+    def test_mtime_up_to_date_after_write(self):
+        self.i.title = 'something else'
+        self.i.write()
+        self.assertGreaterEqual(self.i.mtime, self._mtime())
+
+    def test_mtime_up_to_date_after_read(self):
+        self.i.title = 'something else'
+        self.i.read()
+        self.assertGreaterEqual(self.i.mtime, self._mtime())
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
