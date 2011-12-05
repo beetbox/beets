@@ -98,6 +98,11 @@ section header:
     only in the ``import`` command). Turn this off if your terminal doesn't
     support ANSI colors.
 
+``timeout``
+    The amount of time that the SQLite library should wait before raising an
+    exception when the database lock is contended. This should almost never need
+    to be changed except on very slow systems. Defaults to 5.0 (5 seconds).
+
 You can also configure the directory hierarchy beets uses to store music. That
 uses the ``[paths]`` section instead of the ``[beets]`` section. Each string is
 a `Python template string`_ that can refer to metadata fields (see below for

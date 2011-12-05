@@ -45,6 +45,7 @@ DEFAULT_PATH_FORMATS = {
     'singleton': 'Non-Album/$artist/$title',
 }
 DEFAULT_ART_FILENAME = 'cover'
+DEFAULT_TIMEOUT = 5.0
 
 
 # UI exception. Commands should throw this in order to display
@@ -639,12 +640,18 @@ def main(args=None, configfh=None):
             path_formats.update(config.items('paths'))
     art_filename = \
         config_val(config, 'beets', 'art_filename', DEFAULT_ART_FILENAME)
+    lib_timeout = config_val(config, 'beets', 'timeout', DEFAULT_TIMEOUT)
+    try:
+        lib_timeout = float(lib_timeout)
+    except ValueError:
+        lib_timeout = DEFAULT_TIMEOUT
     db_path = os.path.expanduser(libpath)
     try:
         lib = library.Library(db_path,
                               directory,
                               path_formats,
-                              art_filename)
+                              art_filename,
+                              lib_timeout)
     except sqlite3.OperationalError:
         raise UserError("database file %s could not be opened" % db_path)
     

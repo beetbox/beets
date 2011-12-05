@@ -703,6 +703,7 @@ class Library(BaseLibrary):
                        directory='~/Music',
                        path_formats=None,
                        art_filename='cover',
+                       timeout=5.0,
                        item_fields=ITEM_FIELDS,
                        album_fields=ALBUM_FIELDS):
         if path == ':memory:':
@@ -717,7 +718,8 @@ class Library(BaseLibrary):
         self.path_formats = path_formats
         self.art_filename = bytestring_path(art_filename)
         
-        self.conn = sqlite3.connect(self.path)
+        self.timeout = timeout
+        self.conn = sqlite3.connect(self.path, timeout)
         self.conn.row_factory = sqlite3.Row
             # this way we can access our SELECT results like dictionaries
         

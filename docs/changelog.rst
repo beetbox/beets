@@ -41,6 +41,7 @@ Changelog
   via the ``ignore`` setting; see :doc:`/reference/config`.
 * The database now keeps track of files' modification times so that, during
   an ``update``, unmodified files can be skipped. (Thanks to Jos van der Til.)
+* A new ``timeout`` config value avoids database locking errors on slow systems.
 * Fix a crash after using the "as Tracks" option during import.
 * Fix a Unicode error when tagging items with missing titles.
 * Fix a crash when the state file (``~/.beetsstate``) became emptied or
