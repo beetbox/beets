@@ -21,6 +21,7 @@ from beets.autotag import art
 from beets.autotag import AlbumInfo
 import os
 import shutil
+import StringIO
 
 class MockHeaders(object):
     def __init__(self, typeval):
@@ -31,7 +32,9 @@ class MockUrlRetrieve(object):
     def __init__(self, pathval, typeval):
         self.pathval = pathval
         self.headers = MockHeaders(typeval)
+        self.fetched = None
     def __call__(self, url):
+        self.fetched = url
         return self.pathval, self.headers
 
 class AmazonArtTest(unittest.TestCase):
@@ -72,8 +75,16 @@ class CombinedTest(unittest.TestCase):
     def setUp(self):
         self.dpath = os.path.join(_common.RSRC, 'arttest')
         os.mkdir(self.dpath)
+        self.old_urlopen = art.urllib.urlopen
+        art.urllib.urlopen = self._urlopen
+        self.page_text = ""
     def tearDown(self):
         shutil.rmtree(self.dpath)
+        art.urllib.urlopen = self.old_urlopen
+
+    def _urlopen(self, url):
+        self.urlopen_called = True
+        return StringIO.StringIO(self.page_text)
 
     def test_main_interface_returns_amazon_art(self):
         art.urllib.urlretrieve = MockUrlRetrieve('anotherpath', 'image/jpeg')
@@ -98,6 +109,51 @@ class CombinedTest(unittest.TestCase):
         album = AlbumInfo(None, None, None, None, None, asin='xxxx')
         artpath = art.art_for_album(album, self.dpath)
         self.assertEqual(artpath, 'anotherpath')
+
+    def test_main_interface_tries_amazon_before_aao(self):
+        self.urlopen_called = False
+        art.urllib.urlretrieve = MockUrlRetrieve('anotherpath', 'image/jpeg')
+        album = AlbumInfo(None, None, None, None, None, asin='xxxx')
+        art.art_for_album(album, self.dpath)
+        self.assertFalse(self.urlopen_called)
+
+    def test_main_interface_falls_back_to_aao(self):
+        self.urlopen_called = False
+        art.urllib.urlretrieve = MockUrlRetrieve('anotherpath', 'text/html')
+        album = AlbumInfo(None, None, None, None, None, asin='xxxx')
+        art.art_for_album(album, self.dpath)
+        self.assertTrue(self.urlopen_called)
+
+class AAOTest(unittest.TestCase):
+    def setUp(self):
+        self.old_urlopen = art.urllib.urlopen
+        self.old_urlretrieve = art.urllib.urlretrieve
+        art.urllib.urlopen = self._urlopen
+        self.retriever = MockUrlRetrieve('somepath', 'image/jpeg')
+        art.urllib.urlretrieve = self.retriever
+        self.page_text = ''
+    def tearDown(self):
+        art.urllib.urlopen = self.old_urlopen
+        art.urllib.urlretrieve = self.old_urlretrieve
+
+    def _urlopen(self, url):
+        return StringIO.StringIO(self.page_text)
+
+    def test_aao_scraper_finds_image(self):
+        self.page_text = """
+        <br />
+        <a href="TARGET_URL" title="View larger image" class="thickbox" style="color: #7E9DA2; text-decoration:none;">
+        <img src="http://www.albumart.org/images/zoom-icon.jpg" alt="View larger image" width="17" height="15"  border="0"/></a>
+        """
+        res = art.aao_art('x')
+        self.assertEqual(self.retriever.fetched, 'TARGET_URL')
+        self.assertEqual(res, 'somepath')
+
+    def test_aao_scraper_returns_none_when_no_image_present(self):
+        self.page_text = "blah blah"
+        res = art.aao_art('x')
+        self.assertEqual(self.retriever.fetched, None)
+        self.assertEqual(res, None)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

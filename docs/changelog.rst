@@ -41,6 +41,8 @@ Changelog
   via the ``ignore`` setting; see :doc:`/reference/config`.
 * The database now keeps track of files' modification times so that, during
   an ``update``, unmodified files can be skipped. (Thanks to Jos van der Til.)
+* The album art fetcher now uses `albumart.org`_ as a fallback when the Amazon
+  art downloader fails.
 * A new ``timeout`` config value avoids database locking errors on slow systems.
 * Fix a crash after using the "as Tracks" option during import.
 * Fix a Unicode error when tagging items with missing titles.
@@ -53,6 +55,7 @@ Changelog
 .. _acoustid: http://acoustid.org/
 .. _Peter Brunner: https://github.com/Lugoues
 .. _Simon Chopin: https://github.com/laarmen
+.. _albumart.org: http://www.albumart.org/
 
 1.0b10 (September 22, 2011)
 ---------------------------

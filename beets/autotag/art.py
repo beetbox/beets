@@ -18,6 +18,7 @@ import urllib
 import sys
 import logging
 import os
+import re
 
 from beets.autotag.mb import album_for_id
 
@@ -28,27 +29,62 @@ COVER_NAMES = ['cover', 'front', 'art', 'album', 'folder']
 log = logging.getLogger('beets')
 
 
+CONTENT_TYPES = ('image/jpeg',)
+def _fetch_image(url):
+    """Downloads an image from a URL and checks whether it seems to
+    actually be an image. If so, returns a path to the downloaded image.
+    Otherwise, returns None.
+    """
+    log.debug('Downloading art: %s' % url)
+    try:
+        fn, headers = urllib.urlretrieve(url)
+    except IOError:
+        log.debug('error fetching art')
+        return
+
+    # Make sure it's actually an image.
+    if headers.gettype() in CONTENT_TYPES:
+        log.debug('Downloaded art to: %s' % fn)
+        return fn
+    else:
+        log.debug('Not an image.')
+
+
 # Art from Amazon.
 
 AMAZON_URL = 'http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
 AMAZON_INDICES = (1,2)
-AMAZON_CONTENT_TYPE = 'image/jpeg'
 def art_for_asin(asin):
     """Fetches art for an Amazon ID (ASIN) string."""
     for index in AMAZON_INDICES:
         # Fetch the image.
         url = AMAZON_URL % (asin, index)
-        try:
-            log.debug('Downloading art: %s' % url)
-            fn, headers = urllib.urlretrieve(url)
-        except IOError:
-            log.debug('error fetching art at URL %s' % url)
-            continue
-            
-        # Make sure it's actually an image.
-        if headers.gettype() == AMAZON_CONTENT_TYPE:
-            log.debug('Downloaded art to: %s' % fn)
+        fn = _fetch_image(url)
+        if fn:
             return fn
+
+
+# AlbumArt.org scraper.
+
+AAO_URL = 'http://www.albumart.org/index_detail.php'
+AAO_PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
+def aao_art(asin):
+    # Get the page from albumart.org.
+    url = '%s?%s' % (AAO_URL, urllib.urlencode({'asin': asin}))
+    try:
+        log.debug('Scraping art URL: %s' % url)
+        page = urllib.urlopen(url).read()
+    except IOError:
+        log.debug('Error scraping art page')
+        return
+
+    # Search the page for the image URL.
+    m = re.search(AAO_PAT, page)
+    if m:
+        image_url = m.group(1)
+        return _fetch_image(image_url)
+    else:
+        log.debug('No image found on page')
 
 
 # Art from the filesystem.
@@ -91,7 +127,10 @@ def art_for_album(album, path):
 
     if album.asin:
         log.debug('Fetching album art for ASIN %s.' % album.asin)
-        return art_for_asin(album.asin)
+        out = art_for_asin(album.asin)
+        if out:
+            return out
+        return aao_art(album.asin)
     else:
         log.debug('No ASIN available: no art found.')
         return None
