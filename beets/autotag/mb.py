@@ -157,6 +157,10 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
     if tracks is not None:
         criteria['tracks'] = str(tracks)
 
+    # Abort if we have no search terms.
+    if not any(criteria.itervalues()):
+        return
+
     _adapt_criteria(criteria)
     res = musicbrainz3.release_search(limit=limit, **criteria)
     for release in res['release-list']:
@@ -172,6 +176,9 @@ def match_track(artist, title, limit=SEARCH_LIMIT):
         'artist': artist,
         'recording': title,
     }
+
+    if not any(criteria.itervalues()):
+        return
 
     _adapt_criteria(criteria)
     res = musicbrainz3.recording_search(limit=limit, **criteria)

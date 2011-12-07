@@ -17,7 +17,6 @@ releases and tracks.
 """
 import logging
 import re
-import copy
 from munkres import Munkres
 from unidecode import unidecode
 

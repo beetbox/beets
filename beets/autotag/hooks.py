@@ -117,7 +117,8 @@ def _item_candidates(item, artist, title):
     out = []
 
     # MusicBrainz candidates.
-    out.extend(mb.match_track(artist, title))
+    if artist and title:
+        out.extend(mb.match_track(artist, title))
 
     # Plugin candidates.
     out.extend(plugins.item_candidates(item))
