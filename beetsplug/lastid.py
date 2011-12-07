@@ -85,7 +85,7 @@ class LastIdPlugin(plugins.BeetsPlugin):
 
         # Track title distance.
         dist += match.string_dist(last_data['title'],
-                                  info['title']) \
+                                  info.title) \
                 * match.TRACK_TITLE_WEIGHT
         dist_max += match.TRACK_TITLE_WEIGHT
         
@@ -110,12 +110,12 @@ class LastIdPlugin(plugins.BeetsPlugin):
         # Compare artist to MusicBrainz metadata.
         dist, dist_max = 0.0, 0.0
         if last_artist:
-            dist += match.string_dist(last_artist, info['artist']) \
+            dist += match.string_dist(last_artist, info.artist) \
                     * match.ARTIST_WEIGHT
             dist_max += match.ARTIST_WEIGHT
 
         log.debug('Last artist (%s/%s) distance: %f' %
-                  (last_artist, info['artist'],
+                  (last_artist, info.artist,
                    dist/dist_max if dist_max > 0.0 else 0.0))
 
         #fixme: artist MBID currently ignored (as in vanilla tagger)
@@ -128,7 +128,7 @@ class LastIdPlugin(plugins.BeetsPlugin):
         cands = list(mb.match_album(last_artist, '', len(items)))
 
         log.debug('Matched last candidates: %s' %
-                  ', '.join([cand['album'] for cand in cands]))
+                  ', '.join([cand.album for cand in cands]))
         return cands
 
     def item_candidates(self, item):
@@ -141,5 +141,5 @@ class LastIdPlugin(plugins.BeetsPlugin):
                                     last_data['track']))
 
         log.debug('Matched last track candidates: %s' %
-                  ', '.join([cand['title'] for cand in cands]))
+                  ', '.join([cand.title for cand in cands]))
         return cands
