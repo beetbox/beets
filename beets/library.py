@@ -234,9 +234,6 @@ class Item(object):
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
 
-        # Update mtime to reflect the new file.
-        self.mtime = self.current_mtime()
-
     def current_mtime(self):
         """Returns the current mtime of the file, rounded to the nearest
         integer.
