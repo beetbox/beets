@@ -402,7 +402,7 @@ class CollectionQuery(Query):
                 continue
             key, pattern = res
             if key is None: # No key specified.
-                if os.sep in pattern:
+                if os.sep in pattern and 'path' in all_keys:
                     # This looks like a path.
                     subqueries.append(PathQuery(pattern))
                 else:
@@ -411,7 +411,7 @@ class CollectionQuery(Query):
                                                         default_fields))
             elif key.lower() == 'comp': # a boolean field
                 subqueries.append(BooleanQuery(key.lower(), pattern))
-            elif key.lower() == 'path':
+            elif key.lower() == 'path' and 'path' in all_keys:
                 subqueries.append(PathQuery(pattern))
             elif key.lower() in all_keys: # ignore unrecognized keys
                 subqueries.append(SubstringQuery(key.lower(), pattern))
