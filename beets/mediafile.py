@@ -394,19 +394,22 @@ class MediaField(object):
         """
         # Fetch the data using the various StorageStyles.
         styles = self._styles(obj)
-        for style in styles:
-            # Use the first style that returns a reasonable value.
-            out = self._fetchdata(obj, style)
-            if out:
-                break
+        if styles is None:
+            out = None
+        else:
+            for style in styles:
+                # Use the first style that returns a reasonable value.
+                out = self._fetchdata(obj, style)
+                if out:
+                    break
         
-        if style.packing:
-            out = Packed(out, style.packing)[style.pack_pos]
+            if style.packing:
+                out = Packed(out, style.packing)[style.pack_pos]
 
-        # MPEG-4 freeform frames are (should be?) encoded as UTF-8.
-        if obj.type == 'mp4' and style.key.startswith('----:') and \
-                isinstance(out, str):
-            out = out.decode('utf8')
+            # MPEG-4 freeform frames are (should be?) encoded as UTF-8.
+            if obj.type == 'mp4' and style.key.startswith('----:') and \
+                    isinstance(out, str):
+                out = out.decode('utf8')
         
         return _safe_cast(self.out_type, out)
     
@@ -415,6 +418,9 @@ class MediaField(object):
         """
         # Store using every StorageStyle available.
         styles = self._styles(obj)
+        if styles is None:
+            return
+
         for style in styles:
         
             if style.packing:
