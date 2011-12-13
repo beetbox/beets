@@ -36,7 +36,10 @@ if 'sdist' in sys.argv:
         os.chdir(curdir)
 
     # Copy resulting manpages.
-    shutil.copytree(os.path.join(docdir, '_build', 'man'), 'man')
+    mandir = os.path.join(os.path.dirname(__file__), 'man')
+    if os.path.exists(mandir):
+        shutil.rmtree(mandir)
+    shutil.copytree(os.path.join(docdir, '_build', 'man'), mandir)
 
 setup(name='beets',
       version='1.0b11',
