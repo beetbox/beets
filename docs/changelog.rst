@@ -23,7 +23,7 @@ release: one for assigning genres and another for ReplayGain analysis.
   as multi-disc albums: for example, if a directory contains subdirectories
   labeled "disc 1" and "disc 2", these subdirectories will be coalesced into a
   single album for tagging.
-* The new :doc:`/plugins/chroma` uses the **`Acoustid`_ open-source acoustic
+* The new :doc:`/plugins/chroma` uses the `Acoustid`_ **open-source acoustic
   fingerprinting** service. This replaces the old ``lastid`` plugin, which used
   Last.fm fingerprinting and is now deprecated. Fingerprinting with this library
   should be faster and more reliable.
