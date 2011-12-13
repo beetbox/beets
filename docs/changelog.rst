@@ -1,8 +1,18 @@
 Changelog
 =========
 
-1.0b11 (In Development)
------------------------
+1.0b11 (December 12, 2011)
+--------------------------
+
+This version of beets focuses on transitioning the autotagger to the new version
+of the MusicBrainz database (called NGS). This transition brings with it a
+number of long-overdue improvements: most notably, predictable behavior when
+tagging multi-disc albums and integration with the new `Acoustid`_ acoustic
+fingerprinting technology.
+
+The importer can also now tag *incomplete* albums when you're missing a few
+tracks from a given release. Two other new plugins are also included with this
+release: one for assigning genres and another for ReplayGain analysis.
 
 * Beets now communicates with MusicBrainz via the new `Next Generation Schema`_
   (NGS) service via `python-musicbrainz-ngs`_. The bindings are included with
@@ -13,19 +23,19 @@ Changelog
   as multi-disc albums: for example, if a directory contains subdirectories
   labeled "disc 1" and "disc 2", these subdirectories will be coalesced into a
   single album for tagging.
-* The new :doc:`/plugins/chroma` uses the `Acoustid`_ open-source acoustic
-  fingerprinting service. This replaces the old ``lastid`` plugin, which used
+* The new :doc:`/plugins/chroma` uses the **`Acoustid`_ open-source acoustic
+  fingerprinting** service. This replaces the old ``lastid`` plugin, which used
   Last.fm fingerprinting and is now deprecated. Fingerprinting with this library
   should be faster and more reliable.
 * The importer can now perform **partial matches**. This means that, if you're
   missing a few tracks from an album, beets can still tag the remaining tracks
   as a single album. (Thanks to `Simon Chopin`_.)
-* The new :doc:`/plugins/lastgenre` automatically assigns genres to imported
-  albums and items based on Last.fm tags and an internal whitelist. (Thanks to
+* The new :doc:`/plugins/lastgenre` automatically **assigns genres to imported
+  albums** and items based on Last.fm tags and an internal whitelist. (Thanks to
   `KraYmer`_.)
 * The :doc:`/plugins/replaygain`, written by `Peter Brunner`_, has been merged
-  into the core beets distribution. Use it to analyze audio and adjust playback
-  levels in ReplayGain-aware music players.
+  into the core beets distribution. Use it to analyze audio and **adjust
+  playback levels** in ReplayGain-aware music players.
 * Albums are now tagged with their *original* release date rather than the date
   of any reissue, remaster, "special edition", or the like.
 * The config file and library databases are now given better names and locations
