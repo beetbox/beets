@@ -4,6 +4,8 @@ Changelog
 1.0b12 (in development)
 -----------------------
 
+* Fix an incompatibility in BPD with libmpc (the library that powers mpc and
+  ncmpc).
 
 1.0b11 (December 12, 2011)
 --------------------------

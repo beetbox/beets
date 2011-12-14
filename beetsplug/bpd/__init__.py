@@ -797,7 +797,11 @@ class Server(BaseServer):
                 item = self.lib.get_item(itemid)
                 yield self._item_info(item)
             for name, _ in node.dirs.iteritems():
-                yield u'directory: ' + self._path_join(path, name)
+                dirpath = self._path_join(path, name)
+                if dirpath.startswith(u"/"):
+                    # Strip leading slash (libmpc rejects this).
+                    dirpath = dirpath[1:]
+                yield u'directory: %s' % dirpath
         
     def _listall(self, basepath, node, info=False):
         """Helper function for recursive listing. If info, show
