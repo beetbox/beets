@@ -1,7 +1,7 @@
 Path Formats
 ============
 
-The ``[paths]`` section of the config file (read more on the [Usage] page) lets
+The ``[paths]`` section of the config file (see :doc:`config`) lets
 you specify the directory and file naming scheme for your music library. You
 specify templates using Python template string notation---that is, prefixing
 names with ``$`` characters---and beets fills in the appropriate values.

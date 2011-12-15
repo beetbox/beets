@@ -103,14 +103,17 @@ section header:
     exception when the database lock is contended. This should almost never need
     to be changed except on very slow systems. Defaults to 5.0 (5 seconds).
 
-You can also configure the directory hierarchy beets uses to store music. That
-uses the ``[paths]`` section instead of the ``[beets]`` section. Each string is
-a `Python template string`_ that can refer to metadata fields (see below for
-examples). The extension is added automatically to the end. At the moment, you
-can specify two special paths: ``default`` (for most releases) and ``comp`` (for
-"various artist" releases with no dominant artist). You can also specify a
-different path format for each `MusicBrainz release type`_. The defaults look
-like this::
+Path Formats
+------------
+
+You can also configure the directory hierarchy beets uses to store music.  These
+settings appear under the ``[paths]`` section (rather than the main ``[beets]``
+section we used above).  Each string is a `template string`_ that can refer to
+metadata fields like ``$artist`` or ``$title``. The filename extension is added
+automatically. At the moment, you can specify three special paths: ``default``
+for most releases, ``comp`` for "various artist" releases with no dominant
+artist, and ``singleton`` for non-album tracks. You can also specify a different
+path format for each `MusicBrainz release type`_. The defaults look like this::
 
     [paths]
     default: $albumartist/$album/$track $title
@@ -118,10 +121,10 @@ like this::
     singleton: Non-Album/$artist/$title
 
 Note the use of ``$albumartist`` instead of ``$artist``; this ensure that albums
-will be well-organized. (For more about these format strings, see
-:doc:`pathformat`.)
+will be well-organized. For more about these format strings, see
+:doc:`pathformat`.
 
-.. _Python template string:
+.. _template string:
     http://docs.python.org/library/string.html#template-strings 
 .. _MusicBrainz release type:
     http://wiki.musicbrainz.org/ReleaseType 
