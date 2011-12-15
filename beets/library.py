@@ -16,12 +16,12 @@ import sqlite3
 import os
 import re
 import sys
-from string import Template
 import logging
 from beets.mediafile import MediaFile
 from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile
+from beets.util.functemplate import Template
 
 MAX_FILENAME_LENGTH = 200
 

@@ -156,7 +156,7 @@ Here's an example file::
     default: $genre/$albumartist/$album/$track $title
     soundtrack: Soundtracks/$album/$track $title
     comp: $genre/$album/$track $title
-    singleton: Singletons/$artist - $track
+    singleton: Singletons/$artist - $title
 
     [bpd]
     host: 127.0.0.1
