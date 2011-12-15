@@ -179,6 +179,24 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(len(parts), 1)
         self._assert_call(parts[0], u"foo", 1)
         self.assertEqual(list(_normexpr(parts[0].args[0])), [u'bar}baz'])
+
+    def test_call_with_symbol_argument(self):
+        parts = list(_normparse(u'%foo{$bar,baz}'))
+        self.assertEqual(len(parts), 1)
+        self._assert_call(parts[0], u"foo", 2)
+        arg_parts = list(_normexpr(parts[0].args[0]))
+        self.assertEqual(len(arg_parts), 1)
+        self._assert_symbol(arg_parts[0], u"bar")
+        self.assertEqual(list(_normexpr(parts[0].args[1])), [u"baz"])
+
+    def test_call_with_nested_call_argument(self):
+        parts = list(_normparse(u'%foo{%bar{},baz}'))
+        self.assertEqual(len(parts), 1)
+        self._assert_call(parts[0], u"foo", 2)
+        arg_parts = list(_normexpr(parts[0].args[0]))
+        self.assertEqual(len(arg_parts), 1)
+        self._assert_call(arg_parts[0], u"bar", 0)
+        self.assertEqual(list(_normexpr(parts[0].args[1])), [u"baz"])
     
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
