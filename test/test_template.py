@@ -197,7 +197,64 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(len(arg_parts), 1)
         self._assert_call(arg_parts[0], u"bar", 0)
         self.assertEqual(list(_normexpr(parts[0].args[1])), [u"baz"])
+
+    def test_nested_call_with_argument(self):
+        parts = list(_normparse(u'%foo{%bar{baz}}'))
+        self.assertEqual(len(parts), 1)
+        self._assert_call(parts[0], u"foo", 1)
+        arg_parts = list(_normexpr(parts[0].args[0]))
+        self.assertEqual(len(arg_parts), 1)
+        self._assert_call(arg_parts[0], u"bar", 0)
+
+class EvalTest(unittest.TestCase):
+    def _eval(self, template):
+        values = {
+            u'foo': u'bar',
+            u'baz': u'BaR',
+        }
+        functions = {
+            u'lower': unicode.lower,
+            u'len': len,
+        }
+        return functemplate.Template(template).substitute(values, functions)
+
+    def test_plain_text(self):
+        self.assertEqual(self._eval(u"foo"), u"foo")
     
+    def test_subtitute_value(self):
+        self.assertEqual(self._eval(u"$foo"), u"bar")
+    
+    def test_subtitute_value_in_text(self):
+        self.assertEqual(self._eval(u"hello $foo world"), u"hello bar world")
+
+    def test_not_subtitute_undefined_value(self):
+        self.assertEqual(self._eval(u"$bar"), u"$bar")
+
+    def test_function_call(self):
+        self.assertEqual(self._eval(u"%lower{FOO}"), u"foo")
+
+    def test_function_call_with_text(self):
+        self.assertEqual(self._eval(u"A %lower{FOO} B"), u"A foo B")
+
+    def test_nested_function_call(self):
+        self.assertEqual(self._eval(u"%lower{%lower{FOO}}"), u"foo")
+
+    def test_symbol_in_argument(self):
+        self.assertEqual(self._eval(u"%lower{$baz}"), u"bar")
+
+    def test_function_call_exception(self):
+        res = self._eval(u"%lower{a,b,c,d,e}")
+        self.assertTrue(isinstance(res, basestring))
+    
+    def test_function_returning_integer(self):
+        self.assertEqual(self._eval(u"%len{foo}"), u"3")
+
+    def test_not_subtitute_undefined_func(self):
+        self.assertEqual(self._eval(u"%bar{}"), u"%bar{}")
+
+    def test_not_subtitute_func_with_no_args(self):
+        self.assertEqual(self._eval(u"%lower"), u"%lower")
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

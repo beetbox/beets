@@ -77,7 +77,14 @@ class Call(object):
         Unicode string.
         """
         if self.ident in env.functions:
-            return u'TODO'
+            arg_vals = [expr.evaluate(env) for expr in self.args]
+            try:
+                out = env.functions[self.ident](*arg_vals)
+            except Exception, exc:
+                # Function raised exception! Maybe inlining the name of
+                # the exception will help debug.
+                return u'<%s>' % unicode(exc)
+            return unicode(out)
         else:
             return self.original
 
