@@ -363,6 +363,60 @@ class DestinationTest(unittest.TestCase):
         p = util.sanitize_path('', posixpath)
         self.assertEqual(p, '')
 
+class DestinationFunctionTest(unittest.TestCase):
+    def setUp(self):
+        self.lib = beets.library.Library(':memory:')
+        self.lib.directory = '/base'
+        self.lib.path_formats = {'default': u'path'}
+        self.i = item()
+    def tearDown(self):
+        self.lib.conn.close()
+
+    def _setf(self, fmt):
+        self.lib.path_formats['default'] = fmt
+    def _assert_dest(self, dest):
+        self.assertEqual(self.lib.destination(self.i), dest)
+
+    def test_upper_case_literal(self):
+        self._setf(u'%upper{foo}')
+        self._assert_dest('/base/FOO')
+    
+    def test_upper_case_variable(self):
+        self._setf(u'%upper{$title}')
+        self._assert_dest('/base/THE TITLE')
+
+    def test_title_case_variable(self):
+        self._setf(u'%title{$title}')
+        self._assert_dest('/base/The Title')
+
+    def test_left_variable(self):
+        self._setf(u'%left{$title, 3}')
+        self._assert_dest('/base/the')
+    
+    def test_right_variable(self):
+        self._setf(u'%right{$title,3}')
+        self._assert_dest('/base/tle')
+
+    def test_if_false(self):
+        self._setf(u'%if{,foo}')
+        self._assert_dest('/base/')
+    
+    def test_if_true(self):
+        self._setf(u'%if{bar,foo}')
+        self._assert_dest('/base/foo')
+    
+    def test_if_else_false(self):
+        self._setf(u'%if{,foo,baz}')
+        self._assert_dest('/base/baz')
+
+    def test_if_int_value(self):
+        self._setf(u'%if{0,foo,baz}')
+        self._assert_dest('/base/baz')
+
+    def test_nonexistent_function(self):
+        self._setf(u'%foo{bar}')
+        self._assert_dest('/base/%foo{bar}')
+    
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
     versions.

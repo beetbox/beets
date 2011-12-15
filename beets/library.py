@@ -817,7 +817,7 @@ class Library(BaseLibrary):
             mapping['albumartist'] = mapping['artist']
         
         # Perform substitution.
-        subpath = subpath_tmpl.substitute(mapping)
+        subpath = subpath_tmpl.substitute(mapping, TEMPLATE_FUNCTIONS)
         
         # Encode for the filesystem, dropping unencodable characters.
         if isinstance(subpath, unicode) and not fragment:
@@ -1260,3 +1260,48 @@ class Album(BaseAlbum):
             util.soft_remove(oldart)
         util.copy(path, artdest)
         self.artpath = artdest
+
+
+# Default path template resources.
+
+def _int_arg(s):
+    """Convert a string argument to an integer for use in a template
+    function.  May raise a ValueError.
+    """
+    return int(s.strip())
+def _tmpl_lower(s):
+    """Convert a string to lower case."""
+    return s.lower()
+def _tmpl_upper(s):
+    """Covert a string to upper case."""
+    return s.upper()
+def _tmpl_title(s):
+    """Convert a string to title case."""
+    return s.title()
+def _tmpl_left(s, chars):
+    """Get the leftmost characters of a string."""
+    return s[0:_int_arg(chars)]
+def _tmpl_right(s, chars):
+    """Get the rightmost characters of a string."""
+    return s[-_int_arg(chars):]
+def _tmpl_if(condition, trueval, falseval=u''):
+    """If ``condition`` is nonempty and nonzero, emit ``trueval``;
+    otherwise, emit ``falseval`` (if provided).
+    """
+    try:
+        condition = _int_arg(condition)
+    except ValueError:
+        condition = condition.strip()
+    if condition:
+        return trueval
+    else:
+        return falseval
+
+TEMPLATE_FUNCTIONS = {
+    'lower': _tmpl_lower,
+    'upper': _tmpl_upper,
+    'title': _tmpl_title,
+    'left': _tmpl_left,
+    'right': _tmpl_right,
+    'if': _tmpl_if,
+}
