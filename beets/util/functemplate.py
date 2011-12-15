@@ -23,7 +23,7 @@ always behave like the ``safe_substitute`` method in the standard
 library: unknown symbols are left intact.
 
 This is sort of like a tiny, horrible degeneration of a real templating
-engine like Jinja2.
+engine like Jinja2 or Mustache.
 """
 import re
 
@@ -115,18 +115,28 @@ class ParseError(Exception):
     pass
 
 class Parser(object):
-    """Parses a template string.
+    """Parses a template expression string. Instantiate the class with
+    the template source and call ``parse_expression``. The ``pos`` field
+    will indicate the character after the expression finished and
+    ``parts`` will contain a list of Unicode strings, Symbols, and Calls
+    reflecting the concatenated portions of the expression.
 
-    This is a terrible parser implementation based on a
-    character-by-character, left-to-right scan with no lexing step to
-    speak of; it's probably both inefficient and incorrect. Maybe this
-    should eventually be replaced with a real, accepted parsing
-    technique.
+    This is a terrible, ad-hoc parser implementation based on a
+    left-to-right scan with no lexing step to speak of; it's probably
+    both inefficient and incorrect. Maybe this should eventually be
+    replaced with a real, accepted parsing technique (PEG, parser
+    generator, etc.).
     """
     def __init__(self, string):
         self.string = string
         self.pos = 0
         self.parts = []
+
+    # Common parsing resources.
+    special_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_OPEN, GROUP_CLOSE,
+                     ARG_SEP, ESCAPE_CHAR)
+    special_char_re = re.compile(ur'[%s]|$' %
+                                 u''.join(re.escape(c) for c in special_chars))
 
     def parse_expression(self):
         """Parse a template expression starting at ``pos``. Resulting
@@ -139,14 +149,15 @@ class Parser(object):
         while self.pos < len(self.string):
             char = self.string[self.pos]
 
-            if char not in (SYMBOL_DELIM, FUNC_DELIM, GROUP_OPEN,
-                            GROUP_CLOSE, ARG_SEP, ESCAPE_CHAR):
-                # A non-special character.
-                # TODO: This can be made more efficient by repeatedly asking
-                # for the next special character rather than walking through
-                # the non-specials one at a time.
-                text_parts.append(char)
-                self.pos += 1
+            if char not in self.special_chars:
+                # A non-special character. Skip to the next special
+                # character, treating the interstice as literal text.
+                next_pos = (
+                    self.special_char_re.search(self.string[self.pos:]).start()
+                    + self.pos
+                )
+                text_parts.append(self.string[self.pos:next_pos])
+                self.pos = next_pos
                 continue
 
             if self.pos == len(self.string) - 1:
