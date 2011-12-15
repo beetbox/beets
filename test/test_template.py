@@ -86,16 +86,13 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(list(_normparse(u'hello $$')), [u'hello $'])
 
     def test_escaped_function_delim(self):
-        self.assertEqual(list(_normparse(u'a %% b')), [u'a % b'])
+        self.assertEqual(list(_normparse(u'a $% b')), [u'a % b'])
 
     def test_escaped_sep(self):
-        self.assertEqual(list(_normparse(u'a ,, b')), [u'a , b'])
-
-    def test_escaped_open_brace(self):
-        self.assertEqual(list(_normparse(u'a {{ b')), [u'a { b'])
+        self.assertEqual(list(_normparse(u'a $, b')), [u'a , b'])
 
     def test_escaped_close_brace(self):
-        self.assertEqual(list(_normparse(u'a }} b')), [u'a } b'])
+        self.assertEqual(list(_normparse(u'a $} b')), [u'a } b'])
 
     def test_bare_value_delim_kept_intact(self):
         self.assertEqual(list(_normparse(u'a $ b')), [u'a $ b'])
@@ -169,13 +166,13 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(list(_normexpr(parts[0].args[1])), [u'baz'])
     
     def test_call_with_escaped_sep(self):
-        parts = list(_normparse(u'%foo{bar,,baz}'))
+        parts = list(_normparse(u'%foo{bar$,baz}'))
         self.assertEqual(len(parts), 1)
         self._assert_call(parts[0], u"foo", 1)
         self.assertEqual(list(_normexpr(parts[0].args[0])), [u'bar,baz'])
     
     def test_call_with_escaped_close(self):
-        parts = list(_normparse(u'%foo{bar}}baz}'))
+        parts = list(_normparse(u'%foo{bar$}baz}'))
         self.assertEqual(len(parts), 1)
         self._assert_call(parts[0], u"foo", 1)
         self.assertEqual(list(_normexpr(parts[0].args[0])), [u'bar}baz'])
@@ -204,7 +201,8 @@ class ParseTest(unittest.TestCase):
         self._assert_call(parts[0], u"foo", 1)
         arg_parts = list(_normexpr(parts[0].args[0]))
         self.assertEqual(len(arg_parts), 1)
-        self._assert_call(arg_parts[0], u"bar", 0)
+        self._assert_call(arg_parts[0], u"bar", 1)
+        self.assertEqual(list(_normexpr(arg_parts[0].args[0])), [u'baz'])
 
 class EvalTest(unittest.TestCase):
     def _eval(self, template):

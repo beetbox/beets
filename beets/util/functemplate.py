@@ -32,6 +32,7 @@ FUNC_DELIM = u'%'
 GROUP_OPEN = u'{'
 GROUP_CLOSE = u'}'
 ARG_SEP = u','
+ESCAPE_CHAR = u'$'
 
 class Environment(object):
     """Contains the values and functions to be substituted into a
@@ -139,7 +140,7 @@ class Parser(object):
             char = self.string[self.pos]
 
             if char not in (SYMBOL_DELIM, FUNC_DELIM, GROUP_OPEN,
-                            GROUP_CLOSE, ARG_SEP):
+                            GROUP_CLOSE, ARG_SEP, ESCAPE_CHAR):
                 # A non-special character.
                 # TODO: This can be made more efficient by repeatedly asking
                 # for the next special character rather than walking through
@@ -158,9 +159,13 @@ class Parser(object):
                 break
 
             next_char = self.string[self.pos + 1]
-            if char == next_char:
-                # An escaped special character ($$, etc.).
-                text_parts.append(char)
+            if char == ESCAPE_CHAR and next_char in \
+                  (SYMBOL_DELIM, FUNC_DELIM, GROUP_CLOSE, ARG_SEP):
+                # An escaped special character ($$, $}, etc.). Note that
+                # ${ is not an escape sequence: this is ambiguous with
+                # the start of a symbol and it's not necessary (just
+                # using { suffices in all cases).
+                text_parts.append(next_char)
                 self.pos += 2 # Skip the next character.
                 continue
 
