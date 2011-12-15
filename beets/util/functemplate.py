@@ -69,8 +69,8 @@ class Call(object):
         self.original = original
 
     def __repr__(self):
-        return u'Call(%s, %s, %s)' % (repr(self.ident, self.args,
-                                           self.original))
+        return u'Call(%s, %s, %s)' % (repr(self.ident), repr(self.args),
+                                      repr(self.original))
 
     def evaluate(self, env):
         """Evaluate the function call in the environment, returning a
@@ -80,6 +80,28 @@ class Call(object):
             return u'TODO'
         else:
             return self.original
+
+class Expression(object):
+    """Top-level template construct: contains a list of text blobs,
+    Symbols, and Calls.
+    """
+    def __init__(self, parts):
+        self.parts = parts
+
+    def __repr__(self):
+        return u'Expression(%s)' % (repr(self.parts))
+
+    def evaluate(self, env):
+        """Evaluate the entire expression in the environment, returning
+        a Unicode string.
+        """
+        out = []
+        for part in self.parts:
+            if isinstance(part, basestring):
+                out.append(part)
+            else:
+                out.append(part.evaluate(env))
+        return u''.join(out)
 
 class ParseError(Exception):
     pass
@@ -98,7 +120,7 @@ class Parser(object):
         self.pos = 0
         self.parts = []
 
-    def parse_template(self):
+    def parse_expression(self):
         """Parse a template expression starting at ``pos``. Resulting
         components (Unicode strings, Symbols, and Calls) are added to
         the ``parts`` field, a list.  The ``pos`` field is updated to be
@@ -120,11 +142,13 @@ class Parser(object):
                 continue
 
             if self.pos == len(self.string) - 1:
-                # The last character can never begin a structure, so we just
-                # interpret it as a literal character.
-                text_parts.append(char)
-                self.pos += 1
-                continue
+                # The last character can never begin a structure, so we
+                # just interpret it as a literal character (unless it
+                # terminates the expression, as with , and }).
+                if char not in (GROUP_CLOSE, ARG_SEP):
+                    text_parts.append(char)
+                    self.pos += 1
+                break
 
             next_char = self.string[self.pos + 1]
             if char == next_char:
@@ -203,6 +227,77 @@ class Parser(object):
                 # A standalone $.
                 self.parts.append(SYMBOL_DELIM)
 
+    def parse_call(self):
+        """Parse a function call (like ``%foo{bar,baz}``) starting at
+        ``pos``.  Possibly appends a Call object to ``parts`` and update
+        ``pos``. The character at ``pos`` must be ``%``.
+        """
+        assert self.pos < len(self.string)
+        assert self.string[self.pos] == FUNC_DELIM
+
+        start_pos = self.pos
+        self.pos += 1
+
+        ident = self._parse_ident()
+        if not ident:
+            # No function name.
+            self.parts.append(FUNC_DELIM)
+            return
+        
+        if self.pos >= len(self.string):
+            # Identifier terminates string.
+            self.parts.append(self.string[start_pos:self.pos])
+            return
+
+        if self.string[self.pos] != GROUP_OPEN:
+            # Argument list not opened.
+            self.parts.append(self.string[start_pos:self.pos])
+            return
+
+        # Skip past opening brace and try to parse an argument list.
+        self.pos += 1
+        args = self.parse_argument_list()
+        if self.pos >= len(self.string) or \
+           self.string[self.pos] != GROUP_CLOSE:
+            # Arguments unclosed.
+            self.parts.append(self.string[start_pos:self.pos])
+            return
+
+        self.pos += 1 # Move past closing brace.
+        self.parts.append(Call(ident, args, self.string[start_pos:self.pos]))
+
+    def parse_argument_list(self):
+        """Parse a list of arguments starting at ``pos``, returning a
+        list of Expression objects. Does not modify ``parts``. Should
+        leave ``pos`` pointing to a } character or the end of the
+        string.
+        """
+        # Try to parse a subexpression in a subparser.
+        expressions = []
+
+        while self.pos < len(self.string) and \
+              self.string[self.pos] != GROUP_CLOSE:
+            subparser = Parser(self.string[self.pos:])
+            subparser.parse_expression()
+            if subparser.pos == 0:
+                # No expression could be parsed.
+                break
+
+            # Extract and advance past the parsed expression.
+            expressions.append(Expression(subparser.parts))
+            self.pos += subparser.pos 
+
+            if self.pos >= len(self.string) or \
+               self.string[self.pos] == GROUP_CLOSE:
+                # Argument list terminated by EOF or closing brace.
+                break
+
+            # Only other way to terminate an expression is with ,.
+            assert self.string[self.pos] == ARG_SEP
+            self.pos += 1
+
+        return expressions
+
     def _parse_ident(self):
         """Parse an identifier and return it (possibly an empty string).
         Updates ``pos``.
@@ -213,38 +308,26 @@ class Parser(object):
         return ident
 
 def _parse(template):
-    """Parse a top-level template string expression, returning a list of
-    nodes. Any extraneous text is considered literal text.
+    """Parse a top-level template string Expression. Any extraneous text
+    is considered literal text.
     """
     parser = Parser(template)
-    parser.parse_template()
+    parser.parse_expression()
 
     parts = parser.parts
     remainder = parser.string[parser.pos:]
     if remainder:
         parts.append(remainder)
-    return parts
+    return Expression(parts)
 
 class Template(object):
     """A string template, including text, Symbols, and Calls.
     """
     def __init__(self, template):
-        self.parts = _parse(template)
+        self.expr = _parse(template)
         self.original = template
-
-    def evaluate(self, env):
-        """Evaluate the entire template in the environment, returning a
-        Unicode string.
-        """
-        out = []
-        for part in self.parts:
-            if isinstance(part, basestring):
-                out.append(part)
-            else:
-                out.append(part.evaluate(env))
-        return u''.join(out)
 
     def substitute(self, values={}, functions={}):
         """Evaluate the template given the values and functions.
         """
-        return self.evaluate(Environment(values, functions))
+        return self.expr.evaluate(Environment(values, functions))
