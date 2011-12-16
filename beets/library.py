@@ -817,7 +817,9 @@ class Library(BaseLibrary):
             mapping['albumartist'] = mapping['artist']
         
         # Perform substitution.
-        subpath = subpath_tmpl.substitute(mapping, TEMPLATE_FUNCTIONS)
+        funcs = dict(TEMPLATE_FUNCTIONS)
+        funcs.update(plugins.template_funcs())
+        subpath = subpath_tmpl.substitute(mapping, funcs)
         
         # Encode for the filesystem, dropping unencodable characters.
         if isinstance(subpath, unicode) and not fragment:

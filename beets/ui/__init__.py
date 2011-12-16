@@ -274,10 +274,10 @@ def config_val(config, section, name, default, vtype=None):
             return config.getboolean(section, name)
         elif vtype is list:
             # Whitespace-separated strings.
-            strval = config.get(section, name)
+            strval = config.get(section, name, True)
             return strval.split()
         else:
-            return config.get(section, name)
+            return config.get(section, name, True)
     except ConfigParser.NoOptionError:
         return default
 
@@ -637,7 +637,7 @@ def main(args=None, configfh=None):
             # If no legacy path format, use the defaults instead.
             path_formats = DEFAULT_PATH_FORMATS
         if config.has_section('paths'):
-            path_formats.update(config.items('paths'))
+            path_formats.update(config.items('paths', True))
     art_filename = \
         config_val(config, 'beets', 'art_filename', DEFAULT_ART_FILENAME)
     lib_timeout = config_val(config, 'beets', 'timeout', DEFAULT_TIMEOUT)

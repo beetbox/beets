@@ -1,10 +1,9 @@
 Plugins
 =======
 
-As of the 1.0b3 release, beets started supporting plugins to modularize its
-functionality and allow other developers to add new functionality. Plugins can
-add new commands to the command-line interface, respond to events in beets, and
-augment the autotagger.
+Plugins can extend beets' core functionality. Plugins can add new commands to
+the command-line interface, respond to events in beets, augment the autotagger,
+or provide new path template functions.
 
 Using Plugins
 -------------
@@ -169,10 +168,10 @@ like you would a normal ``OptionParser`` in an independent script.
 Listen for Events
 ^^^^^^^^^^^^^^^^^
 
-As of beets 1.0b5, plugins can also define event handlers. Event handlers allow
-you to run code whenever something happens in beets' operation. For instance, a
-plugin could write a log message every time an album is successfully autotagged
-or update MPD's index whenever the database is changed.
+Event handlers allow plugins to run code whenever something happens in beets'
+operation. For instance, a plugin could write a log message every time an album
+is successfully autotagged or update MPD's index whenever the database is
+changed.
 
 You can "listen" for events using the ``BeetsPlugin.listen`` decorator. Here's
 an example::
@@ -210,7 +209,7 @@ The included ``mpdupdate`` plugin provides an example use case for event listene
 Extend the Autotagger
 ^^^^^^^^^^^^^^^^^^^^^
 
-Plugins in 1.0b5 can also enhance the functionality of the autotagger. For a
+Plugins in can also enhance the functionality of the autotagger. For a
 comprehensive example, try looking at the ``chroma`` plugin, which is included
 with beets.
 
@@ -223,18 +222,21 @@ methods on the plugin class:
 
 * ``track_distance(self, item, info)``: adds a component to the distance
   function (i.e., the similarity metric) for individual tracks. ``item`` is the
-  track to be matched (and Item object) and ``info`` is the !MusicBrainz track
+  track to be matched (and Item object) and ``info`` is the MusicBrainz track
   entry that is proposed as a match. Should return a ``(dist, dist_max)`` pair
   of floats indicating the distance.
 
 * ``album_distance(self, items, info)``: like the above, but compares a list of
-  items (representing an album) to an album-level !MusicBrainz entry. Should
+  items (representing an album) to an album-level MusicBrainz entry. Should
   only consider album-level metadata (e.g., the artist name and album title) and
   should not duplicate the factors considered by ``track_distance``.
 
 * ``candidates(self, items)``: given a list of items comprised by an album to be
-  matched, return a list of !MusicBrainz entries for candidate albums to be
+  matched, return a list of ``AlbumInfo`` objects for candidate albums to be
   compared and matched.
+
+* ``item_candidates(self, item)``: given a *singleton* item, return a list of
+  ``TrackInfo`` objects for candidate tracks to be compared and matched.
 
 When implementing these functions, it will probably be very necessary to use the
 functions from the ``beets.autotag`` and ``beets.autotag.mb`` modules, both of
@@ -254,3 +256,27 @@ values from the config file. Like so::
 
 Try looking at the ``mpdupdate`` plugin (included with beets) for an example of
 real-world use of this API.
+
+Add Path Format Functions
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As of 1.0b12, beets supports *function calls* in its path format syntax (see
+:doc:`/reference/pathformat`. Beets includes a few built-in functions, but
+plugins can add new functions using the ``template_func`` decorator. To use it,
+decorate a function with ``MyPlugin.template_func("name")`` where ``name`` is
+the name of the function as it should appear in template strings.
+
+Here's an example::
+
+    class MyPlugin(BeetsPlugin):
+        pass
+    @MyPlugin.template_func('initial')
+    def _tmpl_initial(text):
+        if text:
+            return text[0].upper()
+        else:
+            return u''
+
+This plugin provides a function ``%initial`` to path templates where
+``%initial{$artist}`` expands to the artist's initial (its capitalized first
+character).

@@ -104,6 +104,21 @@ class BeetsPlugin(object):
             return func
         return helper
 
+    template_funcs = None
+
+    @classmethod
+    def template_func(cls, name):
+        """Decorator that registers a path template function. The
+        function will be invoked as ``%name{}`` from path format
+        strings.
+        """
+        def helper(func):
+            if cls.template_funcs is None:
+                cls.template_funcs = {}
+            cls.template_funcs[name] = func
+            return func
+        return helper
+
 def load_plugins(names=()):
     """Imports the modules for a sequence of plugin names. Each name
     must be the name of a Python module under the "beetsplug" namespace
@@ -194,6 +209,16 @@ def configure(config):
     """Sends the configuration object to each plugin."""
     for plugin in find_plugins():
         plugin.configure(config)
+
+def template_funcs():
+    """Get all the template functions declared by plugins as a
+    dictionary.
+    """
+    funcs = {}
+    for plugin in find_plugins():
+        if plugin.template_funcs:
+            funcs.update(plugin.template_funcs)
+    return funcs
 
 
 # Event dispatch.
