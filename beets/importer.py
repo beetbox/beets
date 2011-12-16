@@ -19,6 +19,7 @@ from __future__ import with_statement # Python 2.5
 import os
 import logging
 import pickle
+import types
 from collections import defaultdict
 
 from beets import autotag
@@ -170,9 +171,9 @@ def _infer_album_fields(task):
     elif task.choice_flag == action.APPLY:
         # Applying autotagged metadata. Just get AA from the first
         # item.
-        if not task.items[0].albumartist:
+        if not isinstance(task.items[0],types.NoneType) and not task.items[0].albumartist:
             changes['albumartist'] = task.items[0].artist
-        if not task.items[0].mb_albumartistid:
+        if not isinstance(task.items[0],types.NoneType) and not task.items[0].mb_albumartistid:
             changes['mb_albumartistid'] = task.items[0].mb_artistid
 
     else:
