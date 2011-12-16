@@ -20,8 +20,8 @@ Here are some paths this format will generate:
 
 Because ``$`` is used to delineate a field reference, you can use ``$$`` to emit
 a dollars sign. As with `Python template strings`_, ``${title}`` is equivalent
-to ``$title``; you can use this if you need to separate the field name from the
-following text.
+to ``$title``; you can use this if you need to separate a field name from the
+text that follows it.
 
 .. _Python template strings: http://docs.python.org/library/string.html#template-strings
 
@@ -66,6 +66,32 @@ These functions are built in to beets:
   the second argument. Otherwise, returns the third argument if specified (or
   nothing if ``falsetext`` is left off).
 
+
+Syntax Details
+--------------
+
+The characters ``$``, ``%``, ``{``, ``}``, and ``,`` are "special" in the path
+template syntax. This means that, for example, if you want a ``%`` character to
+appear in your paths, you'll need to be careful that you don't accidentally
+write a function call. To escape any of these characters (except ``{``), prefix
+it with a ``$``.  For example, ``$$`` becomes ``$``; ``$%`` becomes ``%``, etc.
+The only exception is ``${``, which is ambiguous with the variable reference
+syntax (like ``${title}``). To insert a ``{`` alone, it's always sufficient to
+just type ``{``.
+
+If a value or function is undefined, the syntax is simply left unreplaced. For
+example, if you write ``$foo`` in a path template, this will yield ``$foo`` in
+the resulting paths because "foo" is not a valid field name. The same is true of
+syntax errors like unclosed ``{}`` pairs; if you ever see template syntax
+constructs leaking into your paths, check your template for errors.
+
+If an error occurs in the Python code that implements a function, the function
+call will be expanded to a string that describes the exception so you can debug
+your template. For example, the second parameter to ``%left`` must be an
+integer; if you write ``%left{foo,bar}``, this will be expanded to something
+like ``<ValueError: invalid literal for int()>``.
+
+
 Available Values
 ----------------
 
@@ -81,6 +107,7 @@ Ordinary metadata:
 * title
 * artist
 * album
+* albumartist
 * genre
 * composer
 * grouping
@@ -95,6 +122,8 @@ Ordinary metadata:
 * comments
 * bpm
 * comp
+* albumtype
+* label
 
 Audio information:
 
@@ -107,3 +136,4 @@ MusicBrainz IDs:
 * mb_trackid
 * mb_albumid
 * mb_artistid
+* mb_albumartistid
