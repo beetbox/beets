@@ -147,10 +147,11 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(list(_normparse(u'foo %bar{bar,bar baz')),
                          [u'foo %bar{bar,bar baz'])
 
-    def test_call_no_args(self):
+    def test_call_empty_arg(self):
         parts = list(_normparse(u'%foo{}'))
         self.assertEqual(len(parts), 1)
-        self._assert_call(parts[0], u"foo", 0)
+        self._assert_call(parts[0], u"foo", 1)
+        self.assertEqual(list(_normexpr(parts[0].args[0])), [])
     
     def test_call_single_arg(self):
         parts = list(_normparse(u'%foo{bar}'))
@@ -192,7 +193,7 @@ class ParseTest(unittest.TestCase):
         self._assert_call(parts[0], u"foo", 2)
         arg_parts = list(_normexpr(parts[0].args[0]))
         self.assertEqual(len(arg_parts), 1)
-        self._assert_call(arg_parts[0], u"bar", 0)
+        self._assert_call(arg_parts[0], u"bar", 1)
         self.assertEqual(list(_normexpr(parts[0].args[1])), [u"baz"])
 
     def test_nested_call_with_argument(self):
@@ -252,6 +253,9 @@ class EvalTest(unittest.TestCase):
 
     def test_not_subtitute_func_with_no_args(self):
         self.assertEqual(self._eval(u"%lower"), u"%lower")
+
+    def test_function_call_with_empty_arg(self):
+        self.assertEqual(self._eval(u"%len{}"), u"0")
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

@@ -298,13 +298,9 @@ class Parser(object):
         # Try to parse a subexpression in a subparser.
         expressions = []
 
-        while self.pos < len(self.string) and \
-              self.string[self.pos] != GROUP_CLOSE:
+        while self.pos < len(self.string):
             subparser = Parser(self.string[self.pos:])
             subparser.parse_expression()
-            if subparser.pos == 0:
-                # No expression could be parsed.
-                break
 
             # Extract and advance past the parsed expression.
             expressions.append(Expression(subparser.parts))
@@ -316,6 +312,7 @@ class Parser(object):
                 break
 
             # Only other way to terminate an expression is with ,.
+            # Continue to the next argument.
             assert self.string[self.pos] == ARG_SEP
             self.pos += 1
 

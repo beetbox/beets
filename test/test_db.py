@@ -398,8 +398,8 @@ class DestinationFunctionTest(unittest.TestCase):
         self._assert_dest('/base/tle')
 
     def test_if_false(self):
-        self._setf(u'%if{,foo}')
-        self._assert_dest('/base/')
+        self._setf(u'x%if{,foo}')
+        self._assert_dest('/base/x')
     
     def test_if_true(self):
         self._setf(u'%if{bar,foo}')
