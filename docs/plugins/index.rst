@@ -75,6 +75,8 @@ Here are a few of the plugins written by the beets community:
     https://github.com/coolkehon/beets/blob/master/beetsplug/cmus.py
 .. _cmus: http://cmus.sourceforge.net/
 
+.. _writing-plugins:
+
 Writing Plugins
 ---------------
 

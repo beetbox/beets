@@ -66,6 +66,9 @@ These functions are built in to beets:
   the second argument. Otherwise, returns the third argument if specified (or
   nothing if ``falsetext`` is left off).
 
+Plugins can extend beets with more template functions (see
+:ref:`writing-plugins`).
+
 
 Syntax Details
 --------------

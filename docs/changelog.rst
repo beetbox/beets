@@ -9,7 +9,8 @@ This release focuses on making beets' path formatting vastly more powerful.
 * **Functions in path formats** provide a simple way to write complex file
   naming rules: for example, ``%upper{%left{$artist,1}}`` will insert the
   capitalized first letter of the track's artist. For more details, see
-  :doc:`/reference/pathformat`.
+  :doc:`/reference/pathformat`. If you're interested in adding your own template
+  functions via a plugin, see :ref:`writing-plugins`.
 * Fix an incompatibility in BPD with libmpc (the library that powers mpc and
   ncmpc).
 
