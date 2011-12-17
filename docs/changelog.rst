@@ -13,6 +13,7 @@ This release focuses on making beets' path formatting vastly more powerful.
   functions via a plugin, see :ref:`writing-plugins`.
 * Fix an incompatibility in BPD with libmpc (the library that powers mpc and
   ncmpc).
+* Fix a crash when importing a partial match whose first track was missing.
 
 1.0b11 (December 12, 2011)
 --------------------------

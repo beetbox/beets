@@ -170,18 +170,25 @@ def _infer_album_fields(task):
     elif task.choice_flag == action.APPLY:
         # Applying autotagged metadata. Just get AA from the first
         # item.
-        if not task.items[0].albumartist:
-            changes['albumartist'] = task.items[0].artist
-        if not task.items[0].mb_albumartistid:
-            changes['mb_albumartistid'] = task.items[0].mb_artistid
+        for item in task.items:
+            if item is not None:
+                first_item = item
+                break
+        else:
+            assert False, "all items are None"
+        if not first_item.albumartist:
+            changes['albumartist'] = first_item.artist
+        if not first_item.mb_albumartistid:
+            changes['mb_albumartistid'] = first_item.mb_artistid
 
     else:
         assert False
 
     # Apply new metadata.
     for item in task.items:
-        for k, v in changes.iteritems():
-            setattr(item, k, v)
+        if item is not None:
+            for k, v in changes.iteritems():
+                setattr(item, k, v)
 
 def _open_state():
     """Reads the state file, returning a dictionary."""

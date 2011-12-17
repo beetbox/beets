@@ -541,6 +541,13 @@ class InferAlbumDataTest(unittest.TestCase):
         self._infer()
         self.assertFalse(self.items[0].comp)
 
+    def test_first_item_null_apply(self):
+        self.items[0] = None
+        self.task.set_choice(({}, self.items)) # APPLY
+        self._infer()
+        self.assertFalse(self.items[1].comp)
+        self.assertEqual(self.items[1].albumartist, self.items[2].artist)
+
 class DuplicateCheckTest(unittest.TestCase):
     def setUp(self):
         self.lib = library.Library(':memory:')
