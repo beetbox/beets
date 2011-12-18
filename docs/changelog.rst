@@ -17,6 +17,7 @@ This release focuses on making beets' path formatting vastly more powerful.
 * Fix a crash when importing a partial match whose first track was missing.
 * Ignore FUSE's shadow files when importing.
 * Removed the ``--path-format`` global flag for ``beet``.
+* Removed the ``lastid`` plugin, which was deprecated in the previous version.
 
 1.0b11 (December 12, 2011)
 --------------------------
