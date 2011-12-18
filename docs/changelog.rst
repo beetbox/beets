@@ -16,6 +16,7 @@ This release focuses on making beets' path formatting vastly more powerful.
   ncmpc).
 * Fix a crash when importing a partial match whose first track was missing.
 * Ignore FUSE's shadow files when importing.
+* Removed the ``--path-format`` global flag for ``beet``.
 
 1.0b11 (December 12, 2011)
 --------------------------

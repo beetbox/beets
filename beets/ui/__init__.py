@@ -612,8 +612,6 @@ def main(args=None, configfh=None):
                       help='library database file to use')
     parser.add_option('-d', '--directory', dest='directory',
                       help="destination music directory")
-    parser.add_option('-p', '--pathformat', dest='path_format',
-                      help="destination path format string")
     parser.add_option('-v', '--verbose', dest='verbose', action='store_true',
                       help='print debugging information')
     
@@ -626,18 +624,14 @@ def main(args=None, configfh=None):
     directory = options.directory or \
         config_val(config, 'beets', 'directory', default_dir)
     legacy_path_format = config_val(config, 'beets', 'path_format', None)
-    if options.path_format:
-        # If given, -p overrides all path format settings
-        path_formats = {'default': options.path_format}
+    if legacy_path_format:
+        # Old path formats override the default values.
+        path_formats = {'default': legacy_path_format}
     else:
-        if legacy_path_format:
-            # Old path formats override the default values.
-            path_formats = {'default': legacy_path_format}
-        else:
-            # If no legacy path format, use the defaults instead.
-            path_formats = DEFAULT_PATH_FORMATS
-        if config.has_section('paths'):
-            path_formats.update(config.items('paths', True))
+        # If no legacy path format, use the defaults instead.
+        path_formats = DEFAULT_PATH_FORMATS
+    if config.has_section('paths'):
+        path_formats.update(config.items('paths', True))
     art_filename = \
         config_val(config, 'beets', 'art_filename', DEFAULT_ART_FILENAME)
     lib_timeout = config_val(config, 'beets', 'timeout', DEFAULT_TIMEOUT)
