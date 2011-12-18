@@ -105,6 +105,7 @@ class BeetsPlugin(object):
         return helper
 
     template_funcs = None
+    template_fields = None
 
     @classmethod
     def template_func(cls, name):
@@ -116,6 +117,20 @@ class BeetsPlugin(object):
             if cls.template_funcs is None:
                 cls.template_funcs = {}
             cls.template_funcs[name] = func
+            return func
+        return helper
+
+    @classmethod
+    def template_field(cls, name):
+        """Decorator that registers a path template field computation.
+        The value will be referenced as ``$name`` from path format
+        strings. The function must accept a single parameter, the Item
+        being formatted.
+        """
+        def helper(func):
+            if cls.template_fields is None:
+                cls.template_fields = {}
+            cls.template_fields[name] = func
             return func
         return helper
 
@@ -219,6 +234,17 @@ def template_funcs():
         if plugin.template_funcs:
             funcs.update(plugin.template_funcs)
     return funcs
+
+def template_values(item):
+    """Get all the template values computed for a given Item by
+    registered field computations.
+    """
+    values = {}
+    for plugin in find_plugins():
+        if plugin.template_fields:
+            for name, func in plugin.template_fields.iteritems():
+                values[name] = unicode(func(item))
+    return values
 
 
 # Event dispatch.

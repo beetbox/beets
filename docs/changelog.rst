@@ -11,6 +11,7 @@ This release focuses on making beets' path formatting vastly more powerful.
   capitalized first letter of the track's artist. For more details, see
   :doc:`/reference/pathformat`. If you're interested in adding your own template
   functions via a plugin, see :ref:`writing-plugins`.
+* Plugins can also now define new path *fields* in addition to functions.
 * Fix an incompatibility in BPD with libmpc (the library that powers mpc and
   ncmpc).
 * Fix a crash when importing a partial match whose first track was missing.

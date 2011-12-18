@@ -259,10 +259,10 @@ values from the config file. Like so::
 Try looking at the ``mpdupdate`` plugin (included with beets) for an example of
 real-world use of this API.
 
-Add Path Format Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Add Path Format Functions and Fields
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As of 1.0b12, beets supports *function calls* in its path format syntax (see
+Beets supports *function calls* in its path format syntax (see
 :doc:`/reference/pathformat`. Beets includes a few built-in functions, but
 plugins can add new functions using the ``template_func`` decorator. To use it,
 decorate a function with ``MyPlugin.template_func("name")`` where ``name`` is
@@ -282,3 +282,19 @@ Here's an example::
 This plugin provides a function ``%initial`` to path templates where
 ``%initial{$artist}`` expands to the artist's initial (its capitalized first
 character).
+
+Plugins can also add template *fields*, which are computed values referenced as
+``$name`` in templates. To add a new field, decorate a function taking a single
+parameter, ``item``, with ``MyPlugin.template_field("name")``. Here's an example
+that adds a ``$disc_and_track`` field::
+
+    @MyPlugin.template_value('disc_and_track')
+    def _tmpl_disc_and_track(item):
+        """Expand to the disc number and track number if both are
+        sepcified. If there's no disc number, then just exapnds to the
+        track number.
+        """
+        if item.disc:
+            return u'%02i.%02i' % (item.disc, item.track)
+        else:
+            return u'%02i' % (item.track)

@@ -817,6 +817,7 @@ class Library(BaseLibrary):
             mapping['albumartist'] = mapping['artist']
         
         # Perform substitution.
+        mapping.update(plugins.template_values(item))
         funcs = dict(TEMPLATE_FUNCTIONS)
         funcs.update(plugins.template_funcs())
         subpath = subpath_tmpl.substitute(mapping, funcs)
