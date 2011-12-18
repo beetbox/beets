@@ -100,7 +100,8 @@ Available Values
 
 Here's a (comprehensive?) list of the different values available to path
 formats. (I will try to keep it up to date, but I might forget. The current list
-can be found definitively `in the source`_.)
+can be found definitively `in the source`_.) Note that plugins can add new (or
+replace existing) template values (see :ref:`writing-plugins`).
 
 .. _in the source: 
     http://code.google.com/p/beets/source/browse/beets/library.py#36 

@@ -263,7 +263,7 @@ Add Path Format Functions and Fields
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Beets supports *function calls* in its path format syntax (see
-:doc:`/reference/pathformat`. Beets includes a few built-in functions, but
+:doc:`/reference/pathformat`). Beets includes a few built-in functions, but
 plugins can add new functions using the ``template_func`` decorator. To use it,
 decorate a function with ``MyPlugin.template_func("name")`` where ``name`` is
 the name of the function as it should appear in template strings.
@@ -288,13 +288,16 @@ Plugins can also add template *fields*, which are computed values referenced as
 parameter, ``item``, with ``MyPlugin.template_field("name")``. Here's an example
 that adds a ``$disc_and_track`` field::
 
-    @MyPlugin.template_value('disc_and_track')
+    @MyPlugin.template_field('disc_and_track')
     def _tmpl_disc_and_track(item):
-        """Expand to the disc number and track number if both are
-        sepcified. If there's no disc number, then just exapnds to the
-        track number.
+        """Expand to the disc number and track number if this is a
+        multi-disc release. Otherwise, just exapnds to the track
+        number.
         """
-        if item.disc:
+        if item.disctotal > 1:
             return u'%02i.%02i' % (item.disc, item.track)
         else:
             return u'%02i' % (item.track)
+
+With this plugin enabled, templates can reference ``$disc_and_track`` as they
+can any standard metadata field.
