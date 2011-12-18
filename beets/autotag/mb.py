@@ -30,26 +30,9 @@ class BadResponseError(Exception): pass
 
 log = logging.getLogger('beets')
 
-# We hard-code IDs for artists that can't easily be searched for.
-SPECIAL_CASE_ARTISTS = {
-    '!!!': 'f26c72d3-e52c-467b-b651-679c73d8e1a7',
-}
-
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits']
 TRACK_INCLUDES = ['artists']
-
-def _adapt_criteria(criteria):
-    """Special-case artists in a criteria dictionary before it is passed
-    to the MusicBrainz search server. The dictionary supplied is
-    mutated; nothing is returned.
-    """
-    if 'artist' in criteria:
-        for artist, artist_id in SPECIAL_CASE_ARTISTS.items():
-            if criteria['artist'] == artist:
-                criteria['arid'] = artist_id
-                del criteria['artist']
-                break
 
 def track_info(recording):
     """Translates a MusicBrainz recording result dictionary into a beets
@@ -161,7 +144,6 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
     if not any(criteria.itervalues()):
         return
 
-    _adapt_criteria(criteria)
     res = musicbrainz3.release_search(limit=limit, **criteria)
     for release in res['release-list']:
         # The search result is missing some data (namely, the tracks),
@@ -180,7 +162,6 @@ def match_track(artist, title, limit=SEARCH_LIMIT):
     if not any(criteria.itervalues()):
         return
 
-    _adapt_criteria(criteria)
     res = musicbrainz3.recording_search(limit=limit, **criteria)
     for recording in res['recording-list']:
         yield track_info(recording)
