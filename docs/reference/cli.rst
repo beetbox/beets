@@ -209,6 +209,20 @@ stats
 Show some statistics on your entire library (if you don't provide a
 :doc:`query <query>` or the matched items (if you do).
 
+
+Global Flags
+------------
+
+Beets has a few "global" flags that affect all commands. These must appear
+between the executable name (``beet``) and the command: for example, ``beet -v
+import ...``.
+
+* ``-l LIBPATH``: specify the library database file to use.
+* ``-d DIRECTORY``: specify the library root directory.
+* ``-v``: verbose mode; prints out a deluge of debugging information. Please use
+  this flag when reporting bugs.
+
+
 .. only:: man
 
     See Also
