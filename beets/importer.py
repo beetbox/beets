@@ -451,6 +451,7 @@ def read_tasks(config):
 
     # Look for saved incremental directories.
     if config.incremental:
+        incremental_skipped = 0
         history_dirs = history_get()
     
     for toppath in config.paths:
@@ -475,6 +476,9 @@ def read_tasks(config):
 
             # When incremental, skip paths in the history.
             if config.incremental and path in history_dirs:
+                log.debug(u'Skipping previously-imported path: %s' %
+                          displayable_path(path))
+                incremental_skipped += 1
                 continue
 
             # Yield all the necessary tasks.
@@ -487,6 +491,11 @@ def read_tasks(config):
 
         # Indicate the directory is finished.
         yield ImportTask.done_sentinel(toppath)
+
+    # Show skipped directories.
+    if config.incremental and incremental_skipped:
+        log.info(u'Incremental import: skipped %i directories.' %
+                 incremental_skipped)
 
 def query_tasks(config):
     """A generator that works as a drop-in-replacement for read_tasks.
