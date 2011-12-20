@@ -245,6 +245,27 @@ def move(path, dest, replace=False, pathmod=None):
     _assert_not_exists(dest, pathmod)
     return shutil.move(path, dest)
 
+def unique_path(path):
+    """Returns a version of ``path`` that does not exist on the
+    filesystem. Specifically, if ``path` itself already exists, then
+    something unique is appended to the path.
+    """
+    if not os.path.exists(syspath(path)):
+        return path
+
+    base, ext = os.path.splitext(path)
+    match = re.search(r'\.(\d)+$', base)
+    if match:
+        num = int(match.group(1))
+        base = base[:match.start()]
+    else:
+        num = 0
+    while True:
+        num += 1
+        new_path = '%s.%i%s' % (base, num, ext)
+        if not os.path.exists(new_path):
+            return new_path
+
 # Note: POSIX actually supports \ and : -- I just think they're
 # a pain. And ? has caused problems for some.
 CHAR_REPLACE = [

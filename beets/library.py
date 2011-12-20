@@ -225,8 +225,11 @@ class Item(object):
 
     def move(self, dest, copy=False):
         """Moves or copies the item's file, updating the path value if
-        the move succeeds.
+        the move succeeds. If a file exists at ``dest``, then it is
+        slightly modified to be unique.
         """
+        if not util.samefile(self.path, dest):
+            dest = util.unique_path(dest)
         if copy:
             util.copy(self.path, dest)
         else:
@@ -1264,6 +1267,7 @@ class Album(BaseAlbum):
         # Normal operation.
         if oldart == artdest:
             util.soft_remove(oldart)
+        artdest = util.unique_path(artdest)
         util.copy(path, artdest)
         self.artpath = artdest
 

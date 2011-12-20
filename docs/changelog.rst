@@ -15,6 +15,8 @@ This release focuses on making beets' path formatting vastly more powerful.
 * **Filename substitutions are now configurable** via the ``replace`` config
   value. You can choose which characters you think should be allowed in your
   directory and music file names.  See :doc:`/reference/config`.
+* Beets now ensures that files have **unique filenames** by appending a number
+  to any filename that would otherwise conflict with an existing file.
 * Fix an incompatibility in BPD with libmpc (the library that powers mpc and
   ncmpc).
 * Fix a crash when importing a partial match whose first track was missing.

@@ -113,6 +113,17 @@ class MoveTest(unittest.TestCase, _common.ExtraAsserts):
             # Make everything writable so it can be cleaned up.
             os.chmod(self.path, 0777)
             os.chmod(self.i.path, 0777)
+
+    def test_move_avoids_collision_with_existing_file(self):
+        # Make a conflicting file at the destination.
+        dest = self.lib.destination(self.i)
+        os.makedirs(os.path.dirname(dest))
+        touch(dest)
+
+        self.lib.move(self.i)
+        self.assertNotEqual(self.i.path, dest)
+        self.assertEqual(os.path.dirname(self.i.path),
+                         os.path.dirname(dest))
     
 class HelperTest(unittest.TestCase):
     def test_ancestry_works_on_file(self):
@@ -295,6 +306,25 @@ class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
         # Set the art again.
         ai.set_art(artdest)
         self.assertTrue(os.path.exists(ai.artpath))
+
+    def test_setart_to_conflicting_file_gets_new_path(self):
+        newart = os.path.join(self.libdir, 'newart.jpg')
+        touch(newart)
+        i2 = item()
+        i2.path = self.i.path
+        i2.artist = 'someArtist'
+        ai = self.lib.add_album((i2,))
+        self.lib.move(i2, True)
+
+        # Make a file at the destination.
+        artdest = ai.art_destination(newart)
+        touch(artdest)
+
+        # Set the art.
+        ai.set_art(newart)
+        self.assertNotEqual(artdest, ai.artpath)
+        self.assertEqual(os.path.dirname(artdest),
+                         os.path.dirname(ai.artpath))
 
     def test_setart_sets_permissions(self):
         os.remove(self.art)
@@ -532,6 +562,34 @@ class WalkTest(unittest.TestCase):
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0],
                          (self.base, [], []))
+
+class UniquePathTest(unittest.TestCase):
+    def setUp(self):
+        self.base = os.path.join(_common.RSRC, 'testdir')
+        os.mkdir(self.base)
+        touch(os.path.join(self.base, 'x.mp3'))
+        touch(os.path.join(self.base, 'x.1.mp3'))
+        touch(os.path.join(self.base, 'x.2.mp3'))
+        touch(os.path.join(self.base, 'y.mp3'))
+    def tearDown(self):
+        if os.path.exists(self.base):
+            shutil.rmtree(self.base)
+
+    def test_new_file_unchanged(self):
+        path = util.unique_path(os.path.join(self.base, 'z.mp3'))
+        self.assertEqual(path, os.path.join(self.base, 'z.mp3'))
+
+    def test_conflicting_file_appends_1(self):
+        path = util.unique_path(os.path.join(self.base, 'y.mp3'))
+        self.assertEqual(path, os.path.join(self.base, 'y.1.mp3'))
+
+    def test_conflicting_file_appends_higher_number(self):
+        path = util.unique_path(os.path.join(self.base, 'x.mp3'))
+        self.assertEqual(path, os.path.join(self.base, 'x.3.mp3'))
+
+    def test_conflicting_file_with_number_increases_number(self):
+        path = util.unique_path(os.path.join(self.base, 'x.1.mp3'))
+        self.assertEqual(path, os.path.join(self.base, 'x.3.mp3'))
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
