@@ -18,6 +18,7 @@ This release focuses on making beets' path formatting vastly more powerful.
 * Fix an incompatibility in BPD with libmpc (the library that powers mpc and
   ncmpc).
 * Fix a crash when importing a partial match whose first track was missing.
+* Add a message when skipping directories during an incremental import.
 * Ignore FUSE's shadow files when importing.
 * Removed the ``--path-format`` global flag for ``beet``.
 * Removed the ``lastid`` plugin, which was deprecated in the previous version.
