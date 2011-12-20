@@ -251,25 +251,33 @@ CHAR_REPLACE = [
     (re.compile(r'[\\/\?"]|^\.'), '_'),
     (re.compile(r':'), '-'),
 ]
-CHAR_REPLACE_WINDOWS = re.compile(r'["\*<>\|]|^\.|\.$| +$'), '_'
-def sanitize_path(path, pathmod=None):
+CHAR_REPLACE_WINDOWS = [
+    (re.compile(r'["\*<>\|]|^\.|\.$|\s+$'), '_'),
+]
+def sanitize_path(path, pathmod=None, replacements=None):
     """Takes a path and makes sure that it is legal. Returns a new path.
     Only works with fragments; won't work reliably on Windows when a
     path begins with a drive letter. Path separators (including altsep!)
-    should already be cleaned from the path components.
+    should already be cleaned from the path components. If replacements
+    is specified, it is used *instead* of the default set of
+    replacements for the platform; it must be a list of (compiled regex,
+    replacement string) pairs.
     """
     pathmod = pathmod or os.path
     windows = pathmod.__name__ == 'ntpath'
+
+    # Choose the appropriate replacements.
+    if not replacements:
+        replacements = list(CHAR_REPLACE)
+        if windows:
+            replacements += CHAR_REPLACE_WINDOWS
     
     comps = components(path, pathmod)
     if not comps:
         return ''
     for i, comp in enumerate(comps):
         # Replace special characters.
-        for regex, repl in CHAR_REPLACE:
-            comp = regex.sub(repl, comp)
-        if windows:
-            regex, repl = CHAR_REPLACE_WINDOWS
+        for regex, repl in replacements:
             comp = regex.sub(repl, comp)
         
         # Truncate each component.

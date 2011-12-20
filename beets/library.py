@@ -701,6 +701,7 @@ class Library(BaseLibrary):
                        path_formats=None,
                        art_filename='cover',
                        timeout=5.0,
+                       replacements=None,
                        item_fields=ITEM_FIELDS,
                        album_fields=ALBUM_FIELDS):
         if path == ':memory:':
@@ -714,6 +715,7 @@ class Library(BaseLibrary):
             path_formats = {'default': path_formats}
         self.path_formats = path_formats
         self.art_filename = bytestring_path(art_filename)
+        self.replacements = replacements
         
         self.timeout = timeout
         self.conn = sqlite3.connect(self.path, timeout)
@@ -828,7 +830,7 @@ class Library(BaseLibrary):
             subpath = subpath.encode(encoding, 'replace')
         
         # Truncate components and remove forbidden characters.
-        subpath = util.sanitize_path(subpath)
+        subpath = util.sanitize_path(subpath, pathmod, self.replacements)
         
         # Preserve extension.
         _, extension = pathmod.splitext(item.path)

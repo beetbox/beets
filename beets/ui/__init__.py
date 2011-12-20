@@ -26,6 +26,7 @@ from difflib import SequenceMatcher
 import logging
 import sqlite3
 import errno
+import re
 
 from beets import library
 from beets import plugins
@@ -404,6 +405,30 @@ def default_paths(pathmod=None):
 
     return config, libpath, libdir
 
+def _get_replacements(config):
+    """Given a ConfigParser, get the list of replacement pairs. If no
+    replacements are specified, returns None. Otherwise, returns a list
+    of (compiled regex, replacement string) pairs.
+    """
+    repl_string = config_val(config, 'beets', 'replace', None)
+    if not repl_string:
+        return
+
+    parts = repl_string.strip().split()
+    if not parts:
+        return
+    if len(parts) % 2 != 0:
+        # Must have an even number of parts.
+        raise UserError(u'"replace" config value must consist of'
+                        u' pattern/replacement pairs')
+
+    out = []
+    for index in xrange(0, len(parts), 2):
+        pattern = parts[index]
+        replacement = parts[index+1]
+        out.append((re.compile(pattern), replacement))
+    return out
+
 
 # Subcommand parsing infrastructure.
 
@@ -635,6 +660,7 @@ def main(args=None, configfh=None):
     art_filename = \
         config_val(config, 'beets', 'art_filename', DEFAULT_ART_FILENAME)
     lib_timeout = config_val(config, 'beets', 'timeout', DEFAULT_TIMEOUT)
+    replacements = _get_replacements(config)
     try:
         lib_timeout = float(lib_timeout)
     except ValueError:
@@ -645,7 +671,8 @@ def main(args=None, configfh=None):
                               directory,
                               path_formats,
                               art_filename,
-                              lib_timeout)
+                              lib_timeout,
+                              replacements)
     except sqlite3.OperationalError:
         raise UserError("database file %s could not be opened" % db_path)
     

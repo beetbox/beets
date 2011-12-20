@@ -77,6 +77,8 @@ def _reopen_lib(lib):
             lib.directory,
             lib.path_formats,
             lib.art_filename,
+            lib.timeout,
+            lib.replacements,
         )
     else:
         return lib

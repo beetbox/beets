@@ -73,6 +73,33 @@ section header:
     A space-separated list of glob patterns specifying file and directory names
     to be ignored when importing. Defaults to ``.AppleDouble ._* *~ .DS_Store``.
 
+``replace``
+    A set of regular expression/replacement pairs to be applied to all filenames
+    created by beets. Typically, these replacements are used to avoid confusing
+    problems or errors with the filesystem (for example, leading ``.``
+    characters are replaced on Unix and the ``*<>|`` characters are removed on
+    Windows). To override these substitutions, specify a sequence of
+    whitespace-separated terms; the first term is a regular expression and the
+    second is a string that should replace anything matching that regex. For
+    example, ``replace = [xy] z`` will make beets replace all instances of the
+    characters ``x`` or ``y`` with the character ``z``.
+
+    If you do change this value, be certain that you include at least enough
+    substitutions to avoid causing errors on your operating system. Here are
+    some recommended base replacements for Unix-like OSes::
+
+        replace = [\\/\?"]|^\.' _
+                  : -
+
+    And, on Windows::
+
+        replace = [\\/\?"]|^\.' _
+                  ["\*<>\|]|^\.|\.$|\s+$ _
+                  : -
+
+    Note that the above examples are, in fact, the default substitutions used by
+    beets.
+
 ``art_filename``
     When importing album art, the name of the file (without extension) where the
     cover art image should be placed. Defaults to ``cover`` (i.e., images will

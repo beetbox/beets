@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2011, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,13 +14,13 @@
 
 """Tests for non-query database functions of Item.
 """
-
 import unittest
 import os
 import sqlite3
 import ntpath
 import posixpath
 import shutil
+import re
 
 import _common
 from _common import item
@@ -231,7 +231,7 @@ class DestinationTest(unittest.TestCase):
         self.assertFalse('<' in p)
         self.assertFalse('>' in p)
         self.assertFalse('|' in p)
-    
+
     def test_sanitize_replaces_colon_with_dash(self):
         p = util.sanitize_path(u':', posixpath)
         self.assertEqual(p, u'-')
@@ -362,6 +362,18 @@ class DestinationTest(unittest.TestCase):
     def test_sanitize_path_works_on_empty_string(self):
         p = util.sanitize_path('', posixpath)
         self.assertEqual(p, '')
+
+    def test_sanitize_with_custom_replace_overrides_built_in_sub(self):
+        p = util.sanitize_path('a/.?/b', posixpath, [
+            (re.compile(r'foo'), 'bar'),
+        ])
+        self.assertEqual(p, 'a/.?/b')
+
+    def test_sanitize_with_custom_replace_adds_replacements(self):
+        p = util.sanitize_path('foo/bar', posixpath, [
+            (re.compile(r'foo'), 'bar'),
+        ])
+        self.assertEqual(p, 'bar/bar')
 
 class DestinationFunctionTest(unittest.TestCase):
     def setUp(self):

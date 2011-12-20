@@ -19,16 +19,16 @@ import os
 import shutil
 import textwrap
 import logging
+import re
 from StringIO import StringIO
 
+import _common
 from beets import library
 from beets import ui
 from beets.ui import commands
 from beets import autotag
 from beets import importer
 from beets.mediafile import MediaFile
-
-import _common
 
 class ListTest(unittest.TestCase):
     def setUp(self):
@@ -499,14 +499,6 @@ class ConfigTest(unittest.TestCase):
             [beets]
             path_format=x"""), func)
 
-    def test_paths_section_overriden_by_cli_switch(self):
-        def func(lib, config, opts, args):
-            self.assertEqual(lib.path_formats['default'], 'z')
-            self.assertEqual(len(lib.path_formats), 1)
-        self._run_main(['-p', 'z'], textwrap.dedent("""
-            [paths]
-            x=y"""), func)
-
     def test_nonexistant_config_file(self):
         os.environ['BEETSCONFIG'] = '/xxxxx'
         ui.main(['version'])
@@ -519,6 +511,34 @@ class ConfigTest(unittest.TestCase):
                 [beets]
                 library: /xxx/yyy/not/a/real/path
             """), func)
+
+    def test_replacements_parsed(self):
+        def func(lib, config, opts, args):
+            replacements = lib.replacements
+            self.assertEqual(replacements, [(re.compile(r'[xy]'), 'z')])
+        self._run_main([], textwrap.dedent("""
+            [beets]
+            replace=[xy] z"""), func)
+
+    def test_empty_replacements_produce_none(self):
+        def func(lib, config, opts, args):
+            replacements = lib.replacements
+            self.assertFalse(replacements)
+        self._run_main([], textwrap.dedent("""
+            [beets]
+            """), func)
+
+    def test_multiple_replacements_parsed(self):
+        def func(lib, config, opts, args):
+            replacements = lib.replacements
+            self.assertEqual(replacements, [
+                (re.compile(r'[xy]'), 'z'),
+                (re.compile(r'foo'), 'bar'),
+            ])
+        self._run_main([], textwrap.dedent("""
+            [beets]
+            replace=[xy] z
+                foo bar"""), func)
 
 class ShowdiffTest(unittest.TestCase):
     def setUp(self):
