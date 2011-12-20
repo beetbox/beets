@@ -17,6 +17,7 @@ import os
 import re
 import sys
 import logging
+from unidecode import unidecode
 from beets.mediafile import MediaFile
 from beets import plugins
 from beets import util
@@ -1301,6 +1302,10 @@ def _tmpl_if(condition, trueval, falseval=u''):
         return trueval
     else:
         return falseval
+def _tmpl_asciify(s):
+    """Translate non-ASCII characters to their ASCII equivalents.
+    """
+    return unidecode(s)
 
 TEMPLATE_FUNCTIONS = {
     'lower': _tmpl_lower,
@@ -1309,4 +1314,5 @@ TEMPLATE_FUNCTIONS = {
     'left': _tmpl_left,
     'right': _tmpl_right,
     'if': _tmpl_if,
+    'asciify': _tmpl_asciify,
 }

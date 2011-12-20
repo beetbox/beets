@@ -65,6 +65,11 @@ These functions are built in to beets:
   ``condition`` is nonempty (or nonzero, if it's a number), then returns
   the second argument. Otherwise, returns the third argument if specified (or
   nothing if ``falsetext`` is left off).
+* ``%asciify{text}``: Convert non-ASCII characters to their ASCII equivalents.
+  For example, "café" becomes "cafe". Uses the mapping provided by the
+  `unidecode module`_.
+
+.. _unidecode module: http://pypi.python.org/pypi/Unidecode
 
 Plugins can extend beets with more template functions (see
 :ref:`writing-plugins`).
