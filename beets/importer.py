@@ -709,10 +709,10 @@ def finalize(config):
         # Announce that we've added an album.
         if task.is_album:
             album = lib.get_album(task.album_id)
-            plugins.send('album_imported', lib=lib, album=album)
+            plugins.send('album_imported', lib=lib, album=album, config=config)
         else:
             for item in items:
-                plugins.send('item_imported', lib=lib, item=item)
+                plugins.send('item_imported', lib=lib, item=item, config=config)
 
         # Finally, delete old files.
         if config.copy and config.delete:

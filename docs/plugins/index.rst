@@ -201,10 +201,12 @@ currently available are:
   imported)
 
 * *album_imported*: called with an ``Album`` object every time the ``import``
-  command finishes adding an album to the library
+  command finishes adding an album to the library. Parameters: ``lib``,
+  ``album``, ``config``
 
 * *item_imported*: called with an ``Item`` object every time the importer adds a
-  singleton to the library (not called for full-album imports)
+  singleton to the library (not called for full-album imports). Parameters:
+  ``lib``, ``item``, ``config``
 
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 

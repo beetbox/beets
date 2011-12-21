@@ -154,7 +154,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             options['c14n'] = True
         
 @LastGenrePlugin.listen('album_imported')
-def album_imported(lib, album):
+def album_imported(lib, album, config):
     tags = _tags_for(LASTFM.get_album(album.albumartist, album.album))
     genre = _tags_to_genre(tags)
     if genre:
@@ -162,13 +162,19 @@ def album_imported(lib, album):
         album.genre = genre
         lib.save()
 
-@LastGenrePlugin.listen('item_imported')
-def item_imported(lib, item):
-    tags = _tags_for(LASTFM.get_track(item.artist, item.title))
+        if config.write:
+            for item in album.items():
+                item.write()
 
+@LastGenrePlugin.listen('item_imported')
+def item_imported(lib, item, config):
+    tags = _tags_for(LASTFM.get_track(item.artist, item.title))
     genre = _tags_to_genre(tags)
     if genre:
         log.debug(u'adding last.fm item genre: %s' % genre)
         item.genre = genre
         lib.store(item)
         lib.save()
+
+        if config.write:
+            item.write()

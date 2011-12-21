@@ -48,7 +48,7 @@ class ReplayGainPlugin(BeetsPlugin):
                                        'overwrite',
                                        False)
 
-    def album_imported(self, lib, album):
+    def album_imported(self, lib, album, config):
         self.write_album = True
 
         log.debug("Calculating ReplayGain for %s - %s" % \
@@ -72,7 +72,7 @@ class ReplayGainPlugin(BeetsPlugin):
         except (FileTypeError, UnreadableFileError, TypeError, ValueError), e:
             log.error("failed to calculate replaygain:  %s ", e)
 
-    def item_imported(self, lib, item):
+    def item_imported(self, lib, item, config):
         try:
             self.write_album = False
 
