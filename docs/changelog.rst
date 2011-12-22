@@ -24,6 +24,8 @@ This release focuses on making beets' path formatting vastly more powerful.
   files (when tag-writing is enabled).
 * Add a message when skipping directories during an incremental import.
 * Ignore FUSE's shadow files when importing.
+* Date values in path formats (``$year``, ``$month``, and ``$day``) are now
+  appropriately zero-padded.
 * Removed the ``--path-format`` global flag for ``beet``.
 * Removed the ``lastid`` plugin, which was deprecated in the previous version.
 

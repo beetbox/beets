@@ -165,15 +165,23 @@ class DestinationTest(unittest.TestCase):
     def test_destination_pads_some_indices(self):
         self.lib.directory = 'base'
         self.lib.path_formats = {'default': '$track $tracktotal ' \
-            '$disc $disctotal $bpm $year'}
+            '$disc $disctotal $bpm'}
         self.i.track = 1
         self.i.tracktotal = 2
         self.i.disc = 3
         self.i.disctotal = 4
         self.i.bpm = 5
-        self.i.year = 6
         self.assertEqual(self.lib.destination(self.i),
-                         np('base/01 02 03 04 5 6'))
+                         np('base/01 02 03 04 5'))
+
+    def test_destination_pads_date_values(self):
+        self.lib.directory = 'base'
+        self.lib.path_formats = {'default': '$year-$month-$day'}
+        self.i.year = 1
+        self.i.month = 2
+        self.i.day = 3
+        self.assertEqual(self.lib.destination(self.i),
+                         np('base/0001-02-03'))
     
     def test_destination_escapes_slashes(self):
         self.i.album = 'one/two'
