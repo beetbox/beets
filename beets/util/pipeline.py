@@ -157,9 +157,9 @@ class PipelineThread(Thread):
 
             # Ensure that we are not blocking on a queue read or write.
             if hasattr(self, 'in_queue'):
-                _invalidate_queue(self.in_queue)
+                _invalidate_queue(self.in_queue, POISON)
             if hasattr(self, 'out_queue'):
-                _invalidate_queue(self.out_queue)
+                _invalidate_queue(self.out_queue, POISON)
 
     def abort_all(self, exc_info):
         """Abort all other threads in the system for an exception.
