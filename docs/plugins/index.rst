@@ -42,11 +42,7 @@ disabled by default, but you can turn them on as described above:
    web
    lastgenre
    replaygain
-
-.. toctree::
-   :hidden:
-
-   lastid
+   inline
 
 .. _other-plugins:
 

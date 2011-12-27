@@ -12,6 +12,8 @@ This release focuses on making beets' path formatting vastly more powerful.
   :doc:`/reference/pathformat`. If you're interested in adding your own template
   functions via a plugin, see :ref:`writing-plugins`.
 * Plugins can also now define new path *fields* in addition to functions.
+* The new :doc:`/plugins/inline` lets you **use Python expressions to customize
+  path formats** by defining new fields in the config file.
 * **Filename substitutions are now configurable** via the ``replace`` config
   value. You can choose which characters you think should be allowed in your
   directory and music file names.  See :doc:`/reference/config`.
