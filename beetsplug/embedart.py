@@ -137,6 +137,6 @@ def clear(lib, query):
 
 # Automatically embed art into imported albums.
 @EmbedCoverArtPlugin.listen('album_imported')
-def album_imported(lib, album):
+def album_imported(lib, album, config):
     if album.artpath and options['autoembed']:
         _embed(album.artpath, album.items())
