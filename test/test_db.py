@@ -138,17 +138,17 @@ class DestinationTest(unittest.TestCase):
     
     def test_directory_works_with_trailing_slash(self):
         self.lib.directory = 'one/'
-        self.lib.path_formats = {'default': 'two'}
+        self.lib.path_formats = [('default', 'two')]
         self.assertEqual(self.lib.destination(self.i), np('one/two'))
     
     def test_directory_works_without_trailing_slash(self):
         self.lib.directory = 'one'
-        self.lib.path_formats = {'default': 'two'}
+        self.lib.path_formats = [('default', 'two')]
         self.assertEqual(self.lib.destination(self.i), np('one/two'))
     
     def test_destination_substitues_metadata_values(self):
         self.lib.directory = 'base'
-        self.lib.path_formats = {'default': '$album/$artist $title'}
+        self.lib.path_formats = [('default', '$album/$artist $title')]
         self.i.title = 'three'
         self.i.artist = 'two'
         self.i.album = 'one'
@@ -157,15 +157,15 @@ class DestinationTest(unittest.TestCase):
     
     def test_destination_preserves_extension(self):
         self.lib.directory = 'base'
-        self.lib.path_formats = {'default': '$title'}
+        self.lib.path_formats = [('default', '$title')]
         self.i.path = 'hey.audioFormat'
         self.assertEqual(self.lib.destination(self.i),
                          np('base/the title.audioFormat'))
     
     def test_destination_pads_some_indices(self):
         self.lib.directory = 'base'
-        self.lib.path_formats = {'default': '$track $tracktotal ' \
-            '$disc $disctotal $bpm'}
+        self.lib.path_formats = [('default', '$track $tracktotal ' \
+            '$disc $disctotal $bpm')]
         self.i.track = 1
         self.i.tracktotal = 2
         self.i.disc = 3
@@ -176,7 +176,7 @@ class DestinationTest(unittest.TestCase):
 
     def test_destination_pads_date_values(self):
         self.lib.directory = 'base'
-        self.lib.path_formats = {'default': '$year-$month-$day'}
+        self.lib.path_formats = [('default', '$year-$month-$day')]
         self.i.year = 1
         self.i.month = 2
         self.i.day = 3
@@ -245,7 +245,7 @@ class DestinationTest(unittest.TestCase):
         self.assertEqual(p, u'-')
     
     def test_path_with_format(self):
-        self.lib.path_formats = {'default': '$artist/$album ($format)'}
+        self.lib.path_formats = [('default', '$artist/$album ($format)')]
         p = self.lib.destination(self.i)
         self.assert_('(FLAC)' in p)
 
@@ -253,7 +253,7 @@ class DestinationTest(unittest.TestCase):
         i1, i2 = item(), item()
         self.lib.add_album([i1, i2])
         i1.year, i2.year = 2009, 2010
-        self.lib.path_formats = {'default': '$album ($year)/$track $title'}
+        self.lib.path_formats = [('default', '$album ($year)/$track $title')]
         dest1, dest2 = self.lib.destination(i1), self.lib.destination(i2)
         self.assertEqual(os.path.dirname(dest1), os.path.dirname(dest2))
     
@@ -261,44 +261,51 @@ class DestinationTest(unittest.TestCase):
         self.i.comp = False
         self.lib.add_album([self.i])
         self.lib.directory = 'one'
-        self.lib.path_formats = {'default': 'two',
-                                 'comp': 'three'}
+        self.lib.path_formats = [('default', 'two'),
+                                 ('comp:true', 'three')]
         self.assertEqual(self.lib.destination(self.i), np('one/two'))
 
     def test_singleton_path(self):
         i = item()
         self.lib.directory = 'one'
-        self.lib.path_formats = {'default': 'two',
-                                 'comp': 'three',
-                                 'singleton': 'four'}
+        self.lib.path_formats = [
+            ('default', 'two'),
+            ('singleton:true', 'four'),
+            ('comp:true', 'three'),
+        ]
         self.assertEqual(self.lib.destination(i), np('one/four'))
 
-    def test_singleton_track_falls_back_to_default(self):
+    def test_comp_before_singleton_path(self):
         i = item()
         i.comp = True
-        i.albumtype = 'atype'
         self.lib.directory = 'one'
-        self.lib.path_formats = {'default': 'two',
-                                 'comp': 'three',
-                                 'atype': 'four'}
-        self.assertEqual(self.lib.destination(i), np('one/two'))
+        self.lib.path_formats = [
+            ('default', 'two'),
+            ('comp:true', 'three'),
+            ('singleton:true', 'four'),
+        ]
+        self.assertEqual(self.lib.destination(i), np('one/three'))
 
     def test_comp_path(self):
         self.i.comp = True
         self.lib.add_album([self.i])
         self.lib.directory = 'one'
-        self.lib.path_formats = {'default': 'two',
-                                 'comp': 'three'}
+        self.lib.path_formats = [
+            ('default', 'two'),
+            ('comp:true', 'three'),
+        ]
         self.assertEqual(self.lib.destination(self.i), np('one/three'))
 
-    def test_albumtype_path(self):
+    def test_albumtype_query_path(self):
         self.i.comp = True
         self.lib.add_album([self.i])
         self.i.albumtype = 'sometype'
         self.lib.directory = 'one'
-        self.lib.path_formats = {'default': 'two',
-                                 'comp': 'three',
-                                 'sometype': 'four'}
+        self.lib.path_formats = [
+            ('default', 'two'),
+            ('albumtype:sometype', 'four'),
+            ('comp:true', 'three'),
+        ]
         self.assertEqual(self.lib.destination(self.i), np('one/four'))
 
     def test_albumtype_path_fallback_to_comp(self):
@@ -306,9 +313,11 @@ class DestinationTest(unittest.TestCase):
         self.lib.add_album([self.i])
         self.i.albumtype = 'sometype'
         self.lib.directory = 'one'
-        self.lib.path_formats = {'default': 'two',
-                                 'comp': 'three',
-                                 'anothertype': 'four'}
+        self.lib.path_formats = [
+            ('default', 'two'),
+            ('albumtype:anothertype', 'four'),
+            ('comp:true', 'three'),
+        ]
         self.assertEqual(self.lib.destination(self.i), np('one/three'))
 
     def test_syspath_windows_format(self):
@@ -342,28 +351,28 @@ class DestinationTest(unittest.TestCase):
     def test_artist_falls_back_to_albumartist(self):
         self.i.artist = ''
         self.i.albumartist = 'something'
-        self.lib.path_formats = {'default': '$artist'}
+        self.lib.path_formats = [('default', '$artist')]
         p = self.lib.destination(self.i)
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'something')
 
     def test_albumartist_falls_back_to_artist(self):
         self.i.artist = 'trackartist'
         self.i.albumartist = ''
-        self.lib.path_formats = {'default': '$albumartist'}
+        self.lib.path_formats = [('default', '$albumartist')]
         p = self.lib.destination(self.i)
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'trackartist')
 
     def test_artist_overrides_albumartist(self):
         self.i.artist = 'theartist'
         self.i.albumartist = 'something'
-        self.lib.path_formats = {'default': '$artist'}
+        self.lib.path_formats = [('default', '$artist')]
         p = self.lib.destination(self.i)
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'theartist')
 
     def test_albumartist_overrides_artist(self):
         self.i.artist = 'theartist'
         self.i.albumartist = 'something'
-        self.lib.path_formats = {'default': '$albumartist'}
+        self.lib.path_formats = [('default', '$albumartist')]
         p = self.lib.destination(self.i)
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'something')
 
@@ -387,13 +396,13 @@ class DestinationFunctionTest(unittest.TestCase):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
         self.lib.directory = '/base'
-        self.lib.path_formats = {'default': u'path'}
+        self.lib.path_formats = [('default', u'path')]
         self.i = item()
     def tearDown(self):
         self.lib.conn.close()
 
     def _setf(self, fmt):
-        self.lib.path_formats['default'] = fmt
+        self.lib.path_formats.insert(0, ('default', fmt))
     def _assert_dest(self, dest):
         self.assertEqual(self.lib.destination(self.i), dest)
 

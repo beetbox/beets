@@ -40,14 +40,17 @@ DEFAULT_LIBRARY_FILENAME_UNIX = '.beetsmusic.blb'
 DEFAULT_LIBRARY_FILENAME_WINDOWS = 'beetsmusic.blb'
 DEFAULT_DIRECTORY_NAME = 'Music'
 WINDOWS_BASEDIR = os.environ.get('APPDATA') or '~'
-DEFAULT_PATH_FORMATS = {
-    'default': '$albumartist/$album/$track $title',
-    'comp': 'Compilations/$album/$track $title',
-    'singleton': 'Non-Album/$artist/$title',
+PF_KEY_QUERIES = {
+    'comp': 'comp:true',
+    'singleton': 'singleton:true',
 }
+DEFAULT_PATH_FORMATS = [
+    (library.PF_KEY_DEFAULT,      '$albumartist/$album/$track $title'),
+    (PF_KEY_QUERIES['singleton'], 'Non-Album/$artist/$title'),
+    (PF_KEY_QUERIES['comp'],      'Compilations/$album/$track $title'),
+]
 DEFAULT_ART_FILENAME = 'cover'
 DEFAULT_TIMEOUT = 5.0
-
 
 # UI exception. Commands should throw this in order to display
 # nonrecoverable errors to the user.
@@ -429,6 +432,31 @@ def _get_replacements(config):
         out.append((re.compile(pattern), replacement))
     return out
 
+def _get_path_formats(config):
+    """Returns a list of path formats (query/template pairs); reflecting
+    the config's specified path formats.
+    """
+    legacy_path_format = config_val(config, 'beets', 'path_format', None)
+    if legacy_path_format:
+        # Old path formats override the default values.
+        path_formats = [(library.PF_KEY_DEFAULT, legacy_path_format)]
+    else:
+        # If no legacy path format, use the defaults instead.
+        path_formats = DEFAULT_PATH_FORMATS
+    if config.has_section('paths'):
+        custom_path_formats = []
+        for key, value in config.items('paths', True):
+            if key in PF_KEY_QUERIES:
+                # Special values that indicate simple queries.
+                key = PF_KEY_QUERIES[key]
+            elif key != library.PF_KEY_DEFAULT:
+                # For non-special keys (literal queries), the _
+                # character denotes a :.
+                key = key.replace('_', ':')
+            custom_path_formats.append((key, value))
+        path_formats = custom_path_formats + path_formats
+    return path_formats
+
 
 # Subcommand parsing infrastructure.
 
@@ -648,15 +676,7 @@ def main(args=None, configfh=None):
         config_val(config, 'beets', 'library', default_libpath)
     directory = options.directory or \
         config_val(config, 'beets', 'directory', default_dir)
-    legacy_path_format = config_val(config, 'beets', 'path_format', None)
-    if legacy_path_format:
-        # Old path formats override the default values.
-        path_formats = {'default': legacy_path_format}
-    else:
-        # If no legacy path format, use the defaults instead.
-        path_formats = DEFAULT_PATH_FORMATS
-    if config.has_section('paths'):
-        path_formats.update(config.items('paths', True))
+    path_formats = _get_path_formats(config)
     art_filename = \
         config_val(config, 'beets', 'art_filename', DEFAULT_ART_FILENAME)
     lib_timeout = config_val(config, 'beets', 'timeout', DEFAULT_TIMEOUT)

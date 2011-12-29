@@ -21,6 +21,7 @@ import textwrap
 import logging
 import re
 from StringIO import StringIO
+import ConfigParser
 
 import _common
 from beets import library
@@ -478,26 +479,18 @@ class ConfigTest(unittest.TestCase):
 
     def test_paths_section_respected(self):
         def func(lib, config, opts, args):
-            self.assertEqual(lib.path_formats['x'], 'y')
+            self.assertEqual(lib.path_formats[0], ('x', 'y'))
         self._run_main([], textwrap.dedent("""
             [paths]
             x=y"""), func)
 
     def test_default_paths_preserved(self):
         def func(lib, config, opts, args):
-            self.assertEqual(lib.path_formats['default'],
-                             ui.DEFAULT_PATH_FORMATS['default'])
+            self.assertEqual(lib.path_formats[1:],
+                             ui.DEFAULT_PATH_FORMATS)
         self._run_main([], textwrap.dedent("""
             [paths]
             x=y"""), func)
-
-    def test_default_paths_overriden_by_legacy_path_format(self):
-        def func(lib, config, opts, args):
-            self.assertEqual(lib.path_formats['default'], 'x')
-            self.assertEqual(len(lib.path_formats), 1)
-        self._run_main([], textwrap.dedent("""
-            [beets]
-            path_format=x"""), func)
 
     def test_nonexistant_config_file(self):
         os.environ['BEETSCONFIG'] = '/xxxxx'
@@ -717,6 +710,27 @@ class DefaultPathTest(unittest.TestCase):
         self.assertEqual(config, 'xappdata\\beetsconfig.ini')
         self.assertEqual(lib, 'xappdata\\beetsmusic.blb')
         self.assertEqual(libdir, 'xhome\\Music')
+
+class PathFormatTest(unittest.TestCase):
+    def _config(self, text):
+        cp = ConfigParser.SafeConfigParser()
+        cp.readfp(StringIO(text))
+        return cp
+
+    def _paths_for(self, text):
+        return ui._get_path_formats(self._config("[paths]\n%s" %
+                                                 textwrap.dedent(text)))
+
+    def test_default_paths(self):
+        pf = self._paths_for("")
+        self.assertEqual(pf, ui.DEFAULT_PATH_FORMATS)
+
+    def test_custom_paths_prepend(self):
+        pf = self._paths_for("""
+            foo: bar
+        """)
+        self.assertEqual(pf[0], ('foo', 'bar'))
+        self.assertEqual(pf[1:], ui.DEFAULT_PATH_FORMATS)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

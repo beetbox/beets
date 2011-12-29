@@ -17,6 +17,7 @@ import os
 import re
 import sys
 import logging
+import shlex
 from unidecode import unidecode
 from beets.mediafile import MediaFile
 from beets import plugins
@@ -102,6 +103,9 @@ ARTIST_DEFAULT_FIELDS = ('artist',)
 ALBUM_DEFAULT_FIELDS = ('album', 'albumartist', 'genre')
 ITEM_DEFAULT_FIELDS = ARTIST_DEFAULT_FIELDS + ALBUM_DEFAULT_FIELDS + \
     ('title', 'comments')
+
+# Special path format key.
+PF_KEY_DEFAULT = 'default'
 
 # Logger.
 log = logging.getLogger('beets')
@@ -350,8 +354,8 @@ class CollectionQuery(Query):
     # is there a better way to do this?
     def __len__(self): return len(self.subqueries)
     def __getitem__(self, key): return self.subqueries[key]
-    def __iter__(self): iter(self.subqueries)
-    def __contains__(self, item): item in self.subqueries
+    def __iter__(self): return iter(self.subqueries)
+    def __contains__(self, item): return item in self.subqueries
 
     def clause_with_joiner(self, joiner):
         """Returns a clause created by joining together the clauses of
@@ -425,6 +429,13 @@ class CollectionQuery(Query):
             subqueries = [TrueQuery()]
         return cls(subqueries)
 
+    @classmethod
+    def from_string(cls, query, default_fields=None, all_keys=ITEM_KEYS):
+        """Creates a query based on a single string. The string is split
+        into query parts using shell-style syntax.
+        """
+        return cls.from_strings(shlex.split(query))
+
 class AnySubstringQuery(CollectionQuery):
     """A query that matches a substring in any of a list of metadata
     fields.
@@ -478,6 +489,14 @@ class TrueQuery(Query):
 
     def match(self, item):
         return True
+
+class FalseQuery(Query):
+    """A query that never matches."""
+    def clause(self):
+        return '0', ()
+
+    def match(self, item):
+        return False
 
 class PathQuery(Query):
     """A query that matches all items under a given path."""
@@ -702,7 +721,8 @@ class Library(BaseLibrary):
     """A music library using an SQLite database as a metadata store."""
     def __init__(self, path='library.blb',
                        directory='~/Music',
-                       path_formats=None,
+                       path_formats=((PF_KEY_DEFAULT,
+                                      '$artist/$album/$track $title'),),
                        art_filename='cover',
                        timeout=5.0,
                        replacements=None,
@@ -713,10 +733,6 @@ class Library(BaseLibrary):
         else:
             self.path = bytestring_path(normpath(path))
         self.directory = bytestring_path(normpath(directory))
-        if path_formats is None:
-            path_formats = {'default': '$artist/$album/$track $title'}
-        elif isinstance(path_formats, basestring):
-            path_formats = {'default': path_formats}
         self.path_formats = path_formats
         self.art_filename = bytestring_path(art_filename)
         self.replacements = replacements
@@ -784,19 +800,31 @@ class Library(BaseLibrary):
         """
         pathmod = pathmod or os.path
         
-        # Use a path format based on the album type, if available.
-        if not item.album_id and not in_album:
-            # Singleton track. Never use the "album" formats.
-            if 'singleton' in self.path_formats:
-                path_format = self.path_formats['singleton']
-            else:
-                path_format = self.path_formats['default']
-        elif item.albumtype and item.albumtype in self.path_formats:
-            path_format = self.path_formats[item.albumtype]
-        elif item.comp and 'comp' in self.path_formats:
-            path_format = self.path_formats['comp']
+        # Use a path format based on a query, falling back on the
+        # default.
+        for query, path_format in self.path_formats:
+            if query == PF_KEY_DEFAULT:
+                continue
+            query = AndQuery.from_string(query)
+            if in_album:
+                # If we're treating this item as a member of the item,
+                # hack the query so that singleton queries always
+                # observe the item to be non-singleton.
+                for i, subquery in enumerate(query):
+                    if isinstance(subquery, SingletonQuery):
+                        query[i] = FalseQuery() if subquery.sense \
+                                   else TrueQuery()
+            if query.match(item):
+                # The query matches the item! Use the corresponding path
+                # format.
+                break
         else:
-            path_format = self.path_formats['default']
+            # No query matched; fall back to default.
+            for query, path_format in self.path_formats:
+                if query == PF_KEY_DEFAULT:
+                    break
+            else:
+                assert False, "no default path format"
         subpath_tmpl = Template(path_format)
         
         # Get the item's Album if it has one.

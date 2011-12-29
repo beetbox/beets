@@ -40,7 +40,8 @@ class MoveTest(unittest.TestCase, _common.ExtraAsserts):
         # set up the destination
         self.libdir = join(_common.RSRC, 'testlibdir')
         self.lib.directory = self.libdir
-        self.lib.path_formats = {'default': join('$artist', '$album', '$title')}
+        self.lib.path_formats = [('default',
+                                  join('$artist', '$album', '$title'))]
         self.i.artist = 'one'
         self.i.album = 'two'
         self.i.title = 'three'
@@ -157,7 +158,7 @@ class AlbumFileTest(unittest.TestCase):
         # Make library and item.
         self.lib = beets.library.Library(':memory:')
         self.lib.path_formats = \
-            {'default': join('$albumartist', '$album', '$title')}
+            [('default', join('$albumartist', '$album', '$title'))]
         self.libdir = os.path.join(_common.RSRC, 'testlibdir')
         self.lib.directory = self.libdir
         self.i = item()

@@ -34,9 +34,9 @@ class NonAutotaggedImportTest(unittest.TestCase):
         self.lib = library.Library(self.libdb)
         self.libdir = os.path.join(_common.RSRC, 'testlibdir')
         self.lib.directory = self.libdir
-        self.lib.path_formats = {
-            'default': os.path.join('$artist', '$album', '$title')
-        }
+        self.lib.path_formats = [(
+            'default', os.path.join('$artist', '$album', '$title')
+        )]
 
         self.srcdir = os.path.join(_common.RSRC, 'testsrcdir')
 
@@ -164,11 +164,11 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         self.libdir = os.path.join(_common.RSRC, 'testlibdir')
         os.mkdir(self.libdir)
         self.lib = library.Library(':memory:', self.libdir)
-        self.lib.path_formats = {
-            'default': 'one',
-            'comp': 'two',
-            'singleton': 'three',
-        }
+        self.lib.path_formats = [
+            ('default', 'one'),
+            ('singleton:true', 'three'),
+            ('comp:true', 'two'),
+        ]
 
         self.srcpath = os.path.join(self.libdir, 'srcfile.mp3')
         shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.srcpath)
@@ -212,17 +212,13 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         coro = importer.apply_choices(_common.iconfig(self.lib))
         coro.next() # Prime coroutine.
         _call_apply_choice(coro, [self.i], importer.action.ASIS)
-        self.assertExists(
-            os.path.join(self.libdir, self.lib.path_formats['default']+'.mp3')
-        )
+        self.assertExists(os.path.join(self.libdir, 'one.mp3'))
 
     def test_apply_match_uses_album_path(self):
         coro = importer.apply_choices(_common.iconfig(self.lib))
         coro.next() # Prime coroutine.
         _call_apply(coro, [self.i], self.info)
-        self.assertExists(
-            os.path.join(self.libdir, self.lib.path_formats['default']+'.mp3')
-        )
+        self.assertExists(os.path.join(self.libdir, 'one.mp3'))
 
     def test_apply_tracks_uses_singleton_path(self):
         coro = importer.apply_choices(_common.iconfig(self.lib))
@@ -233,7 +229,7 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         coro.send(task)
 
         self.assertExists(
-            os.path.join(self.libdir, self.lib.path_formats['singleton']+'.mp3')
+            os.path.join(self.libdir, 'three.mp3')
         )
 
     def test_apply_sentinel(self):
@@ -296,9 +292,9 @@ class ApplyExistingItemsTest(unittest.TestCase, _common.ExtraAsserts):
 
         self.dbpath = os.path.join(_common.RSRC, 'templib.blb')
         self.lib = library.Library(self.dbpath, self.libdir)
-        self.lib.path_formats = {
-            'default': '$artist/$title',
-        }
+        self.lib.path_formats = [
+            ('default', '$artist/$title'),
+        ]
         self.config = _common.iconfig(self.lib, write=False, copy=False)
 
         self.srcpath = os.path.join(self.libdir, 'srcfile.mp3')

@@ -130,31 +130,40 @@ section header:
     exception when the database lock is contended. This should almost never need
     to be changed except on very slow systems. Defaults to 5.0 (5 seconds).
 
-Path Formats
-------------
+.. _path-format-config:
+
+Path Format Configuration
+-------------------------
 
 You can also configure the directory hierarchy beets uses to store music.  These
 settings appear under the ``[paths]`` section (rather than the main ``[beets]``
-section we used above).  Each string is a `template string`_ that can refer to
+section we used above).  Each string is a template string that can refer to
 metadata fields like ``$artist`` or ``$title``. The filename extension is added
 automatically. At the moment, you can specify three special paths: ``default``
 for most releases, ``comp`` for "various artist" releases with no dominant
-artist, and ``singleton`` for non-album tracks. You can also specify a different
-path format for each `MusicBrainz release type`_. The defaults look like this::
+artist, and ``singleton`` for non-album tracks. The defaults look like this::
 
     [paths]
     default: $albumartist/$album/$track $title
-    comp: Compilations/$album/$track title
     singleton: Non-Album/$artist/$title
+    comp: Compilations/$album/$track title
 
 Note the use of ``$albumartist`` instead of ``$artist``; this ensure that albums
 will be well-organized. For more about these format strings, see
 :doc:`pathformat`.
 
-.. _template string:
-    http://docs.python.org/library/string.html#template-strings 
-.. _MusicBrainz release type:
-    http://wiki.musicbrainz.org/ReleaseType 
+In addition to ``default``, ``comp``, and ``singleton``, you can condition path
+queries based on beets queries (see :doc:`/reference/query`). There's one catch:
+because the ``:`` character is reserved for separating the query from the
+template string, the ``_`` character is substituted for ``:`` in these queries.
+This means that a config file like this::
+
+    [paths]
+    albumtype_soundtrack: Soundtracks/$albumartist/$track title
+
+will place soundtrack albums in a separate directory. The queries are tested in
+the order they appear in the configuration file, meaning that if an item matches
+multiple queries, beets will use the path format for the *first* matching query.
 
 Example
 -------

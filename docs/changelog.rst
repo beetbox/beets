@@ -14,6 +14,12 @@ This release focuses on making beets' path formatting vastly more powerful.
 * Plugins can also now define new path *fields* in addition to functions.
 * The new :doc:`/plugins/inline` lets you **use Python expressions to customize
   path formats** by defining new fields in the config file.
+* The configuration can **condition path formats based on queries**. That is,
+  you can write a path format that is only used if an item matches a given
+  query. (This supersedes the earlier functionality that only allowed
+  conditioning on album type; if you used this feature in a previous version,
+  you will need to replace, for example, ``soundtrack:`` with
+  ``albumtype_soundtrack:``.) See :ref:`path-format-config`.
 * **Filename substitutions are now configurable** via the ``replace`` config
   value. You can choose which characters you think should be allowed in your
   directory and music file names.  See :doc:`/reference/config`.
@@ -287,7 +293,7 @@ that functionality.
   Tracks" (T) option to add singletons to your library.  To list only singleton
   or only album tracks, use the new ``singleton:`` query term: the query
   ``singleton:true`` matches only singleton tracks; ``singleton:false`` matches
-  only album tracks. The :doc:`/plugins/lastid` has been extended to support
+  only album tracks. The ``lastid`` plugin has been extended to support
   matching individual items as well.
 
 * The importer/autotagger system has been heavily refactored in this release.
@@ -474,7 +480,7 @@ it more reliable. This release also greatly expands the capabilities of beets'
 :doc:`plugin API </plugins/index>`. A host of other little features and fixes
 are also rolled into this release.
 
-* The :doc:`/plugins/lastid` adds Last.fm **acoustic fingerprinting
+* The ``lastid`` plugin adds Last.fm **acoustic fingerprinting
   support** to the autotagger. Similar to the PUIDs used by !MusicBrainz Picard,
   this system allows beets to recognize files that don't have any metadata at
   all. You'll need to install some dependencies for this plugin to work.

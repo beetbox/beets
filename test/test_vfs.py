@@ -21,10 +21,10 @@ from beets import vfs
 
 class VFSTest(unittest.TestCase):
     def setUp(self):
-        self.lib = library.Library(':memory:', path_formats={
-            'default': 'albums/$album/$title',
-            'singleton': 'tracks/$artist/$title',
-        })
+        self.lib = library.Library(':memory:', path_formats=[
+            ('default', 'albums/$album/$title'),
+            ('singleton:true', 'tracks/$artist/$title'),
+        ])
         self.lib.add(_common.item())
         self.lib.add_album([_common.item()])
         self.lib.save()
