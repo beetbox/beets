@@ -211,10 +211,8 @@ def track_distance(item, track_info, track_index=None, incl_artist=False):
     dist, dist_max = 0.0, 0.0
 
     # Check track length.
-    if not track_info.length:
-        # If there's no length to check, assume the worst.
-        dist += TRACK_LENGTH_WEIGHT
-    else:
+    # If there's no length to check, apply no penalty.
+    if track_info.length:
         diff = abs(item.length - track_info.length)
         diff = max(diff - TRACK_LENGTH_GRACE, 0.0)
         diff = min(diff, TRACK_LENGTH_MAX)
