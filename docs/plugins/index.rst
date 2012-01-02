@@ -43,6 +43,7 @@ disabled by default, but you can turn them on as described above:
    lastgenre
    replaygain
    inline
+   scrub
 
 .. _other-plugins:
 
@@ -203,6 +204,9 @@ currently available are:
 * *item_imported*: called with an ``Item`` object every time the importer adds a
   singleton to the library (not called for full-album imports). Parameters:
   ``lib``, ``item``, ``config``
+
+* *write*: called with an ``Item`` and a ``MediaFile`` object just before a
+  file's metadata is written to disk.
 
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 

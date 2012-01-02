@@ -25,6 +25,8 @@ This release focuses on making beets' path formatting vastly more powerful.
   directory and music file names.  See :doc:`/reference/config`.
 * Beets now ensures that files have **unique filenames** by appending a number
   to any filename that would otherwise conflict with an existing file.
+* The new :doc:`/plugins/scrub/` can remove extraneous metadata either manually
+  or automatically.
 * The autotagging heuristics have been tweaked in situations where the
   MusicBrainz database did not contain track lengths. Previously, beets
   penalized matches where this was the case, leading to situations where

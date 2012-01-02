@@ -1,0 +1,41 @@
+Scrub Plugin
+=============
+
+The ``scrub`` plugin lets you remove extraneous metadata from files' tags. If
+you'd prefer never to see crufty tags that come from other tools, the plugin can
+automatically remove all non-beets-tracked tags whenever a file's metadata is
+written to disk by removing the tag entirely before writing new data. The plugin
+also provides a command that lets you manually remove files' tags.
+
+Automatic Scrubbing
+-------------------
+
+To automatically remove files' tags before writing new ones, just
+enable the plugin (see :doc:`/plugins/index`). When importing new files (with
+``import_write`` turned on) or modifying files' tags with the ``beet modify``
+command, beets will first strip the tags entirely and then write the
+database-tracked metadata to the file.
+
+This behavior can be disabled with the ``autoscrub`` config option (see below).
+
+Manual Scrubbing
+----------------
+
+The ``scrub`` command provided by this plugin removes tags from files and then
+rewrites their database-tracked metadata. To run it, just type ``beet scrub
+QUERY`` where ``QUERY`` matches the tracks to be scrubbed. Use this command with
+caution, however, because any information in the tags that is out of sync with
+the database will be lost.
+
+The ``-W`` (or ``--nowrite``) option causes the command to just remove tags but
+not restore any information. This will leave the files with no metadata
+whatsoever.
+
+Configuring
+-----------
+
+The plugin has one configuration option, ``autoscrub``, which lets you disable
+automatic metadata stripping. To do so, add this to your ``~/.beetsconfig``::
+
+    [scrub]
+    autoscrub: no
