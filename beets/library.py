@@ -319,7 +319,8 @@ class SubstringQuery(FieldQuery):
         return clause, subvals
 
     def match(self, item):
-        return self.pattern.lower() in getattr(item, self.field).lower()
+        value = getattr(item, self.field) or ''
+        return self.pattern.lower() in value.lower()
 
 class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
