@@ -704,7 +704,7 @@ def finalize(config):
                 task.save_history()
             continue
 
-        items = task.items if task.is_album else [task.item]
+        items = [i for i in task.items if i] if task.is_album else [task.item]
 
         # Announce that we've added an album.
         if task.is_album:
