@@ -642,8 +642,13 @@ def apply_choices(config):
             if config.copy:
                 # If we're replacing an item, then move rather than
                 # copying.
+                old_path = item.path
                 do_copy = not bool(replaced_items[item])
                 lib.move(item, do_copy, task.is_album)
+                if not do_copy:
+                    # If we moved the item, remove the now-nonexistent
+                    # file from old_paths.
+                    task.old_paths.remove(old_path)
             if config.write and task.should_write_tags():
                 item.write()
 
@@ -718,7 +723,7 @@ def finalize(config):
         if config.copy and config.delete:
             new_paths = [os.path.realpath(item.path) for item in items]
             for old_path in task.old_paths:
-                # Only delete files that were actually moved.
+                # Only delete files that were actually copied.
                 if old_path not in new_paths:
                     os.remove(syspath(old_path))
 

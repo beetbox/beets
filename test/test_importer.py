@@ -151,6 +151,7 @@ def _call_apply(coros, items, info):
         coros = [coros]
     for coro in coros:
         task = coro.send(task)
+    return task
 def _call_apply_choice(coro, items, choice, album=True):
     task = importer.ImportTask(None, None, items)
     task.is_album = album
@@ -163,7 +164,8 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
     def setUp(self):
         self.libdir = os.path.join(_common.RSRC, 'testlibdir')
         os.mkdir(self.libdir)
-        self.lib = library.Library(':memory:', self.libdir)
+        self.libpath = os.path.join(_common.RSRC, 'testlib.blb')
+        self.lib = library.Library(self.libpath, self.libdir)
         self.lib.path_formats = [
             ('default', 'one'),
             ('singleton:true', 'three'),
@@ -189,6 +191,8 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
 
     def tearDown(self):
         shutil.rmtree(self.libdir)
+        if os.path.exists(self.libpath):
+            os.unlink(self.libpath)
 
     def test_finalize_no_delete(self):
         config = _common.iconfig(self.lib, delete=False)
@@ -237,6 +241,31 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         coro.next()
         coro.send(importer.ImportTask.done_sentinel('toppath'))
         # Just test no exception for now.
+
+    def test_apply_populates_old_paths(self):
+        coro = importer.apply_choices(_common.iconfig(self.lib))
+        coro.next()
+        task = _call_apply(coro, [self.i], self.info)
+        self.assertEqual(task.old_paths, [self.srcpath])
+
+    def test_reimport_moves_file_and_does_not_add_to_old_paths(self):
+        # First, add the item to the library.
+        temp_item = library.Item.from_path(self.srcpath)
+        self.lib.add(temp_item)
+        self.lib.save()
+
+        # Then, re-import the same file.
+        coro = importer.apply_choices(_common.iconfig(self.lib))
+        coro.next()
+        task = _call_apply(coro, [self.i], self.info)
+
+        # Old file should be gone.
+        self.assertNotExists(self.srcpath)
+        # New file should be present.
+        self.assertExists(os.path.join(self.libdir, 'one.mp3'))
+        # Also, the old file should not be in old_paths because it does
+        # not exist.
+        self.assertEqual(task.old_paths, [])
 
 class AsIsApplyTest(unittest.TestCase):
     def setUp(self):
