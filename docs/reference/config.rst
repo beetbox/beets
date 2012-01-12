@@ -159,7 +159,7 @@ template string, the ``_`` character is substituted for ``:`` in these queries.
 This means that a config file like this::
 
     [paths]
-    albumtype_soundtrack: Soundtracks/$albumartist/$track title
+    albumtype_soundtrack: Soundtracks/$album/$track title
 
 will place soundtrack albums in a separate directory. The queries are tested in
 the order they appear in the configuration file, meaning that if an item matches
@@ -195,9 +195,9 @@ Here's an example file::
 
     [paths]
     default: $genre/$albumartist/$album/$track $title
-    soundtrack: Soundtracks/$album/$track $title
-    comp: $genre/$album/$track $title
     singleton: Singletons/$artist - $title
+    comp: $genre/$album/$track $title
+    albumtype_soundtrack: Soundtracks/$album/$track $title
 
     [bpd]
     host: 127.0.0.1

@@ -131,8 +131,11 @@ Ordinary metadata:
 * comments
 * bpm
 * comp
-* albumtype
+* albumtype (the MusicBrainz album type; the MusicBrainz wiki has a `list of
+  type names`_)
 * label
+
+.. _list of type names: http://wiki.musicbrainz.org/XMLWebService#Release_Type_and_Status
 
 Audio information:
 
