@@ -44,6 +44,7 @@ disabled by default, but you can turn them on as described above:
    replaygain
    inline
    scrub
+   rewrite
 
 .. _other-plugins:
 
