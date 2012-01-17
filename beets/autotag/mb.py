@@ -15,15 +15,16 @@
 """Searches for albums in the MusicBrainz database.
 """
 import logging
+import musicbrainzngs
 
-from . import musicbrainz3
 import beets.autotag.hooks
 import beets
 
 SEARCH_LIMIT = 5
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 
-musicbrainz3._useragent = 'beets/%s' % beets.__version__
+musicbrainzngs.set_useragent('beets', beets.__version__,
+                             'http://beets.radbox.org/')
 
 class ServerBusyError(Exception): pass
 class BadResponseError(Exception): pass
@@ -144,7 +145,7 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
     if not any(criteria.itervalues()):
         return
 
-    res = musicbrainz3.release_search(limit=limit, **criteria)
+    res = musicbrainzngs.release_search(limit=limit, **criteria)
     for release in res['release-list']:
         # The search result is missing some data (namely, the tracks),
         # so we just use the ID and fetch the rest of the information.
@@ -162,7 +163,7 @@ def match_track(artist, title, limit=SEARCH_LIMIT):
     if not any(criteria.itervalues()):
         return
 
-    res = musicbrainz3.recording_search(limit=limit, **criteria)
+    res = musicbrainzngs.recording_search(limit=limit, **criteria)
     for recording in res['recording-list']:
         yield track_info(recording)
 
@@ -171,8 +172,8 @@ def album_for_id(albumid):
     object or None if the album is not found.
     """
     try:
-        res = musicbrainz3.get_release_by_id(albumid, RELEASE_INCLUDES)
-    except musicbrainz3.ResponseError:
+        res = musicbrainzngs.get_release_by_id(albumid, RELEASE_INCLUDES)
+    except musicbrainzngs.ResponseError:
         log.debug('Album ID match failed.')
         return None
     return album_info(res['release'])
@@ -182,8 +183,8 @@ def track_for_id(trackid):
     or None if no track is found.
     """
     try:
-        res = musicbrainz3.get_recording_by_id(trackid, TRACK_INCLUDES)
-    except musicbrainz3.ResponseError:
+        res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
+    except musicbrainzngs.ResponseError:
         log.debug('Track ID match failed.')
         return None
     return track_info(res['recording'])
