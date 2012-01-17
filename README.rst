@@ -24,6 +24,9 @@ imagine for your music collection. Via `plugins`_, beets becomes a panacea:
 - Fetch lyrics for all your songs from databases on the Web.
 - Manage your `MusicBrainz music collection`_.
 - Analyze music files' metadata from the command line.
+- Clean up crufty tags left behind by other, less-awesome tools.
+- Browse your music library graphically through a Web browser and play it in any
+  browser that supports `HTML5 Audio`_.
 
 If beets doesn't do what you want yet, `writing your own plugin`_ is
 shockingly simple if you know a little Python.
@@ -33,6 +36,8 @@ shockingly simple if you know a little Python.
 .. _MusicBrainz music collection: http://musicbrainz.org/show/collection/
 .. _writing your own plugin:
     http://readthedocs.org/docs/beets/-/plugins/#writing-plugins
+.. _HTML5 Audio:
+    http://www.w3.org/TR/html-markup/audio.html
 
 Read More
 ---------
