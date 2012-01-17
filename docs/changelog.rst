@@ -38,7 +38,7 @@ This release focuses on making beets' path formatting vastly more powerful.
 * The ``lastgenre`` plugin now correctly writes discovered genres to imported
   files (when tag-writing is enabled).
 * Add a message when skipping directories during an incremental import.
-* Ignore FUSE's shadow files when importing.
+* The default ignore settings now ignore all files beginning with a dot.
 * Date values in path formats (``$year``, ``$month``, and ``$day``) are now
   appropriately zero-padded.
 * Removed the ``--path-format`` global flag for ``beet``.

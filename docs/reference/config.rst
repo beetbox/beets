@@ -71,7 +71,8 @@ section header:
 
 ``ignore``
     A space-separated list of glob patterns specifying file and directory names
-    to be ignored when importing. Defaults to ``.AppleDouble ._* *~ .DS_Store``.
+    to be ignored when importing. Defaults to ``.* *~`` (i.e., ignore
+    Unix-style hidden files and backup files).
 
 ``replace``
     A set of regular expression/replacement pairs to be applied to all filenames

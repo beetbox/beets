@@ -98,7 +98,7 @@ DEFAULT_IMPORT_INCREMENTAL    = False
 DEFAULT_THREADED              = True
 DEFAULT_COLOR                 = True
 DEFAULT_IGNORE                = [
-    '.AppleDouble', '._*', '*~', '.DS_Store', '.fuse_hidden*',
+    '.*', '*~',
 ]
 
 VARIOUS_ARTISTS = u'Various Artists'
