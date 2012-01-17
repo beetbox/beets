@@ -1,10 +1,18 @@
 Changelog
 =========
 
-1.0b12 (in development)
------------------------
+1.0b12 (January 16, 2012)
+-------------------------
 
-This release focuses on making beets' path formatting vastly more powerful.
+This release focuses on making beets' path formatting vastly more powerful. It
+adds a function syntax for transforming text. Via a new plugin, arbitrary Python
+code can also be used to define new path format fields. Each path format
+template can now be activated conditionally based on a query. Character set
+substitutions are also now configurable.
+
+In addition, beets avoids problematic filename conflicts by appending numbers to
+filenames that would otherwise conflict. Three new plugins (``inline``,
+``scrub``, and ``rewrite``) are included in this release.
 
 * **Functions in path formats** provide a simple way to write complex file
   naming rules: for example, ``%upper{%left{$artist,1}}`` will insert the
