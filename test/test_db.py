@@ -750,7 +750,7 @@ class MtimeTest(unittest.TestCase):
             os.remove(self.ipath)
 
     def _mtime(self):
-        return os.path.getmtime(self.ipath)
+        return int(os.path.getmtime(self.ipath))
 
     def test_mtime_initially_up_to_date(self):
         self.assertGreaterEqual(self.i.mtime, self._mtime())
