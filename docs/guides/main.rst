@@ -12,17 +12,18 @@ Installing
 You will need Python. (Beets is written for `Python 2.7`_, but it works with
 2.5 and 2.6 as well. Python 3.x is not yet supported.)
 
-.. _Python 2.7: http://www.python.org/download/releases/2.7.1/
+.. _Python 2.7: http://www.python.org/download/releases/2.7.2/
 
 * **Mac OS X** v10.7 (Lion) includes Python 2.7 out of the box; Snow Leopard
   ships with Python 2.6.
 
-* On **Ubuntu**, you can get everything you need by running:
-  ``apt-get install python-dev python-setuptools python-pip``
+* On **Debian or Ubuntu**, depending on the version, beets is available as an
+  official package (`Debian details`_, `Ubuntu details`_), so try typing:
+  ``apt-get install beets``. To build from source, you can get everything you
+  need by running: ``apt-get install python-dev python-setuptools python-pip``
 
-* For **Arch Linux**, try getting `beets from AUR`_. (There's also a `dev
-  package`_, which is likely broken.) If you don't want to use the AUR build,
-  this suffices to get the dependencies: ``pacman -S base-devel python2-pip``
+* For **Arch Linux**, try getting `beets from AUR`_. (There's also a
+  bleeding-edge `dev package`_, which will probably set your computer on fire.)
 
 * If you're on **CentOS** 5, you have Python 2.4. To get 2.6,
   `try this yum repository`_.
@@ -31,10 +32,13 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
     http://chrislea.com/2009/09/09/easy-python-2-6-django-on-centos-5/
 .. _beets from AUR: http://aur.archlinux.org/packages.php?ID=39577
 .. _dev package: http://aur.archlinux.org/packages.php?ID=48617
-
+.. _Debian details: http://packages.qa.debian.org/b/beets.html
+.. _Ubuntu details: https://launchpad.net/ubuntu/+source/beets
 
 If you have `pip`_, just say ``pip install beets`` (you might need ``sudo`` in
-front of that). Otherwise, head over to the `Downloads`_ area, download the most
+front of that). On Arch, you'll need to use ``pip2`` instead of ``pip``.
+
+To install without pip, head over to the `Downloads`_ area, download the most
 recent source distribution, and run ``python setup.py install`` in the directory
 therein.
 
