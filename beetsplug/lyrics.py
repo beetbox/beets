@@ -157,6 +157,9 @@ AUTOFETCH = True
 class LyricsPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand('lyrics', help='fetch song lyrics')
+        cmd.parser.add_option('-p', '--print', dest='printlyr',
+                              action='store_true', default=False,
+                              help='print lyrics to console')
         def func(lib, config, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
@@ -164,6 +167,8 @@ class LyricsPlugin(BeetsPlugin):
                                   commands.DEFAULT_IMPORT_WRITE, bool)
             for item in lib.items(ui.decargs(args)):
                 fetch_item_lyrics(lib, logging.INFO, item, write)
+                if opts.printlyr and item.lyrics:
+                    ui.print_(item.lyrics)
         cmd.func = func
         return [cmd]
 

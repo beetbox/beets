@@ -30,6 +30,9 @@ by that band, and ``beet lyrics`` will get lyrics for my entire library. The
 lyrics will be added to the beets database and, if ``import_write`` is on,
 embedded into files' metadata.
 
+The ``-p`` option to the ``lyrics`` command makes it print lyrics out to the
+console so you can view the fetched (or previously-stored) lyrics.
+
 Configuring
 -----------
 
