@@ -1,0 +1,165 @@
+# This file is part of beets.
+# Copyright 2012, Adrian Sampson.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+# 
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+
+"""Fetches, embeds, and displays lyrics.
+"""
+import urllib
+import re
+import logging
+
+from beets.plugins import BeetsPlugin
+from beets import ui
+from beets.ui import commands
+
+
+# Lyrics scrapers.
+
+COMMENT_RE = re.compile(r'<!--.*-->', re.S)
+DIV_RE = re.compile(r'<(/?)div>?')
+TAG_RE = re.compile(r'<[^>]*>')
+BREAK_RE = re.compile(r'<br\s*/?>')
+
+def unescape(text):
+    """Resolves &#xxx; HTML entities."""
+    def replchar(m):
+        num = m.group(1)
+        return unichr(int(num))
+    return re.sub("&#(\d+);", replchar, text)
+
+def extract_text(html, starttag):
+    """Extract the text from a <DIV> tag in the HTML starting with
+    ``starttag``. Returns None if parsing fails.
+    """
+    # Strip off the leading text before opening tag.
+    try:
+        _, html = html.split(starttag, 1)
+    except ValueError:
+        return
+
+    # Walk through balanced DIV tags.
+    level = 0
+    parts = []
+    pos = 0
+    for match in DIV_RE.finditer(html):
+        if match.group(1): # Closing tag.
+            level -= 1
+            if level == 0:
+                pos = match.end()
+        else: # Opening tag.
+            if level == 0:
+                parts.append(html[pos:match.start()])
+
+            level += 1
+
+        if level == -1:
+            parts.append(html[pos:match.start()])
+            break
+    else:
+        print 'no closing tag found!'
+        return
+    lyrics = ''.join(parts)
+
+    # Strip cruft.
+    lyrics = COMMENT_RE.sub('', lyrics)
+    lyrics = unescape(lyrics)
+    lyrics = re.sub(r'\s+', ' ', lyrics) # Whitespace collapse.
+    lyrics = BREAK_RE.sub('\n', lyrics) # <BR> newlines.
+    lyrics = re.sub(r'\n +', '\n', lyrics)
+    lyrics = re.sub(r' +\n', '\n', lyrics)
+    lyrics = TAG_RE.sub('', lyrics) # Strip remaining HTML tags.
+    lyrics = lyrics.strip()
+    return lyrics
+
+LYRICSWIKI_URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
+def _lw_encode(s):
+    s = re.sub(r'\s+', '_', s)
+    s = s.replace("<", "Less_Than")
+    s = s.replace(">", "Greater_Than")
+    s = s.replace("#", "Number_")
+    s = re.sub(r'[\[\{]', '(', s)
+    s = re.sub(r'[\]\}]', ')', s)
+    return urllib.quote(s)
+def fetch_lyricswiki(artist, title):
+    """Fetch lyrics from LyricsWiki."""
+    url = LYRICSWIKI_URL_PATTERN % (_lw_encode(artist), _lw_encode(title))
+    html = urllib.urlopen(url).read()
+
+    lyrics = extract_text(html, "<div class='lyricbox'>")
+    if lyrics and 'Unfortunately, we are not licensed' not in lyrics:
+        return lyrics
+
+LYRICSCOM_URL_PATTERN = 'http://www.lyrics.com/%s-lyrics-%s.html'
+def _lc_encode(s):
+    s = re.sub(r'\s+', '-', s)
+    return urllib.quote(s)
+def fetch_lyricscom(artist, title):
+    """Fetch lyrics from Lyrics.com."""
+    url = LYRICSCOM_URL_PATTERN % (_lc_encode(title), _lc_encode(artist))
+    html = urllib.urlopen(url).read()
+
+    lyrics = extract_text(html, '<div id="lyric_space">')
+    if lyrics:
+        lyrics, _ = lyrics.split('\n---\nLyrics powered by', 1)
+        return lyrics
+
+BACKENDS = [fetch_lyricswiki, fetch_lyricscom]
+def get_lyrics(artist, title):
+    """Fetch lyrics, trying each source in turn."""
+    for backend in BACKENDS:
+        lyrics = backend(artist, title)
+        if lyrics:
+            return lyrics
+
+
+# Plugin logic.
+
+log = logging.getLogger('beets')
+
+def fetch_lyrics(lib, query, write):
+    """Fetch and store lyrics for each matched item. If ``write``, then
+    the lyrics will also be written to the file itself.
+    """
+    for item in lib.items(query):
+        # Skip if the item already has lyrics.
+        if item.lyrics:
+            log.info(u'lyrics already present: %s - %s' %
+                     (item.artist, item.title))
+            continue
+
+        # Fetch lyrics.
+        lyrics = get_lyrics(item.artist, item.title)
+        if not lyrics:
+            log.info(u'lyrics not found: %s - %s' %
+                     (item.artist, item.title))
+            continue
+
+        log.info(u'fetched lyrics: %s - %s' %
+                 (item.artist, item.title))
+        item.lyrics = lyrics
+        if write:
+            item.write()
+        lib.store(item)
+        lib.save()
+
+class LyricsPlugin(BeetsPlugin):
+    def commands(self):
+        cmd = ui.Subcommand('lyrics', help='fetch song lyrics')
+        def func(lib, config, opts, args):
+            # The "write to files" option corresponds to the
+            # import_write config value.
+            write = ui.config_val(config, 'beets', 'import_write',
+                                  commands.DEFAULT_IMPORT_WRITE, bool)
+            fetch_lyrics(lib, ui.decargs(args), write)
+        cmd.func = func
+        return [cmd]

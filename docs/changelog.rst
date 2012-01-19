@@ -1,6 +1,13 @@
 Changelog
 =========
 
+1.0b13 (in development)
+-----------------------
+
+* The :doc:`/plugins/lyrics`, originally by `Peter Brunner`_, is revamped and
+  included with beets, making it easy to fetch **song lyrics**.
+
+
 1.0b12 (January 16, 2012)
 -------------------------
 

@@ -36,6 +36,7 @@ disabled by default, but you can turn them on as described above:
    :maxdepth: 1
 
    chroma
+   lyrics
    bpd
    mpdupdate
    embedart
@@ -53,8 +54,6 @@ Other Plugins
 
 Here are a few of the plugins written by the beets community:
 
-* `beets-lyrics`_ searches Web repositories for song lyrics and adds them to your files.
-
 * `beetFs`_ is a FUSE filesystem for browsing the music in your beets library.
   (Might be out of date.)
 
@@ -63,8 +62,6 @@ Here are a few of the plugins written by the beets community:
 
 * `A cmus plugin`_ integrates with the `cmus`_ console music player.
 
-.. _beets-replaygain: https://github.com/Lugoues/beets-replaygain/
-.. _beets-lyrics: https://github.com/Lugoues/beets-lyrics/
 .. _beetFs: http://code.google.com/p/beetfs/
 .. _Beet-MusicBrainz-Collection:
     https://github.com/jeffayle/Beet-MusicBrainz-Collection/
