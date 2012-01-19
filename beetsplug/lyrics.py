@@ -126,32 +126,34 @@ def get_lyrics(artist, title):
 
 log = logging.getLogger('beets')
 
-def fetch_lyrics(lib, query, write):
-    """Fetch and store lyrics for each matched item. If ``write``, then
-    the lyrics will also be written to the file itself.
+def fetch_item_lyrics(lib, loglevel, item, write):
+    """Fetch and store lyrics for a single item. If ``write``, then the
+    lyrics will also be written to the file itself. The ``loglevel``
+    parameter controls the visibility of the function's status log
+    messages.
     """
-    for item in lib.items(query):
-        # Skip if the item already has lyrics.
-        if item.lyrics:
-            log.info(u'lyrics already present: %s - %s' %
-                     (item.artist, item.title))
-            continue
+    # Skip if the item already has lyrics.
+    if item.lyrics:
+        log.log(loglevel, u'lyrics already present: %s - %s' %
+                          (item.artist, item.title))
+        return
 
-        # Fetch lyrics.
-        lyrics = get_lyrics(item.artist, item.title)
-        if not lyrics:
-            log.info(u'lyrics not found: %s - %s' %
-                     (item.artist, item.title))
-            continue
+    # Fetch lyrics.
+    lyrics = get_lyrics(item.artist, item.title)
+    if not lyrics:
+        log.log(loglevel, u'lyrics not found: %s - %s' %
+                          (item.artist, item.title))
+        return
 
-        log.info(u'fetched lyrics: %s - %s' %
-                 (item.artist, item.title))
-        item.lyrics = lyrics
-        if write:
-            item.write()
-        lib.store(item)
-        lib.save()
+    log.log(loglevel, u'fetched lyrics: %s - %s' %
+                      (item.artist, item.title))
+    item.lyrics = lyrics
+    if write:
+        item.write()
+    lib.store(item)
+    lib.save()
 
+AUTOFETCH = True
 class LyricsPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand('lyrics', help='fetch song lyrics')
@@ -160,6 +162,22 @@ class LyricsPlugin(BeetsPlugin):
             # import_write config value.
             write = ui.config_val(config, 'beets', 'import_write',
                                   commands.DEFAULT_IMPORT_WRITE, bool)
-            fetch_lyrics(lib, ui.decargs(args), write)
+            for item in lib.items(ui.decargs(args)):
+                fetch_item_lyrics(lib, logging.INFO, item, write)
         cmd.func = func
         return [cmd]
+
+    def configure(self, config):
+        global AUTOFETCH
+        AUTOFETCH = ui.config_val(config, 'lyrics', 'autofetch', True, bool)
+
+# Auto-fetch lyrics on import.
+@LyricsPlugin.listen('album_imported')
+def album_imported(lib, album, config):
+    if AUTOFETCH:
+        for item in album.items():
+            fetch_item_lyrics(lib, logging.DEBUG, item, config.write)
+@LyricsPlugin.listen('item_imported')
+def item_imported(lib, item, config):
+    if AUTOFETCH:
+        fetch_item_lyrics(lib, logging.DEBUG, item, config.write)
