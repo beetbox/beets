@@ -35,6 +35,16 @@ RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits']
 TRACK_INCLUDES = ['artists']
 
+# python-musicbrainz-ngs search functions: tolerate different API versions.
+if hasattr(musicbrainzngs, 'release_search'):
+    # Old API names.
+    _mb_release_search = musicbrainzngs.release_search
+    _mb_recording_search = musicbrainzngs.recording_search
+else:
+    # New API names.
+    _mb_release_search = musicbrainzngs.search_releases
+    _mb_recording_search = musicbrainzngs.search_recordings
+
 def track_info(recording):
     """Translates a MusicBrainz recording result dictionary into a beets
     ``TrackInfo`` object.
@@ -145,7 +155,7 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
     if not any(criteria.itervalues()):
         return
 
-    res = musicbrainzngs.release_search(limit=limit, **criteria)
+    res = _mb_release_search(limit=limit, **criteria)
     for release in res['release-list']:
         # The search result is missing some data (namely, the tracks),
         # so we just use the ID and fetch the rest of the information.
@@ -163,7 +173,7 @@ def match_track(artist, title, limit=SEARCH_LIMIT):
     if not any(criteria.itervalues()):
         return
 
-    res = musicbrainzngs.recording_search(limit=limit, **criteria)
+    res = _mb_recording_search(limit=limit, **criteria)
     for recording in res['recording-list']:
         yield track_info(recording)
 
