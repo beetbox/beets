@@ -6,6 +6,8 @@ Changelog
 
 * The :doc:`/plugins/lyrics`, originally by `Peter Brunner`_, is revamped and
   included with beets, making it easy to fetch **song lyrics**.
+* Fix a bug in the ``rewrite`` plugin that broke the use of multiple rules for
+  a single field.
 
 
 1.0b12 (January 16, 2012)
