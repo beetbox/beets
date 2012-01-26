@@ -45,12 +45,14 @@ else:
     _mb_release_search = musicbrainzngs.search_releases
     _mb_recording_search = musicbrainzngs.search_recordings
 
-def track_info(recording):
+def track_info(recording, medium_index=None):
     """Translates a MusicBrainz recording result dictionary into a beets
-    ``TrackInfo`` object.
+    ``TrackInfo`` object. ``medium_index``, if provided, is the track's
+    index (1-based) on its medium.
     """
     info = beets.autotag.hooks.TrackInfo(recording['title'],
-                                         recording['id'])
+                                         recording['id'],
+                                         medium_index=medium_index)
 
     # Get the name of the track artist.
     if recording.get('artist-credit-phrase'):
@@ -93,7 +95,7 @@ def album_info(release):
     track_infos = []
     for medium in release['medium-list']:
         for track in medium['track-list']:
-            ti = track_info(track['recording'])
+            ti = track_info(track['recording'], int(track['position']))
             if track.get('title'):
                 # Track title may be distinct from underling recording
                 # title.

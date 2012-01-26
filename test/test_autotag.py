@@ -173,6 +173,57 @@ class AlbumDistanceTest(unittest.TestCase):
         )
         self.assertNotEqual(match.distance(items, info), 0)
 
+    def test_tracks_out_of_order(self):
+        items = []
+        items.append(self.item('one', 1))
+        items.append(self.item('three', 2))
+        items.append(self.item('two', 3))
+        info = AlbumInfo(
+            artist = 'some artist',
+            album = 'some album',
+            tracks = self.trackinfo(),
+            va = False,
+            album_id = None, artist_id = None,
+        )
+        dist = match.distance(items, info)
+        self.assertTrue(0 < dist < 0.2)
+
+    def test_two_medium_release(self):
+        items = []
+        items.append(self.item('one', 1))
+        items.append(self.item('two', 2))
+        items.append(self.item('three', 3))
+        info = AlbumInfo(
+            artist = 'some artist',
+            album = 'some album',
+            tracks = self.trackinfo(),
+            va = False,
+            album_id = None, artist_id = None,
+        )
+        info.tracks[0].medium_index = 1
+        info.tracks[1].medium_index = 2
+        info.tracks[2].medium_index = 1
+        dist = match.distance(items, info)
+        self.assertEqual(dist, 0)
+
+    def test_per_medium_track_numbers(self):
+        items = []
+        items.append(self.item('one', 1))
+        items.append(self.item('two', 2))
+        items.append(self.item('three', 1))
+        info = AlbumInfo(
+            artist = 'some artist',
+            album = 'some album',
+            tracks = self.trackinfo(),
+            va = False,
+            album_id = None, artist_id = None,
+        )
+        info.tracks[0].medium_index = 1
+        info.tracks[1].medium_index = 2
+        info.tracks[2].medium_index = 1
+        dist = match.distance(items, info)
+        self.assertEqual(dist, 0)
+
 def _mkmp3(path):
     shutil.copyfile(os.path.join(_common.RSRC, 'min.mp3'), path)
 class AlbumsInDirTest(unittest.TestCase):

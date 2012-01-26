@@ -35,9 +35,13 @@ class MBAlbumInfoTest(unittest.TestCase):
             'medium-list': [],
         }
         if tracks:
-            release['medium-list'].append({
-                'track-list': [{'recording': track} for track in tracks]
-            })
+            track_list = []
+            for i, track in enumerate(tracks):
+                track_list.append({
+                    'recording': track,
+                    'position': str(i+1),
+                })
+            release['medium-list'].append({ 'track-list': track_list })
         return release
 
     def _make_track(self, title, tr_id, duration):
@@ -84,6 +88,16 @@ class MBAlbumInfoTest(unittest.TestCase):
         self.assertEqual(t[1].title, 'TITLE TWO')
         self.assertEqual(t[1].track_id, 'ID TWO')
         self.assertEqual(t[1].length, 200.0)
+
+    def test_parse_track_indices(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(tracks=tracks)
+
+        d = mb.album_info(release)
+        t = d.tracks
+        self.assertEqual(t[0].medium_index, 1)
+        self.assertEqual(t[1].medium_index, 2)
 
     def test_parse_release_year_month_only(self):
         release = self._make_release('1987-03')

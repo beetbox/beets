@@ -6,6 +6,10 @@ Changelog
 
 * The :doc:`/plugins/lyrics`, originally by `Peter Brunner`_, is revamped and
   included with beets, making it easy to fetch **song lyrics**.
+* The autotagger now tolerates tracks on multi-disc albums that are numbered
+  per-disc. For example, if track 24 on a release is the first track on the
+  second disc, then it is not penalized for having its track number set to 1
+  instead of 24.
 * Fix a bug in the ``rewrite`` plugin that broke the use of multiple rules for
   a single field.
 

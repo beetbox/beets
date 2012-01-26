@@ -234,7 +234,7 @@ def track_distance(item, track_info, track_index=None, incl_artist=False):
 
     # Track index.
     if track_index and item.track:
-        if track_index != item.track:
+        if item.track not in (track_index, track_info.medium_index):
             dist += TRACK_INDEX_WEIGHT
         dist_max += TRACK_INDEX_WEIGHT
     
