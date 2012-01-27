@@ -16,6 +16,7 @@ Changelog
   a single field.
 * Fix a crash with non-ASCII characters in bytestring metadata fields (e.g.,
   MusicBrainz IDs).
+* Fix another crash with non-ASCII characters in the configuration paths.
 
 
 1.0b12 (January 16, 2012)

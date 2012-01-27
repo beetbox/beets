@@ -702,9 +702,9 @@ def main(args=None, configfh=None):
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.INFO)
-    log.debug(u'config file: %s' % configpath)
-    log.debug(u'library database: %s' % lib.path)
-    log.debug(u'library directory: %s' % lib.directory)
+    log.debug(u'config file: %s' % util.displayable_path(configpath))
+    log.debug(u'library database: %s' % util.displayable_path(lib.path))
+    log.debug(u'library directory: %s' % util.displayable_path(lib.directory))
     
     # Invoke the subcommand.
     try:

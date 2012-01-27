@@ -171,6 +171,9 @@ def displayable_path(path):
     """
     if isinstance(path, unicode):
         return path
+    elif not isinstance(path, str):
+        # A non-string object: just get its unicode representation.
+        return unicode(path)
 
     encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
     try:
