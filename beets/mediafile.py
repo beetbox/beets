@@ -945,6 +945,10 @@ class MediaFile(object):
         return self.mgfile.info.length
 
     @property
+    def samplerate(self):
+        return self.mgfile.info.sample_rate
+
+    @property
     def bitrate(self):
         if hasattr(self.mgfile.info, 'bitrate'):
             # Many formats provide it explicitly.
