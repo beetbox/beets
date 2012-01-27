@@ -1,0 +1,29 @@
+
+# general hidden files/directories
+
+.DS_Store
+.sconsign*
+.svn
+
+# file patterns
+
+*.dylib
+*.la
+*.lo
+*.o
+*.pyc
+*.pyo
+*.so
+*.tar.gz
+*.tar.bz2
+*~
+*.project
+*.pydevproject
+
+# Project Specific patterns
+
+dist/*
+beets.egg-info/*
+build/*
+docs/_build/*
+
