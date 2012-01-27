@@ -75,7 +75,10 @@ STRONG_REC_THRESH = 0.04
 MEDIUM_REC_THRESH = 0.25
 REC_GAP_THRESH = 0.25
 
-# Artist signals that indicate "various artists".
+# Artist signals that indicate "various artists". These are used at the
+# album level to determine whether a given release is likely a VA
+# release and also on the track level to to remove the penalty for
+# differing artists.
 VA_ARTISTS = (u'', u'various artists', u'va', u'unknown')
 
 # Autotagging exceptions.
@@ -227,14 +230,15 @@ def track_distance(item, track_info, track_index=None, incl_artist=False):
     # Attention: MB DB does not have artist info for all compilations,
     # so only check artist distance if there is actually an artist in
     # the MB track data.
-    if incl_artist and track_info.artist:
+    if incl_artist and track_info.artist and \
+            item.artist.lower() not in VA_ARTISTS:
         dist += string_dist(item.artist, track_info.artist) * \
                 TRACK_ARTIST_WEIGHT
         dist_max += TRACK_ARTIST_WEIGHT
 
     # Track index.
     if track_index and item.track:
-        if track_index != item.track:
+        if item.track not in (track_index, track_info.medium_index):
             dist += TRACK_INDEX_WEIGHT
         dist_max += TRACK_INDEX_WEIGHT
     

@@ -69,12 +69,13 @@ class TrackInfo(object):
     may be None.
     """
     def __init__(self, title, track_id, artist=None, artist_id=None,
-                 length=None):
+                 length=None, medium_index=None):
         self.title = title
         self.track_id = track_id
         self.artist = artist
         self.artist_id = artist_id
         self.length = length
+        self.medium_index = medium_index
 
 
 # Aggregation of sources.
