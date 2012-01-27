@@ -8,13 +8,18 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
 """Provides the basic, interface-agnostic workflow for importing and
 autotagging music files.
 """
+
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 from __future__ import with_statement # Python 2.5
 import os
 import logging
