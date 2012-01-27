@@ -15,12 +15,8 @@
 """Provides the basic, interface-agnostic workflow for importing and
 autotagging music files.
 """
-
-import sys
-reload(sys)
-sys.setdefaultencoding('utf-8')
-
 from __future__ import with_statement # Python 2.5
+import sys
 import os
 import logging
 import pickle
@@ -33,6 +29,9 @@ from beets import plugins
 from beets.util import pipeline
 from beets.util import syspath, normpath, plurality, displayable_path
 from beets.util.enumeration import enum
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 action = enum(
     'SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'APPLY', 'MANUAL_ID',
@@ -458,14 +457,14 @@ def read_tasks(config):
     if config.incremental:
         incremental_skipped = 0
         history_dirs = history_get()
-    
+
     for toppath in config.paths:
         # Check whether the path is to a file.
         if config.singletons and not os.path.isdir(syspath(toppath)):
             item = library.Item.from_path(toppath)
             yield ImportTask.item_task(item)
             continue
-        
+
         # Produce paths under this directory.
         if progress:
             resume_dir = resume_dirs.get(toppath)
@@ -553,7 +552,7 @@ def user_query(config):
         task = yield task
         if task.sentinel:
             continue
-        
+
         # Ask the user for a choice.
         choice = config.choose_match_func(task, config)
         task.set_choice(choice)
@@ -571,7 +570,7 @@ def user_query(config):
                 while True:
                     item_task = yield
                     item_tasks.append(item_task)
-            ipl = pipeline.Pipeline((emitter(), item_lookup(config), 
+            ipl = pipeline.Pipeline((emitter(), item_lookup(config),
                                      item_query(config), collector()))
             ipl.run_sequential()
             task = pipeline.multiple(item_tasks)
@@ -599,14 +598,14 @@ def show_progress(config):
         # Behave as if ASIS were selected.
         task.set_null_match()
         task.set_choice(action.ASIS)
-        
+
 def apply_choices(config):
     """A coroutine for applying changes to albums during the autotag
     process.
     """
     lib = _reopen_lib(config.lib)
     task = None
-    while True:    
+    while True:
         task = yield task
         if task.should_skip():
             continue
@@ -798,7 +797,7 @@ def run_import(**kwargs):
     ImportConfig.
     """
     config = ImportConfig(**kwargs)
-    
+
     # Set up the pipeline.
     if config.query is None:
         stages = [read_tasks(config)]
