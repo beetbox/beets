@@ -114,7 +114,12 @@ def _safe_cast(out_type, val):
         if val is None:
             return u''
         else:
-            return unicode(val)
+            if isinstance(val, str):
+                return val.decode('utf-8', errors='ignore')
+            elif isinstance(val, unicode):
+                return val
+            else:
+                return unicode(val)
 
     elif out_type == float:
         if val is None:

@@ -8,6 +8,8 @@ Changelog
   included with beets, making it easy to fetch **song lyrics**.
 * Fix a bug in the ``rewrite`` plugin that broke the use of multiple rules for
   a single field.
+* Fix a crash with non-ASCII characters in bytestring metadata fields (e.g.,
+  MusicBrainz IDs).
 
 
 1.0b12 (January 16, 2012)

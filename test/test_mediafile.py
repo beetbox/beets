@@ -106,6 +106,11 @@ class InvalidValueToleranceTest(unittest.TestCase):
     def test_safe_cast_negative_string_to_float(self):
         self.assertAlmostEqual(_sc(float, '-1.234'), -1.234)
 
+    def test_safe_cast_special_chars_to_unicode(self):
+        us = _sc(unicode, 'caf\xc3\xa9')
+        self.assertTrue(isinstance(us, unicode))
+        self.assertTrue(us.startswith(u'caf'))
+
 class SafetyTest(unittest.TestCase):
     def _exccheck(self, fn, exc, data=''):
         fn = os.path.join(_common.RSRC, fn)
