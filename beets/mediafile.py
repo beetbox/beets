@@ -942,31 +942,49 @@ class MediaFile(object):
 
     @property
     def length(self):
+        """The duration of the audio in seconds (a float)."""
         return self.mgfile.info.length
 
     @property
     def samplerate(self):
+        """The audio's sample rate (an int)."""
         if hasattr(self.mgfile.info, 'sample_rate'):
-            # Reasonably sure from checking mutagen source that all
-            # formats will return this information
             return self.mgfile.info.sample_rate
+        return 0
     
     @property
     def bitdepth(self):
+        """The number of bits per sample in the audio encoding (an int).
+        Only available for certain file formats (zero where
+        unavailable).
+        """
         if hasattr(self.mgfile.info, 'bits_per_sample'):
-            # Reasonably sure from checking mutagen source that all 
-            # formats will return this information
             return self.mgfile.info.bits_per_sample        
+        return 0
 
     @property
     def channels(self):
+        """The number of channels in the audio (an int)."""
+        if isinstance(self.mgfile.info, mutagen.mp3.MPEGInfo):
+            return {
+                mutagen.mp3.STEREO: 2,
+                mutagen.mp3.JOINTSTEREO: 2,
+                mutagen.mp3.DUALCHANNEL: 2,
+                mutagen.mp3.MONO: 1,
+            }[self.mgfile.info.mode]
         if hasattr(self.mgfile.info, 'channels'):
-            # Reasonably sure from checking mutagen source that all
-            # formats will return this information
             return self.mgfile.info.channels
+        return 0
 
-   @property
+    @property
     def bitrate(self):
+        """The number of bits per seconds used in the audio coding (an
+        int). If this is provided explicitly by the compressed file
+        format, this is a precise reflection of the encoding. Otherwise,
+        it is estimated from the on-disk file size. In this case, some
+        imprecision is possible because the file header is incorporated
+        in the file size.
+        """
         if hasattr(self.mgfile.info, 'bitrate'):
             # Many formats provide it explicitly.
             return self.mgfile.info.bitrate
@@ -978,4 +996,5 @@ class MediaFile(object):
 
     @property
     def format(self):
+        """A string describing the file format/codec."""
         return TYPES[self.type]

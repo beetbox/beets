@@ -239,42 +239,63 @@ read_only_correct_dicts = {
         'length': 1.0,
         'bitrate': 80000,
         'format': 'MP3',
+        'samplerate': 44100,
+        'bitdepth': 0,
+        'channels': 1,
     },
 
     'full.flac': {
         'length': 1.0,
         'bitrate': 175120,
         'format': 'FLAC',
+        'samplerate': 44100,
+        'bitdepth': 16,
+        'channels': 1,
     },
 
     'full.m4a': {
         'length': 1.0,
         'bitrate': 64000,
         'format': 'AAC',
+        'samplerate': 44100,
+        'bitdepth': 16,
+        'channels': 2,
     },
     
     'full.ogg': {
         'length': 1.0,
         'bitrate': 48000,
         'format': 'OGG',
+        'samplerate': 44100,
+        'bitdepth': 0,
+        'channels': 1,
     },
     
     'full.ape': {
         'length': 1.0,
         'bitrate': 112040,
         'format': 'APE',
+        'samplerate': 44100,
+        'bitdepth': 16,
+        'channels': 1,
     },
 
     'full.wv': {
         'length': 1.0,
         'bitrate': 108744,
         'format': 'WavPack',
+        'samplerate': 44100,
+        'bitdepth': 0,
+        'channels': 1,
     },
 
     'full.mpc': {
         'length': 1.0,
         'bitrate': 23,
         'format': 'Musepack',
+        'samplerate': 44100,
+        'bitdepth': 0,
+        'channels': 2,
     },
 }
 
