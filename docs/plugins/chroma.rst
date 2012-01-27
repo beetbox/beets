@@ -24,16 +24,19 @@ Installing Dependencies
 -----------------------
 
 To get fingerprinting working, you'll need to install three things: the
-`Chromaprint`_ library, an audio decoder, and the `pyacoustid`_ Python library.
+`Chromaprint`_ library or command-line tool, an audio decoder, and the
+`pyacoustid`_ Python library.
 
-First, you will need to install the `Chromaprint`_ dynamic library. The
-Chromaprint site has links to packages for major Linux distributions. On Mac OS
-X and Windows, you will need to build the library yourself; the site also has
-good directions for that.
+First, you will need to install `Chromaprint`_, either as a dynamic library or
+in the form of a command-line tool (``fpcalc``). The Chromaprint site has links
+to packages for major Linux distributions. On Mac OS X and Windows, download the
+appropriate binary package and place the ``fpcalc`` (or ``fpcalc.exe``) on your
+shell search path (e.g., in ``/usr/local/bin`` on Mac OS X or ``C:\\Program
+Files`` on Windows).
 
 Next, you will need a mechanism for decoding audio files supported by the
 `audioread`_ library. Mac OS X has a number of decoders already built into Core
-Audio; on Linux, you can install `GStreamer for Python`_, `FFmpeg`_, or `MAD`
+Audio; on Linux, you can install `GStreamer for Python`_, `FFmpeg`_, or `MAD`_
 and `pymad`_. (Let me know if you have a good source for installing a decoder on
 Windows.) How you install these will depend on your distribution. For example:
 
