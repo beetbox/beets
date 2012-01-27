@@ -945,6 +945,27 @@ class MediaFile(object):
         return self.mgfile.info.length
 
     @property
+    def samplerate(self):
+        if hasattr(self.mgfile.info, 'sample_rate'):
+            # Reasonably sure from checking mutagen source that all
+            # formats will return this information
+            return self.mgfile.info.sample_rate
+    
+    @property
+    def bitdepth(self):
+        if hasattr(self.mgfile.info, 'bits_per_sample'):
+            # Reasonably sure from checking mutagen source that all 
+            # formats will return this information
+            return self.mgfile.info.bits_per_sample        
+
+    @property
+    def channels(self):
+        if hasattr(self.mgfile.info, 'channels'):
+            # Reasonably sure from checking mutagen source that all
+            # formats will return this information
+            return self.mgfile.info.channels
+
+   @property
     def bitrate(self):
         if hasattr(self.mgfile.info, 'bitrate'):
             # Many formats provide it explicitly.
