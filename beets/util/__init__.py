@@ -328,7 +328,10 @@ def sanitize_for_path(value, pathmod, key=None):
         value = u'%02i' % value
     elif key == 'bitrate':
         # Bitrate gets formatted as kbps.
-        value = u'%ikbps' % (value / 1000)
+        value = u'%ikbps' % ((value or 0) / 1000)
+    elif key == 'samplerate':
+        # Sample rate formatted as kHz.
+        value = u'%ikHz' % ((value or 0) / 1000)
     else:
         value = unicode(value)
     return value

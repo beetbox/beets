@@ -348,6 +348,10 @@ class DestinationTest(unittest.TestCase):
         val = util.sanitize_for_path(12345, posixpath, 'bitrate')
         self.assertEqual(val, u'12kbps')
 
+    def test_component_sanitize_uses_khz_samplerate(self):
+        val = util.sanitize_for_path(12345, posixpath, 'samplerate')
+        self.assertEqual(val, u'12kHz')
+
     def test_artist_falls_back_to_albumartist(self):
         self.i.artist = ''
         self.i.albumartist = 'something'

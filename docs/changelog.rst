@@ -6,6 +6,9 @@ Changelog
 
 * The :doc:`/plugins/lyrics`, originally by `Peter Brunner`_, is revamped and
   included with beets, making it easy to fetch **song lyrics**.
+* Items now expose their audio sample rate, number of channels, and bits per
+  sample (bitdepth). See :doc:`/reference/pathformat` for a list of all
+  available audio properties. Thanks to Andrew Dunn.
 * The autotagger now tolerates tracks on multi-disc albums that are numbered
   per-disc. For example, if track 24 on a release is the first track on the
   second disc, then it is not penalized for having its track number set to 1

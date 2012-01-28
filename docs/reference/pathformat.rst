@@ -139,9 +139,12 @@ Ordinary metadata:
 
 Audio information:
 
-* length
-* bitrate
-* format
+* length (in seconds)
+* bitrate (in kilobits per second, with units: e.g., "192kbps")
+* format (e.g., "MP3" or "FLAC")
+* channels
+* bitdepth (only available for some formats)
+* samplerate (in kilohertz, with units: e.g., "48kHz")
 
 MusicBrainz IDs:
 
