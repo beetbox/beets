@@ -22,6 +22,7 @@ Changelog
 * Fix a crash with non-ASCII characters in bytestring metadata fields (e.g.,
   MusicBrainz IDs).
 * Fix another crash with non-ASCII characters in the configuration paths.
+* Fix a divide-by-zero crash on zero-length audio files.
 
 
 1.0b12 (January 16, 2012)

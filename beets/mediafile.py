@@ -991,6 +991,9 @@ class MediaFile(object):
         else:
             # Otherwise, we calculate bitrate from the file size. (This
             # is the case for all of the lossless formats.)
+            if not self.length:
+                # Avoid division by zero if length is not available.
+                return 0
             size = os.path.getsize(self.path)
             return int(size * 8 / self.length)
 

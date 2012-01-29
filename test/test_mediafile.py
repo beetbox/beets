@@ -184,6 +184,19 @@ class EncodingTest(unittest.TestCase):
         new_mf = beets.mediafile.MediaFile(self.path)
         self.assertEqual(new_mf.label, u'foo\xe8bar')
 
+class ZeroLengthMediaFile(beets.mediafile.MediaFile):
+    @property
+    def length(self):
+        return 0.0
+class MissingAudioDataTest(unittest.TestCase):
+    def setUp(self):
+        path = os.path.join(_common.RSRC, 'full.mp3')
+        self.mf = ZeroLengthMediaFile(path)
+
+    def test_bitrate_with_zero_length(self):
+        del self.mf.mgfile.info.bitrate # Not available directly.
+        self.assertEqual(self.mf.bitrate, 0)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
