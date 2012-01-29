@@ -15,6 +15,8 @@ Changelog
   instead of 24.
 * The autotagger now also tolerates tracks whose track artists tags are set
   to "Various Artists".
+* The ``inline`` plugin now prints a more comprehensible error when exceptions
+  occur in Python snippets.
 * Fix a bug in the ``rewrite`` plugin that broke the use of multiple rules for
   a single field.
 * Fix a crash with non-ASCII characters in bytestring metadata fields (e.g.,
