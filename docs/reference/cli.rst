@@ -109,8 +109,8 @@ right now; this is something we need to work on. Read the
     rather than duplicated, if they're already in your library. That is, your
     directory structure will be updated to reflect the new tags if copying is
     enabled; you never end up with two copies of the file. That means that the
-    "delete files" (``-d`` or ``import_delete``) option is ignored when
-    re-importing as well.
+    "delete files" (``import_delete``) option is ignored when re-importing as
+    well.
 
     The ``-L`` (``--library``) flag is also useful for retagging. Instead of
     listing paths you want to import on the command line, specify a :doc:`query
