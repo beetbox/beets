@@ -23,6 +23,8 @@ Changelog
   MusicBrainz IDs).
 * Fix another crash with non-ASCII characters in the configuration paths.
 * Fix a divide-by-zero crash on zero-length audio files.
+* Fix a crash in the ``chroma`` plugin when the Acoustid database had no
+  recording associated with a fingerprint.
 
 
 1.0b12 (January 16, 2012)

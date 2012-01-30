@@ -126,3 +126,4 @@ class AcoustidPlugin(plugins.BeetsPlugin):
             return [track]
         else:
             log.debug('no acoustid item candidate found')
+            return []
