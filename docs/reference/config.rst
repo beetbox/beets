@@ -89,17 +89,25 @@ section header:
     substitutions to avoid causing errors on your operating system. Here are
     some recommended base replacements for Unix-like OSes::
 
-        replace = [\\/\?"]|^\.' _
+        replace = [\\/\?"]|^\. _
                   : -
 
     And, on Windows::
 
-        replace = [\\/\?"]|^\.' _
+        replace = [\\/\?"]|^\. _
                   ["\*<>\|]|^\.|\.$|\s+$ _
                   : -
 
     Note that the above examples are, in fact, the default substitutions used by
     beets.
+
+    To replace space characters, use the ``\s`` (whitespace) entity::
+        
+        replace = \s _
+                  ...
+
+    This will avoid using a literal space and thus confusing beets. (``\s`` also
+    matches tabs and newlines, but that is probably fine.)
 
 ``art_filename``
     When importing album art, the name of the file (without extension) where the
