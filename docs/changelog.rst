@@ -30,6 +30,8 @@ Changelog
 * Fix a divide-by-zero crash on zero-length audio files.
 * Fix a crash in the ``chroma`` plugin when the Acoustid database had no
   recording associated with a fingerprint.
+* Fix a crash when an autotagging with an artist or album containing "AND" or
+  "OR" (upper case).
 
 1.0b12 (January 16, 2012)
 -------------------------

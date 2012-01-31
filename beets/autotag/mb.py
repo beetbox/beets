@@ -144,9 +144,9 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
     optionally, a number of tracks on the album.
     """
     # Build search criteria.
-    criteria = {'release': album}
+    criteria = {'release': album.lower()}
     if artist is not None:
-        criteria['artist'] = artist
+        criteria['artist'] = artist.lower()
     else:
         # Various Artists search.
         criteria['arid'] = VARIOUS_ARTISTS_ID
@@ -168,8 +168,8 @@ def match_track(artist, title, limit=SEARCH_LIMIT):
     objects.
     """
     criteria = {
-        'artist': artist,
-        'recording': title,
+        'artist': artist.lower(),
+        'recording': title.lower(),
     }
 
     if not any(criteria.itervalues()):
