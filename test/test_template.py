@@ -14,9 +14,7 @@
 
 """Tests for template engine.
 """
-import unittest
-
-import _common
+from _common import unittest
 from beets.util import functemplate
 
 def _normexpr(expr):

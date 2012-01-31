@@ -14,9 +14,7 @@
 
 """Tests for MusicBrainz API wrapper.
 """
-import unittest
-
-import _common
+from _common import unittest
 from beets.autotag import mb
 
 class MBAlbumInfoTest(unittest.TestCase):

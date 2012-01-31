@@ -14,7 +14,6 @@
 
 """Tests for non-query database functions of Item.
 """
-import unittest
 import os
 import sqlite3
 import ntpath
@@ -23,6 +22,7 @@ import shutil
 import re
 
 import _common
+from _common import unittest
 from _common import item
 import beets.library
 from beets import util

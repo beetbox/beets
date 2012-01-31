@@ -18,6 +18,12 @@ import sys
 import os
 import logging
 
+# Use unittest2 on Python < 2.7.
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
 # Mangle the search path to include the beets sources.
 sys.path.insert(0, '..')
 import beets.library

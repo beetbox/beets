@@ -14,13 +14,13 @@
 
 """Tests for autotagging functionality.
 """
-import unittest
 import os
 import shutil
 import re
 import copy
 
 import _common
+from _common import unittest
 from beets import autotag
 from beets.autotag import match
 from beets.library import Item

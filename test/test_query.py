@@ -14,10 +14,10 @@
 
 """Various tests for querying the library database.
 """
-import unittest
 import os
 
 import _common
+from _common import unittest
 import beets.library
 
 pqp = beets.library.CollectionQuery._parse_query_part

@@ -15,13 +15,12 @@
 """Automatically-generated blanket testing for the MediaFile metadata
 layer.
 """
-
-import unittest
 import os
 import shutil
 import datetime
 
 import _common
+from _common import unittest
 import beets.mediafile
 
 

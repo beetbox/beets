@@ -14,10 +14,7 @@
 
 """Test the "pipeline.py" restricted parallel programming library.
 """
-
-import unittest
-
-import _common
+from _common import unittest
 from beets.util import pipeline
 
 # Some simple pipeline stages for testing.

@@ -13,9 +13,8 @@
 # included in all copies or substantial portions of the Software.
 
 """Tests for the virtual filesystem builder.."""
-import unittest
-
 import _common
+from _common import unittest
 from beets import library
 from beets import vfs
 

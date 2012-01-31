@@ -14,10 +14,11 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-import unittest
 import os
 import re
 import sys
+
+from _common import unittest
 
 pkgpath = os.path.dirname(__file__) or '.'
 sys.path.append(pkgpath)

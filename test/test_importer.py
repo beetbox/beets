@@ -14,11 +14,11 @@
 
 """Tests for the general importer functionality.
 """
-import unittest
 import os
 import shutil
 
 import _common
+from _common import unittest
 from beets import library
 from beets import importer
 from beets import mediafile

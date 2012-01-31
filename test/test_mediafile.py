@@ -14,12 +14,11 @@
 
 """Specific, edge-case tests for the MediaFile metadata layer.
 """
-
-import unittest
 import os
 import shutil
 
 import _common
+from _common import unittest
 import beets.mediafile
 
 class EdgeTest(unittest.TestCase):

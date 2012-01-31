@@ -14,7 +14,6 @@
 
 """Tests for the command-line interface.
 """
-import unittest
 import os
 import shutil
 import textwrap
@@ -24,6 +23,7 @@ from StringIO import StringIO
 import ConfigParser
 
 import _common
+from _common import unittest
 from beets import library
 from beets import ui
 from beets.ui import commands
