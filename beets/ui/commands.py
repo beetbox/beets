@@ -580,7 +580,11 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
     # Open the log.
     if logpath:
         logpath = normpath(logpath)
-        logfile = open(syspath(logpath), 'a')
+        try:
+            logfile = open(syspath(logpath), 'a')
+        except IOError:
+            raise ui.UserError(u"could not open log file for writing: %s" %
+                               displayable_path(logpath))
         print >>logfile, 'import started', time.asctime()
     else:
         logfile = None

@@ -17,6 +17,8 @@ Changelog
   to "Various Artists".
 * The ``inline`` plugin now prints a more comprehensible error when exceptions
   occur in Python snippets.
+* A reasonable error message is now shown when the import log file cannot be
+  opened.
 * Fix a bug in the ``rewrite`` plugin that broke the use of multiple rules for
   a single field.
 * Fix a crash with non-ASCII characters in bytestring metadata fields (e.g.,
@@ -25,7 +27,6 @@ Changelog
 * Fix a divide-by-zero crash on zero-length audio files.
 * Fix a crash in the ``chroma`` plugin when the Acoustid database had no
   recording associated with a fingerprint.
-
 
 1.0b12 (January 16, 2012)
 -------------------------
