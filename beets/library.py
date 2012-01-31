@@ -854,9 +854,12 @@ class Library(BaseLibrary):
             mapping['artist'] = mapping['albumartist']
         if not mapping['albumartist']:
             mapping['albumartist'] = mapping['artist']
+
+        # Get values from plugins.
+        for key, value in plugins.template_values(item).iteritems():
+            mapping[key] = util.sanitize_for_path(value, pathmod, key)
         
         # Perform substitution.
-        mapping.update(plugins.template_values(item))
         funcs = dict(TEMPLATE_FUNCTIONS)
         funcs.update(plugins.template_funcs())
         subpath = subpath_tmpl.substitute(mapping, funcs)

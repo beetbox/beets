@@ -15,6 +15,8 @@ Changelog
   instead of 24.
 * The autotagger now also tolerates tracks whose track artists tags are set
   to "Various Artists".
+* Plugin-supplied template values, such as those created by ``rewrite``, are now
+  properly sanitized (for example, ``AC/DC`` properly becomes ``AC_DC``).
 * The ``inline`` plugin now prints a more comprehensible error when exceptions
   occur in Python snippets.
 * A reasonable error message is now shown when the import log file cannot be
