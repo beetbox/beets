@@ -874,7 +874,7 @@ class Library(BaseLibrary):
         
         # Preserve extension.
         _, extension = pathmod.splitext(item.path)
-        subpath += extension
+        subpath += extension.lower()
         
         if fragment:
             return subpath

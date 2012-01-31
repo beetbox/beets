@@ -17,6 +17,7 @@ Changelog
   to "Various Artists".
 * Plugin-supplied template values, such as those created by ``rewrite``, are now
   properly sanitized (for example, ``AC/DC`` properly becomes ``AC_DC``).
+* Filename extensions are now always lower-cased when copying and moving files.
 * The ``inline`` plugin now prints a more comprehensible error when exceptions
   occur in Python snippets.
 * A reasonable error message is now shown when the import log file cannot be

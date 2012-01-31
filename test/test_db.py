@@ -159,9 +159,16 @@ class DestinationTest(unittest.TestCase):
     def test_destination_preserves_extension(self):
         self.lib.directory = 'base'
         self.lib.path_formats = [('default', '$title')]
-        self.i.path = 'hey.audioFormat'
+        self.i.path = 'hey.audioformat'
         self.assertEqual(self.lib.destination(self.i),
-                         np('base/the title.audioFormat'))
+                         np('base/the title.audioformat'))
+    
+    def test_lower_case_extension(self):
+        self.lib.directory = 'base'
+        self.lib.path_formats = [('default', '$title')]
+        self.i.path = 'hey.MP3'
+        self.assertEqual(self.lib.destination(self.i),
+                         np('base/the title.mp3'))
     
     def test_destination_pads_some_indices(self):
         self.lib.directory = 'base'
