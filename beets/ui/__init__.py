@@ -185,7 +185,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
                 prompt_part_lengths.append(len(tmpl % str(default)))
             else:
                 prompt_parts.append('# selection')
-                prompt_part_lengths.append(prompt_parts[-1])
+                prompt_part_lengths.append(len(prompt_parts[-1]))
         prompt_parts += capitalized
         prompt_part_lengths += [len(s) for s in options]
 
