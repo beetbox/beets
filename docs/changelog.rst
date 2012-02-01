@@ -32,6 +32,8 @@ Changelog
   recording associated with a fingerprint.
 * Fix a crash when an autotagging with an artist or album containing "AND" or
   "OR" (upper case).
+* Fix an error in the ``rewrite`` and ``inline`` plugins when the corresponding
+  config sections did not exist.
 
 1.0b12 (January 16, 2012)
 -------------------------

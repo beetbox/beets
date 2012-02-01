@@ -59,8 +59,9 @@ class InlinePlugin(BeetsPlugin):
         cls = type(self)
 
         # Add field expressions.
-        for key, value in config.items('pathfields', True):
-            log.debug(u'adding template field %s' % key)
-            func = compile_expr(value)
-            if func is not None:
-                cls.template_fields[key] = func
+        if config.has_section('pathfields'):
+            for key, value in config.items('pathfields', True):
+                log.debug(u'adding template field %s' % key)
+                func = compile_expr(value)
+                if func is not None:
+                    cls.template_fields[key] = func

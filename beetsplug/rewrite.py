@@ -48,6 +48,8 @@ class RewritePlugin(BeetsPlugin):
 
         # Gather all the rewrite rules for each field.
         rules = defaultdict(list)
+        if not config.has_section('rewrite'):
+            return
         for key, value in config.items('rewrite', True):
             try:
                 fieldname, pattern = key.split(None, 1)
