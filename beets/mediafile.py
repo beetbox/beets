@@ -115,7 +115,7 @@ def _safe_cast(out_type, val):
             return u''
         else:
             if isinstance(val, str):
-                return val.decode('utf-8', errors='ignore')
+                return val.decode('utf8', 'ignore')
             elif isinstance(val, unicode):
                 return val
             else:
