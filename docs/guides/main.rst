@@ -25,15 +25,18 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
 * For **Arch Linux**, try getting `beets from AUR`_. (There's also a
   bleeding-edge `dev package`_, which will probably set your computer on fire.)
 
-* If you're on **CentOS** 5, you have Python 2.4. To get 2.6,
-  `try this yum repository`_.
+* For **Gentoo Linux**, there are a couple of overlays that include beets. `One
+  by vh4x0r`_ includes a development ebuild and `one by syranez`_ includes the
+  released version. Eventually, beets may eventually get `added to the official
+  Portage tree`_.
 
-.. _try this yum repository:
-    http://chrislea.com/2009/09/09/easy-python-2-6-django-on-centos-5/
 .. _beets from AUR: http://aur.archlinux.org/packages.php?ID=39577
 .. _dev package: http://aur.archlinux.org/packages.php?ID=48617
 .. _Debian details: http://packages.qa.debian.org/b/beets.html
 .. _Ubuntu details: https://launchpad.net/ubuntu/+source/beets
+.. _One by vh4x0r: https://github.com/vh4x0r/apokolips
+.. _one by syranez: https://github.com/syranez/gentoo
+.. _added to the official portage tree: http://www.gentoo.org/doc/en/ebuild-submit.xml
 
 If you have `pip`_, just say ``pip install beets`` (you might need ``sudo`` in
 front of that). On Arch, you'll need to use ``pip2`` instead of ``pip``.
@@ -59,13 +62,9 @@ get it right:
 
 1. If you don't have it, `install Python`_ (you want Python 2.7).
 
-.. _install Python: http://python.org/download/
-
 2. Install `Setuptools`_ from PyPI. To do this, scroll to the bottom of that
    page and download the Windows installer (``.exe``, not ``.egg``) for your
    Python version (for example: ``setuptools-0.6c11.win32-py2.7.exe``).
-
-.. _Setuptools: http://pypi.python.org/pypi/setuptools
 
 3. If you haven't done so already, set your ``PATH`` environment variable to
    include Python and its scripts. To do so, you have to get the "Properties"
@@ -85,6 +84,9 @@ Because I don't use Windows myself, I may have missed something. If you have
 trouble or you have more detail to contribute here, please `let me know`_.
 
 .. _let me know: mailto:adrian@radbox.org
+.. _install Python: http://python.org/download/
+.. _Setuptools: http://pypi.python.org/pypi/setuptools
+
 
 Configuring
 -----------
