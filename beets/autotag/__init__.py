@@ -140,6 +140,10 @@ def apply_metadata(items, album_info):
         # Title and track index.
         item.title = track_info.title
         item.track = index + 1
+
+        # Disc and disc count.
+        item.disc = track_info.medium
+        item.disctotal = album_info.mediums
         
         # MusicBrainz IDs.
         item.mb_trackid = track_info.track_id

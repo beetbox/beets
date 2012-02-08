@@ -321,11 +321,11 @@ def sanitize_for_path(value, pathmod, key=None):
                 value = value.replace(sep, u'_')
     elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
         # Pad indices with zeros.
-        value = u'%02i' % value
+        value = u'%02i' % (value or 0)
     elif key == 'year':
-        value = u'%04i' % value
+        value = u'%04i' % (value or 0)
     elif key in ('month', 'day'):
-        value = u'%02i' % value
+        value = u'%02i' % (value or 0)
     elif key == 'bitrate':
         # Bitrate gets formatted as kbps.
         value = u'%ikbps' % ((value or 0) / 1000)

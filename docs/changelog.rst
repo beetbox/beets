@@ -13,6 +13,8 @@ Changelog
   per-disc. For example, if track 24 on a release is the first track on the
   second disc, then it is not penalized for having its track number set to 1
   instead of 24.
+* The autotagger sets the disc number and disc total fields on autotagged
+  albums.
 * The autotagger now also tolerates tracks whose track artists tags are set
   to "Various Artists".
 * Plugin-supplied template values, such as those created by ``rewrite``, are now
