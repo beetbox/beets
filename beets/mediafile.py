@@ -985,7 +985,7 @@ class MediaFile(object):
         imprecision is possible because the file header is incorporated
         in the file size.
         """
-        if hasattr(self.mgfile.info, 'bitrate'):
+        if hasattr(self.mgfile.info, 'bitrate') and self.mgfile.info.bitrate:
             # Many formats provide it explicitly.
             return self.mgfile.info.bitrate
         else:

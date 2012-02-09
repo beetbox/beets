@@ -36,6 +36,8 @@ Changelog
   "OR" (upper case).
 * Fix an error in the ``rewrite`` and ``inline`` plugins when the corresponding
   config sections did not exist.
+* Fix bitrate estimation for AAC files whose headers are missing the relevant
+  data.
 
 1.0b12 (January 16, 2012)
 -------------------------
