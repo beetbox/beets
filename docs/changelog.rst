@@ -22,6 +22,8 @@ Changelog
 * Filename extensions are now always lower-cased when copying and moving files.
 * The ``inline`` plugin now prints a more comprehensible error when exceptions
   occur in Python snippets.
+* New plugin API: plugins can now add fields to the MediaFile tag abstraction
+  layer. See :ref:`writing-plugins`.
 * A reasonable error message is now shown when the import log file cannot be
   opened.
 * Fix a bug in the ``rewrite`` plugin that broke the use of multiple rules for
