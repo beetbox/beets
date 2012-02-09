@@ -17,6 +17,8 @@ Changelog
   albums.
 * The autotagger now also tolerates tracks whose track artists tags are set
   to "Various Artists".
+* Importing with ``import_delete`` enabled now cleans up empty directories that
+  contained deleting imported music files.
 * Plugin-supplied template values, such as those created by ``rewrite``, are now
   properly sanitized (for example, ``AC/DC`` properly becomes ``AC_DC``).
 * Filename extensions are now always lower-cased when copying and moving files.

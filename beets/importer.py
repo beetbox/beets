@@ -25,8 +25,9 @@ from beets import autotag
 from beets import library
 import beets.autotag.art
 from beets import plugins
+from beets import util
 from beets.util import pipeline
-from beets.util import syspath, normpath, plurality, displayable_path
+from beets.util import syspath, normpath, displayable_path
 from beets.util.enumeration import enum
 
 action = enum(
@@ -158,7 +159,7 @@ def _infer_album_fields(task):
 
     if task.choice_flag == action.ASIS:
         # Taking metadata "as-is". Guess whether this album is VA.
-        plur_artist, freq = plurality([i.artist for i in task.items])
+        plur_artist, freq = util.plurality([i.artist for i in task.items])
         if freq == len(task.items) or (freq > 1 and
                 float(freq) / len(task.items) >= SINGLE_ARTIST_THRESH):
             # Single-artist album.
@@ -726,6 +727,10 @@ def finalize(config):
                 # Only delete files that were actually copied.
                 if old_path not in new_paths:
                     os.remove(syspath(old_path))
+                    # Clean up directory if it is emptied.
+                    if task.toppath:
+                        util.prune_dirs(os.path.dirname(old_path),
+                                        task.toppath)
 
         # Update progress.
         if config.resume is not False:
