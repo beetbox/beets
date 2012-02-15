@@ -13,13 +13,19 @@ Changelog
   per-disc. For example, if track 24 on a release is the first track on the
   second disc, then it is not penalized for having its track number set to 1
   instead of 24.
+* The autotagger sets the disc number and disc total fields on autotagged
+  albums.
 * The autotagger now also tolerates tracks whose track artists tags are set
   to "Various Artists".
+* Importing with ``import_delete`` enabled now cleans up empty directories that
+  contained deleting imported music files.
 * Plugin-supplied template values, such as those created by ``rewrite``, are now
   properly sanitized (for example, ``AC/DC`` properly becomes ``AC_DC``).
 * Filename extensions are now always lower-cased when copying and moving files.
 * The ``inline`` plugin now prints a more comprehensible error when exceptions
   occur in Python snippets.
+* New plugin API: plugins can now add fields to the MediaFile tag abstraction
+  layer. See :ref:`writing-plugins`.
 * A reasonable error message is now shown when the import log file cannot be
   opened.
 * Fix a bug in the ``rewrite`` plugin that broke the use of multiple rules for
@@ -34,6 +40,8 @@ Changelog
   "OR" (upper case).
 * Fix an error in the ``rewrite`` and ``inline`` plugins when the corresponding
   config sections did not exist.
+* Fix bitrate estimation for AAC files whose headers are missing the relevant
+  data.
 
 1.0b12 (January 16, 2012)
 -------------------------

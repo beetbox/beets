@@ -143,9 +143,10 @@ class NonAutotaggedImportTest(unittest.TestCase):
         self.assertTrue(os.path.exists(paths[0]))
 
 # Utilities for invoking the apply_choices coroutine.
-def _call_apply(coros, items, info):
+def _call_apply(coros, items, info, toppath=None):
     task = importer.ImportTask(None, None, None)
     task.is_album = True
+    task.toppath = toppath
     task.set_choice((info, items))
     if not isinstance(coros, list):
         coros = [coros]
@@ -172,7 +173,10 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
             ('comp:true', 'two'),
         ]
 
-        self.srcpath = os.path.join(self.libdir, 'srcfile.mp3')
+        self.srcdir = os.path.join(_common.RSRC, 'testsrcdir')
+        os.mkdir(self.srcdir)
+        os.mkdir(os.path.join(self.srcdir, 'testalbum'))
+        self.srcpath = os.path.join(self.srcdir, 'testalbum', 'srcfile.mp3')
         shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.srcpath)
         self.i = library.Item.from_path(self.srcpath)
         self.i.comp = False
@@ -191,6 +195,8 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
 
     def tearDown(self):
         shutil.rmtree(self.libdir)
+        if os.path.exists(self.srcdir):
+            shutil.rmtree(self.srcdir)
         if os.path.exists(self.libpath):
             os.unlink(self.libpath)
 
@@ -211,6 +217,16 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         finalize.next()
         _call_apply([applyc, finalize], [self.i], self.info)
         self.assertNotExists(self.srcpath)
+
+    def test_finalize_with_delete_prunes_directory_empty(self):
+        config = _common.iconfig(self.lib, delete=True)
+        applyc = importer.apply_choices(config)
+        applyc.next()
+        finalize = importer.finalize(config)
+        finalize.next()
+        _call_apply([applyc, finalize], [self.i], self.info,
+                    self.srcdir)
+        self.assertNotExists(os.path.dirname(self.srcpath))
 
     def test_apply_asis_uses_album_path(self):
         coro = importer.apply_choices(_common.iconfig(self.lib))
