@@ -105,11 +105,28 @@ Change that first path to a directory where you'd like to keep your music. Then,
 for ``library``, choose a good place to keep a database file that keeps an index
 of your music.
 
-Here, you can also change a few more options: you can leave files in place
-instead of copying everything to your library folder; you can customize the
-library's directory structure and naming scheme; you can also choose not to
-write updated tags to files you import. If you're curious,
-see :doc:`/reference/config`.
+The default configuration assumes you want to start a new organized music folder
+(that ``directory`` above) and that you'll *copy* cleaned-up music into that
+empty folder using beets' ``import`` command (see below). But you can configure
+beets to behave many other ways:
+
+* Start with a new empty directory, but *move* new music in instead of copying
+  it (saving disk space). Put ``import_delete: yes`` in your config file, which
+  will instruct beets to remove source music after it's been placed in your
+  organized directory.
+* Keep your current directory structure; importing should never move or copy
+  files but instead just correct the tags on music. Put the line ``import_copy:
+  no`` in your config file to disable any copying or renaming. Make sure to
+  point ``directory`` at the place where your music is currently stored.
+* Keep your current directory structure and *do not* correct files' tags: leave
+  files completely unmodified on your disk. (Corrected tags will still be stored
+  in beets' database, and you can use them to do renaming or tag changes later.)
+  Add both ``import_copy: no`` and ``import_write: no`` to your config file to
+  disable renaming and tag-writing.
+
+There are approximately six million other configuration options you can set
+here, including the directory and file naming scheme. See
+:doc:`/reference/config` for a full reference.
 
 Importing Your Library
 ----------------------
