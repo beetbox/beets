@@ -45,12 +45,14 @@ Read More
 Learn more about beets at `its Web site`_. Follow `@b33ts`_ on Twitter for
 news and updates.
 
-Check out the `Getting Started`_ guide to learn about installing and using
-beets.
+You can install beets by typing ``pip install beets``. (Or, to live on the
+cutting edge, type ``pip install beets==dev`` for the `latest source`_.) Check
+out the `Getting Started`_ guide to learn more about installing and using beets.
 
 .. _its Web site: http://beets.radbox.org/
 .. _Getting Started: http://readthedocs.org/docs/beets/-/guides/main.html
 .. _@b33ts: http://twitter.com/b33ts/
+.. _latest source: https://github.com/sampsyo/beets/tarball/master#egg=beets-dev
 
 Authors
 -------
