@@ -209,6 +209,21 @@ to getting it set up.
 
 .. _Chromaprint: http://acoustid.org/chromaprint
 
+Album Art
+---------
+
+By default, beets will search for cover art for every album you import, placing
+the cover art in a file named something like ``cover.jpg`` in the album's
+folder. (If you want to customize the name or disable album art fetching
+altogether, see :doc:`/reference/config` for the ``art_filename`` and
+``import_art`` settings.) Currently, beets looks for art on Amazon.com and on
+your local filesystem: if you have an image file called "cover," "front," "art,"
+"album," for "folder" alongside your music, beets will treat it as album art and
+skip searching any online databases.
+
+Beets will not, by default, embed album art into files' tags. To do that, take a
+look at the :doc:`/plugins/embedart`.
+
 Missing Albums?
 ---------------
 
