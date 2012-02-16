@@ -347,8 +347,8 @@ def recommendation(results):
     return rec
 
 def validate_candidate(items, tuple_dict, info):
-    """Given a candidate info dict, attempt to add the candidate to
-    the output dictionary of result tuples. This involves checking
+    """Given a candidate AlbumInfo object, attempt to add the candidate
+    to the output dictionary of result tuples. This involves checking
     the track count, ordering the items, checking for duplicates, and
     calculating the distance.
     """
