@@ -692,6 +692,10 @@ def fetch_art(config):
                 try:
                     album = lib.get_album(task.album_id)
                     album.set_art(artpath)
+                    if config.delete and not util.samefile(artpath,
+                                                           album.artpath):
+                        # Delete the original file after it's imported.
+                        os.remove(artpath)
                 finally:
                     lib.save(False)
 

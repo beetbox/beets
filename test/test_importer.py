@@ -729,9 +729,9 @@ class ArtFetchTest(unittest.TestCase, _common.ExtraAsserts):
         self.lib.save()
 
         # Set up an art-fetching coroutine.
-        config = _common.iconfig(self.lib)
-        config.art = True
-        self.coro = importer.fetch_art(config)
+        self.config = _common.iconfig(self.lib)
+        self.config.art = True
+        self.coro = importer.fetch_art(self.config)
         self.coro.next()
 
         # Import task for the coroutine.
@@ -784,6 +784,21 @@ class ArtFetchTest(unittest.TestCase, _common.ExtraAsserts):
     def test_no_art_for_singleton(self):
         self.task.is_album = False
         self._fetch_art(False)
+
+    def test_leave_original_file_in_place(self):
+        self._fetch_art(True)
+        self.assertExists(self.art_file)
+
+    def test_delete_original_file(self):
+        self.config.delete = True
+        self._fetch_art(True)
+        self.assertNotExists(self.art_file)
+
+    def test_do_not_delete_original_if_already_in_place(self):
+        artdest = os.path.join(os.path.dirname(self.i.path), 'cover.jpg')
+        shutil.copyfile(self.art_file, artdest)
+        art.art_for_album = lambda a, b: artdest
+        self._fetch_art(True)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

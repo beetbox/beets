@@ -19,6 +19,8 @@ Changelog
   to "Various Artists".
 * Importing with ``import_delete`` enabled now cleans up empty directories that
   contained deleting imported music files.
+* Similarly, ``import_delete`` now causes original album art imported from the
+  disk to be deleted.
 * Plugin-supplied template values, such as those created by ``rewrite``, are now
   properly sanitized (for example, ``AC/DC`` properly becomes ``AC_DC``).
 * Filename extensions are now always lower-cased when copying and moving files.
