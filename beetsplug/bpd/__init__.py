@@ -998,7 +998,7 @@ class Server(BaseServer):
         c.execute(statement, subvals)
         
         for row in c:
-            conn.send(show_tag_canon + u': ' + unicode(row[0]))
+            yield show_tag_canon + u': ' + unicode(row[0])
     
     def cmd_count(self, conn, tag, value):
         """Returns the number and total time of songs matching the
