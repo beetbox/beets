@@ -44,6 +44,7 @@ Changelog
   config sections did not exist.
 * Fix bitrate estimation for AAC files whose headers are missing the relevant
   data.
+* Fix the ``list`` command in BPD (thanks to Simon Chopin).
 
 1.0b12 (January 16, 2012)
 -------------------------
