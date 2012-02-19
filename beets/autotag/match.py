@@ -399,8 +399,9 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
     cur_artist, cur_album, artist_consensus = current_metadata(items)
     log.debug('Tagging %s - %s' % (cur_artist, cur_album))
     
-    # The output result tuples (keyed by MB album ID).
-    out_tuples = {}
+    # The output result (distance, AlbumInfo) tuples (keyed by MB album
+    # ID).
+    candidates = {}
     
     # Try to find album indicated by MusicBrainz IDs.
     if search_id:
@@ -409,21 +410,21 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
     else:
         id_info = match_by_id(items)
     if id_info:
-        validate_candidate(items, out_tuples, id_info)
-        rec = recommendation(out_tuples.values())
+        validate_candidate(items, candidates, id_info)
+        rec = recommendation(candidates.values())
         log.debug('Album ID match recommendation is ' + str(rec))
-        if out_tuples and not timid:
+        if candidates and not timid:
             # If we have a very good MBID match, return immediately.
             # Otherwise, this match will compete against metadata-based
             # matches.
             if rec == RECOMMEND_STRONG:
                 log.debug('ID match.')
-                return cur_artist, cur_album, out_tuples.values(), rec
+                return cur_artist, cur_album, candidates.values(), rec
 
     # If searching by ID, don't continue to metadata search.
     if search_id is not None:
-        if out_tuples:
-            return cur_artist, cur_album, out_tuples.values(), rec
+        if candidates:
+            return cur_artist, cur_album, candidates.values(), rec
         else:
             return cur_artist, cur_album, [], RECOMMEND_NONE
     
@@ -440,20 +441,16 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
     log.debug(u'Album might be VA: %s' % str(va_likely))
 
     # Get the results from the data sources.
-    candidates = hooks._album_candidates(items, search_artist, search_album,
-                                         va_likely)
+    search_cands = hooks._album_candidates(items, search_artist, search_album,
+                                           va_likely)
+    log.debug(u'Evaluating %i candidates.' % len(search_cands))
+    for info in search_cands:
+        validate_candidate(items, candidates, info)
     
-    # Get the distance to each candidate.
-    log.debug(u'Evaluating %i candidates.' % len(candidates))
-    for info in candidates:
-        validate_candidate(items, out_tuples, info)
-    
-    # Sort by distance.
-    out_tuples = out_tuples.values()
-    out_tuples.sort()
-    
-    rec = recommendation(out_tuples)
-    return cur_artist, cur_album, out_tuples, rec
+    # Sort and get the recommendation.
+    candidates = sorted(candidates.itervalues())
+    rec = recommendation(candidates)
+    return cur_artist, cur_album, candidates, rec
 
 def tag_item(item, timid=False, search_artist=None, search_title=None,
              search_id=None):
@@ -463,7 +460,9 @@ def tag_item(item, timid=False, search_artist=None, search_title=None,
     `search_title` may be used to override the current metadata for
     the purposes of the MusicBrainz title; likewise `search_id`.
     """
-    candidates = []
+    # Holds candidates found so far: keys are MBIDs; values are
+    # (distance, TrackInfo) pairs.
+    candidates = {}
 
     # First, try matching by MusicBrainz ID.
     trackid = search_id or item.mb_trackid
@@ -472,17 +471,17 @@ def tag_item(item, timid=False, search_artist=None, search_title=None,
         track_info = hooks._track_for_id(trackid)
         if track_info:
             dist = track_distance(item, track_info, incl_artist=True)
-            candidates.append((dist, track_info))
+            candidates[track_info.track_id] = (dist, track_info)
             # If this is a good match, then don't keep searching.
-            rec = recommendation(candidates)
+            rec = recommendation(candidates.values())
             if rec == RECOMMEND_STRONG and not timid:
                 log.debug('Track ID match.')
-                return candidates, rec
+                return candidates.values(), rec
 
     # If we're searching by ID, don't proceed.
     if search_id is not None:
         if candidates:
-            return candidates, rec
+            return candidates.values(), rec
         else:
             return [], RECOMMEND_NONE
     
@@ -494,10 +493,10 @@ def tag_item(item, timid=False, search_artist=None, search_title=None,
     # Get and evaluate candidate metadata.
     for track_info in hooks._item_candidates(item, search_artist, search_title):
         dist = track_distance(item, track_info, incl_artist=True)
-        candidates.append((dist, track_info))
+        candidates[track_info.track_id] = (dist, track_info)
 
     # Sort by distance and return with recommendation.
     log.debug('Found %i candidates.' % len(candidates))
-    candidates.sort()
+    candidates = sorted(candidates.itervalues())
     rec = recommendation(candidates)
     return candidates, rec
