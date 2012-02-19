@@ -109,6 +109,12 @@ section header:
     This will avoid using a literal space and thus confusing beets. (``\s`` also
     matches tabs and newlines, but that is probably fine.)
 
+    To remove characters entirely, use ``<strip>`` as the replacement. For
+    example, to remove all vowels from your filenames::
+
+        replace = [aeiou] <strip>
+                  ...
+
 ``art_filename``
     When importing album art, the name of the file (without extension) where the
     cover art image should be placed. Defaults to ``cover`` (i.e., images will

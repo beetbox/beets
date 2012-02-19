@@ -51,6 +51,7 @@ DEFAULT_PATH_FORMATS = [
 ]
 DEFAULT_ART_FILENAME = 'cover'
 DEFAULT_TIMEOUT = 5.0
+NULL_REPLACE = '<strip>'
 
 # UI exception. Commands should throw this in order to display
 # nonrecoverable errors to the user.
@@ -429,6 +430,8 @@ def _get_replacements(config):
     for index in xrange(0, len(parts), 2):
         pattern = parts[index]
         replacement = parts[index+1]
+        if replacement.lower() == NULL_REPLACE:
+            replacement = ''
         out.append((re.compile(pattern), replacement))
     return out
 

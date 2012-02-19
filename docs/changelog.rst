@@ -26,6 +26,9 @@ Changelog
 * Filename extensions are now always lower-cased when copying and moving files.
 * The ``inline`` plugin now prints a more comprehensible error when exceptions
   occur in Python snippets.
+* The ``replace`` configuration option can now remove characters entirely (in
+  addition to replacing them) if the special string ``<strip>`` is specified as
+  the replacement.
 * New plugin API: plugins can now add fields to the MediaFile tag abstraction
   layer. See :ref:`writing-plugins`.
 * A reasonable error message is now shown when the import log file cannot be
