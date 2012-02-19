@@ -17,6 +17,8 @@ Changelog
   albums.
 * The autotagger now also tolerates tracks whose track artists tags are set
   to "Various Artists".
+* When previewing metadata differences, the importer now shows discrepancies in
+  track length.
 * Importing with ``import_delete`` enabled now cleans up empty directories that
   contained deleting imported music files.
 * Similarly, ``import_delete`` now causes original album art imported from the

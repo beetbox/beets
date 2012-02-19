@@ -297,7 +297,7 @@ def human_bytes(size):
 
 def human_seconds(interval):
     """Formats interval, a number of seconds, as a human-readable time
-    interval.
+    interval using English words.
     """
     units = [
         (1, 'second'),
@@ -320,6 +320,13 @@ def human_seconds(interval):
         interval /= float(increment)
 
     return "%3.1f %ss" % (interval, suffix)
+
+def human_seconds_short(interval):
+    """Formats a number of seconds as a short human-readable M:SS
+    string.
+    """
+    interval = int(interval)
+    return u'%i:%02i' % (interval // 60, interval % 60)
 
 # ANSI terminal colorization code heavily inspired by pygments:
 # http://dev.pocoo.org/hg/pygments-main/file/b2deea5b5030/pygments/console.py

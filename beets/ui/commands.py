@@ -185,10 +185,18 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
         if not item:
             missing_tracks.append((i, track_info))
             continue
+
+        # Get displayable LHS and RHS values.
         cur_track = unicode(item.track)
         new_track = unicode(i+1)
         cur_title = item.title
         new_title = track_info.title
+        if item.length and track_info.length:
+            cur_length = ui.human_seconds_short(item.length)
+            new_length = ui.human_seconds_short(track_info.length)
+            if color:
+                cur_length = ui.colorize('red', cur_length)
+                new_length = ui.colorize('red', new_length)
         
         # Possibly colorize changes.
         if color:
@@ -201,14 +209,24 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
         if not item.title.strip():
             cur_title = displayable_path(os.path.basename(item.path))
         
-        if cur_title != new_title and cur_track != new_track:
-            print_(u" * %s (%s) -> %s (%s)" % (
-                cur_title, cur_track, new_title, new_track
-            ))
-        elif cur_title != new_title:
-            print_(u" * %s -> %s" % (cur_title, new_title))
-        elif cur_track != new_track:
-            print_(u" * %s (%s -> %s)" % (item.title, cur_track, new_track))
+        if cur_title != new_title:
+            lhs, rhs = cur_title, new_title
+            if cur_track != new_track:
+                lhs += u' (%s)' % cur_track
+                rhs += u' (%s)' % new_track
+            print_(u" * %s -> %s" % (lhs, rhs))
+        else:
+            line = u' * %s' % item.title
+            display = False
+            if cur_track != new_track:
+                display = True
+                line += u' (%s -> %s)' % (cur_track, new_track)
+            if item.length and track_info.length and \
+                    abs(item.length - track_info.length) > 2.0:
+                display = True
+                line += u' (%s -> %s)' % (cur_length, new_length)
+            if display:
+                print_(line)
     for i, track_info in missing_tracks:
         line = u' * Missing track: %s (%d)' % (track_info.title, i+1)
         if color:
