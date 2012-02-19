@@ -57,6 +57,7 @@ def tag_log(logfile, status, path):
     """
     if logfile:
         print >>logfile, '%s %s' % (status, path)
+        logfile.flush()
 
 def log_choice(config, task):
     """Logs the task's current choice if it should be logged.

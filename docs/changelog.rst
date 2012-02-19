@@ -33,6 +33,8 @@ Changelog
   layer. See :ref:`writing-plugins`.
 * A reasonable error message is now shown when the import log file cannot be
   opened.
+* The import log file is now flushed and closed properly so that it can be used
+  to monitor import progress, even when the import crashes.
 * Fix a bug in the ``rewrite`` plugin that broke the use of multiple rules for
   a single field.
 * Fix a crash with non-ASCII characters in bytestring metadata fields (e.g.,

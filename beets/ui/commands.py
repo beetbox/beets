@@ -593,35 +593,37 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
     if resume is None and quiet:
         resume = False
 
-    # Perform the import.
-    importer.run_import(
-        lib = lib,
-        paths = paths,
-        resume = resume,
-        logfile = logfile,
-        color = color,
-        quiet = quiet,
-        quiet_fallback = quiet_fallback,
-        copy = copy,
-        write = write,
-        art = art,
-        delete = delete,
-        threaded = threaded,
-        autot = autot,
-        choose_match_func = choose_match,
-        should_resume_func = should_resume,
-        singletons = singletons,
-        timid = timid,
-        choose_item_func = choose_item,
-        query = query,
-        incremental = incremental,
-        ignore = ignore,
-    )
+    try:
+        # Perform the import.
+        importer.run_import(
+            lib = lib,
+            paths = paths,
+            resume = resume,
+            logfile = logfile,
+            color = color,
+            quiet = quiet,
+            quiet_fallback = quiet_fallback,
+            copy = copy,
+            write = write,
+            art = art,
+            delete = delete,
+            threaded = threaded,
+            autot = autot,
+            choose_match_func = choose_match,
+            should_resume_func = should_resume,
+            singletons = singletons,
+            timid = timid,
+            choose_item_func = choose_item,
+            query = query,
+            incremental = incremental,
+            ignore = ignore,
+        )
     
-    # If we were logging, close the file.
-    if logfile:
-        print >>logfile, ''
-        logfile.close()
+    finally:
+        # If we were logging, close the file.
+        if logfile:
+            print >>logfile, ''
+            logfile.close()
 
     # Emit event.
     plugins.send('import', lib=lib, paths=paths)
