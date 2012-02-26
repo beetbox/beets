@@ -89,6 +89,8 @@ def _lw_encode(s):
     s = s.replace("#", "Number_")
     s = re.sub(r'[\[\{]', '(', s)
     s = re.sub(r'[\]\}]', ')', s)
+    if isinstance(s, unicode):
+        s = s.encode('utf8', 'ignore')
     return urllib.quote(s)
 def fetch_lyricswiki(artist, title):
     """Fetch lyrics from LyricsWiki."""
@@ -102,6 +104,8 @@ def fetch_lyricswiki(artist, title):
 LYRICSCOM_URL_PATTERN = 'http://www.lyrics.com/%s-lyrics-%s.html'
 def _lc_encode(s):
     s = re.sub(r'\s+', '-', s)
+    if isinstance(s, unicode):
+        s = s.encode('utf8', 'ignore')
     return urllib.quote(s)
 def fetch_lyricscom(artist, title):
     """Fetch lyrics from Lyrics.com."""
@@ -110,8 +114,9 @@ def fetch_lyricscom(artist, title):
 
     lyrics = extract_text(html, '<div id="lyric_space">')
     if lyrics:
-        lyrics, _ = lyrics.split('\n---\nLyrics powered by', 1)
-        return lyrics
+        parts = lyrics.split('\n---\nLyrics powered by', 1)
+        if parts:
+            return parts[0]
 
 BACKENDS = [fetch_lyricswiki, fetch_lyricscom]
 def get_lyrics(artist, title):
