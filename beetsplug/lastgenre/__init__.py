@@ -40,6 +40,12 @@ LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 DEFAULT_WHITELIST = os.path.join(os.path.dirname(__file__), 'genres.txt')
 C14N_TREE = os.path.join(os.path.dirname(__file__), 'genres-tree.yaml')
 
+PYLAST_EXCEPTIONS = (
+    pylast.WSError,
+    pylast.MalformedResponseError,
+    pylast.NetworkError,
+)
+
 def _tags_for(obj):
     """Given a pylast entity (album or track), returns a list of
     tag names for that entity. Returns an empty list if the entity is
@@ -47,7 +53,7 @@ def _tags_for(obj):
     """
     try:
         res = obj.get_top_tags()
-    except pylast.WSError, exc:
+    except PYLAST_EXCEPTIONS, exc:
         log.debug(u'last.fm error: %s' % unicode(exc))
         return []
 
