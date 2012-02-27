@@ -75,7 +75,7 @@ setup(name='beets',
           'munkres',
           'unidecode',
           'musicbrainzngs',
-      ],
+      ] + (['colorama'] if (sys.platform == 'win32') else []),
 
       classifiers=[
           'Topic :: Multimedia :: Sound/Audio',
