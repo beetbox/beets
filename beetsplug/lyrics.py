@@ -115,7 +115,7 @@ def fetch_lyricscom(artist, title):
     html = urllib.urlopen(url).read()
 
     lyrics = extract_text(html, '<div id="lyric_space">')
-    if lyrics:
+    if lyrics and 'Sorry, we do not have the lyric' not in lyrics:
         parts = lyrics.split('\n---\nLyrics powered by', 1)
         if parts:
             return parts[0]
