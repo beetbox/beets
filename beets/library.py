@@ -42,6 +42,7 @@ ITEM_FIELDS = [
 
     ('title',            'text', True, True),
     ('artist',           'text', True, True),
+    ('artist_sort_name', 'text', True, True),
     ('album',            'text', True, True),
     ('albumartist',      'text', True, True),
     ('genre',            'text', True, True),
