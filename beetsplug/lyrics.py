@@ -124,6 +124,8 @@ def get_lyrics(artist, title):
     for backend in BACKENDS:
         lyrics = backend(artist, title)
         if lyrics:
+            if isinstance(lyrics, str):
+                lyrics = lyrics.decode('utf8', 'ignore')
             return lyrics
 
 
