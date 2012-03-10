@@ -31,11 +31,13 @@ TAG_RE = re.compile(r'<[^>]*>')
 BREAK_RE = re.compile(r'<br\s*/?>')
 
 def unescape(text):
-    """Resolves &#xxx; HTML entities."""
+    """Resolves &#xxx; HTML entities (and some others)."""
+    out = text.replace('&nbsp;', ' ')
     def replchar(m):
         num = m.group(1)
         return unichr(int(num))
-    return re.sub("&#(\d+);", replchar, text)
+    out = re.sub("&#(\d+);", replchar, out)
+    return out
 
 def extract_text(html, starttag):
     """Extract the text from a <DIV> tag in the HTML starting with
