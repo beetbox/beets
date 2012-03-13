@@ -31,11 +31,13 @@ TAG_RE = re.compile(r'<[^>]*>')
 BREAK_RE = re.compile(r'<br\s*/?>')
 
 def unescape(text):
-    """Resolves &#xxx; HTML entities."""
+    """Resolves &#xxx; HTML entities (and some others)."""
+    out = text.replace('&nbsp;', ' ')
     def replchar(m):
         num = m.group(1)
         return unichr(int(num))
-    return re.sub("&#(\d+);", replchar, text)
+    out = re.sub("&#(\d+);", replchar, out)
+    return out
 
 def extract_text(html, starttag):
     """Extract the text from a <DIV> tag in the HTML starting with
@@ -113,7 +115,7 @@ def fetch_lyricscom(artist, title):
     html = urllib.urlopen(url).read()
 
     lyrics = extract_text(html, '<div id="lyric_space">')
-    if lyrics:
+    if lyrics and 'Sorry, we do not have the lyric' not in lyrics:
         parts = lyrics.split('\n---\nLyrics powered by', 1)
         if parts:
             return parts[0]
@@ -124,6 +126,8 @@ def get_lyrics(artist, title):
     for backend in BACKENDS:
         lyrics = backend(artist, title)
         if lyrics:
+            if isinstance(lyrics, str):
+                lyrics = lyrics.decode('utf8', 'ignore')
             return lyrics
 
 

@@ -455,6 +455,8 @@ class MediaField(object):
                         if self.out_type == bool:
                             # store bools as 1,0 instead of True,False
                             out = unicode(int(out))
+                        elif isinstance(out, str):
+                            out = out.decode('utf8', 'ignore')
                         else:
                             out = unicode(out)
                 elif style.as_type == int:
