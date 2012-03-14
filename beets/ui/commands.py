@@ -30,6 +30,7 @@ import beets.autotag.art
 from beets import plugins
 from beets import importer
 from beets.util import syspath, normpath, ancestry, displayable_path
+from beets.util.functemplate import Template
 from beets import library
 
 # Global logger.
@@ -743,7 +744,7 @@ default_commands.append(import_cmd)
 
 # list: Query and show library contents.
 
-def list_items(lib, query, album, path):
+def list_items(lib, query, album, path, format):
     """Print out items in lib matching query. If album, then search for
     albums instead of single items. If path, print the matched objects'
     paths instead of human-readable information about them.
@@ -752,12 +753,21 @@ def list_items(lib, query, album, path):
         for album in lib.albums(query):
             if path:
                 print_(album.item_dir())
+            elif format is not None:
+                template = Template(format)
+                out = template.substitute(album._record)
+                print_(out)
             else:
                 print_(album.albumartist + u' - ' + album.album)
     else:
         for item in lib.items(query):
             if path:
                 print_(item.path)
+            elif format is not None:
+                template = Template(format)
+                out = template.substitute(item.record)
+                print_(out)
+                
             else:
                 print_(item.artist + u' - ' + item.album + u' - ' + item.title)
 
@@ -766,8 +776,10 @@ list_cmd.parser.add_option('-a', '--album', action='store_true',
     help='show matching albums instead of tracks')
 list_cmd.parser.add_option('-p', '--path', action='store_true',
     help='print paths for matched items or albums')
+list_cmd.parser.add_option('-f', '--format', action='store',
+    help='print with custom format (WIP)')
 def list_func(lib, config, opts, args):
-    list_items(lib, decargs(args), opts.album, opts.path)
+    list_items(lib, decargs(args), opts.album, opts.path, opts.format)
 list_cmd.func = list_func
 default_commands.append(list_cmd)
 
