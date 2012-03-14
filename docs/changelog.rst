@@ -16,6 +16,10 @@ lays the foundation for more features to come in the next couple of releases.
 * Items now expose their audio **sample rate**, number of **channels**, and
   **bits per sample** (bitdepth). See :doc:`/reference/pathformat` for a list of
   all available audio properties. Thanks to Andrew Dunn.
+* The ``beet list`` command now accepts a "format" argument that lets you **show
+  specific information about each album or track**. For example, run ``beet ls
+  -af '$album: $tracktotal' beatles`` to see how long each Beatles album is.
+  Thanks to Philippe Mongeau.
 * The autotagger now tolerates tracks on multi-disc albums that are numbered
   per-disc. For example, if track 24 on a release is the first track on the
   second disc, then it is not penalized for having its track number set to 1

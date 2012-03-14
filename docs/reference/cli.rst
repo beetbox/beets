@@ -131,9 +131,15 @@ Want to search for "Gronlandic Edit" by of Montreal? Try ``beet list
 gronlandic``.  Maybe you want to see everything released in 2009 with
 "vegetables" in the title? Try ``beet list year:2009 title:vegetables``. (Read
 more in :doc:`query`.) You can use the ``-a`` switch to search for
-albums instead of individual items. The ``-p`` option makes beets print out
-filenames of matched items, which might be useful for piping into other Unix
-commands (such as `xargs`_).
+albums instead of individual items.
+
+The ``-p`` option makes beets print out filenames of matched items, which might
+be useful for piping into other Unix commands (such as `xargs`_). Similarly, the
+``-f`` option lets you specify a specific format with which to print every album
+or track. This uses the same template syntax as beets' :doc:`path formats
+<pathformat>`. For example, the command ``beet ls -af '$album: $tracktotal'
+beatles`` prints out the number of tracks on each Beatles album. Remember to
+enclose the template argument in single quotes to avoid shell expansion.
 
 .. _xargs: http://en.wikipedia.org/wiki/Xargs
 
