@@ -109,7 +109,8 @@ class Expression(object):
                 out.append(part)
             else:
                 out.append(part.evaluate(env))
-        return u''.join(out)
+        #return u''.join(out)
+        return u''.join([unicode(i) for i in out])
 
 class ParseError(Exception):
     pass

@@ -47,7 +47,7 @@ class ListTest(unittest.TestCase):
         self.io.restore()
         
     def test_list_outputs_item(self):
-        commands.list_items(self.lib, '', False, False)
+        commands.list_items(self.lib, '', False, False, None)
         out = self.io.getoutput()
         self.assertTrue(u'the title' in out)
 
@@ -56,41 +56,65 @@ class ListTest(unittest.TestCase):
         self.lib.store(self.item)
         self.lib.save()
 
-        commands.list_items(self.lib, [u'na\xefve'], False, False)
+        commands.list_items(self.lib, [u'na\xefve'], False, False, None)
         out = self.io.getoutput()
         self.assertTrue(u'na\xefve' in out.decode(self.io.stdout.encoding))
 
     def test_list_item_path(self):
-        commands.list_items(self.lib, '', False, True)
+        commands.list_items(self.lib, '', False, True, None)
         out = self.io.getoutput()
         self.assertEqual(out.strip(), u'xxx/yyy')
 
     def test_list_album_outputs_something(self):
-        commands.list_items(self.lib, '', True, False)
+        commands.list_items(self.lib, '', True, False, None)
         out = self.io.getoutput()
         self.assertGreater(len(out), 0)
 
     def test_list_album_path(self):
-        commands.list_items(self.lib, '', True, True)
+        commands.list_items(self.lib, '', True, True, None)
         out = self.io.getoutput()
         self.assertEqual(out.strip(), u'xxx')
     
     def test_list_album_omits_title(self):
-        commands.list_items(self.lib, '', True, False)
+        commands.list_items(self.lib, '', True, False, None)
         out = self.io.getoutput()
         self.assertTrue(u'the title' not in out)
 
     def test_list_uses_track_artist(self):
-        commands.list_items(self.lib, '', False, False)
+        commands.list_items(self.lib, '', False, False, None)
         out = self.io.getoutput()
         self.assertTrue(u'the artist' in out)
         self.assertTrue(u'the album artist' not in out)
     
     def test_list_album_uses_album_artist(self):
-        commands.list_items(self.lib, '', True, False)
+        commands.list_items(self.lib, '', True, False, None)
         out = self.io.getoutput()
         self.assertTrue(u'the artist' not in out)
         self.assertTrue(u'the album artist' in out)
+
+    def test_list_item_format_artist(self):
+        commands.list_items(self.lib, '', False, False, '$artist')
+        out = self.io.getoutput()
+        self.assertTrue(u'the artist' in out)
+
+    def test_list_item_format_multiple(self):
+        commands.list_items(self.lib, '', False, False, '$artist - $album - $year')
+        out = self.io.getoutput()
+        self.assertTrue(u'1' in out)
+        self.assertTrue(u'the album' in out)
+        self.assertTrue(u'the artist' in out)
+        self.assertEqual(u'the artist - the album - 1', out.strip())
+
+    def test_list_album_format(self):
+        commands.list_items(self.lib, '', True, False, '$genre')
+        out = self.io.getoutput()
+        self.assertTrue(u'the genre' in out)
+        self.assertTrue(u'the album' not in out)
+
+    def test_list_item_path_ignores_format(self):
+        commands.list_items(self.lib, '', False, True, '$year - $artist')
+        out = self.io.getoutput()
+        self.assertEqual(out.strip(), u'xxx/yyy')
 
 class RemoveTest(unittest.TestCase):
     def setUp(self):
