@@ -24,6 +24,7 @@ lays the foundation for more features to come in the next couple of releases.
   albums.
 * The autotagger now also tolerates tracks whose track artists tags are set
   to "Various Artists".
+* Terminal colors are now supported on Windows via `Colorama`_ (thanks to Karl).
 * When previewing metadata differences, the importer now shows discrepancies in
   track length.
 * Importing with ``import_delete`` enabled now cleans up empty directories that
@@ -63,6 +64,8 @@ lays the foundation for more features to come in the next couple of releases.
 * Fix bitrate estimation for AAC files whose headers are missing the relevant
   data.
 * Fix the ``list`` command in BPD (thanks to Simon Chopin).
+
+.. _Colorama: http://pypi.python.org/pypi/colorama
 
 1.0b12 (January 16, 2012)
 -------------------------
