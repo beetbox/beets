@@ -1,15 +1,16 @@
 Changelog
 =========
 
-1.0b13 (in development)
+1.0b13 (March 16, 2012)
 -----------------------
 
 Beets 1.0b13 consists of a plethora of small but important fixes and
 refinements. A lyrics plugin is now included with beets; new audio properties
-are catalogged; the autotagger is more tolerant of different tagging styles; and
-importing with original file deletion now cleans up after itself more
-thoroughly. Many, many bugs—including several crashers—were fixed. This release
-lays the foundation for more features to come in the next couple of releases.
+are catalogged; the ``list`` command has been made more powerful; the autotagger
+is more tolerant of different tagging styles; and importing with original file
+deletion now cleans up after itself more thoroughly. Many, many bugs—including
+several crashers—were fixed. This release lays the foundation for more features
+to come in the next couple of releases.
 
 * The :doc:`/plugins/lyrics`, originally by `Peter Brunner`_, is revamped and
   included with beets, making it easy to fetch **song lyrics**.
