@@ -161,7 +161,7 @@ artist, and ``singleton`` for non-album tracks. The defaults look like this::
     [paths]
     default: $albumartist/$album/$track $title
     singleton: Non-Album/$artist/$title
-    comp: Compilations/$album/$track title
+    comp: Compilations/$album/$track $title
 
 Note the use of ``$albumartist`` instead of ``$artist``; this ensure that albums
 will be well-organized. For more about these format strings, see
@@ -174,7 +174,7 @@ template string, the ``_`` character is substituted for ``:`` in these queries.
 This means that a config file like this::
 
     [paths]
-    albumtype_soundtrack: Soundtracks/$album/$track title
+    albumtype_soundtrack: Soundtracks/$album/$track $title
 
 will place soundtrack albums in a separate directory. The queries are tested in
 the order they appear in the configuration file, meaning that if an item matches
