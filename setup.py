@@ -42,7 +42,7 @@ if 'sdist' in sys.argv:
     shutil.copytree(os.path.join(docdir, '_build', 'man'), mandir)
 
 setup(name='beets',
-      version='1.0b13',
+      version='1.0b14',
       description='music tagger and library organizer',
       author='Adrian Sampson',
       author_email='adrian@radbox.org',
