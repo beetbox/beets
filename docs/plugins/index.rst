@@ -46,6 +46,7 @@ disabled by default, but you can turn them on as described above:
    inline
    scrub
    rewrite
+   m3uupdate
 
 .. _other-plugins:
 

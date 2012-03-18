@@ -3,6 +3,8 @@ Changelog
 
 1.0b14 (in development)
 -----------------------
+* New :doc:`/plugins/m3uupdate`: Catalog imported files in an ``m3u`` playlist
+  file for easy importing to other systems. Thanks to Fabrice Laporte.
 
 
 1.0b13 (March 16, 2012)

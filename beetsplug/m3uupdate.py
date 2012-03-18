@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2012, Adrian Sampson.
+# Copyright 2012, Fabrice Laporte.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,41 +12,60 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Write paths of imported files in a m3u file to ease later import in a music
-player.
+"""Write paths of imported files in a m3u file to ease later import in a
+music player.
 """
 
-from __future__ import with_statement 
+from __future__ import with_statement
 import os
 
 from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import normpath
 
+DEFAULT_FILENAME = 'imported.m3u'
+_m3u_path = None  # If unspecified, use file in library directory.
+
 class m3uPlugin(BeetsPlugin):
     def configure(self, config):
-        global M3U_FILENAME
-        M3U_FILENAME = ui.config_val(config, 'm3uupdate', 'm3u', None)
+        global _m3u_path
+        _m3u_path = ui.config_val(config, 'm3uupdate', 'm3u', None)
+        if _m3u_path:
+            _m3u_path = normpath(_m3u_path)
 
-        if not M3U_FILENAME:
-            M3U_FILENAME = os.path.join(
-                           ui.config_val(config, 'beets', 'directory', '.'),
-                           'imported.m3u')
-        M3U_FILENAME = normpath(M3U_FILENAME)
-        m3u_dir = os.path.dirname(M3U_FILENAME)
-        if not os.path.exists(m3u_dir):
-            os.makedirs(m3u_dir)
+def _get_m3u_path(lib):
+    """Given a Library object, return the path to the M3U file to be
+    used (either in the library directory or an explicitly configured
+    path. Ensures that the containing directory exists.
+    """
+    if _m3u_path:
+        # Explicitly specified.
+        path = _m3u_path
+    else:
+        # Inside library directory.
+        path = os.path.join(lib.directory, DEFAULT_FILENAME)
+
+    # Ensure containing directory exists.
+    m3u_dir = os.path.dirname(path)
+    if not os.path.exists(m3u_dir):
+        os.makedirs(m3u_dir)
+
+    return path
+
+def _record_items(lib, items):
+    """Records relative paths to the given items in the appropriate M3U
+    file.
+    """
+    m3u_path = _get_m3u_path(lib)
+    with open(m3u_path, 'a') as f:
+        for item in items:
+            path = os.path.relpath(item.path, os.path.dirname(m3u_path))
+            f.write(path + '\n')
 
 @m3uPlugin.listen('album_imported')
-def album_imported(lib, album, config): 
-    with open(M3U_FILENAME, 'a') as f:
-        for item in album.items():  
-            f.write(os.path.relpath(item.path, 
-                                    os.path.dirname(M3U_FILENAME)) + '\n')
+def album_imported(lib, album, config):
+    _record_items(lib, album.items())
 
 @m3uPlugin.listen('item_imported')
 def item_imported(lib, item, config):
-    with open(M3U_FILENAME, 'a') as f:
-            f.write(os.path.relpath(item.path, 
-                                    os.path.dirname(M3U_FILENAME)) + '\n')
-
+    _record_items(lib, [item])
