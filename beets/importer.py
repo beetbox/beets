@@ -308,6 +308,7 @@ class ImportTask(object):
         self.path = path
         self.items = items
         self.sentinel = False
+        self.remove_duplicates = False
 
     @classmethod
     def done_sentinel(cls, toppath):

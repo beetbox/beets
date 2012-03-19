@@ -570,7 +570,21 @@ def resolve_duplicate(task, config):
     """
     log.warn("This %s is already in the library!" %
              ("album" if task.is_album else "item"))
-    task.set_choice(importer.action.SKIP)
+    sel = ui.input_options(
+        ('Skip new', 'Keep both', 'Remove old'),
+        color=config.color
+    )
+    if sel == 's':
+        # Skip new.
+        task.set_choice(importer.action.SKIP)
+    elif sel == 'k':
+        # Keep both. Do nothing; leave the choice intact.
+        pass
+    elif sel == 'r':
+        # Remove old.
+        task.remove_duplictes = True
+    else:
+        assert False
 
 # The import command.
 
