@@ -275,7 +275,8 @@ class ImportConfig(object):
                'quiet_fallback', 'copy', 'write', 'art', 'delete',
                'choose_match_func', 'should_resume_func', 'threaded',
                'autot', 'singletons', 'timid', 'choose_item_func',
-               'query', 'incremental', 'ignore']
+               'query', 'incremental', 'ignore',
+               'resolve_duplicate_func']
     def __init__(self, **kwargs):
         for slot in self._fields:
             setattr(self, slot, kwargs[slot])
@@ -577,8 +578,7 @@ def user_query(config):
         # Check for duplicates if we have a match (or ASIS).
         if _duplicate_check(lib, task, recent):
             tag_log(config.logfile, 'duplicate', task.path)
-            log.warn("This album is already in the library!")
-            task.set_choice(action.SKIP)
+            config.resolve_duplicate_func(task, config)
 
 def show_progress(config):
     """This stage replaces the initial_lookup and user_query stages
@@ -777,8 +777,7 @@ def item_query(config):
         # Duplicate check.
         if _item_duplicate_check(lib, task, recent):
             tag_log(config.logfile, 'duplicate', task.item.path)
-            log.warn("This item is already in the library!")
-            task.set_choice(action.SKIP)
+            config.resolve_duplicate_func(task, config)
 
 def item_progress(config):
     """Skips the lookup and query stages in a non-autotagged singleton

@@ -105,6 +105,7 @@ class NonAutotaggedImportTest(unittest.TestCase):
                 query = None,
                 incremental = False,
                 ignore = [],
+                resolve_duplicate_func = None,
         )
 
         return paths

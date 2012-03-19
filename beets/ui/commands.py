@@ -564,6 +564,14 @@ def choose_item(task, config):
             assert not isinstance(choice, importer.action)
             return choice
 
+def resolve_duplicate(task, config):
+    """Decide what to do when a new album or item seems similar to one
+    that's already in the library.
+    """
+    log.warn("This %s is already in the library!" %
+             ("album" if task.is_album else "item"))
+    task.set_choice(importer.action.SKIP)
+
 # The import command.
 
 def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
@@ -636,6 +644,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
             query = query,
             incremental = incremental,
             ignore = ignore,
+            resolve_duplicate_func = resolve_duplicate,
         )
     
     finally:
