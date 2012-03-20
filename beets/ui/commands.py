@@ -589,7 +589,7 @@ def resolve_duplicate(task, config):
         pass
     elif sel == 'r':
         # Remove old.
-        task.remove_duplictes = True
+        task.remove_duplicates = True
     else:
         assert False
 

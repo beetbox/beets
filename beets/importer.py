@@ -59,14 +59,26 @@ def tag_log(logfile, status, path):
         print >>logfile, '%s %s' % (status, path)
         logfile.flush()
 
-def log_choice(config, task):
-    """Logs the task's current choice if it should be logged.
+def log_choice(config, task, duplicate=False):
+    """Logs the task's current choice if it should be logged. If
+    ``duplicate``, then this is a secondary choice after a duplicate was
+    detected and a decision was made.
     """
     path = task.path if task.is_album else task.item.path
-    if task.choice_flag is action.ASIS:
-        tag_log(config.logfile, 'asis', path)
-    elif task.choice_flag is action.SKIP:
-        tag_log(config.logfile, 'skip', path)
+    if duplicate:
+        # Duplicate: log all three choices (skip, keep both, and trump).
+        if task.remove_duplicates:
+            tag_log(config.logfile, 'duplicate-replace', path)
+        elif task.choice_flag in (action.ASIS, action.APPLY):
+            tag_log(config.logfile, 'duplicate-keep', path)
+        elif task.choice_flag is (action.SKIP):
+            tag_log(config.logfile, 'duplicate-skip', path)
+    else:
+        # Non-duplicate: log "skip" and "asis" choices.
+        if task.choice_flag is action.ASIS:
+            tag_log(config.logfile, 'asis', path)
+        elif task.choice_flag is action.SKIP:
+            tag_log(config.logfile, 'skip', path)
 
 def _reopen_lib(lib):
     """Because of limitations in SQLite, a given Library is bound to
@@ -578,8 +590,8 @@ def user_query(config):
 
         # Check for duplicates if we have a match (or ASIS).
         if _duplicate_check(lib, task, recent):
-            tag_log(config.logfile, 'duplicate', task.path)
             config.resolve_duplicate_func(task, config)
+            log_choice(config, task, True)
 
 def show_progress(config):
     """This stage replaces the initial_lookup and user_query stages
@@ -777,8 +789,8 @@ def item_query(config):
 
         # Duplicate check.
         if _item_duplicate_check(lib, task, recent):
-            tag_log(config.logfile, 'duplicate', task.item.path)
             config.resolve_duplicate_func(task, config)
+            log_choice(config, task, True)
 
 def item_progress(config):
     """Skips the lookup and query stages in a non-autotagged singleton
