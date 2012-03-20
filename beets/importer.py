@@ -97,32 +97,18 @@ def _reopen_lib(lib):
     else:
         return lib
 
-def _duplicate_check(lib, task, recent=None):
-    """Check whether an album already exists in the library. `recent`
-    should be a set of (artist, album) pairs that will be built up
-    with every call to this function and checked along with the
-    library.
+def _duplicate_check(lib, task):
+    """Check whether an album already exists in the library. Returns a
+    list of Album objects (empty if no duplicates are found).
     """
-    if task.choice_flag is action.ASIS:
-        artist = task.cur_artist
-        album = task.cur_album
-    elif task.choice_flag is action.APPLY:
-        artist = task.info.artist
-        album = task.info.album
-    else:
-        return False
+    assert task.choice_flag in (action.ASIS, action.APPLY)
+    artist, album = task.chosen_ident()
 
     if artist is None:
         # As-is import with no artist. Skip check.
-        return False
+        return []
 
-    # Try the recent albums.
-    if recent is not None:
-        if (artist, album) in recent:
-            return True
-        recent.add((artist, album))
-
-    # Look in the library.
+    found_albums = []
     cur_paths = set(i.path for i in task.items if i)
     for album_cand in lib.albums(artist=artist):
         if album_cand.album == album:
@@ -131,34 +117,23 @@ def _duplicate_check(lib, task, recent=None):
             other_paths = set(i.path for i in album_cand.items())
             if other_paths == cur_paths:
                 continue
-            return True
+            found_albums.append(album_cand)
+    return found_albums
 
-    return False
+def _item_duplicate_check(lib, task):
+    """Check whether an item already exists in the library. Returns a
+    list of Item objects.
+    """
+    assert task.choice_flag in (action.ASIS, action.APPLY)
+    artist, title = task.chosen_ident()
 
-def _item_duplicate_check(lib, task, recent=None):
-    """Check whether an item already exists in the library."""
-    if task.choice_flag is action.ASIS:
-        artist = task.item.artist
-        title = task.item.title
-    elif task.choice_flag is action.APPLY:
-        artist = task.info.artist
-        title = task.info.title
-    else:
-        return False
-
-    # Try recent items.
-    if recent is not None:
-        if (artist, title) in recent:
-            return True
-        recent.add((artist, title))
-
-    # Check the library.
+    found_items = []
     for other_item in lib.items(artist=artist, title=title):
         # Existing items not considered duplicates.
         if other_item.path == task.item.path:
             continue
-        return True
-    return False
+        found_items.append(other_item)
+    return found_items
 
 def _infer_album_fields(task):
     """Given an album and an associated import task, massage the
@@ -436,6 +411,26 @@ class ImportTask(object):
         """
         return self.sentinel or self.choice_flag == action.SKIP
 
+    # Useful data.
+    def chosen_ident(self):
+        """Returns identifying metadata about the current choice. For
+        albums, this is an (artist, album) pair. For items, this is
+        (artist, title). May only be called when the choice flag is ASIS
+        (in which case the data comes from the files' current metadata)
+        or APPLY (data comes from the choice).
+        """
+        assert self.choice_flag in (action.ASIS, action.APPLY)
+        if self.is_album:
+            if self.choice_flag is action.ASIS:
+                return (self.cur_artist, self.cur_album)
+            elif self.choice_flag is action.APPLY:
+                return (self.info.artist, self.info.album)
+        else:
+            if self.choice_flag is action.ASIS:
+                return (self.item.artist, self.item.title)
+            elif self.choice_flag is action.APPLY:
+                return (self.info.artist, self.info.title)
+
 
 # Full-album pipeline stages.
 
@@ -589,9 +584,15 @@ def user_query(config):
             continue
 
         # Check for duplicates if we have a match (or ASIS).
-        if _duplicate_check(lib, task, recent):
-            config.resolve_duplicate_func(task, config)
-            log_choice(config, task, True)
+        if task.choice_flag in (action.ASIS, action.APPLY):
+            ident = task.chosen_ident()
+            # The "recent" set keeps track of identifiers for recently
+            # imported albums -- those that haven't reached the database
+            # yet.
+            if ident in recent or _duplicate_check(lib, task):
+                config.resolve_duplicate_func(task, config)
+                log_choice(config, task, True)
+            recent.add(ident)
 
 def show_progress(config):
     """This stage replaces the initial_lookup and user_query stages
@@ -638,9 +639,9 @@ def apply_choices(config):
         if task.is_album:
             _infer_album_fields(task)
 
-        # Find existing item entries that these are replacing. Old
-        # album structures are automatically cleaned up when the
-        # last item is removed.
+        # Find existing item entries that these are replacing (for
+        # re-imports). Old album structures are automatically cleaned up
+        # when the last item is removed.
         replaced_items = defaultdict(list)
         for item in items:
             dup_items = lib.items(library.MatchQuery('path', item.path))
@@ -650,6 +651,28 @@ def apply_choices(config):
                           (dup_item.id, displayable_path(item.path)))
         log.debug('%i of %i items replaced' % (len(replaced_items),
                                                len(items)))
+
+        # Find old items that should be replaced as part of a duplicate
+        # resolution.
+        duplicate_items = []
+        if task.remove_duplicates:
+            if task.is_album:
+                for album in _duplicate_check(lib, task):
+                    duplicate_items += album.items()
+            else:
+                duplicate_items = _item_duplicate_check(lib, task)
+            log.debug('removing %i old duplicated items' %
+                      len(duplicate_items))
+
+            # Delete duplicate files that are located inside the library
+            # directory.
+            for duplicate_path in [i.path for i in duplicate_items]:
+                if lib.directory in util.ancestry(duplicate_path):
+                    log.debug(u'deleting replaced duplicate %s' %
+                              util.displayable_path(duplicate_path))
+                    util.soft_remove(duplicate_path)
+                    util.prune_dirs(os.path.dirname(duplicate_path),
+                                    lib.directory)
 
         # Move/copy files.
         task.old_paths = [item.path for item in items]
@@ -674,6 +697,8 @@ def apply_choices(config):
             for replaced in replaced_items.itervalues():
                 for item in replaced:
                     lib.remove(item)
+            for item in duplicate_items:
+                lib.remove(item)
 
             # Add new ones.
             if task.is_album:
@@ -788,9 +813,12 @@ def item_query(config):
         log_choice(config, task)
 
         # Duplicate check.
-        if _item_duplicate_check(lib, task, recent):
-            config.resolve_duplicate_func(task, config)
-            log_choice(config, task, True)
+        if task.choice_flag in (action.ASIS, action.APPLY):
+            ident = task.chosen_ident()
+            if ident in recent or _item_duplicate_check(lib, task):
+                config.resolve_duplicate_func(task, config)
+                log_choice(config, task, True)
+            recent.add(ident)
 
 def item_progress(config):
     """Skips the lookup and query stages in a non-autotagged singleton
