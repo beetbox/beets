@@ -3,6 +3,13 @@ Changelog
 
 1.0b14 (in development)
 -----------------------
+* The importer now gives you **choices when duplicates are detected**.
+  Previously, when beets found an existing album or item in your library
+  matching the metadata on a newly-imported one, it would just skip the new
+  music to avoid introducing duplicates into your library. Now, you have three
+  choices: skip the new music (the previous behavior), keep both, or remove the
+  old music. See the :ref:`guide-duplicates` section in the autotagging guide
+  for details.
 * New :doc:`/plugins/m3uupdate`: Catalog imported files in an ``m3u`` playlist
   file for easy importing to other systems. Thanks to Fabrice Laporte.
 
