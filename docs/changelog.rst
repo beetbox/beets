@@ -10,6 +10,7 @@ Changelog
   choices: skip the new music (the previous behavior), keep both, or remove the
   old music. See the :ref:`guide-duplicates` section in the autotagging guide
   for details.
+* New :doc:`/plugins/rdm`: Randomly select albums and tracks from your library.
 * New :doc:`/plugins/m3uupdate`: Catalog imported files in an ``m3u`` playlist
   file for easy importing to other systems. Thanks to Fabrice Laporte.
 * :doc:`/plugins/bpd`: Use Gstreamer's ``playbin2`` element instead of the

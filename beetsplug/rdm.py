@@ -1,19 +1,29 @@
+# This file is part of beets.
+# Copyright 2011, Philippe Mongeau.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+# 
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs, print_
 from beets.util.functemplate import Template
 import random
 
-
+"""Get a random song or album from the library.
 """
-Get a random song or album from the library
-"""
-
 
 def random_item(lib, config, opts, args):
     query = decargs(args)
     path = opts.path
     fmt = opts.format
-
 
     if fmt is None:
         # If no specific template is supplied, use a default
@@ -22,7 +32,6 @@ def random_item(lib, config, opts, args):
         else:
             fmt = u'$artist - $album - $title'
     template = Template(fmt)
-
 
     if opts.album:
         items = list(lib.albums(query))
@@ -39,7 +48,8 @@ def random_item(lib, config, opts, args):
         else:
             print_(template.substitute(item.record))
 
-random_cmd = Subcommand('random', help='chose a random track, album, artist, etc.')
+random_cmd = Subcommand('random',
+                        help='chose a random track or album')
 random_cmd.parser.add_option('-a', '--album', action='store_true',
         help='choose an album instead of track')
 random_cmd.parser.add_option('-p', '--path', action='store_true',

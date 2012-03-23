@@ -81,6 +81,7 @@ Miscellaneous
 '''''''''''''
 
 * :doc:`web`: An experimental Web-based GUI for beets.
+* :doc:`rdm`: Randomly choose albums and tracks from your library.
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
   compatible with `MPD clients`_.
 
