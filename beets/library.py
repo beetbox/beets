@@ -353,7 +353,7 @@ class CollectionQuery(Query):
     """An abstract query class that aggregates other queries. Can be
     indexed like a list to access the sub-queries.
     """
-    def __init__(self, subqueries = ()):
+    def __init__(self, subqueries=()):
         self.subqueries = subqueries
     
     # is there a better way to do this?
@@ -789,10 +789,10 @@ class Library(BaseLibrary):
         if table == 'albums' and 'artist' in current_fields and \
                     'albumartist' not in current_fields:
             setup_sql += "UPDATE ALBUMS SET albumartist=artist;\n"
-        
+
         self.conn.executescript(setup_sql)
         self.conn.commit()
-    
+
     def destination(self, item, pathmod=None, in_album=False,
                     fragment=False, basedir=None):
         """Returns the path in the library directory designated for item
@@ -804,7 +804,7 @@ class Library(BaseLibrary):
         directory for the destination.
         """
         pathmod = pathmod or os.path
-        
+
         # Use a path format based on a query, falling back on the
         # default.
         for query, path_format in self.path_formats:
@@ -831,10 +831,10 @@ class Library(BaseLibrary):
             else:
                 assert False, "no default path format"
         subpath_tmpl = Template(path_format)
-        
+
         # Get the item's Album if it has one.
         album = self.get_album(item)
-        
+
         # Build the mapping for substitution in the path template,
         # beginning with the values from the database.
         mapping = {}
@@ -847,7 +847,7 @@ class Library(BaseLibrary):
                 # From Item.
                 value = getattr(item, key)
             mapping[key] = util.sanitize_for_path(value, pathmod, key)
-        
+
         # Use the album artist if the track artist is not set and
         # vice-versa.
         if not mapping['artist']:
@@ -858,24 +858,24 @@ class Library(BaseLibrary):
         # Get values from plugins.
         for key, value in plugins.template_values(item).iteritems():
             mapping[key] = util.sanitize_for_path(value, pathmod, key)
-        
+
         # Perform substitution.
-        funcs = DefaultTemplateFunctions(item).functions()
+        funcs = DefaultTemplateFunctions(self, item).functions()
         funcs.update(plugins.template_funcs())
         subpath = subpath_tmpl.substitute(mapping, funcs)
-        
+
         # Encode for the filesystem, dropping unencodable characters.
         if isinstance(subpath, unicode) and not fragment:
             encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
             subpath = subpath.encode(encoding, 'replace')
-        
+
         # Truncate components and remove forbidden characters.
         subpath = util.sanitize_path(subpath, pathmod, self.replacements)
-        
+
         # Preserve extension.
         _, extension = pathmod.splitext(item.path)
         subpath += extension.lower()
-        
+
         if fragment:
             return subpath
         else:
@@ -886,7 +886,6 @@ class Library(BaseLibrary):
     # Item manipulation.
 
     def add(self, item, copy=False):
-        #FIXME make a deep copy of the item?
         item.library = self
         if copy:
             self.move(item, copy=True)
@@ -901,18 +900,18 @@ class Library(BaseLibrary):
                 if key == 'path' and isinstance(value, str):
                     value = buffer(value)
                 subvars.append(value)
-        
+
         # issue query
         c = self.conn.cursor()
         query = 'INSERT INTO items (' + columns + ') VALUES (' + values + ')'
         c.execute(query, subvars)
         new_id = c.lastrowid
         c.close()
-        
+
         item._clear_dirty()
         item.id = new_id
         return new_id
-    
+
     def save(self, event=True):
         """Writes the library to disk (completing an sqlite
         transaction).
@@ -924,7 +923,7 @@ class Library(BaseLibrary):
     def load(self, item, load_id=None):
         if load_id is None:
             load_id = item.id
-        
+
         c = self.conn.execute(
                 'SELECT * FROM items WHERE id=?', (load_id,) )
         item._fill_record(c.fetchone())
@@ -934,7 +933,7 @@ class Library(BaseLibrary):
     def store(self, item, store_id=None, store_all=False):
         if store_id is None:
             store_id = item.id
- 
+
         # build assignments for query
         assignments = ''
         subvars = []
@@ -947,7 +946,7 @@ class Library(BaseLibrary):
                 if key == 'path' and isinstance(value, str):
                     value = buffer(value)
                 subvars.append(value)
-        
+
         if not assignments:
             # nothing to store (i.e., nothing was dirty)
             return
@@ -1322,7 +1321,8 @@ class DefaultTemplateFunctions(object):
     additional context to the functions -- specifically, the Item being
     evaluated.
     """
-    def __init__(self, item):
+    def __init__(self, lib, item):
+        self.lib = lib
         self.item = item
 
     _prefix = 'tmpl_'
@@ -1382,3 +1382,60 @@ class DefaultTemplateFunctions(object):
         """Translate non-ASCII characters to their ASCII equivalents.
         """
         return unidecode(s)
+
+    def tmpl_unique(self, keys, disam):
+        """Generate a string that is guaranteed to be unique among all
+        albums in the library who share the same set of keys. Fields
+        from "disam" are used in the string if they are sufficient to
+        disambiguate the albums. Otherwise, a fallback opaque value is
+        used. Both "keys" and "disam" should be given as
+        whitespace-separated lists of field names.
+        """
+        keys = keys.split()
+        disam = disam.split()
+
+        album = self.lib.get_album(self.item)
+        if not album:
+            # Do nothing for singletons.
+            return u''
+
+        # Find matching albums to disambiguate with.
+        subqueries = []
+        for key in keys:
+            value = getattr(album, key)
+            subqueries.append(MatchQuery(key, value))
+        albums = self.lib.albums(query=AndQuery(subqueries))
+
+        # If there's only one album to matching these details, then do
+        # nothing.
+        if len(albums) == 1:
+            return u''
+
+        # Find the minimum number of fields necessary to disambiguate
+        # the set of albums.
+        disambiguators = []
+        for field in disam:
+            disambiguators.append(field)
+            
+            # Get the value tuple for each album for these
+            # disambiguators.
+            disam_values = set()
+            for a in albums:
+                values = [getattr(a, f) for f in disambiguators]
+                disam_values.add(tuple(values))
+
+            # If the set of unique tuples is equal to the number of
+            # albums in the disambiguation set, we're done -- this is
+            # sufficient disambiguation.
+            if len(disam_values) == len(albums):
+                break
+
+        else:
+            # Even when using all of the disambiguating fields, we
+            # could not separate all the albums. Fall back to the unique
+            # album ID.
+            return u' {}'.format(album.id)
+
+        # Flatten disambiguation values into a string.
+        values = [unicode(getattr(album, f)) for f in disambiguators]
+        return u' [{}]'.format(u' '.join(values))
