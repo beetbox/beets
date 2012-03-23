@@ -47,6 +47,8 @@ disabled by default, but you can turn them on as described above.
    scrub
    rewrite
    m3uupdate
+   rdm
+   mbcollection
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -82,6 +84,7 @@ Miscellaneous
 
 * :doc:`web`: An experimental Web-based GUI for beets.
 * :doc:`rdm`: Randomly choose albums and tracks from your library.
+* :doc:`mbcollection`: Maintain your MusicBrainz collection list.
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
   compatible with `MPD clients`_.
 
@@ -98,15 +101,11 @@ Here are a few of the plugins written by the beets community:
 * `beetFs`_ is a FUSE filesystem for browsing the music in your beets library.
   (Might be out of date.)
 
-* `Beet-MusicBrainz-Collection`_ lets you add albums from your library to your
-  MusicBrainz `"music collection"`_.
-
 * `A cmus plugin`_ integrates with the `cmus`_ console music player.
 
 .. _beetFs: http://code.google.com/p/beetfs/
 .. _Beet-MusicBrainz-Collection:
     https://github.com/jeffayle/Beet-MusicBrainz-Collection/
-.. _"music collection": http://musicbrainz.org/show/collection/
 .. _A cmus plugin:
     https://github.com/coolkehon/beets/blob/master/beetsplug/cmus.py
 .. _cmus: http://cmus.sourceforge.net/

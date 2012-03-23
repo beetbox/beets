@@ -11,10 +11,13 @@ Changelog
   old music. See the :ref:`guide-duplicates` section in the autotagging guide
   for details.
 * New :doc:`/plugins/rdm`: Randomly select albums and tracks from your library.
+  Thanks to Philippe Mongeau.
+* The :doc:`/plugins/mbcollection` by Jeffrey Aylesworth was added to the core
+  beets distribution.
 * New :doc:`/plugins/m3uupdate`: Catalog imported files in an ``m3u`` playlist
   file for easy importing to other systems. Thanks to Fabrice Laporte.
 * :doc:`/plugins/bpd`: Use Gstreamer's ``playbin2`` element instead of the
-  deprecated ``playbin``. Thanks to Philippe Mongeau.
+  deprecated ``playbin``.
 
 
 1.0b13 (March 16, 2012)
