@@ -14,7 +14,7 @@ Changelog
 * New :doc:`/plugins/m3uupdate`: Catalog imported files in an ``m3u`` playlist
   file for easy importing to other systems. Thanks to Fabrice Laporte.
 * :doc:`/plugins/bpd`: Use Gstreamer's ``playbin2`` element instead of the
-  deprecated ``playbin``.
+  deprecated ``playbin``. Thanks to Philippe Mongeau.
 
 
 1.0b13 (March 16, 2012)
