@@ -860,7 +860,7 @@ class Library(BaseLibrary):
             mapping[key] = util.sanitize_for_path(value, pathmod, key)
         
         # Perform substitution.
-        funcs = dict(TEMPLATE_FUNCTIONS)
+        funcs = DefaultTemplateFunctions(item).functions()
         funcs.update(plugins.template_funcs())
         subpath = subpath_tmpl.substitute(mapping, funcs)
         
@@ -1315,44 +1315,70 @@ def _int_arg(s):
     function.  May raise a ValueError.
     """
     return int(s.strip())
-def _tmpl_lower(s):
-    """Convert a string to lower case."""
-    return s.lower()
-def _tmpl_upper(s):
-    """Covert a string to upper case."""
-    return s.upper()
-def _tmpl_title(s):
-    """Convert a string to title case."""
-    return s.title()
-def _tmpl_left(s, chars):
-    """Get the leftmost characters of a string."""
-    return s[0:_int_arg(chars)]
-def _tmpl_right(s, chars):
-    """Get the rightmost characters of a string."""
-    return s[-_int_arg(chars):]
-def _tmpl_if(condition, trueval, falseval=u''):
-    """If ``condition`` is nonempty and nonzero, emit ``trueval``;
-    otherwise, emit ``falseval`` (if provided).
-    """
-    try:
-        condition = _int_arg(condition)
-    except ValueError:
-        condition = condition.strip()
-    if condition:
-        return trueval
-    else:
-        return falseval
-def _tmpl_asciify(s):
-    """Translate non-ASCII characters to their ASCII equivalents.
-    """
-    return unidecode(s)
 
-TEMPLATE_FUNCTIONS = {
-    'lower': _tmpl_lower,
-    'upper': _tmpl_upper,
-    'title': _tmpl_title,
-    'left': _tmpl_left,
-    'right': _tmpl_right,
-    'if': _tmpl_if,
-    'asciify': _tmpl_asciify,
-}
+class DefaultTemplateFunctions(object):
+    """A container class for the default functions provided to path
+    templates. These functions are contained in an object to provide
+    additional context to the functions -- specifically, the Item being
+    evaluated.
+    """
+    def __init__(self, item):
+        self.item = item
+
+    _prefix = 'tmpl_'
+
+    def functions(self):
+        """Returns a dictionary containing the functions defined in this
+        object. The keys are function names (as exposed in templates)
+        and the values are Python functions.
+        """
+        out = {}
+        for key in dir(self):
+            if key.startswith(self._prefix):
+                out[key[len(self._prefix):]] = getattr(self, key)
+        return out
+
+    @staticmethod
+    def tmpl_lower(s):
+        """Convert a string to lower case."""
+        return s.lower()
+
+    @staticmethod
+    def tmpl_upper(s):
+        """Covert a string to upper case."""
+        return s.upper()
+
+    @staticmethod
+    def tmpl_title(s):
+        """Convert a string to title case."""
+        return s.title()
+
+    @staticmethod
+    def tmpl_left(s, chars):
+        """Get the leftmost characters of a string."""
+        return s[0:_int_arg(chars)]
+
+    @staticmethod
+    def tmpl_right(s, chars):
+        """Get the rightmost characters of a string."""
+        return s[-_int_arg(chars):]
+
+    @staticmethod
+    def tmpl_if(condition, trueval, falseval=u''):
+        """If ``condition`` is nonempty and nonzero, emit ``trueval``;
+        otherwise, emit ``falseval`` (if provided).
+        """
+        try:
+            condition = _int_arg(condition)
+        except ValueError:
+            condition = condition.strip()
+        if condition:
+            return trueval
+        else:
+            return falseval
+
+    @staticmethod
+    def tmpl_asciify(s):
+        """Translate non-ASCII characters to their ASCII equivalents.
+        """
+        return unidecode(s)
