@@ -86,8 +86,7 @@ class TrackInfo(object):
         self.length = length
         self.medium = medium
         self.medium_index = medium_index
-        if artist_sort_name != '':
-            self.artist_sort_name = artist_sort_name
+        self.artist_sort_name = artist_sort_name
 
 # Aggregation of sources.
 

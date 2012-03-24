@@ -63,6 +63,7 @@ def track_info(recording, medium=None, medium_index=None):
     if 'artist-credit' in recording:
         artist = recording['artist-credit'][0]['artist']
         info.artist_id = artist['id']
+        info.artist_sort_name = artist['sort-name']
 
     if recording.get('length'):
         info.length = int(recording['length'])/(1000.0)
@@ -94,8 +95,6 @@ def album_info(release):
             artist_sort_parts.append(el['artist']['sort-name'])
     artist_name = ''.join(artist_parts)
     artist_sort_name = ', '.join(artist_sort_parts)
-    if artist_sort_name == artist_name:
-        artist_sort_name = ''
 
     # Basic info.
     track_infos = []
