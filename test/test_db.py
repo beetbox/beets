@@ -404,7 +404,17 @@ class DestinationTest(unittest.TestCase):
         ])
         self.assertEqual(p, 'bar/bar')
 
-class DestinationFunctionTest(unittest.TestCase):
+class PathFormattingMixin(object):
+    """Utilities for testing path formatting."""
+    def _setf(self, fmt):
+        self.lib.path_formats.insert(0, ('default', fmt))
+    def _assert_dest(self, dest, i=None):
+        if i is None:
+            i = self.i
+        self.assertEqual(self.lib.destination(i, pathmod=posixpath),
+                         dest)
+
+class DestinationFunctionTest(unittest.TestCase, PathFormattingMixin):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
         self.lib.directory = '/base'
@@ -412,12 +422,6 @@ class DestinationFunctionTest(unittest.TestCase):
         self.i = item()
     def tearDown(self):
         self.lib.conn.close()
-
-    def _setf(self, fmt):
-        self.lib.path_formats.insert(0, ('default', fmt))
-    def _assert_dest(self, dest):
-        self.assertEqual(self.lib.destination(self.i, pathmod=posixpath),
-                         dest)
 
     def test_upper_case_literal(self):
         self._setf(u'%upper{foo}')
@@ -458,6 +462,43 @@ class DestinationFunctionTest(unittest.TestCase):
     def test_nonexistent_function(self):
         self._setf(u'%foo{bar}')
         self._assert_dest('/base/%foo{bar}')
+
+class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
+    def setUp(self):
+        self.lib = beets.library.Library(':memory:')
+        self.lib.directory = '/base'
+        self.lib.path_formats = [('default', u'path')]
+
+        self.i1 = item()
+        self.i1.year = 2001
+        self.lib.add_album([self.i1])
+        self.i2 = item()
+        self.i2.year = 2002
+        self.lib.add_album([self.i2])
+        self.lib.save()
+
+        self._setf(u'foo%unique{albumartist album,year}/$title')
+
+    def tearDown(self):
+        self.lib.conn.close()
+
+    def test_unique_expands_to_disambiguating_year(self):
+        self._assert_dest('/base/foo [2001]/the title', self.i1)
+
+    def test_unique_expands_to_nothing_for_distinct_albums(self):
+        album2 = self.lib.get_album(self.i2)
+        album2.album = 'different album'
+        self.lib.save()
+
+        self._assert_dest('/base/foo/the title', self.i1)
+
+    def test_use_fallback_numbers_when_identical(self):
+        album2 = self.lib.get_album(self.i2)
+        album2.year = 2001
+        self.lib.save()
+
+        self._assert_dest('/base/foo 1/the title', self.i1)
+        self._assert_dest('/base/foo 2/the title', self.i2)
 
 class PluginDestinationTest(unittest.TestCase):
     # Mock the plugins.template_values(item) function.

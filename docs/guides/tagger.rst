@@ -195,6 +195,26 @@ guessing---beets will show you the proposed changes and ask you to confirm
 them, just like the earlier example. As the prompt suggests, you can just hit
 return to select the first candidate.
 
+.. _guide-duplicates:
+
+Duplicates
+----------
+
+If beets finds an album or item in your library that seems to be the same as the
+one you're importing, you may see a prompt like this::
+
+    This album is already in the library!
+    [S]kip new, Keep both, Remove old?
+
+Beets wants to keep you safe from duplicates, which can be a real pain, so you
+have three choices in this situation. You can skip importing the new music,
+choosing to keep the stuff you already have in your library; you can keep both
+the old and the new music; or you can remove the existing music and choose the
+new stuff. If you choose that last "trump" option, any duplicates will be
+removed from your library database---and, if the corresponding files are located
+inside of your beets library directory, the files themselves will be deleted as
+well.
+
 Fingerprinting
 --------------
 

@@ -30,10 +30,10 @@ Plugins Included With Beets
 ---------------------------
 
 There are a few plugins that are included with the beets distribution. They're
-disabled by default, but you can turn them on as described above:
+disabled by default, but you can turn them on as described above.
 
 .. toctree::
-   :maxdepth: 1
+   :hidden:
 
    chroma
    lyrics
@@ -46,6 +46,50 @@ disabled by default, but you can turn them on as described above:
    inline
    scrub
    rewrite
+   m3uupdate
+   rdm
+   mbcollection
+
+Autotagger Extensions
+''''''''''''''''''''''
+
+* :doc:`chroma`: Use acoustic fingerprinting to identify audio files with
+  missing or incorrect metadata.
+
+Metadata
+''''''''
+
+* :doc:`lyrics`: Automatically fetch song lyrics.
+* :doc:`lastgenre`: Fetch genres based on Last.fm tags.
+* :doc:`embedart`: Embed album art images into files' metadata. (By default,
+  beets uses image files "on the side" instead of embedding images.)
+* :doc:`replaygain`: Calculate volume normalization for players that support it.
+* :doc:`scrub`: Clean extraneous metadata from music files.
+
+Path Formats
+''''''''''''
+
+* :doc:`inline`: Use Python snippets to customize path format strings.
+* :doc:`rewrite`: Substitute values in path formats.
+
+Interoperability
+''''''''''''''''
+
+* :doc:`mpdupdate`: Automatically notifies `MPD`_ whenever the beets library
+  changes.
+* :doc:`m3uupdate`: Catalog imported files in an ``.m3u`` playlist file.
+
+Miscellaneous
+'''''''''''''
+
+* :doc:`web`: An experimental Web-based GUI for beets.
+* :doc:`rdm`: Randomly choose albums and tracks from your library.
+* :doc:`mbcollection`: Maintain your MusicBrainz collection list.
+* :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
+  compatible with `MPD clients`_.
+
+.. _MPD: http://mpd.wikia.com/
+.. _MPD clients: http://mpd.wikia.com/wiki/Clients
 
 .. _other-plugins:
 
@@ -57,15 +101,11 @@ Here are a few of the plugins written by the beets community:
 * `beetFs`_ is a FUSE filesystem for browsing the music in your beets library.
   (Might be out of date.)
 
-* `Beet-MusicBrainz-Collection`_ lets you add albums from your library to your
-  MusicBrainz `"music collection"`_.
-
 * `A cmus plugin`_ integrates with the `cmus`_ console music player.
 
 .. _beetFs: http://code.google.com/p/beetfs/
 .. _Beet-MusicBrainz-Collection:
     https://github.com/jeffayle/Beet-MusicBrainz-Collection/
-.. _"music collection": http://musicbrainz.org/show/collection/
 .. _A cmus plugin:
     https://github.com/coolkehon/beets/blob/master/beetsplug/cmus.py
 .. _cmus: http://cmus.sourceforge.net/

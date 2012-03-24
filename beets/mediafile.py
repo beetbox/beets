@@ -317,7 +317,13 @@ class MediaField(object):
         # possibly index the list
         if style.list_elem:
             if entry: # List must have at least one value.
-                return entry[0]
+                # Handle Mutagen bugs when reading values (#356).
+                try:
+                    return entry[0]
+                except:
+                    log.error('Mutagen exception when reading field: %s' %
+                              traceback.format_exc)
+                    return None
             else:
                 return None
         else:

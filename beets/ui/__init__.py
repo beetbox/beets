@@ -32,6 +32,10 @@ from beets import library
 from beets import plugins
 from beets import util
 
+if sys.platform == 'win32':
+    import colorama
+    colorama.init()
+
 # Constants.
 CONFIG_PATH_VAR = 'BEETSCONFIG'
 DEFAULT_CONFIG_FILENAME_UNIX = '.beetsconfig'

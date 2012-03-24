@@ -50,7 +50,7 @@ class GstPlayer(object):
         
         # Set up the Gstreamer player. From the pygst tutorial:
         # http://pygstdocs.berlios.de/pygst-tutorial/playbin.html
-        self.player = gst.element_factory_make("playbin", "player")
+        self.player = gst.element_factory_make("playbin2", "player")
         fakesink = gst.element_factory_make("fakesink", "fakesink")
         self.player.set_property("video-sink", fakesink)
         bus = self.player.get_bus()

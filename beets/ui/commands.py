@@ -30,6 +30,7 @@ import beets.autotag.art
 from beets import plugins
 from beets import importer
 from beets.util import syspath, normpath, ancestry, displayable_path
+from beets.util.functemplate import Template
 from beets import library
 
 # Global logger.
@@ -563,6 +564,35 @@ def choose_item(task, config):
             assert not isinstance(choice, importer.action)
             return choice
 
+def resolve_duplicate(task, config):
+    """Decide what to do when a new album or item seems similar to one
+    that's already in the library.
+    """
+    log.warn("This %s is already in the library!" %
+             ("album" if task.is_album else "item"))
+
+    if config.quiet:
+        # In quiet mode, don't prompt -- just skip.
+        log.info('Skipping.')
+        sel = 's'
+    else:
+        sel = ui.input_options(
+            ('Skip new', 'Keep both', 'Remove old'),
+            color=config.color
+        )
+
+    if sel == 's':
+        # Skip new.
+        task.set_choice(importer.action.SKIP)
+    elif sel == 'k':
+        # Keep both. Do nothing; leave the choice intact.
+        pass
+    elif sel == 'r':
+        # Remove old.
+        task.remove_duplicates = True
+    else:
+        assert False
+
 # The import command.
 
 def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
@@ -635,6 +665,7 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
             query = query,
             incremental = incremental,
             ignore = ignore,
+            resolve_duplicate_func = resolve_duplicate,
         )
     
     finally:
@@ -743,31 +774,41 @@ default_commands.append(import_cmd)
 
 # list: Query and show library contents.
 
-def list_items(lib, query, album, path):
+def list_items(lib, query, album, path, fmt):
     """Print out items in lib matching query. If album, then search for
     albums instead of single items. If path, print the matched objects'
     paths instead of human-readable information about them.
     """
+    if fmt is None:
+        # If no specific template is supplied, use a default.
+        if album:
+            fmt = u'$albumartist - $album'
+        else:
+            fmt = u'$artist - $album - $title'
+    template = Template(fmt)
+
     if album:
         for album in lib.albums(query):
             if path:
                 print_(album.item_dir())
-            else:
-                print_(album.albumartist + u' - ' + album.album)
+            elif fmt is not None:
+                print_(template.substitute(album._record))
     else:
         for item in lib.items(query):
             if path:
                 print_(item.path)
-            else:
-                print_(item.artist + u' - ' + item.album + u' - ' + item.title)
+            elif fmt is not None:
+                print_(template.substitute(item.record))
 
 list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
 list_cmd.parser.add_option('-a', '--album', action='store_true',
     help='show matching albums instead of tracks')
 list_cmd.parser.add_option('-p', '--path', action='store_true',
     help='print paths for matched items or albums')
+list_cmd.parser.add_option('-f', '--format', action='store',
+    help='print with custom format', default=None)
 def list_func(lib, config, opts, args):
-    list_items(lib, decargs(args), opts.album, opts.path)
+    list_items(lib, decargs(args), opts.album, opts.path, opts.format)
 list_cmd.func = list_func
 default_commands.append(list_cmd)
 

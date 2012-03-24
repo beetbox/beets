@@ -95,6 +95,7 @@ def iconfig(lib, **kwargs):
         query = None,
         incremental = False,
         ignore = [],
+        resolve_duplicate_func = lambda x, y: None,
     )
     for k, v in kwargs.items():
         setattr(config, k, v)

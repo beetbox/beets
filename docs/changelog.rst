@@ -1,21 +1,45 @@
 Changelog
 =========
 
-1.0b13 (in development)
+1.0b14 (in development)
+-----------------------
+* The importer now gives you **choices when duplicates are detected**.
+  Previously, when beets found an existing album or item in your library
+  matching the metadata on a newly-imported one, it would just skip the new
+  music to avoid introducing duplicates into your library. Now, you have three
+  choices: skip the new music (the previous behavior), keep both, or remove the
+  old music. See the :ref:`guide-duplicates` section in the autotagging guide
+  for details.
+* New :doc:`/plugins/rdm`: Randomly select albums and tracks from your library.
+  Thanks to Philippe Mongeau.
+* The :doc:`/plugins/mbcollection` by Jeffrey Aylesworth was added to the core
+  beets distribution.
+* New :doc:`/plugins/m3uupdate`: Catalog imported files in an ``m3u`` playlist
+  file for easy importing to other systems. Thanks to Fabrice Laporte.
+* :doc:`/plugins/bpd`: Use Gstreamer's ``playbin2`` element instead of the
+  deprecated ``playbin``.
+
+
+1.0b13 (March 16, 2012)
 -----------------------
 
 Beets 1.0b13 consists of a plethora of small but important fixes and
 refinements. A lyrics plugin is now included with beets; new audio properties
-are catalogged; the autotagger is more tolerant of different tagging styles; and
-importing with original file deletion now cleans up after itself more
-thoroughly. Many, many bugs—including several crashers—were fixed. This release
-lays the foundation for more features to come in the next couple of releases.
+are catalogged; the ``list`` command has been made more powerful; the autotagger
+is more tolerant of different tagging styles; and importing with original file
+deletion now cleans up after itself more thoroughly. Many, many bugs—including
+several crashers—were fixed. This release lays the foundation for more features
+to come in the next couple of releases.
 
 * The :doc:`/plugins/lyrics`, originally by `Peter Brunner`_, is revamped and
   included with beets, making it easy to fetch **song lyrics**.
 * Items now expose their audio **sample rate**, number of **channels**, and
   **bits per sample** (bitdepth). See :doc:`/reference/pathformat` for a list of
   all available audio properties. Thanks to Andrew Dunn.
+* The ``beet list`` command now accepts a "format" argument that lets you **show
+  specific information about each album or track**. For example, run ``beet ls
+  -af '$album: $tracktotal' beatles`` to see how long each Beatles album is.
+  Thanks to Philippe Mongeau.
 * The autotagger now tolerates tracks on multi-disc albums that are numbered
   per-disc. For example, if track 24 on a release is the first track on the
   second disc, then it is not penalized for having its track number set to 1
@@ -24,6 +48,7 @@ lays the foundation for more features to come in the next couple of releases.
   albums.
 * The autotagger now also tolerates tracks whose track artists tags are set
   to "Various Artists".
+* Terminal colors are now supported on Windows via `Colorama`_ (thanks to Karl).
 * When previewing metadata differences, the importer now shows discrepancies in
   track length.
 * Importing with ``import_delete`` enabled now cleans up empty directories that
@@ -63,6 +88,8 @@ lays the foundation for more features to come in the next couple of releases.
 * Fix bitrate estimation for AAC files whose headers are missing the relevant
   data.
 * Fix the ``list`` command in BPD (thanks to Simon Chopin).
+
+.. _Colorama: http://pypi.python.org/pypi/colorama
 
 1.0b12 (January 16, 2012)
 -------------------------

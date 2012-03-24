@@ -105,6 +105,7 @@ class NonAutotaggedImportTest(unittest.TestCase):
                 query = None,
                 incremental = False,
                 ignore = [],
+                resolve_duplicate_func = None,
         )
 
         return paths
@@ -676,26 +677,6 @@ class DuplicateCheckTest(unittest.TestCase):
         res = importer._item_duplicate_check(self.lib, 
                                     self._item_task(True, 'xxx', 'yyy'))
         self.assertFalse(res)
-
-    def test_recent_item(self):
-        recent = set()
-        importer._item_duplicate_check(self.lib, 
-                                       self._item_task(False, 'xxx', 'yyy'), 
-                                       recent)
-        res = importer._item_duplicate_check(self.lib, 
-                                       self._item_task(False, 'xxx', 'yyy'), 
-                                       recent)
-        self.assertTrue(res)
-
-    def test_recent_album(self):
-        recent = set()
-        importer._duplicate_check(self.lib, 
-                                  self._album_task(False, 'xxx', 'yyy'), 
-                                  recent)
-        res = importer._duplicate_check(self.lib, 
-                                  self._album_task(False, 'xxx', 'yyy'), 
-                                  recent)
-        self.assertTrue(res)
 
     def test_duplicate_album_existing(self):
         res = importer._duplicate_check(self.lib,
