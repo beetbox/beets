@@ -125,6 +125,10 @@ def apply_metadata(items, album_info):
             item.artist = track_info.artist
         else:
             item.artist = album_info.artist
+        if track_info.artist_sort_name:
+            item.artist_sort_name = track_info.artist_sort_name
+        elif album_info.artist_sort_name:
+            item.artist_sort_name = album_info.artist_sort_name
         item.albumartist = album_info.artist
         item.album = album_info.album
         item.tracktotal = len(items)

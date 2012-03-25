@@ -36,13 +36,14 @@ class AlbumInfo(object):
     - ``day``: release day
     - ``label``: music label responsible for the release
     - ``mediums``: the number of discs in this release
+    - ``artist_sort_name``: name of the release's artists for sorting
 
     The fields up through ``tracks`` are required. The others are
     optional and may be None.
     """
     def __init__(self, album, album_id, artist, artist_id, tracks, asin=None,
                  albumtype=None, va=False, year=None, month=None, day=None,
-                 label=None, mediums=None):
+                 label=None, mediums=None, artist_sort_name=None):
         self.album = album
         self.album_id = album_id
         self.artist = artist
@@ -56,6 +57,8 @@ class AlbumInfo(object):
         self.day = day
         self.label = label
         self.mediums = mediums
+        if artist_sort_name != '':
+            self.artist_sort_name = artist_sort_name
 
 class TrackInfo(object):
     """Describes a canonical track present on a release. Appears as part
@@ -68,12 +71,14 @@ class TrackInfo(object):
     - ``length``: float: duration of the track in seconds
     - ``medium``: the disc number this track appears on in the album
     - ``medium_index``: the track's position on the disc
+    - ``artist_sort_name``: name of the release's artists for sorting
 
     Only ``title`` and ``track_id`` are required. The rest of the fields
     may be None.
     """
     def __init__(self, title, track_id, artist=None, artist_id=None,
-                 length=None, medium=None, medium_index=None):
+                 length=None, medium=None, medium_index=None,
+                 artist_sort_name=None):
         self.title = title
         self.track_id = track_id
         self.artist = artist
@@ -81,7 +86,7 @@ class TrackInfo(object):
         self.length = length
         self.medium = medium
         self.medium_index = medium_index
-
+        self.artist_sort_name = artist_sort_name
 
 # Aggregation of sources.
 
