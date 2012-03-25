@@ -744,6 +744,11 @@ class MediaFile(object):
                 mp4 = StorageStyle("\xa9ART"), 
                 etc = StorageStyle('artist'),
             )     
+    artist_sort_name = MediaField(
+                          mp3 = StorageStyle('TSOP'),
+                          mp4 = StorageStyle("soar"), 
+                          etc = StorageStyle('ARTISTSORT'),
+            )
     album = MediaField(
                 mp3 = StorageStyle('TALB'),
                 mp4 = StorageStyle("\xa9alb"), 

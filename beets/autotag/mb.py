@@ -63,6 +63,7 @@ def track_info(recording, medium=None, medium_index=None):
     if 'artist-credit' in recording:
         artist = recording['artist-credit'][0]['artist']
         info.artist_id = artist['id']
+        info.artist_sort_name = artist['sort-name']
 
     if recording.get('length'):
         info.length = int(recording['length'])/(1000.0)
@@ -85,12 +86,15 @@ def album_info(release):
     """
     # Get artist name using join phrases.
     artist_parts = []
+    artist_sort_parts = []
     for el in release['artist-credit']:
         if isinstance(el, basestring):
             artist_parts.append(el)
         else:
             artist_parts.append(el['artist']['name'])
+            artist_sort_parts.append(el['artist']['sort-name'])
     artist_name = ''.join(artist_parts)
+    artist_sort_name = ', '.join(artist_sort_parts)
 
     # Basic info.
     track_infos = []
@@ -111,6 +115,7 @@ def album_info(release):
         release['artist-credit'][0]['artist']['id'],
         track_infos,
         mediums=len(release['medium-list']),
+        artist_sort_name = artist_sort_name,
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
     if 'asin' in release:
