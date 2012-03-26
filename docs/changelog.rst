@@ -12,7 +12,8 @@ Changelog
   for details.
 * Artist **sort names** are now fetched from MusicBrainz. There are two new data
   fields, ``artist_sort`` and ``albumartist_sort``, that contain sortable artist
-  names like "Beatles, The". Thanks to Paul Provost.
+  names like "Beatles, The". These fields are also used to sort albums and items
+  when using the ``list`` command. Thanks to Paul Provost.
 * New :doc:`/plugins/rdm`: Randomly select albums and tracks from your library.
   Thanks to Philippe Mongeau.
 * The :doc:`/plugins/mbcollection` by Jeffrey Aylesworth was added to the core

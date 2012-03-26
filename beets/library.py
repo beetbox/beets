@@ -118,6 +118,15 @@ log = logging.getLogger('beets')
 if not log.handlers:
     log.addHandler(logging.StreamHandler())
 
+# A little SQL utility.
+def _orelse(exp1, exp2):
+    """Generates an SQLite expression that evaluates to exp1 if exp1 is
+    non-null and non-empty or exp2 otherwise.
+    """
+    return ('(CASE {0} WHEN NULL THEN {1} '
+                      'WHEN "" THEN {1} '
+                      'ELSE {0} END)').format(exp1, exp2)
+
 
 # Exceptions.
 
@@ -1042,7 +1051,8 @@ class Library(BaseLibrary):
         where, subvals = query.clause()
         sql = "SELECT * FROM albums " + \
               "WHERE " + where + \
-              " ORDER BY albumartist, album"
+              " ORDER BY %s, album" % \
+                _orelse("albumartist_sort", "albumartist")
         c = self.conn.execute(sql, subvals)
         return [Album(self, dict(res)) for res in c.fetchall()]
 
@@ -1059,7 +1069,8 @@ class Library(BaseLibrary):
 
         sql = "SELECT * FROM items " + \
               "WHERE " + where + \
-              " ORDER BY artist, album, disc, track"
+              " ORDER BY %s, album, disc, track" % \
+                _orelse("artist_sort", "artist")
         log.debug('Getting items with SQL: %s' % sql)
         c = self.conn.execute(sql, subvals)
         return ResultIterator(c)
