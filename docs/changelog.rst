@@ -22,6 +22,7 @@ Changelog
   file for easy importing to other systems. Thanks to Fabrice Laporte.
 * :doc:`/plugins/bpd`: Use Gstreamer's ``playbin2`` element instead of the
   deprecated ``playbin``.
+* Filenames are normalized with Unicode Normal Form D (NFD).
 
 
 1.0b13 (March 16, 2012)

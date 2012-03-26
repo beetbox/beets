@@ -18,6 +18,7 @@ import re
 import sys
 import logging
 import shlex
+import unicodedata
 from unidecode import unidecode
 from beets.mediafile import MediaFile
 from beets import plugins
@@ -877,6 +878,7 @@ class Library(BaseLibrary):
         subpath = subpath_tmpl.substitute(mapping, funcs)
 
         # Encode for the filesystem, dropping unencodable characters.
+        subpath = unicodedata.normalize('NFD', subpath)
         if isinstance(subpath, unicode) and not fragment:
             encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
             subpath = subpath.encode(encoding, 'replace')
