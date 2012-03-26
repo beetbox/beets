@@ -87,6 +87,7 @@ ALBUM_FIELDS = [
     ('artpath', 'blob',                False),
 
     ('albumartist',      'text', True),
+    ('albumartist_sort', 'text', True),
     ('album',            'text', True),
     ('genre',            'text', True),
     ('year',             'int',  True),
