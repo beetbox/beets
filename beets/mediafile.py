@@ -743,11 +743,6 @@ class MediaFile(object):
                 mp3 = StorageStyle('TPE1'),
                 mp4 = StorageStyle("\xa9ART"), 
                 etc = StorageStyle('artist'),
-            )     
-    artist_sort_name = MediaField(
-                          mp3 = StorageStyle('TSOP'),
-                          mp4 = StorageStyle("soar"), 
-                          etc = StorageStyle('ARTISTSORT'),
             )
     album = MediaField(
                 mp3 = StorageStyle('TALB'),
@@ -889,6 +884,16 @@ class MediaFile(object):
                        StorageStyle('----:com.apple.iTunes:publisher')],
                 etc = [StorageStyle('label'),
                        StorageStyle('publisher')] # Traktor
+            )
+    artist_sort = MediaField(
+                mp3 = StorageStyle('TSOP'),
+                mp4 = StorageStyle("soar"),
+                etc = StorageStyle('ARTISTSORT'),
+            )
+    albumartist_sort = MediaField(
+                mp3 = StorageStyle('TXXX', id3_desc=u'ALBUMARTISTSORT'),
+                mp4 = StorageStyle("soaa"),
+                etc = StorageStyle('ALBUMARTISTSORT'),
             )
 
     # Album art.

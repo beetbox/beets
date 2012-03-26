@@ -195,7 +195,7 @@ correct_dicts = {
         'disc':       0,
         'disctotal':  0
     },
-    
+
     # ID3 tag deleted with `mp3info -d`. Tests default values.
     'empty': {
         'title':      u'',
@@ -221,8 +221,14 @@ correct_dicts = {
         'mb_artistid':u'',
         'art':        None,
         'label':      u'',
+
+        # Additional, non-iTunes fields.
+        'albumartist':      u'',
+        'mb_albumartistid': u'',
+        'artist_sort':      u'',
+        'albumartist_sort': u'',
     },
-    
+
     # Full release date.
     'date': {
         'year':       1987,

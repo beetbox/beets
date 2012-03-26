@@ -27,7 +27,11 @@ class MBAlbumInfoTest(unittest.TestCase):
                 'first-release-date': date_str,
             },
             'artist-credit': [
-                {'artist': {'name': 'ARTIST NAME', 'id': 'ARTIST ID'}}
+                {'artist': {
+                    'name': 'ARTIST NAME',
+                    'id': 'ARTIST ID',
+                    'sort-name': 'ARTIST SORT NAME',
+                }}
             ],
             'date': '3001',
             'medium-list': [],
@@ -162,6 +166,11 @@ class MBAlbumInfoTest(unittest.TestCase):
             mb.VARIOUS_ARTISTS_ID
         d = mb.album_info(release)
         self.assertTrue(d.va)
+
+    def test_parse_artist_sort_name(self):
+        release = self._make_release(None)
+        d = mb.album_info(release)
+        self.assertEqual(d.artist_sort, 'ARTIST SORT NAME')
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

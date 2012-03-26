@@ -109,14 +109,16 @@ can be found definitively `in the source`_.) Note that plugins can add new (or
 replace existing) template values (see :ref:`writing-plugins`).
 
 .. _in the source: 
-    http://code.google.com/p/beets/source/browse/beets/library.py#36 
+    https://github.com/sampsyo/beets/blob/master/beets/library.py#L39
 
 Ordinary metadata:
 
 * title
 * artist
+* artist_sort
 * album
 * albumartist
+* albumartist_sort
 * genre
 * composer
 * grouping
