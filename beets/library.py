@@ -807,7 +807,7 @@ class Library(BaseLibrary):
         self.conn.commit()
 
     def destination(self, item, pathmod=None, in_album=False,
-                    fragment=False, basedir=None):
+                    fragment=False, basedir=None, platform=None):
         """Returns the path in the library directory designated for item
         item (i.e., where the file ought to be). in_album forces the
         item to be treated as part of an album. fragment makes this
@@ -817,6 +817,7 @@ class Library(BaseLibrary):
         directory for the destination.
         """
         pathmod = pathmod or os.path
+        platform = platform or sys.platform
 
         # Use a path format based on a query, falling back on the
         # default.
@@ -878,7 +879,10 @@ class Library(BaseLibrary):
         subpath = subpath_tmpl.substitute(mapping, funcs)
 
         # Encode for the filesystem, dropping unencodable characters.
-        subpath = unicodedata.normalize('NFD', subpath)
+        if platform == 'darwin':
+            subpath = unicodedata.normalize('NFD', subpath)
+        else:
+            subpath = unicodedata.normalize('NFC', subpath)
         if isinstance(subpath, unicode) and not fragment:
             encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
             subpath = subpath.encode(encoding, 'replace')

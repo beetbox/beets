@@ -20,6 +20,7 @@ import ntpath
 import posixpath
 import shutil
 import re
+import unicodedata
 
 import _common
 from _common import unittest
@@ -403,6 +404,18 @@ class DestinationTest(unittest.TestCase):
             (re.compile(r'foo'), 'bar'),
         ])
         self.assertEqual(p, 'bar/bar')
+
+    def test_unicode_normalized_nfd_on_mac(self):
+        instr = unicodedata.normalize('NFC', u'caf\xe9')
+        self.lib.path_formats = [('default', instr)]
+        dest = self.lib.destination(self.i, platform='darwin', fragment=True)
+        self.assertEqual(dest, unicodedata.normalize('NFD', instr))
+
+    def test_unicode_normalized_nfc_on_linux(self):
+        instr = unicodedata.normalize('NFD', u'caf\xe9')
+        self.lib.path_formats = [('default', instr)]
+        dest = self.lib.destination(self.i, platform='linux2', fragment=True)
+        self.assertEqual(dest, unicodedata.normalize('NFC', instr))
 
 class PathFormattingMixin(object):
     """Utilities for testing path formatting."""

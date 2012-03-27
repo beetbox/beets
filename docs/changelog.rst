@@ -24,7 +24,8 @@ Changelog
   tracks on the album (to help you guess what might be going wrong).
 * :doc:`/plugins/bpd`: Use Gstreamer's ``playbin2`` element instead of the
   deprecated ``playbin``.
-* Filenames are normalized with Unicode Normal Form D (NFD).
+* Filenames are normalized with Unicode Normal Form D (NFD) on Mac OS X and NFC
+  on all other platforms.
 
 
 1.0b13 (March 16, 2012)
