@@ -20,6 +20,8 @@ Changelog
   beets distribution.
 * New :doc:`/plugins/m3uupdate`: Catalog imported files in an ``m3u`` playlist
   file for easy importing to other systems. Thanks to Fabrice Laporte.
+* When the autotagger fails to find a match, it now displays the number of
+  tracks on the album (to help you guess what might be going wrong).
 * :doc:`/plugins/bpd`: Use Gstreamer's ``playbin2`` element instead of the
   deprecated ``playbin``.
 * Filenames are normalized with Unicode Normal Form D (NFD).
