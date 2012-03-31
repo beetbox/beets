@@ -17,46 +17,60 @@ music player.
 """
 
 from __future__ import with_statement
+import datetime
 import os
+import sys
+import re
 
 from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import normpath
 
-DEFAULT_FILENAME = 'imported.m3u'
-_m3u_path = None  # If unspecified, use file in library directory.
+_m3u_dirpath = None  # If unspecified, use file in library directory.
 
 class m3uPlugin(BeetsPlugin):
     def configure(self, config):
-        global _m3u_path
-        _m3u_path = ui.config_val(config, 'm3uupdate', 'm3u', None)
-        if _m3u_path:
-            _m3u_path = normpath(_m3u_path)
+        global _m3u_dirpath, _m3u_fixedname
+        _m3u_dirpath = ui.config_val(config, 'm3uupdate', 'm3u_dirpath', None)
 
-def _get_m3u_path(lib):
+        if _m3u_dirpath:
+            _m3u_dirpath = normpath(_m3u_dirpath)
+
+        _m3u_fixedname = ui.config_val(config, 'm3uupdate', 'm3u_fixedname', None)
+
+def _get_m3u_dirpath(lib):
     """Given a Library object, return the path to the M3U file to be
     used (either in the library directory or an explicitly configured
     path. Ensures that the containing directory exists.
     """
-    if _m3u_path:
+    if _m3u_dirpath:
         # Explicitly specified.
-        path = _m3u_path
+        dirpath = _m3u_dirpath
     else:
         # Inside library directory.
-        path = os.path.join(lib.directory, DEFAULT_FILENAME)
+        dirpath = lib.directory
 
-    # Ensure containing directory exists.
-    m3u_dir = os.path.dirname(path)
-    if not os.path.exists(m3u_dir):
-        os.makedirs(m3u_dir)
+    # Ensure directory exists.
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
 
+    return dirpath
+
+def _build_filename(lib, basename):
+    """Builds unique basename for the M3U file."""
+    if _m3u_fixedname:
+        path = os.path.join(_get_m3u_dirpath(lib), _m3u_fixedname) 
+    else :
+        m3u_dirpath = _get_m3u_dirpath(lib)
+        basename = re.sub(r"[\s,'\"]", '_', basename)
+        date = datetime.datetime.now().strftime("%Y%m%d_%Hh%M")
+        path = normpath(os.path.join(m3u_dirpath, date+'_'+basename+'.m3u'))
     return path
 
-def _record_items(lib, items):
+def _record_items(m3u_path, items):
     """Records relative paths to the given items in the appropriate M3U
     file.
     """
-    m3u_path = _get_m3u_path(lib)
     with open(m3u_path, 'a') as f:
         for item in items:
             path = os.path.relpath(item.path, os.path.dirname(m3u_path))
@@ -64,8 +78,8 @@ def _record_items(lib, items):
 
 @m3uPlugin.listen('album_imported')
 def album_imported(lib, album, config):
-    _record_items(lib, album.items())
+    _record_items(_build_filename(lib, album.album), album.items())
 
 @m3uPlugin.listen('item_imported')
 def item_imported(lib, item, config):
-    _record_items(lib, [item])
+    _record_items(_build_filename(lib, item.title), [item])
