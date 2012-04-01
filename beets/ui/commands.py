@@ -732,6 +732,8 @@ import_cmd.parser.add_option('-L', '--library', dest='library',
     action='store_true', help='retag items matching a query')
 import_cmd.parser.add_option('-i', '--incremental', dest='incremental',
     action='store_true', help='skip already-imported directories')
+import_cmd.parser.add_option('--no-incremental', dest='incremental',
+    action='store_false', help='do not skip already-imported directories')
 def import_func(lib, config, opts, args):
     copy  = opts.copy  if opts.copy  is not None else \
         ui.config_val(config, 'beets', 'import_copy',
