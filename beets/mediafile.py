@@ -932,6 +932,24 @@ class MediaFile(object):
                 etc = StorageStyle('musicbrainz_albumartistid')
             )
 
+    # Acoustid fields.
+    acoustid_fingerprint = MediaField(
+                mp3 = StorageStyle('TXXX',
+                                   id3_desc=u'Acoustid Fingerprint'),
+                mp4 = StorageStyle(
+                    '----:com.apple.iTunes:Acoustid Fingerprint',
+                    as_type=str),
+                etc = StorageStyle('ACOUSTID_FINGERPRINT')
+            )
+    acoustid_id = MediaField(
+                mp3 = StorageStyle('TXXX',
+                                   id3_desc=u'Acoustid Id'),
+                mp4 = StorageStyle(
+                    '----:com.apple.iTunes:Acoustid Id',
+                    as_type=str),
+                etc = StorageStyle('ACOUSTID_ID')
+            )
+
     # ReplayGain fields.
     rg_track_gain = FloatValueField(2, 'dB',
                 mp3 = StorageStyle('TXXX',

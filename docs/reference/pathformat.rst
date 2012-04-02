@@ -148,9 +148,11 @@ Audio information:
 * bitdepth (only available for some formats)
 * samplerate (in kilohertz, with units: e.g., "48kHz")
 
-MusicBrainz IDs:
+MusicBrainz and fingerprint information:
 
 * mb_trackid
 * mb_albumid
 * mb_artistid
 * mb_albumartistid
+* acoustid_fingerprint
+* acoustid_id

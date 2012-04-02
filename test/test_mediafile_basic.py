@@ -223,10 +223,12 @@ correct_dicts = {
         'label':      u'',
 
         # Additional, non-iTunes fields.
-        'albumartist':      u'',
-        'mb_albumartistid': u'',
-        'artist_sort':      u'',
-        'albumartist_sort': u'',
+        'albumartist':          u'',
+        'mb_albumartistid':     u'',
+        'artist_sort':          u'',
+        'albumartist_sort':     u'',
+        'acoustid_fingerprint': u'',
+        'acoustid_id':          u'',
     },
 
     # Full release date.
