@@ -17,6 +17,8 @@ autotagger. Requires the pyacoustid library.
 """
 from __future__ import with_statement
 from beets import plugins
+from beets import ui
+from beets import util
 from beets.autotag import hooks
 import acoustid
 import logging
@@ -41,6 +43,9 @@ _matches = {}
 # autotagging.
 _fingerprints = {}
 _acoustids = {}
+
+# The user's Acoustid API key, if provided.
+_userkey = None
 
 
 def acoustid_match(path):
@@ -86,6 +91,9 @@ def acoustid_match(path):
 
     log.debug('chroma: matched recording {}'.format(recording_id))
     _matches[path] = recording_id, release_ids
+
+
+# Plugin structure and autotagging logic.
 
 def _all_releases(items):
     """Given an iterable of Items, determines (according to Acoustid)
@@ -141,6 +149,23 @@ class AcoustidPlugin(plugins.BeetsPlugin):
             log.debug('no acoustid item candidate found')
             return []
 
+    def configure(self, config):
+        global _userkey
+        _userkey = ui.config_val(config, 'acoustid', 'apikey', None)
+
+    def commands(self):
+        submit_cmd = ui.Subcommand('submit',
+                                   help='submit Acoustid fingerprints')
+        def submit_cmd_func(lib, config, opts, args):
+            if not _userkey:
+                raise ui.UserError('no Acoustid user API key provided')
+            submit_items(_userkey, lib.items(ui.decargs(args)))
+        submit_cmd.func = submit_cmd_func
+        return [submit_cmd]
+
+
+# Hooks into import process.
+
 @AcoustidPlugin.listen('import_task_start')
 def fingerprint_task(config=None, task=None):
     """Fingerprint each item in the task for later use during the
@@ -158,3 +183,66 @@ def apply_acoustid_metadata(config=None, task=None):
             item.acoustid_fingerprint = _fingerprints[item.path]
         if item.path in _acoustids:
             item.acoustid_id = _acoustids[item.path]
+
+
+# UI commands.
+
+def submit_items(userkey, items, chunksize=64):
+    """Submit fingerprints for the items to the Acoustid server.
+    """
+    data = []  # The running list of dictionaries to submit.
+    def submit_chunk():
+        """Submit the current accumulated fingerprint data."""
+        log.info('submitting {} fingerprints'.format(len(data)))
+        acoustid.submit(API_KEY, userkey, data)
+        del data[:]
+
+    for item in items:
+        # Get a fingerprint and length for this track.
+        if not item.length:
+            log.info(u'{}: no duration available'.format(
+                util.displayable_path(item.path)
+            ))
+            continue
+        elif item.acoustid_fingerprint:
+            log.info(u'{}: using existing fingerprint'.format(
+                util.displayable_path(item.path)
+            ))
+            fp = item.acoustid_fingerprint
+        else:
+            log.info(u'{}: fingerprinting'.format(
+                util.displayable_path(item.path)
+            ))
+            try:
+                _, fp = acoustid.fingerprint_file(item.path)
+            except acoustid.FingerprintGenerationError, exc:
+                log.info('fingerprint generation failed')
+                continue
+
+        # Construct a submission dictionary for this item.
+        item_data = {
+            'duration': int(item.length),
+            'fingerprint': fp,
+        }
+        if item.mb_trackid:
+            item_data['mbid'] = item.mb_trackid
+            log.debug('submitting MBID')
+        else:
+            item_data.update({
+                'track': item.title,
+                'artist': item.artist,
+                'album': item.album,
+                'albumartist': item.albumartist,
+                'year': item.year,
+                'trackno': item.track,
+                'discno': item.disc,
+            })
+            log.debug('submitting textual metadata')
+        data.append(item_data)
+
+        # If we have enough data, submit a chunk.
+        if len(data) > chunksize:
+            submit_chunk()
+
+    # Submit remaining data in a final chunk.
+    submit_chunk()

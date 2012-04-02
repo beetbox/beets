@@ -14,9 +14,12 @@ Changelog
   fields, ``artist_sort`` and ``albumartist_sort``, that contain sortable artist
   names like "Beatles, The". These fields are also used to sort albums and items
   when using the ``list`` command. Thanks to Paul Provost.
-* :doc:`/plugins/chroma`: The Chromaprint fingerprint and Acoustid ID are now
-  stored for all fingerprinted tracks. This version of beets *requires* at least
-  version 0.6 of `pyacoustid`_ for fingerprinting to work.
+* :doc:`/plugins/chroma`: A new command, ``beet submit``, will **submit
+  fingerprints** to the Acoustid database. Submitting your library helps
+  increase the coverage and accuracy of Acoustid fingerprinting. The Chromaprint
+  fingerprint and Acoustid ID are also now stored for all fingerprinted tracks.
+  This version of beets *requires* at least version 0.6 of `pyacoustid`_ for
+  fingerprinting to work.
 * New :doc:`/plugins/rdm`: Randomly select albums and tracks from your library.
   Thanks to Philippe Mongeau.
 * The :doc:`/plugins/mbcollection` by Jeffrey Aylesworth was added to the core
