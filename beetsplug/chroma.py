@@ -29,22 +29,14 @@ COMMON_REL_THRESH = 0.6 # How many tracks must have an album in common?
 
 log = logging.getLogger('beets')
 
-class _cached(object):
-    """Decorator implementing memoization."""
-    def __init__(self, func):
-        self.func = func
-        self.cache = {}
+# Stores the Acoustid match information for each track. This is
+# populated when an import task begins and then used when searching for
+# candidates. It maps audio file paths to (recording_id, release_ids)
+# pairs. If a given path is not present in the mapping, then no match
+# was found.
+_matches = {}
 
-    def __call__(self, *args, **kwargs):
-        cache_key = (args, tuple(sorted(kwargs.iteritems())))
-        if cache_key in self.cache:
-            return self.cache[cache_key]
-        res = self.func(*args, **kwargs)
-        self.cache[cache_key] = res
-        return res
-
-@_cached
-def acoustid_match(path, metadata=None):
+def acoustid_match(path):
     """Gets metadata for a file from Acoustid. Returns a recording ID
     and a list of release IDs if a match is found; otherwise, returns
     None.
@@ -87,10 +79,10 @@ def _all_releases(items):
     # Count the number of "hits" for each release.
     relcounts = defaultdict(int)
     for item in items:
-        aidata = acoustid_match(item.path)
-        if not aidata:
+        if item.path not in _matches:
             continue
-        _, release_ids = aidata
+
+        _, release_ids = _matches[item.path]
         for release_id in release_ids:
             relcounts[release_id] += 1
 
@@ -100,12 +92,11 @@ def _all_releases(items):
 
 class AcoustidPlugin(plugins.BeetsPlugin):
     def track_distance(self, item, info):
-        aidata = acoustid_match(item.path)
-        if not aidata:
+        if item.path not in _matches:
             # Match failed.
             return 0.0, 0.0
 
-        recording_id, _ = aidata
+        recording_id, _ = _matches[item.path]
         if info.track_id == recording_id:
             dist = 0.0
         else:
@@ -123,10 +114,10 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         return albums
 
     def item_candidates(self, item):
-        aidata = acoustid_match(item.path)
-        if not aidata:
-            return []
-        recording_id, _ = aidata
+        if item.path not in _matches:
+            return 0.0, 0.0
+
+        recording_id, _ = _matches[item.path]
         track = hooks._track_for_id(recording_id)
         if track:
             log.debug('found acoustid item candidate')
@@ -134,3 +125,13 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         else:
             log.debug('no acoustid item candidate found')
             return []
+
+@AcoustidPlugin.listen('start_import_task')
+def fingerprint_task(config=None, task=None):
+    """Fingerprint each item in the task for later use during the
+    autotagging candidate search.
+    """
+    for item in task.all_items():
+        match = acoustid_match(item.path)
+        if match:
+            _matches[item.path] = match

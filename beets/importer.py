@@ -296,6 +296,7 @@ class ImportTask(object):
         self.items = items
         self.sentinel = False
         self.remove_duplicates = False
+        self.is_album = True
 
     @classmethod
     def done_sentinel(cls, toppath):
@@ -328,12 +329,12 @@ class ImportTask(object):
         """Sets the candidates for this album matched by the
         `autotag.tag_album` method.
         """
+        assert self.is_album
         assert not self.sentinel
         self.cur_artist = cur_artist
         self.cur_album = cur_album
         self.candidates = candidates
         self.rec = rec
-        self.is_album = True
 
     def set_null_match(self):
         """Set the candidates to indicate no album match was found.
@@ -393,7 +394,9 @@ class ImportTask(object):
         if self.sentinel or self.is_album:
             history_add(self.path)
 
+
     # Logical decisions.
+
     def should_write_tags(self):
         """Should new info be written to the files' metadata?"""
         if self.choice_flag == action.APPLY:
@@ -402,16 +405,20 @@ class ImportTask(object):
             return False
         else:
             assert False
+
     def should_fetch_art(self):
         """Should album art be downloaded for this album?"""
         return self.should_write_tags() and self.is_album
+
     def should_skip(self):
         """After a choice has been made, returns True if this is a
         sentinel or it has been marked for skipping.
         """
         return self.sentinel or self.choice_flag == action.SKIP
 
-    # Useful data.
+
+    # Convenient data.
+
     def chosen_ident(self):
         """Returns identifying metadata about the current choice. For
         albums, this is an (artist, album) pair. For items, this is
@@ -430,6 +437,16 @@ class ImportTask(object):
                 return (self.item.artist, self.item.title)
             elif self.choice_flag is action.APPLY:
                 return (self.info.artist, self.info.title)
+
+    def all_items(self):
+        """If this is an album task, returns the list of non-None
+        (non-gap) items. If this is a singleton task, returns a list
+        containing the item.
+        """
+        if self.is_album:
+            return [i for i in self.items if i]
+        else:
+            return [self.item]
 
 
 # Full-album pipeline stages.
@@ -540,6 +557,8 @@ def initial_lookup(config):
         if task.sentinel:
             continue
 
+        plugins.send('start_import_task', task=task, config=config)
+
         log.debug('Looking up: %s' % task.path)
         try:
             task.set_match(*autotag.tag_album(task.items, config.timid))
@@ -622,7 +641,7 @@ def apply_choices(config):
         if task.should_skip():
             continue
 
-        items = [i for i in task.items if i] if task.is_album else [task.item]
+        items = task.all_items()
         # Clear IDs in case the items are being re-tagged.
         for item in items:
             item.id = None
@@ -753,7 +772,7 @@ def finalize(config):
                 task.save_history()
             continue
 
-        items = [i for i in task.items if i] if task.is_album else [task.item]
+        items = task.all_items()
 
         # Announce that we've added an album.
         if task.is_album:
@@ -793,6 +812,8 @@ def item_lookup(config):
         task = yield task
         if task.sentinel:
             continue
+
+        plugins.send('start_import_task', task=task, config=config)
 
         task.set_item_match(*autotag.tag_item(task.item, config.timid))
 

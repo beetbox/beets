@@ -134,6 +134,9 @@ currently available are:
 * *write*: called with an ``Item`` and a ``MediaFile`` object just before a
   file's metadata is written to disk.
 
+* *start_import_task*: called when before an import task begins processing.
+  Parameters: ``task`` and ``config``.
+
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 
 Extend the Autotagger
