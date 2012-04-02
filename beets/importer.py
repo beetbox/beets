@@ -557,7 +557,7 @@ def initial_lookup(config):
         if task.sentinel:
             continue
 
-        plugins.send('start_import_task', task=task, config=config)
+        plugins.send('import_task_start', task=task, config=config)
 
         log.debug('Looking up: %s' % task.path)
         try:
@@ -653,6 +653,7 @@ def apply_choices(config):
                 autotag.apply_metadata(task.items, task.info)
             else:
                 autotag.apply_item_metadata(task.item, task.info)
+            plugins.send('import_task_apply', config=config, task=task)
 
         # Infer album-level fields.
         if task.is_album:
@@ -813,7 +814,7 @@ def item_lookup(config):
         if task.sentinel:
             continue
 
-        plugins.send('start_import_task', task=task, config=config)
+        plugins.send('import_task_start', task=task, config=config)
 
         task.set_item_match(*autotag.tag_item(task.item, config.timid))
 

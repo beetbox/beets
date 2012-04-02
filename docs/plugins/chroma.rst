@@ -25,7 +25,7 @@ Installing Dependencies
 
 To get fingerprinting working, you'll need to install three things: the
 `Chromaprint`_ library or command-line tool, an audio decoder, and the
-`pyacoustid`_ Python library.
+`pyacoustid`_ Python library (version 0.6 or later).
 
 First, you will need to install `Chromaprint`_, either as a dynamic library or
 in the form of a command-line tool (``fpcalc``). The Chromaprint site has links
