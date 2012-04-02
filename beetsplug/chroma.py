@@ -60,13 +60,15 @@ def acoustid_match(path, metadata=None):
         log.debug('fingerprint matching %s failed: %s' % 
                   (repr(path), str(exc)))
         return None
-    log.debug('fingerprinted: %s' % repr(path))
+    log.debug('chroma: fingerprinted %s' % repr(path))
     
     # Ensure the response is usable and parse it.
     if res['status'] != 'ok' or not res.get('results'):
+        log.debug('chroma: no match found')
         return None
     result = res['results'][0]
     if result['score'] < SCORE_THRESH or not result.get('recordings'):
+        log.debug('chroma: no recordings above threshold')
         return None
     recording = result['recordings'][0]
     recording_id = recording['id']
@@ -75,6 +77,7 @@ def acoustid_match(path, metadata=None):
     else:
         release_ids = []
 
+    log.debug('chroma: matched recording {}'.format(recording_id))
     return recording_id, release_ids
 
 def _all_releases(items):
