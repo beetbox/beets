@@ -241,7 +241,7 @@ def submit_items(userkey, items, chunksize=64):
         data.append(item_data)
 
         # If we have enough data, submit a chunk.
-        if len(data) > chunksize:
+        if len(data) >= chunksize:
             submit_chunk()
 
     # Submit remaining data in a final chunk.
