@@ -428,6 +428,7 @@ def _get_replacements(config):
     repl_string = config_val(config, 'beets', 'replace', None)
     if not repl_string:
         return
+    repl_string = repl_string.decode('utf8')
 
     parts = repl_string.strip().split()
     if not parts:

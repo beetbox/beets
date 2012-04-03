@@ -232,15 +232,15 @@ class DestinationTest(unittest.TestCase):
         self.assertFalse('two / three' in p)
     
     def test_sanitize_unix_replaces_leading_dot(self):
-        p = util.sanitize_path('one/.two/three', posixpath)
+        p = util.sanitize_path(u'one/.two/three', posixpath)
         self.assertFalse('.' in p)
     
     def test_sanitize_windows_replaces_trailing_dot(self):
-        p = util.sanitize_path('one/two./three', ntpath)
+        p = util.sanitize_path(u'one/two./three', ntpath)
         self.assertFalse('.' in p)
     
     def test_sanitize_windows_replaces_illegal_chars(self):
-        p = util.sanitize_path(':*?"<>|', ntpath)
+        p = util.sanitize_path(u':*?"<>|', ntpath)
         self.assertFalse(':' in p)
         self.assertFalse('*' in p)
         self.assertFalse('?' in p)
@@ -249,10 +249,6 @@ class DestinationTest(unittest.TestCase):
         self.assertFalse('>' in p)
         self.assertFalse('|' in p)
 
-    def test_sanitize_replaces_colon_with_dash(self):
-        p = util.sanitize_path(u':', posixpath)
-        self.assertEqual(p, u'-')
-    
     def test_path_with_format(self):
         self.lib.path_formats = [('default', '$artist/$album ($format)')]
         p = self.lib.destination(self.i)
@@ -341,7 +337,7 @@ class DestinationTest(unittest.TestCase):
         self.assertEqual(path, outpath)
 
     def test_sanitize_windows_replaces_trailing_space(self):
-        p = util.sanitize_path('one/two /three', ntpath)
+        p = util.sanitize_path(u'one/two /three', ntpath)
         self.assertFalse(' ' in p)
 
     def test_component_sanitize_replaces_separators(self):
@@ -390,20 +386,20 @@ class DestinationTest(unittest.TestCase):
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'something')
 
     def test_sanitize_path_works_on_empty_string(self):
-        p = util.sanitize_path('', posixpath)
-        self.assertEqual(p, '')
+        p = util.sanitize_path(u'', posixpath)
+        self.assertEqual(p, u'')
 
     def test_sanitize_with_custom_replace_overrides_built_in_sub(self):
-        p = util.sanitize_path('a/.?/b', posixpath, [
-            (re.compile(r'foo'), 'bar'),
+        p = util.sanitize_path(u'a/.?/b', posixpath, [
+            (re.compile(ur'foo'), u'bar'),
         ])
-        self.assertEqual(p, 'a/.?/b')
+        self.assertEqual(p, u'a/.?/b')
 
     def test_sanitize_with_custom_replace_adds_replacements(self):
-        p = util.sanitize_path('foo/bar', posixpath, [
-            (re.compile(r'foo'), 'bar'),
+        p = util.sanitize_path(u'foo/bar', posixpath, [
+            (re.compile(ur'foo'), u'bar'),
         ])
-        self.assertEqual(p, 'bar/bar')
+        self.assertEqual(p, u'bar/bar')
 
     def test_unicode_normalized_nfd_on_mac(self):
         instr = unicodedata.normalize('NFC', u'caf\xe9')
@@ -822,14 +818,14 @@ class PathStringTest(unittest.TestCase):
         self.assertEqual(path, alb.artpath)
 
     def test_sanitize_path_with_special_chars(self):
-        path = 'b\xe1r?'
+        path = u'b\xe1r?'
         new_path = util.sanitize_path(path)
-        self.assert_(new_path.startswith('b\xe1r'))
+        self.assert_(new_path.startswith(u'b\xe1r'))
 
-    def test_sanitize_path_returns_bytestring(self):
-        path = 'b\xe1r?'
+    def test_sanitize_path_returns_unicode(self):
+        path = u'b\xe1r?'
         new_path = util.sanitize_path(path)
-        self.assert_(isinstance(new_path, str))
+        self.assert_(isinstance(new_path, unicode))
 
     def test_unicode_artpath_becomes_bytestring(self):
         alb = self.lib.add_album([self.i])

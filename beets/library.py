@@ -880,17 +880,17 @@ class Library(BaseLibrary):
         funcs.update(plugins.template_funcs())
         subpath = subpath_tmpl.substitute(mapping, funcs)
 
-        # Encode for the filesystem, dropping unencodable characters.
+        # Prepare path for output: normalize Unicode characters.
         if platform == 'darwin':
             subpath = unicodedata.normalize('NFD', subpath)
         else:
             subpath = unicodedata.normalize('NFC', subpath)
+        # Truncate components and remove forbidden characters.
+        subpath = util.sanitize_path(subpath, pathmod, self.replacements)
+        # Encode for the filesystem, dropping unencodable characters.
         if isinstance(subpath, unicode) and not fragment:
             encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
             subpath = subpath.encode(encoding, 'replace')
-
-        # Truncate components and remove forbidden characters.
-        subpath = util.sanitize_path(subpath, pathmod, self.replacements)
 
         # Preserve extension.
         _, extension = pathmod.splitext(item.path)

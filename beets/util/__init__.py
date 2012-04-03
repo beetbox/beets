@@ -277,33 +277,33 @@ def unique_path(path):
         if not os.path.exists(new_path):
             return new_path
 
-# Note: POSIX actually supports \ and : -- I just think they're
-# a pain. And ? has caused problems for some.
+# Note: The Windows "reserved characters" are, of course, allowed on
+# Unix. They are forbidden here because they cause problems on Samba
+# shares, which are sufficiently common as to cause frequent problems.
+# http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
 CHAR_REPLACE = [
-    (re.compile(r'[\\/\?"]|^\.'), '_'),
-    (re.compile(r':'), '-'),
-]
-CHAR_REPLACE_WINDOWS = [
-    (re.compile(r'["\*<>\|]|^\.|\.$|\s+$'), '_'),
+    (re.compile(ur'[\\/]'), u'_'),  # / and \ -- forbidden everywhere.
+    (re.compile(ur'^\.'), u'_'),  # Leading dot (hidden files on Unix).
+    (re.compile(ur'[\x00-\x1f]'), u''),  # Control characters.
+    (re.compile(ur'[<>:"\?\*\|]'), u'_'),  # Windows "reserved characters".
+    (re.compile(ur'\.$'), u'_'),  # Trailing dots.
+    (re.compile(ur'\s+$'), u''),  # Trailing whitespace.
 ]
 def sanitize_path(path, pathmod=None, replacements=None):
-    """Takes a path and makes sure that it is legal. Returns a new path.
-    Only works with fragments; won't work reliably on Windows when a
-    path begins with a drive letter. Path separators (including altsep!)
-    should already be cleaned from the path components. If replacements
-    is specified, it is used *instead* of the default set of
-    replacements for the platform; it must be a list of (compiled regex,
-    replacement string) pairs.
+    """Takes a path (as a Unicode string) and makes sure that it is
+    legal. Returns a new path. Only works with fragments; won't work
+    reliably on Windows when a path begins with a drive letter. Path
+    separators (including altsep!) should already be cleaned from the
+    path components. If replacements is specified, it is used *instead*
+    of the default set of replacements for the platform; it must be a
+    list of (compiled regex, replacement string) pairs.
     """
     pathmod = pathmod or os.path
-    windows = pathmod.__name__ == 'ntpath'
 
     # Choose the appropriate replacements.
     if not replacements:
         replacements = list(CHAR_REPLACE)
-        if windows:
-            replacements += CHAR_REPLACE_WINDOWS
-    
+
     comps = components(path, pathmod)
     if not comps:
         return ''
@@ -311,10 +311,10 @@ def sanitize_path(path, pathmod=None, replacements=None):
         # Replace special characters.
         for regex, repl in replacements:
             comp = regex.sub(repl, comp)
-        
+
         # Truncate each component.
         comp = comp[:MAX_FILENAME_LENGTH]
-                
+
         comps[i] = comp
     return pathmod.join(*comps)
 
