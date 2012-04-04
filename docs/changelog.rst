@@ -14,6 +14,9 @@ Changelog
   fields, ``artist_sort`` and ``albumartist_sort``, that contain sortable artist
   names like "Beatles, The". These fields are also used to sort albums and items
   when using the ``list`` command. Thanks to Paul Provost.
+* Many other **new metadata fields** were added, including ASIN, label catalog
+  number, disc title, encoder, and MusicBrainz release group ID. For a full list
+  of fields, see :ref:`itemfields`.
 * :doc:`/plugins/chroma`: A new command, ``beet submit``, will **submit
   fingerprints** to the Acoustid database. Submitting your library helps
   increase the coverage and accuracy of Acoustid fingerprinting. The Chromaprint

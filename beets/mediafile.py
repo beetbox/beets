@@ -855,6 +855,60 @@ class MediaFile(object):
         mp4 = StorageStyle("soaa"),
         etc = StorageStyle('ALBUMARTISTSORT'),
     )
+    asin = MediaField(
+        mp3 = StorageStyle('TXXX', id3_desc=u'ASIN'),
+        mp4 = StorageStyle("----:com.apple.iTunes:ASIN"),
+        etc = StorageStyle('ASIN'),
+    )
+    catalognum = MediaField(
+        mp3 = StorageStyle('TXXX', id3_desc=u'TXXX:CATALOGNUMBER'),
+        mp4 = StorageStyle("----:com.apple.iTunes:CATALOGNUMBER"),
+        etc = StorageStyle('CATALOGNUMBER'),
+    )
+    disctitle = MediaField(
+        mp3 = StorageStyle('TSST'),
+        mp4 = StorageStyle("----:com.apple.iTunes:DISCSUBTITLE"),
+        etc = StorageStyle('DISCSUBTITLE'),
+    )
+    encoder = MediaField(
+        mp3 = StorageStyle('TENC'),
+        mp4 = StorageStyle("\xa9too"),
+        etc = [StorageStyle('ENCODEDBY'),
+               StorageStyle('ENCODER')]
+    )
+    script = MediaField(
+        mp3 = StorageStyle('TXXX', id3_desc=u'Script'),
+        mp4 = StorageStyle("----:com.apple.iTunes:SCRIPT"),
+        etc = StorageStyle('SCRIPT'),
+    )
+    language = MediaField(
+        mp3 = StorageStyle('TLAN'),
+        mp4 = StorageStyle("----:com.apple.iTunes:LANGUAGE"),
+        etc = StorageStyle('LANGUAGE'),
+    )
+    country = MediaField(
+        mp3 = StorageStyle('TXXX',
+                           id3_desc=u'MusicBrainz Album Release Country'),
+        mp4 = StorageStyle("----:com.apple.iTunes:MusicBrainz Album "
+                           "Release Country"),
+        etc = StorageStyle('RELEASECOUNTRY'),
+    )
+    albumstatus = MediaField(
+        mp3 = StorageStyle('TXXX', id3_desc=u'MusicBrainz Album Status'),
+        mp4 = StorageStyle("----:com.apple.iTunes:MusicBrainz Album Status"),
+        etc = StorageStyle('MUSICBRAINZ_ALBUMSTATUS'),
+    )
+    media = MediaField(
+        mp3 = StorageStyle('TMED'),
+        mp4 = StorageStyle("----:com.apple.iTunes:MEDIA"),
+        etc = StorageStyle('MEDIA'),
+    )
+    albumdisambig = MediaField(
+        # This tag mapping was invented for beets (not used by Picard, etc).
+        mp3 = StorageStyle('TXXX', id3_desc=u'MusicBrainz Album Comment'),
+        mp4 = StorageStyle("----:com.apple.iTunes:MusicBrainz Album Comment"),
+        etc = StorageStyle('MUSICBRAINZ_ALBUMCOMMENT'),
+    )
 
     # Album art.
     art = ImageField()
@@ -886,6 +940,13 @@ class MediaFile(object):
         mp4 = StorageStyle('----:com.apple.iTunes:MusicBrainz Album Artist Id',
                            as_type=str),
         etc = StorageStyle('musicbrainz_albumartistid')
+    )
+    mb_releasegroupid = MediaField(
+        mp3 = StorageStyle('TXXX',
+                            id3_desc=u'MusicBrainz Release Group Id'),
+        mp4 = StorageStyle('----:com.apple.iTunes:MusicBrainz Release Group Id',
+                           as_type=str),
+        etc = StorageStyle('musicbrainz_releasegroupid')
     )
 
     # Acoustid fields.

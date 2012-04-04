@@ -99,6 +99,7 @@ your template. For example, the second parameter to ``%left`` must be an
 integer; if you write ``%left{foo,bar}``, this will be expanded to something
 like ``<ValueError: invalid literal for int()>``.
 
+.. _itemfields:
 
 Available Values
 ----------------
@@ -136,6 +137,16 @@ Ordinary metadata:
 * albumtype (the MusicBrainz album type; the MusicBrainz wiki has a `list of
   type names`_)
 * label
+* asin
+* catalognum
+* script
+* language
+* country
+* albumstatus
+* media
+* albumdisambig
+* disctitle
+* encoder
 
 .. _list of type names: http://wiki.musicbrainz.org/XMLWebService#Release_Type_and_Status
 
@@ -154,5 +165,6 @@ MusicBrainz and fingerprint information:
 * mb_albumid
 * mb_artistid
 * mb_albumartistid
+* mb_releasegroupid
 * acoustid_fingerprint
 * acoustid_id
