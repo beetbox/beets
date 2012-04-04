@@ -24,6 +24,10 @@ section header:
     directory when using ``beet import``. Defaults to ``yes``.  Can be
     overridden with the ``-c`` and ``-C`` command-line options.
 
+``import_move``
+    Either ``yes`` or ``no``, indicating whether to move files into the library
+    directory when using ``beet import``. Defaults to ``no``.
+
 ``import_write``
     Either ``yes`` or ``no``, controlling whether metadata (e.g., ID3) tags are
     written to files when using ``beet import``. Defaults to ``yes``. The ``-w``
