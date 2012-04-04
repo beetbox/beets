@@ -96,6 +96,7 @@ def album_info(release):
     # Basic info.
     track_infos = []
     for medium in release['medium-list']:
+        disctitle = medium.get('title')
         for track in medium['track-list']:
             ti = track_info(track['recording'],
                             int(medium['position']),
@@ -104,6 +105,7 @@ def album_info(release):
                 # Track title may be distinct from underling recording
                 # title.
                 ti.title = track['title']
+            ti.disctitle = disctitle
             track_infos.append(ti)
     info = beets.autotag.hooks.AlbumInfo(
         release['title'],
@@ -115,8 +117,11 @@ def album_info(release):
         artist_sort=release['artist-credit'][0]['artist']['sort-name'],
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
-    if 'asin' in release:
-        info.asin = release['asin']
+    info.asin = release.get('asin')
+    info.releasegroup_id = release['release-group']['id']
+    info.albumdisambig = release['release-group'].get('disambiguation')
+    info.country = release.get('country')
+    info.albumstatus = release.get('status')
 
     # Release type not always populated.
     if 'type' in release['release-group']:
@@ -139,6 +144,18 @@ def album_info(release):
             label = label_info['label']['name']
             if label != '[no label]':
                 info.label = label
+        info.catalognum = label_info.get('catalog-number')
+
+    # Text representation data.
+    if release.get('text-representation'):
+        rep = release['text-representation']
+        info.script = rep['script']
+        info.language = rep['language']
+
+    # Media (format).
+    if release['medium-list']:
+        first_medium = release['medium-list'][0]
+        info.media = first_medium.get('format')
 
     return info
 

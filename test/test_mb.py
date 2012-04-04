@@ -22,9 +22,12 @@ class MBAlbumInfoTest(unittest.TestCase):
         release = {
             'title': 'ALBUM TITLE',
             'id': 'ALBUM ID',
+            'asin': 'ALBUM ASIN',
             'release-group': {
                 'type': 'Album',
                 'first-release-date': date_str,
+                'id': 'RELEASE GROUP ID',
+                'disambiguation': 'DISAMBIGUATION',
             },
             'artist-credit': [
                 {'artist': {
@@ -35,6 +38,16 @@ class MBAlbumInfoTest(unittest.TestCase):
             ],
             'date': '3001',
             'medium-list': [],
+            'label-info-list': [{
+                'catalog-number': 'CATALOG NUMBER',
+                'label': {'name': 'LABEL NAME'},
+            }],
+            'text-representation': {
+                'script': 'SCRIPT',
+                'language': 'LANGUAGE',
+            },
+            'country': 'COUNTRY',
+            'status': 'STATUS',
         }
         if tracks:
             track_list = []
@@ -46,6 +59,8 @@ class MBAlbumInfoTest(unittest.TestCase):
             release['medium-list'].append({
                 'position': '1',
                 'track-list': track_list,
+                'format': 'FORMAT',
+                'title': 'MEDIUM TITLE',
             })
         return release
 
@@ -57,7 +72,7 @@ class MBAlbumInfoTest(unittest.TestCase):
         if duration is not None:
             track['length'] = duration
         return track
-    
+
     def test_parse_release_with_year(self):
         release = self._make_release('1984')
         d = mb.album_info(release)
@@ -171,6 +186,58 @@ class MBAlbumInfoTest(unittest.TestCase):
         release = self._make_release(None)
         d = mb.album_info(release)
         self.assertEqual(d.artist_sort, 'ARTIST SORT NAME')
+
+    def test_parse_releasegroupid(self):
+        release = self._make_release(None)
+        d = mb.album_info(release)
+        self.assertEqual(d.releasegroup_id, 'RELEASE GROUP ID')
+
+    def test_parse_asin(self):
+        release = self._make_release(None)
+        d = mb.album_info(release)
+        self.assertEqual(d.asin, 'ALBUM ASIN')
+
+    def test_parse_catalognum(self):
+        release = self._make_release(None)
+        d = mb.album_info(release)
+        self.assertEqual(d.catalognum, 'CATALOG NUMBER')
+
+    def test_parse_textrepr(self):
+        release = self._make_release(None)
+        d = mb.album_info(release)
+        self.assertEqual(d.script, 'SCRIPT')
+        self.assertEqual(d.language, 'LANGUAGE')
+
+    def test_parse_country(self):
+        release = self._make_release(None)
+        d = mb.album_info(release)
+        self.assertEqual(d.country, 'COUNTRY')
+
+    def test_parse_status(self):
+        release = self._make_release(None)
+        d = mb.album_info(release)
+        self.assertEqual(d.albumstatus, 'STATUS')
+
+    def test_parse_media(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(None, tracks=tracks)
+        d = mb.album_info(release)
+        self.assertEqual(d.media, 'FORMAT')
+
+    def test_parse_disambig(self):
+        release = self._make_release(None)
+        d = mb.album_info(release)
+        self.assertEqual(d.albumdisambig, 'DISAMBIGUATION')
+
+    def test_parse_disctitle(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0)]
+        release = self._make_release(None, tracks=tracks)
+        d = mb.album_info(release)
+        t = d.tracks
+        self.assertEqual(t[0].disctitle, 'MEDIUM TITLE')
+        self.assertEqual(t[1].disctitle, 'MEDIUM TITLE')
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

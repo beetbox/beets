@@ -135,7 +135,7 @@ def apply_metadata(items, album_info):
         else:
             item.artist_sort = album_info.artist_sort
         item.albumartist_sort = album_info.artist_sort
-        
+
         # Release date.
         if album_info.year:
             item.year = album_info.year
@@ -143,7 +143,7 @@ def apply_metadata(items, album_info):
             item.month = album_info.month
         if album_info.day:
             item.day = album_info.day
-        
+
         # Title and track index.
         item.title = track_info.title
         item.track = index + 1
@@ -151,7 +151,7 @@ def apply_metadata(items, album_info):
         # Disc and disc count.
         item.disc = track_info.medium
         item.disctotal = album_info.mediums
-        
+
         # MusicBrainz IDs.
         item.mb_trackid = track_info.track_id
         item.mb_albumid = album_info.album_id
@@ -160,9 +160,21 @@ def apply_metadata(items, album_info):
         else:
             item.mb_artistid = album_info.artist_id
         item.mb_albumartistid = album_info.artist_id
+        item.mb_releasegroupid = album_info.releasegroup_id
+
+        # Compilation flag.
+        item.comp = album_info.va
+
+        # Miscellaneous metadata.
         item.albumtype = album_info.albumtype
         if album_info.label:
             item.label = album_info.label
-        
-        # Compilation flag.
-        item.comp = album_info.va
+        item.asin = album_info.asin
+        item.catalognum = album_info.catalognum
+        item.script = album_info.script
+        item.language = album_info.language
+        item.country = album_info.country
+        item.albumstatus = album_info.albumstatus
+        item.media = album_info.media
+        item.albumdisambig = album_info.albumdisambig
+        item.disctitle = track_info.disctitle
