@@ -391,7 +391,7 @@ class MediaField(object):
         if obj.type in ('mp3', 'mp4'):
             styles = self.styles[obj.type]
         else:
-            styles = self.styles['etc'] # sane styles
+            styles = self.styles['etc']  # Sane styles.
 
         # Make sure we always return a list of styles, even when given
         # a single style for convenience.
@@ -736,114 +736,114 @@ class MediaFile(object):
     title = MediaField(
         mp3 = StorageStyle('TIT2'),
         mp4 = StorageStyle("\xa9nam"),
-        etc = StorageStyle('title'),
+        etc = StorageStyle('TITLE'),
     )
     artist = MediaField(
         mp3 = StorageStyle('TPE1'),
         mp4 = StorageStyle("\xa9ART"),
-        etc = StorageStyle('artist'),
+        etc = StorageStyle('ARTIST'),
     )
     album = MediaField(
         mp3 = StorageStyle('TALB'),
         mp4 = StorageStyle("\xa9alb"),
-        etc = StorageStyle('album'),
+        etc = StorageStyle('ALBUM'),
     )
     genre = MediaField(
         mp3 = StorageStyle('TCON'),
         mp4 = StorageStyle("\xa9gen"),
-        etc = StorageStyle('genre'),
+        etc = StorageStyle('GENRE'),
     )
     composer = MediaField(
         mp3 = StorageStyle('TCOM'),
         mp4 = StorageStyle("\xa9wrt"),
-        etc = StorageStyle('composer'),
+        etc = StorageStyle('COMPOSER'),
     )
     grouping = MediaField(
         mp3 = StorageStyle('TIT1'),
         mp4 = StorageStyle("\xa9grp"),
-        etc = StorageStyle('grouping'),
+        etc = StorageStyle('GROUPING'),
     )
     year = MediaField(out_type=int,
         mp3 = StorageStyle('TDRC', packing=packing.DATE, pack_pos=0),
         mp4 = StorageStyle("\xa9day", packing=packing.DATE, pack_pos=0),
-        etc = [StorageStyle('date', packing=packing.DATE, pack_pos=0),
-               StorageStyle('year')]
+        etc = [StorageStyle('DATE', packing=packing.DATE, pack_pos=0),
+               StorageStyle('YEAR')]
     )
     month = MediaField(out_type=int,
         mp3 = StorageStyle('TDRC', packing=packing.DATE, pack_pos=1),
         mp4 = StorageStyle("\xa9day", packing=packing.DATE, pack_pos=1),
-        etc = StorageStyle('date', packing=packing.DATE, pack_pos=1),
+        etc = StorageStyle('DATE', packing=packing.DATE, pack_pos=1),
     )
     day = MediaField(out_type=int,
         mp3 = StorageStyle('TDRC', packing=packing.DATE, pack_pos=2),
         mp4 = StorageStyle("\xa9day", packing=packing.DATE, pack_pos=2),
-        etc = StorageStyle('date', packing=packing.DATE, pack_pos=2),
+        etc = StorageStyle('DATE', packing=packing.DATE, pack_pos=2),
     )
     date = CompositeDateField(year, month, day)
     track = MediaField(out_type=int,
         mp3 = StorageStyle('TRCK', packing=packing.SLASHED, pack_pos=0),
         mp4 = StorageStyle('trkn', packing=packing.TUPLE, pack_pos=0),
-        etc = [StorageStyle('track'),
-               StorageStyle('tracknumber')]
+        etc = [StorageStyle('TRACK'),
+               StorageStyle('TRACKNUMBER')]
     )
     tracktotal = MediaField(out_type=int,
         mp3 = StorageStyle('TRCK', packing=packing.SLASHED, pack_pos=1),
         mp4 = StorageStyle('trkn', packing=packing.TUPLE, pack_pos=1),
-        etc = [StorageStyle('tracktotal'),
-               StorageStyle('trackc'),
-               StorageStyle('totaltracks')]
+        etc = [StorageStyle('TRACKTOTAL'),
+               StorageStyle('TRACKC'),
+               StorageStyle('TOTALTRACKS')]
     )
     disc = MediaField(out_type=int,
         mp3 = StorageStyle('TPOS', packing=packing.SLASHED, pack_pos=0),
         mp4 = StorageStyle('disk', packing=packing.TUPLE, pack_pos=0),
-        etc = [StorageStyle('disc'),
-               StorageStyle('discnumber')]
+        etc = [StorageStyle('DISC'),
+               StorageStyle('DISCNUMBER')]
     )
     disctotal = MediaField(out_type=int,
         mp3 = StorageStyle('TPOS', packing=packing.SLASHED, pack_pos=1),
         mp4 = StorageStyle('disk', packing=packing.TUPLE, pack_pos=1),
-        etc = [StorageStyle('disctotal'),
-               StorageStyle('discc'),
-               StorageStyle('totaldiscs')]
+        etc = [StorageStyle('DISCTOTAL'),
+               StorageStyle('DISCC'),
+               StorageStyle('TOTALDISCS')]
     )
     lyrics = MediaField(
         mp3 = StorageStyle('USLT', list_elem=False, id3_desc=u''),
         mp4 = StorageStyle("\xa9lyr"),
-        etc = StorageStyle('lyrics')
+        etc = StorageStyle('LYRICS')
     )
     comments = MediaField(
         mp3 = StorageStyle('COMM', id3_desc=u''),
         mp4 = StorageStyle("\xa9cmt"),
-        etc = [StorageStyle('description'),
-               StorageStyle('comment')]
+        etc = [StorageStyle('DESCRIPTION'),
+               StorageStyle('COMMENT')]
     )
     bpm = MediaField(out_type=int,
         mp3 = StorageStyle('TBPM'),
         mp4 = StorageStyle('tmpo', as_type=int),
-        etc = StorageStyle('bpm'),
+        etc = StorageStyle('BPM'),
     )
     comp = MediaField(out_type=bool,
         mp3 = StorageStyle('TCMP'),
         mp4 = StorageStyle('cpil', list_elem=False, as_type=bool),
-        etc = StorageStyle('compilation'),
+        etc = StorageStyle('COMPILATION'),
     )
     albumartist = MediaField(
         mp3 = StorageStyle('TPE2'),
         mp4 = StorageStyle('aART'),
-        etc = [StorageStyle('album artist'),
-               StorageStyle('albumartist')]
+        etc = [StorageStyle('ALBUM ARTIST'),
+               StorageStyle('ALBUMARTIST')]
     )
     albumtype = MediaField(
         mp3 = StorageStyle('TXXX', id3_desc=u'MusicBrainz Album Type'),
         mp4 = StorageStyle('----:com.apple.iTunes:MusicBrainz Album Type'),
-        etc = StorageStyle('musicbrainz_albumtype'),
+        etc = StorageStyle('MUSICBRAINZ_ALBUMTYPE'),
     )
     label = MediaField(
         mp3 = StorageStyle('TPUB'),
         mp4 = [StorageStyle('----:com.apple.iTunes:Label'),
                StorageStyle('----:com.apple.iTunes:publisher')],
-        etc = [StorageStyle('label'),
-               StorageStyle('publisher')]  # Traktor
+        etc = [StorageStyle('LABEL'),
+               StorageStyle('PUBLISHER')]  # Traktor
     )
     artist_sort = MediaField(
         mp3 = StorageStyle('TSOP'),
@@ -920,33 +920,33 @@ class MediaFile(object):
                             id3_frame_field = 'data'),
         mp4 = StorageStyle('----:com.apple.iTunes:MusicBrainz Track Id',
                            as_type=str),
-        etc = StorageStyle('musicbrainz_trackid')
+        etc = StorageStyle('MUSICBRAINZ_TRACKID')
     )
     mb_albumid = MediaField(
         mp3 = StorageStyle('TXXX', id3_desc=u'MusicBrainz Album Id'),
         mp4 = StorageStyle('----:com.apple.iTunes:MusicBrainz Album Id',
                            as_type=str),
-        etc = StorageStyle('musicbrainz_albumid')
+        etc = StorageStyle('MUSICBRAINZ_ALBUMID')
     )
     mb_artistid = MediaField(
         mp3 = StorageStyle('TXXX', id3_desc=u'MusicBrainz Artist Id'),
         mp4 = StorageStyle('----:com.apple.iTunes:MusicBrainz Artist Id',
                            as_type=str),
-        etc = StorageStyle('musicbrainz_artistid')
+        etc = StorageStyle('MUSICBRAINZ_ARTISTID')
     )
     mb_albumartistid = MediaField(
         mp3 = StorageStyle('TXXX',
                             id3_desc=u'MusicBrainz Album Artist Id'),
         mp4 = StorageStyle('----:com.apple.iTunes:MusicBrainz Album Artist Id',
                            as_type=str),
-        etc = StorageStyle('musicbrainz_albumartistid')
+        etc = StorageStyle('MUSICBRAINZ_ALBUMARTISTID')
     )
     mb_releasegroupid = MediaField(
         mp3 = StorageStyle('TXXX',
                             id3_desc=u'MusicBrainz Release Group Id'),
         mp4 = StorageStyle('----:com.apple.iTunes:MusicBrainz Release Group Id',
                            as_type=str),
-        etc = StorageStyle('musicbrainz_releasegroupid')
+        etc = StorageStyle('MUSICBRAINZ_RELEASEGROUPID')
     )
 
     # Acoustid fields.
