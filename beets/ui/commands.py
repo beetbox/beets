@@ -61,7 +61,8 @@ def _do_query(lib, query, album, also_items=True):
         items = list(lib.items(query))
 
     if album and not albums:
-        raise ui.UserError('No matching albums found.')
+        raise ui.UserError('No matching albums found. See '
+                           'https://github.com/sampsyo/beets/wiki/FAQ#wiki-nomatch')
     elif not album and not items:
         raise ui.UserError('No matching items found.')
     
