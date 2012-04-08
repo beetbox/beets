@@ -46,7 +46,7 @@ disabled by default, but you can turn them on as described above.
    inline
    scrub
    rewrite
-   m3uupdate
+   importfeeds
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -75,7 +75,7 @@ Interoperability
 
 * :doc:`mpdupdate`: Automatically notifies `MPD`_ whenever the beets library
   changes.
-* :doc:`m3uupdate`: Catalog imported files in an ``.m3u`` playlist file.
+* :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
 
 Miscellaneous
 '''''''''''''
