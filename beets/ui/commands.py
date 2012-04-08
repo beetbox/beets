@@ -273,13 +273,14 @@ def _quiet_fall_back(config):
     return config.quiet_fallback
 
 def choose_candidate(candidates, singleton, rec, color, timid,
-                     cur_artist=None, cur_album=None, item=None):
+                     cur_artist=None, cur_album=None, item=None,
+                     itemcount=None):
     """Given a sorted list of candidates, ask the user for a selection
-    of which candidate to use. Applies to both full albums and 
+    of which candidate to use. Applies to both full albums and
     singletons  (tracks). For albums, the candidates are `(dist, items,
-    info)` triples and `cur_artist` and `cur_album` must be provided.
-    For singletons, the candidates are `(dist, info)` pairs and `item`
-    must be provided.
+    info)` triples and `cur_artist`, `cur_album`, and `itemcount` must
+    be provided. For singletons, the candidates are `(dist, info)` pairs
+    and `item` must be provided.
 
     Returns the result of the choice, which may SKIP, ASIS, TRACKS, or
     MANUAL or a candidate. For albums, a candidate is a `(info, items)`
@@ -294,11 +295,13 @@ def choose_candidate(candidates, singleton, rec, color, timid,
 
     # Zero candidates.
     if not candidates:
-        print_("No match found.")
         if singleton:
+            print_("No matching recordings found.")
             opts = ('Use as-is', 'Skip', 'Enter search', 'enter Id',
                     'aBort')
         else:
+            print_("No matching release found for {} tracks."
+                   .format(itemcount))
             opts = ('Use as-is', 'as Tracks', 'Skip', 'Enter search',
                     'enter Id', 'aBort')
         sel = ui.input_options(opts, color=color)
@@ -490,7 +493,7 @@ def choose_match(task, config):
         # Ask for a choice from the user.
         choice = choose_candidate(candidates, False, rec, config.color, 
                                   config.timid, task.cur_artist,
-                                  task.cur_album)
+                                  task.cur_album, itemcount=len(task.items))
     
         # Choose which tags to use.
         if choice in (importer.action.SKIP, importer.action.ASIS,

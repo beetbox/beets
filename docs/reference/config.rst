@@ -74,11 +74,13 @@ section header:
     to be ignored when importing. Defaults to ``.* *~`` (i.e., ignore
     Unix-style hidden files and backup files).
 
+.. _replace:
+
 ``replace``
     A set of regular expression/replacement pairs to be applied to all filenames
     created by beets. Typically, these replacements are used to avoid confusing
     problems or errors with the filesystem (for example, leading ``.``
-    characters are replaced on Unix and the ``*<>|`` characters are removed on
+    characters are replaced on Unix and trailing whitespace is removed on
     Windows). To override these substitutions, specify a sequence of
     whitespace-separated terms; the first term is a regular expression and the
     second is a string that should replace anything matching that regex. For
@@ -87,19 +89,22 @@ section header:
 
     If you do change this value, be certain that you include at least enough
     substitutions to avoid causing errors on your operating system. Here are
-    some recommended base replacements for Unix-like OSes::
+    the default substitutions used by beets, which are sufficient to avoid
+    unexpected behavior on all popular platforms::
 
-        replace = [\\/\?"]|^\. _
-                  : -
+        replace = [\\/] _
+                  ^\. _
+                  [\x00-\x1f] _
+                  [<>:"\?\*\|] _
+                  \.$ _
+                  \s+$ <strip>
 
-    And, on Windows::
-
-        replace = [\\/\?"]|^\. _
-                  ["\*<>\|]|^\.|\.$|\s+$ _
-                  : -
-
-    Note that the above examples are, in fact, the default substitutions used by
-    beets.
+    These substitutions remove forward and back slashes, leading dots, and
+    control characters—all of which is a good idea on any OS. The fourth line
+    removes the Windows "reserved characters" (useful even on Unix for for
+    compatibility with Windows-influenced network filesystems like Samba).
+    Trailing dots and trailing whitespace, which can cause problems on Windows
+    clients, are also removed.
 
     To replace space characters, use the ``\s`` (whitespace) entity::
         

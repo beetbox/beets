@@ -171,11 +171,6 @@ correct_dicts = {
         'mb_artistid':'7cf0ea9d-86b9-4dad-ba9e-2355a64899ea',
         'art':        None,
         'label':      u'the label',
-
-        'rg_track_peak': 0.0,
-        'rg_track_gain': 0.0,
-        'rg_album_peak': 0.0,
-        'rg_album_gain': 0.0,
     },
 
     # Additional coverage for common cases when "total" fields are unset.
@@ -195,7 +190,7 @@ correct_dicts = {
         'disc':       0,
         'disctotal':  0
     },
-    
+
     # ID3 tag deleted with `mp3info -d`. Tests default values.
     'empty': {
         'title':      u'',
@@ -221,8 +216,31 @@ correct_dicts = {
         'mb_artistid':u'',
         'art':        None,
         'label':      u'',
+
+        # Additional, non-iTunes fields.
+        'rg_track_peak':        0.0,
+        'rg_track_gain':        0.0,
+        'rg_album_peak':        0.0,
+        'rg_album_gain':        0.0,
+        'albumartist':          u'',
+        'mb_albumartistid':     u'',
+        'artist_sort':          u'',
+        'albumartist_sort':     u'',
+        'acoustid_fingerprint': u'',
+        'acoustid_id':          u'',
+        'mb_releasegroupid':    u'',
+        'asin':                 u'',
+        'catalognum':           u'',
+        'disctitle':            u'',
+        'encoder':              u'',
+        'script':               u'',
+        'language':             u'',
+        'country':              u'',
+        'albumstatus':          u'',
+        'media':                u'',
+        'albumdisambig':        u'',
     },
-    
+
     # Full release date.
     'date': {
         'year':       1987,

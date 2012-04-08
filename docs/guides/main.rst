@@ -46,7 +46,7 @@ recent source distribution, and run ``python setup.py install`` in the directory
 therein.
 
 .. _pip: http://pip.openplans.org/
-.. _Downloads: http://code.google.com/p/beets/downloads/list
+.. _Downloads: https://github.com/sampsyo/beets/downloads
 
 The best way to upgrade beets to a new version is by running ``pip install -U
 beets``. You may want to follow `@b33ts`_ on Twitter to hear about progress on

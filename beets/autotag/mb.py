@@ -55,14 +55,15 @@ def track_info(recording, medium=None, medium_index=None):
                                          medium=medium,
                                          medium_index=medium_index)
 
-    # Get the name of the track artist.
+    # Get the track artist credit.
     if recording.get('artist-credit-phrase'):
         info.artist = recording['artist-credit-phrase']
 
-    # Get the ID of the first artist.
+    # Get the ID and sort name of the first artist.
     if 'artist-credit' in recording:
         artist = recording['artist-credit'][0]['artist']
         info.artist_id = artist['id']
+        info.artist_sort = artist['sort-name']
 
     if recording.get('length'):
         info.length = int(recording['length'])/(1000.0)
@@ -95,6 +96,7 @@ def album_info(release):
     # Basic info.
     track_infos = []
     for medium in release['medium-list']:
+        disctitle = medium.get('title')
         for track in medium['track-list']:
             ti = track_info(track['recording'],
                             int(medium['position']),
@@ -103,6 +105,7 @@ def album_info(release):
                 # Track title may be distinct from underling recording
                 # title.
                 ti.title = track['title']
+            ti.disctitle = disctitle
             track_infos.append(ti)
     info = beets.autotag.hooks.AlbumInfo(
         release['title'],
@@ -111,10 +114,14 @@ def album_info(release):
         release['artist-credit'][0]['artist']['id'],
         track_infos,
         mediums=len(release['medium-list']),
+        artist_sort=release['artist-credit'][0]['artist']['sort-name'],
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
-    if 'asin' in release:
-        info.asin = release['asin']
+    info.asin = release.get('asin')
+    info.releasegroup_id = release['release-group']['id']
+    info.albumdisambig = release['release-group'].get('disambiguation')
+    info.country = release.get('country')
+    info.albumstatus = release.get('status')
 
     # Release type not always populated.
     if 'type' in release['release-group']:
@@ -137,6 +144,18 @@ def album_info(release):
             label = label_info['label']['name']
             if label != '[no label]':
                 info.label = label
+        info.catalognum = label_info.get('catalog-number')
+
+    # Text representation data.
+    if release.get('text-representation'):
+        rep = release['text-representation']
+        info.script = rep['script']
+        info.language = rep['language']
+
+    # Media (format).
+    if release['medium-list']:
+        first_medium = release['medium-list'][0]
+        info.media = first_medium.get('format')
 
     return info
 

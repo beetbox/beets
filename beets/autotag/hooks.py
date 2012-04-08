@@ -36,13 +36,25 @@ class AlbumInfo(object):
     - ``day``: release day
     - ``label``: music label responsible for the release
     - ``mediums``: the number of discs in this release
+    - ``artist_sort``: name of the release's artist for sorting
+    - ``releasegroup_id``: MBID for the album's release group
+    - ``catalognum``: the label's catalog number for the release
+    - ``script``: character set used for metadata
+    - ``language``: human language of the metadata
+    - ``country``: the release country
+    - ``albumstatus``: MusicBrainz release status (Official, etc.)
+    - ``media``: delivery mechanism (Vinyl, etc.)
+    - ``albumdisambig``: MusicBrainz release disambiguation comment
 
     The fields up through ``tracks`` are required. The others are
     optional and may be None.
     """
     def __init__(self, album, album_id, artist, artist_id, tracks, asin=None,
                  albumtype=None, va=False, year=None, month=None, day=None,
-                 label=None, mediums=None):
+                 label=None, mediums=None, artist_sort=None,
+                 releasegroup_id=None, catalognum=None, script=None,
+                 language=None, country=None, albumstatus=None, media=None,
+                 albumdisambig=None):
         self.album = album
         self.album_id = album_id
         self.artist = artist
@@ -56,6 +68,15 @@ class AlbumInfo(object):
         self.day = day
         self.label = label
         self.mediums = mediums
+        self.artist_sort = artist_sort
+        self.releasegroup_id = releasegroup_id
+        self.catalognum = catalognum
+        self.script = script
+        self.language = language
+        self.country = country
+        self.albumstatus = albumstatus
+        self.media = media
+        self.albumdisambig = albumdisambig
 
 class TrackInfo(object):
     """Describes a canonical track present on a release. Appears as part
@@ -68,12 +89,15 @@ class TrackInfo(object):
     - ``length``: float: duration of the track in seconds
     - ``medium``: the disc number this track appears on in the album
     - ``medium_index``: the track's position on the disc
+    - ``artist_sort``: name of the track artist for sorting
+    - ``disctitle``: name of the individual medium (subtitle)
 
     Only ``title`` and ``track_id`` are required. The rest of the fields
     may be None.
     """
     def __init__(self, title, track_id, artist=None, artist_id=None,
-                 length=None, medium=None, medium_index=None):
+                 length=None, medium=None, medium_index=None,
+                 artist_sort=None, disctitle=None):
         self.title = title
         self.track_id = track_id
         self.artist = artist
@@ -81,6 +105,8 @@ class TrackInfo(object):
         self.length = length
         self.medium = medium
         self.medium_index = medium_index
+        self.artist_sort = artist_sort
+        self.disctitle = disctitle
 
 
 # Aggregation of sources.
