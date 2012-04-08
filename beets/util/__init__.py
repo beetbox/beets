@@ -241,7 +241,8 @@ def copy(path, dest, replace=False, pathmod=None):
         return
     path = syspath(path)
     dest = syspath(dest)
-    _assert_not_exists(dest, pathmod)
+    if not replace:
+        _assert_not_exists(dest, pathmod)
     return shutil.copyfile(path, dest)
 
 def move(path, dest, replace=False, pathmod=None):
