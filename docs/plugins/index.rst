@@ -46,9 +46,13 @@ disabled by default, but you can turn them on as described above.
    inline
    scrub
    rewrite
+<<<<<<< HEAD
    m3uupdate
    rdm
    mbcollection
+=======
+   importfeeds
+>>>>>>> 837b91b... rename 'm3uupdate' plugin to 'importfeeds'. Handles two more output formats: multi m3u files (one per item imported) and symlinks. Update plugin docs.
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -77,7 +81,7 @@ Interoperability
 
 * :doc:`mpdupdate`: Automatically notifies `MPD`_ whenever the beets library
   changes.
-* :doc:`m3uupdate`: Catalog imported files in an ``.m3u`` playlist file.
+* :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
 
 Miscellaneous
 '''''''''''''
