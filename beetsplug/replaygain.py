@@ -29,7 +29,7 @@ from beets.util import syspath
 
 log = logging.getLogger('beets')
 
-DEFAULT_REFERENCE_LOUDNESS = 91
+DEFAULT_REFERENCE_LOUDNESS = 89
 
 
 class ReplayGainPlugin(BeetsPlugin):
