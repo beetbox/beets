@@ -1,12 +1,126 @@
 Changelog
 =========
 
-1.0b13 (in development)
+1.0b14 (in development)
 -----------------------
+* The importer now gives you **choices when duplicates are detected**.
+  Previously, when beets found an existing album or item in your library
+  matching the metadata on a newly-imported one, it would just skip the new
+  music to avoid introducing duplicates into your library. Now, you have three
+  choices: skip the new music (the previous behavior), keep both, or remove the
+  old music. See the :ref:`guide-duplicates` section in the autotagging guide
+  for details.
+* Artist **sort names** are now fetched from MusicBrainz. There are two new data
+  fields, ``artist_sort`` and ``albumartist_sort``, that contain sortable artist
+  names like "Beatles, The". These fields are also used to sort albums and items
+  when using the ``list`` command. Thanks to Paul Provost.
+* Many other **new metadata fields** were added, including ASIN, label catalog
+  number, disc title, encoder, and MusicBrainz release group ID. For a full list
+  of fields, see :ref:`itemfields`.
+* :doc:`/plugins/chroma`: A new command, ``beet submit``, will **submit
+  fingerprints** to the Acoustid database. Submitting your library helps
+  increase the coverage and accuracy of Acoustid fingerprinting. The Chromaprint
+  fingerprint and Acoustid ID are also now stored for all fingerprinted tracks.
+  This version of beets *requires* at least version 0.6 of `pyacoustid`_ for
+  fingerprinting to work.
+* The importer can now **move files**. Previously, beets could only copy files
+  and delete the originals, which is inefficient if the source and destination
+  are on the same filesystem. Use the ``import_move`` configuration option and
+  see :doc:`/reference/config` for more details. Thanks to Domen Kožar.
+* New :doc:`/plugins/rdm`: Randomly select albums and tracks from your library.
+  Thanks to Philippe Mongeau.
+* The :doc:`/plugins/mbcollection` by Jeffrey Aylesworth was added to the core
+  beets distribution.
+* New :doc:`/plugins/importfeeds`: Catalog imported files in ``m3u`` playlist
+  files or as symlinks for easy importing to other systems. Thanks to Fabrice
+  Laporte.
+* When the autotagger fails to find a match, it now displays the number of
+  tracks on the album (to help you guess what might be going wrong) and a link
+  to the FAQ.
+* Readline is now used when available to provide nicer terminal input.
+* The default filename character substitutions were changed to be more
+  conservative. The Windows "reserved characters" are substituted by default
+  even on Unix platforms (this causes less surprise when using Samba shares to
+  store music). To customize your character substitutions, see :ref:`the replace
+  config option <replace>`.
+* :doc:`/plugins/bpd`: Use Gstreamer's ``playbin2`` element instead of the
+  deprecated ``playbin``.
+* Filenames are normalized with Unicode Normal Form D (NFD) on Mac OS X and NFC
+  on all other platforms.
+
+.. _pyacoustid: https://github.com/sampsyo/pyacoustid
+
+
+1.0b13 (March 16, 2012)
+-----------------------
+
+Beets 1.0b13 consists of a plethora of small but important fixes and
+refinements. A lyrics plugin is now included with beets; new audio properties
+are catalogged; the ``list`` command has been made more powerful; the autotagger
+is more tolerant of different tagging styles; and importing with original file
+deletion now cleans up after itself more thoroughly. Many, many bugs—including
+several crashers—were fixed. This release lays the foundation for more features
+to come in the next couple of releases.
 
 * The :doc:`/plugins/lyrics`, originally by `Peter Brunner`_, is revamped and
   included with beets, making it easy to fetch **song lyrics**.
+* Items now expose their audio **sample rate**, number of **channels**, and
+  **bits per sample** (bitdepth). See :doc:`/reference/pathformat` for a list of
+  all available audio properties. Thanks to Andrew Dunn.
+* The ``beet list`` command now accepts a "format" argument that lets you **show
+  specific information about each album or track**. For example, run ``beet ls
+  -af '$album: $tracktotal' beatles`` to see how long each Beatles album is.
+  Thanks to Philippe Mongeau.
+* The autotagger now tolerates tracks on multi-disc albums that are numbered
+  per-disc. For example, if track 24 on a release is the first track on the
+  second disc, then it is not penalized for having its track number set to 1
+  instead of 24.
+* The autotagger sets the disc number and disc total fields on autotagged
+  albums.
+* The autotagger now also tolerates tracks whose track artists tags are set
+  to "Various Artists".
+* Terminal colors are now supported on Windows via `Colorama`_ (thanks to Karl).
+* When previewing metadata differences, the importer now shows discrepancies in
+  track length.
+* Importing with ``import_delete`` enabled now cleans up empty directories that
+  contained deleting imported music files.
+* Similarly, ``import_delete`` now causes original album art imported from the
+  disk to be deleted.
+* Plugin-supplied template values, such as those created by ``rewrite``, are now
+  properly sanitized (for example, ``AC/DC`` properly becomes ``AC_DC``).
+* Filename extensions are now always lower-cased when copying and moving files.
+* The ``inline`` plugin now prints a more comprehensible error when exceptions
+  occur in Python snippets.
+* The ``replace`` configuration option can now remove characters entirely (in
+  addition to replacing them) if the special string ``<strip>`` is specified as
+  the replacement.
+* New plugin API: plugins can now add fields to the MediaFile tag abstraction
+  layer. See :ref:`writing-plugins`.
+* A reasonable error message is now shown when the import log file cannot be
+  opened.
+* The import log file is now flushed and closed properly so that it can be used
+  to monitor import progress, even when the import crashes.
+* Duplicate track matches are no longer shown when autotagging singletons.
+* The ``chroma`` plugin now logs errors when fingerprinting fails.
+* The ``lastgenre`` plugin suppresses more errors when dealing with the Last.fm
+  API.
+* Fix a bug in the ``rewrite`` plugin that broke the use of multiple rules for
+  a single field.
+* Fix a crash with non-ASCII characters in bytestring metadata fields (e.g.,
+  MusicBrainz IDs).
+* Fix another crash with non-ASCII characters in the configuration paths.
+* Fix a divide-by-zero crash on zero-length audio files.
+* Fix a crash in the ``chroma`` plugin when the Acoustid database had no
+  recording associated with a fingerprint.
+* Fix a crash when an autotagging with an artist or album containing "AND" or
+  "OR" (upper case).
+* Fix an error in the ``rewrite`` and ``inline`` plugins when the corresponding
+  config sections did not exist.
+* Fix bitrate estimation for AAC files whose headers are missing the relevant
+  data.
+* Fix the ``list`` command in BPD (thanks to Simon Chopin).
 
+.. _Colorama: http://pypi.python.org/pypi/colorama
 
 1.0b12 (January 16, 2012)
 -------------------------

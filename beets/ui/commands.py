@@ -30,6 +30,7 @@ import beets.autotag.art
 from beets import plugins
 from beets import importer
 from beets.util import syspath, normpath, ancestry, displayable_path
+from beets.util.functemplate import Template
 from beets import library
 
 # Global logger.
@@ -86,6 +87,7 @@ def _showdiff(field, oldval, newval, color):
 # import: Autotagger and importer.
 
 DEFAULT_IMPORT_COPY           = True
+DEFAULT_IMPORT_MOVE           = False
 DEFAULT_IMPORT_WRITE          = True
 DEFAULT_IMPORT_DELETE         = False
 DEFAULT_IMPORT_AUTOT          = True
@@ -185,10 +187,18 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
         if not item:
             missing_tracks.append((i, track_info))
             continue
+
+        # Get displayable LHS and RHS values.
         cur_track = unicode(item.track)
         new_track = unicode(i+1)
         cur_title = item.title
         new_title = track_info.title
+        if item.length and track_info.length:
+            cur_length = ui.human_seconds_short(item.length)
+            new_length = ui.human_seconds_short(track_info.length)
+            if color:
+                cur_length = ui.colorize('red', cur_length)
+                new_length = ui.colorize('red', new_length)
         
         # Possibly colorize changes.
         if color:
@@ -201,14 +211,24 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
         if not item.title.strip():
             cur_title = displayable_path(os.path.basename(item.path))
         
-        if cur_title != new_title and cur_track != new_track:
-            print_(u" * %s (%s) -> %s (%s)" % (
-                cur_title, cur_track, new_title, new_track
-            ))
-        elif cur_title != new_title:
-            print_(u" * %s -> %s" % (cur_title, new_title))
-        elif cur_track != new_track:
-            print_(u" * %s (%s -> %s)" % (item.title, cur_track, new_track))
+        if cur_title != new_title:
+            lhs, rhs = cur_title, new_title
+            if cur_track != new_track:
+                lhs += u' (%s)' % cur_track
+                rhs += u' (%s)' % new_track
+            print_(u" * %s -> %s" % (lhs, rhs))
+        else:
+            line = u' * %s' % item.title
+            display = False
+            if cur_track != new_track:
+                display = True
+                line += u' (%s -> %s)' % (cur_track, new_track)
+            if item.length and track_info.length and \
+                    abs(item.length - track_info.length) > 2.0:
+                display = True
+                line += u' (%s -> %s)' % (cur_length, new_length)
+            if display:
+                print_(line)
     for i, track_info in missing_tracks:
         line = u' * Missing track: %s (%d)' % (track_info.title, i+1)
         if color:
@@ -254,13 +274,14 @@ def _quiet_fall_back(config):
     return config.quiet_fallback
 
 def choose_candidate(candidates, singleton, rec, color, timid,
-                     cur_artist=None, cur_album=None, item=None):
+                     cur_artist=None, cur_album=None, item=None,
+                     itemcount=None):
     """Given a sorted list of candidates, ask the user for a selection
-    of which candidate to use. Applies to both full albums and 
+    of which candidate to use. Applies to both full albums and
     singletons  (tracks). For albums, the candidates are `(dist, items,
-    info)` triples and `cur_artist` and `cur_album` must be provided.
-    For singletons, the candidates are `(dist, info)` pairs and `item`
-    must be provided.
+    info)` triples and `cur_artist`, `cur_album`, and `itemcount` must
+    be provided. For singletons, the candidates are `(dist, info)` pairs
+    and `item` must be provided.
 
     Returns the result of the choice, which may SKIP, ASIS, TRACKS, or
     MANUAL or a candidate. For albums, a candidate is a `(info, items)`
@@ -275,11 +296,15 @@ def choose_candidate(candidates, singleton, rec, color, timid,
 
     # Zero candidates.
     if not candidates:
-        print_("No match found.")
         if singleton:
+            print_("No matching recordings found.")
             opts = ('Use as-is', 'Skip', 'Enter search', 'enter Id',
                     'aBort')
         else:
+            print_("No matching release found for {} tracks."
+                   .format(itemcount))
+            print_('For help, see: '
+                   'https://github.com/sampsyo/beets/wiki/FAQ#wiki-nomatch')
             opts = ('Use as-is', 'as Tracks', 'Skip', 'Enter search',
                     'enter Id', 'aBort')
         sel = ui.input_options(opts, color=color)
@@ -471,7 +496,7 @@ def choose_match(task, config):
         # Ask for a choice from the user.
         choice = choose_candidate(candidates, False, rec, config.color, 
                                   config.timid, task.cur_artist,
-                                  task.cur_album)
+                                  task.cur_album, itemcount=len(task.items))
     
         # Choose which tags to use.
         if choice in (importer.action.SKIP, importer.action.ASIS,
@@ -545,9 +570,38 @@ def choose_item(task, config):
             assert not isinstance(choice, importer.action)
             return choice
 
+def resolve_duplicate(task, config):
+    """Decide what to do when a new album or item seems similar to one
+    that's already in the library.
+    """
+    log.warn("This %s is already in the library!" %
+             ("album" if task.is_album else "item"))
+
+    if config.quiet:
+        # In quiet mode, don't prompt -- just skip.
+        log.info('Skipping.')
+        sel = 's'
+    else:
+        sel = ui.input_options(
+            ('Skip new', 'Keep both', 'Remove old'),
+            color=config.color
+        )
+
+    if sel == 's':
+        # Skip new.
+        task.set_choice(importer.action.SKIP)
+    elif sel == 'k':
+        # Keep both. Do nothing; leave the choice intact.
+        pass
+    elif sel == 'r':
+        # Remove old.
+        task.remove_duplicates = True
+    else:
+        assert False
+
 # The import command.
 
-def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
+def import_files(lib, paths, copy, move, write, autot, logpath, art, threaded,
                  color, delete, quiet, resume, quiet_fallback, singletons,
                  timid, query, incremental, ignore):
     """Import the files in the given list of paths, tagging each leaf
@@ -580,7 +634,11 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
     # Open the log.
     if logpath:
         logpath = normpath(logpath)
-        logfile = open(syspath(logpath), 'a')
+        try:
+            logfile = open(syspath(logpath), 'a')
+        except IOError:
+            raise ui.UserError(u"could not open log file for writing: %s" %
+                               displayable_path(logpath))
         print >>logfile, 'import started', time.asctime()
     else:
         logfile = None
@@ -589,35 +647,39 @@ def import_files(lib, paths, copy, write, autot, logpath, art, threaded,
     if resume is None and quiet:
         resume = False
 
-    # Perform the import.
-    importer.run_import(
-        lib = lib,
-        paths = paths,
-        resume = resume,
-        logfile = logfile,
-        color = color,
-        quiet = quiet,
-        quiet_fallback = quiet_fallback,
-        copy = copy,
-        write = write,
-        art = art,
-        delete = delete,
-        threaded = threaded,
-        autot = autot,
-        choose_match_func = choose_match,
-        should_resume_func = should_resume,
-        singletons = singletons,
-        timid = timid,
-        choose_item_func = choose_item,
-        query = query,
-        incremental = incremental,
-        ignore = ignore,
-    )
+    try:
+        # Perform the import.
+        importer.run_import(
+            lib = lib,
+            paths = paths,
+            resume = resume,
+            logfile = logfile,
+            color = color,
+            quiet = quiet,
+            quiet_fallback = quiet_fallback,
+            copy = copy,
+            move = move,
+            write = write,
+            art = art,
+            delete = delete,
+            threaded = threaded,
+            autot = autot,
+            choose_match_func = choose_match,
+            should_resume_func = should_resume,
+            singletons = singletons,
+            timid = timid,
+            choose_item_func = choose_item,
+            query = query,
+            incremental = incremental,
+            ignore = ignore,
+            resolve_duplicate_func = resolve_duplicate,
+        )
     
-    # If we were logging, close the file.
-    if logfile:
-        print >>logfile, ''
-        logfile.close()
+    finally:
+        # If we were logging, close the file.
+        if logfile:
+            print >>logfile, ''
+            logfile.close()
 
     # Emit event.
     plugins.send('import', lib=lib, paths=paths)
@@ -661,6 +723,8 @@ def import_func(lib, config, opts, args):
     copy  = opts.copy  if opts.copy  is not None else \
         ui.config_val(config, 'beets', 'import_copy',
             DEFAULT_IMPORT_COPY, bool)
+    move  = ui.config_val(config, 'beets', 'import_move',
+                          DEFAULT_IMPORT_MOVE, bool)
     write = opts.write if opts.write is not None else \
         ui.config_val(config, 'beets', 'import_write',
             DEFAULT_IMPORT_WRITE, bool)
@@ -710,7 +774,7 @@ def import_func(lib, config, opts, args):
         query = None
         paths = args
 
-    import_files(lib, paths, copy, write, autot, logpath, art, threaded,
+    import_files(lib, paths, copy, move, write, autot, logpath, art, threaded,
                  color, delete, quiet, resume, quiet_fallback, singletons,
                  timid, query, incremental, ignore)
 import_cmd.func = import_func
@@ -719,31 +783,41 @@ default_commands.append(import_cmd)
 
 # list: Query and show library contents.
 
-def list_items(lib, query, album, path):
+def list_items(lib, query, album, path, fmt):
     """Print out items in lib matching query. If album, then search for
     albums instead of single items. If path, print the matched objects'
     paths instead of human-readable information about them.
     """
+    if fmt is None:
+        # If no specific template is supplied, use a default.
+        if album:
+            fmt = u'$albumartist - $album'
+        else:
+            fmt = u'$artist - $album - $title'
+    template = Template(fmt)
+
     if album:
         for album in lib.albums(query):
             if path:
                 print_(album.item_dir())
-            else:
-                print_(album.albumartist + u' - ' + album.album)
+            elif fmt is not None:
+                print_(template.substitute(album._record))
     else:
         for item in lib.items(query):
             if path:
                 print_(item.path)
-            else:
-                print_(item.artist + u' - ' + item.album + u' - ' + item.title)
+            elif fmt is not None:
+                print_(template.substitute(item.record))
 
 list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
 list_cmd.parser.add_option('-a', '--album', action='store_true',
     help='show matching albums instead of tracks')
 list_cmd.parser.add_option('-p', '--path', action='store_true',
     help='print paths for matched items or albums')
+list_cmd.parser.add_option('-f', '--format', action='store',
+    help='print with custom format', default=None)
 def list_func(lib, config, opts, args):
-    list_items(lib, decargs(args), opts.album, opts.path)
+    list_items(lib, decargs(args), opts.album, opts.path, opts.format)
 list_cmd.func = list_func
 default_commands.append(list_cmd)
 

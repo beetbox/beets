@@ -18,8 +18,18 @@ import logging
 import traceback
 
 from beets.plugins import BeetsPlugin
+from beets import ui
 
 log = logging.getLogger('beets')
+
+class InlineError(Exception):
+    """Raised when a runtime error occurs in an inline expression.
+    """
+    def __init__(self, expr, exc):
+        super(InlineError, self).__init__(
+            (u"error in inline path field expression:\n" \
+             u"%s\n%s: %s") % (expr, type(exc).__name__, unicode(exc))
+        )
 
 def compile_expr(expr):
     """Given a Python expression, compile it as a path field function.
@@ -35,7 +45,11 @@ def compile_expr(expr):
         return None
 
     def field_func(item):
-        return eval(code, dict(item.record))
+        values = dict(item.record)
+        try:
+            return eval(code, values)
+        except Exception, exc:
+            raise InlineError(expr, exc)
     return field_func
 
 class InlinePlugin(BeetsPlugin):
@@ -45,8 +59,9 @@ class InlinePlugin(BeetsPlugin):
         cls = type(self)
 
         # Add field expressions.
-        for key, value in config.items('pathfields', True):
-            log.debug(u'adding template field %s' % key)
-            func = compile_expr(value)
-            if func is not None:
-                cls.template_fields[key] = func
+        if config.has_section('pathfields'):
+            for key, value in config.items('pathfields', True):
+                log.debug(u'adding template field %s' % key)
+                func = compile_expr(value)
+                if func is not None:
+                    cls.template_fields[key] = func

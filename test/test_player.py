@@ -14,10 +14,7 @@
 
 """Tests for BPD and music playing.
 """
-
-import unittest
-
-import _common
+from _common import unittest
 from beetsplug import bpd
 
 class CommandParseTest(unittest.TestCase):

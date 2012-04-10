@@ -106,11 +106,10 @@ right now; this is something we need to work on. Read the
     situation and avoid duplicating any items. In this situation, the "copy
     files" option (``-c``/``-C`` on the command line or ``import_copy`` in the
     config file) has slightly different behavior: it causes files to be *moved*,
-    rather than duplicated, if they're already in your library. That is, your
-    directory structure will be updated to reflect the new tags if copying is
-    enabled; you never end up with two copies of the file. That means that the
-    "delete files" (``-d`` or ``import_delete``) option is ignored when
-    re-importing as well.
+    rather than duplicated, if they're already in your library. (The same is
+    true, of course, if ``import_move`` is enabled.) That is, your directory
+    structure will be updated to reflect the new tags if copying is enabled; you
+    never end up with two copies of the file.
 
     The ``-L`` (``--library``) flag is also useful for retagging. Instead of
     listing paths you want to import on the command line, specify a :doc:`query
@@ -131,9 +130,15 @@ Want to search for "Gronlandic Edit" by of Montreal? Try ``beet list
 gronlandic``.  Maybe you want to see everything released in 2009 with
 "vegetables" in the title? Try ``beet list year:2009 title:vegetables``. (Read
 more in :doc:`query`.) You can use the ``-a`` switch to search for
-albums instead of individual items. The ``-p`` option makes beets print out
-filenames of matched items, which might be useful for piping into other Unix
-commands (such as `xargs`_).
+albums instead of individual items.
+
+The ``-p`` option makes beets print out filenames of matched items, which might
+be useful for piping into other Unix commands (such as `xargs`_). Similarly, the
+``-f`` option lets you specify a specific format with which to print every album
+or track. This uses the same template syntax as beets' :doc:`path formats
+<pathformat>`. For example, the command ``beet ls -af '$album: $tracktotal'
+beatles`` prints out the number of tracks on each Beatles album. Remember to
+enclose the template argument in single quotes to avoid shell expansion.
 
 .. _xargs: http://en.wikipedia.org/wiki/Xargs
 

@@ -19,6 +19,8 @@ import itertools
 import traceback
 from collections import defaultdict
 
+from beets import mediafile
+
 PLUGIN_NAMESPACE = 'beetsplug'
 DEFAULT_PLUGINS = []
 
@@ -36,6 +38,12 @@ class BeetsPlugin(object):
     functionality by defining a subclass of BeetsPlugin and overriding
     the abstract methods defined here.
     """
+    def __init__(self):
+        """Perform one-time plugin setup. There is probably no reason to
+        override this method.
+        """
+        _add_media_fields(self.item_fields())
+
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
         commands that should be added to beets' CLI.
@@ -71,6 +79,14 @@ class BeetsPlugin(object):
         the CLI starts up.
         """
         pass
+
+    def item_fields(self):
+        """Returns field descriptors to be added to the MediaFile class,
+        in the form of a dictionary whose keys are field names and whose
+        values are descriptor (e.g., MediaField) instances. The Library
+        database schema is not (currently) extended.
+        """
+        return {}
 
     listeners = None
 
@@ -245,6 +261,13 @@ def template_values(item):
             for name, func in plugin.template_fields.iteritems():
                 values[name] = unicode(func(item))
     return values
+
+def _add_media_fields(fields):
+    """Adds a {name: descriptor} dictionary of fields to the MediaFile
+    class. Called during the plugin initialization.
+    """
+    for key, value in fields.iteritems():
+        setattr(mediafile.MediaFile, key, value)
 
 
 # Event dispatch.

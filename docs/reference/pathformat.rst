@@ -99,6 +99,7 @@ your template. For example, the second parameter to ``%left`` must be an
 integer; if you write ``%left{foo,bar}``, this will be expanded to something
 like ``<ValueError: invalid literal for int()>``.
 
+.. _itemfields:
 
 Available Values
 ----------------
@@ -109,14 +110,16 @@ can be found definitively `in the source`_.) Note that plugins can add new (or
 replace existing) template values (see :ref:`writing-plugins`).
 
 .. _in the source: 
-    http://code.google.com/p/beets/source/browse/beets/library.py#36 
+    https://github.com/sampsyo/beets/blob/master/beets/library.py#L39
 
 Ordinary metadata:
 
 * title
 * artist
+* artist_sort
 * album
 * albumartist
+* albumartist_sort
 * genre
 * composer
 * grouping
@@ -134,18 +137,34 @@ Ordinary metadata:
 * albumtype (the MusicBrainz album type; the MusicBrainz wiki has a `list of
   type names`_)
 * label
+* asin
+* catalognum
+* script
+* language
+* country
+* albumstatus
+* media
+* albumdisambig
+* disctitle
+* encoder
 
 .. _list of type names: http://wiki.musicbrainz.org/XMLWebService#Release_Type_and_Status
 
 Audio information:
 
-* length
-* bitrate
-* format
+* length (in seconds)
+* bitrate (in kilobits per second, with units: e.g., "192kbps")
+* format (e.g., "MP3" or "FLAC")
+* channels
+* bitdepth (only available for some formats)
+* samplerate (in kilohertz, with units: e.g., "48kHz")
 
-MusicBrainz IDs:
+MusicBrainz and fingerprint information:
 
 * mb_trackid
 * mb_albumid
 * mb_artistid
 * mb_albumartistid
+* mb_releasegroupid
+* acoustid_fingerprint
+* acoustid_id

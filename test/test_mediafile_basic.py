@@ -15,13 +15,12 @@
 """Automatically-generated blanket testing for the MediaFile metadata
 layer.
 """
-
-import unittest
 import os
 import shutil
 import datetime
 
 import _common
+from _common import unittest
 import beets.mediafile
 
 
@@ -172,11 +171,6 @@ correct_dicts = {
         'mb_artistid':'7cf0ea9d-86b9-4dad-ba9e-2355a64899ea',
         'art':        None,
         'label':      u'the label',
-
-        'rg_track_peak': 0.0,
-        'rg_track_gain': 0.0,
-        'rg_album_peak': 0.0,
-        'rg_album_gain': 0.0,
     },
 
     # Additional coverage for common cases when "total" fields are unset.
@@ -196,7 +190,7 @@ correct_dicts = {
         'disc':       0,
         'disctotal':  0
     },
-    
+
     # ID3 tag deleted with `mp3info -d`. Tests default values.
     'empty': {
         'title':      u'',
@@ -222,8 +216,31 @@ correct_dicts = {
         'mb_artistid':u'',
         'art':        None,
         'label':      u'',
+
+        # Additional, non-iTunes fields.
+        'rg_track_peak':        0.0,
+        'rg_track_gain':        0.0,
+        'rg_album_peak':        0.0,
+        'rg_album_gain':        0.0,
+        'albumartist':          u'',
+        'mb_albumartistid':     u'',
+        'artist_sort':          u'',
+        'albumartist_sort':     u'',
+        'acoustid_fingerprint': u'',
+        'acoustid_id':          u'',
+        'mb_releasegroupid':    u'',
+        'asin':                 u'',
+        'catalognum':           u'',
+        'disctitle':            u'',
+        'encoder':              u'',
+        'script':               u'',
+        'language':             u'',
+        'country':              u'',
+        'albumstatus':          u'',
+        'media':                u'',
+        'albumdisambig':        u'',
     },
-    
+
     # Full release date.
     'date': {
         'year':       1987,
@@ -239,42 +256,63 @@ read_only_correct_dicts = {
         'length': 1.0,
         'bitrate': 80000,
         'format': 'MP3',
+        'samplerate': 44100,
+        'bitdepth': 0,
+        'channels': 1,
     },
 
     'full.flac': {
         'length': 1.0,
         'bitrate': 175120,
         'format': 'FLAC',
+        'samplerate': 44100,
+        'bitdepth': 16,
+        'channels': 1,
     },
 
     'full.m4a': {
         'length': 1.0,
         'bitrate': 64000,
         'format': 'AAC',
+        'samplerate': 44100,
+        'bitdepth': 16,
+        'channels': 2,
     },
     
     'full.ogg': {
         'length': 1.0,
         'bitrate': 48000,
         'format': 'OGG',
+        'samplerate': 44100,
+        'bitdepth': 0,
+        'channels': 1,
     },
     
     'full.ape': {
         'length': 1.0,
         'bitrate': 112040,
         'format': 'APE',
+        'samplerate': 44100,
+        'bitdepth': 16,
+        'channels': 1,
     },
 
     'full.wv': {
         'length': 1.0,
         'bitrate': 108744,
         'format': 'WavPack',
+        'samplerate': 44100,
+        'bitdepth': 0,
+        'channels': 1,
     },
 
     'full.mpc': {
         'length': 1.0,
         'bitrate': 23,
         'format': 'Musepack',
+        'samplerate': 44100,
+        'bitdepth': 0,
+        'channels': 2,
     },
 }
 

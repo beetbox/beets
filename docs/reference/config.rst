@@ -19,21 +19,32 @@ section header:
     The directory to which files will be copied/moved when adding them to the
     library. Defaults to ``~/Music``.
 
-``import_copy``
-    Either ``yes`` or ``no``, indicating whether to copy files into the library
-    directory when using ``beet import``. Defaults to ``yes``.  Can be
-    overridden with the ``-c`` and ``-C`` command-line options.
-
 ``import_write``
     Either ``yes`` or ``no``, controlling whether metadata (e.g., ID3) tags are
     written to files when using ``beet import``. Defaults to ``yes``. The ``-w``
     and ``-W`` command-line options override this setting.
 
-``import_delete``
-    Either ``yes`` or ``no``. When enabled in conjunction with ``import_copy``,
-    deletes original files after they are copied into your library. This might
-    be useful, for example, if you're low on disk space -- but it's risky!
-    Defaults to ``no``.
+``import_copy``
+    Either ``yes`` or ``no``, indicating whether to **copy** files into the
+    library directory when using ``beet import``. Defaults to ``yes``.  Can be
+    overridden with the ``-c`` and ``-C`` command-line options.
+    
+    The option is ignored if ``import_move`` is enabled (i.e., beets can move or
+    copy files but it doesn't make sense to do both).
+
+``import_move``
+    Either ``yes`` or ``no``, indicating whether to **move** files into the
+    library directory when using ``beet import``.
+    Defaults to ``no``. 
+
+    The effect is similar to the ``import_copy`` option but you end up with only
+    one copy of the imported file. ("Moving" works even across filesystems; if
+    necessary, beets will copy and then delete when a simple rename is
+    impossible.) Moving files can be risky—it's a good idea to keep a backup in
+    case beets doesn't do what you expect with your files.
+
+    This option *overrides* ``import_copy``, so enabling it will always move
+    (and not copy) files.
 
 ``import_resume``
     Either ``yes``, ``no``, or ``ask``. Controls whether interrupted imports
@@ -74,11 +85,13 @@ section header:
     to be ignored when importing. Defaults to ``.* *~`` (i.e., ignore
     Unix-style hidden files and backup files).
 
+.. _replace:
+
 ``replace``
     A set of regular expression/replacement pairs to be applied to all filenames
     created by beets. Typically, these replacements are used to avoid confusing
     problems or errors with the filesystem (for example, leading ``.``
-    characters are replaced on Unix and the ``*<>|`` characters are removed on
+    characters are replaced on Unix and trailing whitespace is removed on
     Windows). To override these substitutions, specify a sequence of
     whitespace-separated terms; the first term is a regular expression and the
     second is a string that should replace anything matching that regex. For
@@ -87,19 +100,36 @@ section header:
 
     If you do change this value, be certain that you include at least enough
     substitutions to avoid causing errors on your operating system. Here are
-    some recommended base replacements for Unix-like OSes::
+    the default substitutions used by beets, which are sufficient to avoid
+    unexpected behavior on all popular platforms::
 
-        replace = [\\/\?"]|^\.' _
-                  : -
+        replace = [\\/] _
+                  ^\. _
+                  [\x00-\x1f] _
+                  [<>:"\?\*\|] _
+                  \.$ _
+                  \s+$ <strip>
 
-    And, on Windows::
+    These substitutions remove forward and back slashes, leading dots, and
+    control characters—all of which is a good idea on any OS. The fourth line
+    removes the Windows "reserved characters" (useful even on Unix for for
+    compatibility with Windows-influenced network filesystems like Samba).
+    Trailing dots and trailing whitespace, which can cause problems on Windows
+    clients, are also removed.
 
-        replace = [\\/\?"]|^\.' _
-                  ["\*<>\|]|^\.|\.$|\s+$ _
-                  : -
+    To replace space characters, use the ``\s`` (whitespace) entity::
+        
+        replace = \s _
+                  ...
 
-    Note that the above examples are, in fact, the default substitutions used by
-    beets.
+    This will avoid using a literal space and thus confusing beets. (``\s`` also
+    matches tabs and newlines, but that is probably fine.)
+
+    To remove characters entirely, use ``<strip>`` as the replacement. For
+    example, to remove all vowels from your filenames::
+
+        replace = [aeiou] <strip>
+                  ...
 
 ``art_filename``
     When importing album art, the name of the file (without extension) where the
@@ -131,6 +161,15 @@ section header:
     exception when the database lock is contended. This should almost never need
     to be changed except on very slow systems. Defaults to 5.0 (5 seconds).
 
+``import_delete``
+    Either ``yes`` or ``no``. When enabled in conjunction with ``import_copy``,
+    deletes original files after they are copied into your library. Has no
+    effect if the importer is in ``import_move`` mode or "leave files in place"
+    mode. Defaults to ``no``.
+
+    This option is historical and deprecated: it's almost always more
+    appropriate to use ``import_move`` instead.
+
 .. _path-format-config:
 
 Path Format Configuration
@@ -147,7 +186,7 @@ artist, and ``singleton`` for non-album tracks. The defaults look like this::
     [paths]
     default: $albumartist/$album/$track $title
     singleton: Non-Album/$artist/$title
-    comp: Compilations/$album/$track title
+    comp: Compilations/$album/$track $title
 
 Note the use of ``$albumartist`` instead of ``$artist``; this ensure that albums
 will be well-organized. For more about these format strings, see
@@ -160,7 +199,7 @@ template string, the ``_`` character is substituted for ``:`` in these queries.
 This means that a config file like this::
 
     [paths]
-    albumtype_soundtrack: Soundtracks/$album/$track title
+    albumtype_soundtrack: Soundtracks/$album/$track $title
 
 will place soundtrack albums in a separate directory. The queries are tested in
 the order they appear in the configuration file, meaning that if an item matches

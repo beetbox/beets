@@ -96,38 +96,46 @@ def mkdirall(path):
         if not os.path.isdir(syspath(ancestor)):
             os.mkdir(syspath(ancestor))
 
-def prune_dirs(path, root, clutter=('.DS_Store', 'Thumbs.db')):
-    """If path is an empty directory, then remove it. Recursively
-    remove path's ancestry up to root (which is never removed) where
-    there are empty directories. If path is not contained in root, then
-    nothing is removed. Filenames in clutter are ignored when
-    determining emptiness.
+def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
+    """If path is an empty directory, then remove it. Recursively remove
+    path's ancestry up to root (which is never removed) where there are
+    empty directories. If path is not contained in root, then nothing is
+    removed. Filenames in clutter are ignored when determining
+    emptiness. If root is not provided, then only path may be removed
+    (i.e., no recursive removal).
     """
     path = normpath(path)
-    root = normpath(root)
+    if root is not None:
+        root = normpath(root)
 
     ancestors = ancestry(path)
-    if root in ancestors:
+    if root is None:
+        # Only remove the top directory.
+        ancestors = []
+    elif root in ancestors:
         # Only remove directories below the root.
         ancestors = ancestors[ancestors.index(root)+1:]
+    else:
+        # Remove nothing.
+        return
 
-        # Traverse upward from path.
-        ancestors.append(path)
-        ancestors.reverse()
-        for directory in ancestors:
-            directory = syspath(directory)
-            if not os.path.exists(directory):
-                # Directory gone already.
-                continue
+    # Traverse upward from path.
+    ancestors.append(path)
+    ancestors.reverse()
+    for directory in ancestors:
+        directory = syspath(directory)
+        if not os.path.exists(directory):
+            # Directory gone already.
+            continue
 
-            if all(fn in clutter for fn in os.listdir(directory)):
-                # Directory contains only clutter (or nothing).
-                try:
-                    shutil.rmtree(directory)
-                except OSError:
-                    break
-            else:
+        if all(fn in clutter for fn in os.listdir(directory)):
+            # Directory contains only clutter (or nothing).
+            try:
+                shutil.rmtree(directory)
+            except OSError:
                 break
+        else:
+            break
 
 def components(path, pathmod=None):
     """Return a list of the path components in path. For instance:
@@ -171,6 +179,9 @@ def displayable_path(path):
     """
     if isinstance(path, unicode):
         return path
+    elif not isinstance(path, str):
+        # A non-string object: just get its unicode representation.
+        return unicode(path)
 
     encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
     try:
@@ -230,7 +241,8 @@ def copy(path, dest, replace=False, pathmod=None):
         return
     path = syspath(path)
     dest = syspath(dest)
-    _assert_not_exists(dest, pathmod)
+    if not replace:
+        _assert_not_exists(dest, pathmod)
     return shutil.copyfile(path, dest)
 
 def move(path, dest, replace=False, pathmod=None):
@@ -266,33 +278,33 @@ def unique_path(path):
         if not os.path.exists(new_path):
             return new_path
 
-# Note: POSIX actually supports \ and : -- I just think they're
-# a pain. And ? has caused problems for some.
+# Note: The Windows "reserved characters" are, of course, allowed on
+# Unix. They are forbidden here because they cause problems on Samba
+# shares, which are sufficiently common as to cause frequent problems.
+# http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
 CHAR_REPLACE = [
-    (re.compile(r'[\\/\?"]|^\.'), '_'),
-    (re.compile(r':'), '-'),
-]
-CHAR_REPLACE_WINDOWS = [
-    (re.compile(r'["\*<>\|]|^\.|\.$|\s+$'), '_'),
+    (re.compile(ur'[\\/]'), u'_'),  # / and \ -- forbidden everywhere.
+    (re.compile(ur'^\.'), u'_'),  # Leading dot (hidden files on Unix).
+    (re.compile(ur'[\x00-\x1f]'), u''),  # Control characters.
+    (re.compile(ur'[<>:"\?\*\|]'), u'_'),  # Windows "reserved characters".
+    (re.compile(ur'\.$'), u'_'),  # Trailing dots.
+    (re.compile(ur'\s+$'), u''),  # Trailing whitespace.
 ]
 def sanitize_path(path, pathmod=None, replacements=None):
-    """Takes a path and makes sure that it is legal. Returns a new path.
-    Only works with fragments; won't work reliably on Windows when a
-    path begins with a drive letter. Path separators (including altsep!)
-    should already be cleaned from the path components. If replacements
-    is specified, it is used *instead* of the default set of
-    replacements for the platform; it must be a list of (compiled regex,
-    replacement string) pairs.
+    """Takes a path (as a Unicode string) and makes sure that it is
+    legal. Returns a new path. Only works with fragments; won't work
+    reliably on Windows when a path begins with a drive letter. Path
+    separators (including altsep!) should already be cleaned from the
+    path components. If replacements is specified, it is used *instead*
+    of the default set of replacements for the platform; it must be a
+    list of (compiled regex, replacement string) pairs.
     """
     pathmod = pathmod or os.path
-    windows = pathmod.__name__ == 'ntpath'
 
     # Choose the appropriate replacements.
     if not replacements:
         replacements = list(CHAR_REPLACE)
-        if windows:
-            replacements += CHAR_REPLACE_WINDOWS
-    
+
     comps = components(path, pathmod)
     if not comps:
         return ''
@@ -300,10 +312,10 @@ def sanitize_path(path, pathmod=None, replacements=None):
         # Replace special characters.
         for regex, repl in replacements:
             comp = regex.sub(repl, comp)
-        
+
         # Truncate each component.
         comp = comp[:MAX_FILENAME_LENGTH]
-                
+
         comps[i] = comp
     return pathmod.join(*comps)
 
@@ -318,14 +330,17 @@ def sanitize_for_path(value, pathmod, key=None):
                 value = value.replace(sep, u'_')
     elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
         # Pad indices with zeros.
-        value = u'%02i' % value
+        value = u'%02i' % (value or 0)
     elif key == 'year':
-        value = u'%04i' % value
+        value = u'%04i' % (value or 0)
     elif key in ('month', 'day'):
-        value = u'%02i' % value
+        value = u'%02i' % (value or 0)
     elif key == 'bitrate':
         # Bitrate gets formatted as kbps.
-        value = u'%ikbps' % (value / 1000)
+        value = u'%ikbps' % ((value or 0) / 1000)
+    elif key == 'samplerate':
+        # Sample rate formatted as kHz.
+        value = u'%ikHz' % ((value or 0) / 1000)
     else:
         value = unicode(value)
     return value

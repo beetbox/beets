@@ -14,14 +14,13 @@
 
 """Test file manipulation functionality of Item.
 """
-
-import unittest
 import shutil
 import os
 import stat
 from os.path import join
 
 import _common
+from _common import unittest
 from _common import item, touch
 import beets.library
 from beets import util

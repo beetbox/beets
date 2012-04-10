@@ -14,18 +14,20 @@
 
 """Tests for non-query database functions of Item.
 """
-import unittest
 import os
 import sqlite3
 import ntpath
 import posixpath
 import shutil
 import re
+import unicodedata
 
 import _common
+from _common import unittest
 from _common import item
 import beets.library
 from beets import util
+from beets import plugins
 
 def lib():
     return beets.library.Library(os.path.join(_common.RSRC, 'test.blb'))
@@ -158,9 +160,16 @@ class DestinationTest(unittest.TestCase):
     def test_destination_preserves_extension(self):
         self.lib.directory = 'base'
         self.lib.path_formats = [('default', '$title')]
-        self.i.path = 'hey.audioFormat'
+        self.i.path = 'hey.audioformat'
         self.assertEqual(self.lib.destination(self.i),
-                         np('base/the title.audioFormat'))
+                         np('base/the title.audioformat'))
+    
+    def test_lower_case_extension(self):
+        self.lib.directory = 'base'
+        self.lib.path_formats = [('default', '$title')]
+        self.i.path = 'hey.MP3'
+        self.assertEqual(self.lib.destination(self.i),
+                         np('base/the title.mp3'))
     
     def test_destination_pads_some_indices(self):
         self.lib.directory = 'base'
@@ -223,15 +232,15 @@ class DestinationTest(unittest.TestCase):
         self.assertFalse('two / three' in p)
     
     def test_sanitize_unix_replaces_leading_dot(self):
-        p = util.sanitize_path('one/.two/three', posixpath)
+        p = util.sanitize_path(u'one/.two/three', posixpath)
         self.assertFalse('.' in p)
     
     def test_sanitize_windows_replaces_trailing_dot(self):
-        p = util.sanitize_path('one/two./three', ntpath)
+        p = util.sanitize_path(u'one/two./three', ntpath)
         self.assertFalse('.' in p)
     
     def test_sanitize_windows_replaces_illegal_chars(self):
-        p = util.sanitize_path(':*?"<>|', ntpath)
+        p = util.sanitize_path(u':*?"<>|', ntpath)
         self.assertFalse(':' in p)
         self.assertFalse('*' in p)
         self.assertFalse('?' in p)
@@ -240,10 +249,6 @@ class DestinationTest(unittest.TestCase):
         self.assertFalse('>' in p)
         self.assertFalse('|' in p)
 
-    def test_sanitize_replaces_colon_with_dash(self):
-        p = util.sanitize_path(u':', posixpath)
-        self.assertEqual(p, u'-')
-    
     def test_path_with_format(self):
         self.lib.path_formats = [('default', '$artist/$album ($format)')]
         p = self.lib.destination(self.i)
@@ -332,7 +337,7 @@ class DestinationTest(unittest.TestCase):
         self.assertEqual(path, outpath)
 
     def test_sanitize_windows_replaces_trailing_space(self):
-        p = util.sanitize_path('one/two /three', ntpath)
+        p = util.sanitize_path(u'one/two /three', ntpath)
         self.assertFalse(' ' in p)
 
     def test_component_sanitize_replaces_separators(self):
@@ -347,6 +352,10 @@ class DestinationTest(unittest.TestCase):
     def test_component_sanitize_uses_kbps_bitrate(self):
         val = util.sanitize_for_path(12345, posixpath, 'bitrate')
         self.assertEqual(val, u'12kbps')
+
+    def test_component_sanitize_uses_khz_samplerate(self):
+        val = util.sanitize_for_path(12345, posixpath, 'samplerate')
+        self.assertEqual(val, u'12kHz')
 
     def test_artist_falls_back_to_albumartist(self):
         self.i.artist = ''
@@ -377,22 +386,44 @@ class DestinationTest(unittest.TestCase):
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'something')
 
     def test_sanitize_path_works_on_empty_string(self):
-        p = util.sanitize_path('', posixpath)
-        self.assertEqual(p, '')
+        p = util.sanitize_path(u'', posixpath)
+        self.assertEqual(p, u'')
 
     def test_sanitize_with_custom_replace_overrides_built_in_sub(self):
-        p = util.sanitize_path('a/.?/b', posixpath, [
-            (re.compile(r'foo'), 'bar'),
+        p = util.sanitize_path(u'a/.?/b', posixpath, [
+            (re.compile(ur'foo'), u'bar'),
         ])
-        self.assertEqual(p, 'a/.?/b')
+        self.assertEqual(p, u'a/.?/b')
 
     def test_sanitize_with_custom_replace_adds_replacements(self):
-        p = util.sanitize_path('foo/bar', posixpath, [
-            (re.compile(r'foo'), 'bar'),
+        p = util.sanitize_path(u'foo/bar', posixpath, [
+            (re.compile(ur'foo'), u'bar'),
         ])
-        self.assertEqual(p, 'bar/bar')
+        self.assertEqual(p, u'bar/bar')
 
-class DestinationFunctionTest(unittest.TestCase):
+    def test_unicode_normalized_nfd_on_mac(self):
+        instr = unicodedata.normalize('NFC', u'caf\xe9')
+        self.lib.path_formats = [('default', instr)]
+        dest = self.lib.destination(self.i, platform='darwin', fragment=True)
+        self.assertEqual(dest, unicodedata.normalize('NFD', instr))
+
+    def test_unicode_normalized_nfc_on_linux(self):
+        instr = unicodedata.normalize('NFD', u'caf\xe9')
+        self.lib.path_formats = [('default', instr)]
+        dest = self.lib.destination(self.i, platform='linux2', fragment=True)
+        self.assertEqual(dest, unicodedata.normalize('NFC', instr))
+
+class PathFormattingMixin(object):
+    """Utilities for testing path formatting."""
+    def _setf(self, fmt):
+        self.lib.path_formats.insert(0, ('default', fmt))
+    def _assert_dest(self, dest, i=None):
+        if i is None:
+            i = self.i
+        self.assertEqual(self.lib.destination(i, pathmod=posixpath),
+                         dest)
+
+class DestinationFunctionTest(unittest.TestCase, PathFormattingMixin):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
         self.lib.directory = '/base'
@@ -400,11 +431,6 @@ class DestinationFunctionTest(unittest.TestCase):
         self.i = item()
     def tearDown(self):
         self.lib.conn.close()
-
-    def _setf(self, fmt):
-        self.lib.path_formats.insert(0, ('default', fmt))
-    def _assert_dest(self, dest):
-        self.assertEqual(self.lib.destination(self.i), dest)
 
     def test_upper_case_literal(self):
         self._setf(u'%upper{foo}')
@@ -445,6 +471,84 @@ class DestinationFunctionTest(unittest.TestCase):
     def test_nonexistent_function(self):
         self._setf(u'%foo{bar}')
         self._assert_dest('/base/%foo{bar}')
+
+class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
+    def setUp(self):
+        self.lib = beets.library.Library(':memory:')
+        self.lib.directory = '/base'
+        self.lib.path_formats = [('default', u'path')]
+
+        self.i1 = item()
+        self.i1.year = 2001
+        self.lib.add_album([self.i1])
+        self.i2 = item()
+        self.i2.year = 2002
+        self.lib.add_album([self.i2])
+        self.lib.save()
+
+        self._setf(u'foo%unique{albumartist album,year}/$title')
+
+    def tearDown(self):
+        self.lib.conn.close()
+
+    def test_unique_expands_to_disambiguating_year(self):
+        self._assert_dest('/base/foo [2001]/the title', self.i1)
+
+    def test_unique_expands_to_nothing_for_distinct_albums(self):
+        album2 = self.lib.get_album(self.i2)
+        album2.album = 'different album'
+        self.lib.save()
+
+        self._assert_dest('/base/foo/the title', self.i1)
+
+    def test_use_fallback_numbers_when_identical(self):
+        album2 = self.lib.get_album(self.i2)
+        album2.year = 2001
+        self.lib.save()
+
+        self._assert_dest('/base/foo 1/the title', self.i1)
+        self._assert_dest('/base/foo 2/the title', self.i2)
+
+class PluginDestinationTest(unittest.TestCase):
+    # Mock the plugins.template_values(item) function.
+    def _template_values(self, item):
+        return self._tv_map
+    def setUp(self):
+        self._tv_map = {}
+        self.old_template_values = plugins.template_values
+        plugins.template_values = self._template_values
+
+        self.lib = beets.library.Library(':memory:')
+        self.lib.directory = '/base'
+        self.lib.path_formats = [('default', u'$artist $foo')]
+        self.i = item()
+    def tearDown(self):
+        plugins.template_values = self.old_template_values
+
+    def _assert_dest(self, dest):
+        self.assertEqual(self.lib.destination(self.i, pathmod=posixpath),
+                         '/base/' + dest)
+
+    def test_undefined_value_not_substituted(self):
+        self._assert_dest('the artist $foo')
+    
+    def test_plugin_value_not_substituted(self):
+        self._tv_map = {
+            'foo': 'bar',
+        }
+        self._assert_dest('the artist bar')
+    
+    def test_plugin_value_overrides_attribute(self):
+        self._tv_map = {
+            'artist': 'bar',
+        }
+        self._assert_dest('bar $foo')
+
+    def test_plugin_value_sanitized(self):
+        self._tv_map = {
+            'foo': 'bar/baz',
+        }
+        self._assert_dest('the artist bar_baz')
     
 class MigrationTest(unittest.TestCase):
     """Tests the ability to change the database schema between
@@ -714,14 +818,14 @@ class PathStringTest(unittest.TestCase):
         self.assertEqual(path, alb.artpath)
 
     def test_sanitize_path_with_special_chars(self):
-        path = 'b\xe1r?'
+        path = u'b\xe1r?'
         new_path = util.sanitize_path(path)
-        self.assert_(new_path.startswith('b\xe1r'))
+        self.assert_(new_path.startswith(u'b\xe1r'))
 
-    def test_sanitize_path_returns_bytestring(self):
-        path = 'b\xe1r?'
+    def test_sanitize_path_returns_unicode(self):
+        path = u'b\xe1r?'
         new_path = util.sanitize_path(path)
-        self.assert_(isinstance(new_path, str))
+        self.assert_(isinstance(new_path, unicode))
 
     def test_unicode_artpath_becomes_bytestring(self):
         alb = self.lib.add_album([self.i])

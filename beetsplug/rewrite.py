@@ -17,6 +17,7 @@ formats.
 """
 import re
 import logging
+from collections import defaultdict
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -24,15 +25,19 @@ from beets import library
 
 log = logging.getLogger('beets')
 
-def rewriter(fieldname, pattern, replacement):
+def rewriter(field, rules):
+    """Create a template field function that rewrites the given field
+    with the given rewriting rules. ``rules`` must be a list of
+    (pattern, replacement) pairs.
+    """
     def fieldfunc(item):
-        value = getattr(item, fieldname)
-        if pattern.match(value):
-            # Rewrite activated.
-            return replacement
-        else:
-            # Not activated; return original value.
-            return value
+        value = getattr(item, field)
+        for pattern, replacement in rules:
+            if pattern.match(value):
+                # Rewrite activated.
+                return replacement
+        # Not activated; return original value.
+        return value
     return fieldfunc
 
 class RewritePlugin(BeetsPlugin):
@@ -41,6 +46,10 @@ class RewritePlugin(BeetsPlugin):
     def configure(self, config):
         cls = type(self)
 
+        # Gather all the rewrite rules for each field.
+        rules = defaultdict(list)
+        if not config.has_section('rewrite'):
+            return
         for key, value in config.items('rewrite', True):
             try:
                 fieldname, pattern = key.split(None, 1)
@@ -51,12 +60,12 @@ class RewritePlugin(BeetsPlugin):
                                    fieldname)
             log.debug(u'adding template field %s' % key)
             pattern = re.compile(pattern, re.I)
-
-            # Replace the template field with the new function.
-            cls.template_fields[fieldname] = rewriter(fieldname, pattern,
-                                                      value)
+            rules[fieldname].append((pattern, value))
             if fieldname == 'artist':
-                # Special case for the artist field: apply the same rewrite for
-                # "albumartist" as well.
-                cls.template_fields['albumartist'] = rewriter('albumartist',
-                                                              pattern, value)
+                # Special case for the artist field: apply the same
+                # rewrite for "albumartist" as well.
+                rules['albumartist'].append((pattern, value))
+
+        # Replace each template field with the new rewriter function.
+        for fieldname, fieldrules in rules.iteritems():
+            cls.template_fields[fieldname] = rewriter(fieldname, fieldrules)

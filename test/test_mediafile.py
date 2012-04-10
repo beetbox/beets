@@ -14,12 +14,11 @@
 
 """Specific, edge-case tests for the MediaFile metadata layer.
 """
-
-import unittest
 import os
 import shutil
 
 import _common
+from _common import unittest
 import beets.mediafile
 
 class EdgeTest(unittest.TestCase):
@@ -106,6 +105,11 @@ class InvalidValueToleranceTest(unittest.TestCase):
     def test_safe_cast_negative_string_to_float(self):
         self.assertAlmostEqual(_sc(float, '-1.234'), -1.234)
 
+    def test_safe_cast_special_chars_to_unicode(self):
+        us = _sc(unicode, 'caf\xc3\xa9')
+        self.assertTrue(isinstance(us, unicode))
+        self.assertTrue(us.startswith(u'caf'))
+
 class SafetyTest(unittest.TestCase):
     def _exccheck(self, fn, exc, data=''):
         fn = os.path.join(_common.RSRC, fn)
@@ -178,6 +182,19 @@ class EncodingTest(unittest.TestCase):
         self.mf.save()
         new_mf = beets.mediafile.MediaFile(self.path)
         self.assertEqual(new_mf.label, u'foo\xe8bar')
+
+class ZeroLengthMediaFile(beets.mediafile.MediaFile):
+    @property
+    def length(self):
+        return 0.0
+class MissingAudioDataTest(unittest.TestCase):
+    def setUp(self):
+        path = os.path.join(_common.RSRC, 'full.mp3')
+        self.mf = ZeroLengthMediaFile(path)
+
+    def test_bitrate_with_zero_length(self):
+        del self.mf.mgfile.info.bitrate # Not available directly.
+        self.assertEqual(self.mf.bitrate, 0)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

@@ -32,6 +32,25 @@ from beets import library
 from beets import plugins
 from beets import util
 
+
+# On Windows platforms, use colorama to support "ANSI" terminal colors.
+if sys.platform == 'win32':
+    try:
+        import colorama
+    except ImportError:
+        pass
+    else:
+        colorama.init()
+
+# On Unix-like platforms, use readline to make prompts more usable.
+try:
+    import readline
+except ImportError:
+    pass
+else:
+    readline  # Silence pyflakes "unused import" warning.
+
+
 # Constants.
 CONFIG_PATH_VAR = 'BEETSCONFIG'
 DEFAULT_CONFIG_FILENAME_UNIX = '.beetsconfig'
@@ -51,6 +70,7 @@ DEFAULT_PATH_FORMATS = [
 ]
 DEFAULT_ART_FILENAME = 'cover'
 DEFAULT_TIMEOUT = 5.0
+NULL_REPLACE = '<strip>'
 
 # UI exception. Commands should throw this in order to display
 # nonrecoverable errors to the user.
@@ -185,7 +205,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
                 prompt_part_lengths.append(len(tmpl % str(default)))
             else:
                 prompt_parts.append('# selection')
-                prompt_part_lengths.append(prompt_parts[-1])
+                prompt_part_lengths.append(len(prompt_parts[-1]))
         prompt_parts += capitalized
         prompt_part_lengths += [len(s) for s in options]
 
@@ -222,9 +242,14 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
             fallback_prompt += '%i-%i, ' % numrange
         fallback_prompt += ', '.join(display_letters) + ':'
 
-    # (raw_input(prompt) was causing problems with colors.)
-    print prompt,
-    resp = raw_input()
+    # Note: In the past, this line was causing problems with colors in
+    # the prompt string. However, using a separate "print prompt," line
+    # breaks the readline module, which expects the length of the prompt
+    # to be available to it. (Namely, entering text and then deleting it
+    # caused the entire last line of the prompt to disappear.) However,
+    # readline also seems to have fixed the issue with colors, so we've
+    # now switched back.
+    resp = raw_input(prompt + ' ')
     while True:
         resp = resp.strip().lower()
         
@@ -252,8 +277,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
                 return resp
         
         # Prompt for new input.
-        print fallback_prompt,
-        resp = raw_input()
+        resp = raw_input(fallback_prompt + ' ')
 
 def input_yn(prompt, require=False, color=False):
     """Prompts the user for a "yes" or "no" response. The default is
@@ -296,7 +320,7 @@ def human_bytes(size):
 
 def human_seconds(interval):
     """Formats interval, a number of seconds, as a human-readable time
-    interval.
+    interval using English words.
     """
     units = [
         (1, 'second'),
@@ -319,6 +343,13 @@ def human_seconds(interval):
         interval /= float(increment)
 
     return "%3.1f %ss" % (interval, suffix)
+
+def human_seconds_short(interval):
+    """Formats a number of seconds as a short human-readable M:SS
+    string.
+    """
+    interval = int(interval)
+    return u'%i:%02i' % (interval // 60, interval % 60)
 
 # ANSI terminal colorization code heavily inspired by pygments:
 # http://dev.pocoo.org/hg/pygments-main/file/b2deea5b5030/pygments/console.py
@@ -416,6 +447,7 @@ def _get_replacements(config):
     repl_string = config_val(config, 'beets', 'replace', None)
     if not repl_string:
         return
+    repl_string = repl_string.decode('utf8')
 
     parts = repl_string.strip().split()
     if not parts:
@@ -429,6 +461,8 @@ def _get_replacements(config):
     for index in xrange(0, len(parts), 2):
         pattern = parts[index]
         replacement = parts[index+1]
+        if replacement.lower() == NULL_REPLACE:
+            replacement = ''
         out.append((re.compile(pattern), replacement))
     return out
 
@@ -702,9 +736,9 @@ def main(args=None, configfh=None):
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.INFO)
-    log.debug(u'config file: %s' % configpath)
-    log.debug(u'library database: %s' % lib.path)
-    log.debug(u'library directory: %s' % lib.directory)
+    log.debug(u'config file: %s' % util.displayable_path(configpath))
+    log.debug(u'library database: %s' % util.displayable_path(lib.path))
+    log.debug(u'library directory: %s' % util.displayable_path(lib.directory))
     
     # Invoke the subcommand.
     try:

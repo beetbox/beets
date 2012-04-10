@@ -18,6 +18,12 @@ import sys
 import os
 import logging
 
+# Use unittest2 on Python < 2.7.
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
 # Mangle the search path to include the beets sources.
 sys.path.insert(0, '..')
 import beets.library
@@ -76,6 +82,7 @@ def iconfig(lib, **kwargs):
         quiet = True,
         quiet_fallback = importer.action.SKIP,
         copy = True,
+        move = False,
         write = False,
         art = False,
         delete = False,
@@ -89,6 +96,7 @@ def iconfig(lib, **kwargs):
         query = None,
         incremental = False,
         ignore = [],
+        resolve_duplicate_func = lambda x, y: None,
     )
     for k, v in kwargs.items():
         setattr(config, k, v)

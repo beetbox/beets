@@ -14,9 +14,8 @@
 
 """Tests for the album art fetchers."""
 
-import unittest
-
 import _common
+from _common import unittest
 from beets.autotag import art
 from beets.autotag import AlbumInfo
 import os
