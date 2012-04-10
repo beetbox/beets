@@ -22,6 +22,7 @@ import os
 import time
 import itertools
 import re
+import readline
 
 from beets import ui
 from beets.ui import print_, decargs
