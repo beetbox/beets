@@ -34,11 +34,15 @@ section header:
 
 ``import_move``
     Either ``yes`` or ``no``, indicating whether to **move** files into the
-    library directory when using ``beet import``. This is like the
-    ``import_copy`` option but keeps only one copy of the imported file. (This
-    can be risky—it's a good idea to keep a backup in case beets doesn't do what
-    you expect with your files.) Defaults to ``no``. 
-    
+    library directory when using ``beet import``.
+    Defaults to ``no``. 
+
+    The effect is similar to the ``import_copy`` option but you end up with only
+    one copy of the imported file. ("Moving" works even across filesystems; if
+    necessary, beets will copy and then delete when a simple rename is
+    impossible.) Moving files can be risky—it's a good idea to keep a backup in
+    case beets doesn't do what you expect with your files.
+
     This option *overrides* ``import_copy``, so enabling it will always move
     (and not copy) files.
 
