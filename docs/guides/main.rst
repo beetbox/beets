@@ -111,9 +111,7 @@ empty folder using beets' ``import`` command (see below). But you can configure
 beets to behave many other ways:
 
 * Start with a new empty directory, but *move* new music in instead of copying
-  it (saving disk space). Put ``import_delete: yes`` in your config file, which
-  will instruct beets to remove source music after it's been placed in your
-  organized directory.
+  it (saving disk space). Put ``import_move: yes`` in your config file.
 * Keep your current directory structure; importing should never move or copy
   files but instead just correct the tags on music. Put the line ``import_copy:
   no`` in your config file to disable any copying or renaming. Make sure to

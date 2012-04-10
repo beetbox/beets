@@ -106,11 +106,10 @@ right now; this is something we need to work on. Read the
     situation and avoid duplicating any items. In this situation, the "copy
     files" option (``-c``/``-C`` on the command line or ``import_copy`` in the
     config file) has slightly different behavior: it causes files to be *moved*,
-    rather than duplicated, if they're already in your library. That is, your
-    directory structure will be updated to reflect the new tags if copying is
-    enabled; you never end up with two copies of the file. That means that the
-    "delete files" (``import_delete``) option is ignored when re-importing as
-    well.
+    rather than duplicated, if they're already in your library. (The same is
+    true, of course, if ``import_move`` is enabled.) That is, your directory
+    structure will be updated to reflect the new tags if copying is enabled; you
+    never end up with two copies of the file.
 
     The ``-L`` (``--library``) flag is also useful for retagging. Instead of
     listing paths you want to import on the command line, specify a :doc:`query

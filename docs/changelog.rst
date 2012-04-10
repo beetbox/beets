@@ -23,6 +23,10 @@ Changelog
   fingerprint and Acoustid ID are also now stored for all fingerprinted tracks.
   This version of beets *requires* at least version 0.6 of `pyacoustid`_ for
   fingerprinting to work.
+* The importer can now **move files**. Previously, beets could only copy files
+  and delete the originals, which is inefficient if the source and destination
+  are on the same filesystem. Use the ``import_move`` configuration option and
+  see :doc:`/reference/config` for more details. Thanks to Domen Kožar.
 * New :doc:`/plugins/rdm`: Randomly select albums and tracks from your library.
   Thanks to Philippe Mongeau.
 * The :doc:`/plugins/mbcollection` by Jeffrey Aylesworth was added to the core

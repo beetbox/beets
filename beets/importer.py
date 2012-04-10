@@ -283,6 +283,14 @@ class ImportConfig(object):
             self.resume = False
             self.incremental = False
 
+        # Copy and move are mutually exclusive.
+        if self.move:
+            self.copy = False
+
+        # Only delete when copying.
+        if not self.copy:
+            self.delete = False
+
 
 # The importer task class.
 
@@ -695,21 +703,22 @@ def apply_choices(config):
                                     lib.directory)
 
         # Move/copy files.
-        task.old_paths = [item.path for item in items]
+        task.old_paths = [item.path for item in items]  # For deletion.
         for item in items:
             if config.copy or config.move:
-                # If we're replacing an item, then move rather than
-                # copying.
-                old_path = item.path
-                do_copy = not bool(replaced_items[item])
                 if config.move:
+                    # Just move the file.
                     lib.move(item, False, task.is_album)
                 else:
+                    # If it's a reimport, move the file. Otherwise, copy
+                    # and keep track of the old path.
+                    old_path = item.path
+                    do_copy = not bool(replaced_items[item])
                     lib.move(item, do_copy, task.is_album)
-                if not do_copy:
-                    # If we moved the item, remove the now-nonexistent
-                    # file from old_paths.
-                    task.old_paths.remove(old_path)
+                    if not do_copy:
+                        # If we moved the item, remove the now-nonexistent
+                        # file from old_paths.
+                        task.old_paths.remove(old_path)
 
             if config.write and task.should_write_tags():
                 item.write()

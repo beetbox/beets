@@ -690,8 +690,6 @@ import_cmd.parser.add_option('-c', '--copy', action='store_true',
     default=None, help="copy tracks into library directory (default)")
 import_cmd.parser.add_option('-C', '--nocopy', action='store_false',
     dest='copy', help="don't copy tracks (opposite of -c)")
-import_cmd.parser.add_option('-m', '--move', action='store_true',
-    default=None, help="move tracks into library directory")
 import_cmd.parser.add_option('-w', '--write', action='store_true',
     default=None, help="write new metadata to files' tags (default)")
 import_cmd.parser.add_option('-W', '--nowrite', action='store_false',
@@ -725,9 +723,8 @@ def import_func(lib, config, opts, args):
     copy  = opts.copy  if opts.copy  is not None else \
         ui.config_val(config, 'beets', 'import_copy',
             DEFAULT_IMPORT_COPY, bool)
-    move  = opts.move  if opts.move  is not None else \
-        ui.config_val(config, 'beets', 'import_move',
-            DEFAULT_IMPORT_MOVE, bool)
+    move  = ui.config_val(config, 'beets', 'import_move',
+                          DEFAULT_IMPORT_MOVE, bool)
     write = opts.write if opts.write is not None else \
         ui.config_val(config, 'beets', 'import_write',
             DEFAULT_IMPORT_WRITE, bool)

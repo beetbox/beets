@@ -19,25 +19,28 @@ section header:
     The directory to which files will be copied/moved when adding them to the
     library. Defaults to ``~/Music``.
 
-``import_copy``
-    Either ``yes`` or ``no``, indicating whether to copy files into the library
-    directory when using ``beet import``. Defaults to ``yes``.  Can be
-    overridden with the ``-c`` and ``-C`` command-line options.
-
-``import_move``
-    Either ``yes`` or ``no``, indicating whether to move files into the library
-    directory when using ``beet import``. Defaults to ``no``.
-
 ``import_write``
     Either ``yes`` or ``no``, controlling whether metadata (e.g., ID3) tags are
     written to files when using ``beet import``. Defaults to ``yes``. The ``-w``
     and ``-W`` command-line options override this setting.
 
-``import_delete``
-    Either ``yes`` or ``no``. When enabled in conjunction with ``import_copy``,
-    deletes original files after they are copied into your library. This might
-    be useful, for example, if you're low on disk space -- but it's risky!
-    Defaults to ``no``.
+``import_copy``
+    Either ``yes`` or ``no``, indicating whether to **copy** files into the
+    library directory when using ``beet import``. Defaults to ``yes``.  Can be
+    overridden with the ``-c`` and ``-C`` command-line options.
+    
+    The option is ignored if ``import_move`` is enabled (i.e., beets can move or
+    copy files but it doesn't make sense to do both).
+
+``import_move``
+    Either ``yes`` or ``no``, indicating whether to **move** files into the
+    library directory when using ``beet import``. This is like the
+    ``import_copy`` option but keeps only one copy of the imported file. (This
+    can be risky—it's a good idea to keep a backup in case beets doesn't do what
+    you expect with your files.) Defaults to ``no``. 
+    
+    This option *overrides* ``import_copy``, so enabling it will always move
+    (and not copy) files.
 
 ``import_resume``
     Either ``yes``, ``no``, or ``ask``. Controls whether interrupted imports
@@ -153,6 +156,15 @@ section header:
     The amount of time that the SQLite library should wait before raising an
     exception when the database lock is contended. This should almost never need
     to be changed except on very slow systems. Defaults to 5.0 (5 seconds).
+
+``import_delete``
+    Either ``yes`` or ``no``. When enabled in conjunction with ``import_copy``,
+    deletes original files after they are copied into your library. Has no
+    effect if the importer is in ``import_move`` mode or "leave files in place"
+    mode. Defaults to ``no``.
+
+    This option is historical and deprecated: it's almost always more
+    appropriate to use ``import_move`` instead.
 
 .. _path-format-config:
 

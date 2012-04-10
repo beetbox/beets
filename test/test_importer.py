@@ -127,7 +127,7 @@ class NonAutotaggedImportTest(unittest.TestCase):
         destinations = set('%s.mp3' % title for title in TEST_TITLES)
         self.assertEqual(filenames, destinations)
 
-    def test_import_copy_arrives(self):
+    def test_import_copy_arrives_but_leaves_originals(self):
         paths = self._run_import()
         self._copy_arrives()
 
