@@ -35,7 +35,9 @@ Changelog
   files or as symlinks for easy importing to other systems. Thanks to Fabrice
   Laporte.
 * When the autotagger fails to find a match, it now displays the number of
-  tracks on the album (to help you guess what might be going wrong).
+  tracks on the album (to help you guess what might be going wrong) and a link
+  to the FAQ.
+* Readline is now used when available to provide nicer terminal input.
 * The default filename character substitutions were changed to be more
   conservative. The Windows "reserved characters" are substituted by default
   even on Unix platforms (this causes less surprise when using Samba shares to
