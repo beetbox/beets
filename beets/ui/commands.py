@@ -302,6 +302,8 @@ def choose_candidate(candidates, singleton, rec, color, timid,
         else:
             print_("No matching release found for {} tracks."
                    .format(itemcount))
+            print_('For help, see: '
+                   'https://github.com/sampsyo/beets/wiki/FAQ#wiki-nomatch')
             opts = ('Use as-is', 'as Tracks', 'Skip', 'Enter search',
                     'enter Id', 'aBort')
         sel = ui.input_options(opts, color=color)
