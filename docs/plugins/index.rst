@@ -46,13 +46,9 @@ disabled by default, but you can turn them on as described above.
    inline
    scrub
    rewrite
-<<<<<<< HEAD
-   m3uupdate
    rdm
    mbcollection
-=======
    importfeeds
->>>>>>> 837b91b... rename 'm3uupdate' plugin to 'importfeeds'. Handles two more output formats: multi m3u files (one per item imported) and symlinks. Update plugin docs.
 
 Autotagger Extensions
 ''''''''''''''''''''''

@@ -16,7 +16,7 @@ Three different types of outputs coexist, specify the ones you want to use by se
 - ``m3u_multi``: create a new playlist for each import (uniquely named by appending the date and track/album name). 
 - ``link``: create a symlink for each imported item. This is the recommended setting to propagate beets imports to your iTunes library: just drag and drop the ``feeds_dir`` folder on the iTunes dock icon.
 
-An example of ``importfeeds``configuration::
+An example of ``importfeeds`` configuration::
 
     [importfeeds]
     feeds_formats: m3u link

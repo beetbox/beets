@@ -27,8 +27,9 @@ Changelog
   Thanks to Philippe Mongeau.
 * The :doc:`/plugins/mbcollection` by Jeffrey Aylesworth was added to the core
   beets distribution.
-* New :doc:`/plugins/m3uupdate`: Catalog imported files in an ``m3u`` playlist
-  file for easy importing to other systems. Thanks to Fabrice Laporte.
+* New :doc:`/plugins/importfeeds`: Catalog imported files in ``m3u`` playlist
+  files or as symlinks for easy importing to other systems. Thanks to Fabrice
+  Laporte.
 * When the autotagger fails to find a match, it now displays the number of
   tracks on the album (to help you guess what might be going wrong).
 * The default filename character substitutions were changed to be more
