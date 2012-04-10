@@ -32,9 +32,24 @@ from beets import library
 from beets import plugins
 from beets import util
 
+
+# On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == 'win32':
-    import colorama
-    colorama.init()
+    try:
+        import colorama
+    except ImportError:
+        pass
+    else:
+        colorama.init()
+
+# On Unix-like platforms, use readline to make prompts more usable.
+try:
+    import readline
+except ImportError:
+    pass
+else:
+    readline  # Silence pyflakes "unused import" warning.
+
 
 # Constants.
 CONFIG_PATH_VAR = 'BEETSCONFIG'
@@ -227,9 +242,14 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
             fallback_prompt += '%i-%i, ' % numrange
         fallback_prompt += ', '.join(display_letters) + ':'
 
-    # (raw_input(prompt) was causing problems with colors.)
-    print prompt,
-    resp = raw_input()
+    # Note: In the past, this line was causing problems with colors in
+    # the prompt string. However, using a separate "print prompt," line
+    # breaks the readline module, which expects the length of the prompt
+    # to be available to it. (Namely, entering text and then deleting it
+    # caused the entire last line of the prompt to disappear.) However,
+    # readline also seems to have fixed the issue with colors, so we've
+    # now switched back.
+    resp = raw_input(prompt + ' ')
     while True:
         resp = resp.strip().lower()
         
@@ -257,8 +277,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
                 return resp
         
         # Prompt for new input.
-        print fallback_prompt,
-        resp = raw_input()
+        resp = raw_input(fallback_prompt + ' ')
 
 def input_yn(prompt, require=False, color=False):
     """Prompts the user for a "yes" or "no" response. The default is
