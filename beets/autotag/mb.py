@@ -149,8 +149,8 @@ def album_info(release):
     # Text representation data.
     if release.get('text-representation'):
         rep = release['text-representation']
-        info.script = rep['script']
-        info.language = rep['language']
+        info.script = rep.get('script')
+        info.language = rep.get('language')
 
     # Media (format).
     if release['medium-list']:

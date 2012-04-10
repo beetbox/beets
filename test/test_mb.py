@@ -239,6 +239,12 @@ class MBAlbumInfoTest(unittest.TestCase):
         self.assertEqual(t[0].disctitle, 'MEDIUM TITLE')
         self.assertEqual(t[1].disctitle, 'MEDIUM TITLE')
 
+    def test_missing_language(self):
+        release = self._make_release(None)
+        del release['text-representation']['language']
+        d = mb.album_info(release)
+        self.assertEqual(d.language, None)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
