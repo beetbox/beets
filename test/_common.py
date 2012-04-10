@@ -82,6 +82,7 @@ def iconfig(lib, **kwargs):
         quiet = True,
         quiet_fallback = importer.action.SKIP,
         copy = True,
+        move = False,
         write = False,
         art = False,
         delete = False,
