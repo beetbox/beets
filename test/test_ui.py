@@ -470,7 +470,7 @@ class AutotagTest(unittest.TestCase):
 class ImportTest(unittest.TestCase):
     def test_quiet_timid_disallowed(self):
         self.assertRaises(ui.UserError, commands.import_files,
-                          None, [], False, False, False, None, False, False,
+                          None, [], False, False, False, False, None, False, False,
                           False, False, True, False, None, False, True, None,
                           False, [])
 
