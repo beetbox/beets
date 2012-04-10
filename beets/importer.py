@@ -259,7 +259,7 @@ class ImportConfig(object):
     then never touched again.
     """
     _fields = ['lib', 'paths', 'resume', 'logfile', 'color', 'quiet',
-               'quiet_fallback', 'copy', 'write', 'art', 'delete',
+               'quiet_fallback', 'copy', 'move', 'write', 'art', 'delete',
                'choose_match_func', 'should_resume_func', 'threaded',
                'autot', 'singletons', 'timid', 'choose_item_func',
                'query', 'incremental', 'ignore',
@@ -697,16 +697,20 @@ def apply_choices(config):
         # Move/copy files.
         task.old_paths = [item.path for item in items]
         for item in items:
-            if config.copy:
+            if config.copy or config.move:
                 # If we're replacing an item, then move rather than
                 # copying.
                 old_path = item.path
                 do_copy = not bool(replaced_items[item])
-                lib.move(item, do_copy, task.is_album)
+                if config.move:
+                    lib.move(item, False, task.is_album)
+                else:
+                    lib.move(item, do_copy, task.is_album)
                 if not do_copy:
                     # If we moved the item, remove the now-nonexistent
                     # file from old_paths.
                     task.old_paths.remove(old_path)
+
             if config.write and task.should_write_tags():
                 item.write()
 

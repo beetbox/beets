@@ -69,7 +69,7 @@ class NonAutotaggedImportTest(unittest.TestCase):
         return realpath
 
     def _run_import(self, titles=TEST_TITLES, delete=False, threaded=False,
-                    singletons=False):
+                    singletons=False, move=False):
         # Make a bunch of tracks to import.
         paths = []
         for i, title in enumerate(titles):
@@ -86,7 +86,8 @@ class NonAutotaggedImportTest(unittest.TestCase):
         importer.run_import(
                 lib=self.lib,
                 paths=[os.path.dirname(paths[0])],
-                copy=True,
+                copy=not move,
+                move=move,
                 write=True,
                 autot=False,
                 logfile=None,
@@ -125,12 +126,33 @@ class NonAutotaggedImportTest(unittest.TestCase):
         filenames = set(os.listdir(album_folder))
         destinations = set('%s.mp3' % title for title in TEST_TITLES)
         self.assertEqual(filenames, destinations)
+
     def test_import_copy_arrives(self):
-        self._run_import()
+        paths = self._run_import()
         self._copy_arrives()
+
+        for path in paths:
+            self.assertTrue(os.path.exists(path))
+
     def test_threaded_import_copy_arrives(self):
-        self._run_import(threaded=True)
+        paths = self._run_import(threaded=True)
         self._copy_arrives()
+        for path in paths:
+            self.assertTrue(os.path.exists(path))
+
+    def test_import_move(self):
+        paths = self._run_import(move=True)
+        self._copy_arrives()
+
+        for path in paths:
+            self.assertFalse(os.path.exists(path))
+
+    def test_threaded_import_move(self):
+        paths = self._run_import(threaded=True, move=True)
+        self._copy_arrives()
+
+        for path in paths:
+            self.assertFalse(os.path.exists(path))
 
     def test_import_no_delete(self):
         paths = self._run_import(['sometrack'], delete=False)
