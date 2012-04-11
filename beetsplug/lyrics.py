@@ -23,12 +23,27 @@ from beets import ui
 from beets.ui import commands
 
 
+# Global logger.
+
+log = logging.getLogger('beets')
+
+
 # Lyrics scrapers.
 
 COMMENT_RE = re.compile(r'<!--.*-->', re.S)
 DIV_RE = re.compile(r'<(/?)div>?')
 TAG_RE = re.compile(r'<[^>]*>')
 BREAK_RE = re.compile(r'<br\s*/?>')
+
+def fetch_url(url):
+    """Retrieve the content at a given URL, or return None if the source
+    is unreachable.
+    """
+    try:
+        return urllib.urlopen(url).read()
+    except IOError as exc:
+        log.debug('failed to fetch: {} ({})'.format(url, str(exc)))
+        return None
 
 def unescape(text):
     """Resolves &#xxx; HTML entities (and some others)."""
@@ -97,7 +112,9 @@ def _lw_encode(s):
 def fetch_lyricswiki(artist, title):
     """Fetch lyrics from LyricsWiki."""
     url = LYRICSWIKI_URL_PATTERN % (_lw_encode(artist), _lw_encode(title))
-    html = urllib.urlopen(url).read()
+    html = fetch_url(url)
+    if not html:
+        return
 
     lyrics = extract_text(html, "<div class='lyricbox'>")
     if lyrics and 'Unfortunately, we are not licensed' not in lyrics:
@@ -112,7 +129,9 @@ def _lc_encode(s):
 def fetch_lyricscom(artist, title):
     """Fetch lyrics from Lyrics.com."""
     url = LYRICSCOM_URL_PATTERN % (_lc_encode(title), _lc_encode(artist))
-    html = urllib.urlopen(url).read()
+    html = fetch_url(url)
+    if not html:
+        return
 
     lyrics = extract_text(html, '<div id="lyric_space">')
     if lyrics and 'Sorry, we do not have the lyric' not in lyrics:
@@ -132,8 +151,6 @@ def get_lyrics(artist, title):
 
 
 # Plugin logic.
-
-log = logging.getLogger('beets')
 
 def fetch_item_lyrics(lib, loglevel, item, write):
     """Fetch and store lyrics for a single item. If ``write``, then the
