@@ -84,6 +84,19 @@ def _showdiff(field, oldval, newval, color):
         print_(u'  %s: %s -> %s' % (field, oldval, newval))
 
 
+# fields: Shows a list of available fields for queries and format strings.
+fields_cmd = ui.Subcommand('fields',
+    help='show fields available for queries and format strings')
+def fields_func(lib, config, opts, args):
+    print "Available item fields:"
+    print "  " + "\n  ".join([key for key in library.ITEM_KEYS])
+    print "\nAvailable album fields:"
+    print "  " + "\n  ".join([key for key in library.ALBUM_KEYS])
+
+fields_cmd.func = fields_func
+default_commands.append(fields_cmd)
+
+
 # import: Autotagger and importer.
 
 DEFAULT_IMPORT_COPY           = True
@@ -719,6 +732,8 @@ import_cmd.parser.add_option('-L', '--library', dest='library',
     action='store_true', help='retag items matching a query')
 import_cmd.parser.add_option('-i', '--incremental', dest='incremental',
     action='store_true', help='skip already-imported directories')
+import_cmd.parser.add_option('-I', '--no-incremental', dest='incremental',
+    action='store_false', help='do not skip already-imported directories')
 def import_func(lib, config, opts, args):
     copy  = opts.copy  if opts.copy  is not None else \
         ui.config_val(config, 'beets', 'import_copy',
