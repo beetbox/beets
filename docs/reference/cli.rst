@@ -77,7 +77,7 @@ right now; this is something we need to work on. Read the
   option to run an *incremental* import. With this flag, beets will keep
   track of every directory it ever imports and avoid importing them again.
   This is useful if you have an "incoming" directory that you periodically
-  add things to.
+  add things to. (The ``-I`` flag disables incremental imports.)
 
 * By default, beets will proceed without asking if it finds a very close
   metadata match. To disable this and have the importer as you every time,
@@ -213,6 +213,15 @@ stats
 
 Show some statistics on your entire library (if you don't provide a
 :doc:`query <query>` or the matched items (if you do).
+
+fields
+``````
+::
+
+    beet fields
+
+Show the item and album metadata fields available for use in :doc:`query` and
+:doc:`pathformat`.
 
 
 Global Flags

@@ -104,13 +104,10 @@ like ``<ValueError: invalid literal for int()>``.
 Available Values
 ----------------
 
-Here's a (comprehensive?) list of the different values available to path
-formats. (I will try to keep it up to date, but I might forget. The current list
-can be found definitively `in the source`_.) Note that plugins can add new (or
-replace existing) template values (see :ref:`writing-plugins`).
-
-.. _in the source: 
-    https://github.com/sampsyo/beets/blob/master/beets/library.py#L39
+Here's a list of the different values available to path formats. The current
+list can be found definitively by running the command ``beet fields``. Note that
+plugins can add new (or replace existing) template values (see
+:ref:`writing-plugins`).
 
 Ordinary metadata:
 
