@@ -793,10 +793,10 @@ class Server(BaseServer):
             # Trying to list a track.
             raise BPDError(ERROR_ARG, 'this is not a directory')
         else:
-            for name, itemid in node.files.iteritems():
+            for name, itemid in iter(sorted(node.files.items())):
                 item = self.lib.get_item(itemid)
                 yield self._item_info(item)
-            for name, _ in node.dirs.iteritems():
+            for name, _ in iter(sorted(node.dirs.iteritems())):
                 dirpath = self._path_join(path, name)
                 if dirpath.startswith(u"/"):
                     # Strip leading slash (libmpc rejects this).
