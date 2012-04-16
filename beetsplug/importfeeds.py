@@ -34,7 +34,10 @@ class ImportFeedsPlugin(BeetsPlugin):
 
         _feeds_formats = ui.config_val(config, 'importfeeds', 'feeds_formats',
                                        '').split()
+
         _feeds_dir = ui.config_val(config, 'importfeeds', 'feeds_dir', None)
+        _feeds_dir = os.path.expanduser(_feeds_dir)
+
         _m3u_name = ui.config_val(config, 'importfeeds', 'm3u_name', 
                                  M3U_DEFAULT_NAME)
         
