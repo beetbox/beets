@@ -36,7 +36,7 @@ Changelog
   Laporte.
 * A new command ``beet fields`` displays the available metadata fields (thanks
   to Matteo Mecucci).
-* The ``import`` command now has a ``--noimport`` or ``-I`` flag to disable
+* The ``import`` command now has a ``--noincremental`` or ``-I`` flag to disable
   incremental imports (thanks to Matteo Mecucci).
 * When the autotagger fails to find a match, it now displays the number of
   tracks on the album (to help you guess what might be going wrong) and a link
