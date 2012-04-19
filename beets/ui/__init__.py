@@ -42,14 +42,6 @@ if sys.platform == 'win32':
     else:
         colorama.init()
 
-# On Unix-like platforms, use readline to make prompts more usable.
-try:
-    import readline
-except ImportError:
-    pass
-else:
-    readline  # Silence pyflakes "unused import" warning.
-
 
 # Constants.
 CONFIG_PATH_VAR = 'BEETSCONFIG'
