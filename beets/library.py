@@ -895,7 +895,7 @@ class Library(BaseLibrary):
             mapping[key] = util.sanitize_for_path(value, pathmod, key)
 
         # Perform substitution.
-        funcs = DefaultTemplateFunctions(self, item).functions()
+        funcs = DefaultTemplateFunctions(self, item, pathmod).functions()
         funcs.update(plugins.template_funcs())
         subpath = subpath_tmpl.substitute(mapping, funcs)
 
@@ -1362,9 +1362,10 @@ class DefaultTemplateFunctions(object):
     additional context to the functions -- specifically, the Item being
     evaluated.
     """
-    def __init__(self, lib, item):
+    def __init__(self, lib, item, pathmod):
         self.lib = lib
         self.item = item
+        self.pathmod = pathmod
 
     _prefix = 'tmpl_'
 
@@ -1478,5 +1479,9 @@ class DefaultTemplateFunctions(object):
             return u' {}'.format(album.id)
 
         # Flatten disambiguation values into a string.
-        values = [unicode(getattr(album, f)) for f in disambiguators]
+        values = [
+            util.sanitize_for_path(unicode(getattr(album, f)),
+                                   self.pathmod, f)
+            for f in disambiguators
+        ]
         return u' [{}]'.format(u' '.join(values))

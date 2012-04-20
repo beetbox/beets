@@ -509,6 +509,14 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
         self._assert_dest('/base/foo 1/the title', self.i1)
         self._assert_dest('/base/foo 2/the title', self.i2)
 
+    def test_unique_sanitized(self):
+        album2 = self.lib.get_album(self.i2)
+        album2.year = 2001
+        album1 = self.lib.get_album(self.i1)
+        album1.albumtype = 'foo/bar'
+        self._setf(u'foo%unique{albumartist album,albumtype}/$title')
+        self._assert_dest('/base/foo [foo_bar]/the title', self.i1)
+
 class PluginDestinationTest(unittest.TestCase):
     # Mock the plugins.template_values(item) function.
     def _template_values(self, item):
