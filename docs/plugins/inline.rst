@@ -15,7 +15,7 @@ on your ``plugins`` line, like so::
 Then, make a ``[pathfields]`` section in your config file. In this section,
 every line defines a new template field; the key is the name of the field
 (you'll use the name to refer to the field in your templates) and the value is a
-Python expression. The expression has all of a track's items in scope, so you
+Python expression. The expression has all of a track's fields in scope, so you
 can refer to any normal attributes (such as ``artist`` or ``title``) as Python
 variables. Here are a couple of examples::
 
