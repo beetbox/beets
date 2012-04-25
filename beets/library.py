@@ -116,6 +116,7 @@ ALBUM_FIELDS = [
     ('label',             'text', True),
     ('mb_releasegroupid', 'text', True),
     ('asin',              'text', True),
+    ('catalognum',        'text', True),
     ('script',            'text', True),
     ('language',          'text', True),
     ('country',           'text', True),
