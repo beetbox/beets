@@ -486,13 +486,20 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
         self.lib.add_album([self.i2])
         self.lib.save()
 
-        self._setf(u'foo%unique{albumartist album,year}/$title')
+        self._setf(u'foo%aunique{albumartist album,year}/$title')
 
     def tearDown(self):
         self.lib.conn.close()
 
     def test_unique_expands_to_disambiguating_year(self):
         self._assert_dest('/base/foo [2001]/the title', self.i1)
+
+    def test_unique_with_default_arguments_uses_albumtype(self):
+        album2 = self.lib.get_album(self.i1)
+        album2.albumtype = 'bar'
+        self.lib.save()
+        self._setf(u'foo%aunique{}/$title')
+        self._assert_dest('/base/foo [bar]/the title', self.i1)
 
     def test_unique_expands_to_nothing_for_distinct_albums(self):
         album2 = self.lib.get_album(self.i2)
@@ -514,7 +521,7 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
         album2.year = 2001
         album1 = self.lib.get_album(self.i1)
         album1.albumtype = 'foo/bar'
-        self._setf(u'foo%unique{albumartist album,albumtype}/$title')
+        self._setf(u'foo%aunique{albumartist album,albumtype}/$title')
         self._assert_dest('/base/foo [foo_bar]/the title', self.i1)
 
 class PluginDestinationTest(unittest.TestCase):

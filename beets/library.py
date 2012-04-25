@@ -136,6 +136,7 @@ ITEM_DEFAULT_FIELDS = ARTIST_DEFAULT_FIELDS + ALBUM_DEFAULT_FIELDS + \
 # Special path format key.
 PF_KEY_DEFAULT = 'default'
 
+
 # Logger.
 log = logging.getLogger('beets')
 if not log.handlers:
@@ -895,9 +896,11 @@ class Library(BaseLibrary):
         for key, value in plugins.template_values(item).iteritems():
             mapping[key] = util.sanitize_for_path(value, pathmod, key)
 
-        # Perform substitution.
+        # Get template functions.
         funcs = DefaultTemplateFunctions(self, item, pathmod).functions()
         funcs.update(plugins.template_funcs())
+
+        # Perform substitution.
         subpath = subpath_tmpl.substitute(mapping, funcs)
 
         # Prepare path for output: normalize Unicode characters.
@@ -1426,7 +1429,7 @@ class DefaultTemplateFunctions(object):
         """
         return unidecode(s)
 
-    def tmpl_unique(self, keys, disam):
+    def tmpl_aunique(self, keys=None, disam=None):
         """Generate a string that is guaranteed to be unique among all
         albums in the library who share the same set of keys. Fields
         from "disam" are used in the string if they are sufficient to
@@ -1434,6 +1437,8 @@ class DefaultTemplateFunctions(object):
         used. Both "keys" and "disam" should be given as
         whitespace-separated lists of field names.
         """
+        keys = keys or 'albumartist album'
+        disam = disam or 'albumtype year label catalognum albumdisambig'
         keys = keys.split()
         disam = disam.split()
 
