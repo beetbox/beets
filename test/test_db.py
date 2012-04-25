@@ -516,6 +516,10 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
         self._assert_dest('/base/foo 1/the title', self.i1)
         self._assert_dest('/base/foo 2/the title', self.i2)
 
+    def test_unique_falls_back_to_second_distinguishing_field(self):
+        self._setf(u'foo%aunique{albumartist album,month year}/$title')
+        self._assert_dest('/base/foo [2001]/the title', self.i1)
+
     def test_unique_sanitized(self):
         album2 = self.lib.get_album(self.i2)
         album2.year = 2001
