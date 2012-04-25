@@ -56,9 +56,9 @@ PF_KEY_QUERIES = {
     'singleton': 'singleton:true',
 }
 DEFAULT_PATH_FORMATS = [
-    (library.PF_KEY_DEFAULT,      '$albumartist/$album/$track $title'),
-    (PF_KEY_QUERIES['singleton'], 'Non-Album/$artist/$title'),
-    (PF_KEY_QUERIES['comp'],      'Compilations/$album/$track $title'),
+  (library.PF_KEY_DEFAULT,      '$albumartist/$album%aunique{}/$track $title'),
+  (PF_KEY_QUERIES['singleton'], 'Non-Album/$artist/$title'),
+  (PF_KEY_QUERIES['comp'],      'Compilations/$album%aunique{}/$track $title'),
 ]
 DEFAULT_ART_FILENAME = 'cover'
 DEFAULT_TIMEOUT = 5.0
