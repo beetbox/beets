@@ -837,14 +837,23 @@ class Library(BaseLibrary):
         self.art_filename = bytestring_path(art_filename)
         self.replacements = replacements
         
+        # uncomment for extra traceback on error
+        #sqlite3.enable_callback_tracebacks(1)
+
         self.timeout = timeout
         self.conn = sqlite3.connect(self.path, timeout)
         self.conn.row_factory = sqlite3.Row
             # this way we can access our SELECT results like dictionaries
 
         def regexp(expr, item):
-            reg = re.compile(expr)
-            return reg.search(item) is not None
+            if item == None:
+                return False
+            try:
+                reg = re.compile(expr)
+                res = reg.search(item)
+                return res is not None
+            except:
+                return False
 
         self.conn.create_function("REGEXP", 2, regexp)
         
