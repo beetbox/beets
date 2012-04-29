@@ -215,6 +215,9 @@ removed from your library database---and, if the corresponding files are located
 inside of your beets library directory, the files themselves will be deleted as
 well.
 
+If you choose to keep two identically-named albums, beets can avoid storing both
+in the same directory. See :ref:`aunique` for details.
+
 Fingerprinting
 --------------
 

@@ -184,13 +184,14 @@ for most releases, ``comp`` for "various artist" releases with no dominant
 artist, and ``singleton`` for non-album tracks. The defaults look like this::
 
     [paths]
-    default: $albumartist/$album/$track $title
+    default: $albumartist/$album%aunique{}/$track $title
     singleton: Non-Album/$artist/$title
-    comp: Compilations/$album/$track $title
+    comp: Compilations/$album%aunique{}/$track $title
 
 Note the use of ``$albumartist`` instead of ``$artist``; this ensure that albums
 will be well-organized. For more about these format strings, see
-:doc:`pathformat`.
+:doc:`pathformat`. The ``aunique{}`` function ensures that identically-named
+albums are placed in different directories; see :ref:`aunique` for details.
 
 In addition to ``default``, ``comp``, and ``singleton``, you can condition path
 queries based on beets queries (see :doc:`/reference/query`). There's one catch:
