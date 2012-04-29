@@ -103,12 +103,15 @@ Here are a few of the plugins written by the beets community:
 
 * `A cmus plugin`_ integrates with the `cmus`_ console music player.
 
+* `featInTitle`_ moves featured artists from the artist tag to the title tag.
+
 .. _beetFs: http://code.google.com/p/beetfs/
 .. _Beet-MusicBrainz-Collection:
     https://github.com/jeffayle/Beet-MusicBrainz-Collection/
 .. _A cmus plugin:
     https://github.com/coolkehon/beets/blob/master/beetsplug/cmus.py
 .. _cmus: http://cmus.sourceforge.net/
+.. _featInTitle: https://github.com/Verrus/beets-plugin-featInTitle/
 
 Writing Plugins
 ---------------
