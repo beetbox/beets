@@ -858,7 +858,10 @@ class Library(BaseLibrary):
                     break
             else:
                 assert False, "no default path format"
-        subpath_tmpl = Template(path_format)
+        if isinstance(path_format, Template):
+            subpath_tmpl = path_format
+        else:
+            subpath_tmpl = Template(path_format)
 
         # Get the item's Album if it has one.
         album = self.get_album(item)

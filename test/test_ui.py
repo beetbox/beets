@@ -503,7 +503,9 @@ class ConfigTest(unittest.TestCase):
 
     def test_paths_section_respected(self):
         def func(lib, config, opts, args):
-            self.assertEqual(lib.path_formats[0], ('x', 'y'))
+            key, template = lib.path_formats[0]
+            self.assertEqual(key, 'x')
+            self.assertEqual(template.original, 'y')
         self._run_main([], textwrap.dedent("""
             [paths]
             x=y"""), func)
@@ -753,7 +755,9 @@ class PathFormatTest(unittest.TestCase):
         pf = self._paths_for("""
             foo: bar
         """)
-        self.assertEqual(pf[0], ('foo', 'bar'))
+        key, tmpl = pf[0]
+        self.assertEqual(key, 'foo')
+        self.assertEqual(tmpl.original, 'bar')
         self.assertEqual(pf[1:], ui.DEFAULT_PATH_FORMATS)
 
 def suite():

@@ -31,6 +31,7 @@ import re
 from beets import library
 from beets import plugins
 from beets import util
+from beets.util.functemplate import Template
 
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
@@ -56,9 +57,12 @@ PF_KEY_QUERIES = {
     'singleton': 'singleton:true',
 }
 DEFAULT_PATH_FORMATS = [
-  (library.PF_KEY_DEFAULT,      '$albumartist/$album%aunique{}/$track $title'),
-  (PF_KEY_QUERIES['singleton'], 'Non-Album/$artist/$title'),
-  (PF_KEY_QUERIES['comp'],      'Compilations/$album%aunique{}/$track $title'),
+  (library.PF_KEY_DEFAULT,
+   Template('$albumartist/$album%aunique{}/$track $title')),
+  (PF_KEY_QUERIES['singleton'],
+   Template('Non-Album/$artist/$title')),
+  (PF_KEY_QUERIES['comp'],
+   Template('Compilations/$album%aunique{}/$track $title')),
 ]
 DEFAULT_ART_FILENAME = 'cover'
 DEFAULT_TIMEOUT = 5.0
@@ -465,10 +469,12 @@ def _get_path_formats(config):
     legacy_path_format = config_val(config, 'beets', 'path_format', None)
     if legacy_path_format:
         # Old path formats override the default values.
-        path_formats = [(library.PF_KEY_DEFAULT, legacy_path_format)]
+        path_formats = [(library.PF_KEY_DEFAULT,
+                         Template(legacy_path_format))]
     else:
         # If no legacy path format, use the defaults instead.
         path_formats = DEFAULT_PATH_FORMATS
+
     if config.has_section('paths'):
         custom_path_formats = []
         for key, value in config.items('paths', True):
@@ -479,8 +485,9 @@ def _get_path_formats(config):
                 # For non-special keys (literal queries), the _
                 # character denotes a :.
                 key = key.replace('_', ':')
-            custom_path_formats.append((key, value))
+            custom_path_formats.append((key, Template(value)))
         path_formats = custom_path_formats + path_formats
+
     return path_formats
 
 
