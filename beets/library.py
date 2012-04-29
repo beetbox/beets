@@ -1251,13 +1251,13 @@ class Album(BaseAlbum):
             # Remove items.
             for item in self.items():
                 self._library.remove(item, delete, False)
-        
+
         if delete:
             # Delete art file.
             artpath = self.artpath
             if artpath:
                 util.soft_remove(artpath)
-        
+
         # Remove album from database.
         self._library.conn.execute(
             'DELETE FROM albums WHERE id=?',
@@ -1276,6 +1276,7 @@ class Album(BaseAlbum):
         if new_art == old_art:
             return
 
+        new_art = util.unique_path(new_art)
         log.debug('moving album art %s to %s' % (old_art, new_art))
         if copy:
             util.copy(old_art, new_art)
@@ -1284,7 +1285,7 @@ class Album(BaseAlbum):
         self.artpath = new_art
 
         # Prune old path when moving.
-        if not copy: 
+        if not copy:
             util.prune_dirs(os.path.dirname(old_art),
                             self._library.directory)
 
