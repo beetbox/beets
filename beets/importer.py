@@ -702,29 +702,9 @@ def apply_choices(config):
                     util.prune_dirs(os.path.dirname(duplicate_path),
                                     lib.directory)
 
-        # Move/copy files.
-        task.old_paths = [item.path for item in items]  # For deletion.
-        for item in items:
-            if config.copy or config.move:
-                if config.move:
-                    # Just move the file.
-                    lib.move(item, False, task.is_album)
-                else:
-                    # If it's a reimport, move the file. Otherwise, copy
-                    # and keep track of the old path.
-                    old_path = item.path
-                    do_copy = not bool(replaced_items[item])
-                    lib.move(item, do_copy, task.is_album)
-                    if not do_copy:
-                        # If we moved the item, remove the now-nonexistent
-                        # file from old_paths.
-                        task.old_paths.remove(old_path)
-
-            if config.write and task.should_write_tags():
-                item.write()
-
-        # Add items to library. We consolidate this at the end to avoid
-        # locking while we do the copying and tag updates.
+        # Add items -- before path changes -- to the library. We add the
+        # items now (rather than at the end) so that album structures
+        # are in place before calls to destination().
         try:
             # Remove old items.
             for replaced in replaced_items.itervalues():
@@ -742,6 +722,34 @@ def apply_choices(config):
                 # Add tracks.
                 for item in items:
                     lib.add(item)
+        finally:
+            lib.save()
+
+        # Move/copy files.
+        task.old_paths = [item.path for item in items]  # For deletion.
+        for item in items:
+            if config.copy or config.move:
+                if config.move:
+                    # Just move the file.
+                    lib.move(item, False)
+                else:
+                    # If it's a reimport, move the file. Otherwise, copy
+                    # and keep track of the old path.
+                    old_path = item.path
+                    do_copy = not bool(replaced_items[item])
+                    lib.move(item, do_copy)
+                    if not do_copy:
+                        # If we moved the item, remove the now-nonexistent
+                        # file from old_paths.
+                        task.old_paths.remove(old_path)
+
+            if config.write and task.should_write_tags():
+                item.write()
+
+        # Save new paths.
+        try:
+            for item in items:
+                lib.store(item)
         finally:
             lib.save()
 

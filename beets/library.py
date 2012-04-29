@@ -829,11 +829,10 @@ class Library(BaseLibrary):
         self.conn.executescript(setup_sql)
         self.conn.commit()
 
-    def destination(self, item, pathmod=None, in_album=False,
-                    fragment=False, basedir=None, platform=None):
+    def destination(self, item, pathmod=None, fragment=False,
+                    basedir=None, platform=None):
         """Returns the path in the library directory designated for item
-        item (i.e., where the file ought to be). in_album forces the
-        item to be treated as part of an album. fragment makes this
+        item (i.e., where the file ought to be). fragment makes this
         method return just the path fragment underneath the root library
         directory; the path is also returned as Unicode instead of
         encoded as a bytestring. basedir can override the library's base
@@ -848,14 +847,6 @@ class Library(BaseLibrary):
             if query == PF_KEY_DEFAULT:
                 continue
             query = AndQuery.from_string(query)
-            if in_album:
-                # If we're treating this item as a member of the item,
-                # hack the query so that singleton queries always
-                # observe the item to be non-singleton.
-                for i, subquery in enumerate(query):
-                    if isinstance(subquery, SingletonQuery):
-                        query[i] = FalseQuery() if subquery.sense \
-                                   else TrueQuery()
             if query.match(item):
                 # The query matches the item! Use the corresponding path
                 # format.
@@ -1024,7 +1015,7 @@ class Library(BaseLibrary):
             util.soft_remove(item.path)
             util.prune_dirs(os.path.dirname(item.path), self.directory)
     
-    def move(self, item, copy=False, in_album=False, basedir=None,
+    def move(self, item, copy=False, basedir=None,
              with_album=True):
         """Move the item to its designated location within the library
         directory (provided by destination()). Subdirectories are
@@ -1033,11 +1024,6 @@ class Library(BaseLibrary):
         
         If copy is True, moving the file is copied rather than moved.
         
-        If in_album is True, then the track is treated as part of an
-        album even if it does not yet have an album_id associated with
-        it. (This allows items to be moved before they are added to the
-        database, a performance optimization.)
-
         basedir overrides the library base directory for the
         destination.
 
@@ -1050,7 +1036,7 @@ class Library(BaseLibrary):
         side effect. You probably want to call save() to commit the DB
         transaction.
         """
-        dest = self.destination(item, in_album=in_album, basedir=basedir)
+        dest = self.destination(item, basedir=basedir)
         
         # Create necessary ancestry for the move.
         util.mkdirall(dest)
