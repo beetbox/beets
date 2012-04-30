@@ -1376,9 +1376,8 @@ class DefaultTemplateFunctions(object):
         and the values are Python functions.
         """
         out = {}
-        for key in dir(self):
-            if key.startswith(self._prefix):
-                out[key[len(self._prefix):]] = getattr(self, key)
+        for key in self._func_names:
+            out[key[len(self._prefix):]] = getattr(self, key)
         return out
 
     @staticmethod
@@ -1425,17 +1424,6 @@ class DefaultTemplateFunctions(object):
         """Translate non-ASCII characters to their ASCII equivalents.
         """
         return unidecode(s)
-
-    def _memo_get(self, key):
-        """Get a memoized value. The key is any hashable Python object.
-        The memoization namespace is associated with the library.
-        Returns None if no value is available.
-        """
-        return self.lib._memotable.get(key)
-
-    def _memo_set(self, key, value):
-        """Set a memoized value for the key."""
-        self.lib._memotable[key] = value
 
     def tmpl_aunique(self, keys=None, disam=None):
         """Generate a string that is guaranteed to be unique among all
@@ -1500,3 +1488,8 @@ class DefaultTemplateFunctions(object):
         res = u' [{}]'.format(disam_value)
         self.lib._memotable[memokey] = res
         return res
+
+# Get the name of tmpl_* functions in the above class.
+DefaultTemplateFunctions._func_names = \
+    [s for s in dir(DefaultTemplateFunctions)
+     if s.startswith(DefaultTemplateFunctions._prefix)]
