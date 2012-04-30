@@ -51,6 +51,8 @@ Changelog
   store music). To customize your character substitutions, see :ref:`the replace
   config option <replace>`.
 * Filename collisions are now avoided when moving album art.
+* :doc:`/plugins/bpd`: Print messages to show when directory tree is being
+  constructed.
 * :doc:`/plugins/bpd`: Use Gstreamer's ``playbin2`` element instead of the
   deprecated ``playbin``.
 * :doc:`/plugins/bpd`: Listings are now sorted (thanks once again to Matteo

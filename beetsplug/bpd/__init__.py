@@ -751,7 +751,9 @@ class Server(BaseServer):
         """
         # Path is ignored. Also, the real MPD does this asynchronously;
         # this is done inline.
+        print 'Building directory tree...'
         self.tree = vfs.libtree(self.lib)
+        print '... done.'
         self.updated_time = time.time()
 
 
@@ -1093,7 +1095,7 @@ class BPDPlugin(BeetsPlugin):
             Server(lib, host, port, password).run()
         except NoGstreamerError:
             global_log.error('Gstreamer Python bindings not found.')
-            global_log.error('Install "python-gst0.10", "py26-gst-python",'
+            global_log.error('Install "python-gst0.10", "py27-gst-python", '
                              'or similar package to use BPD.')
 
     def commands(self):

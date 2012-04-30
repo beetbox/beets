@@ -17,10 +17,9 @@ Before you can use BPD, you'll need the media library called GStreamer (along
 with its Python bindings) on your system.
 
 * On Mac OS X, you can use `MacPorts`_ or `Homebrew`_. For MacPorts, just run
-  ``port install py27-gst-python``. For Homebrew, the `Mopidy`_ project has
-  `detailed instructions`_ for installing the necessary libraries.
-  (Note that you'll need the
-  Mac OS X Developer Tools.)
+  ``port install py27-gst-python``. For Homebrew, use `my auxiliary repository`_
+  to install: ``brew tap sampsyo/py ; brew install gst-python``.
+  (Note that you'll need the Mac OS X Developer Tools in either case.)
 
 * On Linux, it's likely that you already have gst-python. (If not, your
   distribution almost certainly has a package for it.)
@@ -31,8 +30,7 @@ with its Python bindings) on your system.
 .. _MacPorts: http://www.macports.org/
 .. _GStreamer WinBuilds: http://www.gstreamer-winbuild.ylatuya.es/
 .. _Homebrew: http://mxcl.github.com/homebrew/
-.. _Mopidy: https://github.com/mopidy/mopidy/
-.. _detailed instructions: http://docs.mopidy.com/en/latest/installation/gstreamer/#installing-gstreamer-on-os-x
+.. _my auxiliary repository: https://github.com/sampsyo/homebrew-py
 
 Using and Configuring
 ---------------------
