@@ -1450,7 +1450,7 @@ class DefaultTemplateFunctions(object):
             return None
         memokey = ('aunique', keys, disam, self.item.album_id)
         memoval = self.lib._memotable.get(memokey)
-        if memoval:
+        if memoval is not None:
             return memoval
 
         keys = keys or 'albumartist album'
