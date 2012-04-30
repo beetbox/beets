@@ -777,15 +777,17 @@ class Library(BaseLibrary):
         self.path_formats = path_formats
         self.art_filename = bytestring_path(art_filename)
         self.replacements = replacements
-        
+
         self.timeout = timeout
         self.conn = sqlite3.connect(self.path, timeout)
         self.conn.row_factory = sqlite3.Row
             # this way we can access our SELECT results like dictionaries
-        
+
         self._make_table('items', item_fields)
         self._make_table('albums', album_fields)
-    
+
+        self._memotable = {}  # Used for template substitution performance.
+
     def _make_table(self, table, fields):
         """Set up the schema of the library file. fields is a list of
         all the fields that should be present in the indicated table.
@@ -929,7 +931,7 @@ class Library(BaseLibrary):
 
         # build essential parts of query
         columns = ','.join([key for key in ITEM_KEYS if key != 'id'])
-        values = ','.join( ['?'] * (len(ITEM_KEYS)-1) )
+        values = ','.join(['?'] * (len(ITEM_KEYS) - 1))
         subvars = []
         for key in ITEM_KEYS:
             if key != 'id':
@@ -947,6 +949,7 @@ class Library(BaseLibrary):
 
         item._clear_dirty()
         item.id = new_id
+        self._memotable = {}
         return new_id
 
     def save(self, event=True):
@@ -997,6 +1000,8 @@ class Library(BaseLibrary):
         self.conn.execute(query, subvars)
         item._clear_dirty()
 
+        self._memotable = {}
+
     def remove(self, item, delete=False, with_album=True):
         """Removes this item. If delete, then the associated file is
         removed from disk. If with_album, then the item's album (if any)
@@ -1017,7 +1022,9 @@ class Library(BaseLibrary):
         if delete:
             util.soft_remove(item.path)
             util.prune_dirs(os.path.dirname(item.path), self.directory)
-    
+
+        self._memotable = {}
+
     def move(self, item, copy=False, basedir=None,
              with_album=True):
         """Move the item to its designated location within the library
@@ -1356,12 +1363,12 @@ class DefaultTemplateFunctions(object):
     additional context to the functions -- specifically, the Item being
     evaluated.
     """
+    _prefix = 'tmpl_'
+
     def __init__(self, lib, item, pathmod):
         self.lib = lib
         self.item = item
         self.pathmod = pathmod
-
-    _prefix = 'tmpl_'
 
     def functions(self):
         """Returns a dictionary containing the functions defined in this
@@ -1419,6 +1426,17 @@ class DefaultTemplateFunctions(object):
         """
         return unidecode(s)
 
+    def _memo_get(self, key):
+        """Get a memoized value. The key is any hashable Python object.
+        The memoization namespace is associated with the library.
+        Returns None if no value is available.
+        """
+        return self.lib._memotable.get(key)
+
+    def _memo_set(self, key, value):
+        """Set a memoized value for the key."""
+        self.lib._memotable[key] = value
+
     def tmpl_aunique(self, keys=None, disam=None):
         """Generate a string that is guaranteed to be unique among all
         albums in the library who share the same set of keys. A fields
@@ -1427,6 +1445,14 @@ class DefaultTemplateFunctions(object):
         used. Both "keys" and "disam" should be given as
         whitespace-separated lists of field names.
         """
+        # Fast paths: no album or memoized value.
+        if self.item.album_id is None:
+            return None
+        memokey = ('aunique', keys, disam, self.item.album_id)
+        memoval = self.lib._memotable.get(memokey)
+        if memoval:
+            return memoval
+
         keys = keys or 'albumartist album'
         disam = disam or 'albumtype year label catalognum albumdisambig'
         keys = keys.split()
@@ -1435,6 +1461,7 @@ class DefaultTemplateFunctions(object):
         album = self.lib.get_album(self.item)
         if not album:
             # Do nothing for singletons.
+            self.lib._memotable[memokey] = u''
             return u''
 
         # Find matching albums to disambiguate with.
@@ -1447,6 +1474,7 @@ class DefaultTemplateFunctions(object):
         # If there's only one album to matching these details, then do
         # nothing.
         if len(albums) == 1:
+            self.lib._memotable[memokey] = u''
             return u''
 
         # Find the first disambiguator that distinguishes the albums.
@@ -1462,9 +1490,13 @@ class DefaultTemplateFunctions(object):
 
         else:
             # No disambiguator distinguished all fields.
-            return u' {}'.format(album.id)
+            res = u' {}'.format(album.id)
+            self.lib._memotable[memokey] = res
+            return res
 
         # Flatten disambiguation value into a string.
         disam_value = util.sanitize_for_path(getattr(album, disambiguator),
                                              self.pathmod, disambiguator)
-        return u' [{}]'.format(disam_value)
+        res = u' [{}]'.format(disam_value)
+        self.lib._memotable[memokey] = res
+        return res
