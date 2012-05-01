@@ -38,6 +38,8 @@ Changelog
 * New :doc:`/plugins/importfeeds`: Catalog imported files in ``m3u`` playlist
   files or as symlinks for easy importing to other systems. Thanks to Fabrice
   Laporte.
+* The ``-f`` (output format) option to the ``beet list`` command can now contain
+  template functions as well as field references. Thanks to Steve Dougherty.
 * A new command ``beet fields`` displays the available metadata fields (thanks
   to Matteo Mecucci).
 * The ``import`` command now has a ``--noincremental`` or ``-I`` flag to disable

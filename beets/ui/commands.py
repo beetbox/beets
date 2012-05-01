@@ -824,7 +824,7 @@ def list_items(lib, query, album, path, fmt):
             if path:
                 print_(item.path)
             elif fmt is not None:
-                print_(lib.substitute_template(item, template))
+                print_(lib.evaluate_template(item, template))
 
 list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
 list_cmd.parser.add_option('-a', '--album', action='store_true',

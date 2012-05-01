@@ -831,10 +831,13 @@ class Library(BaseLibrary):
         self.conn.executescript(setup_sql)
         self.conn.commit()
 
-    def substitute_template(self, item, template, pathmod=None):
-        """Runs functions and substitutes fields in template. If a pathmod is
-        specified, all values are path-sanitized.
+    def evaluate_template(self, item, template, sanitize=False, pathmod=None):
+        """Evaluates a Template object using the item's fields. If
+        `sanitize`, then each value will be sanitized for inclusion in a
+        file path.
         """
+        pathmod = pathmod or os.path
+
         # Get the item's Album if it has one.
         album = self.get_album(item)
 
@@ -849,10 +852,9 @@ class Library(BaseLibrary):
             else:
                 # From Item.
                 value = getattr(item, key)
-            if pathmod is not None:
-                mapping[key] = util.sanitize_for_path(value, pathmod, key)
-            else:
-                mapping[key] = value
+            if sanitize:
+                value = util.sanitize_for_path(value, pathmod, key)
+            mapping[key] = value
 
         # Use the album artist if the track artist is not set and
         # vice-versa.
@@ -863,10 +865,9 @@ class Library(BaseLibrary):
 
         # Get values from plugins.
         for key, value in plugins.template_values(item).iteritems():
-            if pathmod is not None:
-                mapping[key] = util.sanitize_for_path(value, pathmod, key)
-            else:
-                mapping[key] = value
+            if sanitize:
+                value = util.sanitize_for_path(value, pathmod, key)
+            mapping[key] = value
 
         # Get template functions.
         funcs = DefaultTemplateFunctions(self, item, pathmod).functions()
@@ -909,7 +910,7 @@ class Library(BaseLibrary):
         else:
             subpath_tmpl = Template(path_format)
 
-        subpath = self.substitute_template(item, subpath_tmpl, pathmod=pathmod)
+        subpath = self.evaluate_template(item, subpath_tmpl, True, pathmod)
 
         # Prepare path for output: normalize Unicode characters.
         if platform == 'darwin':
