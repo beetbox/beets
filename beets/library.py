@@ -289,6 +289,57 @@ class Item(object):
         return int(os.path.getmtime(syspath(self.path)))
 
 
+    # Templating.
+
+    def evaluate_template(self, template, lib=None, sanitize=False,
+                          pathmod=None):
+        """Evaluates a Template object using the item's fields. If `lib`
+        is provided, it is used to map some fields to the item's album
+        (if available) and is made available to template functions. If
+        `sanitize`, then each value will be sanitized for inclusion in a
+        file path.
+        """
+        pathmod = pathmod or os.path
+
+        # Get the item's Album if it has one.
+        album = lib.get_album(self)
+
+        # Build the mapping for substitution in the template,
+        # beginning with the values from the database.
+        mapping = {}
+        for key in ITEM_KEYS_META:
+            # Get the values from either the item or its album.
+            if key in ALBUM_KEYS_ITEM and album is not None:
+                # From album.
+                value = getattr(album, key)
+            else:
+                # From Item.
+                value = getattr(self, key)
+            if sanitize:
+                value = util.sanitize_for_path(value, pathmod, key)
+            mapping[key] = value
+
+        # Use the album artist if the track artist is not set and
+        # vice-versa.
+        if not mapping['artist']:
+            mapping['artist'] = mapping['albumartist']
+        if not mapping['albumartist']:
+            mapping['albumartist'] = mapping['artist']
+
+        # Get values from plugins.
+        for key, value in plugins.template_values(self).iteritems():
+            if sanitize:
+                value = util.sanitize_for_path(value, pathmod, key)
+            mapping[key] = value
+
+        # Get template functions.
+        funcs = DefaultTemplateFunctions(self, lib, pathmod).functions()
+        funcs.update(plugins.template_funcs())
+
+        # Perform substitution.
+        return template.substitute(mapping, funcs)
+
+
 # Library queries.
 
 class Query(object):
@@ -831,51 +882,6 @@ class Library(BaseLibrary):
         self.conn.executescript(setup_sql)
         self.conn.commit()
 
-    def evaluate_template(self, item, template, sanitize=False, pathmod=None):
-        """Evaluates a Template object using the item's fields. If
-        `sanitize`, then each value will be sanitized for inclusion in a
-        file path.
-        """
-        pathmod = pathmod or os.path
-
-        # Get the item's Album if it has one.
-        album = self.get_album(item)
-
-        # Build the mapping for substitution in the template,
-        # beginning with the values from the database.
-        mapping = {}
-        for key in ITEM_KEYS_META:
-            # Get the values from either the item or its album.
-            if key in ALBUM_KEYS_ITEM and album is not None:
-                # From album.
-                value = getattr(album, key)
-            else:
-                # From Item.
-                value = getattr(item, key)
-            if sanitize:
-                value = util.sanitize_for_path(value, pathmod, key)
-            mapping[key] = value
-
-        # Use the album artist if the track artist is not set and
-        # vice-versa.
-        if not mapping['artist']:
-            mapping['artist'] = mapping['albumartist']
-        if not mapping['albumartist']:
-            mapping['albumartist'] = mapping['artist']
-
-        # Get values from plugins.
-        for key, value in plugins.template_values(item).iteritems():
-            if sanitize:
-                value = util.sanitize_for_path(value, pathmod, key)
-            mapping[key] = value
-
-        # Get template functions.
-        funcs = DefaultTemplateFunctions(self, item, pathmod).functions()
-        funcs.update(plugins.template_funcs())
-
-        # Perform substitution.
-        return template.substitute(mapping, funcs)
-
     def destination(self, item, pathmod=None, fragment=False,
                     basedir=None, platform=None):
         """Returns the path in the library directory designated for item
@@ -910,7 +916,8 @@ class Library(BaseLibrary):
         else:
             subpath_tmpl = Template(path_format)
 
-        subpath = self.evaluate_template(item, subpath_tmpl, True, pathmod)
+        # Evaluate the selected template.
+        subpath = item.evaluate_template(subpath_tmpl, self, True, pathmod)
 
         # Prepare path for output: normalize Unicode characters.
         if platform == 'darwin':
@@ -1378,10 +1385,14 @@ class DefaultTemplateFunctions(object):
     """
     _prefix = 'tmpl_'
 
-    def __init__(self, lib, item, pathmod):
-        self.lib = lib
+    def __init__(self, item, lib=None, pathmod=None):
+        """Paramaterize the functions. If `lib` is None, then some
+        functions (namely, ``aunique``) will always evaluate to the
+        empty string.
+        """
         self.item = item
-        self.pathmod = pathmod
+        self.lib = lib
+        self.pathmod = pathmod or os.path
 
     def functions(self):
         """Returns a dictionary containing the functions defined in this
@@ -1446,9 +1457,9 @@ class DefaultTemplateFunctions(object):
         used. Both "keys" and "disam" should be given as
         whitespace-separated lists of field names.
         """
-        # Fast paths: no album or memoized value.
-        if self.item.album_id is None:
-            return None
+        # Fast paths: no album, no library, or memoized value.
+        if self.item.album_id is None or not self.lib:
+            return u''
         memokey = ('aunique', keys, disam, self.item.album_id)
         memoval = self.lib._memotable.get(memokey)
         if memoval is not None:
