@@ -831,6 +831,50 @@ class Library(BaseLibrary):
         self.conn.executescript(setup_sql)
         self.conn.commit()
 
+    def substitute_template(self, item, template, pathmod=None):
+        """Runs functions and substitutes fields in template. If a pathmod is
+        specified, all values are path-sanitized.
+        """
+        # Get the item's Album if it has one.
+        album = self.get_album(item)
+
+        # Build the mapping for substitution in the template,
+        # beginning with the values from the database.
+        mapping = {}
+        for key in ITEM_KEYS_META:
+            # Get the values from either the item or its album.
+            if key in ALBUM_KEYS_ITEM and album is not None:
+                # From album.
+                value = getattr(album, key)
+            else:
+                # From Item.
+                value = getattr(item, key)
+            if pathmod is not None:
+                mapping[key] = util.sanitize_for_path(value, pathmod, key)
+            else:
+                mapping[key] = value
+
+        # Use the album artist if the track artist is not set and
+        # vice-versa.
+        if not mapping['artist']:
+            mapping['artist'] = mapping['albumartist']
+        if not mapping['albumartist']:
+            mapping['albumartist'] = mapping['artist']
+
+        # Get values from plugins.
+        for key, value in plugins.template_values(item).iteritems():
+            if pathmod is not None:
+                mapping[key] = util.sanitize_for_path(value, pathmod, key)
+            else:
+                mapping[key] = value
+
+        # Get template functions.
+        funcs = DefaultTemplateFunctions(self, item, pathmod).functions()
+        funcs.update(plugins.template_funcs())
+
+        # Perform substitution.
+        return template.substitute(mapping, funcs)
+
     def destination(self, item, pathmod=None, fragment=False,
                     basedir=None, platform=None):
         """Returns the path in the library directory designated for item
@@ -865,39 +909,7 @@ class Library(BaseLibrary):
         else:
             subpath_tmpl = Template(path_format)
 
-        # Get the item's Album if it has one.
-        album = self.get_album(item)
-
-        # Build the mapping for substitution in the path template,
-        # beginning with the values from the database.
-        mapping = {}
-        for key in ITEM_KEYS_META:
-            # Get the values from either the item or its album.
-            if key in ALBUM_KEYS_ITEM and album is not None:
-                # From album.
-                value = getattr(album, key)
-            else:
-                # From Item.
-                value = getattr(item, key)
-            mapping[key] = util.sanitize_for_path(value, pathmod, key)
-
-        # Use the album artist if the track artist is not set and
-        # vice-versa.
-        if not mapping['artist']:
-            mapping['artist'] = mapping['albumartist']
-        if not mapping['albumartist']:
-            mapping['albumartist'] = mapping['artist']
-
-        # Get values from plugins.
-        for key, value in plugins.template_values(item).iteritems():
-            mapping[key] = util.sanitize_for_path(value, pathmod, key)
-
-        # Get template functions.
-        funcs = DefaultTemplateFunctions(self, item, pathmod).functions()
-        funcs.update(plugins.template_funcs())
-
-        # Perform substitution.
-        subpath = subpath_tmpl.substitute(mapping, funcs)
+        subpath = self.substitute_template(item, subpath_tmpl, pathmod=pathmod)
 
         # Prepare path for output: normalize Unicode characters.
         if platform == 'darwin':
