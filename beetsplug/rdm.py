@@ -45,13 +45,13 @@ def random_item(lib, config, opts, args):
             if path:
                 print_(album.item_dir())
             else:
-                print_(template.substitute(album._record))
+                print_(album.evaluate_template(template))
     else:
         for item in objs:
             if path:
                 print_(item.path)
             else:
-                print_(template.substitute(item.record))
+                print_(item.evaluate_template(template, lib))
 
 random_cmd = Subcommand('random',
                         help='chose a random track or album')

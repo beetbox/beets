@@ -1344,7 +1344,7 @@ class Album(BaseAlbum):
         _, ext = os.path.splitext(image)
         dest = os.path.join(item_dir, self._library.art_filename + ext)
         return dest
-    
+
     def set_art(self, path):
         """Sets the album's cover art to the image at the given path.
         The image is copied into place, replacing any existing art.
@@ -1368,6 +1368,21 @@ class Album(BaseAlbum):
         util.copy(path, artdest)
         self.artpath = artdest
 
+    def evaluate_template(self, template):
+        """Evaluates a Template object using the album's fields.
+        """
+        # Get template field values.
+        mapping = {}
+        for key in ALBUM_KEYS:
+            mapping[key] = getattr(self, key)
+
+        # Get template functions.
+        funcs = DefaultTemplateFunctions().functions()
+        funcs.update(plugins.template_funcs())
+
+        # Perform substitution.
+        return template.substitute(mapping, funcs)
+
 
 # Default path template resources.
 
@@ -1385,9 +1400,9 @@ class DefaultTemplateFunctions(object):
     """
     _prefix = 'tmpl_'
 
-    def __init__(self, item, lib=None, pathmod=None):
-        """Paramaterize the functions. If `lib` is None, then some
-        functions (namely, ``aunique``) will always evaluate to the
+    def __init__(self, item=None, lib=None, pathmod=None):
+        """Paramaterize the functions. If `item` or `lib` is None, then
+        some functions (namely, ``aunique``) will always evaluate to the
         empty string.
         """
         self.item = item
@@ -1457,8 +1472,10 @@ class DefaultTemplateFunctions(object):
         used. Both "keys" and "disam" should be given as
         whitespace-separated lists of field names.
         """
-        # Fast paths: no album, no library, or memoized value.
-        if self.item.album_id is None or not self.lib:
+        # Fast paths: no album, no item or library, or memoized value.
+        if not self.item or not self.lib:
+            return u''
+        if self.item.album_id is None:
             return u''
         memokey = ('aunique', keys, disam, self.item.album_id)
         memoval = self.lib._memotable.get(memokey)

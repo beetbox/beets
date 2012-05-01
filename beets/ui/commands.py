@@ -817,8 +817,7 @@ def list_items(lib, query, album, path, fmt):
             if path:
                 print_(album.item_dir())
             elif fmt is not None:
-                #TODO: Support functions and plugin fields in album mode.
-                print_(template.substitute(album._record))
+                print_(album.evaluate_template(template))
     else:
         for item in lib.items(query):
             if path:
