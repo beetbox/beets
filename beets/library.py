@@ -412,6 +412,21 @@ class SubstringQuery(FieldQuery):
         value = getattr(item, self.field) or ''
         return self.pattern.lower() in value.lower()
 
+class RegexpQuery(FieldQuery):
+    """A query that matches a regular expression in a specific item field."""
+    def __init__(self, field, pattern):
+        super(RegexpQuery, self).__init__(field, pattern)
+        self.regexp = re.compile(pattern)
+
+    def clause(self):
+        clause = self.field + " REGEXP ?"
+        subvals = [self.pattern]
+        return clause, subvals
+
+    def match(self, item):
+        value = getattr(item, self.field) or ''
+        return self.regexp.match(value) is not None
+
 class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
     string reflecting a boolean.
@@ -468,17 +483,23 @@ class CollectionQuery(Query):
                                 r'(\S+?)'   # the keyword
                                 r'(?<!\\):' # unescaped :
                            r')?'
+                           r'((?<!\\):?)'  # unescaped : for regexps
                            r'(.+)',        # the term itself
                            re.I)            # case-insensitive
     @classmethod
     def _parse_query_part(cls, part):
         """Takes a query in the form of a key/value pair separated by a
-        colon. Returns pair (key, term) where key is None if the search
-        term has no key.
+        colon. An additional colon before the value indicates that the
+        value is a regular expression.
+        Returns tuple (key, term, is_regexp) where key is None if
+        the search term has no key and is_regexp indicates whether term
+        is a regular expression or not.
 
         For instance,
-        parse_query('stapler') == (None, 'stapler')
-        parse_query('color:red') == ('color', 'red')
+        parse_query('stapler') == (None, 'stapler', false)
+        parse_query('color:red') == ('color', 'red', false)
+        parse_query(':^Quiet') == (None, '^Quiet', true)
+        parse_query('color::b..e') == ('color', 'b..e', true)
 
         Colons may be 'escaped' with a backslash to disable the keying
         behavior.
@@ -486,7 +507,7 @@ class CollectionQuery(Query):
         part = part.strip()
         match = cls._pq_regex.match(part)
         if match:
-            return match.group(1), match.group(2).replace(r'\:', ':')
+            return match.group(1), match.group(3).replace(r'\:', ':'), match.group(2)==':'
 
     @classmethod
     def from_strings(cls, query_parts, default_fields=None, all_keys=ITEM_KEYS):
@@ -500,21 +521,28 @@ class CollectionQuery(Query):
             res = cls._parse_query_part(part)
             if not res:
                 continue
-            key, pattern = res
+            key, pattern, is_regexp = res
             if key is None: # No key specified.
                 if os.sep in pattern and 'path' in all_keys:
                     # This looks like a path.
                     subqueries.append(PathQuery(pattern))
                 else:
                     # Match any field.
-                    subqueries.append(AnySubstringQuery(pattern,
-                                                        default_fields))
+                    if is_regexp:
+                        subqueries.append(
+                            AnyRegexpQuery(pattern, default_fields))
+                    else:
+                        subqueries.append(
+                            AnySubstringQuery(pattern, default_fields))
             elif key.lower() == 'comp': # a boolean field
                 subqueries.append(BooleanQuery(key.lower(), pattern))
             elif key.lower() == 'path' and 'path' in all_keys:
                 subqueries.append(PathQuery(pattern))
             elif key.lower() in all_keys: # ignore unrecognized keys
-                subqueries.append(SubstringQuery(key.lower(), pattern))
+                if is_regexp:
+                    subqueries.append(RegexpQuery(key.lower(), pattern))
+                else:
+                    subqueries.append(SubstringQuery(key.lower(), pattern))
             elif key.lower() == 'singleton':
                 subqueries.append(SingletonQuery(util.str2bool(pattern)))
         if not subqueries: # no terms in query
@@ -556,6 +584,37 @@ class AnySubstringQuery(CollectionQuery):
                 continue
             if isinstance(val, basestring) and \
                self.pattern.lower() in val.lower():
+                return True
+        return False
+
+class AnyRegexpQuery(CollectionQuery):
+    """A query that matches a regexp in any of a list of metadata
+    fields.
+    """
+    def __init__(self, pattern, fields=None):
+        """Create a query for regexp over the sequence of fields
+        given. If no fields are given, all available fields are
+        used.
+        """
+        self.regexp = re.compile(pattern)
+        self.fields = fields or ITEM_KEYS_WRITABLE
+
+        subqueries = []
+        for field in self.fields:
+            subqueries.append(RegexpQuery(field, pattern))
+        super(AnyRegexpQuery, self).__init__(subqueries)
+
+    def clause(self):
+        return self.clause_with_joiner('or')
+
+    def match(self, item):
+        for fld in self.fields:
+            try:
+                val = getattr(item, fld)
+            except KeyError:
+                continue
+            if isinstance(val, basestring) and \
+               self.regexp.match(val) is not None:
                 return True
         return False
 
@@ -833,6 +892,18 @@ class Library(BaseLibrary):
         self.conn = sqlite3.connect(self.path, timeout)
         self.conn.row_factory = sqlite3.Row
             # this way we can access our SELECT results like dictionaries
+
+        # Add REGEXP function to SQLite queries.
+        def regexp(expr, item):
+            if item == None:
+                return False
+            try:
+                reg = re.compile(expr)
+                res = reg.search(item)
+                return res is not None
+            except:
+                return False
+        self.conn.create_function("REGEXP", 2, regexp)
 
         self._make_table('items', item_fields)
         self._make_table('albums', album_fields)
