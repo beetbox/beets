@@ -79,6 +79,33 @@ backslashes are not part of beets' syntax; I'm just using the escaping
 functionality of by shell (bash or zsh, for instance) to pass ``the rebel`` as a
 single argument instead of two.
 
+.. _regex:
+
+Regular Expressions
+-------------------
+
+While ordinary keywords perform simple substring matches, beets also supports
+regular expression matching for more advanced queries. To run a regex query, use
+an additional ``:`` between the field name and the expression::
+
+    $ beet list 'artist::Ann(a|ie)'
+
+That query finds songs by Anna Calvi and Annie but not Annuals. Similarly, this
+query prints the path to any file in my library that's missing a track title::
+
+    $ beet list -p title::^$
+
+To search *all* fields using a regular expression, just prefix the expression
+with a single `:`, like so::
+
+    $ beet list :Ho[pm]eless
+
+Regular expressions are case-sensitive and build on `Python's built-in
+implementation`_. See Python's documentation for specifics on regex syntax.
+
+.. _Python's built-in implementation: http://docs.python.org/library/re.html
+
+
 Path Queries
 ------------
 
@@ -97,19 +124,3 @@ equivalent::
 Note that this only matches items that are *already in your library*, so a path
 query won't necessarily find *all* the audio files in a directory---just the
 ones you've already added to your beets library.
-
-Future Work
------------
-
-Here are a few things that the query syntax should eventually support but aren't
-yet implemented. Please drop me a line if you have other ideas.
-
-* "Null" queries. It's currently impossible to query for items that have an
-  empty artist. Perhaps the syntax should look like ``artist:NULL`` or
-  ``artist:EMPTY``.
-
-* Regular expressions. Beets queries are based on simple case-insensitive
-  substring matching, but regexes might be useful occasionally as well. Maybe
-  the syntax should look something like ``re:artist:^.*$`` or, perhaps,
-  ``artist:/^.*$/``. Having regular expressions could help with null queries
-  (above): ``re:artist:^$``.

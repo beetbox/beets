@@ -72,7 +72,7 @@ class AnySubstringQueryTest(unittest.TestCase):
     def test_restriction_completeness(self):
         q = beets.library.AnySubstringQuery('title', ['title'])
         self.assertEqual(self.lib.items(q).next().title, 'the title')
-        
+
     def test_restriction_soundness(self):
         q = beets.library.AnySubstringQuery('title', ['artist'])
         self.assertRaises(StopIteration, self.lib.items(q).next)
@@ -98,7 +98,6 @@ class AnyRegexpQueryTest(unittest.TestCase):
         q = beets.library.AnyRegexpQuery(r'the ti$', ['title'])
         self.assertRaises(StopIteration, self.lib.items(q).next)
 
-
 # Convenient asserts for matching items.
 class AssertsMixin(object):
     def assert_matched(self, result_iterator, title):
@@ -111,7 +110,7 @@ class AssertsMixin(object):
         self.assert_matched(result_iterator, 'Lovers Who Uncover')
         self.assert_matched(result_iterator, 'Boracay')
         self.assert_done(result_iterator)
-    
+
 class GetTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
         self.lib = beets.library.Library(

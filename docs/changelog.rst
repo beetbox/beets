@@ -14,6 +14,9 @@ Changelog
   The new ``%aunique{}`` template function, which is included in the default
   path formats, ensures that Crystal Castles' albums will be placed into
   different directories. See :ref:`aunique` for details.
+* Beets queries can now use **regular expressions**. Use an additional `:` in
+  your query to enable regex matching. See :ref:`regex` for the full details.
+  Thanks to Matteo Mecucci.
 * Artist **sort names** are now fetched from MusicBrainz. There are two new data
   fields, ``artist_sort`` and ``albumartist_sort``, that contain sortable artist
   names like "Beatles, The". These fields are also used to sort albums and items

@@ -425,7 +425,7 @@ class RegexpQuery(FieldQuery):
 
     def match(self, item):
         value = getattr(item, self.field) or ''
-        return self.regexp.match(value) is not None
+        return self.regexp.search(value) is not None
 
 class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
@@ -476,24 +476,28 @@ class CollectionQuery(Query):
             subvals += subq_subvals
         clause = (' ' + joiner + ' ').join(clause_parts)
         return clause, subvals
-    
-    # regular expression for _parse_query_part, below
-    _pq_regex = re.compile(# non-grouping optional segment for the keyword
-                           r'(?:'
-                                r'(\S+?)'   # the keyword
-                                r'(?<!\\):' # unescaped :
-                           r')?'
-                           r'((?<!\\):?)'  # unescaped : for regexps
-                           r'(.+)',        # the term itself
-                           re.I)            # case-insensitive
+
+    # Regular expression for _parse_query_part, below.
+    _pq_regex = re.compile(
+        # Non-capturing optional segment for the keyword.
+        r'(?:'
+            r'(\S+?)'    # The field key.
+            r'(?<!\\):'  # Unescaped :
+        r')?'
+
+        r'((?<!\\):?)'   # Unescaped : indicating a regex.
+        r'(.+)',         # The term itself.
+
+        re.I  # Case-insensitive.
+    )
     @classmethod
     def _parse_query_part(cls, part):
         """Takes a query in the form of a key/value pair separated by a
         colon. An additional colon before the value indicates that the
-        value is a regular expression.
-        Returns tuple (key, term, is_regexp) where key is None if
-        the search term has no key and is_regexp indicates whether term
-        is a regular expression or not.
+        value is a regular expression. Returns tuple (key, term,
+        is_regexp) where key is None if the search term has no key and
+        is_regexp indicates whether term is a regular expression or an
+        ordinary substring match.
 
         For instance,
         parse_query('stapler') == (None, 'stapler', false)
@@ -507,10 +511,15 @@ class CollectionQuery(Query):
         part = part.strip()
         match = cls._pq_regex.match(part)
         if match:
-            return match.group(1), match.group(3).replace(r'\:', ':'), match.group(2)==':'
+            return (
+                match.group(1),  # Key.
+                match.group(3).replace(r'\:', ':'),  # Term.
+                match.group(2) == ':',  # Regular expression.
+            )
 
     @classmethod
-    def from_strings(cls, query_parts, default_fields=None, all_keys=ITEM_KEYS):
+    def from_strings(cls, query_parts, default_fields=None,
+                     all_keys=ITEM_KEYS):
         """Creates a query from a list of strings in the format used by
         _parse_query_part. If default_fields are specified, they are the
         fields to be searched by unqualified search terms. Otherwise,
@@ -522,30 +531,40 @@ class CollectionQuery(Query):
             if not res:
                 continue
             key, pattern, is_regexp = res
-            if key is None: # No key specified.
+
+            # No key specified.
+            if key is None:
                 if os.sep in pattern and 'path' in all_keys:
                     # This looks like a path.
                     subqueries.append(PathQuery(pattern))
                 else:
                     # Match any field.
                     if is_regexp:
-                        subqueries.append(
-                            AnyRegexpQuery(pattern, default_fields))
+                        subq = AnyRegexpQuery(pattern, default_fields)
                     else:
-                        subqueries.append(
-                            AnySubstringQuery(pattern, default_fields))
-            elif key.lower() == 'comp': # a boolean field
+                        subq = AnySubstringQuery(pattern, default_fields)
+                    subqueries.append(subq)
+
+            # A boolean field.
+            elif key.lower() == 'comp':
                 subqueries.append(BooleanQuery(key.lower(), pattern))
+
+            # Path field.
             elif key.lower() == 'path' and 'path' in all_keys:
                 subqueries.append(PathQuery(pattern))
-            elif key.lower() in all_keys: # ignore unrecognized keys
+
+            # Other (recognized) field.
+            elif key.lower() in all_keys:
                 if is_regexp:
                     subqueries.append(RegexpQuery(key.lower(), pattern))
                 else:
                     subqueries.append(SubstringQuery(key.lower(), pattern))
+
+            # Singleton query (not a real field).
             elif key.lower() == 'singleton':
                 subqueries.append(SingletonQuery(util.str2bool(pattern)))
-        if not subqueries: # no terms in query
+
+        if not subqueries:  # No terms in query.
             subqueries = [TrueQuery()]
         return cls(subqueries)
 
@@ -890,19 +909,21 @@ class Library(BaseLibrary):
 
         self.timeout = timeout
         self.conn = sqlite3.connect(self.path, timeout)
+        # This way we can access our SELECT results like dictionaries.
         self.conn.row_factory = sqlite3.Row
-            # this way we can access our SELECT results like dictionaries
 
         # Add REGEXP function to SQLite queries.
-        def regexp(expr, item):
-            if item == None:
+        def regexp(expr, val):
+            if val is None or expr is None:
                 return False
+            if not isinstance(val, basestring):
+                val = unicode(val)
             try:
-                reg = re.compile(expr)
-                res = reg.search(item)
-                return res is not None
-            except:
+                res = re.search(expr, val)
+            except re.error:
+                # Invalid regular expression.
                 return False
+            return res is not None
         self.conn.create_function("REGEXP", 2, regexp)
 
         self._make_table('items', item_fields)
