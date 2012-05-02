@@ -69,7 +69,7 @@ def _build_m3u_filename(basename):
 def _write_m3u(m3u_path, items_paths):
     """Append relative paths to items into m3u file.
     """
-    with open(m3u_path, 'w+') as f:
+    with open(m3u_path, 'a') as f:
         for path in items_paths:
             f.write(path + '\n')
 
