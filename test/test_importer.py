@@ -307,6 +307,25 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         # not exist.
         self.assertEqual(task.old_paths, [])
 
+    def test_apply_with_move(self):
+        config = _common.iconfig(self.lib, move=True)
+        applyc = importer.apply_choices(config)
+        applyc.next()
+        finalize = importer.finalize(config)
+        finalize.next()
+        _call_apply([applyc], [self.i], self.info)
+        self.assertExists(list(self.lib.items())[0].path)
+        self.assertNotExists(self.srcpath)
+
+    def test_apply_with_move_prunes_empty_directory(self):
+        config = _common.iconfig(self.lib, move=True)
+        applyc = importer.apply_choices(config)
+        applyc.next()
+        finalize = importer.finalize(config)
+        finalize.next()
+        _call_apply([applyc], [self.i], self.info, self.srcdir)
+        self.assertNotExists(os.path.dirname(self.srcpath))
+
 class AsIsApplyTest(unittest.TestCase):
     def setUp(self):
         self.dbpath = os.path.join(_common.RSRC, 'templib.blb')

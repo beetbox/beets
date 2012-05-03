@@ -731,7 +731,12 @@ def apply_choices(config):
             if config.copy or config.move:
                 if config.move:
                     # Just move the file.
+                    old_path = item.path
                     lib.move(item, False)
+                    # Clean up empty parent directory.
+                    if task.toppath:
+                        util.prune_dirs(os.path.dirname(old_path),
+                                        task.toppath)
                 else:
                     # If it's a reimport, move the file. Otherwise, copy
                     # and keep track of the old path.
