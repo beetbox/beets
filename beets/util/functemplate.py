@@ -182,6 +182,36 @@ class Call(object):
         else:
             return self.original
 
+    def translate(self):
+        """Compile the function call."""
+        varnames = set()
+        funcnames = set([self.ident])
+
+        arg_exprs = []
+        for arg in self.args:
+            subexprs, subvars, subfuncs = arg.translate()
+            varnames.update(subvars)
+            funcnames.update(subfuncs)
+
+            # Create a subexpression that joins the result components of
+            # the arguments.
+            arg_exprs.append(ex_call(
+                ast.Attribute(ex_literal(u''), 'join', ast.Load()),
+                [ex_call(
+                    'map',
+                    [
+                        ex_rvalue('unicode'),
+                        ast.List(subexprs, ast.Load()),
+                    ]
+                )],
+            ))
+
+        subexpr_call = ex_call(
+            FUNCTION_PREFIX + self.ident,
+            arg_exprs
+        )
+        return [subexpr_call], varnames, funcnames
+
 class Expression(object):
     """Top-level template construct: contains a list of text blobs,
     Symbols, and Calls.
