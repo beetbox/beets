@@ -26,6 +26,9 @@ This is sort of like a tiny, horrible degeneration of a real templating
 engine like Jinja2 or Mustache.
 """
 import re
+import ast
+import dis
+import types
 
 SYMBOL_DELIM = u'$'
 FUNC_DELIM = u'%'
@@ -34,6 +37,10 @@ GROUP_CLOSE = u'}'
 ARG_SEP = u','
 ESCAPE_CHAR = u'$'
 
+OUT_LIST_NAME = '__out'
+VARIABLE_PREFIX = '__var_'
+FUNCTION_PREFIX = '__func_'
+
 class Environment(object):
     """Contains the values and functions to be substituted into a
     template.
@@ -41,6 +48,100 @@ class Environment(object):
     def __init__(self, values, functions):
         self.values = values
         self.functions = functions
+
+
+# Code generation helpers.
+
+def ex_lvalue(name):
+    """A variable load expression."""
+    return ast.Name(name, ast.Store())
+
+def ex_rvalue(name):
+    """A variable store expression."""
+    return ast.Name(name, ast.Load())
+
+def ex_literal(val):
+    """An int, float, long, bool, string, or None literal with the given
+    value.
+    """
+    if val is None:
+        return ast.Name('None', ast.Load())
+    elif isinstance(val, (int, float, long)):
+        return ast.Num(val)
+    elif isinstance(val, bool):
+        return ast.Name(str(val), ast.Load())
+    elif isinstance(val, basestring):
+        return ast.Str(val)
+    raise TypeError('no literal for {}'.format(type(val)))
+
+def ex_varassign(name, expr):
+    """Assign an expression into a single variable. The expression may
+    either be an `ast.expr` object or a value to be used as a literal.
+    """
+    if not isinstance(expr, ast.expr):
+        expr = ex_literal(expr)
+    return ast.Assign([ex_lvalue(name)], expr)
+
+def ex_call(func, args):
+    """A function-call expression with only positional parameters. The
+    function may be an expression or the name of a function. Each
+    argument may be an expression or a value to be used as a literal.
+    """
+    if isinstance(func, basestring):
+        func = ex_rvalue(func)
+
+    args = list(args)
+    for i in range(len(args)):
+        if not isinstance(args[i], ast.expr):
+            args[i] = ex_literal(args[i])
+
+    return ast.Call(func, args, [], None, None)
+
+def st_out_append(expr, name=OUT_LIST_NAME):
+    """A statement that appends a value to a list (for output from a
+    compiled template function). The expression argument may be an
+    `ast.expr` or a value to be used as a literal.
+    """
+    if not isinstance(expr, ast.expr):
+        expr = ex_literal(expr)
+    func = ast.Attribute(ex_rvalue(name), 'append', ast.Load())
+    return ast.Expr(ast.Call(
+        func, [expr], [], None, None,
+    ))
+
+def compile_func(arg_names, statements, name='_the_func', debug=False):
+    """Compile a list of statements as the body of a function and return
+    the resulting Python function. If `debug`, then print out the
+    bytecode of the compiled function.
+    """
+    func_def = ast.FunctionDef(
+        name,
+        ast.arguments(
+            [ast.Name(n, ast.Param()) for n in arg_names],
+            None, None,
+            [ex_literal(None) for _ in arg_names],
+        ),
+        statements,
+        [],
+    )
+    mod = ast.Module([func_def])
+    ast.fix_missing_locations(mod)
+
+    prog = compile(mod, '<generated>', 'exec')
+
+    # Debug: show bytecode.
+    if debug:
+        dis.dis(prog)
+        for const in prog.co_consts:
+            if isinstance(const, types.CodeType):
+                dis.dis(const)
+
+    the_locals = {}
+    exec prog in {}, the_locals
+    return the_locals[name]
+
+
+# AST nodes for the template language.
 
 class Symbol(object):
     """A variable-substitution symbol in a template."""
@@ -61,6 +162,11 @@ class Symbol(object):
         else:
             # Keep original text.
             return self.original
+
+    def translate(self):
+        """Compile the variable lookup."""
+        statement = st_out_append(ex_rvalue(VARIABLE_PREFIX + self.ident))
+        return [statement], set([self.ident]), set()
 
 class Call(object):
     """A function call in a template."""
@@ -110,6 +216,26 @@ class Expression(object):
             else:
                 out.append(part.evaluate(env))
         return u''.join(map(unicode, out))
+
+    def translate(self):
+        """Compile the expression to a list of Python AST statements, a
+        set of variable names used, and a set of function names.
+        """
+        statements = []
+        varnames = set()
+        funcnames = set()
+        for part in self.parts:
+            if isinstance(part, basestring):
+                statements.append(st_out_append(part))
+            else:
+                s, v, f = part.translate()
+                statements.extend(s)
+                varnames.update(v)
+                funcnames.update(f)
+        return statements, varnames, funcnames
+
+
+# Parser.
 
 class ParseError(Exception):
     pass
@@ -340,6 +466,9 @@ def _parse(template):
         parts.append(remainder)
     return Expression(parts)
 
+
+# External interface.
+
 class Template(object):
     """A string template, including text, Symbols, and Calls.
     """
@@ -351,3 +480,25 @@ class Template(object):
         """Evaluate the template given the values and functions.
         """
         return self.expr.evaluate(Environment(values, functions))
+
+    def translate(self):
+        """Compile the template to a Python function."""
+        statements, varnames, funcnames = self.expr.translate()
+        argnames = [OUT_LIST_NAME]
+        for varname in varnames:
+            argnames.append(VARIABLE_PREFIX + varname)
+        for funcname in funcnames:
+            argnames.append(FUNCTION_PREFIX + funcname)
+        func = compile_func(argnames, statements)
+
+        def wrapper_func(values={}, functions={}):
+            args = {}
+            for varname in varnames:
+                args[VARIABLE_PREFIX + varname] = values[varname]
+            for funcname in funcnames:
+                args[FUNCTION_PREFIX + funcname] = functions[funcname]
+            parts = []
+            func(parts, **args)
+            return u''.join(parts)
+
+        return wrapper_func
