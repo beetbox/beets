@@ -152,8 +152,8 @@ class Symbol(object):
 
     def translate(self):
         """Compile the variable lookup."""
-        expr = ex_rvalue(VARIABLE_PREFIX + self.ident)
-        return [expr], set([self.ident]), set()
+        expr = ex_rvalue(VARIABLE_PREFIX + self.ident.encode('utf8'))
+        return [expr], set([self.ident.encode('utf8')]), set()
 
 class Call(object):
     """A function call in a template."""
@@ -185,7 +185,7 @@ class Call(object):
     def translate(self):
         """Compile the function call."""
         varnames = set()
-        funcnames = set([self.ident])
+        funcnames = set([self.ident.encode('utf8')])
 
         arg_exprs = []
         for arg in self.args:
@@ -207,7 +207,7 @@ class Call(object):
             ))
 
         subexpr_call = ex_call(
-            FUNCTION_PREFIX + self.ident,
+            FUNCTION_PREFIX + self.ident.encode('utf8'),
             arg_exprs
         )
         return [subexpr_call], varnames, funcnames
@@ -523,3 +523,22 @@ class Template(object):
             return u''.join(parts)
 
         return wrapper_func
+
+
+# Performance tests.
+
+if __name__ == '__main__':
+    import timeit
+    _tmpl = Template(u'foo $bar %baz{foozle $bar barzle} $bar')
+    _vars = {'bar': 'qux'}
+    _funcs = {'baz': unicode.upper}
+    _compiled = _tmpl.translate()
+    interp_time = timeit.timeit('_tmpl.substitute(_vars, _funcs)',
+                                'from __main__ import _tmpl, _vars, _funcs',
+                                number=10000)
+    print interp_time
+    comp_time = timeit.timeit('_compiled(_vars, _funcs)',
+                              'from __main__ import _compiled, _vars, _funcs',
+                              number=10000)
+    print comp_time
+    print 'Speedup:', interp_time / comp_time
