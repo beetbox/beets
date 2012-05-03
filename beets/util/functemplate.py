@@ -492,11 +492,24 @@ class Template(object):
     def __init__(self, template):
         self.expr = _parse(template)
         self.original = template
+        self.compiled = self.translate()
+
+    def interpret(self, values={}, functions={}):
+        """Like `substitute`, but forces the interpreter (rather than
+        the compiled version) to be used. The interpreter includes
+        exception-handling code for missing variables and buggy template
+        functions but is much slower.
+        """
+        return self.expr.evaluate(Environment(values, functions))
 
     def substitute(self, values={}, functions={}):
         """Evaluate the template given the values and functions.
         """
-        return self.expr.evaluate(Environment(values, functions))
+        try:
+            res = self.compiled(values, functions)
+        except:  # Handle any exceptions thrown by compiled version.
+            res = self.interpret(values, functions)
+        return res
 
     def translate(self):
         """Compile the template to a Python function."""
@@ -504,9 +517,9 @@ class Template(object):
 
         argnames = []
         for varname in varnames:
-            argnames.append(VARIABLE_PREFIX + varname)
+            argnames.append(VARIABLE_PREFIX.encode('utf8') + varname)
         for funcname in funcnames:
-            argnames.append(FUNCTION_PREFIX + funcname)
+            argnames.append(FUNCTION_PREFIX.encode('utf8') + funcname)
 
         func = compile_func(
             argnames,
@@ -532,13 +545,12 @@ if __name__ == '__main__':
     _tmpl = Template(u'foo $bar %baz{foozle $bar barzle} $bar')
     _vars = {'bar': 'qux'}
     _funcs = {'baz': unicode.upper}
-    _compiled = _tmpl.translate()
-    interp_time = timeit.timeit('_tmpl.substitute(_vars, _funcs)',
+    interp_time = timeit.timeit('_tmpl.interpret(_vars, _funcs)',
                                 'from __main__ import _tmpl, _vars, _funcs',
                                 number=10000)
     print interp_time
-    comp_time = timeit.timeit('_compiled(_vars, _funcs)',
-                              'from __main__ import _compiled, _vars, _funcs',
+    comp_time = timeit.timeit('_tmpl.substitute(_vars, _funcs)',
+                              'from __main__ import _tmpl, _vars, _funcs',
                               number=10000)
     print comp_time
     print 'Speedup:', interp_time / comp_time
