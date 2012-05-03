@@ -37,7 +37,6 @@ GROUP_CLOSE = u'}'
 ARG_SEP = u','
 ESCAPE_CHAR = u'$'
 
-OUT_LIST_NAME = '__out'
 VARIABLE_PREFIX = '__var_'
 FUNCTION_PREFIX = '__func_'
 
@@ -97,18 +96,6 @@ def ex_call(func, args):
 
     return ast.Call(func, args, [], None, None)
 
-def st_out_append(expr, name=OUT_LIST_NAME):
-    """A statement that appends a value to a list (for output from a
-    compiled template function). The expression argument may be an
-    `ast.expr` or a value to be used as a literal.
-    """
-    if not isinstance(expr, ast.expr):
-        expr = ex_literal(expr)
-    func = ast.Attribute(ex_rvalue(name), 'append', ast.Load())
-    return ast.Expr(ast.Call(
-        func, [expr], [], None, None,
-    ))
-
 def compile_func(arg_names, statements, name='_the_func', debug=False):
     """Compile a list of statements as the body of a function and return
     the resulting Python function. If `debug`, then print out the
@@ -165,8 +152,8 @@ class Symbol(object):
 
     def translate(self):
         """Compile the variable lookup."""
-        statement = st_out_append(ex_rvalue(VARIABLE_PREFIX + self.ident))
-        return [statement], set([self.ident]), set()
+        expr = ex_rvalue(VARIABLE_PREFIX + self.ident)
+        return [expr], set([self.ident]), set()
 
 class Call(object):
     """A function call in a template."""
@@ -218,21 +205,21 @@ class Expression(object):
         return u''.join(map(unicode, out))
 
     def translate(self):
-        """Compile the expression to a list of Python AST statements, a
+        """Compile the expression to a list of Python AST expressions, a
         set of variable names used, and a set of function names.
         """
-        statements = []
+        expressions = []
         varnames = set()
         funcnames = set()
         for part in self.parts:
             if isinstance(part, basestring):
-                statements.append(st_out_append(part))
+                expressions.append(ex_literal(part))
             else:
-                s, v, f = part.translate()
-                statements.extend(s)
+                e, v, f = part.translate()
+                expressions.extend(e)
                 varnames.update(v)
                 funcnames.update(f)
-        return statements, varnames, funcnames
+        return expressions, varnames, funcnames
 
 
 # Parser.
@@ -483,13 +470,18 @@ class Template(object):
 
     def translate(self):
         """Compile the template to a Python function."""
-        statements, varnames, funcnames = self.expr.translate()
-        argnames = [OUT_LIST_NAME]
+        expressions, varnames, funcnames = self.expr.translate()
+
+        argnames = []
         for varname in varnames:
             argnames.append(VARIABLE_PREFIX + varname)
         for funcname in funcnames:
             argnames.append(FUNCTION_PREFIX + funcname)
-        func = compile_func(argnames, statements)
+
+        func = compile_func(
+            argnames,
+            [ast.Return(ast.List(expressions, ast.Load()))],
+        )
 
         def wrapper_func(values={}, functions={}):
             args = {}
@@ -497,8 +489,7 @@ class Template(object):
                 args[VARIABLE_PREFIX + varname] = values[varname]
             for funcname in funcnames:
                 args[FUNCTION_PREFIX + funcname] = functions[funcname]
-            parts = []
-            func(parts, **args)
+            parts = func(**args)
             return u''.join(parts)
 
         return wrapper_func
