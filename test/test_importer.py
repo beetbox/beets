@@ -816,6 +816,11 @@ class ArtFetchTest(unittest.TestCase, _common.ExtraAsserts):
         self._fetch_art(True)
         self.assertNotExists(self.art_file)
 
+    def test_move_original_file(self):
+        self.config.move = True
+        self._fetch_art(True)
+        self.assertNotExists(self.art_file)
+
     def test_do_not_delete_original_if_already_in_place(self):
         artdest = os.path.join(os.path.dirname(self.i.path), 'cover.jpg')
         shutil.copyfile(self.art_file, artdest)

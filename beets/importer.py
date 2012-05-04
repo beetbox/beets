@@ -776,13 +776,13 @@ def fetch_art(config):
             if artpath:
                 try:
                     album = lib.get_album(task.album_id)
-                    album.set_art(artpath)
-                    if config.delete and not util.samefile(artpath,
-                                                           album.artpath):
-                        # Delete the original file after it's imported.
-                        os.remove(artpath)
+                    album.set_art(artpath, not (config.delete or config.move))
                 finally:
                     lib.save(False)
+
+                if (config.delete or config.move) and task.toppath:
+                    util.prune_dirs(os.path.dirname(artpath),
+                                    task.toppath)
 
 def finalize(config):
     """A coroutine that finishes up importer tasks. In particular, the

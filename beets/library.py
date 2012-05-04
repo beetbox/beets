@@ -1437,9 +1437,10 @@ class Album(BaseAlbum):
         dest = os.path.join(item_dir, self._library.art_filename + ext)
         return dest
 
-    def set_art(self, path):
+    def set_art(self, path, copy=True):
         """Sets the album's cover art to the image at the given path.
-        The image is copied into place, replacing any existing art.
+        The image is copied (or moved) into place, replacing any
+        existing art.
         """
         path = bytestring_path(path)
         oldart = self.artpath
@@ -1457,7 +1458,10 @@ class Album(BaseAlbum):
         if oldart == artdest:
             util.soft_remove(oldart)
         artdest = util.unique_path(artdest)
-        util.copy(path, artdest)
+        if copy:
+            util.copy(path, artdest)
+        else:
+            util.move(path, artdest)
         self.artpath = artdest
 
     def evaluate_template(self, template):
