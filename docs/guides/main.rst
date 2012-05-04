@@ -211,7 +211,7 @@ So handy!
 Beets also has a ``stats`` command, just in case you want to see how much music
 you have::
 
-    $ ./beet stats
+    $ beet stats
     Tracks: 13019
     Total time: 4.9 weeks
     Total size: 71.1 GB

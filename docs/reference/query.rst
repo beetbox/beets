@@ -57,7 +57,7 @@ matches a lot of songs in my library, this more-specific query::
 only matches songs by the artist The-Dream. One query I especially appreciate is
 one that matches albums by year::
 
-    $ beet list -a year:2011
+    $ beet list -a year:2012
 
 Recall that ``-a`` makes the ``list`` command show albums instead of individual
 tracks, so this command shows me all the releases I have from this year.
@@ -65,7 +65,8 @@ tracks, so this command shows me all the releases I have from this year.
 Phrases
 -------
 
-As of beets 1.0b9, you can query for strings with spaces in them by quoting or escaping them using your shell's argument syntax. For example, this command::
+You can query for strings with spaces in them by quoting or escaping them using
+your shell's argument syntax. For example, this command::
 
     $ beet list the rebel
 
@@ -76,7 +77,7 @@ shows several tracks in my library, but these (equivalent) commands::
 
 only match the track "The Rebel" by Buck 65. Note that the quotes and
 backslashes are not part of beets' syntax; I'm just using the escaping
-functionality of by shell (bash or zsh, for instance) to pass ``the rebel`` as a
+functionality of my shell (bash or zsh, for instance) to pass ``the rebel`` as a
 single argument instead of two.
 
 .. _regex:
@@ -96,7 +97,7 @@ query prints the path to any file in my library that's missing a track title::
     $ beet list -p title::^$
 
 To search *all* fields using a regular expression, just prefix the expression
-with a single `:`, like so::
+with a single ``:``, like so::
 
     $ beet list :Ho[pm]eless
 
@@ -110,8 +111,7 @@ Path Queries
 ------------
 
 Sometimes it's useful to find all the items in your library that are
-(recursively) inside a certain directory. With beets 1.0b9, use the ``path:``
-field to do this::
+(recursively) inside a certain directory. Use the ``path:`` field to do this::
 
     $ beet list path:/my/music/directory
 
