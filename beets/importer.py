@@ -457,6 +457,19 @@ class ImportTask(object):
             return [self.item]
 
 
+    # Utilities.
+
+    def prune(self, filename):
+        """Prune any empty directories above the given file, which must
+        not exist. If this task has no `toppath` or the file path
+        provided is not within the `toppath`, then this function has no
+        effect.
+        """
+        assert not os.path.exists(filename)
+        if self.toppath:
+            util.prune_dirs(os.path.dirname(filename), self.toppath)
+
+
 # Full-album pipeline stages.
 
 def read_tasks(config):
@@ -735,8 +748,7 @@ def apply_choices(config):
                     lib.move(item, False)
                     # Clean up empty parent directory.
                     if task.toppath:
-                        util.prune_dirs(os.path.dirname(old_path),
-                                        task.toppath)
+                        task.prune(old_path)
                 else:
                     # If it's a reimport, move the file. Otherwise, copy
                     # and keep track of the old path.
@@ -781,8 +793,7 @@ def fetch_art(config):
                     lib.save(False)
 
                 if (config.delete or config.move) and task.toppath:
-                    util.prune_dirs(os.path.dirname(artpath),
-                                    task.toppath)
+                    task.prune(artpath)
 
 def finalize(config):
     """A coroutine that finishes up importer tasks. In particular, the
@@ -818,8 +829,7 @@ def finalize(config):
                     os.remove(syspath(old_path))
                     # Clean up directory if it is emptied.
                     if task.toppath:
-                        util.prune_dirs(os.path.dirname(old_path),
-                                        task.toppath)
+                        task.prune(old_path)
 
         # Update progress.
         if config.resume is not False:
