@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2011, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -776,6 +776,11 @@ def import_func(lib, config, opts, args):
             resume = False
         else:
             resume = None
+
+    # Special case: --copy flag suppresses import_move (which would
+    # otherwise take precedence).
+    if opts.copy:
+        move = False
 
     if quiet_fallback_str == 'asis':
         quiet_fallback = importer.action.ASIS

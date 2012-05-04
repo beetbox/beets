@@ -44,7 +44,8 @@ section header:
     case beets doesn't do what you expect with your files.
 
     This option *overrides* ``import_copy``, so enabling it will always move
-    (and not copy) files.
+    (and not copy) files. The ``-c`` switch to the ``beet import`` command,
+    however, still takes precedence.
 
 ``import_resume``
     Either ``yes``, ``no``, or ``ask``. Controls whether interrupted imports
