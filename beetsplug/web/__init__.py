@@ -59,8 +59,9 @@ def single_item(item_id):
 
 @app.route('/item/')
 def all_items():
-    c = g.lib.conn.execute("SELECT id FROM items")
-    all_ids = [row[0] for row in c]
+    with g.lib.transaction() as tx:
+        rows = tx.query("SELECT id FROM items")
+    all_ids = [row[0] for row in rows]
     return flask.jsonify(item_ids=all_ids)
 
 @app.route('/item/<int:item_id>/file')
@@ -84,8 +85,9 @@ def single_album(album_id):
 
 @app.route('/album/')
 def all_albums():
-    c = g.lib.conn.execute("SELECT id FROM albums")
-    all_ids = [row[0] for row in c]
+    with g.lib.transaction() as tx:
+        rows = tx.query("SELECT id FROM albums")
+    all_ids = [row[0] for row in rows]
     return flask.jsonify(album_ids=all_ids)
 
 @app.route('/album/query/<path:query>')

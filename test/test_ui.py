@@ -54,7 +54,7 @@ class ListTest(unittest.TestCase):
     def test_list_unicode_query(self):
         self.item.title = u'na\xefve'
         self.lib.store(self.item)
-        self.lib.save()
+        self.lib.conn.commit()
 
         commands.list_items(self.lib, [u'na\xefve'], False, False, None)
         out = self.io.getoutput()

@@ -177,7 +177,6 @@ def fetch_item_lyrics(lib, loglevel, item, write):
     if write:
         item.write()
     lib.store(item)
-    lib.save()
 
 AUTOFETCH = True
 class LyricsPlugin(BeetsPlugin):

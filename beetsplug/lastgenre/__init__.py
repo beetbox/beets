@@ -166,7 +166,6 @@ def album_imported(lib, album, config):
     if genre:
         log.debug(u'adding last.fm album genre: %s' % genre)
         album.genre = genre
-        lib.save()
 
         if config.write:
             for item in album.items():
@@ -180,7 +179,6 @@ def item_imported(lib, item, config):
         log.debug(u'adding last.fm item genre: %s' % genre)
         item.genre = genre
         lib.store(item)
-        lib.save()
 
         if config.write:
             item.write()

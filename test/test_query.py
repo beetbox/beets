@@ -296,7 +296,6 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
     def test_unicode_query(self):
         self.single_item.title = u'caf\xe9'
         self.lib.store(self.single_item)
-        self.lib.save()
 
         q = u'title:caf\xe9'
         results = self.lib.items(q)
@@ -410,13 +409,15 @@ class CountTest(unittest.TestCase):
         self.lib.add(self.item)
 
     def test_count_gets_single_item(self):
-        songs, totaltime = beets.library.TrueQuery().count(self.lib)
+        with self.lib.transaction() as tx:
+            songs, totaltime = beets.library.TrueQuery().count(tx)
         self.assertEqual(songs, 1)
         self.assertEqual(totaltime, self.item.length)
 
     def test_count_works_for_empty_library(self):
         self.lib.remove(self.item)
-        songs, totaltime = beets.library.TrueQuery().count(self.lib)
+        with self.lib.transaction() as tx:
+            songs, totaltime = beets.library.TrueQuery().count(tx)
         self.assertEqual(songs, 0)
         self.assertEqual(totaltime, 0.0)
         

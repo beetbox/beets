@@ -116,9 +116,6 @@ currently available are:
 * *pluginload*: called after all the plugins have been loaded after the ``beet``
   command starts
 
-* *save*: called whenever the library is changed and written to disk (the
-  ``lib`` keyword argument is the Library object that was written)
-
 * *import*: called after a ``beet import`` command fishes (the ``lib`` keyword
   argument is a Library object; ``paths`` is a list of paths (strings) that were
   imported)
