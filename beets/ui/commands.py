@@ -314,7 +314,7 @@ def choose_candidate(candidates, singleton, rec, color, timid,
             opts = ('Use as-is', 'Skip', 'Enter search', 'enter Id',
                     'aBort')
         else:
-            print_("No matching release found for {} tracks."
+            print_("No matching release found for {0} tracks."
                    .format(itemcount))
             print_('For help, see: '
                    'https://github.com/sampsyo/beets/wiki/FAQ#wiki-nomatch')

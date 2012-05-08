@@ -1,7 +1,9 @@
 language: python
 python:
     - "2.7"
+    - "2.6"
 install:
     - pip install . --use-mirrors
     - pip install pylast flask --use-mirrors
+    - "if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2 --use-mirrors; fi"
 script: nosetests
