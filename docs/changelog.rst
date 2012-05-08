@@ -55,6 +55,8 @@ Changelog
   even on Unix platforms (this causes less surprise when using Samba shares to
   store music). To customize your character substitutions, see :ref:`the replace
   config option <replace>`.
+* :doc:`/plugins/rewrite`: Unicode rewriting rules are now allowed (thanks to
+  Nicolas Dietrich).
 * Filename collisions are now avoided when moving album art.
 * :doc:`/plugins/bpd`: Print messages to show when directory tree is being
   constructed.
