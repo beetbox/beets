@@ -60,6 +60,8 @@ Changelog
   constructed.
 * :doc:`/plugins/bpd`: Use Gstreamer's ``playbin2`` element instead of the
   deprecated ``playbin``.
+* :doc:`/plugins/bpd`: Random and repeat modes are now supported (thanks to
+  Matteo Mecucci).
 * :doc:`/plugins/bpd`: Listings are now sorted (thanks once again to Matteo
   Mecucci).
 * Filenames are normalized with Unicode Normal Form D (NFD) on Mac OS X and NFC
