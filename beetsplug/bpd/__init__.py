@@ -22,6 +22,7 @@ import re
 from string import Template
 import traceback
 import logging
+import random
 import time
 
 import beets
@@ -170,6 +171,9 @@ class BaseServer(object):
         self.current_index = -1
         self.paused = False
         self.error = None
+
+        # Object for random numbers generation
+        self.random_obj = random.Random()
     
     def run(self):
         """Block and start listening for connections from clients. An
@@ -200,6 +204,40 @@ class BaseServer(object):
                 return index
         # Loop finished with no track found.
         raise ArgumentNotFoundError()
+
+    def _random_idx(self):
+        """Returns a random index different from the current one.
+        If there are no songs in the playlist it returns -1.
+        If there is only one song in the playlist it returns 0.
+        """
+        if len(self.playlist) < 2:
+            return len(self.playlist)-1
+        new_index = self.random_obj.randint(0, len(self.playlist)-1)
+        while new_index == self.current_index:
+            new_index = self.random_obj.randint(0, len(self.playlist)-1)
+        return new_index
+
+    def _succ_idx(self):
+        """Returns the index for the next song to play.
+        It also considers random and repeat flags.
+        No boundaries are checked.
+        """
+        if self.repeat:
+            return self.current_index
+        if self.random:
+            return self._random_idx()
+        return self.current_index+1
+
+    def _prev_idx(self):
+        """Returns the index for the previous song to play.
+        It also considers random and repeat flags.
+        No boundaries are checked.
+        """
+        if self.repeat:
+            return self.current_index
+        if self.random:
+            return self._random_idx()
+        return self.current_index-1
 
     def cmd_ping(self, conn):
         """Succeeds."""
@@ -427,10 +465,10 @@ class BaseServer(object):
         if self.current_index != -1: # -1 means stopped.
             track = self.playlist[self.current_index]
             yield self._item_info(track)
-    
+
     def cmd_next(self, conn):
         """Advance to the next song in the playlist."""
-        self.current_index += 1
+        self.current_index = self._succ_idx()
         if self.current_index >= len(self.playlist):
             # Fallen off the end. Just move to stopped state.
             return self.cmd_stop(conn)
@@ -439,7 +477,7 @@ class BaseServer(object):
     
     def cmd_previous(self, conn):
         """Step back to the last song."""
-        self.current_index -= 1
+        self.current_index = self._prev_idx()
         if self.current_index < 0:
             return self.cmd_stop(conn)
         else:
