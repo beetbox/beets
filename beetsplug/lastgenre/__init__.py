@@ -128,6 +128,8 @@ options = {
 }
 class LastGenrePlugin(plugins.BeetsPlugin):
     def configure(self, config):
+        global fallback_str
+
         wl_filename = ui.config_val(config, 'lastgenre', 'whitelist', None)
         if not wl_filename:
             # No filename specified. Instead, use the whitelist that's included
@@ -158,12 +160,19 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             flatten_tree(genres_tree, [], branches) 
             options['branches'] = branches 
             options['c14n'] = True
+
+        fallback_str = ui.config_val(config, 'lastgenre', 'fallback_str', None)
+
         
 @LastGenrePlugin.listen('album_imported')
 def album_imported(lib, album, config):
+    global fallback_str
     tags = _tags_for(LASTFM.get_album(album.albumartist, album.album))
     genre = _tags_to_genre(tags)
-    if genre:
+    if not genre and fallback_str != None :
+        genre = fallback_str
+        log.debug(u'no last.fm genre found: fallback to %s' % genre)
+    if genre is not None:
         log.debug(u'adding last.fm album genre: %s' % genre)
         album.genre = genre
 
@@ -173,9 +182,13 @@ def album_imported(lib, album, config):
 
 @LastGenrePlugin.listen('item_imported')
 def item_imported(lib, item, config):
+    global fallback_str
     tags = _tags_for(LASTFM.get_track(item.artist, item.title))
     genre = _tags_to_genre(tags)
-    if genre:
+    if not genre and fallback_str != None :
+        genre = fallback_str
+        log.debug(u'no last.fm genre found: fallback to %s' % genre)
+    if genre is not None:
         log.debug(u'adding last.fm item genre: %s' % genre)
         item.genre = genre
         lib.store(item)
