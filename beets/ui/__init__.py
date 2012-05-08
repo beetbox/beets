@@ -27,6 +27,7 @@ import logging
 import sqlite3
 import errno
 import re
+import codecs
 
 from beets import library
 from beets import plugins
@@ -673,7 +674,7 @@ def main(args=None, configfh=None):
     if configpath:
         configpath = util.syspath(configpath)
         if os.path.exists(util.syspath(configpath)):
-            configfh = open(configpath)
+            configfh = codecs.open(configpath, 'r', encoding='utf-8')
         else:
             configfh = None
     if configfh:
