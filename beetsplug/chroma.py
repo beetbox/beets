@@ -89,7 +89,7 @@ def acoustid_match(path):
     else:
         release_ids = []
 
-    log.debug('chroma: matched recording {}'.format(recording_id))
+    log.debug('chroma: matched recording {0}'.format(recording_id))
     _matches[path] = recording_id, release_ids
 
 
@@ -193,24 +193,24 @@ def submit_items(userkey, items, chunksize=64):
     data = []  # The running list of dictionaries to submit.
     def submit_chunk():
         """Submit the current accumulated fingerprint data."""
-        log.info('submitting {} fingerprints'.format(len(data)))
+        log.info('submitting {0} fingerprints'.format(len(data)))
         acoustid.submit(API_KEY, userkey, data)
         del data[:]
 
     for item in items:
         # Get a fingerprint and length for this track.
         if not item.length:
-            log.info(u'{}: no duration available'.format(
+            log.info(u'{0}: no duration available'.format(
                 util.displayable_path(item.path)
             ))
             continue
         elif item.acoustid_fingerprint:
-            log.info(u'{}: using existing fingerprint'.format(
+            log.info(u'{0}: using existing fingerprint'.format(
                 util.displayable_path(item.path)
             ))
             fp = item.acoustid_fingerprint
         else:
-            log.info(u'{}: fingerprinting'.format(
+            log.info(u'{0}: fingerprinting'.format(
                 util.displayable_path(item.path)
             ))
             try:

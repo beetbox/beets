@@ -44,7 +44,7 @@ def update_collection(lib, config, opts, args):
     albums = [a.mb_albumid for a in lib.albums() if a.mb_albumid]
 
     # Submit to MusicBrainz.
-    print 'Updating MusicBrainz collection {}...'.format(collection_id)
+    print 'Updating MusicBrainz collection {0}...'.format(collection_id)
     submit_albums(collection_id, albums)
     print '...MusicBrainz collection updated.'
 

@@ -1615,14 +1615,14 @@ class DefaultTemplateFunctions(object):
 
         else:
             # No disambiguator distinguished all fields.
-            res = u' {}'.format(album.id)
+            res = u' {0}'.format(album.id)
             self.lib._memotable[memokey] = res
             return res
 
         # Flatten disambiguation value into a string.
         disam_value = util.sanitize_for_path(getattr(album, disambiguator),
                                              self.pathmod, disambiguator)
-        res = u' [{}]'.format(disam_value)
+        res = u' [{0}]'.format(disam_value)
         self.lib._memotable[memokey] = res
         return res
 

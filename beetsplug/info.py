@@ -31,7 +31,7 @@ def info(paths):
     # Line format.
     other_fields = ['album art']
     maxwidth = max(len(name) for name in fields + other_fields)
-    lineformat = u'{{:>{0}}}: {{}}'.format(maxwidth)
+    lineformat = u'{{:>{0}}}: {{0}}'.format(maxwidth)
 
     first = True
     for path in paths:

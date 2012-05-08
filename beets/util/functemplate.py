@@ -71,7 +71,7 @@ def ex_literal(val):
         return ast.Name(str(val), ast.Load())
     elif isinstance(val, basestring):
         return ast.Str(val)
-    raise TypeError('no literal for {}'.format(type(val)))
+    raise TypeError('no literal for {0}'.format(type(val)))
 
 def ex_varassign(name, expr):
     """Assign an expression into a single variable. The expression may
