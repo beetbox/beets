@@ -26,7 +26,6 @@ class VFSTest(unittest.TestCase):
         ])
         self.lib.add(_common.item())
         self.lib.add_album([_common.item()])
-        self.lib.save()
         self.tree = vfs.libtree(self.lib)
     
     def test_singleton_item(self):

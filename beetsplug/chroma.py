@@ -138,7 +138,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
 
     def item_candidates(self, item):
         if item.path not in _matches:
-            return 0.0, 0.0
+            return []
 
         recording_id, _ = _matches[item.path]
         track = hooks._track_for_id(recording_id)

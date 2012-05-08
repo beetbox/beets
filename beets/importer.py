@@ -718,7 +718,7 @@ def apply_choices(config):
         # Add items -- before path changes -- to the library. We add the
         # items now (rather than at the end) so that album structures
         # are in place before calls to destination().
-        try:
+        with lib.transaction():
             # Remove old items.
             for replaced in replaced_items.itervalues():
                 for item in replaced:
@@ -735,8 +735,6 @@ def apply_choices(config):
                 # Add tracks.
                 for item in items:
                     lib.add(item)
-        finally:
-            lib.save()
 
         # Move/copy files.
         task.old_paths = [item.path for item in items]  # For deletion.
@@ -764,11 +762,9 @@ def apply_choices(config):
                 item.write()
 
         # Save new paths.
-        try:
+        with lib.transaction():
             for item in items:
                 lib.store(item)
-        finally:
-            lib.save()
 
 def fetch_art(config):
     """A coroutine that fetches and applies album art for albums where
@@ -786,11 +782,8 @@ def fetch_art(config):
 
             # Save the art if any was found.
             if artpath:
-                try:
-                    album = lib.get_album(task.album_id)
-                    album.set_art(artpath, not (config.delete or config.move))
-                finally:
-                    lib.save(False)
+                album = lib.get_album(task.album_id)
+                album.set_art(artpath, not (config.delete or config.move))
 
                 if (config.delete or config.move) and task.toppath:
                     task.prune(artpath)

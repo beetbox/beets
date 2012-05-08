@@ -64,6 +64,8 @@ Changelog
   Mecucci).
 * Filenames are normalized with Unicode Normal Form D (NFD) on Mac OS X and NFC
   on all other platforms.
+* Significant internal restructuring to avoid SQLite locking errors. As part of
+  these changes, the not-very-useful "save" plugin event has been removed.
 
 .. _pyacoustid: https://github.com/sampsyo/pyacoustid
 
