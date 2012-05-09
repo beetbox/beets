@@ -42,7 +42,7 @@ If no genre is found, you have the opportunity to specify a fixed string instead
 (declare *fallback_str* with no value to blank the genre field)::
 
     [lastgenre]
-    faalback_str:
+    fallback_str:
 
 
 Canonicalization
