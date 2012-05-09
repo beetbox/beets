@@ -66,6 +66,8 @@ release.
   even on Unix platforms (this causes less surprise when using Samba shares to
   store music). To customize your character substitutions, see :ref:`the replace
   config option <replace>`.
+* :doc:`/plugins/lastgenre`: Added a "fallback" option when no suitable genre
+  can be found (thanks to Fabrice Laporte).
 * :doc:`/plugins/rewrite`: Unicode rewriting rules are now allowed (thanks to
   Nicolas Dietrich).
 * Filename collisions are now avoided when moving album art.
