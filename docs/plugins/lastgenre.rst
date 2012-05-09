@@ -38,6 +38,13 @@ Wikipedia`_.
 .. _pylast: http://code.google.com/p/pylast/
 .. _script that scrapes Wikipedia: https://gist.github.com/1241307
 
+If no genre is found, you have the opportunity to specify a fixed string instead
+(declare *fallback_str* with no value to blank the genre field)::
+
+    [lastgenre]
+    fallback_str:
+
+
 Canonicalization
 ----------------
 
