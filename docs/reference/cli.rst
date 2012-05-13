@@ -122,7 +122,7 @@ list
 ````
 ::
 
-    beet list [-ap] QUERY
+    beet list [-apf] QUERY
 
 :doc:`Queries <query>` the database for music.
 
