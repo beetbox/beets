@@ -12,7 +12,7 @@ and a plugin for interoperability with other music library systems.
 A million thanks to the (growing) beets community for making this a huge
 release.
 
-1.0b14 (May XX, 2012)
+1.0b14 (May 12, 2012)
 ---------------------
 * The importer now gives you **choices when duplicates are detected**.
   Previously, when beets found an existing album or item in your library
