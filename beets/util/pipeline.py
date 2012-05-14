@@ -30,6 +30,8 @@ up a bottleneck stage by dividing its work among multiple threads.
 To do so, pass an iterable of coroutines to the Pipeline constructor
 in place of any single coroutine.
 """
+from __future__ import print_function
+
 import Queue
 from threading import Thread, Lock
 import sys
@@ -392,20 +394,20 @@ if __name__ == '__main__':
     # in parallel.
     def produce():
         for i in range(5):
-            print 'generating %i' % i
+            print('generating %i' % i)
             time.sleep(1)
             yield i
     def work():
         num = yield
         while True:
-            print 'processing %i' % num
+            print('processing %i' % num)
             time.sleep(2)
             num = yield num*2
     def consume():
         while True:
             num = yield
             time.sleep(1)
-            print 'received %i' % num
+            print('received %i' % num)
     ts_start = time.time()
     Pipeline([produce(), work(), consume()]).run_sequential()
     ts_seq = time.time()
@@ -413,21 +415,21 @@ if __name__ == '__main__':
     ts_par = time.time()
     Pipeline([produce(), (work(), work()), consume()]).run_parallel()
     ts_end = time.time()
-    print 'Sequential time:', ts_seq - ts_start
-    print 'Parallel time:', ts_par - ts_seq
-    print 'Multiply-parallel time:', ts_end - ts_par
-    print
+    print('Sequential time:', ts_seq - ts_start)
+    print('Parallel time:', ts_par - ts_seq)
+    print('Multiply-parallel time:', ts_end - ts_par)
+    print()
 
     # Test a pipeline that raises an exception.
     def exc_produce():
         for i in range(10):
-            print 'generating %i' % i
+            print('generating %i' % i)
             time.sleep(1)
             yield i
     def exc_work():
         num = yield
         while True:
-            print 'processing %i' % num
+            print('processing %i' % num)
             time.sleep(3)
             if num == 3:
                raise Exception()
@@ -437,5 +439,5 @@ if __name__ == '__main__':
             num = yield
             #if num == 4:
             #   raise Exception()
-            print 'received %i' % num
+            print('received %i' % num)
     Pipeline([exc_produce(), exc_work(), exc_consume()]).run_parallel(1)

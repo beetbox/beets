@@ -8,19 +8,16 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Finding album art for tagged albums."""
-
+"""Finding album art for tagged albums.
+"""
 import urllib
-import sys
 import logging
 import os
 import re
-
-from beets.autotag.mb import album_for_id
 
 IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 COVER_NAMES = ['cover', 'front', 'art', 'album', 'folder']
@@ -134,19 +131,3 @@ def art_for_album(album, path):
     else:
         log.debug('No ASIN available: no art found.')
         return None
-
-
-# Smoke test.
-
-if __name__ == '__main__':
-    aid = sys.argv[1]
-    album = album_for_id(aid)
-    if not album:
-        print 'album not found'
-    else:
-        fn = art_for_album(album, None)
-        if fn:
-            print fn
-            print len(open(fn).read())/1024
-        else:
-            print 'no art found'

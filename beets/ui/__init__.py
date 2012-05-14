@@ -16,6 +16,8 @@
 interface. To invoke the CLI, just call beets.ui.main(). The actual
 CLI commands are implemented in the ui.commands module.
 """
+from __future__ import print_function
+
 import os
 import locale
 import optparse
@@ -106,7 +108,7 @@ def print_(*strings):
         txt = u''
     if isinstance(txt, unicode):
         txt = txt.encode(_encoding(), 'replace')
-    print txt
+    print(txt)
 
 def input_options(options, require=False, prompt=None, fallback_prompt=None,
                   numrange=None, default=None, color=False, max_width=72):

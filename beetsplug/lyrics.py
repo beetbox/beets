@@ -14,6 +14,8 @@
 
 """Fetches, embeds, and displays lyrics.
 """
+from __future__ import print_function
+
 import urllib
 import re
 import logging
@@ -83,7 +85,7 @@ def extract_text(html, starttag):
             parts.append(html[pos:match.start()])
             break
     else:
-        print 'no closing tag found!'
+        print('no closing tag found!')
         return
     lyrics = ''.join(parts)
 

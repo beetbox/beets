@@ -120,7 +120,7 @@ class Enumerated(object):
         >>> class Garment(Enumerated):
         ...     values = 'hat glove belt poncho lederhosen suspenders'
         ...     def wear(self):
-        ...         print 'now wearing a ' + self.name
+        ...         print('now wearing a ' + self.name)
         ...
         >>> Garment.poncho.wear()
         now wearing a poncho

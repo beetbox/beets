@@ -15,6 +15,7 @@
 """A wrapper for the GStreamer Python bindings that exposes a simple
 music player.
 """
+from __future__ import print_function
 
 import gst
 import sys
@@ -83,7 +84,7 @@ class GstPlayer(object):
             # error
             self.player.set_state(gst.STATE_NULL)
             err, debug = message.parse_error()
-            print "Error: " + str(err)
+            print("Error: " + str(err))
             self.playing = False
 
     def _set_volume(self, volume):

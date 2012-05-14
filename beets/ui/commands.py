@@ -15,6 +15,8 @@
 """This module provides the default commands for beets' command-line
 interface.
 """
+from __future__ import print_function
+
 import logging
 import sys
 import os
@@ -87,10 +89,10 @@ def _showdiff(field, oldval, newval, color):
 fields_cmd = ui.Subcommand('fields',
     help='show fields available for queries and format strings')
 def fields_func(lib, config, opts, args):
-    print "Available item fields:"
-    print "  " + "\n  ".join([key for key in library.ITEM_KEYS])
-    print "\nAvailable album fields:"
-    print "  " + "\n  ".join([key for key in library.ALBUM_KEYS])
+    print("Available item fields:")
+    print("  " + "\n  ".join([key for key in library.ITEM_KEYS]))
+    print("\nAvailable album fields:")
+    print("  " + "\n  ".join([key for key in library.ALBUM_KEYS]))
 
 fields_cmd.func = fields_func
 default_commands.append(fields_cmd)
@@ -651,7 +653,7 @@ def import_files(lib, paths, copy, move, write, autot, logpath, art, threaded,
         except IOError:
             raise ui.UserError(u"could not open log file for writing: %s" %
                                displayable_path(logpath))
-        print >>logfile, 'import started', time.asctime()
+        print('import started', time.asctime(), file=logfile)
     else:
         logfile = None
 
@@ -690,7 +692,7 @@ def import_files(lib, paths, copy, move, write, autot, logpath, art, threaded,
     finally:
         # If we were logging, close the file.
         if logfile:
-            print >>logfile, ''
+            print('', file=logfile)
             logfile.close()
 
     # Emit event.
@@ -1035,16 +1037,16 @@ default_commands.append(stats_cmd)
 # version: Show current beets version.
 
 def show_version(lib, config, opts, args):
-    print 'beets version %s' % beets.__version__
+    print_('beets version %s' % beets.__version__)
     # Show plugins.
     names = []
     for plugin in plugins.find_plugins():
         modname = plugin.__module__
         names.append(modname.split('.')[-1])
     if names:
-        print 'plugins:', ', '.join(names)
+        print_('plugins:', ', '.join(names))
     else:
-        print 'no plugins loaded'
+        print_('no plugins loaded')
 version_cmd = ui.Subcommand('version',
     help='output version information')
 version_cmd.func = show_version

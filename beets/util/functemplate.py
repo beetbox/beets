@@ -25,6 +25,8 @@ library: unknown symbols are left intact.
 This is sort of like a tiny, horrible degeneration of a real templating
 engine like Jinja2 or Mustache.
 """
+from __future__ import print_function
+
 import re
 import ast
 import dis
@@ -548,9 +550,9 @@ if __name__ == '__main__':
     interp_time = timeit.timeit('_tmpl.interpret(_vars, _funcs)',
                                 'from __main__ import _tmpl, _vars, _funcs',
                                 number=10000)
-    print interp_time
+    print(interp_time)
     comp_time = timeit.timeit('_tmpl.substitute(_vars, _funcs)',
                               'from __main__ import _tmpl, _vars, _funcs',
                               number=10000)
-    print comp_time
-    print 'Speedup:', interp_time / comp_time
+    print(comp_time)
+    print('Speedup:', interp_time / comp_time)

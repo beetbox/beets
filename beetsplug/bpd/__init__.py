@@ -16,6 +16,7 @@
 Beets library. Attempts to implement a compatible protocol to allow
 use of the wide range of MPD clients.
 """
+from __future__ import print_function
 
 import bluelet
 import re
@@ -536,7 +537,7 @@ class BaseServer(object):
         """Memory profiling for debugging."""
         from guppy import hpy
         heap = hpy().heap()
-        print heap
+        print(heap)
 
 class Connection(object):
     """A connection between a client and the server. Handles input and
@@ -789,9 +790,9 @@ class Server(BaseServer):
         """
         # Path is ignored. Also, the real MPD does this asynchronously;
         # this is done inline.
-        print 'Building directory tree...'
+        print('Building directory tree...')
         self.tree = vfs.libtree(self.lib)
-        print '... done.'
+        print('... done.')
         self.updated_time = time.time()
 
 

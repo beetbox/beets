@@ -15,6 +15,8 @@
 """Provides the basic, interface-agnostic workflow for importing and
 autotagging music files.
 """
+from __future__ import print_function
+
 import os
 import logging
 import pickle
@@ -55,7 +57,7 @@ def tag_log(logfile, status, path):
     reflect the reason the album couldn't be tagged.
     """
     if logfile:
-        print >>logfile, '%s %s' % (status, path)
+        print('{0} {1}'.format(status, path), file=logfile)
         logfile.flush()
 
 def log_choice(config, task, duplicate=False):

@@ -12,6 +12,8 @@
 #ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 #OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+from __future__ import print_function
+
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets import ui
@@ -44,9 +46,9 @@ def update_collection(lib, config, opts, args):
     albums = [a.mb_albumid for a in lib.albums() if a.mb_albumid]
 
     # Submit to MusicBrainz.
-    print 'Updating MusicBrainz collection {0}...'.format(collection_id)
+    print('Updating MusicBrainz collection {0}...'.format(collection_id))
     submit_albums(collection_id, albums)
-    print '...MusicBrainz collection updated.'
+    print('...MusicBrainz collection updated.')
 
 update_mb_collection_cmd = Subcommand('mbupdate',
         help='Update MusicBrainz collection')

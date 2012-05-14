@@ -12,6 +12,10 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+"""Some simple performance benchmarks for beets.
+"""
+from __future__ import print_function
+
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import vfs
@@ -34,7 +38,7 @@ def benchmark(lib, prof):
                         'paths.withaunique.prof')
     else:
         interval = timeit.timeit(_build_tree, number=1)
-        print 'With %aunique:', interval
+        print('With %aunique:', interval)
 
     # And with %aunique replaceed with a "cheap" no-op function.
     lib.path_formats = [
@@ -46,7 +50,7 @@ def benchmark(lib, prof):
                         'paths.withoutaunique.prof')
     else:
         interval = timeit.timeit(_build_tree, number=1)
-        print 'Without %aunique:', interval
+        print('Without %aunique:', interval)
 
 class BenchmarkPlugin(BeetsPlugin):
     """A plugin for performing some simple performance benchmarks.

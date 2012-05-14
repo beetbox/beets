@@ -16,6 +16,7 @@
 """
 import os
 import shutil
+import StringIO
 
 import _common
 from _common import unittest
@@ -826,6 +827,17 @@ class ArtFetchTest(unittest.TestCase, _common.ExtraAsserts):
         shutil.copyfile(self.art_file, artdest)
         art.art_for_album = lambda a, b: artdest
         self._fetch_art(True)
+
+class TagLogTest(unittest.TestCase):
+    def test_tag_log_line(self):
+        sio = StringIO.StringIO()
+        importer.tag_log(sio, 'status', 'path')
+        assert 'status path' in sio.getvalue()
+
+    def test_tag_log_unicode(self):
+        sio = StringIO.StringIO()
+        importer.tag_log(sio, 'status', 'caf\xc3\xa9')
+        assert 'status caf' in sio.getvalue()
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
