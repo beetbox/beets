@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -30,12 +30,12 @@ class MoveTest(unittest.TestCase, _common.ExtraAsserts):
         # make a temporary file
         self.path = join(_common.RSRC, 'temp.mp3')
         shutil.copy(join(_common.RSRC, 'full.mp3'), self.path)
-        
+
         # add it to a temporary library
         self.lib = beets.library.Library(':memory:')
         self.i = beets.library.Item.from_path(self.path)
         self.lib.add(self.i)
-        
+
         # set up the destination
         self.libdir = join(_common.RSRC, 'testlibdir')
         self.lib.directory = self.libdir
@@ -47,7 +47,7 @@ class MoveTest(unittest.TestCase, _common.ExtraAsserts):
         self.dest = join(self.libdir, 'one', 'two', 'three.mp3')
 
         self.otherdir = join(_common.RSRC, 'testotherdir')
-        
+
     def tearDown(self):
         if os.path.exists(self.path):
             os.remove(self.path)
@@ -55,15 +55,15 @@ class MoveTest(unittest.TestCase, _common.ExtraAsserts):
             shutil.rmtree(self.libdir)
         if os.path.exists(self.otherdir):
             shutil.rmtree(self.otherdir)
-    
+
     def test_move_arrives(self):
         self.lib.move(self.i)
         self.assertExists(self.dest)
-    
+
     def test_move_to_custom_dir(self):
         self.lib.move(self.i, basedir=self.otherdir)
         self.assertExists(join(self.otherdir, 'one', 'two', 'three.mp3'))
-    
+
     def test_move_departs(self):
         self.lib.move(self.i)
         self.assertNotExists(self.path)
@@ -77,15 +77,15 @@ class MoveTest(unittest.TestCase, _common.ExtraAsserts):
         self.lib.move(self.i)
         self.assertNotExists(old_path)
         self.assertNotExists(os.path.dirname(old_path))
-    
+
     def test_copy_arrives(self):
         self.lib.move(self.i, copy=True)
         self.assertExists(self.dest)
-    
+
     def test_copy_does_not_depart(self):
         self.lib.move(self.i, copy=True)
         self.assertExists(self.path)
-    
+
     def test_move_changes_path(self):
         self.lib.move(self.i)
         self.assertEqual(self.i.path, util.normpath(self.dest))
@@ -124,7 +124,7 @@ class MoveTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertNotEqual(self.i.path, dest)
         self.assertEqual(os.path.dirname(self.i.path),
                          os.path.dirname(dest))
-    
+
 class HelperTest(unittest.TestCase):
     def test_ancestry_works_on_file(self):
         p = '/a/b/c'
@@ -138,7 +138,7 @@ class HelperTest(unittest.TestCase):
         p = 'a/b/c'
         a = ['a', 'a/b']
         self.assertEqual(util.ancestry(p), a)
-    
+
     def test_components_works_on_file(self):
         p = '/a/b/c'
         a =  ['/', 'a', 'b', 'c']
@@ -268,11 +268,11 @@ class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
         i2.artist = 'someArtist'
         ai = self.lib.add_album((i2,))
         self.lib.move(i2, True)
-        
+
         self.assertEqual(ai.artpath, None)
         ai.set_art(newart)
         self.assertTrue(os.path.exists(ai.artpath))
-    
+
     def test_setart_to_existing_art_works(self):
         os.remove(self.art)
 
@@ -332,7 +332,7 @@ class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
         newart = os.path.join(self.libdir, 'newart.jpg')
         touch(newart)
         os.chmod(newart, 0400) # read-only
-        
+
         try:
             i2 = item()
             i2.path = self.i.path
@@ -340,11 +340,11 @@ class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
             ai = self.lib.add_album((i2,))
             self.lib.move(i2, True)
             ai.set_art(newart)
-            
+
             mode = stat.S_IMODE(os.stat(ai.artpath).st_mode)
             self.assertTrue(mode & stat.S_IRGRP)
             self.assertTrue(os.access(ai.artpath, os.W_OK))
-            
+
         finally:
             # Make everything writable so it can be cleaned up.
             os.chmod(newart, 0777)

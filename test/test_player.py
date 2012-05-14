@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -57,7 +57,7 @@ class CommandParseTest(unittest.TestCase):
         s = ur'command "hello \\ there"'
         c = bpd.Command(s)
         self.assertEqual(c.args, [u'hello \ there'])
-    
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

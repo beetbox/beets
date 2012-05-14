@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -156,7 +156,7 @@ class MBAlbumInfoTest(unittest.TestCase):
         d = mb.album_info(release)
         self.assertEqual(d.year, 1987)
         self.assertEqual(d.month, 3)
-    
+
     def test_no_durations(self):
         tracks = [self._make_track('TITLE', 'ID', None)]
         release = self._make_release(tracks=tracks)

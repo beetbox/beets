@@ -133,7 +133,7 @@ $.fn.player = function(debug) {
 $.fn.disableSelection = function() {
     $(this).attr('unselectable', 'on')
            .css('-moz-user-select', 'none')
-           .each(function() { 
+           .each(function() {
                this.onselectstart = function() { return false; };
             });
 };

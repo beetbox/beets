@@ -8,9 +8,9 @@ body {
     right: 0;
     top: 0;
     height: 36px;
-    
+
     color: white;
-    
+
     cursor: default;
 
     /* shadowy border */
@@ -33,15 +33,15 @@ body {
 
 #entities {
     width: 17em;
-    
+
     position: fixed;
     top: 36px;
     left: 0;
     bottom: 0;
     margin: 0;
-    
+
     z-index: 1;
-    background: #dde4eb;   
+    background: #dde4eb;
 
     /* shadowy border */
     box-shadow: 0 0 20px #666;
@@ -59,7 +59,7 @@ body {
 }
 #entities ul {
     width: 17em;
-    
+
     position: fixed;
     top: 36px;
     left: 0;

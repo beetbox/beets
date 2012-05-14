@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -64,7 +64,7 @@ def _do_query(lib, query, album, also_items=True):
         raise ui.UserError('No matching albums found.')
     elif not album and not items:
         raise ui.UserError('No matching items found.')
-    
+
     return items, albums
 
 FLOAT_EPSILON = 0.01
@@ -212,7 +212,7 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
             if color:
                 cur_length = ui.colorize('red', cur_length)
                 new_length = ui.colorize('red', new_length)
-        
+
         # Possibly colorize changes.
         if color:
             cur_title, new_title = ui.colordiff(cur_title, new_title)
@@ -223,7 +223,7 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
         # Show filename (non-colorized) when title is not set.
         if not item.title.strip():
             cur_title = displayable_path(os.path.basename(item.path))
-        
+
         if cur_title != new_title:
             lhs, rhs = cur_title, new_title
             if cur_track != new_track:
@@ -345,7 +345,7 @@ def choose_candidate(candidates, singleton, rec, color, timid,
         else:
             dist, items, info = candidates[0]
         bypass_candidates = True
-        
+
     while True:
         # Display and choose from candidates.
         if not bypass_candidates:
@@ -387,7 +387,7 @@ def choose_candidate(candidates, singleton, rec, color, timid,
                         line += u' %s' % warning
 
                     print_(line)
-                                            
+
             # Ask the user for a choice.
             if singleton:
                 opts = ('Skip', 'Use as-is', 'Enter search', 'enter Id',
@@ -416,20 +416,20 @@ def choose_candidate(candidates, singleton, rec, color, timid,
                 else:
                     dist, items, info = candidates[sel-1]
         bypass_candidates = False
-    
+
         # Show what we're about to do.
         if singleton:
             show_item_change(item, info, dist, color)
         else:
             show_change(cur_artist, cur_album, items, info, dist, color)
-    
+
         # Exact match => tag automatically if we're not in timid mode.
         if rec == autotag.RECOMMEND_STRONG and not timid:
             if singleton:
                 return info
             else:
                 return info, items
-        
+
         # Ask for confirmation.
         if singleton:
             opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
@@ -507,10 +507,10 @@ def choose_match(task, config):
     candidates, rec = task.candidates, task.rec
     while True:
         # Ask for a choice from the user.
-        choice = choose_candidate(candidates, False, rec, config.color, 
+        choice = choose_candidate(candidates, False, rec, config.color,
                                   config.timid, task.cur_artist,
                                   task.cur_album, itemcount=len(task.items))
-    
+
         # Choose which tags to use.
         if choice in (importer.action.SKIP, importer.action.ASIS,
                       importer.action.TRACKS):
@@ -687,7 +687,7 @@ def import_files(lib, paths, copy, move, write, autot, logpath, art, threaded,
             ignore = ignore,
             resolve_duplicate_func = resolve_duplicate,
         )
-    
+
     finally:
         # If we were logging, close the file.
         if logfile:

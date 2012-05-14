@@ -123,7 +123,7 @@ class ThreadException(Exception):
         self.exc_info = exc_info
     def reraise(self):
         raise self.exc_info[0], self.exc_info[1], self.exc_info[2]
-        
+
 def run(root_coro):
     """Schedules a coroutine, running it to completion. This
     encapsulates the Bluelet scheduler, which the root coroutine can
@@ -138,7 +138,7 @@ def run(root_coro):
     # suspended until the delegate completes. This dictionary keeps
     # track of each running delegate's delegator.
     delegators = {}
-    
+
     def advance_thread(coro, value, is_exc=False):
         """After an event is fired, run a given coroutine associated with
         it in the threads dict until it yields again. If the coroutine
@@ -222,7 +222,7 @@ def run(root_coro):
                     threads[event2coro[event]] = ReturnEvent(None)
                 else:
                     advance_thread(event2coro[event], value)
-    
+
         except ThreadException, te:
             # Exception raised from inside a thread.
             event = ExceptionEvent(te.exc_info)
@@ -235,7 +235,7 @@ def run(root_coro):
                 # The thread is root-level. Raise in client code.
                 exit_te = te
                 break
-        
+
         except:
             # For instance, KeyboardInterrupt during select(). Raise
             # into root thread and terminate others.
@@ -414,7 +414,7 @@ def server(host, port, func):
             yield func(conn)
         finally:
             conn.close()
-            
+
     listener = Listener(host, port)
     try:
         while True:

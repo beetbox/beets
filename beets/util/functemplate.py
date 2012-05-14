@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -409,7 +409,7 @@ class Parser(object):
             # No function name.
             self.parts.append(FUNC_DELIM)
             return
-        
+
         if self.pos >= len(self.string):
             # Identifier terminates string.
             self.parts.append(self.string[start_pos:self.pos])
@@ -447,7 +447,7 @@ class Parser(object):
 
             # Extract and advance past the parsed expression.
             expressions.append(Expression(subparser.parts))
-            self.pos += subparser.pos 
+            self.pos += subparser.pos
 
             if self.pos >= len(self.string) or \
                self.string[self.pos] == GROUP_CLOSE:

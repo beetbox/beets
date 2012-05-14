@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -68,7 +68,7 @@ def update_mpd(host='localhost', port=6600, password=None):
     if 'OK MPD' not in resp:
         print 'MPD connection failed:', repr(resp)
         return
-    
+
     if password:
         s.send('password "%s"\n' % password)
         resp = s.readline()

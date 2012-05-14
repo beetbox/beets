@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -177,23 +177,23 @@ class FirstPipelineThread(PipelineThread):
         self.coro = coro
         self.out_queue = out_queue
         self.out_queue.acquire()
-        
+
         self.abort_lock = Lock()
         self.abort_flag = False
-    
+
     def run(self):
         try:
             while True:
                 with self.abort_lock:
                     if self.abort_flag:
                         return
-                
+
                 # Get the value from the generator.
                 try:
                     msg = self.coro.next()
                 except StopIteration:
                     break
-                
+
                 # Send messages to the next stage.
                 for msg in _allmsgs(msg):
                     with self.abort_lock:
@@ -207,7 +207,7 @@ class FirstPipelineThread(PipelineThread):
 
         # Generator finished; shut down the pipeline.
         self.out_queue.release()
-    
+
 class MiddlePipelineThread(PipelineThread):
     """A thread running any stage in the pipeline except the first or
     last.
@@ -223,7 +223,7 @@ class MiddlePipelineThread(PipelineThread):
         try:
             # Prime the coroutine.
             self.coro.next()
-            
+
             while True:
                 with self.abort_lock:
                     if self.abort_flag:
@@ -233,14 +233,14 @@ class MiddlePipelineThread(PipelineThread):
                 msg = self.in_queue.get()
                 if msg is POISON:
                     break
-                
+
                 with self.abort_lock:
                     if self.abort_flag:
                         return
 
                 # Invoke the current stage.
                 out = self.coro.send(msg)
-                
+
                 # Send messages to next stage.
                 for msg in _allmsgs(out):
                     with self.abort_lock:
@@ -251,7 +251,7 @@ class MiddlePipelineThread(PipelineThread):
         except:
             self.abort_all(sys.exc_info())
             return
-        
+
         # Pipeline is shutting down normally.
         self.out_queue.release()
 
@@ -273,12 +273,12 @@ class LastPipelineThread(PipelineThread):
                 with self.abort_lock:
                     if self.abort_flag:
                         return
-                    
+
                 # Get the message from the previous stage.
                 msg = self.in_queue.get()
                 if msg is POISON:
                     break
-                
+
                 with self.abort_lock:
                     if self.abort_flag:
                         return
@@ -308,7 +308,7 @@ class Pipeline(object):
                 self.stages.append((stage,))
             else:
                 self.stages.append(stage)
-        
+
     def run_sequential(self):
         """Run the pipeline sequentially in the current thread. The
         stages are run one after the other. Only the first coroutine
@@ -319,7 +319,7 @@ class Pipeline(object):
         # "Prime" the coroutines.
         for coro in coros[1:]:
             coro.next()
-        
+
         # Begin the pipeline.
         for out in coros[0]:
             msgs = _allmsgs(out)
@@ -329,7 +329,7 @@ class Pipeline(object):
                     out = coro.send(msg)
                     next_msgs.extend(_allmsgs(out))
                 msgs = next_msgs
-    
+
     def run_parallel(self, queue_size=DEFAULT_QUEUE_SIZE):
         """Run the pipeline in parallel using one thread per stage. The
         messages between the stages are stored in queues of the given
@@ -354,11 +354,11 @@ class Pipeline(object):
             threads.append(
                 LastPipelineThread(coro, queues[-1], threads)
             )
-        
+
         # Start threads.
         for thread in threads:
             thread.start()
-        
+
         # Wait for termination. The final thread lasts the longest.
         try:
             # Using a timeout allows us to receive KeyboardInterrupt
@@ -371,7 +371,7 @@ class Pipeline(object):
             for thread in threads:
                 thread.abort()
             raise
-        
+
         finally:
             # Make completely sure that all the threads have finished
             # before we return. They should already be either finished,
@@ -388,7 +388,7 @@ class Pipeline(object):
 # Smoke test.
 if __name__ == '__main__':
     import time
-    
+
     # Test a normally-terminating pipeline both in sequence and
     # in parallel.
     def produce():

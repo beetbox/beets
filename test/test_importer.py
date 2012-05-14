@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -700,22 +700,22 @@ class DuplicateCheckTest(unittest.TestCase):
         self.assertTrue(res)
 
     def test_duplicate_item_apply(self):
-        res = importer._item_duplicate_check(self.lib, 
+        res = importer._item_duplicate_check(self.lib,
                                              self._item_task(False))
         self.assertTrue(res)
 
     def test_different_item_apply(self):
-        res = importer._item_duplicate_check(self.lib, 
+        res = importer._item_duplicate_check(self.lib,
                                     self._item_task(False, 'xxx', 'yyy'))
         self.assertFalse(res)
 
     def test_duplicate_item_asis(self):
-        res = importer._item_duplicate_check(self.lib, 
+        res = importer._item_duplicate_check(self.lib,
                                              self._item_task(True))
         self.assertTrue(res)
 
     def test_different_item_asis(self):
-        res = importer._item_duplicate_check(self.lib, 
+        res = importer._item_duplicate_check(self.lib,
                                     self._item_task(True, 'xxx', 'yyy'))
         self.assertFalse(res)
 
@@ -725,7 +725,7 @@ class DuplicateCheckTest(unittest.TestCase):
         self.assertFalse(res)
 
     def test_duplicate_item_existing(self):
-        res = importer._item_duplicate_check(self.lib, 
+        res = importer._item_duplicate_check(self.lib,
                                         self._item_task(False, existing=True))
         self.assertFalse(res)
 

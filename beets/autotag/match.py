@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -112,7 +112,7 @@ def string_dist(str1, str2):
     """
     str1 = str1.lower()
     str2 = str2.lower()
-    
+
     # Don't penalize strings that move certain words to the end. For
     # example, "the something" should be considered equal to
     # "something, the".
@@ -126,7 +126,7 @@ def string_dist(str1, str2):
     for pat, repl in SD_REPLACE:
         str1 = re.sub(pat, repl, str1)
         str2 = re.sub(pat, repl, str2)
-    
+
     # Change the weight for certain string portions matched by a set
     # of regular expressions. We gradually change the strings and build
     # up penalties associated with parts of the string that were
@@ -137,7 +137,7 @@ def string_dist(str1, str2):
         # Get strings that drop the pattern.
         case_str1 = re.sub(pat, '', str1)
         case_str2 = re.sub(pat, '', str2)
-        
+
         if case_str1 != str1 or case_str2 != str2:
             # If the pattern was present (i.e., it is deleted in the
             # the current case), recalculate the distances for the
@@ -146,7 +146,7 @@ def string_dist(str1, str2):
             case_delta = max(0.0, base_dist - case_dist)
             if case_delta == 0.0:
                 continue
-            
+
             # Shift our baseline strings down (to avoid rematching the
             # same part of the string) and add a scaled distance
             # amount to the penalties.
@@ -155,7 +155,7 @@ def string_dist(str1, str2):
             base_dist = case_dist
             penalty += weight * case_delta
     dist = base_dist + penalty
-    
+
     return dist
 
 def current_metadata(items):
@@ -191,7 +191,7 @@ def order_items(items, trackinfo):
         for i, canon_item in enumerate(trackinfo):
             row.append(track_distance(cur_item, canon_item, i+1))
         costs.append(row)
-    
+
     # Find a minimum-cost bipartite matching.
     matching = Munkres().compute(costs)
 
@@ -221,7 +221,7 @@ def track_distance(item, track_info, track_index=None, incl_artist=False):
         diff = min(diff, TRACK_LENGTH_MAX)
         dist += (diff / TRACK_LENGTH_MAX) * TRACK_LENGTH_WEIGHT
     dist_max += TRACK_LENGTH_WEIGHT
-    
+
     # Track title.
     dist += string_dist(item.title, track_info.title) * TRACK_TITLE_WEIGHT
     dist_max += TRACK_TITLE_WEIGHT
@@ -241,7 +241,7 @@ def track_distance(item, track_info, track_index=None, incl_artist=False):
         if item.track not in (track_index, track_info.medium_index):
             dist += TRACK_INDEX_WEIGHT
         dist_max += TRACK_INDEX_WEIGHT
-    
+
     # MusicBrainz track ID.
     if item.mb_trackid:
         if item.mb_trackid != track_info.track_id:
@@ -262,19 +262,19 @@ def distance(items, album_info):
     cur_artist, cur_album, _ = current_metadata(items)
     cur_artist = cur_artist or ''
     cur_album = cur_album or ''
-    
+
     # These accumulate the possible distance components. The final
     # distance will be dist/dist_max.
     dist = 0.0
     dist_max = 0.0
-    
+
     # Artist/album metadata.
     if not album_info.va:
         dist += string_dist(cur_artist, album_info.artist) * ARTIST_WEIGHT
         dist_max += ARTIST_WEIGHT
     dist += string_dist(cur_album,  album_info.album) * ALBUM_WEIGHT
     dist_max += ALBUM_WEIGHT
-    
+
     # Track distances.
     for i, (item, track_info) in enumerate(zip(items, album_info.tracks)):
         if item:
@@ -305,7 +305,7 @@ def match_by_id(items):
     if not albumids:
         log.debug('No album IDs found.')
         return None
-    
+
     # If all album IDs are equal, look up the album.
     if bool(reduce(lambda x,y: x if x==y else (), albumids)):
         albumid = albumids[0]
@@ -314,7 +314,7 @@ def match_by_id(items):
     else:
         log.debug('No album ID consensus.')
         return None
-    
+
     #fixme In the future, at the expense of performance, we could use
     # other IDs (i.e., track and artist) in case the album tag isn't
     # present, but that event seems very unlikely.
@@ -398,11 +398,11 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
     # Get current metadata.
     cur_artist, cur_album, artist_consensus = current_metadata(items)
     log.debug('Tagging %s - %s' % (cur_artist, cur_album))
-    
+
     # The output result (distance, AlbumInfo) tuples (keyed by MB album
     # ID).
     candidates = {}
-    
+
     # Try to find album indicated by MusicBrainz IDs.
     if search_id:
         log.debug('Searching for album ID: ' + search_id)
@@ -427,13 +427,13 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
             return cur_artist, cur_album, candidates.values(), rec
         else:
             return cur_artist, cur_album, [], RECOMMEND_NONE
-    
+
     # Search terms.
     if not (search_artist and search_album):
         # No explicit search terms -- use current metadata.
         search_artist, search_album = cur_artist, cur_album
     log.debug(u'Search terms: %s - %s' % (search_artist, search_album))
-    
+
     # Is this album likely to be a "various artist" release?
     va_likely = ((not artist_consensus) or
                  (search_artist.lower() in VA_ARTISTS) or
@@ -446,7 +446,7 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
     log.debug(u'Evaluating %i candidates.' % len(search_cands))
     for info in search_cands:
         validate_candidate(items, candidates, info)
-    
+
     # Sort and get the recommendation.
     candidates = sorted(candidates.itervalues())
     rec = recommendation(candidates)
@@ -456,7 +456,7 @@ def tag_item(item, timid=False, search_artist=None, search_title=None,
              search_id=None):
     """Attempts to find metadata for a single track. Returns a
     `(candidates, recommendation)` pair where `candidates` is a list
-    of `(distance, track_info)` pairs. `search_artist` and 
+    of `(distance, track_info)` pairs. `search_artist` and
     `search_title` may be used to override the current metadata for
     the purposes of the MusicBrainz title; likewise `search_id`.
     """
@@ -484,7 +484,7 @@ def tag_item(item, timid=False, search_artist=None, search_title=None,
             return candidates.values(), rec
         else:
             return [], RECOMMEND_NONE
-    
+
     # Search terms.
     if not (search_artist and search_title):
         search_artist, search_title = item.artist, item.title

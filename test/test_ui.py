@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -45,7 +45,7 @@ class ListTest(unittest.TestCase):
 
     def tearDown(self):
         self.io.restore()
-        
+
     def test_list_outputs_item(self):
         commands.list_items(self.lib, '', False, False, None)
         out = self.io.getoutput()
@@ -74,7 +74,7 @@ class ListTest(unittest.TestCase):
         commands.list_items(self.lib, '', True, True, None)
         out = self.io.getoutput()
         self.assertEqual(out.strip(), u'xxx')
-    
+
     def test_list_album_omits_title(self):
         commands.list_items(self.lib, '', True, False, None)
         out = self.io.getoutput()
@@ -85,7 +85,7 @@ class ListTest(unittest.TestCase):
         out = self.io.getoutput()
         self.assertTrue(u'the artist' in out)
         self.assertTrue(u'the album artist' not in out)
-    
+
     def test_list_album_uses_album_artist(self):
         commands.list_items(self.lib, '', True, False, None)
         out = self.io.getoutput()
@@ -407,7 +407,7 @@ class PrintTest(unittest.TestCase):
         self.io.install()
     def tearDown(self):
         self.io.restore()
-    
+
     def test_print_without_locale(self):
         lang = os.environ.get('LANG')
         if lang:

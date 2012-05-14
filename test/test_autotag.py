@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -82,7 +82,7 @@ def _make_trackinfo():
     ti.append(TrackInfo('two', None, 'some artist', length=1))
     ti.append(TrackInfo('three', None, 'some artist', length=1))
     return ti
-    
+
 class TrackDistanceTest(unittest.TestCase):
     def test_identical_tracks(self):
         item = _make_item('one', 1)
@@ -258,13 +258,13 @@ class AlbumsInDirTest(unittest.TestCase):
         # create a directory structure for testing
         self.base = os.path.abspath(os.path.join(_common.RSRC, 'tempdir'))
         os.mkdir(self.base)
-        
+
         os.mkdir(os.path.join(self.base, 'album1'))
         os.mkdir(os.path.join(self.base, 'album2'))
         os.mkdir(os.path.join(self.base, 'more'))
         os.mkdir(os.path.join(self.base, 'more', 'album3'))
         os.mkdir(os.path.join(self.base, 'more', 'album4'))
-        
+
         _mkmp3(os.path.join(self.base, 'album1', 'album1song1.mp3'))
         _mkmp3(os.path.join(self.base, 'album1', 'album1song2.mp3'))
         _mkmp3(os.path.join(self.base, 'album2', 'album2song.mp3'))
@@ -272,11 +272,11 @@ class AlbumsInDirTest(unittest.TestCase):
         _mkmp3(os.path.join(self.base, 'more', 'album4', 'album4song.mp3'))
     def tearDown(self):
         shutil.rmtree(self.base)
-    
+
     def test_finds_all_albums(self):
         albums = list(autotag.albums_in_dir(self.base))
         self.assertEqual(len(albums), 4)
-    
+
     def test_separates_contents(self):
         found = []
         for _, album in autotag.albums_in_dir(self.base):
@@ -285,7 +285,7 @@ class AlbumsInDirTest(unittest.TestCase):
         self.assertTrue('2' in found)
         self.assertTrue('3' in found)
         self.assertTrue('4' in found)
-    
+
     def test_finds_multiple_songs(self):
         for _, album in autotag.albums_in_dir(self.base):
             n = re.search(r'album(.)song', album[0].path).group(1)
@@ -351,7 +351,7 @@ class OrderingTest(unittest.TestCase):
             'title': title, 'track': track,
             'mb_trackid': '', 'mb_albumid': '', 'mb_artistid': '',
         })
-    
+
     def test_order_corrects_metadata(self):
         items = []
         items.append(self.item('one', 1))
@@ -482,46 +482,46 @@ class ApplyTest(unittest.TestCase):
             va = False,
             mediums = 2,
         )
-    
+
     def test_titles_applied(self):
         autotag.apply_metadata(self.items, self.info)
         self.assertEqual(self.items[0].title, 'oneNew')
         self.assertEqual(self.items[1].title, 'twoNew')
-    
+
     def test_album_and_artist_applied_to_all(self):
         autotag.apply_metadata(self.items, self.info)
         self.assertEqual(self.items[0].album, 'albumNew')
         self.assertEqual(self.items[1].album, 'albumNew')
         self.assertEqual(self.items[0].artist, 'artistNew')
         self.assertEqual(self.items[1].artist, 'artistNew')
-    
+
     def test_track_index_applied(self):
         autotag.apply_metadata(self.items, self.info)
         self.assertEqual(self.items[0].track, 1)
         self.assertEqual(self.items[1].track, 2)
-    
+
     def test_track_total_applied(self):
         autotag.apply_metadata(self.items, self.info)
         self.assertEqual(self.items[0].tracktotal, 2)
         self.assertEqual(self.items[1].tracktotal, 2)
-    
+
     def test_disc_index_applied(self):
         autotag.apply_metadata(self.items, self.info)
         self.assertEqual(self.items[0].disc, 1)
         self.assertEqual(self.items[1].disc, 2)
-    
+
     def test_disc_total_applied(self):
         autotag.apply_metadata(self.items, self.info)
         self.assertEqual(self.items[0].disctotal, 2)
         self.assertEqual(self.items[1].disctotal, 2)
-    
+
     def test_mb_trackid_applied(self):
         autotag.apply_metadata(self.items, self.info)
         self.assertEqual(self.items[0].mb_trackid,
                         'dfa939ec-118c-4d0f-84a0-60f3d1e6522c')
         self.assertEqual(self.items[1].mb_trackid,
                          '40130ed1-a27c-42fd-a328-1ebefb6caef4')
-    
+
     def test_mb_albumid_and_artistid_applied(self):
         autotag.apply_metadata(self.items, self.info)
         for item in self.items:
@@ -611,59 +611,59 @@ class StringDistanceTest(unittest.TestCase):
     def test_equal_strings(self):
         dist = match.string_dist('Some String', 'Some String')
         self.assertEqual(dist, 0.0)
-    
+
     def test_different_strings(self):
         dist = match.string_dist('Some String', 'Totally Different')
         self.assertNotEqual(dist, 0.0)
-    
+
     def test_punctuation_ignored(self):
         dist = match.string_dist('Some String', 'Some.String!')
         self.assertEqual(dist, 0.0)
-    
+
     def test_case_ignored(self):
         dist = match.string_dist('Some String', 'sOME sTring')
         self.assertEqual(dist, 0.0)
-    
-    def test_leading_the_has_lower_weight(self):    
+
+    def test_leading_the_has_lower_weight(self):
         dist1 = match.string_dist('XXX Band Name', 'Band Name')
         dist2 = match.string_dist('The Band Name', 'Band Name')
         self.assert_(dist2 < dist1)
-    
-    def test_parens_have_lower_weight(self):    
+
+    def test_parens_have_lower_weight(self):
         dist1 = match.string_dist('One .Two.', 'One')
         dist2 = match.string_dist('One (Two)', 'One')
         self.assert_(dist2 < dist1)
-    
-    def test_brackets_have_lower_weight(self):    
+
+    def test_brackets_have_lower_weight(self):
         dist1 = match.string_dist('One .Two.', 'One')
         dist2 = match.string_dist('One [Two]', 'One')
         self.assert_(dist2 < dist1)
-    
-    def test_ep_label_has_zero_weight(self):    
+
+    def test_ep_label_has_zero_weight(self):
         dist = match.string_dist('My Song (EP)', 'My Song')
         self.assertEqual(dist, 0.0)
-    
-    def test_featured_has_lower_weight(self):    
+
+    def test_featured_has_lower_weight(self):
         dist1 = match.string_dist('My Song blah Someone', 'My Song')
         dist2 = match.string_dist('My Song feat Someone', 'My Song')
         self.assert_(dist2 < dist1)
-    
-    def test_postfix_the(self):    
+
+    def test_postfix_the(self):
         dist = match.string_dist('The Song Title', 'Song Title, The')
         self.assertEqual(dist, 0.0)
-    
-    def test_postfix_a(self):    
+
+    def test_postfix_a(self):
         dist = match.string_dist('A Song Title', 'Song Title, A')
         self.assertEqual(dist, 0.0)
-    
-    def test_postfix_an(self):    
+
+    def test_postfix_an(self):
         dist = match.string_dist('An Album Title', 'Album Title, An')
         self.assertEqual(dist, 0.0)
-    
+
     def test_empty_strings(self):
         dist = match.string_dist('', '')
         self.assertEqual(dist, 0.0)
-    
+
     def test_solo_pattern(self):
         # Just make sure these don't crash.
         match.string_dist('The ', '')

@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -54,7 +54,7 @@ class EdgeTest(unittest.TestCase):
         # rather than just a number.
         f = beets.mediafile.MediaFile(os.path.join(_common.RSRC, 'bpm.mp3'))
         self.assertEqual(f.bpm, 128)
-    
+
     def test_discc_alternate_field(self):
         # Different taggers use different vorbis comments to reflect
         # the disc and disc count fields: ensure that the alternative
@@ -119,27 +119,27 @@ class SafetyTest(unittest.TestCase):
             self.assertRaises(exc, beets.mediafile.MediaFile, fn)
         finally:
             os.unlink(fn) # delete the temporary file
-    
+
     def test_corrupt_mp3_raises_unreadablefileerror(self):
         # Make sure we catch Mutagen reading errors appropriately.
         self._exccheck('corrupt.mp3', beets.mediafile.UnreadableFileError)
-    
+
     def test_corrupt_mp4_raises_unreadablefileerror(self):
         self._exccheck('corrupt.m4a', beets.mediafile.UnreadableFileError)
-    
+
     def test_corrupt_flac_raises_unreadablefileerror(self):
         self._exccheck('corrupt.flac', beets.mediafile.UnreadableFileError)
-    
+
     def test_corrupt_ogg_raises_unreadablefileerror(self):
         self._exccheck('corrupt.ogg', beets.mediafile.UnreadableFileError)
 
     def test_invalid_ogg_header_raises_unreadablefileerror(self):
         self._exccheck('corrupt.ogg', beets.mediafile.UnreadableFileError,
                        'OggS\x01vorbis')
-    
+
     def test_corrupt_monkeys_raises_unreadablefileerror(self):
         self._exccheck('corrupt.ape', beets.mediafile.UnreadableFileError)
-    
+
     def test_invalid_extension_raises_filetypeerror(self):
         self._exccheck('something.unknown', beets.mediafile.FileTypeError)
 

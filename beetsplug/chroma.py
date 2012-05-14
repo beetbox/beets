@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -63,11 +63,11 @@ def acoustid_match(path):
         res = acoustid.lookup(API_KEY, fp, duration,
                               meta='recordings releases')
     except acoustid.AcoustidError, exc:
-        log.debug('fingerprint matching %s failed: %s' % 
+        log.debug('fingerprint matching %s failed: %s' %
                   (repr(path), str(exc)))
         return None
     log.debug('chroma: fingerprinted %s' % repr(path))
-    
+
     # Ensure the response is usable and parse it.
     if res['status'] != 'ok' or not res.get('results'):
         log.debug('chroma: no match found')

@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -27,7 +27,7 @@ class VFSTest(unittest.TestCase):
         self.lib.add(_common.item())
         self.lib.add_album([_common.item()])
         self.tree = vfs.libtree(self.lib)
-    
+
     def test_singleton_item(self):
         self.assertEqual(self.tree.dirs['tracks'].dirs['the artist'].
                          files['the title'], 1)

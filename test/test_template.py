@@ -8,7 +8,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -128,19 +128,19 @@ class ParseTest(unittest.TestCase):
 
     def test_unclosed_braces_symbol(self):
         self.assertEqual(list(_normparse(u'a ${ b')), [u'a ${ b'])
-    
+
     def test_empty_braces_symbol(self):
         self.assertEqual(list(_normparse(u'a ${} b')), [u'a ${} b'])
 
     def test_call_without_args_at_end(self):
         self.assertEqual(list(_normparse(u'foo %bar')), [u'foo %bar'])
-    
+
     def test_call_without_args(self):
         self.assertEqual(list(_normparse(u'foo %bar baz')), [u'foo %bar baz'])
 
     def test_call_with_unclosed_args(self):
         self.assertEqual(list(_normparse(u'foo %bar{ baz')), [u'foo %bar{ baz'])
-    
+
     def test_call_with_unclosed_multiple_args(self):
         self.assertEqual(list(_normparse(u'foo %bar{bar,bar baz')),
                          [u'foo %bar{bar,bar baz'])
@@ -150,26 +150,26 @@ class ParseTest(unittest.TestCase):
         self.assertEqual(len(parts), 1)
         self._assert_call(parts[0], u"foo", 1)
         self.assertEqual(list(_normexpr(parts[0].args[0])), [])
-    
+
     def test_call_single_arg(self):
         parts = list(_normparse(u'%foo{bar}'))
         self.assertEqual(len(parts), 1)
         self._assert_call(parts[0], u"foo", 1)
         self.assertEqual(list(_normexpr(parts[0].args[0])), [u'bar'])
-    
+
     def test_call_two_args(self):
         parts = list(_normparse(u'%foo{bar,baz}'))
         self.assertEqual(len(parts), 1)
         self._assert_call(parts[0], u"foo", 2)
         self.assertEqual(list(_normexpr(parts[0].args[0])), [u'bar'])
         self.assertEqual(list(_normexpr(parts[0].args[1])), [u'baz'])
-    
+
     def test_call_with_escaped_sep(self):
         parts = list(_normparse(u'%foo{bar$,baz}'))
         self.assertEqual(len(parts), 1)
         self._assert_call(parts[0], u"foo", 1)
         self.assertEqual(list(_normexpr(parts[0].args[0])), [u'bar,baz'])
-    
+
     def test_call_with_escaped_close(self):
         parts = list(_normparse(u'%foo{bar$}baz}'))
         self.assertEqual(len(parts), 1)
@@ -217,10 +217,10 @@ class EvalTest(unittest.TestCase):
 
     def test_plain_text(self):
         self.assertEqual(self._eval(u"foo"), u"foo")
-    
+
     def test_subtitute_value(self):
         self.assertEqual(self._eval(u"$foo"), u"bar")
-    
+
     def test_subtitute_value_in_text(self):
         self.assertEqual(self._eval(u"hello $foo world"), u"hello bar world")
 
@@ -242,7 +242,7 @@ class EvalTest(unittest.TestCase):
     def test_function_call_exception(self):
         res = self._eval(u"%lower{a,b,c,d,e}")
         self.assertTrue(isinstance(res, basestring))
-    
+
     def test_function_returning_integer(self):
         self.assertEqual(self._eval(u"%len{foo}"), u"3")
 
