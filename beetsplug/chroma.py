@@ -15,7 +15,6 @@
 """Adds Chromaprint/Acoustid acoustic fingerprinting support to the
 autotagger. Requires the pyacoustid library.
 """
-from __future__ import with_statement
 from beets import plugins
 from beets import ui
 from beets import util
@@ -27,7 +26,7 @@ from collections import defaultdict
 API_KEY = '1vOwZtEn'
 SCORE_THRESH = 0.5
 TRACK_ID_WEIGHT = 10.0
-COMMON_REL_THRESH = 0.6 # How many tracks must have an album in common?
+COMMON_REL_THRESH = 0.6  # How many tracks must have an album in common?
 
 log = logging.getLogger('beets')
 

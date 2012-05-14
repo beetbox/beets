@@ -15,8 +15,6 @@
 """Cleans extraneous metadata from files' tags via a command or
 automatically whenever tags are written.
 """
-from __future__ import with_statement
-
 import logging
 
 from beets.plugins import BeetsPlugin

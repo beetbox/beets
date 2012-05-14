@@ -15,7 +15,6 @@
 """Provides the basic, interface-agnostic workflow for importing and
 autotagging music files.
 """
-from __future__ import with_statement # Python 2.5
 import os
 import logging
 import pickle

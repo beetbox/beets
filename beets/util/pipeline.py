@@ -30,7 +30,6 @@ up a bottleneck stage by dividing its work among multiple threads.
 To do so, pass an iterable of coroutines to the Pipeline constructor
 in place of any single coroutine.
 """
-from __future__ import with_statement # for Python 2.5
 import Queue
 from threading import Thread, Lock
 import sys

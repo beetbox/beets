@@ -24,8 +24,6 @@ The included (default) genre list was produced by scraping Wikipedia.
 The scraper script used is available here:
 https://gist.github.com/1241307
 """
-from __future__ import with_statement
-
 import logging
 import pylast
 import os

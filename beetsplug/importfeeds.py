@@ -15,16 +15,13 @@
 """Write paths of imported files in various formats to ease later import in a
 music player.
 """
-
-from __future__ import with_statement
 import datetime
 import os
-import sys
 import re
 
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.util import normpath, copy
+from beets.util import normpath
 
 M3U_DEFAULT_NAME = 'imported.m3u'
 

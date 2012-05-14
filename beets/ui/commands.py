@@ -15,7 +15,6 @@
 """This module provides the default commands for beets' command-line
 interface.
 """
-from __future__ import with_statement # Python 2.5
 import logging
 import sys
 import os
