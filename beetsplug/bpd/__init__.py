@@ -18,7 +18,6 @@ use of the wide range of MPD clients.
 """
 from __future__ import print_function
 
-import bluelet
 import re
 from string import Template
 import traceback
@@ -30,6 +29,7 @@ import beets
 from beets.plugins import BeetsPlugin
 import beets.ui
 from beets import vfs
+from beets.util import bluelet
 
 
 DEFAULT_PORT = 6600
@@ -119,7 +119,7 @@ ArgumentIndexError = make_bpd_error(ERROR_ARG, 'argument out of range')
 ArgumentNotFoundError = make_bpd_error(ERROR_NO_EXIST, 'argument not found')
 
 def cast_arg(t, val):
-    """Attempts to call t on val, raising a CommandArgumentError
+    """Attempts to call t on val, raising a ArgumentTypeError
     on ValueError.
 
     If 't' is the special string 'intbool', attempts to cast first
@@ -131,7 +131,7 @@ def cast_arg(t, val):
         try:
             return t(val)
         except ValueError:
-            raise CommandArgumentError()
+            raise ArgumentTypeError()
 
 class BPDClose(Exception):
     """Raised by a command invocation to indicate that the connection
@@ -391,7 +391,7 @@ class BaseServer(object):
 
         self.playlist_version += 1
 
-    def cmd_moveid(self, conn, id_from, idx_to):
+    def cmd_moveid(self, conn, idx_from, idx_to):
         idx_from = self._id_to_index(idx_from)
         return self.cmd_move(conn, idx_from, idx_to)
 
