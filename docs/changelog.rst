@@ -1,6 +1,13 @@
 Changelog
 =========
 
+1.0b15 (in development)
+-----------------------
+
+
+1.0b14 (May 12, 2012)
+---------------------
+
 The centerpiece of this beets release is the graceful handling of
 similarly-named albums. It's now possible to import two albums with the same
 artist and title and to keep them from conflicting in the filesystem. Many other
@@ -12,8 +19,6 @@ and a plugin for interoperability with other music library systems.
 A million thanks to the (growing) beets community for making this a huge
 release.
 
-1.0b14 (May 12, 2012)
----------------------
 * The importer now gives you **choices when duplicates are detected**.
   Previously, when beets found an existing album or item in your library
   matching the metadata on a newly-imported one, it would just skip the new
