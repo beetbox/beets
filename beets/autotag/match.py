@@ -15,6 +15,8 @@
 """Matches existing metadata with canonical information to identify
 releases and tracks.
 """
+from __future__ import division
+
 import logging
 import re
 from munkres import Munkres

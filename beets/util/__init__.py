@@ -13,6 +13,8 @@
 # included in all copies or substantial portions of the Software.
 
 """Miscellaneous utility functions."""
+from __future__ import division
+
 import os
 import sys
 import re
@@ -149,7 +151,7 @@ def components(path, pathmod=None):
         comp = pathmod.basename(anc)
         if comp:
             comps.append(comp)
-        else: # root
+        else:  # root
             comps.append(anc)
 
     last = pathmod.basename(path)
@@ -337,10 +339,10 @@ def sanitize_for_path(value, pathmod, key=None):
         value = u'%02i' % (value or 0)
     elif key == 'bitrate':
         # Bitrate gets formatted as kbps.
-        value = u'%ikbps' % ((value or 0) / 1000)
+        value = u'%ikbps' % ((value or 0) // 1000)
     elif key == 'samplerate':
         # Sample rate formatted as kHz.
-        value = u'%ikHz' % ((value or 0) / 1000)
+        value = u'%ikHz' % ((value or 0) // 1000)
     else:
         value = unicode(value)
     return value
