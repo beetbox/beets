@@ -176,7 +176,7 @@ class Call(object):
             arg_vals = [expr.evaluate(env) for expr in self.args]
             try:
                 out = env.functions[self.ident](*arg_vals)
-            except Exception, exc:
+            except Exception as exc:
                 # Function raised exception! Maybe inlining the name of
                 # the exception will help debug.
                 return u'<%s>' % unicode(exc)

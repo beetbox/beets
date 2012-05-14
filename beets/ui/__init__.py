@@ -745,10 +745,10 @@ def main(args=None, configfh=None):
     # Invoke the subcommand.
     try:
         subcommand.func(lib, config, suboptions, subargs)
-    except UserError, exc:
+    except UserError as exc:
         message = exc.args[0] if exc.args else None
         subcommand.parser.error(message)
-    except IOError, exc:
+    except IOError as exc:
         if exc.errno == errno.EPIPE:
             # "Broken pipe". End silently.
             pass

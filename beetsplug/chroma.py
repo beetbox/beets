@@ -53,7 +53,7 @@ def acoustid_match(path):
     """
     try:
         duration, fp = acoustid.fingerprint_file(path)
-    except acoustid.FingerprintGenerationError, exc:
+    except acoustid.FingerprintGenerationError as exc:
         log.error('fingerprinting of %s failed: %s' %
                   (repr(path), str(exc)))
         return None
@@ -61,7 +61,7 @@ def acoustid_match(path):
     try:
         res = acoustid.lookup(API_KEY, fp, duration,
                               meta='recordings releases')
-    except acoustid.AcoustidError, exc:
+    except acoustid.AcoustidError as exc:
         log.debug('fingerprint matching %s failed: %s' %
                   (repr(path), str(exc)))
         return None
@@ -214,7 +214,7 @@ def submit_items(userkey, items, chunksize=64):
             ))
             try:
                 _, fp = acoustid.fingerprint_file(item.path)
-            except acoustid.FingerprintGenerationError, exc:
+            except acoustid.FingerprintGenerationError:
                 log.info('fingerprint generation failed')
                 continue
 

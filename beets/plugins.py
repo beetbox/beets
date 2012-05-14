@@ -162,7 +162,7 @@ def load_plugins(names=()):
         try:
             try:
                 __import__(modname, None, None)
-            except ImportError, exc:
+            except ImportError as exc:
                 # Again, this is hacky:
                 if exc.args[0].endswith(' ' + name):
                     log.warn('** plugin %s not found' % name)

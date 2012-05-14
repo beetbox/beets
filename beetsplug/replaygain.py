@@ -69,7 +69,8 @@ class ReplayGainPlugin(BeetsPlugin):
             for mf in media_files:
                 self.write_gain(mf, track_data, album_data)
 
-        except (FileTypeError, UnreadableFileError, TypeError, ValueError), e:
+        except (FileTypeError, UnreadableFileError,
+                TypeError, ValueError) as e:
             log.error("failed to calculate replaygain:  %s ", e)
 
     def item_imported(self, lib, item, config):
@@ -83,7 +84,8 @@ class ReplayGainPlugin(BeetsPlugin):
                                                           True,
                                                           self.ref_level)
                 self.write_gain(mf, track_data, None)
-        except (FileTypeError, UnreadableFileError, TypeError, ValueError), e:
+        except (FileTypeError, UnreadableFileError,
+                TypeError, ValueError) as e:
             log.error("failed to calculate replaygain:  %s ", e)
 
     def write_gain(self, mf, track_data, album_data):
@@ -116,7 +118,7 @@ class ReplayGainPlugin(BeetsPlugin):
                          mf.rg_track_peak))
 
             mf.save()
-        except (FileTypeError, UnreadableFileError, TypeError, ValueError), e:
+        except (FileTypeError, UnreadableFileError, TypeError, ValueError):
             log.error("failed to write replaygain: %s" % (mf.title))
 
     def requires_gain(self, mf):

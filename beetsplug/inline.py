@@ -18,7 +18,6 @@ import logging
 import traceback
 
 from beets.plugins import BeetsPlugin
-from beets import ui
 
 log = logging.getLogger('beets')
 
@@ -48,7 +47,7 @@ def compile_expr(expr):
         values = dict(item.record)
         try:
             return eval(code, values)
-        except Exception, exc:
+        except Exception as exc:
             raise InlineError(expr, exc)
     return field_func
 

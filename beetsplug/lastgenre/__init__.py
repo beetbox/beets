@@ -51,7 +51,7 @@ def _tags_for(obj):
     """
     try:
         res = obj.get_top_tags()
-    except PYLAST_EXCEPTIONS, exc:
+    except PYLAST_EXCEPTIONS as exc:
         log.debug(u'last.fm error: %s' % unicode(exc))
         return []
 

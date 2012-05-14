@@ -194,7 +194,7 @@ def _save_state(state):
     try:
         with open(STATE_FILE, 'w') as f:
             pickle.dump(state, f)
-    except IOError, exc:
+    except IOError as exc:
         log.error(u'state file could not be written: %s' % unicode(exc))
 
 

@@ -569,7 +569,7 @@ class Connection(object):
         appropriate response."""
         try:
             yield bluelet.call(command.run(self))
-        except BPDError, e:
+        except BPDError as e:
             # Send the error.
             yield self.send(e.response())
         else:
@@ -668,7 +668,7 @@ class Command(object):
                 for data in results:
                     yield conn.send(data)
 
-        except BPDError, e:
+        except BPDError as e:
             # An exposed error. Set the command name and then let
             # the Connection handle it.
             e.cmd_name = self.name
@@ -679,7 +679,7 @@ class Command(object):
             # it on the Connection.
             raise
 
-        except Exception, e:
+        except Exception as e:
             # An "unintentional" error. Hide it from the client.
             log.error(traceback.format_exc(e))
             raise BPDError(ERROR_SYSTEM, u'server error', self.name)
@@ -705,7 +705,7 @@ class CommandList(list):
         for i, command in enumerate(self):
             try:
                 yield bluelet.call(command.run(conn))
-            except BPDError, e:
+            except BPDError as e:
                 # If the command failed, stop executing.
                 e.index = i # Give the error the correct index.
                 raise e
@@ -728,7 +728,7 @@ class Server(BaseServer):
     def __init__(self, library, host='', port=DEFAULT_PORT, password=''):
         try:
             from beetsplug.bpd import gstplayer
-        except ImportError, e:
+        except ImportError as e:
             # This is a little hacky, but it's the best I know for now.
             if e.args[0].endswith(' gst'):
                 raise NoGstreamerError()
