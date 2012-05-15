@@ -6,6 +6,8 @@ Changelog
 
 * New plugin event: ``import_task_choice`` is called after an import task has an
   action assigned.
+* New plugin event: ``library_opened`` is called when beets starts up and
+  opens the library database.
 
 1.0b14 (May 12, 2012)
 ---------------------

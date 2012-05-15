@@ -142,6 +142,9 @@ currently available are:
   Use ``task.choice_flag`` to determine the action to be taken. Parameters:
   ``task`` and ``config``.
 
+* *library_opened*: called after beets starts up and initializes the main
+  Library object. Parameter: ``lib``.
+
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 
 Extend the Autotagger

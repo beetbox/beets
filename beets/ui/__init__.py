@@ -731,6 +731,7 @@ def main(args=None, configfh=None):
                               replacements)
     except sqlite3.OperationalError:
         raise UserError("database file %s could not be opened" % db_path)
+    plugins.send("library_opened", lib=lib)
 
     # Configure the logger.
     log = logging.getLogger('beets')
