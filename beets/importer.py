@@ -605,6 +605,7 @@ def user_query(config):
         choice = config.choose_match_func(task, config)
         task.set_choice(choice)
         log_choice(config, task)
+        plugins.send('import_task_choice', task=task, config=config)
 
         # As-tracks: transition to singleton workflow.
         if choice is action.TRACKS:

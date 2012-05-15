@@ -137,6 +137,11 @@ currently available are:
 * *import_task_apply*: called after metadata changes have been applied in an
   import task. Parameters: ``task`` and ``config``.
 
+* *import_task_choice*: called after a decision has been made about an import
+  task. This event can be used to initiate further interaction with the user.
+  Use ``task.choice_flag`` to determine the action to be taken. Parameters:
+  ``task`` and ``config``.
+
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 
 Extend the Autotagger

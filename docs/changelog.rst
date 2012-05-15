@@ -4,6 +4,8 @@ Changelog
 1.0b15 (in development)
 -----------------------
 
+* New plugin event: ``import_task_choice`` is called after an import task has an
+  action assigned.
 
 1.0b14 (May 12, 2012)
 ---------------------
