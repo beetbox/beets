@@ -171,6 +171,11 @@ section header:
     This option is historical and deprecated: it's almost always more
     appropriate to use ``import_move`` instead.
 
+``list_format``
+    Format to use when listing library content using ``beet list``. Defaults to
+    ``$artist - $album - $title``. The ``-f`` command-line option override this
+    setting.
+
 .. _path-format-config:
 
 Path Format Configuration
