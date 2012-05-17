@@ -861,7 +861,7 @@ class MediaFile(object):
         etc = StorageStyle('ASIN'),
     )
     catalognum = MediaField(
-        mp3 = StorageStyle('TXXX', id3_desc=u'TXXX:CATALOGNUMBER'),
+        mp3 = StorageStyle('TXXX', id3_desc=u'CATALOGNUMBER'),
         mp4 = StorageStyle("----:com.apple.iTunes:CATALOGNUMBER"),
         etc = StorageStyle('CATALOGNUMBER'),
     )

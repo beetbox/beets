@@ -17,6 +17,7 @@ Changelog
   copied. This solves a problem (introduced in 1.0b14) where beets could crash
   after adding files to the library but before finishing copying them; during
   the next import, the (external) files would be moved instead of copied.
+* Fix ID3 tag name for the catalog number field.
 
 1.0b14 (May 12, 2012)
 ---------------------
