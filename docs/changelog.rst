@@ -4,6 +4,8 @@ Changelog
 1.0b15 (in development)
 -----------------------
 
+* Tracks on multi-disc albums can now be numbered per-disc instead of per-album
+  via the :ref:`per_disc_numbering` config option.
 * The default output format for the ``beet list`` command is now configurable
   via the :ref:`list_format_item` and :ref:`list_format_album` config options.
   Thanks to Fabrice Laporte.

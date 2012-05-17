@@ -116,6 +116,7 @@ DEFAULT_COLOR                 = True
 DEFAULT_IGNORE                = [
     '.*', '*~',
 ]
+DEFAULT_PER_DISC_NUMBERING    = False
 
 VARIOUS_ARTISTS = u'Various Artists'
 
@@ -617,7 +618,7 @@ def resolve_duplicate(task, config):
 
 def import_files(lib, paths, copy, move, write, autot, logpath, art, threaded,
                  color, delete, quiet, resume, quiet_fallback, singletons,
-                 timid, query, incremental, ignore):
+                 timid, query, incremental, ignore, per_disc_numbering):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into
     the library folder. If write, then new metadata is written to the
@@ -687,6 +688,7 @@ def import_files(lib, paths, copy, move, write, autot, logpath, art, threaded,
             incremental = incremental,
             ignore = ignore,
             resolve_duplicate_func = resolve_duplicate,
+            per_disc_numbering = per_disc_numbering,
         )
 
     finally:
@@ -766,6 +768,8 @@ def import_func(lib, config, opts, args):
         ui.config_val(config, 'beets', 'import_incremental',
             DEFAULT_IMPORT_INCREMENTAL, bool)
     ignore = ui.config_val(config, 'beets', 'ignore', DEFAULT_IGNORE, list)
+    per_disc_numbering = ui.config_val(config, 'beets', 'per_disc_numbering',
+                                       DEFAULT_PER_DISC_NUMBERING, bool)
 
     # Resume has three options: yes, no, and "ask" (None).
     resume = opts.resume if opts.resume is not None else \
@@ -797,7 +801,7 @@ def import_func(lib, config, opts, args):
 
     import_files(lib, paths, copy, move, write, autot, logpath, art, threaded,
                  color, delete, quiet, resume, quiet_fallback, singletons,
-                 timid, query, incremental, ignore)
+                 timid, query, incremental, ignore, per_disc_numbering)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 

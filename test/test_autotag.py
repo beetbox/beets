@@ -468,10 +468,10 @@ class ApplyTest(unittest.TestCase):
         trackinfo = []
         trackinfo.append(TrackInfo('oneNew',
                                    'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
-                                   medium=1))
+                                   medium=1, medium_index=1))
         trackinfo.append(TrackInfo('twoNew',
                                    '40130ed1-a27c-42fd-a328-1ebefb6caef4',
-                                   medium=2))
+                                   medium=2, medium_index=1))
         self.info = AlbumInfo(
             tracks = trackinfo,
             artist = 'artistNew',
@@ -514,6 +514,12 @@ class ApplyTest(unittest.TestCase):
         autotag.apply_metadata(self.items, self.info)
         self.assertEqual(self.items[0].disctotal, 2)
         self.assertEqual(self.items[1].disctotal, 2)
+
+    def test_per_disc_numbering(self):
+        autotag.apply_metadata(self.items, self.info,
+                               per_disc_numbering=True)
+        self.assertEqual(self.items[0].track, 1)
+        self.assertEqual(self.items[1].track, 1)
 
     def test_mb_trackid_applied(self):
         autotag.apply_metadata(self.items, self.info)

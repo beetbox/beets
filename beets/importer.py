@@ -264,7 +264,7 @@ class ImportConfig(object):
                'choose_match_func', 'should_resume_func', 'threaded',
                'autot', 'singletons', 'timid', 'choose_item_func',
                'query', 'incremental', 'ignore',
-               'resolve_duplicate_func']
+               'resolve_duplicate_func', 'per_disc_numbering']
     def __init__(self, **kwargs):
         for slot in self._fields:
             setattr(self, slot, kwargs[slot])
@@ -673,7 +673,10 @@ def apply_choices(config):
         # Change metadata.
         if task.should_write_tags():
             if task.is_album:
-                autotag.apply_metadata(task.items, task.info)
+                autotag.apply_metadata(
+                    task.items, task.info,
+                    per_disc_numbering=config.per_disc_numbering
+                )
             else:
                 autotag.apply_item_metadata(task.item, task.info)
             plugins.send('import_task_apply', config=config, task=task)

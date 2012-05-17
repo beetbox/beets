@@ -218,6 +218,17 @@ Format to use when listing *albums* with the ``beet list`` command.
 Defaults to ``$albumartist - $album``. The ``-f`` command-line option
 overrides this setting.
 
+.. _per_disc_numbering:
+
+per_disc_numbering
+~~~~~~~~~~~~~~~~~~
+
+A boolean controlling the track numbering style on multi-disc releases. By
+default (``per_disc_numbering: no``), tracks are numbered per-release, so the
+first track on the second disc has track number N+1 where N is the number of
+tracks on the first disc. If this ``per_disc_numbering`` is enabled, then the
+first track on each disc always has track number 1.
+
 import_delete
 ~~~~~~~~~~~~~
 
