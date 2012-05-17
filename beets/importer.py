@@ -741,24 +741,32 @@ def apply_choices(config):
         # Move/copy files.
         task.old_paths = [item.path for item in items]  # For deletion.
         for item in items:
-            if config.copy or config.move:
-                if config.move:
-                    # Just move the file.
-                    old_path = item.path
-                    lib.move(item, False)
-                    # Clean up empty parent directory.
-                    if task.toppath:
-                        task.prune(old_path)
-                else:
-                    # If it's a reimport, move the file. Otherwise, copy
-                    # and keep track of the old path.
-                    old_path = item.path
-                    do_copy = not bool(replaced_items[item])
-                    lib.move(item, do_copy)
-                    if not do_copy:
-                        # If we moved the item, remove the now-nonexistent
-                        # file from old_paths.
+            if config.move:
+                # Just move the file.
+                old_path = item.path
+                lib.move(item, False)
+                # Clean up empty parent directory.
+                if task.toppath:
+                    task.prune(old_path)
+            elif config.copy:
+                # If it's a reimport, move in-library files and copy
+                # out-of-library files. Otherwise, copy and keep track
+                # of the old path.
+                old_path = item.path
+                if replaced_items[item]:
+                    # This is a reimport. Move in-library files and copy
+                    # out-of-library files.
+                    if lib.directory in util.ancestry(old_path):
+                        lib.move(item, False)
+                        # We moved the item, so remove the
+                        # now-nonexistent file from old_paths.
                         task.old_paths.remove(old_path)
+                    else:
+                        lib.move(item, True)
+                else:
+                    # A normal import. Just copy files and keep track of
+                    # old paths.
+                    lib.move(item, True)
 
             if config.write and task.should_write_tags():
                 item.write()

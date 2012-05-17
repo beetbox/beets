@@ -12,6 +12,11 @@ Changelog
 * New plugin event: ``library_opened`` is called when beets starts up and
   opens the library database.
 * :doc:`/plugins/mpdupdate`: Fix TypeError crash (thanks to Philippe Mongeau).
+* When re-importing files with ``import_copy`` enabled, only files inside the
+  library directory are moved. Files outside the library directory are still
+  copied. This solves a problem (introduced in 1.0b14) where beets could crash
+  after adding files to the library but before finishing copying them; during
+  the next import, the (external) files would be moved instead of copied.
 
 1.0b14 (May 12, 2012)
 ---------------------

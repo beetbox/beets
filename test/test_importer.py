@@ -289,7 +289,37 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         task = _call_apply(coro, [self.i], self.info)
         self.assertEqual(task.old_paths, [self.srcpath])
 
-    def test_reimport_moves_file_and_does_not_add_to_old_paths(self):
+    def test_reimport_inside_file_moves_and_does_not_add_to_old_paths(self):
+        """Reimporting a file *inside* the library directory should
+        *move* the file.
+        """
+        # Add the item to the library while inside the library directory.
+        internal_srcpath = os.path.join(self.libdir, 'source.mp3')
+        shutil.move(self.srcpath, internal_srcpath)
+        temp_item = library.Item.from_path(internal_srcpath)
+        self.lib.add(temp_item)
+        self.lib.conn.commit()
+
+        self.i = library.Item.from_path(internal_srcpath)
+        self.i.comp = False
+
+        # Then, re-import the same file.
+        coro = importer.apply_choices(_common.iconfig(self.lib))
+        coro.next()
+        task = _call_apply(coro, [self.i], self.info)
+
+        # Old file should be gone.
+        self.assertNotExists(internal_srcpath)
+        # New file should be present.
+        self.assertExists(os.path.join(self.libdir, 'one.mp3'))
+        # Also, the old file should not be in old_paths because it does
+        # not exist.
+        self.assertEqual(task.old_paths, [])
+
+    def test_reimport_outside_file_copies(self):
+        """Reimporting a file *outside* the library directory should
+        *copy* the file (when copying is enabled).
+        """
         # First, add the item to the library.
         temp_item = library.Item.from_path(self.srcpath)
         self.lib.add(temp_item)
@@ -300,13 +330,13 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         coro.next()
         task = _call_apply(coro, [self.i], self.info)
 
-        # Old file should be gone.
-        self.assertNotExists(self.srcpath)
-        # New file should be present.
+        # Old file should still exist.
+        self.assertExists(self.srcpath)
+        # New file should also be present.
         self.assertExists(os.path.join(self.libdir, 'one.mp3'))
-        # Also, the old file should not be in old_paths because it does
-        # not exist.
-        self.assertEqual(task.old_paths, [])
+        # The old (copy-source) file should be marked for possible
+        # deletion.
+        self.assertEqual(task.old_paths, [self.srcpath])
 
     def test_apply_with_move(self):
         config = _common.iconfig(self.lib, move=True)
