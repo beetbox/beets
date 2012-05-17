@@ -162,6 +162,20 @@ section header:
     exception when the database lock is contended. This should almost never need
     to be changed except on very slow systems. Defaults to 5.0 (5 seconds).
 
+.. _list_format_item:
+
+``list_format_item``
+    Format to use when listing *individual items* with the ``beet list``
+    command. Defaults to ``$artist - $album - $title``. The ``-f`` command-line
+    option overrides this setting.
+
+.. _list_format_album:
+
+``list_format_album``
+    Format to use when listing *albums* with the ``beet list`` command.
+    Defaults to ``$albumartist - $album``. The ``-f`` command-line option
+    overrides this setting.
+
 ``import_delete``
     Either ``yes`` or ``no``. When enabled in conjunction with ``import_copy``,
     deletes original files after they are copied into your library. Has no
@@ -171,10 +185,7 @@ section header:
     This option is historical and deprecated: it's almost always more
     appropriate to use ``import_move`` instead.
 
-``list_format``
-    Format to use when listing library content using ``beet list``. Defaults to
-    ``$artist - $album - $title``. The ``-f`` command-line option override this
-    setting.
+
 
 .. _path-format-config:
 

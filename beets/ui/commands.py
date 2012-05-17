@@ -804,20 +804,14 @@ default_commands.append(import_cmd)
 
 # list: Query and show library contents.
 
-DEFAULT_LIST_FORMAT = '$artist - $album - $title'
+DEFAULT_LIST_FORMAT_ITEM = '$artist - $album - $title'
+DEFAULT_LIST_FORMAT_ALBUM = '$albumartist - $album'
 
 def list_items(lib, query, album, path, fmt):
     """Print out items in lib matching query. If album, then search for
     albums instead of single items. If path, print the matched objects'
     paths instead of human-readable information about them.
     """
-    if fmt is None:
-        # If no specific template is supplied, use a default.
-        if album:
-            fmt = u'$albumartist - $album'
-        else:
-            fmt = u'$artist - $album - $title'
-
     template = Template(fmt)
 
     if album:
@@ -841,10 +835,16 @@ list_cmd.parser.add_option('-p', '--path', action='store_true',
 list_cmd.parser.add_option('-f', '--format', action='store',
     help='print with custom format', default=None)
 def list_func(lib, config, opts, args):
-    format = opts.format if opts.format is not None else \
-        ui.config_val(config, 'beets', 'list_format', 
-                      DEFAULT_LIST_FORMAT)
-    list_items(lib, decargs(args), opts.album, opts.path, format)
+    fmt = opts.format
+    if not fmt:
+        # If no format is specified, fall back to a default.
+        if opts.album:
+            fmt = ui.config_val(config, 'beets', 'list_format_album',
+                                DEFAULT_LIST_FORMAT_ALBUM)
+        else:
+            fmt = ui.config_val(config, 'beets', 'list_format_item',
+                                DEFAULT_LIST_FORMAT_ITEM)
+    list_items(lib, decargs(args), opts.album, opts.path, fmt)
 list_cmd.func = list_func
 default_commands.append(list_cmd)
 
