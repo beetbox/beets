@@ -103,5 +103,5 @@ class MPDUpdatePlugin(BeetsPlugin):
             ui.config_val(config, 'mpdupdate', 'password', '')
 
 @MPDUpdatePlugin.listen('import')
-def update(lib=None):
+def update(lib=None, paths=None):
     update_mpd(options['host'], options['port'], options['password'])
