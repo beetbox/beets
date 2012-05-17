@@ -20,6 +20,8 @@ Changelog
   after adding files to the library but before finishing copying them; during
   the next import, the (external) files would be moved instead of copied.
 * Fix ID3 tag name for the catalog number field.
+* :doc:`/plugins/chroma`: Fix occasional crash at end of fingerprint submission
+  and give more context to "failed fingerprint generation" errors.
 
 1.0b14 (May 12, 2012)
 ---------------------

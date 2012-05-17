@@ -29,10 +29,13 @@ To get fingerprinting working, you'll need to install three things: the
 
 First, you will need to install `Chromaprint`_, either as a dynamic library or
 in the form of a command-line tool (``fpcalc``). The Chromaprint site has links
-to packages for major Linux distributions. On Mac OS X and Windows, download the
-appropriate binary package and place the ``fpcalc`` (or ``fpcalc.exe``) on your
-shell search path (e.g., in ``/usr/local/bin`` on Mac OS X or ``C:\\Program
-Files`` on Windows).
+to packages for major Linux distributions. If you use `Homebrew`_ on Mac OS X,
+you can install the library with ``brew install chromaprint``. Otherwise, on Mac
+OS X and Windows, download the appropriate binary package and place the
+``fpcalc`` (or ``fpcalc.exe``) on your shell search path (e.g., in
+``/usr/local/bin`` on Mac OS X or ``C:\\Program Files`` on Windows).
+
+.. _Homebrew: http://mxcl.github.com/homebrew/
 
 Next, you will need a mechanism for decoding audio files supported by the
 `audioread`_ library. Mac OS X has a number of decoders already built into Core

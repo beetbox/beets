@@ -214,8 +214,10 @@ def submit_items(userkey, items, chunksize=64):
             ))
             try:
                 _, fp = acoustid.fingerprint_file(item.path)
-            except acoustid.FingerprintGenerationError:
-                log.info('fingerprint generation failed')
+            except acoustid.FingerprintGenerationError as exc:
+                log.info(
+                    'fingerprint generation failed: {0}'.format(exc)
+                )
                 continue
 
         # Construct a submission dictionary for this item.
@@ -244,4 +246,5 @@ def submit_items(userkey, items, chunksize=64):
             submit_chunk()
 
     # Submit remaining data in a final chunk.
-    submit_chunk()
+    if data:
+        submit_chunk()
