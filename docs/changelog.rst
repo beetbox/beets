@@ -11,6 +11,7 @@ Changelog
   action assigned.
 * New plugin event: ``library_opened`` is called when beets starts up and
   opens the library database.
+* :doc:`/plugins/mpdupdate`: Fix TypeError crash (thanks to Philippe Mongeau).
 
 1.0b14 (May 12, 2012)
 ---------------------
