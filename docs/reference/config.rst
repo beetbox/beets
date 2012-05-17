@@ -11,180 +11,223 @@ Options
 These options are available, all of which must appear under the ``[beets]``
 section header:
 
-``library``
-    Path to the beets library file. Defaults to ``~/.beetsmusic.blb`` on Unix
-    and ``%APPDATA\beetsmusic.blb`` on Windows.
+library
+~~~~~~~
 
-``directory``
-    The directory to which files will be copied/moved when adding them to the
-    library. Defaults to ``~/Music``.
+Path to the beets library file. Defaults to ``~/.beetsmusic.blb`` on Unix
+and ``%APPDATA\beetsmusic.blb`` on Windows.
 
-``import_write``
-    Either ``yes`` or ``no``, controlling whether metadata (e.g., ID3) tags are
-    written to files when using ``beet import``. Defaults to ``yes``. The ``-w``
-    and ``-W`` command-line options override this setting.
+directory
+~~~~~~~~~
 
-``import_copy``
-    Either ``yes`` or ``no``, indicating whether to **copy** files into the
-    library directory when using ``beet import``. Defaults to ``yes``.  Can be
-    overridden with the ``-c`` and ``-C`` command-line options.
+The directory to which files will be copied/moved when adding them to the
+library. Defaults to ``~/Music``.
+
+import_write
+~~~~~~~~~~~~
+
+Either ``yes`` or ``no``, controlling whether metadata (e.g., ID3) tags are
+written to files when using ``beet import``. Defaults to ``yes``. The ``-w``
+and ``-W`` command-line options override this setting.
+
+import_copy
+~~~~~~~~~~~
+
+Either ``yes`` or ``no``, indicating whether to **copy** files into the
+library directory when using ``beet import``. Defaults to ``yes``.  Can be
+overridden with the ``-c`` and ``-C`` command-line options.
     
-    The option is ignored if ``import_move`` is enabled (i.e., beets can move or
-    copy files but it doesn't make sense to do both).
+The option is ignored if ``import_move`` is enabled (i.e., beets can move or
+copy files but it doesn't make sense to do both).
 
-``import_move``
-    Either ``yes`` or ``no``, indicating whether to **move** files into the
-    library directory when using ``beet import``.
-    Defaults to ``no``. 
+import_move
+~~~~~~~~~~~
 
-    The effect is similar to the ``import_copy`` option but you end up with only
-    one copy of the imported file. ("Moving" works even across filesystems; if
-    necessary, beets will copy and then delete when a simple rename is
-    impossible.) Moving files can be risky—it's a good idea to keep a backup in
-    case beets doesn't do what you expect with your files.
+Either ``yes`` or ``no``, indicating whether to **move** files into the
+library directory when using ``beet import``.
+Defaults to ``no``. 
 
-    This option *overrides* ``import_copy``, so enabling it will always move
-    (and not copy) files. The ``-c`` switch to the ``beet import`` command,
-    however, still takes precedence.
+The effect is similar to the ``import_copy`` option but you end up with only
+one copy of the imported file. ("Moving" works even across filesystems; if
+necessary, beets will copy and then delete when a simple rename is
+impossible.) Moving files can be risky—it's a good idea to keep a backup in
+case beets doesn't do what you expect with your files.
 
-``import_resume``
-    Either ``yes``, ``no``, or ``ask``. Controls whether interrupted imports
-    should be resumed. "Yes" means that imports are always resumed when
-    possible; "no" means resuming is disabled entirely; "ask" (the default)
-    means that the user should be prompted when resuming is possible. The ``-p``
-    and ``-P`` flags correspond to the "yes" and "no" settings and override this
-    option.
+This option *overrides* ``import_copy``, so enabling it will always move
+(and not copy) files. The ``-c`` switch to the ``beet import`` command,
+however, still takes precedence.
 
-``import_incremental``
-    Either ``yes`` or ``no``, controlling whether imported directories are
-    recorded and whether these recorded directories are skipped.  This
-    corresponds to the ``-i`` flag to ``beet import``.
+import_resume
+~~~~~~~~~~~~~
 
-``import_art``
-    Either ``yes`` or ``no``, indicating whether the autotagger should attempt
-    to find and download album cover art for the files it imports.  Defaults to
-    ``yes``. The ``-r`` and ``-R`` command-line options override this setting.
+Either ``yes``, ``no``, or ``ask``. Controls whether interrupted imports
+should be resumed. "Yes" means that imports are always resumed when
+possible; "no" means resuming is disabled entirely; "ask" (the default)
+means that the user should be prompted when resuming is possible. The ``-p``
+and ``-P`` flags correspond to the "yes" and "no" settings and override this
+option.
 
-``import_quiet_fallback``
-    Either ``skip`` (default) or ``asis``, specifying what should happen in
-    quiet mode (see the ``-q`` flag to ``import``, above) when there is no
-    strong recommendation.
+import_incremental
+~~~~~~~~~~~~~~~~~~
 
-``import_timid``
-    Either ``yes`` or ``no``, controlling whether the importer runs in *timid*
-    mode, in which it asks for confirmation on every autotagging match, even the
-    ones that seem very close. Defaults to ``no``. The ``-t`` command-line flag
-    controls the same setting.
+Either ``yes`` or ``no``, controlling whether imported directories are
+recorded and whether these recorded directories are skipped.  This
+corresponds to the ``-i`` flag to ``beet import``.
 
-``import_log``
-    Specifies a filename where the importer's log should be kept.  By default,
-    no log is written. This can be overridden with the ``-l`` flag to
-    ``import``.
+import_art
+~~~~~~~~~~
 
-``ignore``
-    A space-separated list of glob patterns specifying file and directory names
-    to be ignored when importing. Defaults to ``.* *~`` (i.e., ignore
-    Unix-style hidden files and backup files).
+Either ``yes`` or ``no``, indicating whether the autotagger should attempt
+to find and download album cover art for the files it imports.  Defaults to
+``yes``. The ``-r`` and ``-R`` command-line options override this setting.
+
+import_quiet_fallback
+~~~~~~~~~~~~~~~~~~~~~
+
+Either ``skip`` (default) or ``asis``, specifying what should happen in
+quiet mode (see the ``-q`` flag to ``import``, above) when there is no
+strong recommendation.
+
+import_timid
+~~~~~~~~~~~~
+
+Either ``yes`` or ``no``, controlling whether the importer runs in *timid*
+mode, in which it asks for confirmation on every autotagging match, even the
+ones that seem very close. Defaults to ``no``. The ``-t`` command-line flag
+controls the same setting.
+
+import_log
+~~~~~~~~~~
+
+Specifies a filename where the importer's log should be kept.  By default,
+no log is written. This can be overridden with the ``-l`` flag to
+``import``.
+
+ignore
+~~~~~~
+
+A space-separated list of glob patterns specifying file and directory names
+to be ignored when importing. Defaults to ``.* *~`` (i.e., ignore
+Unix-style hidden files and backup files).
 
 .. _replace:
 
-``replace``
-    A set of regular expression/replacement pairs to be applied to all filenames
-    created by beets. Typically, these replacements are used to avoid confusing
-    problems or errors with the filesystem (for example, leading ``.``
-    characters are replaced on Unix and trailing whitespace is removed on
-    Windows). To override these substitutions, specify a sequence of
-    whitespace-separated terms; the first term is a regular expression and the
-    second is a string that should replace anything matching that regex. For
-    example, ``replace = [xy] z`` will make beets replace all instances of the
-    characters ``x`` or ``y`` with the character ``z``.
+replace
+~~~~~~~
 
-    If you do change this value, be certain that you include at least enough
-    substitutions to avoid causing errors on your operating system. Here are
-    the default substitutions used by beets, which are sufficient to avoid
-    unexpected behavior on all popular platforms::
+A set of regular expression/replacement pairs to be applied to all filenames
+created by beets. Typically, these replacements are used to avoid confusing
+problems or errors with the filesystem (for example, leading ``.``
+characters are replaced on Unix and trailing whitespace is removed on
+Windows). To override these substitutions, specify a sequence of
+whitespace-separated terms; the first term is a regular expression and the
+second is a string that should replace anything matching that regex. For
+example, ``replace = [xy] z`` will make beets replace all instances of the
+characters ``x`` or ``y`` with the character ``z``.
 
-        replace = [\\/] _
-                  ^\. _
-                  [\x00-\x1f] _
-                  [<>:"\?\*\|] _
-                  \.$ _
-                  \s+$ <strip>
+If you do change this value, be certain that you include at least enough
+substitutions to avoid causing errors on your operating system. Here are
+the default substitutions used by beets, which are sufficient to avoid
+unexpected behavior on all popular platforms::
 
-    These substitutions remove forward and back slashes, leading dots, and
-    control characters—all of which is a good idea on any OS. The fourth line
-    removes the Windows "reserved characters" (useful even on Unix for for
-    compatibility with Windows-influenced network filesystems like Samba).
-    Trailing dots and trailing whitespace, which can cause problems on Windows
-    clients, are also removed.
+    replace = [\\/] _
+                ^\. _
+                [\x00-\x1f] _
+                [<>:"\?\*\|] _
+                \.$ _
+                \s+$ <strip>
 
-    To replace space characters, use the ``\s`` (whitespace) entity::
-        
-        replace = \s _
-                  ...
+These substitutions remove forward and back slashes, leading dots, and
+control characters—all of which is a good idea on any OS. The fourth line
+removes the Windows "reserved characters" (useful even on Unix for for
+compatibility with Windows-influenced network filesystems like Samba).
+Trailing dots and trailing whitespace, which can cause problems on Windows
+clients, are also removed.
 
-    This will avoid using a literal space and thus confusing beets. (``\s`` also
-    matches tabs and newlines, but that is probably fine.)
+To replace space characters, use the ``\s`` (whitespace) entity::
+    
+    replace = \s _
+                ...
 
-    To remove characters entirely, use ``<strip>`` as the replacement. For
-    example, to remove all vowels from your filenames::
+This will avoid using a literal space and thus confusing beets. (``\s`` also
+matches tabs and newlines, but that is probably fine.)
 
-        replace = [aeiou] <strip>
-                  ...
+To remove characters entirely, use ``<strip>`` as the replacement. For
+example, to remove all vowels from your filenames::
 
-``art_filename``
-    When importing album art, the name of the file (without extension) where the
-    cover art image should be placed. Defaults to ``cover`` (i.e., images will
-    be named ``cover.jpg`` or ``cover.png`` and placed in the album's
-    directory).
+    replace = [aeiou] <strip>
+                ...
 
-``plugins``
-    A space-separated list of plugin module names to load. For instance, beets
-    includes the BPD plugin for playing music.
+art_filename
+~~~~~~~~~~~~
 
-``pluginpath``
-    A colon-separated list of directories to search for plugins.  These paths
-    are just added to ``sys.path`` before the plugins are loaded. The plugins
-    still have to be contained in a ``beetsplug`` namespace package.
+When importing album art, the name of the file (without extension) where the
+cover art image should be placed. Defaults to ``cover`` (i.e., images will
+be named ``cover.jpg`` or ``cover.png`` and placed in the album's
+directory).
 
-``threaded``
-    Either ``yes`` or ``no``, indicating whether the autotagger should use
-    multiple threads. This makes things faster but may behave strangely.
-    Defaults to ``yes``.
+plugins
+~~~~~~~
 
-``color``
-    Either ``yes`` or ``no``; whether to use color in console output (currently
-    only in the ``import`` command). Turn this off if your terminal doesn't
-    support ANSI colors.
+A space-separated list of plugin module names to load. For instance, beets
+includes the BPD plugin for playing music.
 
-``timeout``
-    The amount of time that the SQLite library should wait before raising an
-    exception when the database lock is contended. This should almost never need
-    to be changed except on very slow systems. Defaults to 5.0 (5 seconds).
+pluginpath
+~~~~~~~~~~
+
+A colon-separated list of directories to search for plugins.  These paths
+are just added to ``sys.path`` before the plugins are loaded. The plugins
+still have to be contained in a ``beetsplug`` namespace package.
+
+threaded
+~~~~~~~~
+
+Either ``yes`` or ``no``, indicating whether the autotagger should use
+multiple threads. This makes things faster but may behave strangely.
+Defaults to ``yes``.
+
+color
+~~~~~
+
+Either ``yes`` or ``no``; whether to use color in console output (currently
+only in the ``import`` command). Turn this off if your terminal doesn't
+support ANSI colors.
+
+timeout
+~~~~~~~
+
+The amount of time that the SQLite library should wait before raising an
+exception when the database lock is contended. This should almost never need
+to be changed except on very slow systems. Defaults to 5.0 (5 seconds).
 
 .. _list_format_item:
 
-``list_format_item``
-    Format to use when listing *individual items* with the ``beet list``
-    command. Defaults to ``$artist - $album - $title``. The ``-f`` command-line
-    option overrides this setting.
+list_format_item
+~~~~~~~~~~~~~~~~
+
+Format to use when listing *individual items* with the ``beet list``
+command. Defaults to ``$artist - $album - $title``. The ``-f`` command-line
+option overrides this setting.
 
 .. _list_format_album:
 
-``list_format_album``
-    Format to use when listing *albums* with the ``beet list`` command.
-    Defaults to ``$albumartist - $album``. The ``-f`` command-line option
-    overrides this setting.
+list_format_album
+~~~~~~~~~~~~~~~~~
 
-``import_delete``
-    Either ``yes`` or ``no``. When enabled in conjunction with ``import_copy``,
-    deletes original files after they are copied into your library. Has no
-    effect if the importer is in ``import_move`` mode or "leave files in place"
-    mode. Defaults to ``no``.
+Format to use when listing *albums* with the ``beet list`` command.
+Defaults to ``$albumartist - $album``. The ``-f`` command-line option
+overrides this setting.
 
-    This option is historical and deprecated: it's almost always more
-    appropriate to use ``import_move`` instead.
+import_delete
+~~~~~~~~~~~~~
 
+Either ``yes`` or ``no``. When enabled in conjunction with ``import_copy``,
+deletes original files after they are copied into your library. Has no
+effect if the importer is in ``import_move`` mode or "leave files in place"
+mode. Defaults to ``no``.
+
+This option is historical and deprecated: it's almost always more
+appropriate to use ``import_move`` instead.
 
 
 .. _path-format-config:
