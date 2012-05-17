@@ -872,6 +872,7 @@ def item_query(config):
         choice = config.choose_item_func(task, config)
         task.set_choice(choice)
         log_choice(config, task)
+        plugins.send('import_task_choice', task=task, config=config)
 
         # Duplicate check.
         if task.choice_flag in (action.ASIS, action.APPLY):
