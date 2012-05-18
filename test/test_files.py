@@ -449,12 +449,12 @@ class SoftRemoveTest(unittest.TestCase, _common.ExtraAsserts):
             os.remove(self.path)
 
     def test_soft_remove_deletes_file(self):
-        util.soft_remove(self.path)
+        util.remove(self.path, True)
         self.assertNotExists(self.path)
 
     def test_soft_remove_silent_on_no_file(self):
         try:
-            util.soft_remove(self.path + 'XXX')
+            util.remove(self.path + 'XXX', True)
         except OSError:
             self.fail('OSError when removing path')
 
@@ -473,10 +473,6 @@ class SafeMoveCopyTest(unittest.TestCase, _common.ExtraAsserts):
         if os.path.exists(self.dest):
             os.remove(self.dest)
 
-    def test_existence_check(self):
-        with self.assertRaises(OSError):
-            util._assert_not_exists(self.path)
-
     def test_successful_move(self):
         util.move(self.path, self.dest)
         self.assertExists(self.dest)
@@ -488,11 +484,11 @@ class SafeMoveCopyTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertExists(self.path)
 
     def test_unsuccessful_move(self):
-        with self.assertRaises(OSError):
+        with self.assertRaises(util.FilesystemError):
             util.move(self.path, self.otherpath)
 
     def test_unsuccessful_copy(self):
-        with self.assertRaises(OSError):
+        with self.assertRaises(util.FilesystemError):
             util.copy(self.path, self.otherpath)
 
     def test_self_move(self):

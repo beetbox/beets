@@ -1162,7 +1162,7 @@ class Library(BaseLibrary):
                 album.remove(delete, False)
 
         if delete:
-            util.soft_remove(item.path)
+            util.remove(item.path)
             util.prune_dirs(os.path.dirname(item.path), self.directory)
 
         self._memotable = {}
@@ -1391,7 +1391,7 @@ class Album(BaseAlbum):
             # Delete art file.
             artpath = self.artpath
             if artpath:
-                util.soft_remove(artpath)
+                util.remove(artpath)
 
         with self._library.transaction() as tx:
             if with_items:
@@ -1489,7 +1489,7 @@ class Album(BaseAlbum):
 
         # Normal operation.
         if oldart == artdest:
-            util.soft_remove(oldart)
+            util.remove(oldart)
         artdest = util.unique_path(artdest)
         if copy:
             util.copy(path, artdest)

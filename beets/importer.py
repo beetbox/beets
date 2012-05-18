@@ -716,7 +716,7 @@ def apply_choices(config):
                 if lib.directory in util.ancestry(duplicate_path):
                     log.debug(u'deleting replaced duplicate %s' %
                               util.displayable_path(duplicate_path))
-                    util.soft_remove(duplicate_path)
+                    util.remove(duplicate_path)
                     util.prune_dirs(os.path.dirname(duplicate_path),
                                     lib.directory)
 
@@ -832,7 +832,7 @@ def finalize(config):
             for old_path in task.old_paths:
                 # Only delete files that were actually copied.
                 if old_path not in new_paths:
-                    os.remove(syspath(old_path))
+                    util.remove(syspath(old_path), False)
                     # Clean up directory if it is emptied.
                     if task.toppath:
                         task.prune(old_path)

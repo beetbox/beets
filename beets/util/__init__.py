@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2011, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -23,6 +23,39 @@ import fnmatch
 from collections import defaultdict
 
 MAX_FILENAME_LENGTH = 200
+
+class FilesystemError(Exception):
+    """An error that occurred while performing a filesystem manipulation
+    via a function in this module. Has three fields: `reason`, the
+    underlying exception or a string describing the problem; `verb`, the
+    action being performed; and `paths`, a list of pathnames involved.
+    """
+    def __init__(self, reason, verb, paths):
+        self.reason = reason
+        self.verb = verb
+        self.paths = paths
+
+        # Use a nicer English phrasing for some specific verbs.
+        gerund = verb[:-1] if verb.endswith('e') else verb
+        gerund += 'ing'
+        if verb in ('move', 'copy'):
+            clause = 'while {0} {1} to {2}'.format(gerund, repr(paths[0]),
+                                                   repr(paths[1]))
+        elif verb in ('delete',):
+            clause = 'while {0} {1}'.format(gerund, repr(paths[0]))
+        else:
+            clause = 'during {0} of paths {1}'.format(
+                self.verb, u', '.join(repr(p) for p in paths)
+            )
+
+        if isinstance(reason, basestring):
+            reason_str = reason
+        elif hasattr(reason, 'strerror'):  # i.e., EnvironmentError
+            reason_str = reason.strerror
+        else:
+            reason_str = u'"{0}"'.format(reason)
+        msg = u'{0} {1}'.format(reason_str, clause)
+        super(FilesystemError, self).__init__(msg)
 
 def normpath(path):
     """Provide the canonical form of the path suitable for storing in
@@ -221,19 +254,19 @@ def samefile(p1, p2):
     """Safer equality for paths."""
     return shutil._samefile(syspath(p1), syspath(p2))
 
-def soft_remove(path):
-    """Remove the file if it exists."""
+def remove(path, soft=True):
+    """Remove the file. If `soft`, then no error will be raised if the
+    file does not exist.
+    """
     path = syspath(path)
-    if os.path.exists(path):
+    if soft and not os.path.exists(path):
+        return
+    try:
         os.remove(path)
+    except (OSError, IOError) as exc:
+        raise FilesystemError(exc, 'delete', (path,))
 
-def _assert_not_exists(path, pathmod=None):
-    """Raises an OSError if the path exists."""
-    pathmod = pathmod or os.path
-    if pathmod.exists(path):
-        raise OSError('file exists: %s' % path)
-
-def copy(path, dest, replace=False, pathmod=None):
+def copy(path, dest, replace=False, pathmod=os.path):
     """Copy a plain file. Permissions are not copied. If dest already
     exists, raises an OSError unless replace is True. Has no effect if
     path is the same as dest. Paths are translated to system paths
@@ -243,11 +276,14 @@ def copy(path, dest, replace=False, pathmod=None):
         return
     path = syspath(path)
     dest = syspath(dest)
-    if not replace:
-        _assert_not_exists(dest, pathmod)
-    return shutil.copyfile(path, dest)
+    if not replace and pathmod.exists(dest):
+        raise FilesystemError('file exists', 'copy', (path, dest))
+    try:
+        shutil.copyfile(path, dest)
+    except (OSError, IOError) as exc:
+        raise FilesystemError(exc, 'copy', (path, dest))
 
-def move(path, dest, replace=False, pathmod=None):
+def move(path, dest, replace=False, pathmod=os.path):
     """Rename a file. dest may not be a directory. If dest already
     exists, raises an OSError unless replace is True. Hos no effect if
     path is the same as dest. Paths are translated to system paths.
@@ -256,8 +292,12 @@ def move(path, dest, replace=False, pathmod=None):
         return
     path = syspath(path)
     dest = syspath(dest)
-    _assert_not_exists(dest, pathmod)
-    return shutil.move(path, dest)
+    if pathmod.exists(dest):
+        raise FilesystemError('file exists', 'move', (path, dest))
+    try:
+        shutil.move(path, dest)
+    except (OSError, IOError) as exc:
+        raise FilesystemError(exc, 'move', (path, dest))
 
 def unique_path(path):
     """Returns a version of ``path`` that does not exist on the
