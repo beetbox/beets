@@ -696,9 +696,10 @@ class MediaFile(object):
             raise UnreadableFileError('Mutagen could not read file')
         except IOError:
             raise UnreadableFileError('could not read file')
-        except:
+        except Exception as exc:
             # Hide bugs in Mutagen.
-            log.error('uncaught Mutagen exception:\n' + traceback.format_exc())
+            log.debug(traceback.format_exc())
+            log.error('uncaught Mutagen exception: {0}'.format(exc))
             raise UnreadableFileError('Mutagen raised an exception')
 
         if self.mgfile is None: # Mutagen couldn't guess the type
