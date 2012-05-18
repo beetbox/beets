@@ -13,7 +13,8 @@ Changelog
   halting the importer.
 * Similarly, filesystem manipulation errors now print helpful error messages
   instead of a messy traceback. They still interrupt beets, but they should now
-  be easier for users to understand.
+  be easier for users to understand. Tracebacks are still available in verbose
+  mode.
 * New plugin event: ``import_task_choice`` is called after an import task has an
   action assigned.
 * New plugin event: ``library_opened`` is called when beets starts up and

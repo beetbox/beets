@@ -21,41 +21,88 @@ import re
 import shutil
 import fnmatch
 from collections import defaultdict
+import traceback
 
 MAX_FILENAME_LENGTH = 200
 
-class FilesystemError(Exception):
-    """An error that occurred while performing a filesystem manipulation
-    via a function in this module. Has three fields: `reason`, the
-    underlying exception or a string describing the problem; `verb`, the
-    action being performed; and `paths`, a list of pathnames involved.
+class HumanReadableException(Exception):
+    """An Exception that can include a human-readable error message to
+    be logged without a traceback. Can preserve a traceback for
+    debugging purposes as well.
+
+    Has at least two fields: `reason`, the underlying exception or a
+    string describing the problem; and `verb`, the action being
+    performed during the error.
+
+    If `tb` is provided, it is a string containing a traceback for the
+    associated exception. (Note that this is not necessary in Python 3.x
+    and should be removed when we make the transition.)
     """
-    def __init__(self, reason, verb, paths):
+    error_kind = 'Error'  # Human-readable description of error type.
+
+    def __init__(self, reason, verb, tb=None):
         self.reason = reason
         self.verb = verb
-        self.paths = paths
+        self.tb = tb
+        super(HumanReadableException, self).__init__(self.get_message())
 
-        # Use a nicer English phrasing for some specific verbs.
-        gerund = verb[:-1] if verb.endswith('e') else verb
+    def _gerund(self):
+        """Generate a (likely) gerund form of the English verb.
+        """
+        if ' ' in self.verb:
+            return self.verb
+        gerund = self.verb[:-1] if self.verb.endswith('e') else self.verb
         gerund += 'ing'
-        if verb in ('move', 'copy'):
-            clause = 'while {0} {1} to {2}'.format(gerund, repr(paths[0]),
-                                                   repr(paths[1]))
-        elif verb in ('delete',):
-            clause = 'while {0} {1}'.format(gerund, repr(paths[0]))
+        return gerund
+    
+    def _reasonstr(self):
+        """Get the reason as a string."""
+        if isinstance(self.reason, basestring):
+            return self.reason
+        elif hasattr(self.reason, 'strerror'):  # i.e., EnvironmentError
+            return self.reason.strerror
+        else:
+            return u'"{0}"'.format(self.reason)
+
+    def get_message(self):
+        """Create the human-readable description of the error, sans
+        introduction.
+        """
+        raise NotImplementedError
+
+    def log(self, logger):
+        """Log to the provided `logger` a human-readable message as an
+        error and a verbose traceback as a debug message.
+        """
+        if self.tb:
+            logger.debug(self.tb)
+        logger.error(u'{0}: {1}'.format(self.error_kind, self.args[0]))
+
+class FilesystemError(HumanReadableException):
+    """An error that occurred while performing a filesystem manipulation
+    via a function in this module. The `paths` field is a sequence of
+    pathnames involved in the operation.
+    """
+    def __init__(self, reason, verb, paths, tb=None):
+        self.paths = paths
+        super(FilesystemError, self).__init__(reason, verb, tb)
+
+    def get_message(self):
+        # Use a nicer English phrasing for some specific verbs.
+        if self.verb in ('move', 'copy'):
+            clause = 'while {0} {1} to {2}'.format(
+                self._gerund(), repr(self.paths[0]), repr(self.paths[1])
+            )
+        elif self.verb in ('delete',):
+            clause = 'while {0} {1}'.format(
+                self._gerund(), repr(self.paths[0])
+            )
         else:
             clause = 'during {0} of paths {1}'.format(
-                self.verb, u', '.join(repr(p) for p in paths)
+                self.verb, u', '.join(repr(p) for p in self.paths)
             )
 
-        if isinstance(reason, basestring):
-            reason_str = reason
-        elif hasattr(reason, 'strerror'):  # i.e., EnvironmentError
-            reason_str = reason.strerror
-        else:
-            reason_str = u'"{0}"'.format(reason)
-        msg = u'{0} {1}'.format(reason_str, clause)
-        super(FilesystemError, self).__init__(msg)
+        return u'{0} {1}'.format(self._reasonstr(), clause)
 
 def normpath(path):
     """Provide the canonical form of the path suitable for storing in
@@ -264,7 +311,7 @@ def remove(path, soft=True):
     try:
         os.remove(path)
     except (OSError, IOError) as exc:
-        raise FilesystemError(exc, 'delete', (path,))
+        raise FilesystemError(exc, 'delete', (path,), traceback.format_exc())
 
 def copy(path, dest, replace=False, pathmod=os.path):
     """Copy a plain file. Permissions are not copied. If dest already
@@ -281,7 +328,8 @@ def copy(path, dest, replace=False, pathmod=os.path):
     try:
         shutil.copyfile(path, dest)
     except (OSError, IOError) as exc:
-        raise FilesystemError(exc, 'copy', (path, dest))
+        raise FilesystemError(exc, 'copy', (path, dest),
+                              traceback.format_exc())
 
 def move(path, dest, replace=False, pathmod=os.path):
     """Rename a file. dest may not be a directory. If dest already
@@ -293,11 +341,13 @@ def move(path, dest, replace=False, pathmod=os.path):
     path = syspath(path)
     dest = syspath(dest)
     if pathmod.exists(dest):
-        raise FilesystemError('file exists', 'move', (path, dest))
+        raise FilesystemError('file exists', 'move', (path, dest),
+                              traceback.format_exc())
     try:
         shutil.move(path, dest)
     except (OSError, IOError) as exc:
-        raise FilesystemError(exc, 'move', (path, dest))
+        raise FilesystemError(exc, 'move', (path, dest),
+                              traceback.format_exc())
 
 def unique_path(path):
     """Returns a version of ``path`` that does not exist on the

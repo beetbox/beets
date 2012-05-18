@@ -749,8 +749,8 @@ def main(args=None, configfh=None):
     except UserError as exc:
         message = exc.args[0] if exc.args else None
         subcommand.parser.error(message)
-    except util.FilesystemError as exc:
-        log.error(u'file manipulation error: {0}'.format(exc.args[0]))
+    except util.HumanReadableException as exc:
+        exc.log(log)
         sys.exit(1)
     except IOError as exc:
         if exc.errno == errno.EPIPE:

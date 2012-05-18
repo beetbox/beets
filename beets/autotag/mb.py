@@ -16,9 +16,11 @@
 """
 import logging
 import musicbrainzngs
+import traceback
 
 import beets.autotag.hooks
 import beets
+from beets import util
 
 SEARCH_LIMIT = 5
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
@@ -26,21 +28,18 @@ VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 musicbrainzngs.set_useragent('beets', beets.__version__,
                              'http://beets.radbox.org/')
 
-class MusicBrainzAPIError(Exception):
-    """An error while talking to MusicBrainz. Has three fields:
-    `reason`, the underlying exception; `verb`, the action being taken
-    (a string); and `query`, the parameter to the action (of any type).
+class MusicBrainzAPIError(util.HumanReadableException):
+    """An error while talking to MusicBrainz. The `query` field is the
+    parameter to the action and may have any type.
     """
-    def __init__(self, reason, verb, query):
-        self.reason = reason
-        self.verb = verb
+    def __init__(self, reason, verb, query, tb=None):
         self.query = query
-        msg = u'"{0}" in {1} with query {2}'.format(reason, verb, repr(query))
-        super(MusicBrainzAPIError, self).__init__(msg)
+        super(MusicBrainzAPIError, self).__init__(reason, verb, tb)
 
-    def log(self):
-        """Produce a human-readable log message."""
-        return u'MusicBrainz API error: {0}'.format(self)
+    def get_message(self):
+        return u'"{0}" in {1} with query {2}'.format(
+            self._reasonstr(), self.verb, repr(self.query)
+        )
 
 log = logging.getLogger('beets')
 
@@ -197,7 +196,8 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
     try:
         res = _mb_release_search(limit=limit, **criteria)
     except musicbrainzngs.MusicBrainzError as exc:
-        raise MusicBrainzAPIError(exc, 'release search', criteria)
+        raise MusicBrainzAPIError(exc, 'release search', criteria,
+                                  traceback.format_exc())
     for release in res['release-list']:
         # The search result is missing some data (namely, the tracks),
         # so we just use the ID and fetch the rest of the information.
@@ -220,7 +220,8 @@ def match_track(artist, title, limit=SEARCH_LIMIT):
     try:
         res = _mb_recording_search(limit=limit, **criteria)
     except musicbrainzngs.MusicBrainzError as exc:
-        raise MusicBrainzAPIError(exc, 'recording search', criteria)
+        raise MusicBrainzAPIError(exc, 'recording search', criteria,
+                                  traceback.format_exc())
     for recording in res['recording-list']:
         yield track_info(recording)
 
@@ -235,7 +236,8 @@ def album_for_id(albumid):
         log.debug('Album ID match failed.')
         return None
     except musicbrainzngs.MusicBrainzError as exc:
-        raise MusicBrainzAPIError(exc, 'get release by ID', albumid)
+        raise MusicBrainzAPIError(exc, 'get release by ID', albumid,
+                                  traceback.format_exc())
     return album_info(res['release'])
 
 def track_for_id(trackid):
@@ -248,5 +250,6 @@ def track_for_id(trackid):
         log.debug('Track ID match failed.')
         return None
     except musicbrainzngs.MusicBrainzError as exc:
-        raise MusicBrainzAPIError(exc, 'get recording by ID', trackid)
+        raise MusicBrainzAPIError(exc, 'get recording by ID', trackid,
+                                  traceback.format_exc())
     return track_info(res['recording'])

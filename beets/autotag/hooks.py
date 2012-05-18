@@ -118,14 +118,14 @@ def _album_for_id(album_id):
     try:
         return mb.album_for_id(album_id)
     except mb.MusicBrainzAPIError as exc:
-        log.error(exc.log())
+        exc.log(log)
 
 def _track_for_id(track_id):
     """Get an item for a recording MBID."""
     try:
         return mb.track_for_id(track_id)
     except mb.MusicBrainzAPIError as exc:
-        log.error(exc.log())
+        exc.log(log)
 
 def _album_candidates(items, artist, album, va_likely):
     """Search for album matches. ``items`` is a list of Item objects
@@ -141,14 +141,14 @@ def _album_candidates(items, artist, album, va_likely):
         try:
             out.extend(mb.match_album(artist, album, len(items)))
         except mb.MusicBrainzAPIError as exc:
-            log.error(exc.log())
+            exc.log(log)
 
     # Also add VA matches from MusicBrainz where appropriate.
     if va_likely and album:
         try:
             out.extend(mb.match_album(None, album, len(items)))
         except mb.MusicBrainzAPIError as exc:
-            log.error(exc.log())
+            exc.log(log)
 
     # Candidates from plugins.
     out.extend(plugins.candidates(items))
@@ -167,7 +167,7 @@ def _item_candidates(item, artist, title):
         try:
             out.extend(mb.match_track(artist, title))
         except mb.MusicBrainzAPIError as exc:
-            log.error(exc.log())
+            exc.log(log)
 
     # Plugin candidates.
     out.extend(plugins.item_candidates(item))
