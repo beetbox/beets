@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2011, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -26,8 +26,21 @@ VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 musicbrainzngs.set_useragent('beets', beets.__version__,
                              'http://beets.radbox.org/')
 
-class ServerBusyError(Exception): pass
-class BadResponseError(Exception): pass
+class MusicBrainzAPIError(Exception):
+    """An error while talking to MusicBrainz. Has three fields:
+    `reason`, the underlying exception; `verb`, the action being taken
+    (a string); and `query`, the parameter to the action (of any type).
+    """
+    def __init__(self, reason, verb, query):
+        self.reason = reason
+        self.verb = verb
+        self.query = query
+        msg = u'"{0}" in {1} with query {2}'.format(reason, verb, repr(query))
+        super(MusicBrainzAPIError, self).__init__(msg)
+
+    def log(self):
+        """Produce a human-readable log message."""
+        return u'MusicBrainz API error: {0}'.format(self)
 
 log = logging.getLogger('beets')
 
@@ -161,7 +174,8 @@ def album_info(release):
 
 def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
     """Searches for a single album ("release" in MusicBrainz parlance)
-    and returns an iterator over AlbumInfo objects.
+    and returns an iterator over AlbumInfo objects. May raise a
+    MusicBrainzAPIError.
 
     The query consists of an artist name, an album name, and,
     optionally, a number of tracks on the album.
@@ -180,7 +194,10 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
     if not any(criteria.itervalues()):
         return
 
-    res = _mb_release_search(limit=limit, **criteria)
+    try:
+        res = _mb_release_search(limit=limit, **criteria)
+    except musicbrainzngs.MusicBrainzError as exc:
+        raise MusicBrainzAPIError(exc, 'release search', criteria)
     for release in res['release-list']:
         # The search result is missing some data (namely, the tracks),
         # so we just use the ID and fetch the rest of the information.
@@ -190,7 +207,7 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
 
 def match_track(artist, title, limit=SEARCH_LIMIT):
     """Searches for a single track and returns an iterable of TrackInfo
-    objects.
+    objects. May raise a MusicBrainzAPIError.
     """
     criteria = {
         'artist': artist.lower(),
@@ -200,28 +217,36 @@ def match_track(artist, title, limit=SEARCH_LIMIT):
     if not any(criteria.itervalues()):
         return
 
-    res = _mb_recording_search(limit=limit, **criteria)
+    try:
+        res = _mb_recording_search(limit=limit, **criteria)
+    except musicbrainzngs.MusicBrainzError as exc:
+        raise MusicBrainzAPIError(exc, 'recording search', criteria)
     for recording in res['recording-list']:
         yield track_info(recording)
 
 def album_for_id(albumid):
     """Fetches an album by its MusicBrainz ID and returns an AlbumInfo
-    object or None if the album is not found.
+    object or None if the album is not found. May raise a
+    MusicBrainzAPIError.
     """
     try:
         res = musicbrainzngs.get_release_by_id(albumid, RELEASE_INCLUDES)
     except musicbrainzngs.ResponseError:
         log.debug('Album ID match failed.')
         return None
+    except musicbrainzngs.MusicBrainzError as exc:
+        raise MusicBrainzAPIError(exc, 'get release by ID', albumid)
     return album_info(res['release'])
 
 def track_for_id(trackid):
     """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
-    or None if no track is found.
+    or None if no track is found. May raise a MusicBrainzAPIError.
     """
     try:
         res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
     except musicbrainzngs.ResponseError:
         log.debug('Track ID match failed.')
         return None
+    except musicbrainzngs.MusicBrainzError as exc:
+        raise MusicBrainzAPIError(exc, 'get recording by ID', trackid)
     return track_info(res['recording'])

@@ -9,6 +9,8 @@ Changelog
 * The default output format for the ``beet list`` command is now configurable
   via the :ref:`list_format_item` and :ref:`list_format_album` config options.
   Thanks to Fabrice Laporte.
+* Errors when communicating with MusicBrainz now log an error message instead of
+  halting the importer.
 * New plugin event: ``import_task_choice`` is called after an import task has an
   action assigned.
 * New plugin event: ``library_opened`` is called when beets starts up and

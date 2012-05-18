@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2011, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -13,9 +13,11 @@
 # included in all copies or substantial portions of the Software.
 
 """Glue between metadata sources and the matching logic."""
-
+import logging
 from beets import plugins
 from beets.autotag import mb
+
+log = logging.getLogger('beets')
 
 # Classes used to represent candidate options.
 
@@ -113,11 +115,17 @@ class TrackInfo(object):
 
 def _album_for_id(album_id):
     """Get an album corresponding to a MusicBrainz release ID."""
-    return mb.album_for_id(album_id)
+    try:
+        return mb.album_for_id(album_id)
+    except mb.MusicBrainzAPIError as exc:
+        log.error(exc.log())
 
 def _track_for_id(track_id):
     """Get an item for a recording MBID."""
-    return mb.track_for_id(track_id)
+    try:
+        return mb.track_for_id(track_id)
+    except mb.MusicBrainzAPIError as exc:
+        log.error(exc.log())
 
 def _album_candidates(items, artist, album, va_likely):
     """Search for album matches. ``items`` is a list of Item objects
@@ -130,11 +138,17 @@ def _album_candidates(items, artist, album, va_likely):
 
     # Base candidates if we have album and artist to match.
     if artist and album:
-        out.extend(mb.match_album(artist, album, len(items)))
+        try:
+            out.extend(mb.match_album(artist, album, len(items)))
+        except mb.MusicBrainzAPIError as exc:
+            log.error(exc.log())
 
     # Also add VA matches from MusicBrainz where appropriate.
     if va_likely and album:
-        out.extend(mb.match_album(None, album, len(items)))
+        try:
+            out.extend(mb.match_album(None, album, len(items)))
+        except mb.MusicBrainzAPIError as exc:
+            log.error(exc.log())
 
     # Candidates from plugins.
     out.extend(plugins.candidates(items))
@@ -150,7 +164,10 @@ def _item_candidates(item, artist, title):
 
     # MusicBrainz candidates.
     if artist and title:
-        out.extend(mb.match_track(artist, title))
+        try:
+            out.extend(mb.match_track(artist, title))
+        except mb.MusicBrainzAPIError as exc:
+            log.error(exc.log())
 
     # Plugin candidates.
     out.extend(plugins.item_candidates(item))
