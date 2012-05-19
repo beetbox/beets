@@ -205,7 +205,8 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
 
         # Get displayable LHS and RHS values.
         cur_track = unicode(item.track)
-        new_track = unicode(i+1)
+        new_track = unicode(i + 1)
+        tracks_differ = item.track not in (i + 1, track_info.medium_index)
         cur_title = item.title
         new_title = track_info.title
         if item.length and track_info.length:
@@ -218,9 +219,8 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
         # Possibly colorize changes.
         if color:
             cur_title, new_title = ui.colordiff(cur_title, new_title)
-            if cur_track != new_track:
-                cur_track = ui.colorize('red', cur_track)
-                new_track = ui.colorize('red', new_track)
+            cur_track = ui.colorize('red', cur_track)
+            new_track = ui.colorize('red', new_track)
 
         # Show filename (non-colorized) when title is not set.
         if not item.title.strip():
@@ -228,14 +228,14 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
 
         if cur_title != new_title:
             lhs, rhs = cur_title, new_title
-            if cur_track != new_track:
+            if tracks_differ:
                 lhs += u' (%s)' % cur_track
                 rhs += u' (%s)' % new_track
             print_(u" * %s -> %s" % (lhs, rhs))
         else:
             line = u' * %s' % item.title
             display = False
-            if cur_track != new_track:
+            if tracks_differ:
                 display = True
                 line += u' (%s -> %s)' % (cur_track, new_track)
             if item.length and track_info.length and \
