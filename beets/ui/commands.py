@@ -138,7 +138,8 @@ def dist_string(dist, color):
             out = ui.colorize('red', out)
     return out
 
-def show_change(cur_artist, cur_album, items, info, dist, color=True):
+def show_change(cur_artist, cur_album, items, info, dist, color=True,
+                per_disc_numbering=False):
     """Print out a representation of the changes that will be made if
     tags are changed from (cur_artist, cur_album, items) to info with
     distance dist.
@@ -205,7 +206,14 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True):
 
         # Get displayable LHS and RHS values.
         cur_track = unicode(item.track)
-        new_track = unicode(i + 1)
+        if per_disc_numbering:
+            if info.mediums > 1:
+                new_track = u'{0}-{1}'.format(track_info.medium,
+                                              track_info.medium_index)
+            else:
+                new_track = unicode(track_info.medium_index)
+        else:
+            new_track = unicode(i + 1)
         tracks_differ = item.track not in (i + 1, track_info.medium_index)
         cur_title = item.title
         new_title = track_info.title
@@ -290,7 +298,7 @@ def _quiet_fall_back(config):
 
 def choose_candidate(candidates, singleton, rec, color, timid,
                      cur_artist=None, cur_album=None, item=None,
-                     itemcount=None):
+                     itemcount=None, per_disc_numbering=False):
     """Given a sorted list of candidates, ask the user for a selection
     of which candidate to use. Applies to both full albums and
     singletons  (tracks). For albums, the candidates are `(dist, items,
@@ -423,7 +431,8 @@ def choose_candidate(candidates, singleton, rec, color, timid,
         if singleton:
             show_item_change(item, info, dist, color)
         else:
-            show_change(cur_artist, cur_album, items, info, dist, color)
+            show_change(cur_artist, cur_album, items, info, dist, color,
+                        per_disc_numbering)
 
         # Exact match => tag automatically if we're not in timid mode.
         if rec == autotag.RECOMMEND_STRONG and not timid:
@@ -511,7 +520,8 @@ def choose_match(task, config):
         # Ask for a choice from the user.
         choice = choose_candidate(candidates, False, rec, config.color,
                                   config.timid, task.cur_artist,
-                                  task.cur_album, itemcount=len(task.items))
+                                  task.cur_album, itemcount=len(task.items),
+                                  per_disc_numbering=config.per_disc_numbering)
 
         # Choose which tags to use.
         if choice in (importer.action.SKIP, importer.action.ASIS,
