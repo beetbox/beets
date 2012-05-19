@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2011, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -239,6 +239,8 @@ correct_dicts = {
         'albumstatus':          u'',
         'media':                u'',
         'albumdisambig':        u'',
+        'artist_credit':        u'',
+        'albumartist_credit':   u'',
     },
 
     # Full release date.

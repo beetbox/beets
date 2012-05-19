@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2011, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -909,6 +909,18 @@ class MediaFile(object):
         mp3 = StorageStyle('TXXX', id3_desc=u'MusicBrainz Album Comment'),
         mp4 = StorageStyle("----:com.apple.iTunes:MusicBrainz Album Comment"),
         etc = StorageStyle('MUSICBRAINZ_ALBUMCOMMENT'),
+    )
+
+    # Nonstandard metadata.
+    artist_credit = MediaField(
+        mp3 = StorageStyle('TXXX', id3_desc=u'Artist Credit'),
+        mp4 = StorageStyle("----:com.apple.iTunes:Artist Credit"),
+        etc = StorageStyle('ARTIST_CREDIT'),
+    )
+    albumartist_credit = MediaField(
+        mp3 = StorageStyle('TXXX', id3_desc=u'Album Artist Credit'),
+        mp4 = StorageStyle("----:com.apple.iTunes:Album Artist Credit"),
+        etc = StorageStyle('ALBUMARTIST_CREDIT'),
     )
 
     # Album art.
