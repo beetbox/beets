@@ -89,7 +89,7 @@ class FilesystemError(HumanReadableException):
 
     def get_message(self):
         # Use a nicer English phrasing for some specific verbs.
-        if self.verb in ('move', 'copy'):
+        if self.verb in ('move', 'copy', 'rename'):
             clause = 'while {0} {1} to {2}'.format(
                 self._gerund(), repr(self.paths[0]), repr(self.paths[1])
             )
@@ -314,10 +314,10 @@ def remove(path, soft=True):
         raise FilesystemError(exc, 'delete', (path,), traceback.format_exc())
 
 def copy(path, dest, replace=False, pathmod=os.path):
-    """Copy a plain file. Permissions are not copied. If dest already
-    exists, raises an OSError unless replace is True. Has no effect if
-    path is the same as dest. Paths are translated to system paths
-    before the syscall.
+    """Copy a plain file. Permissions are not copied. If `dest` already
+    exists, raises a FilesystemError unless `replace` is True. Has no
+    effect if `path` is the same as `dest`. Paths are translated to
+    system paths before the syscall.
     """
     if samefile(path, dest):
         return
@@ -332,22 +332,32 @@ def copy(path, dest, replace=False, pathmod=os.path):
                               traceback.format_exc())
 
 def move(path, dest, replace=False, pathmod=os.path):
-    """Rename a file. dest may not be a directory. If dest already
-    exists, raises an OSError unless replace is True. Hos no effect if
-    path is the same as dest. Paths are translated to system paths.
+    """Rename a file. `dest` may not be a directory. If `dest` already
+    exists, raises an OSError unless `replace` is True. Has no effect if
+    `path` is the same as `dest`. If the paths are on different
+    filesystems (or the rename otherwise fails), a copy is attempted
+    instead, in which case metadata will *not* be preserved. Paths are
+    translated to system paths.
     """
     if samefile(path, dest):
         return
     path = syspath(path)
     dest = syspath(dest)
     if pathmod.exists(dest):
-        raise FilesystemError('file exists', 'move', (path, dest),
+        raise FilesystemError('file exists', 'rename', (path, dest),
                               traceback.format_exc())
+
+    # First, try renaming the file.
     try:
-        shutil.move(path, dest)
-    except (OSError, IOError) as exc:
-        raise FilesystemError(exc, 'move', (path, dest),
-                              traceback.format_exc())
+        os.rename(path, dest)
+    except OSError:
+        # Otherwise, copy and delete the original.
+        try:
+            shutil.copyfile(path, dest)
+            os.remove(path)
+        except (OSError, IOError) as exc:
+            raise FilesystemError(exc, 'move', (path, dest),
+                                  traceback.format_exc())
 
 def unique_path(path):
     """Returns a version of ``path`` that does not exist on the

@@ -19,6 +19,7 @@ Changelog
   action assigned.
 * New plugin event: ``library_opened`` is called when beets starts up and
   opens the library database.
+* Fix a crash when moving files to a Samba share.
 * :doc:`/plugins/mpdupdate`: Fix TypeError crash (thanks to Philippe Mongeau).
 * When re-importing files with ``import_copy`` enabled, only files inside the
   library directory are moved. Files outside the library directory are still
