@@ -269,6 +269,30 @@ class MBAlbumInfoTest(unittest.TestCase):
         self.assertEqual(track.artist_sort, 'TRACK ARTIST SORT NAME')
         self.assertEqual(track.artist_credit, 'TRACK ARTIST CREDIT')
 
+class ArtistFlatteningTest(unittest.TestCase):
+    def _credit_dict(self, suffix=''):
+        return {
+            'artist': {
+                'name': 'NAME' + suffix,
+                'sort-name': 'SORT' + suffix,
+            },
+            'name': 'CREDIT' + suffix,
+        }
+
+    def test_single_artist(self):
+        a, s, c = mb._flatten_artist_credit([self._credit_dict()])
+        self.assertEqual(a, 'NAME')
+        self.assertEqual(s, 'SORT')
+        self.assertEqual(c, 'CREDIT')
+
+    def test_two_artists(self):
+        a, s, c = mb._flatten_artist_credit(
+            [self._credit_dict('a'), ' AND ', self._credit_dict('b')]
+        )
+        self.assertEqual(a, 'NAMEa AND NAMEb')
+        self.assertEqual(s, 'SORTa AND SORTb')
+        self.assertEqual(c, 'CREDITa AND CREDITb')
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
