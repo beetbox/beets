@@ -57,6 +57,26 @@ else:
     _mb_release_search = musicbrainzngs.search_releases
     _mb_recording_search = musicbrainzngs.search_recordings
 
+def _flatten_artist_credit(credit):
+    """Given a list representing an ``artist-credit`` block, flatten the
+    data into a pair of strings: the "canonical" joined artist name and
+    the specific "credit" joined artist name.
+    """
+    artist_parts = []
+    artist_credit_parts = []
+    for el in credit:
+        if isinstance(el, basestring):
+            artist_parts.append(el)
+            artist_credit_parts.append(el)
+        else:
+            cur_artist_name = el['artist']['name']
+            artist_parts.append(cur_artist_name)
+            if 'name' in el:  # Special artist credit.
+                artist_credit_parts.append(el['name'])
+            else:
+                artist_credit_parts.append(cur_artist_name)
+    return ''.join(artist_parts), ''.join(artist_credit_parts)
+
 def track_info(recording, medium=None, medium_index=None):
     """Translates a MusicBrainz recording result dictionary into a beets
     ``TrackInfo`` object. ``medium_index``, if provided, is the track's
@@ -67,12 +87,12 @@ def track_info(recording, medium=None, medium_index=None):
                                          medium=medium,
                                          medium_index=medium_index)
 
-    # Get the track artist credit.
-    if recording.get('artist-credit-phrase'):
-        info.artist = recording['artist-credit-phrase']
+    if recording.get('artist-credit'):
+        # Get the artist names.
+        info.artist, info.artist_credit = \
+            _flatten_artist_credit(recording['artist-credit'])
 
-    # Get the ID and sort name of the first artist.
-    if 'artist-credit' in recording:
+        # Get the ID and sort name of the first artist.
         artist = recording['artist-credit'][0]['artist']
         info.artist_id = artist['id']
         info.artist_sort = artist['sort-name']
@@ -97,13 +117,8 @@ def album_info(release):
     AlbumInfo object containing the interesting data about that release.
     """
     # Get artist name using join phrases.
-    artist_parts = []
-    for el in release['artist-credit']:
-        if isinstance(el, basestring):
-            artist_parts.append(el)
-        else:
-            artist_parts.append(el['artist']['name'])
-    artist_name = ''.join(artist_parts)
+    artist_name, artist_credit_name = \
+        _flatten_artist_credit(release['artist-credit'])
 
     # Basic info.
     track_infos = []
@@ -127,6 +142,7 @@ def album_info(release):
         track_infos,
         mediums=len(release['medium-list']),
         artist_sort=release['artist-credit'][0]['artist']['sort-name'],
+        artist_credit=artist_credit_name,
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
     info.asin = release.get('asin')

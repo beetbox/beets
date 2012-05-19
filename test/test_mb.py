@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2010, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -30,11 +30,14 @@ class MBAlbumInfoTest(unittest.TestCase):
                 'disambiguation': 'DISAMBIGUATION',
             },
             'artist-credit': [
-                {'artist': {
-                    'name': 'ARTIST NAME',
-                    'id': 'ARTIST ID',
-                    'sort-name': 'ARTIST SORT NAME',
-                }}
+                {
+                    'artist': {
+                        'name': 'ARTIST NAME',
+                        'id': 'ARTIST ID',
+                        'sort-name': 'ARTIST SORT NAME',
+                    },
+                    'name': 'ARTIST CREDIT',
+                }
             ],
             'date': '3001',
             'medium-list': [],
@@ -64,13 +67,24 @@ class MBAlbumInfoTest(unittest.TestCase):
             })
         return release
 
-    def _make_track(self, title, tr_id, duration):
+    def _make_track(self, title, tr_id, duration, artist=False):
         track = {
             'title': title,
             'id': tr_id,
         }
         if duration is not None:
             track['length'] = duration
+        if artist:
+            track['artist-credit'] = [
+                {
+                    'artist': {
+                        'name': 'TRACK ARTIST NAME',
+                        'id': 'TRACK ARTIST ID',
+                        'sort-name': 'TRACK ARTIST SORT NAME',
+                    },
+                    'name': 'TRACK ARTIST CREDIT',
+                }
+            ]
         return track
 
     def test_parse_release_with_year(self):
@@ -81,6 +95,7 @@ class MBAlbumInfoTest(unittest.TestCase):
         self.assertEqual(d.artist, 'ARTIST NAME')
         self.assertEqual(d.artist_id, 'ARTIST ID')
         self.assertEqual(d.year, 1984)
+        self.assertEqual(d.artist_credit, 'ARTIST CREDIT')
 
     def test_parse_release_type(self):
         release = self._make_release('1984')
@@ -244,6 +259,15 @@ class MBAlbumInfoTest(unittest.TestCase):
         del release['text-representation']['language']
         d = mb.album_info(release)
         self.assertEqual(d.language, None)
+
+    def test_parse_track_artist(self):
+        tracks = [self._make_track('a', 'b', 1, True)]
+        release = self._make_release(None, tracks=tracks)
+        track = mb.album_info(release).tracks[0]
+        self.assertEqual(track.artist, 'TRACK ARTIST NAME')
+        self.assertEqual(track.artist_id, 'TRACK ARTIST ID')
+        self.assertEqual(track.artist_sort, 'TRACK ARTIST SORT NAME')
+        self.assertEqual(track.artist_credit, 'TRACK ARTIST CREDIT')
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

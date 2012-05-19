@@ -47,6 +47,7 @@ class AlbumInfo(object):
     - ``albumstatus``: MusicBrainz release status (Official, etc.)
     - ``media``: delivery mechanism (Vinyl, etc.)
     - ``albumdisambig``: MusicBrainz release disambiguation comment
+    - ``artist_credit``: Release-specific artist name
 
     The fields up through ``tracks`` are required. The others are
     optional and may be None.
@@ -56,7 +57,7 @@ class AlbumInfo(object):
                  label=None, mediums=None, artist_sort=None,
                  releasegroup_id=None, catalognum=None, script=None,
                  language=None, country=None, albumstatus=None, media=None,
-                 albumdisambig=None):
+                 albumdisambig=None, artist_credit=None):
         self.album = album
         self.album_id = album_id
         self.artist = artist
@@ -79,6 +80,7 @@ class AlbumInfo(object):
         self.albumstatus = albumstatus
         self.media = media
         self.albumdisambig = albumdisambig
+        self.artist_credit = artist_credit
 
 class TrackInfo(object):
     """Describes a canonical track present on a release. Appears as part
@@ -93,13 +95,14 @@ class TrackInfo(object):
     - ``medium_index``: the track's position on the disc
     - ``artist_sort``: name of the track artist for sorting
     - ``disctitle``: name of the individual medium (subtitle)
+    - ``artist_credit``: Recording-specific artist name
 
     Only ``title`` and ``track_id`` are required. The rest of the fields
     may be None.
     """
     def __init__(self, title, track_id, artist=None, artist_id=None,
                  length=None, medium=None, medium_index=None,
-                 artist_sort=None, disctitle=None):
+                 artist_sort=None, disctitle=None, artist_credit=None):
         self.title = title
         self.track_id = track_id
         self.artist = artist
@@ -109,6 +112,7 @@ class TrackInfo(object):
         self.medium_index = medium_index
         self.artist_sort = artist_sort
         self.disctitle = disctitle
+        self.artist_credit = artist_credit
 
 
 # Aggregation of sources.
