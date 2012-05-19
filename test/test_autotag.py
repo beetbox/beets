@@ -466,9 +466,11 @@ class ApplyTest(unittest.TestCase):
         self.items.append(Item({}))
         self.items.append(Item({}))
         trackinfo = []
-        trackinfo.append(TrackInfo('oneNew',
-                                   'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
-                                   medium=1, medium_index=1))
+        trackinfo.append(TrackInfo(
+            'oneNew', 'dfa939ec-118c-4d0f-84a0-60f3d1e6522c', medium=1,
+            medium_index=1, artist_credit='trackArtistCredit',
+            artist_sort='trackArtistSort',
+        ))
         trackinfo.append(TrackInfo('twoNew',
                                    '40130ed1-a27c-42fd-a328-1ebefb6caef4',
                                    medium=2, medium_index=1))
@@ -478,6 +480,8 @@ class ApplyTest(unittest.TestCase):
             album = 'albumNew',
             album_id = '7edb51cb-77d6-4416-a23c-3a8c2994a2c7',
             artist_id = 'a6623d39-2d8e-4f70-8242-0a9553b91e50',
+            artist_credit = 'albumArtistCredit',
+            artist_sort = 'albumArtistSort',
             albumtype = 'album',
             va = False,
             mediums = 2,
@@ -554,6 +558,20 @@ class ApplyTest(unittest.TestCase):
         autotag.apply_metadata(self.items, my_info)
         self.assertEqual(self.items[0].artist, 'artist1!')
         self.assertEqual(self.items[1].artist, 'artist2!')
+
+    def test_artist_credit_applied(self):
+        autotag.apply_metadata(self.items, self.info)
+        self.assertEqual(self.items[0].albumartist_credit, 'albumArtistCredit')
+        self.assertEqual(self.items[0].artist_credit, 'trackArtistCredit')
+        self.assertEqual(self.items[1].albumartist_credit, 'albumArtistCredit')
+        self.assertEqual(self.items[1].artist_credit, 'albumArtistCredit')
+
+    def test_artist_sort_applied(self):
+        autotag.apply_metadata(self.items, self.info)
+        self.assertEqual(self.items[0].albumartist_sort, 'albumArtistSort')
+        self.assertEqual(self.items[0].artist_sort, 'trackArtistSort')
+        self.assertEqual(self.items[1].albumartist_sort, 'albumArtistSort')
+        self.assertEqual(self.items[1].artist_sort, 'albumArtistSort')
 
 class ApplyCompilationTest(unittest.TestCase):
     def setUp(self):

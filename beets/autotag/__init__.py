@@ -106,6 +106,8 @@ def apply_item_metadata(item, track_info):
     """Set an item's metadata from its matched TrackInfo object.
     """
     item.artist = track_info.artist
+    item.artist_sort = track_info.artist_sort
+    item.artist_credit = track_info.artist_credit
     item.title = track_info.title
     item.mb_trackid = track_info.track_id
     if track_info.artist_id:
@@ -130,12 +132,12 @@ def apply_metadata(items, album_info, per_disc_numbering=False):
         item.album = album_info.album
         item.tracktotal = len(items)
 
-        # Artist sort names.
-        if track_info.artist_sort:
-            item.artist_sort = track_info.artist_sort
-        else:
-            item.artist_sort = album_info.artist_sort
+        # Artist sort and credit names.
+        item.artist_sort = track_info.artist_sort or album_info.artist_sort
+        item.artist_credit = track_info.artist_credit or \
+                             album_info.artist_credit
         item.albumartist_sort = album_info.artist_sort
+        item.albumartist_credit = album_info.artist_credit
 
         # Release date.
         if album_info.year:

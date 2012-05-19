@@ -15,6 +15,9 @@ Changelog
   instead of a messy traceback. They still interrupt beets, but they should now
   be easier for users to understand. Tracebacks are still available in verbose
   mode.
+* New metadata fields for `artist credits`_: ``artist_credit`` and
+  ``albumartist_credit`` can now contain release- and recording-specific
+  variations of the artist's name. See :ref:`itemfields`.
 * New plugin event: ``import_task_choice`` is called after an import task has an
   action assigned.
 * New plugin event: ``library_opened`` is called when beets starts up and
@@ -29,6 +32,8 @@ Changelog
 * Fix ID3 tag name for the catalog number field.
 * :doc:`/plugins/chroma`: Fix occasional crash at end of fingerprint submission
   and give more context to "failed fingerprint generation" errors.
+
+.. _artist credits: http://wiki.musicbrainz.org/Artist_Credit
 
 1.0b14 (May 12, 2012)
 ---------------------
