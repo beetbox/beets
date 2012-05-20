@@ -34,6 +34,7 @@ Changelog
 * Fix ID3 tag name for the catalog number field.
 * :doc:`/plugins/chroma`: Fix occasional crash at end of fingerprint submission
   and give more context to "failed fingerprint generation" errors.
+* Interactive prompts are sent to stdout instead of stderr.
 
 .. _artist credits: http://wiki.musicbrainz.org/Artist_Credit
 

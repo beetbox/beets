@@ -95,7 +95,7 @@ will expand to "[2008]" for one album and "[2010]" for the other. The
 function detects that you have two albums with the same artist and title but
 that they have different release years.
 
-For full flexibility, the ``%auniqe`` function takes two arguments, each of
+For full flexibility, the ``%aunique`` function takes two arguments, each of
 which are whitespace-separated lists of album field names: a set of
 *identifiers* and a set of *disambiguators*. Any group of albums with identical
 values for all the identifiers will be considered "duplicates". Then, the

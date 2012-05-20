@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2011, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -241,14 +241,11 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
             fallback_prompt += '%i-%i, ' % numrange
         fallback_prompt += ', '.join(display_letters) + ':'
 
-    # Note: In the past, this line was causing problems with colors in
-    # the prompt string. However, using a separate "print prompt," line
-    # breaks the readline module, which expects the length of the prompt
-    # to be available to it. (Namely, entering text and then deleting it
-    # caused the entire last line of the prompt to disappear.) However,
-    # readline also seems to have fixed the issue with colors, so we've
-    # now switched back.
-    resp = raw_input(prompt + ' ')
+    # raw_input incorrectly sends prompts to stderr, not stdout, so we
+    # use print() explicitly to display prompts.
+    # http://bugs.python.org/issue1927
+    print(prompt, end=' ')
+    resp = raw_input()
     while True:
         resp = resp.strip().lower()
 
@@ -276,7 +273,8 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
                 return resp
 
         # Prompt for new input.
-        resp = raw_input(fallback_prompt + ' ')
+        print(fallback_prompt, end=' ')
+        resp = raw_input()
 
 def input_yn(prompt, require=False, color=False):
     """Prompts the user for a "yes" or "no" response. The default is
