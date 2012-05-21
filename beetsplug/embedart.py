@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2011, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -36,7 +36,13 @@ def _embed(path, items):
     # Add art to each file.
     log.debug('Embedding album art.')
     for item in items:
-        f = mediafile.MediaFile(syspath(item.path))
+        try:
+            f = mediafile.MediaFile(syspath(item.path))
+        except mediafile.UnreadableFileError as exc:
+            log.warn('Could not embed art in {0}: {1}'.format(
+                repr(item.path), exc
+            ))
+            continue
         f.art = data
         f.save()
 

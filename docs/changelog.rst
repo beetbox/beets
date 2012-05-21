@@ -35,6 +35,7 @@ Changelog
 * :doc:`/plugins/chroma`: Fix occasional crash at end of fingerprint submission
   and give more context to "failed fingerprint generation" errors.
 * Interactive prompts are sent to stdout instead of stderr.
+* :doc:`/plugins/embedart`: Fix crash when audio files are unreadable.
 
 .. _artist credits: http://wiki.musicbrainz.org/Artist_Credit
 
