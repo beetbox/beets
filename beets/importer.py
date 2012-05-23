@@ -688,14 +688,14 @@ def apply_choices(config):
         # Find existing item entries that these are replacing (for
         # re-imports). Old album structures are automatically cleaned up
         # when the last item is removed.
-        replaced_items = defaultdict(list)
+        task.replaced_items = defaultdict(list)
         for item in items:
             dup_items = lib.items(library.MatchQuery('path', item.path))
             for dup_item in dup_items:
-                replaced_items[item].append(dup_item)
+                task.replaced_items[item].append(dup_item)
                 log.debug('replacing item %i: %s' %
                           (dup_item.id, displayable_path(item.path)))
-        log.debug('%i of %i items replaced' % (len(replaced_items),
+        log.debug('%i of %i items replaced' % (len(task.replaced_items),
                                                len(items)))
 
         # Find old items that should be replaced as part of a duplicate
@@ -725,7 +725,7 @@ def apply_choices(config):
         # are in place before calls to destination().
         with lib.transaction():
             # Remove old items.
-            for replaced in replaced_items.itervalues():
+            for replaced in task.replaced_items.itervalues():
                 for item in replaced:
                     lib.remove(item)
             for item in duplicate_items:
@@ -741,7 +741,19 @@ def apply_choices(config):
                 for item in items:
                     lib.add(item)
 
+def manipulate_files(config):
+    """A coroutine (pipeline stage) that performs necessary file
+    manipulations *after* items have been added to the library.
+    """
+    lib = _reopen_lib(config.lib)
+    task = None
+    while True:
+        task = yield task
+        if task.should_skip():
+            continue
+
         # Move/copy files.
+        items = task.all_items()
         task.old_paths = [item.path for item in items]  # For deletion.
         for item in items:
             if config.move:
@@ -756,7 +768,7 @@ def apply_choices(config):
                 # out-of-library files. Otherwise, copy and keep track
                 # of the old path.
                 old_path = item.path
-                if replaced_items[item]:
+                if task.replaced_items[item]:
                     # This is a reimport. Move in-library files and copy
                     # out-of-library files.
                     if lib.directory in util.ancestry(old_path):
@@ -928,7 +940,7 @@ def run_import(**kwargs):
         else:
             # When not autotagging, just display progress.
             stages += [show_progress(config)]
-    stages += [apply_choices(config)]
+    stages += [apply_choices(config), manipulate_files(config)]
     if config.art:
         stages += [fetch_art(config)]
     stages += [finalize(config)]
