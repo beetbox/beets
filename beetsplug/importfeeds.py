@@ -31,15 +31,14 @@ class ImportFeedsPlugin(BeetsPlugin):
 
         _feeds_formats = ui.config_val(config, 'importfeeds', 'feeds_formats',
                                        '').split()
-
-        _feeds_dir = ui.config_val(config, 'importfeeds', 'feeds_dir', None)
-        _feeds_dir = os.path.expanduser(_feeds_dir)
-
         _m3u_name = ui.config_val(config, 'importfeeds', 'm3u_name',
                                  M3U_DEFAULT_NAME)
-
-        if _feeds_dir and not os.path.exists(_feeds_dir):
-            os.makedirs(_feeds_dir)
+        _feeds_dir = ui.config_val(config, 'importfeeds', 'feeds_dir', None)
+        
+        if _feeds_dir: 
+            _feeds_dir = os.path.expanduser(_feeds_dir)
+            if not os.path.exists(_feeds_dir):
+                os.makedirs(_feeds_dir)
 
 def _get_feeds_dir(lib):
     """Given a Library object, return the path to the feeds directory to be
@@ -73,10 +72,7 @@ def _write_m3u(m3u_path, items_paths):
 def _record_items(lib, basename, items):
     """Records relative paths to the given items for each feed format
     """
-    global _feeds_dir
-    if not _feeds_dir:
-        _feeds_dir = _get_feeds_dir(lib)
-
+    
     paths = []
     for item in items:
         paths.append(os.path.relpath(item.path, _feeds_dir))
@@ -93,9 +89,16 @@ def _record_items(lib, basename, items):
         for path in paths:
             os.symlink(path, os.path.join(_feeds_dir, os.path.basename(path)))
 
+@ImportFeedsPlugin.listen('library_opened')
+def library_opened(lib):
+    global _feeds_dir
+    if not _feeds_dir:
+        _feeds_dir = _get_feeds_dir(lib)
+
 @ImportFeedsPlugin.listen('album_imported')
 def album_imported(lib, album, config):
     _record_items(lib, album.album, album.items())
+
 @ImportFeedsPlugin.listen('item_imported')
 def item_imported(lib, item, config):
     _record_items(lib, item.title, [item])
