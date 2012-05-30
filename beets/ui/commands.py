@@ -249,7 +249,7 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True,
             if item.length and track_info.length and \
                     abs(item.length - track_info.length) > 2.0:
                 display = True
-                line += u' (%s -> %s)' % (cur_length, new_length)
+                line += u' (%s vs. %s)' % (cur_length, new_length)
             if display:
                 print_(line)
     for i, track_info in missing_tracks:
