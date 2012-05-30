@@ -25,10 +25,9 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
 * For **Arch Linux**, try getting `beets from AUR`_. (There's also a
   bleeding-edge `dev package`_, which will probably set your computer on fire.)
 
-* For **Gentoo Linux**, there are a couple of overlays that include beets. `One
-  by vh4x0r`_ includes a development ebuild and `one by syranez`_ includes the
-  released version. Eventually, beets may eventually get `added to the official
-  Portage tree`_.
+* For **Gentoo Linux**, beets is in Portage as ``media-sound/beets``. Just run
+  ``emerge beets`` to install. There are several USE flags available for
+  optional plugin dependencies.
 
 .. _beets from AUR: http://aur.archlinux.org/packages.php?ID=39577
 .. _dev package: http://aur.archlinux.org/packages.php?ID=48617
@@ -36,7 +35,6 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
 .. _Ubuntu details: https://launchpad.net/ubuntu/+source/beets
 .. _One by vh4x0r: https://github.com/vh4x0r/apokolips
 .. _one by syranez: https://github.com/syranez/gentoo
-.. _added to the official portage tree: http://www.gentoo.org/doc/en/ebuild-submit.xml
 
 If you have `pip`_, just say ``pip install beets`` (you might need ``sudo`` in
 front of that). On Arch, you'll need to use ``pip2`` instead of ``pip``.
