@@ -344,6 +344,16 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         _call_stages(config, [self.i], self.info, toppath=self.srcdir)
         self.assertNotExists(os.path.dirname(self.srcpath))
 
+    def test_manipulate_files_with_null_move(self):
+        """It should be possible to "move" a file even when the file is
+        already at the destination.
+        """
+        config = _common.iconfig(self.lib, move=True)
+        self.lib.move(self.i)  # Already at destination.
+        _call_stages(config, [self.i], self.info, toppath=self.srcdir,
+                     stages=[importer.manipulate_files])
+        self.assertExists(self.i.path)
+
 class AsIsApplyTest(unittest.TestCase):
     def setUp(self):
         self.dbpath = os.path.join(_common.RSRC, 'templib.blb')

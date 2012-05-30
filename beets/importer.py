@@ -461,13 +461,13 @@ class ImportTask(object):
     # Utilities.
 
     def prune(self, filename):
-        """Prune any empty directories above the given file, which must
-        not exist. If this task has no `toppath` or the file path
-        provided is not within the `toppath`, then this function has no
-        effect.
+        """Prune any empty directories above the given file. If this
+        task has no `toppath` or the file path provided is not within
+        the `toppath`, then this function has no effect. Similarly, if
+        the file still exists, no pruning is performed, so it's safe to
+        call when the file in question may not have been removed.
         """
-        assert not os.path.exists(filename)
-        if self.toppath:
+        if self.toppath and not os.path.exists(filename):
             util.prune_dirs(os.path.dirname(filename), self.toppath)
 
 
@@ -760,9 +760,7 @@ def manipulate_files(config):
                 # Just move the file.
                 old_path = item.path
                 lib.move(item, False)
-                # Clean up empty parent directory.
-                if task.toppath:
-                    task.prune(old_path)
+                task.prune(old_path)
             elif config.copy:
                 # If it's a reimport, move in-library files and copy
                 # out-of-library files. Otherwise, copy and keep track
@@ -810,7 +808,7 @@ def fetch_art(config):
                 album = lib.get_album(task.album_id)
                 album.set_art(artpath, not (config.delete or config.move))
 
-                if (config.delete or config.move) and task.toppath:
+                if config.delete or config.move:
                     task.prune(artpath)
 
 def finalize(config):
@@ -845,9 +843,7 @@ def finalize(config):
                 # Only delete files that were actually copied.
                 if old_path not in new_paths:
                     util.remove(syspath(old_path), False)
-                    # Clean up directory if it is emptied.
-                    if task.toppath:
-                        task.prune(old_path)
+                    task.prune(old_path)
 
         # Update progress.
         if config.resume is not False:

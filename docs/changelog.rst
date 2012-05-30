@@ -36,6 +36,8 @@ Changelog
   and give more context to "failed fingerprint generation" errors.
 * Interactive prompts are sent to stdout instead of stderr.
 * :doc:`/plugins/embedart`: Fix crash when audio files are unreadable.
+* Fix an assertion failure while importing with moving enabled when the file was
+  already at its destination.
 
 .. _artist credits: http://wiki.musicbrainz.org/Artist_Credit
 
