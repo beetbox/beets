@@ -92,8 +92,9 @@ contains a dummy implementation that just calls playlistinfo.
 
 The ``stats`` command always send zero for ``playtime``, which is supposed to
 indicate the amount of time the server has spent playing music. BPD doesn't
-currently keep track of this. Also, because database updates aren't yet
-supported, ``db_update`` is just the time the server was started.
+currently keep track of this.
+
+The ``update`` command regenerates the directory tree from the beets database.
 
 Unimplemented Commands
 ----------------------
@@ -102,10 +103,6 @@ These are the commands from `the MPD protocol`_ that have not yet been
 implemented in BPD.
 
 .. _the MPD protocol: http://mpd.wikia.com/wiki/MusicPlayerDaemonCommands
-
-Database:
-
-* update
 
 Saved playlists:
 
