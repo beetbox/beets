@@ -587,6 +587,8 @@ class Connection(object):
             if not line:
                 break
             line = line.strip()
+            if not line:
+                break
             log.debug(line)
                
             if clist is not None:
