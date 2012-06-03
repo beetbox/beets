@@ -583,9 +583,10 @@ class Connection(object):
         
         clist = None # Initially, no command list is being constructed.
         while True:
-            line = (yield self.sock.readline()).strip()
+            line = yield self.sock.readline() 
             if not line:
                 break
+            line = line.strip()
             log.debug(line)
                
             if clist is not None:
