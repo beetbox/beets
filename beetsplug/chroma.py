@@ -32,7 +32,7 @@ log = logging.getLogger('beets')
 
 # Stores the Acoustid match information for each track. This is
 # populated when an import task begins and then used when searching for
-# candidates. It maps audio file paths to (recording_id, release_ids)
+# candidates. It maps audio file paths to (recording_ids, release_ids)
 # pairs. If a given path is not present in the mapping, then no match
 # was found.
 _matches = {}
@@ -71,25 +71,25 @@ def acoustid_match(path):
     if res['status'] != 'ok' or not res.get('results'):
         log.debug('chroma: no match found')
         return None
-    result = res['results'][0]
+    result = res['results'][0]  # Best match.
     if result['score'] < SCORE_THRESH:
         log.debug('chroma: no results above threshold')
         return None
     _acoustids[path] = result['id']
 
-    # Get recordings from the result.
+    # Get recording and releases from the result.
     if not result.get('recordings'):
         log.debug('chroma: no recordings found')
         return None
-    recording = result['recordings'][0]
-    recording_id = recording['id']
-    if 'releases' in recording:
-        release_ids = [rel['id'] for rel in recording['releases']]
-    else:
-        release_ids = []
+    recording_ids = []
+    release_ids = []
+    for recording in result['recordings']:
+        recording_ids.append(recording['id'])
+        if 'releases' in recording:
+            release_ids += [rel['id'] for rel in recording['releases']]
 
-    log.debug('chroma: matched recording {0}'.format(recording_id))
-    _matches[path] = recording_id, release_ids
+    log.debug('chroma: matched recordings {0}'.format(recording_ids))
+    _matches[path] = recording_ids, release_ids
 
 
 # Plugin structure and autotagging logic.
@@ -118,8 +118,8 @@ class AcoustidPlugin(plugins.BeetsPlugin):
             # Match failed.
             return 0.0, 0.0
 
-        recording_id, _ = _matches[item.path]
-        if info.track_id == recording_id:
+        recording_ids, _ = _matches[item.path]
+        if info.track_id in recording_ids:
             dist = 0.0
         else:
             dist = TRACK_ID_WEIGHT
@@ -139,14 +139,14 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         if item.path not in _matches:
             return []
 
-        recording_id, _ = _matches[item.path]
-        track = hooks._track_for_id(recording_id)
-        if track:
-            log.debug('found acoustid item candidate')
-            return [track]
-        else:
-            log.debug('no acoustid item candidate found')
-            return []
+        recording_ids, _ = _matches[item.path]
+        tracks = []
+        for recording_id in recording_ids:
+            track = hooks._track_for_id(recording_id)
+            if track:
+                tracks.append(track)
+        log.debug('acoustid item candidates: {0}'.format(len(tracks)))
+        return tracks
 
     def configure(self, config):
         global _userkey

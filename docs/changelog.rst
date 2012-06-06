@@ -34,6 +34,10 @@ Changelog
 * When previewing changes during import, differences in track duration are now
   shown as "2:50 vs. 3:10" rather than separated with ``->`` like track numbers.
   This should clarify that beets isn't doing anything to modify lengths.
+* :doc:`/plugins/chroma`: Fix tracking with ambiguous Acoustids. Some Acoustids
+  are identified with multiple recordings; beets now considers any associated
+  recording a valid match. This should reduce some cases of errant track
+  reordering when using chroma.
 * Fix ID3 tag name for the catalog number field.
 * :doc:`/plugins/chroma`: Fix occasional crash at end of fingerprint submission
   and give more context to "failed fingerprint generation" errors.
