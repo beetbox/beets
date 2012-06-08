@@ -912,7 +912,12 @@ class Transaction(object):
         another is active in a different thread.
         """
         with self.lib._tx_stack() as stack:
+            first = not stack
             stack.append(self)
+        if first:
+            # Beginning a "root" transaction, which corresponds to an
+            # SQLite transaction.
+            self.lib._db_lock.acquire()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -924,7 +929,9 @@ class Transaction(object):
             assert stack.pop() is self
             empty = not stack
         if empty:
+            # Ending a "root" transaction. End the SQLite transaction.
             self.lib._connection().commit()
+            self.lib._db_lock.release()
 
     def query(self, statement, subvals=()):
         """Execute an SQL statement with substitution values and return
@@ -972,6 +979,15 @@ class Library(BaseLibrary):
         # A lock to protect the _connections and _tx_stacks maps, which
         # both map thread IDs to private resources.
         self._shared_map_lock = threading.Lock()
+        # A lock to protect access to the database itself. SQLite does
+        # allow multiple threads to access the database at the same
+        # time, but many users were experiencing crashes related to this
+        # capability: where SQLite was compiled without HAVE_USLEEP, its
+        # backoff algorithm in the case of contention was causing
+        # whole-second sleeps (!) that would trigger its internal
+        # timeout. Using this lock ensures only one SQLite transaction
+        # is active at a time.
+        self._db_lock = threading.Lock()
 
         # Set up database schema.
         self._make_table('items', item_fields)
