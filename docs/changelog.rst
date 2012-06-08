@@ -26,6 +26,8 @@ Changelog
   avoid internal SQLite contention, which should avoid this error.
 * Plugins can now add parallel stages to the import pipeline. See
   :ref:`writing-plugins`.
+* :doc:`/plugins/lastgenre`: Fixed a problem where path formats containing
+  `$genre` would use the old genre instead of the newly discovered one.
 * New plugin event: ``import_task_choice`` is called after an import task has an
   action assigned.
 * New plugin event: ``library_opened`` is called when beets starts up and

@@ -182,6 +182,10 @@ def fetch_item_lyrics(lib, loglevel, item, write):
 
 AUTOFETCH = True
 class LyricsPlugin(BeetsPlugin):
+    def __init__(self):
+        super(LyricsPlugin, self).__init__()
+        self.import_stages = [self.imported]
+
     def commands(self):
         cmd = ui.Subcommand('lyrics', help='fetch song lyrics')
         cmd.parser.add_option('-p', '--print', dest='printlyr',
@@ -203,13 +207,8 @@ class LyricsPlugin(BeetsPlugin):
         global AUTOFETCH
         AUTOFETCH = ui.config_val(config, 'lyrics', 'autofetch', True, bool)
 
-# Auto-fetch lyrics on import.
-@LyricsPlugin.listen('album_imported')
-def album_imported(lib, album, config):
-    if AUTOFETCH:
-        for item in album.items():
-            fetch_item_lyrics(lib, logging.DEBUG, item, config.write)
-@LyricsPlugin.listen('item_imported')
-def item_imported(lib, item, config):
-    if AUTOFETCH:
-        fetch_item_lyrics(lib, logging.DEBUG, item, config.write)
+    # Auto-fetch lyrics on import.
+    def imported(self, config, task):
+        if AUTOFETCH:
+            for item in task.all_items():
+                fetch_item_lyrics(config.lib, logging.DEBUG, item, False)

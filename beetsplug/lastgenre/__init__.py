@@ -124,7 +124,12 @@ options = {
     'branches': None,
     'c14n': False,
 }
+fallback_str = None
 class LastGenrePlugin(plugins.BeetsPlugin):
+    def __init__(self):
+        super(LastGenrePlugin, self).__init__()
+        self.import_stages = [self.imported]
+
     def configure(self, config):
         global fallback_str
 
@@ -161,35 +166,27 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         fallback_str = ui.config_val(config, 'lastgenre', 'fallback_str', None)
 
+    def imported(self, config, task):
+        if task.is_album:
+            album = config.lib.get_album(task.album_id)
+            lastfm_obj = LASTFM.get_album(album.albumartist, album.album)
+        else:
+            item = task.item
+            lastfm_obj = LASTFM.get_track(item.artist, item.title)
 
-@LastGenrePlugin.listen('album_imported')
-def album_imported(lib, album, config):
-    global fallback_str
-    tags = _tags_for(LASTFM.get_album(album.albumartist, album.album))
-    genre = _tags_to_genre(tags)
-    if not genre and fallback_str != None :
-        genre = fallback_str
-        log.debug(u'no last.fm genre found: fallback to %s' % genre)
-    if genre is not None:
-        log.debug(u'adding last.fm album genre: %s' % genre)
-        album.genre = genre
+        tags = _tags_for(lastfm_obj)
+        genre = _tags_to_genre(tags)
 
-        if config.write:
-            for item in album.items():
-                item.write()
+        if not genre and fallback_str != None:
+            genre = fallback_str
+            log.debug(u'no last.fm genre found: fallback to %s' % genre)
 
-@LastGenrePlugin.listen('item_imported')
-def item_imported(lib, item, config):
-    global fallback_str
-    tags = _tags_for(LASTFM.get_track(item.artist, item.title))
-    genre = _tags_to_genre(tags)
-    if not genre and fallback_str != None :
-        genre = fallback_str
-        log.debug(u'no last.fm genre found: fallback to %s' % genre)
-    if genre is not None:
-        log.debug(u'adding last.fm item genre: %s' % genre)
-        item.genre = genre
-        lib.store(item)
+        if genre is not None:
+            log.debug(u'adding last.fm album genre: %s' % genre)
 
-        if config.write:
-            item.write()
+            if task.is_album:
+                album = config.lib.get_album(task.album_id)
+                album.genre = genre
+            else:
+                item.genre = genre
+                config.lib.store(item)
