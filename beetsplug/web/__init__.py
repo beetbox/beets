@@ -15,7 +15,6 @@
 """A Web interface to beets."""
 from beets.plugins import BeetsPlugin
 from beets import ui
-from beets.importer import _reopen_lib
 import beets.library
 import flask
 from flask import g
@@ -44,10 +43,7 @@ app = flask.Flask(__name__)
 
 @app.before_request
 def before_request():
-    g.lib = _reopen_lib(app.config['lib'])
-@app.teardown_request
-def teardown_request(req):
-    g.lib._connection().close()
+    g.lib = app.config['lib']
 
 
 # Items.

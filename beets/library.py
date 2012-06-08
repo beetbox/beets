@@ -22,6 +22,7 @@ import logging
 import shlex
 import unicodedata
 import threading
+from collections import defaultdict
 from unidecode import unidecode
 from beets.mediafile import MediaFile
 from beets import plugins
@@ -905,11 +906,19 @@ class Transaction(object):
     def __init__(self, lib):
         self.lib = lib
 
+    @property
+    def _stack(self):
+        """Return the transaction stack that this transaction belongs
+        to. This is the associated library's stack for the current
+        thread ID. Transactions should never migrate across threads.
+        """
+        return self.lib._tx_stacks[threading.current_thread().ident]
+
     def __enter__(self):
         """Begin a transaction. This transaction may be created while
-        another is active.
+        another is active in a different thread.
         """
-        self.lib._tx_stack.append(self)
+        self._stack.append(self)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -917,8 +926,8 @@ class Transaction(object):
         entered but not yet exited transaction. If it is the last active
         transaction, the database updates are committed.
         """
-        assert self.lib._tx_stack.pop() is self
-        if not self.lib._tx_stack:
+        assert self._stack.pop() is self
+        if not self._stack:
             self.lib._connection().commit()
 
     def query(self, statement, subvals=()):
@@ -960,10 +969,10 @@ class Library(BaseLibrary):
         self.replacements = replacements
 
         self._memotable = {}  # Used for template substitution performance.
-        self._tx_stack = []
 
         self.timeout = timeout
         self._connections = {}
+        self._tx_stacks = defaultdict(list)
 
         self._make_table('items', item_fields)
         self._make_table('albums', album_fields)
