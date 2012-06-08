@@ -43,6 +43,7 @@ class BeetsPlugin(object):
         override this method.
         """
         _add_media_fields(self.item_fields())
+        self.import_stages = []
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
@@ -268,6 +269,14 @@ def _add_media_fields(fields):
     """
     for key, value in fields.iteritems():
         setattr(mediafile.MediaFile, key, value)
+
+def import_stages():
+    """Get a list of import stage functions defined by plugins."""
+    stages = []
+    for plugin in find_plugins():
+        if hasattr(plugin, 'import_stages'):
+            stages += plugin.import_stages
+    return stages
 
 
 # Event dispatch.

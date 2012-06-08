@@ -720,6 +720,18 @@ def apply_choices(config):
                 for item in items:
                     config.lib.add(item)
 
+def plugin_stage(config, func):
+    """A coroutine (pipeline stage) that calls the given function with
+    each non-skipped import task. These stages occur between applying
+    metadata changes and moving/copying/writing files.
+    """
+    task = None
+    while True:
+        task = yield task
+        if task.should_skip():
+            continue
+        func(config, task)
+
 def manipulate_files(config):
     """A coroutine (pipeline stage) that performs necessary file
     manipulations *after* items have been added to the library.
@@ -913,7 +925,10 @@ def run_import(**kwargs):
         else:
             # When not autotagging, just display progress.
             stages += [show_progress(config)]
-    stages += [apply_choices(config), manipulate_files(config)]
+    stages += [apply_choices(config)]
+    for stage_func in plugins.import_stages():
+        stages.append(plugin_stage(config, stage_func))
+    stages += [manipulate_files(config)]
     if config.art:
         stages += [fetch_art(config)]
     stages += [finalize(config)]

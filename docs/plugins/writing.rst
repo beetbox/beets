@@ -276,3 +276,30 @@ are not extended, so the fields are second-class citizens. This may change
 eventually.
 
 .. _MediaFile: https://github.com/sampsyo/beets/wiki/MediaFile
+
+Add Import Pipeline Stages
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Many plugins need to add high-latency operations to the import workflow. For
+example, a plugin that fetches lyrics from the Web would, ideally, not block the
+progress of the rest of the importer. Beets allows plugins to add stages to the
+parallel import pipeline.
+
+Each stage is run in its own thread. Plugin stages run after metadata changes
+have been applied to a unit of music (album or track) and before file
+manipulation has occurred (copying and moving files, writing tags to disk).
+Multiple stages run in parallel but each stage processes only one task at a time
+and each task is processed by only one stage at a time.
+
+Plugins provide stages as functions that take two arguments: ``config`` and
+``task``, which are ``ImportConfig`` and ``ImportTask`` objects (both defined in
+``beets.importer``). Add such a function to the plugin's ``import_stages`` field
+to register it::
+
+    from beets.plugins import BeetsPlugin
+    class ExamplePlugin(BeetsPlugin):
+        def __init__(self):
+            super(ExamplePlugin, self).__init__()
+            self.import_stages = [self.stage]
+        def stage(self, config, task):
+            print('Importing something!')
