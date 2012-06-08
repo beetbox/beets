@@ -295,7 +295,7 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         shutil.move(self.srcpath, internal_srcpath)
         temp_item = library.Item.from_path(internal_srcpath)
         self.lib.add(temp_item)
-        self.lib.conn.commit()
+        self.lib._connection().commit()
 
         self.i = library.Item.from_path(internal_srcpath)
         self.i.comp = False
@@ -319,7 +319,7 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         # First, add the item to the library.
         temp_item = library.Item.from_path(self.srcpath)
         self.lib.add(temp_item)
-        self.lib.conn.commit()
+        self.lib._connection().commit()
 
         # Then, re-import the same file.
         config = _common.iconfig(self.lib)
@@ -774,7 +774,7 @@ class ArtFetchTest(unittest.TestCase, _common.ExtraAsserts):
         self.i = _common.item()
         self.i.path = itempath
         self.album = self.lib.add_album([self.i])
-        self.lib.conn.commit()
+        self.lib._connection().commit()
 
         # Set up an art-fetching coroutine.
         self.config = _common.iconfig(self.lib)

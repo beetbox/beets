@@ -39,7 +39,7 @@ def remove_lib():
         os.unlink(TEMP_LIB)
 def boracay(l):
     return beets.library.Item(
-        l.conn.execute('select * from items where id=3').fetchone()
+        l._connection().execute('select * from items where id=3').fetchone()
     )
 np = util.normpath
 
@@ -48,7 +48,7 @@ class LoadTest(unittest.TestCase):
         self.lib = lib()
         self.i = boracay(self.lib)
     def tearDown(self):
-        self.lib.conn.close()
+        self.lib._connection().close()
         remove_lib()
 
     def test_load_restores_data_from_db(self):
@@ -67,13 +67,14 @@ class StoreTest(unittest.TestCase):
         self.lib = lib()
         self.i = boracay(self.lib)
     def tearDown(self):
-        self.lib.conn.close()
+        self.lib._connection().close()
         remove_lib()
 
     def test_store_changes_database_value(self):
         self.i.year = 1987
         self.lib.store(self.i)
-        new_year = self.lib.conn.execute('select year from items where '
+        new_year = self.lib._connection().execute(
+            'select year from items where '
             'title="Boracay"').fetchone()['year']
         self.assertEqual(new_year, 1987)
 
@@ -81,7 +82,8 @@ class StoreTest(unittest.TestCase):
         original_genre = self.i.genre
         self.i.record['genre'] = 'beatboxing' # change value w/o dirtying
         self.lib.store(self.i)
-        new_genre = self.lib.conn.execute('select genre from items where '
+        new_genre = self.lib._connection().execute(
+            'select genre from items where '
             'title="Boracay"').fetchone()['genre']
         self.assertEqual(new_genre, original_genre)
 
@@ -95,18 +97,20 @@ class AddTest(unittest.TestCase):
         self.lib = beets.library.Library(':memory:')
         self.i = item()
     def tearDown(self):
-        self.lib.conn.close()
+        self.lib._connection().close()
 
     def test_item_add_inserts_row(self):
         self.lib.add(self.i)
-        new_grouping = self.lib.conn.execute('select grouping from items '
+        new_grouping = self.lib._connection().execute(
+            'select grouping from items '
             'where composer="the composer"').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
 
     def test_library_add_path_inserts_row(self):
         i = beets.library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
         self.lib.add(i)
-        new_grouping = self.lib.conn.execute('select grouping from items '
+        new_grouping = self.lib._connection().execute(
+            'select grouping from items '
             'where composer="the composer"').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
 
@@ -115,12 +119,12 @@ class RemoveTest(unittest.TestCase):
         self.lib = lib()
         self.i = boracay(self.lib)
     def tearDown(self):
-        self.lib.conn.close()
+        self.lib._connection().close()
         remove_lib()
 
     def test_remove_deletes_from_db(self):
         self.lib.remove(self.i)
-        c = self.lib.conn.execute('select * from items where id=3')
+        c = self.lib._connection().execute('select * from items where id=3')
         self.assertEqual(c.fetchone(), None)
 
 class GetSetTest(unittest.TestCase):
@@ -147,7 +151,7 @@ class DestinationTest(unittest.TestCase):
         self.lib = beets.library.Library(':memory:')
         self.i = item()
     def tearDown(self):
-        self.lib.conn.close()
+        self.lib._connection().close()
 
     def test_directory_works_with_trailing_slash(self):
         self.lib.directory = 'one/'
@@ -441,7 +445,7 @@ class DestinationFunctionTest(unittest.TestCase, PathFormattingMixin):
         self.lib.path_formats = [('default', u'path')]
         self.i = item()
     def tearDown(self):
-        self.lib.conn.close()
+        self.lib._connection().close()
 
     def test_upper_case_literal(self):
         self._setf(u'%upper{foo}')
@@ -495,12 +499,12 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
         self.i2 = item()
         self.i2.year = 2002
         self.lib.add_album([self.i2])
-        self.lib.conn.commit()
+        self.lib._connection().commit()
 
         self._setf(u'foo%aunique{albumartist album,year}/$title')
 
     def tearDown(self):
-        self.lib.conn.close()
+        self.lib._connection().close()
 
     def test_unique_expands_to_disambiguating_year(self):
         self._assert_dest('/base/foo [2001]/the title', self.i1)
@@ -508,21 +512,21 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
     def test_unique_with_default_arguments_uses_albumtype(self):
         album2 = self.lib.get_album(self.i1)
         album2.albumtype = 'bar'
-        self.lib.conn.commit()
+        self.lib._connection().commit()
         self._setf(u'foo%aunique{}/$title')
         self._assert_dest('/base/foo [bar]/the title', self.i1)
 
     def test_unique_expands_to_nothing_for_distinct_albums(self):
         album2 = self.lib.get_album(self.i2)
         album2.album = 'different album'
-        self.lib.conn.commit()
+        self.lib._connection().commit()
 
         self._assert_dest('/base/foo/the title', self.i1)
 
     def test_use_fallback_numbers_when_identical(self):
         album2 = self.lib.get_album(self.i2)
         album2.year = 2001
-        self.lib.conn.commit()
+        self.lib._connection().commit()
 
         self._assert_dest('/base/foo 1/the title', self.i1)
         self._assert_dest('/base/foo 2/the title', self.i2)
@@ -596,10 +600,10 @@ class MigrationTest(unittest.TestCase):
         old_lib = beets.library.Library(self.libfile,
                                         item_fields=self.old_fields)
         # Add an item to the old library.
-        old_lib.conn.execute(
+        old_lib._connection().execute(
             'insert into items (field_one, field_two) values (4, 2)'
         )
-        old_lib.conn.commit()
+        old_lib._connection().commit()
         del old_lib
 
     def tearDown(self):
@@ -608,7 +612,7 @@ class MigrationTest(unittest.TestCase):
     def test_open_with_same_fields_leaves_untouched(self):
         new_lib = beets.library.Library(self.libfile,
                                         item_fields=self.old_fields)
-        c = new_lib.conn.cursor()
+        c = new_lib._connection().cursor()
         c.execute("select * from items")
         row = c.fetchone()
         self.assertEqual(len(row), len(self.old_fields))
@@ -616,7 +620,7 @@ class MigrationTest(unittest.TestCase):
     def test_open_with_new_field_adds_column(self):
         new_lib = beets.library.Library(self.libfile,
                                         item_fields=self.new_fields)
-        c = new_lib.conn.cursor()
+        c = new_lib._connection().cursor()
         c.execute("select * from items")
         row = c.fetchone()
         self.assertEqual(len(row), len(self.new_fields))
@@ -624,7 +628,7 @@ class MigrationTest(unittest.TestCase):
     def test_open_with_fewer_fields_leaves_untouched(self):
         new_lib = beets.library.Library(self.libfile,
                                         item_fields=self.older_fields)
-        c = new_lib.conn.cursor()
+        c = new_lib._connection().cursor()
         c.execute("select * from items")
         row = c.fetchone()
         self.assertEqual(len(row), len(self.old_fields))
@@ -632,7 +636,7 @@ class MigrationTest(unittest.TestCase):
     def test_open_with_multiple_new_fields(self):
         new_lib = beets.library.Library(self.libfile,
                                         item_fields=self.newer_fields)
-        c = new_lib.conn.cursor()
+        c = new_lib._connection().cursor()
         c.execute("select * from items")
         row = c.fetchone()
         self.assertEqual(len(row), len(self.newer_fields))
@@ -650,7 +654,7 @@ class MigrationTest(unittest.TestCase):
         new_lib = beets.library.Library(self.libfile,
                                         item_fields=self.newer_fields)
         try:
-            new_lib.conn.execute("select * from albums")
+            new_lib._connection().execute("select * from albums")
         except sqlite3.OperationalError:
             self.fail("select failed")
 
@@ -664,7 +668,9 @@ class MigrationTest(unittest.TestCase):
 
         new_lib = beets.library.Library(self.libfile,
                                         item_fields=self.newer_fields)
-        albums = new_lib.conn.execute('select * from albums').fetchall()
+        albums = new_lib._connection().execute(
+            'select * from albums'
+        ).fetchall()
         self.assertEqual(len(albums), 1)
         self.assertEqual(albums[0][1], 'blah')
 
@@ -678,7 +684,7 @@ class MigrationTest(unittest.TestCase):
 
         new_lib = beets.library.Library(self.libfile,
                                         item_fields=self.newer_fields)
-        c = new_lib.conn.execute("select * from albums")
+        c = new_lib._connection().execute("select * from albums")
         album = c.fetchone()
         self.assertEqual(album['albumartist'], 'theartist')
 
@@ -707,7 +713,7 @@ class AlbumInfoTest(unittest.TestCase):
         self.lib.get_album(self.i)
         self.lib.get_album(i2)
 
-        c = self.lib.conn.cursor()
+        c = self.lib._connection().cursor()
         c.execute('select * from albums where album=?', (self.i.album,))
         # Cursor should only return one row.
         self.assertNotEqual(c.fetchone(), None)
@@ -755,7 +761,9 @@ class AlbumInfoTest(unittest.TestCase):
     def test_albuminfo_remove_removes_items(self):
         item_id = self.i.id
         self.lib.get_album(self.i).remove()
-        c = self.lib.conn.execute('SELECT id FROM items WHERE id=?', (item_id,))
+        c = self.lib._connection().execute(
+            'SELECT id FROM items WHERE id=?', (item_id,)
+        )
         self.assertEqual(c.fetchone(), None)
 
     def test_removing_last_item_removes_album(self):
@@ -807,7 +815,7 @@ class PathStringTest(unittest.TestCase):
         self.assert_(isinstance(self.i.path, str))
 
     def test_unicode_in_database_becomes_bytestring(self):
-        self.lib.conn.execute("""
+        self.lib._connection().execute("""
         update items set path=? where id=?
         """, (self.i.id, u'somepath'))
         i = list(self.lib.items())[0]
@@ -864,7 +872,7 @@ class PathStringTest(unittest.TestCase):
 
     def test_unicode_artpath_in_database_decoded(self):
         alb = self.lib.add_album([self.i])
-        self.lib.conn.execute(
+        self.lib._connection().execute(
             "update albums set artpath=? where id=?",
             (u'somep\xe1th', alb.id)
         )

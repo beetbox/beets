@@ -47,7 +47,7 @@ def before_request():
     g.lib = _reopen_lib(app.config['lib'])
 @app.teardown_request
 def teardown_request(req):
-    g.lib.conn.close()
+    g.lib._connection().close()
 
 
 # Items.

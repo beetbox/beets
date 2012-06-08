@@ -21,6 +21,7 @@ import sys
 import logging
 import shlex
 import unicodedata
+import threading
 from unidecode import unidecode
 from beets.mediafile import MediaFile
 from beets import plugins
@@ -155,6 +156,22 @@ def _orelse(exp1, exp2):
     return ('(CASE {0} WHEN NULL THEN {1} '
                       'WHEN "" THEN {1} '
                       'ELSE {0} END)').format(exp1, exp2)
+
+# An SQLite function for regular expression matching.
+def _regexp(expr, val):
+    """Return a boolean indicating whether the regular expression `expr`
+    matches `val`.
+    """
+    if val is None or expr is None:
+        return False
+    if not isinstance(val, basestring):
+        val = unicode(val)
+    try:
+        res = re.search(expr, val)
+    except re.error:
+        # Invalid regular expression.
+        return False
+    return res is not None
 
 
 # Exceptions.
@@ -902,25 +919,25 @@ class Transaction(object):
         """
         assert self.lib._tx_stack.pop() is self
         if not self.lib._tx_stack:
-            self.lib.conn.commit()
+            self.lib._connection().commit()
 
     def query(self, statement, subvals=()):
         """Execute an SQL statement with substitution values and return
         a list of rows from the database.
         """
-        cursor = self.lib.conn.execute(statement, subvals)
+        cursor = self.lib._connection().execute(statement, subvals)
         return cursor.fetchall()
 
     def mutate(self, statement, subvals=()):
         """Execute an SQL statement with substitution values and return
         the row ID of the last affected row.
         """
-        cursor = self.lib.conn.execute(statement, subvals)
+        cursor = self.lib._connection().execute(statement, subvals)
         return cursor.lastrowid
 
     def script(self, statements):
         """Execute a string containing multiple SQL statements."""
-        self.lib.conn.executescript(statements)
+        self.lib._connection().executescript(statements)
 
 class Library(BaseLibrary):
     """A music library using an SQLite database as a metadata store."""
@@ -946,23 +963,7 @@ class Library(BaseLibrary):
         self._tx_stack = []
 
         self.timeout = timeout
-        self.conn = sqlite3.connect(self.path, timeout)
-        # This way we can access our SELECT results like dictionaries.
-        self.conn.row_factory = sqlite3.Row
-
-        # Add REGEXP function to SQLite queries.
-        def regexp(expr, val):
-            if val is None or expr is None:
-                return False
-            if not isinstance(val, basestring):
-                val = unicode(val)
-            try:
-                res = re.search(expr, val)
-            except re.error:
-                # Invalid regular expression.
-                return False
-            return res is not None
-        self.conn.create_function("REGEXP", 2, regexp)
+        self._connections = {}
 
         self._make_table('items', item_fields)
         self._make_table('albums', album_fields)
@@ -1009,6 +1010,25 @@ class Library(BaseLibrary):
 
         with self.transaction() as tx:
             tx.script(setup_sql)
+
+    def _connection(self):
+        """Get a SQLite connection object to the underlying database.
+        One connection object is created per thread.
+        """
+        thread_id = threading.current_thread().ident
+        if thread_id in self._connections:
+            return self._connections[thread_id]
+        else:
+            # Make a new connection.
+            conn = sqlite3.connect(self.path, self.timeout)
+
+            # Access SELECT results like dictionaries.
+            conn.row_factory = sqlite3.Row
+            # Add the REGEXP function to SQLite queries.
+            conn.create_function("REGEXP", 2, _regexp)
+
+            self._connections[thread_id] = conn
+            return conn
 
     def transaction(self):
         """Get a transaction object for interacting with the database.
