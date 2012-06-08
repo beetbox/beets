@@ -18,6 +18,12 @@ Changelog
 * New metadata fields for `artist credits`_: ``artist_credit`` and
   ``albumartist_credit`` can now contain release- and recording-specific
   variations of the artist's name. See :ref:`itemfields`.
+* Revamped the way beets handles concurrent database access to avoid
+  nondeterministic SQLite-related crashes when using the multithreaded importer.
+  On systems where SQLite was compiled without ``usleep(3)`` support,
+  multithreaded database access could cause an internal error (with the message
+  "database is locked"). This release synchronizes access to the database to
+  avoid internal SQLite contention, which should avoid this error.
 * New plugin event: ``import_task_choice`` is called after an import task has an
   action assigned.
 * New plugin event: ``library_opened`` is called when beets starts up and
