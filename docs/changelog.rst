@@ -30,6 +30,8 @@ Changelog
   `$genre` would use the old genre instead of the newly discovered one.
 * New plugin event: ``import_task_choice`` is called after an import task has an
   action assigned.
+* New plugin event: `import_task_files` is called after a task's file
+  manipulation has finished (copying or moving files, writing metadata tags).
 * New plugin event: ``library_opened`` is called when beets starts up and
   opens the library database.
 * Fix a crash when moving files to a Samba share.

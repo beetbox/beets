@@ -142,6 +142,10 @@ currently available are:
   Use ``task.choice_flag`` to determine the action to be taken. Parameters:
   ``task`` and ``config``.
 
+* *import_task_files*: called after an import task finishes manipulating the
+  filesystem (copying and moving files, writing metadata tags). Parameters:
+  ``task`` and ``config``.
+
 * *library_opened*: called after beets starts up and initializes the main
   Library object. Parameter: ``lib``.
 

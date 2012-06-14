@@ -779,6 +779,9 @@ def manipulate_files(config):
             for item in items:
                 config.lib.store(item)
 
+        # Plugin event.
+        plugins.send('import_task_files', config=config, task=task)
+
 def fetch_art(config):
     """A coroutine that fetches and applies album art for albums where
     appropriate.
