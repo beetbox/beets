@@ -23,11 +23,13 @@ import difflib
 def fuzzy_score(query, item):
     return difflib.SequenceMatcher(a=query, b=item).quick_ratio()
 
-def is_match(query, item, verbose=False):
+def is_match(query, item, album=False, verbose=False):
     query = ' '.join(query)
-    s =  max(fuzzy_score(query, i) for i in (item.artist,
-                                           item.album,
-                                           item.title))
+
+    if album: values = [item.albumartist, item.album]
+    else: values = [item.artist, item.album, item.title]
+
+    s =  max(fuzzy_score(query, i) for i in values)
     if s > 0.7: return (True, s) if verbose else True
     else: return (False, s) if verbose else False
 
@@ -54,10 +56,12 @@ def fuzzy_list(lib, config, opts, args):
 
     if opts.album:
         for album in objs:
-            if path:
-                print_(album.item_dir())
-            else:
-                print_(album.evaluate_template(template))
+            if is_match(query, album, album=True):
+                if path:
+                    print_(album.item_dir())
+                else:
+                    print_(album.evaluate_template(template))
+                if verbose: print is_match(query,album, album=True, verbose=True)[1]
     else:
         for item in objs:
             if is_match(query, item):
@@ -65,7 +69,7 @@ def fuzzy_list(lib, config, opts, args):
                     print_(item.path)
                 else:
                     print_(item.evaluate_template(template, lib))
-                if verbose: print is_match(query,item, True)[1]
+                if verbose: print is_match(query,item, verbose=True)[1]
 
 fuzzy_cmd = Subcommand('fuzzy',
                         help='list items using fuzzy matching')
