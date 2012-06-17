@@ -213,7 +213,7 @@ stats
     beet stats [QUERY]
 
 Show some statistics on your entire library (if you don't provide a
-:doc:`query <query>` or the matched items (if you do).
+:doc:`query <query>`) or the matched items (if you do).
 
 fields
 ``````
