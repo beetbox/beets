@@ -48,9 +48,9 @@ def fuzzy_list(lib, config, opts, args):
     template = Template(fmt)
 
     if opts.album:
-        objs = list(lib.albums())
+        objs = lib.albums()
     else:
-        objs = list(lib.items())
+        objs = lib.items()
 
     # matches = [i for i in objs if is_match(query, i)]
 
@@ -83,6 +83,8 @@ fuzzy_cmd.parser.add_option('-v', '--verbose', action='store_true',
         help='output scores for matches')
 fuzzy_cmd.func = fuzzy_list
 
-class Random(BeetsPlugin):
+
+
+class Fuzzy(BeetsPlugin):
     def commands(self):
         return [fuzzy_cmd]
