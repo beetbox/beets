@@ -59,6 +59,7 @@ Changelog
   Mecucci).
 * Fix an assertion failure while importing with moving enabled when the file was
   already at its destination.
+* Use a nicer error message when input requested but stdin is closed.
 
 .. _artist credits: http://wiki.musicbrainz.org/Artist_Credit
 

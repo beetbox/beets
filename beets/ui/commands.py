@@ -25,7 +25,7 @@ import itertools
 import re
 
 from beets import ui
-from beets.ui import print_, decargs
+from beets.ui import print_, input_, decargs
 from beets import autotag
 import beets.autotag.art
 from beets import plugins
@@ -474,18 +474,17 @@ def manual_search(singleton):
     """Input either an artist and album (for full albums) or artist and
     track name (for singletons) for manual search.
     """
-    artist = raw_input('Artist: ').decode(sys.stdin.encoding)
-    name = raw_input('Track: ' if singleton else 'Album: ') \
-           .decode(sys.stdin.encoding)
+    artist = input_('Artist:')
+    name = input_('Track:' if singleton else 'Album:')
     return artist.strip(), name.strip()
 
 def manual_id(singleton):
     """Input a MusicBrainz ID, either for an album ("release") or a
     track ("recording"). If no valid ID is entered, returns None.
     """
-    prompt = 'Enter MusicBrainz %s ID: ' % \
+    prompt = 'Enter MusicBrainz %s ID:' % \
              ('recording' if singleton else 'release')
-    entry = raw_input(prompt).decode(sys.stdin.encoding).strip()
+    entry = input_(prompt).strip()
 
     # Find the first thing that looks like a UUID/MBID.
     match = re.search('[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', entry)
