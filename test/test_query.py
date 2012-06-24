@@ -421,6 +421,15 @@ class CountTest(unittest.TestCase):
         self.assertEqual(songs, 0)
         self.assertEqual(totaltime, 0.0)
 
+class StringParseTest(unittest.TestCase):
+    def test_single_field_query(self):
+        q = beets.library.AndQuery.from_string(u'albumtype:soundtrack')
+        self.assertEqual(len(q.subqueries), 1)
+        subq = q.subqueries[0]
+        self.assertTrue(isinstance(subq, beets.library.SubstringQuery))
+        self.assertEqual(subq.field, 'albumtype')
+        self.assertEqual(subq.pattern, 'soundtrack')
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

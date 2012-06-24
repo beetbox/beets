@@ -595,7 +595,14 @@ class CollectionQuery(Query):
         """Creates a query based on a single string. The string is split
         into query parts using shell-style syntax.
         """
-        return cls.from_strings(shlex.split(query))
+        # A bug in Python < 2.7.3 prevents correct shlex splitting of
+        # Unicode strings.
+        # http://bugs.python.org/issue6988
+        if isinstance(query, unicode):
+            pass
+            query = query.encode('utf8')
+        parts = [s.decode('utf8') for s in shlex.split(query)]
+        return cls.from_strings(parts)
 
 class AnySubstringQuery(CollectionQuery):
     """A query that matches a substring in any of a list of metadata
