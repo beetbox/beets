@@ -1053,7 +1053,7 @@ class Library(BaseLibrary):
                 return self._connections[thread_id]
             else:
                 # Make a new connection.
-                conn = sqlite3.connect(self.path, self.timeout)
+                conn = sqlite3.connect(self.path, timeout=self.timeout)
 
                 # Access SELECT results like dictionaries.
                 conn.row_factory = sqlite3.Row
