@@ -4,6 +4,7 @@
 .DS_Store
 .sconsign*
 .svn
+.tox
 
 # file patterns
 
