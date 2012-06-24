@@ -16,6 +16,11 @@ art for your music, enable this plugin after upgrading to beets 1.0b15.
   Thanks to Fabrice Laporte.
 * Album cover art fetching is now encapsulated in the :doc:`/plugins/fetchart`.
   Be sure to enable this plugin if you're using this functionality.
+* :doc:`/plugins/fetchart`: Cover art can now be fetched from the `Cover Art
+  Archive`_, a new image repository from MusicBrainz and the Internet Archive.
+  While its coverage is currently spotty, CAA is growing and its images are
+  generally higher-quality than those from Amazon. You can help out by
+  `submitting new images to the archive`_.
 * Errors when communicating with MusicBrainz now log an error message instead of
   halting the importer.
 * Similarly, filesystem manipulation errors now print helpful error messages
@@ -70,7 +75,10 @@ art for your music, enable this plugin after upgrading to beets 1.0b15.
   already at its destination.
 * Use a nicer error message when input requested but stdin is closed.
 
+.. _submitting new images to the archive:
+    http://musicbrainz.org/doc/How_to_Add_Cover_Art
 .. _artist credits: http://wiki.musicbrainz.org/Artist_Credit
+.. _Cover Art Archive: http://coverartarchive.org/
 
 1.0b14 (May 12, 2012)
 ---------------------

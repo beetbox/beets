@@ -85,6 +85,7 @@ class CombinedTest(unittest.TestCase):
 
     def _urlopen(self, url):
         self.urlopen_called = True
+        self.fetched_url = url
         return StringIO.StringIO(self.page_text)
 
     def test_main_interface_returns_amazon_art(self):
@@ -129,6 +130,14 @@ class CombinedTest(unittest.TestCase):
         album = AlbumInfo(None, None, None, None, None, asin='xxxx')
         fetchart.art_for_album(album, self.dpath)
         self.assertTrue(self.urlopen_called)
+
+    def test_main_interface_uses_caa_when_mbid_available(self):
+        mock_retrieve = MockUrlRetrieve('anotherpath', 'image/jpeg')
+        fetchart.urllib.urlretrieve = mock_retrieve
+        album = AlbumInfo(None, 'releaseid', None, None, None, asin='xxxx')
+        artpath = fetchart.art_for_album(album, None)
+        self.assertEqual(artpath, 'anotherpath')
+        self.assertTrue('coverartarchive.org' in mock_retrieve.fetched)
 
 class AAOTest(unittest.TestCase):
     def setUp(self):

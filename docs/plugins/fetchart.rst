@@ -18,10 +18,12 @@ the :ref:`art-filename` config option.
 Album Art Sources
 -----------------
 
-Currently, this plugin searches for art in the local filesystem, on Amazon.com,
-and on AlbumArt.org (in that order).
+Currently, this plugin searches for art in the local filesystem, on the `Cover
+Art Archive`_, on Amazon, and on AlbumArt.org (in that order).
 
-When looking for local album art, beets looks for image files located in the
+.. _Cover Art Archive: http://coverartarchive.org/
+
+When looking for local album art, beets checks for image files located in the
 same folder as the music files you're importing. If you have an image file
 called "cover," "front," "art," "album," for "folder" alongside your music,
 beets will treat it as album art and skip searching any online databases.

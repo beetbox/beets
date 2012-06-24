@@ -50,13 +50,25 @@ def _fetch_image(url):
         log.debug('Not an image.')
 
 
+# Cover Art Archive.
+
+CAA_URL = 'http://coverartarchive.org/release/{mbid}/front-500'
+
+def caa_art(release_id):
+    """Fetch album art from the Cover Art Archive given a MusicBrainz
+    release ID.
+    """
+    url = CAA_URL.format(mbid=release_id)
+    return _fetch_image(url)
+
+
 # Art from Amazon.
 
 AMAZON_URL = 'http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
 AMAZON_INDICES = (1, 2)
 
 def art_for_asin(asin):
-    """Fetches art for an Amazon ID (ASIN) string."""
+    """Fetch art for an Amazon ID (ASIN) string."""
     for index in AMAZON_INDICES:
         # Fetch the image.
         url = AMAZON_URL % (asin, index)
@@ -71,6 +83,7 @@ AAO_URL = 'http://www.albumart.org/index_detail.php'
 AAO_PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
 
 def aao_art(asin):
+    """Fetch art from AlbumArt.org."""
     # Get the page from albumart.org.
     url = '%s?%s' % (AAO_URL, urllib.urlencode({'asin': asin}))
     try:
@@ -119,11 +132,17 @@ def art_in_path(path):
 # Try each source in turn.
 
 def art_for_album(album, path):
-    """Given an album info dictionary from MusicBrainz, returns a path
-    to downloaded art for the album (or None if no art is found).
+    """Given an AlbumInfo object, returns a path to downloaded art for
+    the album (or None if no art is found).
     """
     if isinstance(path, basestring):
         out = art_in_path(path)
+        if out:
+            return out
+
+    if album.album_id:
+        log.debug('Fetching album art for MBID {0}.'.format(album.album_id))
+        out = caa_art(album.album_id)
         if out:
             return out
 
