@@ -74,13 +74,6 @@ Either ``yes`` or ``no``, controlling whether imported directories are
 recorded and whether these recorded directories are skipped.  This
 corresponds to the ``-i`` flag to ``beet import``.
 
-import_art
-~~~~~~~~~~
-
-Either ``yes`` or ``no``, indicating whether the autotagger should attempt
-to find and download album cover art for the files it imports.  Defaults to
-``yes``. The ``-r`` and ``-R`` command-line options override this setting.
-
 import_quiet_fallback
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -157,6 +150,8 @@ example, to remove all vowels from your filenames::
 
     replace = [aeiou] <strip>
                 ...
+
+.. _art-filename:
 
 art_filename
 ~~~~~~~~~~~~

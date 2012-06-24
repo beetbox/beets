@@ -4,11 +4,18 @@ Changelog
 1.0b15 (in development)
 -----------------------
 
+This release contains one backwards-incompatible change: album art fetching,
+which was previously baked into the import workflow, is now encapsulated in a
+plugin (the :doc:`/plugins/fetchart`). If you want to continue fetching cover
+art for your music, enable this plugin after upgrading to beets 1.0b15.
+
 * Tracks on multi-disc albums can now be numbered per-disc instead of per-album
   via the :ref:`per_disc_numbering` config option.
 * The default output format for the ``beet list`` command is now configurable
   via the :ref:`list_format_item` and :ref:`list_format_album` config options.
   Thanks to Fabrice Laporte.
+* Album cover art fetching is now encapsulated in the :doc:`/plugins/fetchart`.
+  Be sure to enable this plugin if you're using this functionality.
 * Errors when communicating with MusicBrainz now log an error message instead of
   halting the importer.
 * Similarly, filesystem manipulation errors now print helpful error messages

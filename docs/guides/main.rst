@@ -164,12 +164,6 @@ This will attempt to autotag the new album (interactively) and add it to your
 library. There are, of course, more options for this command---just type ``beet
 help import`` to see what's available.
 
-By default, the ``import`` command will try to find and download album art for
-every album it finds. It will store the art in a file called ``cover.jpg``
-alongside the songs. If you don't like that, you can disable it with the ``-R``
-switch or by setting a value in the :doc:`configuration file
-</reference/config>`.
-
 Seeing Your Music
 -----------------
 

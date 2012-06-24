@@ -12,9 +12,10 @@ This plugin was added in beets 1.0b8.
 Embedding Art Automatically
 ---------------------------
 
-To automatically embed discovered album art into imported files, just
-:doc:`enable the plugin </plugins/index>`. Art will be embedded after each album
-is added to the library.
+To automatically embed discovered album art into imported files, just enable the
+plugin (see :doc:`/plugins/index`). You'll also want to enable the
+:doc:`/plugins/fetchart` to obtain the images to be embedded. Art will be
+embedded after each album is added to the library.
 
 This behavior can be disabled with the ``autoembed`` config option (see below).
 

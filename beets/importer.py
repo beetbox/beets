@@ -24,7 +24,6 @@ from collections import defaultdict
 
 from beets import autotag
 from beets import library
-import beets.autotag.art
 from beets import plugins
 from beets import util
 from beets.util import pipeline
@@ -243,7 +242,7 @@ class ImportConfig(object):
     then never touched again.
     """
     _fields = ['lib', 'paths', 'resume', 'logfile', 'color', 'quiet',
-               'quiet_fallback', 'copy', 'move', 'write', 'art', 'delete',
+               'quiet_fallback', 'copy', 'move', 'write', 'delete',
                'choose_match_func', 'should_resume_func', 'threaded',
                'autot', 'singletons', 'timid', 'choose_item_func',
                'query', 'incremental', 'ignore',
@@ -397,10 +396,6 @@ class ImportTask(object):
             return False
         else:
             assert False
-
-    def should_fetch_art(self):
-        """Should album art be downloaded for this album?"""
-        return self.should_write_tags() and self.is_album
 
     def should_skip(self):
         """After a choice has been made, returns True if this is a
@@ -782,27 +777,6 @@ def manipulate_files(config):
         # Plugin event.
         plugins.send('import_task_files', config=config, task=task)
 
-def fetch_art(config):
-    """A coroutine that fetches and applies album art for albums where
-    appropriate.
-    """
-    task = None
-    while True:
-        task = yield task
-        if task.should_skip():
-            continue
-
-        if task.should_fetch_art():
-            artpath = beets.autotag.art.art_for_album(task.info, task.path)
-
-            # Save the art if any was found.
-            if artpath:
-                album = config.lib.get_album(task.album_id)
-                album.set_art(artpath, not (config.delete or config.move))
-
-                if config.delete or config.move:
-                    task.prune(artpath)
-
 def finalize(config):
     """A coroutine that finishes up importer tasks. In particular, the
     coroutine sends plugin events, deletes old files, and saves
@@ -932,8 +906,6 @@ def run_import(**kwargs):
     for stage_func in plugins.import_stages():
         stages.append(plugin_stage(config, stage_func))
     stages += [manipulate_files(config)]
-    if config.art:
-        stages += [fetch_art(config)]
     stages += [finalize(config)]
     pl = pipeline.Pipeline(stages)
 
