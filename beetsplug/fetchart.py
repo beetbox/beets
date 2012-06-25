@@ -190,12 +190,20 @@ def batch_fetch_art(lib, albums, force):
 class FetchArtPlugin(BeetsPlugin):
     def __init__(self):
         super(FetchArtPlugin, self).__init__()
-        self.import_stages = [self.fetch_art]
-        self.register_listener('import_task_files', self.assign_art)
+
+        self.autofetch = True
 
         # Holds paths to downloaded images between fetching them and
         # placing them in the filesystem.
         self.art_paths = {}
+
+    def configure(self, config):
+        self.autofetch = ui.config_val(config, 'fetchart',
+                                       'autofetch', True, bool)
+        if self.autofetch:
+            # Enable two import hooks when fetching is enabled.
+            self.import_stages = [self.fetch_art]
+            self.register_listener('import_task_files', self.assign_art)
 
     # Asynchronous; after music is added to the library.
     def fetch_art(self, config, task):

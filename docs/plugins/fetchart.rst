@@ -15,6 +15,12 @@ By default, beets stores album art image files alongside the music files for an
 album in a file called ``cover.jpg``. To customize the name of this file, use
 the :ref:`art-filename` config option.
 
+To disable automatic art downloading, just put this in your configuration
+file::
+
+    [fetchart]
+    autofetch: no
+
 Manually Fetching Album Art
 ---------------------------
 

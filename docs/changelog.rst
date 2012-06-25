@@ -27,7 +27,8 @@ art for your music, enable this plugin after upgrading to beets 1.0b15.
     the local filesystem (although Web repositories are still not searched in
     these cases).
   * A new command, ``beet fetchart``, allows you to download album art
-    post-import.
+    post-import. If you only want to fetch art manually, not automatically
+    during import, set the new plugin's ``autofetch`` option to ``no``.
 
 * Errors when communicating with MusicBrainz now log an error message instead of
   halting the importer.

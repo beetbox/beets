@@ -281,19 +281,16 @@ def import_stages():
 
 # Event dispatch.
 
-# All the handlers for the event system.
-# Each key of the dictionary should contain a list of functions to be
-# called for any event. Functions will be called in the order they were
-# added.
-_event_handlers = defaultdict(list)
-
-def load_listeners():
-    """Loads and registers event handlers from all loaded plugins.
+def event_handlers():
+    """Find all event handlers from plugins as a dictionary mapping
+    event names to sequences of callables.
     """
+    all_handlers = defaultdict(list)
     for plugin in find_plugins():
         if plugin.listeners:
             for event, handlers in plugin.listeners.items():
-                _event_handlers[event] += handlers
+                all_handlers[event] += handlers
+    return all_handlers
 
 def send(event, **arguments):
     """Sends an event to all assigned event listeners. Event is the
@@ -303,7 +300,7 @@ def send(event, **arguments):
     Returns the number of handlers called.
     """
     log.debug('Sending event: %s' % event)
-    handlers = _event_handlers[event]
+    handlers = event_handlers()[event]
     for handler in handlers:
         handler(**arguments)
     return len(handlers)
