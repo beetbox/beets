@@ -28,6 +28,10 @@ same folder as the music files you're importing. If you have an image file
 called "cover," "front," "art," "album," for "folder" alongside your music,
 beets will treat it as album art and skip searching any online databases.
 
+When you choose to apply changes during an import, beets searches all sources
+for album art. For "as-is" imports (and non-autotagged imports using the ``-A``
+flag), beets only looks for art on the local filesystem.
+
 Embedding Album Art
 -------------------
 

@@ -79,6 +79,7 @@ class CombinedTest(unittest.TestCase):
         self.old_urlopen = fetchart.urllib.urlopen
         fetchart.urllib.urlopen = self._urlopen
         self.page_text = ""
+        self.urlopen_called = False
     def tearDown(self):
         shutil.rmtree(self.dpath)
         fetchart.urllib.urlopen = self.old_urlopen
@@ -116,7 +117,6 @@ class CombinedTest(unittest.TestCase):
         self.assertEqual(artpath, 'anotherpath')
 
     def test_main_interface_tries_amazon_before_aao(self):
-        self.urlopen_called = False
         fetchart.urllib.urlretrieve = \
                 MockUrlRetrieve('anotherpath', 'image/jpeg')
         album = AlbumInfo(None, None, None, None, None, asin='xxxx')
@@ -124,7 +124,6 @@ class CombinedTest(unittest.TestCase):
         self.assertFalse(self.urlopen_called)
 
     def test_main_interface_falls_back_to_aao(self):
-        self.urlopen_called = False
         fetchart.urllib.urlretrieve = \
                 MockUrlRetrieve('anotherpath', 'text/html')
         album = AlbumInfo(None, None, None, None, None, asin='xxxx')
@@ -138,6 +137,25 @@ class CombinedTest(unittest.TestCase):
         artpath = fetchart.art_for_album(album, None)
         self.assertEqual(artpath, 'anotherpath')
         self.assertTrue('coverartarchive.org' in mock_retrieve.fetched)
+
+    def test_local_only_does_not_access_network(self):
+        mock_retrieve = MockUrlRetrieve('anotherpath', 'image/jpeg')
+        fetchart.urllib.urlretrieve = mock_retrieve
+        album = AlbumInfo(None, 'albumid', None, None, None, asin='xxxx')
+        artpath = fetchart.art_for_album(album, self.dpath, local_only=True)
+        self.assertEqual(artpath, None)
+        self.assertFalse(self.urlopen_called)
+        self.assertFalse(mock_retrieve.fetched)
+
+    def test_local_only_gets_fs_image(self):
+        _common.touch(os.path.join(self.dpath, 'a.jpg'))
+        mock_retrieve = MockUrlRetrieve('anotherpath', 'image/jpeg')
+        fetchart.urllib.urlretrieve = mock_retrieve
+        album = AlbumInfo(None, 'albumid', None, None, None, asin='xxxx')
+        artpath = fetchart.art_for_album(album, self.dpath, local_only=True)
+        self.assertEqual(artpath, os.path.join(self.dpath, 'a.jpg'))
+        self.assertFalse(self.urlopen_called)
+        self.assertFalse(mock_retrieve.fetched)
 
 class AAOTest(unittest.TestCase):
     def setUp(self):
@@ -176,7 +194,10 @@ class ArtImporterTest(unittest.TestCase, _common.ExtraAsserts):
         self.art_file = os.path.join(_common.RSRC, 'tmpcover.jpg')
         _common.touch(self.art_file)
         self.old_afa = fetchart.art_for_album
-        fetchart.art_for_album = lambda a, b: self.art_file
+        self.afa_response = self.art_file
+        def art_for_album(i, p, local_only=False):
+            return self.afa_response
+        fetchart.art_for_album = art_for_album
 
         # Test library.
         self.libpath = os.path.join(_common.RSRC, 'tmplib.blb')
@@ -241,7 +262,7 @@ class ArtImporterTest(unittest.TestCase, _common.ExtraAsserts):
         self._fetch_art(True)
 
     def test_art_not_found(self):
-        fetchart.art_for_album = lambda a, b: None
+        self.afa_response = None
         self._fetch_art(False)
 
     def test_no_art_for_singleton(self):
@@ -265,7 +286,7 @@ class ArtImporterTest(unittest.TestCase, _common.ExtraAsserts):
     def test_do_not_delete_original_if_already_in_place(self):
         artdest = os.path.join(os.path.dirname(self.i.path), 'cover.jpg')
         shutil.copyfile(self.art_file, artdest)
-        fetchart.art_for_album = lambda a, b: artdest
+        self.afa_response = artdest
         self._fetch_art(True)
 
 

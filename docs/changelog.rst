@@ -21,6 +21,9 @@ art for your music, enable this plugin after upgrading to beets 1.0b15.
   While its coverage is currently spotty, CAA is growing and its images are
   generally higher-quality than those from Amazon. You can help out by
   `submitting new images to the archive`_.
+* :doc:`/plugins/fetchart`: "As-is" and non-autotagged imports can now have
+  album art imported from the local filesystem (although Web repositories are
+  still not searched in these cases).
 * Errors when communicating with MusicBrainz now log an error message instead of
   halting the importer.
 * Similarly, filesystem manipulation errors now print helpful error messages

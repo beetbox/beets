@@ -20,6 +20,7 @@ import logging
 import os
 
 from beets.plugins import BeetsPlugin
+from beets import importer
 
 IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 COVER_NAMES = ['cover', 'front', 'art', 'album', 'folder']
@@ -131,30 +132,39 @@ def art_in_path(path):
 
 # Try each source in turn.
 
-def art_for_album(album, path):
+def art_for_album(album, path, local_only=False):
     """Given an AlbumInfo object, returns a path to downloaded art for
-    the album (or None if no art is found).
+    the album (or None if no art is found). If `local_only`, then only
+    local image files from the filesystem are returned; no network
+    requests are made.
     """
+    # Local art.
     if isinstance(path, basestring):
         out = art_in_path(path)
         if out:
             return out
+    if local_only:
+        # Abort without trying Web sources.
+        return
 
+    # CoverArtArchive.org.
     if album.album_id:
         log.debug('Fetching album art for MBID {0}.'.format(album.album_id))
         out = caa_art(album.album_id)
         if out:
             return out
 
+    # Amazon and AlbumArt.org.
     if album.asin:
         log.debug('Fetching album art for ASIN %s.' % album.asin)
         out = art_for_asin(album.asin)
         if out:
             return out
         return aao_art(album.asin)
-    else:
-        log.debug('No ASIN available: no art found.')
-        return None
+
+    # All sources failed.
+    log.debug('No ASIN available: no art found.')
+    return None
 
 
 # PLUGIN LOGIC ###############################################################
@@ -172,8 +182,18 @@ class FetchArtPlugin(BeetsPlugin):
     # Asynchronous; after music is added to the library.
     def fetch_art(self, config, task):
         """Find art for the album being imported."""
-        if task.should_write_tags() and task.is_album:
-            path = art_for_album(task.info, task.path)
+        if task.is_album:  # Only fetch art for full albums.
+            if task.choice_flag == importer.action.ASIS:
+                # For as-is imports, don't search Web sources for art.
+                local = True
+            elif task.choice_flag == importer.action.APPLY:
+                # Search everywhere for art.
+                local = False
+            else:
+                # For any other choices (e.g., TRACKS), do nothing.
+                return
+
+            path = art_for_album(task.info, task.path, local_only=local)
             if path:
                 self.art_paths[task] = path
 
