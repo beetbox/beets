@@ -92,12 +92,12 @@ class CombinedTest(unittest.TestCase):
     def test_main_interface_returns_amazon_art(self):
         fetchart.urllib.urlretrieve = \
                 MockUrlRetrieve('anotherpath', 'image/jpeg')
-        album = AlbumInfo(None, None, None, None, None, asin='xxxx')
+        album = _common.Bag(asin='xxxx')
         artpath = fetchart.art_for_album(album, None)
         self.assertEqual(artpath, 'anotherpath')
 
     def test_main_interface_returns_none_for_missing_asin_and_path(self):
-        album = AlbumInfo(None, None, None, None, None, asin=None)
+        album = _common.Bag()
         artpath = fetchart.art_for_album(album, None)
         self.assertEqual(artpath, None)
 
@@ -105,35 +105,35 @@ class CombinedTest(unittest.TestCase):
         _common.touch(os.path.join(self.dpath, 'a.jpg'))
         fetchart.urllib.urlretrieve = \
                 MockUrlRetrieve('anotherpath', 'image/jpeg')
-        album = AlbumInfo(None, None, None, None, None, asin='xxxx')
+        album = _common.Bag(asin='xxxx')
         artpath = fetchart.art_for_album(album, self.dpath)
         self.assertEqual(artpath, os.path.join(self.dpath, 'a.jpg'))
 
     def test_main_interface_falls_back_to_amazon(self):
         fetchart.urllib.urlretrieve = \
                 MockUrlRetrieve('anotherpath', 'image/jpeg')
-        album = AlbumInfo(None, None, None, None, None, asin='xxxx')
+        album = _common.Bag(asin='xxxx')
         artpath = fetchart.art_for_album(album, self.dpath)
         self.assertEqual(artpath, 'anotherpath')
 
     def test_main_interface_tries_amazon_before_aao(self):
         fetchart.urllib.urlretrieve = \
                 MockUrlRetrieve('anotherpath', 'image/jpeg')
-        album = AlbumInfo(None, None, None, None, None, asin='xxxx')
+        album = _common.Bag(asin='xxxx')
         fetchart.art_for_album(album, self.dpath)
         self.assertFalse(self.urlopen_called)
 
     def test_main_interface_falls_back_to_aao(self):
         fetchart.urllib.urlretrieve = \
                 MockUrlRetrieve('anotherpath', 'text/html')
-        album = AlbumInfo(None, None, None, None, None, asin='xxxx')
+        album = _common.Bag(asin='xxxx')
         fetchart.art_for_album(album, self.dpath)
         self.assertTrue(self.urlopen_called)
 
     def test_main_interface_uses_caa_when_mbid_available(self):
         mock_retrieve = MockUrlRetrieve('anotherpath', 'image/jpeg')
         fetchart.urllib.urlretrieve = mock_retrieve
-        album = AlbumInfo(None, 'releaseid', None, None, None, asin='xxxx')
+        album = _common.Bag(mb_albumid='releaseid', asin='xxxx')
         artpath = fetchart.art_for_album(album, None)
         self.assertEqual(artpath, 'anotherpath')
         self.assertTrue('coverartarchive.org' in mock_retrieve.fetched)
@@ -141,7 +141,7 @@ class CombinedTest(unittest.TestCase):
     def test_local_only_does_not_access_network(self):
         mock_retrieve = MockUrlRetrieve('anotherpath', 'image/jpeg')
         fetchart.urllib.urlretrieve = mock_retrieve
-        album = AlbumInfo(None, 'albumid', None, None, None, asin='xxxx')
+        album = _common.Bag(mb_albumid='releaseid', asin='xxxx')
         artpath = fetchart.art_for_album(album, self.dpath, local_only=True)
         self.assertEqual(artpath, None)
         self.assertFalse(self.urlopen_called)
@@ -151,7 +151,7 @@ class CombinedTest(unittest.TestCase):
         _common.touch(os.path.join(self.dpath, 'a.jpg'))
         mock_retrieve = MockUrlRetrieve('anotherpath', 'image/jpeg')
         fetchart.urllib.urlretrieve = mock_retrieve
-        album = AlbumInfo(None, 'albumid', None, None, None, asin='xxxx')
+        album = _common.Bag(mb_albumid='releaseid', asin='xxxx')
         artpath = fetchart.art_for_album(album, self.dpath, local_only=True)
         self.assertEqual(artpath, os.path.join(self.dpath, 'a.jpg'))
         self.assertFalse(self.urlopen_called)

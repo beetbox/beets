@@ -15,6 +15,19 @@ By default, beets stores album art image files alongside the music files for an
 album in a file called ``cover.jpg``. To customize the name of this file, use
 the :ref:`art-filename` config option.
 
+Manually Fetching Album Art
+---------------------------
+
+Use the ``fetchart`` command to download album art after albums have already
+been imported::
+
+    $ beet fetchart [-f] [query]
+
+By default, the command will only look for album art when the album doesn't
+already have it; the ``-f`` or ``--force`` switch makes it search for art
+regardless. If you specify a query, only matching albums will be processed;
+otherwise, the command processes every album in your library.
+
 Album Art Sources
 -----------------
 

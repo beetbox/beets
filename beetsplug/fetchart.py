@@ -21,6 +21,7 @@ import os
 
 from beets.plugins import BeetsPlugin
 from beets import importer
+from beets import ui
 
 IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 COVER_NAMES = ['cover', 'front', 'art', 'album', 'folder']
@@ -133,10 +134,10 @@ def art_in_path(path):
 # Try each source in turn.
 
 def art_for_album(album, path, local_only=False):
-    """Given an AlbumInfo object, returns a path to downloaded art for
-    the album (or None if no art is found). If `local_only`, then only
-    local image files from the filesystem are returned; no network
-    requests are made.
+    """Given an Album object, returns a path to downloaded art for the
+    album (or None if no art is found). If `local_only`, then only local
+    image files from the filesystem are returned; no network requests
+    are made.
     """
     # Local art.
     if isinstance(path, basestring):
@@ -148,9 +149,9 @@ def art_for_album(album, path, local_only=False):
         return
 
     # CoverArtArchive.org.
-    if album.album_id:
-        log.debug('Fetching album art for MBID {0}.'.format(album.album_id))
-        out = caa_art(album.album_id)
+    if album.mb_albumid:
+        log.debug('Fetching album art for MBID {0}.'.format(album.mb_albumid))
+        out = caa_art(album.mb_albumid)
         if out:
             return out
 
@@ -168,6 +169,23 @@ def art_for_album(album, path, local_only=False):
 
 
 # PLUGIN LOGIC ###############################################################
+
+def batch_fetch_art(lib, albums, force):
+    """Fetch album art for each of the albums. This implements the manual
+    fetchart CLI command.
+    """
+    for album in albums:
+        if album.artpath and not force:
+            message = 'has album art'
+        else:
+            path = art_for_album(album, None)
+            if path:
+                album.set_art(path, False)
+                message = 'found album art'
+            else:
+                message = 'no art found'
+        log.info(u'{0} - {1}: {2}'.format(album.albumartist, album.album,
+                                          message))
 
 class FetchArtPlugin(BeetsPlugin):
     def __init__(self):
@@ -193,7 +211,8 @@ class FetchArtPlugin(BeetsPlugin):
                 # For any other choices (e.g., TRACKS), do nothing.
                 return
 
-            path = art_for_album(task.info, task.path, local_only=local)
+            album = config.lib.get_album(task.album_id)
+            path = art_for_album(album, task.path, local_only=local)
             if path:
                 self.art_paths[task] = path
 
@@ -208,3 +227,14 @@ class FetchArtPlugin(BeetsPlugin):
 
             if config.delete or config.move:
                 task.prune(path)
+
+    # Manual album art fetching.
+    def commands(self):
+        cmd = ui.Subcommand('fetchart', help='download album art')
+        cmd.parser.add_option('-f', '--force', dest='force',
+                              action='store_true', default=False,
+                              help='re-download art when already present')
+        def func(lib, config, opts, args):
+            batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force)
+        cmd.func = func
+        return [cmd]

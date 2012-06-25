@@ -15,15 +15,20 @@ art for your music, enable this plugin after upgrading to beets 1.0b15.
   via the :ref:`list_format_item` and :ref:`list_format_album` config options.
   Thanks to Fabrice Laporte.
 * Album cover art fetching is now encapsulated in the :doc:`/plugins/fetchart`.
-  Be sure to enable this plugin if you're using this functionality.
-* :doc:`/plugins/fetchart`: Cover art can now be fetched from the `Cover Art
-  Archive`_, a new image repository from MusicBrainz and the Internet Archive.
-  While its coverage is currently spotty, CAA is growing and its images are
-  generally higher-quality than those from Amazon. You can help out by
-  `submitting new images to the archive`_.
-* :doc:`/plugins/fetchart`: "As-is" and non-autotagged imports can now have
-  album art imported from the local filesystem (although Web repositories are
-  still not searched in these cases).
+  Be sure to enable this plugin if you're using this functionality. As a result
+  of this new organization, the new plugin has gained a few new features:
+
+  * Cover art can now be fetched from the `Cover Art Archive`_, a new image
+    repository from MusicBrainz and the Internet Archive. While its coverage
+    is currently spotty, CAA is growing and its images are generally
+    higher-quality than those from Amazon. You can help out by `submitting new
+    images to the archive`_.
+  * "As-is" and non-autotagged imports can now have album art imported from
+    the local filesystem (although Web repositories are still not searched in
+    these cases).
+  * A new command, ``beet fetchart``, allows you to download album art
+    post-import.
+
 * Errors when communicating with MusicBrainz now log an error message instead of
   halting the importer.
 * Similarly, filesystem manipulation errors now print helpful error messages
