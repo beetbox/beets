@@ -84,7 +84,6 @@ def iconfig(lib, **kwargs):
         copy = True,
         move = False,
         write = False,
-        art = False,
         delete = False,
         choose_match_func = lambda x, y: importer.action.SKIP,
         should_resume_func = lambda _: False,
@@ -208,3 +207,14 @@ class ExtraAsserts(object):
 
 def touch(path):
     open(path, 'a').close()
+
+class Bag(object):
+    """An object that exposes a set of fields given as keyword
+    arguments. Any field not found in the dictionary appears to be None.
+    Used for mocking Album objects and the like.
+    """
+    def __init__(self, **fields):
+        self.fields = fields
+
+    def __getattr__(self, key):
+        return self.fields.get(key)

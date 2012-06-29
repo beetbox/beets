@@ -4,11 +4,32 @@ Changelog
 1.0b15 (in development)
 -----------------------
 
+This release contains one backwards-incompatible change: album art fetching,
+which was previously baked into the import workflow, is now encapsulated in a
+plugin (the :doc:`/plugins/fetchart`). If you want to continue fetching cover
+art for your music, enable this plugin after upgrading to beets 1.0b15.
+
 * Tracks on multi-disc albums can now be numbered per-disc instead of per-album
   via the :ref:`per_disc_numbering` config option.
 * The default output format for the ``beet list`` command is now configurable
   via the :ref:`list_format_item` and :ref:`list_format_album` config options.
   Thanks to Fabrice Laporte.
+* Album cover art fetching is now encapsulated in the :doc:`/plugins/fetchart`.
+  Be sure to enable this plugin if you're using this functionality. As a result
+  of this new organization, the new plugin has gained a few new features:
+
+  * Cover art can now be fetched from the `Cover Art Archive`_, a new image
+    repository from MusicBrainz and the Internet Archive. While its coverage
+    is currently spotty, CAA is growing and its images are generally
+    higher-quality than those from Amazon. You can help out by `submitting new
+    images to the archive`_.
+  * "As-is" and non-autotagged imports can now have album art imported from
+    the local filesystem (although Web repositories are still not searched in
+    these cases).
+  * A new command, ``beet fetchart``, allows you to download album art
+    post-import. If you only want to fetch art manually, not automatically
+    during import, set the new plugin's ``autofetch`` option to ``no``.
+
 * Errors when communicating with MusicBrainz now log an error message instead of
   halting the importer.
 * Similarly, filesystem manipulation errors now print helpful error messages
@@ -46,7 +67,9 @@ Changelog
 * When previewing changes during import, differences in track duration are now
   shown as "2:50 vs. 3:10" rather than separated with ``->`` like track numbers.
   This should clarify that beets isn't doing anything to modify lengths.
-* :doc:`/plugins/chroma`: Fix tracking with ambiguous Acoustids. Some Acoustids
+* Fix a problem with query-based path format matching where a field-qualified
+  pattern, like ``albumtype_soundtrack``, would match everything.
+* :doc:`/plugins/chroma`: Fix matching with ambiguous Acoustids. Some Acoustids
   are identified with multiple recordings; beets now considers any associated
   recording a valid match. This should reduce some cases of errant track
   reordering when using chroma.
@@ -61,7 +84,10 @@ Changelog
   already at its destination.
 * Use a nicer error message when input requested but stdin is closed.
 
+.. _submitting new images to the archive:
+    http://musicbrainz.org/doc/How_to_Add_Cover_Art
 .. _artist credits: http://wiki.musicbrainz.org/Artist_Credit
+.. _Cover Art Archive: http://coverartarchive.org/
 
 1.0b14 (May 12, 2012)
 ---------------------

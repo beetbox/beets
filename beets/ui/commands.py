@@ -18,16 +18,15 @@ interface.
 from __future__ import print_function
 
 import logging
-import sys
 import os
 import time
 import itertools
 import re
 
+import beets
 from beets import ui
 from beets.ui import print_, input_, decargs
 from beets import autotag
-import beets.autotag.art
 from beets import plugins
 from beets import importer
 from beets.util import syspath, normpath, ancestry, displayable_path
@@ -106,7 +105,6 @@ DEFAULT_IMPORT_WRITE          = True
 DEFAULT_IMPORT_DELETE         = False
 DEFAULT_IMPORT_AUTOT          = True
 DEFAULT_IMPORT_TIMID          = False
-DEFAULT_IMPORT_ART            = True
 DEFAULT_IMPORT_QUIET          = False
 DEFAULT_IMPORT_QUIET_FALLBACK = 'skip'
 DEFAULT_IMPORT_RESUME         = None # "ask"
@@ -635,24 +633,23 @@ def resolve_duplicate(task, config):
 
 # The import command.
 
-def import_files(lib, paths, copy, move, write, autot, logpath, art, threaded,
+def import_files(lib, paths, copy, move, write, autot, logpath, threaded,
                  color, delete, quiet, resume, quiet_fallback, singletons,
                  timid, query, incremental, ignore, per_disc_numbering):
     """Import the files in the given list of paths, tagging each leaf
-    directory as an album. If copy, then the files are copied into
-    the library folder. If write, then new metadata is written to the
-    files themselves. If not autot, then just import the files
-    without attempting to tag. If logpath is provided, then untaggable
-    albums will be logged there. If art, then attempt to download
-    cover art for each album. If threaded, then accelerate autotagging
+    directory as an album. If copy, then the files are copied into the
+    library folder. If write, then new metadata is written to the files
+    themselves. If not autot, then just import the files without
+    attempting to tag. If logpath is provided, then untaggable albums
+    will be logged there. If threaded, then accelerate autotagging
     imports by running them in multiple threads. If color, then
     ANSI-colorize some terminal output. If delete, then old files are
-    deleted when they are copied. If quiet, then the user is
-    never prompted for input; instead, the tagger just skips anything
-    it is not confident about. resume indicates whether interrupted
-    imports can be resumed and is either a boolean or None.
-    quiet_fallback should be either ASIS or SKIP and indicates what
-    should happen in quiet mode when the recommendation is not strong.
+    deleted when they are copied. If quiet, then the user is never
+    prompted for input; instead, the tagger just skips anything it is
+    not confident about. resume indicates whether interrupted imports
+    can be resumed and is either a boolean or None. quiet_fallback
+    should be either ASIS or SKIP and indicates what should happen in
+    quiet mode when the recommendation is not strong.
     """
     # Check the user-specified directories.
     for path in paths:
@@ -694,7 +691,6 @@ def import_files(lib, paths, copy, move, write, autot, logpath, art, threaded,
             copy = copy,
             move = move,
             write = write,
-            art = art,
             delete = delete,
             threaded = threaded,
             autot = autot,
@@ -738,10 +734,6 @@ import_cmd.parser.add_option('-p', '--resume', action='store_true',
     default=None, help="resume importing if interrupted")
 import_cmd.parser.add_option('-P', '--noresume', action='store_false',
     dest='resume', help="do not try to resume importing")
-import_cmd.parser.add_option('-r', '--art', action='store_true',
-    default=None, help="try to download album art")
-import_cmd.parser.add_option('-R', '--noart', action='store_false',
-    dest='art', help="don't album art (opposite of -r)")
 import_cmd.parser.add_option('-q', '--quiet', action='store_true',
     dest='quiet', help="never prompt for input: skip albums instead")
 import_cmd.parser.add_option('-l', '--log', dest='logpath',
@@ -768,9 +760,6 @@ def import_func(lib, config, opts, args):
     delete = ui.config_val(config, 'beets', 'import_delete',
             DEFAULT_IMPORT_DELETE, bool)
     autot = opts.autotag if opts.autotag is not None else DEFAULT_IMPORT_AUTOT
-    art = opts.art if opts.art is not None else \
-        ui.config_val(config, 'beets', 'import_art',
-            DEFAULT_IMPORT_ART, bool)
     threaded = ui.config_val(config, 'beets', 'threaded',
             DEFAULT_THREADED, bool)
     color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
@@ -818,7 +807,7 @@ def import_func(lib, config, opts, args):
         query = None
         paths = args
 
-    import_files(lib, paths, copy, move, write, autot, logpath, art, threaded,
+    import_files(lib, paths, copy, move, write, autot, logpath, threaded,
                  color, delete, quiet, resume, quiet_fallback, singletons,
                  timid, query, incremental, ignore, per_disc_numbering)
 import_cmd.func = import_func

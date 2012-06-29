@@ -39,6 +39,7 @@ disabled by default, but you can turn them on as described above.
    lyrics
    bpd
    mpdupdate
+   fetchart
    embedart
    web
    lastgenre
@@ -61,8 +62,8 @@ Metadata
 
 * :doc:`lyrics`: Automatically fetch song lyrics.
 * :doc:`lastgenre`: Fetch genres based on Last.fm tags.
-* :doc:`embedart`: Embed album art images into files' metadata. (By default,
-  beets uses image files "on the side" instead of embedding images.)
+* :doc:`fetchart`: Fetch album cover art from various sources.
+* :doc:`embedart`: Embed album art images into files' metadata.
 * :doc:`replaygain`: Calculate volume normalization for players that support it.
 * :doc:`scrub`: Clean extraneous metadata from music files.
 

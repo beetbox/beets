@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2011, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -24,7 +24,6 @@ from beets import library
 from beets import importer
 from beets import mediafile
 from beets.autotag import AlbumInfo, TrackInfo
-from beets.autotag import art
 
 TEST_TITLES = ('The Opener', 'The Second Track', 'The Last Track')
 class NonAutotaggedImportTest(unittest.TestCase):
@@ -92,7 +91,6 @@ class NonAutotaggedImportTest(unittest.TestCase):
             write=True,
             autot=False,
             logfile=None,
-            art=False,
             threaded=threaded,
             color=False,
             delete=delete,
@@ -754,104 +752,6 @@ class DuplicateCheckTest(unittest.TestCase):
         res = importer._item_duplicate_check(self.lib,
                                         self._item_task(False, existing=True))
         self.assertFalse(res)
-
-class ArtFetchTest(unittest.TestCase, _common.ExtraAsserts):
-    def setUp(self):
-        # Mock the album art fetcher to always return our test file.
-        self.art_file = os.path.join(_common.RSRC, 'tmpcover.jpg')
-        _common.touch(self.art_file)
-        self.old_afa = art.art_for_album
-        art.art_for_album = lambda a, b: self.art_file
-
-        # Test library.
-        self.libpath = os.path.join(_common.RSRC, 'tmplib.blb')
-        self.libdir = os.path.join(_common.RSRC, 'tmplib')
-        os.mkdir(self.libdir)
-        os.mkdir(os.path.join(self.libdir, 'album'))
-        itempath = os.path.join(self.libdir, 'album', 'test.mp3')
-        shutil.copyfile(os.path.join(_common.RSRC, 'full.mp3'), itempath)
-        self.lib = library.Library(self.libpath)
-        self.i = _common.item()
-        self.i.path = itempath
-        self.album = self.lib.add_album([self.i])
-        self.lib._connection().commit()
-
-        # Set up an art-fetching coroutine.
-        self.config = _common.iconfig(self.lib)
-        self.config.art = True
-        self.coro = importer.fetch_art(self.config)
-        self.coro.next()
-
-        # Import task for the coroutine.
-        self.task = importer.ImportTask(None, None, [self.i])
-        self.task.is_album = True
-        self.task.album_id = self.album.id
-        info = AlbumInfo(
-            album = 'some album',
-            album_id = 'albumid',
-            artist = 'some artist',
-            artist_id = 'artistid',
-            tracks = [TrackInfo('one',  'trackid', 'some artist',
-                                'artistid', 1)],
-        )
-        self.task.set_choice((info, [self.i]))
-
-    def tearDown(self):
-        art.art_for_album = self.old_afa
-        if os.path.exists(self.art_file):
-            os.remove(self.art_file)
-        if os.path.exists(self.libpath):
-            os.remove(self.libpath)
-        if os.path.exists(self.libdir):
-            shutil.rmtree(self.libdir)
-
-    def _fetch_art(self, should_exist):
-        """Execute the fetch_art coroutine for the task and return the
-        album's resulting artpath. ``should_exist`` specifies whether to
-        assert that art path was set (to the correct value) or or that
-        the path was not set.
-        """
-        self.coro.send(self.task)
-        artpath = self.lib.albums()[0].artpath
-        if should_exist:
-            self.assertEqual(artpath,
-                os.path.join(os.path.dirname(self.i.path), 'cover.jpg'))
-            self.assertExists(artpath)
-        else:
-            self.assertEqual(artpath, None)
-        return artpath
-
-    def test_fetch_art(self):
-        assert not self.lib.albums()[0].artpath
-        self._fetch_art(True)
-
-    def test_art_not_found(self):
-        art.art_for_album = lambda a, b: None
-        self._fetch_art(False)
-
-    def test_no_art_for_singleton(self):
-        self.task.is_album = False
-        self._fetch_art(False)
-
-    def test_leave_original_file_in_place(self):
-        self._fetch_art(True)
-        self.assertExists(self.art_file)
-
-    def test_delete_original_file(self):
-        self.config.delete = True
-        self._fetch_art(True)
-        self.assertNotExists(self.art_file)
-
-    def test_move_original_file(self):
-        self.config.move = True
-        self._fetch_art(True)
-        self.assertNotExists(self.art_file)
-
-    def test_do_not_delete_original_if_already_in_place(self):
-        artdest = os.path.join(os.path.dirname(self.i.path), 'cover.jpg')
-        shutil.copyfile(self.art_file, artdest)
-        art.art_for_album = lambda a, b: artdest
-        self._fetch_art(True)
 
 class TagLogTest(unittest.TestCase):
     def test_tag_log_line(self):

@@ -1,0 +1,59 @@
+FetchArt Plugin
+===============
+
+The ``fetchart`` plugin retrieves album art images from various sources on the
+Web and stores them as image files.
+
+Fetching Album Art During Import
+--------------------------------
+
+To automatically get album art for every album you import, just enable the
+plugin by putting ``fetchart`` on your config file's ``plugins`` line (see
+:doc:`/plugins/index`).
+
+By default, beets stores album art image files alongside the music files for an
+album in a file called ``cover.jpg``. To customize the name of this file, use
+the :ref:`art-filename` config option.
+
+To disable automatic art downloading, just put this in your configuration
+file::
+
+    [fetchart]
+    autofetch: no
+
+Manually Fetching Album Art
+---------------------------
+
+Use the ``fetchart`` command to download album art after albums have already
+been imported::
+
+    $ beet fetchart [-f] [query]
+
+By default, the command will only look for album art when the album doesn't
+already have it; the ``-f`` or ``--force`` switch makes it search for art
+regardless. If you specify a query, only matching albums will be processed;
+otherwise, the command processes every album in your library.
+
+Album Art Sources
+-----------------
+
+Currently, this plugin searches for art in the local filesystem, on the `Cover
+Art Archive`_, on Amazon, and on AlbumArt.org (in that order).
+
+.. _Cover Art Archive: http://coverartarchive.org/
+
+When looking for local album art, beets checks for image files located in the
+same folder as the music files you're importing. If you have an image file
+called "cover," "front," "art," "album," for "folder" alongside your music,
+beets will treat it as album art and skip searching any online databases.
+
+When you choose to apply changes during an import, beets searches all sources
+for album art. For "as-is" imports (and non-autotagged imports using the ``-A``
+flag), beets only looks for art on the local filesystem.
+
+Embedding Album Art
+-------------------
+
+This plugin fetches album art but does not embed images into files' tags. To do
+that, use the :doc:`/plugins/embedart`. (You'll want to have both plugins
+enabled.)

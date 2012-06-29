@@ -85,8 +85,6 @@ command-line options you should know:
 * ``beet import -C``: don't copy imported files to your music directory; leave
   them where they are
 
-* ``beet import -R``: don't fetch album art.
-
 * ``beet import -l LOGFILE``: write a message to ``LOGFILE`` every time you skip
   an album or choose to take its tags "as-is" (see below) or the album is
   skipped as a duplicate; this lets you come back later and reexamine albums
@@ -232,20 +230,15 @@ to getting it set up.
 
 .. _Chromaprint: http://acoustid.org/chromaprint
 
-Album Art
----------
+Album Art, Lyrics, Genres and Such
+----------------------------------
 
-By default, beets will search for cover art for every album you import, placing
-the cover art in a file named something like ``cover.jpg`` in the album's
-folder. (If you want to customize the name or disable album art fetching
-altogether, see :doc:`/reference/config` for the ``art_filename`` and
-``import_art`` settings.) Currently, beets looks for art on Amazon.com and on
-your local filesystem: if you have an image file called "cover," "front," "art,"
-"album," for "folder" alongside your music, beets will treat it as album art and
-skip searching any online databases.
-
-Beets will not, by default, embed album art into files' tags. To do that, take a
-look at the :doc:`/plugins/embedart`.
+Aside from the basic stuff, beets can optionally fetch more specialized
+metadata. As a rule, plugins are responsible for getting information that
+doesn't come directly from the MusicBrainz database. This includes :doc:`album
+cover art </plugins/fetchart>`, :doc:`song lyrics </plugins/lyrics>`, and
+:doc:`musical genres </plugins/lastgenre>`. Check out the :doc:`list of plugins
+</plugins/index>` to pick and choose the data you want.
 
 Missing Albums?
 ---------------

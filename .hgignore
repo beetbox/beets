@@ -3,3 +3,4 @@
 ^build/
 ^MANIFEST$
 ^docs/_build/
+^\.tox/
