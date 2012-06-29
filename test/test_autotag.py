@@ -345,14 +345,14 @@ class MultiDiscAlbumsInDirTest(unittest.TestCase):
         albums = list(autotag.albums_in_dir(self.base))
         self.assertEquals(len(albums), 0)
 
-class OrderingTest(unittest.TestCase):
+class AssignmentTest(unittest.TestCase):
     def item(self, title, track):
         return Item({
             'title': title, 'track': track,
             'mb_trackid': '', 'mb_albumid': '', 'mb_artistid': '',
         })
 
-    def test_order_corrects_metadata(self):
+    def test_reorder_when_track_numbers_incorrect(self):
         items = []
         items.append(self.item('one', 1))
         items.append(self.item('three', 2))
@@ -361,12 +361,17 @@ class OrderingTest(unittest.TestCase):
         trackinfo.append(TrackInfo('one', None))
         trackinfo.append(TrackInfo('two', None))
         trackinfo.append(TrackInfo('three', None))
-        ordered = match.order_items(items, trackinfo)
-        self.assertEqual(ordered[0].title, 'one')
-        self.assertEqual(ordered[1].title, 'two')
-        self.assertEqual(ordered[2].title, 'three')
+        mapping, extra_items, extra_tracks = \
+            match.assign_items(items, trackinfo)
+        self.assertEqual(extra_items, set())
+        self.assertEqual(extra_tracks, set())
+        self.assertEqual(mapping, {
+            items[0]: trackinfo[0],
+            items[1]: trackinfo[2],
+            items[2]: trackinfo[1],
+        })
 
-    def test_order_works_with_incomplete_metadata(self):
+    def test_order_works_with_invalid_track_numbers(self):
         items = []
         items.append(self.item('one', 1))
         items.append(self.item('three', 1))
@@ -375,21 +380,15 @@ class OrderingTest(unittest.TestCase):
         trackinfo.append(TrackInfo('one', None))
         trackinfo.append(TrackInfo('two', None))
         trackinfo.append(TrackInfo('three', None))
-        ordered = match.order_items(items, trackinfo)
-        self.assertEqual(ordered[0].title, 'one')
-        self.assertEqual(ordered[1].title, 'two')
-        self.assertEqual(ordered[2].title, 'three')
-
-    def test_order_returns_none_for_length_mismatch(self):
-        items = []
-        items.append(self.item('one', 1))
-        items.append(self.item('two', 2))
-        items.append(self.item('three', 3))
-        items.append(self.item('four',4))
-        trackinfo = []
-        trackinfo.append(TrackInfo('one', None))
-        ordered = match.order_items(items, trackinfo)
-        self.assertEqual(ordered, None)
+        mapping, extra_items, extra_tracks = \
+            match.assign_items(items, trackinfo)
+        self.assertEqual(extra_items, set())
+        self.assertEqual(extra_tracks, set())
+        self.assertEqual(mapping, {
+            items[0]: trackinfo[0],
+            items[1]: trackinfo[2],
+            items[2]: trackinfo[1],
+        })
 
     def test_order_works_with_missing_tracks(self):
         items = []
@@ -399,12 +398,16 @@ class OrderingTest(unittest.TestCase):
         trackinfo.append(TrackInfo('one', None))
         trackinfo.append(TrackInfo('two', None))
         trackinfo.append(TrackInfo('three', None))
-        ordered = match.order_items(items, trackinfo)
-        self.assertEqual(ordered[0].title, 'one')
-        self.assertEqual(ordered[1], None)
-        self.assertEqual(ordered[2].title, 'three')
+        mapping, extra_items, extra_tracks = \
+            match.assign_items(items, trackinfo)
+        self.assertEqual(extra_items, set())
+        self.assertEqual(extra_tracks, set([trackinfo[1]]))
+        self.assertEqual(mapping, {
+            items[0]: trackinfo[0],
+            items[1]: trackinfo[2],
+        })
 
-    def test_order_returns_none_for_extra_tracks(self):
+    def test_order_works_with_extra_tracks(self):
         items = []
         items.append(self.item('one', 1))
         items.append(self.item('two', 2))
@@ -412,10 +415,16 @@ class OrderingTest(unittest.TestCase):
         trackinfo = []
         trackinfo.append(TrackInfo('one', None))
         trackinfo.append(TrackInfo('three', None))
-        ordered = match.order_items(items, trackinfo)
-        self.assertEqual(ordered, None)
+        mapping, extra_items, extra_tracks = \
+            match.assign_items(items, trackinfo)
+        self.assertEqual(extra_items, set([items[1]]))
+        self.assertEqual(extra_tracks, set())
+        self.assertEqual(mapping, {
+            items[0]: trackinfo[0],
+            items[2]: trackinfo[1],
+        })
 
-    def test_order_corrects_when_track_names_are_entirely_wrong(self):
+    def test_order_works_when_track_names_are_entirely_wrong(self):
         # A real-world test case contributed by a user.
         def item(i, length):
             return Item({
@@ -440,25 +449,28 @@ class OrderingTest(unittest.TestCase):
         items.append(item(11, 243.57001238834192))
         items.append(item(12, 186.45916150485752))
 
-        def info(title, length):
-            return TrackInfo(title, None, length=length)
+        def info(index, title, length):
+            return TrackInfo(title, None, length=length, index=index)
         trackinfo = []
-        trackinfo.append(info('Alone', 238.893))
-        trackinfo.append(info('The Woman in You', 341.44))
-        trackinfo.append(info('Less', 245.59999999999999))
-        trackinfo.append(info('Two Hands of a Prayer', 470.49299999999999))
-        trackinfo.append(info('Please Bleed', 277.86599999999999))
-        trackinfo.append(info('Suzie Blue', 269.30599999999998))
-        trackinfo.append(info('Steal My Kisses', 245.36000000000001))
-        trackinfo.append(info('Burn to Shine', 214.90600000000001))
-        trackinfo.append(info('Show Me a Little Shame', 224.09299999999999))
-        trackinfo.append(info('Forgiven', 317.19999999999999))
-        trackinfo.append(info('Beloved One', 243.733))
-        trackinfo.append(info('In the Lord\'s Arms', 186.13300000000001))
+        trackinfo.append(info(1, 'Alone', 238.893))
+        trackinfo.append(info(2, 'The Woman in You', 341.44))
+        trackinfo.append(info(3, 'Less', 245.59999999999999))
+        trackinfo.append(info(4, 'Two Hands of a Prayer', 470.49299999999999))
+        trackinfo.append(info(5, 'Please Bleed', 277.86599999999999))
+        trackinfo.append(info(6, 'Suzie Blue', 269.30599999999998))
+        trackinfo.append(info(7, 'Steal My Kisses', 245.36000000000001))
+        trackinfo.append(info(8, 'Burn to Shine', 214.90600000000001))
+        trackinfo.append(info(9, 'Show Me a Little Shame', 224.09299999999999))
+        trackinfo.append(info(10, 'Forgiven', 317.19999999999999))
+        trackinfo.append(info(11, 'Beloved One', 243.733))
+        trackinfo.append(info(12, 'In the Lord\'s Arms', 186.13300000000001))
 
-        ordered = match.order_items(items, trackinfo)
-        for i, item in enumerate(ordered):
-            self.assertEqual(i+1, item.track)
+        mapping, extra_items, extra_tracks = \
+            match.assign_items(items, trackinfo)
+        self.assertEqual(extra_items, set())
+        self.assertEqual(extra_tracks, set())
+        for item, info in mapping.iteritems():
+            self.assertEqual(items.index(item), trackinfo.index(info))
 
 class ApplyTest(unittest.TestCase):
     def setUp(self):

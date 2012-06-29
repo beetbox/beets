@@ -173,42 +173,33 @@ def current_metadata(items):
         consensus[key] = (freq == len(values))
     return likelies['artist'], likelies['album'], consensus['artist']
 
-def order_items(items, trackinfo):
-    """Orders the items based on how they match some canonical track
-    information. Returns a list of Items whose length is equal to the
-    length of ``trackinfo``. This always produces a result if the
-    numbers of items is at most the number of TrackInfo objects
-    (otherwise, returns None). In the case of a partial match, the
-    returned list may contain None in some positions.
+def assign_items(items, tracks):
+    """Given a list of Items and a list of TrackInfo objects, find the
+    best mapping between them. Returns a mapping from Items to TrackInfo
+    objects, a set of extra Items, and a set of extra TrackInfo
+    objects. These "extra" objects occur when there is an unequal number
+    of objects of the two types.
     """
-    # Make sure lengths match: If there is less items, it might just be that
-    # there is some tracks missing.
-    if len(items) > len(trackinfo):
-        return None
-
     # Construct the cost matrix.
     costs = []
-    for cur_item in items:
+    for item in items:
         row = []
-        for i, canon_item in enumerate(trackinfo):
-            row.append(track_distance(cur_item, canon_item, i+1))
+        for i, track in enumerate(tracks):
+            row.append(track_distance(item, track))
         costs.append(row)
 
     # Find a minimum-cost bipartite matching.
     matching = Munkres().compute(costs)
 
-    # Order items based on the matching.
-    ordered_items = [None]*len(trackinfo)
-    for cur_idx, canon_idx in matching:
-        ordered_items[canon_idx] = items[cur_idx]
-    return ordered_items
+    # Produce the output matching.
+    mapping = dict((items[i], tracks[j]) for (i, j) in matching)
+    extra_items = set(items) - set(mapping.keys())
+    extra_tracks = set(tracks) - set(mapping.values())
+    return mapping, extra_items, extra_tracks
 
-def track_distance(item, track_info, track_index=None, incl_artist=False):
-    """Determines the significance of a track metadata change. Returns
-    a float in [0.0,1.0]. `track_index` is the track number of the
-    `track_info` metadata set. If `track_index` is provided and
-    item.track is set, then these indices are used as a component of
-    the distance calculation. `incl_artist` indicates that a distance
+def track_distance(item, track_info, incl_artist=False):
+    """Determines the significance of a track metadata change. Returns a
+    float in [0.0,1.0]. `incl_artist` indicates that a distance
     component should be included for the track artist (i.e., for
     various-artist releases).
     """
@@ -239,8 +230,8 @@ def track_distance(item, track_info, track_index=None, incl_artist=False):
         dist_max += TRACK_ARTIST_WEIGHT
 
     # Track index.
-    if track_index and item.track:
-        if item.track not in (track_index, track_info.medium_index):
+    if track_info.index and item.track:
+        if item.track not in (track_info.index, track_info.medium_index):
             dist += TRACK_INDEX_WEIGHT
         dist_max += TRACK_INDEX_WEIGHT
 
@@ -280,7 +271,7 @@ def distance(items, album_info):
     # Track distances.
     for i, (item, track_info) in enumerate(zip(items, album_info.tracks)):
         if item:
-            dist += track_distance(item, track_info, i+1, album_info.va) * \
+            dist += track_distance(item, track_info, album_info.va) * \
                     TRACK_WEIGHT
             dist_max += TRACK_WEIGHT
         else:
@@ -348,7 +339,7 @@ def recommendation(results):
             rec = RECOMMEND_NONE
     return rec
 
-def validate_candidate(items, tuple_dict, info):
+def validate_candidate(items, results, info):
     """Given a candidate AlbumInfo object, attempt to add the candidate
     to the output dictionary of result tuples. This involves checking
     the track count, ordering the items, checking for duplicates, and
@@ -357,7 +348,7 @@ def validate_candidate(items, tuple_dict, info):
     log.debug('Candidate: %s - %s' % (info.artist, info.album))
 
     # Don't duplicate.
-    if info.album_id in tuple_dict:
+    if info.album_id in results:
         log.debug('Duplicate.')
         return
 
@@ -368,16 +359,17 @@ def validate_candidate(items, tuple_dict, info):
         return
 
     # Put items in order.
-    ordered = order_items(items, info.tracks)
-    if not ordered:
-        log.debug('Not orderable.')
-        return
+    mapping, extra_items, extra_tracks = assign_items(items, info.tracks)
+    # TEMPORARY: make ordered item list with gaps.
+    ordered = [None] * len(info.tracks)
+    for item, track_info in mapping.iteritems():
+        ordered[track_info.index - 1] = item
 
     # Get the change distance.
     dist = distance(ordered, info)
     log.debug('Success. Distance: %f' % dist)
 
-    tuple_dict[info.album_id] = dist, ordered, info
+    results[info.album_id] = dist, ordered, info
 
 def tag_album(items, timid=False, search_artist=None, search_album=None,
               search_id=None):
