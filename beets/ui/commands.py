@@ -199,9 +199,9 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True,
 
     # Tracks.
     missing_tracks = []
-    for i, (item, track_info) in enumerate(zip(items, info.tracks)):
+    for item, track_info in zip(items, info.tracks):
         if not item:
-            missing_tracks.append((i, track_info))
+            missing_tracks.append(track_info)
             continue
 
         # Get displayable LHS and RHS values.
@@ -213,8 +213,9 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True,
             else:
                 new_track = unicode(track_info.medium_index)
         else:
-            new_track = unicode(i + 1)
-        tracks_differ = item.track not in (i + 1, track_info.medium_index)
+            new_track = unicode(track_info.index)
+        tracks_differ = item.track not in (track_info.index,
+                                           track_info.medium_index)
         cur_title = item.title
         new_title = track_info.title
         if item.length and track_info.length:
@@ -252,8 +253,11 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True,
                 line += u' (%s vs. %s)' % (cur_length, new_length)
             if display:
                 print_(line)
-    for i, track_info in missing_tracks:
-        line = u' * Missing track: %s (%d)' % (track_info.title, i+1)
+
+    # Missing tracks.
+    for track_info in missing_tracks:
+        line = u' * Missing track: %s (%d)' % (track_info.title,
+                                               track_info.index)
         if color:
             line = ui.colorize('yellow', line)
         print_(line)
