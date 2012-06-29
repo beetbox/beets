@@ -165,6 +165,19 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True,
             out += u' ' + warning
         print_(out)
 
+    def format_index(track_info):
+        """Return a string representing the track index of the given
+        TrackInfo object.
+        """
+        if per_disc_numbering:
+            if info.mediums > 1:
+                return u'{0}-{1}'.format(track_info.medium,
+                                         track_info.medium_index)
+            else:
+                return unicode(track_info.medium_index)
+        else:
+            return unicode(track_info.index)
+
     # Record if the match is partial or not.
     partial_match = None in items
 
@@ -206,14 +219,7 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True,
 
         # Get displayable LHS and RHS values.
         cur_track = unicode(item.track)
-        if per_disc_numbering:
-            if info.mediums > 1:
-                new_track = u'{0}-{1}'.format(track_info.medium,
-                                              track_info.medium_index)
-            else:
-                new_track = unicode(track_info.medium_index)
-        else:
-            new_track = unicode(track_info.index)
+        new_track = format_index(track_info)
         tracks_differ = item.track not in (track_info.index,
                                            track_info.medium_index)
         cur_title = item.title
@@ -256,8 +262,8 @@ def show_change(cur_artist, cur_album, items, info, dist, color=True,
 
     # Missing tracks.
     for track_info in missing_tracks:
-        line = u' * Missing track: %s (%d)' % (track_info.title,
-                                               track_info.index)
+        line = u' * Missing track: {0} ({1})'.format(track_info.title,
+                                                     format_index(track_info))
         if color:
             line = ui.colorize('yellow', line)
         print_(line)
