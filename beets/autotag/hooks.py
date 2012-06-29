@@ -14,10 +14,13 @@
 
 """Glue between metadata sources and the matching logic."""
 import logging
+from collections import namedtuple
+
 from beets import plugins
 from beets.autotag import mb
 
 log = logging.getLogger('beets')
+
 
 # Classes used to represent candidate options.
 
@@ -116,6 +119,11 @@ class TrackInfo(object):
         self.artist_sort = artist_sort
         self.disctitle = disctitle
         self.artist_credit = artist_credit
+
+AlbumMatch = namedtuple('AlbumMatch', ['distance', 'info', 'mapping',
+                                       'extra_items', 'extra_tracks'])
+
+TrackMatch = namedtuple('TrackMatch', ['distance', 'info'])
 
 
 # Aggregation of sources.
