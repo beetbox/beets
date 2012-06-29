@@ -132,7 +132,9 @@ class MBAlbumInfoTest(unittest.TestCase):
         d = mb.album_info(release)
         t = d.tracks
         self.assertEqual(t[0].medium_index, 1)
+        self.assertEqual(t[0].index, 1)
         self.assertEqual(t[1].medium_index, 2)
+        self.assertEqual(t[1].index, 2)
 
     def test_parse_medium_numbers_single_medium(self):
         tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
@@ -163,8 +165,10 @@ class MBAlbumInfoTest(unittest.TestCase):
         t = d.tracks
         self.assertEqual(t[0].medium, 1)
         self.assertEqual(t[0].medium_index, 1)
+        self.assertEqual(t[0].index, 1)
         self.assertEqual(t[1].medium, 2)
         self.assertEqual(t[1].medium_index, 1)
+        self.assertEqual(t[1].index, 2)
 
     def test_parse_release_year_month_only(self):
         release = self._make_release('1987-03')

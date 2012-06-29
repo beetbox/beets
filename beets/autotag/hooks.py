@@ -91,6 +91,7 @@ class TrackInfo(object):
     - ``artist``: individual track artist name
     - ``artist_id``
     - ``length``: float: duration of the track in seconds
+    - ``index``: position on the entire release
     - ``medium``: the disc number this track appears on in the album
     - ``medium_index``: the track's position on the disc
     - ``artist_sort``: name of the track artist for sorting
@@ -98,16 +99,18 @@ class TrackInfo(object):
     - ``artist_credit``: Recording-specific artist name
 
     Only ``title`` and ``track_id`` are required. The rest of the fields
-    may be None.
+    may be None. The indices ``index``, ``medium``, and ``medium_index``
+    are all 1-based.
     """
     def __init__(self, title, track_id, artist=None, artist_id=None,
-                 length=None, medium=None, medium_index=None,
+                 length=None, index=None, medium=None, medium_index=None,
                  artist_sort=None, disctitle=None, artist_credit=None):
         self.title = title
         self.track_id = track_id
         self.artist = artist
         self.artist_id = artist_id
         self.length = length
+        self.index = index
         self.medium = medium
         self.medium_index = medium_index
         self.artist_sort = artist_sort

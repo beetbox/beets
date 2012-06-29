@@ -95,13 +95,17 @@ def _flatten_artist_credit(credit):
         ''.join(artist_credit_parts),
     )
 
-def track_info(recording, medium=None, medium_index=None):
+def track_info(recording, index=None, medium=None, medium_index=None):
     """Translates a MusicBrainz recording result dictionary into a beets
-    ``TrackInfo`` object. ``medium_index``, if provided, is the track's
-    index (1-based) on its medium.
+    ``TrackInfo`` object. Three parameters are optional and are used
+    only for tracks that appear on releases (non-singletons): ``index``,
+    the overall track number; ``medium``, the disc number;
+    ``medium_index``, the track's index on its medium. Each number is a
+    1-based index.
     """
     info = beets.autotag.hooks.TrackInfo(recording['title'],
                                          recording['id'],
+                                         index=index,
                                          medium=medium,
                                          medium_index=medium_index)
 
@@ -139,10 +143,13 @@ def album_info(release):
 
     # Basic info.
     track_infos = []
+    index = 0
     for medium in release['medium-list']:
         disctitle = medium.get('title')
         for track in medium['track-list']:
+            index += 1
             ti = track_info(track['recording'],
+                            index,
                             int(medium['position']),
                             int(track['position']))
             if track.get('title'):
