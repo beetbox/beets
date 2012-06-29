@@ -77,11 +77,11 @@ def _make_item(title, track, artist='some artist'):
     })
 
 def _make_trackinfo():
-    ti = []
-    ti.append(TrackInfo('one', None, 'some artist', length=1))
-    ti.append(TrackInfo('two', None, 'some artist', length=1))
-    ti.append(TrackInfo('three', None, 'some artist', length=1))
-    return ti
+    return [
+        TrackInfo('one', None, 'some artist', length=1, index=1),
+        TrackInfo('two', None, 'some artist', length=1, index=2),
+        TrackInfo('three', None, 'some artist', length=1, index=3),
+    ]
 
 class TrackDistanceTest(unittest.TestCase):
     def test_identical_tracks(self):
@@ -481,11 +481,11 @@ class ApplyTest(unittest.TestCase):
         trackinfo.append(TrackInfo(
             'oneNew', 'dfa939ec-118c-4d0f-84a0-60f3d1e6522c', medium=1,
             medium_index=1, artist_credit='trackArtistCredit',
-            artist_sort='trackArtistSort',
+            artist_sort='trackArtistSort', index=1,
         ))
         trackinfo.append(TrackInfo('twoNew',
                                    '40130ed1-a27c-42fd-a328-1ebefb6caef4',
-                                   medium=2, medium_index=1))
+                                   medium=2, medium_index=1, index=2))
         self.info = AlbumInfo(
             tracks = trackinfo,
             artist = 'artistNew',
@@ -596,12 +596,14 @@ class ApplyCompilationTest(unittest.TestCase):
             'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
             'artistOneNew',
             'a05686fc-9db2-4c23-b99e-77f5db3e5282',
+            index=1,
         ))
         trackinfo.append(TrackInfo(
             'twoNew',
             '40130ed1-a27c-42fd-a328-1ebefb6caef4',
             'artistTwoNew',
             '80b3cf5e-18fe-4c59-98c7-e5bb87210710',
+            index=2,
         ))
         self.info = AlbumInfo(
             tracks = trackinfo,

@@ -120,7 +120,7 @@ def apply_metadata(items, album_info, per_disc_numbering=False):
     items must be ordered. If `per_disc_numbering`, then the track
     numbers are per-disc instead of per-release.
     """
-    for index, (item, track_info) in enumerate(zip(items, album_info.tracks)):
+    for item, track_info in zip(items, album_info.tracks):
         # Album, artist, track count.
         if not item:
             continue
@@ -153,7 +153,7 @@ def apply_metadata(items, album_info, per_disc_numbering=False):
         if per_disc_numbering:
             item.track = track_info.medium_index
         else:
-            item.track = index + 1
+            item.track = track_info.index
 
         # Disc and disc count.
         item.disc = track_info.medium
