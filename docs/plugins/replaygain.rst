@@ -4,41 +4,29 @@ ReplayGain Plugin
 This plugin adds support for `ReplayGain`_, a technique for normalizing audio
 playback levels.
 
-.. warning::
-
-    Some users have reported problems with the Gstreamer ReplayGain calculation
-    plugin. If you experience segmentation faults or random hangs with this
-    plugin enabled, consider disabling it. (Please `file a bug`_ if you can get
-    a gdb traceback for such a segfault or hang.)
-
-    .. _file a bug: http://code.google.com/p/beets/issues/entry
 
 Installation
 ------------
 
-This plugin requires `GStreamer`_ with the `rganalysis`_ plugin (part of
-`gst-plugins-good`_), `gst-python`_, and the `rgain`_ Python module.
+This plugin use a command line tool to compute the ReplayGain information:
 
-.. _ReplayGain: http://wiki.hydrogenaudio.org/index.php?title=ReplayGain
-.. _rganalysis: http://gstreamer.freedesktop.org/data/doc/gstreamer/head/gst-plugins-good-plugins/html/gst-plugins-good-plugins-rganalysis.html
-.. _gst-plugins-good: http://gstreamer.freedesktop.org/modules/gst-plugins-good.html
-.. _gst-python: http://gstreamer.freedesktop.org/modules/gst-python.html
-.. _rgain: https://github.com/cacack/rgain
-.. _pip: http://www.pip-installer.org/
-.. _GStreamer: http://gstreamer.freedesktop.org/
+* On Mac OS X, you can use `Homebrew`_. Type ``brew install aacgain``.
+* On Windows, install the original `mp3gain`_.
 
-First, install GStreamer, its "good" plugins, and the Python bindings if your
-system doesn't have them already. (The :doc:`/plugins/bpd` and
-:doc:`/plugins/chroma` pages have hints on getting GStreamer stuff installed.)
-Then install `rgain`_ using `pip`_::
+.. _mp3gain: http://mp3gain.sourceforge.net/download.php
+.. _Homebrew: http://mxcl.github.com/homebrew/
 
-    $ pip install rgain
-
-Finally, add ``replaygain`` to your ``plugins`` line in your
-:doc:`/reference/config`, like so::
+To enable the plugin, you’ll need to edit your .beetsconfig file and add the 
+line ``plugins: replaygain``.
 
     [beets]
     plugins = replaygain
+
+In case beets doesn't find the path to the ReplayGain binary, you can write it
+explicitely in the plugin options like so :
+
+    [replaygain]
+    command: /Applications/MacMP3Gain.app/Contents/Resources/aacgain
 
 Usage & Configuration
 ---------------------
@@ -53,3 +41,21 @@ for the plugin in your :doc:`/reference/config`, like so::
 
     [replaygain]
     overwrite: yes
+
+The target level can be modified to any target dB with the ``targetlevel``option
+(default: 89 dB).
+
+The use of ReplayGain can cause clipping if the average volume of a song is below
+the target level. By default a "prevent clipping" feature named ``noclip`` is
+enabled to reduce the amount of ReplayGain adjustment to whatever amount would
+keep clipping from occurring.
+
+ReplayGain allows to make consistent the loudness of a whole album while allowing
+ the dynamics from song to song on the album to remain intact. This is called
+ 'Album Gain' (especially important for classical music albums with large loudness
+ range). 
+'Track Gain' (each song considered independently) mode is used by default but can 
+be changed with ``albumgain`` switch::
+
+    [replaygain]
+    albumgain: yes
