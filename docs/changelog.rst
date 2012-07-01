@@ -9,6 +9,12 @@ which was previously baked into the import workflow, is now encapsulated in a
 plugin (the :doc:`/plugins/fetchart`). If you want to continue fetching cover
 art for your music, enable this plugin after upgrading to beets 1.0b15.
 
+* The autotagger can now find matches for albums when you have extra tracks on
+  your filesystem that aren't present in the MusicBrainz catalog. Previously, if
+  you tried to match album with 15 audio files but the MusicBrainz entry had
+  only 14 tracks, beets would ignore this match. Now, beets will show you
+  matches even when they are "too short" and indicate which tracks from your
+  disk are unmatched.
 * Tracks on multi-disc albums can now be numbered per-disc instead of per-album
   via the :ref:`per_disc_numbering` config option.
 * The default output format for the ``beet list`` command is now configurable

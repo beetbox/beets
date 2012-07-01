@@ -243,23 +243,15 @@ cover art </plugins/fetchart>`, :doc:`song lyrics </plugins/lyrics>`, and
 Missing Albums?
 ---------------
 
-If you're having trouble tagging a particular album with beets, you might want to check the following possibilities:
-
-* Is the album present in `the MusicBrainz database`_?  You can search on their
-  site to make sure it's cataloged there. If not, anyone can edit
-  MusicBrainz---so consider adding the data yourself.
-
-* Beets won't show you possibilities from MusicBrainz that have *fewer* tracks
-  than the current album. In other words, if you have extra tracks that aren't
-  included on the release, that candidate won't be displayed. (The tagger
-  should, on the other hand, show you candidates that have *more* tracks than
-  you do in the case that you're missing some of the album's songs. Beets will
-  warn you when any candidate is a partial match.)
+If you're having trouble tagging a particular album with beets, check to make
+sure the album is present in `the MusicBrainz database`_.  You can search on
+their site to make sure it's cataloged there. If not, anyone can edit
+MusicBrainz---so consider adding the data yourself.
 
 .. _the MusicBrainz database: http://musicbrainz.org/
 
-If neither of these situations apply and you're still having trouble tagging
-something, please `file a bug report`_.
+If you think beets is ignoring an album that's listed in MusicBrainz, please
+`file a bug report`_.
 
 .. _file a bug report: http://code.google.com/p/beets/issues/entry
 
