@@ -64,7 +64,7 @@ all of these limitations.
 
 * Currently MP3, AAC, FLAC, Ogg Vorbis, Monkey's Audio, WavPack, and Musepack
   files are supported. (Do you use some other format?
-  `Let me know!`_
+  `Let me know!`_)
 
 .. _Let me know!: mailto:adrian@radbox.org
 
