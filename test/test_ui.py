@@ -656,7 +656,7 @@ class ShowChangeTest(unittest.TestCase):
         items[0].path = '/path/to/file.mp3'
         info = autotag.AlbumInfo(
             'the album', 'album id', 'the artist', 'artist id', [
-                autotag.TrackInfo('the title', 'track id')
+                autotag.TrackInfo('the title', 'track id', index=1)
         ])
         return items, info
 
