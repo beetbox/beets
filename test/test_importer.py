@@ -23,7 +23,7 @@ from _common import unittest
 from beets import library
 from beets import importer
 from beets import mediafile
-from beets.autotag import AlbumInfo, TrackInfo
+from beets.autotag import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch
 
 TEST_TITLES = ('The Opener', 'The Second Track', 'The Last Track')
 class NonAutotaggedImportTest(unittest.TestCase):
@@ -182,7 +182,8 @@ def _call_stages(config, items, choice_or_info,
     if isinstance(choice_or_info, importer.action):
         task.set_choice(choice_or_info)
     else:
-        task.set_choice((choice_or_info, items))
+        mapping = dict(zip(items, choice_or_info.tracks))
+        task.set_choice(AlbumMatch(0, choice_or_info, mapping, set(), set()))
 
     # Call the coroutines.
     for stage in stages:
@@ -265,7 +266,7 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         manip_coro.next()
 
         task = importer.ImportTask.item_task(self.i)
-        task.set_choice(self.info.tracks[0])
+        task.set_choice(TrackMatch(0, self.info.tracks[0]))
         apply_coro.send(task)
         manip_coro.send(task)
 
@@ -579,7 +580,7 @@ class InferAlbumDataTest(unittest.TestCase):
 
         self.task = importer.ImportTask(path='a path', toppath='top path',
                                         items=self.items)
-        self.task.set_null_match()
+        self.task.set_null_candidates()
 
     def _infer(self):
         importer._infer_album_fields(self.task)
@@ -621,7 +622,7 @@ class InferAlbumDataTest(unittest.TestCase):
         self.assertEqual(self.items[0].albumartist, self.items[2].artist)
 
     def test_apply_gets_artist_and_id(self):
-        self.task.set_choice(({}, self.items)) # APPLY
+        self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
 
         self._infer()
 
@@ -633,7 +634,7 @@ class InferAlbumDataTest(unittest.TestCase):
         for item in self.items:
             item.albumartist = 'some album artist'
             item.mb_albumartistid = 'some album artist id'
-        self.task.set_choice(({}, self.items)) # APPLY
+        self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
 
         self._infer()
 
@@ -651,7 +652,7 @@ class InferAlbumDataTest(unittest.TestCase):
 
     def test_first_item_null_apply(self):
         self.items[0] = None
-        self.task.set_choice(({}, self.items)) # APPLY
+        self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
         self._infer()
         self.assertFalse(self.items[1].comp)
         self.assertEqual(self.items[1].albumartist, self.items[2].artist)
@@ -672,14 +673,12 @@ class DuplicateCheckTest(unittest.TestCase):
 
         task = importer.ImportTask(path='a path', toppath='top path',
                                    items=[item])
-        task.set_match(artist, album, None, None)
+        task.set_candidates(artist, album, None, None)
         if asis:
             task.set_choice(importer.action.ASIS)
         else:
-            task.set_choice((
-                AlbumInfo(album, None, artist, None, None),
-                [item]
-            ))
+            info = AlbumInfo(album, None, artist, None, None)
+            task.set_choice(AlbumMatch(0, info, {}, set(), set()))
         return task
 
     def _item_task(self, asis, artist=None, title=None, existing=False):
@@ -696,7 +695,7 @@ class DuplicateCheckTest(unittest.TestCase):
             item.title = title
             task.set_choice(importer.action.ASIS)
         else:
-            task.set_choice(TrackInfo(title, None, artist))
+            task.set_choice(TrackMatch(0, TrackInfo(title, None, artist)))
         return task
 
     def test_duplicate_album_apply(self):

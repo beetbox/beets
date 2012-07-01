@@ -17,7 +17,7 @@
 import _common
 from _common import unittest
 from beetsplug import fetchart
-from beets.autotag import AlbumInfo
+from beets.autotag import AlbumInfo, AlbumMatch
 from beets import library
 from beets import importer
 import os
@@ -227,7 +227,7 @@ class ArtImporterTest(unittest.TestCase, _common.ExtraAsserts):
             artist_id = 'artistid',
             tracks = [],
         )
-        self.task.set_choice((info, [self.i]))
+        self.task.set_choice(AlbumMatch(0, info, {}, set(), set()))
 
     def tearDown(self):
         fetchart.art_for_album = self.old_afa

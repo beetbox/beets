@@ -316,7 +316,7 @@ class ImportTask(object):
         obj.is_album = False
         return obj
 
-    def set_match(self, cur_artist, cur_album, candidates, rec):
+    def set_candidates(self, cur_artist, cur_album, candidates, rec):
         """Sets the candidates for this album matched by the
         `autotag.tag_album` method.
         """
@@ -327,45 +327,39 @@ class ImportTask(object):
         self.candidates = candidates
         self.rec = rec
 
-    def set_null_match(self):
+    def set_null_candidates(self):
         """Set the candidates to indicate no album match was found.
         """
-        self.set_match(None, None, None, None)
+        self.cur_artist = None
+        self.cur_album = None
+        self.candidates = None
+        self.rec = None
 
-    def set_item_match(self, candidates, rec):
+    def set_item_candidates(self, candidates, rec):
         """Set the match for a single-item task."""
         assert not self.is_album
         assert self.item is not None
-        self.item_match = (candidates, rec)
-
-    def set_null_item_match(self):
-        """For single-item tasks, mark the item as having no matches.
-        """
-        assert not self.is_album
-        assert self.item is not None
-        self.item_match = None
+        self.candidates = candidates
+        self.rec = rec
 
     def set_choice(self, choice):
-        """Given either an (info, items) tuple or an action constant,
-        indicates that an action has been selected by the user (or
-        automatically).
+        """Given an AlbumMatch or TrackMatch object or an action constant,
+        indicates that an action has been selected for this task.
         """
         assert not self.sentinel
         # Not part of the task structure:
         assert choice not in (action.MANUAL, action.MANUAL_ID)
-        assert choice != action.APPLY # Only used internally.
+        assert choice != action.APPLY  # Only used internally.
         if choice in (action.SKIP, action.ASIS, action.TRACKS):
             self.choice_flag = choice
-            self.info = None
+            self.match = None
         else:
-            assert not isinstance(choice, action)
             if self.is_album:
-                info, items = choice
-                self.items = items # Reordered items list.
+                assert isinstance(choice, autotag.AlbumMatch)
             else:
-                info = choice
-            self.info = info
-            self.choice_flag = action.APPLY # Implicit choice.
+                assert isinstance(choice, autotag.TrackMatch)
+            self.choice_flag = action.APPLY  # Implicit choice.
+            self.match = choice
 
     def save_progress(self):
         """Updates the progress state to indicate that this album has
@@ -418,20 +412,19 @@ class ImportTask(object):
             if self.choice_flag is action.ASIS:
                 return (self.cur_artist, self.cur_album)
             elif self.choice_flag is action.APPLY:
-                return (self.info.artist, self.info.album)
+                return (self.match.info.artist, self.match.info.album)
         else:
             if self.choice_flag is action.ASIS:
                 return (self.item.artist, self.item.title)
             elif self.choice_flag is action.APPLY:
-                return (self.info.artist, self.info.title)
+                return (self.match.info.artist, self.match.info.title)
 
     def all_items(self):
-        """If this is an album task, returns the list of non-None
-        (non-gap) items. If this is a singleton task, returns a list
-        containing the item.
+        """If this is an album task, returns the list of items. If this
+        is a singleton task, returns a list containing the item.
         """
         if self.is_album:
-            return [i for i in self.items if i]
+            return list(self.items)
         else:
             return [self.item]
 
@@ -559,9 +552,9 @@ def initial_lookup(config):
 
         log.debug('Looking up: %s' % task.path)
         try:
-            task.set_match(*autotag.tag_album(task.items, config.timid))
+            task.set_candidates(*autotag.tag_album(task.items, config.timid))
         except autotag.AutotagError:
-            task.set_null_match()
+            task.set_null_candidates()
 
 def user_query(config):
     """A coroutine for interfacing with the user about the tagging
@@ -625,7 +618,7 @@ def show_progress(config):
         log.info(task.path)
 
         # Behave as if ASIS were selected.
-        task.set_null_match()
+        task.set_null_candidates()
         task.set_choice(action.ASIS)
 
 def apply_choices(config):
@@ -648,11 +641,11 @@ def apply_choices(config):
         if task.should_write_tags():
             if task.is_album:
                 autotag.apply_metadata(
-                    task.items, task.info,
+                    task.match.info, task.match.mapping,
                     per_disc_numbering=config.per_disc_numbering
                 )
             else:
-                autotag.apply_item_metadata(task.item, task.info)
+                autotag.apply_item_metadata(task.item, task.match.info)
             plugins.send('import_task_apply', config=config, task=task)
 
         # Infer album-level fields.
@@ -833,7 +826,7 @@ def item_lookup(config):
 
         plugins.send('import_task_start', task=task, config=config)
 
-        task.set_item_match(*autotag.tag_item(task.item, config.timid))
+        task.set_item_candidates(*autotag.tag_item(task.item, config.timid))
 
 def item_query(config):
     """A coroutine that queries the user for input on single-item
@@ -871,7 +864,7 @@ def item_progress(config):
             continue
 
         log.info(displayable_path(task.item.path))
-        task.set_null_item_match()
+        task.set_null_candidates()
         task.set_choice(action.ASIS)
 
 

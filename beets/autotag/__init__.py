@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2011, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -22,7 +22,7 @@ from beets import library, mediafile
 from beets.util import sorted_walk, ancestry
 
 # Parts of external interface.
-from .hooks import AlbumInfo, TrackInfo
+from .hooks import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch
 from .match import AutotagError
 from .match import tag_item, tag_album
 from .match import RECOMMEND_STRONG, RECOMMEND_MEDIUM, RECOMMEND_NONE
@@ -115,12 +115,12 @@ def apply_item_metadata(item, track_info):
     # At the moment, the other metadata is left intact (including album
     # and track number). Perhaps these should be emptied?
 
-def apply_metadata(items, album_info, per_disc_numbering=False):
-    """Set the items' metadata to match an AlbumInfo object. The list of
-    items must be ordered. If `per_disc_numbering`, then the track
-    numbers are per-disc instead of per-release.
+def apply_metadata(album_info, mapping, per_disc_numbering=False):
+    """Set the items' metadata to match an AlbumInfo object using a
+    mapping from Items to TrackInfo objects. If `per_disc_numbering`,
+    then the track numbers are per-disc instead of per-release.
     """
-    for item, track_info in zip(items, album_info.tracks):
+    for item, track_info in mapping.iteritems():
         # Album, artist, track count.
         if not item:
             continue
@@ -130,7 +130,7 @@ def apply_metadata(items, album_info, per_disc_numbering=False):
             item.artist = album_info.artist
         item.albumartist = album_info.artist
         item.album = album_info.album
-        item.tracktotal = len(items)
+        item.tracktotal = len(album_info.tracks)
 
         # Artist sort and credit names.
         item.artist_sort = track_info.artist_sort or album_info.artist_sort
