@@ -419,12 +419,19 @@ class ImportTask(object):
             elif self.choice_flag is action.APPLY:
                 return (self.match.info.artist, self.match.info.title)
 
-    def all_items(self):
-        """If this is an album task, returns the list of items. If this
-        is a singleton task, returns a list containing the item.
+    def imported_items(self):
+        """Return a list of Items that should be added to the library.
+        If this is an album task, return the list of items in the
+        selected match or everything if the choice is ASIS. If this is a
+        singleton task, return a list containing the item.
         """
         if self.is_album:
-            return list(self.items)
+            if self.choice_flag == action.ASIS:
+                return list(self.items)
+            elif self.choice_flag == action.APPLY:
+                return self.match.mapping.keys()
+            else:
+                assert False
         else:
             return [self.item]
 
@@ -622,8 +629,8 @@ def show_progress(config):
         task.set_choice(action.ASIS)
 
 def apply_choices(config):
-    """A coroutine for applying changes to albums during the autotag
-    process.
+    """A coroutine for applying changes to albums and singletons during
+    the autotag process.
     """
     task = None
     while True:
@@ -631,7 +638,7 @@ def apply_choices(config):
         if task.should_skip():
             continue
 
-        items = task.all_items()
+        items = task.imported_items()
         # Clear IDs in case the items are being re-tagged.
         for item in items:
             item.id = None
@@ -731,7 +738,7 @@ def manipulate_files(config):
             continue
 
         # Move/copy files.
-        items = task.all_items()
+        items = task.imported_items()
         task.old_paths = [item.path for item in items]  # For deletion.
         for item in items:
             if config.move:
@@ -784,7 +791,7 @@ def finalize(config):
                 task.save_history()
             continue
 
-        items = task.all_items()
+        items = task.imported_items()
 
         # Announce that we've added an album.
         if task.is_album:
