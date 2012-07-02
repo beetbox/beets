@@ -1080,7 +1080,7 @@ class Library(BaseLibrary):
         return Transaction(self)
 
     def destination(self, item, pathmod=None, fragment=False,
-                    basedir=None, platform=None):
+                    basedir=None, platform=None, unicrep=False):
         """Returns the path in the library directory designated for item
         item (i.e., where the file ought to be). fragment makes this
         method return just the path fragment underneath the root library
@@ -1115,6 +1115,13 @@ class Library(BaseLibrary):
 
         # Evaluate the selected template.
         subpath = item.evaluate_template(subpath_tmpl, self, True, pathmod)
+
+        # Replace Unicode characters into its ASCII equivalents
+        if unicrep:
+            nkfd_form = unicodedata.normalize('NFKD', subpath)
+            removed_accents= u"".join([c for c in nkfd_form if not unicodedata.combining(c)])
+            only_ascii = removed_accents.encode('ASCII', 'ignore')
+            subpath= unicode( only_ascii )
 
         # Prepare path for output: normalize Unicode characters.
         if platform == 'darwin':
@@ -1234,7 +1241,7 @@ class Library(BaseLibrary):
         self._memotable = {}
 
     def move(self, item, copy=False, basedir=None,
-             with_album=True):
+             with_album=True, unicrep=False):
         """Move the item to its designated location within the library
         directory (provided by destination()). Subdirectories are
         created as needed. If the operation succeeds, the item's path
@@ -1254,7 +1261,7 @@ class Library(BaseLibrary):
         side effect. You probably want to call save() to commit the DB
         transaction.
         """
-        dest = self.destination(item, basedir=basedir)
+        dest = self.destination(item, basedir=basedir, unicrep=unicrep)
 
         # Create necessary ancestry for the move.
         util.mkdirall(dest)
