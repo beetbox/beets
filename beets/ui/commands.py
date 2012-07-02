@@ -109,6 +109,7 @@ DEFAULT_IMPORT_QUIET          = False
 DEFAULT_IMPORT_QUIET_FALLBACK = 'skip'
 DEFAULT_IMPORT_RESUME         = None # "ask"
 DEFAULT_IMPORT_INCREMENTAL    = False
+DEFAULT_IMPORT_UNICREP        = False
 DEFAULT_THREADED              = True
 DEFAULT_COLOR                 = True
 DEFAULT_IGNORE                = [
@@ -626,7 +627,8 @@ def resolve_duplicate(task, config):
 
 def import_files(lib, paths, copy, move, write, autot, logpath, threaded,
                  color, delete, quiet, resume, quiet_fallback, singletons,
-                 timid, query, incremental, ignore, per_disc_numbering):
+                 timid, query, incremental, unicrep, ignore,
+                 per_disc_numbering):
     """Import the files in the given list of paths, tagging each leaf
     directory as an album. If copy, then the files are copied into the
     library folder. If write, then new metadata is written to the files
@@ -692,6 +694,7 @@ def import_files(lib, paths, copy, move, write, autot, logpath, threaded,
             choose_item_func = choose_item,
             query = query,
             incremental = incremental,
+            unicrep = unicrep,
             ignore = ignore,
             resolve_duplicate_func = resolve_duplicate,
             per_disc_numbering = per_disc_numbering,
@@ -739,6 +742,9 @@ import_cmd.parser.add_option('-i', '--incremental', dest='incremental',
     action='store_true', help='skip already-imported directories')
 import_cmd.parser.add_option('-I', '--noincremental', dest='incremental',
     action='store_false', help='do not skip already-imported directories')
+import_cmd.parser.add_option('-u', '--unicrep', dest='unicrep',
+    action='store_true',
+    help="replace unicode paths by its ASCII equivalents")
 def import_func(lib, config, opts, args):
     copy  = opts.copy  if opts.copy  is not None else \
         ui.config_val(config, 'beets', 'import_copy',
@@ -766,6 +772,9 @@ def import_func(lib, config, opts, args):
     incremental = opts.incremental if opts.incremental is not None else \
         ui.config_val(config, 'beets', 'import_incremental',
             DEFAULT_IMPORT_INCREMENTAL, bool)
+    unicrep = opts.unicrep if opts.unicrep is not None else \
+        ui.config_val(config, 'beets', 'unicode_replace',
+            DEFAULT_IMPORT_UNICREP, bool)
     ignore = ui.config_val(config, 'beets', 'ignore', DEFAULT_IGNORE, list)
     per_disc_numbering = ui.config_val(config, 'beets', 'per_disc_numbering',
                                        DEFAULT_PER_DISC_NUMBERING, bool)
@@ -800,7 +809,7 @@ def import_func(lib, config, opts, args):
 
     import_files(lib, paths, copy, move, write, autot, logpath, threaded,
                  color, delete, quiet, resume, quiet_fallback, singletons,
-                 timid, query, incremental, ignore, per_disc_numbering)
+                 timid, query, incremental, unicrep, ignore, per_disc_numbering)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 

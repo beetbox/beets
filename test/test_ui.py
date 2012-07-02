@@ -480,7 +480,7 @@ class ImportTest(unittest.TestCase):
         self.assertRaises(ui.UserError, commands.import_files,
                           None, [], False, False, False, False, None,
                           False, False, False, True, False, None, False, True,
-                          None, False, [], False)
+                          None, False, False, [], False)
 
 class InputTest(unittest.TestCase):
     def setUp(self):

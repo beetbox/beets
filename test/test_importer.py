@@ -104,6 +104,7 @@ class NonAutotaggedImportTest(unittest.TestCase):
             timid = False,
             query = None,
             incremental = False,
+            unicrep = False,
             ignore = [],
             resolve_duplicate_func = None,
             per_disc_numbering = False,

@@ -94,6 +94,7 @@ def iconfig(lib, **kwargs):
         timid = False,
         query = None,
         incremental = False,
+        unicrep = False,
         ignore = [],
         resolve_duplicate_func = lambda x, y: None,
         per_disc_numbering = False,

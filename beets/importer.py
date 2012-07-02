@@ -245,7 +245,7 @@ class ImportConfig(object):
                'quiet_fallback', 'copy', 'move', 'write', 'delete',
                'choose_match_func', 'should_resume_func', 'threaded',
                'autot', 'singletons', 'timid', 'choose_item_func',
-               'query', 'incremental', 'ignore',
+               'query', 'incremental', 'unicrep', 'ignore',
                'resolve_duplicate_func', 'per_disc_numbering']
     def __init__(self, **kwargs):
         for slot in self._fields:
@@ -744,7 +744,7 @@ def manipulate_files(config):
             if config.move:
                 # Just move the file.
                 old_path = item.path
-                config.lib.move(item, False)
+                config.lib.move(item, False, unicrep=config.unicrep)
                 task.prune(old_path)
             elif config.copy:
                 # If it's a reimport, move in-library files and copy
@@ -755,16 +755,16 @@ def manipulate_files(config):
                     # This is a reimport. Move in-library files and copy
                     # out-of-library files.
                     if config.lib.directory in util.ancestry(old_path):
-                        config.lib.move(item, False)
+                        config.lib.move(item, False, unicrep=config.unicrep)
                         # We moved the item, so remove the
                         # now-nonexistent file from old_paths.
                         task.old_paths.remove(old_path)
                     else:
-                        config.lib.move(item, True)
+                        config.lib.move(item, True, unicrep=config.unicrep)
                 else:
                     # A normal import. Just copy files and keep track of
                     # old paths.
-                    config.lib.move(item, True)
+                    config.lib.move(item, True, unicrep=config.unicrep)
 
             if config.write and task.should_write_tags():
                 item.write()
