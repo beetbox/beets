@@ -48,10 +48,10 @@ art for your music, enable this plugin after upgrading to beets 1.0b15.
 * Plugins can now add parallel stages to the import pipeline. See
   :ref:`writing-plugins`.
 * :doc:`/plugins/lastgenre`: Fixed a problem where path formats containing
-  `$genre` would use the old genre instead of the newly discovered one.
+  ``$genre`` would use the old genre instead of the newly discovered one.
 * New plugin event: ``import_task_choice`` is called after an import task has an
   action assigned.
-* New plugin event: `import_task_files` is called after a task's file
+* New plugin event: ``import_task_files`` is called after a task's file
   manipulation has finished (copying or moving files, writing metadata tags).
 * New plugin event: ``library_opened`` is called when beets starts up and
   opens the library database.
@@ -82,7 +82,7 @@ art for your music, enable this plugin after upgrading to beets 1.0b15.
   Mecucci).
 * Fix an assertion failure while importing with moving enabled when the file was
   already at its destination.
-* Use a nicer error message when input requested but stdin is closed.
+* Use a nicer error message when input is requested but stdin is closed.
 
 .. _submitting new images to the archive:
     http://musicbrainz.org/doc/How_to_Add_Cover_Art
