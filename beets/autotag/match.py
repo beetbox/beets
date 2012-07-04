@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2011, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -35,6 +35,8 @@ ALBUM_WEIGHT = 3.0
 TRACK_WEIGHT = 1.0
 # The weight of a missing track.
 MISSING_WEIGHT = 0.9
+# The weight of an extra (umatched) track.
+UNMATCHED_WEIGHT = 0.6
 # These distances are components of the track distance (that is, they
 # compete against each other but not ARTIST_WEIGHT and ALBUM_WEIGHT;
 # the overall TRACK_WEIGHT does that).
@@ -248,9 +250,14 @@ def track_distance(item, track_info, incl_artist=False):
 
     return dist / dist_max
 
-def distance(items, album_info):
+def distance(items, album_info, mapping):
     """Determines how "significant" an album metadata change would be.
-    Returns a float in [0.0,1.0]. The list of items must be ordered.
+    Returns a float in [0.0,1.0]. `album_info` is an AlbumInfo object
+    reflecting the album to be compared. `items` is a sequence of all
+    Item objects that will be matched (order is not important).
+    `mapping` is a dictionary mapping Items to TrackInfo objects; the
+    keys are a subset of `items` and the values are a subset of
+    `album_info.tracks`.
     """
     cur_artist, cur_album, _ = current_metadata(items)
     cur_artist = cur_artist or ''
@@ -268,15 +275,18 @@ def distance(items, album_info):
     dist += string_dist(cur_album,  album_info.album) * ALBUM_WEIGHT
     dist_max += ALBUM_WEIGHT
 
-    # Track distances.
-    for i, (item, track_info) in enumerate(zip(items, album_info.tracks)):
-        if item:
-            dist += track_distance(item, track_info, album_info.va) * \
-                    TRACK_WEIGHT
-            dist_max += TRACK_WEIGHT
-        else:
-            dist += MISSING_WEIGHT
-            dist_max += MISSING_WEIGHT
+    # Matched track distances.
+    for item, track in mapping.iteritems():
+        dist += track_distance(item, track, album_info.va) * TRACK_WEIGHT
+        dist_max += TRACK_WEIGHT
+
+    # Extra and unmatched tracks.
+    for track in set(album_info.tracks) - set(mapping.values()):
+        dist += MISSING_WEIGHT
+        dist_max += MISSING_WEIGHT
+    for item in set(items) - set(mapping.keys()):
+        dist += UNMATCHED_WEIGHT
+        dist_max += UNMATCHED_WEIGHT
 
     # Plugin distances.
     plugin_d, plugin_dm = plugins.album_distance(items, album_info)
@@ -287,11 +297,12 @@ def distance(items, album_info):
     if dist_max == 0.0:
         return 0.0
     else:
-        return dist/dist_max
+        return dist / dist_max
 
 def match_by_id(items):
     """If the items are tagged with a MusicBrainz album ID, returns an
-    info dict for the corresponding album. Otherwise, returns None.
+    AlbumInfo object for the corresponding album. Otherwise, returns
+    None.
     """
     # Is there a consensus on the MB album ID?
     albumids = [item.mb_albumid for item in items if item.mb_albumid]
@@ -313,15 +324,15 @@ def match_by_id(items):
     # present, but that event seems very unlikely.
 
 def recommendation(results):
-    """Given a sorted list of result tuples, returns a recommendation
-    flag (RECOMMEND_STRONG, RECOMMEND_MEDIUM, RECOMMEND_NONE) based
-    on the results' distances.
+    """Given a sorted list of AlbumMatch or TrackMatch objects, return a
+    recommendation flag (RECOMMEND_STRONG, RECOMMEND_MEDIUM,
+    RECOMMEND_NONE) based on the results' distances.
     """
     if not results:
         # No candidates: no recommendation.
         rec = RECOMMEND_NONE
     else:
-        min_dist = results[0][0]
+        min_dist = results[0].distance
         if min_dist < STRONG_REC_THRESH:
             # Strong recommendation level.
             rec = RECOMMEND_STRONG
@@ -331,7 +342,7 @@ def recommendation(results):
         elif min_dist <= MEDIUM_REC_THRESH:
             # Medium recommendation level.
             rec = RECOMMEND_MEDIUM
-        elif results[1][0] - min_dist >= REC_GAP_THRESH:
+        elif results[1].distance - min_dist >= REC_GAP_THRESH:
             # Gap between first two candidates is large.
             rec = RECOMMEND_MEDIUM
         else:
@@ -339,11 +350,11 @@ def recommendation(results):
             rec = RECOMMEND_NONE
     return rec
 
-def validate_candidate(items, results, info):
+def _add_candidate(items, results, info):
     """Given a candidate AlbumInfo object, attempt to add the candidate
-    to the output dictionary of result tuples. This involves checking
-    the track count, ordering the items, checking for duplicates, and
-    calculating the distance.
+    to the output dictionary of AlbumMatch objects. This involves
+    checking the track count, ordering the items, checking for
+    duplicates, and calculating the distance.
     """
     log.debug('Candidate: %s - %s' % (info.artist, info.album))
 
@@ -352,24 +363,15 @@ def validate_candidate(items, results, info):
         log.debug('Duplicate.')
         return
 
-    # Make sure the album has the correct number of tracks.
-    if len(items) > len(info.tracks):
-        log.debug('Too many items to match: %i > %i.' %
-                  (len(items), len(info.tracks)))
-        return
-
-    # Put items in order.
+    # Find mapping between the items and the track info.
     mapping, extra_items, extra_tracks = assign_items(items, info.tracks)
-    # TEMPORARY: make ordered item list with gaps.
-    ordered = [None] * len(info.tracks)
-    for item, track_info in mapping.iteritems():
-        ordered[track_info.index - 1] = item
 
     # Get the change distance.
-    dist = distance(ordered, info)
+    dist = distance(items, info, mapping)
     log.debug('Success. Distance: %f' % dist)
 
-    results[info.album_id] = dist, ordered, info
+    results[info.album_id] = hooks.AlbumMatch(dist, info, mapping,
+                                              extra_items, extra_tracks)
 
 def tag_album(items, timid=False, search_artist=None, search_album=None,
               search_id=None):
@@ -377,10 +379,8 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
     set of items comprised by an album. Returns everything relevant:
         - The current artist.
         - The current album.
-        - A list of (distance, items, info) tuples where info is a
-          dictionary containing the inferred tags and items is a
-          reordered version of the input items list. The candidates are
-          sorted by distance (i.e., best match first).
+        - A list of AlbumMatch objects. The candidates are sorted by
+        distance (i.e., best match first).
         - A recommendation, one of RECOMMEND_STRONG, RECOMMEND_MEDIUM,
           or RECOMMEND_NONE; indicating that the first candidate is
           very likely, it is somewhat likely, or no conclusion could
@@ -404,7 +404,7 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
     else:
         id_info = match_by_id(items)
     if id_info:
-        validate_candidate(items, candidates, id_info)
+        _add_candidate(items, candidates, id_info)
         rec = recommendation(candidates.values())
         log.debug('Album ID match recommendation is ' + str(rec))
         if candidates and not timid:
@@ -439,7 +439,7 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
                                            va_likely)
     log.debug(u'Evaluating %i candidates.' % len(search_cands))
     for info in search_cands:
-        validate_candidate(items, candidates, info)
+        _add_candidate(items, candidates, info)
 
     # Sort and get the recommendation.
     candidates = sorted(candidates.itervalues())
@@ -449,10 +449,10 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
 def tag_item(item, timid=False, search_artist=None, search_title=None,
              search_id=None):
     """Attempts to find metadata for a single track. Returns a
-    `(candidates, recommendation)` pair where `candidates` is a list
-    of `(distance, track_info)` pairs. `search_artist` and
-    `search_title` may be used to override the current metadata for
-    the purposes of the MusicBrainz title; likewise `search_id`.
+    `(candidates, recommendation)` pair where `candidates` is a list of
+    TrackMatch objects. `search_artist` and `search_title` may be used
+    to override the current metadata for the purposes of the MusicBrainz
+    title; likewise `search_id`.
     """
     # Holds candidates found so far: keys are MBIDs; values are
     # (distance, TrackInfo) pairs.
@@ -465,7 +465,8 @@ def tag_item(item, timid=False, search_artist=None, search_title=None,
         track_info = hooks._track_for_id(trackid)
         if track_info:
             dist = track_distance(item, track_info, incl_artist=True)
-            candidates[track_info.track_id] = (dist, track_info)
+            candidates[track_info.track_id] = \
+                    hooks.TrackMatch(dist, track_info)
             # If this is a good match, then don't keep searching.
             rec = recommendation(candidates.values())
             if rec == RECOMMEND_STRONG and not timid:
@@ -487,7 +488,7 @@ def tag_item(item, timid=False, search_artist=None, search_title=None,
     # Get and evaluate candidate metadata.
     for track_info in hooks._item_candidates(item, search_artist, search_title):
         dist = track_distance(item, track_info, incl_artist=True)
-        candidates[track_info.track_id] = (dist, track_info)
+        candidates[track_info.track_id] = hooks.TrackMatch(dist, track_info)
 
     # Sort by distance and return with recommendation.
     log.debug('Found %i candidates.' % len(candidates))
