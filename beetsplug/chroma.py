@@ -170,14 +170,14 @@ def fingerprint_task(config=None, task=None):
     """Fingerprint each item in the task for later use during the
     autotagging candidate search.
     """
-    for item in task.all_items():
+    for item in task.imported_items():
         acoustid_match(item.path)
 
 @AcoustidPlugin.listen('import_task_apply')
 def apply_acoustid_metadata(config=None, task=None):
     """Apply Acoustid metadata (fingerprint and ID) to the task's items.
     """
-    for item in task.all_items():
+    for item in task.imported_items():
         if item.path in _fingerprints:
             item.acoustid_fingerprint = _fingerprints[item.path]
         if item.path in _acoustids:

@@ -210,5 +210,5 @@ class LyricsPlugin(BeetsPlugin):
     # Auto-fetch lyrics on import.
     def imported(self, config, task):
         if AUTOFETCH:
-            for item in task.all_items():
+            for item in task.imported_items():
                 fetch_item_lyrics(config.lib, logging.DEBUG, item, False)
