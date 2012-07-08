@@ -547,6 +547,14 @@ class ConfigTest(unittest.TestCase):
             [beets]
             replace=[xy] z"""), func)
 
+    def test_replacements_parsed_unicode(self):
+        def func(lib, config, opts, args):
+            replacements = lib.replacements
+            self.assertEqual(replacements, [(re.compile(ur'\u2019'), u'z')])
+        self._run_main([], textwrap.dedent(u"""
+            [beets]
+            replace=\u2019 z"""), func)
+
     def test_empty_replacements_produce_none(self):
         def func(lib, config, opts, args):
             replacements = lib.replacements
