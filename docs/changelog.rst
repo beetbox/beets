@@ -88,6 +88,7 @@ art for your music, enable this plugin after upgrading to beets 1.0b15.
   Mecucci).
 * Fix an assertion failure while importing with moving enabled when the file was
   already at its destination.
+* Fix Unicode values in the ``replace`` config option (thanks to Jakob Borg).
 * Use a nicer error message when input is requested but stdin is closed.
 
 .. _submitting new images to the archive:
