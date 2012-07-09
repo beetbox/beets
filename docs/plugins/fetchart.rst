@@ -37,10 +37,8 @@ otherwise, the command processes every album in your library.
 Album Art Sources
 -----------------
 
-Currently, this plugin searches for art in the local filesystem, on the `Cover
-Art Archive`_, on Amazon, and on AlbumArt.org (in that order).
-
-.. _Cover Art Archive: http://coverartarchive.org/
+Currently, this plugin searches for art in the local filesystem as well as on
+the Cover Art Archive, Amazon, and AlbumArt.org (in that order).
 
 When looking for local album art, beets checks for image files located in the
 same folder as the music files you're importing. If you have an image file

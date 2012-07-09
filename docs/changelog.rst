@@ -24,17 +24,13 @@ art for your music, enable this plugin after upgrading to beets 1.0b15.
   Be sure to enable this plugin if you're using this functionality. As a result
   of this new organization, the new plugin has gained a few new features:
 
-  * Cover art can now be fetched from the `Cover Art Archive`_, a new image
-    repository from MusicBrainz and the Internet Archive. While its coverage
-    is currently spotty, CAA is growing and its images are generally
-    higher-quality than those from Amazon. You can help out by `submitting new
-    images to the archive`_.
   * "As-is" and non-autotagged imports can now have album art imported from
     the local filesystem (although Web repositories are still not searched in
     these cases).
   * A new command, ``beet fetchart``, allows you to download album art
     post-import. If you only want to fetch art manually, not automatically
     during import, set the new plugin's ``autofetch`` option to ``no``.
+  * New album art sources have been added.
 
 * Errors when communicating with MusicBrainz now log an error message instead of
   halting the importer.
@@ -91,10 +87,7 @@ art for your music, enable this plugin after upgrading to beets 1.0b15.
 * Fix Unicode values in the ``replace`` config option (thanks to Jakob Borg).
 * Use a nicer error message when input is requested but stdin is closed.
 
-.. _submitting new images to the archive:
-    http://musicbrainz.org/doc/How_to_Add_Cover_Art
 .. _artist credits: http://wiki.musicbrainz.org/Artist_Credit
-.. _Cover Art Archive: http://coverartarchive.org/
 
 1.0b14 (May 12, 2012)
 ---------------------
