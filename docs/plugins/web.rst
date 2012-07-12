@@ -32,7 +32,7 @@ http://localhost:8337/. This is what it looks like:
 
 You can also specify the hostname and port number used by the Web server. These
 can be specified on the command line or in the ``[web]`` section of your
-[Usage#Configuration .beetsconfig].
+:doc:`/reference/config`.
 
 On the command line, use ``beet web [HOSTNAME] [PORT]``. In the config file, use
 something like this::
