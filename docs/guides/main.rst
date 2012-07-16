@@ -78,12 +78,19 @@ get it right:
 6. You're all set! Type ``beet`` at the command prompt to make sure everything's
    in order.
 
+Windows users may also want to install a context menu item for importing files
+into beets. Just download and open `beets.reg`_ to add the necessary keys to the
+registry. You can then right-click a directory and choose "Import with beets".
+If Python is in a nonstandard location on your system, you may have to edit the
+command path manually.
+
 Because I don't use Windows myself, I may have missed something. If you have
 trouble or you have more detail to contribute here, please `let me know`_.
 
 .. _let me know: mailto:adrian@radbox.org
 .. _install Python: http://python.org/download/
 .. _Setuptools: http://pypi.python.org/pypi/setuptools
+.. _beets.reg: https://github.com/sampsyo/beets/blob/master/extra/beets.reg
 
 
 Configuring
