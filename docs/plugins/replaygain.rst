@@ -4,6 +4,7 @@ ReplayGain Plugin
 This plugin adds support for `ReplayGain`_, a technique for normalizing audio
 playback levels.
 
+.. _ReplayGain: http://wiki.hydrogenaudio.org/index.php?title=ReplayGain
 
 Installation
 ------------
@@ -45,11 +46,6 @@ for the plugin in your :doc:`/reference/config`, like so::
 The target level can be modified to any target dB with the ``targetlevel``option
 (default: 89 dB).
 
-The use of ReplayGain can cause clipping if the average volume of a song is below
-the target level. By default a "prevent clipping" feature named ``noclip`` is
-enabled to reduce the amount of ReplayGain adjustment to whatever amount would
-keep clipping from occurring.
-
 ReplayGain allows to make consistent the loudness of a whole album while allowing
  the dynamics from song to song on the album to remain intact. This is called
  'Album Gain' (especially important for classical music albums with large loudness
@@ -59,3 +55,11 @@ be changed with ``albumgain`` switch::
 
     [replaygain]
     albumgain: yes
+
+If you use a player that does not support ReplayGain specifications, you may want
+to force the volume normalization by applying the gain to the file via the ``apply`` 
+option. This is a lossless and revertable operation with no decoding/re-encoding involved.
+The use of ReplayGain can cause clipping if the average volume of a song is below
+the target level. By default a "prevent clipping" feature named ``noclip`` is
+enabled to reduce the amount of ReplayGain adjustment to whatever amount would
+keep clipping from occurring.

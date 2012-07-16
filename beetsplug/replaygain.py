@@ -55,6 +55,8 @@ class ReplayGainPlugin(BeetsPlugin):
                                        'overwrite', False, bool)
         self.noclip = ui.config_val(config,'replaygain',
                                        'noclip', True, bool)
+        self.apply_gain = ui.config_val(config,'replaygain',
+                                       'apply_gain', False, bool)
         self.albumgain = ui.config_val(config,'replaygain',
                                        'albumgain', False, bool)
         target_level = float(ui.config_val(config,'replaygain',
@@ -78,7 +80,7 @@ class ReplayGainPlugin(BeetsPlugin):
             media_files = \
                 [MediaFile(syspath(item.path)) for item in album.items()]
 
-            self.apply_replaygain(media_files)
+            self.write_rgain(media_files, self.compute_rgain(media_files))
 
         except (FileTypeError, UnreadableFileError,
                 TypeError, ValueError) as e:
@@ -88,7 +90,7 @@ class ReplayGainPlugin(BeetsPlugin):
     def item_imported(self, lib, item, config):
         try:
             mf = MediaFile(syspath(item.path))
-            self.apply_replaygain(mf)
+            self.write_rgain(mf, self.compute_rgain(mf))
         except (FileTypeError, UnreadableFileError,
             TypeError, ValueError) as e:
             log.error("failed to calculate replaygain:  %s ", e)
@@ -147,8 +149,8 @@ class ReplayGainPlugin(BeetsPlugin):
         return albumgain
 
     
-    def apply_replaygain(self, media_files):
-        '''Apply replaygain with correct options to given files. 
+    def compute_rgain(self, media_files):
+        '''Compute replaygain taking options into account. 
         Returns filtered command stdout'''
 
         cmd_args = []
@@ -168,7 +170,9 @@ class ReplayGainPlugin(BeetsPlugin):
         cmd = [self.command, '-o']
         if self.noclip:
             cmd = cmd + ['-k'] 
-        cmd = cmd + ['-r','-d', str(self.gain_offset)]
+        if self.apply_gain:
+            cmd = cmd + ['-r'] 
+        cmd = cmd + ['-d', str(self.gain_offset)]
         cmd = cmd + media_paths
         try:
             subprocess.check_call(cmd)
@@ -181,11 +185,10 @@ class ReplayGainPlugin(BeetsPlugin):
             raise RgainError("%s exited with status %i" % (cmd, retcode))
 
         tmp = proc.communicate()[0]
-        rgain_infos = self.extract_rgain_infos(tmp)
-        self.write_gain(media_files, rgain_infos)
+        return self.extract_rgain_infos(tmp)
 
 
-    def write_gain(self, media_files, rgain_infos): 
+    def write_rgain(self, media_files, rgain_infos): 
         '''Write computed gain infos for each media file'''
         
         for (i,mf) in enumerate(media_files):
