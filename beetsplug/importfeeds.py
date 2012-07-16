@@ -87,7 +87,9 @@ def _record_items(lib, basename, items):
 
     if 'link' in _feeds_formats:
         for path in paths:
-            os.symlink(path, os.path.join(_feeds_dir, os.path.basename(path)))
+            dest = os.path.join(_feeds_dir, os.path.basename(path))
+            if not os.path.exists(dest):
+                os.symlink(path, dest)
 
 @ImportFeedsPlugin.listen('library_opened')
 def library_opened(lib):
