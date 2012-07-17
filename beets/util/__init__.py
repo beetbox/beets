@@ -141,7 +141,9 @@ def sorted_walk(path, ignore=()):
     # Get all the directories and files at this level.
     dirs = []
     files = []
-    for base in os.listdir(path):
+    for base in os.listdir(syspath(path)):
+        base = bytestring_path(base)
+
         # Skip ignored filenames.
         skip = False
         for pat in ignore:
@@ -166,7 +168,7 @@ def sorted_walk(path, ignore=()):
     # Recurse into directories.
     for base in dirs:
         cur = os.path.join(path, base)
-        # yield from _sorted_walk(cur)
+        # yield from sorted_walk(...)
         for res in sorted_walk(cur, ignore):
             yield res
 
@@ -250,6 +252,13 @@ def bytestring_path(path):
 
     # Try to encode with default encodings, but fall back to UTF8.
     encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
+    if encoding == 'mbcs':
+        # On Windows, a broken encoding known to Python as "MBCS" is
+        # used for the filesystem. However, we only use the Unicode API
+        # for Windows paths, so the encoding is actually immaterial so
+        # we can avoid dealing with this nastiness. We arbitrarily
+        # choose UTF-8.
+        encoding = 'utf8'
     try:
         return path.encode(encoding)
     except (UnicodeError, LookupError):

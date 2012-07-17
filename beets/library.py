@@ -1123,17 +1123,9 @@ class Library(BaseLibrary):
             subpath = unicodedata.normalize('NFC', subpath)
         # Truncate components and remove forbidden characters.
         subpath = util.sanitize_path(subpath, pathmod, self.replacements)
-        # Encode for the filesystem, dropping unencodable characters.
-        if isinstance(subpath, unicode) and not fragment:
-            encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
-            if encoding == 'mbcs':
-                # On Windows, a broken encoding known to Python as
-                # "MBCS" is used for the filesystem. However, we only
-                # use the Unicode API for Windows paths, so the encoding
-                # is actually immaterial so we can avoid dealing with
-                # this nastiness. We arbitrarily choose UTF-8.
-                encoding = 'utf8'
-            subpath = subpath.encode(encoding, 'replace')
+        # Encode for the filesystem.
+        if not fragment:
+            subpath = bytestring_path(subpath)
 
         # Preserve extension.
         _, extension = pathmod.splitext(item.path)
