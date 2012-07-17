@@ -86,6 +86,11 @@ art for your music, enable this plugin after upgrading to beets 1.0b15.
   already at its destination.
 * Fix Unicode values in the ``replace`` config option (thanks to Jakob Borg).
 * Use a nicer error message when input is requested but stdin is closed.
+* Fix errors on Windows for certain Unicode characters that can't be represented
+  in the MBCS encoding. This required a change to the way that paths are
+  represented in the database on Windows; if you find that beets' paths are out
+  of sync with your filesystem with this release, delete and recreate your
+  database with ``beet import -AWC /path/to/music``.
 
 .. _artist credits: http://wiki.musicbrainz.org/Artist_Credit
 

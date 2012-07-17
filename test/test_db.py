@@ -21,6 +21,7 @@ import posixpath
 import shutil
 import re
 import unicodedata
+import sys
 
 import _common
 from _common import unittest
@@ -427,6 +428,19 @@ class DestinationTest(unittest.TestCase):
         self.lib.path_formats = [('default', instr)]
         dest = self.lib.destination(self.i, platform='linux2', fragment=True)
         self.assertEqual(dest, unicodedata.normalize('NFC', instr))
+
+    def test_non_mbcs_characters_on_windows(self):
+        oldfunc = sys.getfilesystemencoding
+        sys.getfilesystemencoding = lambda: 'mbcs'
+        try:
+            self.i.title = u'h\u0259d'
+            self.lib.path_formats = [('default', '$title')]
+            p = self.lib.destination(self.i)
+            self.assertFalse('?' in p)
+            # We use UTF-8 to encode Windows paths now.
+            self.assertTrue(u'h\u0259d'.encode('utf8') in p)
+        finally:
+            sys.getfilesystemencoding = oldfunc
 
 class PathFormattingMixin(object):
     """Utilities for testing path formatting."""

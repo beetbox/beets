@@ -1126,6 +1126,13 @@ class Library(BaseLibrary):
         # Encode for the filesystem, dropping unencodable characters.
         if isinstance(subpath, unicode) and not fragment:
             encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
+            if encoding == 'mbcs':
+                # On Windows, a broken encoding known to Python as
+                # "MBCS" is used for the filesystem. However, we only
+                # use the Unicode API for Windows paths, so the encoding
+                # is actually immaterial so we can avoid dealing with
+                # this nastiness. We arbitrarily choose UTF-8.
+                encoding = 'utf8'
             subpath = subpath.encode(encoding, 'replace')
 
         # Preserve extension.

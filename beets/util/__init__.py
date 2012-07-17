@@ -284,12 +284,16 @@ def syspath(path, pathmod=None):
         return path
 
     if not isinstance(path, unicode):
-        # Try to decode with default encodings, but fall back to UTF8.
-        encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
+        # Beets currently represents Windows paths internally with UTF-8
+        # arbitrarily. But earlier versions used MBCS because it is
+        # reported as the FS encoding by Windows. Try both.
         try:
-            path = path.decode(encoding, 'replace')
+            path = path.decode('utf8')
         except UnicodeError:
-            path = path.decode('utf8', 'replace')
+            # The encoding should always be MBCS, Windows' broken
+            # Unicode representation.
+            encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
+            path = path.decode(encoding, 'replace')
 
     # Add the magic prefix if it isn't already there
     if not path.startswith(u'\\\\?\\'):
