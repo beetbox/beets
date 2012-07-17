@@ -91,6 +91,7 @@ art for your music, enable this plugin after upgrading to beets 1.0b15.
   represented in the database on Windows; if you find that beets' paths are out
   of sync with your filesystem with this release, delete and recreate your
   database with ``beet import -AWC /path/to/music``.
+* Fix ``import`` with relative path arguments on Windows.
 
 .. _artist credits: http://wiki.musicbrainz.org/Artist_Credit
 
