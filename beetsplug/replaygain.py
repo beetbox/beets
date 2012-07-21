@@ -174,12 +174,15 @@ class ReplayGainPlugin(BeetsPlugin):
             cmd = cmd + ['-r'] 
         cmd = cmd + ['-d', str(self.gain_offset)]
         cmd = cmd + media_paths
+        
         try:
-            subprocess.check_call(cmd)
+            with open(os.devnull, 'w') as tempf:
+                subprocess.check_call(cmd, stdout=tempf, stderr=tempf)
         except subprocess.CalledProcessError as e:
             raise RgainError("%s exited with status %i" % (cmd, e.returncode))
       
         cmd = [self.command, '-s','c','-o'] + media_paths
+        
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         if proc.poll():
             raise RgainError("%s exited with status %i" % (cmd, retcode))
@@ -196,12 +199,6 @@ class ReplayGainPlugin(BeetsPlugin):
             try:
                 mf.rg_track_gain = float(rgain_infos[i][2])
                 mf.rg_track_peak = float(rgain_infos[i][4])
-
-                print('Tagging ReplayGain for: %s - %s' % (mf.artist, 
-                                                           mf.title))
-                print('\tTrack gain = %f\n' % mf.rg_track_gain)
-                print('\tTrack peak = %f\n' % mf.rg_track_peak)
-
                 mf.save()
             except (FileTypeError, UnreadableFileError, TypeError, ValueError):
                 log.error("failed to write replaygain: %s" % (mf.title))
