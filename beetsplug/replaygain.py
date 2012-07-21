@@ -90,7 +90,7 @@ class ReplayGainPlugin(BeetsPlugin):
     def item_imported(self, lib, item, config):
         try:
             mf = MediaFile(syspath(item.path))
-            self.write_rgain(mf, self.compute_rgain(mf))
+            self.write_rgain([mf], self.compute_rgain([mf]))
         except (FileTypeError, UnreadableFileError,
             TypeError, ValueError) as e:
             log.error("failed to calculate replaygain:  %s ", e)
