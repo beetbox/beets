@@ -246,7 +246,6 @@ class BaseServer(object):
 
     def cmd_kill(self, conn):
         """Exits the server process."""
-        self.listener.close()
         exit(0)
 
     def cmd_close(self, conn):
