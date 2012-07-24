@@ -247,7 +247,7 @@ class Item(object):
 
         if key in ITEM_KEYS:
             # If the value changed, mark the field as dirty.
-            if (not (key in self.record)) or (self.record[key] != value):
+            if (key not in self.record) or (self.record[key] != value):
                 self.record[key] = value
                 self.dirty[key] = True
                 if key in ITEM_KEYS_WRITABLE:
