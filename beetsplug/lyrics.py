@@ -123,6 +123,10 @@ def fetch_lyricswiki(artist, title):
         return lyrics
 
 LYRICSCOM_URL_PATTERN = 'http://www.lyrics.com/%s-lyrics-%s.html'
+LYRICSCOM_NOT_FOUND = (
+    'Sorry, we do not have the lyric',
+    'Submit Lyrics',
+)
 def _lc_encode(s):
     s = re.sub(r'\s+', '-', s)
     if isinstance(s, unicode):
@@ -136,10 +140,15 @@ def fetch_lyricscom(artist, title):
         return
 
     lyrics = extract_text(html, '<div id="lyric_space">')
-    if lyrics and 'Sorry, we do not have the lyric' not in lyrics:
-        parts = lyrics.split('\n---\nLyrics powered by', 1)
-        if parts:
-            return parts[0]
+    if not lyrics:
+        return
+    for not_found_str in LYRICSCOM_NOT_FOUND:
+        if not_found_str in lyrics:
+            return
+
+    parts = lyrics.split('\n---\nLyrics powered by', 1)
+    if parts:
+        return parts[0]
 
 BACKENDS = [fetch_lyricswiki, fetch_lyricscom]
 def get_lyrics(artist, title):
@@ -149,6 +158,7 @@ def get_lyrics(artist, title):
         if lyrics:
             if isinstance(lyrics, str):
                 lyrics = lyrics.decode('utf8', 'ignore')
+            log.debug('got lyrics from backend: {0}'.format(backend.__name__))
             return lyrics
 
 
