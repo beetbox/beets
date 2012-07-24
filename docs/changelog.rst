@@ -1,28 +1,37 @@
 Changelog
 =========
 
-1.0b15 (in development)
------------------------
+1.0b15 (July XX, 2012)
+----------------------
 
-This release contains one backwards-incompatible change: album art fetching,
-which was previously baked into the import workflow, is now encapsulated in a
-plugin (the :doc:`/plugins/fetchart`). If you want to continue fetching cover
-art for your music, enable this plugin after upgrading to beets 1.0b15.
+The fifteenth (!) beta of beets is compendium of small fixes and features, most
+of which represent long-standing requests. The improvements include matching
+albums with extra tracks, per-disc track numbering in multi-disc albums, an
+overhaul of the album art downloader, and robustness enhancements that should
+keep beets running even when things go wrong. All these smaller changes should
+help us focus on some larger changes coming before 1.0.
 
-* The autotagger can now find matches for albums when you have extra tracks on
-  your filesystem that aren't present in the MusicBrainz catalog. Previously, if
-  you tried to match album with 15 audio files but the MusicBrainz entry had
+Please note that this release contains one backwards-incompatible change: album
+art fetching, which was previously baked into the import workflow, is now
+encapsulated in a plugin (the :doc:`/plugins/fetchart`). If you want to continue
+fetching cover art for your music, enable this plugin after upgrading to beets
+1.0b15.
+
+* The autotagger can now find matches for albums when you have **extra tracks**
+  on your filesystem that aren't present in the MusicBrainz catalog. Previously,
+  if you tried to match album with 15 audio files but the MusicBrainz entry had
   only 14 tracks, beets would ignore this match. Now, beets will show you
   matches even when they are "too short" and indicate which tracks from your
   disk are unmatched.
-* Tracks on multi-disc albums can now be numbered per-disc instead of per-album
-  via the :ref:`per_disc_numbering` config option.
+* Tracks on multi-disc albums can now be **numbered per-disc** instead of
+  per-album via the :ref:`per_disc_numbering` config option.
 * The default output format for the ``beet list`` command is now configurable
   via the :ref:`list_format_item` and :ref:`list_format_album` config options.
   Thanks to Fabrice Laporte.
-* Album cover art fetching is now encapsulated in the :doc:`/plugins/fetchart`.
-  Be sure to enable this plugin if you're using this functionality. As a result
-  of this new organization, the new plugin has gained a few new features:
+* Album **cover art fetching** is now encapsulated in the
+  :doc:`/plugins/fetchart`. Be sure to enable this plugin if you're using this
+  functionality. As a result of this new organization, the new plugin has gained
+  a few new features:
 
   * "As-is" and non-autotagged imports can now have album art imported from
     the local filesystem (although Web repositories are still not searched in
@@ -49,14 +58,17 @@ art for your music, enable this plugin after upgrading to beets 1.0b15.
   avoid internal SQLite contention, which should avoid this error.
 * Plugins can now add parallel stages to the import pipeline. See
   :ref:`writing-plugins`.
+* New plugin events:
+
+  * ``import_task_choice`` is called after an import task has an action
+    assigned.
+  * ``import_task_files`` is called after a task's file manipulation has
+    finished (copying or moving files, writing metadata tags).
+  * ``library_opened`` is called when beets starts up and opens the library
+    database.
+
 * :doc:`/plugins/lastgenre`: Fixed a problem where path formats containing
   ``$genre`` would use the old genre instead of the newly discovered one.
-* New plugin event: ``import_task_choice`` is called after an import task has an
-  action assigned.
-* New plugin event: ``import_task_files`` is called after a task's file
-  manipulation has finished (copying or moving files, writing metadata tags).
-* New plugin event: ``library_opened`` is called when beets starts up and
-  opens the library database.
 * Fix a crash when moving files to a Samba share.
 * :doc:`/plugins/mpdupdate`: Fix TypeError crash (thanks to Philippe Mongeau).
 * When re-importing files with ``import_copy`` enabled, only files inside the
@@ -75,7 +87,7 @@ art for your music, enable this plugin after upgrading to beets 1.0b15.
   are identified with multiple recordings; beets now considers any associated
   recording a valid match. This should reduce some cases of errant track
   reordering when using chroma.
-* Fix ID3 tag name for the catalog number field.
+* Fix the ID3 tag name for the catalog number field.
 * :doc:`/plugins/chroma`: Fix occasional crash at end of fingerprint submission
   and give more context to "failed fingerprint generation" errors.
 * Interactive prompts are sent to stdout instead of stderr.
