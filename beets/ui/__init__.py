@@ -660,6 +660,8 @@ class SubcommandsOptionParser(optparse.OptionParser):
                 # particular
                 cmdname = subargs[0]
                 helpcommand = self._subcommand_for_name(cmdname)
+                if not helpcommand:
+                    self.error('no command named {0}'.format(cmdname))
                 helpcommand.parser.print_help()
                 self.exit()
             else:
