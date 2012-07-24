@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2011, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -170,7 +170,8 @@ def fingerprint_task(config=None, task=None):
     """Fingerprint each item in the task for later use during the
     autotagging candidate search.
     """
-    for item in task.imported_items():
+    items = task.items if task.is_album else [task.item]
+    for item in items:
         acoustid_match(item.path)
 
 @AcoustidPlugin.listen('import_task_apply')
