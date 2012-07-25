@@ -126,8 +126,13 @@ list
 Want to search for "Gronlandic Edit" by of Montreal? Try ``beet list
 gronlandic``.  Maybe you want to see everything released in 2009 with
 "vegetables" in the title? Try ``beet list year:2009 title:vegetables``. (Read
-more in :doc:`query`.) You can use the ``-a`` switch to search for
-albums instead of individual items.
+more in :doc:`query`.)
+
+You can use the ``-a`` switch to search for albums instead of individual items.
+In this case, the queries you use are restricted to album-level fields: for
+example, you can search for ``year:1969`` but query parts for item-level fields
+like ``title:foo`` will be ignored. Remember that ``artist`` is an item-level
+field; ``albumartist`` is the corresponding album field.
 
 The ``-p`` option makes beets print out filenames of matched items, which might
 be useful for piping into other Unix commands (such as `xargs`_). Similarly, the

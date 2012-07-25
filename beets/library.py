@@ -586,6 +586,10 @@ class CollectionQuery(Query):
             elif key.lower() == 'singleton':
                 subqueries.append(SingletonQuery(util.str2bool(pattern)))
 
+            # Unrecognized field.
+            else:
+                log.warn('no such field in query: {0}'.format(key))
+
         if not subqueries:  # No terms in query.
             subqueries = [TrueQuery()]
         return cls(subqueries)

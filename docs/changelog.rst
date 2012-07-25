@@ -58,6 +58,9 @@ fetching cover art for your music, enable this plugin after upgrading to beets
   avoid internal SQLite contention, which should avoid this error.
 * Plugins can now add parallel stages to the import pipeline. See
   :ref:`writing-plugins`.
+* Beets now prints out an error when you use an unrecognized field name in a
+  query: for example, when running ``beet ls -a artist:foo`` (because ``artist``
+  is an item-level field).
 * New plugin events:
 
   * ``import_task_choice`` is called after an import task has an action
