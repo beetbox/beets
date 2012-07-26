@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.0b15 (July XX, 2012)
+1.0b15 (July 26, 2012)
 ----------------------
 
 The fifteenth (!) beta of beets is compendium of small fixes and features, most
