@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>beets: the music geek&rsquo;s media organizer</title>
+        <link rel="stylesheet" href="bootstrap.min.css">
+        <style type="text/css">
+            .container {
+                /* Remove 2 columns from the Bootstrap 16-col grid. */
+                width: 820px;
+            }
+
+            .leader {
+                margin-top: 20px;
+                border-bottom: 0;
+                height: 6em;
+            }
+
+            .flair {
+                margin-top: 1em;
+                text-align: center;
+            }
+            
+            li {
+                color: inherit;
+            }
+            ul, ol {
+                margin-bottom: 1em;
+            }
+
+            .screen p:first-of-type {
+                margin-top: 1em;
+            }
+
+            #sidebar h3:first-of-type {
+                margin-top: -10px;
+            }
+
+            #twitterStatus, #twitterStatus li {
+                margin-left: 0;
+                padding-left: 0;
+                list-style: none;
+            }
+            #twitterStatus li {
+                margin-bottom: 0.5em;
+            }
+            #twitterStatus .date {
+                font-weight: bold;
+                font-size: small;
+                display: block;
+                color: #999;
+            }
+
+            /* Undo Bootstrap's form styling for donate buttons. */
+            #donate input[type=image] {
+                width: auto;
+                height: auto;
+                -webkit-appearance: none;
+                border: none;
+                background: transparent;
+                box-shadow: none;
+                -webkit-box-shadow: none;
+                -moz-box-shadow: none;
+            }
+            #donate input[type=text] {
+                width: 5em;
+            }
+        </style>
+
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+        <script type="text/javascript">
+var INTERVAL_INITIAL = 7000;
+var INTERVAL_SUBSEQUENT = 5000;
+var BEETS_IS = [
+    'the media library management system for obsessive-compulsive music geeks',
+    'an infinitely flexible automatic metadata corrector and file renamer',
+    'the best command-line tool for viewing, querying, renaming, and updating your music collection',
+    'an album art downloader, lyrics fetcher, and genre identifier',
+    'a simple music metadata inspection and modification tool for tons of audio file types',
+    'an MPD-compatible music player',
+    'a Web-based collection explorer and HTML5 music player',
+];
+
+// Cycle "Beets is..." text.
+var beetsisIndex = 0;
+function updateBeetsis() {
+    beetsisIndex++;
+    if (beetsisIndex >= BEETS_IS.length)
+        beetsisIndex = 0;
+    var message = BEETS_IS[beetsisIndex] + '.';
+    $('#beetsis').fadeOut(function() {
+        $(this).text(message).fadeIn();
+        setTimeout(updateBeetsis, INTERVAL_SUBSEQUENT);
+    });
+}
+
+
+// Fetch and display the latest messages from the Twitter account.
+var NEWS_COUNT = 3;
+var MONTH_NAMES = [ "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December" ];
+var urlre = /(http:\/\/([^ \/]+)(\/\S+)?)\b/;
+function getNews() {
+    var twitterUser = 'b33ts';
+    var url = 'http://twitter.com/statuses/user_timeline/'+twitterUser+'.json';
+    $.ajax({
+        url: url,
+        dataType: 'jsonp',
+        success: function(data) {
+            // Find the first non-reply status. This assumes there's at least
+            // one non-reply in this chunk... probably a reasonable assumption.
+            $('#twitterStatus').empty();
+            var count = 0;
+            $.each(data, function(i, status) {
+    			if (status.in_reply_to_screen_name == null) {
+    				// Not a reply.
+
+    				var text = status.text;
+                    text = text.replace(urlre, "<a href=\"$1\">link&nbsp;&raquo;</a>");
+
+                    var date = new Date(Date.parse(status.created_at));
+                    date = MONTH_NAMES[date.getMonth()] + ' ' + date.getDate();
+
+                    $('#twitterStatus').append(
+                        '<li><span class="date">' + date + '</span> ' +
+                        text + '</li>'
+                    );
+                    count++;
+                    if (count >= NEWS_COUNT)
+                        return false; // break
+    			}
+    		});
+        },
+    });
+}
+
+$(function() {
+    setTimeout(updateBeetsis, INTERVAL_INITIAL);
+    getNews();
+});
+        </script>
+
+        <!-- Flattr button code -->
+        <script type="text/javascript">
+            (function() {
+                var s = document.createElement('script'), t = document.getElementsByTagName('script')[0];
+                s.type = 'text/javascript';
+                s.async = true;
+                s.src = 'http://api.flattr.com/js/0.6/load.js?mode=auto';
+                t.parentNode.insertBefore(s, t);
+            })();
+        </script>
+
+        <!-- Google Analytics -->
+        <script type="text/javascript">
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-11763891-2']);
+        _gaq.push(['_trackPageview']);
+
+        (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="content">
+                <div class="page-header leader">
+                    <h1>
+                        Beets is
+                        <span id="beetsis">the media library management system
+                            for obsessive-compulsive music geeks.</span>
+                    </h1>
+                </div>
+
+                <div class="row">
+
+<!-- ********************************************************************** -->
+                    
+                    <div class="span10 screen" id="{{ page.section }}">
+{{ content }}
+                    </div>
+
+
+<!-- ********************************************************************** -->
+
+                    <div class="span4" id="sidebar">
+<!-- SIDEBAR -->
+<section>
+    <h3>Get Beets</h3>
+    <p>
+        Install with <a
+            href="http://www.pip-installer.org/">pip</a>
+        by typing <code>pip install beets</code>,
+        then read the
+        <a href="http://readthedocs.org/docs/beets/-/guides/main.html">Getting
+        Started</a> guide.
+    </p>
+</section>
+<section>
+    <h3>Project</h3>
+    <ul>
+        <li><a href="http://github.com/sampsyo/beets">beets on github</a></li>
+        <li><a href="http://bitbucket.org/adrian/beets">beets on bitbucket</a></li>
+        <li><a href="http://beets.readthedocs.org/">documentation</a></li>
+        <li><a href="http://code.google.com/p/beets/issues/list">bug tracker</a></li>
+        <li><a href="http://groups.google.com/group/beets-users">mailing
+            list</a></li>
+        <li><a href="irc://irc.freenode.net/beets">#beets on
+            freenode</a></li>
+    </ul>
+</section>
+<section>
+    <h3>News</h3>
+    <ul id="twitterStatus">
+    </ul>
+    <p>
+        <a href="http://twitter.com/b33ts" class="twitter-follow-button">Follow @b33ts</a>
+    </p>
+</section>
+<section>
+    <h3>Contact</h3>
+    <p>
+        Email <a href="mailto:adrian@radbox.org">Adrian Sampson</a> with comments, questions, and fan mail.
+        You can <a href="{{ site.url }}/donate.html">donate with PayPal or Amazon</a>,
+        but please consider a donation to
+        <a href="http://www.publicampaign.org/donate">Public
+            Campaign</a> instead.
+        Thanks!
+    </p>
+</section>
+<section class="flair">
+    <!-- tweet button -->
+    <a href="http://twitter.com/share" class="twitter-share-button"
+    data-text="Beets: an awesome open-source music library manager and MusicBrainz tagger."
+    data-count="none" data-via="b33ts"
+    data-url="http://beets.radbox.org/">tweet beets</a>
+    <script type="text/javascript"
+    src="http://platform.twitter.com/widgets.js"></script>
+
+    <!-- google +1 button -->
+    <g:plusone count="false" size="medium"
+    href="http://beets.radbox.org/"></g:plusone>
+
+    <!-- flattr button -->
+    <a class="FlattrButton" style="display:none;"
+        rev="flattr;button:compact;" href="http://beets.radbox.org/"></a>
+</section>
+
+                    </div>
+
+<!-- ********************************************************************** -->
+
+                </div>
+            </div>
+        </div>
+
+        <a href="http://github.com/sampsyo/beets"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+        <script type="text/javascript" src="http://apis.google.com/js/plusone.js"></script>
+    </body>
+</html>

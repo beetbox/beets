@@ -1,0 +1,4 @@
+markdown: rdiscount
+rdiscount:
+    extensions: [smart]
+url: http://beets.radbox.org
