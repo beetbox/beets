@@ -3,147 +3,11 @@
     <head>
         <title>beets: {{ page.shorttitle }}</title>
         <link rel="stylesheet" href="bootstrap.min.css">
-        <style type="text/css">
-            .container {
-                /* Remove 2 columns from the Bootstrap 16-col grid. */
-                width: 820px;
-            }
-
-            .page-header {
-                border-bottom: 0;
-                box-shadow: 0;
-                -webkit-box-shadow: 0;
-                -moz-box-shadow: 0;
-                margin-top: 10px;
-            }
-            .leader {
-                margin-top: 20px;
-                height: 6em;
-            }
-
-            .flair {
-                margin-top: 1em;
-                text-align: center;
-            }
-            
-            li {
-                color: inherit;
-            }
-            ul, ol {
-                margin-bottom: 1em;
-            }
-
-            .screen p:first-of-type {
-                margin-top: 1em;
-            }
-
-            #sidebar h3:first-of-type {
-                margin-top: -10px;
-            }
-
-            #twitterStatus, #twitterStatus li {
-                margin-left: 0;
-                padding-left: 0;
-                list-style: none;
-            }
-            #twitterStatus li {
-                margin-bottom: 0.5em;
-            }
-            #twitterStatus .date {
-                font-weight: bold;
-                font-size: small;
-                display: block;
-                color: #999;
-            }
-
-            /* Undo Bootstrap's form styling for donate buttons. */
-            #donate input[type=image] {
-                width: auto;
-                height: auto;
-                -webkit-appearance: none;
-                border: none;
-                background: transparent;
-                box-shadow: none;
-                -webkit-box-shadow: none;
-                -moz-box-shadow: none;
-            }
-            #donate input[type=text] {
-                width: 5em;
-            }
-        </style>
-
+        <link rel="stylesheet" href="beets.css">
+        {% if page.section == 'main' %}
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-        <script type="text/javascript">
-var INTERVAL_INITIAL = 7000;
-var INTERVAL_SUBSEQUENT = 5000;
-var BEETS_IS = [
-    'the media library management system for obsessive-compulsive music geeks',
-    'an infinitely flexible automatic metadata corrector and file renamer',
-    'the best command-line tool for viewing, querying, renaming, and updating your music collection',
-    'an album art downloader, lyrics fetcher, and genre identifier',
-    'a simple music metadata inspection and modification tool for tons of audio file types',
-    'an MPD-compatible music player',
-    'a Web-based collection explorer and HTML5 music player',
-];
-
-// Cycle "Beets is..." text.
-var beetsisIndex = 0;
-function updateBeetsis() {
-    beetsisIndex++;
-    if (beetsisIndex >= BEETS_IS.length)
-        beetsisIndex = 0;
-    var message = BEETS_IS[beetsisIndex] + '.';
-    $('#beetsis').fadeOut(function() {
-        $(this).text(message).fadeIn();
-        setTimeout(updateBeetsis, INTERVAL_SUBSEQUENT);
-    });
-}
-
-
-// Fetch and display the latest messages from the Twitter account.
-var NEWS_COUNT = 3;
-var MONTH_NAMES = [ "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December" ];
-var urlre = /(http:\/\/([^ \/]+)(\/\S+)?)\b/;
-function getNews() {
-    var twitterUser = 'b33ts';
-    var url = 'http://twitter.com/statuses/user_timeline/'+twitterUser+'.json';
-    $.ajax({
-        url: url,
-        dataType: 'jsonp',
-        success: function(data) {
-            // Find the first non-reply status. This assumes there's at least
-            // one non-reply in this chunk... probably a reasonable assumption.
-            $('#twitterStatus').empty();
-            var count = 0;
-            $.each(data, function(i, status) {
-    			if (status.in_reply_to_screen_name == null) {
-    				// Not a reply.
-
-    				var text = status.text;
-                    text = text.replace(urlre, "<a href=\"$1\">link&nbsp;&raquo;</a>");
-
-                    var date = new Date(Date.parse(status.created_at));
-                    date = MONTH_NAMES[date.getMonth()] + ' ' + date.getDate();
-
-                    $('#twitterStatus').append(
-                        '<li><span class="date">' + date + '</span> ' +
-                        text + '</li>'
-                    );
-                    count++;
-                    if (count >= NEWS_COUNT)
-                        return false; // break
-    			}
-    		});
-        },
-    });
-}
-
-$(function() {
-    setTimeout(updateBeetsis, INTERVAL_INITIAL);
-    getNews();
-});
-        </script>
+        <script type="text/javascript" src="beets.js"></script>
+        {% endif %}
 
         <!-- Flattr button code -->
         <script type="text/javascript">
@@ -226,9 +90,11 @@ $(function() {
     </ul>
 </section>
 <section>
+    {% if page.section == 'main' %}
     <h3>News</h3>
     <ul id="twitterStatus">
     </ul>
+    {% endif %}
     <p>
         <a href="http://twitter.com/b33ts" class="twitter-follow-button">Follow @b33ts</a>
     </p>

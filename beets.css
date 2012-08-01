@@ -1,0 +1,66 @@
+.container {
+    /* Remove 2 columns from the Bootstrap 16-col grid. */
+    width: 820px;
+}
+
+.page-header {
+    border-bottom: 0;
+    box-shadow: 0;
+    -webkit-box-shadow: 0;
+    -moz-box-shadow: 0;
+    margin-top: 10px;
+}
+.leader {
+    margin-top: 20px;
+    height: 6em;
+}
+
+.flair {
+    margin-top: 1em;
+    text-align: center;
+}
+
+li {
+    color: inherit;
+}
+ul, ol {
+    margin-bottom: 1em;
+}
+
+.screen p:first-of-type {
+    margin-top: 1em;
+}
+
+#sidebar h3:first-of-type {
+    margin-top: -10px;
+}
+
+#twitterStatus, #twitterStatus li {
+    margin-left: 0;
+    padding-left: 0;
+    list-style: none;
+}
+#twitterStatus li {
+    margin-bottom: 0.5em;
+}
+#twitterStatus .date {
+    font-weight: bold;
+    font-size: small;
+    display: block;
+    color: #999;
+}
+
+/* Undo Bootstrap's form styling for donate buttons. */
+#donate input[type=image] {
+    width: auto;
+    height: auto;
+    -webkit-appearance: none;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+}
+#donate input[type=text] {
+    width: 5em;
+}
