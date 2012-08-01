@@ -28,6 +28,13 @@
     text-align: center;
 }
 
+#sidebar h3 a {
+    color: inherit;
+}
+#sidebar h3 a:hover {
+    text-decoration: none;
+}
+
 li {
     color: inherit;
 }
@@ -39,18 +46,18 @@ ul, ol {
     margin-top: 1em;
 }
 
-#twitterStatus {
+.newslist {
     margin-bottom: 0;
 }
-#twitterStatus, #twitterStatus li {
+.newslist, .newslist li {
     margin-left: 0;
     padding-left: 0;
     list-style: none;
 }
-#twitterStatus li {
+.newslist li {
     margin-bottom: 0.5em;
 }
-#twitterStatus .date {
+.newslist .date {
     font-weight: bold;
     font-size: small;
     display: block;

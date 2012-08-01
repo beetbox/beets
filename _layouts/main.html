@@ -1,15 +1,24 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>beets: {{ page.shorttitle }}</title>
+        <title>
+            beets:
+            {% if page.shorttitle %}
+                {{ page.shorttitle }}
+            {% else %}
+                {{ page.title }}
+            {% endif %}
+        </title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="bootstrap.min.css">
-        <link rel="stylesheet" href="bootstrap-responsive.min.css">
-        <link rel="stylesheet" href="beets.css">
+        <link rel="stylesheet" href="/bootstrap.min.css">
+        <link rel="stylesheet" href="/bootstrap-responsive.min.css">
+        <link rel="stylesheet" href="/beets.css">
         {% if page.section == 'main' %}
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
         <script type="text/javascript" src="beets.js"></script>
         {% endif %}
+
+        <link rel="alternate" href="/blog/atom.xml" type="application/atom+xml">
 
         <!-- Flattr button code -->
         <script type="text/javascript">
@@ -53,7 +62,11 @@
                 {% else %}
                 <div class="span12" id="header">
                     <h1>
+                        {% if page.section == 'blog' %}
+                        The beets blog: {{ page.title }}.
+                        {% else %}
                         {{ page.title }}
+                        {% endif %}
                     </h1>
                 </div>
                 {% endif %}
@@ -81,20 +94,23 @@
 <section>
 <h3>Project</h3>
 <ul>
-    <li><a href="http://github.com/sampsyo/beets">beets on github</a></li>
-    <li><a href="http://bitbucket.org/adrian/beets">beets on bitbucket</a></li>
+    <li>
+        <a href="http://github.com/sampsyo/beets">github</a>,
+        <a href="http://bitbucket.org/adrian/beets">bitbucket</a>
+    </li>
     <li><a href="http://beets.readthedocs.org/">documentation</a></li>
     <li><a href="http://code.google.com/p/beets/issues/list">bug tracker</a></li>
     <li><a href="http://groups.google.com/group/beets-users">mailing
         list</a></li>
+    <li><a href="/blog/">blog</a>, <a href="/blog/atom.xml">atom</a></li>
     <li><a href="irc://irc.freenode.net/beets">#beets on
         freenode</a></li>
 </ul>
 </section>
 <section>
 {% if page.section == 'main' %}
-<h3>News</h3>
-<ul id="twitterStatus">
+<h3><a href="http://twitter.com/b33ts">News</a></h3>
+<ul id="twitterStatus" class="newslist">
 </ul>
 {% endif %}
 <p id="twitterFollow">
@@ -102,10 +118,24 @@
 </p>
 </section>
 <section>
+<h3><a href="/blog/">Blog</a></h3>
+<ul id="blogSidebar" class="newslist">
+{% for post in site.posts limit:3 %}
+<li>
+    <span class="date">{{ post.date | date: '%B %e' }}</span>
+    <a href="{{ post.url }}">{{ post.title }}</a>
+</li>
+{% endfor %}
+</ul>
+<p id="tease">
+    <a href="/blog/">all posts&hellip;</a>
+</p>
+</section>
+<section>
 <h3>Contact</h3>
 <p>
     Email <a href="mailto:adrian@radbox.org">Adrian Sampson</a> with comments, questions, and fan mail.
-    You can <a href="{{ site.url }}/donate.html">donate with PayPal or Amazon</a>,
+    You can <a href="/donate.html">donate with PayPal or Amazon</a>,
     but please consider a donation to
     <a href="http://www.publicampaign.org/donate">Public
         Campaign</a> instead.

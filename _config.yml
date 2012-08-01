@@ -2,3 +2,4 @@ markdown: rdiscount
 rdiscount:
     extensions: [smart]
 url: http://beets.radbox.org
+permalink: /blog/:title.html
