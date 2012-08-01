@@ -1,18 +1,26 @@
-.container {
-    /* Remove 2 columns from the Bootstrap 16-col grid. */
-    width: 820px;
-}
-
-.page-header {
-    border-bottom: 0;
-    box-shadow: 0;
-    -webkit-box-shadow: 0;
-    -moz-box-shadow: 0;
+#header {
     margin-top: 10px;
 }
-.leader {
+#header.leader {
     margin-top: 20px;
-    height: 6em;
+    height: 7em;
+}
+.fixed-header {
+    display: none;
+}
+
+/* Landscape phone to portrait tablet */
+@media (max-width: 767px) {
+    #header.leader {
+        height: auto;
+        margin-bottom: 10px;
+    }
+    .rotating-header {
+        display: none;
+    }
+    .fixed-header {
+        display: block;
+    }
 }
 
 .flair {
@@ -31,10 +39,9 @@ ul, ol {
     margin-top: 1em;
 }
 
-#sidebar h3:first-of-type {
-    margin-top: -10px;
+#twitterStatus {
+    margin-bottom: 0;
 }
-
 #twitterStatus, #twitterStatus li {
     margin-left: 0;
     padding-left: 0;
@@ -48,6 +55,26 @@ ul, ol {
     font-size: small;
     display: block;
     color: #999;
+}
+
+/* Responsive video embed.
+ * http://amobil.se/2011/11/responsive-embeds/
+ */
+.embed {
+    position: relative;
+    padding-bottom: 56.25%; /* 16/9 ratio */
+    padding-top: 30px; /* IE6 workaround*/
+    height: 0;
+    overflow: hidden;
+}
+.embed iframe,
+.embed object,
+.embed embed {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 
 /* Undo Bootstrap's form styling for donate buttons. */
