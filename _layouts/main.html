@@ -76,6 +76,14 @@
 
                 <div class="span8 screen" id="{{ page.section }}">
 {{ content }}
+{% if page.section == 'blog' %}
+<p class="articleFooter">
+Have comments or questions?
+<a href="mailto:adrian@radbox.org">Send me an email</a>,
+tweet at <a href="http://twitter.com/b33ts">@b33ts</a>,
+or <a href="http://news.ycombinator.com/submitlink?u={{ site.url | cgi_escape }}{{ page.url | cgi_escape }}&t={{ page.title | cgi_escape }}">discuss on Hacker News</a>.
+</p>
+{% endif %}
                 </div>
 
                 <div class="span4" id="sidebar">

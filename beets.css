@@ -98,3 +98,14 @@ ul, ol {
 #donate input[type=text] {
     width: 5em;
 }
+
+.articleFooter {
+    color: #999;
+    font-style: italic;
+    border-top: 1px solid #ccc;
+    margin-top: 1.25em;
+}
+.articleFooter a {
+    color: #666;
+    text-decoration: underline;
+}
