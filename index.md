@@ -1,6 +1,7 @@
 ---
 layout: main
 section: main
+shorttitle: the music geek&rsquo;s media organizer
 ---
 <iframe width="560" height="345" src="http://www.youtube.com/embed/ZaqJmjM23D0" frameborder="0"></iframe>
 

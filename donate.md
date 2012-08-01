@@ -1,6 +1,8 @@
 ---
 layout: main
 section: donate
+shorttitle: donate
+title: Donate to beets.
 ---
 Thanks for considering donating to the beets project. I truly appreciate
 your support.

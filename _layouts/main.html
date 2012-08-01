@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>beets: the music geek&rsquo;s media organizer</title>
+        <title>beets: {{ page.shorttitle }}</title>
         <link rel="stylesheet" href="bootstrap.min.css">
         <style type="text/css">
             .container {
@@ -9,9 +9,15 @@
                 width: 820px;
             }
 
+            .page-header {
+                border-bottom: 0;
+                box-shadow: 0;
+                -webkit-box-shadow: 0;
+                -moz-box-shadow: 0;
+                margin-top: 10px;
+            }
             .leader {
                 margin-top: 20px;
-                border-bottom: 0;
                 height: 6em;
             }
 
@@ -166,6 +172,7 @@ $(function() {
     <body>
         <div class="container">
             <div class="content">
+                {% if page.section == 'main' %}
                 <div class="page-header leader">
                     <h1>
                         Beets is
@@ -173,6 +180,13 @@ $(function() {
                             for obsessive-compulsive music geeks.</span>
                     </h1>
                 </div>
+                {% else %}
+                <div class="page-header">
+                    <h1>
+                        {{ page.title }}
+                    </h1>
+                </div>
+                {% endif %}
 
                 <div class="row">
 
