@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.0b16 (in development)
+-----------------------
+
+* :doc:`/plugins/fetchart`: Fix a bug where cover art filenames could lack
+  a ``.jpg`` extension.
+
 1.0b15 (July 26, 2012)
 ----------------------
 

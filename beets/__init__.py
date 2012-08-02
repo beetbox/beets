@@ -12,7 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-__version__ = '1.0b15'
+__version__ = '1.0b16'
 __author__ = 'Adrian Sampson <adrian@radbox.org>'
 
 import beets.library

@@ -10,10 +10,10 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 project = u'beets'
-copyright = u'2011, Adrian Sampson'
+copyright = u'2012, Adrian Sampson'
 
-version = '1.0b15'
-release = '1.0b15'
+version = '1.0b16'
+release = '1.0b16'
 
 pygments_style = 'sphinx'
 

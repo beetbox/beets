@@ -54,7 +54,7 @@ def _fetch_image(url):
 
 # Cover Art Archive.
 
-CAA_URL = 'http://coverartarchive.org/release/{mbid}/front-500'
+CAA_URL = 'http://coverartarchive.org/release/{mbid}/front-500.jpg'
 
 def caa_art(release_id):
     """Fetch album art from the Cover Art Archive given a MusicBrainz
