@@ -38,10 +38,16 @@ OS X and Windows, download the appropriate binary package and place the
 .. _Homebrew: http://mxcl.github.com/homebrew/
 
 Next, you will need a mechanism for decoding audio files supported by the
-`audioread`_ library. Mac OS X has a number of decoders already built into Core
-Audio; on Linux, you can install `GStreamer for Python`_, `FFmpeg`_, or `MAD`_
-and `pymad`_. (Let me know if you have a good source for installing a decoder on
-Windows.) How you install these will depend on your distribution. For example:
+`audioread`_ library:
+
+* Mac OS X has a number of decoders already built into Core Audio
+
+* On Linux, you can install `GStreamer for Python`_, `FFmpeg`_, or `MAD`_ and
+  `pymad`_. How you install these will depend on your distribution. For example,
+  on Ubuntu, run ``apt-get install python-gst0.10-dev``. On Arch Linux, you want
+  ``pacman -S gstreamer0.10-python``. 
+
+* On Windows, try the Gstreamer "WinBuilds" from the `OSSBuild`_ project.
 
 .. _audioread: https://github.com/sampsyo/audioread
 .. _pyacoustid: http://github.com/sampsyo/pyacoustid
@@ -51,10 +57,7 @@ Windows.) How you install these will depend on your distribution. For example:
 .. _MAD: http://spacepants.org/src/pymad/
 .. _pymad: http://www.underbit.com/products/mad/
 .. _Core Audio: http://developer.apple.com/technologies/mac/audio-and-video.html
-
-* On Ubuntu, run ``apt-get install python-gst0.10-dev``.
-
-* On Arch Linux, you want ``pacman -S gstreamer0.10-python``. 
+.. _OSSBuild: http://code.google.com/p/ossbuild/
 
 To decode audio formats (MP3, FLAC, etc.) with GStreamer, you'll need the
 standard set of Gstreamer plugins. For example, on Ubuntu, install the packages
