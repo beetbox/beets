@@ -6,6 +6,7 @@ Changelog
 
 * :doc:`/plugins/fetchart`: Fix a bug where cover art filenames could lack
   a ``.jpg`` extension.
+* Add the track mapping dictionary to the ``album_distance`` plugin function.
 
 1.0b15 (July 26, 2012)
 ----------------------

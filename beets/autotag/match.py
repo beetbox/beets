@@ -289,7 +289,7 @@ def distance(items, album_info, mapping):
         dist_max += UNMATCHED_WEIGHT
 
     # Plugin distances.
-    plugin_d, plugin_dm = plugins.album_distance(items, album_info)
+    plugin_d, plugin_dm = plugins.album_distance(items, album_info, mapping)
     dist += plugin_d
     dist_max += plugin_dm
 

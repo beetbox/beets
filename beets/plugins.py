@@ -57,7 +57,7 @@ class BeetsPlugin(object):
         """
         return 0.0, 0.0
 
-    def album_distance(self, items, info):
+    def album_distance(self, items, album_info, mapping):
         """Should return a (distance, distance_max) pair to be added
         to the distance value for every album-level comparison.
         """
@@ -211,12 +211,12 @@ def track_distance(item, info):
         dist_max += dm
     return dist, dist_max
 
-def album_distance(items, info):
+def album_distance(items, album_info, mapping):
     """Returns the album distance calculated by plugins."""
     dist = 0.0
     dist_max = 0.0
     for plugin in find_plugins():
-        d, dm = plugin.album_distance(items, info)
+        d, dm = plugin.album_distance(items, album_info, mapping)
         dist += d
         dist_max += dm
     return dist, dist_max

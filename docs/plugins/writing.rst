@@ -167,14 +167,15 @@ methods on the plugin class:
 
 * ``track_distance(self, item, info)``: adds a component to the distance
   function (i.e., the similarity metric) for individual tracks. ``item`` is the
-  track to be matched (and Item object) and ``info`` is the MusicBrainz track
-  entry that is proposed as a match. Should return a ``(dist, dist_max)`` pair
+  track to be matched (an Item object) and ``info`` is the TrackInfo object
+  that is proposed as a match. Should return a ``(dist, dist_max)`` pair
   of floats indicating the distance.
 
-* ``album_distance(self, items, info)``: like the above, but compares a list of
-  items (representing an album) to an album-level MusicBrainz entry. Should
-  only consider album-level metadata (e.g., the artist name and album title) and
-  should not duplicate the factors considered by ``track_distance``.
+* ``album_distance(self, items, album_info, mapping)``: like the above, but
+  compares a list of items (representing an album) to an album-level MusicBrainz
+  entry. ``items`` is a list of Item objects; ``album_info`` is an AlbumInfo
+  object; and ``mapping`` is a dictionary that maps Items to their corresponding
+  TrackInfo objects.
 
 * ``candidates(self, items)``: given a list of items comprised by an album to be
   matched, return a list of ``AlbumInfo`` objects for candidate albums to be
