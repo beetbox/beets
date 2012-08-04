@@ -224,6 +224,14 @@ first track on the second disc has track number N+1 where N is the number of
 tracks on the first disc. If this ``per_disc_numbering`` is enabled, then the
 first track on each disc always has track number 1.
 
+If you enable ``per_disc_numbering``, you will likely want to change your
+:ref:`path-format-config` also to include ``$disc`` before ``$track`` to make
+filenames sort correctly in album directories. For example, you might want to
+use a path format like this::
+
+    [paths]
+    default: $albumartist/$album%aunique{}/$disc-$track $title
+
 import_delete
 ~~~~~~~~~~~~~
 
