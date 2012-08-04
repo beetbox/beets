@@ -1,14 +1,14 @@
-var BEETS_HOST = 'localhost';
-var BEETS_PORT = 8337;
-
 var BeetsResolver = Tomahawk.extend(TomahawkResolver,
 {
+    // Basic setup.
     settings:
     {
         name: 'beets',
         weight: 95,
         timeout: 5
     },
+
+    // Resolution.
     resolve: function( qid, artist, album, title )
     {
         this.beetsQuery(qid,
@@ -19,9 +19,13 @@ var BeetsResolver = Tomahawk.extend(TomahawkResolver,
     {
         this.beetsQuery(qid, searchString.split(' '));
     },
+    baseUrl: function() {
+        return 'http://' + this.host + ':' + this.port;
+    },
     beetsQuery: function( qid, queryParts )
     {
-        var url = 'http://' + BEETS_HOST + ':' + BEETS_PORT + '/item/query/';
+        var baseUrl = this.baseUrl();
+        var url = baseUrl + '/item/query/';
         for (var i = 0; i < queryParts.length; ++i) {
             url += encodeURIComponent(queryParts[i]);
             url += '/';
@@ -41,7 +45,7 @@ var BeetsResolver = Tomahawk.extend(TomahawkResolver,
                     track: item['title'],
                     albumpos: item['track'],
                     source: "beets",
-                    url: "http://" + BEETS_HOST + ':' + BEETS_PORT + '/item/' + item['id'] + '/file',
+                    url: baseUrl + '/item/' + item['id'] + '/file',
                     bitrate: Math.floor(item['bitrate'] / 1024),
                     duration: Math.floor(item['length']),
                     size: 83375, //!
@@ -57,7 +61,42 @@ var BeetsResolver = Tomahawk.extend(TomahawkResolver,
                 results: searchResults
             })
         });
-    }
+    },
+
+    // Configuration.
+    getConfigUi: function () {
+        var uiData = Tomahawk.readBase64("config.ui");
+        return {
+            "widget": uiData,
+            "fields": [{
+                name: "host",
+                widget: "hostField",
+                property: "text"
+            }, {
+                name: "port",
+                widget: "portField",
+                property: "text"
+            }]
+        };
+    },
+    newConfigSaved: function () {
+        var userConfig = this.getUserConfig();
+
+        this.host = userConfig.host || 'localhost';
+
+        var port = userConfig.port;
+        port = parseInt(port);
+        if (isNaN(port) || !port) {
+            port = 8337;
+        }
+        userConfig.port = port;
+
+        this.port = port;
+    },
+
+    // Defaults.
+    host: 'localhost',
+    port: 8337
 });
 
 Tomahawk.resolver.instance = BeetsResolver;
