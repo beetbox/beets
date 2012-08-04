@@ -109,3 +109,8 @@ ul, ol {
     color: #666;
     text-decoration: underline;
 }
+
+#blog img {
+    display: block;
+    margin: 0.5em auto;
+}
