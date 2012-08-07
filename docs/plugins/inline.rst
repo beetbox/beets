@@ -20,13 +20,13 @@ can refer to any normal attributes (such as ``artist`` or ``title``) as Python
 variables. Here are a couple of examples::
 
     [pathfields]
-    artist_initial: artist[0].upper() + u'.'
+    initial: albumartist[0].upper() + u'.'
     disc_and_track: u'%02i.%02i' % (disc, track) if
                     disctotal > 1 else u'%02i' % (track)
 
 (Note that the config file's syntax allows newlines in values if the subsequent
-lines are indented.) These examples define ``$artist_initial`` and
+lines are indented.) These examples define ``$initial`` and
 ``$disc_and_track`` fields that can be referenced in path templates like so::
 
     [paths]
-    default: $artist_initial/$artist/$album/$disc_and_track $title
+    default: $initial/$artist/$album%aunique{}/$disc_and_track $title
