@@ -7,6 +7,8 @@ Changelog
 * :doc:`/plugins/fetchart`: Fix a bug where cover art filenames could lack
   a ``.jpg`` extension.
 * Add the track mapping dictionary to the ``album_distance`` plugin function.
+* Fix an assertion failure when the MusicBrainz main database and search server
+  disagree.
 
 1.0b15 (July 26, 2012)
 ----------------------

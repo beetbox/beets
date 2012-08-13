@@ -242,8 +242,8 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
         # The search result is missing some data (namely, the tracks),
         # so we just use the ID and fetch the rest of the information.
         albuminfo = album_for_id(release['id'])
-        assert albuminfo is not None
-        yield albuminfo
+        if albuminfo is not None:
+            yield albuminfo
 
 def match_track(artist, title, limit=SEARCH_LIMIT):
     """Searches for a single track and returns an iterable of TrackInfo
