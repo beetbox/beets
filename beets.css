@@ -114,3 +114,22 @@ ul, ol {
     display: block;
     margin: 0.5em auto;
 }
+
+/* GitHub "fork me" banner */
+/* https://github.com/philwareham/github-ribbons-retina */
+#fork-me {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 9999;
+    width: 140px;
+    height: 140px;
+    text-indent: -9999px;
+    background-image: url("/images/fork-me.png");
+}
+@media (-webkit-min-device-pixel-ratio: 2) {
+    #fork-me {
+        background-image: url("/images/fork-me@2x.png") !important;
+        -webkit-background-size: 140px 140px;
+    }
+}
