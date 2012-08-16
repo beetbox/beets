@@ -4,6 +4,8 @@ Changelog
 1.0b16 (in development)
 -----------------------
 
+* ``list`` command: Templates given with ``-f`` can now show items' paths (using
+  ``$path``).
 * :doc:`/plugins/fetchart`: Fix a bug where cover art filenames could lack
   a ``.jpg`` extension.
 * Add the track mapping dictionary to the ``album_distance`` plugin function.

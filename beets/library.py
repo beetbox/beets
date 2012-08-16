@@ -343,6 +343,10 @@ class Item(object):
                 value = util.sanitize_for_path(value, pathmod, key)
             mapping[key] = value
 
+        # Additional fields in non-sanitized case.
+        if not sanitize:
+            mapping['path'] = self.path
+
         # Use the album artist if the track artist is not set and
         # vice-versa.
         if not mapping['artist']:
