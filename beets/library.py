@@ -164,8 +164,10 @@ def _regexp(expr, val):
     """Return a boolean indicating whether the regular expression `expr`
     matches `val`.
     """
-    if val is None or expr is None:
+    if expr is None:
         return False
+    if val is None:
+        val = u''
     if not isinstance(val, basestring):
         val = unicode(val)
     try:
@@ -409,8 +411,6 @@ class FieldQuery(Query):
     pattern.
     """
     def __init__(self, field, pattern):
-        if field not in ITEM_KEYS:
-            raise InvalidFieldError(field + ' is not an item key')
         self.field = field
         self.pattern = pattern
 
@@ -607,10 +607,10 @@ class CollectionQuery(Query):
         # Unicode strings.
         # http://bugs.python.org/issue6988
         if isinstance(query, unicode):
-            pass
             query = query.encode('utf8')
         parts = [s.decode('utf8') for s in shlex.split(query)]
-        return cls.from_strings(parts)
+        return cls.from_strings(parts, default_fields=default_fields,
+                                all_keys=all_keys)
 
 class AnySubstringQuery(CollectionQuery):
     """A query that matches a substring in any of a list of metadata

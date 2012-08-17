@@ -6,6 +6,9 @@ Changelog
 
 * ``list`` command: Templates given with ``-f`` can now show items' paths (using
   ``$path``).
+* Fix album queries for ``artpath`` and other non-item fields.
+* Null values in the database can now be matched with the empty-string regular
+  expression, ``^$``.
 * :doc:`/plugins/fetchart`: Fix a bug where cover art filenames could lack
   a ``.jpg`` extension.
 * Add the track mapping dictionary to the ``album_distance`` plugin function.
