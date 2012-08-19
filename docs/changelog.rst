@@ -11,6 +11,7 @@ Changelog
   expression, ``^$``.
 * :doc:`/plugins/fetchart`: Fix a bug where cover art filenames could lack
   a ``.jpg`` extension.
+* :doc:`/plugins/lyrics`: Fix an exception with non-ASCII lyrics.
 * Add the track mapping dictionary to the ``album_distance`` plugin function.
 * Fix an assertion failure when the MusicBrainz main database and search server
   disagree.

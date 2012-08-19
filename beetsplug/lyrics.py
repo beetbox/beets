@@ -49,6 +49,8 @@ def fetch_url(url):
 
 def unescape(text):
     """Resolves &#xxx; HTML entities (and some others)."""
+    if isinstance(text, str):
+        text = text.decode('utf8', 'ignore')
     out = text.replace('&nbsp;', ' ')
     def replchar(m):
         num = m.group(1)
