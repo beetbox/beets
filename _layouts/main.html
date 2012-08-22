@@ -130,7 +130,7 @@ or <a href="http://news.ycombinator.com/submitlink?u={{ site.url | cgi_escape }}
 <ul id="blogSidebar" class="newslist">
 {% for post in site.posts limit:3 %}
 <li>
-    <span class="date">{{ post.date | date: '%B %e' }}</span>
+    <span class="date">{{ post.date | date: '%B %e' }}:</span>
     <a href="{{ post.url }}">{{ post.title }}</a>
 </li>
 {% endfor %}

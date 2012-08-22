@@ -55,12 +55,9 @@ ul, ol {
     list-style: none;
 }
 .newslist li {
-    margin-bottom: 0.5em;
+    margin-bottom: 0.1em;
 }
 .newslist .date {
-    font-weight: bold;
-    font-size: small;
-    display: block;
     color: #999;
 }
 
