@@ -133,3 +133,14 @@ ul, ol {
         -webkit-background-size: 140px 140px;
     }
 }
+
+.twtr-ft, .twtr-hd, .twtr-user {
+    display: none;
+}
+.twtr-tweet-wrap {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+.twtr-widget {
+    margin-bottom: 10px;
+}

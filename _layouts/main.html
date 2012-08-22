@@ -126,16 +126,6 @@ or <a href="http://news.ycombinator.com/submitlink?u={{ site.url | cgi_escape }}
 </ul>
 </section>
 <section>
-{% if page.section == 'main' %}
-<h3><a href="http://twitter.com/b33ts">News</a></h3>
-<ul id="twitterStatus" class="newslist">
-</ul>
-{% endif %}
-<p id="twitterFollow">
-    <a href="http://twitter.com/b33ts" class="twitter-follow-button">Follow @b33ts</a>
-</p>
-</section>
-<section>
 <h3><a href="/blog/">Blog</a></h3>
 <ul id="blogSidebar" class="newslist">
 {% for post in site.posts limit:3 %}
@@ -148,6 +138,43 @@ or <a href="http://news.ycombinator.com/submitlink?u={{ site.url | cgi_escape }}
 <p id="tease">
     <a href="/blog/">all posts&hellip;</a>
 </p>
+</section>
+<section>
+{% if page.section == 'main' %}
+<h3><a href="http://twitter.com/b33ts">News from @b33ts</a></h3>
+<script charset="utf-8" src="http://widgets.twimg.com/j/2/widget.js"></script>
+<script>
+new TWTR.Widget({
+  version: 2,
+  type: 'profile',
+  rpp: 3,
+  interval: 30000,
+  width: 'auto',
+  height: 300,
+  theme: {
+    shell: {
+      background: '#ffffff',
+      color: '#000000'
+    },
+    tweets: {
+      background: '#ffffff',
+      color: '#000000',
+      links: '#0088cc'
+    }
+  },
+  features: {
+    scrollbar: false,
+    loop: false,
+    live: false,
+    behavior: 'all'
+  }
+}).render().setUser('b33ts').start();
+</script>
+{% else %}
+<p id="twitterFollow">
+    <a href="http://twitter.com/b33ts" class="twitter-follow-button">Follow @b33ts</a>
+</p>
+{% endif %}
 </section>
 <section>
 <h3>Contact</h3>
