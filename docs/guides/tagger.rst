@@ -228,6 +228,10 @@ plugin </plugins/chroma>`, distributed with beets, uses the `Chromaprint`_ open-
 it's sort of tricky to install. See the :doc:`/plugins/chroma` page for a guide
 to getting it set up.
 
+Before you jump into acoustic fingerprinting with both feet, though, give beets
+a try without it. You may be surprised at how well metadata-based matching
+works.
+
 .. _Chromaprint: http://acoustid.org/chromaprint
 
 Album Art, Lyrics, Genres and Such
