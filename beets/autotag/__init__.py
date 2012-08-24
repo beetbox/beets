@@ -122,8 +122,6 @@ def apply_metadata(album_info, mapping, per_disc_numbering=False):
     """
     for item, track_info in mapping.iteritems():
         # Album, artist, track count.
-        if not item:
-            continue
         if track_info.artist:
             item.artist = track_info.artist
         else:

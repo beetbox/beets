@@ -128,8 +128,8 @@ currently available are:
   singleton to the library (not called for full-album imports). Parameters:
   ``lib``, ``item``, ``config``
 
-* *write*: called with an ``Item`` and a ``MediaFile`` object just before a
-  file's metadata is written to disk.
+* *write*: called with an ``Item`` object just before a file's metadata is
+  written to disk (i.e., just before the file on disk is opened).
 
 * *import_task_start*: called when before an import task begins processing.
   Parameters: ``task`` and ``config``.

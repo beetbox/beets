@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2011, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -19,12 +19,26 @@ import logging
 
 from beets.plugins import BeetsPlugin
 from beets import ui
-from beets import mediafile
 from beets import util
 
 log = logging.getLogger('beets')
 
 AUTOSCRUB_KEY = 'autoscrub'
+_MUTAGEN_FORMATS = {
+    'asf': 'ASF',
+    'apev2': 'APEv2File',
+    'flac': 'FLAC',
+    'id3': 'ID3FileType',
+    'mp3': 'MP3',
+    'oggflac': 'OggFLAC',
+    'oggspeex': 'OggSpeex',
+    'oggtheora': 'OggTheora',
+    'oggvorbis': 'OggVorbis',
+    'trueaudio': 'TrueAudio',
+    'wavpack': 'WavPack',
+    'monkeysaudio': 'MonkeysAudio',
+    'optimfrog': 'OptimFROG',
+}
 
 scrubbing = False
 
@@ -47,9 +61,7 @@ class ScrubPlugin(BeetsPlugin):
             # Walk through matching files and remove tags.
             for item in lib.items(ui.decargs(args)):
                 log.info(u'scrubbing: %s' % util.displayable_path(item.path))
-                mf = mediafile.MediaFile(item.path)
-                _scrub(mf)
-                mf.save()
+                _scrub(item.path)
 
                 if opts.write:
                     log.debug(u'writing new tags after scrub')
@@ -65,17 +77,36 @@ class ScrubPlugin(BeetsPlugin):
 
         return [scrub_cmd]
 
-def _scrub(mf):
-    """Remove all tags from a MediaFile by manipulating the underlying
-    Mutagen object.
+def _mutagen_classes():
+    """Get a list of file type classes from the Mutagen module.
     """
-    mf.mgfile.delete()
-    # Reinitialize the MediaFile: also a little hacky.
-    mf.__init__(mf.path)
+    classes = []
+    for modname, clsname in _MUTAGEN_FORMATS.items():
+        mod = __import__('mutagen.{}'.format(modname),
+                         fromlist=[clsname])
+        classes.append(getattr(mod, clsname))
+    return classes
+
+def _scrub(path):
+    """Remove all tags from a file.
+    """
+    for cls in _mutagen_classes():
+        # Try opening the file with this type, but just skip in the
+        # event of any error.
+        try:
+            f = cls(util.syspath(path))
+        except Exception:
+            continue
+        if f.tags is None:
+            continue
+
+        # Remove the tag for this type.
+        f.delete()
+        f.save()
 
 # Automatically embed art into imported albums.
 @ScrubPlugin.listen('write')
-def write_item(item, mf):
+def write_item(item):
     if not scrubbing and options[AUTOSCRUB_KEY]:
         log.debug(u'auto-scrubbing %s' % util.displayable_path(item.path))
-        _scrub(mf)
+        _scrub(item.path)

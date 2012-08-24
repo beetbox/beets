@@ -4,6 +4,9 @@ Changelog
 1.0b16 (in development)
 -----------------------
 
+* :doc:`/plugins/scrub`: Scrubbing now removes *all* types of tags from a file
+  rather than just one. For example, if your FLAC file has both ordinary FLAC
+  tags and ID3 tags, the ID3 tags are now also removed.
 * ``list`` command: Templates given with ``-f`` can now show items' paths (using
   ``$path``).
 * Fix album queries for ``artpath`` and other non-item fields.

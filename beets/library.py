@@ -281,8 +281,9 @@ class Item(object):
     def write(self):
         """Writes the item's metadata to the associated file.
         """
+        plugins.send('write', item=self)
+
         f = MediaFile(syspath(self.path))
-        plugins.send('write', item=self, mf=f)
         for key in ITEM_KEYS_WRITABLE:
             setattr(f, key, getattr(self, key))
         f.save()
