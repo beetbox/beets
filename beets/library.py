@@ -709,17 +709,17 @@ class PathQuery(Query):
     """A query that matches all items under a given path."""
     def __init__(self, path):
         # Match the path as a single file.
-        self.file_path = normpath(path)
+        self.file_path = bytestring_path(normpath(path))
         # As a directory (prefix).
-        self.dir_path = os.path.join(self.file_path, '')
+        self.dir_path = bytestring_path(os.path.join(self.file_path, ''))
 
     def match(self, item):
         return (item.path == self.file_path) or \
                item.path.startswith(self.dir_path)
 
     def clause(self):
-        dir_pat = self.dir_path + '%'
-        file_blob = buffer(bytestring_path(self.file_path))
+        dir_pat = buffer(self.dir_path + '%')
+        file_blob = buffer(self.file_path)
         return '(path = ?) || (path LIKE ?)', (file_blob, dir_pat)
 
 class ResultIterator(object):
