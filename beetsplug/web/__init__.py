@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2011, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,9 +15,11 @@
 """A Web interface to beets."""
 from beets.plugins import BeetsPlugin
 from beets import ui
+from beets import util
 import beets.library
 import flask
 from flask import g
+import os
 
 DEFAULT_HOST = ''
 DEFAULT_PORT = 8337
@@ -26,10 +28,22 @@ DEFAULT_PORT = 8337
 # Utilities.
 
 def _rep(obj):
+    """Get a flat -- i.e., JSON-ish -- representation of a beets Item or
+    Album object.
+    """
     if isinstance(obj, beets.library.Item):
         out = dict(obj.record)
         del out['path']
+
+        # Get the size (in bytes) of the backing file. This is useful
+        # for the Tomahawk resolver API.
+        try:
+            out['size'] = os.path.getsize(util.syspath(obj.path))
+        except OSError:
+            out['size'] = 0
+
         return out
+
     elif isinstance(obj, beets.library.Album):
         out = dict(obj._record)
         del out['artpath']

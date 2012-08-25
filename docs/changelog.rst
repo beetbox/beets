@@ -15,9 +15,13 @@ Changelog
 * :doc:`/plugins/fetchart`: Fix a bug where cover art filenames could lack
   a ``.jpg`` extension.
 * :doc:`/plugins/lyrics`: Fix an exception with non-ASCII lyrics.
+* :doc:`/plugins/web`: The API now reports file sizes (for use with the
+  `Tomahawk resolver`_).
 * Add the track mapping dictionary to the ``album_distance`` plugin function.
 * Fix an assertion failure when the MusicBrainz main database and search server
   disagree.
+
+.. _Tomahawk resolver: http://beets.radbox.org/blog/tomahawk-resolver.html
 
 1.0b15 (July 26, 2012)
 ----------------------
