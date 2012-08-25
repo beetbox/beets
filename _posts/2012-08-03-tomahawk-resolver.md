@@ -9,15 +9,11 @@ Beets is a music library manager--not, for the most part, a music player. It doe
 
 There's now a [beets Tomahawk resolver][beets resolver] that can hook your meticulously organized beets music library into the Tomahawk interface. And it even works remotely, so you can stream music from a server running beets to a different machine running Tomahawk.
 
-To use the resolver, first run the [beets Web plugin][web] on the machine with
-your music. Just add `web` to your "plugins" line in [~/.beetsconfig][config]
-and then run `beet web` to start the server. Then, on the machine running
-Tomahawk (this might, of course, be the same computer), get a fresh [git][] or
-[Mercurial][] checkout of the beets source code. For example:
+To use the resolver, first run the [beets Web plugin][web] on the machine with your music. Just add `web` to your "plugins" line in [~/.beetsconfig][config] and then run `beet web` to start the server. Then, on the machine running Tomahawk (this might, of course, be the same computer), get a copy the resolver repository. For example:
 
-    git clone git://github.com/sampsyo/beets.git
+    git clone git://github.com/tomahawk-player/tomahawk-resolvers.git
 
-Then, open the Tomahawk settings and add a new service using the "Install from file..." button. Navigate to `beets/extra/beets-resolver` and choose the `beets.js` file. Then, click the wrench icon next to the beets resolver to configure it:
+Then, open the Tomahawk settings and add a new service using the "Install from file..." button. Navigate to `tomahawk-resolvers/beets` and choose the `beets.js` file. Then, click the wrench icon next to the beets resolver to configure it:
 
 ![Configuring the beets Tomahawk resolver.](/images/tomahawk-resolver-config.png)
 
