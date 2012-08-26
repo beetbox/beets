@@ -17,13 +17,13 @@ This is particularly frustrating because there's no correlation at all between w
 
 ## The Problem
 
-A little bit of background: beets uses the amazing [SQLite][] database library to store its music catalog. When importing music, multiple threads collaborate to speed up the process and several of the threads have to read and write the database. Fortunately, SQLite's [transactions][] and [ACID guarantees][] make this straightforward: each thread gets to make atomic accesses without bothering the other threads.
+A little bit of background: beets uses the amazing [SQLite][] database library to store its music catalog. When importing music, multiple threads collaborate to speed up the process and several of the threads have to read from and write to the database. Fortunately, SQLite's [transactions][] and [ACID guarantees][] make this straightforward: each thread gets to make atomic accesses without bothering the other threads.
 
 [ACID guarantees]: http://en.wikipedia.org/wiki/ACID
 
-But things can go wrong. If a transaction stays open too long, it can block other threads from accessing the database--or, in the worst case, several threads can deadlock while waiting for each other. For exactly this reason, SQLite has a lock timeout built-in. If it ever sees that a thread has been waiting for a lock for more than five seconds (by default), it throws up its hands and the user sees the dreaded `database is locked` error.
+But things can go wrong. If a transaction stays open too long, it can block other threads from accessing the database--or, in the worst case, several threads can deadlock while waiting for each other. For exactly this reason, SQLite has a lock timeout built in. If it ever sees that a thread has been waiting for a lock for more than five seconds (by default), it throws up its hands and the user sees the dreaded `database is locked` error.
 
-So the solution should be simple: somewhere, beets is holding a transaction open for more than five seconds, so we can either find the offending transaction or crank up that timeout. But herein lies the mystery: five seconds is a *long* time. That beets is spending *5,000 milliseconds* manipulating the database in a single transaction is indicative of something dark and terrible. No amount of `SELECT`s and `INSERT`s should add up to five seconds, so turning up the timeout parameter is really just painting over the rot.
+So the solution should be simple: somewhere, beets is holding a transaction open for more than five seconds, so we can either find the offending transaction or crank up that timeout. But herein lies the mystery: five seconds is a *long* time. That beets spends *5,000 milliseconds* manipulating the database in a single transaction is indicative of something dark and terrible. No amount of `SELECT`s and `INSERT`s at beets' scale should add up to five seconds, so turning up the timeout parameter is really just painting over the rot.
 
 So I looked at every line in the source where a transaction could start. I made extra-double-sure that filesystem operations happened only outside of transactions. I fastidiously closed every [cursor][] after each `SELECT`. But all this was to no avail--the bug reports continued to pour in.
 
@@ -31,9 +31,9 @@ At this point, I was almost certain that nothing was wrong with beets' transacti
 
 ## The Real Problem
 
-I finally gave up trying to reproduce the problem on my own machine. Eventually, one incredibly helpful user offered to give me guest SSH access so I could see the bug *in vitro* on his machine.
+I finally gave up trying to reproduce the problem on my own machine. Eventually, one incredibly helpful user offered to give me guest SSH access so I could see the bug manifest *in vitro* on his machine.
 
-I again set about measuring the length of each transaction. Again, most transactions were in the one- or two-millisecond range. But, this time, an occasional transaction would sometimes take *much* longer: 1.08 seconds, say. And, eventually, some errant transaction would take 5.04 seconds and beets would crash: `database is locked`.
+I again set about measuring the length of each transaction. And again, most transactions were in the one- or two-millisecond range. But, this time, an occasional transaction would sometimes take *much* longer: 1.08 seconds, say. And, eventually, some errant transaction would take 5.04 seconds and beets would crash: `database is locked`.
 
 But there was a pattern. Every long-lasting transaction took slightly more than an integral number of seconds. I saw transactions that took 1.02 and 1.04 seconds, but never 1.61 seconds or 0.98 seconds. Something was adding whole seconds to transactions' latencies.
 
@@ -64,7 +64,9 @@ Here's what it looks like. When a thread needs to access the database, it uses a
     with self.transaction() as tx:
         rows = tx.query('SELECT * FROM items WHERE id=?', (load_id,))
 
-The only way to access the database is via methods on the [Transaction object](https://github.com/sampsyo/beets/blob/master/beets/library.py#L919). And creating a Transaction means acquiring a lock. Together, these two restrictions make it impossible for two different threads to access the database at the same time. This reduces the concurrency available in DB accesses but eradicates the possibility of SQLite timeouts and will make it easy for beets to move to a different backend in the future--even one that doesn't support concurrency itself.
+The only way to access the database is via methods on the [Transaction object][txn]. And creating a Transaction means acquiring a lock. Together, these two restrictions make it impossible for two different threads to access the database at the same time. This reduces the concurrency available in the DB (appropriate for beets but not for, say, a popular Web service) but eradicates the possibility of SQLite timeouts and will make it easy for beets to move to a different backend in the future--even one that doesn't support concurrency itself.
+
+[txn]: https://github.com/sampsyo/beets/blob/master/beets/library.py#L919
 
 To make this explicit-transaction approach feasible, transactions need to be *composable:* it has to be possible to take two correctly-coded transactional functions and call them both together in a single transaction. For example, the beets Library has [a method that deletes a single track](https://github.com/sampsyo/beets/blob/master/beets/library.py#L1220). The ["beet remove" command][beet remove] needs to remove *many* tracks in one fell, atomic swoop.
 
@@ -74,7 +76,7 @@ The smaller method--`Library.remove`--uses a transaction internally so it can sy
         for item in items:
             lib.remove(item)
 
-To make all of this work, I want to make the *outermost* transaction the only one that synchronizes. If a thread enters a transaction and then, before leaving the outer one, enters another *nested* transaction, the inner one should have no effect. In this case, the transaction that surrounds the `for` loop needs to synchronize with other threads, but the inner transactions (inside each call to ``lib.remove``) should be [no-ops][nop] because the thread is already holding a lock.
+To make all of this work, I want to make the *outermost* transaction the only one that synchronizes. If a thread enters a transaction and then, before leaving the outer one, enters another nested transaction, the inner one should have no effect. In this case, the transaction that surrounds the `for` loop needs to synchronize with other threads, but the inner transactions (inside each call to ``lib.remove``) should be [no-ops][nop] because the thread is already holding a lock.
 
 To accomplish this, each thread transparently maintains a *transaction stack* that keeps track of all the Transaction objects that are currently active. When a transaction starts, it gets pushed onto the stack; when it finishes, it pops off. When the stack goes from having zero transactions to one, the thread acquires a lock; when the last transaction is popped from the stack, the lock is released. This simple policy allows beets to safely compose transactional code into larger functions.
 
@@ -107,6 +109,8 @@ Without explicit transactions, it's hard--impossible, in some cases--to see wher
 * It's easy to verify that a transaction ends in a timely manner.
 * You can add synchronization to unsynchronized datastores like [LevelDB][] or flat files.
 * You can interpose on transactions for debugging purposes. For example, you might want to measure the time taken by each transaction. (This technique was instrumental to diagnosing this bug in beets.)
+
+And if you're coding for SQLite in Python, feel free to [steal beets' Transaction implementation][txn]--it's open source!
 
 [LevelDB]: http://code.google.com/p/leveldb/
 [cursor]: http://docs.python.org/library/sqlite3.html#cursor-objects
