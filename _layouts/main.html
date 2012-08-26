@@ -126,7 +126,12 @@ or <a href="http://news.ycombinator.com/submitlink?u={{ site.url | cgi_escape }}
 </ul>
 </section>
 <section>
-<h3><a href="/blog/">Blog</a></h3>
+<h3>
+    <a href="/blog/">Blog</a>
+    <a href="/blog/atom.xml" class="feed-icon">
+        <img src="/images/feed.png" width="14" height="14" alt="Atom feed">
+    </a>
+</h3>
 <ul id="blogSidebar" class="newslist">
 {% for post in site.posts limit:3 %}
 <li>

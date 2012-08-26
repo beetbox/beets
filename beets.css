@@ -61,6 +61,12 @@ ul, ol {
     color: #999;
 }
 
+.feed-icon {
+    position: absolute;
+    margin-top: -3px;
+    margin-left: 7px;
+}
+
 /* Responsive video embed.
  * http://amobil.se/2011/11/responsive-embeds/
  */

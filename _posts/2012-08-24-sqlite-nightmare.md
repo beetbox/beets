@@ -3,7 +3,7 @@ title: the SQLite lock timeout nightmare
 layout: main
 section: blog
 ---
-Software has bugs. There are little bugs--the [beets release notes][relnotes] are saturated with them. And then there are the monstrous, enormous bugs--the kind that follow you from version to version, from year to year.
+Software has bugs. There are little bugs: the [beets release notes][relnotes] are saturated with them. And then there are the monstrous, enormous bugs: the kind that follow you from version to version, from year to year.
 
 [relnotes]: http://readthedocs.org/docs/beets/-/changelog.html
 
