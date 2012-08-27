@@ -77,7 +77,7 @@ def all_items():
 @app.route('/item/<int:item_id>/file')
 def item_file(item_id):
     item = g.lib.get_item(item_id)
-    return flask.send_file(item.path)
+    return flask.send_file(item.path, as_attachment=True, attachment_filename=os.path.basename(item.path))
 
 @app.route('/item/query/<path:query>')
 def item_query(query):
