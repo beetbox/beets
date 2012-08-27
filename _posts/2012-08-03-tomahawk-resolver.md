@@ -3,7 +3,7 @@ title: Tomahawk resolver
 layout: main
 section: blog
 ---
-Beets is a music library manager--not, for the most part, a music player. It does include a [simple player plugin][bpd] and an [experimental Web-based player][web], but it generally leaves actual sound-reproduction to specialized tools.
+Beets is a music library manager---not, for the most part, a music player. It does include a [simple player plugin][bpd] and an [experimental Web-based player][web], but it generally leaves actual sound-reproduction to specialized tools.
 
 [Tomahawk][] is one particularly exciting new open-source music player. The magic of Tomahawk lies in its ability to consolidate many sources of music into a single player interface. (It's also a very nicely-designed, cross-platform player even if you don't count the magic.) To integrate new sources of music with Tomahawk, you just have to provide a [resolver][]: a piece of code that searches for music and gives it to Tomahawk to display and play back.
 

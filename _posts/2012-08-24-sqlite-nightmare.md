@@ -21,13 +21,13 @@ A little bit of background: beets uses the amazing [SQLite][] database library t
 
 [ACID guarantees]: http://en.wikipedia.org/wiki/ACID
 
-But things can go wrong. If a transaction stays open too long, it can block other threads from accessing the database--or, in the worst case, several threads can deadlock while waiting for each other. For exactly this reason, SQLite has a lock timeout built in. If it ever sees that a thread has been waiting for a lock for more than five seconds (by default), it throws up its hands and the user sees the dreaded `database is locked` error.
+But things can go wrong. If a transaction stays open too long, it can block other threads from accessing the database---or, in the worst case, several threads can deadlock while waiting for each other. For exactly this reason, SQLite has a lock timeout built in. If it ever sees that a thread has been waiting for a lock for more than five seconds (by default), it throws up its hands and the user sees the dreaded `database is locked` error.
 
 So the solution should be simple: somewhere, beets is holding a transaction open for more than five seconds, so we can either find the offending transaction or crank up that timeout. But herein lies the mystery: five seconds is a *long* time. That beets spends *5,000 milliseconds* manipulating the database in a single transaction is indicative of something dark and terrible. No amount of `SELECT`s and `INSERT`s at beets' scale should add up to five seconds, so turning up the timeout parameter is really just painting over the rot.
 
-So I looked at every line in the source where a transaction could start. I made extra-double-sure that filesystem operations happened only outside of transactions. I fastidiously closed every [cursor][] after each `SELECT`. But all this was to no avail--the bug reports continued to pour in.
+So I looked at every line in the source where a transaction could start. I made extra-double-sure that filesystem operations happened only outside of transactions. I fastidiously closed every [cursor][] after each `SELECT`. But all this was to no avail---the bug reports continued to pour in.
 
-At this point, I was almost certain that nothing was wrong with beets' transactions in themselves. I measured the length of each access and, on my machine, they each took a handful of milliseconds apiece--nowhere near a full five seconds.
+At this point, I was almost certain that nothing was wrong with beets' transactions in themselves. I measured the length of each access and, on my machine, they each took a handful of milliseconds apiece---nowhere near a full five seconds.
 
 ## The Real Problem
 
@@ -64,13 +64,13 @@ Here's what it looks like. When a thread needs to access the database, it uses a
     with self.transaction() as tx:
         rows = tx.query('SELECT * FROM items WHERE id=?', (load_id,))
 
-The only way to access the database is via methods on the [Transaction object][txn]. And creating a Transaction means acquiring a lock. Together, these two restrictions make it impossible for two different threads to access the database at the same time. This reduces the concurrency available in the DB (appropriate for beets but not for, say, a popular Web service) but eradicates the possibility of SQLite timeouts and will make it easy for beets to move to a different backend in the future--even one that doesn't support concurrency itself.
+The only way to access the database is via methods on the [Transaction object][txn]. And creating a Transaction means acquiring a lock. Together, these two restrictions make it impossible for two different threads to access the database at the same time. This reduces the concurrency available in the DB (appropriate for beets but not for, say, a popular Web service) but eradicates the possibility of SQLite timeouts and will make it easy for beets to move to a different backend in the future---even one that doesn't support concurrency itself.
 
 [txn]: https://github.com/sampsyo/beets/blob/master/beets/library.py#L919
 
 To make this explicit-transaction approach feasible, transactions need to be *composable:* it has to be possible to take two correctly-coded transactional functions and call them both together in a single transaction. For example, the beets Library has [a method that deletes a single track](https://github.com/sampsyo/beets/blob/master/beets/library.py#L1220). The ["beet remove" command][beet remove] needs to remove *many* tracks in one fell, atomic swoop.
 
-The smaller method--`Library.remove`--uses a transaction internally so it can synchronize correctly when it's called alone. But the higher-level command has to call it many times in a single transaction, [like so](https://github.com/sampsyo/beets/blob/master/beets/ui/commands.py#L984):
+The smaller method---`Library.remove`---uses a transaction internally so it can synchronize correctly when it's called alone. But the higher-level command has to call it many times in a single transaction, [like so](https://github.com/sampsyo/beets/blob/master/beets/ui/commands.py#L984):
 
     with lib.transaction():
         for item in items:
@@ -89,7 +89,7 @@ To accomplish this, each thread transparently maintains a *transaction stack* th
 
 ## Takeaway for Other Projects
 
-What can we learn from the vanquishing of this monstrous bug--other than the [well-known fact][cbug classification] that [concurrency bugs are horrifying][heisenbug]? I think there are two lessons here: one for everybody who uses SQLite and one developers of any small-scale, desktop application that uses a database. 
+What can we learn from the vanquishing of this monstrous bug---other than the [well-known fact][cbug classification] that [concurrency bugs are horrifying][heisenbug]? I think there are two lessons here: one for everybody who uses SQLite and one developers of any small-scale, desktop application that uses a database. 
 
 [heisenbug]: http://en.wiktionary.org/wiki/heisenbug
 [cbug classification]: http://www.cs.columbia.edu/~junfeng/09fa-e6998/papers/concurrency-bugs.pdf
@@ -104,13 +104,13 @@ I haven't seen this particular quirk documented elsewhere, but it should be comm
 
 If you're writing a small-scale application that doesn't need highly concurrent access to a database, consider using explicit transactions based on a language-level construct (Python's [context managers][ctx] are a perfect example).
 
-Without explicit transactions, it's hard--impossible, in some cases--to see where transactions begin and end. So it's easy to introduce bugs where transactions remain open much longer than they need to be. There are several advantages to marking the start and end of every transaction:
+Without explicit transactions, it's hard---impossible, in some cases---to see where transactions begin and end. So it's easy to introduce bugs where transactions remain open much longer than they need to be. There are several advantages to marking the start and end of every transaction:
 
 * It's easy to verify that a transaction ends in a timely manner.
 * You can add synchronization to unsynchronized datastores like [LevelDB][] or flat files.
 * You can interpose on transactions for debugging purposes. For example, you might want to measure the time taken by each transaction. (This technique was instrumental to diagnosing this bug in beets.)
 
-And if you're coding for SQLite in Python, feel free to [steal beets' Transaction implementation][txn]--it's open source!
+And if you're coding for SQLite in Python, feel free to [steal beets' Transaction implementation][txn]---it's open source!
 
 [LevelDB]: http://code.google.com/p/leveldb/
 [cursor]: http://docs.python.org/library/sqlite3.html#cursor-objects

@@ -1,5 +1,5 @@
-markdown: rdiscount
-rdiscount:
-    extensions: [smart]
+markdown: kramdown
+kramdown:
+    entity_output: true
 url: http://beets.radbox.org
 permalink: /blog/:title.html
