@@ -3,8 +3,6 @@ layout: main
 section: main
 shorttitle: the music geek&rsquo;s media organizer
 ---
-<div class="embed"><iframe width="560" height="345" src="http://www.youtube.com/embed/ZaqJmjM23D0" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe></div>
-
 The purpose of beets is to get your music collection right once and for all. It
 catalogs your collection, automatically improving its metadata as it goes using
 the [MusicBrainz][] database. (It also downloads cover art for albums it
