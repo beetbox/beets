@@ -17,6 +17,8 @@ Changelog
 * :doc:`/plugins/lyrics`: Fix an exception with non-ASCII lyrics.
 * :doc:`/plugins/web`: The API now reports file sizes (for use with the
   `Tomahawk resolver`_).
+* :doc:`/plugins/web`: Files now download with a reasonable filename rather
+  than just being called "file" (thanks to Zach Denton).
 * Add the track mapping dictionary to the ``album_distance`` plugin function.
 * Fix an assertion failure when the MusicBrainz main database and search server
   disagree.
