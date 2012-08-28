@@ -76,6 +76,9 @@ NULL_REPLACE = '<strip>'
 class UserError(Exception):
     pass
 
+# Main logger.
+log = logging.getLogger('beets')
+
 
 # Utilities.
 
@@ -674,8 +677,10 @@ class SubcommandsOptionParser(optparse.OptionParser):
 
 # The root parser and its main function.
 
-def main(args=None, configfh=None):
-    """Run the main command-line interface for beets."""
+def _raw_main(args, configfh):
+    """A helper function for `main` without top-level exception
+    handling.
+    """
     # Get the default subcommands.
     from beets.ui.commands import default_commands
 
@@ -750,7 +755,6 @@ def main(args=None, configfh=None):
     plugins.send("library_opened", lib=lib)
 
     # Configure the logger.
-    log = logging.getLogger('beets')
     if options.verbose:
         log.setLevel(logging.DEBUG)
     else:
@@ -760,11 +764,18 @@ def main(args=None, configfh=None):
     log.debug(u'library directory: %s' % util.displayable_path(lib.directory))
 
     # Invoke the subcommand.
+    subcommand.func(lib, config, suboptions, subargs)
+
+def main(args=None, configfh=None):
+    """Run the main command-line interface for beets. Includes top-level
+    exception handlers that print friendly error messages.
+    """
     try:
-        subcommand.func(lib, config, suboptions, subargs)
+        _raw_main(args, configfh)
     except UserError as exc:
         message = exc.args[0] if exc.args else None
-        subcommand.parser.error(message)
+        log.error(u'error: {0}'.format(message))
+        sys.exit(1)
     except util.HumanReadableException as exc:
         exc.log(log)
         sys.exit(1)

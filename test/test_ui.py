@@ -507,7 +507,7 @@ class ConfigTest(unittest.TestCase):
         commands.default_commands.pop()
     def _run_main(self, args, config, func):
         self.test_cmd.func = func
-        ui.main(args + ['test'], StringIO(config))
+        ui._raw_main(args + ['test'], StringIO(config))
 
     def test_paths_section_respected(self):
         def func(lib, config, opts, args):
