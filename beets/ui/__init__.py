@@ -664,8 +664,8 @@ def _raw_main(args, configfh):
             config['library'].get(confit.as_filename),
             config['directory'].get(confit.as_filename),
             config['paths'].get(dict),  # FIXME
-            config['art_filename'].get(basestring),
-            config['timeout'].get(float),  # FIXME int okay
+            config['art_filename'].get(unicode),
+            config['timeout'].get(confit.as_number),
             config['replace'].get(dict),
         )
     except sqlite3.OperationalError:

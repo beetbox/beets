@@ -840,9 +840,9 @@ def list_func(lib, config, opts, args):
     if not fmt:
         # If no format is specified, fall back to a default.
         if opts.album:
-            fmt = config['list_format_album'].get(basestring)
+            fmt = config['list_format_album'].get(unicode)
         else:
-            fmt = config['list_format_item'].get(basestring)
+            fmt = config['list_format_item'].get(unicode)
     list_items(lib, decargs(args), opts.album, opts.path, fmt)
 list_cmd.func = list_func
 default_commands.append(list_cmd)
