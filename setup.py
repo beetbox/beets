@@ -75,6 +75,7 @@ setup(name='beets',
           'munkres',
           'unidecode',
           'musicbrainzngs',
+          'pyyaml',
       ] + (['colorama'] if (sys.platform == 'win32') else []),
 
       classifiers=[

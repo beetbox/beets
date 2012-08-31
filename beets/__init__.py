@@ -16,4 +16,8 @@ __version__ = '1.0b16'
 __author__ = 'Adrian Sampson <adrian@radbox.org>'
 
 import beets.library
+from beets.util import confit
+
 Library = beets.library.Library
+
+config = confit.Configuration('beets', __name__)

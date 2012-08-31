@@ -808,9 +808,6 @@ default_commands.append(import_cmd)
 
 # list: Query and show library contents.
 
-DEFAULT_LIST_FORMAT_ITEM = '$artist - $album - $title'
-DEFAULT_LIST_FORMAT_ALBUM = '$albumartist - $album'
-
 def list_items(lib, query, album, path, fmt):
     """Print out items in lib matching query. If album, then search for
     albums instead of single items. If path, print the matched objects'
@@ -843,11 +840,9 @@ def list_func(lib, config, opts, args):
     if not fmt:
         # If no format is specified, fall back to a default.
         if opts.album:
-            fmt = ui.config_val(config, 'beets', 'list_format_album',
-                                DEFAULT_LIST_FORMAT_ALBUM)
+            fmt = config['list_format_album'].get(basestring)
         else:
-            fmt = ui.config_val(config, 'beets', 'list_format_item',
-                                DEFAULT_LIST_FORMAT_ITEM)
+            fmt = config['list_format_item'].get(basestring)
     list_items(lib, decargs(args), opts.album, opts.path, fmt)
 list_cmd.func = list_func
 default_commands.append(list_cmd)

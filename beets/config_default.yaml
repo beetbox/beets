@@ -1,0 +1,37 @@
+library: ~/.beetsmusic.blb
+directory: ~/Music
+
+import_write: yes
+import_copy: yes
+import_move: no
+import_resume: ask
+import_incremental: yes
+import_quiet_fallback: skip
+import_timid: no
+import_log:
+
+ignore: [".*", "*~"]
+replace:
+    '[\\/]': _
+    '^\.': _
+    '[\x00-\x1f]': _
+    '[<>:"\?\*\|]': _
+    '\.$': _
+    '\s+$': ''
+art_filename: cover
+
+plugins: []
+pluginpath: []
+threaded: yes
+color: yes
+timeout: 5.0
+per_disc_numbering: no
+verbose: no
+
+list_format_item: $artist - $album - $title
+list_format_album: $albumartist - $album
+
+paths:
+    default: $albumartist/$album%aunique{}/$track $title
+    singleton: Non-Album/$artist/$title
+    comp: Compilations/$album%aunique{}/$track $title

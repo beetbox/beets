@@ -22,19 +22,19 @@ import os
 import locale
 import optparse
 import textwrap
-import ConfigParser
 import sys
 from difflib import SequenceMatcher
 import logging
 import sqlite3
 import errno
 import re
-import codecs
 
 from beets import library
 from beets import plugins
 from beets import util
 from beets.util.functemplate import Template
+from beets import config
+from beets.util import confit
 
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
@@ -304,27 +304,6 @@ def input_yn(prompt, require=False, color=False):
     )
     return sel == 'y'
 
-def config_val(config, section, name, default, vtype=None):
-    """Queries the configuration file for a value (given by the section
-    and name). If no value is present, returns default.  vtype
-    optionally specifies the return type (although only ``bool`` and
-    ``list`` are supported for now).
-    """
-    if not config.has_section(section):
-        config.add_section(section)
-
-    try:
-        if vtype is bool:
-            return config.getboolean(section, name)
-        elif vtype is list:
-            # Whitespace-separated strings.
-            strval = config.get(section, name, True)
-            return strval.split()
-        else:
-            return config.get(section, name, True)
-    except ConfigParser.NoOptionError:
-        return default
-
 def human_bytes(size):
     """Formats size, a number of bytes, in a human-readable way."""
     suffices = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB', 'HB']
@@ -427,33 +406,6 @@ def colordiff(a, b, highlight='red'):
             assert(False)
 
     return u''.join(a_out), u''.join(b_out)
-
-def default_paths(pathmod=None):
-    """Produces the appropriate default config, library, and directory
-    paths for the current system. On Unix, this is always in ~. On
-    Windows, tries ~ first and then $APPDATA for the config and library
-    files (for backwards compatibility).
-    """
-    pathmod = pathmod or os.path
-    windows = pathmod.__name__ == 'ntpath'
-    if windows:
-        windata = os.environ.get('APPDATA') or '~'
-
-    # Shorthand for joining paths.
-    def exp(*vals):
-        return pathmod.expanduser(pathmod.join(*vals))
-
-    config = exp('~', DEFAULT_CONFIG_FILENAME_UNIX)
-    if windows and not pathmod.exists(config):
-        config = exp(windata, DEFAULT_CONFIG_FILENAME_WINDOWS)
-
-    libpath = exp('~', DEFAULT_LIBRARY_FILENAME_UNIX)
-    if windows and not pathmod.exists(libpath):
-        libpath = exp(windata, DEFAULT_LIBRARY_FILENAME_WINDOWS)
-
-    libdir = exp('~', DEFAULT_DIRECTORY_NAME)
-
-    return config, libpath, libdir
 
 def _get_replacements(config):
     """Given a ConfigParser, get the list of replacement pairs. If no
@@ -684,41 +636,18 @@ def _raw_main(args, configfh):
     # Get the default subcommands.
     from beets.ui.commands import default_commands
 
-    # Get default file paths.
-    default_config, default_libpath, default_dir = default_paths()
-
-    # Read defaults from config file.
-    config = ConfigParser.SafeConfigParser()
-    if configfh:
-        configpath = None
-    elif CONFIG_PATH_VAR in os.environ:
-        configpath = os.path.expanduser(os.environ[CONFIG_PATH_VAR])
-    else:
-        configpath = default_config
-    if configpath:
-        configpath = util.syspath(configpath)
-        if os.path.exists(util.syspath(configpath)):
-            configfh = codecs.open(configpath, 'r', encoding='utf-8')
-        else:
-            configfh = None
-    if configfh:
-        config.readfp(configfh)
-
     # Add plugin paths.
-    plugpaths = config_val(config, 'beets', 'pluginpath', '')
-    for plugpath in plugpaths.split(':'):
+    for plugpath in config['pluginpath'].get(list):
         sys.path.append(os.path.expanduser(plugpath))
     # Load requested plugins.
-    plugnames = config_val(config, 'beets', 'plugins', '')
-    plugins.load_plugins(plugnames.split())
+    plugins.load_plugins(config['plugins'].get(list))
     plugins.send("pluginload")
-    plugins.configure(config)
 
     # Construct the root parser.
     commands = list(default_commands)
     commands += plugins.commands()
     parser = SubcommandsOptionParser(subcommands=commands)
-    parser.add_option('-l', '--library', dest='libpath',
+    parser.add_option('-l', '--library', dest='library',
                       help='library database file to use')
     parser.add_option('-d', '--directory', dest='directory',
                       help="destination music directory")
@@ -727,39 +656,28 @@ def _raw_main(args, configfh):
 
     # Parse the command-line!
     options, subcommand, suboptions, subargs = parser.parse_args(args)
+    config.add_args(options)
 
     # Open library file.
-    libpath = options.libpath or \
-        config_val(config, 'beets', 'library', default_libpath)
-    directory = options.directory or \
-        config_val(config, 'beets', 'directory', default_dir)
-    path_formats = _get_path_formats(config)
-    art_filename = \
-        config_val(config, 'beets', 'art_filename', DEFAULT_ART_FILENAME)
-    lib_timeout = config_val(config, 'beets', 'timeout', DEFAULT_TIMEOUT)
-    replacements = _get_replacements(config)
     try:
-        lib_timeout = float(lib_timeout)
-    except ValueError:
-        lib_timeout = DEFAULT_TIMEOUT
-    db_path = os.path.expanduser(libpath)
-    try:
-        lib = library.Library(db_path,
-                              directory,
-                              path_formats,
-                              art_filename,
-                              lib_timeout,
-                              replacements)
+        lib = library.Library(
+            config['library'].get(confit.as_filename),
+            config['directory'].get(confit.as_filename),
+            config['paths'].get(dict),  # FIXME
+            config['art_filename'].get(basestring),
+            config['timeout'].get(float),  # FIXME int okay
+            config['replace'].get(dict),
+        )
     except sqlite3.OperationalError:
-        raise UserError("database file %s could not be opened" % db_path)
+        raise UserError("database file %s could not be opened" % FIXME)
     plugins.send("library_opened", lib=lib)
 
     # Configure the logger.
-    if options.verbose:
+    if config['verbose'].get(bool):
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.INFO)
-    log.debug(u'config file: %s' % util.displayable_path(configpath))
+    log.debug(u'data directory: %s' % util.displayable_path('FIXME'))
     log.debug(u'library database: %s' % util.displayable_path(lib.path))
     log.debug(u'library directory: %s' % util.displayable_path(lib.directory))
 
@@ -779,6 +697,8 @@ def main(args=None, configfh=None):
     except util.HumanReadableException as exc:
         exc.log(log)
         sys.exit(1)
+    except confit.ConfigError as exc:
+        xxx
     except IOError as exc:
         if exc.errno == errno.EPIPE:
             # "Broken pipe". End silently.
