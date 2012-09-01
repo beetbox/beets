@@ -69,7 +69,6 @@ DEFAULT_PATH_FORMATS = [
 ]
 DEFAULT_ART_FILENAME = 'cover'
 DEFAULT_TIMEOUT = 5.0
-NULL_REPLACE = '<strip>'
 
 # UI exception. Commands should throw this in order to display
 # nonrecoverable errors to the user.
@@ -407,61 +406,39 @@ def colordiff(a, b, highlight='red'):
 
     return u''.join(a_out), u''.join(b_out)
 
-def _get_replacements(config):
-    """Given a ConfigParser, get the list of replacement pairs. If no
-    replacements are specified, returns None. Otherwise, returns a list
-    of (compiled regex, replacement string) pairs.
+def _as_pairs(view, value):
+    """Confit validation function that reads a list of single-element
+    dictionaries as a list of pairs.
     """
-    repl_string = config_val(config, 'beets', 'replace', None)
-    if not repl_string:
-        return
-    if not isinstance(repl_string, unicode):
-        repl_string = repl_string.decode('utf8')
-
-    parts = repl_string.strip().split()
-    if not parts:
-        return
-    if len(parts) % 2 != 0:
-        # Must have an even number of parts.
-        raise UserError(u'"replace" config value must consist of'
-                        u' pattern/replacement pairs')
-
+    if not isinstance(value, list):
+        raise confit.ConfigTypeError('{0} must be a list'.format(view.name))
     out = []
-    for index in xrange(0, len(parts), 2):
-        pattern = parts[index]
-        replacement = parts[index+1]
-        if replacement.lower() == NULL_REPLACE:
-            replacement = ''
-        out.append((re.compile(pattern), replacement))
+    for dic in value:
+        if not isinstance(dic, dict) or len(dic) != 1:
+            raise confit.ConfigTypeError(
+                '{0} elements must be single-element maps'.format(view.name)
+            )
+        out.append(dic.items()[0])
     return out
 
-def _get_path_formats(config):
-    """Returns a list of path formats (query/template pairs); reflecting
-    the config's specified path formats.
+def _as_path_formats(view, value):
+    """Confit validation function that gets a list of path formats,
+    which are query/template pairs.
     """
-    legacy_path_format = config_val(config, 'beets', 'path_format', None)
-    if legacy_path_format:
-        # Old path formats override the default values.
-        path_formats = [(library.PF_KEY_DEFAULT,
-                         Template(legacy_path_format))]
-    else:
-        # If no legacy path format, use the defaults instead.
-        path_formats = DEFAULT_PATH_FORMATS
-
-    if config.has_section('paths'):
-        custom_path_formats = []
-        for key, value in config.items('paths', True):
-            if key in PF_KEY_QUERIES:
-                # Special values that indicate simple queries.
-                key = PF_KEY_QUERIES[key]
-            elif key != library.PF_KEY_DEFAULT:
-                # For non-special keys (literal queries), the _
-                # character denotes a :.
-                key = key.replace('_', ':')
-            custom_path_formats.append((key, Template(value)))
-        path_formats = custom_path_formats + path_formats
-
+    pairs = _as_pairs(view, value)
+    path_formats = []
+    for query, fmt in pairs:
+        query = PF_KEY_QUERIES.get(query, query)  # Expand common queries.
+        path_formats.append((query, Template(fmt)))
+    # FIXME append defaults
     return path_formats
+
+def _as_replacements(view, value):
+    """Confit validation function that reads regex/string pairs.
+    """
+    pairs = _as_pairs(view, value)
+    # FIXME handle regex compilation errors
+    return [(re.compile(k), v) for (k, v) in pairs]
 
 
 # Subcommand parsing infrastructure.
@@ -663,10 +640,10 @@ def _raw_main(args, configfh):
         lib = library.Library(
             config['library'].get(confit.as_filename),
             config['directory'].get(confit.as_filename),
-            config['paths'].get(dict),  # FIXME
+            config['paths'].get(_as_path_formats),
             config['art_filename'].get(unicode),
             config['timeout'].get(confit.as_number),
-            config['replace'].get(dict),
+            config['replace'].get(_as_replacements),
         )
     except sqlite3.OperationalError:
         raise UserError("database file %s could not be opened" % FIXME)
