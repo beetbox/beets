@@ -32,6 +32,7 @@ from beets import importer
 from beets.util import syspath, normpath, ancestry, displayable_path
 from beets.util.functemplate import Template
 from beets import library
+from beets import config
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -68,7 +69,7 @@ def _do_query(lib, query, album, also_items=True):
     return items, albums
 
 FLOAT_EPSILON = 0.01
-def _showdiff(field, oldval, newval, color):
+def _showdiff(field, oldval, newval):
     """Prints out a human-readable field difference line."""
     # Considering floats incomparable for perfect equality, introduce
     # an epsilon tolerance.
@@ -77,7 +78,7 @@ def _showdiff(field, oldval, newval, color):
         return
 
     if newval != oldval:
-        if color:
+        if config['color'].get(bool):
             oldval, newval = ui.colordiff(oldval, newval)
         else:
             oldval, newval = unicode(oldval), unicode(newval)
@@ -850,7 +851,7 @@ default_commands.append(list_cmd)
 
 # update: Update library contents according to on-disk tags.
 
-def update_items(lib, query, album, move, color, pretend):
+def update_items(lib, query, album, move, pretend):
     """For all the items matched by the query, update the library to
     reflect the item's embedded tags.
     """
@@ -896,7 +897,7 @@ def update_items(lib, query, album, move, color, pretend):
                 # Something changed.
                 print_(u'* %s - %s' % (item.artist, item.title))
                 for key, (oldval, newval) in changes.iteritems():
-                    _showdiff(key, oldval, newval, color)
+                    _showdiff(key, oldval, newval)
 
                 # If we're just pretending, then don't move or save.
                 if pretend:
@@ -941,14 +942,13 @@ def update_items(lib, query, album, move, color, pretend):
 update_cmd = ui.Subcommand('update',
     help='update the library', aliases=('upd','up',))
 update_cmd.parser.add_option('-a', '--album', action='store_true',
-    help='show matching albums instead of tracks')
+    help='match albums instead of tracks')
 update_cmd.parser.add_option('-M', '--nomove', action='store_false',
     default=True, dest='move', help="don't move files in library")
 update_cmd.parser.add_option('-p', '--pretend', action='store_true',
     help="show all changes but do nothing")
 def update_func(lib, config, opts, args):
-    color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
-    update_items(lib, decargs(args), opts.album, opts.move, color, opts.pretend)
+    update_items(lib, decargs(args), opts.album, opts.move, opts.pretend)
 update_cmd.func = update_func
 default_commands.append(update_cmd)
 
@@ -1059,7 +1059,7 @@ default_commands.append(version_cmd)
 
 # modify: Declaratively change metadata.
 
-def modify_items(lib, mods, query, write, move, album, color, confirm):
+def modify_items(lib, mods, query, write, move, album, confirm):
     """Modifies matching items according to key=value assignments."""
     # Parse key=value specifications into a dictionary.
     allowed_keys = library.ALBUM_KEYS if album else library.ITEM_KEYS_WRITABLE
@@ -1086,7 +1086,7 @@ def modify_items(lib, mods, query, write, move, album, color, confirm):
         # Show each change.
         for field, value in fsets.iteritems():
             curval = getattr(obj, field)
-            _showdiff(field, curval, value, color)
+            _showdiff(field, curval, value)
 
     # Confirm.
     if confirm:
@@ -1139,11 +1139,8 @@ def modify_func(lib, config, opts, args):
     if not mods:
         raise ui.UserError('no modifications specified')
     write = opts.write if opts.write is not None else \
-        ui.config_val(config, 'beets', 'import_write',
-            DEFAULT_IMPORT_WRITE, bool)
-    color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
-    modify_items(lib, mods, query, write, opts.move, opts.album, color,
-                 not opts.yes)
+        config['import_write'].get(bool)
+    modify_items(lib, mods, query, write, opts.move, opts.album, not opts.yes)
 modify_cmd.func = modify_func
 default_commands.append(modify_cmd)
 
