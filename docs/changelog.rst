@@ -22,6 +22,8 @@ Changelog
 * Add the track mapping dictionary to the ``album_distance`` plugin function.
 * Fix an assertion failure when the MusicBrainz main database and search server
   disagree.
+* Fix a bug that caused the :doc:`/plugins/lastgenre` and other plugins not to
+  modify files' tags even when they successfully change the database.
 
 .. _Tomahawk resolver: http://beets.radbox.org/blog/tomahawk-resolver.html
 
