@@ -9,11 +9,10 @@ your support.
 
 ## Charities
 
-These are some organizations doing work that is even more important than
-music organization software. They almost certainly need support more than I
-do.
+These are some organizations doing work that is even more important than music
+organization software. They need support more than I do.
 
-* <a href="http://www.publicampaign.org/">Public Campaign</a>
+* <a href="https://www.unpac.org/donate/">unPAC</a>
 * <a href="http://www.stopcorporateabuse.org/">Corporate Accountability International</a>
 * <a href="http://www.hrc.org/">Human Rights Campaign</a>
 
