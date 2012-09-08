@@ -452,6 +452,10 @@ class RegexpQuery(FieldQuery):
 
     def match(self, item):
         value = getattr(item, self.field) or ''
+        if value is None:
+            value = u''
+        elif not isinstance(value, basestring):
+            value = unicode(value)
         return self.regexp.search(value) is not None
 
 class BooleanQuery(MatchQuery):

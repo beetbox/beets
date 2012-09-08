@@ -302,6 +302,22 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
         self.assert_matched(results, u'caf\xe9')
         self.assert_done(results)
 
+class MatchTest(unittest.TestCase):
+    def setUp(self):
+        self.item = _common.item()
+
+    def test_regex_match_positive(self):
+        q = beets.library.RegexpQuery('album', '^the album$')
+        self.assertTrue(q.match(self.item))
+
+    def test_regex_match_negative(self):
+        q = beets.library.RegexpQuery('album', '^album$')
+        self.assertFalse(q.match(self.item))
+
+    def test_regex_match_non_string_value(self):
+        q = beets.library.RegexpQuery('disc', '^6$')
+        self.assertTrue(q.match(self.item))
+
 class PathQueryTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
