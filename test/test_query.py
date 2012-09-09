@@ -318,6 +318,18 @@ class MatchTest(unittest.TestCase):
         q = beets.library.RegexpQuery('disc', '^6$')
         self.assertTrue(q.match(self.item))
 
+    def test_substring_match_positive(self):
+        q = beets.library.SubstringQuery('album', 'album')
+        self.assertTrue(q.match(self.item))
+
+    def test_substring_match_negative(self):
+        q = beets.library.SubstringQuery('album', 'ablum')
+        self.assertFalse(q.match(self.item))
+
+    def test_substring_match_non_string_value(self):
+        q = beets.library.SubstringQuery('disc', '6')
+        self.assertTrue(q.match(self.item))
+
 class PathQueryTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')

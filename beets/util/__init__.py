@@ -467,6 +467,15 @@ def str2bool(value):
     else:
         return False
 
+def as_string(value):
+    """Convert a value to a Unicode object for matching with a query.
+    None becomes the empty string.
+    """
+    if value is None:
+        return u''
+    else:
+        return unicode(value)
+
 def levenshtein(s1, s2):
     """A nice DP edit distance implementation from Wikibooks:
     http://en.wikibooks.org/wiki/Algorithm_implementation/Strings/
