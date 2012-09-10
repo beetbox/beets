@@ -12,8 +12,6 @@ import:
     log:
     autotag: yes
     quiet: no
-
-    # Typically only set from the command line.
     singletons: no
 
 ignore: [".*", "*~"]

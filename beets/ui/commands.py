@@ -271,10 +271,6 @@ def show_item_change(item, match):
 
     print_('(Similarity: %s)' % dist_string(match.distance))
 
-def should_resume(config, path):
-    return ui.input_yn("Import of the directory:\n%s"
-                       "\nwas interrupted. Resume (Y/n)?" % path)
-
 def _quiet_fall_back(config):
     """Show the user that the default action is being taken because
     we're in quiet mode and the recommendation is not strong.
@@ -474,161 +470,156 @@ def manual_id(singleton):
         log.error('Invalid MBID.')
         return None
 
-def choose_match(task, config):
-    """Given an initial autotagging of items, go through an interactive
-    dance with the user to ask for a choice of metadata. Returns an
-    AlbumMatch object, ASIS, or SKIP.
+class TerminalImportSession(importer.ImportSession):
+    """An import session that runs in a terminal.
     """
-    # Show what we're tagging.
-    print_()
-    print_(task.path)
+    def choose_match(self, task):
+        """Given an initial autotagging of items, go through an interactive
+        dance with the user to ask for a choice of metadata. Returns an
+        AlbumMatch object, ASIS, or SKIP.
+        """
+        # Show what we're tagging.
+        print_()
+        print_(task.path)
 
-    if config.quiet:
-        # No input; just make a decision.
-        if task.rec == autotag.RECOMMEND_STRONG:
-            match = task.candidates[0]
-            show_change(task.cur_artist, task.cur_album, match)
-            return match
-        else:
-            return _quiet_fall_back(config)
+        if config.quiet:
+            # No input; just make a decision.
+            if task.rec == autotag.RECOMMEND_STRONG:
+                match = task.candidates[0]
+                show_change(task.cur_artist, task.cur_album, match)
+                return match
+            else:
+                return _quiet_fall_back(config)
 
-    # Loop until we have a choice.
-    candidates, rec = task.candidates, task.rec
-    while True:
-        # Ask for a choice from the user.
-        choice = choose_candidate(candidates, False, rec, task.cur_artist,
-                                  task.cur_album, itemcount=len(task.items))
+        # Loop until we have a choice.
+        candidates, rec = task.candidates, task.rec
+        while True:
+            # Ask for a choice from the user.
+            choice = choose_candidate(candidates, False, rec, task.cur_artist,
+                                    task.cur_album, itemcount=len(task.items))
 
-        # Choose which tags to use.
-        if choice in (importer.action.SKIP, importer.action.ASIS,
-                      importer.action.TRACKS):
-            # Pass selection to main control flow.
-            return choice
-        elif choice is importer.action.MANUAL:
-            # Try again with manual search terms.
-            search_artist, search_album = manual_search(False)
-            try:
-                _, _, candidates, rec = \
-                    autotag.tag_album(task.items, search_artist, search_album)
-            except autotag.AutotagError:
-                candidates, rec = None, None
-        elif choice is importer.action.MANUAL_ID:
-            # Try a manually-entered ID.
-            search_id = manual_id(False)
-            if search_id:
+            # Choose which tags to use.
+            if choice in (importer.action.SKIP, importer.action.ASIS,
+                        importer.action.TRACKS):
+                # Pass selection to main control flow.
+                return choice
+            elif choice is importer.action.MANUAL:
+                # Try again with manual search terms.
+                search_artist, search_album = manual_search(False)
                 try:
                     _, _, candidates, rec = \
-                        autotag.tag_album(task.items, search_id=search_id)
+                        autotag.tag_album(task.items, search_artist,
+                                          search_album)
                 except autotag.AutotagError:
                     candidates, rec = None, None
+            elif choice is importer.action.MANUAL_ID:
+                # Try a manually-entered ID.
+                search_id = manual_id(False)
+                if search_id:
+                    try:
+                        _, _, candidates, rec = \
+                            autotag.tag_album(task.items, search_id=search_id)
+                    except autotag.AutotagError:
+                        candidates, rec = None, None
+            else:
+                # We have a candidate! Finish tagging. Here, choice is an
+                # AlbumMatch object.
+                assert isinstance(choice, autotag.AlbumMatch)
+                return choice
+
+    def choose_item(self, task):
+        """Ask the user for a choice about tagging a single item. Returns
+        either an action constant or a TrackMatch object.
+        """
+        print_()
+        print_(task.item.path)
+        candidates, rec = task.candidates, task.rec
+
+        if config.quiet:
+            # Quiet mode; make a decision.
+            if rec == autotag.RECOMMEND_STRONG:
+                match = candidates[0]
+                show_item_change(task.item, match)
+                return match
+            else:
+                return _quiet_fall_back(config)
+
+        while True:
+            # Ask for a choice.
+            choice = choose_candidate(candidates, True, rec, item=task.item)
+
+            if choice in (importer.action.SKIP, importer.action.ASIS):
+                return choice
+            elif choice == importer.action.TRACKS:
+                assert False # TRACKS is only legal for albums.
+            elif choice == importer.action.MANUAL:
+                # Continue in the loop with a new set of candidates.
+                search_artist, search_title = manual_search(True)
+                candidates, rec = autotag.tag_item(task.item, search_artist,
+                                                search_title)
+            elif choice == importer.action.MANUAL_ID:
+                # Ask for a track ID.
+                search_id = manual_id(True)
+                if search_id:
+                    candidates, rec = autotag.tag_item(task.item,
+                                                    search_id=search_id)
+            else:
+                # Chose a candidate.
+                assert isinstance(choice, autotag.TrackMatch)
+                return choice
+
+    def resolve_duplicate(self, task):
+        """Decide what to do when a new album or item seems similar to one
+        that's already in the library.
+        """
+        log.warn("This %s is already in the library!" %
+                ("album" if task.is_album else "item"))
+
+        if config.quiet:
+            # In quiet mode, don't prompt -- just skip.
+            log.info('Skipping.')
+            sel = 's'
         else:
-            # We have a candidate! Finish tagging. Here, choice is an
-            # AlbumMatch object.
-            assert isinstance(choice, autotag.AlbumMatch)
-            return choice
+            sel = ui.input_options(
+                ('Skip new', 'Keep both', 'Remove old')
+            )
 
-def choose_item(task, config):
-    """Ask the user for a choice about tagging a single item. Returns
-    either an action constant or a TrackMatch object.
-    """
-    print_()
-    print_(task.item.path)
-    candidates, rec = task.candidates, task.rec
-
-    if config.quiet:
-        # Quiet mode; make a decision.
-        if rec == autotag.RECOMMEND_STRONG:
-            match = candidates[0]
-            show_item_change(task.item, match)
-            return match
+        if sel == 's':
+            # Skip new.
+            task.set_choice(importer.action.SKIP)
+        elif sel == 'k':
+            # Keep both. Do nothing; leave the choice intact.
+            pass
+        elif sel == 'r':
+            # Remove old.
+            task.remove_duplicates = True
         else:
-            return _quiet_fall_back(config)
+            assert False
 
-    while True:
-        # Ask for a choice.
-        choice = choose_candidate(candidates, True, rec, item=task.item)
-
-        if choice in (importer.action.SKIP, importer.action.ASIS):
-            return choice
-        elif choice == importer.action.TRACKS:
-            assert False # TRACKS is only legal for albums.
-        elif choice == importer.action.MANUAL:
-            # Continue in the loop with a new set of candidates.
-            search_artist, search_title = manual_search(True)
-            candidates, rec = autotag.tag_item(task.item, search_artist,
-                                               search_title)
-        elif choice == importer.action.MANUAL_ID:
-            # Ask for a track ID.
-            search_id = manual_id(True)
-            if search_id:
-                candidates, rec = autotag.tag_item(task.item,
-                                                   search_id=search_id)
-        else:
-            # Chose a candidate.
-            assert isinstance(choice, autotag.TrackMatch)
-            return choice
-
-def resolve_duplicate(task, config):
-    """Decide what to do when a new album or item seems similar to one
-    that's already in the library.
-    """
-    log.warn("This %s is already in the library!" %
-             ("album" if task.is_album else "item"))
-
-    if config.quiet:
-        # In quiet mode, don't prompt -- just skip.
-        log.info('Skipping.')
-        sel = 's'
-    else:
-        sel = ui.input_options(
-            ('Skip new', 'Keep both', 'Remove old')
-        )
-
-    if sel == 's':
-        # Skip new.
-        task.set_choice(importer.action.SKIP)
-    elif sel == 'k':
-        # Keep both. Do nothing; leave the choice intact.
-        pass
-    elif sel == 'r':
-        # Remove old.
-        task.remove_duplicates = True
-    else:
-        assert False
+    def should_resume(config, path):
+        return ui.input_yn("Import of the directory:\n%s"
+                        "\nwas interrupted. Resume (Y/n)?" % path)
 
 # The import command.
 
-def import_files(lib, paths, copy, move, write, autot, logpath, threaded,
-                 color, delete, quiet, resume, quiet_fallback, singletons,
-                 timid, query, incremental, ignore, per_disc_numbering):
-    """Import the files in the given list of paths, tagging each leaf
-    directory as an album. If copy, then the files are copied into the
-    library folder. If write, then new metadata is written to the files
-    themselves. If not autot, then just import the files without
-    attempting to tag. If logpath is provided, then untaggable albums
-    will be logged there. If threaded, then accelerate autotagging
-    imports by running them in multiple threads. If color, then
-    ANSI-colorize some terminal output. If delete, then old files are
-    deleted when they are copied. If quiet, then the user is never
-    prompted for input; instead, the tagger just skips anything it is
-    not confident about. resume indicates whether interrupted imports
-    can be resumed and is either a boolean or None. quiet_fallback
-    should be either ASIS or SKIP and indicates what should happen in
-    quiet mode when the recommendation is not strong.
+def import_files(lib, paths, query):
+    """Import the files in the given list of paths or matching the
+    query.
     """
     # Check the user-specified directories.
     for path in paths:
         fullpath = syspath(normpath(path))
-        if not singletons and not os.path.isdir(fullpath):
+        if not config['import']['singletons'] and not os.path.isdir(fullpath):
             raise ui.UserError('not a directory: ' + path)
-        elif singletons and not os.path.exists(fullpath):
+        elif config['import']['singletons'] and not os.path.exists(fullpath):
             raise ui.UserError('no such file: ' + path)
 
     # Check parameter consistency.
-    if quiet and timid:
+    if config['import']['quiet'] and config['import']['timid']:
         raise ui.UserError("can't be both quiet and timid")
 
     # Open the log.
+    logpath = config['import']['log'].as_filename()
     if logpath:
         logpath = normpath(logpath)
         try:
@@ -641,37 +632,13 @@ def import_files(lib, paths, copy, move, write, autot, logpath, threaded,
         logfile = None
 
     # Never ask for input in quiet mode.
-    if resume is None and quiet:
-        resume = False
+    if config['import']['resume'] is None and \
+            config['import']['quiet']:  # FIXME resume
+        config['import']['resume'] = False
 
+    session = TerminalImportSession(lib, logfile, paths, query)
     try:
-        # Perform the import.
-        importer.run_import(
-            lib = lib,
-            paths = paths,
-            resume = resume,
-            logfile = logfile,
-            color = color,
-            quiet = quiet,
-            quiet_fallback = quiet_fallback,
-            copy = copy,
-            move = move,
-            write = write,
-            delete = delete,
-            threaded = threaded,
-            autot = autot,
-            choose_match_func = choose_match,
-            should_resume_func = should_resume,
-            singletons = singletons,
-            timid = timid,
-            choose_item_func = choose_item,
-            query = query,
-            incremental = incremental,
-            ignore = ignore,
-            resolve_duplicate_func = resolve_duplicate,
-            per_disc_numbering = per_disc_numbering,
-        )
-
+        session.run()
     finally:
         # If we were logging, close the file.
         if logfile:
@@ -715,6 +682,8 @@ import_cmd.parser.add_option('-i', '--incremental', dest='incremental',
 import_cmd.parser.add_option('-I', '--noincremental', dest='incremental',
     action='store_false', help='do not skip already-imported directories')
 def import_func(lib, config, opts, args):
+    # FIXME add_args at config['import']
+
     copy  = opts.copy  if opts.copy  is not None else \
         ui.config_val(config, 'beets', 'import_copy',
             DEFAULT_IMPORT_COPY, bool)
