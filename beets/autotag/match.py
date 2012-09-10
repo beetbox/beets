@@ -23,6 +23,7 @@ from munkres import Munkres
 from unidecode import unidecode
 
 from beets import plugins
+from beets import config
 from beets.util import levenshtein, plurality
 from beets.autotag import hooks
 
@@ -373,7 +374,7 @@ def _add_candidate(items, results, info):
     results[info.album_id] = hooks.AlbumMatch(dist, info, mapping,
                                               extra_items, extra_tracks)
 
-def tag_album(items, timid=False, search_artist=None, search_album=None,
+def tag_album(items, search_artist=None, search_album=None,
               search_id=None):
     """Bundles together the functionality used to infer tags for a
     set of items comprised by an album. Returns everything relevant:
@@ -407,7 +408,7 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
         _add_candidate(items, candidates, id_info)
         rec = recommendation(candidates.values())
         log.debug('Album ID match recommendation is ' + str(rec))
-        if candidates and not timid:
+        if candidates and not config['import']['timid']:
             # If we have a very good MBID match, return immediately.
             # Otherwise, this match will compete against metadata-based
             # matches.
@@ -446,7 +447,7 @@ def tag_album(items, timid=False, search_artist=None, search_album=None,
     rec = recommendation(candidates)
     return cur_artist, cur_album, candidates, rec
 
-def tag_item(item, timid=False, search_artist=None, search_title=None,
+def tag_item(item, search_artist=None, search_title=None,
              search_id=None):
     """Attempts to find metadata for a single track. Returns a
     `(candidates, recommendation)` pair where `candidates` is a list of
@@ -469,7 +470,7 @@ def tag_item(item, timid=False, search_artist=None, search_title=None,
                     hooks.TrackMatch(dist, track_info)
             # If this is a good match, then don't keep searching.
             rec = recommendation(candidates.values())
-            if rec == RECOMMEND_STRONG and not timid:
+            if rec == RECOMMEND_STRONG and not config['import_timid'].get(bool):
                 log.debug('Track ID match.')
                 return candidates.values(), rec
 

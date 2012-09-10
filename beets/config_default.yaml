@@ -1,14 +1,20 @@
 library: ~/.beetsmusic.blb
 directory: ~/Music
 
-import_write: yes
-import_copy: yes
-import_move: no
-import_resume: ask
-import_incremental: yes
-import_quiet_fallback: skip
-import_timid: no
-import_log:
+import:
+    write: yes
+    copy: yes
+    move: no
+    resume: ask
+    incremental: no
+    quiet_fallback: skip
+    timid: no
+    log:
+    autotag: yes
+    quiet: no
+
+    # Typically only set from the command line.
+    singletons: no
 
 ignore: [".*", "*~"]
 replace:

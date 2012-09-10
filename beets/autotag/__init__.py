@@ -18,7 +18,7 @@ import os
 import logging
 import re
 
-from beets import library, mediafile
+from beets import library, mediafile, config
 from beets.util import sorted_walk, ancestry
 
 # Parts of external interface.
@@ -115,7 +115,7 @@ def apply_item_metadata(item, track_info):
     # At the moment, the other metadata is left intact (including album
     # and track number). Perhaps these should be emptied?
 
-def apply_metadata(album_info, mapping, per_disc_numbering=False):
+def apply_metadata(album_info, mapping):
     """Set the items' metadata to match an AlbumInfo object using a
     mapping from Items to TrackInfo objects. If `per_disc_numbering`,
     then the track numbers are per-disc instead of per-release.
@@ -148,7 +148,7 @@ def apply_metadata(album_info, mapping, per_disc_numbering=False):
         # Title.
         item.title = track_info.title
 
-        if per_disc_numbering:
+        if config['per_disc_numbering']:
             item.track = track_info.medium_index
         else:
             item.track = track_info.index

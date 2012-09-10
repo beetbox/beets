@@ -100,35 +100,18 @@ default_commands.append(fields_cmd)
 
 # import: Autotagger and importer.
 
-DEFAULT_IMPORT_COPY           = True
-DEFAULT_IMPORT_MOVE           = False
-DEFAULT_IMPORT_WRITE          = True
-DEFAULT_IMPORT_DELETE         = False
-DEFAULT_IMPORT_AUTOT          = True
-DEFAULT_IMPORT_TIMID          = False
-DEFAULT_IMPORT_QUIET          = False
-DEFAULT_IMPORT_QUIET_FALLBACK = 'skip'
-DEFAULT_IMPORT_RESUME         = None # "ask"
-DEFAULT_IMPORT_INCREMENTAL    = False
-DEFAULT_THREADED              = True
-DEFAULT_COLOR                 = True
-DEFAULT_IGNORE                = [
-    '.*', '*~',
-]
-DEFAULT_PER_DISC_NUMBERING    = False
-
 VARIOUS_ARTISTS = u'Various Artists'
 
 PARTIAL_MATCH_MESSAGE = u'(partial match!)'
 
 # Importer utilities and support.
 
-def dist_string(dist, color):
+def dist_string(dist):
     """Formats a distance (a float) as a similarity percentage string.
     The string is colorized if color is True.
     """
     out = '%.1f%%' % ((1 - dist) * 100)
-    if color:
+    if config['color'].get(bool):
         if dist <= autotag.STRONG_REC_THRESH:
             out = ui.colorize('green', out)
         elif dist <= autotag.MEDIUM_REC_THRESH:
@@ -137,8 +120,7 @@ def dist_string(dist, color):
             out = ui.colorize('red', out)
     return out
 
-def show_change(cur_artist, cur_album, match, color=True,
-                per_disc_numbering=False):
+def show_change(cur_artist, cur_album, match):
     """Print out a representation of the changes that will be made if an
     album's tags are changed according to `match`, which must be an AlbumMatch
     object.
@@ -156,7 +138,7 @@ def show_change(cur_artist, cur_album, match, color=True,
             warning = PARTIAL_MATCH_MESSAGE
         else:
             warning = None
-        if color and warning:
+        if config['color'].get(bool) and warning:
             warning = ui.colorize('yellow', warning)
 
         out = album_description
@@ -168,7 +150,7 @@ def show_change(cur_artist, cur_album, match, color=True,
         """Return a string representing the track index of the given
         TrackInfo object.
         """
-        if per_disc_numbering:
+        if config['per_disc_numbering'].get(bool):
             if match.info.mediums > 1:
                 return u'{0}-{1}'.format(track_info.medium,
                                          track_info.medium_index)
@@ -187,7 +169,7 @@ def show_change(cur_artist, cur_album, match, color=True,
             # Hide artists for VA releases.
             artist_l, artist_r = u'', u''
 
-        if color:
+        if config['color'].get(bool):
             artist_l, artist_r = ui.colordiff(artist_l, artist_r)
             album_l, album_r   = ui.colordiff(album_l, album_r)
 
@@ -199,13 +181,13 @@ def show_change(cur_artist, cur_album, match, color=True,
         message = u"Tagging: %s - %s" % (match.info.artist, match.info.album)
         if match.extra_items or match.extra_tracks:
             warning = PARTIAL_MATCH_MESSAGE
-            if color:
+            if config['color'].get(bool):
                 warning = ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
             message += u' ' + warning
         print_(message)
 
     # Distance/similarity.
-    print_('(Similarity: %s)' % dist_string(match.distance, color))
+    print_('(Similarity: %s)' % dist_string(match.distance))
 
     # Tracks.
     pairs = match.mapping.items()
@@ -221,12 +203,12 @@ def show_change(cur_artist, cur_album, match, color=True,
         if item.length and track_info.length:
             cur_length = ui.human_seconds_short(item.length)
             new_length = ui.human_seconds_short(track_info.length)
-            if color:
+            if config['color'].get(bool):
                 cur_length = ui.colorize('red', cur_length)
                 new_length = ui.colorize('red', new_length)
 
         # Possibly colorize changes.
-        if color:
+        if config['color'].get(bool):
             cur_title, new_title = ui.colordiff(cur_title, new_title)
             cur_track = ui.colorize('red', cur_track)
             new_track = ui.colorize('red', new_track)
@@ -258,16 +240,16 @@ def show_change(cur_artist, cur_album, match, color=True,
     for track_info in match.extra_tracks:
         line = u' * Missing track: {0} ({1})'.format(track_info.title,
                                                      format_index(track_info))
-        if color:
+        if config['color'].get(bool):
             line = ui.colorize('yellow', line)
         print_(line)
     for item in match.extra_items:
         line = u' * Unmatched track: {0} ({1})'.format(item.title, item.track)
-        if color:
+        if config['color'].get(bool):
             line = ui.colorize('yellow', line)
         print_(line)
 
-def show_item_change(item, match, color):
+def show_item_change(item, match):
     """Print out the change that would occur by tagging `item` with the
     metadata from `match`, a TrackMatch object.
     """
@@ -275,7 +257,7 @@ def show_item_change(item, match, color):
     cur_title, new_title = item.title, match.info.title
 
     if cur_artist != new_artist or cur_title != new_title:
-        if color:
+        if config['color'].get():
             cur_artist, new_artist = ui.colordiff(cur_artist, new_artist)
             cur_title, new_title = ui.colordiff(cur_title, new_title)
 
@@ -287,7 +269,7 @@ def show_item_change(item, match, color):
     else:
         print_("Tagging track: %s - %s" % (cur_artist, cur_title))
 
-    print_('(Similarity: %s)' % dist_string(match.distance, color))
+    print_('(Similarity: %s)' % dist_string(match.distance))
 
 def should_resume(config, path):
     return ui.input_yn("Import of the directory:\n%s"
@@ -305,9 +287,8 @@ def _quiet_fall_back(config):
         assert(False)
     return config.quiet_fallback
 
-def choose_candidate(candidates, singleton, rec, color, timid,
-                     cur_artist=None, cur_album=None, item=None,
-                     itemcount=None, per_disc_numbering=False):
+def choose_candidate(candidates, singleton, rec, cur_artist=None,
+                     cur_album=None, item=None, itemcount=None):
     """Given a sorted list of candidates, ask the user for a selection
     of which candidate to use. Applies to both full albums and
     singletons  (tracks). Candidates are either AlbumMatch or TrackMatch
@@ -338,7 +319,7 @@ def choose_candidate(candidates, singleton, rec, color, timid,
                    'https://github.com/sampsyo/beets/wiki/FAQ#wiki-nomatch')
             opts = ('Use as-is', 'as Tracks', 'Skip', 'Enter search',
                     'enter Id', 'aBort')
-        sel = ui.input_options(opts, color=color)
+        sel = ui.input_options(opts)
         if sel == 'u':
             return importer.action.ASIS
         elif sel == 't':
@@ -372,7 +353,7 @@ def choose_candidate(candidates, singleton, rec, color, timid,
                 for i, match in enumerate(candidates):
                     print_('%i. %s - %s (%s)' %
                            (i + 1, match.info.artist, match.info.title,
-                            dist_string(match.distance, color)))
+                            dist_string(match.distance)))
             else:
                 print_('Finding tags for album "%s - %s".' %
                        (cur_artist, cur_album))
@@ -394,12 +375,12 @@ def choose_candidate(candidates, singleton, rec, color, timid,
                     elif year:
                         line += u' [%s]' % year
 
-                    line += ' (%s)' % dist_string(match.distance, color)
+                    line += ' (%s)' % dist_string(match.distance)
 
                     # Point out the partial matches.
                     if match.extra_items or match.extra_tracks:
                         warning = PARTIAL_MATCH_MESSAGE
-                        if color:
+                        if config['color'].get(bool):
                             warning = ui.colorize('yellow', warning)
                         line += u' %s' % warning
 
@@ -412,8 +393,7 @@ def choose_candidate(candidates, singleton, rec, color, timid,
             else:
                 opts = ('Skip', 'Use as-is', 'as Tracks', 'Enter search',
                         'enter Id', 'aBort')
-            sel = ui.input_options(opts, numrange=(1, len(candidates)),
-                                   color=color)
+            sel = ui.input_options(opts, numrange=(1, len(candidates)))
             if sel == 's':
                 return importer.action.SKIP
             elif sel == 'u':
@@ -436,13 +416,12 @@ def choose_candidate(candidates, singleton, rec, color, timid,
 
         # Show what we're about to do.
         if singleton:
-            show_item_change(item, match, color)
+            show_item_change(item, match)
         else:
-            show_change(cur_artist, cur_album, match, color,
-                        per_disc_numbering)
+            show_change(cur_artist, cur_album, match)
 
         # Exact match => tag automatically if we're not in timid mode.
-        if rec == autotag.RECOMMEND_STRONG and not timid:
+        if rec == autotag.RECOMMEND_STRONG and not config['import']['timid']:
             return match
 
         # Ask for confirmation.
@@ -452,7 +431,7 @@ def choose_candidate(candidates, singleton, rec, color, timid,
         else:
             opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
                     'as Tracks', 'Enter search', 'enter Id', 'aBort')
-        sel = ui.input_options(opts, color=color)
+        sel = ui.input_options(opts)
         if sel == 'a':
             return match
         elif sel == 'm':
@@ -508,7 +487,7 @@ def choose_match(task, config):
         # No input; just make a decision.
         if task.rec == autotag.RECOMMEND_STRONG:
             match = task.candidates[0]
-            show_change(task.cur_artist, task.cur_album, match, config.color)
+            show_change(task.cur_artist, task.cur_album, match)
             return match
         else:
             return _quiet_fall_back(config)
@@ -517,10 +496,8 @@ def choose_match(task, config):
     candidates, rec = task.candidates, task.rec
     while True:
         # Ask for a choice from the user.
-        choice = choose_candidate(candidates, False, rec, config.color,
-                                  config.timid, task.cur_artist,
-                                  task.cur_album, itemcount=len(task.items),
-                                  per_disc_numbering=config.per_disc_numbering)
+        choice = choose_candidate(candidates, False, rec, task.cur_artist,
+                                  task.cur_album, itemcount=len(task.items))
 
         # Choose which tags to use.
         if choice in (importer.action.SKIP, importer.action.ASIS,
@@ -532,8 +509,7 @@ def choose_match(task, config):
             search_artist, search_album = manual_search(False)
             try:
                 _, _, candidates, rec = \
-                    autotag.tag_album(task.items, config.timid, search_artist,
-                                      search_album)
+                    autotag.tag_album(task.items, search_artist, search_album)
             except autotag.AutotagError:
                 candidates, rec = None, None
         elif choice is importer.action.MANUAL_ID:
@@ -542,8 +518,7 @@ def choose_match(task, config):
             if search_id:
                 try:
                     _, _, candidates, rec = \
-                        autotag.tag_album(task.items, config.timid,
-                                        search_id=search_id)
+                        autotag.tag_album(task.items, search_id=search_id)
                 except autotag.AutotagError:
                     candidates, rec = None, None
         else:
@@ -564,15 +539,14 @@ def choose_item(task, config):
         # Quiet mode; make a decision.
         if rec == autotag.RECOMMEND_STRONG:
             match = candidates[0]
-            show_item_change(task.item, match, config.color)
+            show_item_change(task.item, match)
             return match
         else:
             return _quiet_fall_back(config)
 
     while True:
         # Ask for a choice.
-        choice = choose_candidate(candidates, True, rec, config.color,
-                                  config.timid, item=task.item)
+        choice = choose_candidate(candidates, True, rec, item=task.item)
 
         if choice in (importer.action.SKIP, importer.action.ASIS):
             return choice
@@ -581,13 +555,13 @@ def choose_item(task, config):
         elif choice == importer.action.MANUAL:
             # Continue in the loop with a new set of candidates.
             search_artist, search_title = manual_search(True)
-            candidates, rec = autotag.tag_item(task.item, config.timid,
-                                               search_artist, search_title)
+            candidates, rec = autotag.tag_item(task.item, search_artist,
+                                               search_title)
         elif choice == importer.action.MANUAL_ID:
             # Ask for a track ID.
             search_id = manual_id(True)
             if search_id:
-                candidates, rec = autotag.tag_item(task.item, config.timid,
+                candidates, rec = autotag.tag_item(task.item,
                                                    search_id=search_id)
         else:
             # Chose a candidate.
@@ -607,8 +581,7 @@ def resolve_duplicate(task, config):
         sel = 's'
     else:
         sel = ui.input_options(
-            ('Skip new', 'Keep both', 'Remove old'),
-            color=config.color
+            ('Skip new', 'Keep both', 'Remove old')
         )
 
     if sel == 's':
@@ -1139,7 +1112,7 @@ def modify_func(lib, config, opts, args):
     if not mods:
         raise ui.UserError('no modifications specified')
     write = opts.write if opts.write is not None else \
-        config['import_write'].get(bool)
+        config['import']['write'].get(bool)
     modify_items(lib, mods, query, write, opts.move, opts.album, not opts.yes)
 modify_cmd.func = modify_func
 default_commands.append(modify_cmd)

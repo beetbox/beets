@@ -48,27 +48,10 @@ if sys.platform == 'win32':
 
 
 # Constants.
-CONFIG_PATH_VAR = 'BEETSCONFIG'
-DEFAULT_CONFIG_FILENAME_UNIX = '.beetsconfig'
-DEFAULT_CONFIG_FILENAME_WINDOWS = 'beetsconfig.ini'
-DEFAULT_LIBRARY_FILENAME_UNIX = '.beetsmusic.blb'
-DEFAULT_LIBRARY_FILENAME_WINDOWS = 'beetsmusic.blb'
-DEFAULT_DIRECTORY_NAME = 'Music'
-WINDOWS_BASEDIR = os.environ.get('APPDATA') or '~'
 PF_KEY_QUERIES = {
     'comp': 'comp:true',
     'singleton': 'singleton:true',
 }
-DEFAULT_PATH_FORMATS = [
-  (library.PF_KEY_DEFAULT,
-   Template('$albumartist/$album%aunique{}/$track $title')),
-  (PF_KEY_QUERIES['singleton'],
-   Template('Non-Album/$artist/$title')),
-  (PF_KEY_QUERIES['comp'],
-   Template('Compilations/$album%aunique{}/$track $title')),
-]
-DEFAULT_ART_FILENAME = 'cover'
-DEFAULT_TIMEOUT = 5.0
 
 # UI exception. Commands should throw this in order to display
 # nonrecoverable errors to the user.
@@ -134,7 +117,7 @@ def input_(prompt=None):
     return resp.decode(sys.stdin.encoding, 'ignore')
 
 def input_options(options, require=False, prompt=None, fallback_prompt=None,
-                  numrange=None, default=None, color=False, max_width=72):
+                  numrange=None, default=None, max_width=72):
     """Prompts a user for input. The sequence of `options` defines the
     choices the user has. A single-letter shortcut is inferred for each
     option; the user's choice is returned as that single, lower-case
@@ -192,7 +175,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
             is_default = False
 
         # Possibly colorize the letter shortcut.
-        if color:
+        if config['color'].get(bool):
             color = 'turquoise' if is_default else 'blue'
             show_letter = colorize(color, show_letter)
 
