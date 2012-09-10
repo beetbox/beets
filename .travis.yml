@@ -7,3 +7,6 @@ install:
     - pip install pylast flask --use-mirrors
     - "if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2 --use-mirrors; fi"
 script: nosetests
+branches:
+    only:
+        - master
