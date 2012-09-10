@@ -20,8 +20,9 @@ import os
 import pkgutil
 import sys
 import yaml
+import types
 
-UNIX_DIR_VAR = 'XDG_DATA_HOME'
+UNIX_DIR_VAR = 'XDG_CONFIG_HOME'
 UNIX_DIR_FALLBACK = '~/.config'
 WINDOWS_DIR_VAR = 'APPDATA'
 WINDOWS_DIR_FALLBACK = '~\\AppData\\Roaming'
@@ -35,7 +36,8 @@ DEFAULT_FILENAME = 'config_default.yaml'
 
 PY3 = sys.version_info[0] == 3
 STRING = str if PY3 else unicode
-NUMERIC_TYPES = [int, float] if PY3 else [int, float, long]
+NUMERIC_TYPES = (int, float) if PY3 else (int, float, long)
+TYPE_TYPES = (type,) if PY3 else (type, types.ClassType)
 
 def iter_first(sequence):
     """Get the first element from an iterable or raise a ValueError if
@@ -122,19 +124,17 @@ class ConfigView(object):
         except ValueError:
             raise NotFoundError("{0} not found".format(self.name))
 
-        # Validate/convert.
-        if isinstance(typ, type):
-            # Check type of value.
+        # Validate type.
+        if typ is not None:
+            if not isinstance(typ, TYPE_TYPES):
+                raise TypeError('argument to get() must be a type')
+
             if not isinstance(value, typ):
                 raise ConfigTypeError(
                     "{0} must be of type {1}, not {2}".format(
                         self.name, typ.__name__, type(value).__name__
                     )
                 )
-
-        elif typ is not None:
-            # typ must a callable that takes this view and the value.
-            value = typ(self, value)
 
         return value
 
@@ -235,6 +235,64 @@ class ConfigView(object):
                 )
             for value in it:
                 yield value
+
+    # Explicit validators/converters.
+
+    def as_filename(self):
+        """Get a string as a normalized filename, made absolute and with
+        tilde expanded.
+        """
+        value = STRING(self.get())
+        return os.path.abspath(os.path.expanduser(value))
+
+    def as_choice(self, choices):
+        """Ensure that the value is among a collection of choices and
+        return it.
+        """
+        value = self.get()
+        if value not in choices:
+            raise ConfigValueError(
+                '{0} must be one of {1}, not {2}'.format(
+                    self.name, repr(value), repr(list(choices))
+                )
+            )
+        return value
+
+    def as_number(self):
+        """Ensure that a value is of numeric type."""
+        value = self.get()
+        if isinstance(value, NUMERIC_TYPES):
+            return value
+        raise ConfigTypeError(
+            '{0} must be numeric, not {1}'.format(
+                self.name, type(value).__name__
+            )
+        )
+
+    def as_pairs(self, all_sources=False):
+        """Ensure that the value is a list whose elements are either
+        pairs (two-element lists) or single-entry dictionaries (which
+        have a slightly nicer syntax in YAML). Return a list of pairs
+        (tuples). If `all_sources`, then the values from all sources are
+        concatenated.
+        """
+        if all_sources:
+            it = self.all_contents()
+        else:
+            it = self.get(list)
+
+        out = []
+        for item in it:
+            if isinstance(item, list) and len(item) == 2:
+                out.append(tuple(item))
+            elif isinstance(item, dict) and len(item) == 1:
+                out.append(iter_first(item.items()))
+            else:
+                raise ConfigValueError(
+                    '{0} must be a list of pairs'.format(self.name)
+                )
+        
+        return out
 
 class RootView(ConfigView):
     """The base of a view hierarchy. This view keeps track of the
@@ -342,41 +400,6 @@ def config_dirs():
         if path not in out:
             out.append(path)
     return out
-
-
-# Validation and conversion helpers.
-
-def as_filename(view, value):
-    """Gets a string as a normalized filename, made absolute and with
-    tilde expanded.
-    """
-    value = STRING(value)
-    return os.path.abspath(os.path.expanduser(value))
-
-def as_choice(choices):
-    """Returns a function that ensures that the value is one of a
-    collection of choices.
-    """
-    def f(view, value):
-        if value not in choices:
-            raise ConfigValueError(
-                '{0} must be one of {1}, not {2}'.format(
-                    view.name, repr(value), repr(list(choices))
-                )
-            )
-        return value
-    return f
-
-def as_number(view, value):
-    """Ensure that a value is of numeric type."""
-    for typ in NUMERIC_TYPES:
-        if isinstance(value, typ):
-            return value
-    raise ConfigTypeError(
-        '{0} must be numeric, not {1}'.format(
-            view.name, type(value).__name__
-        )
-    )
 
 
 # YAML.

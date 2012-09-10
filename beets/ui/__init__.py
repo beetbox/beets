@@ -406,37 +406,21 @@ def colordiff(a, b, highlight='red'):
 
     return u''.join(a_out), u''.join(b_out)
 
-def _as_pairs(view, value):
-    """Confit validation function that reads a list of single-element
-    dictionaries as a list of pairs.
+def get_path_formats():
+    """Get the configuration's path formats as a list of query/template
+    pairs.
     """
-    if not isinstance(value, list):
-        raise confit.ConfigTypeError('{0} must be a list'.format(view.name))
-    out = []
-    for dic in value:
-        if not isinstance(dic, dict) or len(dic) != 1:
-            raise confit.ConfigTypeError(
-                '{0} elements must be single-element maps'.format(view.name)
-            )
-        out.append(dic.items()[0])
-    return out
-
-def _as_path_formats(view, value):
-    """Confit validation function that gets a list of path formats,
-    which are query/template pairs.
-    """
-    pairs = _as_pairs(view, value)
+    pairs = config['paths'].as_pairs(True)
     path_formats = []
     for query, fmt in pairs:
         query = PF_KEY_QUERIES.get(query, query)  # Expand common queries.
         path_formats.append((query, Template(fmt)))
-    # FIXME append defaults
     return path_formats
 
-def _as_replacements(view, value):
+def get_replacements():
     """Confit validation function that reads regex/string pairs.
     """
-    pairs = _as_pairs(view, value)
+    pairs = config['replace'].as_pairs()
     # FIXME handle regex compilation errors
     return [(re.compile(k), v) for (k, v) in pairs]
 
@@ -638,12 +622,12 @@ def _raw_main(args, configfh):
     # Open library file.
     try:
         lib = library.Library(
-            config['library'].get(confit.as_filename),
-            config['directory'].get(confit.as_filename),
-            config['paths'].get(_as_path_formats),
+            config['library'].as_filename(),
+            config['directory'].as_filename(),
+            get_path_formats(),
             config['art_filename'].get(unicode),
-            config['timeout'].get(confit.as_number),
-            config['replace'].get(_as_replacements),
+            config['timeout'].as_number(),
+            get_replacements(),
         )
     except sqlite3.OperationalError:
         raise UserError("database file %s could not be opened" % FIXME)
@@ -675,7 +659,7 @@ def main(args=None, configfh=None):
         exc.log(log)
         sys.exit(1)
     except confit.ConfigError as exc:
-        xxx
+        FIXME
     except IOError as exc:
         if exc.errno == errno.EPIPE:
             # "Broken pipe". End silently.
