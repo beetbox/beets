@@ -12,6 +12,7 @@ Changelog
 * Fix album queries for ``artpath`` and other non-item fields.
 * Null values in the database can now be matched with the empty-string regular
   expression, ``^$``.
+* Queries now correctly match non-string values in path format predicates.
 * :doc:`/plugins/fetchart`: Fix a bug where cover art filenames could lack
   a ``.jpg`` extension.
 * :doc:`/plugins/lyrics`: Fix an exception with non-ASCII lyrics.
@@ -22,6 +23,8 @@ Changelog
 * Add the track mapping dictionary to the ``album_distance`` plugin function.
 * Fix an assertion failure when the MusicBrainz main database and search server
   disagree.
+* Fix a bug that caused the :doc:`/plugins/lastgenre` and other plugins not to
+  modify files' tags even when they successfully change the database.
 
 .. _Tomahawk resolver: http://beets.radbox.org/blog/tomahawk-resolver.html
 

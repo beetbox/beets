@@ -166,10 +166,7 @@ def _regexp(expr, val):
     """
     if expr is None:
         return False
-    if val is None:
-        val = u''
-    if not isinstance(val, basestring):
-        val = unicode(val)
+    val = util.as_string(val)
     try:
         res = re.search(expr, val)
     except re.error:
@@ -436,7 +433,7 @@ class SubstringQuery(FieldQuery):
         return clause, subvals
 
     def match(self, item):
-        value = getattr(item, self.field) or ''
+        value = util.as_string(getattr(item, self.field))
         return self.pattern.lower() in value.lower()
 
 class RegexpQuery(FieldQuery):
@@ -451,7 +448,7 @@ class RegexpQuery(FieldQuery):
         return clause, subvals
 
     def match(self, item):
-        value = getattr(item, self.field) or ''
+        value = util.as_string(getattr(item, self.field))
         return self.regexp.search(value) is not None
 
 class BooleanQuery(MatchQuery):

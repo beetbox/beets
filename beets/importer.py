@@ -729,6 +729,10 @@ def plugin_stage(func):
             continue
         func(task)
 
+        # Stage may modify DB, so re-load cached item data.
+        for item in task.imported_items():
+            config.lib.load(item)
+
 def manipulate_files():
     """A coroutine (pipeline stage) that performs necessary file
     manipulations *after* items have been added to the library.
@@ -739,7 +743,7 @@ def manipulate_files():
         if task.should_skip():
             continue
 
-        # Move/copy files.
+        # Move/copy/write files.
         items = task.imported_items()
         task.old_paths = [item.path for item in items]  # For deletion.
         for item in items:
