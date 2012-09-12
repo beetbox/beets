@@ -21,7 +21,7 @@ import re
 
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.util import normpath
+from beets.util import normpath, syspath, bytestring_path
 
 M3U_DEFAULT_NAME = 'imported.m3u'
 
@@ -36,9 +36,9 @@ class ImportFeedsPlugin(BeetsPlugin):
         _feeds_dir = ui.config_val(config, 'importfeeds', 'feeds_dir', None)
         
         if _feeds_dir: 
-            _feeds_dir = os.path.expanduser(_feeds_dir)
+            _feeds_dir = os.path.expanduser(bytestring_path(_feeds_dir))
             if not os.path.exists(_feeds_dir):
-                os.makedirs(_feeds_dir)
+                os.makedirs(syspath(_feeds_dir))
 
 def _get_feeds_dir(lib):
     """Given a Library object, return the path to the feeds directory to be
@@ -49,8 +49,8 @@ def _get_feeds_dir(lib):
     dirpath = lib.directory
 
     # Ensure directory exists.
-    if not os.path.exists(dirpath):
-        os.makedirs(dirpath)
+    if not os.path.exists(syspath(dirpath)):
+        os.makedirs(syspath(dirpath))
     return dirpath
 
 def _build_m3u_filename(basename):
@@ -65,7 +65,7 @@ def _build_m3u_filename(basename):
 def _write_m3u(m3u_path, items_paths):
     """Append relative paths to items into m3u file.
     """
-    with open(m3u_path, 'a') as f:
+    with open(syspath(m3u_path), 'a') as f:
         for path in items_paths:
             f.write(path + '\n')
 

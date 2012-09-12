@@ -20,6 +20,8 @@ Changelog
   `Tomahawk resolver`_).
 * :doc:`/plugins/web`: Files now download with a reasonable filename rather
   than just being called "file" (thanks to Zach Denton).
+* :doc:`/plugins/importfeeds`: Fix error in symlink mode with non-ASCII
+  filenames.
 * Add the track mapping dictionary to the ``album_distance`` plugin function.
 * Fix an assertion failure when the MusicBrainz main database and search server
   disagree.
