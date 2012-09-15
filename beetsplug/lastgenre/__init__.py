@@ -167,16 +167,21 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         fallback_str = ui.config_val(config, 'lastgenre', 'fallback_str', None)
 
     def imported(self, config, task):
+        tags = []
         if task.is_album:
             album = config.lib.get_album(task.album_id)
             lastfm_obj = LASTFM.get_album(album.albumartist, album.album)
+            if album.genre:
+                tags.append(album.genre)
         else:
             item = task.item
             lastfm_obj = LASTFM.get_track(item.artist, item.title)
+            if item.genre:
+                tags.append(item.genre)
 
-        tags = _tags_for(lastfm_obj)
+        tags.extend(_tags_for(lastfm_obj))
         genre = _tags_to_genre(tags)
-
+        
         if not genre and fallback_str != None:
             genre = fallback_str
             log.debug(u'no last.fm genre found: fallback to %s' % genre)
