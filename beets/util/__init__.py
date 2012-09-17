@@ -93,7 +93,7 @@ class FilesystemError(HumanReadableException):
             clause = 'while {0} {1} to {2}'.format(
                 self._gerund(), repr(self.paths[0]), repr(self.paths[1])
             )
-        elif self.verb in ('delete',):
+        elif self.verb in ('delete', 'write'):
             clause = 'while {0} {1}'.format(
                 self._gerund(), repr(self.paths[0])
             )

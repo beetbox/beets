@@ -23,6 +23,7 @@ import shlex
 import unicodedata
 import threading
 import contextlib
+import traceback
 from collections import defaultdict
 from unidecode import unidecode
 from beets.mediafile import MediaFile
@@ -283,7 +284,12 @@ class Item(object):
         f = MediaFile(syspath(self.path))
         for key in ITEM_KEYS_WRITABLE:
             setattr(f, key, getattr(self, key))
-        f.save()
+
+        try:
+            f.save()
+        except (OSError, IOError) as exc:
+            raise util.FilesystemError(exc, 'write', (self.path,),
+                                       traceback.format_exc())
 
         # The file has a new mtime.
         self.mtime = self.current_mtime()

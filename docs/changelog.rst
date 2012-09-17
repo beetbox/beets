@@ -29,6 +29,7 @@ Changelog
   modify files' tags even when they successfully change the database.
 * Fix a VFS bug leading to a crash in the :doc:`/plugins/bpd` when files had
   non-ASCII extensions.
+* Add a human-readable error message when writing files' tags fails.
 
 .. _Tomahawk resolver: http://beets.radbox.org/blog/tomahawk-resolver.html
 
