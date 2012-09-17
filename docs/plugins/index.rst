@@ -50,6 +50,7 @@ disabled by default, but you can turn them on as described above.
    rdm
    mbcollection
    importfeeds
+   the
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -72,6 +73,7 @@ Path Formats
 
 * :doc:`inline`: Use Python snippets to customize path format strings.
 * :doc:`rewrite`: Substitute values in path formats.
+* :doc:`the`: Moves patterns in path formats (suitable for moving articles).
 
 Interoperability
 ''''''''''''''''
