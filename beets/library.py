@@ -1135,6 +1135,9 @@ class Library(BaseLibrary):
 
         # Preserve extension.
         _, extension = pathmod.splitext(item.path)
+        if fragment:
+            # Outputting Unicode.
+            extension = extension.decode('utf8', 'ignore')
         subpath += extension.lower()
 
         if fragment:
