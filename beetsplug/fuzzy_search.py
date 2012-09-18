@@ -12,25 +12,26 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Get a random song or album from the library.
+"""Like beet list, but with fuzzy matching
 """
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs, print_
 from beets.util.functemplate import Template
-import random
 import difflib
+
+# THRESHOLD = 0.7
 
 def fuzzy_score(query, item):
     return difflib.SequenceMatcher(a=query, b=item).quick_ratio()
 
-def is_match(query, item, album=False, verbose=False):
+def is_match(query, item, album=False, verbose=False, threshold=0.7):
     query = ' '.join(query)
 
     if album: values = [item.albumartist, item.album]
     else: values = [item.artist, item.album, item.title]
 
-    s =  max(fuzzy_score(query, i) for i in values)
-    if s > 0.7: return (True, s) if verbose else True
+    s =  max(fuzzy_score(query.lower(), i.lower()) for i in values)
+    if s > threshold: return (True, s) if verbose else True
     else: return (False, s) if verbose else False
 
 def fuzzy_list(lib, config, opts, args):
@@ -38,6 +39,7 @@ def fuzzy_list(lib, config, opts, args):
     path = opts.path
     fmt = opts.format
     verbose = opts.verbose
+    threshold = float(opts.threshold)
 
     if fmt is None:
         # If no specific template is supplied, use a default
@@ -52,19 +54,18 @@ def fuzzy_list(lib, config, opts, args):
     else:
         objs = lib.items()
 
-    # matches = [i for i in objs if is_match(query, i)]
-
     if opts.album:
         for album in objs:
-            if is_match(query, album, album=True):
+            if is_match(query, album, album=True, threshold=threshold):
                 if path:
                     print_(album.item_dir())
                 else:
                     print_(album.evaluate_template(template))
-                if verbose: print is_match(query,album, album=True, verbose=True)[1]
+                if verbose: print is_match(query, album,
+                                           album=True, verbose=True)[1]
     else:
         for item in objs:
-            if is_match(query, item):
+            if is_match(query, item, threshold=threshold):
                 if path:
                     print_(item.path)
                 else:
@@ -81,6 +82,9 @@ fuzzy_cmd.parser.add_option('-f', '--format', action='store',
         help='print with custom format', default=None)
 fuzzy_cmd.parser.add_option('-v', '--verbose', action='store_true',
         help='output scores for matches')
+fuzzy_cmd.parser.add_option('-t', '--threshold', action='store',
+        help='return result with a fuzzy score above threshold. (default is 0.7)',
+        default=0.7)
 fuzzy_cmd.func = fuzzy_list
 
 
