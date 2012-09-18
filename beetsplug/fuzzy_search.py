@@ -21,18 +21,25 @@ import difflib
 
 # THRESHOLD = 0.7
 
+
 def fuzzy_score(query, item):
     return difflib.SequenceMatcher(a=query, b=item).quick_ratio()
+
 
 def is_match(query, item, album=False, verbose=False, threshold=0.7):
     query = ' '.join(query)
 
-    if album: values = [item.albumartist, item.album]
-    else: values = [item.artist, item.album, item.title]
+    if album:
+        values = [item.albumartist, item.album]
+    else:
+        values = [item.artist, item.album, item.title]
 
-    s =  max(fuzzy_score(query.lower(), i.lower()) for i in values)
-    if s > threshold: return (True, s) if verbose else True
-    else: return (False, s) if verbose else False
+    s = max(fuzzy_score(query.lower(), i.lower()) for i in values)
+    if s >= threshold:
+        return (True, s) if verbose else True
+    else:
+        return (False, s) if verbose else False
+
 
 def fuzzy_list(lib, config, opts, args):
     query = decargs(args)
@@ -61,8 +68,8 @@ def fuzzy_list(lib, config, opts, args):
                     print_(album.item_dir())
                 else:
                     print_(album.evaluate_template(template))
-                if verbose: print is_match(query, album,
-                                           album=True, verbose=True)[1]
+                if verbose:
+                    print is_match(query, album, album=True, verbose=True)[1]
     else:
         for item in objs:
             if is_match(query, item, threshold=threshold):
@@ -70,7 +77,8 @@ def fuzzy_list(lib, config, opts, args):
                     print_(item.path)
                 else:
                     print_(item.evaluate_template(template, lib))
-                if verbose: print is_match(query,item, verbose=True)[1]
+                if verbose:
+                    print is_match(query, item, verbose=True)[1]
 
 fuzzy_cmd = Subcommand('fuzzy',
                         help='list items using fuzzy matching')
@@ -83,10 +91,9 @@ fuzzy_cmd.parser.add_option('-f', '--format', action='store',
 fuzzy_cmd.parser.add_option('-v', '--verbose', action='store_true',
         help='output scores for matches')
 fuzzy_cmd.parser.add_option('-t', '--threshold', action='store',
-        help='return result with a fuzzy score above threshold. (default is 0.7)',
-        default=0.7)
+        help='return result with a fuzzy score above threshold. \
+              (default is 0.7)', default=0.7)
 fuzzy_cmd.func = fuzzy_list
-
 
 
 class Fuzzy(BeetsPlugin):
