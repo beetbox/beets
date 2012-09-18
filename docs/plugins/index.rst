@@ -51,6 +51,7 @@ disabled by default, but you can turn them on as described above.
    mbcollection
    importfeeds
    the
+   fuzzy_search
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -87,6 +88,7 @@ Miscellaneous
 
 * :doc:`web`: An experimental Web-based GUI for beets.
 * :doc:`rdm`: Randomly choose albums and tracks from your library.
+* :doc:`fuzzy_search`: Search albums and tracks with fuzzy string matching.
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
   compatible with `MPD clients`_.

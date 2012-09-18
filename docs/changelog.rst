@@ -4,6 +4,9 @@ Changelog
 1.0b16 (in development)
 -----------------------
 
+* New plugin: :doc:`/plugins/fuzzy_search` lets you find albums and tracks using
+  fuzzy string matching so you don't have to type (or even remember) their exact
+  names. Thanks to Philippe Mongeau.
 * New plugin: :doc:`/plugins/the` adds a template function that helps format
   text for nicely-sorted directory listings. Thanks to Blemjhoo Tezoulbr.
 * :doc:`/plugins/scrub`: Scrubbing now removes *all* types of tags from a file

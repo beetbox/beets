@@ -1,5 +1,5 @@
 Fuzzy Search Plugin
-=============
+===================
 
 The ``fuzzy_search`` plugin provides a command that search your library using
 fuzzy pattern matching. This can be useful if you want to find a track with complicated characters in the title.
