@@ -14,10 +14,12 @@
 
 """Like beet list, but with fuzzy matching
 """
+import beets
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs, print_
 from beets.util.functemplate import Template
 import difflib
+
 
 # THRESHOLD = 0.7
 
@@ -44,7 +46,10 @@ def is_match(query, item, album=False, verbose=False, threshold=0.7):
 def fuzzy_list(lib, config, opts, args):
     query = decargs(args)
     fmt = opts.format
-    threshold = float(opts.threshold)
+    if opts.threshold is not None:
+        threshold = float(opts.threshold)
+    else:
+        threshold = float(conf['threshold'])
 
     if fmt is None:
         # If no specific template is supplied, use a default
@@ -84,10 +89,16 @@ fuzzy_cmd.parser.add_option('-v', '--verbose', action='store_true',
         help='output scores for matches')
 fuzzy_cmd.parser.add_option('-t', '--threshold', action='store',
         help='return result with a fuzzy score above threshold. \
-              (default is 0.7)', default=0.7)
+              (default is 0.7)', default=None)
 fuzzy_cmd.func = fuzzy_list
+
+conf = {}
 
 
 class Fuzzy(BeetsPlugin):
     def commands(self):
         return [fuzzy_cmd]
+
+    def configure(self, config):
+        conf['threshold'] = beets.ui.config_val(config, 'fuzzy',
+                                                'threshold', 0.7)
