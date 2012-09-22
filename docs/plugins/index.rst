@@ -52,6 +52,7 @@ disabled by default, but you can turn them on as described above.
    importfeeds
    the
    fuzzy_search
+   zero
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -68,6 +69,7 @@ Metadata
 * :doc:`embedart`: Embed album art images into files' metadata.
 * :doc:`replaygain`: Calculate volume normalization for players that support it.
 * :doc:`scrub`: Clean extraneous metadata from music files.
+* :doc:`zero`: Nullify fields by pattern or unconditionally.
 
 Path Formats
 ''''''''''''
