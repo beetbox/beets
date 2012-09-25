@@ -5,7 +5,7 @@ from beets.library import Item
 from beetsplug.zero import ZeroPlugin
 
 
-class ThePluginTest(unittest.TestCase):
+class ZeroPluginTest(unittest.TestCase):
 
     def test_singleton(self):
         z1 = ZeroPlugin()

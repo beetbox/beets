@@ -43,9 +43,9 @@ class ZeroPlugin(BeetsPlugin):
         return cls._instance
 
     def __str__(self):
-        return ('[zero]\n  debug = {}\n  fields = {}\n  patterns = {}\n'
-                '  warned = {}'.format(self.debug, self.fields, self.patterns, 
-                                     self.warned))
+        return ('[zero]\n  debug = {0}\n  fields = {1}\n  patterns = {2}\n'
+                '  warned = {3}'.format(self.debug, self.fields, self.patterns, 
+                                        self.warned))
 
     def dbg(self, *args):
         """Prints message to stderr."""
@@ -59,7 +59,9 @@ class ZeroPlugin(BeetsPlugin):
         self.debug = ui.config_val(config, 'zero', 'debug', True, bool)
         for f in ui.config_val(config, 'zero', 'fields', '').split():
             if f not in ITEM_KEYS:
-                self.dbg('invalid field \"{}\" (try \'beet fields\')')
+                self.dbg(
+                    'invalid field \"{0}\" (try \'beet fields\')'.format(f)
+                )
             else:
                 self.fields.append(f)
                 p = ui.config_val(config, 'zero', f, '').split()
@@ -100,16 +102,16 @@ class ZeroPlugin(BeetsPlugin):
             try:
                 fval = getattr(item, fn)
             except AttributeError:
-                self.dbg('? no such field: {}'.format(fn))
+                self.dbg('? no such field: {0}'.format(fn))
             else:
                 if not self.match_patterns(fval, self.patterns[fn]):
-                    self.dbg('\"{}\" ({}) is not match any of: {}'
+                    self.dbg('\"{0}\" ({1}) is not match any of: {2}'
                              .format(fval, fn, ' '.join(self.patterns[fn])))
                     continue
-                self.dbg('\"{}\" ({}) match: {}'
+                self.dbg('\"{0}\" ({1}) match: {2}'
                          .format(fval, fn, ' '.join(self.patterns[fn])))
                 setattr(item, fn, type(fval)())
-                self.dbg('{}={}'.format(fn, getattr(item, fn)))
+                self.dbg('{0}={1}'.format(fn, getattr(item, fn)))
 
 
 @ZeroPlugin.listen('import_task_choice')

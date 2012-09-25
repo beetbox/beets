@@ -64,12 +64,12 @@ class ThePlugin(BeetsPlugin):
                 try:
                     re.compile(p)
                 except re.error:
-                    print(u'[the] invalid pattern: {}'.format(p),
+                    print(u'[the] invalid pattern: {0}'.format(p),
                           file=sys.stderr)
                 else:
                     if not (p.startswith('^') or p.endswith('$')):
                         if not the_options['silent']:
-                            print(u'[the] warning: pattern \"{}\" will not '
+                            print(u'[the] warning: pattern \"{0}\" will not '
                                   'match string start/end'.format(p),
                                   file=sys.stderr)
         if the_options['a']:
@@ -79,7 +79,7 @@ class ThePlugin(BeetsPlugin):
         if not the_options['patterns'] and not the_options['silent']:
             print('[the] no patterns defined!')
         if the_options['debug']:
-            print(u'[the] patterns: {}'
+            print(u'[the] patterns: {0}'
                   .format(' '.join(the_options['patterns'])), file=sys.stderr)
 
 
@@ -118,7 +118,7 @@ def func_the(text):
             if r != text:
                 break
         if the_options['debug']:
-            print(u'[the] \"{}\" -> \"{}\"'.format(text, r), file=sys.stderr)
+            print(u'[the] \"{0}\" -> \"{1}\"'.format(text, r), file=sys.stderr)
         return r
     else:
         return u''
