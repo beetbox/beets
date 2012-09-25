@@ -12,16 +12,18 @@ your beets config::
     [beets]
     plugins = zero
 
-You need to configure plugin before use, so add following section into config
-file and adjust it to your needs::
+To configure the plugin, use a ``[zero]`` section in your configuration file.
+Set ``fields`` to the (whitespace-separated) list of fields to null. You can get
+the list of available fields by running ``beet fields``. To conditionally filter
+a field, use ``field=regexp regexp`` to specify regular expressions.
+
+For example::
 
     [zero]
-    # list of fields to null, you can get full list by running 'beet fields'
     fields=month day genre comments
-    # custom regexp patterns for each field, separated by space
-    # if custom pattern is not defined, field will be nulled unconditionally
+    # Custom regexp patterns for each field, separated by spaces:
     comments=EAC LAME from.+collection ripped\sby
     genre=rnb power\smetal
 
-  Note: for now plugin will not zero fields in 'as-is' mode.
-  
+If custom pattern is not defined, field will be nulled unconditionally. Note
+that the plugin currently does not zero fields when importing "as-is".

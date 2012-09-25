@@ -9,6 +9,8 @@ Changelog
   names. Thanks to Philippe Mongeau.
 * New plugin: :doc:`/plugins/the` adds a template function that helps format
   text for nicely-sorted directory listings. Thanks to Blemjhoo Tezoulbr.
+* New plugin: :doc:`/plugins/zero` filters out undesirable fields before they
+  are written to your tags. Thanks again to Blemjhoo Tezoulbr.
 * :doc:`/plugins/scrub`: Scrubbing now removes *all* types of tags from a file
   rather than just one. For example, if your FLAC file has both ordinary FLAC
   tags and ID3 tags, the ID3 tags are now also removed.
