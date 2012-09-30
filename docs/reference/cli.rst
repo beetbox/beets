@@ -51,11 +51,11 @@ right now; this is something we need to work on. Read the
   configuration file (below).
 
 * Also, you can disable the autotagging behavior entirely using ``-A``
-  (don't autotag) -- then your music will be imported with its existing
+  (don't autotag)---then your music will be imported with its existing
   metadata.
 
 * During a long tagging import, it can be useful to keep track of albums
-  that weren't tagged successfully -- either because they're not in the
+  that weren't tagged successfully---either because they're not in the
   MusicBrainz database or because something's wrong with the files. Use the
   ``-l`` option to specify a filename to log every time you skip and album
   or import it "as-is" or an album gets skipped as a duplicate.
@@ -77,7 +77,11 @@ right now; this is something we need to work on. Read the
   option to run an *incremental* import. With this flag, beets will keep
   track of every directory it ever imports and avoid importing them again.
   This is useful if you have an "incoming" directory that you periodically
-  add things to. (The ``-I`` flag disables incremental imports.)
+  add things to.
+  To get this to work correctly, you'll need to use an incremental import *every
+  time* you run an import on the directory in question---including the first
+  time, when no subdirectories will be skipped. So consider enabling the
+  ``import_incremental`` configuration option.
 
 * By default, beets will proceed without asking if it finds a very close
   metadata match. To disable this and have the importer as you every time,
