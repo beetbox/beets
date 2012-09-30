@@ -21,6 +21,9 @@ You'll need to enter the hostname and port of the beets Web server. (You don't n
 
 Tomahawk will now be able to find tracks from your beets library. Type a query into the "global search" box and rock out.
 
+If you have trouble getting the beets resolver to work, try the latest [nightly Tomahawk build][nightly]. Some users have better luck with the cutting-edge version.
+
+[nightly]: http://download.tomahawk-player.org/nightly/
 [beets resolver]: https://github.com/sampsyo/beets/tree/master/extra/beets-resolver
 [resolver]: http://www.tomahawk-player.org/resolvers.html
 [Tomahawk]: http://www.tomahawk-player.org/
