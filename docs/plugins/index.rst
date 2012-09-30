@@ -50,6 +50,9 @@ disabled by default, but you can turn them on as described above.
    rdm
    mbcollection
    importfeeds
+   the
+   fuzzy_search
+   zero
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -66,12 +69,14 @@ Metadata
 * :doc:`embedart`: Embed album art images into files' metadata.
 * :doc:`replaygain`: Calculate volume normalization for players that support it.
 * :doc:`scrub`: Clean extraneous metadata from music files.
+* :doc:`zero`: Nullify fields by pattern or unconditionally.
 
 Path Formats
 ''''''''''''
 
 * :doc:`inline`: Use Python snippets to customize path format strings.
 * :doc:`rewrite`: Substitute values in path formats.
+* :doc:`the`: Moves patterns in path formats (suitable for moving articles).
 
 Interoperability
 ''''''''''''''''
@@ -85,6 +90,7 @@ Miscellaneous
 
 * :doc:`web`: An experimental Web-based GUI for beets.
 * :doc:`rdm`: Randomly choose albums and tracks from your library.
+* :doc:`fuzzy_search`: Search albums and tracks with fuzzy string matching.
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
   compatible with `MPD clients`_.

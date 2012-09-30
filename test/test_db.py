@@ -442,6 +442,12 @@ class DestinationTest(unittest.TestCase):
         finally:
             sys.getfilesystemencoding = oldfunc
 
+    def test_unicode_extension_in_fragment(self):
+        self.lib.path_formats = [('default', u'foo')]
+        self.i.path = util.bytestring_path(u'bar.caf\xe9')
+        dest = self.lib.destination(self.i, platform='linux2', fragment=True)
+        self.assertEqual(dest, u'foo.caf\xe9')
+
 class PathFormattingMixin(object):
     """Utilities for testing path formatting."""
     def _setf(self, fmt):

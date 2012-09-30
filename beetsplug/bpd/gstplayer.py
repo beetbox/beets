@@ -17,7 +17,6 @@ music player.
 """
 from __future__ import print_function
 
-import gst
 import sys
 import time
 import gobject
@@ -25,6 +24,10 @@ import thread
 import os
 import copy
 import urllib
+
+import pygst
+pygst.require('0.10')
+import gst
 
 class GstPlayer(object):
     """A music player abstracting GStreamer's Playbin element.

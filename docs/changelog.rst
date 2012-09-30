@@ -4,6 +4,13 @@ Changelog
 1.0b16 (in development)
 -----------------------
 
+* New plugin: :doc:`/plugins/fuzzy_search` lets you find albums and tracks using
+  fuzzy string matching so you don't have to type (or even remember) their exact
+  names. Thanks to Philippe Mongeau.
+* New plugin: :doc:`/plugins/the` adds a template function that helps format
+  text for nicely-sorted directory listings. Thanks to Blemjhoo Tezoulbr.
+* New plugin: :doc:`/plugins/zero` filters out undesirable fields before they
+  are written to your tags. Thanks again to Blemjhoo Tezoulbr.
 * :doc:`/plugins/scrub`: Scrubbing now removes *all* types of tags from a file
   rather than just one. For example, if your FLAC file has both ordinary FLAC
   tags and ID3 tags, the ID3 tags are now also removed.
@@ -20,11 +27,16 @@ Changelog
   `Tomahawk resolver`_).
 * :doc:`/plugins/web`: Files now download with a reasonable filename rather
   than just being called "file" (thanks to Zach Denton).
+* :doc:`/plugins/importfeeds`: Fix error in symlink mode with non-ASCII
+  filenames.
 * Add the track mapping dictionary to the ``album_distance`` plugin function.
 * Fix an assertion failure when the MusicBrainz main database and search server
   disagree.
 * Fix a bug that caused the :doc:`/plugins/lastgenre` and other plugins not to
   modify files' tags even when they successfully change the database.
+* Fix a VFS bug leading to a crash in the :doc:`/plugins/bpd` when files had
+  non-ASCII extensions.
+* Add a human-readable error message when writing files' tags fails.
 
 .. _Tomahawk resolver: http://beets.radbox.org/blog/tomahawk-resolver.html
 
