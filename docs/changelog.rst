@@ -20,6 +20,8 @@ Changelog
 * Null values in the database can now be matched with the empty-string regular
   expression, ``^$``.
 * Queries now correctly match non-string values in path format predicates.
+* :doc:`/plugins/lastgenre`: Use the albums' existing genre tags if they pass
+  the whitelist (thank to Fabrice Laporte).
 * :doc:`/plugins/fetchart`: Fix a bug where cover art filenames could lack
   a ``.jpg`` extension.
 * :doc:`/plugins/lyrics`: Fix an exception with non-ASCII lyrics.
