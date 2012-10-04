@@ -65,3 +65,11 @@ tree.
 
 .. _YAML: http://www.yaml.org/
 .. _pyyaml: http://pyyaml.org/
+
+
+Running Manually
+----------------
+
+In addition to running automatically on import, the plugin can also run manually
+from the command line. Use the command ``beet lastgenre [QUERY]`` to fetch
+genres for albums matching a certain query.
