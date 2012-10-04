@@ -31,6 +31,7 @@ import os
 from beets import plugins
 from beets import ui
 from beets.util import normpath
+from beets.ui import commands
 
 log = logging.getLogger('beets')
 
@@ -165,6 +166,35 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             options['c14n'] = True
 
         fallback_str = ui.config_val(config, 'lastgenre', 'fallback_str', None)
+
+    def commands(self):
+        lastgenre_cmd = ui.Subcommand('lastgenre', help='fetch genres')
+        def lastgenre_func(lib, config, opts, args):
+            # The "write to files" option corresponds to the
+            # import_write config value.
+            write = ui.config_val(config, 'beets', 'import_write',
+                                  commands.DEFAULT_IMPORT_WRITE, bool)
+            for album in lib.albums(ui.decargs(args)):
+                tags = []    
+                lastfm_obj = LASTFM.get_album(album.albumartist, album.album)
+                if album.genre:
+                    tags.append(album.genre)
+
+                tags.extend(_tags_for(lastfm_obj))
+                genre = _tags_to_genre(tags)
+
+                if not genre and fallback_str != None:
+                    genre = fallback_str
+                    log.debug(u'no last.fm genre found: fallback to %s' % genre)
+
+                if genre is not None:
+                    log.debug(u'adding last.fm album genre: %s' % genre)
+                    album.genre = genre
+                    if write:
+                        for item in album.items():
+                            item.write()
+        lastgenre_cmd.func = lastgenre_func
+        return [lastgenre_cmd]
 
     def imported(self, config, task):
         tags = []
