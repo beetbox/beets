@@ -36,8 +36,6 @@ can add plugin section into config file::
     format={0}, {1}
     # strip instead of moving to the end, default is off
     strip=no
-    # do not print warnings, default is off
-    silent=no
     # custom regexp patterns, separated by space
     patterns=
 

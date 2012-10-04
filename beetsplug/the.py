@@ -14,118 +14,106 @@
 
 """Moves patterns in path formats (suitable for moving articles)."""
 
-from __future__ import print_function
-import sys
 import re
+import logging
 from beets.plugins import BeetsPlugin
 from beets import ui
 
 
 __author__ = 'baobab@heresiarch.info'
-__version__ = '1.0'
+__version__ = '1.1'
 
 PATTERN_THE = u'^[the]{3}\s'
 PATTERN_A = u'^[a][n]?\s'
 FORMAT = u'{0}, {1}'
 
-the_options = {
-    'debug': False,
-    'the': True,
-    'a': True,
-    'format': FORMAT,
-    'strip': False,
-    'silent': False,
-    'patterns': [PATTERN_THE, PATTERN_A],
-}
-
-
 class ThePlugin(BeetsPlugin):
+
+    _instance = None
+    _log = logging.getLogger('beets')
+
+    the = True
+    a = True
+    format = u''
+    strip = False
+    patterns = []
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(ThePlugin,
+                                  cls).__new__(cls, *args, **kwargs)
+        return cls._instance
+
+    def __str__(self):
+        return ('[the]\n  the = {0}\n  a = {1}\n  format = {2}\n'
+                '  strip = {3}\n  patterns = {4}'
+                .format(self.the, self.a, self.format, self.strip,
+                        self.patterns))
 
     def configure(self, config):
         if not config.has_section('the'):
-            print('[the] plugin is not configured, using defaults',
-                  file=sys.stderr)
+            self._log.warn(u'[the] plugin is not configured, using defaults')
             return
-        self.in_config = True
-        the_options['debug'] = ui.config_val(config, 'the', 'debug', False,
-                                             bool)
-        the_options['the'] = ui.config_val(config, 'the', 'the', True, bool)
-        the_options['a'] = ui.config_val(config, 'the', 'a', True, bool)
-        the_options['format'] = ui.config_val(config, 'the', 'format',
-                                              FORMAT)
-        the_options['strip'] = ui.config_val(config, 'the', 'strip', False,
-                                             bool)
-        the_options['silent'] = ui.config_val(config, 'the', 'silent', False,
-                                              bool)
-        the_options['patterns'] = ui.config_val(config, 'the', 'patterns',
-                                                '').split()
-        for p in the_options['patterns']:
+        self.the = ui.config_val(config, 'the', 'the', True, bool)
+        self.a = ui.config_val(config, 'the', 'a', True, bool)
+        self.format = ui.config_val(config, 'the', 'format', FORMAT)
+        self.strip = ui.config_val(config, 'the', 'strip', False, bool)
+        self.patterns = ui.config_val(config, 'the', 'patterns', '').split()
+        for p in self.patterns:
             if p:
                 try:
                     re.compile(p)
                 except re.error:
-                    print(u'[the] invalid pattern: {0}'.format(p),
-                          file=sys.stderr)
+                    self._log.error(u'[the] invalid pattern: {0}'.format(p))
                 else:
                     if not (p.startswith('^') or p.endswith('$')):
-                        if not the_options['silent']:
-                            print(u'[the] warning: pattern \"{0}\" will not '
-                                  'match string start/end'.format(p),
-                                  file=sys.stderr)
-        if the_options['a']:
-            the_options['patterns'] = [PATTERN_A] + the_options['patterns']
-        if the_options['the']:
-            the_options['patterns'] = [PATTERN_THE] + the_options['patterns']
-        if not the_options['patterns'] and not the_options['silent']:
-            print('[the] no patterns defined!')
-        if the_options['debug']:
-            print(u'[the] patterns: {0}'
-                  .format(' '.join(the_options['patterns'])), file=sys.stderr)
+                        self._log.warn(u'[the] warning: \"{0}\" will not '
+                                       'match string start/end'.format(p))
+        if self.a:
+            self.patterns = [PATTERN_A] + self.patterns
+        if self.the:
+            self.patterns = [PATTERN_THE] + self.patterns
+        if not self.patterns:
+            self._log.warn(u'[the] no patterns defined!')
 
 
-def unthe(text, pattern, strip=False):
-    """Moves pattern in the path format string or strips it
+    def unthe(self, text, pattern):
+        """Moves pattern in the path format string or strips it
 
-    text -- text to handle
-    pattern -- regexp pattern (case ignore is already on)
-    strip -- if True, pattern will be removed
+        text -- text to handle
+        pattern -- regexp pattern (case ignore is already on)
+        strip -- if True, pattern will be removed
 
-    """
-    if text:
-        r = re.compile(pattern, flags=re.IGNORECASE)
-        try:
-            t = r.findall(text)[0]
-        except IndexError:
-            return text
-        else:
-            r = re.sub(r, '', text).strip()
-            if strip:
-                return r
+        """
+        if text:
+            r = re.compile(pattern, flags=re.IGNORECASE)
+            try:
+                t = r.findall(text)[0]
+            except IndexError:
+                return text
             else:
-                return the_options['format'].format(r, t.strip()).strip()
-    else:
-        return u''
+                r = re.sub(r, '', text).strip()
+                if self.strip:
+                    return r
+                else:
+                    return self.format.format(r, t.strip()).strip()
+        else:
+            return u''
 
+    def the_template_func(self, text):
+        if not self.patterns:
+            return text
+        if text:
+            for p in self.patterns:
+                r = self.unthe(text, p)
+                if r != text:
+                    break
+            self._log.debug(u'[the] \"{0}\" -> \"{1}\"'.format(text, r))
+            return r
+        else:
+            return u''
 
 @ThePlugin.template_func('the')
 def func_the(text):
     """Provides beets template function %the"""
-    if not the_options['patterns']:
-        return text
-    if text:
-        for p in the_options['patterns']:
-            r = unthe(text, p, the_options['strip'])
-            if r != text:
-                break
-        if the_options['debug']:
-            print(u'[the] \"{0}\" -> \"{1}\"'.format(text, r), file=sys.stderr)
-        return r
-    else:
-        return u''
-
-
-# simple tests
-if __name__ == '__main__':
-    print(unthe('The The', PATTERN_THE))
-    print(unthe('An Apple', PATTERN_A))
-    print(unthe('A Girl', PATTERN_A, strip=True))
+    return ThePlugin().the_template_func(text)
