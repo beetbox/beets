@@ -17,6 +17,8 @@ import logging
 import os
 import subprocess
 import os.path
+import threading
+import imghdr
 
 from beets.plugins import BeetsPlugin
 from beets import ui, library, util, mediafile
@@ -27,7 +29,7 @@ log = logging.getLogger('beets')
 def _embed(path, items):
     """Embed an image file, located at `path`, into each item.
     """
-    data = open(syspath(path), 'rb').read()
+    data = open(util.syspath(path), 'rb').read()
     kindstr = imghdr.what(None, data)
     if kindstr not in ('jpeg', 'png'):
         log.error('A file of type %s is not allowed as coverart.' % kindstr)
@@ -44,58 +46,74 @@ def _embed(path, items):
         f.art = data
         f.save()
 
-def convert_track(source, dest):
-    with open(os.devnull, "w") as fnull:
-	    subprocess.call('flac -cd "{0}" | lame -V2 - "{1}"'.format(source, dest), 
-                stdout=fnull, stderr=fnull, shell=True)
+global sema
+
+class encodeThread(threading.Thread):
+    def __init__(self, source, dest, artpath):
+        threading.Thread.__init__(self)
+        self.source = source
+        self.dest = dest
+        self.artpath = artpath
+
+    def run(self):
+        sema.acquire()
+        log.info('Started encoding '+ self.source)
+        temp_dest = self.dest + "~"
+
+        decode = subprocess.Popen(["flac", "-c", "-d", "-s", self.source], stdout=subprocess.PIPE)
+        encode = subprocess.Popen(['lame', '-V2', '-', temp_dest], stdin=decode.stdout)
+        decode.stdout.close()
+        encode.communicate()
+
+        os.rename(temp_dest, self.dest)
+        converted_item = library.Item.from_path(self.dest)
+        converted_item.read(self.source)
+        converted_item.path = self.dest
+        converted_item.write()
+        if self.artpath:
+            _embed(self.artpath,[converted_item])
+        log.info('Finished encoding '+ self.source)
+        sema.release()
 
 
 def convert_item(lib, item, dest, artpath):
+    if item.format != "FLAC":
+        log.info('Skipping {0} : not FLAC'.format(item.path))
+        return
     dest_path = os.path.join(dest,lib.destination(item, fragment = True))
     dest_path = os.path.splitext(dest_path)[0] + '.mp3'
     if not os.path.exists(dest_path):
         util.mkdirall(dest_path)
-    	log.info('Encoding '+ item.path)
-        convert_track(item.path, dest_path)
-        converted_item = library.Item.from_path(dest_path)
-        converted_item.read(item.path)
-        converted_item.path = dest_path
-        converted_item.write()
-        if artpath:
-            _embed(artpath,[converted_item])
+        thread = encodeThread(item.path, dest_path, artpath)
+        thread.start()
     else:
-        log.info('Skipping '+item.path)
+        log.info('Skipping {0} : target file exists'.format(item.path))
+
 
 def convert_func(lib, config, opts, args):
+    global sema
     if not conf['dest']:
         log.error('No destination set')
         return
+    sema = threading.BoundedSemaphore(opts.threads)
     if opts.album:
-        fmt = u'$albumartist - $album'
+        fmt = '$albumartist - $album'
     else:
-        fmt = u'$artist - $album - $title'
-    template = Template(fmt)
-    if opts.album:
-        objs = lib.albums(ui.decargs(args))
-    else:
-        objs = list(lib.items(ui.decargs(args)))
+        fmt = '$artist - $album - $title'
 
-    for o in objs:
-        if opts.album:
-            ui.print_(o.evaluate_template(template))
-        else:
-            ui.print_(o.evaluate_template(template, lib))
+    ui.commands.list_items(lib, ui.decargs(args), opts.album, False, fmt)
 
     if not ui.input_yn("Convert? (Y/n)"):
         return
 
-    for o in objs:
-        if opts.album:
-            for item in o.items():
+    if opts.album:
+        for album in lib.albums(ui.decargs(args)):
+            for item in album.items():
                 convert_item(lib, item, conf['dest'], o.artpath)
-        else:
-            album = lib.get_album(o)
-            convert_item(lib, o, conf['dest'], album.artpath)
+    else:
+        for item in lib.items(ui.decargs(args)):
+            album = lib.get_album(item)
+            convert_item(lib, item, conf['dest'], album.artpath)
 
 conf = {}
 
@@ -106,6 +124,8 @@ class ConvertPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand('convert', help='convert albums to external location')
         cmd.parser.add_option('-a', '--album', action='store_true',
-                        help='choose an album instead of track')
+                        help='choose albums instead of tracks')
+        cmd.parser.add_option('-t', '--threads', action='store', type='int',
+                        help='change the number of threads (default 2)', default=2)
         cmd.func = convert_func
         return [cmd]
