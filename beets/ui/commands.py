@@ -1004,7 +1004,7 @@ default_commands.append(remove_cmd)
 
 # stats: Show library/query statistics.
 
-def show_stats(lib, query):
+def show_stats(lib, query, exact):
     """Shows some statistics about the matched items."""
     items = lib.items(query)
 
@@ -1015,30 +1015,32 @@ def show_stats(lib, query):
     albums = set()
 
     for item in items:
-        #fixme This is approximate, so people might complain that
-        # this total size doesn't match "du -sh". Could fix this
-        # by putting total file size in the database.
-        total_size += int(item.length * item.bitrate / 8)
+        if exact:
+            total_size += os.path.getsize(item.path)
+        else:
+            total_size += int(item.length * item.bitrate / 8)
         total_time += item.length
         total_items += 1
         artists.add(item.artist)
         albums.add(item.album)
 
-    print_("""Tracks: %i
-Total time: %s
-Total size: %s
-Artists: %i
-Albums: %i""" % (
-        total_items,
-        ui.human_seconds(total_time),
-        ui.human_bytes(total_size),
-        len(artists), len(albums)
-    ))
+    size_str = '' + ui.human_bytes(total_size)
+    if exact:
+        size_str += ' ({0} bytes)'.format(total_size)
+
+    print_("""Tracks: {0}
+Total time: {1} ({2:.2f} seconds)
+Total size: {3}
+Artists: {4}
+Albums: {5}""".format(total_items, ui.human_seconds(total_time), total_time,
+                      size_str, len(artists), len(albums)))
 
 stats_cmd = ui.Subcommand('stats',
     help='show statistics about the library or a query')
+stats_cmd.parser.add_option('-e', '--exact', action='store_true',
+    help='get exact file sizes')
 def stats_func(lib, config, opts, args):
-    show_stats(lib, decargs(args))
+    show_stats(lib, decargs(args), opts.exact)
 stats_cmd.func = stats_func
 default_commands.append(stats_cmd)
 
