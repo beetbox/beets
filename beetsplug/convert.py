@@ -1,23 +1,11 @@
-# Copyright 2012, Jakob Schnitzer.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-
 """Converts tracks or albums to external directory
 """
 import logging
 import os
-import subprocess
-import os.path
 import threading
+import shutil
+from subprocess import Popen, PIPE
+
 import imghdr
 
 from beets.plugins import BeetsPlugin
@@ -25,6 +13,8 @@ from beets import ui, library, util, mediafile
 from beets.util.functemplate import Template
 
 log = logging.getLogger('beets')
+DEVNULL = open(os.devnull, 'wb')
+conf = {}
 
 def _embed(path, items):
     """Embed an image file, located at `path`, into each item.
@@ -46,8 +36,6 @@ def _embed(path, items):
         f.art = data
         f.save()
 
-global sema
-
 class encodeThread(threading.Thread):
     def __init__(self, source, dest, artpath):
         threading.Thread.__init__(self)
@@ -57,50 +45,72 @@ class encodeThread(threading.Thread):
 
     def run(self):
         sema.acquire()
-        log.info('Started encoding '+ self.source)
-        temp_dest = self.dest + "~"
-
-        decode = subprocess.Popen(["flac", "-c", "-d", "-s", self.source], stdout=subprocess.PIPE)
-        encode = subprocess.Popen(['lame', '-V2', '-', temp_dest], stdin=decode.stdout)
-        decode.stdout.close()
-        encode.communicate()
-
-        os.rename(temp_dest, self.dest)
-        converted_item = library.Item.from_path(self.dest)
-        converted_item.read(self.source)
-        converted_item.path = self.dest
-        converted_item.write()
-        if self.artpath:
-            _embed(self.artpath,[converted_item])
-        log.info('Finished encoding '+ self.source)
+        self.encode()
         sema.release()
 
+        dest_item = library.Item.from_path(self.source)
+        dest_item.path = self.dest
+        dest_item.write()
+        if self.artpath:
+            _embed(self.artpath,[dest_item])
 
-def convert_item(lib, item, dest, artpath):
-    if item.format != "FLAC":
-        log.info('Skipping {0} : not FLAC'.format(item.path))
+    def encode(self):
+        log.info('Started encoding '+ self.source)
+        temp_dest = self.dest + '~'
+
+        source_ext = os.path.splitext(self.source)[1].lower()
+        if source_ext == '.flac':
+            decode = Popen([conf['flac'], '-c', '-d', '-s', self.source],
+                           stdout=PIPE)
+            encode = Popen([conf['lame']] + conf['opts'] + ['-', temp_dest],
+                       stdin=decode.stdout, stderr=DEVNULL)
+            decode.stdout.close()
+            encode.communicate()
+        elif source_ext == '.mp3':
+            encode = Popen([conf['lame']] + conf['opts'] + ['--mp3input'] +
+                 [self.source, temp_dest], close_fds=True, stderr=DEVNULL)
+            encode.communicate()
+        else:
+            log.error('Only converting from FLAC or MP3 implemented')
+            return
+        shutil.move(temp_dest, self.dest)
+        log.info('Finished encoding '+ self.source)
+
+
+def convert_item(lib, item, dest_dir, artpath):
+    if item.format != 'FLAC' and item.format != 'MP3':
+        log.info('Skipping {0} : not supported format'.format(item.path))
         return
-    dest_path = os.path.join(dest,lib.destination(item, fragment = True))
-    dest_path = os.path.splitext(dest_path)[0] + '.mp3'
-    if not os.path.exists(dest_path):
-        util.mkdirall(dest_path)
-        thread = encodeThread(item.path, dest_path, artpath)
-        thread.start()
+
+    dest = os.path.join(dest_dir,lib.destination(item, fragment = True))
+    dest = os.path.splitext(dest)[0] + '.mp3'
+
+    if not os.path.exists(dest):
+        util.mkdirall(dest)
+        if item.format == 'MP3' and item.bitrate < 1000*conf['max_bitrate']:
+            log.info('Copying {0}'.format(item.path))
+            shutil.copy(item.path, dest)
+            if artpath:
+                _embed(artpath,[library.Item.from_path(dest)])
+        else:
+            thread = encodeThread(item.path, dest, artpath)
+            thread.start()
     else:
         log.info('Skipping {0} : target file exists'.format(item.path))
 
 
 def convert_func(lib, config, opts, args):
     global sema
-    if not conf['dest']:
+
+    dest = opts.dest if opts.dest is not None else conf['dest']
+    if not dest:
         log.error('No destination set')
         return
-    sema = threading.BoundedSemaphore(opts.threads)
-    if opts.album:
-        fmt = '$albumartist - $album'
-    else:
-        fmt = '$artist - $album - $title'
+    threads = opts.threads if opts.threads is not None else conf['threads']
+    sema = threading.BoundedSemaphore(threads)
 
+    fmt = '$albumartist - $album' if opts.album \
+                                  else '$artist - $album - $title'
     ui.commands.list_items(lib, ui.decargs(args), opts.album, False, fmt)
 
     if not ui.input_yn("Convert? (Y/n)"):
@@ -109,23 +119,29 @@ def convert_func(lib, config, opts, args):
     if opts.album:
         for album in lib.albums(ui.decargs(args)):
             for item in album.items():
-                convert_item(lib, item, conf['dest'], o.artpath)
+                convert_item(lib, item, dest, album.artpath)
     else:
         for item in lib.items(ui.decargs(args)):
-            album = lib.get_album(item)
-            convert_item(lib, item, conf['dest'], album.artpath)
-
-conf = {}
+            convert_item(lib, item, dest, lib.get_album(item).artpath)
 
 class ConvertPlugin(BeetsPlugin):
     def configure(self, config):
-        conf['dest'] = ui.config_val(config, 'convert', 'path', None)
+        conf['dest'] = ui.config_val(config, 'convert', 'dest', None)
+        conf['threads'] = ui.config_val(config, 'convert', 'threads', 2)
+        conf['flac'] = ui.config_val(config, 'convert', 'flac', 'flac')
+        conf['lame'] = ui.config_val(config, 'convert', 'lame', 'lame')
+        conf['opts'] = ui.config_val(config, 'convert',
+                                     'opts', '-V2').split(' ')
+        conf['max_bitrate'] = int(ui.config_val(config, 'convert',
+                                                'max_bitrate','500'))
 
     def commands(self):
-        cmd = ui.Subcommand('convert', help='convert albums to external location')
+        cmd = ui.Subcommand('convert', help='convert to external location')
         cmd.parser.add_option('-a', '--album', action='store_true',
                         help='choose albums instead of tracks')
         cmd.parser.add_option('-t', '--threads', action='store', type='int',
-                        help='change the number of threads (default 2)', default=2)
+                        help='change the number of threads (default 2)')
+        cmd.parser.add_option('-d', '--dest', action='store',
+                        help='set the destination directory')
         cmd.func = convert_func
         return [cmd]
