@@ -23,6 +23,46 @@ function updateBeetsis() {
     });
 }
 
+// Fetch and display the latest messages from the Twitter account.
+var NEWS_COUNT = 3;
+var MONTH_NAMES = [ "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December" ];
+var urlre = /(http:\/\/([^ \/]+)(\/\S+)?)\b/g;
+function getNews() {
+    var twitterUser = 'b33ts';
+    var url = 'http://twitter.com/statuses/user_timeline/'+twitterUser+'.json';
+    $.ajax({
+        url: url,
+        dataType: 'jsonp',
+        success: function(data) {
+            // Find the first non-reply status. This assumes there's at least
+            // one non-reply in this chunk... probably a reasonable assumption.
+            $('#twitterStatus').empty();
+            var count = 0;
+            $.each(data, function(i, status) {
+    			if (status.in_reply_to_screen_name == null) {
+    				// Not a reply.
+
+    				var text = status.text;
+                    text = text.replace(urlre, "<a href=\"$1\">link&nbsp;&raquo;</a>");
+
+                    var date = new Date(Date.parse(status.created_at));
+                    date = MONTH_NAMES[date.getMonth()] + ' ' + date.getDate();
+
+                    $('#twitterStatus').append(
+                        '<li><span class="date">' + date + ':</span> ' +
+                        text + '</li>'
+                    );
+                    count++;
+                    if (count >= NEWS_COUNT)
+                        return false; // break
+    			}
+    		});
+        },
+    });
+}
+
 $(function() {
     setTimeout(updateBeetsis, INTERVAL_INITIAL);
+    getNews();
 });
