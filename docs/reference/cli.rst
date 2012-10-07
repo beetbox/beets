@@ -119,6 +119,8 @@ right now; this is something we need to work on. Read the
     or full albums. If you want to retag your whole library, just supply a null
     query, which matches everything: ``beet import -L``
 
+.. _list-cmd:
+
 list
 ````
 ::
@@ -212,14 +214,19 @@ To perform a "dry run" an update, just use the ``-p`` (for "pretend") flag. This
 will show you all the proposed changes but won't actually change anything on
 disk.
 
+.. _stats-cmd:
+
 stats
 `````
 ::
 
-    beet stats [QUERY]
+    beet stats [-e] [QUERY]
 
 Show some statistics on your entire library (if you don't provide a
 :doc:`query <query>`) or the matched items (if you do).
+
+The ``-e`` (``--exact``) option makes the calculation of total file size more
+accurate but slower.
 
 fields
 ``````

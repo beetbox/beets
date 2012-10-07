@@ -17,8 +17,10 @@ Changelog
 * :doc:`/plugins/scrub`: Scrubbing now removes *all* types of tags from a file
   rather than just one. For example, if your FLAC file has both ordinary FLAC
   tags and ID3 tags, the ID3 tags are now also removed.
-* ``list`` command: Templates given with ``-f`` can now show items' paths (using
-  ``$path``).
+* :ref:`stats-cmd` command: New ``--exact`` switch to make the file size
+  calculation more accurate (thanks to yagebu).
+* :ref:`list-cmd` command: Templates given with ``-f`` can now show items' paths
+  (using ``$path``).
 * Fix album queries for ``artpath`` and other non-item fields.
 * Null values in the database can now be matched with the empty-string regular
   expression, ``^$``.
