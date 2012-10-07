@@ -11,6 +11,9 @@ Changelog
   text for nicely-sorted directory listings. Thanks to Blemjhoo Tezoulbr.
 * New plugin: :doc:`/plugins/zero` filters out undesirable fields before they
   are written to your tags. Thanks again to Blemjhoo Tezoulbr.
+* New plugin: :doc:`/plugins/ihate` automatically skips (or warns you about)
+  importing albums that match certain criteria. Thanks once again to Blemjhoo
+  Tezoulbr.
 * :doc:`/plugins/scrub`: Scrubbing now removes *all* types of tags from a file
   rather than just one. For example, if your FLAC file has both ordinary FLAC
   tags and ID3 tags, the ID3 tags are now also removed.
@@ -23,7 +26,7 @@ Changelog
 * :doc:`/plugins/lastgenre`: Use the albums' existing genre tags if they pass
   the whitelist (thanks to Fabrice Laporte).
 * :doc:`/plugins/lastgenre`: Add a ``lastgenre`` command for fetching genres
-  post facto.
+  post facto (thanks to yagebu).
 * :doc:`/plugins/fetchart`: Fix a bug where cover art filenames could lack
   a ``.jpg`` extension.
 * :doc:`/plugins/lyrics`: Fix an exception with non-ASCII lyrics.
