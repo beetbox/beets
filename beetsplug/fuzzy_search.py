@@ -24,19 +24,18 @@ import difflib
 # THRESHOLD = 0.7
 
 
-def fuzzy_score(query, item):
-    return difflib.SequenceMatcher(a=query, b=item).quick_ratio()
+def fuzzy_score(queryMatcher, item):
+    queryMatcher.set_seq1(item)
+    return queryMatcher.quick_ratio()
 
 
-def is_match(query, item, album=False, verbose=False, threshold=0.7):
-    query = ' '.join(query)
-
+def is_match(queryMatcher, item, album=False, verbose=False, threshold=0.7):
     if album:
         values = [item.albumartist, item.album]
     else:
         values = [item.artist, item.album, item.title]
 
-    s = max(fuzzy_score(query.lower(), i.lower()) for i in values)
+    s = max(fuzzy_score(queryMatcher, i.lower()) for i in values)
     if verbose:
         return (s >= threshold, s)
     else:
@@ -45,6 +44,9 @@ def is_match(query, item, album=False, verbose=False, threshold=0.7):
 
 def fuzzy_list(lib, config, opts, args):
     query = decargs(args)
+    query = ' '.join(query).lower()
+    queryMatcher = difflib.SequenceMatcher(b=query)
+
     fmt = opts.format
     if opts.threshold is not None:
         threshold = float(opts.threshold)
@@ -64,7 +66,7 @@ def fuzzy_list(lib, config, opts, args):
     else:
         objs = lib.items()
 
-    items = filter(lambda i: is_match(query, i, album=opts.album,
+    items = filter(lambda i: is_match(queryMatcher, i, album=opts.album,
                                       threshold=threshold), objs)
     for i in items:
         if opts.path:
@@ -74,7 +76,7 @@ def fuzzy_list(lib, config, opts, args):
         else:
             print_(i.evaluate_template(template, lib))
         if opts.verbose:
-            print(is_match(query, i, album=opts.album, verbose=True)[1])
+            print(is_match(queryMatcher, i, album=opts.album, verbose=True)[1])
 
 
 fuzzy_cmd = Subcommand('fuzzy',
