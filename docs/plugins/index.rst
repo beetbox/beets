@@ -53,6 +53,7 @@ disabled by default, but you can turn them on as described above.
    the
    fuzzy_search
    zero
+   convert
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -94,6 +95,7 @@ Miscellaneous
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
   compatible with `MPD clients`_.
+* :doc:`convert`: Converts parts of your collection to an external directory
 
 .. _MPD: http://mpd.wikia.com/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients
