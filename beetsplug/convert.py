@@ -51,7 +51,7 @@ class encodeThread(threading.Thread):
         dest_item = library.Item.from_path(self.source)
         dest_item.path = self.dest
         dest_item.write()
-        if self.artpath:
+        if self.artpath and conf['embed']:
             _embed(self.artpath,[dest_item])
 
     def encode(self):
@@ -90,7 +90,7 @@ def convert_item(lib, item, dest_dir, artpath):
         if item.format == 'MP3' and item.bitrate < 1000*conf['max_bitrate']:
             log.info('Copying {0}'.format(item.path))
             shutil.copy(item.path, dest)
-            if artpath:
+            if artpath and conf['embed']:
                 _embed(artpath,[library.Item.from_path(dest)])
         else:
             thread = encodeThread(item.path, dest, artpath)
@@ -134,6 +134,8 @@ class ConvertPlugin(BeetsPlugin):
                                      'opts', '-V2').split(' ')
         conf['max_bitrate'] = int(ui.config_val(config, 'convert',
                                                 'max_bitrate','500'))
+        conf['embed'] = ui.config_val(config, 'convert', 'embed', True,
+                                      vtype = bool)
 
     def commands(self):
         cmd = ui.Subcommand('convert', help='convert to external location')
