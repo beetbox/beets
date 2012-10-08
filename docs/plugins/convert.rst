@@ -43,8 +43,9 @@ will be copied). ``opts`` are the encoding options that are passed to ``lame``
 (defaults to "-V2"). Please refer to the ``lame`` docs for possible options.
 
 The ``dest`` sets the directory the files will be converted (or copied) to.
-Finally ``threads`` lets you determine the number of threads to use for
-encoding (default: 2). An example configuration::
+This is a required setting and has to be set either in ``.beetsconfig`` or on
+the commandline. Finally ``threads`` lets you determine the number of threads
+to use for encoding (default: 2). An example configuration::
 
     [convert]
     embed:false
