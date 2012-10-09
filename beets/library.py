@@ -29,7 +29,8 @@ from unidecode import unidecode
 from beets.mediafile import MediaFile
 from beets import plugins
 from beets import util
-from beets.util import bytestring_path, syspath, normpath, samefile
+from beets.util import bytestring_path, syspath, normpath, samefile,\
+    displayable_path
 from beets.util.functemplate import Template
 
 MAX_FILENAME_LENGTH = 200
@@ -351,7 +352,7 @@ class Item(object):
 
         # Additional fields in non-sanitized case.
         if not sanitize:
-            mapping['path'] = self.path
+            mapping['path'] = displayable_path(self.path)
 
         # Use the album artist if the track artist is not set and
         # vice-versa.
@@ -1584,6 +1585,8 @@ class Album(BaseAlbum):
         mapping = {}
         for key in ALBUM_KEYS:
             mapping[key] = getattr(self, key)
+
+        mapping['artpath'] = displayable_path(mapping['artpath'])
 
         # Get template functions.
         funcs = DefaultTemplateFunctions().functions()

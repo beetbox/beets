@@ -10,7 +10,6 @@ import imghdr
 
 from beets.plugins import BeetsPlugin
 from beets import ui, library, util, mediafile
-from beets.util.functemplate import Template
 
 log = logging.getLogger('beets')
 DEVNULL = open(os.devnull, 'wb')
@@ -23,11 +22,11 @@ def _embed(path, items):
     kindstr = imghdr.what(None, data)
     if kindstr not in ('jpeg', 'png'):
         log.error('A file of type %s is not allowed as coverart.' % kindstr)
-    return
+        return
     log.debug('Embedding album art.')
     for item in items:
         try:
-            f = mediafile.MediaFile(syspath(item.path))
+            f = mediafile.MediaFile(util.syspath(item.path))
         except mediafile.UnreadableFileError as exc:
             log.warn('Could not embed art in {0}: {1}'.format(
                 repr(item.path), exc
@@ -36,78 +35,70 @@ def _embed(path, items):
         f.art = data
         f.save()
 
-class encodeThread(threading.Thread):
-    def __init__(self, source, dest, artpath):
-        threading.Thread.__init__(self)
-        self.source = source
-        self.dest = dest
-        self.artpath = artpath
+def encode(source, dest):
+    log.info('Started encoding '+ source)
+    temp_dest = dest + '~'
 
-    def run(self):
-        sema.acquire()
-        self.encode()
-        sema.release()
-
-        dest_item = library.Item.from_path(self.source)
-        dest_item.path = self.dest
-        dest_item.write()
-        if self.artpath and conf['embed']:
-            _embed(self.artpath,[dest_item])
-
-    def encode(self):
-        log.info('Started encoding '+ self.source)
-        temp_dest = self.dest + '~'
-
-        source_ext = os.path.splitext(self.source)[1].lower()
-        if source_ext == '.flac':
-            decode = Popen([conf['flac'], '-c', '-d', '-s', self.source],
-                           stdout=PIPE)
-            encode = Popen([conf['lame']] + conf['opts'] + ['-', temp_dest],
-                       stdin=decode.stdout, stderr=DEVNULL)
-            decode.stdout.close()
-            encode.communicate()
-        elif source_ext == '.mp3':
-            encode = Popen([conf['lame']] + conf['opts'] + ['--mp3input'] +
-                 [self.source, temp_dest], close_fds=True, stderr=DEVNULL)
-            encode.communicate()
-        else:
-            log.error('Only converting from FLAC or MP3 implemented')
-            return
-        shutil.move(temp_dest, self.dest)
-        log.info('Finished encoding '+ self.source)
-
-
-def convert_item(lib, item, dest_dir, artpath):
-    if item.format != 'FLAC' and item.format != 'MP3':
-        log.info('Skipping {0} : not supported format'.format(item.path))
+    source_ext = os.path.splitext(source)[1].lower()
+    if source_ext == '.flac':
+        decode = Popen([conf['flac'], '-c', '-d', '-s', source],
+                       stdout=PIPE)
+        encode = Popen([conf['lame']] + conf['opts'] + ['-', temp_dest],
+                   stdin=decode.stdout, stderr=DEVNULL)
+        decode.stdout.close()
+        encode.communicate()
+    elif source_ext == '.mp3':
+        encode = Popen([conf['lame']] + conf['opts'] + ['--mp3input'] +
+             [source, temp_dest], close_fds=True, stderr=DEVNULL)
+        encode.communicate()
+    else:
+        log.error('Only converting from FLAC or MP3 implemented')
         return
+    shutil.move(temp_dest, dest)
+    log.info('Finished encoding '+ source)
 
-    dest = os.path.join(dest_dir,lib.destination(item, fragment = True))
-    dest = os.path.splitext(dest)[0] + '.mp3'
 
-    if not os.path.exists(dest):
+def convert_item(lib, dest_dir):
+    while True:
+        item = yield
+        if item.format != 'FLAC' and item.format != 'MP3':
+            log.info('Skipping {0} : not supported format'.format(item.path))
+            continue
+
+        dest = os.path.join(dest_dir,lib.destination(item, fragment = True))
+        dest = os.path.splitext(dest)[0] + '.mp3'
+
+        if os.path.exists(dest):
+            log.info('Skipping {0} : target file exists'.format(item.path))
+            continue
+
         util.mkdirall(dest)
         if item.format == 'MP3' and item.bitrate < 1000*conf['max_bitrate']:
             log.info('Copying {0}'.format(item.path))
             shutil.copy(item.path, dest)
-            if artpath and conf['embed']:
-                _embed(artpath,[library.Item.from_path(dest)])
+            dest_item = library.Item.from_path(dest)
         else:
-            thread = encodeThread(item.path, dest, artpath)
-            thread.start()
-    else:
-        log.info('Skipping {0} : target file exists'.format(item.path))
+            encode(item.path, dest)
+            dest_item = library.Item.from_path(item.path)
+            dest_item.path = dest
+            dest_item.write()
+
+        artpath = lib.get_album(item).artpath
+        if artpath and conf['embed']:
+            _embed(artpath,[dest_item])
+
+
+def generator(items):
+     for item in items:
+        yield item
 
 
 def convert_func(lib, config, opts, args):
-    global sema
-
     dest = opts.dest if opts.dest is not None else conf['dest']
     if not dest:
         log.error('No destination set')
         return
     threads = opts.threads if opts.threads is not None else conf['threads']
-    sema = threading.BoundedSemaphore(threads)
 
     fmt = '$albumartist - $album' if opts.album \
                                   else '$artist - $album - $title'
@@ -117,12 +108,14 @@ def convert_func(lib, config, opts, args):
         return
 
     if opts.album:
-        for album in lib.albums(ui.decargs(args)):
-            for item in album.items():
-                convert_item(lib, item, dest, album.artpath)
+        items = (i for a in lib.albums(ui.decargs(args)) for i in a.items())
     else:
-        for item in lib.items(ui.decargs(args)):
-            convert_item(lib, item, dest, lib.get_album(item).artpath)
+        items = lib.items(ui.decargs(args))
+        items = generator(items)
+    convert = [convert_item(lib, dest) for i in range(threads)]
+    pipe = util.pipeline.Pipeline([items, convert])
+    pipe.run_parallel()
+
 
 class ConvertPlugin(BeetsPlugin):
     def configure(self, config):
@@ -136,6 +129,7 @@ class ConvertPlugin(BeetsPlugin):
                                                 'max_bitrate','500'))
         conf['embed'] = ui.config_val(config, 'convert', 'embed', True,
                                       vtype = bool)
+
 
     def commands(self):
         cmd = ui.Subcommand('convert', help='convert to external location')
