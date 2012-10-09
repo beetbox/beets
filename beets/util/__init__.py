@@ -469,10 +469,12 @@ def str2bool(value):
 
 def as_string(value):
     """Convert a value to a Unicode object for matching with a query.
-    None becomes the empty string.
+    None becomes the empty string. Bytestrings are silently decoded.
     """
     if value is None:
         return u''
+    elif isinstance(value, str):
+        return value.decode('utf8', 'ignore')
     else:
         return unicode(value)
 
