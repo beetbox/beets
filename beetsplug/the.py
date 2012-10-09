@@ -52,7 +52,7 @@ class ThePlugin(BeetsPlugin):
 
     def configure(self, config):
         if not config.has_section('the'):
-            self._log.warn(u'[the] plugin is not configured, using defaults')
+            self._log.debug(u'[the] plugin is not configured, using defaults')
             return
         self.the = ui.config_val(config, 'the', 'the', True, bool)
         self.a = ui.config_val(config, 'the', 'a', True, bool)

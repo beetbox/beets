@@ -60,7 +60,7 @@ class IHatePlugin(BeetsPlugin):
 
     def configure(self, config):
         if not config.has_section('ihate'):
-            self._log.warn('[ihate] plugin is not configured')
+            self._log.debug('[ihate] plugin is not configured')
             return
         self.warn_genre = ui.config_val(config, 'ihate', 'warn_genre', 
                                         '').split()

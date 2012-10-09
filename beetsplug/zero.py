@@ -47,7 +47,7 @@ class ZeroPlugin(BeetsPlugin):
 
     def configure(self, config):
         if not config.has_section('zero'):
-            self._log.warn('[zero] plugin is not configured')
+            self._log.debug('[zero] plugin is not configured')
             return
         for f in ui.config_val(config, 'zero', 'fields', '').split():
             if f not in ITEM_KEYS:
