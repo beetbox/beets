@@ -88,11 +88,6 @@ def convert_item(lib, dest_dir):
             _embed(artpath,[dest_item])
 
 
-def generator(items):
-     for item in items:
-        yield item
-
-
 def convert_func(lib, config, opts, args):
     dest = opts.dest if opts.dest is not None else conf['dest']
     if not dest:
@@ -111,7 +106,6 @@ def convert_func(lib, config, opts, args):
         items = (i for a in lib.albums(ui.decargs(args)) for i in a.items())
     else:
         items = lib.items(ui.decargs(args))
-        items = generator(items)
     convert = [convert_item(lib, dest) for i in range(threads)]
     pipe = util.pipeline.Pipeline([items, convert])
     pipe.run_parallel()
