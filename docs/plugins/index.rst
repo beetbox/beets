@@ -54,6 +54,7 @@ disabled by default, but you can turn them on as described above.
    fuzzy_search
    zero
    ihate
+   convert
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -96,6 +97,7 @@ Miscellaneous
 * :doc:`ihate`: Skip by defined patterns things you hate during import process.
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
   compatible with `MPD clients`_.
+* :doc:`convert`: Converts parts of your collection to an external directory
 
 .. _MPD: http://mpd.wikia.com/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients
