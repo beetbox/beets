@@ -473,6 +473,8 @@ def as_string(value):
     """
     if value is None:
         return u''
+    elif isinstance(value, buffer):
+        return str(value).decode('utf8', 'ignore')
     elif isinstance(value, str):
         return value.decode('utf8', 'ignore')
     else:
