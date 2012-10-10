@@ -54,6 +54,12 @@ def encode(source, dest):
     else:
         log.error('Only converting from FLAC or MP3 implemented')
         return
+    if encode.returncode != 0:
+        # Something went wrong (probably Ctrl+C), remove temporary files
+        log.info('Encoding {0} failed. Cleaning up...'.format(source))
+        util.remove(temp_dest)
+        util.prune_dirs(os.path.dirname(temp_dest))
+        return
     shutil.move(temp_dest, dest)
     log.info('Finished encoding '+ source)
 
