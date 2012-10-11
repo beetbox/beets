@@ -4,6 +4,8 @@ Changelog
 1.0b16 (in development)
 -----------------------
 
+* New plugin: :doc:`/plugins/convert` lets you convert parts of your collection
+  to an external directory using flac and lame.
 * New plugin: :doc:`/plugins/fuzzy_search` lets you find albums and tracks using
   fuzzy string matching so you don't have to type (or even remember) their exact
   names. Thanks to Philippe Mongeau.
