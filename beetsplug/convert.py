@@ -16,6 +16,7 @@
 """
 import logging
 import os
+import sys
 import shutil
 from subprocess import Popen, PIPE
 
@@ -27,6 +28,32 @@ from beets import ui, library, util, mediafile
 log = logging.getLogger('beets')
 DEVNULL = open(os.devnull, 'wb')
 conf = {}
+
+
+def _cpu_count():
+    """ Returns the number of CPUs in the system.
+    Code was adapted from observing the soundconverter project:
+    https://github.com/kassoulet/soundconverter
+    """
+    if sys.platform == 'win32':
+        try:
+            num = int(os.environ['NUMBER_OF_PROCESSORS'])
+        except (ValueError, KeyError):
+            num = 0
+    elif sys.platform == 'darwin':
+        try:
+            num = int(os.popen('sysctl -n hw.ncpu').read())
+        except ValueError:
+            num = 0
+    else:
+        try:
+            num = os.sysconf('SC_NPROCESSORS_ONLN')
+        except (ValueError, OSError, AttributeError):
+            num = 0
+    if num >= 1:
+        return num
+    else:
+        return 1
 
 
 def _embed(path, items):
@@ -135,7 +162,8 @@ def convert_func(lib, config, opts, args):
 class ConvertPlugin(BeetsPlugin):
     def configure(self, config):
         conf['dest'] = ui.config_val(config, 'convert', 'dest', None)
-        conf['threads'] = ui.config_val(config, 'convert', 'threads', 2)
+        conf['threads'] = ui.config_val(config, 'convert', 'threads',
+            _cpu_count)
         conf['flac'] = ui.config_val(config, 'convert', 'flac', 'flac')
         conf['lame'] = ui.config_val(config, 'convert', 'lame', 'lame')
         conf['opts'] = ui.config_val(config, 'convert',
@@ -150,7 +178,8 @@ class ConvertPlugin(BeetsPlugin):
         cmd.parser.add_option('-a', '--album', action='store_true',
                               help='choose albums instead of tracks')
         cmd.parser.add_option('-t', '--threads', action='store', type='int',
-                              help='change the number of threads (default 2)')
+                              help='change the number of threads, \
+                              defaults to maximum availble processors ')
         cmd.parser.add_option('-d', '--dest', action='store',
                               help='set the destination directory')
         cmd.func = convert_func
