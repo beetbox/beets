@@ -45,7 +45,8 @@ will be copied). ``opts`` are the encoding options that are passed to ``lame``
 The ``dest`` sets the directory the files will be converted (or copied) to.
 This is a required setting and has to be set either in ``.beetsconfig`` or on
 the commandline. Finally ``threads`` lets you determine the number of threads
-to use for encoding (default: 2). An example configuration::
+to use for encoding. By default the convert plugin will detect the maximum
+available cores within a system and use them all. An example configuration::
 
     [convert]
     embed:false
