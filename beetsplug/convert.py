@@ -163,7 +163,7 @@ class ConvertPlugin(BeetsPlugin):
     def configure(self, config):
         conf['dest'] = ui.config_val(config, 'convert', 'dest', None)
         conf['threads'] = ui.config_val(config, 'convert', 'threads',
-            _cpu_count)
+            _cpu_count())
         conf['flac'] = ui.config_val(config, 'convert', 'flac', 'flac')
         conf['lame'] = ui.config_val(config, 'convert', 'lame', 'lame')
         conf['opts'] = ui.config_val(config, 'convert',
