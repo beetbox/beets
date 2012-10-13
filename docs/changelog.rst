@@ -16,6 +16,9 @@ Changelog
 * New plugin: :doc:`/plugins/ihate` automatically skips (or warns you about)
   importing albums that match certain criteria. Thanks once again to Blemjhoo
   Tezoulbr.
+* :doc:`/plugins/replaygain`: This plugin has been completely overhauled to use
+  the `mp3gain`_ or `aacgain`_ command-line tools instead of the failure-prone
+  Gstreamer ReplayGain implementation. Thanks to Fabrice Laporte.
 * :doc:`/plugins/scrub`: Scrubbing now removes *all* types of tags from a file
   rather than just one. For example, if your FLAC file has both ordinary FLAC
   tags and ID3 tags, the ID3 tags are now also removed.
@@ -52,6 +55,8 @@ Changelog
   unintentionally loading the plugins they contain.
 
 .. _Tomahawk resolver: http://beets.radbox.org/blog/tomahawk-resolver.html
+.. _mp3gain: http://mp3gain.sourceforge.net/download.php
+.. _aacgain: http://aacgain.altosdesign.com
 
 1.0b15 (July 26, 2012)
 ----------------------

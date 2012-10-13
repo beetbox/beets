@@ -1,28 +1,20 @@
-#Copyright (c) 2012, Fabrice Laporte
+# This file is part of beets.
+# Copyright 2012, Fabrice Laporte and Peter Brunner.
 #
-#Permission is hereby granted, free of charge, to any person obtaining a copy
-#of this software and associated documentation files (the "Software"), to deal
-#in the Software without restriction, including without limitation the rights
-#to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#copies of the Software, and to permit persons to whom the Software is
-#furnished to do so, subject to the following conditions:
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
 #
-#The above copyright notice and this permission notice shall be included in
-#all copies or substantial portions of the Software.
-#
-#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-#THE SOFTWARE.
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
 
 import logging
 import subprocess
-import tempfile
 import os
-import errno
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -38,7 +30,7 @@ class RgainError(Exception):
 
 class RgainNoBackendError(RgainError):
     """The audio rgain could not be computed because neither mp3gain
-     nor aacgain command-line tool is installed.
+    nor aacgain command-line tool is installed.
     """
 
 class ReplayGainPlugin(BeetsPlugin):
