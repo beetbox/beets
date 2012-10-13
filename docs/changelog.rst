@@ -4,8 +4,8 @@ Changelog
 1.0b16 (in development)
 -----------------------
 
-* New plugin: :doc:`/plugins/convert` lets you convert parts of your collection
-  to an external directory using flac and lame.
+* New plugin: :doc:`/plugins/convert` transcodes music and embeds album art
+  while copying to a separate directory. Thanks to Jakob Schnitzer.
 * New plugin: :doc:`/plugins/fuzzy_search` lets you find albums and tracks using
   fuzzy string matching so you don't have to type (or even remember) their exact
   names. Thanks to Philippe Mongeau.
@@ -20,7 +20,7 @@ Changelog
   rather than just one. For example, if your FLAC file has both ordinary FLAC
   tags and ID3 tags, the ID3 tags are now also removed.
 * :ref:`stats-cmd` command: New ``--exact`` switch to make the file size
-  calculation more accurate (thanks to yagebu).
+  calculation more accurate (thanks to Jakob Schnitzer).
 * :ref:`list-cmd` command: Templates given with ``-f`` can now show items' paths
   (using ``$path``).
 * Fix album queries for ``artpath`` and other non-item fields.
@@ -30,7 +30,7 @@ Changelog
 * :doc:`/plugins/lastgenre`: Use the albums' existing genre tags if they pass
   the whitelist (thanks to Fabrice Laporte).
 * :doc:`/plugins/lastgenre`: Add a ``lastgenre`` command for fetching genres
-  post facto (thanks to yagebu).
+  post facto (thanks to Jakob Schnitzer).
 * :doc:`/plugins/fetchart`: Fix a bug where cover art filenames could lack
   a ``.jpg`` extension.
 * :doc:`/plugins/lyrics`: Fix an exception with non-ASCII lyrics.
