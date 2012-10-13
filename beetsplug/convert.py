@@ -22,32 +22,12 @@ from subprocess import Popen, PIPE
 import imghdr
 
 from beets.plugins import BeetsPlugin
-from beets import ui, library, util, mediafile
+from beets import ui, library, util
+from beetsplug.embedart import _embed
 
 log = logging.getLogger('beets')
 DEVNULL = open(os.devnull, 'wb')
 conf = {}
-
-
-def _embed(path, items):
-    """Embed an image file, located at `path`, into each item.
-    """
-    data = open(util.syspath(path), 'rb').read()
-    kindstr = imghdr.what(None, data)
-    if kindstr not in ('jpeg', 'png'):
-        log.error('A file of type %s is not allowed as coverart.' % kindstr)
-        return
-    log.debug('Embedding album art.')
-    for item in items:
-        try:
-            f = mediafile.MediaFile(util.syspath(item.path))
-        except mediafile.UnreadableFileError as exc:
-            log.warn('Could not embed art in {0}: {1}'.format(
-                repr(item.path), exc
-            ))
-            continue
-        f.art = data
-        f.save()
 
 
 def encode(source, dest):

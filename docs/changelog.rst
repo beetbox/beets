@@ -48,6 +48,8 @@ Changelog
 * Fix a VFS bug leading to a crash in the :doc:`/plugins/bpd` when files had
   non-ASCII extensions.
 * Add a human-readable error message when writing files' tags fails.
+* Changed plugin loading so that modules can be imported without
+  unintentionally loading the plugins they contain.
 
 .. _Tomahawk resolver: http://beets.radbox.org/blog/tomahawk-resolver.html
 

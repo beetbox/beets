@@ -22,7 +22,6 @@ from collections import defaultdict
 from beets import mediafile
 
 PLUGIN_NAMESPACE = 'beetsplug'
-DEFAULT_PLUGINS = []
 
 # Plugins using the Last.fm API can share the same API key.
 LASTFM_KEY = '2dc3914abf35f0d9c92d97d8f8e42b43'
@@ -151,24 +150,29 @@ class BeetsPlugin(object):
             return func
         return helper
 
+_classes = set()
 def load_plugins(names=()):
     """Imports the modules for a sequence of plugin names. Each name
     must be the name of a Python module under the "beetsplug" namespace
     package in sys.path; the module indicated should contain the
-    BeetsPlugin subclasses desired. A default set of plugins is also
-    loaded.
+    BeetsPlugin subclasses desired.
     """
-    for name in itertools.chain(names, DEFAULT_PLUGINS):
+    for name in names:
         modname = '%s.%s' % (PLUGIN_NAMESPACE, name)
         try:
             try:
-                __import__(modname, None, None)
+                namespace = __import__(modname, None, None)
             except ImportError as exc:
                 # Again, this is hacky:
                 if exc.args[0].endswith(' ' + name):
                     log.warn('** plugin %s not found' % name)
                 else:
                     raise
+            else:
+                for obj in getattr(namespace, name).__dict__.values():
+                    if isinstance(obj, type) and issubclass(obj, BeetsPlugin):
+                        _classes.add(obj)
+
         except:
             log.warn('** error loading plugin %s' % name)
             log.warn(traceback.format_exc())
@@ -181,7 +185,7 @@ def find_plugins():
     """
     load_plugins()
     plugins = []
-    for cls in BeetsPlugin.__subclasses__():
+    for cls in _classes:
         # Only instantiate each plugin class once.
         if cls not in _instances:
             _instances[cls] = cls()
