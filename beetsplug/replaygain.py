@@ -1,16 +1,22 @@
-# This file is part of beets.
-# Copyright 2012, Fabrice Laporte and Peter Brunner.
+#Copyright (c) 2012, Fabrice Laporte
 #
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
+#Permission is hereby granted, free of charge, to any person obtaining a copy
+#of this software and associated documentation files (the "Software"), to deal
+#in the Software without restriction, including without limitation the rights
+#to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#copies of the Software, and to permit persons to whom the Software is
+#furnished to do so, subject to the following conditions:
 #
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
+#The above copyright notice and this permission notice shall be included in
+#all copies or substantial portions of the Software.
+#
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+#THE SOFTWARE.
 
 import logging
 import subprocess
@@ -30,7 +36,7 @@ class RgainError(Exception):
 
 class RgainNoBackendError(RgainError):
     """The audio rgain could not be computed because neither mp3gain
-    nor aacgain command-line tool is installed.
+     nor aacgain command-line tool is installed.
     """
 
 class ReplayGainPlugin(BeetsPlugin):
@@ -128,16 +134,14 @@ class ReplayGainPlugin(BeetsPlugin):
         No command switch give you the max no-clip in album mode. 
         So we consider the recommended gain and decrease it until no song is
         clipped when applying the gain.
-        Formula used has been found at: 
-        http://www.hydrogenaudio.org/forums//lofiversion/index.php/t10630.html
+        Formula found at: 
+        http://www.hydrogenaudio.org/forums/lofiversion/index.php/t10630.html
         '''
 
         if albumgain > 0:
-            for (i,mf) in enumerate(track_gains):
-                maxpcm = track_gains[i]['Max Amplitude']
-                while (maxpcm * (2**(albumgain/4.0)) > 32767):
-                    clipped = 1
-                    albumgain -= 1 
+            maxpcm = max([t['Max Amplitude'] for t in track_gains])
+            while (maxpcm * (2**(albumgain/4.0)) > 32767):
+                albumgain -= 1 
         return albumgain
 
     
@@ -162,14 +166,16 @@ class ReplayGainPlugin(BeetsPlugin):
         cmd = [self.command, '-o']
         if self.noclip:
             cmd = cmd + ['-k'] 
+        else:
+            cmd = cmd + ['-c']
         if self.apply_gain:
             cmd = cmd + ['-r'] 
         cmd = cmd + ['-d', str(self.gain_offset)]
         cmd = cmd + media_paths
-        
+
         try:
             with open(os.devnull, 'w') as tempf:
-                subprocess.check_call(cmd, stdout=tempf, stderr=tempf)
+                subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=tempf)
         except subprocess.CalledProcessError as e:
             raise RgainError("%s exited with status %i" % (cmd, e.returncode))
       
@@ -191,6 +197,7 @@ class ReplayGainPlugin(BeetsPlugin):
             try:
                 mf.rg_track_gain = float(rgain_infos[i][2])
                 mf.rg_track_peak = float(rgain_infos[i][4])
+                print('Track gains %s %s' % (mf.rg_track_gain, mf.rg_track_peak))
                 mf.save()
             except (FileTypeError, UnreadableFileError, TypeError, ValueError):
                 log.error("failed to write replaygain: %s" % (mf.title))
