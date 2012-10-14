@@ -29,31 +29,6 @@ DEVNULL = open(os.devnull, 'wb')
 conf = {}
 
 
-def _cpu_count():
-    """ Returns the number of CPUs in the system.
-    Code was adapted from observing the soundconverter project:
-    https://github.com/kassoulet/soundconverter
-    """
-    if sys.platform == 'win32':
-        try:
-            num = int(os.environ['NUMBER_OF_PROCESSORS'])
-        except (ValueError, KeyError):
-            num = 0
-    elif sys.platform == 'darwin':
-        try:
-            num = int(os.popen('sysctl -n hw.ncpu').read())
-        except ValueError:
-            num = 0
-    else:
-        try:
-            num = os.sysconf('SC_NPROCESSORS_ONLN')
-        except (ValueError, OSError, AttributeError):
-            num = 0
-    if num >= 1:
-        return num
-    else:
-        return 1
-
 
 def encode(source, dest):
     log.info('Started encoding ' + source)
@@ -144,7 +119,7 @@ class ConvertPlugin(BeetsPlugin):
     def configure(self, config):
         conf['dest'] = ui.config_val(config, 'convert', 'dest', None)
         conf['threads'] = ui.config_val(config, 'convert', 'threads',
-            _cpu_count())
+            util.cpu_count())
         conf['flac'] = ui.config_val(config, 'convert', 'flac', 'flac')
         conf['lame'] = ui.config_val(config, 'convert', 'lame', 'lame')
         conf['opts'] = ui.config_val(config, 'convert',

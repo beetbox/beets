@@ -5,7 +5,8 @@ Changelog
 -----------------------
 
 * New plugin: :doc:`/plugins/convert` transcodes music and embeds album art
-  while copying to a separate directory. Thanks to Jakob Schnitzer.
+  while copying to a separate directory. Thanks to Jakob Schnitzer and Andrew G.
+  Dunn.
 * New plugin: :doc:`/plugins/fuzzy_search` lets you find albums and tracks using
   fuzzy string matching so you don't have to type (or even remember) their exact
   names. Thanks to Philippe Mongeau.

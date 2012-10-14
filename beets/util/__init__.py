@@ -524,3 +524,29 @@ def plurality(objs):
             res = obj
 
     return res, max_freq
+
+def cpu_count():
+    """Return the number of hardware thread contexts (cores or SMT
+    threads) in the system.
+    """
+    # Adapted from observing the soundconverter project:
+    # https://github.com/kassoulet/soundconverter
+    if sys.platform == 'win32':
+        try:
+            num = int(os.environ['NUMBER_OF_PROCESSORS'])
+        except (ValueError, KeyError):
+            num = 0
+    elif sys.platform == 'darwin':
+        try:
+            num = int(os.popen('sysctl -n hw.ncpu').read())
+        except ValueError:
+            num = 0
+    else:
+        try:
+            num = os.sysconf('SC_NPROCESSORS_ONLN')
+        except (ValueError, OSError, AttributeError):
+            num = 0
+    if num >= 1:
+        return num
+    else:
+        return 1
