@@ -49,7 +49,8 @@ The plugin offers several configuration options, all of which live under the
 * ``opts`` are the encoding options that are passed to ``lame``. Default: 
   "-V2". Please refer to the LAME documentation for possible options.
 * Finally, ``threads`` determines the number of threads to use for parallel
-  encoding. Default: 2.
+  encoding. By default, the plugin will detect the number of processors
+  available and use them all.
 
 Here's an example configuration::
 
