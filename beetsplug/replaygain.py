@@ -31,13 +31,22 @@ log = logging.getLogger('beets')
 
 DEFAULT_REFERENCE_LOUDNESS = 89
 
-class RgainError(Exception):
-    """Base for exceptions in this module."""
-
-class RgainNoBackendError(RgainError):
-    """The audio rgain could not be computed because neither mp3gain
-     nor aacgain command-line tool is installed.
+class ReplayGainError(Exception):
+    """Raised when an error occurs during mp3gain/aacgain execution.
     """
+
+def call(args):
+    """Execute the command indicated by `args` (an array of strings) and
+    return the command's output. The stderr stream is ignored. If the command
+    exits abnormally, a ReplayGainError is raised.
+    """
+    try:
+        with open(os.devnull, 'w') as devnull:
+            return subprocess.check_output(args, stderr=devnull)
+    except subprocess.CalledProcessError as e:
+        raise ReplayGainError(
+            "{0} exited with status {1}".format(args[0], e.returncode)
+        )
 
 class ReplayGainPlugin(BeetsPlugin):
     '''Provides replay gain analysis for the Beets Music Manager'''
@@ -72,11 +81,11 @@ class ReplayGainPlugin(BeetsPlugin):
                 )
         else:
             # Check whether the program is in $PATH.
-            for cmd in ['mp3gain','aacgain']:
+            for cmd in ('mp3gain', 'aacgain'):
                 try:
-                    subprocess.call([cmd,'-v'], stderr=subprocess.PIPE)
+                    call([cmd, '-v'])
                     self.command = cmd
-                except OSError:
+                except OSError as exc:
                     pass
         if not self.command:
             raise ui.UserError(
@@ -116,15 +125,8 @@ class ReplayGainPlugin(BeetsPlugin):
 
     def get_recommended_gains(self, media_paths):
         '''Returns recommended track and album gain values'''
-
-        proc = subprocess.Popen([self.command,'-o','-d',str(self.gain_offset)] +
-                                media_paths,
-                                stdout=subprocess.PIPE)
-        retcode = proc.poll()
-        if retcode:
-            raise RgainError("%s exited with status %i" %
-                                          (self.command,retcode))  
-        rgain_out, _ = proc.communicate()
+        rgain_out = call([self.command, '-o', '-d', str(self.gain_offset)] +
+                         media_paths)
         rgain_out = rgain_out.strip('\n').split('\n')
         keys = rgain_out[0].split('\t')[1:]
         tracks_mp3_gain = [dict(zip(keys, 
@@ -160,7 +162,6 @@ class ReplayGainPlugin(BeetsPlugin):
         '''Compute replaygain taking options into account. 
         Returns filtered command stdout'''
 
-        cmd_args = []
         media_files = [mf for mf in media_files if self.requires_gain(mf)]
         if not media_files:
             print 'No gain to compute'
@@ -174,30 +175,27 @@ class ReplayGainPlugin(BeetsPlugin):
                 self.gain_offset = self.reduce_gain_for_noclip(track_gains, 
                                                                album_gain)
 
-        cmd = [self.command, '-o']
+        # Construct shell command. The "-o" option makes the output
+        # easily parseable (tab-delimited). "-s s" forces gain
+        # recalculation even if tags are already present and disables
+        # tag-writing; this turns the mp3gain/aacgain tool into a gain
+        # calculator rather than a tag manipulator because we take care
+        # of changing tags ourselves.
+        cmd = [self.command, '-o', '-s', 's']
         if self.noclip:
+            # Adjust to avoid clipping.
             cmd = cmd + ['-k'] 
         else:
+            # Disable clipping warning. 
             cmd = cmd + ['-c']
         if self.apply_gain:
+            # Lossless audio adjustment.
             cmd = cmd + ['-r'] 
         cmd = cmd + ['-d', str(self.gain_offset)]
         cmd = cmd + media_paths
 
-        try:
-            with open(os.devnull, 'w') as tempf:
-                subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=tempf)
-        except subprocess.CalledProcessError as e:
-            raise RgainError("%s exited with status %i" % (cmd, e.returncode))
-      
-        cmd = [self.command, '-s','c','-o'] + media_paths
-        
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        if proc.poll():
-            raise RgainError("%s exited with status %i" % (cmd, retcode))
-
-        tmp = proc.communicate()[0]
-        return self.extract_rgain_infos(tmp)
+        output = call(cmd)
+        return self.extract_rgain_infos(output)
 
 
     def write_rgain(self, media_files, rgain_infos): 
