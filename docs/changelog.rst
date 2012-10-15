@@ -44,6 +44,9 @@ Changelog
   than just being called "file" (thanks to Zach Denton).
 * :doc:`/plugins/importfeeds`: Fix error in symlink mode with non-ASCII
   filenames.
+* :doc:`/plugins/mbcollection`: Fix an error when submitting a large number of
+  releases (we now submit only 200 releases at a time instead of 350). Thanks
+  to Jonathan Towne.
 * Add the track mapping dictionary to the ``album_distance`` plugin function.
 * Fix an assertion failure when the MusicBrainz main database and search server
   disagree.

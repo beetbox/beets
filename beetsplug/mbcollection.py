@@ -20,7 +20,7 @@ from beets import ui
 import musicbrainzngs
 from musicbrainzngs import musicbrainz
 
-SUBMISSION_CHUNK_SIZE = 350
+SUBMISSION_CHUNK_SIZE = 200
 
 def submit_albums(collection_id, release_ids):
     """Add all of the release IDs to the indicated collection. Multiple
