@@ -49,10 +49,8 @@ def call(args):
         )
 
 class ReplayGainPlugin(BeetsPlugin):
-    '''Provides replay gain analysis for the Beets Music Manager'''
-
-    ref_level = DEFAULT_REFERENCE_LOUDNESS
-
+    """Provides ReplayGain analysis.
+    """
     def __init__(self):
         self.register_listener('album_imported', self.album_imported)
         self.register_listener('item_imported', self.item_imported)
@@ -164,7 +162,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
         media_files = [mf for mf in media_files if self.requires_gain(mf)]
         if not media_files:
-            print 'No gain to compute'
+            log.debug('replaygain: no gain to compute')
             return
 
         media_paths = [syspath(mf.path) for mf in media_files]
@@ -206,7 +204,9 @@ class ReplayGainPlugin(BeetsPlugin):
             try:
                 mf.rg_track_gain = float(rgain_infos[i][2])
                 mf.rg_track_peak = float(rgain_infos[i][4])
-                print('Track gains %s %s' % (mf.rg_track_gain, mf.rg_track_peak))
+                log.debug('replaygain: wrote track gain {0}, peak {1}'.format(
+                    mf.rg_track_gain, mf.rg_track_peak
+                ))
                 mf.save()
             except (FileTypeError, UnreadableFileError, TypeError, ValueError):
                 log.error("failed to write replaygain: %s" % (mf.title))
