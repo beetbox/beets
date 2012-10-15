@@ -61,14 +61,16 @@ class ReplayGainPlugin(BeetsPlugin):
                                        'targetlevel', DEFAULT_REFERENCE_LOUDNESS))
         self.gain_offset = int(target_level-DEFAULT_REFERENCE_LOUDNESS)
         self.command = ui.config_val(config,'replaygain','command', None)
-        if not os.path.isfile(self.command):
-            raise ui.UserError('no valid rgain command filepath given')
-        if not self.command:
+        if self.command:
+	    if not os.path.isfile(self.command):
+                raise ui.UserError('no valid rgain command filepath given')
+        else:
             for cmd in ['mp3gain','aacgain']:
-                proc = subprocess.Popen([cmd,'-v'])
-                retcode = proc.poll()
-                if not retcode:
+                try:
+                    subprocess.call([cmd,'-v'], stderr=subprocess.PIPE)
                     self.command = cmd
+                except OSError:
+                    pass
         if not self.command:
             raise ui.UserError('no valid rgain command found')
 
