@@ -51,6 +51,8 @@ Changelog
   modify files' tags even when they successfully change the database.
 * Fix a VFS bug leading to a crash in the :doc:`/plugins/bpd` when files had
   non-ASCII extensions.
+* Fix for changing date fields (like "year") with the :ref:`modify-cmd`
+  command.
 * Add a human-readable error message when writing files' tags fails.
 * Changed plugin loading so that modules can be imported without
   unintentionally loading the plugins they contain.

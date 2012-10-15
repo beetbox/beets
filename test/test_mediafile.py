@@ -196,6 +196,15 @@ class MissingAudioDataTest(unittest.TestCase):
         del self.mf.mgfile.info.bitrate # Not available directly.
         self.assertEqual(self.mf.bitrate, 0)
 
+class TypeTest(unittest.TestCase):
+    def setUp(self):
+        path = os.path.join(_common.RSRC, 'full.mp3')
+        self.mf = beets.mediafile.MediaFile(path)
+
+    def test_year_integer_in_string(self):
+        self.mf.year = '2009'
+        self.assertEqual(self.mf.year, 2009)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

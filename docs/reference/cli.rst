@@ -164,6 +164,8 @@ You'll be shown a list of the files that will be removed and asked to confirm.
 By default, this just removes entries from the library database; it doesn't
 touch the files on disk. To actually delete the files, use ``beet remove -d``.
 
+.. _modify-cmd:
+
 modify
 ``````
 ::

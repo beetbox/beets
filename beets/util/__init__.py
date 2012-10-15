@@ -529,7 +529,7 @@ def cpu_count():
     """Return the number of hardware thread contexts (cores or SMT
     threads) in the system.
     """
-    # Adapted from observing the soundconverter project:
+    # Adapted from the soundconverter project:
     # https://github.com/kassoulet/soundconverter
     if sys.platform == 'win32':
         try:

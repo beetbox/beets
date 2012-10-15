@@ -255,7 +255,7 @@ class Packed(object):
             field_lengths = [4, 2, 2] # YYYY-MM-DD
             elems = []
             for i, item in enumerate(new_items):
-                elems.append( ('%0' + str(field_lengths[i]) + 'i') % item )
+                elems.append('{0:0{1}}'.format(int(item), field_lengths[i]))
             self.items = '-'.join(elems)
         elif self.packstyle == packing.TUPLE:
             self.items = new_items
