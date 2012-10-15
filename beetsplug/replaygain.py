@@ -177,8 +177,11 @@ class ReplayGainPlugin(BeetsPlugin):
         """Compute ReplayGain values and return a list of results
         dictionaries as given by `parse_tool_output`.
         """
-        media_files = [mf for mf in media_files if self.requires_gain(mf)]
-        if not media_files:
+        # Skip calculating gain only when *all* files don't need
+        # recalculation. This way, if any file among an album's tracks
+        # needs recalculation, we still get an accurate album gain
+        # value.
+        if all([not self.requires_gain(mf) for mf in media_files]):
             log.debug('replaygain: no gain to compute')
             return
 
