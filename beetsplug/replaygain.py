@@ -58,13 +58,20 @@ class ReplayGainPlugin(BeetsPlugin):
         self.albumgain = ui.config_val(config,'replaygain',
                                        'albumgain', False, bool)
         target_level = float(ui.config_val(config,'replaygain',
-                                       'targetlevel', DEFAULT_REFERENCE_LOUDNESS))
-        self.gain_offset = int(target_level-DEFAULT_REFERENCE_LOUDNESS)
+                                    'targetlevel', DEFAULT_REFERENCE_LOUDNESS))
+        self.gain_offset = int(target_level - DEFAULT_REFERENCE_LOUDNESS)
+
         self.command = ui.config_val(config,'replaygain','command', None)
         if self.command:
-	    if not os.path.isfile(self.command):
-                raise ui.UserError('no valid rgain command filepath given')
+            # Explicit executable path.
+            if not os.path.isfile(self.command):
+                raise ui.UserError(
+                    'replaygain command does not exist: {0}'.format(
+                        self.command
+                    )
+                )
         else:
+            # Check whether the program is in $PATH.
             for cmd in ['mp3gain','aacgain']:
                 try:
                     subprocess.call([cmd,'-v'], stderr=subprocess.PIPE)
@@ -72,7 +79,9 @@ class ReplayGainPlugin(BeetsPlugin):
                 except OSError:
                     pass
         if not self.command:
-            raise ui.UserError('no valid rgain command found')
+            raise ui.UserError(
+                'no replaygain command found: install mp3gain or aacgain'
+            )
 
 
     def album_imported(self, lib, album, config):
