@@ -96,7 +96,9 @@ class ReplayGainPlugin(BeetsPlugin):
             media_files = \
                 [MediaFile(syspath(item.path)) for item in album.items()]
 
-            self.write_rgain(media_files, self.compute_rgain(media_files))
+            self.write_rgain(media_files,
+                             self.compute_rgain(media_files),
+                             True)
 
         except (FileTypeError, UnreadableFileError,
                 TypeError, ValueError) as e:
@@ -213,16 +215,28 @@ class ReplayGainPlugin(BeetsPlugin):
         return self.parse_tool_output(output)
 
 
-    def write_rgain(self, media_files, rgain_infos): 
+    def write_rgain(self, media_files, rgain_infos, album=False): 
         """Write computed gain values for each media file.
         """
+        if album:
+            assert len(rgain_infos) == len(media_files) + 1
+            album_info = rgain_infos[-1]
+
         for mf, info in zip(media_files, rgain_infos):
             try:
-                mf.rg_track_gain = float(info['gain'])
-                mf.rg_track_peak = float(info['peak'])
-                log.debug('replaygain: wrote track gain {0}, peak {1}'.format(
-                    mf.rg_track_gain, mf.rg_track_peak
+                mf.rg_track_gain = info['gain']
+                mf.rg_track_peak = info['peak']
+
+                if album:
+                    mf.rg_album_gain = album_info['gain']
+                    mf.rg_album_peak = album_info['peak']
+
+                log.debug('replaygain: writing track gain {0}, peak {1}; '
+                          'album gain {2}, peak {3}'.format(
+                    mf.rg_track_gain, mf.rg_track_peak,
+                    mf.rg_album_gain, mf.rg_album_peak
                 ))
                 mf.save()
-            except (UnreadableFileError, TypeError, ValueError):
+
+            except UnreadableFileError:
                 log.error("replaygain: write failed for %s" % (mf.title))
