@@ -132,7 +132,7 @@ def input_(prompt=None):
     except EOFError:
         raise UserError('stdin stream ended while input required')
 
-    return resp.decode(sys.stdin.encoding, 'ignore')
+    return resp.decode(sys.stdin.encoding or 'utf8', 'ignore')
 
 def input_options(options, require=False, prompt=None, fallback_prompt=None,
                   numrange=None, default=None, color=False, max_width=72):
