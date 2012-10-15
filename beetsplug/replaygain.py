@@ -134,10 +134,25 @@ class ReplayGainPlugin(BeetsPlugin):
         return [tracks_mp3_gain, album_mp3_gain]
 
 
-    def extract_rgain_infos(self, text):
-        '''Extract rgain infos stats from text'''
-
-        return [l.split('\t') for l in text.split('\n') if l.count('\t')>1][1:]
+    def parse_tool_output(self, text):
+        """Given the tab-delimited output from an invocation of mp3gain
+        or aacgain, parse the text and return a list of dictionaries
+        containing information about each analyzed file.
+        """
+        out = []
+        for line in text.split('\n'):
+            parts = line.split('\t')
+            if len(parts) != 6 or parts[0] == 'File':
+                continue
+            out.append({
+                'file': parts[0],
+                'mp3gain': int(parts[1]),
+                'gain': float(parts[2]),
+                'peak': float(parts[3]),
+                'maxgain': int(parts[4]),
+                'mingain': int(parts[5]),
+            })
+        return out
     
 
     def reduce_gain_for_noclip(self, track_gains, albumgain):
@@ -157,9 +172,9 @@ class ReplayGainPlugin(BeetsPlugin):
 
     
     def compute_rgain(self, media_files):
-        '''Compute replaygain taking options into account. 
-        Returns filtered command stdout'''
-
+        """Compute ReplayGain values and return a list of results
+        dictionaries as given by `parse_tool_output`.
+        """
         media_files = [mf for mf in media_files if self.requires_gain(mf)]
         if not media_files:
             log.debug('replaygain: no gain to compute')
@@ -192,22 +207,22 @@ class ReplayGainPlugin(BeetsPlugin):
         cmd = cmd + ['-d', str(self.gain_offset)]
         cmd = cmd + media_paths
 
+        log.debug('replaygain: analyzing {0} files'.format(len(media_files)))
         output = call(cmd)
-        return self.extract_rgain_infos(output)
+        log.debug('replaygain: analysis finished')
+        return self.parse_tool_output(output)
 
 
     def write_rgain(self, media_files, rgain_infos): 
-        '''Write computed gain infos for each media file'''
-        
-        for (i,mf) in enumerate(media_files):
- 
+        """Write computed gain values for each media file.
+        """
+        for mf, info in zip(media_files, rgain_infos):
             try:
-                mf.rg_track_gain = float(rgain_infos[i][2])
-                mf.rg_track_peak = float(rgain_infos[i][4])
+                mf.rg_track_gain = float(info['gain'])
+                mf.rg_track_peak = float(info['peak'])
                 log.debug('replaygain: wrote track gain {0}, peak {1}'.format(
                     mf.rg_track_gain, mf.rg_track_peak
                 ))
                 mf.save()
-            except (FileTypeError, UnreadableFileError, TypeError, ValueError):
-                log.error("failed to write replaygain: %s" % (mf.title))
-
+            except (UnreadableFileError, TypeError, ValueError):
+                log.error("replaygain: write failed for %s" % (mf.title))
