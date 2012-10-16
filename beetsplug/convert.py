@@ -16,8 +16,8 @@
 """
 import logging
 import os
-import sys
 import shutil
+import threading
 from subprocess import Popen, PIPE
 
 from beets.plugins import BeetsPlugin
@@ -27,7 +27,7 @@ from beetsplug.embedart import _embed
 log = logging.getLogger('beets')
 DEVNULL = open(os.devnull, 'wb')
 conf = {}
-
+_fs_lock = threading.Lock()
 
 
 def encode(source, dest):
@@ -77,7 +77,12 @@ def convert_item(lib, dest_dir):
             ))
             continue
 
-        util.mkdirall(dest)
+        # Ensure that only one thread tries to create directories at a
+        # time. (The existence check is not atomic with the directory
+        # creation inside this function.)
+        with _fs_lock:
+            util.mkdirall(dest)
+
         if item.format == 'MP3' and item.bitrate < 1000 * conf['max_bitrate']:
             log.info('Copying {0}'.format(util.displayable_path(item.path)))
             util.copy(item.path, dest)
