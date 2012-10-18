@@ -83,7 +83,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 try:
                     call([cmd, '-v'])
                     self.command = cmd
-                except OSError as exc:
+                except OSError:
                     pass
         if not self.command:
             raise ui.UserError(
@@ -97,7 +97,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 [MediaFile(syspath(item.path)) for item in album.items()]
 
             self.write_rgain(media_files,
-                             self.compute_rgain(media_files),
+                             self.compute_rgain(media_files, True),
                              True)
 
         except (FileTypeError, UnreadableFileError,
@@ -123,19 +123,6 @@ class ReplayGainPlugin(BeetsPlugin):
                 self.albumgain)
 
 
-    def get_recommended_gains(self, media_paths):
-        '''Returns recommended track and album gain values'''
-        rgain_out = call([self.command, '-o', '-d', str(self.gain_offset)] +
-                         media_paths)
-        rgain_out = rgain_out.strip('\n').split('\n')
-        keys = rgain_out[0].split('\t')[1:]
-        tracks_mp3_gain = [dict(zip(keys, 
-                                    [float(x) for x in l.split('\t')[1:]]))
-                           for l in rgain_out[1:-1]]
-        album_mp3_gain = int(rgain_out[-1].split('\t')[1]) 
-        return [tracks_mp3_gain, album_mp3_gain]
-
-
     def parse_tool_output(self, text):
         """Given the tab-delimited output from an invocation of mp3gain
         or aacgain, parse the text and return a list of dictionaries
@@ -157,7 +144,7 @@ class ReplayGainPlugin(BeetsPlugin):
         return out
     
 
-    def reduce_gain_for_noclip(self, track_gains, albumgain):
+    def reduce_gain_for_noclip(self, track_peaks, album_gain):
         '''Reduce albumgain value until no song is clipped.
         No command switch give you the max no-clip in album mode. 
         So we consider the recommended gain and decrease it until no song is
@@ -165,15 +152,14 @@ class ReplayGainPlugin(BeetsPlugin):
         Formula found at: 
         http://www.hydrogenaudio.org/forums/lofiversion/index.php/t10630.html
         '''
-
-        if albumgain > 0:
-            maxpcm = max([t['Max Amplitude'] for t in track_gains])
-            while (maxpcm * (2**(albumgain/4.0)) > 32767):
-                albumgain -= 1 
-        return albumgain
+        if album_gain > 0:
+            maxpcm = max(track_peaks)
+            while (maxpcm * (2 ** (album_gain / 4.0)) > 32767):
+                album_gain -= 1 
+        return album_gain
 
     
-    def compute_rgain(self, media_files):
+    def compute_rgain(self, media_files, album=False):
         """Compute ReplayGain values and return a list of results
         dictionaries as given by `parse_tool_output`.
         """
@@ -186,12 +172,6 @@ class ReplayGainPlugin(BeetsPlugin):
             return
 
         media_paths = [syspath(mf.path) for mf in media_files]
-
-        if self.albumgain:
-            track_gains, album_gain = self.get_recommended_gains(media_paths)
-            if self.noclip:
-                self.gain_offset = self.reduce_gain_for_noclip(track_gains, 
-                                                               album_gain)
 
         # Construct shell command. The "-o" option makes the output
         # easily parseable (tab-delimited). "-s s" forces gain
@@ -215,7 +195,16 @@ class ReplayGainPlugin(BeetsPlugin):
         log.debug('replaygain: analyzing {0} files'.format(len(media_files)))
         output = call(cmd)
         log.debug('replaygain: analysis finished')
-        return self.parse_tool_output(output)
+        results = self.parse_tool_output(output)
+
+        # Adjust for noclip mode.
+        if album and self.noclip:
+            album_gain = results[-1]['gain']
+            track_peaks = [r['peak'] for r in results[:-1]]
+            album_gain = self.reduce_gain_for_noclip(track_peaks, album_gain)
+            results[-1]['gain'] = album_gain
+
+        return results
 
 
     def write_rgain(self, media_files, rgain_infos, album=False): 
