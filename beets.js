@@ -8,6 +8,8 @@ var BEETS_IS = [
     'a simple music metadata inspection and modification tool for tons of audio file types',
     'an MPD-compatible music player',
     'a Web-based collection explorer and HTML5 music player',
+    'grep for your music collection',
+    'a batch audio file transcoder'
 ];
 
 // Cycle "Beets is..." text.
