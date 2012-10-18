@@ -58,3 +58,22 @@ transcoding involved. The use of ReplayGain can cause clipping if the average
 volume of a song is below the target level. By default, a "prevent clipping"
 option named ``noclip`` is enabled to reduce the amount of ReplayGain adjustment
 to whatever amount would keep clipping from occurring.
+
+Manual Analysis
+---------------
+
+By default, the plugin will analyze all items an albums as they are implemented.
+However, you can also manually analyze files that are already in your library.
+Use the ``beet replaygain`` command::
+
+    $ beet replaygain [-a] [QUERY]
+
+The ``-a`` flag analyzes whole albums instead of individual tracks. Provide a
+query (see :doc:`/reference/query`) to indicate which items or albums to
+analyze.
+
+ReplayGain analysis is not fast, so you may want to disable it during import.
+Use the ``automatic`` config option to control this::
+
+    [replaygain]
+    automatic: no

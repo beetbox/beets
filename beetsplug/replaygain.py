@@ -19,6 +19,7 @@ import os
 from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import syspath
+from beets.ui import commands
 
 log = logging.getLogger('beets')
 
@@ -83,15 +84,18 @@ class ReplayGainPlugin(BeetsPlugin):
         self.import_stages = [self.imported]
 
     def configure(self, config):
-        self.overwrite = ui.config_val(config,'replaygain',
+        self.overwrite = ui.config_val(config, 'replaygain',
                                        'overwrite', False, bool)
-        self.noclip = ui.config_val(config,'replaygain',
-                                       'noclip', True, bool)
-        self.apply_gain = ui.config_val(config,'replaygain',
-                                       'apply_gain', False, bool)
-        target_level = float(ui.config_val(config,'replaygain',
-                                    'targetlevel', DEFAULT_REFERENCE_LOUDNESS))
+        self.noclip = ui.config_val(config, 'replaygain',
+                                    'noclip', True, bool)
+        self.apply_gain = ui.config_val(config, 'replaygain',
+                                        'apply_gain', False, bool)
+        target_level = float(ui.config_val(config, 'replaygain',
+                                           'targetlevel',
+                                           DEFAULT_REFERENCE_LOUDNESS))
         self.gain_offset = int(target_level - DEFAULT_REFERENCE_LOUDNESS)
+        self.automatic = ui.config_val(config, 'replaygain',
+                                       'automatic', True, bool)
 
         self.command = ui.config_val(config,'replaygain','command', None)
         if self.command:
@@ -117,6 +121,9 @@ class ReplayGainPlugin(BeetsPlugin):
 
     def imported(self, config, task):
         """Our import stage function."""
+        if not self.automatic:
+            return
+
         if task.is_album:
             album = config.lib.get_album(task.album_id)
             items = list(album.items())
@@ -124,8 +131,47 @@ class ReplayGainPlugin(BeetsPlugin):
             items = [task.item]
 
         results = self.compute_rgain(items, task.is_album)
-        self.store_gain(config.lib, items, results,
-                        album if task.is_album else None)
+        if results:
+            self.store_gain(config.lib, items, results,
+                            album if task.is_album else None)
+
+    def commands(self):
+        """Provide a ReplayGain command."""
+        def func(lib, config, opts, args):
+            write = ui.config_val(config, 'beets', 'import_write',
+                                  commands.DEFAULT_IMPORT_WRITE, bool)
+
+            if opts.album:
+                # Analyze albums.
+                for album in lib.albums(ui.decargs(args)):
+                    log.info('analyzing {0} - {1}'.format(album.albumartist,
+                                                          album.album))
+                    items = list(album.items())
+                    results = self.compute_rgain(items, True)
+                    if results:
+                        self.store_gain(lib, items, results, album)
+
+                    if write:
+                        for item in items:
+                            item.write()
+
+            else:
+                # Analyze individual tracks.
+                for item in lib.items(ui.decargs(args)):
+                    log.info('analyzing {0} - {1}'.format(item.artist,
+                                                          item.title))
+                    results = self.compute_rgain([item], False)
+                    if results:
+                        self.store_gain(lib, [item], results, None)
+
+                    if write:
+                        item.write()
+
+        cmd = ui.Subcommand('replaygain', help='analyze for ReplayGain')
+        cmd.parser.add_option('-a', '--album', action='store_true',
+                              help='analyze albums instead of tracks')
+        cmd.func = func
+        return [cmd]
 
     def requires_gain(self, item, album=False):
         """Does the gain need to be computed?"""
