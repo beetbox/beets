@@ -89,9 +89,8 @@ def convert_item(lib, dest_dir):
             dest_item = library.Item.from_path(dest)
         else:
             encode(item.path, dest)
-            dest_item = library.Item.from_path(item.path)
-            dest_item.path = dest
-            dest_item.write()
+            item.path = dest
+            item.write()
 
         artpath = lib.get_album(item).artpath
         if artpath and conf['embed']:
