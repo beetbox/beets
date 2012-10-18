@@ -29,17 +29,25 @@ var MONTH_NAMES = [ "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December" ];
 var urlre = /(http:\/\/([^ \/]+)(\/\S+)?)\b/g;
 function getNews() {
-    var twitterUser = 'b33ts';
-    var url = 'http://twitter.com/statuses/user_timeline/'+twitterUser+'.json';
+    var url = 'http://pipes.yahoo.com/pipes/pipe.run'
+    var args = {
+        _id: '6a14ac0e3884a3913d16bbc4d0811322',
+        _render: 'json',
+        _callback: 'jsonpCallback'
+    };
     $.ajax({
         url: url,
+        data: args,
+        type: 'GET',
         dataType: 'jsonp',
+        jsonpCallback: 'jsonpCallback',
         success: function(data) {
             // Find the first non-reply status. This assumes there's at least
             // one non-reply in this chunk... probably a reasonable assumption.
             $('#twitterStatus').empty();
             var count = 0;
-            $.each(data, function(i, status) {
+            $.each(data['value']['items'], function(i, status) {
+                console.log(status);
     			if (status.in_reply_to_screen_name == null) {
     				// Not a reply.
 
