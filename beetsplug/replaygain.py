@@ -51,8 +51,8 @@ class ReplayGainPlugin(BeetsPlugin):
     """Provides ReplayGain analysis.
     """
     def __init__(self):
-        self.register_listener('album_imported', self.album_imported)
-        self.register_listener('item_imported', self.item_imported)
+        super(ReplayGainPlugin, self).__init__()
+        self.import_stages = [self.imported]
 
     def configure(self, config):
         self.overwrite = ui.config_val(config,'replaygain',
@@ -87,16 +87,17 @@ class ReplayGainPlugin(BeetsPlugin):
                 'no replaygain command found: install mp3gain or aacgain'
             )
 
+    def imported(self, config, task):
+        """Our import stage function."""
+        if task.is_album:
+            album = config.lib.get_album(task.album_id)
+            items = list(album.items())
+        else:
+            items = [task.item]
 
-    def album_imported(self, lib, album, config):
-        items = list(album.items())
-        self.store_gain(items,
-                        self.compute_rgain(items, True),
-                        True)
-
-
-    def item_imported(self, lib, item, config):
-        self.store_gain([item], self.compute_rgain([item]))
+        results = self.compute_rgain(items, task.is_album)
+        self.store_gain(config.lib, items, results,
+                        album if task.is_album else None)
     
 
     def requires_gain(self, item, album=False):
@@ -189,23 +190,23 @@ class ReplayGainPlugin(BeetsPlugin):
         return results
 
 
-    def store_gain(self, items, rgain_infos, album=False): 
-        """Write computed gain values for each media file.
+    def store_gain(self, lib, items, rgain_infos, album=None): 
+        """Store computed ReplayGain values to the Items and the Album
+        (if it is provided).
         """
-        if album:
-            assert len(rgain_infos) == len(items) + 1
-            album_info = rgain_infos[-1]
-
         for item, info in zip(items, rgain_infos):
             item.rg_track_gain = info['gain']
             item.rg_track_peak = info['peak']
+            lib.store(item)
 
-            if album:
-                item.rg_album_gain = album_info['gain']
-                item.rg_album_peak = album_info['peak']
-
-            log.debug('replaygain: applying track gain {0}, peak {1}; '
+            log.debug('replaygain: applied track gain {0}, peak {1}; '
                         'album gain {2}, peak {3}'.format(
                 item.rg_track_gain, item.rg_track_peak,
                 item.rg_album_gain, item.rg_album_peak
             ))
+
+        if album:
+            assert len(rgain_infos) == len(items) + 1
+            album_info = rgain_infos[-1]
+            album.rg_album_gain = album_info['gain']
+            album.rg_album_peak = album_info['peak']
