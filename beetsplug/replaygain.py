@@ -36,9 +36,9 @@ class ReplayGainError(Exception):
     """
 
 def call(args):
-    """Execute the command indicated by `args` (an array of strings) and
-    return the command's output. The stderr stream is ignored. If the command
-    exits abnormally, a ReplayGainError is raised.
+    """Execute the command indicated by `args` (a list of strings) and
+    return the command's output. The stderr stream is ignored. If the
+    command exits abnormally, a ReplayGainError is raised.
     """
     try:
         with open(os.devnull, 'w') as devnull:
@@ -62,8 +62,6 @@ class ReplayGainPlugin(BeetsPlugin):
                                        'noclip', True, bool)
         self.apply_gain = ui.config_val(config,'replaygain',
                                        'apply_gain', False, bool)
-        self.albumgain = ui.config_val(config,'replaygain',
-                                       'albumgain', False, bool)
         target_level = float(ui.config_val(config,'replaygain',
                                     'targetlevel', DEFAULT_REFERENCE_LOUDNESS))
         self.gain_offset = int(target_level - DEFAULT_REFERENCE_LOUDNESS)
@@ -114,13 +112,13 @@ class ReplayGainPlugin(BeetsPlugin):
             log.error("failed to calculate replaygain:  %s ", e)
     
 
-    def requires_gain(self, mf):
+    def requires_gain(self, mf, album=False):
         '''Does the gain need to be computed?'''
 
         return self.overwrite or \
                (not mf.rg_track_gain or not mf.rg_track_peak) or \
                ((not mf.rg_album_gain or not mf.rg_album_peak) and \
-                self.albumgain)
+                album)
 
 
     def parse_tool_output(self, text):
@@ -145,7 +143,7 @@ class ReplayGainPlugin(BeetsPlugin):
     
 
     def reduce_gain_for_noclip(self, track_peaks, album_gain):
-        '''Reduce albumgain value until no song is clipped.
+        '''Reduce album gain value until no song is clipped.
         No command switch give you the max no-clip in album mode. 
         So we consider the recommended gain and decrease it until no song is
         clipped when applying the gain.
@@ -167,7 +165,7 @@ class ReplayGainPlugin(BeetsPlugin):
         # recalculation. This way, if any file among an album's tracks
         # needs recalculation, we still get an accurate album gain
         # value.
-        if all([not self.requires_gain(mf) for mf in media_files]):
+        if all([not self.requires_gain(mf, album) for mf in media_files]):
             log.debug('replaygain: no gain to compute')
             return
 
