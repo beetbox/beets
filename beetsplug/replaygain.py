@@ -24,7 +24,6 @@ import os
 
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.mediafile import MediaFile, FileTypeError, UnreadableFileError
 from beets.util import syspath
 
 log = logging.getLogger('beets')
@@ -90,34 +89,21 @@ class ReplayGainPlugin(BeetsPlugin):
 
 
     def album_imported(self, lib, album, config):
-        try:
-            media_files = \
-                [MediaFile(syspath(item.path)) for item in album.items()]
-
-            self.write_rgain(media_files,
-                             self.compute_rgain(media_files, True),
-                             True)
-
-        except (FileTypeError, UnreadableFileError,
-                TypeError, ValueError) as e:
-            log.error("failed to calculate replaygain:  %s ", e)
+        items = list(album.items())
+        self.store_gain(items,
+                        self.compute_rgain(items, True),
+                        True)
 
 
     def item_imported(self, lib, item, config):
-        try:
-            mf = MediaFile(syspath(item.path))
-            self.write_rgain([mf], self.compute_rgain([mf]))
-        except (FileTypeError, UnreadableFileError,
-            TypeError, ValueError) as e:
-            log.error("failed to calculate replaygain:  %s ", e)
+        self.store_gain([item], self.compute_rgain([item]))
     
 
-    def requires_gain(self, mf, album=False):
-        '''Does the gain need to be computed?'''
-
+    def requires_gain(self, item, album=False):
+        """Does the gain need to be computed?"""
         return self.overwrite or \
-               (not mf.rg_track_gain or not mf.rg_track_peak) or \
-               ((not mf.rg_album_gain or not mf.rg_album_peak) and \
+               (not item.rg_track_gain or not item.rg_track_peak) or \
+               ((not item.rg_album_gain or not item.rg_album_peak) and \
                 album)
 
 
@@ -157,7 +143,7 @@ class ReplayGainPlugin(BeetsPlugin):
         return album_gain
 
     
-    def compute_rgain(self, media_files, album=False):
+    def compute_rgain(self, items, album=False):
         """Compute ReplayGain values and return a list of results
         dictionaries as given by `parse_tool_output`.
         """
@@ -165,11 +151,9 @@ class ReplayGainPlugin(BeetsPlugin):
         # recalculation. This way, if any file among an album's tracks
         # needs recalculation, we still get an accurate album gain
         # value.
-        if all([not self.requires_gain(mf, album) for mf in media_files]):
+        if all([not self.requires_gain(i, album) for i in items]):
             log.debug('replaygain: no gain to compute')
             return
-
-        media_paths = [syspath(mf.path) for mf in media_files]
 
         # Construct shell command. The "-o" option makes the output
         # easily parseable (tab-delimited). "-s s" forces gain
@@ -188,9 +172,9 @@ class ReplayGainPlugin(BeetsPlugin):
             # Lossless audio adjustment.
             cmd = cmd + ['-r'] 
         cmd = cmd + ['-d', str(self.gain_offset)]
-        cmd = cmd + media_paths
+        cmd = cmd + [syspath(i.path) for i in items]
 
-        log.debug('replaygain: analyzing {0} files'.format(len(media_files)))
+        log.debug('replaygain: analyzing {0} files'.format(len(items)))
         output = call(cmd)
         log.debug('replaygain: analysis finished')
         results = self.parse_tool_output(output)
@@ -205,28 +189,23 @@ class ReplayGainPlugin(BeetsPlugin):
         return results
 
 
-    def write_rgain(self, media_files, rgain_infos, album=False): 
+    def store_gain(self, items, rgain_infos, album=False): 
         """Write computed gain values for each media file.
         """
         if album:
-            assert len(rgain_infos) == len(media_files) + 1
+            assert len(rgain_infos) == len(items) + 1
             album_info = rgain_infos[-1]
 
-        for mf, info in zip(media_files, rgain_infos):
-            try:
-                mf.rg_track_gain = info['gain']
-                mf.rg_track_peak = info['peak']
+        for item, info in zip(items, rgain_infos):
+            item.rg_track_gain = info['gain']
+            item.rg_track_peak = info['peak']
 
-                if album:
-                    mf.rg_album_gain = album_info['gain']
-                    mf.rg_album_peak = album_info['peak']
+            if album:
+                item.rg_album_gain = album_info['gain']
+                item.rg_album_peak = album_info['peak']
 
-                log.debug('replaygain: writing track gain {0}, peak {1}; '
-                          'album gain {2}, peak {3}'.format(
-                    mf.rg_track_gain, mf.rg_track_peak,
-                    mf.rg_album_gain, mf.rg_album_peak
-                ))
-                mf.save()
-
-            except UnreadableFileError:
-                log.error("replaygain: write failed for %s" % (mf.title))
+            log.debug('replaygain: applying track gain {0}, peak {1}; '
+                        'album gain {2}, peak {3}'.format(
+                item.rg_track_gain, item.rg_track_peak,
+                item.rg_album_gain, item.rg_album_peak
+            ))
