@@ -1,22 +1,16 @@
-#Copyright (c) 2012, Fabrice Laporte
+# This file is part of beets.
+# Copyright 2012, Fabrice Laporte.
 #
-#Permission is hereby granted, free of charge, to any person obtaining a copy
-#of this software and associated documentation files (the "Software"), to deal
-#in the Software without restriction, including without limitation the rights
-#to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#copies of the Software, and to permit persons to whom the Software is
-#furnished to do so, subject to the following conditions:
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
 #
-#The above copyright notice and this permission notice shall be included in
-#all copies or substantial portions of the Software.
-#
-#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-#THE SOFTWARE.
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
 
 import logging
 import subprocess
@@ -46,6 +40,40 @@ def call(args):
         raise ReplayGainError(
             "{0} exited with status {1}".format(args[0], e.returncode)
         )
+
+def reduce_gain_for_noclip(track_peaks, album_gain):
+    """Reduce album gain value until no song is clipped.
+    No command switch give you the max no-clip in album mode. 
+    So we consider the recommended gain and decrease it until no song is
+    clipped when applying the gain.
+    Formula found at: 
+    http://www.hydrogenaudio.org/forums/lofiversion/index.php/t10630.html
+    """
+    if album_gain > 0:
+        maxpcm = max(track_peaks)
+        while (maxpcm * (2 ** (album_gain / 4.0)) > 32767):
+            album_gain -= 1 
+    return album_gain
+
+def parse_tool_output(text):
+    """Given the tab-delimited output from an invocation of mp3gain
+    or aacgain, parse the text and return a list of dictionaries
+    containing information about each analyzed file.
+    """
+    out = []
+    for line in text.split('\n'):
+        parts = line.split('\t')
+        if len(parts) != 6 or parts[0] == 'File':
+            continue
+        out.append({
+            'file': parts[0],
+            'mp3gain': int(parts[1]),
+            'gain': float(parts[2]),
+            'peak': float(parts[3]),
+            'maxgain': int(parts[4]),
+            'mingain': int(parts[5]),
+        })
+    return out
 
 class ReplayGainPlugin(BeetsPlugin):
     """Provides ReplayGain analysis.
@@ -98,7 +126,6 @@ class ReplayGainPlugin(BeetsPlugin):
         results = self.compute_rgain(items, task.is_album)
         self.store_gain(config.lib, items, results,
                         album if task.is_album else None)
-    
 
     def requires_gain(self, item, album=False):
         """Does the gain need to be computed?"""
@@ -107,43 +134,6 @@ class ReplayGainPlugin(BeetsPlugin):
                ((not item.rg_album_gain or not item.rg_album_peak) and \
                 album)
 
-
-    def parse_tool_output(self, text):
-        """Given the tab-delimited output from an invocation of mp3gain
-        or aacgain, parse the text and return a list of dictionaries
-        containing information about each analyzed file.
-        """
-        out = []
-        for line in text.split('\n'):
-            parts = line.split('\t')
-            if len(parts) != 6 or parts[0] == 'File':
-                continue
-            out.append({
-                'file': parts[0],
-                'mp3gain': int(parts[1]),
-                'gain': float(parts[2]),
-                'peak': float(parts[3]),
-                'maxgain': int(parts[4]),
-                'mingain': int(parts[5]),
-            })
-        return out
-    
-
-    def reduce_gain_for_noclip(self, track_peaks, album_gain):
-        '''Reduce album gain value until no song is clipped.
-        No command switch give you the max no-clip in album mode. 
-        So we consider the recommended gain and decrease it until no song is
-        clipped when applying the gain.
-        Formula found at: 
-        http://www.hydrogenaudio.org/forums/lofiversion/index.php/t10630.html
-        '''
-        if album_gain > 0:
-            maxpcm = max(track_peaks)
-            while (maxpcm * (2 ** (album_gain / 4.0)) > 32767):
-                album_gain -= 1 
-        return album_gain
-
-    
     def compute_rgain(self, items, album=False):
         """Compute ReplayGain values and return a list of results
         dictionaries as given by `parse_tool_output`.
@@ -178,17 +168,16 @@ class ReplayGainPlugin(BeetsPlugin):
         log.debug('replaygain: analyzing {0} files'.format(len(items)))
         output = call(cmd)
         log.debug('replaygain: analysis finished')
-        results = self.parse_tool_output(output)
+        results = parse_tool_output(output)
 
         # Adjust for noclip mode.
         if album and self.noclip:
             album_gain = results[-1]['gain']
             track_peaks = [r['peak'] for r in results[:-1]]
-            album_gain = self.reduce_gain_for_noclip(track_peaks, album_gain)
+            album_gain = reduce_gain_for_noclip(track_peaks, album_gain)
             results[-1]['gain'] = album_gain
 
         return results
-
 
     def store_gain(self, lib, items, rgain_infos, album=None): 
         """Store computed ReplayGain values to the Items and the Album
