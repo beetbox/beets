@@ -201,13 +201,13 @@ class ReplayGainPlugin(BeetsPlugin):
         cmd = [self.command, '-o', '-s', 's']
         if self.noclip:
             # Adjust to avoid clipping.
-            cmd = cmd + ['-k'] 
+            cmd = cmd + ['-k']
         else:
             # Disable clipping warning. 
             cmd = cmd + ['-c']
         if self.apply_gain:
             # Lossless audio adjustment.
-            cmd = cmd + ['-r'] 
+            cmd = cmd + ['-a' if album else '-r']
         cmd = cmd + ['-d', str(self.gain_offset)]
         cmd = cmd + [syspath(i.path) for i in items]
 
