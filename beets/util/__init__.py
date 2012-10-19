@@ -108,7 +108,9 @@ def normpath(path):
     """Provide the canonical form of the path suitable for storing in
     the database.
     """
-    return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
+    unicode_path = syspath(path)
+    norm_path = os.path.normpath(os.path.abspath(os.path.expanduser(unicode_path)))
+    return bytestring_path(norm_path)
 
 def ancestry(path, pathmod=None):
     """Return a list consisting of path's parent directory, its
@@ -116,6 +118,8 @@ def ancestry(path, pathmod=None):
        >>> ancestry('/a/b/c')
        ['/', '/a', '/a/b']
     """
+    if path.startswith(u'\\\\?\\'): # Remove magic prefix if there
+        path = path[4:]
     pathmod = pathmod or os.path
     out = []
     last_path = None
