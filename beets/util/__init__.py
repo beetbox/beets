@@ -242,6 +242,20 @@ def components(path, pathmod=None):
 
     return comps
 
+def _fsencoding():
+    """Get the system's filesystem encoding. On Windows, this is always
+    UTF-8 (not MBCS).
+    """
+    encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
+    if encoding == 'mbcs':
+        # On Windows, a broken encoding known to Python as "MBCS" is
+        # used for the filesystem. However, we only use the Unicode API
+        # for Windows paths, so the encoding is actually immaterial so
+        # we can avoid dealing with this nastiness. We arbitrarily
+        # choose UTF-8.
+        encoding = 'utf8'
+    return encoding
+
 def bytestring_path(path):
     """Given a path, which is either a str or a unicode, returns a str
     path (ensuring that we never deal with Unicode pathnames).
@@ -251,16 +265,8 @@ def bytestring_path(path):
         return path
 
     # Try to encode with default encodings, but fall back to UTF8.
-    encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
-    if encoding == 'mbcs':
-        # On Windows, a broken encoding known to Python as "MBCS" is
-        # used for the filesystem. However, we only use the Unicode API
-        # for Windows paths, so the encoding is actually immaterial so
-        # we can avoid dealing with this nastiness. We arbitrarily
-        # choose UTF-8.
-        encoding = 'utf8'
     try:
-        return path.encode(encoding)
+        return path.encode(_fsencoding())
     except (UnicodeError, LookupError):
         return path.encode('utf8')
 
@@ -274,9 +280,8 @@ def displayable_path(path):
         # A non-string object: just get its unicode representation.
         return unicode(path)
 
-    encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
     try:
-        return path.decode(encoding, 'ignore')
+        return path.decode(_fsencoding(), 'ignore')
     except (UnicodeError, LookupError):
         return path.decode('utf8', 'ignore')
 
