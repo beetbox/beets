@@ -489,7 +489,7 @@ def manual_id(singleton):
     # Find the first thing that looks like a UUID/MBID.
     match = re.search('[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', entry)
     if match:
-       return match.group()
+        return match.group()
     else:
         log.error('Invalid MBID.')
         return None
