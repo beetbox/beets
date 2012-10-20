@@ -970,9 +970,12 @@ update_cmd.parser.add_option('-M', '--nomove', action='store_false',
     default=True, dest='move', help="don't move files in library")
 update_cmd.parser.add_option('-p', '--pretend', action='store_true',
     help="show all changes but do nothing")
+update_cmd.parser.add_option('-f', '--format', action='store',
+    help='print with custom format', default=None)
 def update_func(lib, config, opts, args):
     color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
-    update_items(lib, config, decargs(args), opts.album, opts.move, color, opts.pretend)
+    fmt = _pick_format(config, opts.album, opts.format)
+    update_items(lib, decargs(args), opts.album, opts.move, color, opts.pretend, fmt)
 update_cmd.func = update_func
 default_commands.append(update_cmd)
 
@@ -1015,8 +1018,11 @@ remove_cmd.parser.add_option("-d", "--delete", action="store_true",
     help="also remove files from disk")
 remove_cmd.parser.add_option('-a', '--album', action='store_true',
     help='match albums instead of tracks')
+remove_cmd.parser.add_option('-f', '--format', action='store',
+    help='print with custom format', default=None)
 def remove_func(lib, config, opts, args):
-    remove_items(lib, config, decargs(args), opts.album, opts.delete)
+    fmt = _pick_format(config, opts.album, opts.format)
+    remove_items(lib, decargs(args), opts.album, opts.delete, fmt)
 remove_cmd.func = remove_func
 default_commands.append(remove_cmd)
 
@@ -1155,6 +1161,8 @@ modify_cmd.parser.add_option('-a', '--album', action='store_true',
     help='modify whole albums instead of tracks')
 modify_cmd.parser.add_option('-y', '--yes', action='store_true',
     help='skip confirmation')
+modify_cmd.parser.add_option('-f', '--format', action='store',
+    help='print with custom format', default=None)
 def modify_func(lib, config, opts, args):
     args = decargs(args)
     mods = [a for a in args if '=' in a]
@@ -1165,8 +1173,9 @@ def modify_func(lib, config, opts, args):
         ui.config_val(config, 'beets', 'import_write',
             DEFAULT_IMPORT_WRITE, bool)
     color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
-    modify_items(lib, config, mods, query, write, opts.move, opts.album,
-                 color, not opts.yes)
+    fmt = _pick_format(config, opts.album, opts.format)
+    modify_items(lib, mods, query, write, opts.move, opts.album, color,
+                 not opts.yes, fmt)
 modify_cmd.func = modify_func
 default_commands.append(modify_cmd)
 
