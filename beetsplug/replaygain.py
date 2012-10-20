@@ -72,6 +72,8 @@ class ReplayGainPlugin(BeetsPlugin):
     def configure(self, config):
         self.overwrite = ui.config_val(config, 'replaygain',
                                        'overwrite', False, bool)
+        self.albumgain = ui.config_val(config, 'replaygain',
+                                       'albumgain', False, bool)
         self.noclip = ui.config_val(config, 'replaygain',
                                     'noclip', True, bool)
         self.apply_gain = ui.config_val(config, 'replaygain',
@@ -193,7 +195,7 @@ class ReplayGainPlugin(BeetsPlugin):
             cmd = cmd + ['-c']
         if self.apply_gain:
             # Lossless audio adjustment.
-            cmd = cmd + ['-a' if album else '-r']
+            cmd = cmd + ['-a' if album and self.albumgain else '-r']
         cmd = cmd + ['-d', str(self.gain_offset)]
         cmd = cmd + [syspath(i.path) for i in items]
 
@@ -213,14 +215,17 @@ class ReplayGainPlugin(BeetsPlugin):
             item.rg_track_peak = info['peak']
             lib.store(item)
 
-            log.debug('replaygain: applied track gain {0}, peak {1}; '
-                        'album gain {2}, peak {3}'.format(
-                item.rg_track_gain, item.rg_track_peak,
-                item.rg_album_gain, item.rg_album_peak
+            log.debug('replaygain: applied track gain {0}, peak {1}'.format(
+                item.rg_track_gain,
+                item.rg_track_peak
             ))
 
-        if album:
+        if album and self.albumgain:
             assert len(rgain_infos) == len(items) + 1
             album_info = rgain_infos[-1]
             album.rg_album_gain = album_info['gain']
             album.rg_album_peak = album_info['peak']
+            log.debug('replaygain: applied album gain {0}, peak {1}'.format(
+                album.rg_album_gain,
+                album.rg_album_peak
+            ))

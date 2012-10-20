@@ -45,11 +45,13 @@ for the plugin in your :doc:`/reference/config`, like so::
 The target level can be modified to any target dB with the ``targetlevel``
 option (default: 89 dB).
 
-When analyzing albums, this plugin calculates both an "album gain" alongside
+When analyzing albums, this plugin can calculates an "album gain" alongside
 individual track gains. Album gain normalizes an entire album's loudness while
 allowing the dynamics from song to song on the album to remain intact. This is
 especially important for classical music albums with large loudness ranges.
-Players can choose which gain (track or album) to honor.
+Players can choose which gain (track or album) to honor. By default, only
+per-track gains are used; to calculate album gain also, set the ``albumgain``
+option to ``yes``.
 
 If you use a player that does not support ReplayGain specifications, you can
 force the volume normalization by applying the gain to the file via the
