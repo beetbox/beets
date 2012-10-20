@@ -122,8 +122,8 @@ def convert_func(lib, config, opts, args):
 class ConvertPlugin(BeetsPlugin):
     def configure(self, config):
         conf['dest'] = ui.config_val(config, 'convert', 'dest', None)
-        conf['threads'] = ui.config_val(config, 'convert', 'threads',
-            util.cpu_count())
+        conf['threads'] = int(ui.config_val(config, 'convert', 'threads',
+            util.cpu_count()))
         conf['flac'] = ui.config_val(config, 'convert', 'flac', 'flac')
         conf['lame'] = ui.config_val(config, 'convert', 'lame', 'lame')
         conf['opts'] = ui.config_val(config, 'convert',
