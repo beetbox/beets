@@ -42,20 +42,6 @@ def call(args):
             "{0} exited with status {1}".format(args[0], e.returncode)
         )
 
-def reduce_gain_for_noclip(track_peaks, album_gain):
-    """Reduce album gain value until no song is clipped.
-    No command switch give you the max no-clip in album mode. 
-    So we consider the recommended gain and decrease it until no song is
-    clipped when applying the gain.
-    Formula found at: 
-    http://www.hydrogenaudio.org/forums/lofiversion/index.php/t10630.html
-    """
-    if album_gain > 0:
-        maxpcm = max(track_peaks)
-        while (maxpcm * (2 ** (album_gain / 4.0)) > 32767):
-            album_gain -= 1 
-    return album_gain
-
 def parse_tool_output(text):
     """Given the tab-delimited output from an invocation of mp3gain
     or aacgain, parse the text and return a list of dictionaries
@@ -215,13 +201,6 @@ class ReplayGainPlugin(BeetsPlugin):
         output = call(cmd)
         log.debug('replaygain: analysis finished')
         results = parse_tool_output(output)
-
-        # Adjust for noclip mode.
-        if album and self.noclip:
-            album_gain = results[-1]['gain']
-            track_peaks = [r['peak'] for r in results[:-1]]
-            album_gain = reduce_gain_for_noclip(track_peaks, album_gain)
-            results[-1]['gain'] = album_gain
 
         return results
 
