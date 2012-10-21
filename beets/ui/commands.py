@@ -84,6 +84,36 @@ def _showdiff(field, oldval, newval, color):
         print_(u'  %s: %s -> %s' % (field, oldval, newval))
 
 
+DEFAULT_LIST_FORMAT_ITEM = '$artist - $album - $title'
+DEFAULT_LIST_FORMAT_ALBUM = '$albumartist - $album'
+
+def _pick_format(config=None, album=False, fmt=None):
+    """Pick album / item printing format from passed arguments,
+    falling back to config options and defaults."""
+    if not fmt and not config:
+        fmt = DEFAULT_LIST_FORMAT_ALBUM \
+              if album else DEFAULT_LIST_FORMAT_ITEM
+    elif not fmt:
+        if album:
+            fmt = ui.config_val(config, 'beets', 'list_format_album',
+                                DEFAULT_LIST_FORMAT_ALBUM)
+        else:
+            fmt = ui.config_val(config, 'beets', 'list_format_item',
+                                DEFAULT_LIST_FORMAT_ITEM)
+    return fmt
+
+def _format_and_print(obj, lib, album=False, fmt=None):
+    """Print object according to specified format."""
+    if not fmt:
+        fmt = _pick_format(album=album)
+    template = Template(fmt)
+    if album:
+        print_(obj.evaluate_template(template))
+    else:
+        print_(obj.evaluate_template(template, lib=lib))
+
+
+
 # fields: Shows a list of available fields for queries and format strings.
 fields_cmd = ui.Subcommand('fields',
     help='show fields available for queries and format strings')
@@ -808,9 +838,6 @@ default_commands.append(import_cmd)
 
 # list: Query and show library contents.
 
-DEFAULT_LIST_FORMAT_ITEM = '$artist - $album - $title'
-DEFAULT_LIST_FORMAT_ALBUM = '$albumartist - $album'
-
 def list_items(lib, query, album, path, fmt):
     """Print out items in lib matching query. If album, then search for
     albums instead of single items. If path, print the matched objects'
@@ -839,15 +866,7 @@ list_cmd.parser.add_option('-p', '--path', action='store_true',
 list_cmd.parser.add_option('-f', '--format', action='store',
     help='print with custom format', default=None)
 def list_func(lib, config, opts, args):
-    fmt = opts.format
-    if not fmt:
-        # If no format is specified, fall back to a default.
-        if opts.album:
-            fmt = ui.config_val(config, 'beets', 'list_format_album',
-                                DEFAULT_LIST_FORMAT_ALBUM)
-        else:
-            fmt = ui.config_val(config, 'beets', 'list_format_item',
-                                DEFAULT_LIST_FORMAT_ITEM)
+    fmt = _pick_format(config, opts.album, opts.format)
     list_items(lib, decargs(args), opts.album, opts.path, fmt)
 list_cmd.func = list_func
 default_commands.append(list_cmd)
@@ -855,7 +874,7 @@ default_commands.append(list_cmd)
 
 # update: Update library contents according to on-disk tags.
 
-def update_items(lib, query, album, move, color, pretend):
+def update_items(lib, query, album, move, color, pretend, fmt=None):
     """For all the items matched by the query, update the library to
     reflect the item's embedded tags.
     """
@@ -867,7 +886,7 @@ def update_items(lib, query, album, move, color, pretend):
         for item in items:
             # Item deleted?
             if not os.path.exists(syspath(item.path)):
-                print_(u'X %s - %s' % (item.artist, item.title))
+                _format_and_print(item, lib, fmt=fmt)
                 if not pretend:
                     lib.remove(item, True)
                 affected_albums.add(item.album_id)
@@ -899,7 +918,7 @@ def update_items(lib, query, album, move, color, pretend):
                     changes[key] = old_data[key], getattr(item, key)
             if changes:
                 # Something changed.
-                print_(u'* %s - %s' % (item.artist, item.title))
+                _format_and_print(item, lib, fmt=fmt)
                 for key, (oldval, newval) in changes.iteritems():
                     _showdiff(key, oldval, newval, color)
 
@@ -951,16 +970,19 @@ update_cmd.parser.add_option('-M', '--nomove', action='store_false',
     default=True, dest='move', help="don't move files in library")
 update_cmd.parser.add_option('-p', '--pretend', action='store_true',
     help="show all changes but do nothing")
+update_cmd.parser.add_option('-f', '--format', action='store',
+    help='print with custom format', default=None)
 def update_func(lib, config, opts, args):
     color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
-    update_items(lib, decargs(args), opts.album, opts.move, color, opts.pretend)
+    fmt = _pick_format(config, opts.album, opts.format)
+    update_items(lib, decargs(args), opts.album, opts.move, color, opts.pretend, fmt)
 update_cmd.func = update_func
 default_commands.append(update_cmd)
 
 
 # remove: Remove items from library, delete files.
 
-def remove_items(lib, query, album, delete=False):
+def remove_items(lib, query, album, delete=False, fmt=None):
     """Remove items matching query from lib. If album, then match and
     remove whole albums. If delete, also remove files from disk.
     """
@@ -969,7 +991,7 @@ def remove_items(lib, query, album, delete=False):
 
     # Show all the items.
     for item in items:
-        print_(item.artist + ' - ' + item.album + ' - ' + item.title)
+        _format_and_print(item, lib, fmt=fmt)
 
     # Confirm with user.
     print_()
@@ -996,8 +1018,11 @@ remove_cmd.parser.add_option("-d", "--delete", action="store_true",
     help="also remove files from disk")
 remove_cmd.parser.add_option('-a', '--album', action='store_true',
     help='match albums instead of tracks')
+remove_cmd.parser.add_option('-f', '--format', action='store',
+    help='print with custom format', default=None)
 def remove_func(lib, config, opts, args):
-    remove_items(lib, decargs(args), opts.album, opts.delete)
+    fmt = _pick_format(config, opts.album, opts.format)
+    remove_items(lib, decargs(args), opts.album, opts.delete, fmt)
 remove_cmd.func = remove_func
 default_commands.append(remove_cmd)
 
@@ -1066,7 +1091,7 @@ default_commands.append(version_cmd)
 
 # modify: Declaratively change metadata.
 
-def modify_items(lib, mods, query, write, move, album, color, confirm):
+def modify_items(lib, mods, query, write, move, album, color, confirm, fmt=None):
     """Modifies matching items according to key=value assignments."""
     # Parse key=value specifications into a dictionary.
     allowed_keys = library.ALBUM_KEYS if album else library.ITEM_KEYS_WRITABLE
@@ -1085,10 +1110,7 @@ def modify_items(lib, mods, query, write, move, album, color, confirm):
     print_('Modifying %i %ss.' % (len(objs), 'album' if album else 'item'))
     for obj in objs:
         # Identify the changed object.
-        if album:
-            print_(u'* %s - %s' % (obj.albumartist, obj.album))
-        else:
-            print_(u'* %s - %s' % (obj.artist, obj.title))
+        _format_and_print(obj, lib, album=album, fmt=fmt)
 
         # Show each change.
         for field, value in fsets.iteritems():
@@ -1139,6 +1161,8 @@ modify_cmd.parser.add_option('-a', '--album', action='store_true',
     help='modify whole albums instead of tracks')
 modify_cmd.parser.add_option('-y', '--yes', action='store_true',
     help='skip confirmation')
+modify_cmd.parser.add_option('-f', '--format', action='store',
+    help='print with custom format', default=None)
 def modify_func(lib, config, opts, args):
     args = decargs(args)
     mods = [a for a in args if '=' in a]
@@ -1149,8 +1173,9 @@ def modify_func(lib, config, opts, args):
         ui.config_val(config, 'beets', 'import_write',
             DEFAULT_IMPORT_WRITE, bool)
     color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
+    fmt = _pick_format(config, opts.album, opts.format)
     modify_items(lib, mods, query, write, opts.move, opts.album, color,
-                 not opts.yes)
+                 not opts.yes, fmt)
 modify_cmd.func = modify_func
 default_commands.append(modify_cmd)
 
