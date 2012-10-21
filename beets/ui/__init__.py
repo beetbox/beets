@@ -38,6 +38,7 @@ from beets.util.functemplate import Template
 
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
+
 if sys.platform == 'win32':
     try:
         import colorama
@@ -48,6 +49,7 @@ if sys.platform == 'win32':
 
 
 # Constants.
+
 CONFIG_PATH_VAR = 'BEETSCONFIG'
 DEFAULT_CONFIG_FILENAME_UNIX = '.beetsconfig'
 DEFAULT_CONFIG_FILENAME_WINDOWS = 'beetsconfig.ini'
@@ -70,6 +72,9 @@ DEFAULT_PATH_FORMATS = [
 DEFAULT_ART_FILENAME = 'cover'
 DEFAULT_TIMEOUT = 5.0
 NULL_REPLACE = '<strip>'
+DEFAULT_LIST_FORMAT_ITEM = '$artist - $album - $title'
+DEFAULT_LIST_FORMAT_ALBUM = '$albumartist - $album'
+
 
 # UI exception. Commands should throw this in order to display
 # nonrecoverable errors to the user.
@@ -510,6 +515,35 @@ def _get_path_formats(config):
         path_formats = custom_path_formats + path_formats
 
     return path_formats
+
+def _pick_format(config=None, album=False, fmt=None):
+    """Pick a format string for printing Album or Item objects,
+    falling back to config options and defaults.
+    """
+    if not fmt and not config:
+        fmt = DEFAULT_LIST_FORMAT_ALBUM \
+              if album else DEFAULT_LIST_FORMAT_ITEM
+    elif not fmt:
+        if album:
+            fmt = config_val(config, 'beets', 'list_format_album',
+                             DEFAULT_LIST_FORMAT_ALBUM)
+        else:
+            fmt = config_val(config, 'beets', 'list_format_item',
+                             DEFAULT_LIST_FORMAT_ITEM)
+    return fmt
+
+def print_obj(obj, lib, config, fmt=None):
+    """Print an Album or Item object. If `fmt` is specified, use that
+    format string. Otherwise, use the configured (or default) template.
+    """
+    album = isinstance(obj, library.Album)
+    if not fmt:
+        fmt = _pick_format(config, album=album)
+    template = Template(fmt)
+    if album:
+        print_(obj.evaluate_template(template))
+    else:
+        print_(obj.evaluate_template(template, lib=lib))
 
 
 # Subcommand parsing infrastructure.
