@@ -34,12 +34,8 @@ def random_item(lib, config, opts, args):
     number = min(len(objs), opts.number)
     objs = random.sample(objs, number)
 
-    if opts.album:
-        for album in objs:
-            print_obj(album, lib, config, template)
-    else:
-       for item in objs:
-            print_obj(item, lib, config, template)
+    for item in objs:
+        print_obj(item, lib, config, template)
 
 random_cmd = Subcommand('random',
                         help='chose a random track or album')

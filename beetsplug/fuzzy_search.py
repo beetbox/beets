@@ -16,7 +16,7 @@
 """
 import beets
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, decargs, print_
+from beets.ui import Subcommand, decargs, print_obj
 from beets.util.functemplate import Template
 import difflib
 
@@ -47,19 +47,16 @@ def fuzzy_list(lib, config, opts, args):
     query = ' '.join(query).lower()
     queryMatcher = difflib.SequenceMatcher(b=query)
 
-    fmt = opts.format
     if opts.threshold is not None:
         threshold = float(opts.threshold)
     else:
         threshold = float(conf['threshold'])
 
-    if fmt is None:
-        # If no specific template is supplied, use a default
-        if opts.album:
-            fmt = u'$albumartist - $album'
-        else:
-            fmt = u'$artist - $album - $title'
-    template = Template(fmt)
+    if opts.path:
+        fmt = '$path'
+    else:
+        fmt = opts.format
+    template = Template(fmt) if fmt else None
 
     if opts.album:
         objs = lib.albums()
@@ -68,13 +65,9 @@ def fuzzy_list(lib, config, opts, args):
 
     items = filter(lambda i: is_match(queryMatcher, i, album=opts.album,
                                       threshold=threshold), objs)
-    for i in items:
-        if opts.path:
-            print_(i.item_dir() if opts.album else i.path)
-        elif opts.album:
-            print_(i.evaluate_template(template))
-        else:
-            print_(i.evaluate_template(template, lib))
+
+    for item in items:
+        print_obj(item, lib, config, template)
         if opts.verbose:
             print(is_match(queryMatcher, i, album=opts.album, verbose=True)[1])
 
