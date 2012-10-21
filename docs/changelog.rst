@@ -62,6 +62,8 @@ Changelog
 * Fix for changing date fields (like "year") with the :ref:`modify-cmd`
   command.
 * Fix a crash when input is read from a pipe without a specified encoding.
+* Fix some problem with identifying files on Windows with Unicode directory
+  names in their path.
 * Add a human-readable error message when writing files' tags fails.
 * Changed plugin loading so that modules can be imported without
   unintentionally loading the plugins they contain.

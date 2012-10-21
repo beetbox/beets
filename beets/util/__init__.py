@@ -116,8 +116,11 @@ def normpath(path):
 def ancestry(path, pathmod=None):
     """Return a list consisting of path's parent directory, its
     grandparent, and so on. For instance:
+
        >>> ancestry('/a/b/c')
        ['/', '/a', '/a/b']
+
+    The argument should *not* be the result of a call to `syspath`.
     """
     pathmod = pathmod or os.path
     out = []
@@ -226,8 +229,11 @@ def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
 
 def components(path, pathmod=None):
     """Return a list of the path components in path. For instance:
+
        >>> components('/a/b/c')
        ['a', 'b', 'c']
+
+    The argument should *not* be the result of a call to `syspath`.
     """
     pathmod = pathmod or os.path
     comps = []
