@@ -40,7 +40,11 @@ log = logging.getLogger('beets')
 # objects that can be fed to a SubcommandsOptionParser.
 default_commands = []
 
-# Utility.
+DEFAULT_LIST_FORMAT_ITEM = '$artist - $album - $title'
+DEFAULT_LIST_FORMAT_ALBUM = '$albumartist - $album'
+
+
+# Utilities.
 
 def _do_query(lib, query, album, also_items=True):
     """For commands that operate on matched items, performs a query
@@ -83,13 +87,10 @@ def _showdiff(field, oldval, newval, color):
             oldval, newval = unicode(oldval), unicode(newval)
         print_(u'  %s: %s -> %s' % (field, oldval, newval))
 
-
-DEFAULT_LIST_FORMAT_ITEM = '$artist - $album - $title'
-DEFAULT_LIST_FORMAT_ALBUM = '$albumartist - $album'
-
 def _pick_format(config=None, album=False, fmt=None):
-    """Pick album / item printing format from passed arguments,
-    falling back to config options and defaults."""
+    """Pick a format string for printing Album or Item objects,
+    falling back to config options and defaults.
+    """
     if not fmt and not config:
         fmt = DEFAULT_LIST_FORMAT_ALBUM \
               if album else DEFAULT_LIST_FORMAT_ITEM
@@ -102,8 +103,11 @@ def _pick_format(config=None, album=False, fmt=None):
                                 DEFAULT_LIST_FORMAT_ITEM)
     return fmt
 
-def _format_and_print(obj, lib, album=False, fmt=None):
-    """Print object according to specified format."""
+def _print_obj(obj, lib, fmt=None):
+    """Print an Album or Item object. If `fmt` is specified, use that
+    format string. Otherwise, use the configured (or default) template.
+    """
+    album = isinstance(obj, library.Album)
     if not fmt:
         fmt = _pick_format(album=album)
     template = Template(fmt)
@@ -113,8 +117,8 @@ def _format_and_print(obj, lib, album=False, fmt=None):
         print_(obj.evaluate_template(template, lib=lib))
 
 
-
 # fields: Shows a list of available fields for queries and format strings.
+
 fields_cmd = ui.Subcommand('fields',
     help='show fields available for queries and format strings')
 def fields_func(lib, config, opts, args):
@@ -886,7 +890,7 @@ def update_items(lib, query, album, move, color, pretend, fmt=None):
         for item in items:
             # Item deleted?
             if not os.path.exists(syspath(item.path)):
-                _format_and_print(item, lib, fmt=fmt)
+                _print_obj(item, lib, fmt=fmt)
                 if not pretend:
                     lib.remove(item, True)
                 affected_albums.add(item.album_id)
@@ -918,7 +922,7 @@ def update_items(lib, query, album, move, color, pretend, fmt=None):
                     changes[key] = old_data[key], getattr(item, key)
             if changes:
                 # Something changed.
-                _format_and_print(item, lib, fmt=fmt)
+                _print_obj(item, lib, fmt=fmt)
                 for key, (oldval, newval) in changes.iteritems():
                     _showdiff(key, oldval, newval, color)
 
@@ -991,7 +995,7 @@ def remove_items(lib, query, album, delete=False, fmt=None):
 
     # Show all the items.
     for item in items:
-        _format_and_print(item, lib, fmt=fmt)
+        _print_obj(item, lib, fmt=fmt)
 
     # Confirm with user.
     print_()
@@ -1110,7 +1114,7 @@ def modify_items(lib, mods, query, write, move, album, color, confirm, fmt=None)
     print_('Modifying %i %ss.' % (len(objs), 'album' if album else 'item'))
     for obj in objs:
         # Identify the changed object.
-        _format_and_print(obj, lib, album=album, fmt=fmt)
+        _print_obj(obj, lib, fmt=fmt)
 
         # Show each change.
         for field, value in fsets.iteritems():

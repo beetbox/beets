@@ -151,6 +151,8 @@ variable expansion.
 
 .. _xargs: http://en.wikipedia.org/wiki/Xargs
 
+.. _remove-cmd:
+
 remove
 ``````
 ::
@@ -198,6 +200,8 @@ query are renamed into your library directory structure. By specifying a
 destination directory with ``-d`` manually, you can move items matching a query
 anywhere in your filesystem. The ``-c`` option copies files instead of moving
 them. As with other commands, the ``-a`` option matches albums instead of items.
+
+.. _update-cmd:
 
 update
 ``````

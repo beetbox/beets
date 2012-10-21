@@ -27,6 +27,9 @@ Changelog
   calculation more accurate (thanks to Jakob Schnitzer).
 * :ref:`list-cmd` command: Templates given with ``-f`` can now show items' paths
   (using ``$path``).
+* The output of the :ref:`update-cmd`, :ref:`remove-cmd`, and :ref:`modify-cmd`
+  commands now respects the :ref:`list_format_album` and
+  :ref:`list_format_item` config options. Thanks to Mike Kazantsev.
 * Fix album queries for ``artpath`` and other non-item fields.
 * Null values in the database can now be matched with the empty-string regular
   expression, ``^$``.
