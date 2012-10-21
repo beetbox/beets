@@ -103,9 +103,7 @@ def convert_func(lib, config, opts, args):
         raise ui.UserError('no convert destination set')
     threads = opts.threads if opts.threads is not None else conf['threads']
 
-    fmt = '$albumartist - $album' if opts.album \
-          else '$artist - $album - $title'
-    ui.commands.list_items(lib, ui.decargs(args), opts.album, False, fmt)
+    ui.commands.list_items(lib, ui.decargs(args), opts.album, None, config)
 
     if not ui.input_yn("Convert? (Y/n)"):
         return
