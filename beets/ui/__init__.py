@@ -539,7 +539,10 @@ def print_obj(obj, lib, config, fmt=None):
     album = isinstance(obj, library.Album)
     if not fmt:
         fmt = _pick_format(config, album=album)
-    template = Template(fmt)
+    if isinstance(fmt, Template):
+        template = fmt
+    else:
+        template = Template(fmt)
     if album:
         print_(obj.evaluate_template(template))
     else:

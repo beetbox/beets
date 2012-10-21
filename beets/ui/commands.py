@@ -810,25 +810,17 @@ default_commands.append(import_cmd)
 
 # list: Query and show library contents.
 
-def list_items(lib, query, album, path, fmt):
+def list_items(lib, query, album, fmt, config):
     """Print out items in lib matching query. If album, then search for
-    albums instead of single items. If path, print the matched objects'
-    paths instead of human-readable information about them.
+    albums instead of single items.
     """
-    template = Template(fmt)
-
+    tmpl = Template(fmt) if fmt else None
     if album:
         for album in lib.albums(query):
-            if path:
-                print_(album.item_dir())
-            elif fmt is not None:
-                print_(album.evaluate_template(template))
+            ui.print_obj(album, lib, config, tmpl)
     else:
         for item in lib.items(query):
-            if path:
-                print_(item.path)
-            elif fmt is not None:
-                print_(item.evaluate_template(template, lib))
+            ui.print_obj(item, lib, config, tmpl)
 
 list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
 list_cmd.parser.add_option('-a', '--album', action='store_true',
@@ -838,8 +830,11 @@ list_cmd.parser.add_option('-p', '--path', action='store_true',
 list_cmd.parser.add_option('-f', '--format', action='store',
     help='print with custom format', default=None)
 def list_func(lib, config, opts, args):
-    fmt = ui._pick_format(config, opts.album, opts.format)
-    list_items(lib, decargs(args), opts.album, opts.path, fmt)
+    if opts.path:
+        fmt = '$path'
+    else:
+        fmt = opts.format
+    list_items(lib, decargs(args), opts.album, fmt, config)
 list_cmd.func = list_func
 default_commands.append(list_cmd)
 

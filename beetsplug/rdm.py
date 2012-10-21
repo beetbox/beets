@@ -15,22 +15,17 @@
 """Get a random song or album from the library.
 """
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, decargs, print_
+from beets.ui import Subcommand, decargs, print_obj
 from beets.util.functemplate import Template
 import random
 
 def random_item(lib, config, opts, args):
     query = decargs(args)
-    path = opts.path
-    fmt = opts.format
-
-    if fmt is None:
-        # If no specific template is supplied, use a default
-        if opts.album:
-            fmt = u'$albumartist - $album'
-        else:
-            fmt = u'$artist - $album - $title'
-    template = Template(fmt)
+    if opts.path:
+        fmt = '$path'
+    else:
+        fmt = opts.format
+    template = Template(fmt) if fmt else None
 
     if opts.album:
         objs = list(lib.albums(query=query))
@@ -41,16 +36,10 @@ def random_item(lib, config, opts, args):
 
     if opts.album:
         for album in objs:
-            if path:
-                print_(album.item_dir())
-            else:
-                print_(album.evaluate_template(template))
+            print_obj(album, lib, config, template)
     else:
-        for item in objs:
-            if path:
-                print_(item.path)
-            else:
-                print_(item.evaluate_template(template, lib))
+       for item in objs:
+            print_obj(item, lib, config, template)
 
 random_cmd = Subcommand('random',
                         help='chose a random track or album')

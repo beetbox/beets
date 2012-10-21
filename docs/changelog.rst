@@ -25,8 +25,8 @@ Changelog
   tags and ID3 tags, the ID3 tags are now also removed.
 * :ref:`stats-cmd` command: New ``--exact`` switch to make the file size
   calculation more accurate (thanks to Jakob Schnitzer).
-* :ref:`list-cmd` command: Templates given with ``-f`` can now show items' paths
-  (using ``$path``).
+* :ref:`list-cmd` command: Templates given with ``-f`` can now show items' and
+  albums' paths (using ``$path``).
 * The output of the :ref:`update-cmd`, :ref:`remove-cmd`, and :ref:`modify-cmd`
   commands now respects the :ref:`list_format_album` and
   :ref:`list_format_item` config options. Thanks to Mike Kazantsev.

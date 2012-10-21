@@ -1600,6 +1600,7 @@ class Album(BaseAlbum):
             mapping[key] = getattr(self, key)
 
         mapping['artpath'] = displayable_path(mapping['artpath'])
+        mapping['path'] = displayable_path(self.item_dir())
 
         # Get template functions.
         funcs = DefaultTemplateFunctions().functions()
