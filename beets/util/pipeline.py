@@ -432,7 +432,7 @@ if __name__ == '__main__':
             print('processing %i' % num)
             time.sleep(3)
             if num == 3:
-               raise Exception()
+                raise Exception()
             num = yield num * 2
     def exc_consume():
         while True:
