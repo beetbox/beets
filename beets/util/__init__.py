@@ -24,6 +24,7 @@ from collections import defaultdict
 import traceback
 
 MAX_FILENAME_LENGTH = 200
+WINDOWS_MAGIC_PREFIX = u'\\\\?\\'
 
 class HumanReadableException(Exception):
     """An Exception that can include a human-readable error message to
@@ -108,7 +109,9 @@ def normpath(path):
     """Provide the canonical form of the path suitable for storing in
     the database.
     """
-    return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
+    path = syspath(path)
+    path = os.path.normpath(os.path.abspath(os.path.expanduser(path)))
+    return bytestring_path(path)
 
 def ancestry(path, pathmod=None):
     """Return a list consisting of path's parent directory, its
@@ -256,13 +259,22 @@ def _fsencoding():
         encoding = 'utf8'
     return encoding
 
-def bytestring_path(path):
+def bytestring_path(path, pathmod=None):
     """Given a path, which is either a str or a unicode, returns a str
     path (ensuring that we never deal with Unicode pathnames).
     """
+    pathmod = pathmod or os.path
+    windows = pathmod.__name__ == 'ntpath'
+
     # Pass through bytestrings.
     if isinstance(path, str):
         return path
+
+    # On Windows, remove the magic prefix added by `syspath`. This makes
+    # ``bytestring_path(syspath(X)) == X``, i.e., we can safely
+    # round-trip through `syspath`.
+    if windows and path.startswith(WINDOWS_MAGIC_PREFIX):
+        path = path[len(WINDOWS_MAGIC_PREFIX):]
 
     # Try to encode with default encodings, but fall back to UTF8.
     try:
@@ -310,8 +322,8 @@ def syspath(path, pathmod=None):
             path = path.decode(encoding, 'replace')
 
     # Add the magic prefix if it isn't already there
-    if not path.startswith(u'\\\\?\\'):
-        path = u'\\\\?\\' + path
+    if not path.startswith(WINDOWS_MAGIC_PREFIX):
+        path = WINDOWS_MAGIC_PREFIX + path
 
     return path
 

@@ -341,17 +341,6 @@ class DestinationTest(unittest.TestCase):
         ]
         self.assertEqual(self.lib.destination(self.i), np('one/three'))
 
-    def test_syspath_windows_format(self):
-        path = ntpath.join('a', 'b', 'c')
-        outpath = util.syspath(path, ntpath)
-        self.assertTrue(isinstance(outpath, unicode))
-        self.assertTrue(outpath.startswith(u'\\\\?\\'))
-
-    def test_syspath_posix_unchanged(self):
-        path = posixpath.join('a', 'b', 'c')
-        outpath = util.syspath(path, posixpath)
-        self.assertEqual(path, outpath)
-
     def test_sanitize_windows_replaces_trailing_space(self):
         p = util.sanitize_path(u'one/two /three', ntpath)
         self.assertFalse(' ' in p)
@@ -562,6 +551,36 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
         album1.albumtype = 'foo/bar'
         self._setf(u'foo%aunique{albumartist album,albumtype}/$title')
         self._assert_dest('/base/foo [foo_bar]/the title', self.i1)
+
+class PathConversionTest(unittest.TestCase):
+    def test_syspath_windows_format(self):
+        path = ntpath.join('a', 'b', 'c')
+        outpath = util.syspath(path, ntpath)
+        self.assertTrue(isinstance(outpath, unicode))
+        self.assertTrue(outpath.startswith(u'\\\\?\\'))
+
+    def test_syspath_posix_unchanged(self):
+        path = posixpath.join('a', 'b', 'c')
+        outpath = util.syspath(path, posixpath)
+        self.assertEqual(path, outpath)
+
+    def _windows_bytestring_path(self, path):
+        old_gfse = sys.getfilesystemencoding
+        sys.getfilesystemencoding = lambda: 'mbcs'
+        try:
+            return util.bytestring_path(path, ntpath)
+        finally:
+            sys.getfilesystemencoding = old_gfse
+
+    def test_bytestring_path_windows_encodes_utf8(self):
+        path = u'caf\xe9'
+        outpath = self._windows_bytestring_path(path)
+        self.assertEqual(path, outpath.decode('utf8'))
+
+    def test_bytesting_path_windows_removes_magic_prefix(self):
+        path = u'\\\\?\\C:\\caf\xe9'
+        outpath = self._windows_bytestring_path(path)
+        self.assertEqual(outpath, u'C:\\caf\xe9'.encode('utf8'))
 
 class PluginDestinationTest(unittest.TestCase):
     # Mock the plugins.template_values(item) function.
