@@ -47,12 +47,7 @@ class ListTest(unittest.TestCase):
         self.io.restore()
 
     def _run_list(self, query='', album=False, path=False, fmt=None):
-        if not fmt:
-            if album:
-                fmt = commands.DEFAULT_LIST_FORMAT_ALBUM
-            else:
-                fmt = commands.DEFAULT_LIST_FORMAT_ITEM
-        commands.list_items(self.lib, query, album, path, fmt)
+        commands.list_items(self.lib, query, album, fmt, None)
 
     def test_list_outputs_item(self):
         self._run_list()
@@ -69,7 +64,7 @@ class ListTest(unittest.TestCase):
         self.assertTrue(u'na\xefve' in out.decode(self.io.stdout.encoding))
 
     def test_list_item_path(self):
-        self._run_list(path=True)
+        self._run_list(fmt='$path')
         out = self.io.getoutput()
         self.assertEqual(out.strip(), u'xxx/yyy')
 
@@ -79,7 +74,7 @@ class ListTest(unittest.TestCase):
         self.assertGreater(len(out), 0)
 
     def test_list_album_path(self):
-        self._run_list(album=True, path=True)
+        self._run_list(album=True, fmt='$path')
         out = self.io.getoutput()
         self.assertEqual(out.strip(), u'xxx')
 
@@ -119,11 +114,6 @@ class ListTest(unittest.TestCase):
         self.assertTrue(u'the genre' in out)
         self.assertTrue(u'the album' not in out)
 
-    def test_list_item_path_ignores_format(self):
-        self._run_list(path=True, fmt='$year - $artist')
-        out = self.io.getoutput()
-        self.assertEqual(out.strip(), u'xxx/yyy')
-
 class RemoveTest(unittest.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
@@ -143,14 +133,14 @@ class RemoveTest(unittest.TestCase):
 
     def test_remove_items_no_delete(self):
         self.io.addinput('y')
-        commands.remove_items(self.lib, '', False, False)
+        commands.remove_items(self.lib, '', False, False, None)
         items = self.lib.items()
         self.assertEqual(len(list(items)), 0)
         self.assertTrue(os.path.exists(self.i.path))
 
     def test_remove_items_with_delete(self):
         self.io.addinput('y')
-        commands.remove_items(self.lib, '', False, True)
+        commands.remove_items(self.lib, '', False, True, None)
         items = self.lib.items()
         self.assertEqual(len(list(items)), 0)
         self.assertFalse(os.path.exists(self.i.path))
@@ -176,7 +166,7 @@ class ModifyTest(unittest.TestCase):
     def _modify(self, mods, query=(), write=False, move=False, album=False):
         self.io.addinput('y')
         commands.modify_items(self.lib, mods, query,
-                              write, move, album, True, True)
+                              write, move, album, True, True, None)
 
     def test_modify_item_dbdata(self):
         self._modify(["title=newTitle"])
@@ -334,7 +324,7 @@ class UpdateTest(unittest.TestCase, _common.ExtraAsserts):
         if reset_mtime:
             self.i.mtime = 0
             self.lib.store(self.i)
-        commands.update_items(self.lib, query, album, move, True, False)
+        commands.update_items(self.lib, query, album, move, True, False, None)
 
     def test_delete_removes_item(self):
         self.assertTrue(list(self.lib.items()))
