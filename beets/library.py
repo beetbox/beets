@@ -276,7 +276,7 @@ class Item(object):
         try:
             f = MediaFile(syspath(read_path))
         except Exception:
-            log.error('failed reading file: {0}'.format(
+            log.error(u'failed reading file: {0}'.format(
                 displayable_path(read_path))
             )
             raise
@@ -610,7 +610,7 @@ class CollectionQuery(Query):
 
             # Unrecognized field.
             else:
-                log.warn('no such field in query: {0}'.format(key))
+                log.warn(u'no such field in query: {0}'.format(key))
 
         if not subqueries:  # No terms in query.
             subqueries = [TrueQuery()]

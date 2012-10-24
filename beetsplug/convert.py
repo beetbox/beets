@@ -31,7 +31,7 @@ _fs_lock = threading.Lock()
 
 
 def encode(source, dest):
-    log.info('Started encoding ' + source)
+    log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
     temp_dest = dest + '~'
 
     source_ext = os.path.splitext(source)[1].lower()
@@ -47,23 +47,23 @@ def encode(source, dest):
                        [source, temp_dest], close_fds=True, stderr=DEVNULL)
         encode.communicate()
     else:
-        log.error('Only converting from FLAC or MP3 implemented')
+        log.error(u'Only converting from FLAC or MP3 implemented')
         return
     if encode.returncode != 0:
         # Something went wrong (probably Ctrl+C), remove temporary files
-        log.info('Encoding {0} failed. Cleaning up...'.format(source))
+        log.info(u'Encoding {0} failed. Cleaning up...'.format(source))
         util.remove(temp_dest)
         util.prune_dirs(os.path.dirname(temp_dest))
         return
     shutil.move(temp_dest, dest)
-    log.info('Finished encoding ' + source)
+    log.info(u'Finished encoding {0}'.format(util.displayable_path(source)))
 
 
 def convert_item(lib, dest_dir):
     while True:
         item = yield
         if item.format != 'FLAC' and item.format != 'MP3':
-            log.info('Skipping {0} (unsupported format)'.format(
+            log.info(u'Skipping {0} (unsupported format)'.format(
                 util.displayable_path(item.path)
             ))
             continue
@@ -72,7 +72,7 @@ def convert_item(lib, dest_dir):
         dest = os.path.splitext(dest)[0] + '.mp3'
 
         if os.path.exists(dest):
-            log.info('Skipping {0} (target file exists)'.format(
+            log.info(u'Skipping {0} (target file exists)'.format(
                 util.displayable_path(item.path)
             ))
             continue
@@ -84,7 +84,7 @@ def convert_item(lib, dest_dir):
             util.mkdirall(dest)
 
         if item.format == 'MP3' and item.bitrate < 1000 * conf['max_bitrate']:
-            log.info('Copying {0}'.format(util.displayable_path(item.path)))
+            log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
             util.copy(item.path, dest)
             dest_item = library.Item.from_path(dest)
         else:

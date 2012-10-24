@@ -44,7 +44,7 @@ def fetch_url(url):
     try:
         return urllib.urlopen(url).read()
     except IOError as exc:
-        log.debug('failed to fetch: {0} ({1})'.format(url, str(exc)))
+        log.debug(u'failed to fetch: {0} ({1})'.format(url, unicode(exc)))
         return None
 
 def unescape(text):
@@ -160,7 +160,7 @@ def get_lyrics(artist, title):
         if lyrics:
             if isinstance(lyrics, str):
                 lyrics = lyrics.decode('utf8', 'ignore')
-            log.debug('got lyrics from backend: {0}'.format(backend.__name__))
+            log.debug(u'got lyrics from backend: {0}'.format(backend.__name__))
             return lyrics
 
 

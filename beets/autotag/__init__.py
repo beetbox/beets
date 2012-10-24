@@ -19,7 +19,7 @@ import logging
 import re
 
 from beets import library, mediafile
-from beets.util import sorted_walk, ancestry
+from beets.util import sorted_walk, ancestry, displayable_path
 
 # Parts of external interface.
 from .hooks import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch
@@ -57,7 +57,9 @@ def albums_in_dir(path, ignore=()):
             except mediafile.FileTypeError:
                 pass
             except mediafile.UnreadableFileError:
-                log.warn('unreadable file: ' + filename)
+                log.warn(u'unreadable file: {0}'.format(
+                    displayable_path(filename))
+                )
             else:
                 items.append(i)
 

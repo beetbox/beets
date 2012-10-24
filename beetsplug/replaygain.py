@@ -132,8 +132,8 @@ class ReplayGainPlugin(BeetsPlugin):
             if opts.album:
                 # Analyze albums.
                 for album in lib.albums(ui.decargs(args)):
-                    log.info('analyzing {0} - {1}'.format(album.albumartist,
-                                                          album.album))
+                    log.info(u'analyzing {0} - {1}'.format(album.albumartist,
+                                                           album.album))
                     items = list(album.items())
                     results = self.compute_rgain(items, True)
                     if results:
@@ -146,8 +146,8 @@ class ReplayGainPlugin(BeetsPlugin):
             else:
                 # Analyze individual tracks.
                 for item in lib.items(ui.decargs(args)):
-                    log.info('analyzing {0} - {1}'.format(item.artist,
-                                                          item.title))
+                    log.info(u'analyzing {0} - {1}'.format(item.artist,
+                                                           item.title))
                     results = self.compute_rgain([item], False)
                     if results:
                         self.store_gain(lib, [item], results, None)
@@ -177,7 +177,7 @@ class ReplayGainPlugin(BeetsPlugin):
         # needs recalculation, we still get an accurate album gain
         # value.
         if all([not self.requires_gain(i, album) for i in items]):
-            log.debug('replaygain: no gain to compute')
+            log.debug(u'replaygain: no gain to compute')
             return
 
         # Construct shell command. The "-o" option makes the output
@@ -199,9 +199,9 @@ class ReplayGainPlugin(BeetsPlugin):
         cmd = cmd + ['-d', str(self.gain_offset)]
         cmd = cmd + [syspath(i.path) for i in items]
 
-        log.debug('replaygain: analyzing {0} files'.format(len(items)))
+        log.debug(u'replaygain: analyzing {0} files'.format(len(items)))
         output = call(cmd)
-        log.debug('replaygain: analysis finished')
+        log.debug(u'replaygain: analysis finished')
         results = parse_tool_output(output)
 
         return results
@@ -215,7 +215,7 @@ class ReplayGainPlugin(BeetsPlugin):
             item.rg_track_peak = info['peak']
             lib.store(item)
 
-            log.debug('replaygain: applied track gain {0}, peak {1}'.format(
+            log.debug(u'replaygain: applied track gain {0}, peak {1}'.format(
                 item.rg_track_gain,
                 item.rg_track_peak
             ))
@@ -225,7 +225,7 @@ class ReplayGainPlugin(BeetsPlugin):
             album_info = rgain_infos[-1]
             album.rg_album_gain = album_info['gain']
             album.rg_album_peak = album_info['peak']
-            log.debug('replaygain: applied album gain {0}, peak {1}'.format(
+            log.debug(u'replaygain: applied album gain {0}, peak {1}'.format(
                 album.rg_album_gain,
                 album.rg_album_peak
             ))
