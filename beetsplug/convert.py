@@ -86,7 +86,6 @@ def convert_item(lib, dest_dir):
         if item.format == 'MP3' and item.bitrate < 1000 * conf['max_bitrate']:
             log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
             util.copy(item.path, dest)
-            dest_item = library.Item.from_path(dest)
         else:
             encode(item.path, dest)
             item.path = dest
@@ -94,7 +93,7 @@ def convert_item(lib, dest_dir):
 
         artpath = lib.get_album(item).artpath
         if artpath and conf['embed']:
-            _embed(artpath, [item])
+            _embed(artpath, [library.Item.from_path(dest)])
 
 
 def convert_func(lib, config, opts, args):
