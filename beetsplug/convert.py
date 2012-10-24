@@ -88,12 +88,13 @@ def convert_item(lib, dest_dir):
             util.copy(item.path, dest)
         else:
             encode(item.path, dest)
-            item.path = dest
-            item.write()
+
+        item.path = dest
+        item.write()
 
         artpath = lib.get_album(item).artpath
         if artpath and conf['embed']:
-            _embed(artpath, [library.Item.from_path(dest)])
+            _embed(artpath, [item])
 
 
 def convert_func(lib, config, opts, args):
