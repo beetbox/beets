@@ -38,6 +38,8 @@ Changelog
   the whitelist (thanks to Fabrice Laporte).
 * :doc:`/plugins/lastgenre`: Add a ``lastgenre`` command for fetching genres
   post facto (thanks to Jakob Schnitzer).
+* :doc:`/plugins/fetchart`: Local image filenames are now used in alphabetical
+  order.
 * :doc:`/plugins/fetchart`: Fix a bug where cover art filenames could lack
   a ``.jpg`` extension.
 * :doc:`/plugins/lyrics`: Fix an exception with non-ASCII lyrics.

@@ -117,10 +117,11 @@ def art_in_path(path):
         for ext in IMAGE_EXTENSIONS:
             if fn.lower().endswith('.' + ext):
                 images.append(fn)
+    images.sort()
 
     # Look for "preferred" filenames.
-    for fn in images:
-        for name in COVER_NAMES:
+    for name in COVER_NAMES:
+        for fn in images:
             if fn.lower().startswith(name):
                 log.debug('Using well-named art file %s' % fn)
                 return os.path.join(path, fn)
