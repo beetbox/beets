@@ -709,7 +709,7 @@ def list_items(lib, query, album, fmt):
     """Print out items in lib matching query. If album, then search for
     albums instead of single items.
     """
-    tmpl = Template(fmt) if fmt else Template(ui._pick_format(config, album))
+    tmpl = Template(ui._pick_format(album, fmt))
     if album:
         for album in lib.albums(query):
             ui.print_obj(album, lib, tmpl)

@@ -409,7 +409,7 @@ def get_replacements():
     # FIXME handle regex compilation errors
     return [(re.compile(k), v) for (k, v) in pairs]
 
-def _pick_format(album=False, fmt=None):
+def _pick_format(album, fmt=None):
     """Pick a format string for printing Album or Item objects,
     falling back to config options and defaults.
     """
@@ -425,8 +425,7 @@ def print_obj(obj, lib, fmt=None):
     format string. Otherwise, use the configured template.
     """
     album = isinstance(obj, library.Album)
-    if not fmt:
-        fmt = _pick_format(album=album)
+    fmt = _pick_format(album, fmt)
     if isinstance(fmt, Template):
         template = fmt
     else:
