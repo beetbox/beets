@@ -275,8 +275,8 @@ class Item(object):
             read_path = normpath(read_path)
         try:
             f = MediaFile(syspath(read_path))
-        except Exception as exc:
-            log.error(u'failed reading file: {0}'.format(
+        except Exception:
+            log.debug(u'failed reading file: {0}'.format(
                 displayable_path(read_path))
             )
             raise
