@@ -5,6 +5,7 @@ import:
     write: yes
     copy: yes
     move: no
+    delete: no
     resume: ask
     incremental: no
     quiet_fallback: skip

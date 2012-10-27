@@ -670,7 +670,7 @@ def main(args=None, configfh=None):
         exc.log(log)
         sys.exit(1)
     except confit.ConfigError as exc:
-        FIXME
+        log.error(u'configuration error: {0}'.format(exc))
     except IOError as exc:
         if exc.errno == errno.EPIPE:
             # "Broken pipe". End silently.
