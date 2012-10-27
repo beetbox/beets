@@ -599,8 +599,9 @@ class TerminalImportSession(importer.ImportSession):
             assert False
 
     def should_resume(path):
-        return ui.input_yn("Import of the directory:\n%s"
-                        "\nwas interrupted. Resume (Y/n)?" % path)
+        return ui.input_yn(u"Import of the directory:\n{0}\n"
+                           "was interrupted. Resume (Y/n)?"
+                           .format(displayable_path(path)))
 
 # The import command.
 
@@ -697,6 +698,8 @@ def import_func(lib, opts, args):
     else:
         query = None
         paths = args
+        if not paths:
+            raise ui.UserError('no path specified')
 
     import_files(lib, paths, query)
 import_cmd.func = import_func

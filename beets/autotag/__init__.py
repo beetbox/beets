@@ -38,17 +38,17 @@ MULTIDISC_PAT_FMT = r'%s\s*\d'
 
 # Additional utilities for the main interface.
 
-def albums_in_dir(path, ignore=()):
+def albums_in_dir(path):
     """Recursively searches the given directory and returns an iterable
     of (path, items) where path is a containing directory and items is
     a list of Items that is probably an album. Specifically, any folder
-    containing any media files is an album. Directories and file names
-    that match the glob patterns in ``ignore`` are skipped.
+    containing any media files is an album.
     """
     collapse_root = None
     collapse_items = None
 
-    for root, dirs, files in sorted_walk(path, ignore):
+    for root, dirs, files in sorted_walk(path,
+                                         ignore=config['ignore'].get(list)):
         # Get a list of items in the directory.
         items = []
         for filename in files:

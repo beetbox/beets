@@ -261,6 +261,8 @@ class ImportSession(object):
         """
         self.lib = lib
         self.logfile = logfile
+        self.paths = paths
+        self.query = query
 
     def tag_log(self, status, path):
         """Log a message about a given album to logfile. The status should
@@ -307,7 +309,7 @@ class ImportSession(object):
         """Run the import task.
         """
         # Set up the pipeline.
-        if config.query is None:
+        if self.query is None:
             stages = [read_tasks(self)]
         else:
             stages = [query_tasks(self)]
@@ -561,7 +563,7 @@ def read_tasks(session):
         # Produce paths under this directory.
         if progress:
             resume_dir = resume_dirs.get(toppath)
-        for path, items in autotag.albums_in_dir(toppath, config.ignore):
+        for path, items in autotag.albums_in_dir(toppath):
             # Skip according to progress.
             if progress and resume_dir:
                 # We're fast-forwarding to resume a previous tagging.
