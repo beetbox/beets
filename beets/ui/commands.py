@@ -273,17 +273,17 @@ def show_item_change(item, match):
 
     print_('(Similarity: %s)' % dist_string(match.distance))
 
-def _quiet_fall_back(config):
+def _quiet_fall_back():
     """Show the user that the default action is being taken because
     we're in quiet mode and the recommendation is not strong.
     """
-    if config.quiet_fallback == importer.action.SKIP:
+    fallback = config['import']['quiet_fallback'].as_choice(['skip', 'asis'])
+    if fallback == 'skip':
         print_('Skipping.')
-    elif config.quiet_fallback == importer.action.ASIS:
-        print_('Importing as-is.')
+        return importer.action.SKIP
     else:
-        assert(False)
-    return config.quiet_fallback
+        print_('Importing as-is.')
+        return importer.action.ASIS
 
 def choose_candidate(candidates, singleton, rec, cur_artist=None,
                      cur_album=None, item=None, itemcount=None):
@@ -484,14 +484,14 @@ class TerminalImportSession(importer.ImportSession):
         print_()
         print_(task.path)
 
-        if config.quiet:
+        if config['import']['quiet']:
             # No input; just make a decision.
             if task.rec == autotag.RECOMMEND_STRONG:
                 match = task.candidates[0]
                 show_change(task.cur_artist, task.cur_album, match)
                 return match
             else:
-                return _quiet_fall_back(config)
+                return _quiet_fall_back()
 
         # Loop until we have a choice.
         candidates, rec = task.candidates, task.rec
@@ -537,14 +537,14 @@ class TerminalImportSession(importer.ImportSession):
         print_(task.item.path)
         candidates, rec = task.candidates, task.rec
 
-        if config.quiet:
+        if config['import']['quiet']:
             # Quiet mode; make a decision.
             if rec == autotag.RECOMMEND_STRONG:
                 match = candidates[0]
                 show_item_change(task.item, match)
                 return match
             else:
-                return _quiet_fall_back(config)
+                return _quiet_fall_back()
 
         while True:
             # Ask for a choice.
@@ -577,7 +577,7 @@ class TerminalImportSession(importer.ImportSession):
         log.warn("This %s is already in the library!" %
                 ("album" if task.is_album else "item"))
 
-        if config.quiet:
+        if config['import']['quiet']:
             # In quiet mode, don't prompt -- just skip.
             log.info('Skipping.')
             sel = 's'
@@ -598,7 +598,7 @@ class TerminalImportSession(importer.ImportSession):
         else:
             assert False
 
-    def should_resume(config, path):
+    def should_resume(path):
         return ui.input_yn("Import of the directory:\n%s"
                         "\nwas interrupted. Resume (Y/n)?" % path)
 
@@ -684,58 +684,12 @@ import_cmd.parser.add_option('-i', '--incremental', dest='incremental',
 import_cmd.parser.add_option('-I', '--noincremental', dest='incremental',
     action='store_false', help='do not skip already-imported directories')
 def import_func(lib, config, opts, args):
-    # FIXME add_args at config['import']
-
-    copy  = opts.copy  if opts.copy  is not None else \
-        ui.config_val(config, 'beets', 'import_copy',
-            DEFAULT_IMPORT_COPY, bool)
-    move  = ui.config_val(config, 'beets', 'import_move',
-                          DEFAULT_IMPORT_MOVE, bool)
-    write = opts.write if opts.write is not None else \
-        ui.config_val(config, 'beets', 'import_write',
-            DEFAULT_IMPORT_WRITE, bool)
-    delete = ui.config_val(config, 'beets', 'import_delete',
-            DEFAULT_IMPORT_DELETE, bool)
-    autot = opts.autotag if opts.autotag is not None else DEFAULT_IMPORT_AUTOT
-    threaded = ui.config_val(config, 'beets', 'threaded',
-            DEFAULT_THREADED, bool)
-    color = ui.config_val(config, 'beets', 'color', DEFAULT_COLOR, bool)
-    quiet = opts.quiet if opts.quiet is not None else DEFAULT_IMPORT_QUIET
-    quiet_fallback_str = ui.config_val(config, 'beets', 'import_quiet_fallback',
-            DEFAULT_IMPORT_QUIET_FALLBACK)
-    singletons = opts.singletons
-    timid = opts.timid if opts.timid is not None else \
-        ui.config_val(config, 'beets', 'import_timid',
-            DEFAULT_IMPORT_TIMID, bool)
-    logpath = opts.logpath if opts.logpath is not None else \
-        ui.config_val(config, 'beets', 'import_log', None)
-    incremental = opts.incremental if opts.incremental is not None else \
-        ui.config_val(config, 'beets', 'import_incremental',
-            DEFAULT_IMPORT_INCREMENTAL, bool)
-    ignore = ui.config_val(config, 'beets', 'ignore', DEFAULT_IGNORE, list)
-    per_disc_numbering = ui.config_val(config, 'beets', 'per_disc_numbering',
-                                       DEFAULT_PER_DISC_NUMBERING, bool)
-
-    # Resume has three options: yes, no, and "ask" (None).
-    resume = opts.resume if opts.resume is not None else \
-        ui.config_val(config, 'beets', 'import_resume', DEFAULT_IMPORT_RESUME)
-    if isinstance(resume, basestring):
-        if resume.lower() in ('yes', 'true', 't', 'y', '1'):
-            resume = True
-        elif resume.lower() in ('no', 'false', 'f', 'n', '0'):
-            resume = False
-        else:
-            resume = None
+    config['import'].add_args(opts)
 
     # Special case: --copy flag suppresses import_move (which would
     # otherwise take precedence).
     if opts.copy:
-        move = False
-
-    if quiet_fallback_str == 'asis':
-        quiet_fallback = importer.action.ASIS
-    else:
-        quiet_fallback = importer.action.SKIP
+        config['import']['move'] = False
 
     if opts.library:
         query = args
@@ -744,9 +698,7 @@ def import_func(lib, config, opts, args):
         query = None
         paths = args
 
-    import_files(lib, paths, copy, move, write, autot, logpath, threaded,
-                 color, delete, quiet, resume, quiet_fallback, singletons,
-                 timid, query, incremental, ignore, per_disc_numbering)
+    import_files(lib, paths, query)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 
