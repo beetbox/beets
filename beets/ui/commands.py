@@ -90,7 +90,7 @@ def _showdiff(field, oldval, newval):
 
 fields_cmd = ui.Subcommand('fields',
     help='show fields available for queries and format strings')
-def fields_func(lib, config, opts, args):
+def fields_func(lib, opts, args):
     print("Available item fields:")
     print("  " + "\n  ".join([key for key in library.ITEM_KEYS]))
     print("\nAvailable album fields:")
@@ -683,7 +683,7 @@ import_cmd.parser.add_option('-i', '--incremental', dest='incremental',
     action='store_true', help='skip already-imported directories')
 import_cmd.parser.add_option('-I', '--noincremental', dest='incremental',
     action='store_false', help='do not skip already-imported directories')
-def import_func(lib, config, opts, args):
+def import_func(lib, opts, args):
     config['import'].add_args(opts)
 
     # Special case: --copy flag suppresses import_move (which would
@@ -724,7 +724,7 @@ list_cmd.parser.add_option('-p', '--path', action='store_true',
     help='print paths for matched items or albums')
 list_cmd.parser.add_option('-f', '--format', action='store',
     help='print with custom format', default=None)
-def list_func(lib, config, opts, args):
+def list_func(lib, opts, args):
     if opts.path:
         fmt = '$path'
     else:
@@ -834,7 +834,7 @@ update_cmd.parser.add_option('-p', '--pretend', action='store_true',
     help="show all changes but do nothing")
 update_cmd.parser.add_option('-f', '--format', action='store',
     help='print with custom format', default=None)
-def update_func(lib, config, opts, args):
+def update_func(lib, opts, args):
     update_items(lib, decargs(args), opts.album, opts.move, opts.pretend)
 update_cmd.func = update_func
 default_commands.append(update_cmd)
@@ -878,7 +878,7 @@ remove_cmd.parser.add_option("-d", "--delete", action="store_true",
     help="also remove files from disk")
 remove_cmd.parser.add_option('-a', '--album', action='store_true',
     help='match albums instead of tracks')
-def remove_func(lib, config, opts, args):
+def remove_func(lib, opts, args):
     remove_items(lib, decargs(args), opts.album, opts.delete)
 remove_cmd.func = remove_func
 default_commands.append(remove_cmd)
@@ -921,7 +921,7 @@ stats_cmd = ui.Subcommand('stats',
     help='show statistics about the library or a query')
 stats_cmd.parser.add_option('-e', '--exact', action='store_true',
     help='get exact file sizes')
-def stats_func(lib, config, opts, args):
+def stats_func(lib, opts, args):
     show_stats(lib, decargs(args), opts.exact)
 stats_cmd.func = stats_func
 default_commands.append(stats_cmd)
@@ -929,7 +929,7 @@ default_commands.append(stats_cmd)
 
 # version: Show current beets version.
 
-def show_version(lib, config, opts, args):
+def show_version(lib, opts, args):
     print_('beets version %s' % beets.__version__)
     # Show plugins.
     names = []
@@ -1020,7 +1020,7 @@ modify_cmd.parser.add_option('-y', '--yes', action='store_true',
     help='skip confirmation')
 modify_cmd.parser.add_option('-f', '--format', action='store',
     help='print with custom format', default=None)
-def modify_func(lib, config, opts, args):
+def modify_func(lib, opts, args):
     args = decargs(args)
     mods = [a for a in args if '=' in a]
     query = [a for a in args if '=' not in a]
@@ -1064,7 +1064,7 @@ move_cmd.parser.add_option('-c', '--copy', default=False, action='store_true',
     help='copy instead of moving')
 move_cmd.parser.add_option('-a', '--album', default=False, action='store_true',
     help='match whole albums instead of tracks')
-def move_func(lib, config, opts, args):
+def move_func(lib, opts, args):
     dest = opts.dest
     if dest is not None:
         dest = normpath(dest)

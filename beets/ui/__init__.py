@@ -655,7 +655,7 @@ def _raw_main(args, configfh):
     log.debug(u'library directory: %s' % util.displayable_path(lib.directory))
 
     # Invoke the subcommand.
-    subcommand.func(lib, config, suboptions, subargs)
+    subcommand.func(lib, suboptions, subargs)
 
 def main(args=None, configfh=None):
     """Run the main command-line interface for beets. Includes top-level
