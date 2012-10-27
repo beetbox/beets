@@ -38,6 +38,7 @@ from beets.util import confit
 
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
+
 if sys.platform == 'win32':
     try:
         import colorama
@@ -48,6 +49,7 @@ if sys.platform == 'win32':
 
 
 # Constants.
+
 PF_KEY_QUERIES = {
     'comp': 'comp:true',
     'singleton': 'singleton:true',
@@ -114,7 +116,7 @@ def input_(prompt=None):
     except EOFError:
         raise UserError('stdin stream ended while input required')
 
-    return resp.decode(sys.stdin.encoding, 'ignore')
+    return resp.decode(sys.stdin.encoding or 'utf8', 'ignore')
 
 def input_options(options, require=False, prompt=None, fallback_prompt=None,
                   numrange=None, default=None, max_width=72):
@@ -406,6 +408,33 @@ def get_replacements():
     pairs = config['replace'].as_pairs()
     # FIXME handle regex compilation errors
     return [(re.compile(k), v) for (k, v) in pairs]
+
+def _pick_format(album=False, fmt=None):
+    """Pick a format string for printing Album or Item objects,
+    falling back to config options and defaults.
+    """
+    if fmt:
+        return fmt
+    if album:
+        return config['list_format_album'].get(unicode)
+    else:
+        return config['list_format_item'].get(unicode)
+
+def print_obj(obj, lib, fmt=None):
+    """Print an Album or Item object. If `fmt` is specified, use that
+    format string. Otherwise, use the configured template.
+    """
+    album = isinstance(obj, library.Album)
+    if not fmt:
+        fmt = _pick_format(album=album)
+    if isinstance(fmt, Template):
+        template = fmt
+    else:
+        template = Template(fmt)
+    if album:
+        print_(obj.evaluate_template(template))
+    else:
+        print_(obj.evaluate_template(template, lib=lib))
 
 
 # Subcommand parsing infrastructure.

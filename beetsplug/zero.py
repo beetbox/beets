@@ -14,9 +14,8 @@
 
 """ Clears tag fields in media files.""" 
 
-from __future__ import print_function
-import sys
 import re
+import logging
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets.library import ITEM_KEYS
@@ -24,14 +23,14 @@ from beets.importer import action
 
 
 __author__ = 'baobab@heresiarch.info'
-__version__ = '0.9'
+__version__ = '0.10'
 
 
 class ZeroPlugin(BeetsPlugin):
 
     _instance = None
+    _log = logging.getLogger('beets')
 
-    debug = False
     fields = []
     patterns = {}
     warned = False
@@ -43,25 +42,16 @@ class ZeroPlugin(BeetsPlugin):
         return cls._instance
 
     def __str__(self):
-        return ('[zero]\n  debug = {0}\n  fields = {1}\n  patterns = {2}\n'
-                '  warned = {3}'.format(self.debug, self.fields, self.patterns, 
-                                        self.warned))
-
-    def dbg(self, *args):
-        """Prints message to stderr."""
-        if self.debug:
-            print('[zero]', *args, file=sys.stderr)
+        return ('[zero]\n  fields = {0}\n  patterns = {1}\n  warned = {2}'
+                .format(self.fields, self.patterns, self.warned))
 
     def configure(self, config):
         if not config.has_section('zero'):
-            self.dbg('plugin is not configured')
+            self._log.debug('[zero] plugin is not configured')
             return
-        self.debug = ui.config_val(config, 'zero', 'debug', True, bool)
         for f in ui.config_val(config, 'zero', 'fields', '').split():
             if f not in ITEM_KEYS:
-                self.dbg(
-                    'invalid field \"{0}\" (try \'beet fields\')'.format(f)
-                )
+                self._log.error('[zero] invalid field: {0}'.format(f))
             else:
                 self.fields.append(f)
                 p = ui.config_val(config, 'zero', f, '').split()
@@ -69,15 +59,11 @@ class ZeroPlugin(BeetsPlugin):
                     self.patterns[f] = p
                 else:
                     self.patterns[f] = ['.']
-        if self.debug:
-            print(self, file=sys.stderr)
 
     def import_task_choice_event(self, task, config):
         """Listen for import_task_choice event."""
-        if self.debug:
-            self.dbg('listen: import_task_choice')
         if task.choice_flag == action.ASIS and not self.warned:
-            self.dbg('cannot zero in \"as-is\" mode')
+            self._log.warn('[zero] cannot zero in \"as-is\" mode')
             self.warned = True
         # TODO request write in as-is mode 
 
@@ -93,25 +79,24 @@ class ZeroPlugin(BeetsPlugin):
 
     def write_event(self, item):
         """Listen for write event."""
-        if self.debug:
-            self.dbg('listen: write')
         if not self.fields:
-            self.dbg('no fields, nothing to do')
+            self._log.warn('[zero] no fields, nothing to do')
             return
         for fn in self.fields:
             try:
                 fval = getattr(item, fn)
             except AttributeError:
-                self.dbg('? no such field: {0}'.format(fn))
+                self._log.error('[zero] no such field: {0}'.format(fn))
             else:
                 if not self.match_patterns(fval, self.patterns[fn]):
-                    self.dbg('\"{0}\" ({1}) is not match any of: {2}'
-                             .format(fval, fn, ' '.join(self.patterns[fn])))
+                    self._log.debug('[zero] \"{0}\" ({1}) not match: {2}'
+                                    .format(fval, fn, 
+                                            ' '.join(self.patterns[fn])))
                     continue
-                self.dbg('\"{0}\" ({1}) match: {2}'
-                         .format(fval, fn, ' '.join(self.patterns[fn])))
+                self._log.debug('[zero] \"{0}\" ({1}) match: {2}'
+                                .format(fval, fn, ' '.join(self.patterns[fn])))
                 setattr(item, fn, type(fval)())
-                self.dbg('{0}={1}'.format(fn, getattr(item, fn)))
+                self._log.debug('[zero] {0}={1}'.format(fn, getattr(item, fn)))
 
 
 @ZeroPlugin.listen('import_task_choice')
@@ -121,9 +106,3 @@ def zero_choice(task, config):
 @ZeroPlugin.listen('write')
 def zero_write(item):
     ZeroPlugin().write_event(item)
-
-
-# simple test
-if __name__ == '__main__':
-    print(ZeroPlugin().match_patterns('test', ['[0-9]']))
-    print(ZeroPlugin().match_patterns('test', ['.']))

@@ -1,128 +1,231 @@
-#Copyright (c) 2011, Peter Brunner (Lugoues)
+# This file is part of beets.
+# Copyright 2012, Fabrice Laporte.
 #
-#Permission is hereby granted, free of charge, to any person obtaining a copy
-#of this software and associated documentation files (the "Software"), to deal
-#in the Software without restriction, including without limitation the rights
-#to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#copies of the Software, and to permit persons to whom the Software is
-#furnished to do so, subject to the following conditions:
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
 #
-#The above copyright notice and this permission notice shall be included in
-#all copies or substantial portions of the Software.
-#
-#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-#THE SOFTWARE.
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
 
 import logging
-
-from rgain import rgcalc
+import subprocess
+import os
 
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.mediafile import MediaFile, FileTypeError, UnreadableFileError
 from beets.util import syspath
+from beets.ui import commands
 
 log = logging.getLogger('beets')
 
 DEFAULT_REFERENCE_LOUDNESS = 89
 
+class ReplayGainError(Exception):
+    """Raised when an error occurs during mp3gain/aacgain execution.
+    """
+
+def call(args):
+    """Execute the command indicated by `args` (a list of strings) and
+    return the command's output. The stderr stream is ignored. If the
+    command exits abnormally, a ReplayGainError is raised.
+    """
+    try:
+        with open(os.devnull, 'w') as devnull:
+            return subprocess.check_output(args, stderr=devnull)
+    except subprocess.CalledProcessError as e:
+        raise ReplayGainError(
+            "{0} exited with status {1}".format(args[0], e.returncode)
+        )
+
+def parse_tool_output(text):
+    """Given the tab-delimited output from an invocation of mp3gain
+    or aacgain, parse the text and return a list of dictionaries
+    containing information about each analyzed file.
+    """
+    out = []
+    for line in text.split('\n'):
+        parts = line.split('\t')
+        if len(parts) != 6 or parts[0] == 'File':
+            continue
+        out.append({
+            'file': parts[0],
+            'mp3gain': int(parts[1]),
+            'gain': float(parts[2]),
+            'peak': float(parts[3]),
+            'maxgain': int(parts[4]),
+            'mingain': int(parts[5]),
+        })
+    return out
 
 class ReplayGainPlugin(BeetsPlugin):
-    '''Provides replay gain analysis for the Beets Music Manager'''
-
-    ref_level = DEFAULT_REFERENCE_LOUDNESS
-    overwrite = False
-
+    """Provides ReplayGain analysis.
+    """
     def __init__(self):
-        self.register_listener('album_imported', self.album_imported)
-        self.register_listener('item_imported', self.item_imported)
+        super(ReplayGainPlugin, self).__init__()
+        self.import_stages = [self.imported]
 
     def configure(self, config):
-        self.overwrite = ui.config_val(config,
-                                       'replaygain',
-                                       'overwrite',
-                                       False)
+        self.overwrite = ui.config_val(config, 'replaygain',
+                                       'overwrite', False, bool)
+        self.albumgain = ui.config_val(config, 'replaygain',
+                                       'albumgain', False, bool)
+        self.noclip = ui.config_val(config, 'replaygain',
+                                    'noclip', True, bool)
+        self.apply_gain = ui.config_val(config, 'replaygain',
+                                        'apply_gain', False, bool)
+        target_level = float(ui.config_val(config, 'replaygain',
+                                           'targetlevel',
+                                           DEFAULT_REFERENCE_LOUDNESS))
+        self.gain_offset = int(target_level - DEFAULT_REFERENCE_LOUDNESS)
+        self.automatic = ui.config_val(config, 'replaygain',
+                                       'automatic', True, bool)
 
-    def album_imported(self, lib, album, config):
-        self.write_album = True
+        self.command = ui.config_val(config,'replaygain','command', None)
+        if self.command:
+            # Explicit executable path.
+            if not os.path.isfile(self.command):
+                raise ui.UserError(
+                    'replaygain command does not exist: {0}'.format(
+                        self.command
+                    )
+                )
+        else:
+            # Check whether the program is in $PATH.
+            for cmd in ('mp3gain', 'aacgain'):
+                try:
+                    call([cmd, '-v'])
+                    self.command = cmd
+                except OSError:
+                    pass
+        if not self.command:
+            raise ui.UserError(
+                'no replaygain command found: install mp3gain or aacgain'
+            )
 
-        log.debug("Calculating ReplayGain for %s - %s" % \
-            (album.albumartist, album.album))
+    def imported(self, config, task):
+        """Our import stage function."""
+        if not self.automatic:
+            return
 
-        try:
-            media_files = \
-                [MediaFile(syspath(item.path)) for item in album.items()]
-            media_files = [mf for mf in media_files if self.requires_gain(mf)]
+        if task.is_album:
+            album = config.lib.get_album(task.album_id)
+            items = list(album.items())
+        else:
+            items = [task.item]
 
-            #calculate gain.
-            #Return value - track_data: array dictionary indexed by filename
-            track_data, album_data = rgcalc.calculate(
-                [syspath(mf.path) for mf in media_files],
-                True,
-                self.ref_level)
+        results = self.compute_rgain(items, task.is_album)
+        if results:
+            self.store_gain(config.lib, items, results,
+                            album if task.is_album else None)
 
-            for mf in media_files:
-                self.write_gain(mf, track_data, album_data)
+    def commands(self):
+        """Provide a ReplayGain command."""
+        def func(lib, config, opts, args):
+            write = ui.config_val(config, 'beets', 'import_write',
+                                  commands.DEFAULT_IMPORT_WRITE, bool)
 
-        except (FileTypeError, UnreadableFileError,
-                TypeError, ValueError) as e:
-            log.error("failed to calculate replaygain:  %s ", e)
+            if opts.album:
+                # Analyze albums.
+                for album in lib.albums(ui.decargs(args)):
+                    log.info(u'analyzing {0} - {1}'.format(album.albumartist,
+                                                           album.album))
+                    items = list(album.items())
+                    results = self.compute_rgain(items, True)
+                    if results:
+                        self.store_gain(lib, items, results, album)
 
-    def item_imported(self, lib, item, config):
-        try:
-            self.write_album = False
+                    if write:
+                        for item in items:
+                            item.write()
 
-            mf = MediaFile(syspath(item.path))
-
-            if self.requires_gain(mf):
-                track_data, album_data = rgcalc.calculate([syspath(mf.path)],
-                                                          True,
-                                                          self.ref_level)
-                self.write_gain(mf, track_data, None)
-        except (FileTypeError, UnreadableFileError,
-                TypeError, ValueError) as e:
-            log.error("failed to calculate replaygain:  %s ", e)
-
-    def write_gain(self, mf, track_data, album_data):
-        try:
-            mf.rg_track_gain = track_data[syspath(mf.path)].gain
-            mf.rg_track_peak = track_data[syspath(mf.path)].peak
-
-            if self.write_album and album_data:
-                mf.rg_album_gain = album_data.gain
-                mf.rg_album_peak = album_data.peak
-
-                log.debug('Tagging ReplayGain for: %s - %s \n'
-                         '\tTrack Gain = %f\n'
-                         '\tTrack Peak = %f\n'
-                         '\tAlbum Gain = %f\n'
-                         '\tAlbum Peak = %f' % \
-                         (mf.artist,
-                          mf.title,
-                          mf.rg_track_gain,
-                          mf.rg_track_peak,
-                          mf.rg_album_gain,
-                          mf.rg_album_peak))
             else:
-                log.debug('Tagging ReplayGain for: %s - %s \n'
-                         '\tTrack Gain = %f\n'
-                         '\tTrack Peak = %f\n' % \
-                         (mf.artist,
-                         mf.title,
-                         mf.rg_track_gain,
-                         mf.rg_track_peak))
+                # Analyze individual tracks.
+                for item in lib.items(ui.decargs(args)):
+                    log.info(u'analyzing {0} - {1}'.format(item.artist,
+                                                           item.title))
+                    results = self.compute_rgain([item], False)
+                    if results:
+                        self.store_gain(lib, [item], results, None)
 
-            mf.save()
-        except (FileTypeError, UnreadableFileError, TypeError, ValueError):
-            log.error("failed to write replaygain: %s" % (mf.title))
+                    if write:
+                        item.write()
 
-    def requires_gain(self, mf):
+        cmd = ui.Subcommand('replaygain', help='analyze for ReplayGain')
+        cmd.parser.add_option('-a', '--album', action='store_true',
+                              help='analyze albums instead of tracks')
+        cmd.func = func
+        return [cmd]
+
+    def requires_gain(self, item, album=False):
+        """Does the gain need to be computed?"""
         return self.overwrite or \
-               (not mf.rg_track_gain or not mf.rg_track_peak) or \
-               ((not mf.rg_album_gain or not mf.rg_album_peak) and \
-                self.write_album)
+               (not item.rg_track_gain or not item.rg_track_peak) or \
+               ((not item.rg_album_gain or not item.rg_album_peak) and \
+                album)
+
+    def compute_rgain(self, items, album=False):
+        """Compute ReplayGain values and return a list of results
+        dictionaries as given by `parse_tool_output`.
+        """
+        # Skip calculating gain only when *all* files don't need
+        # recalculation. This way, if any file among an album's tracks
+        # needs recalculation, we still get an accurate album gain
+        # value.
+        if all([not self.requires_gain(i, album) for i in items]):
+            log.debug(u'replaygain: no gain to compute')
+            return
+
+        # Construct shell command. The "-o" option makes the output
+        # easily parseable (tab-delimited). "-s s" forces gain
+        # recalculation even if tags are already present and disables
+        # tag-writing; this turns the mp3gain/aacgain tool into a gain
+        # calculator rather than a tag manipulator because we take care
+        # of changing tags ourselves.
+        cmd = [self.command, '-o', '-s', 's']
+        if self.noclip:
+            # Adjust to avoid clipping.
+            cmd = cmd + ['-k']
+        else:
+            # Disable clipping warning. 
+            cmd = cmd + ['-c']
+        if self.apply_gain:
+            # Lossless audio adjustment.
+            cmd = cmd + ['-a' if album and self.albumgain else '-r']
+        cmd = cmd + ['-d', str(self.gain_offset)]
+        cmd = cmd + [syspath(i.path) for i in items]
+
+        log.debug(u'replaygain: analyzing {0} files'.format(len(items)))
+        output = call(cmd)
+        log.debug(u'replaygain: analysis finished')
+        results = parse_tool_output(output)
+
+        return results
+
+    def store_gain(self, lib, items, rgain_infos, album=None): 
+        """Store computed ReplayGain values to the Items and the Album
+        (if it is provided).
+        """
+        for item, info in zip(items, rgain_infos):
+            item.rg_track_gain = info['gain']
+            item.rg_track_peak = info['peak']
+            lib.store(item)
+
+            log.debug(u'replaygain: applied track gain {0}, peak {1}'.format(
+                item.rg_track_gain,
+                item.rg_track_peak
+            ))
+
+        if album and self.albumgain:
+            assert len(rgain_infos) == len(items) + 1
+            album_info = rgain_infos[-1]
+            album.rg_album_gain = album_info['gain']
+            album.rg_album_peak = album_info['peak']
+            log.debug(u'replaygain: applied album gain {0}, peak {1}'.format(
+                album.rg_album_gain,
+                album.rg_album_peak
+            ))

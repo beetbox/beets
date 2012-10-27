@@ -304,11 +304,11 @@ class Pipeline(object):
             raise ValueError('pipeline must have at least two stages')
         self.stages = []
         for stage in stages:
-            if isinstance(stage, types.GeneratorType):
+            if isinstance(stage, (list, tuple)):
+                self.stages.append(stage)
+            else:
                 # Default to one thread per stage.
                 self.stages.append((stage,))
-            else:
-                self.stages.append(stage)
 
     def run_sequential(self):
         """Run the pipeline sequentially in the current thread. The
@@ -432,7 +432,7 @@ if __name__ == '__main__':
             print('processing %i' % num)
             time.sleep(3)
             if num == 3:
-               raise Exception()
+                raise Exception()
             num = yield num * 2
     def exc_consume():
         while True:

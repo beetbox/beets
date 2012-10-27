@@ -4,6 +4,9 @@ Changelog
 1.0b16 (in development)
 -----------------------
 
+* New plugin: :doc:`/plugins/convert` transcodes music and embeds album art
+  while copying to a separate directory. Thanks to Jakob Schnitzer and Andrew G.
+  Dunn.
 * New plugin: :doc:`/plugins/fuzzy_search` lets you find albums and tracks using
   fuzzy string matching so you don't have to type (or even remember) their exact
   names. Thanks to Philippe Mongeau.
@@ -11,15 +14,32 @@ Changelog
   text for nicely-sorted directory listings. Thanks to Blemjhoo Tezoulbr.
 * New plugin: :doc:`/plugins/zero` filters out undesirable fields before they
   are written to your tags. Thanks again to Blemjhoo Tezoulbr.
+* New plugin: :doc:`/plugins/ihate` automatically skips (or warns you about)
+  importing albums that match certain criteria. Thanks once again to Blemjhoo
+  Tezoulbr.
+* :doc:`/plugins/replaygain`: This plugin has been completely overhauled to use
+  the `mp3gain`_ or `aacgain`_ command-line tools instead of the failure-prone
+  Gstreamer ReplayGain implementation. Thanks to Fabrice Laporte.
 * :doc:`/plugins/scrub`: Scrubbing now removes *all* types of tags from a file
   rather than just one. For example, if your FLAC file has both ordinary FLAC
   tags and ID3 tags, the ID3 tags are now also removed.
-* ``list`` command: Templates given with ``-f`` can now show items' paths (using
-  ``$path``).
+* :ref:`stats-cmd` command: New ``--exact`` switch to make the file size
+  calculation more accurate (thanks to Jakob Schnitzer).
+* :ref:`list-cmd` command: Templates given with ``-f`` can now show items' and
+  albums' paths (using ``$path``).
+* The output of the :ref:`update-cmd`, :ref:`remove-cmd`, and :ref:`modify-cmd`
+  commands now respects the :ref:`list_format_album` and
+  :ref:`list_format_item` config options. Thanks to Mike Kazantsev.
 * Fix album queries for ``artpath`` and other non-item fields.
 * Null values in the database can now be matched with the empty-string regular
   expression, ``^$``.
 * Queries now correctly match non-string values in path format predicates.
+* :doc:`/plugins/lastgenre`: Use the albums' existing genre tags if they pass
+  the whitelist (thanks to Fabrice Laporte).
+* :doc:`/plugins/lastgenre`: Add a ``lastgenre`` command for fetching genres
+  post facto (thanks to Jakob Schnitzer).
+* :doc:`/plugins/fetchart`: Local image filenames are now used in alphabetical
+  order.
 * :doc:`/plugins/fetchart`: Fix a bug where cover art filenames could lack
   a ``.jpg`` extension.
 * :doc:`/plugins/lyrics`: Fix an exception with non-ASCII lyrics.
@@ -29,16 +49,30 @@ Changelog
   than just being called "file" (thanks to Zach Denton).
 * :doc:`/plugins/importfeeds`: Fix error in symlink mode with non-ASCII
   filenames.
+* :doc:`/plugins/mbcollection`: Fix an error when submitting a large number of
+  releases (we now submit only 200 releases at a time instead of 350). Thanks
+  to Jonathan Towne.
 * Add the track mapping dictionary to the ``album_distance`` plugin function.
+* When an exception is raised while reading a file, the path of the file in
+  question is now logged (thanks to Mike Kazantsev).
 * Fix an assertion failure when the MusicBrainz main database and search server
   disagree.
 * Fix a bug that caused the :doc:`/plugins/lastgenre` and other plugins not to
   modify files' tags even when they successfully change the database.
 * Fix a VFS bug leading to a crash in the :doc:`/plugins/bpd` when files had
   non-ASCII extensions.
+* Fix for changing date fields (like "year") with the :ref:`modify-cmd`
+  command.
+* Fix a crash when input is read from a pipe without a specified encoding.
+* Fix some problem with identifying files on Windows with Unicode directory
+  names in their path.
 * Add a human-readable error message when writing files' tags fails.
+* Changed plugin loading so that modules can be imported without
+  unintentionally loading the plugins they contain.
 
 .. _Tomahawk resolver: http://beets.radbox.org/blog/tomahawk-resolver.html
+.. _mp3gain: http://mp3gain.sourceforge.net/download.php
+.. _aacgain: http://aacgain.altosdesign.com
 
 1.0b15 (July 26, 2012)
 ----------------------

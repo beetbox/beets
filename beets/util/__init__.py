@@ -24,6 +24,7 @@ from collections import defaultdict
 import traceback
 
 MAX_FILENAME_LENGTH = 200
+WINDOWS_MAGIC_PREFIX = u'\\\\?\\'
 
 class HumanReadableException(Exception):
     """An Exception that can include a human-readable error message to
@@ -108,13 +109,18 @@ def normpath(path):
     """Provide the canonical form of the path suitable for storing in
     the database.
     """
-    return os.path.normpath(os.path.abspath(os.path.expanduser(path)))
+    path = syspath(path)
+    path = os.path.normpath(os.path.abspath(os.path.expanduser(path)))
+    return bytestring_path(path)
 
 def ancestry(path, pathmod=None):
     """Return a list consisting of path's parent directory, its
     grandparent, and so on. For instance:
+
        >>> ancestry('/a/b/c')
        ['/', '/a', '/a/b']
+
+    The argument should *not* be the result of a call to `syspath`.
     """
     pathmod = pathmod or os.path
     out = []
@@ -223,8 +229,11 @@ def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
 
 def components(path, pathmod=None):
     """Return a list of the path components in path. For instance:
+
        >>> components('/a/b/c')
        ['a', 'b', 'c']
+
+    The argument should *not* be the result of a call to `syspath`.
     """
     pathmod = pathmod or os.path
     comps = []
@@ -242,15 +251,10 @@ def components(path, pathmod=None):
 
     return comps
 
-def bytestring_path(path):
-    """Given a path, which is either a str or a unicode, returns a str
-    path (ensuring that we never deal with Unicode pathnames).
+def _fsencoding():
+    """Get the system's filesystem encoding. On Windows, this is always
+    UTF-8 (not MBCS).
     """
-    # Pass through bytestrings.
-    if isinstance(path, str):
-        return path
-
-    # Try to encode with default encodings, but fall back to UTF8.
     encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
     if encoding == 'mbcs':
         # On Windows, a broken encoding known to Python as "MBCS" is
@@ -259,8 +263,28 @@ def bytestring_path(path):
         # we can avoid dealing with this nastiness. We arbitrarily
         # choose UTF-8.
         encoding = 'utf8'
+    return encoding
+
+def bytestring_path(path, pathmod=None):
+    """Given a path, which is either a str or a unicode, returns a str
+    path (ensuring that we never deal with Unicode pathnames).
+    """
+    pathmod = pathmod or os.path
+    windows = pathmod.__name__ == 'ntpath'
+
+    # Pass through bytestrings.
+    if isinstance(path, str):
+        return path
+
+    # On Windows, remove the magic prefix added by `syspath`. This makes
+    # ``bytestring_path(syspath(X)) == X``, i.e., we can safely
+    # round-trip through `syspath`.
+    if windows and path.startswith(WINDOWS_MAGIC_PREFIX):
+        path = path[len(WINDOWS_MAGIC_PREFIX):]
+
+    # Try to encode with default encodings, but fall back to UTF8.
     try:
-        return path.encode(encoding)
+        return path.encode(_fsencoding())
     except (UnicodeError, LookupError):
         return path.encode('utf8')
 
@@ -274,9 +298,8 @@ def displayable_path(path):
         # A non-string object: just get its unicode representation.
         return unicode(path)
 
-    encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
     try:
-        return path.decode(encoding, 'ignore')
+        return path.decode(_fsencoding(), 'ignore')
     except (UnicodeError, LookupError):
         return path.decode('utf8', 'ignore')
 
@@ -305,8 +328,8 @@ def syspath(path, pathmod=None):
             path = path.decode(encoding, 'replace')
 
     # Add the magic prefix if it isn't already there
-    if not path.startswith(u'\\\\?\\'):
-        path = u'\\\\?\\' + path
+    if not path.startswith(WINDOWS_MAGIC_PREFIX):
+        path = WINDOWS_MAGIC_PREFIX + path
 
     return path
 
@@ -469,10 +492,14 @@ def str2bool(value):
 
 def as_string(value):
     """Convert a value to a Unicode object for matching with a query.
-    None becomes the empty string.
+    None becomes the empty string. Bytestrings are silently decoded.
     """
     if value is None:
         return u''
+    elif isinstance(value, buffer):
+        return str(value).decode('utf8', 'ignore')
+    elif isinstance(value, str):
+        return value.decode('utf8', 'ignore')
     else:
         return unicode(value)
 
@@ -520,3 +547,29 @@ def plurality(objs):
             res = obj
 
     return res, max_freq
+
+def cpu_count():
+    """Return the number of hardware thread contexts (cores or SMT
+    threads) in the system.
+    """
+    # Adapted from the soundconverter project:
+    # https://github.com/kassoulet/soundconverter
+    if sys.platform == 'win32':
+        try:
+            num = int(os.environ['NUMBER_OF_PROCESSORS'])
+        except (ValueError, KeyError):
+            num = 0
+    elif sys.platform == 'darwin':
+        try:
+            num = int(os.popen('sysctl -n hw.ncpu').read())
+        except ValueError:
+            num = 0
+    else:
+        try:
+            num = os.sysconf('SC_NPROCESSORS_ONLN')
+        except (ValueError, OSError, AttributeError):
+            num = 0
+    if num >= 1:
+        return num
+    else:
+        return 1

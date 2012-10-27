@@ -200,18 +200,19 @@ to be changed except on very slow systems. Defaults to 5.0 (5 seconds).
 list_format_item
 ~~~~~~~~~~~~~~~~
 
-Format to use when listing *individual items* with the ``beet list``
-command. Defaults to ``$artist - $album - $title``. The ``-f`` command-line
-option overrides this setting.
+Format to use when listing *individual items* with the :ref:`list-cmd`
+command and other commands that need to print out items. Defaults to
+``$artist - $album - $title``. The ``-f`` command-line option overrides
+this setting.
 
 .. _list_format_album:
 
 list_format_album
 ~~~~~~~~~~~~~~~~~
 
-Format to use when listing *albums* with the ``beet list`` command.
-Defaults to ``$albumartist - $album``. The ``-f`` command-line option
-overrides this setting.
+Format to use when listing *albums* with :ref:`list-cmd` and other
+commands. Defaults to ``$albumartist - $album``. The ``-f`` command-line
+option overrides this setting.
 
 .. _per_disc_numbering:
 

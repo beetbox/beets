@@ -51,11 +51,11 @@ right now; this is something we need to work on. Read the
   configuration file (below).
 
 * Also, you can disable the autotagging behavior entirely using ``-A``
-  (don't autotag) -- then your music will be imported with its existing
+  (don't autotag)---then your music will be imported with its existing
   metadata.
 
 * During a long tagging import, it can be useful to keep track of albums
-  that weren't tagged successfully -- either because they're not in the
+  that weren't tagged successfully---either because they're not in the
   MusicBrainz database or because something's wrong with the files. Use the
   ``-l`` option to specify a filename to log every time you skip and album
   or import it "as-is" or an album gets skipped as a duplicate.
@@ -77,7 +77,11 @@ right now; this is something we need to work on. Read the
   option to run an *incremental* import. With this flag, beets will keep
   track of every directory it ever imports and avoid importing them again.
   This is useful if you have an "incoming" directory that you periodically
-  add things to. (The ``-I`` flag disables incremental imports.)
+  add things to.
+  To get this to work correctly, you'll need to use an incremental import *every
+  time* you run an import on the directory in question---including the first
+  time, when no subdirectories will be skipped. So consider enabling the
+  ``import_incremental`` configuration option.
 
 * By default, beets will proceed without asking if it finds a very close
   metadata match. To disable this and have the importer as you every time,
@@ -115,6 +119,8 @@ right now; this is something we need to work on. Read the
     or full albums. If you want to retag your whole library, just supply a null
     query, which matches everything: ``beet import -L``
 
+.. _list-cmd:
+
 list
 ````
 ::
@@ -145,6 +151,8 @@ variable expansion.
 
 .. _xargs: http://en.wikipedia.org/wiki/Xargs
 
+.. _remove-cmd:
+
 remove
 ``````
 ::
@@ -157,6 +165,8 @@ This command uses the same :doc:`query <query>` syntax as the ``list`` command.
 You'll be shown a list of the files that will be removed and asked to confirm.
 By default, this just removes entries from the library database; it doesn't
 touch the files on disk. To actually delete the files, use ``beet remove -d``.
+
+.. _modify-cmd:
 
 modify
 ``````
@@ -191,6 +201,8 @@ destination directory with ``-d`` manually, you can move items matching a query
 anywhere in your filesystem. The ``-c`` option copies files instead of moving
 them. As with other commands, the ``-a`` option matches albums instead of items.
 
+.. _update-cmd:
+
 update
 ``````
 ::
@@ -208,14 +220,19 @@ To perform a "dry run" an update, just use the ``-p`` (for "pretend") flag. This
 will show you all the proposed changes but won't actually change anything on
 disk.
 
+.. _stats-cmd:
+
 stats
 `````
 ::
 
-    beet stats [QUERY]
+    beet stats [-e] [QUERY]
 
 Show some statistics on your entire library (if you don't provide a
 :doc:`query <query>`) or the matched items (if you do).
+
+The ``-e`` (``--exact``) option makes the calculation of total file size more
+accurate but slower.
 
 fields
 ``````

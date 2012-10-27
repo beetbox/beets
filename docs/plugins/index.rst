@@ -53,6 +53,8 @@ disabled by default, but you can turn them on as described above.
    the
    fuzzy_search
    zero
+   ihate
+   convert
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -92,8 +94,10 @@ Miscellaneous
 * :doc:`rdm`: Randomly choose albums and tracks from your library.
 * :doc:`fuzzy_search`: Search albums and tracks with fuzzy string matching.
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
+* :doc:`ihate`: Skip by defined patterns things you hate during import process.
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
   compatible with `MPD clients`_.
+* :doc:`convert`: Converts parts of your collection to an external directory
 
 .. _MPD: http://mpd.wikia.com/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients

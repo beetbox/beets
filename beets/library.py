@@ -29,7 +29,8 @@ from unidecode import unidecode
 from beets.mediafile import MediaFile
 from beets import plugins
 from beets import util
-from beets.util import bytestring_path, syspath, normpath, samefile
+from beets.util import bytestring_path, syspath, normpath, samefile,\
+    displayable_path
 from beets.util.functemplate import Template
 
 MAX_FILENAME_LENGTH = 200
@@ -88,6 +89,10 @@ ITEM_FIELDS = [
     ('albumdisambig',        'text', True, True),
     ('disctitle',            'text', True, True),
     ('encoder',              'text', True, True),
+    ('rg_track_gain',        'real', True, True),
+    ('rg_track_peak',        'real', True, True),
+    ('rg_album_gain',        'real', True, True),
+    ('rg_album_peak',        'real', True, True),
 
     ('length',      'real', False, True),
     ('bitrate',     'int',  False, True),
@@ -132,6 +137,8 @@ ALBUM_FIELDS = [
     ('albumstatus',        'text', True),
     ('media',              'text', True),
     ('albumdisambig',      'text', True),
+    ('rg_album_gain',      'real', True),
+    ('rg_album_peak',      'real', True),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
@@ -266,15 +273,22 @@ class Item(object):
             read_path = self.path
         else:
             read_path = normpath(read_path)
-        f = MediaFile(syspath(read_path))
+        try:
+            f = MediaFile(syspath(read_path))
+        except Exception:
+            log.error(u'failed reading file: {0}'.format(
+                displayable_path(read_path))
+            )
+            raise
 
         for key in ITEM_KEYS_META:
             setattr(self, key, getattr(f, key))
-        self.path = read_path
 
         # Database's mtime should now reflect the on-disk value.
         if read_path == self.path:
             self.mtime = self.current_mtime()
+
+        self.path = read_path
 
     def write(self):
         """Writes the item's metadata to the associated file.
@@ -351,7 +365,7 @@ class Item(object):
 
         # Additional fields in non-sanitized case.
         if not sanitize:
-            mapping['path'] = self.path
+            mapping['path'] = displayable_path(self.path)
 
         # Use the album artist if the track artist is not set and
         # vice-versa.
@@ -596,7 +610,7 @@ class CollectionQuery(Query):
 
             # Unrecognized field.
             else:
-                log.warn('no such field in query: {0}'.format(key))
+                log.warn(u'no such field in query: {0}'.format(key))
 
         if not subqueries:  # No terms in query.
             subqueries = [TrueQuery()]
@@ -1584,6 +1598,9 @@ class Album(BaseAlbum):
         mapping = {}
         for key in ALBUM_KEYS:
             mapping[key] = getattr(self, key)
+
+        mapping['artpath'] = displayable_path(mapping['artpath'])
+        mapping['path'] = displayable_path(self.item_dir())
 
         # Get template functions.
         funcs = DefaultTemplateFunctions().functions()

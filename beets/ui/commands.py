@@ -41,7 +41,8 @@ log = logging.getLogger('beets')
 # objects that can be fed to a SubcommandsOptionParser.
 default_commands = []
 
-# Utility.
+
+# Utilities.
 
 def _do_query(lib, query, album, also_items=True):
     """For commands that operate on matched items, performs a query
@@ -86,6 +87,7 @@ def _showdiff(field, oldval, newval):
 
 
 # fields: Shows a list of available fields for queries and format strings.
+
 fields_cmd = ui.Subcommand('fields',
     help='show fields available for queries and format strings')
 def fields_func(lib, config, opts, args):
@@ -465,7 +467,7 @@ def manual_id(singleton):
     # Find the first thing that looks like a UUID/MBID.
     match = re.search('[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', entry)
     if match:
-       return match.group()
+        return match.group()
     else:
         log.error('Invalid MBID.')
         return None
@@ -751,25 +753,17 @@ default_commands.append(import_cmd)
 
 # list: Query and show library contents.
 
-def list_items(lib, query, album, path, fmt):
+def list_items(lib, query, album, fmt):
     """Print out items in lib matching query. If album, then search for
-    albums instead of single items. If path, print the matched objects'
-    paths instead of human-readable information about them.
+    albums instead of single items.
     """
-    template = Template(fmt)
-
+    tmpl = Template(fmt) if fmt else Template(ui._pick_format(config, album))
     if album:
         for album in lib.albums(query):
-            if path:
-                print_(album.item_dir())
-            elif fmt is not None:
-                print_(album.evaluate_template(template))
+            ui.print_obj(album, lib, tmpl)
     else:
         for item in lib.items(query):
-            if path:
-                print_(item.path)
-            elif fmt is not None:
-                print_(item.evaluate_template(template, lib))
+            ui.print_obj(item, lib, tmpl)
 
 list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
 list_cmd.parser.add_option('-a', '--album', action='store_true',
@@ -779,14 +773,11 @@ list_cmd.parser.add_option('-p', '--path', action='store_true',
 list_cmd.parser.add_option('-f', '--format', action='store',
     help='print with custom format', default=None)
 def list_func(lib, config, opts, args):
-    fmt = opts.format
-    if not fmt:
-        # If no format is specified, fall back to a default.
-        if opts.album:
-            fmt = config['list_format_album'].get(unicode)
-        else:
-            fmt = config['list_format_item'].get(unicode)
-    list_items(lib, decargs(args), opts.album, opts.path, fmt)
+    if opts.path:
+        fmt = '$path'
+    else:
+        fmt = opts.format
+    list_items(lib, decargs(args), opts.album, fmt)
 list_cmd.func = list_func
 default_commands.append(list_cmd)
 
@@ -805,7 +796,7 @@ def update_items(lib, query, album, move, pretend):
         for item in items:
             # Item deleted?
             if not os.path.exists(syspath(item.path)):
-                print_(u'X %s - %s' % (item.artist, item.title))
+                ui.print_obj(item, lib)
                 if not pretend:
                     lib.remove(item, True)
                 affected_albums.add(item.album_id)
@@ -837,7 +828,7 @@ def update_items(lib, query, album, move, pretend):
                     changes[key] = old_data[key], getattr(item, key)
             if changes:
                 # Something changed.
-                print_(u'* %s - %s' % (item.artist, item.title))
+                ui.print_obj(item, lib)
                 for key, (oldval, newval) in changes.iteritems():
                     _showdiff(key, oldval, newval)
 
@@ -889,6 +880,8 @@ update_cmd.parser.add_option('-M', '--nomove', action='store_false',
     default=True, dest='move', help="don't move files in library")
 update_cmd.parser.add_option('-p', '--pretend', action='store_true',
     help="show all changes but do nothing")
+update_cmd.parser.add_option('-f', '--format', action='store',
+    help='print with custom format', default=None)
 def update_func(lib, config, opts, args):
     update_items(lib, decargs(args), opts.album, opts.move, opts.pretend)
 update_cmd.func = update_func
@@ -897,7 +890,7 @@ default_commands.append(update_cmd)
 
 # remove: Remove items from library, delete files.
 
-def remove_items(lib, query, album, delete=False):
+def remove_items(lib, query, album, delete):
     """Remove items matching query from lib. If album, then match and
     remove whole albums. If delete, also remove files from disk.
     """
@@ -906,7 +899,7 @@ def remove_items(lib, query, album, delete=False):
 
     # Show all the items.
     for item in items:
-        print_(item.artist + ' - ' + item.album + ' - ' + item.title)
+        ui.print_obj(item, lib)
 
     # Confirm with user.
     print_()
@@ -941,7 +934,7 @@ default_commands.append(remove_cmd)
 
 # stats: Show library/query statistics.
 
-def show_stats(lib, query):
+def show_stats(lib, query, exact):
     """Shows some statistics about the matched items."""
     items = lib.items(query)
 
@@ -952,30 +945,32 @@ def show_stats(lib, query):
     albums = set()
 
     for item in items:
-        #fixme This is approximate, so people might complain that
-        # this total size doesn't match "du -sh". Could fix this
-        # by putting total file size in the database.
-        total_size += int(item.length * item.bitrate / 8)
+        if exact:
+            total_size += os.path.getsize(item.path)
+        else:
+            total_size += int(item.length * item.bitrate / 8)
         total_time += item.length
         total_items += 1
         artists.add(item.artist)
         albums.add(item.album)
 
-    print_("""Tracks: %i
-Total time: %s
-Total size: %s
-Artists: %i
-Albums: %i""" % (
-        total_items,
-        ui.human_seconds(total_time),
-        ui.human_bytes(total_size),
-        len(artists), len(albums)
-    ))
+    size_str = '' + ui.human_bytes(total_size)
+    if exact:
+        size_str += ' ({0} bytes)'.format(total_size)
+
+    print_("""Tracks: {0}
+Total time: {1} ({2:.2f} seconds)
+Total size: {3}
+Artists: {4}
+Albums: {5}""".format(total_items, ui.human_seconds(total_time), total_time,
+                      size_str, len(artists), len(albums)))
 
 stats_cmd = ui.Subcommand('stats',
     help='show statistics about the library or a query')
+stats_cmd.parser.add_option('-e', '--exact', action='store_true',
+    help='get exact file sizes')
 def stats_func(lib, config, opts, args):
-    show_stats(lib, decargs(args))
+    show_stats(lib, decargs(args), opts.exact)
 stats_cmd.func = stats_func
 default_commands.append(stats_cmd)
 
@@ -1020,10 +1015,7 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     print_('Modifying %i %ss.' % (len(objs), 'album' if album else 'item'))
     for obj in objs:
         # Identify the changed object.
-        if album:
-            print_(u'* %s - %s' % (obj.albumartist, obj.album))
-        else:
-            print_(u'* %s - %s' % (obj.artist, obj.title))
+        ui.print_obj(obj, lib)
 
         # Show each change.
         for field, value in fsets.iteritems():
@@ -1074,6 +1066,8 @@ modify_cmd.parser.add_option('-a', '--album', action='store_true',
     help='modify whole albums instead of tracks')
 modify_cmd.parser.add_option('-y', '--yes', action='store_true',
     help='skip confirmation')
+modify_cmd.parser.add_option('-f', '--format', action='store',
+    help='print with custom format', default=None)
 def modify_func(lib, config, opts, args):
     args = decargs(args)
     mods = [a for a in args if '=' in a]
