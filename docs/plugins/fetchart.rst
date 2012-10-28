@@ -4,6 +4,7 @@ FetchArt Plugin
 The ``fetchart`` plugin retrieves album art images from various sources on the
 Web and stores them as image files.
 
+
 Fetching Album Art During Import
 --------------------------------
 
@@ -14,6 +15,12 @@ plugin by putting ``fetchart`` on your config file's ``plugins`` line (see
 By default, beets stores album art image files alongside the music files for an
 album in a file called ``cover.jpg``. To customize the name of this file, use
 the :ref:`art-filename` config option.
+
+A maximum image width can be defined to downscale fetched images if they are too
+big. The resize operation reduces image width to ``maxwidth`` pixels and 
+height is recomputed so that aspect ratio is preserved.  
+When using ``maxwidth`` config option, please consider installing 
+[ImageMagick](www.imagemagick.org/) first for optimal performance. 
 
 To disable automatic art downloading, just put this in your configuration
 file::

@@ -20,13 +20,17 @@ from beets.plugins import BeetsPlugin
 from beets import mediafile
 from beets import ui
 from beets.ui import decargs
-from beets.util import syspath, normpath
+from beets.util import syspath, normpath, artresizer
 
 log = logging.getLogger('beets')
 
 def _embed(path, items):
     """Embed an image file, located at `path`, into each item.
     """
+    if options['maxwidth']:
+        path = artresizer.inst.resize(options['maxwidth'], syspath(path))
+        log.debug('Resize album art to %s before embedding' % path)
+
     data = open(syspath(path), 'rb').read()
     kindstr = imghdr.what(None, data)
     if kindstr not in ('jpeg', 'png'):
@@ -35,6 +39,7 @@ def _embed(path, items):
 
     # Add art to each file.
     log.debug('Embedding album art.')
+
     for item in items:
         try:
             f = mediafile.MediaFile(syspath(item.path))
@@ -48,12 +53,21 @@ def _embed(path, items):
 
 options = {
     'autoembed': True,
+    'maxwidth': 0,
 }
 class EmbedCoverArtPlugin(BeetsPlugin):
-    """Allows albumart to be embedded into the actual files."""
+    """Allows albumart to be embedded into the actual files.
+    """
     def configure(self, config):
         options['autoembed'] = \
             ui.config_val(config, 'embedart', 'autoembed', True, bool)
+        options['maxwidth'] = \
+            int(ui.config_val(config, 'embedart', 'maxwidth', '0'))
+
+        if options['maxwidth'] and artresizer.inst.method == artresizer.WEBPROXY:
+            options['maxwidth'] = 0
+            log.error("embedart: 'maxwidth' option ignored, " 
+                       "please install ImageMagick first")
 
     def commands(self):
         # Embed command.
