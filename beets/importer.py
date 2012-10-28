@@ -136,6 +136,12 @@ def _infer_album_fields(task):
             for k, v in changes.iteritems():
                 setattr(item, k, v)
 
+def _resume():
+    """Check whether an import should resume and return a boolean or the
+    string 'ask' indicating that the user should be queried.
+    """
+    return config['import']['resume'].as_choice([True, False, 'ask'])
+
 def _open_state():
     """Reads the state file, returning a dictionary."""
     try:
@@ -206,47 +212,6 @@ def history_get():
     return state[HISTORY_KEY]
 
 
-# The configuration structure (FIXME VESTIGIAL).
-
-class ImportConfig(object):
-    """Contains all the settings used during an import session. Should
-    be used in a "write-once" way -- everything is set up initially and
-    then never touched again.
-    """
-    _fields = ['lib', 'paths', 'resume', 'logfile', 'color', 'quiet',
-               'quiet_fallback', 'copy', 'move', 'write', 'delete',
-               'choose_match_func', 'should_resume_func', 'threaded',
-               'autot', 'singletons', 'timid', 'choose_item_func',
-               'query', 'incremental', 'ignore',
-               'resolve_duplicate_func', 'per_disc_numbering']
-    def __init__(self, **kwargs):
-        for slot in self._fields:
-            setattr(self, slot, kwargs[slot])
-
-        # Normalize the paths.
-        if self.paths:
-            self.paths = map(normpath, self.paths)
-
-        # Incremental and progress are mutually exclusive.
-        if self.incremental:
-            self.resume = False
-
-        # When based on a query instead of directories, never
-        # save progress or try to resume.
-        if self.query is not None:
-            self.paths = None
-            self.resume = False
-            self.incremental = False
-
-        # Copy and move are mutually exclusive.
-        if self.move:
-            self.copy = False
-
-        # Only delete when copying.
-        if not self.copy:
-            self.delete = False
-
-
 # Abstract session class.
 
 class ImportSession(object):
@@ -263,6 +228,35 @@ class ImportSession(object):
         self.logfile = logfile
         self.paths = paths
         self.query = query
+
+        # Normalize the paths.
+        if self.paths:
+            self.paths = map(normpath, self.paths)
+
+    def _amend_config(self):
+        """Make implied changes the importer configuration.
+        """
+        # FIXME: Maybe this function should not exist and should instead
+        # provide "decision wrappers" like "should_resume()", etc.
+        iconfig = config['import']
+
+        # Incremental and progress are mutually exclusive.
+        if iconfig['incremental']:
+            iconfig['resume'] = False
+
+        # When based on a query instead of directories, never
+        # save progress or try to resume.
+        if self.query is not None:
+            iconfig['resume'] = False
+            iconfig['incremental'] = False
+
+        # Copy and move are mutually exclusive.
+        if iconfig['move']:
+            iconfig['copy'] = False
+
+        # Only delete when copying.
+        if not iconfig['copy']:
+            iconfig['delete'] = False
 
     def tag_log(self, status, path):
         """Log a message about a given album to logfile. The status should
@@ -308,6 +302,8 @@ class ImportSession(object):
     def run(self):
         """Run the import task.
         """
+        self._amend_config()
+
         # Set up the pipeline.
         if self.query is None:
             stages = [read_tasks(self)]
@@ -527,15 +523,14 @@ def read_tasks(session):
     import, yields single-item tasks instead.
     """
     # Look for saved progress.
-    progress = config['import']['resume'] is not False  # FIXME
-    if progress:
+    if _resume():
         resume_dirs = {}
         for path in session.paths:
             resume_dir = progress_get(path)
             if resume_dir:
 
                 # Either accept immediately or prompt for input to decide.
-                if config['import']['resume']:
+                if _resume() == True:
                     do_resume = True
                     log.warn('Resuming interrupted import of %s' % path)
                 else:
@@ -561,11 +556,11 @@ def read_tasks(session):
             continue
 
         # Produce paths under this directory.
-        if progress:
+        if _resume():
             resume_dir = resume_dirs.get(toppath)
         for path, items in autotag.albums_in_dir(toppath):
             # Skip according to progress.
-            if progress and resume_dir:
+            if _resume() and resume_dir:
                 # We're fast-forwarding to resume a previous tagging.
                 if path == resume_dir:
                     # We've hit the last good path! Turn off the
@@ -860,7 +855,7 @@ def finalize(session):
     while True:
         task = yield
         if task.should_skip():
-            if config['import']['resume ']is not False:
+            if _resume():
                 task.save_progress()
             if config['import']['incremental']:
                 task.save_history()
@@ -888,7 +883,7 @@ def finalize(session):
                     task.prune(old_path)
 
         # Update progress.
-        if config['import']['resume'] is not False:
+        if _resume():
             task.save_progress()
         if config['import']['incremental']:
             task.save_history()

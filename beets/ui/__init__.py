@@ -279,12 +279,12 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         # Prompt for new input.
         resp = input_(fallback_prompt)
 
-def input_yn(prompt, require=False, color=False):
+def input_yn(prompt, require=False):
     """Prompts the user for a "yes" or "no" response. The default is
     "yes" unless `require` is `True`, in which case there is no default.
     """
     sel = input_options(
-        ('y', 'n'), require, prompt, 'Enter Y or N:', color=color
+        ('y', 'n'), require, prompt, 'Enter Y or N:'
     )
     return sel == 'y'
 

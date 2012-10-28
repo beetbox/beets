@@ -598,7 +598,7 @@ class TerminalImportSession(importer.ImportSession):
         else:
             assert False
 
-    def should_resume(path):
+    def should_resume(self, path):
         return ui.input_yn(u"Import of the directory:\n{0}\n"
                            "was interrupted. Resume (Y/n)?"
                            .format(displayable_path(path)))
