@@ -406,8 +406,16 @@ def get_replacements():
     """Confit validation function that reads regex/string pairs.
     """
     pairs = config['replace'].as_pairs()
-    # FIXME handle regex compilation errors
-    return [(re.compile(k), v) for (k, v) in pairs]
+    replacements = []
+    for pattern, value in pairs:
+        try:
+            replacements.append((re.compile(pattern), value))
+        except re.error:
+            raise UserError(
+                u'malformed regular expression in replace: {0}'.format(
+                    pattern
+            ))
+    return replacements
 
 def _pick_format(album, fmt=None):
     """Pick a format string for printing Album or Item objects,
@@ -631,9 +639,10 @@ def _raw_main(args, configfh):
     config.add_args(options)
 
     # Open library file.
+    dbpath = config['library'].as_filename()
     try:
         lib = library.Library(
-            config['library'].as_filename(),
+            dbpath,
             config['directory'].as_filename(),
             get_path_formats(),
             config['art_filename'].get(unicode),
@@ -641,7 +650,9 @@ def _raw_main(args, configfh):
             get_replacements(),
         )
     except sqlite3.OperationalError:
-        raise UserError("database file %s could not be opened" % FIXME)
+        raise UserError(u"database file {0} could not be opened".format(
+            util.displayable_path(dbpath)
+        ))
     plugins.send("library_opened", lib=lib)
 
     # Configure the logger.
@@ -649,9 +660,13 @@ def _raw_main(args, configfh):
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.INFO)
-    log.debug(u'data directory: %s' % util.displayable_path('FIXME'))
-    log.debug(u'library database: %s' % util.displayable_path(lib.path))
-    log.debug(u'library directory: %s' % util.displayable_path(lib.directory))
+    log.debug(u'data directory: {0}\n'
+              u'library database: {1}\n'
+              u'library directory: {2}'.format(
+        util.displayable_path(config.config_dir()),
+        util.displayable_path(lib.path),
+        util.displayable_path(lib.directory),
+    ))
 
     # Invoke the subcommand.
     subcommand.func(lib, suboptions, subargs)
