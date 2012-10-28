@@ -20,6 +20,7 @@ import logging
 import os
 
 from beets.plugins import BeetsPlugin
+from beets.util import artresizer
 from beets import importer
 from beets import ui
 
@@ -32,6 +33,15 @@ log = logging.getLogger('beets')
 
 # ART SOURCES ################################################################
 
+def do_resize_url(func):
+    def wrapper(url, maxwidth=None):
+        """Returns url pointing to resized image instead of original one"""
+        if maxwidth and artresizer.inst.method == artresizer.WEBPROXY :
+            url = artresizer.resize_url(url, maxwidth)
+        return func(url)
+    return wrapper
+
+@do_resize_url
 def _fetch_image(url):
     """Downloads an image from a URL and checks whether it seems to
     actually be an image. If so, returns a path to the downloaded image.
@@ -57,11 +67,8 @@ def _fetch_image(url):
 CAA_URL = 'http://coverartarchive.org/release/{mbid}/front-500.jpg'
 
 def caa_art(release_id):
-    """Fetch album art from the Cover Art Archive given a MusicBrainz
-    release ID.
-    """
-    url = CAA_URL.format(mbid=release_id)
-    return _fetch_image(url)
+    """Return a Cover Art Archive url given a MusicBrain release ID."""
+    return CAA_URL.format(mbid=release_id)
 
 
 # Art from Amazon.
@@ -70,13 +77,15 @@ AMAZON_URL = 'http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
 AMAZON_INDICES = (1, 2)
 
 def art_for_asin(asin):
-    """Fetch art for an Amazon ID (ASIN) string."""
+    """Return url for an Amazon ID (ASIN) string."""
     for index in AMAZON_INDICES:
-        # Fetch the image.
         url = AMAZON_URL % (asin, index)
-        fn = _fetch_image(url)
-        if fn:
-            return fn
+        try:
+            urlopen(url)
+            return url
+        except IOError:
+            pass # does not exist
+    
 
 
 # AlbumArt.org scraper.
@@ -85,7 +94,7 @@ AAO_URL = 'http://www.albumart.org/index_detail.php'
 AAO_PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
 
 def aao_art(asin):
-    """Fetch art from AlbumArt.org."""
+    """Return art url from AlbumArt.org."""
     # Get the page from albumart.org.
     url = '%s?%s' % (AAO_URL, urllib.urlencode({'asin': asin}))
     try:
@@ -99,7 +108,7 @@ def aao_art(asin):
     m = re.search(AAO_PAT, page)
     if m:
         image_url = m.group(1)
-        return _fetch_image(image_url)
+        return image_url
     else:
         log.debug('No image found on page')
 
@@ -117,11 +126,10 @@ def art_in_path(path):
         for ext in IMAGE_EXTENSIONS:
             if fn.lower().endswith('.' + ext):
                 images.append(fn)
-    images.sort()
 
     # Look for "preferred" filenames.
-    for name in COVER_NAMES:
-        for fn in images:
+    for fn in images:
+        for name in COVER_NAMES:
             if fn.lower().startswith(name):
                 log.debug('Using well-named art file %s' % fn)
                 return os.path.join(path, fn)
@@ -133,40 +141,41 @@ def art_in_path(path):
 
 
 # Try each source in turn.
-
-def art_for_album(album, path, local_only=False):
+  
+def art_for_album(album, path, maxwidth=None, local_only=False):
     """Given an Album object, returns a path to downloaded art for the
     album (or None if no art is found). If `local_only`, then only local
     image files from the filesystem are returned; no network requests
     are made.
     """
+
     # Local art.
     if isinstance(path, basestring):
         out = art_in_path(path)
-        if out:
-            return out
-    if local_only:
-        # Abort without trying Web sources.
-        return
 
-    # CoverArtArchive.org.
-    if album.mb_albumid:
-        log.debug('Fetching album art for MBID {0}.'.format(album.mb_albumid))
-        out = caa_art(album.mb_albumid)
-        if out:
-            return out
+    if not local_only and not out:
+        url = None
+        # CoverArtArchive.org.
+        if album.mb_albumid:
+            log.debug('Fetching album art for MBID {0}.'.format(album.mb_albumid))
+            url = caa_art(album.mb_albumid)
+ 
+        # Amazon and AlbumArt.org.
+        if not url and album.asin:
+            log.debug('Fetching album art for ASIN %s.' % album.asin)
+            url = art_for_asin(album.asin)
+            if not url:
+                url = aao_art(album.asin)
 
-    # Amazon and AlbumArt.org.
-    if album.asin:
-        log.debug('Fetching album art for ASIN %s.' % album.asin)
-        out = art_for_asin(album.asin)
-        if out:
-            return out
-        return aao_art(album.asin)
+        if not url:    # All sources failed.
+            log.debug('No ASIN available: no art found.')
+            return None
 
-    # All sources failed.
-    log.debug('No ASIN available: no art found.')
-    return None
+        out = _fetch_image(url, maxwidth)
+        
+    if maxwidth and artresizer.inst.method != artresizer.WEBPROXY :
+        artresizer.inst.resize(maxwidth, out, out)
+    return out
 
 
 # PLUGIN LOGIC ###############################################################
@@ -179,7 +188,8 @@ def batch_fetch_art(lib, albums, force):
         if album.artpath and not force:
             message = 'has album art'
         else:
-            path = art_for_album(album, None)
+            path = art_for_album(album)
+
             if path:
                 album.set_art(path, False)
                 message = 'found album art'
@@ -201,10 +211,13 @@ class FetchArtPlugin(BeetsPlugin):
     def configure(self, config):
         self.autofetch = ui.config_val(config, 'fetchart',
                                        'autofetch', True, bool)
+        self.maxwidth = int(ui.config_val(config, 'fetchart',
+                                       'maxwidth', '0'))
         if self.autofetch:
             # Enable two import hooks when fetching is enabled.
             self.import_stages = [self.fetch_art]
             self.register_listener('import_task_files', self.assign_art)
+
 
     # Asynchronous; after music is added to the library.
     def fetch_art(self, config, task):
@@ -221,7 +234,8 @@ class FetchArtPlugin(BeetsPlugin):
                 return
 
             album = config.lib.get_album(task.album_id)
-            path = art_for_album(album, task.path, local_only=local)
+            path = art_for_album(album, task.path, self.maxwidth, local_only=local)
+
             if path:
                 self.art_paths[task] = path
 
