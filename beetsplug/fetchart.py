@@ -149,6 +149,7 @@ def art_for_album(album, path, maxwidth=None, local_only=False):
     are made.
     """
 
+    out = None
     # Local art.
     if isinstance(path, basestring):
         out = art_in_path(path)
@@ -203,7 +204,7 @@ class FetchArtPlugin(BeetsPlugin):
         super(FetchArtPlugin, self).__init__()
 
         self.autofetch = True
-
+        self.maxwidth = 0
         # Holds paths to downloaded images between fetching them and
         # placing them in the filesystem.
         self.art_paths = {}
@@ -234,7 +235,7 @@ class FetchArtPlugin(BeetsPlugin):
                 return
 
             album = config.lib.get_album(task.album_id)
-            path = art_for_album(album, task.path, self.maxwidth, local_only=local)
+            path = art_for_album(album, task.path, self.maxwidth)
 
             if path:
                 self.art_paths[task] = path
