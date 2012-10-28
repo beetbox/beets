@@ -81,7 +81,7 @@ def art_for_asin(asin):
     for index in AMAZON_INDICES:
         url = AMAZON_URL % (asin, index)
         try:
-            urlopen(url)
+            urllib.urlopen(url)
             return url
         except IOError:
             pass # does not exist
