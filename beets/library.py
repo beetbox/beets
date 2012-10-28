@@ -799,7 +799,7 @@ class BaseLibrary(object):
 
     # Basic operations.
 
-    def add(self, item, copy=False): #FIXME copy should default to true
+    def add(self, item, copy=False):
         """Add the item as a new object to the library database. The id
         field will be updated; the new id is returned. If copy, then
         each item is copied to the destination location before it is
@@ -1380,7 +1380,6 @@ class Library(BaseLibrary):
         don't yet have an ID. Returns an Album object.
         """
         # Set the metadata from the first item.
-        #fixme: check for consensus?
         item_values = dict(
             (key, getattr(items[0], key)) for key in ALBUM_KEYS_ITEM)
 

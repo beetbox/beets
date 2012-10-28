@@ -635,8 +635,8 @@ def import_files(lib, paths, query):
         logfile = None
 
     # Never ask for input in quiet mode.
-    if config['import']['resume'] is None and \
-            config['import']['quiet']:  # FIXME resume
+    if config['import']['resume'].get() == 'ask' and \
+            config['import']['quiet']:
         config['import']['resume'] = False
 
     session = TerminalImportSession(lib, logfile, paths, query)

@@ -428,8 +428,6 @@ class BrowseTest(unittest.TestCase, AssertsMixin):
         items = self.lib.items('2007')
         self.assert_done(items)
 
-    #FIXME Haven't tested explicit (non-query) criteria.
-
 class CountTest(unittest.TestCase):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')

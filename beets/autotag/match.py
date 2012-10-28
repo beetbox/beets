@@ -320,10 +320,6 @@ def match_by_id(items):
         log.debug('No album ID consensus.')
         return None
 
-    #fixme In the future, at the expense of performance, we could use
-    # other IDs (i.e., track and artist) in case the album tag isn't
-    # present, but that event seems very unlikely.
-
 def recommendation(results):
     """Given a sorted list of AlbumMatch or TrackMatch objects, return a
     recommendation flag (RECOMMEND_STRONG, RECOMMEND_MEDIUM,

@@ -923,12 +923,12 @@ class Server(BaseServer):
             item = self.playlist[self.current_index]
 
             yield u'bitrate: ' + unicode(item.bitrate/1000)
-            #fixme: missing 'audio'
+            # Missing 'audio'.
 
             (pos, total) = self.player.time()
             yield u'time: ' + unicode(pos) + u':' + unicode(total)
 
-        #fixme: also missing 'updating_db'
+        # Also missing 'updating_db'.
 
 
     def cmd_stats(self, conn):
@@ -945,7 +945,7 @@ class Server(BaseServer):
                u'albums: ' + unicode(albums),
                u'songs: ' + unicode(songs),
                u'uptime: ' + unicode(int(time.time() - self.startup_time)),
-               u'playtime: ' + u'0', #fixme
+               u'playtime: ' + u'0', # Missing.
                u'db_playtime: ' + unicode(int(totaltime)),
                u'db_update: ' + unicode(int(self.updated_time)),
               )
