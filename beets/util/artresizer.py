@@ -20,7 +20,7 @@ import subprocess
 import os
 from tempfile import NamedTemporaryFile
 import logging
-from beets.util import command_output
+from beets import util
 
 # Resizing methods
 PIL = 1
@@ -43,7 +43,7 @@ def call(args):
     command exits abnormally, a ArtResizerError is raised.
     """
     try:
-        return command_output(args)
+        return util.command_output(args)
     except subprocess.CalledProcessError as e:
         raise ArtResizerError(
             "{0} exited with status {1}".format(args[0], e.returncode)
@@ -69,37 +69,46 @@ def temp_file_for(path):
         return f.name
 
 
-def pil_resize(self, maxwidth, path_in, path_out=None):
-    """Resize using Python Imaging Library (PIL).  Return the output path 
+def pil_resize(maxwidth, path_in, path_out=None):
+    """Resize using Python Imaging Library (PIL).  Return the output path
     of resized image.
     """
+    path_out = path_out or temp_file_for(path_in)
     from PIL import Image
-    if not path_out:
-        path_out = temp_file_for(path_in)
+    log.debug(u'artresizer: PIL resizing {0} to {1}'.format(
+        util.displayable_path(path_in), util.displayable_path(path_out)
+    ))
+
     try:
-        im = Image.open(path_in)
+        im = Image.open(util.syspath(path_in))
         size = maxwidth, maxwidth
         im.thumbnail(size, Image.ANTIALIAS)
         im.save(path_out)
         return path_out
     except IOError:
-        log.error("Cannot create thumbnail for '%s'" % path_in)
+        log.error(u"PIL cannot create thumbnail for '{0}'".format(
+            util.displayable_path(path_in)
+        ))
+        return path_in
 
 
-def im_resize(self, maxwidth, path_in, path_out=None):
+def im_resize(maxwidth, path_in, path_out=None):
     """Resize using ImageMagick's ``convert`` tool.
     tool. Return the output path of resized image.
     """
-    if not path_out:
-        path_out = temp_file_for(path_in)
+    path_out = path_out or temp_file_for(path_in)
+    log.debug(u'artresizer: ImageMagick resizing {0} to {1}'.format(
+        util.displayable_path(path_in), util.displayable_path(path_out)
+    ))
 
     # "-resize widthxheight>" shrinks images with dimension(s) larger
     # than the corresponding width and/or height dimension(s). The >
     # "only shrink" flag is prefixed by ^ escape char for Windows
     # compatability.
-    cmd = ['convert', path_in,
-           '-resize', '{0}x^>'.format(maxwidth), path_out]
-    call(cmd)
+    call([
+        'convert', util.syspath(path_in),
+        '-resize', '{0}x^>'.format(maxwidth), path_out
+    ])
     return path_out
 
 
@@ -136,8 +145,8 @@ class ArtResizer(object):
         specified, with an inferred method.
         """
         self.method = method or self._guess_method()
-        log.debug("ArtResizer method is {0}".format(self.method))        
-    
+        log.debug(u"artresizer: method is {0}".format(self.method))
+
     def resize(self, maxwidth, path_in, path_out=None):
         """Manipulate an image file according to the method, returning a
         new path. For PIL or IMAGEMAGIC methods, resizes the image to a
@@ -184,7 +193,7 @@ class ArtResizer(object):
             if 'imagemagick' in out:
                 return IMAGEMAGICK
         except subprocess.CalledProcessError:
-            pass # system32/convert.exe may be interfering 
+            pass # system32/convert.exe may be interfering
 
         # Fall back to Web proxy method.
         return WEBPROXY

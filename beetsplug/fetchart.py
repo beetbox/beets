@@ -166,7 +166,7 @@ def art_for_album(album, path, maxwidth=None, local_only=False):
             if out:
                 break
 
-    if maxwidth:
+    if maxwidth and out:
         out = ArtResizer.shared.resize(maxwidth, out)
     return out
 
