@@ -18,15 +18,18 @@ import urllib
 import re
 import logging
 import os
+import tempfile
 
 from beets.plugins import BeetsPlugin
 from beets.util.artresizer import ArtResizer
 from beets import importer
 from beets import ui
+from beets import util
 
 IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 COVER_NAMES = ['cover', 'front', 'art', 'album', 'folder']
 CONTENT_TYPES = ('image/jpeg',)
+DOWNLOAD_EXTENSION = '.jpg'
 
 log = logging.getLogger('beets')
 
@@ -36,19 +39,25 @@ def _fetch_image(url):
     actually be an image. If so, returns a path to the downloaded image.
     Otherwise, returns None.
     """
-    log.debug('Downloading art: %s' % url)
+    # Generate a temporary filename with the correct extension.
+    fd, fn = tempfile.mkstemp(suffix=DOWNLOAD_EXTENSION)
+    os.close(fd)
+
+    log.debug(u'fetchart: downloading art: {0}'.format(url))
     try:
-        fn, headers = urllib.urlretrieve(url)
+        _, headers = urllib.urlretrieve(url, filename=fn)
     except IOError:
         log.debug('error fetching art')
         return
 
     # Make sure it's actually an image.
     if headers.gettype() in CONTENT_TYPES:
-        log.debug('Downloaded art to: %s' % fn)
+        log.debug(u'fetchart: downloaded art to: {0}'.format(
+            util.displayable_path(fn)
+        ))
         return fn
     else:
-        log.debug('Not an image.')
+        log.debug(u'fetchart: not an image')
 
 
 # ART SOURCES ################################################################
@@ -84,10 +93,10 @@ def aao_art(asin):
     # Get the page from albumart.org.
     url = '%s?%s' % (AAO_URL, urllib.urlencode({'asin': asin}))
     try:
-        log.debug('Scraping art URL: %s' % url)
+        log.debug(u'fetchart: scraping art URL: {0}'.format(url))
         page = urllib.urlopen(url).read()
     except IOError:
-        log.debug('Error scraping art page')
+        log.debug(u'fetchart: error scraping art page')
         return
 
     # Search the page for the image URL.
@@ -96,7 +105,7 @@ def aao_art(asin):
         image_url = m.group(1)
         return image_url
     else:
-        log.debug('No image found on page')
+        log.debug('fetchart: no image found on page')
 
 
 # Art from the filesystem.
@@ -117,12 +126,16 @@ def art_in_path(path):
     for fn in images:
         for name in COVER_NAMES:
             if fn.lower().startswith(name):
-                log.debug('Using well-named art file %s' % fn)
+                log.debug('fetchart: using well-named art file {0}'.format(
+                    util.displayable_path(fn)
+                ))
                 return os.path.join(path, fn)
 
     # Fall back to any image in the folder.
     if images:
-        log.debug('Using fallback art file %s' % images[0])
+        log.debug('fetchart: using fallback art file {0}'.format(
+            util.displayable_path(images[0])
+        ))
         return os.path.join(path, images[0])
 
 

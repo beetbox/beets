@@ -45,8 +45,10 @@ preserved.
 
 Beets can resize images using `PIL`_, `ImageMagick`_, or a server-side resizing
 proxy. If either PIL or ImageMagick is installed, beets will use those;
-otherwise, it falls back to the resizing proxy. Since server-side resizing can
-be slow, consider installing one of the two backends for better performance.
+otherwise, it falls back to the resizing proxy. If the resizing proxy is used,
+no resizing is performed for album art found on the filesystem---only downloaded
+art is resized. Server-side resizing can also be slower than local resizing, so
+consider installing one of the two backends for better performance.
 
 .. _PIL: http://www.pythonware.com/products/pil/
 .. _ImageMagick: http://www.imagemagick.org/
