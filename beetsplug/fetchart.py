@@ -18,50 +18,58 @@ import urllib
 import re
 import logging
 import os
+import tempfile
 
 from beets.plugins import BeetsPlugin
+from beets.util.artresizer import ArtResizer
 from beets import importer
 from beets import ui
+from beets import util
 
 IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 COVER_NAMES = ['cover', 'front', 'art', 'album', 'folder']
 CONTENT_TYPES = ('image/jpeg',)
+DOWNLOAD_EXTENSION = '.jpg'
 
 log = logging.getLogger('beets')
 
-
-# ART SOURCES ################################################################
 
 def _fetch_image(url):
     """Downloads an image from a URL and checks whether it seems to
     actually be an image. If so, returns a path to the downloaded image.
     Otherwise, returns None.
     """
-    log.debug('Downloading art: %s' % url)
+    # Generate a temporary filename with the correct extension.
+    fd, fn = tempfile.mkstemp(suffix=DOWNLOAD_EXTENSION)
+    os.close(fd)
+
+    log.debug(u'fetchart: downloading art: {0}'.format(url))
     try:
-        fn, headers = urllib.urlretrieve(url)
+        _, headers = urllib.urlretrieve(url, filename=fn)
     except IOError:
         log.debug('error fetching art')
         return
 
     # Make sure it's actually an image.
     if headers.gettype() in CONTENT_TYPES:
-        log.debug('Downloaded art to: %s' % fn)
+        log.debug(u'fetchart: downloaded art to: {0}'.format(
+            util.displayable_path(fn)
+        ))
         return fn
     else:
-        log.debug('Not an image.')
+        log.debug(u'fetchart: not an image')
 
+
+# ART SOURCES ################################################################
 
 # Cover Art Archive.
 
 CAA_URL = 'http://coverartarchive.org/release/{mbid}/front-500.jpg'
 
 def caa_art(release_id):
-    """Fetch album art from the Cover Art Archive given a MusicBrainz
-    release ID.
+    """Return the Cover Art Archive URL given a MusicBrainz release ID.
     """
-    url = CAA_URL.format(mbid=release_id)
-    return _fetch_image(url)
+    return CAA_URL.format(mbid=release_id)
 
 
 # Art from Amazon.
@@ -70,13 +78,9 @@ AMAZON_URL = 'http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
 AMAZON_INDICES = (1, 2)
 
 def art_for_asin(asin):
-    """Fetch art for an Amazon ID (ASIN) string."""
+    """Generate URLs for an Amazon ID (ASIN) string."""
     for index in AMAZON_INDICES:
-        # Fetch the image.
-        url = AMAZON_URL % (asin, index)
-        fn = _fetch_image(url)
-        if fn:
-            return fn
+        yield AMAZON_URL % (asin, index)
 
 
 # AlbumArt.org scraper.
@@ -85,23 +89,23 @@ AAO_URL = 'http://www.albumart.org/index_detail.php'
 AAO_PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
 
 def aao_art(asin):
-    """Fetch art from AlbumArt.org."""
+    """Return art URL from AlbumArt.org given an ASIN."""
     # Get the page from albumart.org.
     url = '%s?%s' % (AAO_URL, urllib.urlencode({'asin': asin}))
     try:
-        log.debug('Scraping art URL: %s' % url)
+        log.debug(u'fetchart: scraping art URL: {0}'.format(url))
         page = urllib.urlopen(url).read()
     except IOError:
-        log.debug('Error scraping art page')
+        log.debug(u'fetchart: error scraping art page')
         return
 
     # Search the page for the image URL.
     m = re.search(AAO_PAT, page)
     if m:
         image_url = m.group(1)
-        return _fetch_image(image_url)
+        return image_url
     else:
-        log.debug('No image found on page')
+        log.debug('fetchart: no image found on page')
 
 
 # Art from the filesystem.
@@ -117,61 +121,72 @@ def art_in_path(path):
         for ext in IMAGE_EXTENSIONS:
             if fn.lower().endswith('.' + ext):
                 images.append(fn)
-    images.sort()
 
     # Look for "preferred" filenames.
-    for name in COVER_NAMES:
-        for fn in images:
+    for fn in images:
+        for name in COVER_NAMES:
             if fn.lower().startswith(name):
-                log.debug('Using well-named art file %s' % fn)
+                log.debug('fetchart: using well-named art file {0}'.format(
+                    util.displayable_path(fn)
+                ))
                 return os.path.join(path, fn)
 
     # Fall back to any image in the folder.
     if images:
-        log.debug('Using fallback art file %s' % images[0])
+        log.debug('fetchart: using fallback art file {0}'.format(
+            util.displayable_path(images[0])
+        ))
         return os.path.join(path, images[0])
 
 
 # Try each source in turn.
 
-def art_for_album(album, path, local_only=False):
-    """Given an Album object, returns a path to downloaded art for the
-    album (or None if no art is found). If `local_only`, then only local
-    image files from the filesystem are returned; no network requests
-    are made.
+def _source_urls(album):
+    """Generate possible source URLs for an album's art. The URLs are
+    not guaranteed to work so they each need to be attempted in turn.
+    This allows the main `art_for_album` function to abort iteration
+    through this sequence early to avoid the cost of scraping when not
+    necessary.
     """
-    # Local art.
-    if isinstance(path, basestring):
-        out = art_in_path(path)
-        if out:
-            return out
-    if local_only:
-        # Abort without trying Web sources.
-        return
-
-    # CoverArtArchive.org.
     if album.mb_albumid:
-        log.debug('Fetching album art for MBID {0}.'.format(album.mb_albumid))
-        out = caa_art(album.mb_albumid)
-        if out:
-            return out
+        yield caa_art(album.mb_albumid)
 
     # Amazon and AlbumArt.org.
     if album.asin:
-        log.debug('Fetching album art for ASIN %s.' % album.asin)
-        out = art_for_asin(album.asin)
-        if out:
-            return out
-        return aao_art(album.asin)
+        for url in art_for_asin(album.asin):
+            yield url
+        yield aao_art(album.asin)
 
-    # All sources failed.
-    log.debug('No ASIN available: no art found.')
-    return None
+def art_for_album(album, path, maxwidth=None, local_only=False):
+    """Given an Album object, returns a path to downloaded art for the
+    album (or None if no art is found). If `maxwidth`, then images are
+    resized to this maximum pixel size. If `local_only`, then only local
+    image files from the filesystem are returned; no network requests
+    are made.
+    """
+    out = None
+
+    # Local art.
+    if isinstance(path, basestring):
+        out = art_in_path(path)
+
+    # Web art sources.
+    if not local_only and not out:
+        for url in _source_urls(album):
+            if maxwidth:
+                url = ArtResizer.shared.proxy_url(maxwidth, url)
+            out = _fetch_image(url)
+            if out:
+                break
+
+    if maxwidth and out:
+        out = ArtResizer.shared.resize(maxwidth, out)
+    return out
 
 
 # PLUGIN LOGIC ###############################################################
 
-def batch_fetch_art(lib, albums, force):
+def batch_fetch_art(lib, albums, force, maxwidth=None):
     """Fetch album art for each of the albums. This implements the manual
     fetchart CLI command.
     """
@@ -179,7 +194,8 @@ def batch_fetch_art(lib, albums, force):
         if album.artpath and not force:
             message = 'has album art'
         else:
-            path = art_for_album(album, None)
+            path = art_for_album(album, None, maxwidth)
+
             if path:
                 album.set_art(path, False)
                 message = 'found album art'
@@ -193,7 +209,7 @@ class FetchArtPlugin(BeetsPlugin):
         super(FetchArtPlugin, self).__init__()
 
         self.autofetch = True
-
+        self.maxwidth = 0
         # Holds paths to downloaded images between fetching them and
         # placing them in the filesystem.
         self.art_paths = {}
@@ -201,6 +217,8 @@ class FetchArtPlugin(BeetsPlugin):
     def configure(self, config):
         self.autofetch = ui.config_val(config, 'fetchart',
                                        'autofetch', True, bool)
+        self.maxwidth = int(ui.config_val(config, 'fetchart',
+                                          'maxwidth', '0'))
         if self.autofetch:
             # Enable two import hooks when fetching is enabled.
             self.import_stages = [self.fetch_art]
@@ -221,7 +239,8 @@ class FetchArtPlugin(BeetsPlugin):
                 return
 
             album = config.lib.get_album(task.album_id)
-            path = art_for_album(album, task.path, local_only=local)
+            path = art_for_album(album, task.path, self.maxwidth, local)
+
             if path:
                 self.art_paths[task] = path
 
@@ -244,6 +263,7 @@ class FetchArtPlugin(BeetsPlugin):
                               action='store_true', default=False,
                               help='re-download art when already present')
         def func(lib, config, opts, args):
-            batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force)
+            batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force,
+                            self.maxwidth)
         cmd.func = func
         return [cmd]

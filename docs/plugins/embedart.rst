@@ -40,8 +40,18 @@ embedded album art:
 Configuring
 -----------
 
-The plugin has one configuration option, ``autoembed``, which lets you disable
-automatic album art embedding. To do so, add this to your ``~/.beetsconfig``::
+``autoembed`` option  lets you disable automatic album art embedding. 
+To do so, add this to your ``~/.beetsconfig``::
 
     [embedart]
     autoembed: no
+
+A maximum image width can be configured as ``maxwidth`` to downscale images
+before embedding them (the original image file is not altered). The resize
+operation reduces image width to ``maxwidth`` pixels. The height is recomputed
+so that the aspect ratio is preserved. `PIL`_ or `ImageMagick`_ is required to
+use the ``maxwidth`` config option. See also :ref:`image-resizing` for further
+caveats about image resizing.
+
+.. _PIL: http://www.pythonware.com/products/pil/
+.. _ImageMagick: http://www.imagemagick.org/

@@ -4,6 +4,7 @@ FetchArt Plugin
 The ``fetchart`` plugin retrieves album art images from various sources on the
 Web and stores them as image files.
 
+
 Fetching Album Art During Import
 --------------------------------
 
@@ -33,6 +34,31 @@ By default, the command will only look for album art when the album doesn't
 already have it; the ``-f`` or ``--force`` switch makes it search for art
 regardless. If you specify a query, only matching albums will be processed;
 otherwise, the command processes every album in your library.
+
+.. _image-resizing:
+
+Image Resizing
+--------------
+
+A maximum image width can be configured as ``maxwidth`` to downscale fetched
+images if they are too big. The resize operation reduces image width to
+``maxwidth`` pixels. The height is recomputed so that the aspect ratio is
+preserved.
+
+Beets can resize images using `PIL`_, `ImageMagick`_, or a server-side resizing
+proxy. If either PIL or ImageMagick is installed, beets will use those;
+otherwise, it falls back to the resizing proxy. If the resizing proxy is used,
+no resizing is performed for album art found on the filesystem---only downloaded
+art is resized. Server-side resizing can also be slower than local resizing, so
+consider installing one of the two backends for better performance.
+
+When using ImageMagic, beets looks for the ``convert`` executable in your path.
+On some versions Windows, the program can be shadowed by a system-provided
+``convert.exe``. On these systems, you may need to modify your ``%PATH%``
+environment variable so that ImageMagick comes first or use PIL instead.
+
+.. _PIL: http://www.pythonware.com/products/pil/
+.. _ImageMagick: http://www.imagemagick.org/
 
 Album Art Sources
 -----------------

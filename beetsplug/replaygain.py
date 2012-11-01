@@ -18,7 +18,7 @@ import os
 
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.util import syspath
+from beets.util import syspath, command_output
 from beets.ui import commands
 
 log = logging.getLogger('beets')
@@ -30,13 +30,11 @@ class ReplayGainError(Exception):
     """
 
 def call(args):
-    """Execute the command indicated by `args` (a list of strings) and
-    return the command's output. The stderr stream is ignored. If the
-    command exits abnormally, a ReplayGainError is raised.
+    """Execute the command and return its output or raise a
+    ReplayGainError on failure.
     """
     try:
-        with open(os.devnull, 'w') as devnull:
-            return subprocess.check_output(args, stderr=devnull)
+        return command_output(args)
     except subprocess.CalledProcessError as e:
         raise ReplayGainError(
             "{0} exited with status {1}".format(args[0], e.returncode)

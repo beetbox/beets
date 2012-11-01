@@ -21,7 +21,7 @@ import threading
 from subprocess import Popen, PIPE
 
 from beets.plugins import BeetsPlugin
-from beets import ui, library, util
+from beets import ui, util
 from beetsplug.embedart import _embed
 
 log = logging.getLogger('beets')

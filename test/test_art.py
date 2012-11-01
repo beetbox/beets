@@ -38,15 +38,15 @@ class MockUrlRetrieve(object):
         self.fetched = url
         return self.pathval, self.headers
 
-class AmazonArtTest(unittest.TestCase):
+class FetchImageTest(unittest.TestCase):
     def test_invalid_type_returns_none(self):
         fetchart.urllib.urlretrieve = MockUrlRetrieve('path', '')
-        artpath = fetchart.art_for_asin('xxxx')
+        artpath = fetchart._fetch_image('http://example.com')
         self.assertEqual(artpath, None)
 
     def test_jpeg_type_returns_path(self):
         fetchart.urllib.urlretrieve = MockUrlRetrieve('somepath', 'image/jpeg')
-        artpath = fetchart.art_for_asin('xxxx')
+        artpath = fetchart._fetch_image('http://example.com')
         self.assertEqual(artpath, 'somepath')
 
 class FSArtTest(unittest.TestCase):
@@ -160,14 +160,10 @@ class CombinedTest(unittest.TestCase):
 class AAOTest(unittest.TestCase):
     def setUp(self):
         self.old_urlopen = fetchart.urllib.urlopen
-        self.old_urlretrieve = fetchart.urllib.urlretrieve
         fetchart.urllib.urlopen = self._urlopen
-        self.retriever = MockUrlRetrieve('somepath', 'image/jpeg')
-        fetchart.urllib.urlretrieve = self.retriever
         self.page_text = ''
     def tearDown(self):
         fetchart.urllib.urlopen = self.old_urlopen
-        fetchart.urllib.urlretrieve = self.old_urlretrieve
 
     def _urlopen(self, url):
         return StringIO.StringIO(self.page_text)
@@ -179,13 +175,11 @@ class AAOTest(unittest.TestCase):
         <img src="http://www.albumart.org/images/zoom-icon.jpg" alt="View larger image" width="17" height="15"  border="0"/></a>
         """
         res = fetchart.aao_art('x')
-        self.assertEqual(self.retriever.fetched, 'TARGET_URL')
-        self.assertEqual(res, 'somepath')
+        self.assertEqual(res, 'TARGET_URL')
 
     def test_aao_scraper_returns_none_when_no_image_present(self):
         self.page_text = "blah blah"
         res = fetchart.aao_art('x')
-        self.assertEqual(self.retriever.fetched, None)
         self.assertEqual(res, None)
 
 class ArtImporterTest(unittest.TestCase, _common.ExtraAsserts):
@@ -195,7 +189,7 @@ class ArtImporterTest(unittest.TestCase, _common.ExtraAsserts):
         _common.touch(self.art_file)
         self.old_afa = fetchart.art_for_album
         self.afa_response = self.art_file
-        def art_for_album(i, p, local_only=False):
+        def art_for_album(i, p, maxwidth=None, local_only=False):
             return self.afa_response
         fetchart.art_for_album = art_for_album
 
