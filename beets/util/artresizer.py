@@ -18,7 +18,6 @@ public resizing proxy if neither is available.
 import urllib
 import subprocess
 import os
-import glob
 import shutil
 from tempfile import NamedTemporaryFile
 import logging
@@ -27,6 +26,8 @@ import logging
 PIL = 1
 IMAGEMAGICK = 2
 WEBPROXY = 3
+
+PROXY_URL = 'http://images.weserv.nl/'
 
 log = logging.getLogger('beets')
 
@@ -51,36 +52,32 @@ def call(args):
 
 
 def resize_url(url, maxwidth):
-    """Return a new url with image of original url resized to maxwidth (keep 
-       aspect ratio)"""
-
-    PROXY_URL = 'http://images.weserv.nl/?url=%s&w=%s'
-    reqUrl = PROXY_URL % (url.replace('http://',''), maxwidth)
-    log.debug("Requesting proxy image at %s" % reqUrl)
-    try:
-        urllib.urlopen(reqUrl)
-    except IOError:
-        log.info('Cannot get resized image via web proxy. '
-                 'Using original image url.')
-        return url
-    return reqUrl
-
-
-def get_temp_file_out(path_in):
-    """Return an unused filename with correct extension.
+    """Return a proxied image URL that resizes the original image to
+    maxwidth (preserving aspect ratio).
     """
-    with NamedTemporaryFile(suffix=os.path.splitext(path_in)[1]) as f:
-        path_out = f.name
-    return path_out
+    return '{0}?{1}'.format(PROXY_URL, urllib.urlencode({
+        'url': url.replace('http://',''),
+        'w': str(maxwidth),
+    }))
+
+
+def temp_file_for(path):
+    """Return an unused filename with the same extension as the
+    specified path.
+    """
+    ext = os.path.splitext(path)[1]
+    with NamedTemporaryFile(suffix=ext, delete=False) as f:
+        return f.name
 
 
 class PilResizer(object):
-    def resize(self, maxwidth, path_in, path_out=None) :
+    def resize(self, maxwidth, path_in, path_out=None):
         """Resize using Python Imaging Library (PIL).  Return the output path 
         of resized image.
         """
+        from PIL import Image
         if not path_out:
-            path_out = get_temp_file_out(path_in)
+            path_out = temp_file_for(path_in)
         try:
             im = Image.open(path_in)
             size = maxwidth, maxwidth
@@ -88,7 +85,7 @@ class PilResizer(object):
             im.save(path_out)
             return path_out
         except IOError:
-            log.error("Cannot create thumbnail for '%s'" % path)
+            log.error("Cannot create thumbnail for '%s'" % path_in)
 
 
 class ImageMagickResizer(object):
@@ -97,13 +94,13 @@ class ImageMagickResizer(object):
         tool. Return the output path of resized image.
         """
         if not path_out:
-            path_out = get_temp_file_out(path_in)
+            path_out = temp_file_for(path_in)
 
         # widthxheight> Shrinks images with dimension(s) larger than the 
         # corresponding width and/or height dimension(s).
         # "only shrink flag" is prefixed by ^ escape char for Windows compat.
-        cmd = [self.convert_path, path_in, '-resize', '%sx^>' % \
-               maxwidth, path_out]
+        cmd = ['convert', path_in, '-resize',
+               '{0}x^>'.format(maxwidth), path_out]
         call(cmd)
         return path_out
 
@@ -111,20 +108,15 @@ class ImageMagickResizer(object):
 class ArtResizer(object):
     """A singleton class that performs image resizes.
     """
-    convert_path = None 
-
-    def __init__(self, detect=True):
+    def __init__(self):
         """ArtResizer factory method"""
+        self.method = self.set_method()
 
-        self.method = WEBPROXY
-        if detect:
-            self.method = self.set_method()
-
-            if self.method == PIL :
-                self.__class__ = PilResizer
-            elif self.method == IMAGEMAGICK :
-                self.__class__ = ImageMagickResizer
-            log.debug("ArtResizer method is %s" % self.__class__)        
+        if self.method == PIL:
+            self.__class__ = PilResizer
+        elif self.method == IMAGEMAGICK:
+            self.__class__ = ImageMagickResizer
+        log.debug("ArtResizer method is %s" % self.__class__)        
 
     def set_method(self):
         """Set the most appropriate resize method. Use PIL if present, else 
@@ -132,22 +124,17 @@ class ArtResizer(object):
         If none is available, use a web proxy."""
 
         try:
-            from PIL import Image
+            __import__('PIL', fromlist=['Image'])
             return PIL
-        except ImportError as e:
+        except ImportError:
             pass
 
-        for dir in os.environ['PATH'].split(os.pathsep):
-            if glob.glob(os.path.join(dir, 'convert*')):
-                convert = os.path.join(dir, 'convert')
-                cmd = [convert, '--version']
-                try:
-                    out = subprocess.check_output(cmd).lower()
-                    if 'imagemagick' in out:
-                        self.convert_path = convert  
-                        return IMAGEMAGICK
-                except subprocess.CalledProcessError as e:
-                    pass # system32/convert.exe may be interfering 
+        try:
+            out = subprocess.check_output(['convert', '--version']).lower()
+            if 'imagemagick' in out:
+                return IMAGEMAGICK
+        except subprocess.CalledProcessError:
+            pass # system32/convert.exe may be interfering 
 
         return WEBPROXY
 
