@@ -20,6 +20,7 @@ import subprocess
 import os
 from tempfile import NamedTemporaryFile
 import logging
+from beets.util import command_output
 
 # Resizing methods
 PIL = 1
@@ -42,8 +43,7 @@ def call(args):
     command exits abnormally, a ArtResizerError is raised.
     """
     try:
-        with open(os.devnull, 'w') as devnull:
-            return subprocess.check_output(args, stderr=devnull)
+        return command_output(args)
     except subprocess.CalledProcessError as e:
         raise ArtResizerError(
             "{0} exited with status {1}".format(args[0], e.returncode)

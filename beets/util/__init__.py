@@ -22,6 +22,7 @@ import shutil
 import fnmatch
 from collections import defaultdict
 import traceback
+import subprocess
 
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = u'\\\\?\\'
@@ -573,3 +574,20 @@ def cpu_count():
         return num
     else:
         return 1
+
+def command_output(cmd):
+    """Wraps the `subprocess` module to invoke a command (given as a
+    list of arguments starting with the command name) and collect
+    stdout. The stderr stream is ignored. May raise
+    `subprocess.CalledProcessError` or an `OSError`.
+
+    This replaces `subprocess.check_output`, which isn't available in
+    Python 2.6 and which can have problems if lots of output is sent to
+    stderr.
+    """
+    with open(os.devnull, 'w') as devnull:
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=devnull)
+        stdout, _ = proc.communicate()
+    if proc.returncode:
+        raise subprocess.CalledProcessError(proc.returncode, cmd)
+    return stdout
