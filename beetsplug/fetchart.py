@@ -218,7 +218,7 @@ class FetchArtPlugin(BeetsPlugin):
         self.autofetch = ui.config_val(config, 'fetchart',
                                        'autofetch', True, bool)
         self.maxwidth = int(ui.config_val(config, 'fetchart',
-                                       'maxwidth', '0'))
+                                          'maxwidth', '0'))
         if self.autofetch:
             # Enable two import hooks when fetching is enabled.
             self.import_stages = [self.fetch_art]

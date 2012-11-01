@@ -35,6 +35,8 @@ already have it; the ``-f`` or ``--force`` switch makes it search for art
 regardless. If you specify a query, only matching albums will be processed;
 otherwise, the command processes every album in your library.
 
+.. _image-resizing:
+
 Image Resizing
 --------------
 
@@ -49,6 +51,11 @@ otherwise, it falls back to the resizing proxy. If the resizing proxy is used,
 no resizing is performed for album art found on the filesystem---only downloaded
 art is resized. Server-side resizing can also be slower than local resizing, so
 consider installing one of the two backends for better performance.
+
+When using ImageMagic, beets looks for the ``convert`` executable in your path.
+On some versions Windows, the program can be shadowed by a system-provided
+``convert.exe``. On these systems, you may need to modify your ``%PATH%``
+environment variable so that ImageMagick comes first or use PIL instead.
 
 .. _PIL: http://www.pythonware.com/products/pil/
 .. _ImageMagick: http://www.imagemagick.org/
