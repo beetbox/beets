@@ -173,7 +173,7 @@ def art_for_album(album, path, maxwidth=None, local_only=False):
 
 # PLUGIN LOGIC ###############################################################
 
-def batch_fetch_art(lib, albums, force):
+def batch_fetch_art(lib, albums, force, maxwidth=None):
     """Fetch album art for each of the albums. This implements the manual
     fetchart CLI command.
     """
@@ -181,7 +181,7 @@ def batch_fetch_art(lib, albums, force):
         if album.artpath and not force:
             message = 'has album art'
         else:
-            path = art_for_album(album)
+            path = art_for_album(album, None, maxwidth)
 
             if path:
                 album.set_art(path, False)
@@ -250,6 +250,7 @@ class FetchArtPlugin(BeetsPlugin):
                               action='store_true', default=False,
                               help='re-download art when already present')
         def func(lib, config, opts, args):
-            batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force)
+            batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force,
+                            self.maxwidth)
         cmd.func = func
         return [cmd]
