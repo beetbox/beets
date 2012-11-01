@@ -36,8 +36,8 @@ log = logging.getLogger('beets')
 def do_resize_url(func):
     def wrapper(url, maxwidth=None):
         """Returns url pointing to resized image instead of original one"""
-        if maxwidth and artresizer.inst.method == artresizer.WEBPROXY :
-            url = artresizer.resize_url(url, maxwidth)
+        if maxwidth:
+            url = artresizer.inst.proxy_url(url, maxwidth)
         return func(url)
     return wrapper
 
@@ -174,7 +174,7 @@ def art_for_album(album, path, maxwidth=None, local_only=False):
 
         out = _fetch_image(url, maxwidth)
         
-    if maxwidth and artresizer.inst.method != artresizer.WEBPROXY :
+    if maxwidth:
         artresizer.inst.resize(maxwidth, out, out)
     return out
 

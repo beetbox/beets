@@ -29,7 +29,6 @@ def _embed(path, items):
     """
     if options['maxwidth']:
         path = artresizer.inst.resize(options['maxwidth'], syspath(path))
-        log.debug('Resize album art to %s before embedding' % path)
 
     data = open(syspath(path), 'rb').read()
     kindstr = imghdr.what(None, data)
@@ -64,10 +63,10 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         options['maxwidth'] = \
             int(ui.config_val(config, 'embedart', 'maxwidth', '0'))
 
-        if options['maxwidth'] and artresizer.inst.method == artresizer.WEBPROXY:
+        if options['maxwidth'] and not artresizer.inst.local:
             options['maxwidth'] = 0
-            log.error("embedart: 'maxwidth' option ignored, " 
-                       "please install ImageMagick first")
+            log.error("embedart: ImageMagick or PIL not found; "
+                      "'maxwidth' option ignored")
 
     def commands(self):
         # Embed command.
