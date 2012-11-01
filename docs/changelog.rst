@@ -21,8 +21,8 @@ Changelog
   the `mp3gain`_ or `aacgain`_ command-line tools instead of the failure-prone
   Gstreamer ReplayGain implementation. Thanks to Fabrice Laporte.
 * :doc:`/plugins/fetchart` and :doc:`/plugins/embedart`: Both plugins can now
-  resize album art to avoid excessively large images. Thanks to
-  Fabrice Laporte.
+  resize album art to avoid excessively large images. Use the ``maxwidth``
+  config option with either plugin. Thanks to Fabrice Laporte.
 * :doc:`/plugins/scrub`: Scrubbing now removes *all* types of tags from a file
   rather than just one. For example, if your FLAC file has both ordinary FLAC
   tags and ID3 tags, the ID3 tags are now also removed.
