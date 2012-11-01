@@ -12,6 +12,9 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+"""Abstraction layer to resize images using PIL, ImageMagick, or a
+public resizing proxy if neither is available.
+"""
 import urllib
 import subprocess
 import os
@@ -20,8 +23,6 @@ import shutil
 from tempfile import NamedTemporaryFile
 import logging
 
-"""Abstraction layer to resize an image without requiring additional dependency
-"""
 # Resizing methods
 PIL = 1
 IMAGEMAGICK = 2
@@ -29,9 +30,11 @@ WEBPROXY = 3
 
 log = logging.getLogger('beets')
 
+
 class ArtResizerError(Exception):
-    """Raised when an error occurs during image resizing
+    """Raised when an error occurs during image resizing.
     """
+
 
 def call(args):
     """Execute the command indicated by `args` (a list of strings) and
@@ -106,7 +109,8 @@ class ImageMagickResizer(object):
 
 
 class ArtResizer(object):
-
+    """A singleton class that performs image resizes.
+    """
     convert_path = None 
 
     def __init__(self, detect=True):
@@ -121,7 +125,6 @@ class ArtResizer(object):
             elif self.method == IMAGEMAGICK :
                 self.__class__ = ImageMagickResizer
             log.debug("ArtResizer method is %s" % self.__class__)        
-
 
     def set_method(self):
         """Set the most appropriate resize method. Use PIL if present, else 
@@ -148,7 +151,6 @@ class ArtResizer(object):
 
         return WEBPROXY
 
-
     def resize(self, maxwidth, url, path_out=None):
         """Resize using web proxy. Return the output path of resized image.
         """
@@ -165,8 +167,6 @@ class ArtResizer(object):
         shutil.copy(fn, path_out)
         return path_out
 
-# module-as-singleton instanciation
+
+# Singleton instantiation.
 inst = ArtResizer()
-
-
-

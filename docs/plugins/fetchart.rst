@@ -16,12 +16,6 @@ By default, beets stores album art image files alongside the music files for an
 album in a file called ``cover.jpg``. To customize the name of this file, use
 the :ref:`art-filename` config option.
 
-A maximum image width can be defined to downscale fetched images if they are too
-big. The resize operation reduces image width to ``maxwidth`` pixels and 
-height is recomputed so that aspect ratio is preserved.  
-When using ``maxwidth`` config option, please consider installing 
-[ImageMagick](www.imagemagick.org/) first for optimal performance. 
-
 To disable automatic art downloading, just put this in your configuration
 file::
 
@@ -40,6 +34,22 @@ By default, the command will only look for album art when the album doesn't
 already have it; the ``-f`` or ``--force`` switch makes it search for art
 regardless. If you specify a query, only matching albums will be processed;
 otherwise, the command processes every album in your library.
+
+Image Resizing
+--------------
+
+A maximum image width can be configured as ``maxwidth`` to downscale fetched
+images if they are too big. The resize operation reduces image width to
+``maxwidth`` pixels. The height is recomputed so that the aspect ratio is
+preserved.
+
+Beets can resize images using `PIL`_, `ImageMagick`_, or a server-side resizing
+proxy. If either PIL or ImageMagick is installed, beets will use those;
+otherwise, it falls back to the resizing proxy. Since server-side resizing can
+be slow, consider installing one of the two backends for better performance.
+
+.. _PIL: http://www.pythonware.com/products/pil/
+.. _ImageMagick: http://www.imagemagick.org/
 
 Album Art Sources
 -----------------
