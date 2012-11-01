@@ -20,7 +20,7 @@ import logging
 import os
 
 from beets.plugins import BeetsPlugin
-from beets.util import artresizer
+from beets.util.artresizer import ArtResizer
 from beets import importer
 from beets import ui
 
@@ -161,13 +161,13 @@ def art_for_album(album, path, maxwidth=None, local_only=False):
     if not local_only and not out:
         for url in _source_urls(album):
             if maxwidth:
-                url = artresizer.inst.proxy_url(maxwidth, url)
+                url = ArtResizer.shared.proxy_url(maxwidth, url)
             out = _fetch_image(url)
             if out:
                 break
 
     if maxwidth:
-        out = artresizer.inst.resize(maxwidth, out)
+        out = ArtResizer.shared.resize(maxwidth, out)
     return out
 
 

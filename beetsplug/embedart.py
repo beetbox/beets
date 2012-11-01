@@ -20,7 +20,8 @@ from beets.plugins import BeetsPlugin
 from beets import mediafile
 from beets import ui
 from beets.ui import decargs
-from beets.util import syspath, normpath, artresizer
+from beets.util import syspath, normpath
+from beets.util.artresizer import ArtResizer
 
 log = logging.getLogger('beets')
 
@@ -28,7 +29,7 @@ def _embed(path, items):
     """Embed an image file, located at `path`, into each item.
     """
     if options['maxwidth']:
-        path = artresizer.inst.resize(options['maxwidth'], syspath(path))
+        path = ArtResizer.shared.resize(options['maxwidth'], syspath(path))
 
     data = open(syspath(path), 'rb').read()
     kindstr = imghdr.what(None, data)
@@ -63,7 +64,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         options['maxwidth'] = \
             int(ui.config_val(config, 'embedart', 'maxwidth', '0'))
 
-        if options['maxwidth'] and not artresizer.inst.local:
+        if options['maxwidth'] and not ArtResizer.shared.local:
             options['maxwidth'] = 0
             log.error("embedart: ImageMagick or PIL not found; "
                       "'maxwidth' option ignored")

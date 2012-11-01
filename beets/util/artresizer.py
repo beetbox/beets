@@ -109,9 +109,28 @@ BACKEND_FUNCS = {
 }
 
 
+class Shareable(type):
+    """A pseudo-singleton metaclass that allows both shared and
+    non-shared instances. The ``MyClass.shared`` property holds a
+    lazily-created shared instance of ``MyClass`` while calling
+    ``MyClass()`` to construct a new object works as usual.
+    """
+    def __init__(cls, name, bases, dict):
+        super(Shareable, cls).__init__(name, bases, dict)
+        cls._instance = None
+
+    @property
+    def shared(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+
 class ArtResizer(object):
     """A singleton class that performs image resizes.
     """
+    __metaclass__ = Shareable
+
     def __init__(self, method=None):
         """Create a resizer object for the given method or, if none is
         specified, with an inferred method.
@@ -169,7 +188,3 @@ class ArtResizer(object):
 
         # Fall back to Web proxy method.
         return WEBPROXY
-
-
-# Singleton instantiation.
-inst = ArtResizer()
