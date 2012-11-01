@@ -31,17 +31,6 @@ CONTENT_TYPES = ('image/jpeg',)
 log = logging.getLogger('beets')
 
 
-# ART SOURCES ################################################################
-
-def do_resize_url(func):
-    def wrapper(url, maxwidth=None):
-        """Returns url pointing to resized image instead of original one"""
-        if maxwidth:
-            url = artresizer.inst.proxy_url(url, maxwidth)
-        return func(url)
-    return wrapper
-
-@do_resize_url
 def _fetch_image(url):
     """Downloads an image from a URL and checks whether it seems to
     actually be an image. If so, returns a path to the downloaded image.
@@ -62,12 +51,15 @@ def _fetch_image(url):
         log.debug('Not an image.')
 
 
+# ART SOURCES ################################################################
+
 # Cover Art Archive.
 
 CAA_URL = 'http://coverartarchive.org/release/{mbid}/front-500.jpg'
 
 def caa_art(release_id):
-    """Return a Cover Art Archive url given a MusicBrain release ID."""
+    """Return the Cover Art Archive URL given a MusicBrainz release ID.
+    """
     return CAA_URL.format(mbid=release_id)
 
 
@@ -77,15 +69,9 @@ AMAZON_URL = 'http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
 AMAZON_INDICES = (1, 2)
 
 def art_for_asin(asin):
-    """Return url for an Amazon ID (ASIN) string."""
+    """Generate URLs for an Amazon ID (ASIN) string."""
     for index in AMAZON_INDICES:
-        url = AMAZON_URL % (asin, index)
-        try:
-            urllib.urlopen(url)
-            return url
-        except IOError:
-            pass # does not exist
-    
+        yield AMAZON_URL % (asin, index)
 
 
 # AlbumArt.org scraper.
@@ -94,7 +80,7 @@ AAO_URL = 'http://www.albumart.org/index_detail.php'
 AAO_PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
 
 def aao_art(asin):
-    """Return art url from AlbumArt.org."""
+    """Return art URL from AlbumArt.org given an ASIN."""
     # Get the page from albumart.org.
     url = '%s?%s' % (AAO_URL, urllib.urlencode({'asin': asin}))
     try:
@@ -141,41 +127,47 @@ def art_in_path(path):
 
 
 # Try each source in turn.
-  
+
+def _source_urls(album):
+    """Generate possible source URLs for an album's art. The URLs are
+    not guaranteed to work so they each need to be attempted in turn.
+    This allows the main `art_for_album` function to abort iteration
+    through this sequence early to avoid the cost of scraping when not
+    necessary.
+    """
+    if album.mb_albumid:
+        yield caa_art(album.mb_albumid)
+
+    # Amazon and AlbumArt.org.
+    if album.asin:
+        for url in art_for_asin(album.asin):
+            yield url
+        yield aao_art(album.asin)
+
 def art_for_album(album, path, maxwidth=None, local_only=False):
     """Given an Album object, returns a path to downloaded art for the
-    album (or None if no art is found). If `local_only`, then only local
+    album (or None if no art is found). If `maxwidth`, then images are
+    resized to this maximum pixel size. If `local_only`, then only local
     image files from the filesystem are returned; no network requests
     are made.
     """
-
     out = None
+
     # Local art.
     if isinstance(path, basestring):
         out = art_in_path(path)
 
+    # Web art sources.
     if not local_only and not out:
-        url = None
-        # CoverArtArchive.org.
-        if album.mb_albumid:
-            log.debug('Fetching album art for MBID {0}.'.format(album.mb_albumid))
-            url = caa_art(album.mb_albumid)
- 
-        # Amazon and AlbumArt.org.
-        if not url and album.asin:
-            log.debug('Fetching album art for ASIN %s.' % album.asin)
-            url = art_for_asin(album.asin)
-            if not url:
-                url = aao_art(album.asin)
+        for url in _source_urls(album):
+            if maxwidth:
+                url = artresizer.inst.proxy_url(maxwidth, url)
+            out = _fetch_image(url)
+            if out:
+                break
 
-        if not url:    # All sources failed.
-            log.debug('No ASIN available: no art found.')
-            return None
-
-        out = _fetch_image(url, maxwidth)
-        
     if maxwidth:
-        artresizer.inst.resize(maxwidth, out, out)
+        out = artresizer.inst.resize(maxwidth, out)
     return out
 
 
@@ -219,7 +211,6 @@ class FetchArtPlugin(BeetsPlugin):
             self.import_stages = [self.fetch_art]
             self.register_listener('import_task_files', self.assign_art)
 
-
     # Asynchronous; after music is added to the library.
     def fetch_art(self, config, task):
         """Find art for the album being imported."""
@@ -235,7 +226,7 @@ class FetchArtPlugin(BeetsPlugin):
                 return
 
             album = config.lib.get_album(task.album_id)
-            path = art_for_album(album, task.path, self.maxwidth)
+            path = art_for_album(album, task.path, self.maxwidth, local)
 
             if path:
                 self.art_paths[task] = path

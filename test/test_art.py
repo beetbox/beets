@@ -195,7 +195,7 @@ class ArtImporterTest(unittest.TestCase, _common.ExtraAsserts):
         _common.touch(self.art_file)
         self.old_afa = fetchart.art_for_album
         self.afa_response = self.art_file
-        def art_for_album(i, p, local_only=False):
+        def art_for_album(i, p, maxwidth=None, local_only=False):
             return self.afa_response
         fetchart.art_for_album = art_for_album
 
