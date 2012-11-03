@@ -95,7 +95,7 @@ class FilesystemError(HumanReadableException):
             clause = 'while {0} {1} to {2}'.format(
                 self._gerund(), repr(self.paths[0]), repr(self.paths[1])
             )
-        elif self.verb in ('delete', 'write'):
+        elif self.verb in ('delete', 'write', 'create'):
             clause = 'while {0} {1}'.format(
                 self._gerund(), repr(self.paths[0])
             )
@@ -185,7 +185,11 @@ def mkdirall(path):
     """
     for ancestor in ancestry(path):
         if not os.path.isdir(syspath(ancestor)):
-            os.mkdir(syspath(ancestor))
+            try:
+                os.mkdir(syspath(ancestor))
+            except (OSError, IOError) as exc:
+                raise FilesystemError(exc, 'create', (ancestor,),
+                                      traceback.format_exc())
 
 def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
     """If path is an empty directory, then remove it. Recursively remove
