@@ -2,7 +2,7 @@ Convert Plugin
 ==============
 
 The ``convert`` plugin lets you convert parts of your collection to a directory
-of your choice. Currently only converting from MP3 or FLAC to MP3 is supported.
+of your choice. It converts all input formats supported by ffmpeg to MP3.
 It will skip files that are already present in the target directory. Converted
 files follow the same path formats as your library.
 
@@ -11,13 +11,12 @@ Installation
 
 First, enable the ``convert`` plugin (see :doc:`/plugins/index`).
 
-To transcode music, this plugin requires the ``flac`` and ``lame`` command-line
-tools. If those executables are in your path, they will be found automatically
-by the plugin. Otherwise, configure the plugin to locate the executables::
+To transcode music, this plugin requires the ``ffmpeg`` command-line
+tool. If its executable is in your path, it  will be found automatically
+by the plugin. Otherwise, configure the plugin to locate the executable::
 
     [convert]
-    flac: /usr/bin/flac
-    lame: /usr/bin/lame
+    ffmpeg: /usr/bin/ffmpeg
 
 Usage
 -----
@@ -44,10 +43,12 @@ The plugin offers several configuration options, all of which live under the
 * If you set ``max_bitrate``, all MP3 files with a higher bitrate will be
   transcoded and those with a lower bitrate will simply be copied. Note that
   this does not guarantee that all converted files will have a lower
-  bitrate---that depends on the encoder and its configuration. By default, FLAC
-  files will be converted and all MP3s will be copied without transcoding.
-* ``opts`` are the encoding options that are passed to ``lame``. Default: 
-  "-V2". Please refer to the LAME documentation for possible options.
+  bitrate---that depends on the encoder and its configuration. By default MP3s
+  will be copied without transcoding and all other formats will be converted.
+* ``opts`` are the encoding options that are passed to ``ffmpeg``. Default:
+  "-aq 2". "-aq <num>" is equivalent to the LAME option "-V <num>". If you
+  want to specify a bitrate use "-ab <bitrate>". Please refer to the FFMPEG
+  documentation for more details.
 * Finally, ``threads`` determines the number of threads to use for parallel
   encoding. By default, the plugin will detect the number of processors
   available and use them all.
@@ -57,6 +58,6 @@ Here's an example configuration::
     [convert]
     embed: false
     max_bitrate: 200
-    opts: -V4
+    opts: -aq 4
     dest: /home/user/MusicForPhone
     threads: 4

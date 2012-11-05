@@ -32,41 +32,22 @@ _fs_lock = threading.Lock()
 
 def encode(source, dest):
     log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
-    temp_dest = dest + '~'
 
-    source_ext = os.path.splitext(source)[1].lower()
-    if source_ext == '.flac':
-        decode = Popen([conf['flac'], '-c', '-d', '-s', source],
-                       stdout=PIPE)
-        encode = Popen([conf['lame']] + conf['opts'] + ['-', temp_dest],
-                       stdin=decode.stdout, stderr=DEVNULL)
-        decode.stdout.close()
-        encode.communicate()
-    elif source_ext == '.mp3':
-        encode = Popen([conf['lame']] + conf['opts'] + ['--mp3input'] +
-                       [source, temp_dest], close_fds=True, stderr=DEVNULL)
-        encode.communicate()
-    else:
-        log.error(u'Only converting from FLAC or MP3 implemented')
-        return
+    encode = Popen([conf['ffmpeg']] + ['-i', source] + conf['opts'] +
+                   [dest], close_fds=True, stderr=DEVNULL)
+    encode.wait()
     if encode.returncode != 0:
         # Something went wrong (probably Ctrl+C), remove temporary files
         log.info(u'Encoding {0} failed. Cleaning up...'.format(source))
-        util.remove(temp_dest)
-        util.prune_dirs(os.path.dirname(temp_dest))
+        util.remove(dest)
+        util.prune_dirs(os.path.dirname(dest))
         return
-    shutil.move(temp_dest, dest)
     log.info(u'Finished encoding {0}'.format(util.displayable_path(source)))
 
 
 def convert_item(lib, dest_dir):
     while True:
         item = yield
-        if item.format != 'FLAC' and item.format != 'MP3':
-            log.info(u'Skipping {0} (unsupported format)'.format(
-                util.displayable_path(item.path)
-            ))
-            continue
 
         dest = os.path.join(dest_dir, lib.destination(item, fragment=True))
         dest = os.path.splitext(dest)[0] + '.mp3'
@@ -122,10 +103,9 @@ class ConvertPlugin(BeetsPlugin):
         conf['dest'] = ui.config_val(config, 'convert', 'dest', None)
         conf['threads'] = int(ui.config_val(config, 'convert', 'threads',
             util.cpu_count()))
-        conf['flac'] = ui.config_val(config, 'convert', 'flac', 'flac')
-        conf['lame'] = ui.config_val(config, 'convert', 'lame', 'lame')
+        conf['ffmpeg'] = ui.config_val(config, 'convert', 'ffmpeg', 'ffmpeg')
         conf['opts'] = ui.config_val(config, 'convert',
-                                     'opts', '-V2').split(' ')
+                                     'opts', '-aq 2').split(' ')
         conf['max_bitrate'] = int(ui.config_val(config, 'convert',
                                                 'max_bitrate', '500'))
         conf['embed'] = ui.config_val(config, 'convert', 'embed', True,
