@@ -69,6 +69,7 @@ Changelog
 * Fix a crash when input is read from a pipe without a specified encoding.
 * Fix some problem with identifying files on Windows with Unicode directory
   names in their path.
+* Fix a crash when Unicode queries were used with ``import -L`` re-imports.
 * Add human-readable error messages when writing files' tags fails or when a
   directory can't be created.
 * Changed plugin loading so that modules can be imported without

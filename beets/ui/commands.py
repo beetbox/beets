@@ -795,7 +795,7 @@ def import_func(lib, config, opts, args):
         quiet_fallback = importer.action.SKIP
 
     if opts.library:
-        query = args
+        query = decargs(args)
         paths = []
     else:
         query = None
