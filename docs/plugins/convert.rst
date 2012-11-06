@@ -2,9 +2,11 @@ Convert Plugin
 ==============
 
 The ``convert`` plugin lets you convert parts of your collection to a directory
-of your choice. It converts all input formats supported by ffmpeg to MP3.
+of your choice. It converts all input formats supported by `FFmpeg`_ to MP3.
 It will skip files that are already present in the target directory. Converted
 files follow the same path formats as your library.
+
+.. _FFmpeg: http://ffmpeg.org
 
 Installation
 ------------
@@ -46,9 +48,9 @@ The plugin offers several configuration options, all of which live under the
   bitrate---that depends on the encoder and its configuration. By default MP3s
   will be copied without transcoding and all other formats will be converted.
 * ``opts`` are the encoding options that are passed to ``ffmpeg``. Default:
-  "-aq 2". "-aq <num>" is equivalent to the LAME option "-V <num>". If you
-  want to specify a bitrate use "-ab <bitrate>". Please refer to the FFMPEG
-  documentation for more details.
+  "-aq 2". (Note that "-aq <num>" is equivalent to the LAME option "-V
+  <num>".) If you want to specify a bitrate, use "-ab <bitrate>". Refer to the
+  `FFmpeg`_ documentation for more details.
 * Finally, ``threads`` determines the number of threads to use for parallel
   encoding. By default, the plugin will detect the number of processors
   available and use them all.
