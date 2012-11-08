@@ -54,7 +54,8 @@ def parse_tool_output(text):
             'file': parts[0],
             'mp3gain': int(parts[1]),
             'gain': float(parts[2]),
-            'peak': float(parts[3]),
+            # fix peak calculation
+            'peak': float("{0:.6f}".format(float(parts[3]) / 32768)),
             'maxgain': int(parts[4]),
             'mingain': int(parts[5]),
         })
@@ -189,7 +190,7 @@ class ReplayGainPlugin(BeetsPlugin):
             # Adjust to avoid clipping.
             cmd = cmd + ['-k']
         else:
-            # Disable clipping warning. 
+            # Disable clipping warning.
             cmd = cmd + ['-c']
         if self.apply_gain:
             # Lossless audio adjustment.
@@ -204,7 +205,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
         return results
 
-    def store_gain(self, lib, items, rgain_infos, album=None): 
+    def store_gain(self, lib, items, rgain_infos, album=None):
         """Store computed ReplayGain values to the Items and the Album
         (if it is provided).
         """
