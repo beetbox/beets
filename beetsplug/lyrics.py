@@ -51,11 +51,11 @@ def unescape(text):
     """Resolves &#xxx; HTML entities (and some others)."""
     if isinstance(text, str):
         text = text.decode('utf8', 'ignore')
-    out = text.replace('&nbsp;', ' ')
+    out = text.replace(u'&nbsp;', u' ')
     def replchar(m):
         num = m.group(1)
         return unichr(int(num))
-    out = re.sub("&#(\d+);", replchar, out)
+    out = re.sub(u"&#(\d+);", replchar, out)
     return out
 
 def extract_text(html, starttag):
