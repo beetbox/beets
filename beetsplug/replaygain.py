@@ -24,6 +24,7 @@ from beets.ui import commands
 log = logging.getLogger('beets')
 
 DEFAULT_REFERENCE_LOUDNESS = 89
+SAMPLE_MAX = 1 << 15
 
 class ReplayGainError(Exception):
     """Raised when an error occurs during mp3gain/aacgain execution.
@@ -54,7 +55,7 @@ def parse_tool_output(text):
             'file': parts[0],
             'mp3gain': int(parts[1]),
             'gain': float(parts[2]),
-            'peak': float(parts[3]),
+            'peak': float(parts[3]) / SAMPLE_MAX,
             'maxgain': int(parts[4]),
             'mingain': int(parts[5]),
         })
@@ -189,7 +190,7 @@ class ReplayGainPlugin(BeetsPlugin):
             # Adjust to avoid clipping.
             cmd = cmd + ['-k']
         else:
-            # Disable clipping warning. 
+            # Disable clipping warning.
             cmd = cmd + ['-c']
         if self.apply_gain:
             # Lossless audio adjustment.
@@ -204,7 +205,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
         return results
 
-    def store_gain(self, lib, items, rgain_infos, album=None): 
+    def store_gain(self, lib, items, rgain_infos, album=None):
         """Store computed ReplayGain values to the Items and the Album
         (if it is provided).
         """
