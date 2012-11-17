@@ -16,7 +16,7 @@ enable the plugin (see :doc:`/plugins/index`). When importing new files (with
 command, beets will first strip all types of tags entirely and then write the
 database-tracked metadata to the file.
 
-This behavior can be disabled with the ``autoscrub`` config option (see below).
+This behavior can be disabled with the ``auto`` config option (see below).
 
 Manual Scrubbing
 ----------------
@@ -34,8 +34,8 @@ whatsoever.
 Configuring
 -----------
 
-The plugin has one configuration option, ``autoscrub``, which lets you disable
+The plugin has one configuration option, ``auto``, which lets you disable
 automatic metadata stripping. To do so, add this to your ``~/.beetsconfig``::
 
     [scrub]
-    autoscrub: no
+    auto: no

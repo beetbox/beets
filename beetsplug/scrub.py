@@ -23,7 +23,7 @@ from beets import util
 
 log = logging.getLogger('beets')
 
-AUTOSCRUB_KEY = 'autoscrub'
+AUTOSCRUB_KEY = 'auto'
 _MUTAGEN_FORMATS = {
     'asf': 'ASF',
     'apev2': 'APEv2File',

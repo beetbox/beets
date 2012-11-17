@@ -36,9 +36,9 @@ console so you can view the fetched (or previously-stored) lyrics.
 Configuring
 -----------
 
-The plugin has one configuration option, ``autofetch``, which lets you disable
+The plugin has one configuration option, ``auto``, which lets you disable
 automatic lyrics fetching during import. To do so, add this to your
 ``~/.beetsconfig``::
 
     [lyrics]
-    autofetch: no
+    auto: no

@@ -208,18 +208,18 @@ class FetchArtPlugin(BeetsPlugin):
     def __init__(self):
         super(FetchArtPlugin, self).__init__()
 
-        self.autofetch = True
+        self.auto = True
         self.maxwidth = 0
         # Holds paths to downloaded images between fetching them and
         # placing them in the filesystem.
         self.art_paths = {}
 
     def configure(self, config):
-        self.autofetch = ui.config_val(config, 'fetchart',
-                                       'autofetch', True, bool)
+        self.auto = ui.config_val(config, 'fetchart',
+                                       'auto', True, bool)
         self.maxwidth = int(ui.config_val(config, 'fetchart',
                                           'maxwidth', '0'))
-        if self.autofetch:
+        if self.auto:
             # Enable two import hooks when fetching is enabled.
             self.import_stages = [self.fetch_art]
             self.register_listener('import_task_files', self.assign_art)

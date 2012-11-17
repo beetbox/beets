@@ -20,7 +20,7 @@ To disable automatic art downloading, just put this in your configuration
 file::
 
     [fetchart]
-    autofetch: no
+    auto: no
 
 Manually Fetching Album Art
 ---------------------------

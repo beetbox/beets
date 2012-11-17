@@ -75,7 +75,7 @@ query (see :doc:`/reference/query`) to indicate which items or albums to
 analyze.
 
 ReplayGain analysis is not fast, so you may want to disable it during import.
-Use the ``automatic`` config option to control this::
+Use the ``auto`` config option to control this::
 
     [replaygain]
-    automatic: no
+    auto: no
