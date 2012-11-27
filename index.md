@@ -14,7 +14,7 @@ your music.
 Because beets is designed as a library, it can do almost anything you can
 imagine for your music collection. Via [plugins][], beets becomes a panacea:
 
-[plugins]: http://beets.readthedocs.org/en/latest/plugins/
+[plugins]: http://beets.readthedocs.org/page/plugins/
 
 * Embed and extract album art from files&rsquo; tags.
 * Listen to your library with a music player that speaks the [MPD][]
@@ -35,12 +35,12 @@ imagine for your music collection. Via [plugins][], beets becomes a panacea:
 If beets doesn't do what you want yet, [writing your own plugin][writing] is
 shockingly simple if you know a little Python.
 
-[writing]: http://beets.readthedocs.org/en/latest/plugins/writing.html
+[writing]: http://beets.readthedocs.org/page/plugins/writing.html
     
 <p class="teaser">Install beets by typing
 <code><a href="http://pip.openplans.org/">pip</a> install beets</code>.
 You might then want to read the
-<a href="http://beets.readthedocs.org/en/latest/guides/main.html">Getting
+<a href="http://beets.readthedocs.org/page/guides/main.html">Getting
 Started</a> guide. Then follow
 <a href="http://twitter.com/b33ts">@b33ts</a>
 on Twitter for updates.</p>
