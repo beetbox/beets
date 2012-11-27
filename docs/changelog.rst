@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.0b16 (in development)
+1.0rc1 (in development)
 -----------------------
 
 * New plugin: :doc:`/plugins/convert` transcodes music and embeds album art
