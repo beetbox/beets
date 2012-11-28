@@ -704,8 +704,9 @@ class ShowChangeTest(unittest.TestCase):
     def test_item_data_change_title_missing_with_unicode_filename(self):
         self.items[0].title = ''
         self.items[0].path = u'/path/to/caf\xe9.mp3'.encode('utf8')
-        msg = self._show_change()
-        self.assertTrue(u'caf\xe9.mp3 -> the title' in msg.decode('utf8'))
+        msg = self._show_change().decode('utf8')
+        self.assertTrue(u'caf\xe9.mp3 -> the title' in msg
+                        or u'caf.mp3 ->' in msg)
 
 class DefaultPathTest(unittest.TestCase):
     def setUp(self):
