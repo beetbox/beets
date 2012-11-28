@@ -457,13 +457,22 @@ def sanitize_path(path, pathmod=None, replacements=None):
         comps[i] = comp
     return pathmod.join(*comps)
 
-def truncate_path(path, pathmod=None):
+def truncate_path(path, pathmod=None, length=MAX_FILENAME_LENGTH):
     """Given a bytestring path or a Unicode path fragment, truncate the
-    components to a legal length.
+    components to a legal length. In the last component, the extension
+    is preserved.
     """
     pathmod = pathmod or os.path
-    comps = [c[:MAX_FILENAME_LENGTH] for c in components(path, pathmod)]
-    return pathmod.join(*comps)
+    comps = components(path, pathmod)
+
+    out = [c[:length] for c in comps]
+    base, ext = pathmod.splitext(comps[-1])
+    if ext:
+        # Last component has an extension.
+        base = base[:length - len(ext)]
+        out[-1] = base + ext
+
+    return pathmod.join(*out)
 
 def sanitize_for_path(value, pathmod, key=None):
     """Sanitize the value for inclusion in a path: replace separators

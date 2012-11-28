@@ -1152,7 +1152,6 @@ class Library(BaseLibrary):
         # Encode for the filesystem.
         if not fragment:
             subpath = bytestring_path(subpath)
-        subpath = util.truncate_path(subpath, pathmod)
 
         # Preserve extension.
         _, extension = pathmod.splitext(item.path)
@@ -1160,6 +1159,9 @@ class Library(BaseLibrary):
             # Outputting Unicode.
             extension = extension.decode('utf8', 'ignore')
         subpath += extension.lower()
+
+        # Truncate too-long components.
+        subpath = util.truncate_path(subpath, pathmod)
 
         if fragment:
             return subpath

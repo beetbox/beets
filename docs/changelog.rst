@@ -60,6 +60,7 @@ Changelog
   question is now logged (thanks to Mike Kazantsev).
 * Truncate long filenames based on their *bytes* rather than their Unicode
   *characters*, fixing situations where encoded names could be too long.
+* Filename truncation now incorporates the length of the extension.
 * Fix an assertion failure when the MusicBrainz main database and search server
   disagree.
 * Fix a bug that caused the :doc:`/plugins/lastgenre` and other plugins not to

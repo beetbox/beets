@@ -918,6 +918,19 @@ class PathStringTest(unittest.TestCase):
         alb = self.lib.get_album(alb.id)
         self.assert_(isinstance(alb.artpath, str))
 
+class PathTruncationTest(unittest.TestCase):
+    def test_truncate_bytestring(self):
+        p = util.truncate_path('abcde/fgh', posixpath, 4)
+        self.assertEqual(p, 'abcd/fgh')
+
+    def test_truncate_unicode(self):
+        p = util.truncate_path(u'abcde/fgh', posixpath, 4)
+        self.assertEqual(p, u'abcd/fgh')
+
+    def test_truncate_preserves_extension(self):
+        p = util.truncate_path(u'abcde/fgh.ext', posixpath, 5)
+        self.assertEqual(p, u'abcde/f.ext')
+
 class MtimeTest(unittest.TestCase):
     def setUp(self):
         self.ipath = os.path.join(_common.RSRC, 'testfile.mp3')
