@@ -166,14 +166,19 @@ def current_metadata(items):
     """Returns the most likely artist and album for a set of Items.
     Each is determined by tag reflected by the plurality of the Items.
     """
-    keys = 'artist', 'album'
     likelies = {}
     consensus = {}
-    for key in keys:
+    for key in 'artist', 'album', 'albumartist':
         values = [getattr(item, key) for item in items if item]
         likelies[key], freq = plurality(values)
         consensus[key] = (freq == len(values))
-    return likelies['artist'], likelies['album'], consensus['artist']
+
+    if consensus['albumartist'] and likelies['albumartist']:
+        artist = likelies['albumartist']
+    else:
+        artist = likelies['artist']
+
+    return artist, likelies['album'], consensus['artist']
 
 def assign_items(items, tracks):
     """Given a list of Items and a list of TrackInfo objects, find the

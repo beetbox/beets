@@ -37,6 +37,8 @@ Changelog
 * Null values in the database can now be matched with the empty-string regular
   expression, ``^$``.
 * Queries now correctly match non-string values in path format predicates.
+* When autotagging a various-artists album, the album artist field is now
+  used instead of the majority track artist.
 * :doc:`/plugins/lastgenre`: Use the albums' existing genre tags if they pass
   the whitelist (thanks to Fabrice Laporte).
 * :doc:`/plugins/lastgenre`: Add a ``lastgenre`` command for fetching genres
