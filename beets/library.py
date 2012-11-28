@@ -1152,6 +1152,7 @@ class Library(BaseLibrary):
         # Encode for the filesystem.
         if not fragment:
             subpath = bytestring_path(subpath)
+        subpath = util.truncate_path(subpath, pathmod)
 
         # Preserve extension.
         _, extension = pathmod.splitext(item.path)

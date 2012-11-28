@@ -58,6 +58,8 @@ Changelog
 * Add the track mapping dictionary to the ``album_distance`` plugin function.
 * When an exception is raised while reading a file, the path of the file in
   question is now logged (thanks to Mike Kazantsev).
+* Truncate long filenames based on their *bytes* rather than their Unicode
+  *characters*, fixing situations where encoded names could be too long.
 * Fix an assertion failure when the MusicBrainz main database and search server
   disagree.
 * Fix a bug that caused the :doc:`/plugins/lastgenre` and other plugins not to

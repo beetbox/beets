@@ -452,14 +452,17 @@ def sanitize_path(path, pathmod=None, replacements=None):
     if not comps:
         return ''
     for i, comp in enumerate(comps):
-        # Replace special characters.
         for regex, repl in replacements:
             comp = regex.sub(repl, comp)
-
-        # Truncate each component.
-        comp = comp[:MAX_FILENAME_LENGTH]
-
         comps[i] = comp
+    return pathmod.join(*comps)
+
+def truncate_path(path, pathmod=None):
+    """Given a bytestring path or a Unicode path fragment, truncate the
+    components to a legal length.
+    """
+    pathmod = pathmod or os.path
+    comps = [c[:MAX_FILENAME_LENGTH] for c in components(path, pathmod)]
     return pathmod.join(*comps)
 
 def sanitize_for_path(value, pathmod, key=None):
