@@ -55,6 +55,7 @@ disabled by default, but you can turn them on as described above.
    zero
    ihate
    convert
+   info
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -98,6 +99,7 @@ Miscellaneous
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
   compatible with `MPD clients`_.
 * :doc:`convert`: Converts parts of your collection to an external directory
+* :doc:`info`: Print music files' tags to the console.
 
 .. _MPD: http://mpd.wikia.com/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients
