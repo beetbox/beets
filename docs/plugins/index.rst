@@ -37,6 +37,7 @@ disabled by default, but you can turn them on as described above.
 
    chroma
    lyrics
+   echonest_tempo
    bpd
    mpdupdate
    fetchart
@@ -67,6 +68,7 @@ Metadata
 ''''''''
 
 * :doc:`lyrics`: Automatically fetch song lyrics.
+* :doc:`echonest_tempo`: Automatically fetch song tempos (bpm).
 * :doc:`lastgenre`: Fetch genres based on Last.fm tags.
 * :doc:`fetchart`: Fetch album cover art from various sources.
 * :doc:`embedart`: Embed album art images into files' metadata.
