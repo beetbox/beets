@@ -59,12 +59,14 @@ class HumanReadableException(Exception):
     
     def _reasonstr(self):
         """Get the reason as a string."""
-        if isinstance(self.reason, basestring):
+        if isinstance(self.reason, unicode):
             return self.reason
+        elif isinstance(self.reason, basestring):  # Byte string.
+            return self.reason.decode('utf8', 'ignore')
         elif hasattr(self.reason, 'strerror'):  # i.e., EnvironmentError
             return self.reason.strerror
         else:
-            return u'"{0}"'.format(self.reason)
+            return u'"{0}"'.format(unicode(self.reason))
 
     def get_message(self):
         """Create the human-readable description of the error, sans
