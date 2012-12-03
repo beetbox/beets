@@ -31,9 +31,8 @@ free from the EchoNest.  To specify your own API key, add the key to your
     [echonest_tempo]
     apikey=YOUR_API_KEY
 
-In addition, this plugin has one configuration option, ``autofetch``, which 
-lets you disable automatic tempo fetching during import. To do so, add this
-to your ``~/.beetsconfig``::
+In addition, the ``autofetch`` config option lets you disable automatic tempo
+fetching during import. To do so, add this to your ``~/.beetsconfig``::
 
     [echonest_tempo]
     autofetch: no
