@@ -157,6 +157,7 @@ PF_KEY_DEFAULT = 'default'
 log = logging.getLogger('beets')
 if not log.handlers:
     log.addHandler(logging.StreamHandler())
+log.propagate = False  # Don't propagate to root handler.
 
 # A little SQL utility.
 def _orelse(exp1, exp2):

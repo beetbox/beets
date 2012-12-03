@@ -10,6 +10,8 @@ Changelog
 * New plugin: :doc:`/plugins/fuzzy_search` lets you find albums and tracks using
   fuzzy string matching so you don't have to type (or even remember) their exact
   names. Thanks to Philippe Mongeau.
+* New plugin: :doc:`/plugins/echonest_tempo` fetches tempo (BPM) information
+  from `The Echo Nest`_. Thanks to David Brenner.
 * New plugin: :doc:`/plugins/the` adds a template function that helps format
   text for nicely-sorted directory listings. Thanks to Blemjhoo Tezoulbr.
 * New plugin: :doc:`/plugins/zero` filters out undesirable fields before they
@@ -80,6 +82,7 @@ Changelog
 * Changed plugin loading so that modules can be imported without
   unintentionally loading the plugins they contain.
 
+.. _The Echo Nest: http://the.echonest.com/
 .. _Tomahawk resolver: http://beets.radbox.org/blog/tomahawk-resolver.html
 .. _mp3gain: http://mp3gain.sourceforge.net/download.php
 .. _aacgain: http://aacgain.altosdesign.com

@@ -75,7 +75,7 @@ class EchoNestTempoPlugin(BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand('tempo', help='fetch song tempo (bpm)')
-        cmd.parser.add_option('-p', '--print', dest='printlyr',
+        cmd.parser.add_option('-p', '--print', dest='printbpm',
                               action='store_true', default=False,
                               help='print tempo (bpm) to console')
         def func(lib, config, opts, args):
@@ -89,8 +89,8 @@ class EchoNestTempoPlugin(BeetsPlugin):
 
             for item in lib.items(ui.decargs(args)):
                 fetch_item_tempo(lib, logging.INFO, item, write)
-                if opts.printlyr and item.bpm:
-                    ui.print_(item.bpm)
+                if opts.printbpm and item.bpm:
+                    ui.print_('{0} BPM'.format(item.bpm))
         cmd.func = func
         return [cmd]
 

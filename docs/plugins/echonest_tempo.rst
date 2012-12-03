@@ -1,8 +1,8 @@
 EchoNest Tempo Plugin
-=============
+=====================
 
-The ``echonest_tempo`` plugin fetches and stores a track's tempo (bpm field)
- from the `EchoNest API`_
+The ``echonest_tempo`` plugin fetches and stores a track's tempo (the "bpm"
+field) from the `EchoNest API`_
 
 .. _EchoNest API: http://developer.echonest.com/
 
@@ -16,7 +16,7 @@ There are packages for most major linux distributions, you can download the
 library from the EchoNest, or you can install the library from `pip`_, 
 like so::
 
-    $ pip install pyacoustid
+    $ pip install pyechonest
 
 .. _pip: http://pip.openplans.org/
 
@@ -42,7 +42,7 @@ to your ``~/.beetsconfig``::
 .. _apply for an API key: http://developer.echonest.com/account/register
 
 Fetch Tempo During Import
---------------------------
+-------------------------
 
 To automatically fetch the tempo for songs you import, just enable the plugin 
 by putting ``echonest_tempo`` on your config file's ``plugins`` line (see
@@ -55,9 +55,9 @@ tempo will also be written to the files' tags.
 This behavior can be disabled with the ``autofetch`` config option (see below).
 
 Fetching Tempo Manually
-------------------------
+-----------------------
 
-The ``echonest_tempo`` command provided by this plugin fetches tempos for 
+The ``tempo`` command provided by this plugin fetches tempos for 
 items that match a query (see :doc:`/reference/query`). For example, 
 ``beet tempo magnetic fields absolutely cuckoo`` will get the tempo for the 
 appropriate Magnetic Fields song, ``beet tempo magnetic fields`` will get 
