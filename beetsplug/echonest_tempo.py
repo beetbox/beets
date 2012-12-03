@@ -23,11 +23,11 @@ import pyechonest.config
 import pyechonest.song
 
 # Global logger.
-
 log = logging.getLogger('beets')
 
-# The user's EchoNest API key, if provided
-_echonest_apikey = None
+# The official Echo Nest API key for beets. This can be overridden by
+# the user.
+ECHONEST_APIKEY = 'NY2KTZHQ0QDSHBAP6'
 
 def fetch_item_tempo(lib, loglevel, item, write):
     """Fetch and store tempo for a single item. If ``write``, then the
@@ -56,12 +56,13 @@ def fetch_item_tempo(lib, loglevel, item, write):
     lib.store(item)
 
 def get_tempo(artist, title):
-    "gets the tempo for a song"
-
+    """Get the tempo for a song."""
     # Unfortunately, all we can do is search by artist and title. EchoNest
     # supports foreign ids from MusicBrainz, but currently only for artists,
     # not individual tracks/recordings.
-    results = pyechonest.song.search(artist=artist, title=title, results=1, buckets=['audio_summary'])
+    results = pyechonest.song.search(
+        artist=artist, title=title, results=1, buckets=['audio_summary']
+    )
     if len(results) > 0:
         return results[0].audio_summary['tempo']
     else:
@@ -81,9 +82,6 @@ class EchoNestTempoPlugin(BeetsPlugin):
         def func(lib, config, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
-            if not _echonest_apikey:
-                raise ui.UserError('no EchoNest user API key provided')
-
             write = ui.config_val(config, 'beets', 'import_write',
                                   commands.DEFAULT_IMPORT_WRITE, bool)
 
@@ -95,11 +93,12 @@ class EchoNestTempoPlugin(BeetsPlugin):
         return [cmd]
 
     def configure(self, config):
-        global AUTOFETCH, _echonest_apikey
-        AUTOFETCH = ui.config_val(config, 'echonest_tempo', 'autofetch', True, bool)
-        _echonest_apikey = ui.config_val(config, 'echonest_tempo', 'apikey',
-             None)
-        pyechonest.config.ECHO_NEST_API_KEY = _echonest_apikey
+        global AUTOFETCH
+        AUTOFETCH = ui.config_val(config, 'echonest_tempo', 'autofetch', True,
+                                  bool)
+        apikey = ui.config_val(config, 'echonest_tempo', 'apikey',
+                               ECHONEST_APIKEY)
+        pyechonest.config.ECHO_NEST_API_KEY = apikey
 
     # Auto-fetch tempo on import.
     def imported(self, config, task):

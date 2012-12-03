@@ -13,7 +13,7 @@ This plugin requires the pyechonest library in order to talk to the EchoNest
 API.
 
 There are packages for most major linux distributions, you can download the
-library from the EchoNest, or you can install the library from `pip`_, 
+library from the Echo Nest, or you can install the library from `pip`_, 
 like so::
 
     $ pip install pyechonest
@@ -23,9 +23,9 @@ like so::
 Configuring
 -----------
 
-The plugin requires an EchoNest API key in order to function. To do this,
-first `apply for an API key`_ from the EchoNest.  Then, add the key to 
-your :doc:`/reference/config` as the value ``apikey`` in a section called 
+Beets includes its own Echo Nest API key, but you can `apply for your own`_ for
+free from the EchoNest.  To specify your own API key, add the key to your
+:doc:`/reference/config` as the value ``apikey`` in a section called
 ``echonest_tempo`` like so::
 
     [echonest_tempo]
@@ -36,10 +36,9 @@ lets you disable automatic tempo fetching during import. To do so, add this
 to your ``~/.beetsconfig``::
 
     [echonest_tempo]
-    apikey=YOUR_API_KEY
     autofetch: no
 
-.. _apply for an API key: http://developer.echonest.com/account/register
+.. _apply for your own: http://developer.echonest.com/account/register
 
 Fetch Tempo During Import
 -------------------------
