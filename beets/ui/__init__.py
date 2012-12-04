@@ -516,6 +516,20 @@ def _get_path_formats(config):
 
     return path_formats
 
+def _get_art_filename(config):
+    """Returns a string of album art format; reflecting
+    the config's specified album art filename.
+    """
+    legacy_art_filename = config_val(config, 'beets', 'art_filename', None)
+    if legacy_art_filename:
+        # Old path formats override the default values.
+        art_filename = Template(legacy_art_filename)
+    else:
+        # If no legacy path format, use the defaults instead.
+        art_filename = DEFAULT_ART_FILENAME
+ 
+    return art_filename
+
 def _pick_format(config=None, album=False, fmt=None):
     """Pick a format string for printing Album or Item objects,
     falling back to config options and defaults.
@@ -771,8 +785,7 @@ def _raw_main(args, configfh):
     directory = options.directory or \
         config_val(config, 'beets', 'directory', default_dir)
     path_formats = _get_path_formats(config)
-    art_filename = \
-        config_val(config, 'beets', 'art_filename', DEFAULT_ART_FILENAME)
+    art_filename = _get_art_filename(config)
     lib_timeout = config_val(config, 'beets', 'timeout', DEFAULT_TIMEOUT)
     replacements = _get_replacements(config)
     try:
