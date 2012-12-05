@@ -1563,15 +1563,13 @@ class Album(BaseAlbum):
         item_dir must be provided.
         """
 
-        if isinstance(self._library.art_filename,Template):
-            art_filename_template = self._library.art_filename,Template
-        else:
-            art_filename_template = Template(self._library.art_filename)
-
-
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
-        sanitized_art_filename = util.sanitize_for_path(self.evaluate_template(art_filename_template),os.path)
+
+        if not isinstance(self._library.art_filename,Template):
+            self._library.art_filename = Template(self._library.art_filename)
+
+        sanitized_art_filename = util.sanitize_for_path(self.evaluate_template(self._library.art_filename),os.path)
         _, ext = os.path.splitext(image)
 
         dest = os.path.join(item_dir, util.sanitize_path(sanitized_art_filename) + ext)
