@@ -522,10 +522,10 @@ def _get_art_filename(config):
     """
     legacy_art_filename = config_val(config, 'beets', 'art_filename', None)
     if legacy_art_filename:
-        # Old path formats override the default values.
+        # Old art filename format override the default value.
         art_filename = Template(legacy_art_filename)
     else:
-        # If no legacy path format, use the defaults instead.
+        # If no legacy art filename format, use the default instead.
         art_filename = DEFAULT_ART_FILENAME
  
     return art_filename
