@@ -1562,14 +1562,21 @@ class Album(BaseAlbum):
         items, so the album must contain at least one item or
         item_dir must be provided.
         """
+
+        if isinstance(self._library.art_filename,Template):
+            art_filename_template = self._library.art_filename,Template
+        else:
+            art_filename_template = Template(self._library.art_filename)
+
+
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
-        sanitized_art_filename = util.sanitize_for_path(self.evaluate_template(self._library.art_filename),os.path)
+        sanitized_art_filename = util.sanitize_for_path(self.evaluate_template(art_filename_template),os.path)
         _, ext = os.path.splitext(image)
 
         dest = os.path.join(item_dir, util.sanitize_path(sanitized_art_filename) + ext)
 
-        return dest
+        return bytestring_path(dest)
 
     def set_art(self, path, copy=True):
         """Sets the album's cover art to the image at the given path.
