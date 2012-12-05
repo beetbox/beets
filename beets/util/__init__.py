@@ -476,11 +476,13 @@ def truncate_path(path, pathmod=None, length=MAX_FILENAME_LENGTH):
 
     return pathmod.join(*out)
 
-def sanitize_for_path(value, pathmod, key=None):
+def sanitize_for_path(value, pathmod=None, key=None):
     """Sanitize the value for inclusion in a path: replace separators
     with _, etc. Doesn't guarantee that the whole path will be valid;
     you should still call sanitize_path on the complete path.
     """
+    pathmod = pathmod or os.path
+
     if isinstance(value, basestring):
         for sep in (pathmod.sep, pathmod.altsep):
             if sep:
@@ -500,6 +502,7 @@ def sanitize_for_path(value, pathmod, key=None):
         value = u'%ikHz' % ((value or 0) // 1000)
     else:
         value = unicode(value)
+
     return value
 
 def str2bool(value):

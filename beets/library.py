@@ -1562,17 +1562,19 @@ class Album(BaseAlbum):
         items, so the album must contain at least one item or
         item_dir must be provided.
         """
-
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
         if not isinstance(self._library.art_filename,Template):
             self._library.art_filename = Template(self._library.art_filename)
 
-        sanitized_art_filename = util.sanitize_for_path(self.evaluate_template(self._library.art_filename),os.path)
-        _, ext = os.path.splitext(image)
+        subpath = util.sanitize_path(util.sanitize_for_path(
+            self.evaluate_template(self._library.art_filename)
+        ))
+        subpath = bytestring_path(subpath)
 
-        dest = os.path.join(item_dir, util.sanitize_path(sanitized_art_filename) + ext)
+        _, ext = os.path.splitext(image)
+        dest = os.path.join(item_dir, subpath + ext)
 
         return bytestring_path(dest)
 

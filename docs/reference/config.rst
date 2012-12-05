@@ -157,9 +157,10 @@ art_filename
 ~~~~~~~~~~~~
 
 When importing album art, the name of the file (without extension) where the
-cover art image should be placed. Defaults to ``cover`` (i.e., images will
-be named ``cover.jpg`` or ``cover.png`` and placed in the album's
-directory).
+cover art image should be placed. This is a template string, so you can use any
+of the syntax available to :doc:`/reference/pathformat`. Defaults to ``cover``
+(i.e., images will be named ``cover.jpg`` or ``cover.png`` and placed in the
+album's directory).
 
 plugins
 ~~~~~~~

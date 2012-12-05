@@ -35,6 +35,8 @@ Changelog
 * The output of the :ref:`update-cmd`, :ref:`remove-cmd`, and :ref:`modify-cmd`
   commands now respects the :ref:`list_format_album` and
   :ref:`list_format_item` config options. Thanks to Mike Kazantsev.
+* The :ref:`art-filename` option can now be a template rather than a simple
+  string. Thanks to Jarrod Beardwood.
 * Fix album queries for ``artpath`` and other non-item fields.
 * Null values in the database can now be matched with the empty-string regular
   expression, ``^$``.
