@@ -79,6 +79,7 @@ Changelog
 * Fix some problem with identifying files on Windows with Unicode directory
   names in their path.
 * Fix a crash when Unicode queries were used with ``import -L`` re-imports.
+* Fix an error when fingerprinting files with Unicode filenames on Windows.
 * Add human-readable error messages when writing files' tags fails or when a
   directory can't be created.
 * Changed plugin loading so that modules can be imported without

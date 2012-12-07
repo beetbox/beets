@@ -52,7 +52,7 @@ def acoustid_match(path):
     _matches, _fingerprints, and _acoustids dictionaries accordingly.
     """
     try:
-        duration, fp = acoustid.fingerprint_file(path)
+        duration, fp = acoustid.fingerprint_file(util.syspath(path))
     except acoustid.FingerprintGenerationError as exc:
         log.error('fingerprinting of %s failed: %s' %
                   (repr(path), str(exc)))
