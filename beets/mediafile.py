@@ -691,8 +691,8 @@ class MediaFile(object):
         )
         try:
             self.mgfile = mutagen.File(path)
-        except unreadable_exc:
-            log.warn('header parsing failed')
+        except unreadable_exc as exc:
+            log.debug(u'header parsing failed: {0}'.format(unicode(exc)))
             raise UnreadableFileError('Mutagen could not read file')
         except IOError:
             raise UnreadableFileError('could not read file')
