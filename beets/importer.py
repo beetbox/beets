@@ -29,6 +29,7 @@ from beets import util
 from beets.util import pipeline
 from beets.util import syspath, normpath, displayable_path
 from beets.util.enumeration import enum
+from beets.mediafile import UnreadableFileError
 
 action = enum(
     'SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'APPLY', 'MANUAL_ID',
@@ -485,7 +486,13 @@ def read_tasks(config):
     for toppath in config.paths:
         # Check whether the path is to a file.
         if config.singletons and not os.path.isdir(syspath(toppath)):
-            item = library.Item.from_path(toppath)
+            try:
+                item = library.Item.from_path(toppath)
+            except UnreadableFileError:
+                log.warn(u'unreadable file: {0}'.format(
+                    util.displayable_path(toppath)
+                ))
+                continue
             yield ImportTask.item_task(item)
             continue
 
