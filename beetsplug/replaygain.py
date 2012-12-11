@@ -203,7 +203,11 @@ class ReplayGainPlugin(BeetsPlugin):
         cmd = cmd + [syspath(i.path) for i in items]
 
         log.debug(u'replaygain: analyzing {0} files'.format(len(items)))
-        output = call(cmd)
+        try:
+            output = call(cmd)
+        except ReplayGainError as exc:
+            log.warn(u'replaygain: analysis failed ({0})'.format(exc))
+            return
         log.debug(u'replaygain: analysis finished')
         results = parse_tool_output(output)
 
