@@ -572,25 +572,18 @@ class ImageField(object):
 
             # No cover found.
             return None
-        elif obj.type == 'flac':
-            if 'metadata_block_picture' not in obj.mgfile:
-                return None
 
-            for data in obj.mgfile['metadata_block_picture']:
-                try:
-                    pic = mutagen.flac.Picture(data)
-                    break
-                except TypeError:
-                    pass
+        elif obj.type == 'flac':
+            pictures = obj.mgfile.pictures
+            if pictures:
+                return pictures[0].data or None
             else:
                 return None
 
-            return pic.data
-
         else:
-            # Here we're assuming everything but MP3, FLAC and MPEG-4 use
-            # the Xiph/Vorbis Comments standard. This may not be valid.
-            # http://wiki.xiph.org/VorbisComment#Cover_art
+            # Here we're assuming everything but MP3, MPEG-4, and FLAC
+            # use the Xiph/Vorbis Comments standard. This may not be
+            # valid. http://wiki.xiph.org/VorbisComment#Cover_art
 
             if 'metadata_block_picture' not in obj.mgfile:
                 # Try legacy COVERART tags.
@@ -639,11 +632,13 @@ class ImageField(object):
                 obj.mgfile['covr'] = [cover]
 
         elif obj.type == 'flac':
-            if val is None:
+            obj.mgfile.clear_pictures()
+
+            if val is not None:
                 pic = mutagen.flac.Picture()
                 pic.data = val
                 pic.mime = self._mime(val)
-                obj.mgfile['metadata_block_picture'] = [pic.write()]
+                obj.mgfile.add_picture(pic)
 
         else:
             # Again, assuming Vorbis Comments standard.
