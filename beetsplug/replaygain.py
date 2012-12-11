@@ -162,6 +162,10 @@ class ReplayGainPlugin(BeetsPlugin):
 
     def requires_gain(self, item, album=False):
         """Does the gain need to be computed?"""
+        if 'mp3gain' in self.command and item.format != 'MP3':
+            return False
+        elif 'aacgain' in self.command and item.format not in ('MP3', 'AAC'):
+            return False
         return self.overwrite or \
                (not item.rg_track_gain or not item.rg_track_peak) or \
                ((not item.rg_album_gain or not item.rg_album_peak) and \
