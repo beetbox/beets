@@ -61,6 +61,10 @@ Changelog
 * :doc:`/plugins/mbcollection`: Fix an error when submitting a large number of
   releases (we now submit only 200 releases at a time instead of 350). Thanks
   to Jonathan Towne.
+* :doc:`/plugins/embedart`: Made the method for embedding art into FLAC files
+  `standard
+  <https://wiki.xiph.org/VorbisComment#METADATA_BLOCK_PICTURE>`_-compliant.
+  Thanks to Daniele Sluijters.
 * Add the track mapping dictionary to the ``album_distance`` plugin function.
 * When an exception is raised while reading a file, the path of the file in
   question is now logged (thanks to Mike Kazantsev).
