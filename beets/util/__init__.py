@@ -59,12 +59,14 @@ class HumanReadableException(Exception):
     
     def _reasonstr(self):
         """Get the reason as a string."""
-        if isinstance(self.reason, basestring):
+        if isinstance(self.reason, unicode):
             return self.reason
+        elif isinstance(self.reason, basestring):  # Byte string.
+            return self.reason.decode('utf8', 'ignore')
         elif hasattr(self.reason, 'strerror'):  # i.e., EnvironmentError
             return self.reason.strerror
         else:
-            return u'"{0}"'.format(self.reason)
+            return u'"{0}"'.format(unicode(self.reason))
 
     def get_message(self):
         """Create the human-readable description of the error, sans
@@ -95,7 +97,7 @@ class FilesystemError(HumanReadableException):
             clause = 'while {0} {1} to {2}'.format(
                 self._gerund(), repr(self.paths[0]), repr(self.paths[1])
             )
-        elif self.verb in ('delete', 'write'):
+        elif self.verb in ('delete', 'write', 'create'):
             clause = 'while {0} {1}'.format(
                 self._gerund(), repr(self.paths[0])
             )
@@ -185,7 +187,11 @@ def mkdirall(path):
     """
     for ancestor in ancestry(path):
         if not os.path.isdir(syspath(ancestor)):
-            os.mkdir(syspath(ancestor))
+            try:
+                os.mkdir(syspath(ancestor))
+            except (OSError, IOError) as exc:
+                raise FilesystemError(exc, 'create', (ancestor,),
+                                      traceback.format_exc())
 
 def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
     """If path is an empty directory, then remove it. Recursively remove
@@ -448,21 +454,35 @@ def sanitize_path(path, pathmod=None, replacements=None):
     if not comps:
         return ''
     for i, comp in enumerate(comps):
-        # Replace special characters.
         for regex, repl in replacements:
             comp = regex.sub(repl, comp)
-
-        # Truncate each component.
-        comp = comp[:MAX_FILENAME_LENGTH]
-
         comps[i] = comp
     return pathmod.join(*comps)
 
-def sanitize_for_path(value, pathmod, key=None):
+def truncate_path(path, pathmod=None, length=MAX_FILENAME_LENGTH):
+    """Given a bytestring path or a Unicode path fragment, truncate the
+    components to a legal length. In the last component, the extension
+    is preserved.
+    """
+    pathmod = pathmod or os.path
+    comps = components(path, pathmod)
+
+    out = [c[:length] for c in comps]
+    base, ext = pathmod.splitext(comps[-1])
+    if ext:
+        # Last component has an extension.
+        base = base[:length - len(ext)]
+        out[-1] = base + ext
+
+    return pathmod.join(*out)
+
+def sanitize_for_path(value, pathmod=None, key=None):
     """Sanitize the value for inclusion in a path: replace separators
     with _, etc. Doesn't guarantee that the whole path will be valid;
     you should still call sanitize_path on the complete path.
     """
+    pathmod = pathmod or os.path
+
     if isinstance(value, basestring):
         for sep in (pathmod.sep, pathmod.altsep):
             if sep:
@@ -482,6 +502,7 @@ def sanitize_for_path(value, pathmod, key=None):
         value = u'%ikHz' % ((value or 0) // 1000)
     else:
         value = unicode(value)
+
     return value
 
 def str2bool(value):

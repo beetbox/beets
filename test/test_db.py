@@ -654,7 +654,7 @@ class MigrationTest(unittest.TestCase):
         c = new_lib._connection().cursor()
         c.execute("select * from items")
         row = c.fetchone()
-        self.assertEqual(len(row), len(self.old_fields))
+        self.assertEqual(len(row.keys()), len(self.old_fields))
 
     def test_open_with_new_field_adds_column(self):
         new_lib = beets.library.Library(self.libfile,
@@ -662,7 +662,7 @@ class MigrationTest(unittest.TestCase):
         c = new_lib._connection().cursor()
         c.execute("select * from items")
         row = c.fetchone()
-        self.assertEqual(len(row), len(self.new_fields))
+        self.assertEqual(len(row.keys()), len(self.new_fields))
 
     def test_open_with_fewer_fields_leaves_untouched(self):
         new_lib = beets.library.Library(self.libfile,
@@ -670,7 +670,7 @@ class MigrationTest(unittest.TestCase):
         c = new_lib._connection().cursor()
         c.execute("select * from items")
         row = c.fetchone()
-        self.assertEqual(len(row), len(self.old_fields))
+        self.assertEqual(len(row.keys()), len(self.old_fields))
 
     def test_open_with_multiple_new_fields(self):
         new_lib = beets.library.Library(self.libfile,
@@ -678,7 +678,7 @@ class MigrationTest(unittest.TestCase):
         c = new_lib._connection().cursor()
         c.execute("select * from items")
         row = c.fetchone()
-        self.assertEqual(len(row), len(self.newer_fields))
+        self.assertEqual(len(row.keys()), len(self.newer_fields))
 
     def test_open_old_db_adds_album_table(self):
         conn = sqlite3.connect(self.libfile)
@@ -917,6 +917,19 @@ class PathStringTest(unittest.TestCase):
         )
         alb = self.lib.get_album(alb.id)
         self.assert_(isinstance(alb.artpath, str))
+
+class PathTruncationTest(unittest.TestCase):
+    def test_truncate_bytestring(self):
+        p = util.truncate_path('abcde/fgh', posixpath, 4)
+        self.assertEqual(p, 'abcd/fgh')
+
+    def test_truncate_unicode(self):
+        p = util.truncate_path(u'abcde/fgh', posixpath, 4)
+        self.assertEqual(p, u'abcd/fgh')
+
+    def test_truncate_preserves_extension(self):
+        p = util.truncate_path(u'abcde/fgh.ext', posixpath, 5)
+        self.assertEqual(p, u'abcde/f.ext')
 
 class MtimeTest(unittest.TestCase):
     def setUp(self):

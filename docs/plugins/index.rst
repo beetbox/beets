@@ -37,6 +37,7 @@ disabled by default, but you can turn them on as described above.
 
    chroma
    lyrics
+   echonest_tempo
    bpd
    mpdupdate
    fetchart
@@ -55,6 +56,7 @@ disabled by default, but you can turn them on as described above.
    zero
    ihate
    convert
+   info
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -66,6 +68,7 @@ Metadata
 ''''''''
 
 * :doc:`lyrics`: Automatically fetch song lyrics.
+* :doc:`echonest_tempo`: Automatically fetch song tempos (bpm).
 * :doc:`lastgenre`: Fetch genres based on Last.fm tags.
 * :doc:`fetchart`: Fetch album cover art from various sources.
 * :doc:`embedart`: Embed album art images into files' metadata.
@@ -98,6 +101,7 @@ Miscellaneous
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
   compatible with `MPD clients`_.
 * :doc:`convert`: Converts parts of your collection to an external directory
+* :doc:`info`: Print music files' tags to the console.
 
 .. _MPD: http://mpd.wikia.com/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients

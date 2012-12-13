@@ -23,128 +23,7 @@ import _common
 from _common import unittest
 import beets.mediafile
 
-
-def MakeReadingTest(path, correct_dict, field):
-    class ReadingTest(unittest.TestCase):
-        def setUp(self):
-            self.f = beets.mediafile.MediaFile(path)
-        def runTest(self):
-            got = getattr(self.f, field)
-            correct = correct_dict[field]
-            message = field + ' incorrect (expected ' + repr(correct) + \
-                      ', got ' + repr(got) + ') when testing ' + \
-                      os.path.basename(path)
-            if isinstance(correct, float):
-                self.assertAlmostEqual(got, correct, msg=message)
-            else:
-                self.assertEqual(got, correct, message)
-    return ReadingTest
-
-def MakeReadOnlyTest(path, field, value):
-    class ReadOnlyTest(unittest.TestCase):
-        def setUp(self):
-            self.f = beets.mediafile.MediaFile(path)
-        def runTest(self):
-            got = getattr(self.f, field)
-            fail_msg = field + ' incorrect (expected ' + \
-                       repr(value) + ', got ' + repr(got) + \
-                       ') on ' + os.path.basename(path)
-            if field == 'length':
-                self.assertTrue(value-0.1 < got < value+0.1, fail_msg)
-            else:
-                self.assertEqual(got, value, fail_msg)
-    return ReadOnlyTest
-
-def MakeWritingTest(path, correct_dict, field, testsuffix='_test'):
-
-    class WritingTest(unittest.TestCase):
-        def setUp(self):
-            # make a copy of the file we'll work on
-            root, ext = os.path.splitext(path)
-            self.tpath = root + testsuffix + ext
-            shutil.copy(path, self.tpath)
-
-            # generate the new value we'll try storing
-            if field == 'art':
-                self.value = 'xxx'
-            elif type(correct_dict[field]) is unicode:
-                self.value = u'TestValue: ' + field
-            elif type(correct_dict[field]) is int:
-                self.value = correct_dict[field] + 42
-            elif type(correct_dict[field]) is bool:
-                self.value = not correct_dict[field]
-            elif type(correct_dict[field]) is datetime.date:
-                self.value = correct_dict[field] + datetime.timedelta(42)
-            elif type(correct_dict[field]) is str:
-                self.value = 'TestValue-' + str(field)
-            elif type(correct_dict[field]) is float:
-                self.value = 9.87
-            else:
-                raise ValueError('unknown field type ' + \
-                        str(type(correct_dict[field])))
-
-        def runTest(self):
-            # write new tag
-            a = beets.mediafile.MediaFile(self.tpath)
-            setattr(a, field, self.value)
-            a.save()
-
-            # verify ALL tags are correct with modification
-            b = beets.mediafile.MediaFile(self.tpath)
-            for readfield in correct_dict.keys():
-                got = getattr(b, readfield)
-
-                # Make sure the modified field was changed correctly...
-                if readfield == field:
-                    message = field + ' modified incorrectly (changed to ' + \
-                              repr(self.value) + ' but read ' + repr(got) + \
-                              ') when testing ' + os.path.basename(path)
-                    if isinstance(self.value, float):
-                        self.assertAlmostEqual(got, self.value, msg=message)
-                    else:
-                        self.assertEqual(got, self.value, message)
-
-                # ... and that no other field was changed.
-                else:
-                    # MPEG-4: ReplayGain not implented.
-                    if 'm4a' in path and readfield.startswith('rg_'):
-                        continue
-
-                    # The value should be what it was originally most of the
-                    # time.
-                    correct = correct_dict[readfield]
-
-                    # The date field, however, is modified when its components
-                    # change.
-                    if readfield=='date' and field in ('year', 'month', 'day'):
-                        try:
-                            correct = datetime.date(
-                               self.value if field=='year' else correct.year,
-                               self.value if field=='month' else correct.month,
-                               self.value if field=='day' else correct.day
-                            )
-                        except ValueError:
-                            correct = datetime.date.min
-                    # And vice-versa.
-                    if field=='date' and readfield in ('year', 'month', 'day'):
-                        correct = getattr(self.value, readfield)
-
-                    message = readfield + ' changed when it should not have' \
-                              ' (expected ' + repr(correct) + ', got ' + \
-                              repr(got) + ') when modifying ' + field + \
-                              ' in ' + os.path.basename(path)
-                    if isinstance(correct, float):
-                        self.assertAlmostEqual(got, correct, msg=message)
-                    else:
-                        self.assertEqual(got, correct, message)
-
-        def tearDown(self):
-            if os.path.exists(self.tpath):
-                os.remove(self.tpath)
-
-    return WritingTest
-
-correct_dicts = {
+CORRECT_DICTS = {
 
     # All of the fields iTunes supports that we do also.
     'full': {
@@ -253,7 +132,7 @@ correct_dicts = {
 
 }
 
-read_only_correct_dicts = {
+READ_ONLY_CORRECT_DICTS = {
     'full.mp3': {
         'length': 1.0,
         'bitrate': 80000,
@@ -318,21 +197,7 @@ read_only_correct_dicts = {
     },
 }
 
-def suite_for_file(path, correct_dict, writing=True):
-    s = unittest.TestSuite()
-    for field in correct_dict:
-        if 'm4a' in path and field.startswith('rg_'):
-            # MPEG-4 files: ReplayGain values not implemented.
-            continue
-        s.addTest(MakeReadingTest(path, correct_dict, field)())
-        if writing and \
-           not (   field == 'month' and correct_dict['year']  == 0
-                or field == 'day'   and correct_dict['month'] == 0):
-             # ensure that we don't test fields that can't be modified
-             s.addTest(MakeWritingTest(path, correct_dict, field)())
-    return s
-
-test_files = {
+TEST_FILES = {
     'm4a': ['full', 'partial', 'min'],
     'mp3': ['full', 'partial', 'min'],
     'flac': ['full', 'partial', 'min'],
@@ -342,39 +207,210 @@ test_files = {
     'mpc': ['full'],
 }
 
-def suite():
-    s = unittest.TestSuite()
+class AllFilesMixin(object):
+    """This is a dumb bit of copypasta but unittest has no supported
+    method of generating tests at runtime.
+    """
+    def test_m4a_full(self):
+        self._run('full', 'm4a')
 
-    # General tests.
-    for kind, tagsets in test_files.items():
-        for tagset in tagsets:
-            path = os.path.join(_common.RSRC, tagset + '.' + kind)
-            correct_dict = correct_dicts[tagset]
-            for test in suite_for_file(path, correct_dict):
-                s.addTest(test)
+    def test_m4a_partial(self):
+        self._run('partial', 'm4a')
 
-    # Special test for missing ID3 tag.
-    for test in suite_for_file(os.path.join(_common.RSRC, 'empty.mp3'),
-                               correct_dicts['empty'],
-                               writing=False):
-        s.addTest(test)
+    def test_m4a_min(self):
+        self._run('min', 'm4a')
+
+    def test_mp3_full(self):
+        self._run('full', 'mp3')
+
+    def test_mp3_partial(self):
+        self._run('partial', 'mp3')
+
+    def test_mp3_min(self):
+        self._run('min', 'mp3')
+
+    def test_flac_full(self):
+        self._run('full', 'flac')
+
+    def test_flac_partial(self):
+        self._run('partial', 'flac')
+
+    def test_flac_min(self):
+        self._run('min', 'flac')
+
+    def test_ogg(self):
+        self._run('full', 'ogg')
+
+    def test_ape(self):
+        self._run('full', 'ape')
+
+    def test_wv(self):
+        self._run('full', 'wv')
+
+    def test_mpc(self):
+        self._run('full', 'mpc')
 
     # Special test for advanced release date.
-    for test in suite_for_file(os.path.join(_common.RSRC, 'date.mp3'),
-                               correct_dicts['date']):
-        s.addTest(test)
+    def test_date_mp3(self):
+        self._run('date', 'mp3')
 
-    # Read-only attribute tests.
-    for fname, correct_dict in read_only_correct_dicts.iteritems():
-        path = os.path.join(_common.RSRC, fname)
-        for field, value in correct_dict.iteritems():
-            s.addTest(MakeReadOnlyTest(path, field, value)())
+class ReadingTest(unittest.TestCase, AllFilesMixin):
+    def _read_field(self, mf, correct_dict, field):
+        got = getattr(mf, field)
+        correct = correct_dict[field]
+        message = field + ' incorrect (expected ' + repr(correct) + \
+                    ', got ' + repr(got) + ')'
+        if isinstance(correct, float):
+            self.assertAlmostEqual(got, correct, msg=message)
+        else:
+            self.assertEqual(got, correct, message)
+    
+    def _run(self, tagset, kind):
+        correct_dict = CORRECT_DICTS[tagset]
+        path = os.path.join(_common.RSRC, tagset + '.' + kind)
+        f = beets.mediafile.MediaFile(path)
+        for field in correct_dict:
+            if 'm4a' in path and field.startswith('rg_'):
+                # MPEG-4 files: ReplayGain values not implemented.
+                continue
+            self._read_field(f, correct_dict, field)
 
-    return s
+    # Special test for missing ID3 tag.
+    def test_empy_mp3(self):
+        self._run('empty', 'mp3')
 
-def test_nose_suite():
-    for test in suite():
-        yield test
+class WritingTest(unittest.TestCase, AllFilesMixin):
+    def _write_field(self, tpath, field, value, correct_dict):
+        # Write new tag.
+        a = beets.mediafile.MediaFile(tpath)
+        setattr(a, field, value)
+        a.save()
+
+        # Verify ALL tags are correct with modification.
+        b = beets.mediafile.MediaFile(tpath)
+        for readfield in correct_dict.keys():
+            got = getattr(b, readfield)
+
+            # Make sure the modified field was changed correctly...
+            if readfield == field:
+                message = field + ' modified incorrectly (changed to ' + \
+                            repr(value) + ' but read ' + repr(got) + ')'
+                if isinstance(value, float):
+                    self.assertAlmostEqual(got, value, msg=message)
+                else:
+                    self.assertEqual(got, value, message)
+
+            # ... and that no other field was changed.
+            else:
+                # MPEG-4: ReplayGain not implented.
+                if 'm4a' in tpath and readfield.startswith('rg_'):
+                    continue
+
+                # The value should be what it was originally most of the
+                # time.
+                correct = correct_dict[readfield]
+
+                # The date field, however, is modified when its components
+                # change.
+                if readfield=='date' and field in ('year', 'month', 'day'):
+                    try:
+                        correct = datetime.date(
+                            value if field=='year' else correct.year,
+                            value if field=='month' else correct.month,
+                            value if field=='day' else correct.day
+                        )
+                    except ValueError:
+                        correct = datetime.date.min
+                # And vice-versa.
+                if field=='date' and readfield in ('year', 'month', 'day'):
+                    correct = getattr(value, readfield)
+
+                message = readfield + ' changed when it should not have' \
+                            ' (expected ' + repr(correct) + ', got ' + \
+                            repr(got) + ') when modifying ' + field
+                if isinstance(correct, float):
+                    self.assertAlmostEqual(got, correct, msg=message)
+                else:
+                    self.assertEqual(got, correct, message)
+
+    def _run(self, tagset, kind):
+        correct_dict = CORRECT_DICTS[tagset]
+        path = os.path.join(_common.RSRC, tagset + '.' + kind)
+
+        for field in correct_dict:
+            if field == 'month' and correct_dict['year']  == 0 or \
+            field == 'day'   and correct_dict['month'] == 0:
+                continue
+
+            # Generate the new value we'll try storing.
+            if field == 'art':
+                value = 'xxx'
+            elif type(correct_dict[field]) is unicode:
+                value = u'TestValue: ' + field
+            elif type(correct_dict[field]) is int:
+                value = correct_dict[field] + 42
+            elif type(correct_dict[field]) is bool:
+                value = not correct_dict[field]
+            elif type(correct_dict[field]) is datetime.date:
+                value = correct_dict[field] + datetime.timedelta(42)
+            elif type(correct_dict[field]) is str:
+                value = 'TestValue-' + str(field)
+            elif type(correct_dict[field]) is float:
+                value = 9.87
+            else:
+                raise ValueError('unknown field type ' + \
+                        str(type(correct_dict[field])))
+            
+            # Make a copy of the file we'll work on.
+            root, ext = os.path.splitext(path)
+            tpath = root + '_test' + ext
+            shutil.copy(path, tpath)
+
+            try:
+                self._write_field(tpath, field, value, correct_dict)
+            finally:
+                os.remove(tpath)
+
+class ReadOnlyTest(unittest.TestCase):
+    def _read_field(self, mf, field, value):
+        got = getattr(mf, field)
+        fail_msg = field + ' incorrect (expected ' + \
+                    repr(value) + ', got ' + repr(got) + ')'
+        if field == 'length':
+            self.assertTrue(value-0.1 < got < value+0.1, fail_msg)
+        else:
+            self.assertEqual(got, value, fail_msg)
+
+    def _run(self, filename):
+        path = os.path.join(_common.RSRC, filename)
+        f = beets.mediafile.MediaFile(path)
+        correct_dict = READ_ONLY_CORRECT_DICTS[filename]
+        for field, value in correct_dict.items():
+            self._read_field(f, field, value)
+
+    def test_mp3(self):
+        self._run('full.mp3')
+
+    def test_m4a(self):
+        self._run('full.m4a')
+
+    def test_flac(self):
+        self._run('full.flac')
+
+    def test_ogg(self):
+        self._run('full.ogg')
+
+    def test_ape(self):
+        self._run('full.ape')
+
+    def test_wv(self):
+        self._run('full.wv')
+
+    def test_mpc(self):
+        self._run('full.mpc')
+
+def suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

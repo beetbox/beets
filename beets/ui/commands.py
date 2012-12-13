@@ -693,7 +693,7 @@ def import_func(lib, opts, args):
         config['import']['move'] = False
 
     if opts.library:
-        query = args
+        query = decargs(args)
         paths = []
     else:
         query = None

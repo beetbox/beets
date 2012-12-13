@@ -53,7 +53,7 @@ art is resized. Server-side resizing can also be slower than local resizing, so
 consider installing one of the two backends for better performance.
 
 When using ImageMagic, beets looks for the ``convert`` executable in your path.
-On some versions Windows, the program can be shadowed by a system-provided
+On some versions of Windows, the program can be shadowed by a system-provided
 ``convert.exe``. On these systems, you may need to modify your ``%PATH%``
 environment variable so that ImageMagick comes first or use PIL instead.
 

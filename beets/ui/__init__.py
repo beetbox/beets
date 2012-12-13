@@ -645,7 +645,7 @@ def _raw_main(args, configfh):
             dbpath,
             config['directory'].as_filename(),
             get_path_formats(),
-            config['art_filename'].get(unicode),
+            Template(config['art_filename'].get(unicode)),
             config['timeout'].as_number(),
             get_replacements(),
         )

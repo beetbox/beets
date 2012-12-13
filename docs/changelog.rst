@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.0b16 (in development)
+1.0rc1 (in development)
 -----------------------
 
 * New plugin: :doc:`/plugins/convert` transcodes music and embeds album art
@@ -10,6 +10,8 @@ Changelog
 * New plugin: :doc:`/plugins/fuzzy_search` lets you find albums and tracks using
   fuzzy string matching so you don't have to type (or even remember) their exact
   names. Thanks to Philippe Mongeau.
+* New plugin: :doc:`/plugins/echonest_tempo` fetches tempo (BPM) information
+  from `The Echo Nest`_. Thanks to David Brenner.
 * New plugin: :doc:`/plugins/the` adds a template function that helps format
   text for nicely-sorted directory listings. Thanks to Blemjhoo Tezoulbr.
 * New plugin: :doc:`/plugins/zero` filters out undesirable fields before they
@@ -21,8 +23,8 @@ Changelog
   the `mp3gain`_ or `aacgain`_ command-line tools instead of the failure-prone
   Gstreamer ReplayGain implementation. Thanks to Fabrice Laporte.
 * :doc:`/plugins/fetchart` and :doc:`/plugins/embedart`: Both plugins can now
-  resize album art to avoid excessively large images. Thanks to
-  Fabrice Laporte.
+  resize album art to avoid excessively large images. Use the ``maxwidth``
+  config option with either plugin. Thanks to Fabrice Laporte.
 * :doc:`/plugins/scrub`: Scrubbing now removes *all* types of tags from a file
   rather than just one. For example, if your FLAC file has both ordinary FLAC
   tags and ID3 tags, the ID3 tags are now also removed.
@@ -33,10 +35,14 @@ Changelog
 * The output of the :ref:`update-cmd`, :ref:`remove-cmd`, and :ref:`modify-cmd`
   commands now respects the :ref:`list_format_album` and
   :ref:`list_format_item` config options. Thanks to Mike Kazantsev.
+* The :ref:`art-filename` option can now be a template rather than a simple
+  string. Thanks to Jarrod Beardwood.
 * Fix album queries for ``artpath`` and other non-item fields.
 * Null values in the database can now be matched with the empty-string regular
   expression, ``^$``.
 * Queries now correctly match non-string values in path format predicates.
+* When autotagging a various-artists album, the album artist field is now
+  used instead of the majority track artist.
 * :doc:`/plugins/lastgenre`: Use the albums' existing genre tags if they pass
   the whitelist (thanks to Fabrice Laporte).
 * :doc:`/plugins/lastgenre`: Add a ``lastgenre`` command for fetching genres
@@ -55,9 +61,16 @@ Changelog
 * :doc:`/plugins/mbcollection`: Fix an error when submitting a large number of
   releases (we now submit only 200 releases at a time instead of 350). Thanks
   to Jonathan Towne.
+* :doc:`/plugins/embedart`: Made the method for embedding art into FLAC files
+  `standard
+  <https://wiki.xiph.org/VorbisComment#METADATA_BLOCK_PICTURE>`_-compliant.
+  Thanks to Daniele Sluijters.
 * Add the track mapping dictionary to the ``album_distance`` plugin function.
 * When an exception is raised while reading a file, the path of the file in
   question is now logged (thanks to Mike Kazantsev).
+* Truncate long filenames based on their *bytes* rather than their Unicode
+  *characters*, fixing situations where encoded names could be too long.
+* Filename truncation now incorporates the length of the extension.
 * Fix an assertion failure when the MusicBrainz main database and search server
   disagree.
 * Fix a bug that caused the :doc:`/plugins/lastgenre` and other plugins not to
@@ -69,10 +82,15 @@ Changelog
 * Fix a crash when input is read from a pipe without a specified encoding.
 * Fix some problem with identifying files on Windows with Unicode directory
   names in their path.
-* Add a human-readable error message when writing files' tags fails.
+* Fix a crash when Unicode queries were used with ``import -L`` re-imports.
+* Fix an error when fingerprinting files with Unicode filenames on Windows.
+* Warn instead of crashing when importing a specific file in singleton mode.
+* Add human-readable error messages when writing files' tags fails or when a
+  directory can't be created.
 * Changed plugin loading so that modules can be imported without
   unintentionally loading the plugins they contain.
 
+.. _The Echo Nest: http://the.echonest.com/
 .. _Tomahawk resolver: http://beets.radbox.org/blog/tomahawk-resolver.html
 .. _mp3gain: http://mp3gain.sourceforge.net/download.php
 .. _aacgain: http://aacgain.altosdesign.com

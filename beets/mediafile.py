@@ -573,10 +573,17 @@ class ImageField(object):
             # No cover found.
             return None
 
+        elif obj.type == 'flac':
+            pictures = obj.mgfile.pictures
+            if pictures:
+                return pictures[0].data or None
+            else:
+                return None
+
         else:
-            # Here we're assuming everything but MP3 and MPEG-4 uses
-            # the Xiph/Vorbis Comments standard. This may not be valid.
-            # http://wiki.xiph.org/VorbisComment#Cover_art
+            # Here we're assuming everything but MP3, MPEG-4, and FLAC
+            # use the Xiph/Vorbis Comments standard. This may not be
+            # valid. http://wiki.xiph.org/VorbisComment#Cover_art
 
             if 'metadata_block_picture' not in obj.mgfile:
                 # Try legacy COVERART tags.
@@ -623,6 +630,15 @@ class ImageField(object):
             else:
                 cover = mutagen.mp4.MP4Cover(val, self._mp4kind(val))
                 obj.mgfile['covr'] = [cover]
+
+        elif obj.type == 'flac':
+            obj.mgfile.clear_pictures()
+
+            if val is not None:
+                pic = mutagen.flac.Picture()
+                pic.data = val
+                pic.mime = self._mime(val)
+                obj.mgfile.add_picture(pic)
 
         else:
             # Again, assuming Vorbis Comments standard.
@@ -691,8 +707,8 @@ class MediaFile(object):
         )
         try:
             self.mgfile = mutagen.File(path)
-        except unreadable_exc:
-            log.warn('header parsing failed')
+        except unreadable_exc as exc:
+            log.debug(u'header parsing failed: {0}'.format(unicode(exc)))
             raise UnreadableFileError('Mutagen could not read file')
         except IOError:
             raise UnreadableFileError('could not read file')

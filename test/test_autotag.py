@@ -68,6 +68,17 @@ class PluralityTest(unittest.TestCase):
         self.assertEqual(l_album, 'The White Album')
         self.assertTrue(artist_consensus)
 
+    def test_albumartist_consensus(self):
+        items = [Item({'artist': 'tartist1', 'album': 'album',
+                       'albumartist': 'aartist'}),
+                 Item({'artist': 'tartist2', 'album': 'album',
+                       'albumartist': 'aartist'}),
+                 Item({'artist': 'tartist3', 'album': 'album',
+                       'albumartist': 'aartist'})]
+        l_artist, l_album, artist_consensus = match.current_metadata(items)
+        self.assertEqual(l_artist, 'aartist')
+        self.assertFalse(artist_consensus)
+
 def _make_item(title, track, artist='some artist'):
     return Item({
         'title': title, 'track': track,

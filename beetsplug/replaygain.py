@@ -24,6 +24,7 @@ from beets.ui import commands
 log = logging.getLogger('beets')
 
 DEFAULT_REFERENCE_LOUDNESS = 89
+SAMPLE_MAX = 1 << 15
 
 class ReplayGainError(Exception):
     """Raised when an error occurs during mp3gain/aacgain execution.
@@ -54,7 +55,7 @@ def parse_tool_output(text):
             'file': parts[0],
             'mp3gain': int(parts[1]),
             'gain': float(parts[2]),
-            'peak': float(parts[3]),
+            'peak': float(parts[3]) / SAMPLE_MAX,
             'maxgain': int(parts[4]),
             'mingain': int(parts[5]),
         })
@@ -161,6 +162,10 @@ class ReplayGainPlugin(BeetsPlugin):
 
     def requires_gain(self, item, album=False):
         """Does the gain need to be computed?"""
+        if 'mp3gain' in self.command and item.format != 'MP3':
+            return False
+        elif 'aacgain' in self.command and item.format not in ('MP3', 'AAC'):
+            return False
         return self.overwrite or \
                (not item.rg_track_gain or not item.rg_track_peak) or \
                ((not item.rg_album_gain or not item.rg_album_peak) and \
@@ -189,7 +194,7 @@ class ReplayGainPlugin(BeetsPlugin):
             # Adjust to avoid clipping.
             cmd = cmd + ['-k']
         else:
-            # Disable clipping warning. 
+            # Disable clipping warning.
             cmd = cmd + ['-c']
         if self.apply_gain:
             # Lossless audio adjustment.
@@ -198,13 +203,17 @@ class ReplayGainPlugin(BeetsPlugin):
         cmd = cmd + [syspath(i.path) for i in items]
 
         log.debug(u'replaygain: analyzing {0} files'.format(len(items)))
-        output = call(cmd)
+        try:
+            output = call(cmd)
+        except ReplayGainError as exc:
+            log.warn(u'replaygain: analysis failed ({0})'.format(exc))
+            return
         log.debug(u'replaygain: analysis finished')
         results = parse_tool_output(output)
 
         return results
 
-    def store_gain(self, lib, items, rgain_infos, album=None): 
+    def store_gain(self, lib, items, rgain_infos, album=None):
         """Store computed ReplayGain values to the Items and the Album
         (if it is provided).
         """

@@ -131,7 +131,12 @@ def _set_date_str(info, date_str):
         date_parts = date_str.split('-')
         for key in ('year', 'month', 'day'):
             if date_parts:
-                setattr(info, key, int(date_parts.pop(0)))
+                date_part = date_parts.pop(0)
+                try:
+                    date_num = int(date_part)
+                except ValueError:
+                    continue
+                setattr(info, key, date_num)
 
 def album_info(release):
     """Takes a MusicBrainz release result dictionary and returns a beets
