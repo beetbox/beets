@@ -56,7 +56,7 @@ class BenchmarkPlugin(BeetsPlugin):
     """A plugin for performing some simple performance benchmarks.
     """
     def commands(self):
-        def bench_func(lib, config, opts, args):
+        def bench_func(lib, opts, args):
             benchmark(lib, opts.profile)
         bench_cmd = ui.Subcommand('bench', help='benchmark')
         bench_cmd.parser.add_option('-p', '--profile',

@@ -25,6 +25,7 @@ from beets.util.artresizer import ArtResizer
 from beets import importer
 from beets import ui
 from beets import util
+from beets import config
 
 IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 COVER_NAMES = ['cover', 'front', 'art', 'album', 'folder']
@@ -32,6 +33,13 @@ CONTENT_TYPES = ('image/jpeg',)
 DOWNLOAD_EXTENSION = '.jpg'
 
 log = logging.getLogger('beets')
+
+config.add({
+    'fetchart': {
+        'auto': True,
+        'maxwidth': 0,
+    }
+})
 
 
 def _fetch_image(url):
@@ -214,18 +222,15 @@ class FetchArtPlugin(BeetsPlugin):
         # placing them in the filesystem.
         self.art_paths = {}
 
-    def configure(self, config):
-        self.autofetch = ui.config_val(config, 'fetchart',
-                                       'autofetch', True, bool)
-        self.maxwidth = int(ui.config_val(config, 'fetchart',
-                                          'maxwidth', '0'))
+        self.autofetch = config['fetchart']['auto'].get(bool)
+        self.maxwidth = config['fetchart']['maxwidth'].get(int)
         if self.autofetch:
             # Enable two import hooks when fetching is enabled.
             self.import_stages = [self.fetch_art]
             self.register_listener('import_task_files', self.assign_art)
 
     # Asynchronous; after music is added to the library.
-    def fetch_art(self, config, task):
+    def fetch_art(self, session, task):
         """Find art for the album being imported."""
         if task.is_album:  # Only fetch art for full albums.
             if task.choice_flag == importer.action.ASIS:
@@ -238,22 +243,23 @@ class FetchArtPlugin(BeetsPlugin):
                 # For any other choices (e.g., TRACKS), do nothing.
                 return
 
-            album = config.lib.get_album(task.album_id)
+            album = session.lib.get_album(task.album_id)
             path = art_for_album(album, task.path, self.maxwidth, local)
 
             if path:
                 self.art_paths[task] = path
 
     # Synchronous; after music files are put in place.
-    def assign_art(self, config, task):
+    def assign_art(self, session, task):
         """Place the discovered art in the filesystem."""
         if task in self.art_paths:
             path = self.art_paths.pop(task)
 
-            album = config.lib.get_album(task.album_id)
-            album.set_art(path, not (config.delete or config.move))
-
-            if config.delete or config.move:
+            album = session.lib.get_album(task.album_id)
+            src_removed = config['import']['delete'].get(bool) or \
+                          config['import']['move'].get(bool)
+            album.set_art(path, not src_removed)
+            if src_removed:
                 task.prune(path)
 
     # Manual album art fetching.
@@ -262,7 +268,7 @@ class FetchArtPlugin(BeetsPlugin):
         cmd.parser.add_option('-f', '--force', dest='force',
                               action='store_true', default=False,
                               help='re-download art when already present')
-        def func(lib, config, opts, args):
+        def func(lib, opts, args):
             batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force,
                             self.maxwidth)
         cmd.func = func

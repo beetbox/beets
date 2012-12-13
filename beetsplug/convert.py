@@ -16,25 +16,37 @@
 """
 import logging
 import os
-import shutil
 import threading
-from subprocess import Popen, PIPE
+from subprocess import Popen
 
 from beets.plugins import BeetsPlugin
 from beets import ui, util
 from beetsplug.embedart import _embed
+from beets import config
 
 log = logging.getLogger('beets')
 DEVNULL = open(os.devnull, 'wb')
-conf = {}
 _fs_lock = threading.Lock()
+
+config.add({
+    'convert': {
+        u'dest': None,
+        u'threads': util.cpu_count(),
+        u'ffmpeg': u'ffmpeg',
+        u'opts': u'-aq 2',
+        u'max_bitrate': 500,
+        u'embed': True,
+    }
+})
 
 
 def encode(source, dest):
     log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
 
-    encode = Popen([conf['ffmpeg']] + ['-i', source] + conf['opts'] +
-                   [dest], close_fds=True, stderr=DEVNULL)
+    opts = config['convert']['opts'].get(unicode).split(u' ')
+    encode = Popen([config['convert']['ffmpeg'].get(unicode), '-i', source] +
+                   opts + [dest],
+                   close_fds=True, stderr=DEVNULL)
     encode.wait()
     if encode.returncode != 0:
         # Something went wrong (probably Ctrl+C), remove temporary files
@@ -64,7 +76,8 @@ def convert_item(lib, dest_dir):
         with _fs_lock:
             util.mkdirall(dest)
 
-        if item.format == 'MP3' and item.bitrate < 1000 * conf['max_bitrate']:
+        maxbr = config['convert']['max_bitrate'].get(int)
+        if item.format == 'MP3' and item.bitrate < 1000 * maxbr:
             log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
             util.copy(item.path, dest)
         else:
@@ -74,17 +87,19 @@ def convert_item(lib, dest_dir):
         item.write()
 
         artpath = lib.get_album(item).artpath
-        if artpath and conf['embed']:
+        if artpath and config['convert']['embed']:
             _embed(artpath, [item])
 
 
-def convert_func(lib, config, opts, args):
-    dest = opts.dest if opts.dest is not None else conf['dest']
+def convert_func(lib, opts, args):
+    dest = opts.dest if opts.dest is not None else \
+            config['convert']['dest'].get()
     if not dest:
         raise ui.UserError('no convert destination set')
-    threads = opts.threads if opts.threads is not None else conf['threads']
+    threads = opts.threads if opts.threads is not None else \
+            config['convert']['threads'].get(int)
 
-    ui.commands.list_items(lib, ui.decargs(args), opts.album, None, config)
+    ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
 
     if not ui.input_yn("Convert? (Y/n)"):
         return
@@ -99,18 +114,6 @@ def convert_func(lib, config, opts, args):
 
 
 class ConvertPlugin(BeetsPlugin):
-    def configure(self, config):
-        conf['dest'] = ui.config_val(config, 'convert', 'dest', None)
-        conf['threads'] = int(ui.config_val(config, 'convert', 'threads',
-            util.cpu_count()))
-        conf['ffmpeg'] = ui.config_val(config, 'convert', 'ffmpeg', 'ffmpeg')
-        conf['opts'] = ui.config_val(config, 'convert',
-                                     'opts', '-aq 2').split(' ')
-        conf['max_bitrate'] = int(ui.config_val(config, 'convert',
-                                                'max_bitrate', '500'))
-        conf['embed'] = ui.config_val(config, 'convert', 'embed', True,
-                                      vtype=bool)
-
     def commands(self):
         cmd = ui.Subcommand('convert', help='convert to external location')
         cmd.parser.add_option('-a', '--album', action='store_true',

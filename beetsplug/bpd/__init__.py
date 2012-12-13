@@ -29,12 +29,17 @@ import beets
 from beets.plugins import BeetsPlugin
 import beets.ui
 from beets import vfs
+from beets import config
 from beets.util import bluelet
 
+config.add({
+    'bpd': {
+        'host': u'',
+        'port': 6600,
+        'password': u'',
+    }
+})
 
-DEFAULT_PORT = 6600
-DEFAULT_HOST = ''
-DEFAULT_PASSWORD = ''
 PROTOCOL_VERSION = '0.13.0'
 BUFSIZE = 1024
 
@@ -154,8 +159,7 @@ class BaseServer(object):
     This is a generic superclass and doesn't support many commands.
     """
 
-    def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT,
-                 password=DEFAULT_PASSWORD):
+    def __init__(self, host, port, password):
         """Create a new server bound to address `host` and listening
         on port `port`. If `password` is given, it is required to do
         anything significant on the server.
@@ -727,7 +731,7 @@ class Server(BaseServer):
     to store its library.
     """
 
-    def __init__(self, library, host='', port=DEFAULT_PORT, password=''):
+    def __init__(self, library, host, port, password):
         try:
             from beetsplug.bpd import gstplayer
         except ImportError as e:
@@ -1144,15 +1148,12 @@ class BPDPlugin(BeetsPlugin):
         cmd.parser.add_option('-d', '--debug', action='store_true',
             help='dump all MPD traffic to stdout')
 
-        def func(lib, config, opts, args):
-            host = args.pop(0) if args else \
-                beets.ui.config_val(config, 'bpd', 'host', DEFAULT_HOST)
-            port = args.pop(0) if args else \
-                beets.ui.config_val(config, 'bpd', 'port', str(DEFAULT_PORT))
+        def func(lib, opts, args):
+            host = args.pop(0) if args else config['bpd']['host'].get(unicode)
+            port = args.pop(0) if args else config['bpd']['port'].get(int)
             if args:
                 raise beets.ui.UserError('too many arguments')
-            password = beets.ui.config_val(config, 'bpd', 'password',
-                                           DEFAULT_PASSWORD)
+            password = config['bpd']['password'].get(unicode)
             debug = opts.debug or False
             self.start_bpd(lib, host, int(port), password, debug)
 

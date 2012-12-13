@@ -628,7 +628,7 @@ def initial_lookup(session):
         if task.sentinel:
             continue
 
-        plugins.send('import_task_start', task=task)
+        plugins.send('import_task_start', session=session, task=task)
 
         log.debug('Looking up: %s' % task.path)
         try:
@@ -654,7 +654,7 @@ def user_query(session):
         choice = session.choose_match(task)
         task.set_choice(choice)
         session.log_choice(task)
-        plugins.send('import_task_choice', task=task)
+        plugins.send('import_task_choice', session=session, task=task)
 
         # As-tracks: transition to singleton workflow.
         if choice is action.TRACKS:
@@ -726,7 +726,7 @@ def apply_choices(session):
                 )
             else:
                 autotag.apply_item_metadata(task.item, task.match.info)
-            plugins.send('import_task_apply', task=task)
+            plugins.send('import_task_apply', session=session, task=task)
 
         # Infer album-level fields.
         if task.is_album:
@@ -852,7 +852,7 @@ def manipulate_files(session):
                 session.lib.store(item)
 
         # Plugin event.
-        plugins.send('import_task_files', task=task)
+        plugins.send('import_task_files', session=session, task=task)
 
 def finalize(session):
     """A coroutine that finishes up importer tasks. In particular, the
@@ -908,7 +908,7 @@ def item_lookup(session):
         if task.sentinel:
             continue
 
-        plugins.send('import_task_start', task=task)
+        plugins.send('import_task_start', session=session, task=task)
 
         task.set_item_candidates(*autotag.tag_item(task.item))
 
@@ -926,7 +926,7 @@ def item_query(session):
         choice = session.choose_item(task)
         task.set_choice(choice)
         session.log_choice(task)
-        plugins.send('import_task_choice', task=task)
+        plugins.send('import_task_choice', session=session, task=task)
 
         # Duplicate check.
         if task.choice_flag in (action.ASIS, action.APPLY):

@@ -18,6 +18,8 @@ autotagger. Requires the pyacoustid library.
 from beets import plugins
 from beets import ui
 from beets import util
+from beets import config
+from beets.util import confit
 from beets.autotag import hooks
 import acoustid
 import logging
@@ -42,9 +44,6 @@ _matches = {}
 # autotagging.
 _fingerprints = {}
 _acoustids = {}
-
-# The user's Acoustid API key, if provided.
-_userkey = None
 
 
 def acoustid_match(path):
@@ -148,17 +147,15 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         log.debug('acoustid item candidates: {0}'.format(len(tracks)))
         return tracks
 
-    def configure(self, config):
-        global _userkey
-        _userkey = ui.config_val(config, 'acoustid', 'apikey', None)
-
     def commands(self):
         submit_cmd = ui.Subcommand('submit',
                                    help='submit Acoustid fingerprints')
-        def submit_cmd_func(lib, config, opts, args):
-            if not _userkey:
+        def submit_cmd_func(lib, opts, args):
+            try:
+                apikey = config['acoustid']['apikey'].get(unicode)
+            except confit.NotFoundError:
                 raise ui.UserError('no Acoustid user API key provided')
-            submit_items(_userkey, lib.items(ui.decargs(args)))
+            submit_items(apikey, lib.items(ui.decargs(args)))
         submit_cmd.func = submit_cmd_func
         return [submit_cmd]
 
@@ -166,7 +163,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
 # Hooks into import process.
 
 @AcoustidPlugin.listen('import_task_start')
-def fingerprint_task(config=None, task=None):
+def fingerprint_task(task):
     """Fingerprint each item in the task for later use during the
     autotagging candidate search.
     """
@@ -175,7 +172,7 @@ def fingerprint_task(config=None, task=None):
         acoustid_match(item.path)
 
 @AcoustidPlugin.listen('import_task_apply')
-def apply_acoustid_metadata(config=None, task=None):
+def apply_acoustid_metadata(task):
     """Apply Acoustid metadata (fingerprint and ID) to the task's items.
     """
     for item in task.imported_items():

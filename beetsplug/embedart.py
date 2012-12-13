@@ -22,14 +22,23 @@ from beets import ui
 from beets.ui import decargs
 from beets.util import syspath, normpath
 from beets.util.artresizer import ArtResizer
+from beets import config
 
 log = logging.getLogger('beets')
+
+config.add({
+    'embedart': {
+        'maxwidth': 0,
+        'auto': True,
+    }
+})
 
 def _embed(path, items):
     """Embed an image file, located at `path`, into each item.
     """
-    if options['maxwidth']:
-        path = ArtResizer.shared.resize(options['maxwidth'], syspath(path))
+    maxwidth = config['embedart']['maxwidth'].get(int)
+    if maxwidth:
+        path = ArtResizer.shared.resize(maxwidth, syspath(path))
 
     data = open(syspath(path), 'rb').read()
     kindstr = imghdr.what(None, data)
@@ -51,29 +60,22 @@ def _embed(path, items):
         f.art = data
         f.save()
 
-options = {
-    'autoembed': True,
-    'maxwidth': 0,
-}
 class EmbedCoverArtPlugin(BeetsPlugin):
     """Allows albumart to be embedded into the actual files.
     """
-    def configure(self, config):
-        options['autoembed'] = \
-            ui.config_val(config, 'embedart', 'autoembed', True, bool)
-        options['maxwidth'] = \
-            int(ui.config_val(config, 'embedart', 'maxwidth', '0'))
-
-        if options['maxwidth'] and not ArtResizer.shared.local:
-            options['maxwidth'] = 0
-            log.error("embedart: ImageMagick or PIL not found; "
-                      "'maxwidth' option ignored")
+    def __init__(self):
+        super(EmbedCoverArtPlugin, self).__init__()
+        if config['embedart']['maxwidth'].get(int) and \
+                not ArtResizer.shared.local:
+            config['embedart']['maxwidth'] = 0
+            log.warn("embedart: ImageMagick or PIL not found; "
+                     "'maxwidth' option ignored")
 
     def commands(self):
         # Embed command.
         embed_cmd = ui.Subcommand('embedart',
                                   help='embed an image file into file metadata')
-        def embed_func(lib, config, opts, args):
+        def embed_func(lib, opts, args):
             if not args:
                 raise ui.UserError('specify an image file')
             imagepath = normpath(args.pop(0))
@@ -85,7 +87,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                                     help='extract an image from file metadata')
         extract_cmd.parser.add_option('-o', dest='outpath',
                                       help='image output file')
-        def extract_func(lib, config, opts, args):
+        def extract_func(lib, opts, args):
             outpath = normpath(opts.outpath or 'cover')
             extract(lib, outpath, decargs(args))
         extract_cmd.func = extract_func
@@ -93,7 +95,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         # Clear command.
         clear_cmd = ui.Subcommand('clearart',
                                   help='remove images from file metadata')
-        def clear_func(lib, config, opts, args):
+        def clear_func(lib, opts, args):
             clear(lib, decargs(args))
         clear_cmd.func = clear_func
 
@@ -155,6 +157,6 @@ def clear(lib, query):
 
 # Automatically embed art into imported albums.
 @EmbedCoverArtPlugin.listen('album_imported')
-def album_imported(lib, album, config):
-    if album.artpath and options['autoembed']:
+def album_imported(lib, album):
+    if album.artpath and config['embedart']['auto']:
         _embed(album.artpath, album.items())

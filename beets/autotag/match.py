@@ -471,7 +471,7 @@ def tag_item(item, search_artist=None, search_title=None,
                     hooks.TrackMatch(dist, track_info)
             # If this is a good match, then don't keep searching.
             rec = recommendation(candidates.values())
-            if rec == RECOMMEND_STRONG and not config['import_timid'].get(bool):
+            if rec == RECOMMEND_STRONG and not config['import']['timid']:
                 log.debug('Track ID match.')
                 return candidates.values(), rec
 
