@@ -48,7 +48,7 @@ class ListTest(unittest.TestCase):
         self.io.restore()
 
     def _run_list(self, query='', album=False, path=False, fmt=None):
-        commands.list_items(self.lib, query, album, fmt, None)
+        commands.list_items(self.lib, query, album, fmt)
 
     def test_list_outputs_item(self):
         self._run_list()
@@ -134,14 +134,14 @@ class RemoveTest(unittest.TestCase):
 
     def test_remove_items_no_delete(self):
         self.io.addinput('y')
-        commands.remove_items(self.lib, '', False, False, None)
+        commands.remove_items(self.lib, '', False, False)
         items = self.lib.items()
         self.assertEqual(len(list(items)), 0)
         self.assertTrue(os.path.exists(self.i.path))
 
     def test_remove_items_with_delete(self):
         self.io.addinput('y')
-        commands.remove_items(self.lib, '', False, True, None)
+        commands.remove_items(self.lib, '', False, True)
         items = self.lib.items()
         self.assertEqual(len(list(items)), 0)
         self.assertFalse(os.path.exists(self.i.path))
@@ -167,7 +167,7 @@ class ModifyTest(unittest.TestCase):
     def _modify(self, mods, query=(), write=False, move=False, album=False):
         self.io.addinput('y')
         commands.modify_items(self.lib, mods, query,
-                              write, move, album, True, True, None)
+                              write, move, album, True)
 
     def test_modify_item_dbdata(self):
         self._modify(["title=newTitle"])
@@ -469,10 +469,11 @@ class AutotagTest(unittest.TestCase):
 
 class ImportTest(unittest.TestCase):
     def test_quiet_timid_disallowed(self):
-        self.assertRaises(ui.UserError, commands.import_files,
-                          None, [], False, False, False, False, None,
-                          False, False, False, True, False, None, False, True,
-                          None, False, [], False)
+        with _common.temp_config():
+            config['import']['quiet'] = True
+            config['import']['timid'] = True
+            self.assertRaises(ui.UserError, commands.import_files, None, [],
+                              None)
 
 class InputTest(unittest.TestCase):
     def setUp(self):
@@ -511,9 +512,10 @@ class ConfigTest(unittest.TestCase):
             x=y"""), func)
 
     def test_default_paths_preserved(self):
+        default_formats = ui.get_path_formats()
         def func(lib, opts, args):
             self.assertEqual(lib.path_formats[1:],
-                             ui.DEFAULT_PATH_FORMATS)
+                             default_formats)
         self._run_main([], textwrap.dedent("""
             [paths]
             x=y"""), func)
@@ -667,11 +669,13 @@ class ShowChangeTest(unittest.TestCase):
         items = items or self.items
         info = info or self.info
         mapping = dict(zip(items, info.tracks))
-        commands.show_change(
-            cur_artist,
-            cur_album,
-            autotag.AlbumMatch(0.1, info, mapping, set(), set()),
-        )
+        with _common.temp_config():
+            config['color'] = False
+            commands.show_change(
+                cur_artist,
+                cur_album,
+                autotag.AlbumMatch(0.1, info, mapping, set(), set()),
+            )
         return self.io.getoutput().lower()
 
     def test_null_change(self):
@@ -711,58 +715,17 @@ class ShowChangeTest(unittest.TestCase):
         self.assertTrue(u'caf\xe9.mp3 -> the title' in msg
                         or u'caf.mp3 ->' in msg)
 
-class DefaultPathTest(unittest.TestCase):
-    def setUp(self):
-        self.old_home = os.environ.get('HOME')
-        self.old_appdata = os.environ.get('APPDATA')
-        os.environ['HOME'] = 'xhome'
-        os.environ['APPDATA'] = 'xappdata'
-    def tearDown(self):
-        if self.old_home is None:
-            del os.environ['HOME']
-        else:
-            os.environ['HOME'] = self.old_home
-        if self.old_appdata is None:
-            del os.environ['APPDATA']
-        else:
-            os.environ['APPDATA'] = self.old_appdata
-
-    def test_unix_paths_in_home(self):
-        import posixpath
-        config, lib, libdir = ui.default_paths(posixpath)
-        self.assertEqual(config, 'xhome/.beetsconfig')
-        self.assertEqual(lib, 'xhome/.beetsmusic.blb')
-        self.assertEqual(libdir, 'xhome/Music')
-
-    def test_windows_paths_in_home_and_appdata(self):
-        import ntpath
-        config, lib, libdir = ui.default_paths(ntpath)
-        self.assertEqual(config, 'xappdata\\beetsconfig.ini')
-        self.assertEqual(lib, 'xappdata\\beetsmusic.blb')
-        self.assertEqual(libdir, 'xhome\\Music')
-
 class PathFormatTest(unittest.TestCase):
-    def _config(self, text):
-        cp = ConfigParser.SafeConfigParser()
-        cp.readfp(StringIO(text))
-        return cp
-
-    def _paths_for(self, text):
-        return ui._get_path_formats(self._config("[paths]\n%s" %
-                                                 textwrap.dedent(text)))
-
-    def test_default_paths(self):
-        pf = self._paths_for("")
-        self.assertEqual(pf, ui.DEFAULT_PATH_FORMATS)
-
     def test_custom_paths_prepend(self):
-        pf = self._paths_for("""
-            foo: bar
-        """)
+        default_formats = ui.get_path_formats()
+
+        with _common.temp_config():
+            config['paths'] = [('foo', 'bar')]
+            pf = ui.get_path_formats()
         key, tmpl = pf[0]
         self.assertEqual(key, 'foo')
         self.assertEqual(tmpl.original, 'bar')
-        self.assertEqual(pf[1:], ui.DEFAULT_PATH_FORMATS)
+        self.assertEqual(pf[1:], default_formats)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

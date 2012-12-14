@@ -293,7 +293,7 @@ class ConfigView(object):
 
         out = []
         for item in it:
-            if isinstance(item, list) and len(item) == 2:
+            if isinstance(item, (list, tuple)) and len(item) == 2:
                 out.append(tuple(item))
             elif isinstance(item, dict) and len(item) == 1:
                 out.append(iter_first(item.items()))

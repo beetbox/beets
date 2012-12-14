@@ -496,6 +496,9 @@ class Template(object):
         self.original = template
         self.compiled = self.translate()
 
+    def __eq__(self, other):
+        return self.original == other.original
+
     def interpret(self, values={}, functions={}):
         """Like `substitute`, but forces the interpreter (rather than
         the compiled version) to be used. The interpreter includes
