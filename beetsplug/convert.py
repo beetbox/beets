@@ -73,9 +73,12 @@ def convert_item(lib, dest_dir):
         item.path = dest
         item.write()
 
-        artpath = lib.get_album(item).artpath
-        if artpath and conf['embed']:
-            _embed(artpath, [item])
+        if conf['embed']:
+            album = lib.get_album(item)
+            if album:
+                artpath = album.artpath
+                if artpath:
+                    _embed(artpath, [item])
 
 
 def convert_func(lib, config, opts, args):
