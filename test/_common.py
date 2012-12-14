@@ -30,6 +30,7 @@ except ImportError:
 sys.path.insert(0, '..')
 import beets.library
 from beets import importer
+from beets.ui import commands
 import beets
 
 # Suppress logging output.
@@ -75,8 +76,9 @@ def item():
     })
 
 # Dummy import session.
-def import_session(lib, logfile=None, paths=[], query=[]):
-    return importer.ImportSession(lib, logfile, paths, query)
+def import_session(lib=None, logfile=None, paths=[], query=[], cli=False):
+    cls = commands.TerminalImportSession if cli else importer.ImportSession
+    return cls(lib, logfile, paths, query)
 
 # Temporary config modifications.
 @contextlib.contextmanager

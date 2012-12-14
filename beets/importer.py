@@ -685,7 +685,7 @@ def user_query(session):
                 session.log_choice(task, True)
             recent.add(ident)
 
-def show_progress():
+def show_progress(session):
     """This stage replaces the initial_lookup and user_query stages
     when the importer is run without autotagging. It displays the album
     name and artist as the files are added.

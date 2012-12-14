@@ -454,7 +454,8 @@ class AutotagTest(unittest.TestCase):
             [_common.item()],
         )
         task.set_candidates('artist', 'album', [], autotag.RECOMMEND_NONE)
-        res = commands.choose_match(_common.import_session(None), task)
+        session = _common.import_session(cli=True)
+        res = session.choose_match(task)
         self.assertEqual(res, result)
         self.assertTrue('No match' in self.io.getoutput())
 
@@ -501,7 +502,7 @@ class ConfigTest(unittest.TestCase):
         ui._raw_main(args + ['test'], StringIO(config))
 
     def test_paths_section_respected(self):
-        def func(lib, config, opts, args):
+        def func(lib, opts, args):
             key, template = lib.path_formats[0]
             self.assertEqual(key, 'x')
             self.assertEqual(template.original, 'y')
@@ -510,7 +511,7 @@ class ConfigTest(unittest.TestCase):
             x=y"""), func)
 
     def test_default_paths_preserved(self):
-        def func(lib, config, opts, args):
+        def func(lib, opts, args):
             self.assertEqual(lib.path_formats[1:],
                              ui.DEFAULT_PATH_FORMATS)
         self._run_main([], textwrap.dedent("""
@@ -522,7 +523,7 @@ class ConfigTest(unittest.TestCase):
         ui.main(['version'])
 
     def test_nonexistant_db(self):
-        def func(lib, config, opts, args):
+        def func(lib, opts, args):
             pass
         with self.assertRaises(ui.UserError):
             self._run_main([], textwrap.dedent("""
@@ -531,7 +532,7 @@ class ConfigTest(unittest.TestCase):
             """), func)
 
     def test_replacements_parsed(self):
-        def func(lib, config, opts, args):
+        def func(lib, opts, args):
             replacements = lib.replacements
             self.assertEqual(replacements, [(re.compile(ur'[xy]'), u'z')])
         self._run_main([], textwrap.dedent("""
@@ -539,7 +540,7 @@ class ConfigTest(unittest.TestCase):
             replace=[xy] z"""), func)
 
     def test_replacements_parsed_unicode(self):
-        def func(lib, config, opts, args):
+        def func(lib, opts, args):
             replacements = lib.replacements
             self.assertEqual(replacements, [(re.compile(ur'\u2019'), u'z')])
         self._run_main([], textwrap.dedent(u"""
@@ -547,7 +548,7 @@ class ConfigTest(unittest.TestCase):
             replace=\u2019 z"""), func)
 
     def test_empty_replacements_produce_none(self):
-        def func(lib, config, opts, args):
+        def func(lib, opts, args):
             replacements = lib.replacements
             self.assertFalse(replacements)
         self._run_main([], textwrap.dedent("""
@@ -555,7 +556,7 @@ class ConfigTest(unittest.TestCase):
             """), func)
 
     def test_multiple_replacements_parsed(self):
-        def func(lib, config, opts, args):
+        def func(lib, opts, args):
             replacements = lib.replacements
             self.assertEqual(replacements, [
                 (re.compile(ur'[xy]'), u'z'),

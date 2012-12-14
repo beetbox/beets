@@ -26,6 +26,7 @@ from beets.autotag import match
 from beets.library import Item
 from beets.util import plurality
 from beets.autotag import AlbumInfo, TrackInfo
+from beets import config
 
 class PluralityTest(unittest.TestCase):
     def test_plurality_consensus(self):
@@ -499,7 +500,9 @@ class ApplyTestUtil(object):
         mapping = {}
         for i, t in zip(self.items, info.tracks):
             mapping[i] = t
-        autotag.apply_metadata(info, mapping, per_disc_numbering)
+        with _common.temp_config():
+            config['per_disc_numbering'] = per_disc_numbering
+            autotag.apply_metadata(info, mapping)
 
 class ApplyTest(unittest.TestCase, ApplyTestUtil):
     def setUp(self):
