@@ -20,6 +20,7 @@ from beetsplug import fetchart
 from beets.autotag import AlbumInfo, AlbumMatch
 from beets import library
 from beets import importer
+from beets import config
 import os
 import shutil
 import StringIO
@@ -204,7 +205,7 @@ class ArtImporterTest(unittest.TestCase, _common.ExtraAsserts):
 
         # The plugin and import configuration.
         self.plugin = fetchart.FetchArtPlugin()
-        self.config = _common.iconfig(self.lib)
+        self.session = _common.import_session(self.lib)
 
         # Import task for the coroutine.
         self.task = importer.ImportTask(None, None, [self.i])
@@ -235,8 +236,8 @@ class ArtImporterTest(unittest.TestCase, _common.ExtraAsserts):
         the path was not set.
         """
         # Execute the two relevant parts of the importer.
-        self.plugin.fetch_art(self.config, self.task)
-        self.plugin.assign_art(self.config, self.task)
+        self.plugin.fetch_art(self.session, self.task)
+        self.plugin.assign_art(self.session, self.task)
 
         artpath = self.lib.albums()[0].artpath
         if should_exist:
@@ -264,12 +265,12 @@ class ArtImporterTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertExists(self.art_file)
 
     def test_delete_original_file(self):
-        self.config.delete = True
+        config['import']['delete'] = True
         self._fetch_art(True)
         self.assertNotExists(self.art_file)
 
     def test_move_original_file(self):
-        self.config.move = True
+        config['import']['move'] = True
         self._fetch_art(True)
         self.assertNotExists(self.art_file)
 

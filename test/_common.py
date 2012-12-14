@@ -71,36 +71,10 @@ def item():
         'album_id':         None,
     })
 
-# Dummy import stuff.
-def iconfig(lib, **kwargs):
-    config = importer.ImportConfig(
-        lib = lib,
-        paths = None,
-        resume = False,
-        logfile = None,
-        color = False,
-        quiet = True,
-        quiet_fallback = importer.action.SKIP,
-        copy = True,
-        move = False,
-        write = False,
-        delete = False,
-        choose_match_func = lambda x, y: importer.action.SKIP,
-        should_resume_func = lambda _: False,
-        threaded = False,
-        autot = True,
-        singletons = False,
-        choose_item_func = lambda x, y: importer.action.SKIP,
-        timid = False,
-        query = None,
-        incremental = False,
-        ignore = [],
-        resolve_duplicate_func = lambda x, y: None,
-        per_disc_numbering = False,
-    )
-    for k, v in kwargs.items():
-        setattr(config, k, v)
-    return config
+# Dummy import session.
+def import_session(lib, logfile=None, paths=[], query=[]):
+    return importer.ImportSession(lib, logfile, paths, query)
+
 
 # Mock timing.
 

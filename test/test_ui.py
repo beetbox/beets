@@ -30,6 +30,7 @@ from beets.ui import commands
 from beets import autotag
 from beets import importer
 from beets.mediafile import MediaFile
+from beets import config
 
 class ListTest(unittest.TestCase):
     def setUp(self):
@@ -324,7 +325,7 @@ class UpdateTest(unittest.TestCase, _common.ExtraAsserts):
         if reset_mtime:
             self.i.mtime = 0
             self.lib.store(self.i)
-        commands.update_items(self.lib, query, album, move, True, False, None)
+        commands.update_items(self.lib, query, album, move, False)
 
     def test_delete_removes_item(self):
         self.assertTrue(list(self.lib.items()))
@@ -453,7 +454,7 @@ class AutotagTest(unittest.TestCase):
             [_common.item()],
         )
         task.set_candidates('artist', 'album', [], autotag.RECOMMEND_NONE)
-        res = commands.choose_match(task, _common.iconfig(None, quiet=False))
+        res = commands.choose_match(_common.import_session(None), task)
         self.assertEqual(res, result)
         self.assertTrue('No match' in self.io.getoutput())
 
@@ -573,46 +574,47 @@ class ShowdiffTest(unittest.TestCase):
         self.io.restore()
 
     def test_showdiff_strings(self):
-        commands._showdiff('field', 'old', 'new', True)
+        commands._showdiff('field', 'old', 'new')
         out = self.io.getoutput()
         self.assertTrue('field' in out)
 
     def test_showdiff_identical(self):
-        commands._showdiff('field', 'old', 'old', True)
+        commands._showdiff('field', 'old', 'old')
         out = self.io.getoutput()
         self.assertFalse('field' in out)
 
     def test_showdiff_ints(self):
-        commands._showdiff('field', 2, 3, True)
+        commands._showdiff('field', 2, 3)
         out = self.io.getoutput()
         self.assertTrue('field' in out)
 
     def test_showdiff_ints_no_color(self):
-        commands._showdiff('field', 2, 3, False)
+        config['color'] = False
+        commands._showdiff('field', 2, 3)
         out = self.io.getoutput()
         self.assertTrue('field' in out)
 
     def test_showdiff_shows_both(self):
-        commands._showdiff('field', 'old', 'new', True)
+        commands._showdiff('field', 'old', 'new')
         out = self.io.getoutput()
         self.assertTrue('old' in out)
         self.assertTrue('new' in out)
 
     def test_showdiff_floats_close_to_identical(self):
-        commands._showdiff('field', 1.999, 2.001, True)
+        commands._showdiff('field', 1.999, 2.001)
         out = self.io.getoutput()
         self.assertFalse('field' in out)
 
     def test_showdiff_floats_differenct(self):
-        commands._showdiff('field', 1.999, 4.001, True)
+        commands._showdiff('field', 1.999, 4.001)
         out = self.io.getoutput()
         self.assertTrue('field' in out)
 
     def test_showdiff_ints_colorizing_is_not_stringwise(self):
-        commands._showdiff('field', 222, 333, True)
+        commands._showdiff('field', 222, 333)
         complete_diff = self.io.getoutput().split()[1]
 
-        commands._showdiff('field', 222, 232, True)
+        commands._showdiff('field', 222, 232)
         partial_diff = self.io.getoutput().split()[1]
 
         self.assertEqual(complete_diff, partial_diff)
@@ -667,7 +669,6 @@ class ShowChangeTest(unittest.TestCase):
             cur_artist,
             cur_album,
             autotag.AlbumMatch(0.1, info, mapping, set(), set()),
-            color=False,
         )
         return self.io.getoutput().lower()
 
