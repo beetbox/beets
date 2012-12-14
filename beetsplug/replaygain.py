@@ -19,11 +19,22 @@ import os
 from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import syspath, command_output
-from beets.ui import commands
+from beets import config
+
+config.add({
+    'replaygain': {
+        'overwrite': False,
+        'albumgain': False,
+        'noclip': True,
+        'apply_gain': False,
+        'targetlevel': 89,
+        'auto': True,
+        'command': u'',
+    }
+})
 
 log = logging.getLogger('beets')
 
-DEFAULT_REFERENCE_LOUDNESS = 89
 SAMPLE_MAX = 1 << 15
 
 class ReplayGainError(Exception):
@@ -68,23 +79,15 @@ class ReplayGainPlugin(BeetsPlugin):
         super(ReplayGainPlugin, self).__init__()
         self.import_stages = [self.imported]
 
-    def configure(self, config):
-        self.overwrite = ui.config_val(config, 'replaygain',
-                                       'overwrite', False, bool)
-        self.albumgain = ui.config_val(config, 'replaygain',
-                                       'albumgain', False, bool)
-        self.noclip = ui.config_val(config, 'replaygain',
-                                    'noclip', True, bool)
-        self.apply_gain = ui.config_val(config, 'replaygain',
-                                        'apply_gain', False, bool)
-        target_level = float(ui.config_val(config, 'replaygain',
-                                           'targetlevel',
-                                           DEFAULT_REFERENCE_LOUDNESS))
-        self.gain_offset = int(target_level - DEFAULT_REFERENCE_LOUDNESS)
-        self.automatic = ui.config_val(config, 'replaygain',
-                                       'automatic', True, bool)
+        self.overwrite = config['replaygain']['overwrite'].get(bool)
+        self.albumgain = config['replaygain']['albumgain'].get(bool)
+        self.noclip = config['replaygain']['noclip'].get(bool)
+        self.apply_gain = config['replaygain']['apply_gain'].get(bool)
+        target_level = config['replaygain']['targetlevel'].as_number()
+        self.gain_offset = int(target_level - 89)
+        self.automatic = config['replaygain']['auto'].get(bool)
+        self.command = config['replaygain']['command'].get(unicode)
 
-        self.command = ui.config_val(config,'replaygain','command', None)
         if self.command:
             # Explicit executable path.
             if not os.path.isfile(self.command):
@@ -106,27 +109,26 @@ class ReplayGainPlugin(BeetsPlugin):
                 'no replaygain command found: install mp3gain or aacgain'
             )
 
-    def imported(self, config, task):
+    def imported(self, session, task):
         """Our import stage function."""
         if not self.automatic:
             return
 
         if task.is_album:
-            album = config.lib.get_album(task.album_id)
+            album = session.lib.get_album(task.album_id)
             items = list(album.items())
         else:
             items = [task.item]
 
         results = self.compute_rgain(items, task.is_album)
         if results:
-            self.store_gain(config.lib, items, results,
+            self.store_gain(session.lib, items, results,
                             album if task.is_album else None)
 
     def commands(self):
         """Provide a ReplayGain command."""
-        def func(lib, config, opts, args):
-            write = ui.config_val(config, 'beets', 'import_write',
-                                  commands.DEFAULT_IMPORT_WRITE, bool)
+        def func(lib, opts, args):
+            write = config['import']['write'].get(bool)
 
             if opts.album:
                 # Analyze albums.

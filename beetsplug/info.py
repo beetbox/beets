@@ -58,7 +58,7 @@ def info(paths):
 class InfoPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand('info', help='show file metadata')
-        def func(lib, config, opts, args):
+        def func(lib, opts, args):
             if not args:
                 raise ui.UserError('no file specified')
             info(args)

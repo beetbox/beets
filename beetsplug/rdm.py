@@ -19,7 +19,7 @@ from beets.ui import Subcommand, decargs, print_obj
 from beets.util.functemplate import Template
 import random
 
-def random_item(lib, config, opts, args):
+def random_item(lib, opts, args):
     query = decargs(args)
     if opts.path:
         fmt = '$path'
@@ -35,7 +35,7 @@ def random_item(lib, config, opts, args):
     objs = random.sample(objs, number)
 
     for item in objs:
-        print_obj(item, lib, config, template)
+        print_obj(item, lib, template)
 
 random_cmd = Subcommand('random',
                         help='chose a random track or album')

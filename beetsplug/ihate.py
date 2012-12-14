@@ -17,12 +17,26 @@
 import re
 import logging
 from beets.plugins import BeetsPlugin
-from beets import ui
+from beets import config
 from beets.importer import action
 
 
 __author__ = 'baobab@heresiarch.info'
 __version__ = '1.0'
+
+
+config.add({
+    'ihate': {
+        'warn_genre': [],
+        'warn_artist': [],
+        'warn_album': [],
+        'warn_whitelist': [],
+        'skip_genre': [],
+        'skip_artist': [],
+        'skip_album': [],
+        'skip_whitelist': [],
+    }
+})
 
 
 class IHatePlugin(BeetsPlugin):
@@ -45,40 +59,6 @@ class IHatePlugin(BeetsPlugin):
                                   cls).__new__(cls, *args, **kwargs)
         return cls._instance
 
-    def __str__(self):
-        return ('(\n  warn_genre = {0}\n'
-                '  warn_artist = {1}\n'
-                '  warn_album = {2}\n'
-                '  warn_whitelist = {3}\n'
-                '  skip_genre = {4}\n'
-                '  skip_artist = {5}\n'
-                '  skip_album = {6}\n'
-                '  skip_whitelist = {7} )\n'
-                .format(self.warn_genre, self.warn_artist, self.warn_album, 
-                        self.warn_whitelist, self.skip_genre, self.skip_artist,
-                        self.skip_album, self.skip_whitelist))
-
-    def configure(self, config):
-        if not config.has_section('ihate'):
-            self._log.debug('[ihate] plugin is not configured')
-            return
-        self.warn_genre = ui.config_val(config, 'ihate', 'warn_genre', 
-                                        '').split()
-        self.warn_artist = ui.config_val(config, 'ihate', 'warn_artist', 
-                                         '').split()
-        self.warn_album = ui.config_val(config, 'ihate', 'warn_album', 
-                                        '').split()
-        self.warn_whitelist = ui.config_val(config, 'ihate', 'warn_whitelist', 
-                                       '').split()
-        self.skip_genre = ui.config_val(config, 'ihate', 'skip_genre', 
-                                        '').split()
-        self.skip_artist = ui.config_val(config, 'ihate', 'skip_artist', 
-                                         '').split()
-        self.skip_album = ui.config_val(config, 'ihate', 'skip_album', 
-                                        '').split()
-        self.skip_whitelist = ui.config_val(config, 'ihate', 'skip_whitelist', 
-                                       '').split()
-
     @classmethod
     def match_patterns(cls, s, patterns):
         """Check if string is matching any of the patterns in the list."""
@@ -99,44 +79,51 @@ class IHatePlugin(BeetsPlugin):
         except:
             genre = u''
         if genre and genre_patterns:
-            if IHatePlugin.match_patterns(genre, genre_patterns):
+            if cls.match_patterns(genre, genre_patterns):
                 hate = True
         if not hate and task.cur_album and album_patterns:
-            if IHatePlugin.match_patterns(task.cur_album, album_patterns):
+            if cls.match_patterns(task.cur_album, album_patterns):
                 hate = True
         if not hate and task.cur_artist and artist_patterns:
-            if IHatePlugin.match_patterns(task.cur_artist, artist_patterns):
+            if cls.match_patterns(task.cur_artist, artist_patterns):
                 hate = True
         if hate and whitelist_patterns:
-            if IHatePlugin.match_patterns(task.cur_artist, whitelist_patterns):
+            if cls.match_patterns(task.cur_artist, whitelist_patterns):
                 hate = False
         return hate
 
     def job_to_do(self):
         """Return True if at least one pattern is defined."""
-        return any([self.warn_genre, self.warn_artist, self.warn_album, 
-                    self.skip_genre, self.skip_artist, self.skip_album])
+        return any(config['ihate'][l].get(list) for l in
+                   ('warn_genre', 'warn_artist', 'warn_album',
+                    'skip_genre', 'skip_artist', 'skip_album'))
 
     def import_task_choice_event(self, task, config):
         if task.choice_flag == action.APPLY:
-            if self.job_to_do:
+            if self.job_to_do():
                 self._log.debug('[ihate] processing your hate')
-                if self.do_i_hate_this(task, self.skip_genre, self.skip_artist,
-                                       self.skip_album, self.skip_whitelist):
+                if self.do_i_hate_this(task,
+                            config['ihate']['skip_genre'].get(list),
+                            config['ihate']['skip_artist'].get(list),
+                            config['ihate']['skip_album'].get(list),
+                            config['ihate']['skip_whitelist'].get(list)):
                     task.choice_flag = action.SKIP
                     self._log.info(u'[ihate] skipped: {0} - {1}'
                                    .format(task.cur_artist, task.cur_album))
                     return
-                if self.do_i_hate_this(task, self.warn_genre, self.warn_artist,
-                                       self.warn_album, self.warn_whitelist):
+                if self.do_i_hate_this(task,
+                            config['ihate']['warn_genre'].get(list),
+                            config['ihate']['warn_artist'].get(list),
+                            config['ihate']['warn_album'].get(list),
+                            config['ihate']['warn_whitelist'].get(list)):
                     self._log.info(u'[ihate] you maybe hate this: {0} - {1}'
                                    .format(task.cur_artist, task.cur_album))
             else:
                 self._log.debug('[ihate] nothing to do')
         else:
-            self._log.debug('[ihate] user make a decision, nothing to do')
+            self._log.debug('[ihate] user made a decision, nothing to do')
 
 
 @IHatePlugin.listen('import_task_choice')
-def ihate_import_task_choice(task, config):
+def ihate_import_task_choice(task, session):
     IHatePlugin().import_task_choice_event(task, config)

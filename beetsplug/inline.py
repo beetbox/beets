@@ -18,6 +18,11 @@ import logging
 import traceback
 
 from beets.plugins import BeetsPlugin
+from beets import config
+
+config.add({
+    'pathfields': [],
+})
 
 log = logging.getLogger('beets')
 
@@ -54,13 +59,12 @@ def compile_expr(expr):
 class InlinePlugin(BeetsPlugin):
     template_fields = {}
 
-    def configure(self, config):
-        cls = type(self)
+    def __init__(self):
+        super(InlinePlugin, self).__init__()
 
         # Add field expressions.
-        if config.has_section('pathfields'):
-            for key, value in config.items('pathfields', True):
-                log.debug(u'adding template field %s' % key)
-                func = compile_expr(value)
-                if func is not None:
-                    cls.template_fields[key] = func
+        for key, value in config['pathfields'].as_pairs():
+            log.debug(u'adding template field %s' % key)
+            func = compile_expr(value)
+            if func is not None:
+                InlinePlugin.template_fields[key] = func

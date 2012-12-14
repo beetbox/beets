@@ -163,7 +163,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
 # Hooks into import process.
 
 @AcoustidPlugin.listen('import_task_start')
-def fingerprint_task(task):
+def fingerprint_task(task, session):
     """Fingerprint each item in the task for later use during the
     autotagging candidate search.
     """
@@ -172,7 +172,7 @@ def fingerprint_task(task):
         acoustid_match(item.path)
 
 @AcoustidPlugin.listen('import_task_apply')
-def apply_acoustid_metadata(task):
+def apply_acoustid_metadata(task, session):
     """Apply Acoustid metadata (fingerprint and ID) to the task's items.
     """
     for item in task.imported_items():

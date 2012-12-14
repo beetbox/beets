@@ -16,13 +16,18 @@
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import util
+from beets import config
 import beets.library
 import flask
 from flask import g
 import os
 
-DEFAULT_HOST = ''
-DEFAULT_PORT = 8337
+config.add({
+    'web': {
+        'host': u'',
+        'port': 8337,
+    }
+})
 
 
 # Utilities.
@@ -126,14 +131,15 @@ class WebPlugin(BeetsPlugin):
         cmd = ui.Subcommand('web', help='start a Web interface')
         cmd.parser.add_option('-d', '--debug', action='store_true',
                               default=False, help='debug mode')
-        def func(lib, config, opts, args):
-            host = args.pop(0) if args else \
-                beets.ui.config_val(config, 'web', 'host', DEFAULT_HOST)
-            port = args.pop(0) if args else \
-                beets.ui.config_val(config, 'web', 'port', str(DEFAULT_PORT))
-            port = int(port)
+        def func(lib, opts, args):
+            if args:
+                config['web']['host'] = args.pop(0)
+            if args:
+                config['web']['port'] = int(args.pop(0))
 
             app.config['lib'] = lib
-            app.run(host=host, port=port, debug=opts.debug, threaded=True)
+            app.run(host=config['web']['host'].get(unicode),
+                    port=config['web']['port'].get(int),
+                    debug=opts.debug, threaded=True)
         cmd.func = func
         return [cmd]

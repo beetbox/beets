@@ -17,6 +17,7 @@ from __future__ import print_function
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets import ui
+from beets import config
 import musicbrainzngs
 from musicbrainzngs import musicbrainz
 
@@ -35,7 +36,7 @@ def submit_albums(collection_id, release_ids):
         # A non-empty request body is required to avoid a 411 "Length
         # Required" error from the MB server.
 
-def update_collection(lib, config, opts, args):
+def update_collection(lib, opts, args):
     # Get the collection to modify.
     collections = musicbrainz._mb_request('collection', 'GET', True, True)
     if not collections['collection-list']:
@@ -55,10 +56,12 @@ update_mb_collection_cmd = Subcommand('mbupdate',
 update_mb_collection_cmd.func = update_collection
 
 class MusicBrainzCollectionPlugin(BeetsPlugin):
-    def configure(self, config):
-        username = ui.config_val(config, 'musicbrainz', 'user', '')
-        password = ui.config_val(config, 'musicbrainz', 'pass', '')
-        musicbrainzngs.auth(username, password)
+    def __init__(self):
+        super(MusicBrainzCollectionPlugin, self).__init__()
+        musicbrainzngs.auth(
+            config['musicbrainz']['user'].get(unicode),
+            config['musicbrainz']['pass'].get(unicode)
+        )
 
     def commands(self):
         return [update_mb_collection_cmd]

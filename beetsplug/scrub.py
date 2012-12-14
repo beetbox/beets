@@ -20,10 +20,16 @@ import logging
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import util
+from beets import config
+
+config.add({
+    'scrub': {
+        'auto': True,
+    }
+})
 
 log = logging.getLogger('beets')
 
-AUTOSCRUB_KEY = 'autoscrub'
 _MUTAGEN_FORMATS = {
     'asf': 'ASF',
     'apev2': 'APEv2File',
@@ -42,17 +48,10 @@ _MUTAGEN_FORMATS = {
 
 scrubbing = False
 
-options = {
-    AUTOSCRUB_KEY: True,
-}
 class ScrubPlugin(BeetsPlugin):
     """Removes extraneous metadata from files' tags."""
-    def configure(self, config):
-        options[AUTOSCRUB_KEY] = \
-            ui.config_val(config, 'scrub', AUTOSCRUB_KEY, True, bool)
-
     def commands(self):
-        def scrub_func(lib, config, opts, args):
+        def scrub_func(lib, opts, args):
             # This is a little bit hacky, but we set a global flag to
             # avoid autoscrubbing when we're also explicitly scrubbing.
             global scrubbing
@@ -107,6 +106,6 @@ def _scrub(path):
 # Automatically embed art into imported albums.
 @ScrubPlugin.listen('write')
 def write_item(item):
-    if not scrubbing and options[AUTOSCRUB_KEY]:
+    if not scrubbing and config['scrub']['auto']:
         log.debug(u'auto-scrubbing %s' % util.displayable_path(item.path))
         _scrub(item.path)

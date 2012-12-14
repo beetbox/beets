@@ -27,16 +27,24 @@ https://gist.github.com/1241307
 import logging
 import pylast
 import os
+import yaml
 
 from beets import plugins
 from beets import ui
 from beets.util import normpath
-from beets.ui import commands
+from beets import config
+
+config.add({
+    'lastgenre': {
+        'whitelist': os.path.join(os.path.dirname(__file__), 'genres.txt'),
+        'fallback': None,
+        'canonical': None,
+    }
+})
 
 log = logging.getLogger('beets')
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
-DEFAULT_WHITELIST = os.path.join(os.path.dirname(__file__), 'genres.txt')
 C14N_TREE = os.path.join(os.path.dirname(__file__), 'genres-tree.yaml')
 
 PYLAST_EXCEPTIONS = (
@@ -125,23 +133,13 @@ options = {
     'branches': None,
     'c14n': False,
 }
-fallback_str = None
 class LastGenrePlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(LastGenrePlugin, self).__init__()
         self.import_stages = [self.imported]
 
-    def configure(self, config):
-        global fallback_str
-
-        wl_filename = ui.config_val(config, 'lastgenre', 'whitelist', None)
-        if not wl_filename:
-            # No filename specified. Instead, use the whitelist that's included
-            # with the plugin (inside the package).
-            wl_filename = DEFAULT_WHITELIST
-        wl_filename = normpath(wl_filename)
-
         # Read the whitelist file.
+        wl_filename = config['lastgenre']['whitelist'].as_filename()
         whitelist = set()
         with open(wl_filename) as f:
             for line in f:
@@ -151,29 +149,25 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         options['whitelist'] = whitelist
 
         # Read the genres tree for canonicalization if enabled.
-        c14n_filename = ui.config_val(config, 'lastgenre', 'canonical', None)
+        c14n_filename = config['lastgenre']['canonical'].get()
         if c14n_filename is not None:
             c14n_filename = c14n_filename.strip()
             if not c14n_filename:
                 c14n_filename = C14N_TREE
             c14n_filename = normpath(c14n_filename)
 
-            from yaml import load
-            genres_tree = load(open(c14n_filename, 'r'))
+            genres_tree = yaml.load(open(c14n_filename, 'r'))
             branches = []
             flatten_tree(genres_tree, [], branches)
             options['branches'] = branches
             options['c14n'] = True
-
-        fallback_str = ui.config_val(config, 'lastgenre', 'fallback_str', None)
 
     def commands(self):
         lastgenre_cmd = ui.Subcommand('lastgenre', help='fetch genres')
         def lastgenre_func(lib, config, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
-            write = ui.config_val(config, 'beets', 'import_write',
-                                  commands.DEFAULT_IMPORT_WRITE, bool)
+            write = config['import']['write'].get(bool)
             for album in lib.albums(ui.decargs(args)):
                 tags = []    
                 lastfm_obj = LASTFM.get_album(album.albumartist, album.album)
@@ -183,6 +177,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 tags.extend(_tags_for(lastfm_obj))
                 genre = _tags_to_genre(tags)
 
+                fallback_str = config['lastgenre']['fallback'].get()
                 if not genre and fallback_str != None:
                     genre = fallback_str
                     log.debug(u'no last.fm genre found: fallback to %s' % genre)
@@ -196,10 +191,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]
 
-    def imported(self, config, task):
+    def imported(self, session, task):
         tags = []
         if task.is_album:
-            album = config.lib.get_album(task.album_id)
+            album = session.lib.get_album(task.album_id)
             lastfm_obj = LASTFM.get_album(album.albumartist, album.album)
             if album.genre:
                 tags.append(album.genre)
@@ -212,6 +207,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         tags.extend(_tags_for(lastfm_obj))
         genre = _tags_to_genre(tags)
         
+        fallback_str = config['lastgenre']['fallback'].get()
         if not genre and fallback_str != None:
             genre = fallback_str
             log.debug(u'no last.fm genre found: fallback to %s' % genre)
@@ -220,8 +216,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             log.debug(u'adding last.fm album genre: %s' % genre)
 
             if task.is_album:
-                album = config.lib.get_album(task.album_id)
+                album = session.lib.get_album(task.album_id)
                 album.genre = genre
             else:
                 item.genre = genre
-                config.lib.store(item)
+                session.lib.store(item)

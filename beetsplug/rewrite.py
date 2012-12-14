@@ -22,6 +22,11 @@ from collections import defaultdict
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import library
+from beets import config
+
+config.add({
+    'rewrite': {},
+})
 
 log = logging.getLogger('beets')
 
@@ -41,16 +46,13 @@ def rewriter(field, rules):
     return fieldfunc
 
 class RewritePlugin(BeetsPlugin):
-    template_fields = {}
-
-    def configure(self, config):
-        cls = type(self)
+    def __init__(self):
+        super(BeetsPlugin, self).__init__()
+        BeetsPlugin.template_fields = {}
 
         # Gather all the rewrite rules for each field.
         rules = defaultdict(list)
-        if not config.has_section('rewrite'):
-            return
-        for key, value in config.items('rewrite', True):
+        for key, value in config['rewrite'].items():
             try:
                 fieldname, pattern = key.split(None, 1)
             except ValueError:
@@ -68,4 +70,5 @@ class RewritePlugin(BeetsPlugin):
 
         # Replace each template field with the new rewriter function.
         for fieldname, fieldrules in rules.iteritems():
-            cls.template_fields[fieldname] = rewriter(fieldname, fieldrules)
+            RewritePlugin.template_fields[fieldname] = \
+                    rewriter(fieldname, fieldrules)

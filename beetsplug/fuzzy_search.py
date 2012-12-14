@@ -14,11 +14,17 @@
 
 """Like beet list, but with fuzzy matching
 """
-import beets
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs, print_obj
 from beets.util.functemplate import Template
+from beets import config
 import difflib
+
+config.add({
+    'fuzzy': {
+        'threshold': 0.7,
+    }
+})
 
 
 # THRESHOLD = 0.7
@@ -42,7 +48,7 @@ def is_match(queryMatcher, item, album=False, verbose=False, threshold=0.7):
         return s >= threshold
 
 
-def fuzzy_list(lib, config, opts, args):
+def fuzzy_list(lib, opts, args):
     query = decargs(args)
     query = ' '.join(query).lower()
     queryMatcher = difflib.SequenceMatcher(b=query)
@@ -50,7 +56,7 @@ def fuzzy_list(lib, config, opts, args):
     if opts.threshold is not None:
         threshold = float(opts.threshold)
     else:
-        threshold = float(conf['threshold'])
+        threshold = config['fuzzy']['threshold'].as_number()
 
     if opts.path:
         fmt = '$path'
@@ -67,9 +73,10 @@ def fuzzy_list(lib, config, opts, args):
                                       threshold=threshold), objs)
 
     for item in items:
-        print_obj(item, lib, config, template)
+        print_obj(item, lib, template)
         if opts.verbose:
-            print(is_match(queryMatcher, i, album=opts.album, verbose=True)[1])
+            print(is_match(queryMatcher, item,
+                           album=opts.album, verbose=True)[1])
 
 
 fuzzy_cmd = Subcommand('fuzzy',
@@ -87,13 +94,7 @@ fuzzy_cmd.parser.add_option('-t', '--threshold', action='store',
               (default is 0.7)', default=None)
 fuzzy_cmd.func = fuzzy_list
 
-conf = {}
-
 
 class Fuzzy(BeetsPlugin):
     def commands(self):
         return [fuzzy_cmd]
-
-    def configure(self, config):
-        conf['threshold'] = beets.ui.config_val(config, 'fuzzy',
-                                                'threshold', 0.7)

@@ -22,7 +22,13 @@ import logging
 
 from beets.plugins import BeetsPlugin
 from beets import ui
-from beets.ui import commands
+from beets import config
+
+config.add({
+    'lyrics': {
+        'auto': True,
+    }
+})
 
 
 # Global logger.
@@ -203,11 +209,10 @@ class LyricsPlugin(BeetsPlugin):
         cmd.parser.add_option('-p', '--print', dest='printlyr',
                               action='store_true', default=False,
                               help='print lyrics to console')
-        def func(lib, config, opts, args):
+        def func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
-            write = ui.config_val(config, 'beets', 'import_write',
-                                  commands.DEFAULT_IMPORT_WRITE, bool)
+            write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
                 fetch_item_lyrics(lib, logging.INFO, item, write)
                 if opts.printlyr and item.lyrics:
@@ -215,12 +220,8 @@ class LyricsPlugin(BeetsPlugin):
         cmd.func = func
         return [cmd]
 
-    def configure(self, config):
-        global AUTOFETCH
-        AUTOFETCH = ui.config_val(config, 'lyrics', 'autofetch', True, bool)
-
     # Auto-fetch lyrics on import.
-    def imported(self, config, task):
-        if AUTOFETCH:
+    def imported(self, session, task):
+        if config['lyrics']['auto']:
             for item in task.imported_items():
-                fetch_item_lyrics(config.lib, logging.DEBUG, item, False)
+                fetch_item_lyrics(session.lib, logging.DEBUG, item, False)

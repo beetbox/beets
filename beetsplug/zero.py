@@ -17,9 +17,16 @@
 import re
 import logging
 from beets.plugins import BeetsPlugin
-from beets import ui
 from beets.library import ITEM_KEYS
 from beets.importer import action
+from beets import config
+from beets.util import confit
+
+config.add({
+    'zero': {
+        'fields': [],
+    }
+})
 
 
 __author__ = 'baobab@heresiarch.info'
@@ -31,36 +38,30 @@ class ZeroPlugin(BeetsPlugin):
     _instance = None
     _log = logging.getLogger('beets')
 
-    fields = []
-    patterns = {}
-    warned = False
-
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super(ZeroPlugin,
                                   cls).__new__(cls, *args, **kwargs)
         return cls._instance
 
-    def __str__(self):
-        return ('[zero]\n  fields = {0}\n  patterns = {1}\n  warned = {2}'
-                .format(self.fields, self.patterns, self.warned))
+    def __init__(self):
+        super(ZeroPlugin, self).__init__()
 
-    def configure(self, config):
-        if not config.has_section('zero'):
-            self._log.debug('[zero] plugin is not configured')
-            return
-        for f in ui.config_val(config, 'zero', 'fields', '').split():
+        self.fields = []
+        self.patterns = {}
+        self.warned = False
+
+        for f in config['zero']['fields'].get(list):
             if f not in ITEM_KEYS:
                 self._log.error('[zero] invalid field: {0}'.format(f))
             else:
                 self.fields.append(f)
-                p = ui.config_val(config, 'zero', f, '').split()
-                if p:
-                    self.patterns[f] = p
-                else:
-                    self.patterns[f] = ['.']
+                try:
+                    self.patterns[f] = config['zero'][f].get(list)
+                except confit.NotFoundError:
+                    self.patterns[f] = [u'']
 
-    def import_task_choice_event(self, task, config):
+    def import_task_choice_event(self, task):
         """Listen for import_task_choice event."""
         if task.choice_flag == action.ASIS and not self.warned:
             self._log.warn('[zero] cannot zero in \"as-is\" mode')
@@ -73,7 +74,7 @@ class ZeroPlugin(BeetsPlugin):
         the list.
         """
         for p in patterns:
-            if re.findall(p, unicode(field), flags=re.IGNORECASE):
+            if re.search(p, unicode(field), flags=re.IGNORECASE):
                 return True
         return False
 
@@ -100,8 +101,8 @@ class ZeroPlugin(BeetsPlugin):
 
 
 @ZeroPlugin.listen('import_task_choice')
-def zero_choice(task, config):
-    ZeroPlugin().import_task_choice_event(task, config)
+def zero_choice(session, task):
+    ZeroPlugin().import_task_choice_event(task)
 
 @ZeroPlugin.listen('write')
 def zero_write(item):

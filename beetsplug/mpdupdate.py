@@ -23,8 +23,16 @@ Put something like the following in your .beetsconfig to configure:
 from __future__ import print_function
 
 from beets.plugins import BeetsPlugin
-from beets import ui
 import socket
+from beets import config
+
+config.add({
+    'mpdupdate': {
+        'host': u'localhost',
+        'port': 6600,
+        'password': u'',
+    }
+})
 
 # No need to introduce a dependency on an MPD library for such a
 # simple use case. Here's a simple socket abstraction to make things
@@ -88,20 +96,13 @@ def update_mpd(host='localhost', port=6600, password=None):
     s.close()
     print('... updated.')
 
-options = {
-    'host': 'localhost',
-    'port': 6600,
-    'password': None,
-}
 class MPDUpdatePlugin(BeetsPlugin):
-    def configure(self, config):
-        options['host'] = \
-            ui.config_val(config, 'mpdupdate', 'host', 'localhost')
-        options['port'] = \
-            int(ui.config_val(config, 'mpdupdate', 'port', '6600'))
-        options['password'] = \
-            ui.config_val(config, 'mpdupdate', 'password', '')
+    pass
 
 @MPDUpdatePlugin.listen('import')
 def update(lib=None, paths=None):
-    update_mpd(options['host'], options['port'], options['password'])
+    update_mpd(
+        config['mpdupdate']['host'].get(unicode),
+        config['mpdupdate']['port'].get(int),
+        config['mpdupdate']['password'].get(unicode),
+    )

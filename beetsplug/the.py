@@ -17,7 +17,17 @@
 import re
 import logging
 from beets.plugins import BeetsPlugin
-from beets import ui
+from beets import config
+
+config.add({
+    'the': {
+        'the': True,
+        'a': True,
+        'format': u'{0}, {1}',
+        'strip': False,
+        'patterns': [],
+    }
+})
 
 
 __author__ = 'baobab@heresiarch.info'
@@ -44,21 +54,10 @@ class ThePlugin(BeetsPlugin):
                                   cls).__new__(cls, *args, **kwargs)
         return cls._instance
 
-    def __str__(self):
-        return ('[the]\n  the = {0}\n  a = {1}\n  format = {2}\n'
-                '  strip = {3}\n  patterns = {4}'
-                .format(self.the, self.a, self.format, self.strip,
-                        self.patterns))
+    def __init__(self):
+        super(ThePlugin, self).__init__()
 
-    def configure(self, config):
-        if not config.has_section('the'):
-            self._log.debug(u'[the] plugin is not configured, using defaults')
-            return
-        self.the = ui.config_val(config, 'the', 'the', True, bool)
-        self.a = ui.config_val(config, 'the', 'a', True, bool)
-        self.format = ui.config_val(config, 'the', 'format', FORMAT)
-        self.strip = ui.config_val(config, 'the', 'strip', False, bool)
-        self.patterns = ui.config_val(config, 'the', 'patterns', '').split()
+        self.patterns = config['the']['patterns'].get(list)
         for p in self.patterns:
             if p:
                 try:
@@ -69,9 +68,9 @@ class ThePlugin(BeetsPlugin):
                     if not (p.startswith('^') or p.endswith('$')):
                         self._log.warn(u'[the] warning: \"{0}\" will not '
                                        'match string start/end'.format(p))
-        if self.a:
+        if config['the']['a']:
             self.patterns = [PATTERN_A] + self.patterns
-        if self.the:
+        if config['the']['the']:
             self.patterns = [PATTERN_THE] + self.patterns
         if not self.patterns:
             self._log.warn(u'[the] no patterns defined!')
@@ -93,10 +92,11 @@ class ThePlugin(BeetsPlugin):
                 return text
             else:
                 r = re.sub(r, '', text).strip()
-                if self.strip:
+                if config['the']['strip']:
                     return r
                 else:
-                    return self.format.format(r, t.strip()).strip()
+                    fmt = config['the']['format'].get(unicode)
+                    return fmt.format(r, t.strip()).strip()
         else:
             return u''
 
