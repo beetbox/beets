@@ -17,6 +17,8 @@ import time
 import sys
 import os
 import logging
+import contextlib
+import copy
 
 # Use unittest2 on Python < 2.7.
 try:
@@ -28,6 +30,7 @@ except ImportError:
 sys.path.insert(0, '..')
 import beets.library
 from beets import importer
+import beets
 
 # Suppress logging output.
 log = logging.getLogger('beets')
@@ -74,6 +77,19 @@ def item():
 # Dummy import session.
 def import_session(lib, logfile=None, paths=[], query=[]):
     return importer.ImportSession(lib, logfile, paths, query)
+
+# Temporary config modifications.
+@contextlib.contextmanager
+def temp_config():
+    """A context manager that saves and restores beets' global
+    configuration. This allows tests to make temporary modifications
+    that will then be automatically removed when the context exits.
+    """
+    old_sources = copy.deepcopy(beets.config.sources)
+    old_overlay = copy.deepcopy(beets.config.overlay)
+    yield
+    beets.config.sources = old_sources
+    beets.config.overlay = old_overlay
 
 
 # Mock timing.

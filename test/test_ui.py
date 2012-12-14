@@ -589,8 +589,9 @@ class ShowdiffTest(unittest.TestCase):
         self.assertTrue('field' in out)
 
     def test_showdiff_ints_no_color(self):
-        config['color'] = False
-        commands._showdiff('field', 2, 3)
+        with _common.temp_config():
+            config['color'] = False
+            commands._showdiff('field', 2, 3)
         out = self.io.getoutput()
         self.assertTrue('field' in out)
 

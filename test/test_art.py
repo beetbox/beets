@@ -265,13 +265,15 @@ class ArtImporterTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertExists(self.art_file)
 
     def test_delete_original_file(self):
-        config['import']['delete'] = True
-        self._fetch_art(True)
+        with _common.temp_config():
+            config['import']['delete'] = True
+            self._fetch_art(True)
         self.assertNotExists(self.art_file)
 
     def test_move_original_file(self):
-        config['import']['move'] = True
-        self._fetch_art(True)
+        with _common.temp_config():
+            config['import']['move'] = True
+            self._fetch_art(True)
         self.assertNotExists(self.art_file)
 
     def test_do_not_delete_original_if_already_in_place(self):
