@@ -609,7 +609,7 @@ class SubcommandsOptionParser(optparse.OptionParser):
 
 # The root parser and its main function.
 
-def _raw_main(args, configfh):
+def _raw_main(args):
     """A helper function for `main` without top-level exception
     handling.
     """
@@ -671,12 +671,12 @@ def _raw_main(args, configfh):
     # Invoke the subcommand.
     subcommand.func(lib, suboptions, subargs)
 
-def main(args=None, configfh=None):
+def main(args=None):
     """Run the main command-line interface for beets. Includes top-level
     exception handlers that print friendly error messages.
     """
     try:
-        _raw_main(args, configfh)
+        _raw_main(args)
     except UserError as exc:
         message = exc.args[0] if exc.args else None
         log.error(u'error: {0}'.format(message))

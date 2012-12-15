@@ -27,8 +27,10 @@ from beets.autotag import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch
 from beets import config
 
 TEST_TITLES = ('The Opener', 'The Second Track', 'The Last Track')
-class NonAutotaggedImportTest(unittest.TestCase):
+class NonAutotaggedImportTest(_common.TempConfigTestCase):
     def setUp(self):
+        super(NonAutotaggedImportTest, self).setUp()
+
         self.io = _common.DummyIO()
         self.io.install()
 
@@ -43,6 +45,8 @@ class NonAutotaggedImportTest(unittest.TestCase):
         self.srcdir = os.path.join(_common.RSRC, 'testsrcdir')
 
     def tearDown(self):
+        super(NonAutotaggedImportTest, self).tearDown()
+
         self.io.restore()
         if os.path.exists(self.libdb):
             os.remove(self.libdb)
@@ -84,17 +88,16 @@ class NonAutotaggedImportTest(unittest.TestCase):
                 }))
 
         # Run the UI "beet import" command!
-        with _common.temp_config():
-            config['import']['delete'] = delete
-            config['import']['threaded'] = threaded
-            config['import']['singletons'] = singletons
-            config['import']['move'] = move
-            config['import']['autotag'] = False
-            session = importer.ImportSession(self.lib,
-                                             logfile=None,
-                                             paths=[os.path.dirname(paths[0])],
-                                             query=None)
-            session.run()
+        config['import']['delete'] = delete
+        config['import']['threaded'] = threaded
+        config['import']['singletons'] = singletons
+        config['import']['move'] = move
+        config['import']['autotag'] = False
+        session = importer.ImportSession(self.lib,
+                                            logfile=None,
+                                            paths=[os.path.dirname(paths[0])],
+                                            query=None)
+        session.run()
 
         return paths
 
@@ -180,8 +183,10 @@ def _call_stages(session, items, choice_or_info,
 
     return task
 
-class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
+class ImportApplyTest(_common.TempConfigTestCase, _common.ExtraAsserts):
     def setUp(self):
+        super(ImportApplyTest, self).setUp()
+
         self.libdir = os.path.join(_common.RSRC, 'testlibdir')
         os.mkdir(self.libdir)
         self.libpath = os.path.join(_common.RSRC, 'testlib.blb')
@@ -214,6 +219,8 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         )
 
     def tearDown(self):
+        super(ImportApplyTest, self).tearDown()
+
         shutil.rmtree(self.libdir)
         if os.path.exists(self.srcdir):
             shutil.rmtree(self.srcdir)
@@ -221,22 +228,19 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
             os.unlink(self.libpath)
 
     def test_finalize_no_delete(self):
-        with _common.temp_config():
-            config['import']['delete'] = False
-            _call_stages(self.session, [self.i], self.info)
+        config['import']['delete'] = False
+        _call_stages(self.session, [self.i], self.info)
         self.assertExists(self.srcpath)
 
     def test_finalize_with_delete(self):
-        with _common.temp_config():
-            config['import']['delete'] = True
-            _call_stages(self.session, [self.i], self.info)
+        config['import']['delete'] = True
+        _call_stages(self.session, [self.i], self.info)
         self.assertNotExists(self.srcpath)
 
     def test_finalize_with_delete_prunes_directory_empty(self):
-        with _common.temp_config():
-            config['import']['delete'] = True
-            _call_stages(self.session, [self.i], self.info,
-                         toppath=self.srcdir)
+        config['import']['delete'] = True
+        _call_stages(self.session, [self.i], self.info,
+                     toppath=self.srcdir)
         self.assertNotExists(os.path.dirname(self.srcpath))
 
     def test_apply_asis_uses_album_path(self):
@@ -318,16 +322,14 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertEqual(task.old_paths, [self.srcpath])
 
     def test_apply_with_move(self):
-        with _common.temp_config():
-            config['import']['move'] = True
-            _call_stages(self.session, [self.i], self.info)
+        config['import']['move'] = True
+        _call_stages(self.session, [self.i], self.info)
         self.assertExists(list(self.lib.items())[0].path)
         self.assertNotExists(self.srcpath)
 
     def test_apply_with_move_prunes_empty_directory(self):
-        with _common.temp_config():
-            config['import']['move'] = True
-            _call_stages(self.session, [self.i], self.info, toppath=self.srcdir)
+        config['import']['move'] = True
+        _call_stages(self.session, [self.i], self.info, toppath=self.srcdir)
         self.assertNotExists(os.path.dirname(self.srcpath))
 
     def test_manipulate_files_with_null_move(self):
@@ -335,10 +337,9 @@ class ImportApplyTest(unittest.TestCase, _common.ExtraAsserts):
         already at the destination.
         """
         self.lib.move(self.i)  # Already at destination.
-        with _common.temp_config():
-            config['import']['move'] = True
-            _call_stages(self.session, [self.i], self.info, toppath=self.srcdir,
-                         stages=[importer.manipulate_files])
+        config['import']['move'] = True
+        _call_stages(self.session, [self.i], self.info, toppath=self.srcdir,
+                     stages=[importer.manipulate_files])
         self.assertExists(self.i.path)
 
 class AsIsApplyTest(unittest.TestCase):
@@ -386,8 +387,10 @@ class AsIsApplyTest(unittest.TestCase):
         self.assertFalse(alb.comp)
         self.assertEqual(alb.albumartist, self.items[2].artist)
 
-class ApplyExistingItemsTest(unittest.TestCase, _common.ExtraAsserts):
+class ApplyExistingItemsTest(_common.TempConfigTestCase, _common.ExtraAsserts):
     def setUp(self):
+        super(ApplyExistingItemsTest, self).setUp()
+
         self.libdir = os.path.join(_common.RSRC, 'testlibdir')
         os.mkdir(self.libdir)
 
@@ -398,8 +401,6 @@ class ApplyExistingItemsTest(unittest.TestCase, _common.ExtraAsserts):
         ]
         self.session = _common.import_session(self.lib)
 
-        self.config_ctx = _common.temp_config()
-        self.config_ctx.__enter__()
         config['import']['write'] = False
         config['import']['copy'] = False
 
@@ -409,7 +410,8 @@ class ApplyExistingItemsTest(unittest.TestCase, _common.ExtraAsserts):
         self.i.comp = False
 
     def tearDown(self):
-        self.config_ctx.__exit__(None, None, None)
+        super(ApplyExistingItemsTest, self).tearDown()
+
         os.remove(self.dbpath)
         shutil.rmtree(self.libdir)
 
@@ -452,17 +454,16 @@ class ApplyExistingItemsTest(unittest.TestCase, _common.ExtraAsserts):
 
     def test_apply_existing_item_new_metadata_does_not_duplicate(self):
         # We want to copy the item to a new location.
-        with _common.temp_config():
-            config['import']['copy'] = True
+        config['import']['copy'] = True
 
-            # Import with existing metadata.
-            self._apply_asis([self.i])
+        # Import with existing metadata.
+        self._apply_asis([self.i])
 
-            # Import again with new metadata.
-            item = self.lib.items().next()
-            new_item = library.Item.from_path(item.path)
-            new_item.title = 'differentTitle'
-            self._apply_asis([new_item])
+        # Import again with new metadata.
+        item = self.lib.items().next()
+        new_item = library.Item.from_path(item.path)
+        new_item.title = 'differentTitle'
+        self._apply_asis([new_item])
 
         # Should not be duplicated.
         self.assertEqual(len(list(self.lib.items())), 1)
@@ -470,14 +471,13 @@ class ApplyExistingItemsTest(unittest.TestCase, _common.ExtraAsserts):
 
     def test_apply_existing_item_new_metadata_moves_files(self):
         # As above, import with old metadata and then reimport with new.
-        with _common.temp_config():
-            config['import']['copy'] = True
+        config['import']['copy'] = True
 
-            self._apply_asis([self.i])
-            item = self.lib.items().next()
-            new_item = library.Item.from_path(item.path)
-            new_item.title = 'differentTitle'
-            self._apply_asis([new_item])
+        self._apply_asis([self.i])
+        item = self.lib.items().next()
+        new_item = library.Item.from_path(item.path)
+        new_item.title = 'differentTitle'
+        self._apply_asis([new_item])
 
         item = self.lib.items().next()
         self.assertTrue('differentTitle' in item.path)
@@ -485,29 +485,27 @@ class ApplyExistingItemsTest(unittest.TestCase, _common.ExtraAsserts):
 
     def test_apply_existing_item_new_metadata_copy_disabled(self):
         # Import *without* copying to ensure that the path does *not* change.
-        with _common.temp_config():
-            config['import']['copy'] = False
+        config['import']['copy'] = False
 
-            self._apply_asis([self.i])
-            item = self.lib.items().next()
-            new_item = library.Item.from_path(item.path)
-            new_item.title = 'differentTitle'
-            self._apply_asis([new_item])
+        self._apply_asis([self.i])
+        item = self.lib.items().next()
+        new_item = library.Item.from_path(item.path)
+        new_item.title = 'differentTitle'
+        self._apply_asis([new_item])
 
         item = self.lib.items().next()
         self.assertFalse('differentTitle' in item.path)
         self.assertExists(item.path)
 
     def test_apply_existing_item_new_metadata_removes_old_files(self):
-        with _common.temp_config():
-            config['import']['copy'] = True
+        config['import']['copy'] = True
 
-            self._apply_asis([self.i])
-            item = self.lib.items().next()
-            oldpath = item.path
-            new_item = library.Item.from_path(item.path)
-            new_item.title = 'differentTitle'
-            self._apply_asis([new_item])
+        self._apply_asis([self.i])
+        item = self.lib.items().next()
+        oldpath = item.path
+        new_item = library.Item.from_path(item.path)
+        new_item.title = 'differentTitle'
+        self._apply_asis([new_item])
 
         item = self.lib.items().next()
         self.assertNotExists(oldpath)
@@ -515,16 +513,15 @@ class ApplyExistingItemsTest(unittest.TestCase, _common.ExtraAsserts):
     def test_apply_existing_item_new_metadata_delete_enabled(self):
         # The "delete" flag should be ignored -- only the "copy" flag
         # controls whether files move.
-        with _common.temp_config():
-            config['import']['copy'] = True
-            config['import']['delete'] = True  # !
+        config['import']['copy'] = True
+        config['import']['delete'] = True  # !
 
-            self._apply_asis([self.i])
-            item = self.lib.items().next()
-            oldpath = item.path
-            new_item = library.Item.from_path(item.path)
-            new_item.title = 'differentTitle'
-            self._apply_asis([new_item])
+        self._apply_asis([self.i])
+        item = self.lib.items().next()
+        oldpath = item.path
+        new_item = library.Item.from_path(item.path)
+        new_item.title = 'differentTitle'
+        self._apply_asis([new_item])
 
         item = self.lib.items().next()
         self.assertNotExists(oldpath)
@@ -533,14 +530,13 @@ class ApplyExistingItemsTest(unittest.TestCase, _common.ExtraAsserts):
 
     def test_apply_existing_item_preserves_file(self):
         # With copying enabled, import the item twice with same metadata.
-        with _common.temp_config():
-            config['import']['copy'] = True
+        config['import']['copy'] = True
 
-            self._apply_asis([self.i])
-            item = self.lib.items().next()
-            oldpath = item.path
-            new_item = library.Item.from_path(item.path)
-            self._apply_asis([new_item])
+        self._apply_asis([self.i])
+        item = self.lib.items().next()
+        oldpath = item.path
+        new_item = library.Item.from_path(item.path)
+        self._apply_asis([new_item])
 
         self.assertEqual(len(list(self.lib.items())), 1)
         item = self.lib.items().next()
@@ -548,14 +544,13 @@ class ApplyExistingItemsTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertExists(oldpath)
 
     def test_apply_existing_item_preserves_file_delete_enabled(self):
-        with _common.temp_config():
-            config['import']['copy'] = True
-            config['import']['delete'] = True  # !
+        config['import']['copy'] = True
+        config['import']['delete'] = True  # !
 
-            self._apply_asis([self.i])
-            item = self.lib.items().next()
-            new_item = library.Item.from_path(item.path)
-            self._apply_asis([new_item])
+        self._apply_asis([self.i])
+        item = self.lib.items().next()
+        new_item = library.Item.from_path(item.path)
+        self._apply_asis([new_item])
 
         self.assertEqual(len(list(self.lib.items())), 1)
         item = self.lib.items().next()

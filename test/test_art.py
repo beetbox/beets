@@ -179,8 +179,10 @@ class AAOTest(unittest.TestCase):
         res = fetchart.aao_art('x')
         self.assertEqual(res, None)
 
-class ArtImporterTest(unittest.TestCase, _common.ExtraAsserts):
+class ArtImporterTest(_common.TempConfigTestCase, _common.ExtraAsserts):
     def setUp(self):
+        super(ArtImporterTest, self).setUp()
+
         # Mock the album art fetcher to always return our test file.
         self.art_file = os.path.join(_common.RSRC, 'tmpcover.jpg')
         _common.touch(self.art_file)
@@ -221,6 +223,8 @@ class ArtImporterTest(unittest.TestCase, _common.ExtraAsserts):
         self.task.set_choice(AlbumMatch(0, info, {}, set(), set()))
 
     def tearDown(self):
+        super(ArtImporterTest, self).tearDown()
+
         fetchart.art_for_album = self.old_afa
         if os.path.exists(self.art_file):
             os.remove(self.art_file)
@@ -265,15 +269,13 @@ class ArtImporterTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertExists(self.art_file)
 
     def test_delete_original_file(self):
-        with _common.temp_config():
-            config['import']['delete'] = True
-            self._fetch_art(True)
+        config['import']['delete'] = True
+        self._fetch_art(True)
         self.assertNotExists(self.art_file)
 
     def test_move_original_file(self):
-        with _common.temp_config():
-            config['import']['move'] = True
-            self._fetch_art(True)
+        config['import']['move'] = True
+        self._fetch_art(True)
         self.assertNotExists(self.art_file)
 
     def test_do_not_delete_original_if_already_in_place(self):

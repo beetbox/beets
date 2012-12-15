@@ -81,17 +81,18 @@ def import_session(lib=None, logfile=None, paths=[], query=[], cli=False):
     return cls(lib, logfile, paths, query)
 
 # Temporary config modifications.
-@contextlib.contextmanager
-def temp_config():
-    """A context manager that saves and restores beets' global
+class TempConfigTestCase(unittest.TestCase):
+    """A TestCase subclass that saves and restores beets' global
     configuration. This allows tests to make temporary modifications
-    that will then be automatically removed when the context exits.
+    that will then be automatically removed when the test completes.
     """
-    old_sources = copy.deepcopy(beets.config.sources)
-    old_overlay = copy.deepcopy(beets.config.overlay)
-    yield
-    beets.config.sources = old_sources
-    beets.config.overlay = old_overlay
+    def setUp(self):
+        self.old_sources = copy.deepcopy(beets.config.sources)
+        self.old_overlay = copy.deepcopy(beets.config.overlay)
+
+    def tearDown(self):
+        beets.config.sources = self.old_sources
+        beets.config.overlay = self.old_overlay
 
 
 # Mock timing.

@@ -19,8 +19,8 @@ import shutil
 import textwrap
 import logging
 import re
+import yaml
 from StringIO import StringIO
-import ConfigParser
 
 import _common
 from _common import unittest
@@ -31,6 +31,7 @@ from beets import autotag
 from beets import importer
 from beets.mediafile import MediaFile
 from beets import config
+from beets.util import confit
 
 class ListTest(unittest.TestCase):
     def setUp(self):
@@ -467,13 +468,12 @@ class AutotagTest(unittest.TestCase):
         self.io.addinput('u')
         self._no_candidates_test(importer.action.ASIS)
 
-class ImportTest(unittest.TestCase):
+class ImportTest(_common.TempConfigTestCase):
     def test_quiet_timid_disallowed(self):
-        with _common.temp_config():
-            config['import']['quiet'] = True
-            config['import']['timid'] = True
-            self.assertRaises(ui.UserError, commands.import_files, None, [],
-                              None)
+        config['import']['quiet'] = True
+        config['import']['timid'] = True
+        self.assertRaises(ui.UserError, commands.import_files, None, [],
+                          None)
 
 class InputTest(unittest.TestCase):
     def setUp(self):
@@ -489,36 +489,44 @@ class InputTest(unittest.TestCase):
         self.assertEqual(artist, u'\xc2me')
         self.assertEqual(album, u'\xc2me')
 
-class ConfigTest(unittest.TestCase):
+class ConfigTest(_common.TempConfigTestCase):
     def setUp(self):
+        super(ConfigTest, self).setUp()
         self.io = _common.DummyIO()
         self.io.install()
         self.test_cmd = ui.Subcommand('test', help='test')
         commands.default_commands.append(self.test_cmd)
     def tearDown(self):
+        super(ConfigTest, self).tearDown()
         self.io.restore()
         commands.default_commands.pop()
-    def _run_main(self, args, config, func):
+    def _run_main(self, args, config_yaml, func):
         self.test_cmd.func = func
-        ui._raw_main(args + ['test'], StringIO(config))
+        config_yaml = textwrap.dedent(config_yaml).strip()
+        if config_yaml:
+            config_data = yaml.load(config_yaml, Loader=confit.Loader)
+            config.sources.insert(0, config_data)
+        ui._raw_main(args + ['test'])
 
     def test_paths_section_respected(self):
         def func(lib, opts, args):
             key, template = lib.path_formats[0]
             self.assertEqual(key, 'x')
             self.assertEqual(template.original, 'y')
-        self._run_main([], textwrap.dedent("""
-            [paths]
-            x=y"""), func)
+        self._run_main([], """
+            paths:
+                - x: y
+        """, func)
 
     def test_default_paths_preserved(self):
         default_formats = ui.get_path_formats()
         def func(lib, opts, args):
             self.assertEqual(lib.path_formats[1:],
                              default_formats)
-        self._run_main([], textwrap.dedent("""
-            [paths]
-            x=y"""), func)
+        self._run_main([], """
+            paths:
+                - x: y
+        """, func)
 
     def test_nonexistant_config_file(self):
         os.environ['BEETSCONFIG'] = '/xxxxx'
@@ -528,34 +536,24 @@ class ConfigTest(unittest.TestCase):
         def func(lib, opts, args):
             pass
         with self.assertRaises(ui.UserError):
-            self._run_main([], textwrap.dedent("""
-                [beets]
+            self._run_main([], """
                 library: /xxx/yyy/not/a/real/path
-            """), func)
+            """, func)
 
     def test_replacements_parsed(self):
         def func(lib, opts, args):
             replacements = lib.replacements
             self.assertEqual(replacements, [(re.compile(ur'[xy]'), u'z')])
-        self._run_main([], textwrap.dedent("""
-            [beets]
-            replace=[xy] z"""), func)
-
-    def test_replacements_parsed_unicode(self):
-        def func(lib, opts, args):
-            replacements = lib.replacements
-            self.assertEqual(replacements, [(re.compile(ur'\u2019'), u'z')])
-        self._run_main([], textwrap.dedent(u"""
-            [beets]
-            replace=\u2019 z"""), func)
+        self._run_main([], """
+            replace:
+                - '[xy]': z
+        """, func)
 
     def test_empty_replacements_produce_none(self):
         def func(lib, opts, args):
             replacements = lib.replacements
             self.assertFalse(replacements)
-        self._run_main([], textwrap.dedent("""
-            [beets]
-            """), func)
+        self._run_main([], "", func)
 
     def test_multiple_replacements_parsed(self):
         def func(lib, opts, args):
@@ -564,16 +562,19 @@ class ConfigTest(unittest.TestCase):
                 (re.compile(ur'[xy]'), u'z'),
                 (re.compile(ur'foo'), u'bar'),
             ])
-        self._run_main([], textwrap.dedent("""
-            [beets]
-            replace=[xy] z
-                foo bar"""), func)
+        self._run_main([], """
+            replace:
+                - '[xy]': z
+                - foo: bar
+        """, func)
 
-class ShowdiffTest(unittest.TestCase):
+class ShowdiffTest(_common.TempConfigTestCase):
     def setUp(self):
+        super(ShowdiffTest, self).setUp()
         self.io = _common.DummyIO()
         self.io.install()
     def tearDown(self):
+        super(ShowdiffTest, self).tearDown()
         self.io.restore()
 
     def test_showdiff_strings(self):
@@ -592,9 +593,8 @@ class ShowdiffTest(unittest.TestCase):
         self.assertTrue('field' in out)
 
     def test_showdiff_ints_no_color(self):
-        with _common.temp_config():
-            config['color'] = False
-            commands._showdiff('field', 2, 3)
+        config['color'] = False
+        commands._showdiff('field', 2, 3)
         out = self.io.getoutput()
         self.assertTrue('field' in out)
 
@@ -647,8 +647,9 @@ class ManualIDTest(unittest.TestCase):
         out = commands.manual_id(False)
         self.assertEqual(out, AN_ID)
 
-class ShowChangeTest(unittest.TestCase):
+class ShowChangeTest(_common.TempConfigTestCase):
     def setUp(self):
+        super(ShowChangeTest, self).setUp()
         self.io = _common.DummyIO()
         self.io.install()
 
@@ -661,6 +662,7 @@ class ShowChangeTest(unittest.TestCase):
         ])
 
     def tearDown(self):
+        super(ShowChangeTest, self).tearDown()
         self.io.restore()
 
     def _show_change(self, items=None, info=None,
@@ -669,13 +671,12 @@ class ShowChangeTest(unittest.TestCase):
         items = items or self.items
         info = info or self.info
         mapping = dict(zip(items, info.tracks))
-        with _common.temp_config():
-            config['color'] = False
-            commands.show_change(
-                cur_artist,
-                cur_album,
-                autotag.AlbumMatch(0.1, info, mapping, set(), set()),
-            )
+        config['color'] = False
+        commands.show_change(
+            cur_artist,
+            cur_album,
+            autotag.AlbumMatch(0.1, info, mapping, set(), set()),
+        )
         return self.io.getoutput().lower()
 
     def test_null_change(self):
@@ -715,13 +716,12 @@ class ShowChangeTest(unittest.TestCase):
         self.assertTrue(u'caf\xe9.mp3 -> the title' in msg
                         or u'caf.mp3 ->' in msg)
 
-class PathFormatTest(unittest.TestCase):
+class PathFormatTest(_common.TempConfigTestCase):
     def test_custom_paths_prepend(self):
         default_formats = ui.get_path_formats()
 
-        with _common.temp_config():
-            config['paths'] = [('foo', 'bar')]
-            pf = ui.get_path_formats()
+        config['paths'] = [('foo', 'bar')]
+        pf = ui.get_path_formats()
         key, tmpl = pf[0]
         self.assertEqual(key, 'foo')
         self.assertEqual(tmpl.original, 'bar')

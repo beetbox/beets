@@ -6,7 +6,7 @@ from beets import config
 from beetsplug.the import ThePlugin, PATTERN_A, PATTERN_THE, FORMAT
 
 
-class ThePluginTest(unittest.TestCase):
+class ThePluginTest(_common.TempConfigTestCase):
 
     def test_unthe_with_default_patterns(self):
         self.assertEqual(ThePlugin().unthe('', PATTERN_THE), '')
@@ -34,11 +34,10 @@ class ThePluginTest(unittest.TestCase):
                          'the An Arse')
 
     def test_unthe_with_strip(self):
-        with _common.temp_config():
-            config['the']['strip'] = True
-            self.assertEqual(ThePlugin().unthe('The Something', PATTERN_THE), 
-                            'Something') 
-            self.assertEqual(ThePlugin().unthe('An A', PATTERN_A), 'A') 
+        config['the']['strip'] = True
+        self.assertEqual(ThePlugin().unthe('The Something', PATTERN_THE), 
+                        'Something') 
+        self.assertEqual(ThePlugin().unthe('An A', PATTERN_A), 'A') 
 
     def test_template_function_with_defaults(self):
         ThePlugin().patterns = [PATTERN_THE, PATTERN_A]
@@ -47,17 +46,15 @@ class ThePluginTest(unittest.TestCase):
         self.assertEqual(ThePlugin().the_template_func('An A'), 'A, An')
 
     def test_custom_pattern(self):
-        with _common.temp_config():
-            config['the']['patterns'] = [u'^test\s']
-            config['the']['format'] = FORMAT
-            self.assertEqual(ThePlugin().the_template_func('test passed'), 
-                            'passed, test')
+        config['the']['patterns'] = [u'^test\s']
+        config['the']['format'] = FORMAT
+        self.assertEqual(ThePlugin().the_template_func('test passed'), 
+                         'passed, test')
 
     def test_custom_format(self):
-        with _common.temp_config():
-            config['the']['patterns'] = [PATTERN_THE, PATTERN_A]
-            config['the']['format'] = u'{1} ({0})'
-            self.assertEqual(ThePlugin().the_template_func('The A'), 'The (A)')
+        config['the']['patterns'] = [PATTERN_THE, PATTERN_A]
+        config['the']['format'] = u'{1} ({0})'
+        self.assertEqual(ThePlugin().the_template_func('The A'), 'The (A)')
 
 
 def suite():

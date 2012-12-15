@@ -500,12 +500,13 @@ class ApplyTestUtil(object):
         mapping = {}
         for i, t in zip(self.items, info.tracks):
             mapping[i] = t
-        with _common.temp_config():
-            config['per_disc_numbering'] = per_disc_numbering
-            autotag.apply_metadata(info, mapping)
+        config['per_disc_numbering'] = per_disc_numbering
+        autotag.apply_metadata(info, mapping)
 
-class ApplyTest(unittest.TestCase, ApplyTestUtil):
+class ApplyTest(_common.TempConfigTestCase, ApplyTestUtil):
     def setUp(self):
+        super(ApplyTest, self).setUp()
+
         self.items = []
         self.items.append(Item({}))
         self.items.append(Item({}))
@@ -616,8 +617,10 @@ class ApplyTest(unittest.TestCase, ApplyTestUtil):
         self.assertEqual(self.items[1].albumartist_sort, 'albumArtistSort')
         self.assertEqual(self.items[1].artist_sort, 'albumArtistSort')
 
-class ApplyCompilationTest(unittest.TestCase, ApplyTestUtil):
+class ApplyCompilationTest(_common.TempConfigTestCase, ApplyTestUtil):
     def setUp(self):
+        super(ApplyCompilationTest, self).setUp()
+
         self.items = []
         self.items.append(Item({}))
         self.items.append(Item({}))
