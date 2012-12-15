@@ -549,12 +549,6 @@ class ConfigTest(_common.TestCase):
                 - '[xy]': z
         """, func)
 
-    def test_empty_replacements_produce_none(self):
-        def func(lib, opts, args):
-            replacements = lib.replacements
-            self.assertFalse(replacements)
-        self._run_main([], "", func)
-
     def test_multiple_replacements_parsed(self):
         def func(lib, opts, args):
             replacements = lib.replacements
