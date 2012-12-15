@@ -179,7 +179,7 @@ class AAOTest(unittest.TestCase):
         res = fetchart.aao_art('x')
         self.assertEqual(res, None)
 
-class ArtImporterTest(_common.TempConfigTestCase, _common.ExtraAsserts):
+class ArtImporterTest(_common.TestCase):
     def setUp(self):
         super(ArtImporterTest, self).setUp()
 

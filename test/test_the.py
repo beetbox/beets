@@ -6,7 +6,7 @@ from beets import config
 from beetsplug.the import ThePlugin, PATTERN_A, PATTERN_THE, FORMAT
 
 
-class ThePluginTest(_common.TempConfigTestCase):
+class ThePluginTest(_common.TestCase):
 
     def test_unthe_with_default_patterns(self):
         self.assertEqual(ThePlugin().unthe('', PATTERN_THE), '')

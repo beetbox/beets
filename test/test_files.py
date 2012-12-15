@@ -25,7 +25,7 @@ from _common import item, touch
 import beets.library
 from beets import util
 
-class MoveTest(unittest.TestCase, _common.ExtraAsserts):
+class MoveTest(_common.TestCase):
     def setUp(self):
         # make a temporary file
         self.path = join(_common.RSRC, 'temp.mp3')
@@ -125,7 +125,7 @@ class MoveTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertEqual(os.path.dirname(self.i.path),
                          os.path.dirname(dest))
 
-class HelperTest(unittest.TestCase):
+class HelperTest(_common.TestCase):
     def test_ancestry_works_on_file(self):
         p = '/a/b/c'
         a =  ['/','/a','/a/b']
@@ -152,7 +152,7 @@ class HelperTest(unittest.TestCase):
         a =  ['a', 'b', 'c']
         self.assertEqual(util.components(p), a)
 
-class AlbumFileTest(unittest.TestCase):
+class AlbumFileTest(_common.TestCase):
     def setUp(self):
         # Make library and item.
         self.lib = beets.library.Library(':memory:')
@@ -205,7 +205,7 @@ class AlbumFileTest(unittest.TestCase):
         self.lib.load(self.i)
         self.assertTrue('testotherdir' in self.i.path)
 
-class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
+class ArtFileTest(_common.TestCase):
     def setUp(self):
         # Make library and item.
         self.lib = beets.library.Library(':memory:')
@@ -379,7 +379,7 @@ class ArtFileTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertEqual(artpath, oldartpath)
         self.assertExists(oldartpath)
 
-class RemoveTest(unittest.TestCase, _common.ExtraAsserts):
+class RemoveTest(_common.TestCase):
     def setUp(self):
         # Make library and item.
         self.lib = beets.library.Library(':memory:')
@@ -440,7 +440,7 @@ class RemoveTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertNotExists(parent)
 
 # Tests that we can "delete" nonexistent files.
-class SoftRemoveTest(unittest.TestCase, _common.ExtraAsserts):
+class SoftRemoveTest(_common.TestCase):
     def setUp(self):
         self.path = os.path.join(_common.RSRC, 'testfile')
         touch(self.path)
@@ -458,7 +458,7 @@ class SoftRemoveTest(unittest.TestCase, _common.ExtraAsserts):
         except OSError:
             self.fail('OSError when removing path')
 
-class SafeMoveCopyTest(unittest.TestCase, _common.ExtraAsserts):
+class SafeMoveCopyTest(_common.TestCase):
     def setUp(self):
         self.path = os.path.join(_common.RSRC, 'testfile')
         touch(self.path)
@@ -499,7 +499,7 @@ class SafeMoveCopyTest(unittest.TestCase, _common.ExtraAsserts):
         util.copy(self.path, self.path)
         self.assertExists(self.path)
 
-class PruneTest(unittest.TestCase, _common.ExtraAsserts):
+class PruneTest(_common.TestCase):
     def setUp(self):
         self.base = os.path.join(_common.RSRC, 'testdir')
         os.mkdir(self.base)
@@ -519,7 +519,7 @@ class PruneTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertExists(self.base)
         self.assertNotExists(self.sub)
 
-class WalkTest(unittest.TestCase):
+class WalkTest(_common.TestCase):
     def setUp(self):
         self.base = os.path.join(_common.RSRC, 'testdir')
         os.mkdir(self.base)
@@ -559,7 +559,7 @@ class WalkTest(unittest.TestCase):
         self.assertEqual(res[0],
                          (self.base, [], []))
 
-class UniquePathTest(unittest.TestCase):
+class UniquePathTest(_common.TestCase):
     def setUp(self):
         self.base = os.path.join(_common.RSRC, 'testdir')
         os.mkdir(self.base)

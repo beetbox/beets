@@ -33,7 +33,7 @@ from beets.mediafile import MediaFile
 from beets import config
 from beets.util import confit
 
-class ListTest(unittest.TestCase):
+class ListTest(_common.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
         self.io.install()
@@ -116,7 +116,7 @@ class ListTest(unittest.TestCase):
         self.assertTrue(u'the genre' in out)
         self.assertTrue(u'the album' not in out)
 
-class RemoveTest(unittest.TestCase):
+class RemoveTest(_common.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
         self.io.install()
@@ -147,7 +147,7 @@ class RemoveTest(unittest.TestCase):
         self.assertEqual(len(list(items)), 0)
         self.assertFalse(os.path.exists(self.i.path))
 
-class ModifyTest(unittest.TestCase):
+class ModifyTest(_common.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
         self.io.install()
@@ -226,7 +226,7 @@ class ModifyTest(unittest.TestCase):
         item.read()
         self.assertFalse('newAlbum' in item.path)
 
-class MoveTest(unittest.TestCase, _common.ExtraAsserts):
+class MoveTest(_common.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
         self.io.install()
@@ -297,7 +297,7 @@ class MoveTest(unittest.TestCase, _common.ExtraAsserts):
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
-class UpdateTest(unittest.TestCase, _common.ExtraAsserts):
+class UpdateTest(_common.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
         self.io.install()
@@ -401,7 +401,7 @@ class UpdateTest(unittest.TestCase, _common.ExtraAsserts):
         item = self.lib.items().next()
         self.assertEqual(item.title, 'full')
 
-class PrintTest(unittest.TestCase):
+class PrintTest(_common.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
         self.io.install()
@@ -441,7 +441,7 @@ class PrintTest(unittest.TestCase):
             else:
                 del os.environ['LC_CTYPE']
 
-class AutotagTest(unittest.TestCase):
+class AutotagTest(_common.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
         self.io.install()
@@ -468,14 +468,14 @@ class AutotagTest(unittest.TestCase):
         self.io.addinput('u')
         self._no_candidates_test(importer.action.ASIS)
 
-class ImportTest(_common.TempConfigTestCase):
+class ImportTest(_common.TestCase):
     def test_quiet_timid_disallowed(self):
         config['import']['quiet'] = True
         config['import']['timid'] = True
         self.assertRaises(ui.UserError, commands.import_files, None, [],
                           None)
 
-class InputTest(unittest.TestCase):
+class InputTest(_common.TestCase):
     def setUp(self):
         self.io = _common.DummyIO()
         self.io.install()
@@ -489,7 +489,7 @@ class InputTest(unittest.TestCase):
         self.assertEqual(artist, u'\xc2me')
         self.assertEqual(album, u'\xc2me')
 
-class ConfigTest(_common.TempConfigTestCase):
+class ConfigTest(_common.TestCase):
     def setUp(self):
         super(ConfigTest, self).setUp()
         self.io = _common.DummyIO()
@@ -568,7 +568,7 @@ class ConfigTest(_common.TempConfigTestCase):
                 - foo: bar
         """, func)
 
-class ShowdiffTest(_common.TempConfigTestCase):
+class ShowdiffTest(_common.TestCase):
     def setUp(self):
         super(ShowdiffTest, self).setUp()
         self.io = _common.DummyIO()
@@ -624,7 +624,7 @@ class ShowdiffTest(_common.TempConfigTestCase):
         self.assertEqual(complete_diff, partial_diff)
 
 AN_ID = "28e32c71-1450-463e-92bf-e0a46446fc11"
-class ManualIDTest(unittest.TestCase):
+class ManualIDTest(_common.TestCase):
     def setUp(self):
         _common.log.setLevel(logging.CRITICAL)
         self.io = _common.DummyIO()
@@ -647,7 +647,7 @@ class ManualIDTest(unittest.TestCase):
         out = commands.manual_id(False)
         self.assertEqual(out, AN_ID)
 
-class ShowChangeTest(_common.TempConfigTestCase):
+class ShowChangeTest(_common.TestCase):
     def setUp(self):
         super(ShowChangeTest, self).setUp()
         self.io = _common.DummyIO()
@@ -716,7 +716,7 @@ class ShowChangeTest(_common.TempConfigTestCase):
         self.assertTrue(u'caf\xe9.mp3 -> the title' in msg
                         or u'caf.mp3 ->' in msg)
 
-class PathFormatTest(_common.TempConfigTestCase):
+class PathFormatTest(_common.TestCase):
     def test_custom_paths_prepend(self):
         default_formats = ui.get_path_formats()
 

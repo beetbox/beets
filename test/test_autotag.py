@@ -503,7 +503,7 @@ class ApplyTestUtil(object):
         config['per_disc_numbering'] = per_disc_numbering
         autotag.apply_metadata(info, mapping)
 
-class ApplyTest(_common.TempConfigTestCase, ApplyTestUtil):
+class ApplyTest(_common.TestCase, ApplyTestUtil):
     def setUp(self):
         super(ApplyTest, self).setUp()
 
@@ -617,7 +617,7 @@ class ApplyTest(_common.TempConfigTestCase, ApplyTestUtil):
         self.assertEqual(self.items[1].albumartist_sort, 'albumArtistSort')
         self.assertEqual(self.items[1].artist_sort, 'albumArtistSort')
 
-class ApplyCompilationTest(_common.TempConfigTestCase, ApplyTestUtil):
+class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
     def setUp(self):
         super(ApplyCompilationTest, self).setUp()
 

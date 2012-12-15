@@ -81,10 +81,11 @@ def import_session(lib=None, logfile=None, paths=[], query=[], cli=False):
     return cls(lib, logfile, paths, query)
 
 # Temporary config modifications.
-class TempConfigTestCase(unittest.TestCase):
-    """A TestCase subclass that saves and restores beets' global
-    configuration. This allows tests to make temporary modifications
-    that will then be automatically removed when the test completes.
+class TestCase(unittest.TestCase):
+    """A unittest.TestCase subclass that saves and restores beets'
+    global configuration. This allows tests to make temporary
+    modifications that will then be automatically removed when the test
+    completes. Also provides some additional assertion methods.
     """
     def setUp(self):
         self.old_sources = copy.deepcopy(beets.config.sources)
@@ -93,6 +94,15 @@ class TempConfigTestCase(unittest.TestCase):
     def tearDown(self):
         beets.config.sources = self.old_sources
         beets.config.overlay = self.old_overlay
+
+    def assertExists(self, path):
+        self.assertTrue(os.path.exists(path),
+                        'file does not exist: %s' % path)
+
+    def assertNotExists(self, path):
+        self.assertFalse(os.path.exists(path),
+                        'file exists: %s' % path)
+
 
 
 # Mock timing.
@@ -184,17 +194,6 @@ class DummyIO(object):
         sys.stdin = sys.__stdin__
         sys.stdout = sys.__stdout__
 
-
-# Mixin for additional assertions.
-
-class ExtraAsserts(object):
-    def assertExists(self, path):
-        self.assertTrue(os.path.exists(path),
-                        'file does not exist: %s' % path)
-
-    def assertNotExists(self, path):
-        self.assertFalse(os.path.exists(path),
-                        'file exists: %s' % path)
 
 # Utility.
 

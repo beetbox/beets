@@ -27,7 +27,7 @@ from beets.autotag import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch
 from beets import config
 
 TEST_TITLES = ('The Opener', 'The Second Track', 'The Last Track')
-class NonAutotaggedImportTest(_common.TempConfigTestCase):
+class NonAutotaggedImportTest(_common.TestCase):
     def setUp(self):
         super(NonAutotaggedImportTest, self).setUp()
 
@@ -183,7 +183,7 @@ def _call_stages(session, items, choice_or_info,
 
     return task
 
-class ImportApplyTest(_common.TempConfigTestCase, _common.ExtraAsserts):
+class ImportApplyTest(_common.TestCase):
     def setUp(self):
         super(ImportApplyTest, self).setUp()
 
@@ -342,7 +342,7 @@ class ImportApplyTest(_common.TempConfigTestCase, _common.ExtraAsserts):
                      stages=[importer.manipulate_files])
         self.assertExists(self.i.path)
 
-class AsIsApplyTest(unittest.TestCase):
+class AsIsApplyTest(_common.TestCase):
     def setUp(self):
         self.dbpath = os.path.join(_common.RSRC, 'templib.blb')
         self.lib = library.Library(self.dbpath)
@@ -387,7 +387,7 @@ class AsIsApplyTest(unittest.TestCase):
         self.assertFalse(alb.comp)
         self.assertEqual(alb.albumartist, self.items[2].artist)
 
-class ApplyExistingItemsTest(_common.TempConfigTestCase, _common.ExtraAsserts):
+class ApplyExistingItemsTest(_common.TestCase):
     def setUp(self):
         super(ApplyExistingItemsTest, self).setUp()
 
@@ -567,8 +567,10 @@ class ApplyExistingItemsTest(_common.TempConfigTestCase, _common.ExtraAsserts):
         self.assertEqual(len(list(self.lib.items())), 1)
         self.assertEqual(len(list(self.lib.albums())), 1)
 
-class InferAlbumDataTest(unittest.TestCase):
+class InferAlbumDataTest(_common.TestCase):
     def setUp(self):
+        super(InferAlbumDataTest, self).setUp()
+
         i1 = _common.item()
         i2 = _common.item()
         i3 = _common.item()
@@ -659,8 +661,10 @@ class InferAlbumDataTest(unittest.TestCase):
         self.assertFalse(self.items[1].comp)
         self.assertEqual(self.items[1].albumartist, self.items[2].artist)
 
-class DuplicateCheckTest(unittest.TestCase):
+class DuplicateCheckTest(_common.TestCase):
     def setUp(self):
+        super(DuplicateCheckTest, self).setUp()
+
         self.lib = library.Library(':memory:')
         self.i = _common.item()
         self.album = self.lib.add_album([self.i])
@@ -754,7 +758,7 @@ class DuplicateCheckTest(unittest.TestCase):
                                         self._item_task(False, existing=True))
         self.assertFalse(res)
 
-class TagLogTest(unittest.TestCase):
+class TagLogTest(_common.TestCase):
     def test_tag_log_line(self):
         sio = StringIO.StringIO()
         session = _common.import_session(logfile=sio)
