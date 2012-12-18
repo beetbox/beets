@@ -81,7 +81,8 @@ Path Formats
 
 * :doc:`inline`: Use Python snippets to customize path format strings.
 * :doc:`rewrite`: Substitute values in path formats.
-* :doc:`the`: Moves patterns in path formats (suitable for moving articles).
+* :doc:`the`: Move patterns in path formats (i.e., move "a" and "the" to the
+  end).
 
 Interoperability
 ''''''''''''''''
@@ -97,10 +98,11 @@ Miscellaneous
 * :doc:`rdm`: Randomly choose albums and tracks from your library.
 * :doc:`fuzzy_search`: Search albums and tracks with fuzzy string matching.
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
-* :doc:`ihate`: Skip by defined patterns things you hate during import process.
+* :doc:`ihate`: Automatically skip albums and tracks during the import process.
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
   compatible with `MPD clients`_.
-* :doc:`convert`: Converts parts of your collection to an external directory
+* :doc:`convert`: Transcode music and embed album art while exporting to
+  a different directory.
 * :doc:`info`: Print music files' tags to the console.
 
 .. _MPD: http://mpd.wikia.com/
