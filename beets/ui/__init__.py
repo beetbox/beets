@@ -822,3 +822,6 @@ def main(args=None, configfh=None):
             pass
         else:
             raise
+    except KeyboardInterrupt:
+        # Silently ignore ^C.
+        pass
