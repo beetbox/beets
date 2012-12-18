@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.0rc2 (in development)
+-----------------------
+
+* :doc:`/plugins/fetchart`: Fix a regression that caused crashes when art was
+  not available from some sources.
+
 1.0rc1 (December 17, 2012)
 --------------------------
 

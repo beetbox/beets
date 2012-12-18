@@ -149,13 +149,17 @@ def _source_urls(album):
     necessary.
     """
     if album.mb_albumid:
-        yield caa_art(album.mb_albumid)
+        url = caa_art(album.mb_albumid)
+        if url:
+            yield url
 
     # Amazon and AlbumArt.org.
     if album.asin:
         for url in art_for_asin(album.asin):
             yield url
-        yield aao_art(album.asin)
+        url = aao_art(album.asin)
+        if url:
+            yield url
 
 def art_for_album(album, path, maxwidth=None, local_only=False):
     """Given an Album object, returns a path to downloaded art for the
