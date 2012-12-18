@@ -14,8 +14,8 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
 
 .. _Python 2.7: http://www.python.org/download/releases/2.7.2/
 
-* **Mac OS X** v10.7 (Lion) includes Python 2.7 out of the box; Snow Leopard
-  ships with Python 2.6.
+* **Mac OS X** v10.7 (Lion) and 10.8 (Mountain Lion) include Python 2.7 out of
+  the box; Snow Leopard ships with Python 2.6.
 
 * On **Debian or Ubuntu**, depending on the version, beets is available as an
   official package (`Debian details`_, `Ubuntu details`_), so try typing:
@@ -39,12 +39,11 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
 If you have `pip`_, just say ``pip install beets`` (you might need ``sudo`` in
 front of that). On Arch, you'll need to use ``pip2`` instead of ``pip``.
 
-To install without pip, head over to the `Downloads`_ area, download the most
-recent source distribution, and run ``python setup.py install`` in the directory
-therein.
+To install without pip, download beets from `its PyPI page`_ and run ``python
+setup.py install`` in the directory therein.
 
+.. _its PyPI page: http://pypi.python.org/pypi/beets#downloads
 .. _pip: http://pip.openplans.org/
-.. _Downloads: https://github.com/sampsyo/beets/downloads
 
 The best way to upgrade beets to a new version is by running ``pip install -U
 beets``. You may want to follow `@b33ts`_ on Twitter to hear about progress on
