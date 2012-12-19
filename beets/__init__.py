@@ -20,4 +20,4 @@ from beets.util import confit
 
 Library = beets.library.Library
 
-config = confit.Configuration('beets', __name__)
+config = confit.Configuration('beets', __name__, False)

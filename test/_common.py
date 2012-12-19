@@ -88,10 +88,12 @@ class TestCase(unittest.TestCase):
     completes. Also provides some additional assertion methods.
     """
     def setUp(self):
-        self.old_sources = copy.deepcopy(beets.config.sources)
+        # A "clean" source list including only the defaults.
+        beets.config.sources = []
+        beets.config.read(user=False, defaults=True)
 
     def tearDown(self):
-        beets.config.sources = self.old_sources
+        pass
 
     def assertExists(self, path):
         self.assertTrue(os.path.exists(path),

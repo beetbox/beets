@@ -607,10 +607,14 @@ class SubcommandsOptionParser(optparse.OptionParser):
 
 # The root parser and its main function.
 
-def _raw_main(args):
+def _raw_main(args, load_config=True):
     """A helper function for `main` without top-level exception
     handling.
     """
+    # Load global configuration files.
+    if load_config:
+        config.read()
+
     # Get the default subcommands.
     from beets.ui.commands import default_commands
 
