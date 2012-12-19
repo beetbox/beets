@@ -6,6 +6,7 @@ Changelog
 
 * :doc:`/plugins/fetchart`: Fix a regression that caused crashes when art was
   not available from some sources.
+* Fix a regression on Windows that caused all relative paths to be "not found".
 
 1.0rc1 (December 17, 2012)
 --------------------------
