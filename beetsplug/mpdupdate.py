@@ -26,14 +26,6 @@ from beets.plugins import BeetsPlugin
 import socket
 from beets import config
 
-config.add({
-    'mpdupdate': {
-        'host': u'localhost',
-        'port': 6600,
-        'password': u'',
-    }
-})
-
 # No need to introduce a dependency on an MPD library for such a
 # simple use case. Here's a simple socket abstraction to make things
 # easier.
@@ -97,7 +89,13 @@ def update_mpd(host='localhost', port=6600, password=None):
     print('... updated.')
 
 class MPDUpdatePlugin(BeetsPlugin):
-    pass
+    def __init__(self):
+        super(MPDUpdatePlugin, self).__init__()
+        self.config.add({
+            'host': u'localhost',
+            'port': 6600,
+            'password': u'',
+        })
 
 @MPDUpdatePlugin.listen('import')
 def update(lib=None, paths=None):

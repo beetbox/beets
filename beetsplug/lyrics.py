@@ -24,12 +24,6 @@ from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import config
 
-config.add({
-    'lyrics': {
-        'auto': True,
-    }
-})
-
 
 # Global logger.
 
@@ -203,6 +197,9 @@ class LyricsPlugin(BeetsPlugin):
     def __init__(self):
         super(LyricsPlugin, self).__init__()
         self.import_stages = [self.imported]
+        self.config.add({
+            'auto': True,
+        })
 
     def commands(self):
         cmd = ui.Subcommand('lyrics', help='fetch song lyrics')
@@ -222,6 +219,6 @@ class LyricsPlugin(BeetsPlugin):
 
     # Auto-fetch lyrics on import.
     def imported(self, session, task):
-        if config['lyrics']['auto']:
+        if self.config['auto']:
             for item in task.imported_items():
                 fetch_item_lyrics(session.lib, logging.DEBUG, item, False)

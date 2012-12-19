@@ -26,13 +26,6 @@ import pyechonest.song
 # Global logger.
 log = logging.getLogger('beets')
 
-config.add({
-    'echonest_tempo': {
-        'apikey': u'NY2KTZHQ0QDSHBAP6',
-        'auto': True,
-    }
-})
-
 def fetch_item_tempo(lib, loglevel, item, write):
     """Fetch and store tempo for a single item. If ``write``, then the
     tempo will also be written to the file itself in the bpm field. The 
@@ -76,9 +69,13 @@ class EchoNestTempoPlugin(BeetsPlugin):
     def __init__(self):
         super(EchoNestTempoPlugin, self).__init__()
         self.import_stages = [self.imported]
+        self.config.add({
+            'apikey': u'NY2KTZHQ0QDSHBAP6',
+            'auto': True,
+        })
 
         pyechonest.config.ECHO_NEST_API_KEY = \
-                config['echonest_tempo']['apikey'].get(unicode)
+                self.config['apikey'].get(unicode)
 
     def commands(self):
         cmd = ui.Subcommand('tempo', help='fetch song tempo (bpm)')
@@ -99,6 +96,6 @@ class EchoNestTempoPlugin(BeetsPlugin):
 
     # Auto-fetch tempo on import.
     def imported(self, config, task):
-        if config['echonest_tempo']['auto']:
+        if self.config['auto']:
             for item in task.imported_items():
                 fetch_item_tempo(config.lib, logging.DEBUG, item, False)

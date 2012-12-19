@@ -28,17 +28,6 @@ log = logging.getLogger('beets')
 DEVNULL = open(os.devnull, 'wb')
 _fs_lock = threading.Lock()
 
-config.add({
-    'convert': {
-        u'dest': None,
-        u'threads': util.cpu_count(),
-        u'ffmpeg': u'ffmpeg',
-        u'opts': u'-aq 2',
-        u'max_bitrate': 500,
-        u'embed': True,
-    }
-})
-
 
 def encode(source, dest):
     log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
@@ -117,6 +106,17 @@ def convert_func(lib, opts, args):
 
 
 class ConvertPlugin(BeetsPlugin):
+    def __init__(self):
+        super(ConvertPlugin, self).__init__()
+        self.config.add({
+            u'dest': None,
+            u'threads': util.cpu_count(),
+            u'ffmpeg': u'ffmpeg',
+            u'opts': u'-aq 2',
+            u'max_bitrate': 500,
+            u'embed': True,
+        })
+
     def commands(self):
         cmd = ui.Subcommand('convert', help='convert to external location')
         cmd.parser.add_option('-a', '--album', action='store_true',

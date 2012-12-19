@@ -17,18 +17,6 @@
 import re
 import logging
 from beets.plugins import BeetsPlugin
-from beets import config
-
-config.add({
-    'the': {
-        'the': True,
-        'a': True,
-        'format': u'{0}, {1}',
-        'strip': False,
-        'patterns': [],
-    }
-})
-
 
 __author__ = 'baobab@heresiarch.info'
 __version__ = '1.1'
@@ -57,7 +45,15 @@ class ThePlugin(BeetsPlugin):
     def __init__(self):
         super(ThePlugin, self).__init__()
 
-        self.patterns = config['the']['patterns'].get(list)
+        self.config.add({
+            'the': True,
+            'a': True,
+            'format': u'{0}, {1}',
+            'strip': False,
+            'patterns': [],
+        })
+
+        self.patterns = self.config['patterns'].get(list)
         for p in self.patterns:
             if p:
                 try:
@@ -68,9 +64,9 @@ class ThePlugin(BeetsPlugin):
                     if not (p.startswith('^') or p.endswith('$')):
                         self._log.warn(u'[the] warning: \"{0}\" will not '
                                        'match string start/end'.format(p))
-        if config['the']['a']:
+        if self.config['a']:
             self.patterns = [PATTERN_A] + self.patterns
-        if config['the']['the']:
+        if self.config['the']:
             self.patterns = [PATTERN_THE] + self.patterns
         if not self.patterns:
             self._log.warn(u'[the] no patterns defined!')
@@ -92,10 +88,10 @@ class ThePlugin(BeetsPlugin):
                 return text
             else:
                 r = re.sub(r, '', text).strip()
-                if config['the']['strip']:
+                if self.config['strip']:
                     return r
                 else:
-                    fmt = config['the']['format'].get(unicode)
+                    fmt = self.config['format'].get(unicode)
                     return fmt.format(r, t.strip()).strip()
         else:
             return u''

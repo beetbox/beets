@@ -24,10 +24,6 @@ from beets import ui
 from beets import library
 from beets import config
 
-config.add({
-    'rewrite': {},
-})
-
 log = logging.getLogger('beets')
 
 def rewriter(field, rules):
@@ -50,9 +46,11 @@ class RewritePlugin(BeetsPlugin):
         super(BeetsPlugin, self).__init__()
         BeetsPlugin.template_fields = {}
 
+        self.config.add({})
+
         # Gather all the rewrite rules for each field.
         rules = defaultdict(list)
-        for key, value in config['rewrite'].items():
+        for key, value in self.config.items():
             try:
                 fieldname, pattern = key.split(None, 1)
             except ValueError:

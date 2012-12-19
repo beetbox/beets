@@ -25,22 +25,19 @@ from beets import config
 
 M3U_DEFAULT_NAME = 'imported.m3u'
 
-config.add({
-    'importfeeds': {
-        'formats': [],
-        'm3u_name': u'imported.m3u',
-        'dir': None,
-    }
-})
-
 class ImportFeedsPlugin(BeetsPlugin):
     def __init__(self):
         super(ImportFeedsPlugin, self).__init__()
+
+        self.config.add({
+            'formats': [],
+            'm3u_name': u'imported.m3u',
+            'dir': None,
+        })
         
-        feeds_dir = config['importfeeds']['dir'].get()
+        feeds_dir = self.config['dir'].get()
         if feeds_dir: 
-            config['importfeeds']['dir'] = \
-                    os.path.expanduser(bytestring_path(feeds_dir))
+            self.config['dir'] = os.path.expanduser(bytestring_path(feeds_dir))
             if not os.path.exists(syspath(feeds_dir)):
                 os.makedirs(syspath(feeds_dir))
 

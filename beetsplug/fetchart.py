@@ -34,13 +34,6 @@ DOWNLOAD_EXTENSION = '.jpg'
 
 log = logging.getLogger('beets')
 
-config.add({
-    'fetchart': {
-        'auto': True,
-        'maxwidth': 0,
-    }
-})
-
 
 def _fetch_image(url):
     """Downloads an image from a URL and checks whether it seems to
@@ -216,15 +209,17 @@ class FetchArtPlugin(BeetsPlugin):
     def __init__(self):
         super(FetchArtPlugin, self).__init__()
 
-        self.autofetch = True
-        self.maxwidth = 0
+        self.config.add({
+            'auto': True,
+            'maxwidth': 0,
+        })
+
         # Holds paths to downloaded images between fetching them and
         # placing them in the filesystem.
         self.art_paths = {}
 
-        self.autofetch = config['fetchart']['auto'].get(bool)
-        self.maxwidth = config['fetchart']['maxwidth'].get(int)
-        if self.autofetch:
+        self.maxwidth = self.config['maxwidth'].get(int)
+        if self.config['auto']:
             # Enable two import hooks when fetching is enabled.
             self.import_stages = [self.fetch_art]
             self.register_listener('import_task_files', self.assign_art)

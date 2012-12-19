@@ -26,13 +26,6 @@ from beets import config
 
 log = logging.getLogger('beets')
 
-config.add({
-    'embedart': {
-        'maxwidth': 0,
-        'auto': True,
-    }
-})
-
 def _embed(path, items):
     """Embed an image file, located at `path`, into each item.
     """
@@ -65,9 +58,13 @@ class EmbedCoverArtPlugin(BeetsPlugin):
     """
     def __init__(self):
         super(EmbedCoverArtPlugin, self).__init__()
-        if config['embedart']['maxwidth'].get(int) and \
+        self.config.add({
+            'maxwidth': 0,
+            'auto': True,
+        })
+        if self.config['maxwidth'].get(int) and \
                 not ArtResizer.shared.local:
-            config['embedart']['maxwidth'] = 0
+            self.config['maxwidth'] = 0
             log.warn("embedart: ImageMagick or PIL not found; "
                      "'maxwidth' option ignored")
 

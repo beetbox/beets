@@ -25,20 +25,6 @@ __author__ = 'baobab@heresiarch.info'
 __version__ = '1.0'
 
 
-config.add({
-    'ihate': {
-        'warn_genre': [],
-        'warn_artist': [],
-        'warn_album': [],
-        'warn_whitelist': [],
-        'skip_genre': [],
-        'skip_artist': [],
-        'skip_album': [],
-        'skip_whitelist': [],
-    }
-})
-
-
 class IHatePlugin(BeetsPlugin):
 
     _instance = None
@@ -58,6 +44,20 @@ class IHatePlugin(BeetsPlugin):
             cls._instance = super(IHatePlugin,
                                   cls).__new__(cls, *args, **kwargs)
         return cls._instance
+    
+    def __init__(self):
+        super(IHatePlugin, self).__init__()
+        self.config.add({
+            'warn_genre': [],
+            'warn_artist': [],
+            'warn_album': [],
+            'warn_whitelist': [],
+            'skip_genre': [],
+            'skip_artist': [],
+            'skip_album': [],
+            'skip_whitelist': [],
+        })
+
 
     @classmethod
     def match_patterns(cls, s, patterns):
@@ -94,28 +94,28 @@ class IHatePlugin(BeetsPlugin):
 
     def job_to_do(self):
         """Return True if at least one pattern is defined."""
-        return any(config['ihate'][l].get(list) for l in
+        return any(self.config[l].get(list) for l in
                    ('warn_genre', 'warn_artist', 'warn_album',
                     'skip_genre', 'skip_artist', 'skip_album'))
 
-    def import_task_choice_event(self, task, config):
+    def import_task_choice_event(self, task):
         if task.choice_flag == action.APPLY:
             if self.job_to_do():
                 self._log.debug('[ihate] processing your hate')
                 if self.do_i_hate_this(task,
-                            config['ihate']['skip_genre'].get(list),
-                            config['ihate']['skip_artist'].get(list),
-                            config['ihate']['skip_album'].get(list),
-                            config['ihate']['skip_whitelist'].get(list)):
+                            self.config['skip_genre'].get(list),
+                            self.config['skip_artist'].get(list),
+                            self.config['skip_album'].get(list),
+                            self.config['skip_whitelist'].get(list)):
                     task.choice_flag = action.SKIP
                     self._log.info(u'[ihate] skipped: {0} - {1}'
                                    .format(task.cur_artist, task.cur_album))
                     return
                 if self.do_i_hate_this(task,
-                            config['ihate']['warn_genre'].get(list),
-                            config['ihate']['warn_artist'].get(list),
-                            config['ihate']['warn_album'].get(list),
-                            config['ihate']['warn_whitelist'].get(list)):
+                            self.config['warn_genre'].get(list),
+                            self.config['warn_artist'].get(list),
+                            self.config['warn_album'].get(list),
+                            self.config['warn_whitelist'].get(list)):
                     self._log.info(u'[ihate] you maybe hate this: {0} - {1}'
                                    .format(task.cur_artist, task.cur_album))
             else:
@@ -126,4 +126,4 @@ class IHatePlugin(BeetsPlugin):
 
 @IHatePlugin.listen('import_task_choice')
 def ihate_import_task_choice(task, session):
-    IHatePlugin().import_task_choice_event(task, config)
+    IHatePlugin().import_task_choice_event(task)

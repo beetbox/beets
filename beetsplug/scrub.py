@@ -22,12 +22,6 @@ from beets import ui
 from beets import util
 from beets import config
 
-config.add({
-    'scrub': {
-        'auto': True,
-    }
-})
-
 log = logging.getLogger('beets')
 
 _MUTAGEN_FORMATS = {
@@ -50,6 +44,12 @@ scrubbing = False
 
 class ScrubPlugin(BeetsPlugin):
     """Removes extraneous metadata from files' tags."""
+    def __init__(self):
+        super(ScrubPlugin, self).__init__()
+        self.config.add({
+            'auto': True,
+        })
+
     def commands(self):
         def scrub_func(lib, opts, args):
             # This is a little bit hacky, but we set a global flag to

@@ -21,18 +21,6 @@ from beets.plugins import BeetsPlugin
 from beets.util import syspath, command_output
 from beets import config
 
-config.add({
-    'replaygain': {
-        'overwrite': False,
-        'albumgain': False,
-        'noclip': True,
-        'apply_gain': False,
-        'targetlevel': 89,
-        'auto': True,
-        'command': u'',
-    }
-})
-
 log = logging.getLogger('beets')
 
 SAMPLE_MAX = 1 << 15
@@ -79,14 +67,24 @@ class ReplayGainPlugin(BeetsPlugin):
         super(ReplayGainPlugin, self).__init__()
         self.import_stages = [self.imported]
 
-        self.overwrite = config['replaygain']['overwrite'].get(bool)
-        self.albumgain = config['replaygain']['albumgain'].get(bool)
-        self.noclip = config['replaygain']['noclip'].get(bool)
-        self.apply_gain = config['replaygain']['apply_gain'].get(bool)
-        target_level = config['replaygain']['targetlevel'].as_number()
+        self.config.add({
+            'overwrite': False,
+            'albumgain': False,
+            'noclip': True,
+            'apply_gain': False,
+            'targetlevel': 89,
+            'auto': True,
+            'command': u'',
+        })
+
+        self.overwrite = self.config['overwrite'].get(bool)
+        self.albumgain = self.config['albumgain'].get(bool)
+        self.noclip = self.config['noclip'].get(bool)
+        self.apply_gain = self.config['apply_gain'].get(bool)
+        target_level = self.config['targetlevel'].as_number()
         self.gain_offset = int(target_level - 89)
-        self.automatic = config['replaygain']['auto'].get(bool)
-        self.command = config['replaygain']['command'].get(unicode)
+        self.automatic = self.config['auto'].get(bool)
+        self.command = self.config['command'].get(unicode)
 
         if self.command:
             # Explicit executable path.

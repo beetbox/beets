@@ -20,10 +20,6 @@ import traceback
 from beets.plugins import BeetsPlugin
 from beets import config
 
-config.add({
-    'pathfields': [],
-})
-
 log = logging.getLogger('beets')
 
 class InlineError(Exception):
@@ -61,6 +57,10 @@ class InlinePlugin(BeetsPlugin):
 
     def __init__(self):
         super(InlinePlugin, self).__init__()
+
+        config.add({
+            'pathfields': [],
+        })
 
         # Add field expressions.
         for key, view in config['pathfields'].items():

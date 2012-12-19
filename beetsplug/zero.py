@@ -19,15 +19,7 @@ import logging
 from beets.plugins import BeetsPlugin
 from beets.library import ITEM_KEYS
 from beets.importer import action
-from beets import config
 from beets.util import confit
-
-config.add({
-    'zero': {
-        'fields': [],
-    }
-})
-
 
 __author__ = 'baobab@heresiarch.info'
 __version__ = '0.10'
@@ -47,17 +39,21 @@ class ZeroPlugin(BeetsPlugin):
     def __init__(self):
         super(ZeroPlugin, self).__init__()
 
+        self.config.add({
+            'fields': [],
+        })
+
         self.fields = []
         self.patterns = {}
         self.warned = False
 
-        for f in config['zero']['fields'].get(list):
+        for f in self.config['fields'].get(list):
             if f not in ITEM_KEYS:
                 self._log.error('[zero] invalid field: {0}'.format(f))
             else:
                 self.fields.append(f)
                 try:
-                    self.patterns[f] = config['zero'][f].get(list)
+                    self.patterns[f] = self.config[f].get(list)
                 except confit.NotFoundError:
                     self.patterns[f] = [u'']
 

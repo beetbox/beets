@@ -20,15 +20,6 @@ from beets.util.functemplate import Template
 from beets import config
 import difflib
 
-config.add({
-    'fuzzy': {
-        'threshold': 0.7,
-    }
-})
-
-
-# THRESHOLD = 0.7
-
 
 def fuzzy_score(queryMatcher, item):
     queryMatcher.set_seq1(item)
@@ -96,5 +87,11 @@ fuzzy_cmd.func = fuzzy_list
 
 
 class Fuzzy(BeetsPlugin):
+    def __init__(self):
+        super(Fuzzy, self).__init__('fuzzy')
+        self.config.add({
+            'threshold': 0.7,
+        })
+
     def commands(self):
         return [fuzzy_cmd]
