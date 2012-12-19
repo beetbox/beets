@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2011, Adrian Sampson.
+# Copyright 2012, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -15,10 +15,10 @@
 """Support for beets plugins."""
 
 import logging
-import itertools
 import traceback
 from collections import defaultdict
 
+import beets
 from beets import mediafile
 
 PLUGIN_NAMESPACE = 'beetsplug'
@@ -37,12 +37,13 @@ class BeetsPlugin(object):
     functionality by defining a subclass of BeetsPlugin and overriding
     the abstract methods defined here.
     """
-    def __init__(self):
-        """Perform one-time plugin setup. There is probably no reason to
-        override this method.
+    def __init__(self, name=None):
+        """Perform one-time plugin setup.
         """
         _add_media_fields(self.item_fields())
         self.import_stages = []
+        self.name = name or self.__module__.split('.')[-1]
+        self.config = beets.config[self.name]
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for

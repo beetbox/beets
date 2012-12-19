@@ -32,14 +32,6 @@ from beets import vfs
 from beets import config
 from beets.util import bluelet
 
-config.add({
-    'bpd': {
-        'host': u'',
-        'port': 6600,
-        'password': u'',
-    }
-})
-
 PROTOCOL_VERSION = '0.13.0'
 BUFSIZE = 1024
 
@@ -1129,6 +1121,14 @@ class BPDPlugin(BeetsPlugin):
     """Provides the "beet bpd" command for running a music player
     server.
     """
+    def __init__(self):
+        super(BPDPlugin, self).__init__()
+        self.config.add({
+            'host': u'',
+            'port': 6600,
+            'password': u'',
+        })
+
     def start_bpd(self, lib, host, port, password, debug):
         """Starts a BPD server."""
         if debug:
@@ -1149,11 +1149,11 @@ class BPDPlugin(BeetsPlugin):
             help='dump all MPD traffic to stdout')
 
         def func(lib, opts, args):
-            host = args.pop(0) if args else config['bpd']['host'].get(unicode)
-            port = args.pop(0) if args else config['bpd']['port'].get(int)
+            host = args.pop(0) if args else self.config['host'].get(unicode)
+            port = args.pop(0) if args else self.config['port'].get(int)
             if args:
                 raise beets.ui.UserError('too many arguments')
-            password = config['bpd']['password'].get(unicode)
+            password = self.config['password'].get(unicode)
             debug = opts.debug or False
             self.start_bpd(lib, host, int(port), password, debug)
 

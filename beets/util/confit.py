@@ -139,6 +139,13 @@ class ConfigView(object):
 
         return value
 
+    def add(self, value):
+        """Add a value as a source for configuration data. The object as
+        added as the lowest-priority source. This can be used to
+        dynamically extend the defaults.
+        """
+        raise NotImplementedError
+
     def set(self, value):
         """Create an overlay source to set the value at this view.
         """
@@ -324,12 +331,6 @@ class RootView(ConfigView):
         self.name = ROOT_NAME
 
     def add(self, obj):
-        """Add the object (probably a dict) as a source for
-        configuration data. The object as added as the lowest-priority
-        source. This can be used to dynamically extend the defaults
-        (i.e., when loading a plugin that shares the main application's
-        config file).
-        """
         self.sources.append(obj)
 
     def set(self, value):
@@ -381,6 +382,9 @@ class Subview(ConfigView):
 
     def set(self, value):
         self.parent.set({self.key: value})
+
+    def add(self, value):
+        self.parent.add({self.key: value})
 
 
 # Config file paths, including platform-specific paths and in-package
