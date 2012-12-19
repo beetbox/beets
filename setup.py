@@ -76,7 +76,9 @@ setup(name='beets',
           'unidecode',
           'musicbrainzngs',
           'pyyaml',
-      ] + (['colorama'] if (sys.platform == 'win32') else []),
+      ]
+      + (['colorama'] if (sys.platform == 'win32') else [])
+      + (['ordereddict'] if sys.version_info < (2, 7, 0) else []),
 
       classifiers=[
           'Topic :: Multimedia :: Sound/Audio',

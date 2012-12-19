@@ -17,12 +17,12 @@ import:
 
 ignore: [".*", "*~"]
 replace:
-    - '[\\/]': _
-    - '^\.': _
-    - '[\x00-\x1f]': _
-    - '[<>:"\?\*\|]': _
-    - '\.$': _
-    - '\s+$': ''
+    '[\\/]': _
+    '^\.': _
+    '[\x00-\x1f]': _
+    '[<>:"\?\*\|]': _
+    '\.$': _
+    '\s+$': ''
 art_filename: cover
 
 plugins: []
@@ -37,6 +37,6 @@ list_format_item: $artist - $album - $title
 list_format_album: $albumartist - $album
 
 paths:
-    - default: $albumartist/$album%aunique{}/$track $title
-    - singleton: Non-Album/$artist/$title
-    - comp: Compilations/$album%aunique{}/$track $title
+    default: $albumartist/$album%aunique{}/$track $title
+    singleton: Non-Album/$artist/$title
+    comp: Compilations/$album%aunique{}/$track $title

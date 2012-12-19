@@ -63,8 +63,8 @@ class InlinePlugin(BeetsPlugin):
         super(InlinePlugin, self).__init__()
 
         # Add field expressions.
-        for key, value in config['pathfields'].as_pairs():
+        for key, view in config['pathfields'].items():
             log.debug(u'adding template field %s' % key)
-            func = compile_expr(value)
+            func = compile_expr(view.get(unicode))
             if func is not None:
                 InlinePlugin.template_fields[key] = func

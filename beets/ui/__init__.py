@@ -395,21 +395,19 @@ def get_path_formats():
     """Get the configuration's path formats as a list of query/template
     pairs.
     """
-    pairs = config['paths'].as_pairs(True)
     path_formats = []
-    for query, fmt in pairs:
+    for query, view in config['paths'].items():
         query = PF_KEY_QUERIES.get(query, query)  # Expand common queries.
-        path_formats.append((query, Template(fmt)))
+        path_formats.append((query, Template(view.get(unicode))))
     return path_formats
 
 def get_replacements():
     """Confit validation function that reads regex/string pairs.
     """
-    pairs = config['replace'].as_pairs()
     replacements = []
-    for pattern, value in pairs:
+    for pattern, view in config['replace'].items():
         try:
-            replacements.append((re.compile(pattern), value))
+            replacements.append((re.compile(pattern), view.get(unicode)))
         except re.error:
             raise UserError(
                 u'malformed regular expression in replace: {0}'.format(

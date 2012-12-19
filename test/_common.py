@@ -89,11 +89,9 @@ class TestCase(unittest.TestCase):
     """
     def setUp(self):
         self.old_sources = copy.deepcopy(beets.config.sources)
-        self.old_overlay = copy.deepcopy(beets.config.overlay)
 
     def tearDown(self):
         beets.config.sources = self.old_sources
-        beets.config.overlay = self.old_overlay
 
     def assertExists(self, path):
         self.assertTrue(os.path.exists(path),

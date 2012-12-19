@@ -505,7 +505,7 @@ class ConfigTest(_common.TestCase):
         config_yaml = textwrap.dedent(config_yaml).strip()
         if config_yaml:
             config_data = yaml.load(config_yaml, Loader=confit.Loader)
-            config.sources.insert(0, config_data)
+            config.set(config_data)
         ui._raw_main(args + ['test'])
 
     def test_paths_section_respected(self):
@@ -515,7 +515,7 @@ class ConfigTest(_common.TestCase):
             self.assertEqual(template.original, 'y')
         self._run_main([], """
             paths:
-                - x: y
+                x: y
         """, func)
 
     def test_default_paths_preserved(self):
@@ -525,7 +525,7 @@ class ConfigTest(_common.TestCase):
                              default_formats)
         self._run_main([], """
             paths:
-                - x: y
+                x: y
         """, func)
 
     def test_nonexistant_config_file(self):
@@ -546,7 +546,7 @@ class ConfigTest(_common.TestCase):
             self.assertEqual(replacements, [(re.compile(ur'[xy]'), u'z')])
         self._run_main([], """
             replace:
-                - '[xy]': z
+                '[xy]': z
         """, func)
 
     def test_multiple_replacements_parsed(self):
@@ -558,8 +558,8 @@ class ConfigTest(_common.TestCase):
             ])
         self._run_main([], """
             replace:
-                - '[xy]': z
-                - foo: bar
+                '[xy]': z
+                foo: bar
         """, func)
 
 class ShowdiffTest(_common.TestCase):
@@ -714,7 +714,7 @@ class PathFormatTest(_common.TestCase):
     def test_custom_paths_prepend(self):
         default_formats = ui.get_path_formats()
 
-        config['paths'] = [('foo', 'bar')]
+        config['paths'] = {u'foo': u'bar'}
         pf = ui.get_path_formats()
         key, tmpl = pf[0]
         self.assertEqual(key, 'foo')
