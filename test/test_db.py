@@ -555,13 +555,13 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
 class PathConversionTest(unittest.TestCase):
     def test_syspath_windows_format(self):
         path = ntpath.join('a', 'b', 'c')
-        outpath = util.syspath(path, ntpath)
+        outpath = util.syspath(path, pathmod=ntpath)
         self.assertTrue(isinstance(outpath, unicode))
         self.assertTrue(outpath.startswith(u'\\\\?\\'))
 
     def test_syspath_posix_unchanged(self):
         path = posixpath.join('a', 'b', 'c')
-        outpath = util.syspath(path, posixpath)
+        outpath = util.syspath(path, pathmod=posixpath)
         self.assertEqual(path, outpath)
 
     def _windows_bytestring_path(self, path):

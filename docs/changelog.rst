@@ -1,21 +1,42 @@
 Changelog
 =========
 
-1.0rc1 (in development)
+1.0rc2 (in development)
 -----------------------
 
-* New plugin: :doc:`/plugins/convert` transcodes music and embeds album art
+* :doc:`/plugins/fetchart`: Fix a regression that caused crashes when art was
+  not available from some sources.
+* Fix a regression on Windows that caused all relative paths to be "not found".
+
+1.0rc1 (December 17, 2012)
+--------------------------
+
+The first release candidate for beets 1.0 includes a deluge of new features
+contributed by beets users. The vast majority of the credit for this release
+goes to the growing and vibrant beets community. A million thanks to everybody
+who contributed to this release.
+
+There are new plugins for transcoding music, fuzzy searches, tempo collection,
+and fiddling with metadata. The ReplayGain plugin has been rebuilt from
+scratch. Album art images can now be resized automatically. Many other smaller
+refinements make things "just work" as smoothly as possible.
+
+With this release candidate, beets 1.0 is feature-complete. We'll be fixing
+bugs on the road to 1.0 but no new features will be added. Concurrently, work
+begins today on features for version 1.1.
+
+* New plugin: :doc:`/plugins/convert` **transcodes** music and embeds album art
   while copying to a separate directory. Thanks to Jakob Schnitzer and Andrew G.
   Dunn.
-* New plugin: :doc:`/plugins/fuzzy_search` lets you find albums and tracks using
-  fuzzy string matching so you don't have to type (or even remember) their exact
-  names. Thanks to Philippe Mongeau.
-* New plugin: :doc:`/plugins/echonest_tempo` fetches tempo (BPM) information
+* New plugin: :doc:`/plugins/fuzzy_search` lets you find albums and tracks
+  using **fuzzy string matching** so you don't have to type (or even remember)
+  their exact names. Thanks to Philippe Mongeau.
+* New plugin: :doc:`/plugins/echonest_tempo` fetches **tempo** (BPM) information
   from `The Echo Nest`_. Thanks to David Brenner.
 * New plugin: :doc:`/plugins/the` adds a template function that helps format
   text for nicely-sorted directory listings. Thanks to Blemjhoo Tezoulbr.
-* New plugin: :doc:`/plugins/zero` filters out undesirable fields before they
-  are written to your tags. Thanks again to Blemjhoo Tezoulbr.
+* New plugin: :doc:`/plugins/zero` **filters out undesirable fields** before
+  they are written to your tags. Thanks again to Blemjhoo Tezoulbr.
 * New plugin: :doc:`/plugins/ihate` automatically skips (or warns you about)
   importing albums that match certain criteria. Thanks once again to Blemjhoo
   Tezoulbr.
@@ -23,7 +44,7 @@ Changelog
   the `mp3gain`_ or `aacgain`_ command-line tools instead of the failure-prone
   Gstreamer ReplayGain implementation. Thanks to Fabrice Laporte.
 * :doc:`/plugins/fetchart` and :doc:`/plugins/embedart`: Both plugins can now
-  resize album art to avoid excessively large images. Use the ``maxwidth``
+  **resize album art** to avoid excessively large images. Use the ``maxwidth``
   config option with either plugin. Thanks to Fabrice Laporte.
 * :doc:`/plugins/scrub`: Scrubbing now removes *all* types of tags from a file
   rather than just one. For example, if your FLAC file has both ordinary FLAC

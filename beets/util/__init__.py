@@ -112,7 +112,7 @@ def normpath(path):
     """Provide the canonical form of the path suitable for storing in
     the database.
     """
-    path = syspath(path)
+    path = syspath(path, prefix=False)
     path = os.path.normpath(os.path.abspath(os.path.expanduser(path)))
     return bytestring_path(path)
 
@@ -310,10 +310,12 @@ def displayable_path(path):
     except (UnicodeError, LookupError):
         return path.decode('utf8', 'ignore')
 
-def syspath(path, pathmod=None):
+def syspath(path, prefix=True, pathmod=None):
     """Convert a path for use by the operating system. In particular,
     paths on Windows must receive a magic prefix and must be converted
-    to unicode before they are sent to the OS.
+    to Unicode before they are sent to the OS. To disable the magic
+    prefix on Windows, set `prefix` to False---but only do this if you
+    *really* know what you're doing.
     """
     pathmod = pathmod or os.path
     windows = pathmod.__name__ == 'ntpath'
@@ -335,7 +337,7 @@ def syspath(path, pathmod=None):
             path = path.decode(encoding, 'replace')
 
     # Add the magic prefix if it isn't already there
-    if not path.startswith(WINDOWS_MAGIC_PREFIX):
+    if prefix and not path.startswith(WINDOWS_MAGIC_PREFIX):
         path = WINDOWS_MAGIC_PREFIX + path
 
     return path
