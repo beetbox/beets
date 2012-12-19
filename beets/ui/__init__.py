@@ -405,9 +405,9 @@ def get_replacements():
     """Confit validation function that reads regex/string pairs.
     """
     replacements = []
-    for pattern, view in config['replace'].items():
+    for pattern, repl in config['replace'].get(dict).items():
         try:
-            replacements.append((re.compile(pattern), view.get(unicode)))
+            replacements.append((re.compile(pattern), repl))
         except re.error:
             raise UserError(
                 u'malformed regular expression in replace: {0}'.format(

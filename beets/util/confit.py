@@ -195,14 +195,16 @@ class ConfigView(object):
     # Dictionary emulation methods.
 
     def keys(self):
-        """Returns an iterable containing all the keys available as
-        subviews of the current views. This enumerates all the keys in
-        *all* dictionaries matching the current view, in contrast to
-        ``dict(view).keys()``, which gets all the keys for the *first*
-        dict matching the view. If the object for this view in any
-        source is not a dict, then a ConfigTypeError is raised.
+        """Returns a list containing all the keys available as subviews
+        of the current views. This enumerates all the keys in *all*
+        dictionaries matching the current view, in contrast to
+        ``view.get(dict).keys()``, which gets all the keys for the
+        *first* dict matching the view. If the object for this view in
+        any source is not a dict, then a ConfigTypeError is raised. The
+        keys are ordered according to how they appear in each source.
         """
-        keys = set()
+        keys = []
+
         for dic in self.get_all():
             try:
                 cur_keys = dic.keys()
@@ -212,7 +214,11 @@ class ConfigView(object):
                         self.name, type(dic).__name__
                     )
                 )
-            keys.update(cur_keys)
+
+            for key in cur_keys:
+                if key not in keys:
+                    keys.append(key)
+
         return keys
 
     def items(self):
