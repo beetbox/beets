@@ -23,3 +23,6 @@ include beetsplug/lastgenre/genres-tree.yaml
 
 # Exclude junk.
 global-exclude .DS_Store
+
+# Include default config
+include beets/config_default.yaml
