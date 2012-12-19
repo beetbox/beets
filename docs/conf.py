@@ -12,8 +12,8 @@ master_doc = 'index'
 project = u'beets'
 copyright = u'2012, Adrian Sampson'
 
-version = '1.0'
-release = '1.0rc2-dev'
+version = '1.1'
+release = '1.1b1-dev'
 
 pygments_style = 'sphinx'
 

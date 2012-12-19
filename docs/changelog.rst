@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.1b1 (in development)
+----------------------
+
+This release entirely revamps beets' configuration system.
+
 1.0rc2 (in development)
 -----------------------
 
