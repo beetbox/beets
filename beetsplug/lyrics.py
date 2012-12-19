@@ -217,7 +217,7 @@ class LyricsPlugin(BeetsPlugin):
 
     def configure(self, config):
         global AUTOFETCH
-        AUTOFETCH = ui.config_val(config, 'lyrics', 'autofetch', True, bool)
+        AUTOFETCH = ui.config_val(config, 'lyrics', 'auto', True, bool)
 
     # Auto-fetch lyrics on import.
     def imported(self, config, task):

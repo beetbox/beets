@@ -52,15 +52,15 @@ def _embed(path, items):
         f.save()
 
 options = {
-    'autoembed': True,
+    'auto': True,
     'maxwidth': 0,
 }
 class EmbedCoverArtPlugin(BeetsPlugin):
     """Allows albumart to be embedded into the actual files.
     """
     def configure(self, config):
-        options['autoembed'] = \
-            ui.config_val(config, 'embedart', 'autoembed', True, bool)
+        options['auto'] = \
+            ui.config_val(config, 'embedart', 'auto', True, bool)
         options['maxwidth'] = \
             int(ui.config_val(config, 'embedart', 'maxwidth', '0'))
 
@@ -156,5 +156,5 @@ def clear(lib, query):
 # Automatically embed art into imported albums.
 @EmbedCoverArtPlugin.listen('album_imported')
 def album_imported(lib, album, config):
-    if album.artpath and options['autoembed']:
+    if album.artpath and options['auto']:
         _embed(album.artpath, album.items())

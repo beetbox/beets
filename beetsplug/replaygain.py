@@ -81,8 +81,8 @@ class ReplayGainPlugin(BeetsPlugin):
                                            'targetlevel',
                                            DEFAULT_REFERENCE_LOUDNESS))
         self.gain_offset = int(target_level - DEFAULT_REFERENCE_LOUDNESS)
-        self.automatic = ui.config_val(config, 'replaygain',
-                                       'automatic', True, bool)
+        self.auto = ui.config_val(config, 'replaygain',
+                                       'auto', True, bool)
 
         self.command = ui.config_val(config,'replaygain','command', None)
         if self.command:
@@ -108,7 +108,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
     def imported(self, config, task):
         """Our import stage function."""
-        if not self.automatic:
+        if not self.auto:
             return
 
         if task.is_album:
