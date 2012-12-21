@@ -171,7 +171,8 @@ def load_plugins(names=()):
                     raise
             else:
                 for obj in getattr(namespace, name).__dict__.values():
-                    if isinstance(obj, type) and issubclass(obj, BeetsPlugin):
+                    if isinstance(obj, type) and issubclass(obj, BeetsPlugin) \
+                            and obj != BeetsPlugin:
                         _classes.add(obj)
 
         except:
