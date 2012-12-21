@@ -24,6 +24,8 @@ Command-Line Interface
 Commands
 --------
 
+.. _import-cmd:
+
 import
 ``````
 ::
@@ -81,7 +83,7 @@ right now; this is something we need to work on. Read the
   To get this to work correctly, you'll need to use an incremental import *every
   time* you run an import on the directory in question---including the first
   time, when no subdirectories will be skipped. So consider enabling the
-  ``import_incremental`` configuration option.
+  ``incremental`` configuration option.
 
 * By default, beets will proceed without asking if it finds a very close
   metadata match. To disable this and have the importer as you every time,
@@ -105,10 +107,10 @@ right now; this is something we need to work on. Read the
     Just point the ``beet import`` command at a directory of files that are
     already catalogged in your library. Beets will automatically detect this
     situation and avoid duplicating any items. In this situation, the "copy
-    files" option (``-c``/``-C`` on the command line or ``import_copy`` in the
+    files" option (``-c``/``-C`` on the command line or ``copy`` in the
     config file) has slightly different behavior: it causes files to be *moved*,
     rather than duplicated, if they're already in your library. (The same is
-    true, of course, if ``import_move`` is enabled.) That is, your directory
+    true, of course, if ``move`` is enabled.) That is, your directory
     structure will be updated to reflect the new tags if copying is enabled; you
     never end up with two copies of the file.
 

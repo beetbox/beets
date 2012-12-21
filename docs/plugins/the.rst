@@ -11,35 +11,30 @@ regexp patterns can be added by user. How it works::
     A Band -> Band, A
     An Orchestra -> Orchestra, An
 
-To use plugin, enable it by including ``the`` into ``plugins`` line of
-your beets config::
+To use plugin, enable it by including ``the`` into ``plugins`` line of your
+beets config. The plugin provides a template function called ``%the`` for use
+in path format expressions::
 
-    [beets]
-    plugins = the
+    paths:
+        default: %the{$albumartist}/($year) $album/$track $title
 
-Plugin provides template function %the, so you can use it on $albumartist or $artist::
+The default configuration moves all English articles to the end of the string,
+but you can override these defaults to make more complex changes::
 
-    [paths]
-    default: %the{$albumartist}/($year) $album/$track $title
+    the:
+        # handle The, default is on
+        the=yes
+        # handle A/An, default is on
+        a=yes
+        # format string, {0} - part w/o article, {1} - article
+        # spaces already trimmed from ends of both parts
+        # default is '{0}, {1}'
+        format={0}, {1}
+        # strip instead of moving to the end, default is off
+        strip=no
+        # custom regexp patterns, separated by space
+        patterns=
 
-Default options are acceptable (moves all English articles to the end), but you
-can add plugin section into config file::
-
-    [the]
-    # handle The, default is on
-    the=yes
-    # handle A/An, default is on
-    a=yes
-    # format string, {0} - part w/o article, {1} - article
-    # spaces already trimmed from ends of both parts
-    # default is '{0}, {1}'
-    format={0}, {1}
-    # strip instead of moving to the end, default is off
-    strip=no
-    # custom regexp patterns, separated by space
-    patterns=
-
-Custom patterns are usual regular expressions. Ignore case is turned on, but ^ is not added 
-automatically, so be careful. Actually, you can swap arguments in format option and write
-regexp to match end of the string, so things will be moved from the end of the string to 
-start.
+Custom patterns are case-insensitive regular expressions. Patterns can be
+matched anywhere in the string (not just the beginning), so use ``^`` if you
+intend to match leading words.

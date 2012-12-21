@@ -20,7 +20,8 @@ flask``.
 
 .. _Flask: http://flask.pocoo.org/
 
-Put ``plugins=web`` in your ``.beetsconfig`` to enable the plugin.
+Put ``web`` on your ``plugins`` line in your configuration file to enable the
+plugin.
 
 Run the Server
 --------------
@@ -32,14 +33,14 @@ http://localhost:8337/. This is what it looks like:
 
 You can also specify the hostname and port number used by the Web server. These
 can be specified on the command line or in the ``[web]`` section of your
-:doc:`/reference/config`.
+:doc:`configuration file </reference/config>`.
 
 On the command line, use ``beet web [HOSTNAME] [PORT]``. In the config file, use
 something like this::
 
-    [web]
-    host=127.0.0.1
-    port=8888
+    web:
+        host: 127.0.0.1
+        port: 8888
 
 Usage
 -----

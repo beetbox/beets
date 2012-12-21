@@ -8,11 +8,11 @@ maintain your `music collection`_ list there.
 
 To begin, just enable the ``mbcollection`` plugin (see :doc:`/plugins/index`).
 Then, add your MusicBrainz username and password to your
-:doc:`/reference/config` in a ``musicbrainz`` section::
+:doc:`configuration file </reference/config>` under a ``musicbrainz`` section::
 
-    [musicbrainz]
-    user: USERNAME
-    pass: PASSWORD
+    musicbrainz:
+        user: you
+        pass: seekrit
 
 Then, use the ``beet mbupdate`` command to send your albums to MusicBrainz. The
 command automatically adds all of your albums to the first collection it finds.

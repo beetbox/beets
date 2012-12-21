@@ -19,8 +19,8 @@ the :ref:`art-filename` config option.
 To disable automatic art downloading, just put this in your configuration
 file::
 
-    [fetchart]
-    autofetch: no
+    fetchart:
+        auto: no
 
 Manually Fetching Album Art
 ---------------------------

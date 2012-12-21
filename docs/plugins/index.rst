@@ -14,15 +14,17 @@ To use a plugin, you have two options:
   just means the plugin has to be installed on your system (e.g., with a
   `setup.py` script or a command like `pip` or `easy_install`).
 
-* Set the `pythonpath` config variable to point to the directory containing the
+* Set the `pluginpath` config variable to point to the directory containing the
   plugin. (See :doc:`/reference/cli`.)
 
-Then, set the `plugins` option in your `~/.beetsconfig` file, like so::
+Then, set the `plugins` option in your `config.yaml` file, like so::
 
-    [beets]
-    plugins = mygreatplugin someotherplugin
+    plugins: mygreatplugin someotherplugin
 
-The value for `plugins` should be a space-separated list of plugin module names.
+The value for `plugins` can be a space-separated list of plugin names or
+a YAML list like ``[foo, bar]``.
+
+You can see which plugins are currently enabled by typing ``beet version``.
 
 .. _included-plugins:
 

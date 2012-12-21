@@ -25,8 +25,8 @@ Then enable the ``replaygain`` plugin (see :doc:`/reference/config`). If beets
 doesn't automatically find the ``mp3gain`` or ``aacgain`` executable, you can
 configure the path explicitly like so::
 
-    [replaygain]
-    command: /Applications/MacMP3Gain.app/Contents/Resources/aacgain
+    replaygain:
+        command: /Applications/MacMP3Gain.app/Contents/Resources/aacgain
 
 Usage & Configuration
 ---------------------
@@ -37,10 +37,10 @@ if your player supports these tags, it can use them to do level adjustment.
 
 By default, files that already have ReplayGain tags will not be re-analyzed. If
 you want to analyze *every* file on import, you can set the ``overwrite`` option
-for the plugin in your :doc:`/reference/config`, like so::
+for the plugin in your :doc:`configuration file </reference/config>`, like so::
 
-    [replaygain]
-    overwrite: yes
+    replaygain:
+        overwrite: yes
 
 The target level can be modified to any target dB with the ``targetlevel``
 option (default: 89 dB).
@@ -75,7 +75,7 @@ query (see :doc:`/reference/query`) to indicate which items or albums to
 analyze.
 
 ReplayGain analysis is not fast, so you may want to disable it during import.
-Use the ``automatic`` config option to control this::
+Use the ``auto`` config option to control this::
 
-    [replaygain]
-    automatic: no
+    replaygain:
+        auto: no

@@ -17,7 +17,7 @@ plugin (see :doc:`/plugins/index`). You'll also want to enable the
 :doc:`/plugins/fetchart` to obtain the images to be embedded. Art will be
 embedded after each album is added to the library.
 
-This behavior can be disabled with the ``autoembed`` config option (see below).
+This behavior can be disabled with the ``auto`` config option (see below).
 
 Manually Embedding and Extracting Art
 -------------------------------------
@@ -40,11 +40,11 @@ embedded album art:
 Configuring
 -----------
 
-``autoembed`` option  lets you disable automatic album art embedding. 
-To do so, add this to your ``~/.beetsconfig``::
+The ``auto`` option  lets you disable automatic album art embedding. 
+To do so, add this to your ``config.yaml``::
 
-    [embedart]
-    autoembed: no
+    embedart:
+        auto: no
 
 A maximum image width can be configured as ``maxwidth`` to downscale images
 before embedding them (the original image file is not altered). The resize

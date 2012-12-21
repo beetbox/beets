@@ -38,8 +38,8 @@ plugin can do. (Read on!)
 
 To use your new plugin, make sure your ``beetsplug`` directory is in the Python
 path (using ``PYTHONPATH`` or by installing in a `virtualenv`_, for example).
-Then, as described above, edit your ``.beetsconfig`` to include
-``plugins=myawesomeplugin`` (substituting the name of the Python module
+Then, as described above, edit your ``config.yaml`` to include
+``plugins: myawesomeplugin`` (substituting the name of the Python module
 containing your plugin).
 
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
@@ -75,8 +75,7 @@ your command name.
 
 You'll need to add a function to your command by saying ``mycommand.func =
 myfunction``. This function should take the following parameters: ``lib`` (a
-beets ``Library`` object), ``config`` (a `ConfigParser object`_ containing the
-configuration values), and ``opts`` and ``args`` (command-line options and
+beets ``Library`` object) and ``opts`` and ``args`` (command-line options and
 arguments as returned by `OptionParser.parse_args`_).
 
 .. _ConfigParser object: http://docs.python.org/library/configparser.html
@@ -191,17 +190,28 @@ which have somewhat helpful docstrings.
 Read Configuration Options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Plugins can configure themselves using the ``.beetsconfig`` file. Define a
-``configure`` method on your plugin that takes an ``OptionParser`` object as an
-argument. Then use the ``beets.ui.config_val`` convenience function to access
-values from the config file. Like so::
+Plugins can configure themselves using the ``config.yaml`` file. You can read
+configuration values in two ways. The first is to use `self.config` within
+your plugin class. This gives you a view onto the configuration values in a
+section with the same name as your plugin's module. For example, if your plugin
+is in ``greatplugin.py``, then `self.config` will refer to options under the
+``greatplugin:`` section of the config file.
 
-    class MyPlugin(BeetsPlugin):
-        def configure(self, config):
-            number_of_goats = beets.ui.config_val(config, 'myplug', 'goats', '42')
+For example, if you have a configuration value called "foo", then users can put
+this in their ``config.yaml``::
 
-Try looking at the ``mpdupdate`` plugin (included with beets) for an example of
-real-world use of this API.
+    greatplugin:
+        foo: bar
+
+To access this value, say ``self.config['foo'].get()`` at any point in your
+plugin's code. The `self.config` object is a *view* as defined by the `Confit`_
+library.
+
+.. _Confit: http://confit.readthedocs.org/
+
+If you want to access configuration values *outside* of your plugin's section,
+import the `config` object from the `beets` module. That is, just put ``from
+beets import config`` at the top of your plugin and access values from there.
 
 Add Path Format Functions and Fields
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

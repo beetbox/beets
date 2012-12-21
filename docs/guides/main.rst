@@ -96,12 +96,12 @@ Configuring
 -----------
 
 You'll want to set a few basic options before you start using beets. The
-configuration is stored in a text file: on Unix-like OSes, the config file is at
-``~/.beetsconfig``; on Windows, it's at ``%APPDATA%\beetsconfig.ini``. Create
-and edit the appropriate file with your favorite text editor. This file will
-start out empty, but here's good place to start::
+configuration is stored in a text file: on Unix-like OSes, the config file is
+at ``~/.config/beets/config.yaml``; on Windows, it's at
+``%APPDATA%\beets\config.yaml``. Create and edit the appropriate file with your
+favorite text editor. This file will start out empty, but here's good place to
+start::
 
-    [beets]
     directory: ~/music
     library: ~/data/musiclibrary.blb
 
@@ -115,16 +115,27 @@ empty folder using beets' ``import`` command (see below). But you can configure
 beets to behave many other ways:
 
 * Start with a new empty directory, but *move* new music in instead of copying
-  it (saving disk space). Put ``import_move: yes`` in your config file.
+  it (saving disk space). Put this in your config file::
+
+        import:
+            move: yes
+
 * Keep your current directory structure; importing should never move or copy
-  files but instead just correct the tags on music. Put the line ``import_copy:
-  no`` in your config file to disable any copying or renaming. Make sure to
-  point ``directory`` at the place where your music is currently stored.
+  files but instead just correct the tags on music. Put the line ``copy: no``
+  under the ``import:`` heading in your config file to disable any copying or
+  renaming. Make sure to point ``directory`` at the place where your music is
+  currently stored.
+
 * Keep your current directory structure and *do not* correct files' tags: leave
   files completely unmodified on your disk. (Corrected tags will still be stored
   in beets' database, and you can use them to do renaming or tag changes later.)
-  Add both ``import_copy: no`` and ``import_write: no`` to your config file to
-  disable renaming and tag-writing.
+  Put this in your config file::
+
+        import:
+            copy: no
+            write: no
+
+  to disable renaming and tag-writing.
 
 There are approximately six million other configuration options you can set
 here, including the directory and file naming scheme. See
@@ -151,7 +162,7 @@ this::
 
 (Note that by default, this command will *copy music into the directory you
 specified above*. If you want to use your current directory structure, set the
-``import_copy`` config option.) To take the fast,
+``import.copy`` config option.) To take the fast,
 un-autotagged path, just say::
 
     $ beet import -A /my/huge/mp3/library

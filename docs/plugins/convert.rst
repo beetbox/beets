@@ -17,8 +17,8 @@ To transcode music, this plugin requires the ``ffmpeg`` command-line
 tool. If its executable is in your path, it  will be found automatically
 by the plugin. Otherwise, configure the plugin to locate the executable::
 
-    [convert]
-    ffmpeg: /usr/bin/ffmpeg
+    convert:
+        ffmpeg: /usr/bin/ffmpeg
 
 Usage
 -----
@@ -35,7 +35,7 @@ Configuration
 -------------
 
 The plugin offers several configuration options, all of which live under the
-``[convert]`` section:
+``convert:`` section:
 
 * ``dest`` sets the directory the files will be converted (or copied) to.
   A destination is required---you either have to provide it in the config file
@@ -57,9 +57,9 @@ The plugin offers several configuration options, all of which live under the
 
 Here's an example configuration::
 
-    [convert]
-    embed: false
-    max_bitrate: 200
-    opts: -aq 4
-    dest: /home/user/MusicForPhone
-    threads: 4
+    convert:
+        embed: false
+        max_bitrate: 200
+        opts: -aq 4
+        dest: /home/user/MusicForPhone
+        threads: 4

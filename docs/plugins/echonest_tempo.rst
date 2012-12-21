@@ -25,30 +25,29 @@ Configuring
 
 Beets includes its own Echo Nest API key, but you can `apply for your own`_ for
 free from the EchoNest.  To specify your own API key, add the key to your
-:doc:`/reference/config` as the value ``apikey`` in a section called
-``echonest_tempo`` like so::
+:doc:`configuration file </reference/config>` as the value for ``apikey`` under
+the key ``echonest_tempo`` like so::
 
-    [echonest_tempo]
-    apikey=YOUR_API_KEY
+    echonest_temo:
+        apikey: YOUR_API_KEY
 
 In addition, the ``autofetch`` config option lets you disable automatic tempo
-fetching during import. To do so, add this to your ``~/.beetsconfig``::
+fetching during import. To do so, add this to your ``config.yaml``::
 
-    [echonest_tempo]
-    autofetch: no
+    echonest_tempo:
+        auto: no
 
 .. _apply for your own: http://developer.echonest.com/account/register
 
 Fetch Tempo During Import
 -------------------------
 
-To automatically fetch the tempo for songs you import, just enable the plugin 
+To automatically fetch the tempo for songs you import, just enable the plugin
 by putting ``echonest_tempo`` on your config file's ``plugins`` line (see
-:doc:`/plugins/index`), along with adding your EchoNest API key to your
-``~/.beetsconfig``.  When importing new files, beets will now fetch the 
-tempo for files that don't already have them. The bpm field will be stored in 
-the beets database. If the ``import_write`` config option is on, then the 
-tempo will also be written to the files' tags.
+:doc:`/plugins/index`). When importing new files, beets will now fetch the
+tempo for files that don't already have them. The bpm field will be stored in
+the beets database. If the ``import.write`` config option is on, then the tempo
+will also be written to the files' tags.
 
 This behavior can be disabled with the ``autofetch`` config option (see below).
 
@@ -61,7 +60,7 @@ items that match a query (see :doc:`/reference/query`). For example,
 appropriate Magnetic Fields song, ``beet tempo magnetic fields`` will get 
 tempos for all my tracks by that band, and ``beet tempo`` will get tempos for 
 my entire library. The tempos will be added to the beets database and, if 
-``import_write`` is on, embedded into files' metadata.
+``import.write`` is on, embedded into files' metadata.
 
 The ``-p`` option to the ``tempo`` command makes it print tempos out to the
 console so you can view the fetched (or previously-stored) tempos.

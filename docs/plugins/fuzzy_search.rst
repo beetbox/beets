@@ -19,7 +19,7 @@ The ``-t NUMBER`` option lets you specify how precise the fuzzy match has to be
 (default is 0.7). To make a fuzzier search, try ``beet fuzzy -t 0.5 Varoeldur``.
 A value of ``1`` will show only perfect matches and a value of ``0`` will match everything.
 
-The default threshold can also be set from the config file.::
+The default threshold can also be set in the config file::
 
-    [fuzzy]
-    threshold: 0.8
+    fuzzy:
+        threshold: 0.8

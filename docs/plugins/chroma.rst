@@ -74,14 +74,9 @@ Using
 -----
 
 Once you have all the dependencies sorted out, you can enable fingerprinting by
-editing your :doc:`/reference/config`. Put ``chroma`` on your ``plugins:``
-line. Your config file should contain something like this::
-
-    [beets]
-    plugins: chroma
-
-With that, beets will use fingerprinting the next time you run ``beet import``.
-
+editing your :doc:`configuration file </reference/config>`. Put ``chroma`` on
+your ``plugins:`` line. With that, beets will use fingerprinting the next time
+you run ``beet import``.
 
 .. _submitfp:
 
@@ -91,11 +86,11 @@ Submitting Fingerprints
 You can help expand the `Acoustid`_ database by submitting fingerprints for the
 music in your collection. To do this, first `get an API key`_ from the Acoustid
 service. Just use an OpenID or MusicBrainz account to log in and you'll get a
-short token string. Then, add the key to your :doc:`/reference/config` as the
+short token string. Then, add the key to your ``config.yaml`` as the
 value ``apikey`` in a section called ``acoustid`` like so::
 
-    [acoustid]
-    apikey=AbCd1234
+    acoustid:
+        apikey: AbCd1234
 
 Then, run ``beet submit``. (You can also provide a query to submit a subset of
 your library.) The command will use stored fingerprints if they're available;

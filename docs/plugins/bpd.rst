@@ -35,12 +35,9 @@ with its Python bindings) on your system.
 Using and Configuring
 ---------------------
 
-BPD is a plugin for beets. It comes with beets, but it's disabled by default. To
-enable it, you'll need to edit your ``.beetsconfig`` file and add the line
-``plugins: bpd``. Like so::
-
-    [beets]
-    plugins: bpd
+BPD is a plugin for beets. It comes with beets, but it's disabled by default.
+To enable it, you'll need to edit your :doc:`configuration file
+</reference/config>` and add ``bpd`` to your ``plugins:`` line.
 
 Then, you can run BPD by invoking::
 
@@ -66,14 +63,14 @@ the client can just as easily on a different computer from the server as it can
 be run locally. Control your music from your laptop (or phone!) while it plays
 on your headless server box. Rad!
 
-To configure the BPD server, add a ``[bpd]`` section to your ``.beetsconfig``
+To configure the BPD server, add a ``bpd:`` section to your ``config.yaml``
 file. The configuration values, which are pretty self-explanatory, are ``host``,
 ``port``, and ``password``. Here's an example::
 
-    [bpd]
-    host: 127.0.0.1
-    port: 6600
-    password: seekrit
+    bpd:
+        host: 127.0.0.1
+        port: 6600
+        password: seekrit
 
 Implementation Notes
 --------------------
