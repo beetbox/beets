@@ -685,7 +685,7 @@ import_cmd.parser.add_option('-i', '--incremental', dest='incremental',
 import_cmd.parser.add_option('-I', '--noincremental', dest='incremental',
     action='store_false', help='do not skip already-imported directories')
 def import_func(lib, opts, args):
-    config['import'].add_args(opts)
+    config['import'].set_args(opts)
 
     # Special case: --copy flag suppresses import_move (which would
     # otherwise take precedence).

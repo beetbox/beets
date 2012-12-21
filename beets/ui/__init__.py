@@ -638,7 +638,7 @@ def _raw_main(args, load_config=True):
 
     # Parse the command-line!
     options, subcommand, suboptions, subargs = parser.parse_args(args)
-    config.add_args(options)
+    config.set_args(options)
 
     # Open library file.
     dbpath = config['library'].as_filename()
