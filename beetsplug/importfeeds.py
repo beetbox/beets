@@ -77,7 +77,7 @@ def _record_items(lib, basename, items):
     """Records relative paths to the given items for each feed format
     """
     feedsdir = config['importfeeds']['dir'].as_filename()
-    formats = config['importfeeds']['formats'].get(list)
+    formats = config['importfeeds']['formats'].as_str_seq()
 
     paths = []
     for item in items:

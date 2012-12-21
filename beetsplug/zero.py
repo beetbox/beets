@@ -47,13 +47,13 @@ class ZeroPlugin(BeetsPlugin):
         self.patterns = {}
         self.warned = False
 
-        for f in self.config['fields'].get(list):
+        for f in self.config['fields'].as_str_seq():
             if f not in ITEM_KEYS:
                 self._log.error(u'[zero] invalid field: {0}'.format(f))
             else:
                 self.fields.append(f)
                 try:
-                    self.patterns[f] = self.config[f].get(list)
+                    self.patterns[f] = self.config[f].as_str_seq()
                 except confit.NotFoundError:
                     self.patterns[f] = [u'']
 

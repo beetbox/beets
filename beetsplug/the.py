@@ -53,7 +53,7 @@ class ThePlugin(BeetsPlugin):
             'patterns': [],
         })
 
-        self.patterns = self.config['patterns'].get(list)
+        self.patterns = self.config['patterns'].as_str_seq()
         for p in self.patterns:
             if p:
                 try:

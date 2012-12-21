@@ -619,10 +619,10 @@ def _raw_main(args, load_config=True):
     from beets.ui.commands import default_commands
 
     # Add plugin paths.
-    for plugpath in config['pluginpath'].get(list):
+    for plugpath in config['pluginpath'].as_str_seq():
         sys.path.append(os.path.expanduser(plugpath))
     # Load requested plugins.
-    plugins.load_plugins(config['plugins'].get(list))
+    plugins.load_plugins(config['plugins'].as_str_seq())
     plugins.send("pluginload")
 
     # Construct the root parser.

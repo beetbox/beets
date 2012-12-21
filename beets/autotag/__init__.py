@@ -48,7 +48,7 @@ def albums_in_dir(path):
     collapse_items = None
 
     for root, dirs, files in sorted_walk(path,
-                                         ignore=config['ignore'].get(list)):
+                                         ignore=config['ignore'].as_str_seq()):
         # Get a list of items in the directory.
         items = []
         for filename in files:
