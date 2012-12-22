@@ -30,6 +30,9 @@ log = logging.getLogger('beets')
 # the user.
 ECHONEST_APIKEY = 'NY2KTZHQ0QDSHBAP6'
 
+RETRY_INTERVAL = 10  # Seconds.
+RETRIES = 10
+
 def fetch_item_tempo(lib, loglevel, item, write):
     """Fetch and store tempo for a single item. If ``write``, then the
     tempo will also be written to the file itself in the bpm field. The 
@@ -58,18 +61,26 @@ def fetch_item_tempo(lib, loglevel, item, write):
 
 def get_tempo(artist, title):
     """Get the tempo for a song."""
-    # Unfortunately, all we can do is search by artist and title. EchoNest
-    # supports foreign ids from MusicBrainz, but currently only for artists,
-    # not individual tracks/recordings.
-    try:
-        results = pyechonest.song.search(
-            artist=artist, title=title, results=1, buckets=['audio_summary']
-        )
-    except pyechonest.util.EchoNestAPIError as e:
-        if e.code == 3:
-            # rate limit exceeded - wait 10 seconds and try again.
-            time.sleep(10)
-            return get_tempo(artist, title)
+    for i in range(RETRIES):
+        try:
+            # Unfortunately, all we can do is search by artist and title.
+            # EchoNest supports foreign ids from MusicBrainz, but currently
+            # only for artists, not individual tracks/recordings.
+            results = pyechonest.song.search(
+                artist=artist, title=title, results=1, buckets=['audio_summary']
+            )
+        except pyechonest.util.EchoNestAPIError as e:
+            if e.code == 3:
+                # Rate limit exceeded.
+                if i >= RETRIES - 1:
+                    # Waited too many times already.
+                    log.debug(u'echonest_tempo: exceeded retries')
+                    return None
+                else:
+                    # Wait and try again.
+                    time.sleep(RETRY_INTERVAL)
+        else:
+            break
 
     if len(results) > 0:
         return results[0].audio_summary['tempo']
