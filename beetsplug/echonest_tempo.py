@@ -15,6 +15,7 @@
 """Gets tempo (bpm) for imported music from the EchoNest API. Requires
 the pyechonest library (https://github.com/echonest/pyechonest).
 """
+import time
 import logging
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -60,9 +61,16 @@ def get_tempo(artist, title):
     # Unfortunately, all we can do is search by artist and title. EchoNest
     # supports foreign ids from MusicBrainz, but currently only for artists,
     # not individual tracks/recordings.
-    results = pyechonest.song.search(
-        artist=artist, title=title, results=1, buckets=['audio_summary']
-    )
+    try:
+        results = pyechonest.song.search(
+            artist=artist, title=title, results=1, buckets=['audio_summary']
+        )
+    except pyechonest.util.EchoNestAPIError as e:
+        if e.code == 3:
+            # rate limit exceeded - wait 10 seconds and try again.
+            time.sleep(10)
+            return get_tempo(artist, title)
+
     if len(results) > 0:
         return results[0].audio_summary['tempo']
     else:
