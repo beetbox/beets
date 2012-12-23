@@ -15,16 +15,19 @@
 """Gets tempo (bpm) for imported music from the EchoNest API. Requires
 the pyechonest library (https://github.com/echonest/pyechonest).
 """
+import time
 import logging
 from beets.plugins import BeetsPlugin
 from beets import ui
-from beets.ui import commands
 from beets import config
 import pyechonest.config
 import pyechonest.song
 
 # Global logger.
 log = logging.getLogger('beets')
+
+RETRY_INTERVAL = 10  # Seconds.
+RETRIES = 10
 
 def fetch_item_tempo(lib, loglevel, item, write):
     """Fetch and store tempo for a single item. If ``write``, then the
@@ -54,12 +57,27 @@ def fetch_item_tempo(lib, loglevel, item, write):
 
 def get_tempo(artist, title):
     """Get the tempo for a song."""
-    # Unfortunately, all we can do is search by artist and title. EchoNest
-    # supports foreign ids from MusicBrainz, but currently only for artists,
-    # not individual tracks/recordings.
-    results = pyechonest.song.search(
-        artist=artist, title=title, results=1, buckets=['audio_summary']
-    )
+    for i in range(RETRIES):
+        try:
+            # Unfortunately, all we can do is search by artist and title.
+            # EchoNest supports foreign ids from MusicBrainz, but currently
+            # only for artists, not individual tracks/recordings.
+            results = pyechonest.song.search(
+                artist=artist, title=title, results=1, buckets=['audio_summary']
+            )
+        except pyechonest.util.EchoNestAPIError as e:
+            if e.code == 3:
+                # Rate limit exceeded.
+                if i >= RETRIES - 1:
+                    # Waited too many times already.
+                    log.debug(u'echonest_tempo: exceeded retries')
+                    return None
+                else:
+                    # Wait and try again.
+                    time.sleep(RETRY_INTERVAL)
+        else:
+            break
+
     if len(results) > 0:
         return results[0].audio_summary['tempo']
     else:
