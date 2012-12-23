@@ -50,11 +50,11 @@ disabled by default, but you can turn them on as described above.
    inline
    scrub
    rewrite
-   rdm
+   random
    mbcollection
    importfeeds
    the
-   fuzzy_search
+   fuzzy
    zero
    ihate
    convert
@@ -97,8 +97,8 @@ Miscellaneous
 '''''''''''''
 
 * :doc:`web`: An experimental Web-based GUI for beets.
-* :doc:`rdm`: Randomly choose albums and tracks from your library.
-* :doc:`fuzzy_search`: Search albums and tracks with fuzzy string matching.
+* :doc:`random`: Randomly choose albums and tracks from your library.
+* :doc:`fuzzy`: Search albums and tracks with fuzzy string matching.
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
 * :doc:`ihate`: Automatically skip albums and tracks during the import process.
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is

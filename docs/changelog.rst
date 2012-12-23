@@ -6,6 +6,14 @@ Changelog
 
 This release entirely revamps beets' configuration system.
 
+* Renamed plugins: The ``rdm`` plugin has been renamed to ``random`` and
+  ``fuzzy_search`` has been renamed to ``fuzzy``.
+* Renamed config options: Many plugins have a flag dictating whether their
+  action runs at import time. This option had many names (``autofetch``,
+  ``autoembed``, etc.) but is now consistently called ``auto``.
+* Reorganized import config options: The various ``import_*`` options are now
+  organized under an ``import:`` heading and their prefixes have been removed.
+
 1.0rc2 (in development)
 -----------------------
 
@@ -35,7 +43,7 @@ begins today on features for version 1.1.
 * New plugin: :doc:`/plugins/convert` **transcodes** music and embeds album art
   while copying to a separate directory. Thanks to Jakob Schnitzer and Andrew G.
   Dunn.
-* New plugin: :doc:`/plugins/fuzzy_search` lets you find albums and tracks
+* New plugin: :doc:`/plugins/fuzzy` lets you find albums and tracks
   using **fuzzy string matching** so you don't have to type (or even remember)
   their exact names. Thanks to Philippe Mongeau.
 * New plugin: :doc:`/plugins/echonest_tempo` fetches **tempo** (BPM) information
@@ -277,7 +285,7 @@ release.
   and delete the originals, which is inefficient if the source and destination
   are on the same filesystem. Use the ``import_move`` configuration option and
   see :doc:`/reference/config` for more details. Thanks to Domen Kožar.
-* New :doc:`/plugins/rdm`: Randomly select albums and tracks from your library.
+* New :doc:`/plugins/random`: Randomly select albums and tracks from your library.
   Thanks to Philippe Mongeau.
 * The :doc:`/plugins/mbcollection` by Jeffrey Aylesworth was added to the core
   beets distribution.

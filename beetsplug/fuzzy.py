@@ -88,7 +88,7 @@ fuzzy_cmd.func = fuzzy_list
 
 class Fuzzy(BeetsPlugin):
     def __init__(self):
-        super(Fuzzy, self).__init__('fuzzy')
+        super(Fuzzy, self).__init__()
         self.config.add({
             'threshold': 0.7,
         })

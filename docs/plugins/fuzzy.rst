@@ -1,10 +1,10 @@
 Fuzzy Search Plugin
 ===================
 
-The ``fuzzy_search`` plugin provides a command that search your library using
+The ``fuzzy`` plugin provides a command that search your library using
 fuzzy pattern matching. This can be useful if you want to find a track with complicated characters in the title.
 
-First, enable the plugin named ``fuzzy_search`` (see :doc:`/plugins/index`).
+First, enable the plugin named ``fuzzy`` (see :doc:`/plugins/index`).
 You'll then be able to use the ``beet fuzzy`` command::
 
     $ beet fuzzy Vareoldur
