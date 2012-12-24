@@ -622,9 +622,8 @@ def import_files(lib, paths, query):
         raise ui.UserError("can't be both quiet and timid")
 
     # Open the log.
-    logpath = config['import']['log'].as_filename()
-    if logpath:
-        logpath = normpath(logpath)
+    if config['import']['log'].get() is not None:
+        logpath = config['import']['log'].as_filename()
         try:
             logfile = open(syspath(logpath), 'a')
         except IOError:

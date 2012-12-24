@@ -319,6 +319,10 @@ class ConfigView(object):
         is relative to the current working directory.
         """
         path, source = self.first()
+        if not isinstance(path, BASESTRING):
+            raise ConfigTypeError('{0} must be a filename, not {1}'.format(
+                self.name, type(path).__name__
+            ))
         path = os.path.expanduser(STRING(path))
 
         if source.default:
