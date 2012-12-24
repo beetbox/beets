@@ -87,7 +87,38 @@ class ConfigReadError(ConfigError):
         super(ConfigReadError, self).__init__(message)
 
 
-# Views and data access logic.
+# Views and sources.
+
+class ConfigSource(dict):
+    """A dictionary augmented with metadata about the source of the
+    configuration.
+    """
+    def __init__(self, value, filename=None, default=False):
+        super(ConfigSource, self).__init__(value)
+        if filename is not None and not isinstance(filename, BASESTRING):
+            raise TypeError('filename must be a string or None')
+        self.filename = filename
+        self.default = default
+
+    def __repr__(self):
+        return 'ConfigSource({0}, {1}, {2})'.format(
+            super(ConfigSource, self).__repr__(),
+            repr(self.filename),
+            repr(self.default)
+        )
+
+    @classmethod
+    def of(self, value):
+        """Given either a dictionary or a `ConfigSource` object, return
+        a `ConfigSource` object. This lets a function accept either type
+        of object as an argument.
+        """
+        if isinstance(value, ConfigSource):
+            return value
+        elif isinstance(value, dict):
+            return ConfigSource(value)
+        else:
+            raise TypeError('source value must be a dict')
 
 class ConfigView(object):
     """A configuration "view" is a query into a program's configuration
@@ -103,41 +134,25 @@ class ConfigView(object):
     configuration in Python-like syntax (e.g., ``foo['bar'][42]``).
     """
 
-    def get_all(self):
-        """Generates all available values for the view in the order of
-        the configuration's sources. (Each source may have at most one
-        value for each view.) If no values are available, no values are
-        generated. If a type error is encountered when traversing a
-        source to resolve the view, a ConfigTypeError may be raised.
+    def resolve(self):
+        """The core (internal) data retrieval method. Generates (value,
+        source) pairs for each source that contains a value for this
+        view. May raise ConfigTypeError if a type error occurs while
+        traversing a source.
         """
         raise NotImplementedError
 
-    def get(self, typ=None):
-        """Returns the canonical value for the view. This amounts to the
-        first item in ``view.get_all()``. If the view cannot be
-        resolved, this method raises a NotFoundError.
+    def first(self):
+        """Returns a (value, source) pair for the first object found for
+        this view. This amounts to the first element returned by
+        `resolve`. If no values are available, a NotFoundError is
+        raised.
         """
-        values = self.get_all()
-
-        # Get the first value.
+        pairs = self.resolve()
         try:
-            value = iter_first(values)
+            return iter_first(pairs)
         except ValueError:
             raise NotFoundError("{0} not found".format(self.name))
-
-        # Validate type.
-        if typ is not None:
-            if not isinstance(typ, TYPE_TYPES):
-                raise TypeError('argument to get() must be a type')
-
-            if not isinstance(value, typ):
-                raise ConfigTypeError(
-                    "{0} must be of type {1}, not {2}".format(
-                        self.name, typ.__name__, type(value).__name__
-                    )
-                )
-
-        return value
 
     def add(self, value):
         """Set the *default* value for this configuration view. The
@@ -150,6 +165,11 @@ class ConfigView(object):
         """*Override* the value for this configuration view. The
         specified value is added as the highest-priority configuration
         data source.
+        """
+        raise NotImplementedError
+
+    def root(self):
+        """The RootView object from which this view is descended.
         """
         raise NotImplementedError
 
@@ -214,7 +234,7 @@ class ConfigView(object):
         """
         keys = []
 
-        for dic in self.get_all():
+        for dic, _ in self.resolve():
             try:
                 cur_keys = dic.keys()
             except AttributeError:
@@ -255,7 +275,7 @@ class ConfigView(object):
         intended to be used when the view indicates a list; this method
         will concatenate the contents of the list from all sources.
         """
-        for collection in self.get_all():
+        for collection, _ in self.resolve():
             try:
                 it = iter(collection)
             except TypeError:
@@ -267,14 +287,49 @@ class ConfigView(object):
             for value in it:
                 yield value
 
-    # Explicit validators/converters.
+    # Validation and conversion.
+
+    def get(self, typ=None):
+        """Returns the canonical value for the view, checked against the
+        passed-in type. If the value is not an instance of the given
+        type, a ConfigTypeError is raised. May also raise a
+        NotFoundError.
+        """
+        value, _ = self.first()
+
+        if typ is not None:
+            if not isinstance(typ, TYPE_TYPES):
+                raise TypeError('argument to get() must be a type')
+
+            if not isinstance(value, typ):
+                raise ConfigTypeError(
+                    "{0} must be of type {1}, not {2}".format(
+                        self.name, typ.__name__, type(value).__name__
+                    )
+                )
+
+        return value
 
     def as_filename(self):
         """Get a string as a normalized filename, made absolute and with
-        tilde expanded.
+        tilde expanded. If the value comes from a default source, the
+        path is considered relative to the application's config
+        directory. If it comes from another file source, the filename is
+        expanded as if it were relative to that directory. Otherwise, it
+        is relative to the current working directory.
         """
-        value = STRING(self.get())
-        return os.path.abspath(os.path.expanduser(value))
+        path, source = self.first()
+        path = os.path.expanduser(STRING(path))
+
+        if source.default:
+            # From defaults: relative to the app's directory.
+            path = os.path.join(self.root().config_dir(), path)
+
+        elif source.filename is not None:
+            # Relative to source filename's directory.
+            path = os.path.join(os.path.dirname(source.filename), path)
+
+        return os.path.abspath(path)
 
     def as_choice(self, choices):
         """Ensure that the value is among a collection of choices and
@@ -333,13 +388,20 @@ class RootView(ConfigView):
         self.name = ROOT_NAME
 
     def add(self, obj):
-        self.sources.append(obj)
+        self.sources.append(ConfigSource.of(obj))
 
     def set(self, value):
-        self.sources.insert(0, value)
+        self.sources.insert(0, ConfigSource.of(value))
 
-    def get_all(self):
-        return self.sources
+    def resolve(self):
+        return ((dict(s), s) for s in self.sources)
+
+    def clear(self):
+        """Remove all sources from this configuration."""
+        del self.sources[:]
+
+    def root(self):
+        return self
 
 class Subview(ConfigView):
     """A subview accessed via a subscript of a parent view."""
@@ -363,8 +425,8 @@ class Subview(ConfigView):
         else:
             self.name += '{0}'.format(repr(self.key))
 
-    def get_all(self):
-        for collection in self.parent.get_all():
+    def resolve(self):
+        for collection, source in self.parent.resolve():
             try:
                 value = collection[self.key]
             except IndexError:
@@ -380,13 +442,16 @@ class Subview(ConfigView):
                         self.parent.name, type(collection).__name__
                     )
                 )
-            yield value
+            yield value, source
 
     def set(self, value):
         self.parent.set({self.key: value})
 
     def add(self, value):
         self.parent.add({self.key: value})
+
+    def root(self):
+        return self.parent.root()
 
 
 # Config file paths, including platform-specific paths and in-package
@@ -539,28 +604,25 @@ class Configuration(RootView):
         for confdir in config_dirs():
             yield os.path.join(confdir, self.appname)
 
-    def _filenames(self, user=True, defaults=True):
-        """Get a list of filenames for configuration files. The files
-        must actually exist and are placed in the order that they should
-        be prioritized. The `user` and `defaults` flags control whether
-        files should be used from discovered configuration directories
-        and from the in-package defaults directory; set either of these
-        to `False` to disable searching for them.
+    def _user_sources(self):
+        """Generate `ConfigSource` objects for each user configuration
+        file in the program's search directories.
         """
-        out = []
+        for appdir in self._search_dirs():
+            filename = os.path.join(appdir, CONFIG_FILENAME)
+            if os.path.isfile(filename):
+                yield ConfigSource(load_yaml(filename), filename)
 
-        # Search standard directories.
-        if user:
-            for appdir in self._search_dirs():
-                out.append(os.path.join(appdir, CONFIG_FILENAME))
-
-        # Search the package for a defaults file.
-        if defaults and self.modname:
+    def _default_source(self):
+        """Return the default-value source for this program or `None` if
+        it does not exist.
+        """
+        if self.modname:
             pkg_path = _package_path(self.modname)
             if pkg_path:
-                out.append(os.path.join(pkg_path, DEFAULT_FILENAME))
-
-        return [p for p in out if os.path.isfile(p)]
+                filename = os.path.join(pkg_path, DEFAULT_FILENAME)
+                if os.path.isfile(filename):
+                    return ConfigSource(load_yaml(filename), filename, True)
 
     def read(self, user=True, defaults=True):
         """Find and read the files for this configuration and set them
@@ -568,9 +630,13 @@ class Configuration(RootView):
         discovered user configuration files or the in-package defaults,
         set `user` or `defaults` to `False`.
         """
-        self.sources = []
-        for filename in self._filenames(user, defaults):
-            self.sources.append(load_yaml(filename))
+        if user:
+            for source in self._user_sources():
+                self.add(source)
+        if defaults:
+            source = self._default_source()
+            if source:
+                self.add(source)
 
     def config_dir(self):
         """Get the path to the directory containing the highest-priority

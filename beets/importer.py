@@ -38,7 +38,6 @@ action = enum(
 )
 
 QUEUE_SIZE = 128
-STATE_FILE = os.path.expanduser('~/.beetsstate')
 SINGLE_ARTIST_THRESH = 0.25
 VARIOUS_ARTISTS = u'Various Artists'
 
@@ -146,14 +145,14 @@ def _resume():
 def _open_state():
     """Reads the state file, returning a dictionary."""
     try:
-        with open(STATE_FILE) as f:
+        with open(config['statefile'].as_filename()) as f:
             return pickle.load(f)
     except (IOError, EOFError):
         return {}
 def _save_state(state):
     """Writes the state dictionary out to disk."""
     try:
-        with open(STATE_FILE, 'w') as f:
+        with open(config['statefile'].as_filename(), 'w') as f:
             pickle.dump(state, f)
     except IOError as exc:
         log.error(u'state file could not be written: %s' % unicode(exc))

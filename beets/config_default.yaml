@@ -1,4 +1,4 @@
-library: ~/.beetsmusic.blb
+library: library.db
 directory: ~/Music
 
 import:
@@ -40,3 +40,5 @@ paths:
     default: $albumartist/$album%aunique{}/$track $title
     singleton: Non-Album/$artist/$title
     comp: Compilations/$album%aunique{}/$track $title
+
+statefile: state.pickle

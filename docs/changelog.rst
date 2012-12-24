@@ -13,6 +13,10 @@ This release entirely revamps beets' configuration system.
   ``autoembed``, etc.) but is now consistently called ``auto``.
 * Reorganized import config options: The various ``import_*`` options are now
   organized under an ``import:`` heading and their prefixes have been removed.
+* New default file locations: The default filename of the library database is
+  now ``library.db`` in the same directory as the config file, as opposed to
+  ``~/.beetsmusic.blb`` previously. Similarly, the runtime state file is now
+  called ``state.pickle`` in the same directory instead of ``~/.beetsstate``.
 
 1.0rc2 (in development)
 -----------------------
