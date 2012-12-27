@@ -4,8 +4,9 @@ Changelog
 1.0rc2 (in development)
 -----------------------
 
-* :doc:`/plugins/echonest_tempo`: If the Echo Nest API limit is exceeded, the
-  plugin now waits and tries again instead of crashing. Thanks to Zach Denton.
+* :doc:`/plugins/echonest_tempo`: If the Echo Nest API limit is exceeded or a
+  communication error occurs, the plugin now waits and tries again instead of
+  crashing. Thanks to Zach Denton.
 * :doc:`/plugins/fetchart`: Fix a regression that caused crashes when art was
   not available from some sources.
 * Fix a regression on Windows that caused all relative paths to be "not found".
