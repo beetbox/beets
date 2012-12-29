@@ -67,16 +67,20 @@ def get_tempo(artist, title):
             )
         except pyechonest.util.EchoNestAPIError as e:
             if e.code == 3:
-                # Rate limit exceeded.
-                if i >= RETRIES - 1:
-                    # Waited too many times already.
-                    log.debug(u'echonest_tempo: exceeded retries')
-                    return None
-                else:
-                    # Wait and try again.
-                    time.sleep(RETRY_INTERVAL)
+                # Wait and try again.
+                time.sleep(RETRY_INTERVAL)
+            else:
+                raise
+        except pyechonest.util.EchoNestIOError as e:
+            log.debug(u'echonest_tempo: IO error: {0}'.format(e))
+            time.sleep(RETRY_INTERVAL)
         else:
             break
+    else:
+        # If we exited the loop without breaking, then we used up all
+        # our allotted retries.
+        log.debug(u'echonest_tempo: exceeded retries')
+        return None
 
     if len(results) > 0:
         return results[0].audio_summary['tempo']
