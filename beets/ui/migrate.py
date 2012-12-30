@@ -35,6 +35,11 @@ DEFAULT_LIBRARY_FILENAME_WINDOWS = 'beetsmusic.blb'
 WINDOWS_BASEDIR = os.environ.get('APPDATA') or '~'
 
 OLD_CONFIG_SUFFIX = '.old'
+PLUGIN_NAMES = {
+    'rdm': 'random',
+    'fuzzy_search': 'fuzzy',
+}
+AUTO_KEYS = ('automatic', 'autofetch', 'autoembed', 'autoscrub')
 
 log = logging.getLogger('beets')
 
@@ -128,12 +133,32 @@ def transform_data(data):
             # The "main" section. In the new config system, these values
             # are in the "root": no section at all.
             for key, value in pairs.items():
-                out[key] = transform_value(value)
+                value = transform_value(value)
+
+                if key.startswith('import_'):
+                    # Importer config is now under an "import:" key.
+                    if 'import' not in out:
+                        out['import'] = confit.OrderedDict()
+                    out['import'][key[7:]] = value
+
+                elif key == 'plugins':
+                    # Renamed plugins.
+                    plugins = value.split()
+                    new_plugins = [PLUGIN_NAMES.get(p, p) for p in plugins]
+                    out['plugins'] = ' '.join(new_plugins)
+
+                else:
+                    out[key] = value
 
         else:
             # Other sections (plugins, etc).
             sec_out = out[section] = confit.OrderedDict()
             for key, value in pairs.items():
+
+                # Standardized "auto" option.
+                if key in AUTO_KEYS:
+                    key = 'auto'
+                
                 sec_out[key] = transform_value(value)
 
     return out
