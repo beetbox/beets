@@ -41,6 +41,16 @@ PLUGIN_NAMES = {
     'fuzzy_search': 'fuzzy',
 }
 AUTO_KEYS = ('automatic', 'autofetch', 'autoembed', 'autoscrub')
+CONFIG_MIGRATED_MESSAGE = u"""
+You appear to be upgrading from beets 1.0 (or earlier) to 1.1. Your
+configuration file has been migrated automatically to:
+{newconfig}
+Edit this file to configure beets. You might want to remove your
+old-style ".beetsconfig" file now. See the documentation for more
+details on the new configuration system:
+http://beets.readthedocs.org/page/reference/config.html
+""".strip()
+DB_MIGRATED_MESSAGE = u'Your database file has also been copied to:\n{newdb}'
 
 log = logging.getLogger('beets')
 
@@ -245,11 +255,11 @@ def migrate_config(replace=False):
     # Load legacy configuration data, if any.
     config, configpath = get_config()
     if not config:
-        log.info(u'no config file found at {0}'.format(
+        log.debug(u'no config file found at {0}'.format(
             util.displayable_path(configpath)
         ))
         return
-    log.info(u'migrating config file {0}'.format(
+    log.debug(u'migrating config file {0}'.format(
         util.displayable_path(configpath)
     ))
 
@@ -258,7 +268,7 @@ def migrate_config(replace=False):
     data = transform_data(flatten_config(config))
 
     # Write the data to the new config destination.
-    log.info(u'writing migrated config to {0}'.format(
+    log.debug(u'writing migrated config to {0}'.format(
         util.displayable_path(destfn)
     ))
     with open(destfn, 'w') as f:
@@ -270,6 +280,7 @@ def migrate_config(replace=False):
             indent=4,
             width=1000,
         )
+    return destfn
 
 def migrate_db(replace=False):
     """Copy the beets library database file to the new location (e.g.,
@@ -292,10 +303,11 @@ def migrate_db(replace=False):
         else:
             return
 
-    log.info(u'copying database from {0} to {1}'.format(
+    log.debug(u'copying database from {0} to {1}'.format(
         util.displayable_path(srcfn), util.displayable_path(destfn)
     ))
     util.copy(srcfn, destfn)
+    return destfn
 
 def migrate_state(replace=False):
     """Copy the beets runtime state file from the old path (i.e.,
@@ -312,15 +324,64 @@ def migrate_state(replace=False):
         else:
             return
 
-    log.info(u'copying state file from {0} to {1}'.format(
+    log.debug(u'copying state file from {0} to {1}'.format(
         util.displayable_path(srcfn), util.displayable_path(destfn)
     ))
     util.copy(srcfn, destfn)
+    return destfn
 
+
+# Automatic migration when beets starts.
+
+def automigrate():
+    """Migrate the configuration, database, and state files. If any
+    migration occurs, print out a notice with some helpful next steps.
+    """
+    config_fn = migrate_config()
+    db_fn = migrate_db()
+    migrate_state()
+
+    if config_fn:
+        heading = u'MIGRATED CONFIGURATION'
+        if beets.config['color']:
+            heading = ui.colorize('fuchsia', heading)
+        ui.print_(heading)
+
+        ui.print_(CONFIG_MIGRATED_MESSAGE.format(
+            newconfig=util.displayable_path(config_fn))
+        )
+        if db_fn:
+            ui.print_(DB_MIGRATED_MESSAGE.format(
+                newdb=util.displayable_path(db_fn)
+            ))
+
+        prompt = u'Press ENTER to continue:'
+        if beets.config['color']:
+            prompt = ui.colorize('fuchsia', prompt)
+        ui.input_(prompt)
+        ui.print_()
+
+
+# CLI command for explicit migration.
 
 migrate_cmd = ui.Subcommand('migrate', help='convert legacy config')
 def migrate_func(lib, opts, args):
-    migrate_config(replace=True)
-    migrate_db(replace=True)
-    migrate_state(replace=True)
+    """Explicit command for migrating files. Existing files in each
+    destination are moved aside.
+    """
+    config_fn = migrate_config(replace=True)
+    if config_fn:
+        log.info(u'Migrated configuration to: {0}'.format(
+            util.displayable_path(config_fn)
+        ))
+    db_fn = migrate_db(replace=True)
+    if db_fn:
+        log.info(u'Migrated library database to: {0}'.format(
+            util.displayable_path(db_fn)
+        ))
+    state_fn = migrate_state(replace=True)
+    if state_fn:
+        log.info(u'Migrated state file to: {0}'.format(
+            util.displayable_path(state_fn)
+        ))
 migrate_cmd.func = migrate_func
