@@ -617,6 +617,7 @@ def _raw_main(args, load_config=True):
 
     # Get the default subcommands.
     from beets.ui.commands import default_commands
+    from beets.ui import migrate
 
     # Add plugin paths.
     for plugpath in config['pluginpath'].as_str_seq():
@@ -628,6 +629,7 @@ def _raw_main(args, load_config=True):
     # Construct the root parser.
     commands = list(default_commands)
     commands += plugins.commands()
+    commands.append(migrate.migrate_cmd)
     parser = SubcommandsOptionParser(subcommands=commands)
     parser.add_option('-l', '--library', dest='library',
                       help='library database file to use')
