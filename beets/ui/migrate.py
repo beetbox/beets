@@ -20,7 +20,9 @@ import ConfigParser
 import codecs
 import yaml
 import logging
+import time
 
+import beets
 from beets import util
 from beets import ui
 from beets.util import confit
@@ -31,6 +33,8 @@ DEFAULT_CONFIG_FILENAME_WINDOWS = 'beetsconfig.ini'
 DEFAULT_LIBRARY_FILENAME_UNIX = '.beetsmusic.blb'
 DEFAULT_LIBRARY_FILENAME_WINDOWS = 'beetsmusic.blb'
 WINDOWS_BASEDIR = os.environ.get('APPDATA') or '~'
+
+OLD_CONFIG_SUFFIX = '.old'
 
 log = logging.getLogger('beets')
 
@@ -165,24 +169,59 @@ class Dumper(yaml.SafeDumper):
         return node
 Dumper.add_representer(confit.OrderedDict, Dumper.represent_dict)
 
-def migrate_config():
+def migrate_config(replace=False):
+    """Migrate a legacy beetsconfig file to a new-style config.yaml file
+    in an appropriate place. If `replace` is enabled, then any existing
+    config.yaml will be moved aside. Otherwise, the process is aborted
+    when the file exists.
+    """
+    # Get the new configuration file path and possibly move it out of
+    # the way.
+    destfn = os.path.join(beets.config.config_dir(), confit.CONFIG_FILENAME)
+    if os.path.exists(destfn):
+        if replace:
+            log.debug(u'moving old config aside: {0}'.format(
+                util.displayable_path(destfn)
+            ))
+            util.move(
+                destfn,
+                u'{0}.old.{1}'.format(destfn, int(time.time())),
+                True
+            )
+        else:
+            # File exists and we won't replace it. We're done.
+            return
+
+    # Load legacy configuration data, if any.
     config, configpath = get_config()
-    if config:
-        log.info(u'migrating config file {0}'.format(
-            util.displayable_path(configpath)
-        ))
-        data = transform_data(flatten_config(config))
-        print(yaml.dump(data,
-                        Dumper=Dumper,
-                        default_flow_style=False,
-                        indent=4,
-                        width=1000))
-    else:
+    if not config:
         log.info(u'no config file found at {0}'.format(
             util.displayable_path(configpath)
         ))
+        return
+    log.info(u'migrating config file {0}'.format(
+        util.displayable_path(configpath)
+    ))
+
+    # Convert the configuration to a data structure ready to be dumped
+    # as the new Confit file.
+    data = transform_data(flatten_config(config))
+
+    # Write the data to the new config destination.
+    log.info(u'writing migrated config to {0}'.format(
+        util.displayable_path(destfn)
+    ))
+    with open(destfn, 'w') as f:
+        yaml.dump(
+            data,
+            f,
+            Dumper=Dumper,
+            default_flow_style=False,
+            indent=4,
+            width=1000,
+        )
 
 migrate_cmd = ui.Subcommand('migrate', help='convert legacy config')
 def migrate_func(lib, opts, args):
-    migrate_config()
+    migrate_config(replace=True)
 migrate_cmd.func = migrate_func

@@ -388,7 +388,7 @@ def move(path, dest, replace=False, pathmod=os.path):
         return
     path = syspath(path)
     dest = syspath(dest)
-    if pathmod.exists(dest):
+    if pathmod.exists(dest) and not replace:
         raise FilesystemError('file exists', 'rename', (path, dest),
                               traceback.format_exc())
 
