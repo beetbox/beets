@@ -49,6 +49,16 @@ def grouper(n, iterable):
     args = [iter(iterable)] * n
     return itertools.izip_longest(*args)
 
+def _displace(fn):
+    """Move a file aside using a timestamp suffix so a new file can be
+    put in its place.
+    """
+    util.move(
+        fn,
+        u'{0}.old.{1}'.format(fn, int(time.time())),
+        True
+    )
+
 def default_paths():
     """Produces the appropriate default config and library database
     paths for the current system. On Unix, this is always in ~. On
@@ -227,11 +237,7 @@ def migrate_config(replace=False):
             log.debug(u'moving old config aside: {0}'.format(
                 util.displayable_path(destfn)
             ))
-            util.move(
-                destfn,
-                u'{0}.old.{1}'.format(destfn, int(time.time())),
-                True
-            )
+            _displace(destfn)
         else:
             # File exists and we won't replace it. We're done.
             return
@@ -265,7 +271,56 @@ def migrate_config(replace=False):
             width=1000,
         )
 
+def migrate_db(replace=False):
+    """Copy the beets library database file to the new location (e.g.,
+    from ~/.beetsmusic.blb to ~/.config/beets/library.db).
+    """
+    _, srcfn = default_paths()
+    destfn = beets.config['library'].as_filename()
+
+    if not os.path.exists(srcfn) or srcfn == destfn:
+        # Old DB does not exist or we're configured to point to the same
+        # database. Do nothing.
+        return
+    
+    if os.path.exists(destfn):
+        if replace:
+            log.debug(u'moving old database aside: {0}'.format(
+                util.displayable_path(destfn)
+            ))
+            _displace(destfn)
+        else:
+            return
+
+    log.info(u'copying database from {0} to {1}'.format(
+        util.displayable_path(srcfn), util.displayable_path(destfn)
+    ))
+    util.copy(srcfn, destfn)
+
+def migrate_state(replace=False):
+    """Copy the beets runtime state file from the old path (i.e.,
+    ~/.beetsstate) to the new path (i.e., ~/.config/beets/state.pickle).
+    """
+    srcfn = os.path.expanduser('~/.beetsstate')
+    if not os.path.exists(srcfn):
+        return
+
+    destfn = beets.config['statefile'].as_filename()
+    if os.path.exists(destfn):
+        if replace:
+            _displace(destfn)
+        else:
+            return
+
+    log.info(u'copying state file from {0} to {1}'.format(
+        util.displayable_path(srcfn), util.displayable_path(destfn)
+    ))
+    util.copy(srcfn, destfn)
+
+
 migrate_cmd = ui.Subcommand('migrate', help='convert legacy config')
 def migrate_func(lib, opts, args):
     migrate_config(replace=True)
+    migrate_db(replace=True)
+    migrate_state(replace=True)
 migrate_cmd.func = migrate_func
