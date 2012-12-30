@@ -21,6 +21,7 @@ import codecs
 import yaml
 import logging
 import time
+import itertools
 
 import beets
 from beets import util
@@ -42,6 +43,11 @@ PLUGIN_NAMES = {
 AUTO_KEYS = ('automatic', 'autofetch', 'autoembed', 'autoscrub')
 
 log = logging.getLogger('beets')
+
+# An itertools recipe.
+def grouper(n, iterable):
+    args = [iter(iterable)] * n
+    return itertools.izip_longest(*args)
 
 def default_paths():
     """Produces the appropriate default config and library database
@@ -94,7 +100,7 @@ def flatten_config(config):
     for section in config.sections():
         sec_dict = out[section] = confit.OrderedDict()
         for option in config.options(section):
-            sec_dict[option] = config.get(section, option)
+            sec_dict[option] = config.get(section, option, True)
     return out
 
 def transform_value(value):
@@ -147,6 +153,15 @@ def transform_data(data):
                     new_plugins = [PLUGIN_NAMES.get(p, p) for p in plugins]
                     out['plugins'] = ' '.join(new_plugins)
 
+                elif key == 'replace':
+                    # YAMLy representation for character replacements.
+                    replacements = confit.OrderedDict()
+                    for pat, repl in grouper(2, value.split()):
+                        if repl == '<strip>':
+                            repl = ''
+                        replacements[pat] = repl
+                    out['replace'] = replacements
+
                 else:
                     out[key] = value
 
@@ -158,6 +173,10 @@ def transform_data(data):
                 # Standardized "auto" option.
                 if key in AUTO_KEYS:
                     key = 'auto'
+
+                # Unnecessary : hack in queries.
+                if section == 'paths':
+                    key = key.replace('_', ':')
                 
                 sec_out[key] = transform_value(value)
 
