@@ -633,7 +633,8 @@ def _raw_main(args, load_config=True):
 
     # Temporary: Migrate from 1.0-style configuration.
     from beets.ui import migrate
-    migrate.automigrate()
+    if load_config:
+        migrate.automigrate()
 
     # Get the default subcommands.
     from beets.ui.commands import default_commands
