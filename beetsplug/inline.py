@@ -59,7 +59,7 @@ class InlinePlugin(BeetsPlugin):
         super(InlinePlugin, self).__init__()
 
         config.add({
-            'pathfields': [],
+            'pathfields': {},
         })
 
         # Add field expressions.
