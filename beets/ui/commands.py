@@ -79,10 +79,7 @@ def _showdiff(field, oldval, newval):
         return
 
     if newval != oldval:
-        if config['color'].get(bool):
-            oldval, newval = ui.colordiff(oldval, newval)
-        else:
-            oldval, newval = unicode(oldval), unicode(newval)
+        oldval, newval = ui.colordiff(oldval, newval)
         print_(u'  %s: %s -> %s' % (field, oldval, newval))
 
 
@@ -113,13 +110,12 @@ def dist_string(dist):
     The string is colorized if color is True.
     """
     out = '%.1f%%' % ((1 - dist) * 100)
-    if config['color'].get(bool):
-        if dist <= autotag.STRONG_REC_THRESH:
-            out = ui.colorize('green', out)
-        elif dist <= autotag.MEDIUM_REC_THRESH:
-            out = ui.colorize('yellow', out)
-        else:
-            out = ui.colorize('red', out)
+    if dist <= autotag.STRONG_REC_THRESH:
+        out = ui.colorize('green', out)
+    elif dist <= autotag.MEDIUM_REC_THRESH:
+        out = ui.colorize('yellow', out)
+    else:
+        out = ui.colorize('red', out)
     return out
 
 def show_change(cur_artist, cur_album, match):
@@ -135,17 +131,12 @@ def show_change(cur_artist, cur_album, match):
         else:
             album_description = u'    (unknown album)'
 
+        out = album_description
+
         # Add a suffix if this is a partial match.
         if partial:
-            warning = PARTIAL_MATCH_MESSAGE
-        else:
-            warning = None
-        if config['color'].get(bool) and warning:
-            warning = ui.colorize('yellow', warning)
+            out += u' ' + ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
 
-        out = album_description
-        if warning:
-            out += u' ' + warning
         print_(out)
 
     def format_index(track_info):
@@ -171,9 +162,8 @@ def show_change(cur_artist, cur_album, match):
             # Hide artists for VA releases.
             artist_l, artist_r = u'', u''
 
-        if config['color'].get(bool):
-            artist_l, artist_r = ui.colordiff(artist_l, artist_r)
-            album_l, album_r   = ui.colordiff(album_l, album_r)
+        artist_l, artist_r = ui.colordiff(artist_l, artist_r)
+        album_l, album_r   = ui.colordiff(album_l, album_r)
 
         print_("Correcting tags from:")
         show_album(artist_l, album_l)
@@ -182,10 +172,7 @@ def show_change(cur_artist, cur_album, match):
     else:
         message = u"Tagging: %s - %s" % (match.info.artist, match.info.album)
         if match.extra_items or match.extra_tracks:
-            warning = PARTIAL_MATCH_MESSAGE
-            if config['color'].get(bool):
-                warning = ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
-            message += u' ' + warning
+            message += u' ' + ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
         print_(message)
 
     # Distance/similarity.
@@ -203,17 +190,15 @@ def show_change(cur_artist, cur_album, match):
         cur_title = item.title
         new_title = track_info.title
         if item.length and track_info.length:
-            cur_length = ui.human_seconds_short(item.length)
-            new_length = ui.human_seconds_short(track_info.length)
-            if config['color'].get(bool):
-                cur_length = ui.colorize('red', cur_length)
-                new_length = ui.colorize('red', new_length)
+            cur_length = ui.colorize('red',
+                                     ui.human_seconds_short(item.length))
+            new_length = ui.colorize('red',
+                                     ui.human_seconds_short(track_info.length))
 
-        # Possibly colorize changes.
-        if config['color'].get(bool):
-            cur_title, new_title = ui.colordiff(cur_title, new_title)
-            cur_track = ui.colorize('red', cur_track)
-            new_track = ui.colorize('red', new_track)
+        # Colorize changes.
+        cur_title, new_title = ui.colordiff(cur_title, new_title)
+        cur_track = ui.colorize('red', cur_track)
+        new_track = ui.colorize('red', new_track)
 
         # Show filename (non-colorized) when title is not set.
         if not item.title.strip():
@@ -242,13 +227,11 @@ def show_change(cur_artist, cur_album, match):
     for track_info in match.extra_tracks:
         line = u' * Missing track: {0} ({1})'.format(track_info.title,
                                                      format_index(track_info))
-        if config['color'].get(bool):
-            line = ui.colorize('yellow', line)
+        line = ui.colorize('yellow', line)
         print_(line)
     for item in match.extra_items:
         line = u' * Unmatched track: {0} ({1})'.format(item.title, item.track)
-        if config['color'].get(bool):
-            line = ui.colorize('yellow', line)
+        line = ui.colorize('yellow', line)
         print_(line)
 
 def show_item_change(item, match):
@@ -259,9 +242,8 @@ def show_item_change(item, match):
     cur_title, new_title = item.title, match.info.title
 
     if cur_artist != new_artist or cur_title != new_title:
-        if config['color'].get():
-            cur_artist, new_artist = ui.colordiff(cur_artist, new_artist)
-            cur_title, new_title = ui.colordiff(cur_title, new_title)
+        cur_artist, new_artist = ui.colordiff(cur_artist, new_artist)
+        cur_title, new_title = ui.colordiff(cur_title, new_title)
 
         print_("Correcting track tags from:")
         print_("    %s - %s" % (cur_artist, cur_title))
@@ -378,8 +360,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                     # Point out the partial matches.
                     if match.extra_items or match.extra_tracks:
                         warning = PARTIAL_MATCH_MESSAGE
-                        if config['color'].get(bool):
-                            warning = ui.colorize('yellow', warning)
+                        warning = ui.colorize('yellow', warning)
                         line += u' %s' % warning
 
                     print_(line)

@@ -342,10 +342,7 @@ def automigrate():
     migrate_state()
 
     if config_fn:
-        heading = u'MIGRATED CONFIGURATION'
-        if beets.config['color']:
-            heading = ui.colorize('fuchsia', heading)
-        ui.print_(heading)
+        ui.print_(ui.colorize('fuchsia', u'MIGRATED CONFIGURATION'))
 
         ui.print_(CONFIG_MIGRATED_MESSAGE.format(
             newconfig=util.displayable_path(config_fn))
@@ -355,10 +352,7 @@ def automigrate():
                 newdb=util.displayable_path(db_fn)
             ))
 
-        prompt = u'Press ENTER to continue:'
-        if beets.config['color']:
-            prompt = ui.colorize('fuchsia', prompt)
-        ui.input_(prompt)
+        ui.input_(ui.colorize('fuchsia', u'Press ENTER to continue:'))
         ui.print_()
 
 

@@ -176,10 +176,9 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
             show_letter = found_letter.upper()
             is_default = False
 
-        # Possibly colorize the letter shortcut.
-        if config['color'].get(bool):
-            color = 'turquoise' if is_default else 'blue'
-            show_letter = colorize(color, show_letter)
+        # Colorize the letter shortcut.
+        show_letter = colorize('turquoise' if is_default else 'blue',
+                               show_letter)
 
         # Insert the highlighted letter back into the word.
         capitalized.append(
@@ -205,8 +204,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         if numrange:
             if isinstance(default, int):
                 default_name = str(default)
-                if color:
-                    default_name = colorize('turquoise', default_name)
+                default_name = colorize('turquoise', default_name)
                 tmpl = '# selection (default %s)'
                 prompt_parts.append(tmpl % default_name)
                 prompt_part_lengths.append(len(tmpl % str(default)))
@@ -339,7 +337,7 @@ DARK_COLORS  = ["black", "darkred", "darkgreen", "brown", "darkblue",
 LIGHT_COLORS = ["darkgray", "red", "green", "yellow", "blue",
                 "fuchsia", "turquoise", "white"]
 RESET_COLOR = COLOR_ESCAPE + "39;49;00m"
-def colorize(color, text):
+def _colorize(color, text):
     """Returns a string that prints the given text in the given color
     in a terminal that is ANSI color-aware. The color must be something
     in DARK_COLORS or LIGHT_COLORS.
@@ -352,7 +350,16 @@ def colorize(color, text):
         raise ValueError('no such color %s', color)
     return escape + text + RESET_COLOR
 
-def colordiff(a, b, highlight='red'):
+def colorize(color, text):
+    """Colorize text if colored output is enabled. (Like _colorize but
+    conditional.)
+    """
+    if config['color']:
+        return _colorize(color, text)
+    else:
+        return text
+
+def _colordiff(a, b, highlight='red'):
     """Given two values, return the same pair of strings except with
     their differences highlighted in the specified color. Strings are
     highlighted intelligently to show differences; other values are
@@ -390,6 +397,15 @@ def colordiff(a, b, highlight='red'):
             assert(False)
 
     return u''.join(a_out), u''.join(b_out)
+
+def colordiff(a, b, highlight='red'):
+    """Colorize differences between two values if color is enabled.
+    (Like _colordiff but conditional.)
+    """
+    if config['color']:
+        return _colordiff(a, b, highlight)
+    else:
+        return unicode(a), unicode(b)
 
 def get_path_formats():
     """Get the configuration's path formats as a list of query/template
