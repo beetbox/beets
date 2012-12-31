@@ -22,6 +22,7 @@ import yaml
 import logging
 import time
 import itertools
+import re
 
 import beets
 from beets import util
@@ -51,6 +52,7 @@ details on the new configuration system:
 http://beets.readthedocs.org/page/reference/config.html
 """.strip()
 DB_MIGRATED_MESSAGE = u'Your database file has also been copied to:\n{newdb}'
+YAML_COMMENT = '# Automatically migrated from legacy .beetsconfig.\n\n'
 
 log = logging.getLogger('beets')
 
@@ -267,19 +269,25 @@ def migrate_config(replace=False):
     # as the new Confit file.
     data = transform_data(flatten_config(config))
 
+    # Encode result as YAML.
+    yaml_out = yaml.dump(
+        data,
+        Dumper=Dumper,
+        default_flow_style=False,
+        indent=4,
+        width=1000,
+    )
+    # A ridiculous little hack to add some whitespace between "sections"
+    # in the YAML output. I hope this doesn't break any YAML syntax.
+    yaml_out = re.sub(r'(\n\w+:\n    [^-\s])', '\n\\1', yaml_out)
+    yaml_out = YAML_COMMENT + yaml_out
+
     # Write the data to the new config destination.
     log.debug(u'writing migrated config to {0}'.format(
         util.displayable_path(destfn)
     ))
     with open(destfn, 'w') as f:
-        yaml.dump(
-            data,
-            f,
-            Dumper=Dumper,
-            default_flow_style=False,
-            indent=4,
-            width=1000,
-        )
+        f.write(yaml_out)
     return destfn
 
 def migrate_db(replace=False):
