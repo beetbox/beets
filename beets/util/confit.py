@@ -484,7 +484,7 @@ def config_dirs():
     """Returns a list of user configuration directories to be searched.
     """
     if platform.system() == 'Darwin':
-        paths = [MAC_DIR, UNIX_DIR_FALLBACK]
+        paths = [UNIX_DIR_FALLBACK, MAC_DIR]
     elif platform.system() == 'Windows':
         if WINDOWS_DIR_VAR in os.environ:
             paths = [os.environ[WINDOWS_DIR_VAR]]
