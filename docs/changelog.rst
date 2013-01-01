@@ -18,6 +18,11 @@ This release entirely revamps beets' configuration system.
   ``~/.beetsmusic.blb`` previously. Similarly, the runtime state file is now
   called ``state.pickle`` in the same directory instead of ``~/.beetsstate``.
 
+1.0.0 (in development)
+----------------------
+
+* :doc:`/plugins/scrub`: Fix an incompatibility with Python 2.6.
+
 1.0rc2 (December 31, 2012)
 --------------------------
 

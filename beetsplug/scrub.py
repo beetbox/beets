@@ -81,7 +81,7 @@ def _mutagen_classes():
     """
     classes = []
     for modname, clsname in _MUTAGEN_FORMATS.items():
-        mod = __import__('mutagen.{}'.format(modname),
+        mod = __import__('mutagen.{0}'.format(modname),
                          fromlist=[clsname])
         classes.append(getattr(mod, clsname))
     return classes
