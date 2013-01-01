@@ -18,8 +18,12 @@ This release entirely revamps beets' configuration system.
   ``~/.beetsmusic.blb`` previously. Similarly, the runtime state file is now
   called ``state.pickle`` in the same directory instead of ``~/.beetsstate``.
 
-1.0rc2 (in development)
------------------------
+1.0rc2 (December 31, 2012)
+--------------------------
+
+This second release candidate follows quickly after rc1 and fixes a few small
+bugs found since that release. There were a couple of regressions and some bugs
+in a newly added plugin.
 
 * :doc:`/plugins/echonest_tempo`: If the Echo Nest API limit is exceeded or a
   communication error occurs, the plugin now waits and tries again instead of
