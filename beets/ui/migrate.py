@@ -191,7 +191,7 @@ def transform_data(data):
                 else:
                     out[key] = value
 
-        else:
+        elif pairs:
             # Other sections (plugins, etc).
             sec_out = out[section] = confit.OrderedDict()
             for key, value in pairs.items():
