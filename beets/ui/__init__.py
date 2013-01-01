@@ -431,6 +431,20 @@ def get_replacements():
             ))
     return replacements
 
+def get_plugin_paths():
+    """Get the list of search paths for plugins from the config file.
+    The value for "pluginpath" may be a single string or a list of
+    strings.
+    """
+    pluginpaths = config['pluginpath'].get()
+    if isinstance(pluginpaths, basestring):
+        pluginpaths = [pluginpaths]
+    if not isinstance(pluginpaths, list):
+        raise confit.ConfigTypeError(
+            u'pluginpath must be string or a list of strings'
+        )
+    return map(util.normpath, pluginpaths)
+
 def _pick_format(album, fmt=None):
     """Pick a format string for printing Album or Item objects,
     falling back to config options and defaults.
@@ -640,8 +654,7 @@ def _raw_main(args, load_config=True):
     from beets.ui.commands import default_commands
 
     # Add plugin paths.
-    for plugpath in config['pluginpath'].as_str_seq():
-        sys.path.append(os.path.expanduser(plugpath))
+    sys.path += get_plugin_paths()
     # Load requested plugins.
     plugins.load_plugins(config['plugins'].as_str_seq())
     plugins.send("pluginload")

@@ -184,6 +184,10 @@ def transform_data(data):
                         replacements[pat] = repl
                     out['replace'] = replacements
 
+                elif key == 'pluginpath':
+                    # Used to be a colon-separated string. Now a list.
+                    out['pluginpath'] = value.split(':')
+
                 else:
                     out[key] = value
 

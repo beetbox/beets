@@ -54,9 +54,15 @@ includes the BPD plugin for playing music.
 pluginpath
 ~~~~~~~~~~
 
-A colon-separated list of directories to search for plugins.  These paths
-are just added to ``sys.path`` before the plugins are loaded. The plugins
-still have to be contained in a ``beetsplug`` namespace package.
+Directories to search for plugins.  These paths are just added to ``sys.path``
+before the plugins are loaded. (The plugins still have to be contained in a
+``beetsplug`` namespace package.) This can either be a single string or a list
+of strings---so, if you have multiple paths, format them as a YAML list like
+so::
+
+    pluginpath:
+        - /path/one
+        - /path/two
 
 ignore
 ~~~~~~
