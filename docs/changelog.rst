@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.0.0 (in development)
+----------------------
+
+* :doc:`/plugins/scrub`: Fix an incompatibility with Python 2.6.
+
 1.0rc2 (December 31, 2012)
 --------------------------
 
