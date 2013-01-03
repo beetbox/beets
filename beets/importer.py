@@ -667,8 +667,8 @@ def user_query(session):
                 while True:
                     item_task = yield
                     item_tasks.append(item_task)
-            ipl = pipeline.Pipeline((emitter(), item_lookup(),
-                                     item_query(), collector()))
+            ipl = pipeline.Pipeline((emitter(), item_lookup(session),
+                                     item_query(session), collector()))
             ipl.run_sequential()
             task = pipeline.multiple(item_tasks)
             continue
