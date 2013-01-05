@@ -37,17 +37,33 @@ def compile_expr(expr):
     a Unicode string. If the expression cannot be compiled, then an
     error is logged and this function returns None.
     """
+    code = None
+
     try:
         code = compile(u'(%s)' % expr, 'inline', 'eval')
     except SyntaxError:
-        log.error(u'syntax error in field expression:\n%s' %
-                  traceback.format_exc())
+        pass
+
+    if code == None:
+        try:
+            code = compile("""%s""" % expr, 'inline', 'exec')
+        except SyntaxError:
+            log.error(u'syntax error in field expression:\n%s' %
+                      traceback.format_exc())
+
+    if code == None:
         return None
 
     def field_func(item):
         values = dict(item.record)
         try:
-            return eval(code, values)
+            ret = eval(code, values)
+            if ret == None:
+                ret = values.get('_', None)
+            if ret == None:
+                raise Exception('Expression must be a statement or a block of' \
+                                ' code storing the result in the "_" variable.')
+            return ret
         except Exception as exc:
             raise InlineError(expr, exc)
     return field_func
