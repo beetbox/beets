@@ -119,8 +119,7 @@ def apply_item_metadata(item, track_info):
 
 def apply_metadata(album_info, mapping):
     """Set the items' metadata to match an AlbumInfo object using a
-    mapping from Items to TrackInfo objects. If `per_disc_numbering`,
-    then the track numbers are per-disc instead of per-release.
+    mapping from Items to TrackInfo objects.
     """
     for item, track_info in mapping.iteritems():
         # Album, artist, track count.

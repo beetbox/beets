@@ -67,6 +67,7 @@ def extract_text(html, starttag):
         _, html = html.split(starttag, 1)
     except ValueError:
         return
+    print(html)
 
     # Walk through balanced DIV tags.
     level = 0

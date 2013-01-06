@@ -18,6 +18,11 @@ This release entirely revamps beets' configuration system.
   ``~/.beetsmusic.blb`` previously. Similarly, the runtime state file is now
   called ``state.pickle`` in the same directory instead of ``~/.beetsstate``.
 
+It also adds some new features:
+
+* :doc:`/plugins/inline`: Inline definitions can now be statements or blocks
+  in addition to just expressions. Thanks to Florent Thoumie.
+
 1.0.0 (in development)
 ----------------------
 

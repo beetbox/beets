@@ -38,19 +38,14 @@ def compile_expr(expr):
     error is logged and this function returns None.
     """
     code = None
-
     try:
         code = compile(u'(%s)' % expr, 'inline', 'eval')
     except SyntaxError:
-        pass
-
-    if code == None:
         try:
-            code = compile("""%s""" % expr, 'inline', 'exec')
+            code = compile(expr, 'inline', 'exec')
         except SyntaxError:
             log.error(u'syntax error in field expression:\n%s' %
                       traceback.format_exc())
-
     if code == None:
         return None
 
