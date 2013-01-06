@@ -20,8 +20,8 @@ This release entirely revamps beets' configuration system.
 
 It also adds some new features:
 
-* :doc:`/plugins/inline`: Inline definitions can now be statements or blocks
-  in addition to just expressions. Thanks to Florent Thoumie.
+* :doc:`/plugins/inline`: Inline definitions can now contain statements or
+  blocks in addition to just expressions. Thanks to Florent Thoumie.
 
 1.0.0 (in development)
 ----------------------

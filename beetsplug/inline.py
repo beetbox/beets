@@ -22,46 +22,71 @@ from beets import config
 
 log = logging.getLogger('beets')
 
+FUNC_NAME = u'__INLINE_FUNC__'
+
 class InlineError(Exception):
     """Raised when a runtime error occurs in an inline expression.
     """
-    def __init__(self, expr, exc):
+    def __init__(self, code, exc):
         super(InlineError, self).__init__(
-            (u"error in inline path field expression:\n" \
-             u"%s\n%s: %s") % (expr, type(exc).__name__, unicode(exc))
+            (u"error in inline path field code:\n" \
+             u"%s\n%s: %s") % (code, type(exc).__name__, unicode(exc))
         )
 
-def compile_expr(expr):
-    """Given a Python expression, compile it as a path field function.
-    The returned function takes a single argument, an Item, and returns
-    a Unicode string. If the expression cannot be compiled, then an
-    error is logged and this function returns None.
+def _compile_func(body):
+    """Given Python code for a function body, return a compiled
+    callable that invokes that code.
     """
-    code = None
-    try:
-        code = compile(u'(%s)' % expr, 'inline', 'eval')
-    except SyntaxError:
-        try:
-            code = compile(expr, 'inline', 'exec')
-        except SyntaxError:
-            log.error(u'syntax error in field expression:\n%s' %
-                      traceback.format_exc())
-    if code == None:
-        return None
+    body = u'def {0}():\n    {1}'.format(
+        FUNC_NAME,
+        body.replace('\n', '\n    ')
+    )
+    code = compile(body, 'inline', 'exec')
+    env = {}
+    eval(code, env)
+    return env[FUNC_NAME]
 
-    def field_func(item):
-        values = dict(item.record)
+def compile_inline(python_code):
+    """Given a Python expression or function body, compile it as a path
+    field function. The returned function takes a single argument, an
+    Item, and returns a Unicode string. If the expression cannot be
+    compiled, then an error is logged and this function returns None.
+    """
+    # First, try compiling as a single function.
+    try:
+        code = compile(u'({0})'.format(python_code), 'inline', 'eval')
+    except SyntaxError:
+        # Fall back to a function body.
         try:
-            ret = eval(code, values)
-            if ret == None:
-                ret = values.get('_', None)
-            if ret == None:
-                raise Exception('Expression must be a statement or a block of' \
-                                ' code storing the result in the "_" variable.')
-            return ret
-        except Exception as exc:
-            raise InlineError(expr, exc)
-    return field_func
+            func = _compile_func(python_code)
+        except SyntaxError:
+            log.error(u'syntax error in inline field definition:\n%s' %
+                      traceback.format_exc())
+            return
+        else:
+            is_expr = False
+    else:
+        is_expr = True
+
+    if is_expr:
+        # For expressions, just evaluate and return the result.
+        def _expr_func(item):
+            values = dict(item.record)
+            try:
+                return eval(code, values)
+            except Exception as exc:
+                raise InlineError(python_code, exc)
+        return _expr_func
+    else:
+        # For function bodies, invoke the function with values as global
+        # variables.
+        def _func_func(item):
+            func.__globals__.update(item.record)
+            try:
+                return func()
+            except Exception as exc:
+                raise InlineError(python_code, exc)
+        return _func_func
 
 class InlinePlugin(BeetsPlugin):
     template_fields = {}
@@ -76,6 +101,6 @@ class InlinePlugin(BeetsPlugin):
         # Add field expressions.
         for key, view in config['pathfields'].items():
             log.debug(u'adding template field %s' % key)
-            func = compile_expr(view.get(unicode))
+            func = compile_inline(view.get(unicode))
             if func is not None:
                 InlinePlugin.template_fields[key] = func
