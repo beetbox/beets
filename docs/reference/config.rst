@@ -299,7 +299,6 @@ Here's an example file::
     import_copy: yes
     import_write: yes
     import_resume: ask
-    import_art: yes
     import_quiet_fallback: skip
     import_timid: no
     import_log: beetslog.txt
