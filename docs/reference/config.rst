@@ -312,7 +312,6 @@ Here's an example file::
         copy: yes
         write: yes
         resume: ask
-        art: yes
         quiet_fallback: skip
         timid: no
         log: beetslog.txt
