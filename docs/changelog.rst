@@ -22,6 +22,8 @@ It also adds some new features:
 
 * :doc:`/plugins/inline`: Inline definitions can now contain statements or
   blocks in addition to just expressions. Thanks to Florent Thoumie.
+* :doc:`/plugins/lyrics`: Fix an issue that failed to find lyrics when metadata
+  contained "real" apostrophes.
 
 1.0.0 (in development)
 ----------------------
