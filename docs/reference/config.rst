@@ -129,13 +129,6 @@ Either ``yes`` or ``no``; whether to use color in console output (currently
 only in the ``import`` command). Turn this off if your terminal doesn't
 support ANSI colors.
 
-timeout
-~~~~~~~
-
-The amount of time that the SQLite library should wait before raising an
-exception when the database lock is contended. This should almost never need
-to be changed except on very slow systems. Defaults to 5.0 (5 seconds).
-
 .. _list_format_item:
 
 list_format_item
@@ -173,6 +166,17 @@ use a path format like this::
 
     paths:
         default: $albumartist/$album%aunique{}/$disc-$track $title
+
+.. _terminal_encoding:
+
+terminal_encoding
+~~~~~~~~~~~~~~~~~
+
+The text encoding, as `known to Python`_, to use for messages printed to the
+standard output. By default, this is determined automatically from the locale
+environment variables.
+
+.. _known to python: http://docs.python.org/2/library/codecs.html#standard-encodings
 
 Importer Options
 ----------------

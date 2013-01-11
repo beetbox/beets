@@ -18,7 +18,6 @@ CLI commands are implemented in the ui.commands module.
 """
 from __future__ import print_function
 
-import os
 import locale
 import optparse
 import textwrap
@@ -67,7 +66,13 @@ log = logging.getLogger('beets')
 # Utilities.
 
 def _encoding():
-    """Tries to guess the encoding uses by the terminal."""
+    """Tries to guess the encoding used by the terminal."""
+    # Configured override?
+    encoding = config['terminal_encoding'].get()
+    if encoding:
+        return encoding
+
+    # Determine from locale settings.
     try:
         return locale.getdefaultlocale()[1] or 'utf8'
     except ValueError:

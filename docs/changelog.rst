@@ -22,6 +22,8 @@ It also adds some new features:
 
 * :doc:`/plugins/inline`: Inline definitions can now contain statements or
   blocks in addition to just expressions. Thanks to Florent Thoumie.
+* Add a configuration option, :ref:`terminal_encoding`, controlling the text
+  encoding used to print messages to standard output.
 * :doc:`/plugins/lyrics`: Fix an issue that failed to find lyrics when metadata
   contained "real" apostrophes.
 
