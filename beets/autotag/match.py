@@ -75,10 +75,6 @@ SD_REPLACE = [
 RECOMMEND_STRONG = 'RECOMMEND_STRONG'
 RECOMMEND_MEDIUM = 'RECOMMEND_MEDIUM'
 RECOMMEND_NONE = 'RECOMMEND_NONE'
-# Thresholds for recommendations.
-STRONG_REC_THRESH = 0.04
-MEDIUM_REC_THRESH = 0.25
-REC_GAP_THRESH = 0.25
 
 # Artist signals that indicate "various artists". These are used at the
 # album level to determine whether a given release is likely a VA
@@ -335,16 +331,17 @@ def recommendation(results):
         rec = RECOMMEND_NONE
     else:
         min_dist = results[0].distance
-        if min_dist < STRONG_REC_THRESH:
+        if min_dist < config['match']['strong_rec_thresh'].as_number():
             # Strong recommendation level.
             rec = RECOMMEND_STRONG
         elif len(results) == 1:
             # Only a single candidate. Medium recommendation.
             rec = RECOMMEND_MEDIUM
-        elif min_dist <= MEDIUM_REC_THRESH:
+        elif min_dist <= config['match']['medium_rec_thresh'].as_number():
             # Medium recommendation level.
             rec = RECOMMEND_MEDIUM
-        elif results[1].distance - min_dist >= REC_GAP_THRESH:
+        elif results[1].distance - min_dist >= \
+                    config['match']['rec_gap_thresh'].as_number():
             # Gap between first two candidates is large.
             rec = RECOMMEND_MEDIUM
         else:

@@ -268,7 +268,7 @@ no log is written. This can be overridden with the ``-l`` flag to
 .. _musicbrainz-config:
 
 MusicBrainz Options
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 If you run your own `MusicBrainz`_ server, you can instruct beets to use it
 instead of the main server. Use the ``host`` and ``ratelimit`` options under a
@@ -286,6 +286,34 @@ server---on this public server, you're `limited`_ to one request per second.
 
 .. _limited: http://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
 .. _MusicBrainz: http://musicbrainz.org/
+
+.. _match-config:
+
+Autotagger Matching Options
+---------------------------
+
+You can configure some aspects of the logic beets uses when automatically
+matching MusicBrainz results under the ``match:`` section. To control how
+*tolerant* the autotagger is of differences, use the ``strong_rec_thresh``
+option, which reflects the distance threshold below which beets will make a
+"strong recommendation" that the metadata be used. Strong recommendations
+are accepted automatically (except in "timid" mode), so you can use this to
+make beets ask your opinion more or less often.
+
+The threshold is a *distance* value between 0.0 and 1.0, so you can think of it
+as the opposite of a *similarity* value. For example, if you want to
+automatically accept any matches above 90% similarity, use::
+
+    match:
+        strong_rec_thresh: 0.10
+
+The default strong recommendation threshold is 0.04.
+
+The ``medium_rec_thresh`` and ``rec_gap_thresh`` options work similarly. When a
+match is above the *medium* recommendation threshold or the distance between it
+and the next-best match is above the *gap* threshold, the importer will suggest
+that match but not automatically confirm it. Otherwise, you'll see a list of
+options to choose from.
 
 .. _path-format-config:
 

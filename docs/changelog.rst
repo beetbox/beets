@@ -26,6 +26,8 @@ It also adds some new features:
   encoding used to print messages to standard output.
 * The MusicBrainz hostname (and rate limiting) are now configurable. See
   :ref:`musicbrainz-config`.
+* You can now configure the similarity thresholds used to determine when the
+  autotagger automatically accepts a metadata match. See :ref:`match-config`.
 * :doc:`/plugins/lyrics`: Fix an issue that failed to find lyrics when metadata
   contained "real" apostrophes.
 

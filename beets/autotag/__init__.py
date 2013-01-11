@@ -26,7 +26,6 @@ from .hooks import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch
 from .match import AutotagError
 from .match import tag_item, tag_album
 from .match import RECOMMEND_STRONG, RECOMMEND_MEDIUM, RECOMMEND_NONE
-from .match import STRONG_REC_THRESH, MEDIUM_REC_THRESH, REC_GAP_THRESH
 
 # Global logger.
 log = logging.getLogger('beets')

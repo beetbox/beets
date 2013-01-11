@@ -106,13 +106,13 @@ PARTIAL_MATCH_MESSAGE = u'(partial match!)'
 # Importer utilities and support.
 
 def dist_string(dist):
-    """Formats a distance (a float) as a similarity percentage string.
-    The string is colorized if color is True.
+    """Formats a distance (a float) as a colorized similarity percentage
+    string.
     """
     out = '%.1f%%' % ((1 - dist) * 100)
-    if dist <= autotag.STRONG_REC_THRESH:
+    if dist <= config['match']['strong_rec_thresh'].as_number():
         out = ui.colorize('green', out)
-    elif dist <= autotag.MEDIUM_REC_THRESH:
+    elif dist <= config['match']['medium_rec_thresh'].as_number():
         out = ui.colorize('yellow', out)
     else:
         out = ui.colorize('red', out)

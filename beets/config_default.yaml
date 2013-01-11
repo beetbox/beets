@@ -48,3 +48,8 @@ musicbrainz:
     host: musicbrainz.org
     ratelimit: 1
     ratelimit_interval: 1.0
+
+match:
+    strong_rec_thresh: 0.04
+    medium_rec_thresh: 0.25
+    rec_gap_thresh: 0.25
