@@ -21,6 +21,7 @@ import traceback
 import beets.autotag.hooks
 import beets
 from beets import util
+from beets import config
 
 SEARCH_LIMIT = 5
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
@@ -56,6 +57,16 @@ else:
     # New API names.
     _mb_release_search = musicbrainzngs.search_releases
     _mb_recording_search = musicbrainzngs.search_recordings
+
+def configure():
+    """Set up the python-musicbrainz-ngs module according to settings
+    from the beets configuration. This should be called at startup.
+    """
+    musicbrainzngs.set_hostname(config['musicbrainz']['host'].get(unicode))
+    musicbrainzngs.set_rate_limit(
+        config['musicbrainz']['ratelimit_interval'].as_number(),
+        config['musicbrainz']['ratelimit'].get(int),
+    )
 
 def _flatten_artist_credit(credit):
     """Given a list representing an ``artist-credit`` block, flatten the

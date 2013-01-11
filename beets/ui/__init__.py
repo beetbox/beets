@@ -34,6 +34,7 @@ from beets import util
 from beets.util.functemplate import Template
 from beets import config
 from beets.util import confit
+from beets.autotag import mb
 
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
@@ -709,6 +710,9 @@ def _raw_main(args, load_config=True):
         util.displayable_path(lib.path),
         util.displayable_path(lib.directory),
     ))
+
+    # Configure the MusicBrainz API.
+    mb.configure()
 
     # Invoke the subcommand.
     subcommand.func(lib, suboptions, subargs)

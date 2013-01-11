@@ -43,3 +43,8 @@ paths:
     comp: Compilations/$album%aunique{}/$track $title
 
 statefile: state.pickle
+
+musicbrainz:
+    host: musicbrainz.org
+    ratelimit: 1
+    ratelimit_interval: 1.0

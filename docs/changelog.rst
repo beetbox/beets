@@ -24,6 +24,8 @@ It also adds some new features:
   blocks in addition to just expressions. Thanks to Florent Thoumie.
 * Add a configuration option, :ref:`terminal_encoding`, controlling the text
   encoding used to print messages to standard output.
+* The MusicBrainz hostname (and rate limiting) are now configurable. See
+  :ref:`musicbrainz-config`.
 * :doc:`/plugins/lyrics`: Fix an issue that failed to find lyrics when metadata
   contained "real" apostrophes.
 
