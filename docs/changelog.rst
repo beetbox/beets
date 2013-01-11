@@ -28,13 +28,13 @@ It also adds some new features:
   :ref:`musicbrainz-config`.
 * You can now configure the similarity thresholds used to determine when the
   autotagger automatically accepts a metadata match. See :ref:`match-config`.
-* :doc:`/plugins/lyrics`: Fix an issue that failed to find lyrics when metadata
-  contained "real" apostrophes.
 
 1.0.0 (in development)
 ----------------------
 
 * :doc:`/plugins/scrub`: Fix an incompatibility with Python 2.6.
+* :doc:`/plugins/lyrics`: Fix an issue that failed to find lyrics when metadata
+  contained "real" apostrophes.
 
 1.0rc2 (December 31, 2012)
 --------------------------
