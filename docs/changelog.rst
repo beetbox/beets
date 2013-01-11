@@ -5,6 +5,8 @@ Changelog
 ----------------------
 
 * :doc:`/plugins/scrub`: Fix an incompatibility with Python 2.6.
+* :doc:`/plugins/lyrics`: Fix an issue that failed to find lyrics when metadata
+  contained "real" apostrophes.
 
 1.0rc2 (December 31, 2012)
 --------------------------

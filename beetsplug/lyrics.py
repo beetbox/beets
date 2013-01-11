@@ -102,6 +102,16 @@ def extract_text(html, starttag):
     lyrics = lyrics.strip()
     return lyrics
 
+def _encode(s):
+    """Encode the string for inclusion in a URL (common to both
+    LyricsWiki and Lyrics.com).
+    """
+    if isinstance(s, unicode):
+        # Replace "fancy" apostrophes with straight ones.
+        s = s.replace(u'\u2019', u"'")
+        s = s.encode('utf8', 'ignore')
+    return urllib.quote(s)
+
 LYRICSWIKI_URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
 def _lw_encode(s):
     s = re.sub(r'\s+', '_', s)
@@ -110,9 +120,7 @@ def _lw_encode(s):
     s = s.replace("#", "Number_")
     s = re.sub(r'[\[\{]', '(', s)
     s = re.sub(r'[\]\}]', ')', s)
-    if isinstance(s, unicode):
-        s = s.encode('utf8', 'ignore')
-    return urllib.quote(s)
+    return _encode(s)
 def fetch_lyricswiki(artist, title):
     """Fetch lyrics from LyricsWiki."""
     url = LYRICSWIKI_URL_PATTERN % (_lw_encode(artist), _lw_encode(title))
@@ -131,9 +139,7 @@ LYRICSCOM_NOT_FOUND = (
 )
 def _lc_encode(s):
     s = re.sub(r'\s+', '-', s)
-    if isinstance(s, unicode):
-        s = s.encode('utf8', 'ignore')
-    return urllib.quote(s)
+    return _encode(s)
 def fetch_lyricscom(artist, title):
     """Fetch lyrics from Lyrics.com."""
     url = LYRICSCOM_URL_PATTERN % (_lc_encode(title), _lc_encode(artist))
