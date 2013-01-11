@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2012, David Brenner <david.a.brenner gmail>
+# Copyright 2013, David Brenner <david.a.brenner gmail>
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the

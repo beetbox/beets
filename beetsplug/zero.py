@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2012, Blemjhoo Tezoulbr <baobab@heresiarch.info>.
+# Copyright 2013, Blemjhoo Tezoulbr <baobab@heresiarch.info>.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
