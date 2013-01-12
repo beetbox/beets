@@ -35,6 +35,8 @@ It also adds some new features:
 * :doc:`/plugins/scrub`: Fix an incompatibility with Python 2.6.
 * :doc:`/plugins/lyrics`: Fix an issue that failed to find lyrics when metadata
   contained "real" apostrophes.
+* :doc:`/plugins/replaygain`: On Windows, emit a warning instead of
+  crashing when analyzing non-ASCII filenames.
 
 1.0rc2 (December 31, 2012)
 --------------------------

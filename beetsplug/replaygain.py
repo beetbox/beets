@@ -39,6 +39,11 @@ def call(args):
         raise ReplayGainError(
             "{0} exited with status {1}".format(args[0], e.returncode)
         )
+    except UnicodeEncodeError:
+        # Due to a bug in Python 2's subprocess on Windows, Unicode
+        # filenames can fail to encode on that platform. See:
+        # http://code.google.com/p/beets/issues/detail?id=499
+        raise ReplayGainError("argument encoding failed")
 
 def parse_tool_output(text):
     """Given the tab-delimited output from an invocation of mp3gain
