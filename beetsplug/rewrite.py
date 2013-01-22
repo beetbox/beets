@@ -43,7 +43,7 @@ def rewriter(field, rules):
 
 class RewritePlugin(BeetsPlugin):
     def __init__(self):
-        super(BeetsPlugin, self).__init__()
+        super(RewritePlugin, self).__init__()
         BeetsPlugin.template_fields = {}
 
         self.config.add({})
