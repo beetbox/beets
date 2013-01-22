@@ -42,6 +42,7 @@ PLUGIN_NAMES = {
     'fuzzy_search': 'fuzzy',
 }
 AUTO_KEYS = ('automatic', 'autofetch', 'autoembed', 'autoscrub')
+IMPORTFEEDS_PREFIX = 'feeds_'
 CONFIG_MIGRATED_MESSAGE = u"""
 You appear to be upgrading from beets 1.0 (or earlier) to 1.1. Your
 configuration file has been migrated automatically to:
@@ -203,6 +204,11 @@ def transform_data(data):
                 # Unnecessary : hack in queries.
                 if section == 'paths':
                     key = key.replace('_', ':')
+
+                # Changed option names for importfeeds plugin.
+                if section == 'importfeeds':
+                    if key.startswith(IMPORTFEEDS_PREFIX):
+                        key = key[len(IMPORTFEEDS_PREFIX):]
                 
                 sec_out[key] = transform_value(value)
 
