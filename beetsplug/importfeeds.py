@@ -45,7 +45,7 @@ class ImportFeedsPlugin(BeetsPlugin):
 
         relative_to = self.config['relative_to'].get()
         if relative_to:
-            self.config['relative_to'] = os.path.expanduser(bytestring_path(relative_to))
+            self.config['relative_to'] = normpath(relative_to)
         else:
             self.config['relative_to'] = feeds_dir
 
@@ -85,8 +85,9 @@ def _record_items(lib, basename, items):
     """Records relative paths to the given items for each feed format
     """
     feedsdir = config['importfeeds']['dir'].as_filename()
-    relative_to = config['importfeeds']['relative_to'].as_filename()
     formats = config['importfeeds']['formats'].as_str_seq()
+    relative_to = config['importfeeds']['relative_to'].get() \
+            or config['importfeeds']['dir'].as_filename()
 
     paths = []
     for item in items:

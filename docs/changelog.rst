@@ -28,6 +28,8 @@ It also adds some new features:
   :ref:`musicbrainz-config`.
 * You can now configure the similarity thresholds used to determine when the
   autotagger automatically accepts a metadata match. See :ref:`match-config`.
+* :doc:`/plugins/importfeeds`: Added a new configuration option that controls
+  the base for relative paths used in m3u files.
 
 1.0.0 (in development)
 ----------------------

@@ -10,9 +10,9 @@ To use the plugin, just put ``importfeeds`` on the ``plugins`` line in your
 The ``dir`` configuration option can be set to specify another folder
 than the default library directory.
 
-the ``relative_to`` configuration option can be set to write the m3u paths
-relative to another folder than where the playlist is being written. If you are
-using importfeeds to genereate a playlist for mpd, you should set this to the
+The ``relative_to`` configuration option can be set to make the m3u paths
+relative to another folder than where the playlist is being written. If you're
+using importfeeds to generate a playlist for MPD, you should set this to the
 root of your music library.
 
 Three different types of outputs coexist, specify the ones you want to use by
