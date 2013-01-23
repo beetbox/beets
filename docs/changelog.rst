@@ -29,7 +29,7 @@ It also adds some new features:
 * You can now configure the similarity thresholds used to determine when the
   autotagger automatically accepts a metadata match. See :ref:`match-config`.
 * :doc:`/plugins/importfeeds`: Added a new configuration option that controls
-  the base for relative paths used in m3u files.
+  the base for relative paths used in m3u files. Thanks to Philippe Mongeau.
 
 1.0.0 (in development)
 ----------------------
