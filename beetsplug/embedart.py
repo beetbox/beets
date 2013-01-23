@@ -26,10 +26,9 @@ from beets import config
 
 log = logging.getLogger('beets')
 
-def _embed(path, items):
+def _embed(path, items, maxwidth=0):
     """Embed an image file, located at `path`, into each item.
     """
-    maxwidth = config['embedart']['maxwidth'].get(int)
     if maxwidth:
         path = ArtResizer.shared.resize(maxwidth, syspath(path))
 
@@ -110,7 +109,8 @@ def embed(lib, imagepath, query):
 
     log.info('Embedding album art into %s - %s.' % \
              (album.albumartist, album.album))
-    _embed(imagepath, album.items())
+    _embed(imagepath, album.items(),
+           config['embedart']['maxwidth'].get(int))
 
 # "extractart" command.
 def extract(lib, outpath, query):
@@ -156,4 +156,5 @@ def clear(lib, query):
 @EmbedCoverArtPlugin.listen('album_imported')
 def album_imported(lib, album):
     if album.artpath and config['embedart']['auto']:
-        _embed(album.artpath, album.items())
+        _embed(album.artpath, album.items(),
+               config['embedart']['maxwidth'].get(int))
