@@ -37,7 +37,8 @@ class ImportFeedsPlugin(BeetsPlugin):
         
         feeds_dir = self.config['dir'].get()
         if feeds_dir: 
-            self.config['dir'] = os.path.expanduser(bytestring_path(feeds_dir))
+            feeds_dir = os.path.expanduser(bytestring_path(feeds_dir))
+            self.config['dir'] = feeds_dir
             if not os.path.exists(syspath(feeds_dir)):
                 os.makedirs(syspath(feeds_dir))
 
