@@ -37,7 +37,7 @@ library
 ~~~~~~~
 
 Path to the beets library file. By default, beets will use a file called
-``beetsmusic.blb`` alongside your configuration file.
+``library.db`` alongside your configuration file.
 
 directory
 ~~~~~~~~~

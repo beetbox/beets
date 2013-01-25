@@ -10,3 +10,4 @@ guide.
 
    main
    tagger
+   migration
