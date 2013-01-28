@@ -172,7 +172,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         index = option.index(found_letter)
 
         # Mark the option's shortcut letter for display.
-        if (default is None and not numrange and first) \
+        if (not require and default is None and not numrange and first) \
            or (isinstance(default, basestring) and
                found_letter.lower() == default.lower()):
             # The first option is the default; mark it.
