@@ -108,8 +108,11 @@ def _safe_cast(out_type, val):
             return False
         else:
             try:
-                # Should work for strings, bools, ints:
-                return bool(int(val))
+                if isinstance(val, mutagen.asf.ASFBoolAttribute):
+                    return bool(val)
+                else:
+                    # Should work for strings, bools, ints:
+                    return bool(int(val))
             except ValueError:
                 return False
 
