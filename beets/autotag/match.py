@@ -332,6 +332,11 @@ def recommendation(results):
     else:
         min_dist = results[0].distance
         if min_dist < config['match']['strong_rec_thresh'].as_number():
+            # Reduce to medium rec if partial releases are not allowed.
+            if isinstance(results[0], hooks.AlbumMatch) and \
+                    config['import']['confirm_partial'] and \
+                    (results[0].extra_items or results[0].extra_tracks):
+                return RECOMMEND_MEDIUM
             # Strong recommendation level.
             rec = RECOMMEND_STRONG
         elif len(results) == 1:
