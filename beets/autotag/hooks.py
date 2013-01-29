@@ -85,6 +85,24 @@ class AlbumInfo(object):
         self.albumdisambig = albumdisambig
         self.artist_credit = artist_credit
 
+    # Work around a bug in python-musicbrainz-ngs that causes some
+    # strings to be bytes rather than Unicode.
+    # https://github.com/alastair/python-musicbrainz-ngs/issues/85
+    def decode(self, codec='utf8'):
+        """Ensure that all string attributes on this object, and the
+        constituent `TrackInfo` objects, are decoded to Unicode.
+        """
+        for fld in ['album', 'artist', 'albumtype', 'label', 'artist_sort',
+                    'script', 'language', 'country', 'albumstatus',
+                    'albumdisambig', 'artist_credit', 'media']:
+            value = getattr(self, fld)
+            if isinstance(value, str):
+                setattr(self, fld, value.decode(codec, 'ignore'))
+
+        if self.tracks:
+            for track in self.tracks:
+                track.decode(codec)
+
 class TrackInfo(object):
     """Describes a canonical track present on a release. Appears as part
     of an AlbumInfo's ``tracks`` list. Consists of these data members:
@@ -119,6 +137,17 @@ class TrackInfo(object):
         self.artist_sort = artist_sort
         self.disctitle = disctitle
         self.artist_credit = artist_credit
+
+    # As above, work around a bug in python-musicbrainz-ngs.
+    def decode(self, codec='utf8'):
+        """Ensure that all string attributes on this object are decoded
+        to Unicode.
+        """
+        for fld in ['title', 'artist', 'medium', 'artist_sort', 'disctitle',
+                    'artist_credit']:
+            value = getattr(self, fld)
+            if isinstance(value, str):
+                setattr(self, fld, value.decode(codec, 'ignore'))
 
 AlbumMatch = namedtuple('AlbumMatch', ['distance', 'info', 'mapping',
                                        'extra_items', 'extra_tracks'])

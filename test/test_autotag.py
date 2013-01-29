@@ -79,44 +79,44 @@ class PluralityTest(unittest.TestCase):
         self.assertEqual(l_artist, 'aartist')
         self.assertFalse(artist_consensus)
 
-def _make_item(title, track, artist='some artist'):
+def _make_item(title, track, artist=u'some artist'):
     return Item({
         'title': title, 'track': track,
-        'artist': artist, 'album': 'some album',
+        'artist': artist, 'album': u'some album',
         'length': 1,
         'mb_trackid': '', 'mb_albumid': '', 'mb_artistid': '',
     })
 
 def _make_trackinfo():
     return [
-        TrackInfo('one', None, 'some artist', length=1, index=1),
-        TrackInfo('two', None, 'some artist', length=1, index=2),
-        TrackInfo('three', None, 'some artist', length=1, index=3),
+        TrackInfo(u'one', None, u'some artist', length=1, index=1),
+        TrackInfo(u'two', None, u'some artist', length=1, index=2),
+        TrackInfo(u'three', None, u'some artist', length=1, index=3),
     ]
 
 class TrackDistanceTest(unittest.TestCase):
     def test_identical_tracks(self):
-        item = _make_item('one', 1)
+        item = _make_item(u'one', 1)
         info = _make_trackinfo()[0]
         dist = match.track_distance(item, info, incl_artist=True)
         self.assertEqual(dist, 0.0)
 
     def test_different_title(self):
-        item = _make_item('foo', 1)
+        item = _make_item(u'foo', 1)
         info = _make_trackinfo()[0]
         dist = match.track_distance(item, info, incl_artist=True)
         self.assertNotEqual(dist, 0.0)
 
     def test_different_artist(self):
-        item = _make_item('one', 1)
-        item.artist = 'foo'
+        item = _make_item(u'one', 1)
+        item.artist = u'foo'
         info = _make_trackinfo()[0]
         dist = match.track_distance(item, info, incl_artist=True)
         self.assertNotEqual(dist, 0.0)
 
     def test_various_artists_tolerated(self):
-        item = _make_item('one', 1)
-        item.artist = 'Various Artists'
+        item = _make_item(u'one', 1)
+        item.artist = u'Various Artists'
         info = _make_trackinfo()[0]
         dist = match.track_distance(item, info, incl_artist=True)
         self.assertEqual(dist, 0.0)
@@ -133,12 +133,12 @@ class AlbumDistanceTest(unittest.TestCase):
 
     def test_identical_albums(self):
         items = []
-        items.append(_make_item('one', 1))
-        items.append(_make_item('two', 2))
-        items.append(_make_item('three', 3))
+        items.append(_make_item(u'one', 1))
+        items.append(_make_item(u'two', 2))
+        items.append(_make_item(u'three', 3))
         info = AlbumInfo(
-            artist = 'some artist',
-            album = 'some album',
+            artist = u'some artist',
+            album = u'some album',
             tracks = _make_trackinfo(),
             va = False,
             album_id = None, artist_id = None,
@@ -147,11 +147,11 @@ class AlbumDistanceTest(unittest.TestCase):
 
     def test_incomplete_album(self):
         items = []
-        items.append(_make_item('one', 1))
-        items.append(_make_item('three', 3))
+        items.append(_make_item(u'one', 1))
+        items.append(_make_item(u'three', 3))
         info = AlbumInfo(
-            artist = 'some artist',
-            album = 'some album',
+            artist = u'some artist',
+            album = u'some album',
             tracks = _make_trackinfo(),
             va = False,
             album_id = None, artist_id = None,
@@ -163,12 +163,12 @@ class AlbumDistanceTest(unittest.TestCase):
 
     def test_global_artists_differ(self):
         items = []
-        items.append(_make_item('one', 1))
-        items.append(_make_item('two', 2))
-        items.append(_make_item('three', 3))
+        items.append(_make_item(u'one', 1))
+        items.append(_make_item(u'two', 2))
+        items.append(_make_item(u'three', 3))
         info = AlbumInfo(
-            artist = 'someone else',
-            album = 'some album',
+            artist = u'someone else',
+            album = u'some album',
             tracks = _make_trackinfo(),
             va = False,
             album_id = None, artist_id = None,
@@ -177,12 +177,12 @@ class AlbumDistanceTest(unittest.TestCase):
 
     def test_comp_track_artists_match(self):
         items = []
-        items.append(_make_item('one', 1))
-        items.append(_make_item('two', 2))
-        items.append(_make_item('three', 3))
+        items.append(_make_item(u'one', 1))
+        items.append(_make_item(u'two', 2))
+        items.append(_make_item(u'three', 3))
         info = AlbumInfo(
-            artist = 'should be ignored',
-            album = 'some album',
+            artist = u'should be ignored',
+            album = u'some album',
             tracks = _make_trackinfo(),
             va = True,
             album_id = None, artist_id = None,
@@ -192,12 +192,12 @@ class AlbumDistanceTest(unittest.TestCase):
     def test_comp_no_track_artists(self):
         # Some VA releases don't have track artists (incomplete metadata).
         items = []
-        items.append(_make_item('one', 1))
-        items.append(_make_item('two', 2))
-        items.append(_make_item('three', 3))
+        items.append(_make_item(u'one', 1))
+        items.append(_make_item(u'two', 2))
+        items.append(_make_item(u'three', 3))
         info = AlbumInfo(
-            artist = 'should be ignored',
-            album = 'some album',
+            artist = u'should be ignored',
+            album = u'some album',
             tracks = _make_trackinfo(),
             va = True,
             album_id = None, artist_id = None,
@@ -209,12 +209,12 @@ class AlbumDistanceTest(unittest.TestCase):
 
     def test_comp_track_artists_do_not_match(self):
         items = []
-        items.append(_make_item('one', 1))
-        items.append(_make_item('two', 2, 'someone else'))
-        items.append(_make_item('three', 3))
+        items.append(_make_item(u'one', 1))
+        items.append(_make_item(u'two', 2, u'someone else'))
+        items.append(_make_item(u'three', 3))
         info = AlbumInfo(
-            artist = 'some artist',
-            album = 'some album',
+            artist = u'some artist',
+            album = u'some album',
             tracks = _make_trackinfo(),
             va = True,
             album_id = None, artist_id = None,
@@ -223,12 +223,12 @@ class AlbumDistanceTest(unittest.TestCase):
 
     def test_tracks_out_of_order(self):
         items = []
-        items.append(_make_item('one', 1))
-        items.append(_make_item('three', 2))
-        items.append(_make_item('two', 3))
+        items.append(_make_item(u'one', 1))
+        items.append(_make_item(u'three', 2))
+        items.append(_make_item(u'two', 3))
         info = AlbumInfo(
-            artist = 'some artist',
-            album = 'some album',
+            artist = u'some artist',
+            album = u'some album',
             tracks = _make_trackinfo(),
             va = False,
             album_id = None, artist_id = None,
@@ -238,12 +238,12 @@ class AlbumDistanceTest(unittest.TestCase):
 
     def test_two_medium_release(self):
         items = []
-        items.append(_make_item('one', 1))
-        items.append(_make_item('two', 2))
-        items.append(_make_item('three', 3))
+        items.append(_make_item(u'one', 1))
+        items.append(_make_item(u'two', 2))
+        items.append(_make_item(u'three', 3))
         info = AlbumInfo(
-            artist = 'some artist',
-            album = 'some album',
+            artist = u'some artist',
+            album = u'some album',
             tracks = _make_trackinfo(),
             va = False,
             album_id = None, artist_id = None,
@@ -256,12 +256,12 @@ class AlbumDistanceTest(unittest.TestCase):
 
     def test_per_medium_track_numbers(self):
         items = []
-        items.append(_make_item('one', 1))
-        items.append(_make_item('two', 2))
-        items.append(_make_item('three', 1))
+        items.append(_make_item(u'one', 1))
+        items.append(_make_item(u'two', 2))
+        items.append(_make_item(u'three', 1))
         info = AlbumInfo(
-            artist = 'some artist',
-            album = 'some album',
+            artist = u'some artist',
+            album = u'some album',
             tracks = _make_trackinfo(),
             va = False,
             album_id = None, artist_id = None,
@@ -375,13 +375,13 @@ class AssignmentTest(unittest.TestCase):
 
     def test_reorder_when_track_numbers_incorrect(self):
         items = []
-        items.append(self.item('one', 1))
-        items.append(self.item('three', 2))
-        items.append(self.item('two', 3))
+        items.append(self.item(u'one', 1))
+        items.append(self.item(u'three', 2))
+        items.append(self.item(u'two', 3))
         trackinfo = []
-        trackinfo.append(TrackInfo('one', None))
-        trackinfo.append(TrackInfo('two', None))
-        trackinfo.append(TrackInfo('three', None))
+        trackinfo.append(TrackInfo(u'one', None))
+        trackinfo.append(TrackInfo(u'two', None))
+        trackinfo.append(TrackInfo(u'three', None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
         self.assertEqual(extra_items, set())
@@ -394,13 +394,13 @@ class AssignmentTest(unittest.TestCase):
 
     def test_order_works_with_invalid_track_numbers(self):
         items = []
-        items.append(self.item('one', 1))
-        items.append(self.item('three', 1))
-        items.append(self.item('two', 1))
+        items.append(self.item(u'one', 1))
+        items.append(self.item(u'three', 1))
+        items.append(self.item(u'two', 1))
         trackinfo = []
-        trackinfo.append(TrackInfo('one', None))
-        trackinfo.append(TrackInfo('two', None))
-        trackinfo.append(TrackInfo('three', None))
+        trackinfo.append(TrackInfo(u'one', None))
+        trackinfo.append(TrackInfo(u'two', None))
+        trackinfo.append(TrackInfo(u'three', None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
         self.assertEqual(extra_items, set())
@@ -413,12 +413,12 @@ class AssignmentTest(unittest.TestCase):
 
     def test_order_works_with_missing_tracks(self):
         items = []
-        items.append(self.item('one', 1))
-        items.append(self.item('three', 3))
+        items.append(self.item(u'one', 1))
+        items.append(self.item(u'three', 3))
         trackinfo = []
-        trackinfo.append(TrackInfo('one', None))
-        trackinfo.append(TrackInfo('two', None))
-        trackinfo.append(TrackInfo('three', None))
+        trackinfo.append(TrackInfo(u'one', None))
+        trackinfo.append(TrackInfo(u'two', None))
+        trackinfo.append(TrackInfo(u'three', None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
         self.assertEqual(extra_items, set())
@@ -430,12 +430,12 @@ class AssignmentTest(unittest.TestCase):
 
     def test_order_works_with_extra_tracks(self):
         items = []
-        items.append(self.item('one', 1))
-        items.append(self.item('two', 2))
-        items.append(self.item('three', 3))
+        items.append(self.item(u'one', 1))
+        items.append(self.item(u'two', 2))
+        items.append(self.item(u'three', 3))
         trackinfo = []
-        trackinfo.append(TrackInfo('one', None))
-        trackinfo.append(TrackInfo('three', None))
+        trackinfo.append(TrackInfo(u'one', None))
+        trackinfo.append(TrackInfo(u'three', None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
         self.assertEqual(extra_items, set([items[1]]))
@@ -449,9 +449,9 @@ class AssignmentTest(unittest.TestCase):
         # A real-world test case contributed by a user.
         def item(i, length):
             return Item({
-                'artist': 'ben harper',
-                'album': 'burn to shine',
-                'title': 'ben harper - Burn to Shine ' + str(i),
+                'artist': u'ben harper',
+                'album': u'burn to shine',
+                'title': u'ben harper - Burn to Shine ' + str(i),
                 'track': i,
                 'length': length,
                 'mb_trackid': '', 'mb_albumid': '', 'mb_artistid': '',
@@ -473,18 +473,18 @@ class AssignmentTest(unittest.TestCase):
         def info(index, title, length):
             return TrackInfo(title, None, length=length, index=index)
         trackinfo = []
-        trackinfo.append(info(1, 'Alone', 238.893))
-        trackinfo.append(info(2, 'The Woman in You', 341.44))
-        trackinfo.append(info(3, 'Less', 245.59999999999999))
-        trackinfo.append(info(4, 'Two Hands of a Prayer', 470.49299999999999))
-        trackinfo.append(info(5, 'Please Bleed', 277.86599999999999))
-        trackinfo.append(info(6, 'Suzie Blue', 269.30599999999998))
-        trackinfo.append(info(7, 'Steal My Kisses', 245.36000000000001))
-        trackinfo.append(info(8, 'Burn to Shine', 214.90600000000001))
-        trackinfo.append(info(9, 'Show Me a Little Shame', 224.09299999999999))
-        trackinfo.append(info(10, 'Forgiven', 317.19999999999999))
-        trackinfo.append(info(11, 'Beloved One', 243.733))
-        trackinfo.append(info(12, 'In the Lord\'s Arms', 186.13300000000001))
+        trackinfo.append(info(1, u'Alone', 238.893))
+        trackinfo.append(info(2, u'The Woman in You', 341.44))
+        trackinfo.append(info(3, u'Less', 245.59999999999999))
+        trackinfo.append(info(4, u'Two Hands of a Prayer', 470.49299999999999))
+        trackinfo.append(info(5, u'Please Bleed', 277.86599999999999))
+        trackinfo.append(info(6, u'Suzie Blue', 269.30599999999998))
+        trackinfo.append(info(7, u'Steal My Kisses', 245.36000000000001))
+        trackinfo.append(info(8, u'Burn to Shine', 214.90600000000001))
+        trackinfo.append(info(9, u'Show Me a Little Shame', 224.09299999999999))
+        trackinfo.append(info(10, u'Forgiven', 317.19999999999999))
+        trackinfo.append(info(11, u'Beloved One', 243.733))
+        trackinfo.append(info(12, u'In the Lord\'s Arms', 186.13300000000001))
 
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
@@ -508,22 +508,22 @@ class ApplyTest(unittest.TestCase, ApplyTestUtil):
         self.items.append(Item({}))
         trackinfo = []
         trackinfo.append(TrackInfo(
-            'oneNew', 'dfa939ec-118c-4d0f-84a0-60f3d1e6522c', medium=1,
+            u'oneNew', 'dfa939ec-118c-4d0f-84a0-60f3d1e6522c', medium=1,
             medium_index=1, artist_credit='trackArtistCredit',
             artist_sort='trackArtistSort', index=1,
         ))
-        trackinfo.append(TrackInfo('twoNew',
+        trackinfo.append(TrackInfo(u'twoNew',
                                    '40130ed1-a27c-42fd-a328-1ebefb6caef4',
                                    medium=2, medium_index=1, index=2))
         self.info = AlbumInfo(
             tracks = trackinfo,
-            artist = 'artistNew',
-            album = 'albumNew',
+            artist = u'artistNew',
+            album = u'albumNew',
             album_id = '7edb51cb-77d6-4416-a23c-3a8c2994a2c7',
             artist_id = 'a6623d39-2d8e-4f70-8242-0a9553b91e50',
-            artist_credit = 'albumArtistCredit',
-            artist_sort = 'albumArtistSort',
-            albumtype = 'album',
+            artist_credit = u'albumArtistCredit',
+            artist_sort = u'albumArtistSort',
+            albumtype = u'album',
             va = False,
             mediums = 2,
         )
@@ -620,26 +620,26 @@ class ApplyCompilationTest(unittest.TestCase, ApplyTestUtil):
         self.items.append(Item({}))
         trackinfo = []
         trackinfo.append(TrackInfo(
-            'oneNew',
+            u'oneNew',
             'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
-            'artistOneNew',
+            u'artistOneNew',
             'a05686fc-9db2-4c23-b99e-77f5db3e5282',
             index=1,
         ))
         trackinfo.append(TrackInfo(
-            'twoNew',
+            u'twoNew',
             '40130ed1-a27c-42fd-a328-1ebefb6caef4',
-            'artistTwoNew',
+            u'artistTwoNew',
             '80b3cf5e-18fe-4c59-98c7-e5bb87210710',
             index=2,
         ))
         self.info = AlbumInfo(
             tracks = trackinfo,
-            artist = 'variousNew',
-            album = 'albumNew',
+            artist = u'variousNew',
+            album = u'albumNew',
             album_id = '3b69ea40-39b8-487f-8818-04b6eff8c21a',
             artist_id = '89ad4ac3-39f7-470e-963a-56509c546377',
-            albumtype = 'compilation',
+            albumtype = u'compilation',
             va = False,
         )
 
@@ -675,73 +675,73 @@ class ApplyCompilationTest(unittest.TestCase, ApplyTestUtil):
 
 class StringDistanceTest(unittest.TestCase):
     def test_equal_strings(self):
-        dist = match.string_dist('Some String', 'Some String')
+        dist = match.string_dist(u'Some String', u'Some String')
         self.assertEqual(dist, 0.0)
 
     def test_different_strings(self):
-        dist = match.string_dist('Some String', 'Totally Different')
+        dist = match.string_dist(u'Some String', u'Totally Different')
         self.assertNotEqual(dist, 0.0)
 
     def test_punctuation_ignored(self):
-        dist = match.string_dist('Some String', 'Some.String!')
+        dist = match.string_dist(u'Some String', u'Some.String!')
         self.assertEqual(dist, 0.0)
 
     def test_case_ignored(self):
-        dist = match.string_dist('Some String', 'sOME sTring')
+        dist = match.string_dist(u'Some String', u'sOME sTring')
         self.assertEqual(dist, 0.0)
 
     def test_leading_the_has_lower_weight(self):
-        dist1 = match.string_dist('XXX Band Name', 'Band Name')
-        dist2 = match.string_dist('The Band Name', 'Band Name')
+        dist1 = match.string_dist(u'XXX Band Name', u'Band Name')
+        dist2 = match.string_dist(u'The Band Name', u'Band Name')
         self.assert_(dist2 < dist1)
 
     def test_parens_have_lower_weight(self):
-        dist1 = match.string_dist('One .Two.', 'One')
-        dist2 = match.string_dist('One (Two)', 'One')
+        dist1 = match.string_dist(u'One .Two.', u'One')
+        dist2 = match.string_dist(u'One (Two)', u'One')
         self.assert_(dist2 < dist1)
 
     def test_brackets_have_lower_weight(self):
-        dist1 = match.string_dist('One .Two.', 'One')
-        dist2 = match.string_dist('One [Two]', 'One')
+        dist1 = match.string_dist(u'One .Two.', u'One')
+        dist2 = match.string_dist(u'One [Two]', u'One')
         self.assert_(dist2 < dist1)
 
     def test_ep_label_has_zero_weight(self):
-        dist = match.string_dist('My Song (EP)', 'My Song')
+        dist = match.string_dist(u'My Song (EP)', u'My Song')
         self.assertEqual(dist, 0.0)
 
     def test_featured_has_lower_weight(self):
-        dist1 = match.string_dist('My Song blah Someone', 'My Song')
-        dist2 = match.string_dist('My Song feat Someone', 'My Song')
+        dist1 = match.string_dist(u'My Song blah Someone', u'My Song')
+        dist2 = match.string_dist(u'My Song feat Someone', u'My Song')
         self.assert_(dist2 < dist1)
 
     def test_postfix_the(self):
-        dist = match.string_dist('The Song Title', 'Song Title, The')
+        dist = match.string_dist(u'The Song Title', u'Song Title, The')
         self.assertEqual(dist, 0.0)
 
     def test_postfix_a(self):
-        dist = match.string_dist('A Song Title', 'Song Title, A')
+        dist = match.string_dist(u'A Song Title', u'Song Title, A')
         self.assertEqual(dist, 0.0)
 
     def test_postfix_an(self):
-        dist = match.string_dist('An Album Title', 'Album Title, An')
+        dist = match.string_dist(u'An Album Title', u'Album Title, An')
         self.assertEqual(dist, 0.0)
 
     def test_empty_strings(self):
-        dist = match.string_dist('', '')
+        dist = match.string_dist(u'', u'')
         self.assertEqual(dist, 0.0)
 
     def test_solo_pattern(self):
         # Just make sure these don't crash.
-        match.string_dist('The ', '')
-        match.string_dist('(EP)', '(EP)')
-        match.string_dist(', An', '')
+        match.string_dist(u'The ', u'')
+        match.string_dist(u'(EP)', u'(EP)')
+        match.string_dist(u', An', u'')
 
     def test_heuristic_does_not_harm_distance(self):
-        dist = match.string_dist('Untitled', '[Untitled]')
+        dist = match.string_dist(u'Untitled', u'[Untitled]')
         self.assertEqual(dist, 0.0)
 
     def test_ampersand_expansion(self):
-        dist = match.string_dist('And', '&')
+        dist = match.string_dist(u'And', u'&')
         self.assertEqual(dist, 0.0)
 
     def test_accented_characters(self):
