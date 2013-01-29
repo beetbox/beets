@@ -1,10 +1,15 @@
 Changelog
 =========
 
-1.1b1 (in development)
-----------------------
+1.1b1 (January 29, 2013)
+------------------------
 
-This release entirely revamps beets' configuration system.
+This release entirely revamps beets' configuration system. The configuration
+file is now a `YAML`_ document and is located, along with other support files,
+in a common directory (e.g., ``~/.config/beets`` on Unix-like systems). If
+you're upgrading from an earlier version, please see :doc:`/guides/migration`.
+
+.. _YAML: http://en.wikipedia.org/wiki/YAML
 
 * Renamed plugins: The ``rdm`` plugin has been renamed to ``random`` and
   ``fuzzy_search`` has been renamed to ``fuzzy``.
@@ -31,8 +36,13 @@ It also adds some new features:
 * :doc:`/plugins/importfeeds`: Added a new configuration option that controls
   the base for relative paths used in m3u files. Thanks to Philippe Mongeau.
 
-1.0.0 (in development)
-----------------------
+1.0.0 (January 29, 2013)
+------------------------
+
+After fifteen betas and two release candidates, beets has finally hit
+one-point-oh. Congratulations to everybody involved. This version of beets will
+remain stable and receive only bug fixes from here on out. New development is
+ongoing in the betas of version 1.1.
 
 * :doc:`/plugins/scrub`: Fix an incompatibility with Python 2.6.
 * :doc:`/plugins/lyrics`: Fix an issue that failed to find lyrics when metadata
