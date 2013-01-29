@@ -1,8 +1,13 @@
 Changelog
 =========
 
-1.0.0 (in development)
-----------------------
+1.0.0 (January 29, 2013)
+------------------------
+
+After fifteen betas and two release candidates, beets has finally hit
+one-point-oh. Congratulations to everybody involved. This version of beets will
+remain stable and receive only bug fixes from here on out. New development is
+ongoing in the betas of version 1.1.
 
 * :doc:`/plugins/scrub`: Fix an incompatibility with Python 2.6.
 * :doc:`/plugins/lyrics`: Fix an issue that failed to find lyrics when metadata
