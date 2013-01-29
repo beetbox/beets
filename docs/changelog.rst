@@ -39,6 +39,7 @@ It also adds some new features:
   contained "real" apostrophes.
 * :doc:`/plugins/replaygain`: On Windows, emit a warning instead of
   crashing when analyzing non-ASCII filenames.
+* Silence a spurious warning from version 0.04.12 of the Unidecode module.
 
 1.0rc2 (December 31, 2012)
 --------------------------

@@ -132,6 +132,7 @@ def track_info(recording, index=None, medium=None, medium_index=None):
     if recording.get('length'):
         info.length = int(recording['length'])/(1000.0)
 
+    info.decode()
     return info
 
 def _set_date_str(info, date_str):
@@ -225,6 +226,7 @@ def album_info(release):
         first_medium = release['medium-list'][0]
         info.media = first_medium.get('format')
 
+    info.decode()
     return info
 
 def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
