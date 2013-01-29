@@ -74,6 +74,7 @@ SD_REPLACE = [
 # Recommendation constants.
 RECOMMEND_STRONG = 'RECOMMEND_STRONG'
 RECOMMEND_MEDIUM = 'RECOMMEND_MEDIUM'
+RECOMMEND_LOW = 'RECOMMEND_LOW'
 RECOMMEND_NONE = 'RECOMMEND_NONE'
 
 # Artist signals that indicate "various artists". These are used at the
@@ -348,7 +349,7 @@ def recommendation(results):
         elif results[1].distance - min_dist >= \
                     config['match']['rec_gap_thresh'].as_number():
             # Gap between first two candidates is large.
-            rec = RECOMMEND_MEDIUM
+            rec = RECOMMEND_LOW
         else:
             # No conclusion.
             rec = RECOMMEND_NONE
