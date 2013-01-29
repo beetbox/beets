@@ -886,7 +886,7 @@ class MediaFile(object):
         etc = [StorageStyle('TRACKTOTAL'),
                StorageStyle('TRACKC'),
                StorageStyle('TOTALTRACKS')],
-        asf = None,
+        asf = StorageStyle('TotalTracks'),
     )
     disc = MediaField(out_type=int,
         mp3 = StorageStyle('TPOS', packing=packing.SLASHED, pack_pos=0),
@@ -901,7 +901,7 @@ class MediaFile(object):
         etc = [StorageStyle('DISCTOTAL'),
                StorageStyle('DISCC'),
                StorageStyle('TOTALDISCS')],
-        asf = None,
+        asf = StorageStyle('TotalDiscs'),
     )
     lyrics = MediaField(
         mp3 = StorageStyle('USLT', list_elem=False, id3_desc=u''),
@@ -965,7 +965,7 @@ class MediaFile(object):
         mp3 = StorageStyle('TXXX', id3_desc=u'ASIN'),
         mp4 = StorageStyle("----:com.apple.iTunes:ASIN"),
         etc = StorageStyle('ASIN'),
-        asf = None,
+        asf = StorageStyle('MusicBrainz/ASIN'),
     )
     catalognum = MediaField(
         mp3 = StorageStyle('TXXX', id3_desc=u'CATALOGNUMBER'),
@@ -1091,7 +1091,7 @@ class MediaFile(object):
         mp4 = StorageStyle('----:com.apple.iTunes:Acoustid Fingerprint',
                            as_type=str),
         etc = StorageStyle('ACOUSTID_FINGERPRINT'),
-        asf = None,
+        asf = StorageStyle('Acoustid/Fingerprint'),
     )
     acoustid_id = MediaField(
         mp3 = StorageStyle('TXXX',
