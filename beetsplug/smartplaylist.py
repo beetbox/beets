@@ -60,7 +60,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
     def commands(self):
         def update(lib, opts, args):
             update_playlists(lib)
-        spl_update = ui.Subcommand('spl_update',
+        spl_update = ui.Subcommand('splupdate',
             help='update the smart playlists')
         spl_update.func = update
         return [spl_update]
