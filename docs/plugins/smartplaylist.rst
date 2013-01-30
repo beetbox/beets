@@ -33,6 +33,15 @@ You can generate as many playlists as you want by adding them to the
 ``name`` (*note*: if you have existing files with the same names, you should
 back them up, as they will be overwritten when the plugin runs).
 
+For more advanced usage, you can also specify metadata (see
+:doc:`/reference/pathformat/`) in the ``name`` field, for example::
+
+    - query: 'year::201(0|1)'
+      name: 'ReleasedIn$year.m3u'
+
+This will query all the songs in 2010 and 2011, and generate the 2 playlist
+files `ReleasedIn2010.m3u` and `ReleasedIn2011.m3u` using those songs.
+
 If you add a smart playlist to your ``config.yaml`` file and don't want to wait
 until the next time your library changes for ``smartplugin`` to run, you can
 invoke it manually from the command-line::
