@@ -10,6 +10,7 @@ library = None
 
 
 def update_playlists(lib):
+    print("Updating smart playlists...")
     playlists = config['smartplaylist']['playlists'].get(list)
     playlist_dir = config['smartplaylist']['playlist_dir'].get(unicode)
     relative_to = config['smartplaylist']['relative_to'].get()
@@ -27,6 +28,7 @@ def update_playlists(lib):
         with open(syspath(m3u_path), 'w') as f:
             for path in paths:
                 f.write(path + '\n')
+    print("... Done")
 
 
 class SmartPlaylistPlugin(BeetsPlugin):
