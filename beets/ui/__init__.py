@@ -723,6 +723,7 @@ def main(args=None):
     """
     try:
         _raw_main(args)
+        plugins.send('cli_exit')
     except UserError as exc:
         message = exc.args[0] if exc.args else None
         log.error(u'error: {0}'.format(message))
