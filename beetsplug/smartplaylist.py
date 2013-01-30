@@ -42,7 +42,7 @@ def update_playlists(lib):
         else:
             paths = [item.path for item in items]
         basename = playlist['name'].encode('utf8')
-        m3u_path = os.path.join(playlist_dir, basename)
+        m3u_path = normpath(os.path.join(playlist_dir, basename))
         with open(syspath(m3u_path), 'w') as f:
             for path in paths:
                 f.write(path + '\n')
