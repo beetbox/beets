@@ -195,6 +195,15 @@ READ_ONLY_CORRECT_DICTS = {
         'bitdepth': 0,
         'channels': 2,
     },
+
+    'full.wma': {
+        'length': 1.0,
+        'bitrate': 23,
+        'format': 'Windows Media',
+        'samplerate': 44100,
+        'bitdepth': 0,
+        'channels': 2,
+    },
 }
 
 TEST_FILES = {
@@ -205,6 +214,7 @@ TEST_FILES = {
     'ape': ['full'],
     'wv': ['full'],
     'mpc': ['full'],
+    'wma': ['full'],
 }
 
 class AllFilesMixin(object):
@@ -249,6 +259,9 @@ class AllFilesMixin(object):
 
     def test_mpc(self):
         self._run('full', 'mpc')
+
+    def test_wma(self):
+        self._run('full', 'wma')
 
     # Special test for advanced release date.
     def test_date_mp3(self):
@@ -408,6 +421,9 @@ class ReadOnlyTest(unittest.TestCase):
 
     def test_mpc(self):
         self._run('full.mpc')
+
+    def test_wma(self):
+        self._run('full.wma')
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
