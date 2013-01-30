@@ -1,3 +1,19 @@
+# This file is part of beets.
+# Copyright 2013, Dang Mai <contact@dangmai.net>.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+
+"""Generates smart playlists based on beets queries.
+"""
 from __future__ import print_function
 
 from beets.plugins import BeetsPlugin
@@ -5,6 +21,8 @@ from beets import config, ui
 from beets.util import normpath, syspath
 import os
 
+# Global variables so that smartplaylist can detect database changes and run
+# only once before beets exits.
 database_changed = False
 library = None
 
