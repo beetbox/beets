@@ -4,6 +4,7 @@ Changelog
 1.1b2 (in development)
 ----------------------
 
+* Support for Windows Media/ASF audio files. Thanks to Dave Hayes.
 * Two new plugin events were added: *database_change* and *cli_exit*. Thanks to
   Dang Mai Hai.
 
