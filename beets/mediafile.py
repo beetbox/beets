@@ -74,7 +74,7 @@ TYPES = {
     'ape':  'APE',
     'wv':   'WavPack',
     'mpc':  'Musepack',
-    'asf':  'Windows Media'
+    'asf':  'Windows Media',
 }
 
 
@@ -145,16 +145,10 @@ def _safe_cast(out_type, val):
         return val
 
 
-def unpack_image(data):
-    """
-    Helper function to unpack image data from a WM/Picture tag.
+# Image coding for ASF/WMA.
 
-    The data has the following format:
-    1 byte: Picture type (0-20), see ID3 APIC frame specification at http://www.id3.org/id3v2.4.0-frames
-    4 bytes: Picture data length in LE format
-    MIME type, null terminated UTF-16-LE string
-    Description, null terminated UTF-16-LE string
-    The image data in the given length
+def _unpack_asf_image(data):
+    """Unpack image data from a WM/Picture tag.
     """
     (type, size) = struct.unpack_from("<bi", data)
     pos = 5
@@ -169,12 +163,11 @@ def unpack_image(data):
         pos += 2
     pos += 2
     image_data = data[pos:pos+size]
-    return (mime.decode("utf-16-le"), image_data, type, description.decode("utf-16-le"))
+    return (mime.decode("utf-16-le"), image_data, type,
+            description.decode("utf-16-le"))
 
-def pack_image(mime, data, type=3, description=""):
-    """
-    Helper function to pack image data for a WM/Picture tag.
-    See unpack_image for a description of the data format.
+def _pack_asf_image(mime, data, type=3, description=""):
+    """Pack image data for a WM/Picture tag.
     """
     tag_data = struct.pack("<bi", type, len(data))
     tag_data += mime.encode("utf-16-le") + "\x00\x00"
@@ -316,14 +309,14 @@ class MediaField(object):
     def __init__(self, out_type = unicode, **kwargs):
         """Creates a new MediaField.
          - out_type: The field's semantic (exterior) type.
-         - kwargs: A hash whose keys are 'mp3', 'mp4', 'asf' and 'etc'
+         - kwargs: A hash whose keys are 'mp3', 'mp4', 'asf', and 'etc'
            and whose values are StorageStyle instances
            parameterizing the field's storage for each type.
         """
         self.out_type = out_type
         if not set(['mp3', 'mp4', 'etc', 'asf']) == set(kwargs):
             raise TypeError('MediaField constructor must have keyword '
-                            'arguments mp3, mp4, etc and asf')
+                            'arguments mp3, mp4, asf, and etc')
         self.styles = kwargs
 
     def _fetchdata(self, obj, style):
@@ -627,15 +620,13 @@ class ImageField(object):
         elif obj.type == 'asf':
             pictures = obj.mgfile['WM/Picture']
             if pictures:
+                data = pictures[0].value
                 try:
-                    pic = pictures[0].value
-                    data = unpack_image(data)[1]
-                    return data
+                    return _unpack_asf_image(data)[1]
                 except:
                     return None
             else:
                 return None
-
 
         else:
             # Here we're assuming everything but MP3, MPEG-4, and FLAC
@@ -696,14 +687,16 @@ class ImageField(object):
                 pic.data = val
                 pic.mime = self._mime(val)
                 obj.mgfile.add_picture(pic)
+
         elif obj.type == 'asf':
             if 'WM/Picture' in obj.mgfile:
                 del obj.mgfile['WM/Picture']
+
             if val is not None:
                 pic = mutagen.asf.ASFByteArrayAttribute()
-                data = pack_image(self._mime(val), val)
-                pic.value = data
+                pic.value = _pack_asf_image(self._mime(val), val)
                 obj.mgfile['WM/Picture'] = [pic]
+
         else:
             # Again, assuming Vorbis Comments standard.
 
