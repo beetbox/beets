@@ -109,7 +109,7 @@ def _safe_cast(out_type, val):
         else:
             try:
                 if isinstance(val, mutagen.asf.ASFBoolAttribute):
-                    return bool(val)
+                    return val.value
                 else:
                     # Should work for strings, bools, ints:
                     return bool(int(val))
@@ -421,7 +421,7 @@ class MediaField(object):
                     **{style.id3_frame_field: val})
                 obj.mgfile.tags.setall(style.key, [frame])
 
-        else: # Not MP3.
+        else:  # Not MP3.
             obj.mgfile[style.key] = out
 
     def _styles(self, obj):
