@@ -4,6 +4,9 @@ Changelog
 1.1b2 (in development)
 ----------------------
 
+* Two new plugin events were added: *database_change* and *cli_exit*. Thanks to
+  Dang Mai Hai.
+
 1.1b1 (January 29, 2013)
 ------------------------
 

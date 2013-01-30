@@ -148,6 +148,12 @@ currently available are:
 * *library_opened*: called after beets starts up and initializes the main
   Library object. Parameter: ``lib``.
 
+* *database_change*: a modification has been made to the library database. The
+  change might not be committed yet. Parameter: ``lib``.
+
+* *cli_exit*: called just before the ``beet`` command-line program exits. No
+  parameters.
+
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 
 Extend the Autotagger
