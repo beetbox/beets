@@ -28,6 +28,7 @@ library = None
 
 
 def update_playlists(lib):
+    from beets.util.functemplate import Template
     print("Updating smart playlists...")
     playlists = config['smartplaylist']['playlists'].get(list)
     playlist_dir = config['smartplaylist']['playlist_dir'].get(unicode)
@@ -37,15 +38,24 @@ def update_playlists(lib):
 
     for playlist in playlists:
         items = lib.items(playlist['query'])
-        if relative_to:
-            paths = [os.path.relpath(item.path, relative_to) for item in items]
-        else:
-            paths = [item.path for item in items]
+        m3us = {}
         basename = playlist['name'].encode('utf8')
-        m3u_path = normpath(os.path.join(playlist_dir, basename))
-        with open(syspath(m3u_path), 'w') as f:
-            for path in paths:
-                f.write(path + '\n')
+        # As we allow tags in the m3u names, we'll need to iterate through
+        # the items and generate the correct m3u file names.
+        for item in items:
+            m3u_name = item.evaluate_template(Template(basename), lib=lib)
+            if not (m3u_name in m3us):
+                m3us[m3u_name] = []
+            if relative_to:
+                m3us[m3u_name].append(os.path.relpath(item.path, relative_to))
+            else:
+                m3us[m3u_name].append(item.path)
+        # Now iterate through the m3us that we need to generate
+        for m3u in m3us:
+            m3u_path = normpath(os.path.join(playlist_dir, m3u))
+            with open(syspath(m3u_path), 'w') as f:
+                for path in m3us[m3u]:
+                    f.write(path + '\n')
     print("... Done")
 
 
