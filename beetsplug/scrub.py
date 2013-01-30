@@ -100,7 +100,11 @@ def _scrub(path):
             continue
 
         # Remove the tag for this type.
-        f.delete()
+        try:
+            f.delete()
+        except NotImplementedError:
+            for tag in f.keys():
+                del f[tag]
         f.save()
 
 # Automatically embed art into imported albums.
