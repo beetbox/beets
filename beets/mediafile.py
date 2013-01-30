@@ -618,15 +618,15 @@ class ImageField(object):
                 return None
         
         elif obj.type == 'asf':
-            pictures = obj.mgfile['WM/Picture']
-            if pictures:
-                data = pictures[0].value
-                try:
-                    return _unpack_asf_image(data)[1]
-                except:
-                    return None
-            else:
-                return None
+            if 'WM/Picture' in obj.mgfile:
+                pictures = obj.mgfile['WM/Picture']
+                if pictures:
+                    data = pictures[0].value
+                    try:
+                        return _unpack_asf_image(data)[1]
+                    except:
+                        return None
+            return None
 
         else:
             # Here we're assuming everything but MP3, MPEG-4, and FLAC

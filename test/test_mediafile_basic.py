@@ -198,11 +198,11 @@ READ_ONLY_CORRECT_DICTS = {
 
     'full.wma': {
         'length': 1.0,
-        'bitrate': 23,
+        'bitrate': 128000,
         'format': 'Windows Media',
         'samplerate': 44100,
         'bitdepth': 0,
-        'channels': 2,
+        'channels': 1,
     },
 }
 
