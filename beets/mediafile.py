@@ -1024,13 +1024,13 @@ class MediaFile(object):
         mp3 = StorageStyle('TXXX', id3_desc=u'Artist Credit'),
         mp4 = StorageStyle("----:com.apple.iTunes:Artist Credit"),
         etc = StorageStyle('ARTIST_CREDIT'),
-        asf = None,
+        asf = StorageStyle('beets/Artist Credit'),
     )
     albumartist_credit = MediaField(
         mp3 = StorageStyle('TXXX', id3_desc=u'Album Artist Credit'),
         mp4 = StorageStyle("----:com.apple.iTunes:Album Artist Credit"),
         etc = StorageStyle('ALBUMARTIST_CREDIT'),
-        asf = None,
+        asf = StorageStyle('beets/Album Artist Credit'),
     )
 
     # Album art.
