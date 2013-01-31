@@ -331,7 +331,7 @@ def migrate_state(replace=False):
     """Copy the beets runtime state file from the old path (i.e.,
     ~/.beetsstate) to the new path (i.e., ~/.config/beets/state.pickle).
     """
-    srcfn = os.path.expanduser('~/.beetsstate')
+    srcfn = os.path.expanduser(os.path.join('~', '.beetsstate'))
     if not os.path.exists(srcfn):
         return
 

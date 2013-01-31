@@ -30,6 +30,8 @@ Other new stuff:
     bad: "low" or "none" recommendations or when choosing a candidate
     other than the first.
 
+* Fix an error when migrating the ``.beetsstate`` file on Windows.
+
 1.1b1 (January 29, 2013)
 ------------------------
 
