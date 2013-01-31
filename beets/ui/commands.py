@@ -272,7 +272,7 @@ def _summary_judment(rec):
             })
 
     elif rec == autotag.RECOMMEND_NONE:
-        action = config['import']['quiet_fallback'].as_choice({
+        action = config['import']['none_rec_action'].as_choice({
             'skip': importer.action.SKIP,
             'asis': importer.action.ASIS,
             'ask': None,
