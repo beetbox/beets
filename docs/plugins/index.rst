@@ -59,6 +59,7 @@ disabled by default, but you can turn them on as described above.
    ihate
    convert
    info
+   smartplaylist
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -92,6 +93,7 @@ Interoperability
 * :doc:`mpdupdate`: Automatically notifies `MPD`_ whenever the beets library
   changes.
 * :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
+* :doc:`smartplaylist`: Generate smart playlists based on beets queries.
 
 Miscellaneous
 '''''''''''''
