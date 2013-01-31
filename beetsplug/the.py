@@ -36,14 +36,10 @@ class ThePlugin(BeetsPlugin):
     strip = False
     patterns = []
 
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super(ThePlugin,
-                                  cls).__new__(cls, *args, **kwargs)
-        return cls._instance
-
     def __init__(self):
         super(ThePlugin, self).__init__()
+
+        self.template_funcs['the'] = self.the_template_func
 
         self.config.add({
             'the': True,
@@ -108,8 +104,3 @@ class ThePlugin(BeetsPlugin):
             return r
         else:
             return u''
-
-@ThePlugin.template_func('the')
-def func_the(text):
-    """Provides beets template function %the"""
-    return ThePlugin().the_template_func(text)

@@ -44,6 +44,8 @@ class BeetsPlugin(object):
         self.import_stages = []
         self.name = name or self.__module__.split('.')[-1]
         self.config = beets.config[self.name]
+        self.template_funcs = {}
+        self.template_fields = {}
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for

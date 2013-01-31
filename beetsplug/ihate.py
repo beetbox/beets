@@ -17,7 +17,6 @@
 import re
 import logging
 from beets.plugins import BeetsPlugin
-from beets import config
 from beets.importer import action
 
 
@@ -39,14 +38,10 @@ class IHatePlugin(BeetsPlugin):
     skip_album = []
     skip_whitelist = []
 
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super(IHatePlugin,
-                                  cls).__new__(cls, *args, **kwargs)
-        return cls._instance
-    
     def __init__(self):
         super(IHatePlugin, self).__init__()
+        self.register_listener('import_task_choice',
+                               self.import_task_choice_event)
         self.config.add({
             'warn_genre': [],
             'warn_artist': [],
@@ -98,7 +93,7 @@ class IHatePlugin(BeetsPlugin):
                    ('warn_genre', 'warn_artist', 'warn_album',
                     'skip_genre', 'skip_artist', 'skip_album'))
 
-    def import_task_choice_event(self, task):
+    def import_task_choice_event(self, session, task):
         if task.choice_flag == action.APPLY:
             if self.job_to_do():
                 self._log.debug('[ihate] processing your hate')
@@ -122,8 +117,3 @@ class IHatePlugin(BeetsPlugin):
                 self._log.debug('[ihate] nothing to do')
         else:
             self._log.debug('[ihate] user made a decision, nothing to do')
-
-
-@IHatePlugin.listen('import_task_choice')
-def ihate_import_task_choice(task, session):
-    IHatePlugin().import_task_choice_event(task)

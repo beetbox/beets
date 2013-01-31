@@ -30,14 +30,13 @@ class ZeroPlugin(BeetsPlugin):
     _instance = None
     _log = logging.getLogger('beets')
 
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super(ZeroPlugin,
-                                  cls).__new__(cls, *args, **kwargs)
-        return cls._instance
-
     def __init__(self):
         super(ZeroPlugin, self).__init__()
+
+        # Listeners.
+        self.register_listener('write', self.write_event)
+        self.register_listener('import_task_choice',
+                               self.import_task_choice_event)
 
         self.config.add({
             'fields': [],
@@ -57,7 +56,7 @@ class ZeroPlugin(BeetsPlugin):
                 except confit.NotFoundError:
                     self.patterns[f] = [u'']
 
-    def import_task_choice_event(self, task):
+    def import_task_choice_event(self, session, task):
         """Listen for import_task_choice event."""
         if task.choice_flag == action.ASIS and not self.warned:
             self._log.warn(u'[zero] cannot zero in \"as-is\" mode')
@@ -95,12 +94,3 @@ class ZeroPlugin(BeetsPlugin):
                 setattr(item, fn, type(fval)())
                 self._log.debug(u'[zero] {0}={1}'
                                 .format(fn, getattr(item, fn)))
-
-
-@ZeroPlugin.listen('import_task_choice')
-def zero_choice(session, task):
-    ZeroPlugin().import_task_choice_event(task)
-
-@ZeroPlugin.listen('write')
-def zero_write(item):
-    ZeroPlugin().write_event(item)

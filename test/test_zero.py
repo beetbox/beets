@@ -6,12 +6,6 @@ from beetsplug.zero import ZeroPlugin
 
 
 class ZeroPluginTest(unittest.TestCase):
-
-    def test_singleton(self):
-        z1 = ZeroPlugin()
-        z2 = ZeroPlugin()
-        self.assertTrue(z1 is z2)
-
     def test_no_patterns(self):
         v = {'comments' : 'test comment',
              'day' : 13,
