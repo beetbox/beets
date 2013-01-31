@@ -53,7 +53,6 @@ def update_playlists(lib):
         # Now iterate through the m3us that we need to generate
         for m3u in m3us:
             m3u_path = normpath(os.path.join(playlist_dir, m3u))
-            import pdb; pdb.set_trace()
             with open(syspath(m3u_path), 'w') as f:
                 for path in m3us[m3u]:
                     f.write(path + '\n')
