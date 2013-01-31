@@ -74,6 +74,7 @@ SD_REPLACE = [
 # Recommendation constants.
 RECOMMEND_STRONG = 'RECOMMEND_STRONG'
 RECOMMEND_MEDIUM = 'RECOMMEND_MEDIUM'
+RECOMMEND_LOW = 'RECOMMEND_LOW'
 RECOMMEND_NONE = 'RECOMMEND_NONE'
 
 # Artist signals that indicate "various artists". These are used at the
@@ -332,6 +333,11 @@ def recommendation(results):
     else:
         min_dist = results[0].distance
         if min_dist < config['match']['strong_rec_thresh'].as_number():
+            # Reduce to medium rec if partial releases are not allowed.
+            if isinstance(results[0], hooks.AlbumMatch) and \
+                    config['import']['confirm_partial'] and \
+                    (results[0].extra_items or results[0].extra_tracks):
+                return RECOMMEND_MEDIUM
             # Strong recommendation level.
             rec = RECOMMEND_STRONG
         elif len(results) == 1:
@@ -343,7 +349,7 @@ def recommendation(results):
         elif results[1].distance - min_dist >= \
                     config['match']['rec_gap_thresh'].as_number():
             # Gap between first two candidates is large.
-            rec = RECOMMEND_MEDIUM
+            rec = RECOMMEND_LOW
         else:
             # No conclusion.
             rec = RECOMMEND_NONE
