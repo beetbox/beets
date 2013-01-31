@@ -19,6 +19,7 @@ from __future__ import print_function
 from beets.plugins import BeetsPlugin
 from beets import config, ui
 from beets.util import normpath, syspath
+from beets.util.functemplate import Template
 import os
 
 # Global variables so that smartplaylist can detect database changes and run
@@ -28,10 +29,9 @@ library = None
 
 
 def update_playlists(lib):
-    from beets.util.functemplate import Template
-    print("Updating smart playlists...")
+    ui.print_("Updating smart playlists...")
     playlists = config['smartplaylist']['playlists'].get(list)
-    playlist_dir = config['smartplaylist']['playlist_dir'].get(unicode)
+    playlist_dir = config['smartplaylist']['playlist_dir'].as_filename()
     relative_to = config['smartplaylist']['relative_to'].get()
     if relative_to:
         relative_to = normpath(relative_to)
@@ -56,7 +56,7 @@ def update_playlists(lib):
             with open(syspath(m3u_path), 'w') as f:
                 for path in m3us[m3u]:
                     f.write(path + '\n')
-    print("... Done")
+    ui.print_("... Done")
 
 
 class SmartPlaylistPlugin(BeetsPlugin):

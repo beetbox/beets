@@ -250,6 +250,8 @@ Either ``skip`` (default) or ``asis``, specifying what should happen in
 quiet mode (see the ``-q`` flag to ``import``, above) when there is no
 strong recommendation.
 
+.. _none_rec_action:
+
 none_rec_action
 ~~~~~~~~~~~~~~~
 
