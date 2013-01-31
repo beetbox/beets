@@ -364,18 +364,16 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                     line = '%i. %s - %s' % (i + 1, match.info.artist,
                                             match.info.album)
 
-                    # Label and year disambiguation, if available.
-                    label, year = None, None
+                    # Label, year and media disambiguation, if available.
+                    info = []
                     if match.info.label:
-                        label = match.info.label
+                        info.append(match.info.label)
                     if match.info.year:
-                        year = unicode(match.info.year)
-                    if label and year:
-                        line += u' [%s, %s]' % (label, year)
-                    elif label:
-                        line += u' [%s]' % label
-                    elif year:
-                        line += u' [%s]' % year
+                        info.append(unicode(match.info.year))
+                    if match.info.media:
+                        info.append(match.info.media)
+                    if len(info) > 0:
+                        line += u' [%s]' % u', '.join(info)
 
                     line += ' (%s)' % dist_string(match.distance)
 
