@@ -265,14 +265,15 @@ Specifies a filename where the importer's log should be kept.  By default,
 no log is written. This can be overridden with the ``-l`` flag to
 ``import``.
 
-confirm_partial
-~~~~~~~~~~~~~~~
+.. _default_action:
 
-Either ``yes`` or ``no``. If ``yes``, strong recommendations for partial
-matches will be downgraded to medium so that they are not auto-tagged and must
-be confirmed. The default selection on confirmation prompts for partial matches
-will also be removed, so that the user must actually make a choice and cannot
-accidentally apply changes. The default is ``no``.
+default_action
+~~~~~~~~~~~~~~
+
+One of ``apply``, ``skip``, ``asis``, or ``none``, indicating which option
+should be the *default* when selecting an action for a given match. This is the
+action that will be taken when you type return without an option letter. The
+default is ``apply``.
 
 .. _musicbrainz-config:
 

@@ -323,8 +323,9 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         bypass_candidates = True
 
     while True:
-        require = rec in (autotag.RECOMMEND_NONE, autotag.RECOMMEND_LOW)
         # Display and choose from candidates.
+        require = rec in (autotag.RECOMMEND_NONE, autotag.RECOMMEND_LOW)
+
         if not bypass_candidates:
             # Display list of candidates.
             if singleton:
@@ -388,12 +389,10 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             elif sel == 'i':
                 return importer.action.MANUAL_ID
             else:  # Numerical selection.
-                if singleton:
-                    match = candidates[sel - 1]
-                else:
-                    match = candidates[sel - 1]
-                # Require selection (no default).
+                match = candidates[sel - 1]
                 if sel != 1:
+                    # When choosing anything but the first match,
+                    # disable the default action.
                     require = True
         bypass_candidates = False
 
@@ -414,10 +413,15 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         else:
             opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
                     'as Tracks', 'Enter search', 'enter Id', 'aBort')
-            if config['import']['confirm_partial'].get(bool) and \
-                    match.extra_items or match.extra_tracks:
-                require = True
-        sel = ui.input_options(opts, require=require)
+        default = config['import']['default_action'].as_choice({
+            'apply': 'a',
+            'skip': 's',
+            'asis': 'u',
+            'none': None,
+        })
+        if default is None:
+            require = True
+        sel = ui.input_options(opts, require=require, default=default)
         if sel == 'a':
             return match
         elif sel == 'm':

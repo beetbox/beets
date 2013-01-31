@@ -333,19 +333,19 @@ def recommendation(results):
     else:
         min_dist = results[0].distance
         if min_dist < config['match']['strong_rec_thresh'].as_number():
-            # Reduce to medium rec if partial releases are not allowed.
+            # Partial matches get downgraded to "medium".
             if isinstance(results[0], hooks.AlbumMatch) and \
-                    config['import']['confirm_partial'] and \
                     (results[0].extra_items or results[0].extra_tracks):
-                return RECOMMEND_MEDIUM
-            # Strong recommendation level.
-            rec = RECOMMEND_STRONG
-        elif len(results) == 1:
-            # Only a single candidate. Medium recommendation.
-            rec = RECOMMEND_MEDIUM
+                rec = RECOMMEND_MEDIUM
+            else:
+                # Strong recommendation level.
+                rec = RECOMMEND_STRONG
         elif min_dist <= config['match']['medium_rec_thresh'].as_number():
             # Medium recommendation level.
             rec = RECOMMEND_MEDIUM
+        elif len(results) == 1:
+            # Only a single candidate.
+            rec = RECOMMEND_LOW
         elif results[1].distance - min_dist >= \
                     config['match']['rec_gap_thresh'].as_number():
             # Gap between first two candidates is large.

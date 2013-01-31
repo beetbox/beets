@@ -337,16 +337,22 @@ class ConfigView(object):
 
     def as_choice(self, choices):
         """Ensure that the value is among a collection of choices and
-        return it.
+        return it. If `choices` is a dictionary, then return the
+        corresponding value rather than the value itself (the key).
         """
         value = self.get()
+
         if value not in choices:
             raise ConfigValueError(
                 '{0} must be one of {1}, not {2}'.format(
                     self.name, repr(value), repr(list(choices))
                 )
             )
-        return value
+
+        if isinstance(choices, dict):
+            return choices[value]
+        else:
+            return value
 
     def as_number(self):
         """Ensure that a value is of numeric type."""

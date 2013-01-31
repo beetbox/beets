@@ -14,7 +14,7 @@ import:
     autotag: yes
     quiet: no
     singletons: no
-    confirm_partial: no
+    default_action: apply
 
 ignore: [".*", "*~"]
 replace:
