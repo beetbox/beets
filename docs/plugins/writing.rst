@@ -151,8 +151,7 @@ currently available are:
 * *database_change*: a modification has been made to the library database. The
   change might not be committed yet. Parameter: ``lib``.
 
-* *cli_exit*: called just before the ``beet`` command-line program exits. No
-  parameters.
+* *cli_exit*: called just before the ``beet`` command-line program exits. Parameter: ``lib``.
 
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 
