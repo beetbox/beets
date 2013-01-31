@@ -14,11 +14,11 @@
 
 """Updates an MPD index whenever the library is changed.
 
-Put something like the following in your .beetsconfig to configure:
-    [mpdupdate]
-    host = localhost
-    port = 6600
-    password = seekrit
+Put something like the following in your config.yaml to configure:
+    mpdupdate:
+        host: localhost
+        port: 6600
+        password: seekrit
 """
 from __future__ import print_function
 
