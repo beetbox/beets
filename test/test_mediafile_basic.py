@@ -189,7 +189,7 @@ READ_ONLY_CORRECT_DICTS = {
 
     'full.mpc': {
         'length': 1.0,
-        'bitrate': 23,
+        'bitrate': 23458,
         'format': 'Musepack',
         'samplerate': 44100,
         'bitdepth': 0,
