@@ -8,6 +8,8 @@ New configuration options:
 
 * :ref:`default_action` lets you determine the default (just-hit-return) option
   is when considering a candidate.
+* :ref:`none_rec_action` lets you skip the prompt, and automatically choose an
+  action, when there is no good candidate. Thanks to mrmachine.
 
 Other new stuff:
 
