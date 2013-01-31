@@ -26,6 +26,10 @@ from beets.plugins import BeetsPlugin
 import socket
 from beets import config
 
+# Global variable so that mpdupdate can detect database changes and run only
+# once before beets exits.
+database_changed = False
+
 # No need to introduce a dependency on an MPD library for such a
 # simple use case. Here's a simple socket abstraction to make things
 # easier.
@@ -97,10 +101,18 @@ class MPDUpdatePlugin(BeetsPlugin):
             'password': u'',
         })
 
-@MPDUpdatePlugin.listen('import')
-def update(lib=None, paths=None):
-    update_mpd(
-        config['mpdupdate']['host'].get(unicode),
-        config['mpdupdate']['port'].get(int),
-        config['mpdupdate']['password'].get(unicode),
-    )
+
+@MPDUpdatePlugin.listen('database_change')
+def handle_change(lib=None):
+    global database_changed
+    database_changed = True
+
+
+@MPDUpdatePlugin.listen('cli_exit')
+def update(lib=None):
+    if database_changed:
+        update_mpd(
+            config['mpdupdate']['host'].get(unicode),
+            config['mpdupdate']['port'].get(int),
+            config['mpdupdate']['password'].get(unicode),
+        )
