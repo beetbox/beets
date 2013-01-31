@@ -181,7 +181,6 @@ def show_change(cur_artist, cur_album, match):
     # Tracks.
     pairs = match.mapping.items()
     pairs.sort(key=lambda (_, track_info): track_info.index)
-    max_title_len = max([len(item.title) for item, track_info in pairs])
     for item, track_info in pairs:
         # Get displayable LHS and RHS values.
         cur_track = unicode(item.track)
@@ -206,14 +205,13 @@ def show_change(cur_artist, cur_album, match):
             cur_title = displayable_path(os.path.basename(item.path))
 
         if cur_title != new_title:
-            pad = ' ' * (max_title_len - len(item.title) + 1)
-            lhs, rhs = cur_title + pad, new_title
+            lhs, rhs = cur_title, new_title
             if tracks_differ:
                 lhs += u' (%s)' % cur_track
                 rhs += u' (%s)' % new_track
-            print_(u" * %s -> %s" % (lhs, rhs))
+            print_(u" * %s ->\n   %s" % (lhs, rhs))
         else:
-            line = u' * %s' % item.title.ljust(max_title_len + 1)
+            line = u' * %s' % item.title
             display = False
             if tracks_differ:
                 display = True
