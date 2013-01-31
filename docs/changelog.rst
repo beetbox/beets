@@ -7,6 +7,8 @@ Changelog
 * Support for Windows Media/ASF audio files. Thanks to Dave Hayes.
 * Two new plugin events were added: *database_change* and *cli_exit*. Thanks to
   Dang Mai Hai.
+* Track titles in the importer's difference display are now broken across two
+  lines for readability. Thanks to mrmachine.
 
 1.1b1 (January 29, 2013)
 ------------------------
