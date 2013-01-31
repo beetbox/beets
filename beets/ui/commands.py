@@ -322,6 +322,14 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         match = candidates[0]
         bypass_candidates = True
 
+    # Just make a decision when there's no recommendation?
+    elif config['import']['none_rec_action'].get() == 'skip':
+        print_('Skipping.')
+        return importer.action.SKIP
+    elif config['import']['none_rec_action'].get() == 'asis':
+        print_('Importing as-is.')
+        return importer.action.ASIS
+
     while True:
         # Display and choose from candidates.
         require = rec in (autotag.RECOMMEND_NONE, autotag.RECOMMEND_LOW)

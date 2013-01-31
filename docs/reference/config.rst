@@ -250,6 +250,14 @@ Either ``skip`` (default) or ``asis``, specifying what should happen in
 quiet mode (see the ``-q`` flag to ``import``, above) when there is no
 strong recommendation.
 
+none_rec_action
+~~~~~~~~~~~~~~~
+
+Either ``ask`` (default), ``asis`` or ``skip``. Specifies what should happen
+during an interactive import session when there is no recommendation. Useful
+when you are only interested in processing medium and strong recommendations
+interactively.
+
 timid
 ~~~~~
 

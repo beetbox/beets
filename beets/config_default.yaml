@@ -9,6 +9,7 @@ import:
     resume: ask
     incremental: no
     quiet_fallback: skip
+    none_rec_action: ask
     timid: no
     log:
     autotag: yes
