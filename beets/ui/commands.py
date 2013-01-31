@@ -323,6 +323,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         bypass_candidates = True
 
     while True:
+        require = rec in (autotag.RECOMMEND_NONE, autotag.RECOMMEND_LOW)
         # Display and choose from candidates.
         if not bypass_candidates:
             # Display list of candidates.
@@ -391,6 +392,9 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                     match = candidates[sel - 1]
                 else:
                     match = candidates[sel - 1]
+                # Require selection (no default).
+                if sel != 1:
+                    require = True
         bypass_candidates = False
 
         # Show what we're about to do.
@@ -410,7 +414,10 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         else:
             opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
                     'as Tracks', 'Enter search', 'enter Id', 'aBort')
-        sel = ui.input_options(opts)
+            if config['import']['confirm_partial'].get(bool) and \
+                    match.extra_items or match.extra_tracks:
+                require = True
+        sel = ui.input_options(opts, require=require)
         if sel == 'a':
             return match
         elif sel == 'm':

@@ -265,6 +265,15 @@ Specifies a filename where the importer's log should be kept.  By default,
 no log is written. This can be overridden with the ``-l`` flag to
 ``import``.
 
+confirm_partial
+~~~~~~~~~~~~~~~
+
+Either ``yes`` or ``no``. If ``yes``, strong recommendations for partial
+matches will be downgraded to medium so that they are not auto-tagged and must
+be confirmed. The default selection on confirmation prompts for partial matches
+will also be removed, so that the user must actually make a choice and cannot
+accidentally apply changes. The default is ``no``.
+
 .. _musicbrainz-config:
 
 MusicBrainz Options
