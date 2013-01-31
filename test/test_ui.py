@@ -688,12 +688,12 @@ class ShowChangeTest(_common.TestCase):
     def test_item_data_change(self):
         self.items[0].title = 'different'
         msg = self._show_change()
-        self.assertTrue('different -> the title' in msg)
+        self.assertTrue('different  -> the title' in msg)
 
     def test_item_data_change_with_unicode(self):
         self.items[0].title = u'caf\xe9'
         msg = self._show_change()
-        self.assertTrue(u'caf\xe9 -> the title' in msg.decode('utf8'))
+        self.assertTrue(u'caf\xe9  -> the title' in msg.decode('utf8'))
 
     def test_album_data_change_with_unicode(self):
         msg = self._show_change(cur_artist=u'caf\xe9',
@@ -703,14 +703,14 @@ class ShowChangeTest(_common.TestCase):
     def test_item_data_change_title_missing(self):
         self.items[0].title = ''
         msg = self._show_change()
-        self.assertTrue('file.mp3 -> the title' in msg)
+        self.assertTrue('file.mp3  -> the title' in msg)
 
     def test_item_data_change_title_missing_with_unicode_filename(self):
         self.items[0].title = ''
         self.items[0].path = u'/path/to/caf\xe9.mp3'.encode('utf8')
         msg = self._show_change().decode('utf8')
-        self.assertTrue(u'caf\xe9.mp3 -> the title' in msg
-                        or u'caf.mp3 ->' in msg)
+        self.assertTrue(u'caf\xe9.mp3  -> the title' in msg
+                        or u'caf.mp3  ->' in msg)
 
 class PathFormatTest(_common.TestCase):
     def test_custom_paths_prepend(self):
