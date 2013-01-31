@@ -22,10 +22,9 @@ from beets.util import normpath, syspath
 from beets.util.functemplate import Template
 import os
 
-# Global variables so that smartplaylist can detect database changes and run
+# Global variable so that smartplaylist can detect database changes and run
 # only once before beets exits.
 database_changed = False
-library = None
 
 
 def update_playlists(lib):
@@ -79,13 +78,11 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
 @SmartPlaylistPlugin.listen('database_change')
 def handle_change(lib):
-    global library
     global database_changed
-    library = lib
     database_changed = True
 
 
 @SmartPlaylistPlugin.listen('cli_exit')
-def update():
+def update(lib):
     if database_changed:
-        update_playlists(library)
+        update_playlists(lib)
