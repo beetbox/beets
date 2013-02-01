@@ -365,15 +365,15 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                                             match.info.album)
 
                     # Label, year and media disambiguation, if available.
-                    info = []
+                    disambig = []
                     if match.info.label:
-                        info.append(match.info.label)
+                        disambig.append(match.info.label)
                     if match.info.year:
-                        info.append(unicode(match.info.year))
+                        disambig.append(unicode(match.info.year))
                     if match.info.media:
-                        info.append(match.info.media)
-                    if len(info) > 0:
-                        line += u' [%s]' % u', '.join(info)
+                        disambig.append(match.info.media)
+                    if disambig:
+                        line += u' [{0}]'.format(u', '.join(disambig))
 
                     line += ' (%s)' % dist_string(match.distance)
 
