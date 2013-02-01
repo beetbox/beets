@@ -371,7 +371,13 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                     if match.info.year:
                         disambig.append(unicode(match.info.year))
                     if match.info.media:
-                        disambig.append(match.info.media)
+                        if match.info.mediums > 1:
+                            disambig.append(u'{0}x{1}'.format(
+                              match.info.mediums, match.info.media))
+                        else:
+                            disambig.append(match.info.media)
+                    if match.info.albumdisambig:
+                        disambig.append(match.info.albumdisambig)
                     if disambig:
                         line += u' [{0}]'.format(u', '.join(disambig))
 
