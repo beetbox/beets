@@ -22,6 +22,9 @@ import os
 import time
 import itertools
 import re
+import fcntl
+import struct
+import termios
 
 import beets
 from beets import ui
@@ -182,87 +185,58 @@ def show_change(cur_artist, cur_album, match):
     pairs = match.mapping.items()
     pairs.sort(key=lambda (_, track_info): track_info.index)
 
-    def do_lengths_differ(item, track_info):
-        return item.length and track_info.length and \
+    # Calculate max column width.
+    buf = fcntl.ioctl(0, termios.TIOCGWINSZ, ' '*4)
+    height, width = struct.unpack('hh', buf)
+    col_width = (width - len(''.join([' * ', ' -> ']))) / 2
+
+    # Get each change as a colorized LHS and RHS value, and the length of the
+    # uncolored LHS value.
+    lines = []
+    for item, track_info in pairs:
+
+        # Get display conditions.
+        tracks_differ = item.track not in \
+            (track_info.index, track_info.medium_index)
+        lengths_differ = item.length and track_info.length and \
             abs(item.length - track_info.length) > 2.0
 
-    def do_tracks_differ(item, track_info):
-        return item.track not in (track_info.index, track_info.medium_index)
-
-    def get_title(item):
-        # Return filename (non-colorized) when title is not set.
+        # Get raw LHS and RHS values.
         if not item.title.strip():
-            return displayable_path(os.path.basename(item.path))
-        return item.title.strip()
-
-    def get_pad_length(pairs, col_width):
-        pad_len = 0
-        for item, track_info in pairs:
-            title = get_title(item)
-            tracks_differ = do_tracks_differ(item, track_info)
-            # Will this track be displayed?
-            if title != track_info.title or tracks_differ or \
-                    do_lengths_differ(item, track_info):
-                # Include track when it differs.
-                if tracks_differ:
-                    title = '%s (%s)' % (title, item.track)
-                pad_len = max([pad_len, len(title)])
-                if pad_len > col_width:
-                    return 0
-        return pad_len
-
-    def get_term_width():
-        import fcntl
-        import struct
-        import termios
-        buf = fcntl.ioctl(0, termios.TIOCGWINSZ, ' '*4)
-        height, width = struct.unpack('hh', buf)
-        return width
-
-    # Calculate terminal width, max column width and padding length.
-    col_width = (get_term_width() - len(''.join([' * ', ' -> ']))) / 2
-    pad_len = get_pad_length(pairs, col_width)
-
-    for item, track_info in pairs:
-        # Get displayable LHS and RHS values.
-        cur_title = get_title(item)
-        new_title = track_info.title
-        cur_track = unicode(item.track)
-        new_track = format_index(track_info)
-        tracks_differ = do_tracks_differ(item, track_info)
-
-        # Colorize changes.
-        cur_title, new_title = ui.colordiff(cur_title, new_title)
-        cur_track = ui.colorize('red', cur_track)
-        new_track = ui.colorize('red', new_track)
-
-        if cur_title != new_title:
-            lhs, rhs = cur_title, new_title
-            if tracks_differ:
-                lhs += u' (%s)' % cur_track
-                rhs += u' (%s)' % new_track
-                pad = pad_len - len(u'%s (%s)' % (item.title, item.track))
-            else:
-                pad = pad_len - len(item.title)
-            # Split across two lines or align in two columns.
-            if pad_len == 0 or pad_len - pad > col_width:
-                print_(u" * %s ->\n   %s" % (lhs, rhs))
-            else:
-                print_(u" * %s%s -> %s" % (lhs, ' ' * pad, rhs))
+            cur_title = displayable_path(os.path.basename(item.path))
         else:
-            line = u' * %s ->' % item.title.ljust(pad_len)
-            display = False
-            if tracks_differ:
-                display = True
-                line += u' (%s -> %s)' % (cur_track, new_track)
-            if do_lengths_differ(item, track_info):
-                display = True
-                lhs = ui.colorize('red', ui.human_seconds_short(item.length))
-                rhs = ui.colorize('red',
-                                  ui.human_seconds_short(track_info.length))
-                line += u' (%s vs. %s)' % (lhs, rhs)
-            if display:
-                print_(line)
+            cur_title = item.title.strip()
+        new_title = track_info.title
+        cur_track, new_track = unicode(item.track), format_index(track_info)
+        if lengths_differ:
+            cur_length = ui.human_seconds_short(item.length)
+            new_length = ui.human_seconds_short(track_info.length)
+
+        # Determine what to display and colorize.
+        length = len(cur_title)
+        lhs, rhs = ui.colordiff(cur_title, new_title)
+        if tracks_differ:
+            length += len(u' (%s)' % cur_track)
+            lhs_track, rhs_track = ui.colordiff(cur_track, new_track)
+            lhs += u' (%s)' % lhs_track
+            rhs += u' (%s)' % rhs_track
+        if lengths_differ:
+            length += len(u' (%s)' % cur_length)
+            lhs_length, rhs_length = ui.colordiff(cur_length, new_length)
+            lhs += u' (%s)' % lhs_length
+            rhs += u' (%s)' % rhs_length
+        if lhs != rhs:
+            lines.append((lhs, rhs, length))
+
+    # Print each track in two columns, or across two lines.
+    if lines:
+        max_length = max([length for lhs, rhs, length in lines])
+        for lhs, rhs, length in lines:
+            if max_length > col_width:
+                print_(u' * %s ->\n   %s' % (lhs, rhs))
+            else:
+                pad = max_length - length
+                print_(u' * %s%s -> %s' % (lhs, ' ' * pad, rhs))
 
     # Missing and unmatched tracks.
     for track_info in match.extra_tracks:
