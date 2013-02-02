@@ -106,7 +106,7 @@ def _record_items(lib, basename, items):
 
     if 'link' in formats:
         for path in paths:
-            dest = os.path.join(feedsdir, os.path.basename(path))
+            dest = os.path.join(feedsdir, normpath(os.path.basename(path)))
             if not os.path.exists(dest):
                 os.symlink(path, dest)
 
