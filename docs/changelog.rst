@@ -32,6 +32,8 @@ Other new stuff:
 
 * Album listings in the importer UI now show the release medium (CD, LP,
   etc.). Thanks to Peter Schnebel.
+* :doc:`/plugins/mpdupdate`: Sends an update message whenever *anything* in the
+  database changes---not just when importing. Thanks to Dang Mai Hai.
 * Fix an error when migrating the ``.beetsstate`` file on Windows.
 
 1.1b1 (January 29, 2013)
