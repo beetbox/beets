@@ -188,33 +188,33 @@ def show_change(cur_artist, cur_album, match):
     lines = []
     for item, track_info in pairs:
         # Titles.
+        new_title = track_info.title
         if not item.title.strip():
             # If there's no title, we use the filename.
             cur_title = displayable_path(os.path.basename(item.path))
+            lhs, rhs = cur_title, new_title
         else:
             cur_title = item.title.strip()
-        new_title = track_info.title
+            lhs, rhs = ui.colordiff(cur_title, new_title)
         lhs_width = len(cur_title)
-        lhs, rhs = ui.colordiff(cur_title, new_title)
 
         # Track number change.
-        if item.track not in \
-                (track_info.index, track_info.medium_index):
+        if item.track not in (track_info.index, track_info.medium_index):
             cur_track, new_track = unicode(item.track), format_index(track_info)
-            lhs_width += len(u' (%s)' % cur_track)
             lhs_track, rhs_track = ui.colordiff(cur_track, new_track)
-            lhs += u' (%s)' % lhs_track
-            rhs += u' (%s)' % rhs_track
+            lhs += u' (#%s)' % lhs_track
+            rhs += u' (#%s)' % rhs_track
+            lhs_width += len(cur_track) + 4
 
         # Length change.
         if item.length and track_info.length and \
                 abs(item.length - track_info.length) > 2.0:
             cur_length = ui.human_seconds_short(item.length)
             new_length = ui.human_seconds_short(track_info.length)
-            lhs_width += len(u' (%s)' % cur_length)
             lhs_length, rhs_length = ui.colordiff(cur_length, new_length)
             lhs += u' (%s)' % lhs_length
             rhs += u' (%s)' % rhs_length
+            lhs_width += len(cur_length) + 3
 
         if lhs != rhs:
             lines.append((lhs, rhs, lhs_width))
