@@ -23,6 +23,7 @@ class MBAlbumInfoTest(unittest.TestCase):
             'title': 'ALBUM TITLE',
             'id': 'ALBUM ID',
             'asin': 'ALBUM ASIN',
+            'disambiguation': 'DISAMBIGUATION',
             'release-group': {
                 'type': 'Album',
                 'first-release-date': date_str,
