@@ -40,6 +40,8 @@ Other new stuff:
   highlighted.
 * The importer UI no longer shows a change when the track length difference is
   less than 10 seconds. (This threshold was previously 2 seconds.)
+* :doc:`/plugins/bpd`: Browse by album artist and album artist sort name.
+  Thanks to Steinþór Pálsson.
 * Fix an error when migrating the ``.beetsstate`` file on Windows.
 * A nicer error message is now given when the configuration file contains tabs.
   (YAML doesn't like tabs.)
