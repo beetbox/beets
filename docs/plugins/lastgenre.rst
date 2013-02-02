@@ -64,6 +64,18 @@ to use your own tree.
 .. _YAML: http://www.yaml.org/
 .. _pyyaml: http://pyyaml.org/
 
+Genre Source
+------------
+
+When looking up genres for albums, you may specify whether you want to retrieve
+the genre from the album, or from the artist by setting the ``source``
+configuration value::
+
+    lastgenre:
+        source: artist
+
+Currently the only available option is 'artist', any other value for ``source``
+will default to retrieving genres from the album.
 
 Running Manually
 ----------------

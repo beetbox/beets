@@ -167,9 +167,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             # The "write to files" option corresponds to the
             # import_write config value.
             write = config['import']['write'].get(bool)
+            source = self.config['source'].get()
             for album in lib.albums(ui.decargs(args)):
                 tags = []    
-                lastfm_obj = LASTFM.get_album(album.albumartist, album.album)
+                if source is 'artist':
+                    lastfm_obj = LASTFM.get_artist(album.albumartist)
+                else:
+                    lastfm_obj = LASTFM.get_album(album.albumartist, album.album)
                 if album.genre:
                     tags.append(album.genre)
 
@@ -191,15 +195,22 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return [lastgenre_cmd]
 
     def imported(self, session, task):
+        source = self.config['source'].get()
         tags = []
         if task.is_album:
             album = session.lib.get_album(task.album_id)
-            lastfm_obj = LASTFM.get_album(album.albumartist, album.album)
+            if source is 'artist':
+                lastfm_obj = LASTFM.get_artist(album.albumartist)
+            else:
+                lastfm_obj = LASTFM.get_album(album.albumartist, album.album)
             if album.genre:
                 tags.append(album.genre)
         else:
             item = task.item
-            lastfm_obj = LASTFM.get_track(item.artist, item.title)
+            if source is 'artist':
+                lastfm_obj = LASTFM.get_artist(item.artist)
+            else:
+                lastfm_obj = LASTFM.get_track(item.artist, item.title)
             if item.genre:
                 tags.append(item.genre)
 
