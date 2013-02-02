@@ -480,7 +480,7 @@ def print_obj(obj, lib, fmt=None):
 
 def term_width():
     """Get the width (columns) of the terminal."""
-    fallback = config['terminal_width'].get(int)
+    fallback = config['ui']['terminal_width'].get(int)
 
     # The fcntl and termios modules are not available on non-Unix
     # platforms, so we fall back to a constant.

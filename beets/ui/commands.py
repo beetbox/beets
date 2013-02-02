@@ -208,7 +208,8 @@ def show_change(cur_artist, cur_album, match):
 
         # Length change.
         if item.length and track_info.length and \
-                abs(item.length - track_info.length) > 2.0:
+                abs(item.length - track_info.length) > \
+                config['ui']['length_diff_thresh'].as_number():
             cur_length = ui.human_seconds_short(item.length)
             new_length = ui.human_seconds_short(track_info.length)
             lhs_length, rhs_length = ui.colordiff(cur_length, new_length)

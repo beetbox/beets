@@ -35,7 +35,10 @@ timeout: 5.0
 per_disc_numbering: no
 verbose: no
 terminal_encoding: utf8
-terminal_width: 80
+
+ui:
+    terminal_width: 80
+    length_diff_thresh: 10.0
 
 list_format_item: $artist - $album - $title
 list_format_album: $albumartist - $album

@@ -34,6 +34,8 @@ Other new stuff:
   etc.). Thanks to Peter Schnebel.
 * :doc:`/plugins/mpdupdate`: Sends an update message whenever *anything* in the
   database changes---not just when importing. Thanks to Dang Mai Hai.
+* The importer UI no longer shows a change when the track length difference is
+  less than 10 seconds. (This threshold was previously 2 seconds.)
 * Fix an error when migrating the ``.beetsstate`` file on Windows.
 * A nicer error message is now given when the configuration file contains tabs.
   (YAML doesn't like tabs.)
