@@ -35,6 +35,8 @@ Other new stuff:
 * :doc:`/plugins/mpdupdate`: Sends an update message whenever *anything* in the
   database changes---not just when importing. Thanks to Dang Mai Hai.
 * Fix an error when migrating the ``.beetsstate`` file on Windows.
+* A nicer error message is now given when the configuration file contains tabs.
+  (YAML doesn't like tabs.)
 
 1.1b1 (January 29, 2013)
 ------------------------

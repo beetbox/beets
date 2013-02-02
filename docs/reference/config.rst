@@ -23,8 +23,9 @@ file will look like this::
         key: value
         foo: bar
 
-If you have questions about more sophisticated syntax, take a look at the
-`YAML`_ documentation.
+In YAML, you will need to use spaces (not tabs!) to indent some lines. If you
+have questions about more sophisticated syntax, take a look at the `YAML`_
+documentation.
 
 .. _YAML: http://yaml.org/
 
