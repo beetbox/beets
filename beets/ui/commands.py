@@ -182,55 +182,52 @@ def show_change(cur_artist, cur_album, match):
     pairs = match.mapping.items()
     pairs.sort(key=lambda (_, track_info): track_info.index)
 
-    # The width of one column in track difference display.
-    col_width = (ui.term_width() - len(''.join([' * ', ' -> ']))) // 2
-
-    # Get each change as a colorized LHS and RHS value, and the length of the
-    # uncolored LHS value.
+    # Build up LHS and RHS for track difference display. The `lines`
+    # list contains ``(current title, new title, width)`` tuples where
+    # `width` is the length (in characters) of the uncolorized LHS.
     lines = []
     for item, track_info in pairs:
-
-        # Get display conditions.
-        tracks_differ = item.track not in \
-            (track_info.index, track_info.medium_index)
-        lengths_differ = item.length and track_info.length and \
-            abs(item.length - track_info.length) > 2.0
-
-        # Get raw LHS and RHS values.
+        # Titles.
         if not item.title.strip():
+            # If there's no title, we use the filename.
             cur_title = displayable_path(os.path.basename(item.path))
         else:
             cur_title = item.title.strip()
         new_title = track_info.title
-        cur_track, new_track = unicode(item.track), format_index(track_info)
-        if lengths_differ:
-            cur_length = ui.human_seconds_short(item.length)
-            new_length = ui.human_seconds_short(track_info.length)
-
-        # Determine what to display and colorize.
-        length = len(cur_title)
+        lhs_width = len(cur_title)
         lhs, rhs = ui.colordiff(cur_title, new_title)
-        if tracks_differ:
-            length += len(u' (%s)' % cur_track)
+
+        # Track number change.
+        if item.track not in \
+                (track_info.index, track_info.medium_index):
+            cur_track, new_track = unicode(item.track), format_index(track_info)
+            lhs_width += len(u' (%s)' % cur_track)
             lhs_track, rhs_track = ui.colordiff(cur_track, new_track)
             lhs += u' (%s)' % lhs_track
             rhs += u' (%s)' % rhs_track
-        if lengths_differ:
-            length += len(u' (%s)' % cur_length)
+
+        # Length change.
+        if item.length and track_info.length and \
+                abs(item.length - track_info.length) > 2.0:
+            cur_length = ui.human_seconds_short(item.length)
+            new_length = ui.human_seconds_short(track_info.length)
+            lhs_width += len(u' (%s)' % cur_length)
             lhs_length, rhs_length = ui.colordiff(cur_length, new_length)
             lhs += u' (%s)' % lhs_length
             rhs += u' (%s)' % rhs_length
+
         if lhs != rhs:
-            lines.append((lhs, rhs, length))
+            lines.append((lhs, rhs, lhs_width))
 
     # Print each track in two columns, or across two lines.
+    col_width = (ui.term_width() - len(''.join([' * ', ' -> ']))) // 2
     if lines:
-        max_length = max([length for lhs, rhs, length in lines])
-        for lhs, rhs, length in lines:
-            if max_length > col_width:
+        max_width = max(w for _, _, w in lines)
+        for lhs, rhs, lhs_width in lines:
+            if max_width > col_width:
                 print_(u' * %s ->\n   %s' % (lhs, rhs))
             else:
-                pad = max_length - length
+                pad = max_width - lhs_width
                 print_(u' * %s%s -> %s' % (lhs, ' ' * pad, rhs))
 
     # Missing and unmatched tracks.
