@@ -84,10 +84,11 @@ def _write_m3u(m3u_path, items_paths):
 def _record_items(lib, basename, items):
     """Records relative paths to the given items for each feed format
     """
-    feedsdir = config['importfeeds']['dir'].as_filename()
+    feedsdir = bytestring_path(config['importfeeds']['dir'].as_filename())
     formats = config['importfeeds']['formats'].as_str_seq()
     relative_to = config['importfeeds']['relative_to'].get() \
             or config['importfeeds']['dir'].as_filename()
+    relative_to = bytestring_path(relative_to)
 
     paths = []
     for item in items:
@@ -96,7 +97,9 @@ def _record_items(lib, basename, items):
         ))
 
     if 'm3u' in formats:
-        basename = config['importfeeds']['m3u_name'].get(unicode).encode('utf8')
+        basename = bytestring_path(
+            config['importfeeds']['m3u_name'].get(unicode)
+        )
         m3u_path = os.path.join(feedsdir, basename)
         _write_m3u(m3u_path, paths)
 
@@ -106,9 +109,9 @@ def _record_items(lib, basename, items):
 
     if 'link' in formats:
         for path in paths:
-            dest = os.path.join(feedsdir, normpath(os.path.basename(path)))
-            if not os.path.exists(dest):
-                os.symlink(path, dest)
+            dest = os.path.join(feedsdir, os.path.basename(path))
+            if not os.path.exists(syspath(dest)):
+                os.symlink(syspath(path), syspath(dest))
 
 @ImportFeedsPlugin.listen('library_opened')
 def library_opened(lib):
