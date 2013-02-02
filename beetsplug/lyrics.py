@@ -99,6 +99,7 @@ def extract_text(html, starttag):
     lyrics = re.sub(r'\n +', '\n', lyrics)
     lyrics = re.sub(r' +\n', '\n', lyrics)
     lyrics = TAG_RE.sub('', lyrics) # Strip remaining HTML tags.
+    lyrics = lyrics.replace('\r','\n')
     lyrics = lyrics.strip()
     return lyrics
 
