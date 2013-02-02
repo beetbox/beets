@@ -51,8 +51,7 @@ be turned into coarser-grained ones that are present in the whitelist. This
 works using a tree of nested genre names, represented using `YAML`_, where the
 leaves of the tree represent the most specific genres.
 
-To enable canonicalization, first install the `pyyaml`_ module (``pip install
-pyyaml``). Then set the ``canonical`` configuration value::
+To enable canonicalization, set the ``canonical`` configuration value::
 
     lastgenre:
         canonical: ''
@@ -62,20 +61,18 @@ tree. You can also set it to a path, just like the ``whitelist`` config value,
 to use your own tree.
 
 .. _YAML: http://www.yaml.org/
-.. _pyyaml: http://pyyaml.org/
+
 
 Genre Source
 ------------
 
-When looking up genres for albums, you may specify whether you want to retrieve
-the genre from the album, or from the artist by setting the ``source``
-configuration value::
+When looking up genres for albums or individual tracks, you may prefer to use a
+genre tag from the *artist* instead of the individual entity. To do so, set the
+``source`` configuration value to "artist", like so::
 
     lastgenre:
         source: artist
 
-Currently the only available option is 'artist', any other value for ``source``
-will default to retrieving genres from the album.
 
 Running Manually
 ----------------

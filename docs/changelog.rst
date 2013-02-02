@@ -10,6 +10,9 @@ New configuration options:
   is when considering a candidate.
 * :ref:`none_rec_action` lets you skip the prompt, and automatically choose an
   action, when there is no good candidate. Thanks to mrmachine.
+* :doc:`/plugins/lastgenre`: A new configuration option lets you choose to
+  retrieve artist-level tags as genres instead of album- or track-level tags.
+  Thanks to Peter Fern.
 
 Other new stuff:
 
