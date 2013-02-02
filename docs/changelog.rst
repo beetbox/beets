@@ -18,8 +18,8 @@ Other new stuff:
   based on beets queries. Thanks to Dang Mai Hai.
 * Two new plugin events were added: *database_change* and *cli_exit*. Thanks
   again to Dang Mai Hai.
-* Track titles in the importer's difference display are now broken across two
-  lines for readability. Thanks to mrmachine.
+* Track titles in the importer UI's difference display are now either aligned
+  vertically or broken across two lines for readability. Thanks to mrmachine.
 * Some changes to the way candidates are recommended for selection, thanks to
   mrmachine:
 
