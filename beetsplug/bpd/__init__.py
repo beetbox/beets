@@ -954,6 +954,8 @@ class Server(BaseServer):
         u'Album':        u'album',
         u'Title':        u'title',
         u'Track':        u'track',
+        u'AlbumArtist':  u'albumartist',
+        u'AlbumArtistSort': u'albumartist_sort',
         # Name?
         u'Genre':        u'genre',
         u'Date':         u'year',
