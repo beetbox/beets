@@ -27,6 +27,7 @@ import logging
 import sqlite3
 import errno
 import re
+import struct
 
 from beets import library
 from beets import plugins
@@ -476,6 +477,28 @@ def print_obj(obj, lib, fmt=None):
         print_(obj.evaluate_template(template))
     else:
         print_(obj.evaluate_template(template, lib=lib))
+
+def term_width():
+    """Get the width (columns) of the terminal."""
+    fallback = config['terminal_width'].get(int)
+
+    # The fcntl and termios modules are not available on non-Unix
+    # platforms, so we fall back to a constant.
+    try:
+        import fcntl
+        import termios
+    except ImportError:
+        return fallback
+
+    try:
+        buf = fcntl.ioctl(0, termios.TIOCGWINSZ, ' '*4)
+    except IOError:
+        return fallback
+    try:
+        height, width = struct.unpack('hh', buf)
+    except struct.error:
+        return fallback
+    return width
 
 
 # Subcommand parsing infrastructure.

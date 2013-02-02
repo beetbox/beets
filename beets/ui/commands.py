@@ -22,9 +22,6 @@ import os
 import time
 import itertools
 import re
-import fcntl
-import struct
-import termios
 
 import beets
 from beets import ui
@@ -185,10 +182,8 @@ def show_change(cur_artist, cur_album, match):
     pairs = match.mapping.items()
     pairs.sort(key=lambda (_, track_info): track_info.index)
 
-    # Calculate max column width.
-    buf = fcntl.ioctl(0, termios.TIOCGWINSZ, ' '*4)
-    height, width = struct.unpack('hh', buf)
-    col_width = (width - len(''.join([' * ', ' -> ']))) / 2
+    # The width of one column in track difference display.
+    col_width = (ui.term_width() - len(''.join([' * ', ' -> ']))) // 2
 
     # Get each change as a colorized LHS and RHS value, and the length of the
     # uncolored LHS value.
