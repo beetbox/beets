@@ -33,6 +33,7 @@ from beets import plugins
 from beets import ui
 from beets.util import normpath
 from beets import config
+from beets import library
 
 log = logging.getLogger('beets')
 
@@ -44,6 +45,27 @@ PYLAST_EXCEPTIONS = (
     pylast.MalformedResponseError,
     pylast.NetworkError,
 )
+
+def _lastfm_obj(obj):
+    """Given a beets item or album, look up the last.fm Track, Album or
+    Artist object for which tags should be extracted.
+    """
+    source = config['lastgenre']['source'].get()
+
+    if isinstance(obj, library.Album):
+        if source == 'artist':
+            return LASTFM.get_artist(obj.albumartist)
+        else:
+            return LASTFM.get_album(obj.albumartist, obj.album)
+
+    elif isinstance(obj, library.Item):
+        if source == 'artist':
+            return LASTFM.get_artist(obj.artist)
+        else:
+            return LASTFM.get_track(obj.artist, obj.title)
+
+    else:
+        raise TypeError('obj should be an Album or Item')
 
 def _tags_for(obj):
     """Given a pylast entity (album or track), returns a list of
@@ -134,6 +156,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'whitelist': os.path.join(os.path.dirname(__file__), 'genres.txt'),
             'fallback': None,
             'canonical': None,
+            'source': 'album',
         })
 
 
@@ -167,13 +190,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             # The "write to files" option corresponds to the
             # import_write config value.
             write = config['import']['write'].get(bool)
-            source = self.config['source'].get()
             for album in lib.albums(ui.decargs(args)):
-                tags = []    
-                if source is 'artist':
-                    lastfm_obj = LASTFM.get_artist(album.albumartist)
-                else:
-                    lastfm_obj = LASTFM.get_album(album.albumartist, album.album)
+                tags = []
+                lastfm_obj = _lastfm_obj(album)
                 if album.genre:
                     tags.append(album.genre)
 
@@ -195,22 +214,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return [lastgenre_cmd]
 
     def imported(self, session, task):
-        source = self.config['source'].get()
         tags = []
         if task.is_album:
             album = session.lib.get_album(task.album_id)
-            if source is 'artist':
-                lastfm_obj = LASTFM.get_artist(album.albumartist)
-            else:
-                lastfm_obj = LASTFM.get_album(album.albumartist, album.album)
+            lastfm_obj = _lastfm_obj(album)
             if album.genre:
                 tags.append(album.genre)
         else:
             item = task.item
-            if source is 'artist':
-                lastfm_obj = LASTFM.get_artist(item.artist)
-            else:
-                lastfm_obj = LASTFM.get_track(item.artist, item.title)
+            lastfm_obj = _lastfm_obj(item)
             if item.genre:
                 tags.append(item.genre)
 
