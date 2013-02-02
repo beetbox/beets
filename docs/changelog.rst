@@ -32,6 +32,8 @@ Other new stuff:
 
 * Album listings in the importer UI now show the release medium (CD, Vinyl,
   3xCD, etc.) as well as the disambiguation string. Thanks to Peter Schnebel.
+* When getting data from MusicBrainz, the album disambiguation string
+  (``albumdisambig``) now reflects both the release and the release group.
 * :doc:`/plugins/mpdupdate`: Sends an update message whenever *anything* in the
   database changes---not just when importing. Thanks to Dang Mai Hai.
 * When the importer UI shows a difference in track numbers or durations, they
