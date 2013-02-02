@@ -201,9 +201,11 @@ def show_change(cur_artist, cur_album, match):
         # Track number change.
         if item.track not in (track_info.index, track_info.medium_index):
             cur_track, new_track = unicode(item.track), format_index(track_info)
-            lhs_track, rhs_track = ui.colordiff(cur_track, new_track)
-            lhs += u' (#%s)' % lhs_track
-            rhs += u' (#%s)' % rhs_track
+            lhs_track, rhs_track = ui.color_diff_suffix(cur_track, new_track)
+            templ = ui.colorize('red', u' (#') + u'{0}' + \
+                    ui.colorize('red', u')')
+            lhs += templ.format(lhs_track)
+            rhs += templ.format(rhs_track)
             lhs_width += len(cur_track) + 4
 
         # Length change.
@@ -212,9 +214,12 @@ def show_change(cur_artist, cur_album, match):
                 config['ui']['length_diff_thresh'].as_number():
             cur_length = ui.human_seconds_short(item.length)
             new_length = ui.human_seconds_short(track_info.length)
-            lhs_length, rhs_length = ui.colordiff(cur_length, new_length)
-            lhs += u' (%s)' % lhs_length
-            rhs += u' (%s)' % rhs_length
+            lhs_length, rhs_length = ui.color_diff_suffix(cur_length,
+                                                          new_length)
+            templ = ui.colorize('red', u' (') + u'{0}' + \
+                    ui.colorize('red', u')')
+            lhs += templ.format(lhs_length)
+            rhs += templ.format(rhs_length)
             lhs_width += len(cur_length) + 3
 
         if lhs != rhs:

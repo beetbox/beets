@@ -414,6 +414,29 @@ def colordiff(a, b, highlight='red'):
     else:
         return unicode(a), unicode(b)
 
+def color_diff_suffix(a, b, highlight='red'):
+    """Colorize the differing suffix between two strings."""
+    a, b = unicode(a), unicode(b)
+    if not config['color']:
+        return a, b
+
+    # Fast path.
+    if a == b:
+        return a, b
+
+    # Find the longest common prefix.
+    first_diff = None
+    for i in range(min(len(a), len(b))):
+        if a[i] != b[i]:
+            first_diff = i
+            break
+    else:
+        first_diff = min(len(a), len(b))
+
+    # Colorize from the first difference on.
+    return a[:first_diff] + colorize(highlight, a[first_diff:]), \
+           b[:first_diff] + colorize(highlight, b[first_diff:])
+
 def get_path_formats():
     """Get the configuration's path formats as a list of query/template
     pairs.

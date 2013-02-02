@@ -30,10 +30,14 @@ Other new stuff:
     bad: "low" or "none" recommendations or when choosing a candidate
     other than the first.
 
-* Album listings in the importer UI now show the release medium (CD, LP,
+* Album listings in the importer UI now show the release medium (CD, Vinyl,
   etc.). Thanks to Peter Schnebel.
 * :doc:`/plugins/mpdupdate`: Sends an update message whenever *anything* in the
   database changes---not just when importing. Thanks to Dang Mai Hai.
+* When the importer UI shows a difference in track numbers or durations, they
+  are now colorized based on the *suffixes* that differ. For example, when
+  showing the difference between 2:01 and 2:09, only the last digit will be
+  highlighted.
 * The importer UI no longer shows a change when the track length difference is
   less than 10 seconds. (This threshold was previously 2 seconds.)
 * Fix an error when migrating the ``.beetsstate`` file on Windows.
