@@ -31,7 +31,7 @@ Other new stuff:
     other than the first.
 
 * Album listings in the importer UI now show the release medium (CD, Vinyl,
-  etc.). Thanks to Peter Schnebel.
+  3xCD, etc.) as well as the disambiguation string. Thanks to Peter Schnebel.
 * :doc:`/plugins/mpdupdate`: Sends an update message whenever *anything* in the
   database changes---not just when importing. Thanks to Dang Mai Hai.
 * When the importer UI shows a difference in track numbers or durations, they

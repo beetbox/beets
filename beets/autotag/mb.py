@@ -188,7 +188,7 @@ def album_info(release):
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
     info.asin = release.get('asin')
     info.releasegroup_id = release['release-group']['id']
-    info.albumdisambig = release.get('disambiguation')
+    info.albumdisambig = release['release-group'].get('disambiguation')
     info.country = release.get('country')
     info.albumstatus = release.get('status')
 
