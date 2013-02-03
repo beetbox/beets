@@ -105,26 +105,26 @@ class CombinedTest(unittest.TestCase):
         _common.touch(os.path.join(self.dpath, 'a.jpg'))
         fetchart.urllib.urlretrieve = MockUrlRetrieve('image/jpeg')
         album = _common.Bag(asin='xxxx')
-        artpath = fetchart.art_for_album(album, self.dpath)
+        artpath = fetchart.art_for_album(album, [self.dpath])
         self.assertEqual(artpath, os.path.join(self.dpath, 'a.jpg'))
 
     def test_main_interface_falls_back_to_amazon(self):
         fetchart.urllib.urlretrieve = MockUrlRetrieve('image/jpeg')
         album = _common.Bag(asin='xxxx')
-        artpath = fetchart.art_for_album(album, self.dpath)
+        artpath = fetchart.art_for_album(album, [self.dpath])
         self.assertNotEqual(artpath, None)
         self.assertFalse(artpath.startswith(self.dpath))
 
     def test_main_interface_tries_amazon_before_aao(self):
         fetchart.urllib.urlretrieve = MockUrlRetrieve('image/jpeg')
         album = _common.Bag(asin='xxxx')
-        fetchart.art_for_album(album, self.dpath)
+        fetchart.art_for_album(album, [self.dpath])
         self.assertFalse(self.urlopen_called)
 
     def test_main_interface_falls_back_to_aao(self):
         fetchart.urllib.urlretrieve = MockUrlRetrieve('text/html')
         album = _common.Bag(asin='xxxx')
-        fetchart.art_for_album(album, self.dpath)
+        fetchart.art_for_album(album, [self.dpath])
         self.assertTrue(self.urlopen_called)
 
     def test_main_interface_uses_caa_when_mbid_available(self):
@@ -139,7 +139,7 @@ class CombinedTest(unittest.TestCase):
         mock_retrieve = MockUrlRetrieve('image/jpeg')
         fetchart.urllib.urlretrieve = mock_retrieve
         album = _common.Bag(mb_albumid='releaseid', asin='xxxx')
-        artpath = fetchart.art_for_album(album, self.dpath, local_only=True)
+        artpath = fetchart.art_for_album(album, [self.dpath], local_only=True)
         self.assertEqual(artpath, None)
         self.assertFalse(self.urlopen_called)
         self.assertFalse(mock_retrieve.fetched)
@@ -149,7 +149,7 @@ class CombinedTest(unittest.TestCase):
         mock_retrieve = MockUrlRetrieve('image/jpeg')
         fetchart.urllib.urlretrieve = mock_retrieve
         album = _common.Bag(mb_albumid='releaseid', asin='xxxx')
-        artpath = fetchart.art_for_album(album, self.dpath, local_only=True)
+        artpath = fetchart.art_for_album(album, [self.dpath], local_only=True)
         self.assertEqual(artpath, os.path.join(self.dpath, 'a.jpg'))
         self.assertFalse(self.urlopen_called)
         self.assertFalse(mock_retrieve.fetched)
