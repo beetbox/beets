@@ -322,19 +322,29 @@ class MultiDiscAlbumsInDirTest(unittest.TestCase):
         os.mkdir(self.base)
 
         self.dirs = [
+            # Nested album with non-consecutive disc numbers and a subtitle.
             os.path.join(self.base, 'album1'),
-            os.path.join(self.base, 'album1', 'disc 1'),
-            os.path.join(self.base, 'album1', 'disc 2'),
-            os.path.join(self.base, 'dir2'),
-            os.path.join(self.base, 'dir2', 'disc 1'),
-            os.path.join(self.base, 'dir2', 'something'),
+            os.path.join(self.base, 'album1', 'cd 1'),
+            os.path.join(self.base, 'album1', 'cd 3 - bonus'),
+            # Nested album with a single disc and punctuation.
+            os.path.join(self.base, 'album2'),
+            os.path.join(self.base, 'album2', 'cd _ 1'),
+            # Flattened album with case typo.
+            os.path.join(self.base, 'artist'),
+            os.path.join(self.base, 'artist', 'CAT disc 1'),
+            os.path.join(self.base, 'artist', 'Cat disc 2'),
+            # Prevent "CAT" being collapsed as a nested multi-disc album,
+            # and test case insensitive sorting.
+            os.path.join(self.base, 'artist', 'CATS'),
         ]
         self.files = [
-            os.path.join(self.base, 'album1', 'disc 1', 'song1.mp3'),
-            os.path.join(self.base, 'album1', 'disc 2', 'song2.mp3'),
-            os.path.join(self.base, 'album1', 'disc 2', 'song3.mp3'),
-            os.path.join(self.base, 'dir2', 'disc 1', 'song4.mp3'),
-            os.path.join(self.base, 'dir2', 'something', 'song5.mp3'),
+            os.path.join(self.base, 'album1', 'cd 1', 'song1.mp3'),
+            os.path.join(self.base, 'album1', 'cd 3 - bonus', 'song2.mp3'),
+            os.path.join(self.base, 'album1', 'cd 3 - bonus', 'song3.mp3'),
+            os.path.join(self.base, 'album2', 'cd _ 1', 'song4.mp3'),
+            os.path.join(self.base, 'artist', 'CAT disc 1', 'song5.mp3'),
+            os.path.join(self.base, 'artist', 'Cat disc 2', 'song6.mp3'),
+            os.path.join(self.base, 'artist', 'CATS', 'song7.mp3'),
         ]
 
         for path in self.dirs:
@@ -347,23 +357,28 @@ class MultiDiscAlbumsInDirTest(unittest.TestCase):
 
     def test_coalesce_multi_disc_album(self):
         albums = list(autotag.albums_in_dir(self.base))
-        self.assertEquals(len(albums), 3)
+        self.assertEquals(len(albums), 4)
+        # Nested album with non-consecutive disc numbers.
         root, items = albums[0]
-        self.assertEquals(root, os.path.join(self.base, 'album1'))
+        self.assertEquals(root, self.dirs[0:3])
         self.assertEquals(len(items), 3)
-
-    def test_separate_red_herring(self):
-        albums = list(autotag.albums_in_dir(self.base))
+        # Nested album with a single disc and punctuation.
         root, items = albums[1]
-        self.assertEquals(root, os.path.join(self.base, 'dir2', 'disc 1'))
+        self.assertEquals(root, self.dirs[3:5])
+        self.assertEquals(len(items), 1)
+        # Flattened album with case typo.
         root, items = albums[2]
-        self.assertEquals(root, os.path.join(self.base, 'dir2', 'something'))
+        self.assertEquals(root, self.dirs[6:8])
+        self.assertEquals(len(items), 2)
+        # Non-multi-disc album (sorted in between "cat" album).
+        root, items = albums[3]
+        self.assertEquals(root, self.dirs[8:])
+        self.assertEquals(len(items), 1)
 
     def test_do_not_yield_empty_album(self):
         # Remove all the MP3s.
         for path in self.files:
             os.remove(path)
-
         albums = list(autotag.albums_in_dir(self.base))
         self.assertEquals(len(albums), 0)
 

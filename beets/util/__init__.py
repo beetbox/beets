@@ -169,8 +169,9 @@ def sorted_walk(path, ignore=()):
         else:
             files.append(base)
 
-    # Sort lists and yield the current level.
-    dirs.sort()
+    # Sort lists and yield the current level. Do case insensitve sort on dirs,
+    # to improve multi-disc album detection.
+    dirs = [d2 for d1, d2 in sorted([(d.lower(), d) for d in dirs])]
     files.sort()
     yield (path, dirs, files)
 
@@ -295,10 +296,12 @@ def bytestring_path(path, pathmod=None):
     except (UnicodeError, LookupError):
         return path.encode('utf8')
 
-def displayable_path(path):
+def displayable_path(path, separator=u'; '):
     """Attempts to decode a bytestring path to a unicode object for the
     purpose of displaying it to the user.
     """
+    if isinstance(path, list):
+        return separator.join(displayable_path(p) for p in path)
     if isinstance(path, unicode):
         return path
     elif not isinstance(path, str):
