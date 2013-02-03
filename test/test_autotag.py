@@ -326,13 +326,16 @@ class MultiDiscAlbumsInDirTest(unittest.TestCase):
             os.path.join(self.base, 'album1'),
             os.path.join(self.base, 'album1', 'cd 1'),
             os.path.join(self.base, 'album1', 'cd 3 - bonus'),
+
             # Nested album with a single disc and punctuation.
             os.path.join(self.base, 'album2'),
             os.path.join(self.base, 'album2', 'cd _ 1'),
+
             # Flattened album with case typo.
             os.path.join(self.base, 'artist'),
             os.path.join(self.base, 'artist', 'CAT disc 1'),
             os.path.join(self.base, 'artist', 'Cat disc 2'),
+
             # Prevent "CAT" being collapsed as a nested multi-disc album,
             # and test case insensitive sorting.
             os.path.join(self.base, 'artist', 'CATS'),
@@ -355,22 +358,31 @@ class MultiDiscAlbumsInDirTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.base)
 
-    def test_coalesce_multi_disc_album(self):
+    def test_coalesce_nested_album_dirs(self):
+        # Nested album with non-consecutive disc numbers.
         albums = list(autotag.albums_in_dir(self.base))
         self.assertEquals(len(albums), 4)
-        # Nested album with non-consecutive disc numbers.
         root, items = albums[0]
         self.assertEquals(root, self.dirs[0:3])
         self.assertEquals(len(items), 3)
+
+    def test_coalesce_single_subdirectory(self):
         # Nested album with a single disc and punctuation.
+        albums = list(autotag.albums_in_dir(self.base))
         root, items = albums[1]
         self.assertEquals(root, self.dirs[3:5])
         self.assertEquals(len(items), 1)
+
+    def test_coalesce_case_insensitive(self):
         # Flattened album with case typo.
+        albums = list(autotag.albums_in_dir(self.base))
         root, items = albums[2]
         self.assertEquals(root, self.dirs[6:8])
         self.assertEquals(len(items), 2)
+
+    def test_non_multi_disc_album(self):
         # Non-multi-disc album (sorted in between "cat" album).
+        albums = list(autotag.albums_in_dir(self.base))
         root, items = albums[3]
         self.assertEquals(root, self.dirs[8:])
         self.assertEquals(len(items), 1)
