@@ -140,9 +140,9 @@ def ancestry(path, pathmod=None):
     return out
 
 def sorted_walk(path, ignore=()):
-    """Like ``os.walk``, but yields things in sorted, breadth-first
-    order.  Directory and file names matching any glob pattern in
-    ``ignore`` are skipped.
+    """Like ``os.walk``, but yields things in case-insensitive sorted,
+    breadth-first order.  Directory and file names matching any glob
+    pattern in ``ignore`` are skipped.
     """
     # Make sure the path isn't a Unicode string.
     path = bytestring_path(path)
@@ -169,10 +169,9 @@ def sorted_walk(path, ignore=()):
         else:
             files.append(base)
 
-    # Sort lists and yield the current level. Do case insensitve sort on dirs,
-    # to improve multi-disc album detection.
-    dirs = [d2 for d1, d2 in sorted([(d.lower(), d) for d in dirs])]
-    files.sort()
+    # Sort lists (case-insensitive) and yield the current level.
+    dirs.sort(key=bytes.lower)
+    files.sort(key=bytes.lower)
     yield (path, dirs, files)
 
     # Recurse into directories.
@@ -298,11 +297,12 @@ def bytestring_path(path, pathmod=None):
 
 def displayable_path(path, separator=u'; '):
     """Attempts to decode a bytestring path to a unicode object for the
-    purpose of displaying it to the user.
+    purpose of displaying it to the user. If the `path` argument is a
+    list or a tuple, the elements are joined with `separator`.
     """
-    if isinstance(path, list):
+    if isinstance(path, (list, tuple)):
         return separator.join(displayable_path(p) for p in path)
-    if isinstance(path, unicode):
+    elif isinstance(path, unicode):
         return path
     elif not isinstance(path, str):
         # A non-string object: just get its unicode representation.
