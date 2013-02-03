@@ -49,3 +49,7 @@ from the command line::
     $ beet splupdate
 
 which will generate your new smart playlists.
+
+You can also use this plugin together with the :doc:`mpdupdate`, in order to
+automatically notify `mpd` of the playlist change, by adding `mpdupdate` to the
+`plugin` section in your config file **after** the `smartplaylist` plugin.
