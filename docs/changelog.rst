@@ -33,6 +33,11 @@ Other new stuff:
     bad: "low" or "none" recommendations or when choosing a candidate
     other than the first.
 
+* The importer's heuristic for coalescing the directories in a multi-disc album
+  has been improved. It can now detect when two directories alongside each
+  other share a similar prefix but a different number (e.g., "Album Disc 1" and
+  "Album Disc 2") even when they are not alone in a common parent directory.
+  Thanks once again to mrmachine.
 * Album listings in the importer UI now show the release medium (CD, Vinyl,
   3xCD, etc.) as well as the disambiguation string. Thanks to Peter Schnebel.
 * When getting data from MusicBrainz, the album disambiguation string

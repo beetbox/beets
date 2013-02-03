@@ -47,11 +47,9 @@ all of these limitations.
   currently be autotaggable. (This will change eventually.)
 
   There is one exception to this rule: directories that look like separate parts
-  of a *multi-disc album* are tagged together as a single release. This
-  situation is detected by looking at the names of directories. If one directory
-  has sub-directories with, for example, "disc 1" and "disc 2" in their names,
-  they get lumped together as a single album. The marker words for this feature
-  are "part", "volume", "vol.", "disc", and "CD".
+  of a *multi-disc album* are tagged together as a single release. If two
+  adjacent albums have a common prefix, followed by "disc" or "CD" and then a
+  number, they are tagged together.
 
 * The music may have bad tags, but it's not completely untagged. (This is
   actually not a hard-and-fast rule: using the *E* option described below, it's
