@@ -271,7 +271,7 @@ class ImportSession(object):
         ``duplicate``, then this is a secondary choice after a duplicate was
         detected and a decision was made.
         """
-        paths = task.path if task.is_album else [task.item.path]
+        paths = task.paths if task.is_album else [task.item.path]
         if duplicate:
             # Duplicate: log all three choices (skip, keep both, and trump).
             if task.remove_duplicates:
@@ -347,9 +347,9 @@ class ImportTask(object):
     """Represents a single set of items to be imported along with its
     intermediate state. May represent an album or a single item.
     """
-    def __init__(self, toppath=None, path=None, items=None):
+    def __init__(self, toppath=None, paths=None, items=None):
         self.toppath = toppath
-        self.path = path
+        self.paths = paths
         self.items = items
         self.sentinel = False
         self.remove_duplicates = False
@@ -365,12 +365,12 @@ class ImportTask(object):
         return obj
 
     @classmethod
-    def progress_sentinel(cls, toppath, path):
+    def progress_sentinel(cls, toppath, paths):
         """Create a task indicating that a single directory in a larger
         import has finished. This is only required for singleton
         imports; progress is implied for album imports.
         """
-        obj = cls(toppath, path)
+        obj = cls(toppath, paths)
         obj.sentinel = True
         return obj
 
@@ -431,19 +431,19 @@ class ImportTask(object):
         """Updates the progress state to indicate that this album has
         finished.
         """
-        if self.sentinel and self.path is None:
+        if self.sentinel and self.paths is None:
             # "Done" sentinel.
             progress_set(self.toppath, None)
         elif self.sentinel or self.is_album:
             # "Directory progress" sentinel for singletons or a real
             # album task, which implies the same.
-            progress_set(self.toppath, self.path)
+            progress_set(self.toppath, self.paths)
 
     def save_history(self):
         """Save the directory in the history for incremental imports.
         """
         if self.sentinel or self.is_album:
-            history_add(self.path)
+            history_add(self.paths)
 
 
     # Logical decisions.
@@ -629,7 +629,7 @@ def initial_lookup(session):
 
         plugins.send('import_task_start', session=session, task=task)
 
-        log.debug('Looking up: %s' % displayable_path(task.path))
+        log.debug('Looking up: %s' % displayable_path(task.paths))
         try:
             task.set_candidates(*autotag.tag_album(task.items,
                                                    config['import']['timid']))
@@ -662,7 +662,7 @@ def user_query(session):
             def emitter():
                 for item in task.items:
                     yield ImportTask.item_task(item)
-                yield ImportTask.progress_sentinel(task.toppath, task.path)
+                yield ImportTask.progress_sentinel(task.toppath, task.paths)
             def collector():
                 while True:
                     item_task = yield
@@ -695,7 +695,7 @@ def show_progress(session):
         if task.sentinel:
             continue
 
-        log.info(displayable_path(task.path))
+        log.info(displayable_path(task.paths))
 
         # Behave as if ASIS were selected.
         task.set_null_candidates()

@@ -246,7 +246,7 @@ class FetchArtPlugin(BeetsPlugin):
                 return
 
             album = session.lib.get_album(task.album_id)
-            path = art_for_album(album, task.path, self.maxwidth, local)
+            path = art_for_album(album, task.paths, self.maxwidth, local)
 
             if path:
                 self.art_paths[task] = path

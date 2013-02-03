@@ -582,7 +582,7 @@ class InferAlbumDataTest(_common.TestCase):
         i1.mb_albumartistid = i2.mb_albumartistid = i3.mb_albumartistid = ''
         self.items = [i1, i2, i3]
 
-        self.task = importer.ImportTask(path='a path', toppath='top path',
+        self.task = importer.ImportTask(paths=['a path'], toppath='top path',
                                         items=self.items)
         self.task.set_null_candidates()
 
@@ -677,7 +677,7 @@ class DuplicateCheckTest(_common.TestCase):
         artist = artist or item.albumartist
         album = album or item.album
 
-        task = importer.ImportTask(path='a path', toppath='top path',
+        task = importer.ImportTask(paths=['a path'], toppath='top path',
                                    items=[item])
         task.set_candidates(artist, album, None, None)
         if asis:
