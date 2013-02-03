@@ -45,6 +45,8 @@ Other new stuff:
   highlighted.
 * The importer UI no longer shows a change when the track length difference is
   less than 10 seconds. (This threshold was previously 2 seconds.)
+* Plugins are now loaded in the order they appear in the config file. Thanks to
+  Dang Mai Hai.
 * :doc:`/plugins/bpd`: Browse by album artist and album artist sort name.
   Thanks to Steinþór Pálsson.
 * Fix an error when migrating the ``.beetsstate`` file on Windows.
