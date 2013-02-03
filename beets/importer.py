@@ -200,7 +200,7 @@ def history_add(path):
     if HISTORY_KEY not in state:
         state[HISTORY_KEY] = set()
 
-    state[HISTORY_KEY].add(path)
+    state[HISTORY_KEY].add(tuple(path))
 
     _save_state(state)
 def history_get():
@@ -271,21 +271,21 @@ class ImportSession(object):
         ``duplicate``, then this is a secondary choice after a duplicate was
         detected and a decision was made.
         """
-        path = task.path if task.is_album else task.item.path
+        paths = task.path if task.is_album else [task.item.path]
         if duplicate:
             # Duplicate: log all three choices (skip, keep both, and trump).
             if task.remove_duplicates:
-                self.tag_log('duplicate-replace', path)
+                self.tag_log('duplicate-replace', displayable_path(paths))
             elif task.choice_flag in (action.ASIS, action.APPLY):
-                self.tag_log('duplicate-keep', path)
+                self.tag_log('duplicate-keep', displayable_path(paths))
             elif task.choice_flag is (action.SKIP):
-                self.tag_log('duplicate-skip', path)
+                self.tag_log('duplicate-skip', displayable_path(paths))
         else:
             # Non-duplicate: log "skip" and "asis" choices.
             if task.choice_flag is action.ASIS:
-                self.tag_log('asis', path)
+                self.tag_log('asis', displayable_path(paths))
             elif task.choice_flag is action.SKIP:
-                self.tag_log('skip', path)
+                self.tag_log('skip', displayable_path(paths))
 
     def should_resume(self, path):
         raise NotImplementedError
@@ -575,7 +575,7 @@ def read_tasks(session):
                 continue
 
             # When incremental, skip paths in the history.
-            if config['import']['incremental'] and path in history_dirs:
+            if config['import']['incremental'] and tuple(path) in history_dirs:
                 log.debug(u'Skipping previously-imported path: %s' %
                           displayable_path(path))
                 incremental_skipped += 1
@@ -613,7 +613,7 @@ def query_tasks(session):
             log.debug('yielding album %i: %s - %s' %
                       (album.id, album.albumartist, album.album))
             items = list(album.items())
-            yield ImportTask(None, album.item_dir(), items)
+            yield ImportTask(None, [album.item_dir()], items)
 
 def initial_lookup(session):
     """A coroutine for performing the initial MusicBrainz lookup for an
@@ -629,7 +629,7 @@ def initial_lookup(session):
 
         plugins.send('import_task_start', session=session, task=task)
 
-        log.debug('Looking up: %s' % task.path)
+        log.debug('Looking up: %s' % displayable_path(task.path))
         try:
             task.set_candidates(*autotag.tag_album(task.items,
                                                    config['import']['timid']))
@@ -695,7 +695,7 @@ def show_progress(session):
         if task.sentinel:
             continue
 
-        log.info(task.path)
+        log.info(displayable_path(task.path))
 
         # Behave as if ASIS were selected.
         task.set_null_candidates()

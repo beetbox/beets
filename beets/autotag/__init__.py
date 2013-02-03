@@ -32,20 +32,19 @@ from .match import \
 log = logging.getLogger('beets')
 
 # Constants for directory walker.
-MULTIDISC_MARKERS = (r'part', r'volume', r'vol\.', r'disc', r'cd')
-MULTIDISC_PAT_FMT = r'%s\s*\d'
+MULTIDISC_MARKERS = (r'disc', r'cd')
+MULTIDISC_PAT_FMT = r'^(.*%s[\W_]*)\d'
 
 
 # Additional utilities for the main interface.
 
 def albums_in_dir(path):
     """Recursively searches the given directory and returns an iterable
-    of (path, items) where path is a containing directory and items is
+    of (paths, items) where paths is a list of directories and items is
     a list of Items that is probably an album. Specifically, any folder
     containing any media files is an album.
     """
-    collapse_root = None
-    collapse_items = None
+    collapse_pat = collapse_paths = collapse_items = multidisc = None
 
     for root, dirs, files in sorted_walk(path,
                                          ignore=config['ignore'].as_str_seq()):
@@ -64,45 +63,68 @@ def albums_in_dir(path):
                 items.append(i)
 
         # If we're collapsing, test to see whether we should continue to
-        # collapse. If so, just add to the collapsed item set;
+        # collapse. If so, just add to the collapsed paths and items;
         # otherwise, end the collapse and continue as normal.
-        if collapse_root is not None:
-            if collapse_root in ancestry(root):
+        if collapse_paths:
+            if collapse_paths[0] in ancestry(root) or \
+                    collapse_pat.match(os.path.basename(root)):
                 # Still collapsing.
+                collapse_paths.append(root)
                 collapse_items += items
                 continue
             else:
                 # Collapse finished. Yield the collapsed directory and
                 # proceed to process the current one.
                 if collapse_items:
-                    yield collapse_root, collapse_items
-                collapse_root = collapse_items = None
+                    yield collapse_paths, collapse_items
+                collapse_pat = collapse_paths = collapse_items = \
+                    multidisc = None
 
-        # Does the current directory look like a multi-disc album? If
-        # so, begin collapsing here.
-        if dirs and not items: # Must be only directories.
-            multidisc = False
-            for marker in MULTIDISC_MARKERS:
-                pat = MULTIDISC_PAT_FMT % marker
-                if all(re.search(pat, dirname, re.I) for dirname in dirs):
-                    multidisc = True
+        # Does the current directory look like the start of a multi-disc
+        # album? If so, begin collapsing here.
+        for marker in MULTIDISC_MARKERS:
+            marker_pat = re.compile(MULTIDISC_PAT_FMT % marker, re.I)
+            # Is this directory the first in a flattened multi-disc album?
+            match = marker_pat.match(os.path.basename(root))
+            if match:
+                multidisc = True
+                collapse_pat = re.compile(r'^%s\d' %
+                    re.escape(match.groups()[0]), re.I)
+                break
+            # Is this directory the root of a nested multi-disc album?
+            elif dirs and not items:
+                multidisc = True
+                for dirname in dirs:
+                    if collapse_pat:
+                        if collapse_pat.match(dirname):
+                            continue
+                    else:
+                        match = marker_pat.match(dirname)
+                        if match:
+                            collapse_pat = re.compile(r'^%s\d' %
+                                re.escape(match.groups()[0]), re.I)
+                            continue
+                    multidisc = False
+                    break
+                if multidisc:
                     break
 
-            # This becomes True only when all directories match a
-            # pattern for a single marker.
-            if multidisc:
-                # Start collapsing; continue to the next iteration.
-                collapse_root = root
-                collapse_items = []
-                continue
+        # This becomes True only when all sub-directories match a
+        # pattern for a single marker with a common prefix, or when
+        # this directory matches a multidisc marker pattern.
+        if multidisc:
+            # Start collapsing; continue to the next iteration.
+            collapse_paths = [root]
+            collapse_items = items
+            continue
 
         # If it's nonempty, yield it.
         if items:
-            yield root, items
+            yield [root], items
 
     # Clear out any unfinished collapse.
-    if collapse_root is not None and collapse_items:
-        yield collapse_root, collapse_items
+    if collapse_paths and collapse_items:
+        yield collapse_paths, collapse_items
 
 def apply_item_metadata(item, track_info):
     """Set an item's metadata from its matched TrackInfo object.
