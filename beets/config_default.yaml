@@ -17,6 +17,7 @@ import:
     singletons: no
     default_action: apply
 
+clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~"]
 replace:
     '[\\/]': _
