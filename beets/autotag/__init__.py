@@ -68,7 +68,7 @@ def albums_in_dir(path):
         # and move on to the next directory. If not, stop collapsing.
         if collapse_paths:
             if (not collapse_pat and collapse_paths[0] in ancestry(root)) or \
-                    (collapse_pat and \
+                    (collapse_pat and
                      collapse_pat.match(os.path.basename(root))):
                 # Still collapsing.
                 collapse_paths.append(root)
