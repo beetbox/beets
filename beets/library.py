@@ -117,7 +117,7 @@ ALBUM_FIELDS = [
     ('albumartist_sort',   'text', True),
     ('albumartist_credit', 'text', True, True),
     ('album',              'text', True),
-    ('genre',              'text', True),
+    ('genre',              'text', False),
     ('year',               'int',  True),
     ('month',              'int',  True),
     ('day',                'int',  True),
@@ -259,6 +259,7 @@ class Item(object):
                 self.record[key] = value
                 self.dirty[key] = True
                 if key in ITEM_KEYS_WRITABLE:
+                    log.debug(u'setting item %s = %s', key, value)
                     self.mtime = 0 # Reset mtime on dirty.
         else:
             super(Item, self).__setattr__(key, value)
@@ -1451,6 +1452,7 @@ class Album(BaseAlbum):
 
             # Possibly make modification on items as well.
             if key in ALBUM_KEYS_ITEM:
+                log.debug('copying %s = %s to all items' % (key, value))
                 for item in self.items():
                     setattr(item, key, value)
                     self._library.store(item)
