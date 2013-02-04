@@ -67,7 +67,8 @@ def albums_in_dir(path):
         # and add the current directory. If so, just add the directory
         # and move on to the next directory. If not, stop collapsing.
         if collapse_paths:
-            if collapse_paths[0] in ancestry(root) or (collapse_pat and
+            if (not collapse_pat and collapse_paths[0] in ancestry(root)) or (
+                    collapse_pat and \
                     collapse_pat.match(os.path.basename(root))):
                 # Still collapsing.
                 collapse_paths.append(root)
@@ -88,19 +89,10 @@ def albums_in_dir(path):
         start_collapsing = False
         for marker in MULTIDISC_MARKERS:
             marker_pat = re.compile(MULTIDISC_PAT_FMT % marker, re.I)
-
-            # Is this directory the first in a flattened multi-disc album?
             match = marker_pat.match(os.path.basename(root))
-            if match:
-                start_collapsing = True
-                # Set the current pattern to match directories with the same
-                # prefix as this one, followed by a digit.
-                collapse_pat = re.compile(r'^%s\d' %
-                    re.escape(match.group(1)), re.I)
-                break
 
             # Is this directory the root of a nested multi-disc album?
-            elif dirs and not items:
+            if dirs and not items:
                 # Check whether all subdirectories have the same prefix.
                 start_collapsing = True
                 subdir_pat = None
@@ -125,6 +117,15 @@ def albums_in_dir(path):
                 # markers.
                 if start_collapsing:
                     break
+
+            # Is this directory the first in a flattened multi-disc album?
+            elif match:
+                start_collapsing = True
+                # Set the current pattern to match directories with the same
+                # prefix as this one, followed by a digit.
+                collapse_pat = re.compile(r'^%s\d' %
+                    re.escape(match.group(1)), re.I)
+                break
 
         # If either of the above heuristics indicated that this is the
         # beginning of a multi-disc album, initialize the collapsed
