@@ -161,21 +161,21 @@ def _save_state(state):
 # Utilities for reading and writing the beets progress file, which
 # allows long tagging tasks to be resumed when they pause (or crash).
 PROGRESS_KEY = 'tagprogress'
-def progress_set(toppath, path):
+def progress_set(toppath, paths):
     """Record that tagging for the given `toppath` was successful up to
-    `path`. If path is None, then clear the progress value (indicating
+    `paths`. If paths is None, then clear the progress value (indicating
     that the tagging completed).
     """
     state = _open_state()
     if PROGRESS_KEY not in state:
         state[PROGRESS_KEY] = {}
 
-    if path is None:
+    if paths is None:
         # Remove progress from file.
         if toppath in state[PROGRESS_KEY]:
             del state[PROGRESS_KEY][toppath]
     else:
-        state[PROGRESS_KEY][toppath] = path
+        state[PROGRESS_KEY][toppath] = paths
 
     _save_state(state)
 def progress_get(toppath):
@@ -192,19 +192,19 @@ def progress_get(toppath):
 # This keeps track of all directories that were ever imported, which
 # allows the importer to only import new stuff.
 HISTORY_KEY = 'taghistory'
-def history_add(path):
-    """Indicate that the import of `path` is completed and should not
-    be repeated in incremental imports.
+def history_add(paths):
+    """Indicate that the import of the album in `paths` is completed and
+    should not be repeated in incremental imports.
     """
     state = _open_state()
     if HISTORY_KEY not in state:
         state[HISTORY_KEY] = set()
 
-    state[HISTORY_KEY].add(tuple(path))
+    state[HISTORY_KEY].add(tuple(paths))
 
     _save_state(state)
 def history_get():
-    """Get the set of completed paths in incremental imports.
+    """Get the set of completed path tuples in incremental imports.
     """
     state = _open_state()
     if HISTORY_KEY not in state:
@@ -442,7 +442,7 @@ class ImportTask(object):
     def save_history(self):
         """Save the directory in the history for incremental imports.
         """
-        if self.sentinel or self.is_album:
+        if self.is_album:
             history_add(self.paths)
 
 
