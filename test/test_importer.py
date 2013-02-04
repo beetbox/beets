@@ -332,6 +332,14 @@ class ImportApplyTest(_common.TestCase):
         _call_stages(self.session, [self.i], self.info, toppath=self.srcdir)
         self.assertNotExists(os.path.dirname(self.srcpath))
 
+    def test_apply_with_move_prunes_with_extra_clutter(self):
+        f = open(os.path.join(self.srcdir, 'testalbum', 'alog.log'), 'w')
+        f.close()
+        config['clutter'] = ['*.log']
+        config['import']['move'] = True
+        _call_stages(self.session, [self.i], self.info, toppath=self.srcdir)
+        self.assertNotExists(os.path.dirname(self.srcpath))
+
     def test_manipulate_files_with_null_move(self):
         """It should be possible to "move" a file even when the file is
         already at the destination.

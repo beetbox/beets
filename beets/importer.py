@@ -513,7 +513,11 @@ class ImportTask(object):
         call when the file in question may not have been removed.
         """
         if self.toppath and not os.path.exists(filename):
-            util.prune_dirs(os.path.dirname(filename), self.toppath)
+            util.prune_dirs(
+                os.path.dirname(filename), 
+                self.toppath,
+                clutter=config['clutter'].get(list)
+                )
 
 
 # Full-album pipeline stages.
