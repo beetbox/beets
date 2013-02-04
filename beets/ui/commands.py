@@ -22,6 +22,7 @@ import os
 import time
 import itertools
 import re
+import codecs
 
 import beets
 from beets import ui
@@ -654,11 +655,11 @@ def import_files(lib, paths, query):
     if config['import']['log'].get() is not None:
         logpath = config['import']['log'].as_filename()
         try:
-            logfile = open(syspath(logpath), 'a')
+            logfile = codecs.open(syspath(logpath), 'a', 'utf8')
         except IOError:
             raise ui.UserError(u"could not open log file for writing: %s" %
                                displayable_path(logpath))
-        print('import started', time.asctime(), file=logfile)
+        print(u'import started', time.asctime(), file=logfile)
     else:
         logfile = None
 
@@ -673,7 +674,7 @@ def import_files(lib, paths, query):
     finally:
         # If we were logging, close the file.
         if logfile:
-            print('', file=logfile)
+            print(u'', file=logfile)
             logfile.close()
 
     # Emit event.

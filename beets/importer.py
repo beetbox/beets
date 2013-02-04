@@ -258,12 +258,13 @@ class ImportSession(object):
         if not iconfig['copy']:
             iconfig['delete'] = False
 
-    def tag_log(self, status, path):
+    def tag_log(self, status, paths):
         """Log a message about a given album to logfile. The status should
         reflect the reason the album couldn't be tagged.
         """
         if self.logfile:
-            print('{0} {1}'.format(status, path), file=self.logfile)
+            print(u'{0} {1}'.format(status, displayable_path(paths)),
+                  file=self.logfile)
             self.logfile.flush()
 
     def log_choice(self, task, duplicate=False):
@@ -275,17 +276,17 @@ class ImportSession(object):
         if duplicate:
             # Duplicate: log all three choices (skip, keep both, and trump).
             if task.remove_duplicates:
-                self.tag_log('duplicate-replace', displayable_path(paths))
+                self.tag_log('duplicate-replace', paths)
             elif task.choice_flag in (action.ASIS, action.APPLY):
-                self.tag_log('duplicate-keep', displayable_path(paths))
+                self.tag_log('duplicate-keep', paths)
             elif task.choice_flag is (action.SKIP):
-                self.tag_log('duplicate-skip', displayable_path(paths))
+                self.tag_log('duplicate-skip', paths)
         else:
             # Non-duplicate: log "skip" and "asis" choices.
             if task.choice_flag is action.ASIS:
-                self.tag_log('asis', displayable_path(paths))
+                self.tag_log('asis', paths)
             elif task.choice_flag is action.SKIP:
-                self.tag_log('skip', displayable_path(paths))
+                self.tag_log('skip', paths)
 
     def should_resume(self, path):
         raise NotImplementedError
