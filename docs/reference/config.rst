@@ -179,6 +179,16 @@ environment variables.
 
 .. _known to python: http://docs.python.org/2/library/codecs.html#standard-encodings
 
+.. _clutter:
+
+clutter
+-------
+
+When beets imports all the files in a directory, it tries to remove the
+directory if it's empty. A directory is considered empty if it only contains
+files whose names match the glob patterns in `clutter`, which should be a list
+of strings. The default list consists of "Thumbs.DB" and ".DS_Store".
+
 Importer Options
 ----------------
 

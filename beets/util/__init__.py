@@ -194,9 +194,8 @@ def mkdirall(path):
                                       traceback.format_exc())
 
 def fnmatch_all(names, patterns):
-    """
-    `names` and `patterns` should be iterables.
-    Returns True if all names match any of the patterns.
+    """Determine whether all strings in `names` match at least one of
+    the `patterns`, which should be shell glob expressions.
     """
     for name in names:
         matches = False
@@ -204,7 +203,7 @@ def fnmatch_all(names, patterns):
             matches = fnmatch.fnmatch(name, pattern)
             if matches:
                 break
-        if not  matches:
+        if not matches:
             return False
     return True
 
@@ -244,7 +243,7 @@ def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
             try:
                 shutil.rmtree(directory)
             except OSError:
-                break        
+                break
         else:
             break
 
