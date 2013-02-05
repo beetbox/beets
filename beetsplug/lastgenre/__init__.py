@@ -317,10 +317,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                               action='store_true',
                               default=self.config['force'].get(bool),
                               help='re-download genre when already present')
-        lastgenre_cmd.parser.add_option('-v', '--verbose', dest='verbose',
-                              action='store_true',
-                              default=False,
-                              help='log genre match details')
         lastgenre_cmd.parser.add_option('-s', '--source', dest='source',
                               type='string',
                               default=self.config['source'].get(),
@@ -333,16 +329,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
             for album in lib.albums(ui.decargs(args)):
                 album.genre, src = self._get_album_genre(album, opts.force)
-                if opts.verbose:
-                    log.info(u'LastGenre: Album({0} - {1}) > {2}({3})'.format(
-                        album.albumartist, album.album, album.genre, src))
+                log.info(u'genre for album {0} - {1} ({2}): {3}'.format(
+                    album.albumartist, album.album, src, album.genre
+                ))
 
                 for item in album.items():
                     item.genre, src = self._get_item_genre(item, opts.force)
                     lib.store(item)
-                    if opts.verbose:
-                        log.info(u'LastGenre: Item({0} - {1}) > {2}({3})'.format(
-                            item.artist, item.title, item.genre, src))
+                    log.info(u'genre for track {0} - {1} ({2}): {3}'.format(
+                        item.artist, item.title, src, item.genre
+                    ))
                     if write:
                         item.write()
 
