@@ -46,27 +46,6 @@ PYLAST_EXCEPTIONS = (
     pylast.NetworkError,
 )
 
-def _lastfm_obj(obj):
-    """Given a beets item or album, look up the last.fm Track, Album or
-    Artist object for which tags should be extracted.
-    """
-    source = config['lastgenre']['source'].get()
-
-    if isinstance(obj, library.Album):
-        if source == 'artist':
-            return LASTFM.get_artist(obj.albumartist)
-        else:
-            return LASTFM.get_album(obj.albumartist, obj.album)
-
-    elif isinstance(obj, library.Item):
-        if source == 'artist':
-            return LASTFM.get_artist(obj.artist)
-        else:
-            return LASTFM.get_track(obj.artist, obj.title)
-
-    else:
-        raise TypeError('obj should be an Album or Item')
-
 def _tags_for(obj):
     """Given a pylast entity (album or track), returns a list of
     tag names for that entity. Returns an empty list if the entity is
@@ -105,6 +84,7 @@ def _tags_to_genre(tags):
         # Just use the flat whitelist.
         return find_allowed(tags)
 
+
 def flatten_tree(elem, path, branches):
     """Flatten nested lists/dictionaries into lists of strings
     (branches).
@@ -133,20 +113,75 @@ def find_parents(candidate, branches):
             continue
     return [candidate]
 
+def is_allowed(genre):
+    """Returns True if the genre is present in the genre whitelist or
+    False if not.
+    """
+    if genre is None:
+        return False
+    if genre.lower() in options['whitelist']:
+        return True
+    return False
+
 def find_allowed(genres):
     """Returns the first genre that is present in the genre whitelist or
     None if no genre is suitable.
     """
     for genre in list(genres):
-        if genre.lower() in options['whitelist']:
+        if is_allowed(genre):
             return genre.title()
     return None
+
+def fetch_genre(lastfm_obj):
+    """Returns the genre for this lastfm_obj.
+    """
+    return _tags_to_genre(_tags_for(lastfm_obj))
+
+def fetch_album_genre(obj):
+    """Returns the album genre for this obj.  Either performs a lookup in
+    lastfm or returns the cached value.
+    """
+    lookup = u'album.{0}-{1}'.format(obj.albumartist, obj.album)
+    if not cache.has_key(lookup):
+        cache[lookup] = \
+              fetch_genre(LASTFM.get_album(obj.albumartist, obj.album))
+    return cache[lookup]
+
+def fetch_album_artist_genre(obj):
+    """Returns the album artists genre for this obj.  Either performs a lookup
+    in lastfm or returns the cached value.
+    """
+    lookup = u'artist.${0}'.format(obj.albumartist)
+    if not cache.has_key(lookup):
+        cache[lookup] = \
+              fetch_genre(LASTFM.get_artist(obj.albumartist))
+    return cache[lookup]
+
+def fetch_artist_genre(obj):
+    """Returns the track artists genre for this obj.  Either performs a lookup
+    in lastfm or returns the cached value.
+    """
+    lookup = u'artist.${0}'.format(obj.artist)
+    if not cache.has_key(lookup):
+        cache[lookup] = fetch_genre(LASTFM.get_artist(obj.artist))
+    return cache[lookup]
+
+def fetch_track_genre(obj):
+    """Returns the track genre for this obj.  Either performs a lookup in
+    lastfm or returns the cached value.  """
+    lookup = u'track.{0}-{1}'.format(obj.artist, obj.title)
+    if not cache.has_key(lookup):
+        cache[lookup] = fetch_genre(LASTFM.get_track(obj.artist, obj.title))
+    return cache[lookup]
 
 options = {
     'whitelist': None,
     'branches': None,
     'c14n': False,
 }
+# simple cache to speed up artist and album lookups track or album mode.  it's
+# probably not required to cache track lookups, but...
+cache = {}
 class LastGenrePlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(LastGenrePlugin, self).__init__()
@@ -157,8 +192,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'fallback': None,
             'canonical': None,
             'source': 'album',
+            'force': False,
         })
-
 
         # Read the whitelist file.
         wl_filename = self.config['whitelist'].as_filename()
@@ -184,62 +219,127 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             options['branches'] = branches
             options['c14n'] = True
 
+    def _set_sources(self, source):
+        """Prepare our internal represantation of valid sources we can use.
+        """
+        self.sources = []
+        if source == 'track':
+            self.sources.extend(['track', 'album', 'artist'])
+        elif source == 'album':
+            self.sources.extend(['album', 'artist'])
+        elif source == 'artist':
+            self.sources.extend(['artist'])
+
+    def _get_album_genre(self, album, force, fallback_str):
+        """Return the best candidate for album genre based on sources (see
+        _set_sources).
+        Going down from album -> artist -> original -> fallback -> None.
+        """
+        if not force and is_allowed(album.genre):
+            return [album.genre, 'keep']
+        result = None
+        # no track lookup for album genre
+        if 'album' in self.sources:
+            result = fetch_album_genre(album)
+            if result:
+                return [result, 'album']
+        if 'artist' in self.sources:
+            # no artist lookup for Various Artists
+            if not album.albumartist == 'Various Artists':
+                result = fetch_album_artist_genre(album)
+            if result:
+                return [result, 'artist']
+        if is_allowed(album.genre):
+            return [album.genre, 'original']
+        if fallback_str:
+            return [fallback_str, 'fallback']
+        return [None, None]
+
+
+    def _get_item_genre(self, item, force, fallback_str):
+        """Return the best candidate for item genre based on sources (see
+        _set_sources).
+        Going down from track -> album -> artist -> original -> fallback ->
+        None.
+        """
+        if not force:
+            if is_allowed(item.genre):
+                return [item.genre, 'keep']
+        result = None
+        if 'track' in self.sources:
+            result = fetch_track_genre(item)
+            if result:
+                return [result, 'track']
+        if 'album' in self.sources:
+            if item.album:
+                result = fetch_album_genre(item)
+            if result:
+                return [result, 'album']
+        if 'artist' in self.sources:
+            result = fetch_artist_genre(item)
+            if result:
+                return [result, 'artist']
+        if is_allowed(item.genre):
+            return [item.genre, 'original']
+        if fallback_str:
+            return [fallback_str, 'fallback']
+        return [None, None]
+
     def commands(self):
         lastgenre_cmd = ui.Subcommand('lastgenre', help='fetch genres')
+        lastgenre_cmd.parser.add_option('-f', '--force', dest='force',
+                              action='store_true',
+                              default=self.config['force'].get(bool),
+                              help='re-download genre when already present')
+        lastgenre_cmd.parser.add_option('-v', '--verbose', dest='verbose',
+                              action='store_true',
+                              default=False,
+                              help='be more verbose')
+        lastgenre_cmd.parser.add_option('-s', '--source', dest='source',
+                              type='string',
+                              default=self.config['source'].get(),
+                              help='set source, one of: artist / album / track')
         def lastgenre_func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
             write = config['import']['write'].get(bool)
+            force = opts.force
+            self._set_sources(opts.source)
+            fallback_str = self.config['fallback'].get()
             for album in lib.albums(ui.decargs(args)):
-                tags = []
-                lastfm_obj = _lastfm_obj(album)
-                if album.genre:
-                    tags.append(album.genre)
-
-                tags.extend(_tags_for(lastfm_obj))
-                genre = _tags_to_genre(tags)
-
-                fallback_str = self.config['fallback'].get()
-                if not genre and fallback_str != None:
-                    genre = fallback_str
-                    log.debug(u'no last.fm genre found: fallback to %s' % genre)
-
-                if genre is not None:
-                    log.debug(u'adding last.fm album genre: %s' % genre)
-                    album.genre = genre
+                album.genre, src = self._get_album_genre(album, force, fallback_str)
+                if opts.verbose:
+                    log.info(u'LastGenre: Album({0} - {1}) > {2}({3})'.format(
+                        album.albumartist, album.album, album.genre, src))
+                for item in album.items():
+                    item.genre, src = self._get_item_genre(item, force,
+                          fallback_str)
+                    lib.store(item)
+                    if opts.verbose:
+                        log.info(u'LastGenre: Item({0} - {1}) > {2}({3})'.format(
+                            item.artist, item.title, item.genre, src))
                     if write:
-                        for item in album.items():
-                            item.write()
+                        item.write()
+
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]
 
     def imported(self, session, task):
+        self._set_sources(self.config['source'].get())
         tags = []
+        fallback_str = self.config['fallback'].get()
         if task.is_album:
             album = session.lib.get_album(task.album_id)
-            lastfm_obj = _lastfm_obj(album)
-            if album.genre:
-                tags.append(album.genre)
+            album.genre, src = self._get_album_genre(album, True, fallback_str)
+            log.debug(u'added last.fm album genre ({0}): {1}'.format(
+                  src, album.genre))
+            for item in album.items():
+                item.genre, src = self._get_item_genre(item, True, fallback_str)
+                log.debug(u'added last.fm item genre ({0}): {1}'.format(
+                      src, item.genre))
         else:
             item = task.item
-            lastfm_obj = _lastfm_obj(item)
-            if item.genre:
-                tags.append(item.genre)
-
-        tags.extend(_tags_for(lastfm_obj))
-        genre = _tags_to_genre(tags)
-        
-        fallback_str = self.config['fallback'].get()
-        if not genre and fallback_str != None:
-            genre = fallback_str
-            log.debug(u'no last.fm genre found: fallback to %s' % genre)
-
-        if genre is not None:
-            log.debug(u'adding last.fm album genre: %s' % genre)
-
-            if task.is_album:
-                album = session.lib.get_album(task.album_id)
-                album.genre = genre
-            else:
-                item.genre = genre
-                session.lib.store(item)
+            item.genre, src = self._get_item_genre(item, True, fallback_str)
+            log.debug(u'added last.fm item genre ({0}): {1}'.format(
+                  src, item.genre))
+            session.lib.store(item)
