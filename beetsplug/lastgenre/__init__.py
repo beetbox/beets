@@ -86,10 +86,10 @@ def _find_allowed(genres):
             return genre.title()  # Title case.
     return None
 
-def _tags_to_genre(tags):
-    """Given a tag list, returns a genre. Returns the first tag that is
-    present in the genre whitelist (or the canonicalization tree) or
-    None if no tag is suitable.
+def _strings_to_genre(tags):
+    """Given a list of strings, return a genre. Returns the first string
+    that is present in the genre whitelist (or the canonicalization
+    tree) or None if no tag is suitable.
     """
     if not tags:
         return None
@@ -99,9 +99,7 @@ def _tags_to_genre(tags):
     if options.get('c14n'):
         # Use the canonicalization tree.
         for tag in tags:
-            genre = _find_allowed(find_parents(tag, options['branches']))
-            if genre:
-                return genre
+            return _find_allowed(find_parents(tag, options['branches']))
     else:
         # Just use the flat whitelist.
         return _find_allowed(tags)
@@ -110,7 +108,7 @@ def fetch_genre(lastfm_obj):
     """Return the genre for a pylast entity or None if no suitable genre
     can be found.
     """
-    return _tags_to_genre(_tags_for(lastfm_obj))
+    return _strings_to_genre(_tags_for(lastfm_obj))
 
 
 # Canonicalization tree processing.
@@ -269,9 +267,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if _is_allowed(album.genre):
             return album.genre, 'original'
 
-        fallback = self.config['fallback'].get()
-        if fallback:
-            return fallback, 'fallback'
+        result = _strings_to_genre([album.genre])
+        if result:
+            return result, 'original'
 
         return None, None
 
@@ -305,8 +303,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if result:
                 return result, 'artist'
 
-        if _is_allowed(item.genre):
-            return item.genre, 'original'
+        result = _strings_to_genre([item.genre])
+        if result:
+            return result, 'original'
 
         fallback = self.config['fallback'].get()
         if fallback:
