@@ -54,6 +54,7 @@ Other new stuff:
   less than 10 seconds. (This threshold was previously 2 seconds.)
 * Plugins are now loaded in the order they appear in the config file. Thanks to
   Dang Mai Hai.
+* ReplayGain tags on MPEG-4/AAC files are now supported. Thanks to Dave Hayes.
 * :doc:`/plugins/bpd`: Browse by album artist and album artist sort name.
   Thanks to Steinþór Pálsson.
 * Fix an error when migrating the ``.beetsstate`` file on Windows.
