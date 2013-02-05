@@ -227,17 +227,20 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             options['branches'] = branches
             options['c14n'] = True
 
-    def _set_sources(self, source):
-        """Prepare our internal representation of valid sources we can use.
+    @property
+    def sources(self):
+        """A tuple of allowed genre sources. May contain 'track',
+        'album', or 'artist.'
         """
+        source = self.config['source'].as_choice(('track', 'album', 'artist'))
         if source == 'track':
-            self.sources = ['track', 'album', 'artist']
+            return 'track', 'album', 'artist'
         elif source == 'album':
-            self.sources = ['album', 'artist']
+            return 'album', 'artist'
         elif source == 'artist':
-            self.sources = ['artist']
+            return 'artist',
 
-    def _get_album_genre(self, album, force):
+    def _get_album_genre(self, album):
         """Return the best candidate for album genre based on
         self.sources. Return a `(genre, source)` pair in which `source`
         is a string indicating where the genre came from. The
@@ -248,7 +251,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             - fallback string
             - None
         """
-        if not force and _is_allowed(album.genre):
+        if not self.config['force'] and _is_allowed(album.genre):
             return album.genre, 'keep'
 
         if 'album' in self.sources:
@@ -272,7 +275,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         return None, None
 
-    def _get_item_genre(self, item, force):
+    def _get_item_genre(self, item):
         """Return the best candidate for item genre based on
         self.sources. Return a `(genre, source)` pair. The
         prioritization order is:
@@ -283,7 +286,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             - fallback
             - None
         """
-        if not force and _is_allowed(item.genre):
+        if not self.config['force'] and _is_allowed(item.genre):
                 return item.genre, 'keep'
 
         if 'track' in self.sources:
@@ -315,26 +318,22 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         lastgenre_cmd = ui.Subcommand('lastgenre', help='fetch genres')
         lastgenre_cmd.parser.add_option('-f', '--force', dest='force',
                               action='store_true',
-                              default=self.config['force'].get(bool),
                               help='re-download genre when already present')
         lastgenre_cmd.parser.add_option('-s', '--source', dest='source',
                               type='string',
-                              default=self.config['source'].get(),
                               help='genre source: artist, album, or track')
         def lastgenre_func(lib, opts, args):
-            # The "write to files" option corresponds to the
-            # import_write config value.
             write = config['import']['write'].get(bool)
-            self._set_sources(opts.source)
+            self.config.set_args(opts)
 
             for album in lib.albums(ui.decargs(args)):
-                album.genre, src = self._get_album_genre(album, opts.force)
+                album.genre, src = self._get_album_genre(album)
                 log.info(u'genre for album {0} - {1} ({2}): {3}'.format(
                     album.albumartist, album.album, src, album.genre
                 ))
 
                 for item in album.items():
-                    item.genre, src = self._get_item_genre(item, opts.force)
+                    item.genre, src = self._get_item_genre(item)
                     lib.store(item)
                     log.info(u'genre for track {0} - {1} ({2}): {3}'.format(
                         item.artist, item.title, src, item.genre
@@ -347,20 +346,20 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     def imported(self, session, task):
         """Event hook called when an import task finishes."""
-        self._set_sources(self.config['source'].get())
         if task.is_album:
             album = session.lib.get_album(task.album_id)
-            album.genre, src = self._get_album_genre(album, True)
+            album.genre, src = self._get_album_genre(album)
             log.debug(u'added last.fm album genre ({0}): {1}'.format(
                   src, album.genre))
             for item in album.items():
-                item.genre, src = self._get_item_genre(item, True)
+                item.genre, src = self._get_item_genre(item)
                 log.debug(u'added last.fm item genre ({0}): {1}'.format(
                       src, item.genre))
                 session.lib.store(item)
+
         else:
             item = task.item
-            item.genre, src = self._get_item_genre(item, True)
+            item.genre, src = self._get_item_genre(item)
             log.debug(u'added last.fm item genre ({0}): {1}'.format(
                   src, item.genre))
             session.lib.store(item)
