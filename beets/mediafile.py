@@ -1104,7 +1104,7 @@ class MediaFile(object):
     # ReplayGain fields.
     rg_track_gain = FloatValueField(2, 'dB',
         mp3 = StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_TRACK_GAIN'),
-        mp4 = StoragedStyle('---:com.apple.iTunes:replaygain_track_gain'),
+        mp4 = StorageStyle('---:com.apple.iTunes:replaygain_track_gain'),
         etc = StorageStyle(u'REPLAYGAIN_TRACK_GAIN'),
         asf = StorageStyle(u'replaygain_track_gain'),
     )
