@@ -1104,25 +1104,25 @@ class MediaFile(object):
     # ReplayGain fields.
     rg_track_gain = FloatValueField(2, 'dB',
         mp3 = StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_TRACK_GAIN'),
-        mp4 = None,
+        mp4 = StoragedStyle('---:com.apple.iTunes:replaygain_track_gain'),
         etc = StorageStyle(u'REPLAYGAIN_TRACK_GAIN'),
         asf = StorageStyle(u'replaygain_track_gain'),
     )
     rg_album_gain = FloatValueField(2, 'dB',
         mp3 = StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_ALBUM_GAIN'),
-        mp4 = None,
+        mp4 = StorageStyle('---:com.apple.iTunes:replay_gain_album_gain'),
         etc = StorageStyle(u'REPLAYGAIN_ALBUM_GAIN'),
         asf = StorageStyle(u'replaygain_album_gain'),
     )
     rg_track_peak = FloatValueField(6, None,
         mp3 = StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_TRACK_PEAK'),
-        mp4 = None,
+        mp4 = StorageStyle('---:com.apple.iTunes:replaygain_track_peak'),
         etc = StorageStyle(u'REPLAYGAIN_TRACK_PEAK'),
         asf = StorageStyle(u'replaygain_track_peak'),
     )
     rg_album_peak = FloatValueField(6, None,
         mp3 = StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_ALBUM_PEAK'),
-        mp4 = None,
+        mp4 = StorageStyle('---:com.apple.iTunes:replaygain_album_peak'),
         etc = StorageStyle(u'REPLAYGAIN_ALBUM_PEAK'),
         asf = StorageStyle(u'replaygain_album_peak'),
     )
