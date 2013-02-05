@@ -117,7 +117,7 @@ ALBUM_FIELDS = [
     ('albumartist_sort',   'text', True),
     ('albumartist_credit', 'text', True, True),
     ('album',              'text', True),
-    ('genre',              'text', False),
+    ('genre',              'text', True),
     ('year',               'int',  True),
     ('month',              'int',  True),
     ('day',                'int',  True),
