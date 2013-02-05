@@ -66,9 +66,9 @@ to use your own tree.
 Genre Source
 ------------
 
-When looking up genres for albums or individual tracks, you may prefer to use a
-genre tag from the *artist* instead of the individual entity. To do so, set the
-``source`` configuration value to "artist", like so::
+When looking up genres for albums or individual tracks, you may prefer to use
+a genre tag from the *track* or *artist* instead of the individual entity. To
+do so, set the ``source`` configuration value to "track" or "artist", like so::
 
     lastgenre:
         source: artist
