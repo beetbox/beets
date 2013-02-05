@@ -14,7 +14,7 @@ New configuration options:
   directories. Thanks to Steinþór Pálsson.
 * :doc:`/plugins/lastgenre`: A new configuration option lets you choose to
   retrieve artist-level tags as genres instead of album- or track-level tags.
-  Thanks to Peter Fern.
+  Thanks to Peter Fern and Peter Schnebel.
 
 Other new stuff:
 
@@ -42,6 +42,8 @@ Other new stuff:
   Thanks once again to Tai Lee.
 * Album listings in the importer UI now show the release medium (CD, Vinyl,
   3xCD, etc.) as well as the disambiguation string. Thanks to Peter Schnebel.
+* :doc:`/plugins/lastgenre`: The plugin can now get different genres for
+  individual tracks on an album. Thanks to Peter Schnebel.
 * When getting data from MusicBrainz, the album disambiguation string
   (``albumdisambig``) now reflects both the release and the release group.
 * :doc:`/plugins/mpdupdate`: Sends an update message whenever *anything* in the
