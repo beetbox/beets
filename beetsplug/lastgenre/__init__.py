@@ -305,6 +305,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             write = config['import']['write'].get(bool)
             force = opts.force
             self._set_sources(opts.source)
+            fallback_str = self.config['fallback'].get()
             for album in lib.albums(ui.decargs(args)):
                 album.genre, src = self._get_album_genre(album, force, fallback_str)
                 if opts.verbose:
