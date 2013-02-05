@@ -33,7 +33,6 @@ from beets import plugins
 from beets import ui
 from beets.util import normpath
 from beets import config
-from beets import library
 
 log = logging.getLogger('beets')
 
@@ -45,6 +44,9 @@ PYLAST_EXCEPTIONS = (
     pylast.MalformedResponseError,
     pylast.NetworkError,
 )
+
+
+# Core genre identification routine.
 
 def _tags_for(obj):
     """Given a pylast entity (album or track), returns a list of
@@ -65,9 +67,29 @@ def _tags_for(obj):
     log.debug(u'last.fm tags: %s' % unicode(tags))
     return tags
 
+def _is_allowed(genre):
+    """Determine whether the genre is present in the whitelist,
+    returning a boolean.
+    """
+    if genre is None:
+        return False
+    if genre.lower() in options['whitelist']:
+        return True
+    return False
+
+def _find_allowed(genres):
+    """Return the first string in the sequence `genres` that is present
+    in the genre whitelist or None if no genre is suitable.
+    """
+    for genre in list(genres):
+        if _is_allowed(genre):
+            return genre.title()  # Title case.
+    return None
+
 def _tags_to_genre(tags):
     """Given a tag list, returns a genre. Returns the first tag that is
-    present in the genre whitelist or None if no tag is suitable.
+    present in the genre whitelist (or the canonicalization tree) or
+    None if no tag is suitable.
     """
     if not tags:
         return None
@@ -77,13 +99,21 @@ def _tags_to_genre(tags):
     if options.get('c14n'):
         # Use the canonicalization tree.
         for tag in tags:
-            genre = find_allowed(find_parents(tag, options['branches']))
+            genre = _find_allowed(find_parents(tag, options['branches']))
             if genre:
                 return genre
     else:
         # Just use the flat whitelist.
-        return find_allowed(tags)
+        return _find_allowed(tags)
 
+def fetch_genre(lastfm_obj):
+    """Return the genre for a pylast entity or None if no suitable genre
+    can be found.
+    """
+    return _tags_to_genre(_tags_for(lastfm_obj))
+
+
+# Canonicalization tree processing.
 
 def flatten_tree(elem, path, branches):
     """Flatten nested lists/dictionaries into lists of strings
@@ -113,75 +143,53 @@ def find_parents(candidate, branches):
             continue
     return [candidate]
 
-def is_allowed(genre):
-    """Returns True if the genre is present in the genre whitelist or
-    False if not.
-    """
-    if genre is None:
-        return False
-    if genre.lower() in options['whitelist']:
-        return True
-    return False
 
-def find_allowed(genres):
-    """Returns the first genre that is present in the genre whitelist or
-    None if no genre is suitable.
-    """
-    for genre in list(genres):
-        if is_allowed(genre):
-            return genre.title()
-    return None
+# Cached entity lookups.
 
-def fetch_genre(lastfm_obj):
-    """Returns the genre for this lastfm_obj.
+_genre_cache = {}
+
+def _cached_lookup(entity, method, *args):
+    """Get a genre based on the named entity using the callable `method`
+    whose arguments are given in the sequence `args`. The genre lookup
+    is cached based on the entity name and the arguments.
     """
-    return _tags_to_genre(_tags_for(lastfm_obj))
+    key = u'{0}.{1}'.format(entity, u'-'.join(unicode(a) for a in args))
+    if key in _genre_cache:
+        return _genre_cache[key]
+    else:
+        genre = fetch_genre(method(*args))
+        _genre_cache[key] = genre
+        return genre
 
 def fetch_album_genre(obj):
-    """Returns the album genre for this obj.  Either performs a lookup in
-    lastfm or returns the cached value.
+    """Return the album genre for this Item or Album.
     """
-    lookup = u'album.{0}-{1}'.format(obj.albumartist, obj.album)
-    if not cache.has_key(lookup):
-        cache[lookup] = \
-              fetch_genre(LASTFM.get_album(obj.albumartist, obj.album))
-    return cache[lookup]
+    return _cached_lookup(u'album', LASTFM.get_album, obj.albumartist,
+                          obj.album)
 
 def fetch_album_artist_genre(obj):
-    """Returns the album artists genre for this obj.  Either performs a lookup
-    in lastfm or returns the cached value.
+    """Return the album artist genre for this Item or Album.
     """
-    lookup = u'artist.${0}'.format(obj.albumartist)
-    if not cache.has_key(lookup):
-        cache[lookup] = \
-              fetch_genre(LASTFM.get_artist(obj.albumartist))
-    return cache[lookup]
+    return _cached_lookup(u'artist', LASTFM.get_artist, obj.albumartist)
 
-def fetch_artist_genre(obj):
-    """Returns the track artists genre for this obj.  Either performs a lookup
-    in lastfm or returns the cached value.
+def fetch_artist_genre(item):
+    """Returns the track artist genre for this Item.
     """
-    lookup = u'artist.${0}'.format(obj.artist)
-    if not cache.has_key(lookup):
-        cache[lookup] = fetch_genre(LASTFM.get_artist(obj.artist))
-    return cache[lookup]
+    return _cached_lookup(u'artist', LASTFM.get_artist, item.artist)
 
 def fetch_track_genre(obj):
-    """Returns the track genre for this obj.  Either performs a lookup in
-    lastfm or returns the cached value.  """
-    lookup = u'track.{0}-{1}'.format(obj.artist, obj.title)
-    if not cache.has_key(lookup):
-        cache[lookup] = fetch_genre(LASTFM.get_track(obj.artist, obj.title))
-    return cache[lookup]
+    """Returns the track genre for this Item.
+    """
+    return _cached_lookup(u'track', LASTFM.get_track, obj.artist, obj.title)
+
+
+# Main plugin logic.
 
 options = {
     'whitelist': None,
     'branches': None,
     'c14n': False,
 }
-# simple cache to speed up artist and album lookups track or album mode.  it's
-# probably not required to cache track lookups, but...
-cache = {}
 class LastGenrePlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(LastGenrePlugin, self).__init__()
@@ -220,70 +228,88 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             options['c14n'] = True
 
     def _set_sources(self, source):
-        """Prepare our internal represantation of valid sources we can use.
+        """Prepare our internal representation of valid sources we can use.
         """
-        self.sources = []
         if source == 'track':
-            self.sources.extend(['track', 'album', 'artist'])
+            self.sources = ['track', 'album', 'artist']
         elif source == 'album':
-            self.sources.extend(['album', 'artist'])
+            self.sources = ['album', 'artist']
         elif source == 'artist':
-            self.sources.extend(['artist'])
+            self.sources = ['artist']
 
-    def _get_album_genre(self, album, force, fallback_str):
-        """Return the best candidate for album genre based on sources (see
-        _set_sources).
-        Going down from album -> artist -> original -> fallback -> None.
+    def _get_album_genre(self, album, force):
+        """Return the best candidate for album genre based on
+        self.sources. Return a `(genre, source)` pair in which `source`
+        is a string indicating where the genre came from. The
+        prioritization order is:
+            - album
+            - artist
+            - original
+            - fallback string
+            - None
         """
-        if not force and is_allowed(album.genre):
-            return [album.genre, 'keep']
-        result = None
-        # no track lookup for album genre
+        if not force and _is_allowed(album.genre):
+            return album.genre, 'keep'
+
         if 'album' in self.sources:
             result = fetch_album_genre(album)
             if result:
-                return [result, 'album']
+                return result, 'album'
+
         if 'artist' in self.sources:
-            # no artist lookup for Various Artists
-            if not album.albumartist == 'Various Artists':
+            # No artist lookup for Various Artists.
+            if album.albumartist != 'Various Artists':
                 result = fetch_album_artist_genre(album)
-            if result:
-                return [result, 'artist']
-        if is_allowed(album.genre):
-            return [album.genre, 'original']
-        if fallback_str:
-            return [fallback_str, 'fallback']
-        return [None, None]
+                if result:
+                    return result, 'artist'
 
+        if _is_allowed(album.genre):
+            return album.genre, 'original'
 
-    def _get_item_genre(self, item, force, fallback_str):
-        """Return the best candidate for item genre based on sources (see
-        _set_sources).
-        Going down from track -> album -> artist -> original -> fallback ->
-        None.
+        fallback = self.config['fallback'].get()
+        if fallback:
+            return fallback, 'fallback'
+
+        return None, None
+
+    def _get_item_genre(self, item, force):
+        """Return the best candidate for item genre based on
+        self.sources. Return a `(genre, source)` pair. The
+        prioritization order is:
+            - track
+            - album
+            - artist
+            - original
+            - fallback
+            - None
         """
-        if not force:
-            if is_allowed(item.genre):
-                return [item.genre, 'keep']
-        result = None
+        if not force and _is_allowed(item.genre):
+                return item.genre, 'keep'
+
         if 'track' in self.sources:
             result = fetch_track_genre(item)
             if result:
-                return [result, 'track']
+                return result, 'track'
+
         if 'album' in self.sources:
             if item.album:
                 result = fetch_album_genre(item)
-            if result:
-                return [result, 'album']
+                if result:
+                    return result, 'album'
+
         if 'artist' in self.sources:
             result = fetch_artist_genre(item)
             if result:
-                return [result, 'artist']
-        if is_allowed(item.genre):
-            return [item.genre, 'original']
-        if fallback_str:
-            return [fallback_str, 'fallback']
-        return [None, None]
+                return result, 'artist'
+
+        if _is_allowed(item.genre):
+            return item.genre, 'original'
+
+        fallback = self.config['fallback'].get()
+        if fallback:
+            return fallback, 'fallback'
+
+        return None, None
 
     def commands(self):
         lastgenre_cmd = ui.Subcommand('lastgenre', help='fetch genres')
@@ -294,26 +320,25 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         lastgenre_cmd.parser.add_option('-v', '--verbose', dest='verbose',
                               action='store_true',
                               default=False,
-                              help='be more verbose')
+                              help='log genre match details')
         lastgenre_cmd.parser.add_option('-s', '--source', dest='source',
                               type='string',
                               default=self.config['source'].get(),
-                              help='set source, one of: artist / album / track')
+                              help='genre source: artist, album, or track')
         def lastgenre_func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
             write = config['import']['write'].get(bool)
-            force = opts.force
             self._set_sources(opts.source)
-            fallback_str = self.config['fallback'].get()
+
             for album in lib.albums(ui.decargs(args)):
-                album.genre, src = self._get_album_genre(album, force, fallback_str)
+                album.genre, src = self._get_album_genre(album, opts.force)
                 if opts.verbose:
                     log.info(u'LastGenre: Album({0} - {1}) > {2}({3})'.format(
                         album.albumartist, album.album, album.genre, src))
+
                 for item in album.items():
-                    item.genre, src = self._get_item_genre(item, force,
-                          fallback_str)
+                    item.genre, src = self._get_item_genre(item, opts.force)
                     lib.store(item)
                     if opts.verbose:
                         log.info(u'LastGenre: Item({0} - {1}) > {2}({3})'.format(
@@ -325,21 +350,21 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return [lastgenre_cmd]
 
     def imported(self, session, task):
+        """Event hook called when an import task finishes."""
         self._set_sources(self.config['source'].get())
-        tags = []
-        fallback_str = self.config['fallback'].get()
         if task.is_album:
             album = session.lib.get_album(task.album_id)
-            album.genre, src = self._get_album_genre(album, True, fallback_str)
+            album.genre, src = self._get_album_genre(album, True)
             log.debug(u'added last.fm album genre ({0}): {1}'.format(
                   src, album.genre))
             for item in album.items():
-                item.genre, src = self._get_item_genre(item, True, fallback_str)
+                item.genre, src = self._get_item_genre(item, True)
                 log.debug(u'added last.fm item genre ({0}): {1}'.format(
                       src, item.genre))
+                session.lib.store(item)
         else:
             item = task.item
-            item.genre, src = self._get_item_genre(item, True, fallback_str)
+            item.genre, src = self._get_item_genre(item, True)
             log.debug(u'added last.fm item genre ({0}): {1}'.format(
                   src, item.genre))
             session.lib.store(item)

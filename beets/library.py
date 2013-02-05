@@ -1454,6 +1454,7 @@ class Album(BaseAlbum):
                 for item in self.items():
                     setattr(item, key, value)
                     self._library.store(item)
+
         else:
             object.__setattr__(self, key, value)
 
