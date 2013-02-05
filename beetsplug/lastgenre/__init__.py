@@ -191,7 +191,6 @@ options = {
 class LastGenrePlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(LastGenrePlugin, self).__init__()
-        self.import_stages = [self.imported]
 
         self.config.add({
             'whitelist': os.path.join(os.path.dirname(__file__), 'genres.txt'),
@@ -199,7 +198,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'canonical': None,
             'source': 'album',
             'force': False,
+            'auto': True,
         })
+
+        if self.config['auto']:
+            self.import_stages = [self.imported]
 
         # Read the whitelist file.
         wl_filename = self.config['whitelist'].as_filename()
@@ -345,6 +348,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     def imported(self, session, task):
         """Event hook called when an import task finishes."""
+        # Always force a "real" lookup during import.
+        if not self.config['force']:
+            self.config['force'] = True
+
         if task.is_album:
             album = session.lib.get_album(task.album_id)
             album.genre, src = self._get_album_genre(album)

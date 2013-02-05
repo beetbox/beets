@@ -80,3 +80,6 @@ Running Manually
 In addition to running automatically on import, the plugin can also run manually
 from the command line. Use the command ``beet lastgenre [QUERY]`` to fetch
 genres for albums matching a certain query.
+
+To disable automatic genre fetching on import, set the ``auto`` config option
+to false.
