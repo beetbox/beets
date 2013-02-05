@@ -57,6 +57,8 @@ Other new stuff:
 * ReplayGain tags on MPEG-4/AAC files are now supported. Thanks to Dave Hayes.
 * :doc:`/plugins/bpd`: Browse by album artist and album artist sort name.
   Thanks to Steinþór Pálsson.
+* :doc:`/plugins/echonest_tempo`: Don't attempt a lookup when the artist or
+  track title is missing.
 * Fix an error when migrating the ``.beetsstate`` file on Windows.
 * A nicer error message is now given when the configuration file contains tabs.
   (YAML doesn't like tabs.)
