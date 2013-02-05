@@ -9,7 +9,7 @@ New configuration options:
 * :ref:`default_action` lets you determine the default (just-hit-return) option
   is when considering a candidate.
 * :ref:`none_rec_action` lets you skip the prompt, and automatically choose an
-  action, when there is no good candidate. Thanks to mrmachine.
+  action, when there is no good candidate. Thanks to Tai Lee.
 * :ref:`clutter` controls which files should be ignored when cleaning up empty
   directories. Thanks to Steinþór Pálsson.
 * :doc:`/plugins/lastgenre`: A new configuration option lets you choose to
@@ -24,9 +24,9 @@ Other new stuff:
 * Two new plugin events were added: *database_change* and *cli_exit*. Thanks
   again to Dang Mai Hai.
 * Track titles in the importer UI's difference display are now either aligned
-  vertically or broken across two lines for readability. Thanks to mrmachine.
+  vertically or broken across two lines for readability. Thanks to Tai Lee.
 * Some changes to the way candidates are recommended for selection, thanks to
-  mrmachine:
+  Tai Lee:
 
   * Partial album matches are never "strong" recommendations.
   * When a match isn't great but is either better than all the others or the
@@ -39,7 +39,7 @@ Other new stuff:
   has been improved. It can now detect when two directories alongside each
   other share a similar prefix but a different number (e.g., "Album Disc 1" and
   "Album Disc 2") even when they are not alone in a common parent directory.
-  Thanks once again to mrmachine.
+  Thanks once again to Tai Lee.
 * Album listings in the importer UI now show the release medium (CD, Vinyl,
   3xCD, etc.) as well as the disambiguation string. Thanks to Peter Schnebel.
 * When getting data from MusicBrainz, the album disambiguation string
