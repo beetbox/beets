@@ -134,10 +134,9 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
     a particular shortcut is desired; in that case, only that letter
     should be capitalized.
 
-    By default, the first option is the default. If `require` is
-    provided, then there is no default. `default` can be provided to
-    override this. The prompt and fallback prompt are also inferred but
-    can be overridden.
+    By default, the first option is the default. `default` can be provided to
+    override this. If `require` is provided, then there is no default. The
+    prompt and fallback prompt are also inferred but can be overridden.
 
     If numrange is provided, it is a pair of `(high, low)` (both ints)
     indicating that, in addition to `options`, the user may enter an
@@ -173,9 +172,9 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         index = option.index(found_letter)
 
         # Mark the option's shortcut letter for display.
-        if (not require and default is None and not numrange and first) \
-           or (isinstance(default, basestring) and
-               found_letter.lower() == default.lower()):
+        if not require and ((default is None and not numrange and first) or
+                (isinstance(default, basestring) and
+                 found_letter.lower() == default.lower())):
             # The first option is the default; mark it.
             show_letter = '[%s]' % found_letter.upper()
             is_default = True
@@ -196,10 +195,10 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         first = False
 
     # The default is just the first option if unspecified.
-    if default is None:
-        if require:
-            default = None
-        elif numrange:
+    if require:
+        default = None
+    elif default is None:
+        if numrange:
             default = numrange[0]
         else:
             default = display_letters[0].lower()
