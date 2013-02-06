@@ -286,7 +286,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # album_tag
                 artist_genres = {}
                 for item in obj.items():
-                    tmp_genre = fetch_artist_genre(item)
+                    tmp_genre = None
+                    if 'track' in self.sources:
+                        tmp_genre = fetch_track_genre(item)
+                    if not tmp_genre:
+                        tmp_genre = fetch_artist_genre(item)
                     if tmp_genre:
                         artist_genres[tmp_genre] = \
                             artist_genres.get(tmp_genre, 0) + 1
