@@ -357,10 +357,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             log.debug(u'added last.fm album genre ({0}): {1}'.format(
                   src, album.genre))
             for item in album.items():
-                item.genre, src = self._get_genre(item)
-                log.debug(u'added last.fm item genre ({0}): {1}'.format(
-                      src, item.genre))
-                session.lib.store(item)
+                if 'track' in self.sources:
+                    item.genre, src = self._get_genre(item)
+                    log.debug(u'added last.fm item genre ({0}): {1}'.format(
+                          src, item.genre))
+                    session.lib.store(item)
 
         else:
             item = task.item
