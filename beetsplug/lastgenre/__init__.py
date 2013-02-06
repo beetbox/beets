@@ -31,7 +31,7 @@ import yaml
 
 from beets import plugins
 from beets import ui
-from beets.util import normpath
+from beets.util import normpath, plurality
 from beets import config
 from beets import library
 
@@ -282,21 +282,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             elif obj.albumartist != 'Various Artists':
                 result = fetch_album_artist_genre(obj)
             else:
-                # For 'Various Artists' pick the most used common tag as
-                # album_tag
-                artist_genres = {}
+                # For "Various Artists", pick the most popular track genre.
+                item_genres = []
                 for item in obj.items():
-                    tmp_genre = None
+                    item_genre = None
                     if 'track' in self.sources:
-                        tmp_genre = fetch_track_genre(item)
-                    if not tmp_genre:
-                        tmp_genre = fetch_artist_genre(item)
-                    if tmp_genre:
-                        artist_genres[tmp_genre] = \
-                            artist_genres.get(tmp_genre, 0) + 1
-                if len(artist_genres) > 0:
-                    result = filter(lambda k:artist_genres[k] ==
-                        max(artist_genres.values()), artist_genres)[0]
+                        item_genre = fetch_track_genre(item)
+                    if not item_genre:
+                        item_genre = fetch_artist_genre(item)
+                    if item_genre:
+                        item_genres.append(item_genre)
+                if item_genres:
+                    result, _ = plurality(item_genres)
 
             if result:
                 return result, 'artist'
@@ -332,13 +329,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 ))
 
                 for item in album.items():
+                    # If we're using track-level sources, also look up each
+                    # track on the album.
                     if 'track' in self.sources:
-                        # Fetch track genre only if source is 'track'
                         item.genre, src = self._get_genre(item)
                         lib.store(item)
                         log.info(u'genre for track {0} - {1} ({2}): {3}'.format(
                             item.artist, item.title, src, item.genre
                         ))
+
                     if write:
                         item.write()
 
@@ -356,8 +355,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             album.genre, src = self._get_genre(album)
             log.debug(u'added last.fm album genre ({0}): {1}'.format(
                   src, album.genre))
-            for item in album.items():
-                if 'track' in self.sources:
+
+            if 'track' in self.sources:
+                for item in album.items():
                     item.genre, src = self._get_genre(item)
                     log.debug(u'added last.fm item genre ({0}): {1}'.format(
                           src, item.genre))

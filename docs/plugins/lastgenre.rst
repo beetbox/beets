@@ -66,12 +66,16 @@ to use your own tree.
 Genre Source
 ------------
 
-When looking up genres for albums or individual tracks, you may prefer to use
-a genre tag from the *track* or *artist* instead of the individual entity. To
-do so, set the ``source`` configuration value to "track" or "artist", like so::
+When looking up genres for albums or individual tracks, you can choose whether
+to use Last.fm tags on the album, the artist, or the track. For example, you
+might want all the albums for a certain artist to carry the same genre. Set the
+``source`` configuration value to "album", "track", or "artist", like so::
 
     lastgenre:
         source: artist
+
+The default is "album". When set to "track", the plugin will fetch *both*
+album-level and track-level genres for your music when importing albums.
 
 
 Running Manually
