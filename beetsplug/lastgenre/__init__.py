@@ -281,6 +281,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 result = fetch_artist_genre(obj)
             elif obj.albumartist != 'Various Artists':
                 result = fetch_album_artist_genre(obj)
+            else:
+                # For 'Various Artists' pick the most used common tag as
+                # album_tag
+                artist_genres = {}
+                for item in obj.items():
+                    tmp_genre = fetch_artist_genre(item)
+                    if tmp_genre:
+                        artist_genres[tmp_genre] = \
+                            artist_genres.get(tmp_genre, 0) + 1
+                if len(artist_genres) > 0:
+                    result = filter(lambda k:artist_genres[k] ==
+                        max(artist_genres.values()), artist_genres)[0]
 
             if result:
                 return result, 'artist'
@@ -316,11 +328,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 ))
 
                 for item in album.items():
-                    item.genre, src = self._get_genre(item)
-                    lib.store(item)
-                    log.info(u'genre for track {0} - {1} ({2}): {3}'.format(
-                        item.artist, item.title, src, item.genre
-                    ))
+                    if 'track' in self.sources:
+                        # Fetch track genre only if source is 'track'
+                        item.genre, src = self._get_genre(item)
+                        lib.store(item)
+                        log.info(u'genre for track {0} - {1} ({2}): {3}'.format(
+                            item.artist, item.title, src, item.genre
+                        ))
                     if write:
                         item.write()
 
