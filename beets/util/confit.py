@@ -357,7 +357,7 @@ class ConfigView(object):
         if value not in choices:
             raise ConfigValueError(
                 '{0} must be one of {1}, not {2}'.format(
-                    self.name, repr(value), repr(list(choices))
+                    self.name, repr(list(choices)), repr(value)
                 )
             )
 
