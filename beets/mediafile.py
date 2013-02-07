@@ -186,23 +186,25 @@ def _pack_asf_image(mime, data, type=3, description=""):
 
 def _sc2rg(soundcheck):
     """Convert a SoundCheck tag to ReplayGain values"""
-    # SoundCheck tags consist 10 numbers, each represented by 8 characters
+    # SoundCheck tags consist of 10 numbers, each represented by 8 characters
     # of ASCII hex preceded by a space.
-    soundcheck = soundcheck.replace(' ', '')
-    soundcheck = struct.unpack('!iiiiiiiiii', soundcheck.decode('hex'))
+    try:
+        soundcheck = soundcheck.replace(' ', '').decode('hex')
+        soundcheck = struct.unpack('!iiiiiiiiii', soundcheck)
+    except:
+        # SoundCheck isn't in the format we expect, so return default values
+        return 0.0, 0.0
     # SoundCheck stores absolute calculated/measured RMS value in an unknown
     # unit. We need to find the ratio of this measurement compared to a 
-    # reference value of 1000 to get our gain in dB. 
-    left = math.log10(soundcheck[0] / 1000.0) * -10
-    right = math.log10(soundcheck[1] / 1000.0) * -10
-    # We play it safe by using the smallest value (i.e., largest reduction)
-    gain = round(min(left, right), 2)
+    # reference value of 1000 to get our gain in dB. We play it safe by using
+    # the larger of the two values (i.e., the most attenuation).
+    gain = math.log10((max(*soundcheck[:2]) or 1000) / 1000.0) * -10
     # SoundCheck stores peak values as the actual value of the sample, and
     # again separately for the left and right channels. We need to convert
     # this to a percentage of full scale, which is 32768 for a 16 bit sample.
     # Once again, we play it safe by using the larger of the two values.
-    peak = round(max(soundcheck[6], soundcheck[7]) / 32768.0, 6)
-    return (gain, peak)
+    peak = max(soundcheck[6:8]) / 32768.0
+    return round(gain, 2), round(peak, 6)
 
 
 def _rg2sc(gain, peak):
@@ -221,10 +223,10 @@ def _rg2sc(gain, peak):
     # Same as above, except our reference level is 2500 units.
     g2 = min(round((10 ** (gain / -10)) * 2500), 65534)
     # The purpose of these values are unknown, but they also seem to be
-    # unused so we just pick a sensible number.
-    uk = 150696
+    # unused so we just use 0
+    uk = 0
     values = (g1, g1, g2, g2, uk, uk, peak, peak, uk, uk)
-    soundcheck = (' %08X' * 10) % values
+    soundcheck = (u' %08X' * 10) % values
     return soundcheck
 
 # Flags for encoding field behavior.
