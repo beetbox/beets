@@ -182,52 +182,65 @@ def _pack_asf_image(mime, data, type=3, description=""):
     tag_data += data
     return tag_data
 
-# SoundCheck/ReplayGain conversion
+
+# iTunes Sound Check encoding.
 
 def _sc2rg(soundcheck):
-    """Convert a SoundCheck tag to ReplayGain values"""
-    # SoundCheck tags consist of 10 numbers, each represented by 8 characters
-    # of ASCII hex preceded by a space.
+    """Convert a Sound Check string value to a (gain, peak) tuple as
+    used by ReplayGain.
+    """
+    # SoundCheck tags consist of 10 numbers, each represented by 8
+    # characters of ASCII hex preceded by a space.
     try:
         soundcheck = soundcheck.replace(' ', '').decode('hex')
         soundcheck = struct.unpack('!iiiiiiiiii', soundcheck)
-    except:
-        # SoundCheck isn't in the format we expect, so return default values
+    except struct.error:
+        # SoundCheck isn't in the format we expect, so return default
+        # values.
         return 0.0, 0.0
-    # SoundCheck stores absolute calculated/measured RMS value in an unknown
-    # unit. We need to find the ratio of this measurement compared to a 
-    # reference value of 1000 to get our gain in dB. We play it safe by using
-    # the larger of the two values (i.e., the most attenuation).
+
+    # SoundCheck stores absolute calculated/measured RMS value in an
+    # unknown unit. We need to find the ratio of this measurement
+    # compared to a reference value of 1000 to get our gain in dB. We
+    # play it safe by using the larger of the two values (i.e., the most
+    # attenuation).
     gain = math.log10((max(*soundcheck[:2]) or 1000) / 1000.0) * -10
-    # SoundCheck stores peak values as the actual value of the sample, and
-    # again separately for the left and right channels. We need to convert
-    # this to a percentage of full scale, which is 32768 for a 16 bit sample.
-    # Once again, we play it safe by using the larger of the two values.
+
+    # SoundCheck stores peak values as the actual value of the sample,
+    # and again separately for the left and right channels. We need to
+    # convert this to a percentage of full scale, which is 32768 for a
+    # 16 bit sample. Once again, we play it safe by using the larger of
+    # the two values.
     peak = max(soundcheck[6:8]) / 32768.0
+
     return round(gain, 2), round(peak, 6)
 
-
 def _rg2sc(gain, peak):
-    """Convert ReplayGain values to a SoundCheck tag"""
+    """Encode ReplayGain gain/peak values as a Sound Check string.
+    """
     if not isinstance(gain, float):
         gain = float(gain.lower().strip(' db'))
-    # SoundCheck stores the peak value as the actual value of the sample,
-    # rather than the percentage of full scale that RG uses, so we do
-    # a simple conversion assuming 16 bit samples.
+
+    # SoundCheck stores the peak value as the actual value of the
+    # sample, rather than the percentage of full scale that RG uses, so
+    # we do a simple conversion assuming 16 bit samples.
     peak = float(peak) * 32768.0
-    # SoundCheck stores absolute RMS values in some unknown units rather than 
-    # the dB values RG uses. We can calculate these absolute values from the 
-    # gain ratio using a reference value of 1000 units. We also enforce the 
-    # maximum value here, which is equivalent to about -18.2dB.
+
+    # SoundCheck stores absolute RMS values in some unknown units rather
+    # than the dB values RG uses. We can calculate these absolute values
+    # from the gain ratio using a reference value of 1000 units. We also
+    # enforce the maximum value here, which is equivalent to about
+    # -18.2dB.
     g1 = min(round((10 ** (gain / -10)) * 1000), 65534)
     # Same as above, except our reference level is 2500 units.
     g2 = min(round((10 ** (gain / -10)) * 2500), 65534)
+
     # The purpose of these values are unknown, but they also seem to be
-    # unused so we just use 0
+    # unused so we just use zero.
     uk = 0
     values = (g1, g1, g2, g2, uk, uk, peak, peak, uk, uk)
-    soundcheck = (u' %08X' * 10) % values
-    return soundcheck
+    return (u' %08X' * 10) % values
+
 
 # Flags for encoding field behavior.
 
@@ -235,7 +248,7 @@ def _rg2sc(gain, peak):
 packing = enum('SLASHED',   # pair delimited by /
                'TUPLE',     # a python tuple of 2 items
                'DATE',      # YYYY-MM-DD
-               'SC',        # 10 numbers as space preceded 8 char ASCII hex
+               'SC',        # Sound Check gain/peak encoding
                name='packing')
 
 class StorageStyle(object):
@@ -254,10 +267,10 @@ class StorageStyle(object):
      - ID3 storage only: match against this 'desc' field as well
        as the key.
     """
-    def __init__(self, key, list_elem = True, as_type = unicode,
-                 packing = None, pack_pos = 0, pack_type = int, 
-                 id3_desc = None, id3_frame_field = 'text',
-                 id3_lang = None):
+    def __init__(self, key, list_elem=True, as_type=unicode,
+                 packing=None, pack_pos=0, pack_type=int, 
+                 id3_desc=None, id3_frame_field='text',
+                 id3_lang=None):
         self.key = key
         self.list_elem = list_elem
         self.as_type = as_type
@@ -309,6 +322,7 @@ class Packed(object):
             seq = items # tuple: items is already indexable
         elif self.packstyle == packing.SC:
             seq = _sc2rg(items)
+
         try:
             out = seq[index]
         except:
@@ -451,20 +465,14 @@ class MediaField(object):
                 # need to make a new frame?
                 if not found:
                     assert isinstance(style.id3_frame_field, str)  # Keyword.
+                    args = {
+                        'encoding': 3,
+                        'desc': style.id3_desc,
+                        style.id3_frame_field: val,
+                    }
                     if style.id3_lang:
-                        frame = mutagen.id3.Frames[style.key](
-                            encoding=3,
-                            desc=style.id3_desc,
-                            lang=style.id3_lang,
-                            **{style.id3_frame_field: val}
-                        )
-                    else:
-                        frame = mutagen.id3.Frames[style.key](
-                            encoding=3,
-                            desc=style.id3_desc,
-                            **{style.id3_frame_field: val}
-                        )
-                    obj.mgfile.tags.add(frame)
+                        args['lang'] = style.id3_lang
+                    obj.mgfile.tags.add(mutagen.id3.Frames[style.key](**args))
 
             # Try to match on "owner" field.
             elif style.key.startswith('UFID:'):
@@ -520,7 +528,8 @@ class MediaField(object):
                     break
 
             if style.packing:
-                out = Packed(out, style.packing, out_type=style.pack_type)[style.pack_pos]
+                p = Packed(out, style.packing, out_type=style.pack_type)
+                out = p[style.pack_pos]
 
             # MPEG-4 freeform frames are (should be?) encoded as UTF-8.
             if obj.type == 'mp4' and style.key.startswith('----:') and \
@@ -540,7 +549,8 @@ class MediaField(object):
         for style in styles:
 
             if style.packing:
-                p = Packed(self._fetchdata(obj, style), style.packing, out_type=style.pack_type)
+                p = Packed(self._fetchdata(obj, style), style.packing,
+                           out_type=style.pack_type)
                 p[style.pack_pos] = val
                 out = p.items
 

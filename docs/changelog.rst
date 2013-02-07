@@ -23,6 +23,9 @@ Other new stuff:
   based on beets queries. Thanks to Dang Mai Hai.
 * Two new plugin events were added: *database_change* and *cli_exit*. Thanks
   again to Dang Mai Hai.
+* ReplayGain tags on MPEG-4/AAC files are now supported. And, even more
+  astonishingly, ReplayGain values in MP3 and AAC files are now compatible with
+  `iTunes Sound Check`_. Thanks to Dave Hayes.
 * Track titles in the importer UI's difference display are now either aligned
   vertically or broken across two lines for readability. Thanks to Tai Lee.
 * Some changes to the way candidates are recommended for selection, thanks to
@@ -56,7 +59,6 @@ Other new stuff:
   less than 10 seconds. (This threshold was previously 2 seconds.)
 * Plugins are now loaded in the order they appear in the config file. Thanks to
   Dang Mai Hai.
-* ReplayGain tags on MPEG-4/AAC files are now supported. Thanks to Dave Hayes.
 * :doc:`/plugins/bpd`: Browse by album artist and album artist sort name.
   Thanks to Steinþór Pálsson.
 * :doc:`/plugins/echonest_tempo`: Don't attempt a lookup when the artist or
@@ -64,6 +66,8 @@ Other new stuff:
 * Fix an error when migrating the ``.beetsstate`` file on Windows.
 * A nicer error message is now given when the configuration file contains tabs.
   (YAML doesn't like tabs.)
+
+.. _iTunes Sound Check: http://support.apple.com/kb/HT2425
 
 1.1b1 (January 29, 2013)
 ------------------------
