@@ -182,12 +182,21 @@ environment variables.
 .. _clutter:
 
 clutter
--------
+~~~~~~~
 
 When beets imports all the files in a directory, it tries to remove the
 directory if it's empty. A directory is considered empty if it only contains
 files whose names match the glob patterns in `clutter`, which should be a list
 of strings. The default list consists of "Thumbs.DB" and ".DS_Store".
+
+.. _max_filename_length:
+
+max_filename_length
+~~~~~~~~~~~~~~~~~~~
+
+Set the maximum number of characters in a filename, after which names will be
+truncated. By default, beets tries to ask the filesystem for the correct
+maximum.
 
 Importer Options
 ----------------
