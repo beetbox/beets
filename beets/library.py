@@ -104,16 +104,16 @@ ITEM_FIELDS = [
 
     ('echonest_fingerprint',    'text', True, False),
     ('echonest_id',             'text', True, False),
-    ('echonest_danceability',   'real', True, False),
-    ('echonest_duration',       'real', True, False),
-    ('echonest_energy',         'real', True, False),
-    ('echonest_key',            'int',  True, False),
-    ('echonest_liveness',       'real', True, False),
-    ('echonest_loudness',       'real', True, False),
-    ('echonest_mode',           'int',  True, False),
-    ('echonest_speechiness',    'real', True, False),
-    ('echonest_tempo',          'real', True, False),
-    ('echonest_time_signature', 'int',  True, False),
+    ('danceability',   'real', True, False),
+    ('duration',       'real', True, False),
+    ('energy',         'real', True, False),
+    ('key',            'int',  True, False),
+    ('liveness',       'real', True, False),
+    ('loudness',       'real', True, False),
+    ('mode',           'int',  True, False),
+    ('speechiness',    'real', True, False),
+    ('tempo',          'real', True, False),
+    ('time_signature', 'int',  True, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]

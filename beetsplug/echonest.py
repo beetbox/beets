@@ -50,6 +50,8 @@ _matches = {}
 _fingerprints = {}
 _echonestids = {}
 _echonestsummaries = {}
+_echonestfields = ['danceability', 'duration', 'energy', 'key', 'liveness',
+                   'loudness', 'mode', 'speechiness', 'tempo', 'time_signature']
 
 def echonest_match(path):
     """Gets metadata for a file from Echonest and populates the
@@ -196,13 +198,6 @@ def apply_echonest_metadata(task, session):
         if item.path in _echonestids:
             item.echonest_id = _echonestids[item.path]
         if item.path in _echonestsummaries:
-            item.echonest_danceability   = _echonestsummaries[item.path]['danceability']
-            item.echonest_duration       = _echonestsummaries[item.path]['duration']
-            item.echonest_energy         = _echonestsummaries[item.path]['energy']
-            item.echonest_key            = _echonestsummaries[item.path]['key']
-            item.echonest_liveness       = _echonestsummaries[item.path]['liveness']
-            item.echonest_loudness       = _echonestsummaries[item.path]['loudness']
-            item.echonest_mode           = _echonestsummaries[item.path]['mode']
-            item.echonest_speechiness    = _echonestsummaries[item.path]['speechiness']
-            item.echonest_tempo          = _echonestsummaries[item.path]['tempo']
-            item.echonest_time_signature = _echonestsummaries[item.path]['time_signature']
+            for f in _echonestfields:
+                setattr(item, f, _echonestsummaries[item.path][f])
+
