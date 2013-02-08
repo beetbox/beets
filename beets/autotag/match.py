@@ -324,64 +324,66 @@ def _recommendation(results):
     """Given a sorted list of AlbumMatch or TrackMatch objects, return a
     recommendation based on the results' distances.
 
-    If the recommendation is higher than the configured maximum for albums with
-    missing/extra tracks or differing track lengths/numbers, the recommendation
-    will be downgraded to the match configured maximum.
+    If the recommendation is higher than the configured maximum for
+    certain situations, the recommendation will be downgraded to the
+    configured maximum.
     """
     if not results:
         # No candidates: no recommendation.
-        rec = recommendation.none
+        return recommendation.none
+
+    # Basic distance thresholding.
+    min_dist = results[0].distance
+    if min_dist < config['match']['strong_rec_thresh'].as_number():
+        # Strong recommendation level.
+        rec = recommendation.strong
+    elif min_dist <= config['match']['medium_rec_thresh'].as_number():
+        # Medium recommendation level.
+        rec = recommendation.medium
+    elif len(results) == 1:
+        # Only a single candidate.
+        rec = recommendation.low
+    elif results[1].distance - min_dist >= \
+            config['match']['rec_gap_thresh'].as_number():
+        # Gap between first two candidates is large.
+        rec = recommendation.low
     else:
-        min_dist = results[0].distance
-        if min_dist < config['match']['strong_rec_thresh'].as_number():
-            # Strong recommendation level.
-            rec = recommendation.strong
-        elif min_dist <= config['match']['medium_rec_thresh'].as_number():
-            # Medium recommendation level.
-            rec = recommendation.medium
-        elif len(results) == 1:
-            # Only a single candidate.
-            rec = recommendation.low
-        elif results[1].distance - min_dist >= \
-                config['match']['rec_gap_thresh'].as_number():
-            # Gap between first two candidates is large.
-            rec = recommendation.low
-        else:
-            # No conclusion.
-            rec = recommendation.none
-        # Downgrade recommendation according to configured maximums.
-        if isinstance(results[0], hooks.AlbumMatch):
-            # Maximum recommendations.
-            max_rec = {}
-            for trigger in ('partial', 'tracklength', 'tracknumber'):
-                max_rec[trigger] = \
-                    config['match']['max_rec'][trigger].as_choice({
-                        'strong': recommendation.strong,
-                        'medium': recommendation.medium,
-                        'low': recommendation.low,
-                        'none': recommendation.none,
-                    })
-            # Partial match.
-            if rec > max_rec['partial'] and \
-                    (results[0].extra_items or results[0].extra_tracks):
-                rec = max_rec['partial']
-            downgraded = False
-            # Check track number and duration for each item.
-            for item, track_info in results[0].mapping.items():
-                # Track length differs.
-                if rec > max_rec['tracklength'] and item.length and \
-                        track_info.length and \
-                        abs(item.length - track_info.length) > \
-                        TRACK_LENGTH_GRACE:
-                    rec = max_rec['tracklength']
-                    downgraded = True
-                # Track number differs.
-                elif rec > max_rec['tracknumber'] and item.track not in \
-                        (track_info.index, track_info.medium_index):
-                    rec = max_rec['tracknumber']
-                    downgraded = True
-                if downgraded:
-                    break
+        # No conclusion.
+        rec = recommendation.none
+
+    # "Downgrades" in certain configured situations.
+    if isinstance(results[0], hooks.AlbumMatch):
+        # Load the configured recommendation maxima.
+        max_rec = {}
+        for trigger in 'partial', 'tracklength', 'tracknumber':
+            max_rec[trigger] = \
+                config['match']['max_rec'][trigger].as_choice({
+                    'strong': recommendation.strong,
+                    'medium': recommendation.medium,
+                    'low': recommendation.low,
+                    'none': recommendation.none,
+                })
+
+        # Partial match.
+        if rec > max_rec['partial'] and \
+                (results[0].extra_items or results[0].extra_tracks):
+            rec = max_rec['partial']
+
+        # Check track number and duration for each item.
+        for item, track_info in results[0].mapping.items():
+            # Track length differs.
+            if rec > max_rec['tracklength'] and \
+                    item.length and track_info.length and \
+                    abs(item.length - track_info.length) > TRACK_LENGTH_GRACE:
+                rec = max_rec['tracklength']
+                break
+
+            # Track number differs.
+            elif rec > max_rec['tracknumber'] and item.track not in \
+                    (track_info.index, track_info.medium_index):
+                rec = max_rec['tracknumber']
+                break
+
     return rec
 
 def _add_candidate(items, results, info):

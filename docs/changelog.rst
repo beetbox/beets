@@ -11,7 +11,8 @@ New configuration options:
 * :ref:`none_rec_action` lets you skip the prompt, and automatically choose an
   action, when there is no good candidate. Thanks to Tai Lee.
 * :ref:`max_rec` lets you define a maximum recommendation for albums with
-  missing/extra tracks or differing track lengths/numbers.
+  missing/extra tracks or differing track lengths/numbers. Thanks again to Tai
+  Lee.
 * :ref:`clutter` controls which files should be ignored when cleaning up empty
   directories. Thanks to Steinþór Pálsson.
 * :doc:`/plugins/lastgenre`: A new configuration option lets you choose to
@@ -33,7 +34,8 @@ Other new stuff:
 * Some changes to the way candidates are recommended for selection, thanks to
   Tai Lee:
 
-  * Partial album matches are downgraded to a "low" recommendation by default.
+  * According to the new :ref:`max_rec` configuration option, partial album
+    matches are downgraded to a "low" recommendation by default.
   * When a match isn't great but is either better than all the others or the
     only match, it is given a "low" (rather than "medium") recommendation.
   * There is no prompt default (i.e., input is required) when matches are

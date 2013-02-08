@@ -351,8 +351,15 @@ options to choose from.
 max_rec
 ~~~~~~~
 
-You can define a maximum recommendation for albums with missing/extra tracks or
-differing track lengths/numbers::
+As mentioned above, autotagger matches have *recommendations* that control how
+the UI behaves for a certain quality of match. The recommendation for a certain
+match is usually based on the distance calculation. But you can also control
+the recommendation for certain specific situations by defining *maximum*
+recommendations when (a) a match has missing/extra tracks; (b) the track number
+for at least one track differs; or (c) the track length for at least one track
+differs.
+
+To define maxima, use keys under ``max_rec:`` in the ``match`` section::
 
     match:
         max_rec:
