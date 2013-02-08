@@ -376,13 +376,11 @@ def _recommendation(results):
                     item.length and track_info.length and \
                     abs(item.length - track_info.length) > TRACK_LENGTH_GRACE:
                 rec = max_rec['tracklength']
-                break
 
             # Track number differs.
             elif rec > max_rec['tracknumber'] and item.track not in \
                     (track_info.index, track_info.medium_index):
                 rec = max_rec['tracknumber']
-                break
 
     return rec
 
