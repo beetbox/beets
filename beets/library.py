@@ -1152,6 +1152,7 @@ class Library(BaseLibrary):
         """
         pathmod = pathmod or os.path
         platform = platform or sys.platform
+        basedir = basedir or self.directory
 
         # Use a path format based on a query, falling back on the
         # default.
@@ -1197,15 +1198,15 @@ class Library(BaseLibrary):
         subpath += extension.lower()
 
         # Truncate too-long components.
-        subpath = util.truncate_path(
-            subpath, pathmod,
-            beets.config['max_filename_length'].get(int),
-        )
+        maxlen = beets.config['max_filename_length'].get(int)
+        if not maxlen:
+            # When zero, try to determine from filesystem.
+            maxlen = util.max_filename_length(self.directory)
+        subpath = util.truncate_path(subpath, pathmod, maxlen)
 
         if fragment:
             return subpath
         else:
-            basedir = basedir or self.directory
             return normpath(os.path.join(basedir, subpath))
 
 
