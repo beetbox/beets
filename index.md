@@ -28,7 +28,7 @@ imagine for your music collection. Via [plugins][], beets becomes a panacea:
   any browser that supports [HTML5 audio][].
 
 [HTML5 audio]: http://www.w3.org/TR/html-markup/audio.html
-[coll]: http://musicbrainz.org/show/collection/
+[coll]: http://wiki.musicbrainz.org/Collections
 [MPD]: http://mpd.wikia.com/
 [MPD clients]: http://mpd.wikia.com/wiki/Clients
 
