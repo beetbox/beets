@@ -149,6 +149,17 @@ Format to use when listing *albums* with :ref:`list-cmd` and other
 commands. Defaults to ``$albumartist - $album``. The ``-f`` command-line
 option overrides this setting.
 
+.. _original_date:
+
+original_date
+~~~~~~~~~~~~~
+
+Either ``yes`` or ``no``, indicating whether matched albums should have their
+``year``, ``month``, and ``day`` fields set to the release date of the
+*original* version of an album rather than the selected version of the release.
+That is, if this option is turned on, then ``year`` will always equal
+``original_year`` and so on. Default: ``no``.
+
 .. _per_disc_numbering:
 
 per_disc_numbering

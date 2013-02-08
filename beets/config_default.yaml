@@ -38,6 +38,7 @@ timeout: 5.0
 per_disc_numbering: no
 verbose: no
 terminal_encoding: utf8
+original_date: no
 
 ui:
     terminal_width: 80

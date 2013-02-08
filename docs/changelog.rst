@@ -4,6 +4,14 @@ Changelog
 1.1b2 (in development)
 ----------------------
 
+This version introduces one **change to the default behavior** that you should
+be aware of. Previously, when importing new albums matched in MusicBrainz, the
+date fields (``year``, ``month``, and ``day``) would be set to the release date
+of the *original* version of the album, as opposed to the specific date of the
+release selected. Now, these fields reflect the specific release and
+``original_year``, etc., reflect the earlier release date. If you want the old
+behavior, just set :ref:`original_date` to true in your config file.
+
 New configuration options:
 
 * :ref:`default_action` lets you determine the default (just-hit-return) option
@@ -13,6 +21,10 @@ New configuration options:
 * :ref:`max_rec` lets you define a maximum recommendation for albums with
   missing/extra tracks or differing track lengths/numbers. Thanks again to Tai
   Lee.
+* :ref:`original_date` determines whether, when importing new albums, the
+  ``year``, ``month``, and ``day`` fields should reflect the specific (e.g.,
+  reissue) release date or the original release date. Note that the original
+  release date is always available as ``original_year``, etc.
 * :ref:`clutter` controls which files should be ignored when cleaning up empty
   directories. Thanks to Steinþór Pálsson.
 * :doc:`/plugins/lastgenre`: A new configuration option lets you choose to
