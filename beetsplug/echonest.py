@@ -201,3 +201,23 @@ def apply_echonest_metadata(task, session):
             for f in _echonestfields:
                 setattr(item, f, _echonestsummaries[item.path][f])
 
+# Additional path fields
+
+def _make_templ_function(field):
+    return """\
+@EchonestPlugin.template_field('{f}')
+def _tmpl_{f}(item):
+    v = getattr(item, '{f}')
+    if isinstance(v, float):
+        v = u'%.2f' % getattr(item, '{f}')
+    return v
+""".format(f=field)
+
+try:
+    get_summary = beets.config['echonest']['summary'].get(bool)
+except confit.NotFoundError:
+    get_summary = False
+
+if get_summary:
+    for f in _echonestfields:
+        exec _make_templ_function(f)
