@@ -61,6 +61,6 @@ match:
     medium_rec_thresh: 0.25
     rec_gap_thresh: 0.25
     max_rec:
-        partial: low
-        tracklength: medium
-        tracknumber: medium
+        partial: medium
+        tracklength: strong
+        tracknumber: strong

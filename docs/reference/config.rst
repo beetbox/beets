@@ -363,13 +363,16 @@ To define maxima, use keys under ``max_rec:`` in the ``match`` section::
 
     match:
         max_rec:
-            partial: low
-            tracklength: medium
-            tracknumber: medium
+            partial: medium
+            tracklength: strong
+            tracknumber: strong
 
 If a recommendation is higher than the configured maximum and the condition is
 met, the recommendation will be downgraded. The maximum for each condition can
-be one of ``none``, ``low``, ``medium`` or ``strong``.
+be one of ``none``, ``low``, ``medium`` or ``strong``. When the maximum
+recommendation is ``strong``, no "downgrading" occurs for that situation.
+
+The above example shows the default ``max_rec`` settings.
 
 .. _path-format-config:
 
