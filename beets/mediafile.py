@@ -218,13 +218,10 @@ def _sc2rg(soundcheck):
 def _rg2sc(gain, peak):
     """Encode ReplayGain gain/peak values as a Sound Check string.
     """
-    if not isinstance(gain, float):
-        gain = float(gain.lower().strip(' db'))
-
     # SoundCheck stores the peak value as the actual value of the
     # sample, rather than the percentage of full scale that RG uses, so
     # we do a simple conversion assuming 16 bit samples.
-    peak = float(peak) * 32768.0
+    peak *= 32768.0
 
     # SoundCheck stores absolute RMS values in some unknown units rather
     # than the dB values RG uses. We can calculate these absolute values
@@ -264,13 +261,23 @@ class StorageStyle(object):
        None. (Makes as_type irrelevant).
      - pack_pos: If the value is packed, in which position it is
        stored.
-     - ID3 storage only: match against this 'desc' field as well
-       as the key.
+     - suffix: When `as_type` is a string type, append this before
+       storing the value.
+     - float_places: When the value is a floating-point number and
+       encoded as a string, the number of digits to store after the
+       point.
+
+    For MP3 only:
+      - id3_desc: match against this 'desc' field as well
+        as the key.
+      - id3_frame_field: store the data in this field of the frame
+        object.
+      - id3_lang: set the language field of the frame object.
     """
     def __init__(self, key, list_elem=True, as_type=unicode,
                  packing=None, pack_pos=0, pack_type=int, 
                  id3_desc=None, id3_frame_field='text',
-                 id3_lang=None):
+                 id3_lang=None, suffix=None, float_places=2):
         self.key = key
         self.list_elem = list_elem
         self.as_type = as_type
@@ -280,6 +287,12 @@ class StorageStyle(object):
         self.id3_desc = id3_desc
         self.id3_frame_field = id3_frame_field
         self.id3_lang = id3_lang
+        self.suffix = suffix
+        self.float_places = float_places
+
+        # Convert suffix to correct string type.
+        if self.suffix and self.as_type in (str, unicode):
+            self.suffix = self.as_type(self.suffix)
 
 
 # Dealing with packings.
@@ -380,7 +393,7 @@ class MediaField(object):
     can be unicode, int, or bool. id3, mp4, and flac are StorageStyle
     instances parameterizing the field's storage for each type.
     """
-    def __init__(self, out_type = unicode, **kwargs):
+    def __init__(self, out_type=unicode, **kwargs):
         """Creates a new MediaField.
          - out_type: The field's semantic (exterior) type.
          - kwargs: A hash whose keys are 'mp3', 'mp4', 'asf', and 'etc'
@@ -531,6 +544,11 @@ class MediaField(object):
                 p = Packed(out, style.packing, out_type=style.pack_type)
                 out = p[style.pack_pos]
 
+            # Remove suffix.
+            if style.suffix and isinstance(out, (str, unicode)):
+                if out.endswith(style.suffix):
+                    out = out[:len(style.suffix)]
+
             # MPEG-4 freeform frames are (should be?) encoded as UTF-8.
             if obj.type == 'mp4' and style.key.startswith('----:') and \
                     isinstance(out, str):
@@ -554,7 +572,7 @@ class MediaField(object):
                 p[style.pack_pos] = val
                 out = p.items
 
-            else: # unicode, integer, or boolean scalar
+            else:  # Unicode, integer, boolean, or float scalar.
                 out = val
 
                 # deal with Nones according to abstract type if present
@@ -571,12 +589,16 @@ class MediaField(object):
 
                 # Convert to correct storage type (irrelevant for
                 # packed values).
-                if style.as_type == unicode:
+                if self.out_type == float and style.as_type in (str, unicode):
+                    # Special case for float-valued data.
+                    out = u'{0:.{1}f}'.format(out, style.float_places)
+                    out = style.as_type(out)
+                elif style.as_type == unicode:
                     if out is None:
                         out = u''
                     else:
                         if self.out_type == bool:
-                            # store bools as 1,0 instead of True,False
+                            # Store bools as 1/0 instead of True/False.
                             out = unicode(int(bool(out)))
                         elif isinstance(out, str):
                             out = out.decode('utf8', 'ignore')
@@ -589,6 +611,10 @@ class MediaField(object):
                         out = int(out)
                 elif style.as_type in (bool, str):
                     out = style.as_type(out)
+
+                # Add a suffix to string storage.
+                if style.as_type in (str, unicode) and style.suffix:
+                    out += style.suffix
 
             # MPEG-4 "freeform" (----) frames must be encoded as UTF-8
             # byte strings.
@@ -797,30 +823,6 @@ class ImageField(object):
                 obj.mgfile['metadata_block_picture'] = [
                     base64.b64encode(pic.write())
                 ]
-
-class FloatValueField(MediaField):
-    """A field that stores a floating-point number as a string."""
-    def __init__(self, places=2, suffix=None, **kwargs):
-        """Make a field that stores ``places`` digits after the decimal
-        point and appends ``suffix`` (if specified) when encoding as a
-        string.
-        """
-        super(FloatValueField, self).__init__(unicode, **kwargs)
-
-        fmt = ['%.', str(places), 'f']
-        if suffix:
-            fmt += [' ', suffix]
-        self.fmt = ''.join(fmt)
-
-    def __get__(self, obj, owner):
-        valstr = super(FloatValueField, self).__get__(obj, owner)
-        return _safe_cast(float, valstr)
-
-    def __set__(self, obj, val):
-        if not val:
-            val = 0.0
-        valstr = self.fmt % val
-        super(FloatValueField, self).__set__(obj, valstr)
 
 
 # The file (a collection of fields).
@@ -1176,41 +1178,53 @@ class MediaFile(object):
     )
 
     # ReplayGain fields.
-    rg_track_gain = FloatValueField(2, 'dB',
-        mp3 = [StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_TRACK_GAIN'),
+    rg_track_gain = MediaField(out_type=float,
+        mp3 = [StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_TRACK_GAIN',
+                            float_places=2, suffix=u' dB'),
                StorageStyle('COMM', id3_desc=u'iTunNORM', id3_lang='eng',
                             packing=packing.SC, pack_pos=0, pack_type=float)],
         mp4 = [StorageStyle('----:com.apple.iTunes:replaygain_track_gain',
-                            as_type=str),
+                            as_type=str, float_places=2, suffix=b' dB'),
                StorageStyle('----:com.apple.iTunes:iTunNORM', 
                             packing=packing.SC, pack_pos=0, pack_type=float)],
-        etc = StorageStyle(u'REPLAYGAIN_TRACK_GAIN'),
-        asf = StorageStyle(u'replaygain_track_gain'),
+        etc = StorageStyle(u'REPLAYGAIN_TRACK_GAIN',
+                           float_places=2, suffix=u' dB'),
+        asf = StorageStyle(u'replaygain_track_gain',
+                           float_places=2, suffix=u' dB'),
     )
-    rg_album_gain = FloatValueField(2, 'dB',
-        mp3 = StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_ALBUM_GAIN'),
+    rg_album_gain = MediaField(out_type=float,
+        mp3 = StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_ALBUM_GAIN',
+                            float_places=2, suffix=u' dB'),
         mp4 = StorageStyle('----:com.apple.iTunes:replaygain_album_gain',
-                           as_type=str),
-        etc = StorageStyle(u'REPLAYGAIN_ALBUM_GAIN'),
-        asf = StorageStyle(u'replaygain_album_gain'),
+                           as_type=str, float_places=2, suffix=b' dB'),
+        etc = StorageStyle(u'REPLAYGAIN_ALBUM_GAIN',
+                           float_places=2, suffix=u' dB'),
+        asf = StorageStyle(u'replaygain_album_gain',
+                           float_places=2, suffix=u' dB'),
     )
-    rg_track_peak = FloatValueField(6, None,
-        mp3 = [StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_TRACK_PEAK'),
+    rg_track_peak = MediaField(out_type=float,
+        mp3 = [StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_TRACK_PEAK',
+                            float_places=6),
                StorageStyle('COMM', id3_desc=u'iTunNORM', id3_lang='eng',
                             packing=packing.SC, pack_pos=1, pack_type=float)],
         mp4 = [StorageStyle('----:com.apple.iTunes:replaygain_track_peak',
-                            as_type=str),
+                            as_type=str, float_places=6),
                StorageStyle('----:com.apple.iTunes:iTunNORM',
                             packing=packing.SC, pack_pos=1, pack_type=float)],
-        etc = StorageStyle(u'REPLAYGAIN_TRACK_PEAK'),
-        asf = StorageStyle(u'replaygain_track_peak'),
+        etc = StorageStyle(u'REPLAYGAIN_TRACK_PEAK',
+                           float_places=6),
+        asf = StorageStyle(u'replaygain_track_peak',
+                           float_places=6),
     )
-    rg_album_peak = FloatValueField(6, None,
-        mp3 = StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_ALBUM_PEAK'),
+    rg_album_peak = MediaField(out_type=float,
+        mp3 = StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_ALBUM_PEAK',
+                            float_places=6),
         mp4 = StorageStyle('----:com.apple.iTunes:replaygain_album_peak',
-                           as_type=str),
-        etc = StorageStyle(u'REPLAYGAIN_ALBUM_PEAK'),
-        asf = StorageStyle(u'replaygain_album_peak'),
+                           as_type=str, float_places=6),
+        etc = StorageStyle(u'REPLAYGAIN_ALBUM_PEAK',
+                           float_places=6),
+        asf = StorageStyle(u'replaygain_album_peak',
+                           float_places=6),
     )
 
     @property
