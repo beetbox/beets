@@ -28,6 +28,7 @@ replace:
     '\s+$': ''
 path_sep_replace: _
 art_filename: cover
+max_filename_length: 200
 
 plugins: []
 pluginpath: []

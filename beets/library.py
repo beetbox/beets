@@ -1197,7 +1197,10 @@ class Library(BaseLibrary):
         subpath += extension.lower()
 
         # Truncate too-long components.
-        subpath = util.truncate_path(subpath, pathmod)
+        subpath = util.truncate_path(
+            subpath, pathmod,
+            beets.config['max_filename_length'].get(int),
+        )
 
         if fragment:
             return subpath
