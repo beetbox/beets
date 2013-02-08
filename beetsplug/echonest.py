@@ -51,7 +51,8 @@ _fingerprints = {}
 _echonestids = {}
 _echonestsummaries = {}
 _echonestfields = ['danceability', 'duration', 'energy', 'key', 'liveness',
-                   'loudness', 'mode', 'speechiness', 'tempo', 'time_signature']
+                   'loudness', 'mode', 'speechiness', 'tempo', 'time_signature',
+                   'song_type']
 
 def echonest_match(path):
     """Gets metadata for a file from Echonest and populates the
@@ -94,6 +95,7 @@ def echonest_match(path):
     if get_summary:
         del result.audio_summary['analysis_url']
         del result.audio_summary['audio_md5']
+        result.audio_summary.update(result.song_type)
         _echonestsummaries[path] = result.audio_summary
 
     # Get recording and releases from the result.

@@ -114,6 +114,7 @@ ITEM_FIELDS = [
     ('speechiness',    'real', True, False),
     ('tempo',          'real', True, False),
     ('time_signature', 'int',  True, False),
+    ('song_type',      'text', True, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
