@@ -347,19 +347,19 @@ class DestinationTest(unittest.TestCase):
 
     def test_component_sanitize_replaces_separators(self):
         name = posixpath.join('a', 'b')
-        newname = util.sanitize_for_path(name, posixpath)
+        newname = beets.library.format_for_path(name, None, posixpath)
         self.assertNotEqual(name, newname)
 
     def test_component_sanitize_pads_with_zero(self):
-        name = util.sanitize_for_path(1, posixpath, 'track')
+        name = beets.library.format_for_path(1, 'track', posixpath)
         self.assertTrue(name.startswith('0'))
 
     def test_component_sanitize_uses_kbps_bitrate(self):
-        val = util.sanitize_for_path(12345, posixpath, 'bitrate')
+        val = beets.library.format_for_path(12345, 'bitrate', posixpath)
         self.assertEqual(val, u'12kbps')
 
     def test_component_sanitize_uses_khz_samplerate(self):
-        val = util.sanitize_for_path(12345, posixpath, 'samplerate')
+        val = beets.library.format_for_path(12345, 'samplerate', posixpath)
         self.assertEqual(val, u'12kHz')
 
     def test_artist_falls_back_to_albumartist(self):

@@ -18,6 +18,9 @@ New configuration options:
 * :doc:`/plugins/lastgenre`: A new configuration option lets you choose to
   retrieve artist-level tags as genres instead of album- or track-level tags.
   Thanks to Peter Fern and Peter Schnebel.
+* You can now customize the character substituted for path separators (e.g., /)
+  in filenames via ``path_sep_replace``. The default is an underscore. Use this
+  setting with caution.
 
 Other new stuff:
 

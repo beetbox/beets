@@ -26,6 +26,7 @@ replace:
     '[<>:"\?\*\|]': _
     '\.$': _
     '\s+$': ''
+path_sep_replace: _
 art_filename: cover
 
 plugins: []

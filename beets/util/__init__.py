@@ -494,35 +494,6 @@ def truncate_path(path, pathmod=None, length=MAX_FILENAME_LENGTH):
 
     return pathmod.join(*out)
 
-def sanitize_for_path(value, pathmod=None, key=None):
-    """Sanitize the value for inclusion in a path: replace separators
-    with _, etc. Doesn't guarantee that the whole path will be valid;
-    you should still call sanitize_path on the complete path.
-    """
-    pathmod = pathmod or os.path
-
-    if isinstance(value, basestring):
-        for sep in (pathmod.sep, pathmod.altsep):
-            if sep:
-                value = value.replace(sep, u'_')
-    elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
-        # Pad indices with zeros.
-        value = u'%02i' % (value or 0)
-    elif key == 'year':
-        value = u'%04i' % (value or 0)
-    elif key in ('month', 'day'):
-        value = u'%02i' % (value or 0)
-    elif key == 'bitrate':
-        # Bitrate gets formatted as kbps.
-        value = u'%ikbps' % ((value or 0) // 1000)
-    elif key == 'samplerate':
-        # Sample rate formatted as kHz.
-        value = u'%ikHz' % ((value or 0) // 1000)
-    else:
-        value = unicode(value)
-
-    return value
-
 def str2bool(value):
     """Returns a boolean reflecting a human-entered string."""
     if value.lower() in ('yes', '1', 'true', 't', 'y'):

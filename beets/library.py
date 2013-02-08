@@ -32,6 +32,7 @@ from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile,\
     displayable_path
 from beets.util.functemplate import Template
+import beets
 
 MAX_FILENAME_LENGTH = 200
 
@@ -182,6 +183,39 @@ def _regexp(expr, val):
         # Invalid regular expression.
         return False
     return res is not None
+
+# Path element formatting for templating.
+def format_for_path(value, key=None, pathmod=None):
+    """Sanitize the value for inclusion in a path: replace separators
+    with _, etc. Doesn't guarantee that the whole path will be valid;
+    you should still call `util.sanitize_path` on the complete path.
+    """
+    pathmod = pathmod or os.path
+
+    if isinstance(value, basestring):
+        for sep in (pathmod.sep, pathmod.altsep):
+            if sep:
+                value = value.replace(
+                    sep,
+                    beets.config['path_sep_replace'].get(unicode),
+                )
+    elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
+        # Pad indices with zeros.
+        value = u'%02i' % (value or 0)
+    elif key == 'year':
+        value = u'%04i' % (value or 0)
+    elif key in ('month', 'day'):
+        value = u'%02i' % (value or 0)
+    elif key == 'bitrate':
+        # Bitrate gets formatted as kbps.
+        value = u'%ikbps' % ((value or 0) // 1000)
+    elif key == 'samplerate':
+        # Sample rate formatted as kHz.
+        value = u'%ikHz' % ((value or 0) // 1000)
+    else:
+        value = unicode(value)
+
+    return value
 
 
 # Exceptions.
@@ -361,7 +395,7 @@ class Item(object):
                 # From Item.
                 value = getattr(self, key)
             if sanitize:
-                value = util.sanitize_for_path(value, pathmod, key)
+                value = format_for_path(value, key, pathmod)
             mapping[key] = value
 
         # Additional fields in non-sanitized case.
@@ -378,7 +412,7 @@ class Item(object):
         # Get values from plugins.
         for key, value in plugins.template_values(self).iteritems():
             if sanitize:
-                value = util.sanitize_for_path(value, pathmod, key)
+                value = format_for_path(value, key, pathmod)
             mapping[key] = value
 
         # Get template functions.
@@ -1568,7 +1602,7 @@ class Album(BaseAlbum):
         if not isinstance(self._library.art_filename,Template):
             self._library.art_filename = Template(self._library.art_filename)
 
-        subpath = util.sanitize_path(util.sanitize_for_path(
+        subpath = util.sanitize_path(format_for_path(
             self.evaluate_template(self._library.art_filename)
         ))
         subpath = bytestring_path(subpath)
@@ -1764,8 +1798,8 @@ class DefaultTemplateFunctions(object):
             return res
 
         # Flatten disambiguation value into a string.
-        disam_value = util.sanitize_for_path(getattr(album, disambiguator),
-                                             self.pathmod, disambiguator)
+        disam_value = format_for_path(getattr(album, disambiguator),
+                                      disambiguator, self.pathmod)
         res = u' [{0}]'.format(disam_value)
         self.lib._memotable[memokey] = res
         return res
