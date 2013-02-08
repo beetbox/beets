@@ -101,6 +101,19 @@ ITEM_FIELDS = [
     ('bitdepth',    'int',  False, True),
     ('channels',    'int',  False, True),
     ('mtime',       'int',  False, False),
+
+    ('echonest_fingerprint',    'text', True, False),
+    ('echonest_id',             'text', True, False),
+    ('echonest_danceability',   'real', True, False),
+    ('echonest_duration',       'real', True, False),
+    ('echonest_energy',         'real', True, False),
+    ('echonest_key',            'int',  True, False),
+    ('echonest_liveness',       'real', True, False),
+    ('echonest_loudness',       'real', True, False),
+    ('echonest_mode',           'int',  True, False),
+    ('echonest_speechiness',    'real', True, False),
+    ('echonest_tempo',          'real', True, False),
+    ('echonest_time_signature', 'int',  True, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]

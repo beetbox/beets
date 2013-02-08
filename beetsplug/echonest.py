@@ -49,6 +49,7 @@ _matches = {}
 # is not relevant for autotagging.
 _fingerprints = {}
 _echonestids = {}
+_echonestsummaries = {}
 
 def echonest_match(path):
     """Gets metadata for a file from Echonest and populates the
@@ -82,6 +83,16 @@ def echonest_match(path):
 
     result = max(songs, key=lambda s: s.score)  # Best match.
     _echonestids[path] = result.id
+
+    try:
+        get_summary = beets.config['echonest']['summary'].get(bool)
+    except confit.NotFoundError:
+        get_summary = False
+
+    if get_summary:
+        del result.audio_summary['analysis_url']
+        del result.audio_summary['audio_md5']
+        _echonestsummaries[path] = result.audio_summary
 
     # Get recording and releases from the result.
     recordings = result.get_tracks('musicbrainz')
@@ -184,3 +195,14 @@ def apply_echonest_metadata(task, session):
             item.echonest_fingerprint = _fingerprints[item.path]
         if item.path in _echonestids:
             item.echonest_id = _echonestids[item.path]
+        if item.path in _echonestsummaries:
+            item.echonest_danceability   = _echonestsummaries[item.path]['danceability']
+            item.echonest_duration       = _echonestsummaries[item.path]['duration']
+            item.echonest_energy         = _echonestsummaries[item.path]['energy']
+            item.echonest_key            = _echonestsummaries[item.path]['key']
+            item.echonest_liveness       = _echonestsummaries[item.path]['liveness']
+            item.echonest_loudness       = _echonestsummaries[item.path]['loudness']
+            item.echonest_mode           = _echonestsummaries[item.path]['mode']
+            item.echonest_speechiness    = _echonestsummaries[item.path]['speechiness']
+            item.echonest_tempo          = _echonestsummaries[item.path]['tempo']
+            item.echonest_time_signature = _echonestsummaries[item.path]['time_signature']
