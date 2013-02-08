@@ -178,12 +178,11 @@ def apply_metadata(album_info, mapping):
         item.albumartist_credit = album_info.artist_credit
 
         # Release date.
-        if album_info.year:
-            item.year = album_info.year
-        if album_info.month:
-            item.month = album_info.month
-        if album_info.day:
-            item.day = album_info.day
+        for key in ('year', 'month', 'day',
+                    'original_year', 'original_month', 'original_day'):
+            value = getattr(album_info, key)
+            if value:
+                setattr(item, key, value)
 
         # Title.
         item.title = track_info.title

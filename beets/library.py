@@ -94,6 +94,9 @@ ITEM_FIELDS = [
     ('rg_track_peak',        'real', True, True),
     ('rg_album_gain',        'real', True, True),
     ('rg_album_peak',        'real', True, True),
+    ('original_year',        'int',  True, True),
+    ('original_month',       'int',  True, True),
+    ('original_day',         'int',  True, True),
 
     ('length',      'real', False, True),
     ('bitrate',     'int',  False, True),
@@ -140,6 +143,9 @@ ALBUM_FIELDS = [
     ('albumdisambig',      'text', True),
     ('rg_album_gain',      'real', True),
     ('rg_album_peak',      'real', True),
+    ('original_year',      'int',  True),
+    ('original_month',     'int',  True),
+    ('original_day',       'int',  True),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]

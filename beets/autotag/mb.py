@@ -135,9 +135,10 @@ def track_info(recording, index=None, medium=None, medium_index=None):
     info.decode()
     return info
 
-def _set_date_str(info, date_str):
+def _set_date_str(info, date_str, original=False):
     """Given a (possibly partial) YYYY-MM-DD string and an AlbumInfo
-    object, set the object's release date fields appropriately.
+    object, set the object's release date fields appropriately. If
+    `original`, then set the original_year, etc., fields.
     """
     if date_str:
         date_parts = date_str.split('-')
@@ -148,6 +149,9 @@ def _set_date_str(info, date_str):
                     date_num = int(date_part)
                 except ValueError:
                     continue
+
+                if original:
+                    key = 'original_' + key
                 setattr(info, key, date_num)
 
 def album_info(release):
@@ -205,13 +209,14 @@ def album_info(release):
         if reltype:
             info.albumtype = reltype.lower()
 
-    # Release date.
-    if 'first-release-date' in release['release-group']:
-        # Try earliest release date for the entire group first.
-        _set_date_str(info, release['release-group']['first-release-date'])
-    elif 'date' in release:
-        # Fall back to release-specific date.
-        _set_date_str(info, release['date'])
+    # Release dates.
+    release_date = release.get('date')
+    release_group_date = release['release-group'].get('first-release-date')
+    if not release_date:
+        # Fall back if release-specific date is not available.
+        release_date = release_group_date
+    _set_date_str(info, release_date, False)
+    _set_date_str(info, release_group_date, True)
 
     # Label name.
     if release.get('label-info-list'):

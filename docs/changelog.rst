@@ -30,13 +30,16 @@ Other new stuff:
 * Support for Windows Media/ASF audio files. Thanks to Dave Hayes.
 * New :doc:`/plugins/smartplaylist`: generate and maintain m3u playlist files
   based on beets queries. Thanks to Dang Mai Hai.
-* Two new plugin events were added: *database_change* and *cli_exit*. Thanks
-  again to Dang Mai Hai.
 * ReplayGain tags on MPEG-4/AAC files are now supported. And, even more
   astonishingly, ReplayGain values in MP3 and AAC files are now compatible with
   `iTunes Sound Check`_. Thanks to Dave Hayes.
 * Track titles in the importer UI's difference display are now either aligned
   vertically or broken across two lines for readability. Thanks to Tai Lee.
+* Albums and items have new fields reflecting the *original* release date
+  (``original_year``, ``original_month``, and ``original_day``). Previously,
+  when tagging from MusicBrainz, *only* the original date was stored; now, the
+  old fields refer to the *specific* release date (e.g., when the album was
+  reissued).
 * Some changes to the way candidates are recommended for selection, thanks to
   Tai Lee:
 
@@ -67,6 +70,8 @@ Other new stuff:
   highlighted.
 * The importer UI no longer shows a change when the track length difference is
   less than 10 seconds. (This threshold was previously 2 seconds.)
+* Two new plugin events were added: *database_change* and *cli_exit*. Thanks
+  again to Dang Mai Hai.
 * Plugins are now loaded in the order they appear in the config file. Thanks to
   Dang Mai Hai.
 * :doc:`/plugins/bpd`: Browse by album artist and album artist sort name.
