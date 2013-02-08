@@ -62,7 +62,7 @@ def echonest_match(path):
         raise ui.UserError('no Echonest user API key provided')
 
     try:
-        pyechonest.config.CODEGEN_BINARY_OVERRIDE = codegen = beets.config['echonest']['codegen'].get(unicode)
+        pyechonest.config.CODEGEN_BINARY_OVERRIDE = beets.config['echonest']['codegen'].get(unicode)
     except:
         pass
 
