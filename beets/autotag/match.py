@@ -25,6 +25,7 @@ from unidecode import unidecode
 from beets import plugins
 from beets import config
 from beets.util import levenshtein, plurality
+from beets.util.enumeration import enum
 from beets.autotag import hooks
 
 # Distance parameters.
@@ -71,11 +72,8 @@ SD_REPLACE = [
     (r'&', 'and'),
 ]
 
-# Recommendation constants.
-RECOMMEND_STRONG = 'RECOMMEND_STRONG'
-RECOMMEND_MEDIUM = 'RECOMMEND_MEDIUM'
-RECOMMEND_LOW = 'RECOMMEND_LOW'
-RECOMMEND_NONE = 'RECOMMEND_NONE'
+# Recommendation enumeration.
+recommendation = enum('none', 'low', 'medium', 'strong', name='recommendation')
 
 # Artist signals that indicate "various artists". These are used at the
 # album level to determine whether a given release is likely a VA
@@ -322,37 +320,36 @@ def match_by_id(items):
         log.debug('No album ID consensus.')
         return None
 
-def recommendation(results):
+def _recommendation(results):
     """Given a sorted list of AlbumMatch or TrackMatch objects, return a
-    recommendation flag (RECOMMEND_STRONG, RECOMMEND_MEDIUM,
-    RECOMMEND_NONE) based on the results' distances.
+    recommendation based on the results' distances.
     """
     if not results:
         # No candidates: no recommendation.
-        rec = RECOMMEND_NONE
+        rec = recommendation.none
     else:
         min_dist = results[0].distance
         if min_dist < config['match']['strong_rec_thresh'].as_number():
             # Partial matches get downgraded to "medium".
             if isinstance(results[0], hooks.AlbumMatch) and \
                     (results[0].extra_items or results[0].extra_tracks):
-                rec = RECOMMEND_MEDIUM
+                rec = recommendation.medium
             else:
                 # Strong recommendation level.
-                rec = RECOMMEND_STRONG
+                rec = recommendation.strong
         elif min_dist <= config['match']['medium_rec_thresh'].as_number():
             # Medium recommendation level.
-            rec = RECOMMEND_MEDIUM
+            rec = recommendation.medium
         elif len(results) == 1:
             # Only a single candidate.
-            rec = RECOMMEND_LOW
+            rec = recommendation.low
         elif results[1].distance - min_dist >= \
                     config['match']['rec_gap_thresh'].as_number():
             # Gap between first two candidates is large.
-            rec = RECOMMEND_LOW
+            rec = recommendation.low
         else:
             # No conclusion.
-            rec = RECOMMEND_NONE
+            rec = recommendation.none
     return rec
 
 def _add_candidate(items, results, info):
@@ -386,10 +383,7 @@ def tag_album(items, search_artist=None, search_album=None,
         - The current album.
         - A list of AlbumMatch objects. The candidates are sorted by
         distance (i.e., best match first).
-        - A recommendation, one of RECOMMEND_STRONG, RECOMMEND_MEDIUM,
-          or RECOMMEND_NONE; indicating that the first candidate is
-          very likely, it is somewhat likely, or no conclusion could
-          be reached.
+        - A recommendation.
     If search_artist and search_album or search_id are provided, then
     they are used as search terms in place of the current metadata.
     May raise an AutotagError if existing metadata is insufficient.
@@ -410,13 +404,13 @@ def tag_album(items, search_artist=None, search_album=None,
         id_info = match_by_id(items)
     if id_info:
         _add_candidate(items, candidates, id_info)
-        rec = recommendation(candidates.values())
+        rec = _recommendation(candidates.values())
         log.debug('Album ID match recommendation is ' + str(rec))
         if candidates and not config['import']['timid']:
             # If we have a very good MBID match, return immediately.
             # Otherwise, this match will compete against metadata-based
             # matches.
-            if rec == RECOMMEND_STRONG:
+            if rec == recommendation.strong:
                 log.debug('ID match.')
                 return cur_artist, cur_album, candidates.values(), rec
 
@@ -425,7 +419,7 @@ def tag_album(items, search_artist=None, search_album=None,
         if candidates:
             return cur_artist, cur_album, candidates.values(), rec
         else:
-            return cur_artist, cur_album, [], RECOMMEND_NONE
+            return cur_artist, cur_album, [], recommendation.none
 
     # Search terms.
     if not (search_artist and search_album):
@@ -448,7 +442,7 @@ def tag_album(items, search_artist=None, search_album=None,
 
     # Sort and get the recommendation.
     candidates = sorted(candidates.itervalues())
-    rec = recommendation(candidates)
+    rec = _recommendation(candidates)
     return cur_artist, cur_album, candidates, rec
 
 def tag_item(item, search_artist=None, search_title=None,
@@ -473,8 +467,8 @@ def tag_item(item, search_artist=None, search_title=None,
             candidates[track_info.track_id] = \
                     hooks.TrackMatch(dist, track_info)
             # If this is a good match, then don't keep searching.
-            rec = recommendation(candidates.values())
-            if rec == RECOMMEND_STRONG and not config['import']['timid']:
+            rec = _recommendation(candidates.values())
+            if rec == recommendation.strong and not config['import']['timid']:
                 log.debug('Track ID match.')
                 return candidates.values(), rec
 
@@ -483,7 +477,7 @@ def tag_item(item, search_artist=None, search_title=None,
         if candidates:
             return candidates.values(), rec
         else:
-            return [], RECOMMEND_NONE
+            return [], recommendation.none
 
     # Search terms.
     if not (search_artist and search_title):
@@ -498,5 +492,5 @@ def tag_item(item, search_artist=None, search_title=None,
     # Sort by distance and return with recommendation.
     log.debug('Found %i candidates.' % len(candidates))
     candidates = sorted(candidates.itervalues())
-    rec = recommendation(candidates)
+    rec = _recommendation(candidates)
     return candidates, rec

@@ -455,7 +455,7 @@ class AutotagTest(_common.TestCase):
             'path',
             [_common.item()],
         )
-        task.set_candidates('artist', 'album', [], autotag.RECOMMEND_NONE)
+        task.set_candidates('artist', 'album', [], autotag.recommendation.none)
         session = _common.import_session(cli=True)
         res = session.choose_match(task)
         self.assertEqual(res, result)
