@@ -346,6 +346,24 @@ and the next-best match is above the *gap* threshold, the importer will suggest
 that match but not automatically confirm it. Otherwise, you'll see a list of
 options to choose from.
 
+.. _max_rec:
+
+max_rec
+~~~~~~~
+
+You can define a maximum recommendation for albums with missing/extra tracks or
+differing track lengths/numbers::
+
+    match:
+        max_rec:
+            partial: low
+            tracklength: medium
+            tracknumber: medium
+
+If a recommendation is higher than the configured maximum and the condition is
+met, the recommendation will be downgraded. The maximum for each condition can
+be one of ``none``, ``low``, ``medium`` or ``strong``.
+
 .. _path-format-config:
 
 Path Format Configuration
