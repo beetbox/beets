@@ -185,7 +185,7 @@ def _pack_asf_image(mime, data, type=3, description=""):
 
 # iTunes Sound Check encoding.
 
-def _sc2rg(soundcheck):
+def _sc_decode(soundcheck):
     """Convert a Sound Check string value to a (gain, peak) tuple as
     used by ReplayGain.
     """
@@ -215,7 +215,7 @@ def _sc2rg(soundcheck):
 
     return round(gain, 2), round(peak, 6)
 
-def _rg2sc(gain, peak):
+def _sc_encode(gain, peak):
     """Encode ReplayGain gain/peak values as a Sound Check string.
     """
     # SoundCheck stores the peak value as the actual value of the
@@ -334,7 +334,7 @@ class Packed(object):
         elif self.packstyle == packing.TUPLE:
             seq = items # tuple: items is already indexable
         elif self.packstyle == packing.SC:
-            seq = _sc2rg(items)
+            seq = _sc_decode(items)
 
         try:
             out = seq[index]
@@ -382,7 +382,7 @@ class Packed(object):
         elif self.packstyle == packing.TUPLE:
             self.items = new_items
         elif self.packstyle == packing.SC:
-            self.items = _rg2sc(*new_items)
+            self.items = _sc_encode(*new_items)
 
 
 # The field itself.
