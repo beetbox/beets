@@ -16,7 +16,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Adds Echoprint/ENMFP Echonest acoustic fingerprinting support to
-the autotagger. Requires the pyechonest library.
+the autotagger. Requires the pyechonest library and an echonest
 codegen binary.
 """
 import logging
@@ -43,7 +43,8 @@ _matches = {}
 
 # Stores the fingerprint and echonest IDs and audio summaries for each
 # track. This is stored as metadata for each track for later use but
-# is not relevant for autotagging.
+# is not relevant for autotagging. Currrently this data is stored in
+# the database itself, not as MediaFile fields.
 _fingerprints = {}
 _echonestids = {}
 _echonestsummaries = {}
@@ -53,8 +54,8 @@ _echonestfields = ['danceability', 'duration', 'energy', 'key', 'liveness',
 
 def echonest_match(path):
     """Gets metadata for a file from Echonest and populates the
-    _matches, _fingerprints, and _echonestids dictionaries
-    accordingly.
+    _matches, _fingerprints, _echonestids, and _echonestsummaries
+    dictionaries accordingly.
     """
     try:
         pyechonest.config.ECHO_NEST_API_KEY = beets.config['echonest']['apikey'].get(unicode)
@@ -71,17 +72,26 @@ def echonest_match(path):
         songs = pyechonest.song.identify(query_obj=query[0],
                                          buckets=['id:musicbrainz', 'tracks'])
     except Exception as exc:
-        log.error('echonest: fingerprinting of {0} failed: {1}'.format(repr(path), str(exc)))
+        log.error('echonest: fingerprinting of {0} failed: {1}'
+                  .format(util.syspath(path),
+                          str(exc)))
         return None
 
     _fingerprints[path] = query[0]['code']
+    # The echonest codegen binaries always return a list, even for a
+    # single file. Since we're only dealing with single files here, it
+    # is safe to just grab the one element of said list
 
-    log.debug('echonest: fingerprinted {0}'.format(repr(path)).encode('utf-8'))
-    log.debug('echonest: {0} song matches found'.format(len(songs)))
+    log.debug('echonest: fingerprinted {0}'
+              .format(util.syspath(path)))
+
+    # no matches reported by the song/identify api call
     if not songs:
         return None
 
-    result = max(songs, key=lambda s: s.score)  # Best match.
+    # song/identify may return multiple songs, each with multiple
+    # tracks. this grabs the best song match according to the score
+    result = max(songs, key=lambda s: s.score)
     _echonestids[path] = result.id
 
     try:
@@ -97,14 +107,14 @@ def echonest_match(path):
 
     # Get recording and releases from the result.
     recordings = result.get_tracks('musicbrainz')
-
-    log.debug('echonest: {0} track matches found'.format(len(recordings)))
+    # filter out those for which echonest holds no mbid
     if not recordings:
         return None
 
     recording_ids = []
     release_ids = []
 
+    # filter out those for which echonest holds no mbid
     for recording in recordings:
         if 'foreign_id' in recording:
             mbid = recording['foreign_id'].split(':')[-1]
@@ -113,7 +123,17 @@ def echonest_match(path):
             mbid = recording['foreign_release_id'].split(':')[-1]
             release_ids.append(mbid)
 
-    log.debug('echonest: matched recordings {0}'.format(recording_ids))
+    def _format(ids):
+        return ",".join(map(lambda x: '{0}..{1}'.format(x[:4], x[-4:]),
+                            ids))
+
+    if recording_ids:
+        log.debug('echonest: matched {0} recordings: {1}'.format(len(recording_ids),
+                                                                 _format(recording_ids)))
+    if release_ids:
+        log.debug('echonest: matched {0} releases: {1}'.format(len(release_ids),
+                                                               _format(release_ids)))
+
     _matches[path] = recording_ids, release_ids
 
 # Plugin structure and autotagging logic.
@@ -200,8 +220,9 @@ def apply_echonest_metadata(task, session):
             for f in _echonestfields:
                 setattr(item, f, _echonestsummaries[item.path][f])
 
-# Additional path fields
 
+# Additional path fields. Since there's a bunch of them defined in
+# _echonestfields, we define these dynamically
 def _make_templ_function(field):
     return """\
 @EchonestPlugin.template_field('{f}')
