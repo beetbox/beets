@@ -49,8 +49,7 @@ _fingerprints = {}
 _echonestids = {}
 _echonestsummaries = {}
 _echonestfields = ['danceability', 'duration', 'energy', 'key', 'liveness',
-                   'loudness', 'mode', 'speechiness', 'tempo', 'time_signature',
-                   'song_type']
+                   'loudness', 'mode', 'speechiness', 'tempo', 'time_signature']
 
 def echonest_match(path):
     """Gets metadata for a file from Echonest and populates the
@@ -218,7 +217,8 @@ def apply_echonest_metadata(task, session):
             item.echonest_id = _echonestids[item.path]
         if item.path in _echonestsummaries:
             for f in _echonestfields:
-                setattr(item, f, _echonestsummaries[item.path][f])
+                setattr(item, 'echonest_' + f, _echonestsummaries[item.path][f])
+
 
 
 # Additional path fields. Since there's a bunch of them defined in
@@ -231,13 +231,7 @@ def _tmpl_{f}(item):
     if isinstance(v, float):
         v = u'%.2f' % getattr(item, '{f}')
     return v
-""".format(f=field)
+""".format(f='echonest_' + field)
 
-try:
-    get_summary = beets.config['echonest']['summary'].get(bool)
-except confit.NotFoundError:
-    get_summary = False
-
-if get_summary:
-    for f in _echonestfields:
-        exec _make_templ_function(f)
+for f in _echonestfields:
+    exec _make_templ_function(f)
