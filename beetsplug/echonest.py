@@ -94,20 +94,12 @@ def _echonest_match(path):
     result = max(songs, key=lambda s: s.score)
     _echonestids[path] = result.id
 
-    try:
-        get_summary = beets.config['echonest']['summary'].get(bool)
-    except confit.NotFoundError:
-        get_summary = False
-
-    if get_summary:
-        del result.audio_summary['analysis_url']
-        del result.audio_summary['audio_md5']
-        result.audio_summary.update(result.song_type)
-        _echonestsummaries[path] = result.audio_summary
+    del result.audio_summary['analysis_url']
+    del result.audio_summary['audio_md5']
+    _echonestsummaries[path] = result.audio_summary
 
     # Get recording and releases from the result.
     recordings = result.get_tracks('musicbrainz')
-    # filter out those for which echonest holds no mbid
     if not recordings:
         return None
 
