@@ -57,13 +57,13 @@ def echonest_match(path):
     dictionaries accordingly.
     """
     try:
-        pyechonest.config.ECHO_NEST_API_KEY = beets.config['echonest']['apikey'].get(unicode)
+        pyechonest.config.ECHO_NEST_API_KEY = config['echonest']['apikey'].get(unicode)
     except confit.NotFoundError:
-        raise ui.UserError('no Echonest user API key provided')
+        raise ui.UserError('echonest: no Echonest user API key provided')
 
     try:
-        pyechonest.config.CODEGEN_BINARY_OVERRIDE = beets.config['echonest']['codegen'].get(unicode)
-    except:
+        pyechonest.config.CODEGEN_BINARY_OVERRIDE = config['echonest']['codegen'].get(unicode)
+    except confit.NotFoundError:
         pass
 
     try:
