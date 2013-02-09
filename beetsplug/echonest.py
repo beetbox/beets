@@ -145,12 +145,10 @@ def _all_releases(items):
         for release_id in release_ids:
             relcounts[release_id] += 1
 
-    for release_id, count in relcounts.iteritems():
-        coeff = float(count) / len(items)
-        log.debug('echonest: examining release id {0} with frequency {1} (coefficient: {2})'.format(release_id, count, coeff))
-        if coeff > COMMON_REL_THRESH:
-            log.debug('echonest: chosen release id {0}'.format(release_id))
-            yield release_id
+    for release_id, count in sorted(relcounts.iteritems(), key=lambda x: x[1]):
+        log.debug('echonest: examining release id {0} ({1}/{2})'
+                  .format(release_id, count, len(items)))
+        yield release_id
 
 
 class EchonestPlugin(plugins.BeetsPlugin):
