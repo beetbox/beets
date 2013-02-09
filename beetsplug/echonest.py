@@ -216,6 +216,8 @@ def apply_echonest_metadata(task, session):
 # Additional path fields. Since there's a bunch of them defined in
 # _echonestfields, we define these dynamically
 def _make_templ_function(field):
+    """Build a function definition ready for evaluation string as
+    @template_field expects it"""
     return """\
 @EchonestPlugin.template_field('{f}')
 def _tmpl_{f}(item):
