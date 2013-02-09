@@ -17,19 +17,18 @@
 
 """Adds Echoprint/ENMFP Echonest acoustic fingerprinting support to
 the autotagger. Requires the pyechonest library.
+codegen binary.
 """
-import beets
-from beets import plugins
-from beets import ui
-from beets import util
-from beets import config
+import logging
+import collections
+
+from beets import ui, util, config, plugins
 from beets.util import confit
 from beets.autotag import hooks
+
 import pyechonest.song
 import pyechonest.config
 import pyechonest.util
-import logging
-from collections import defaultdict
 
 API_KEY = 'O8IIFBUUBEO55GEHU'
 TRACK_ID_WEIGHT = 10.0
