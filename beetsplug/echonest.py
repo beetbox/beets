@@ -67,7 +67,7 @@ def echonest_match(path):
         pass
 
     try:
-        query = pyechonest.util.codegen(util.syspath(path).decode('utf-8'))
+        query = pyechonest.util.codegen(path.decode('utf-8'))
         songs = pyechonest.song.identify(query_obj=query[0],
                                          buckets=['id:musicbrainz', 'tracks'])
     except Exception as exc:
