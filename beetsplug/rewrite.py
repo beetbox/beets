@@ -44,7 +44,6 @@ def rewriter(field, rules):
 class RewritePlugin(BeetsPlugin):
     def __init__(self):
         super(RewritePlugin, self).__init__()
-        BeetsPlugin.template_fields = {}
 
         self.config.add({})
 
@@ -68,5 +67,4 @@ class RewritePlugin(BeetsPlugin):
 
         # Replace each template field with the new rewriter function.
         for fieldname, fieldrules in rules.iteritems():
-            RewritePlugin.template_fields[fieldname] = \
-                    rewriter(fieldname, fieldrules)
+            self.template_fields[fieldname] = rewriter(fieldname, fieldrules)

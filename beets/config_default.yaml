@@ -17,6 +17,7 @@ import:
     singletons: no
     default_action: apply
 
+clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~"]
 replace:
     '[\\/]': _
@@ -25,7 +26,9 @@ replace:
     '[<>:"\?\*\|]': _
     '\.$': _
     '\s+$': ''
+path_sep_replace: _
 art_filename: cover
+max_filename_length: 0
 
 plugins: []
 pluginpath: []
@@ -35,6 +38,11 @@ timeout: 5.0
 per_disc_numbering: no
 verbose: no
 terminal_encoding: utf8
+original_date: no
+
+ui:
+    terminal_width: 80
+    length_diff_thresh: 10.0
 
 list_format_item: $artist - $album - $title
 list_format_album: $albumartist - $album
@@ -55,3 +63,7 @@ match:
     strong_rec_thresh: 0.04
     medium_rec_thresh: 0.25
     rec_gap_thresh: 0.25
+    max_rec:
+        partial: medium
+        tracklength: strong
+        tracknumber: strong

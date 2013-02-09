@@ -22,11 +22,13 @@ import os
 import time
 import itertools
 import re
+import codecs
 
 import beets
 from beets import ui
 from beets.ui import print_, input_, decargs
 from beets import autotag
+from beets.autotag import recommendation
 from beets import plugins
 from beets import importer
 from beets.util import syspath, normpath, ancestry, displayable_path
@@ -181,47 +183,60 @@ def show_change(cur_artist, cur_album, match):
     # Tracks.
     pairs = match.mapping.items()
     pairs.sort(key=lambda (_, track_info): track_info.index)
+
+    # Build up LHS and RHS for track difference display. The `lines`
+    # list contains ``(current title, new title, width)`` tuples where
+    # `width` is the length (in characters) of the uncolorized LHS.
+    lines = []
     for item, track_info in pairs:
-        # Get displayable LHS and RHS values.
-        cur_track = unicode(item.track)
-        new_track = format_index(track_info)
-        tracks_differ = item.track not in (track_info.index,
-                                           track_info.medium_index)
-        cur_title = item.title
+        # Titles.
         new_title = track_info.title
-        if item.length and track_info.length:
-            cur_length = ui.colorize('red',
-                                     ui.human_seconds_short(item.length))
-            new_length = ui.colorize('red',
-                                     ui.human_seconds_short(track_info.length))
-
-        # Colorize changes.
-        cur_title, new_title = ui.colordiff(cur_title, new_title)
-        cur_track = ui.colorize('red', cur_track)
-        new_track = ui.colorize('red', new_track)
-
-        # Show filename (non-colorized) when title is not set.
         if not item.title.strip():
+            # If there's no title, we use the filename.
             cur_title = displayable_path(os.path.basename(item.path))
-
-        if cur_title != new_title:
             lhs, rhs = cur_title, new_title
-            if tracks_differ:
-                lhs += u' (%s)' % cur_track
-                rhs += u' (%s)' % new_track
-            print_(u" * %s ->\n   %s" % (lhs, rhs))
         else:
-            line = u' * %s' % item.title
-            display = False
-            if tracks_differ:
-                display = True
-                line += u' (%s -> %s)' % (cur_track, new_track)
-            if item.length and track_info.length and \
-                    abs(item.length - track_info.length) > 2.0:
-                display = True
-                line += u' (%s vs. %s)' % (cur_length, new_length)
-            if display:
-                print_(line)
+            cur_title = item.title.strip()
+            lhs, rhs = ui.colordiff(cur_title, new_title)
+        lhs_width = len(cur_title)
+
+        # Track number change.
+        if item.track not in (track_info.index, track_info.medium_index):
+            cur_track, new_track = unicode(item.track), format_index(track_info)
+            lhs_track, rhs_track = ui.color_diff_suffix(cur_track, new_track)
+            templ = ui.colorize('red', u' (#') + u'{0}' + \
+                    ui.colorize('red', u')')
+            lhs += templ.format(lhs_track)
+            rhs += templ.format(rhs_track)
+            lhs_width += len(cur_track) + 4
+
+        # Length change.
+        if item.length and track_info.length and \
+                abs(item.length - track_info.length) > \
+                config['ui']['length_diff_thresh'].as_number():
+            cur_length = ui.human_seconds_short(item.length)
+            new_length = ui.human_seconds_short(track_info.length)
+            lhs_length, rhs_length = ui.color_diff_suffix(cur_length,
+                                                          new_length)
+            templ = ui.colorize('red', u' (') + u'{0}' + \
+                    ui.colorize('red', u')')
+            lhs += templ.format(lhs_length)
+            rhs += templ.format(rhs_length)
+            lhs_width += len(cur_length) + 3
+
+        if lhs != rhs:
+            lines.append((lhs, rhs, lhs_width))
+
+    # Print each track in two columns, or across two lines.
+    col_width = (ui.term_width() - len(''.join([' * ', ' -> ']))) // 2
+    if lines:
+        max_width = max(w for _, _, w in lines)
+        for lhs, rhs, lhs_width in lines:
+            if max_width > col_width:
+                print_(u' * %s ->\n   %s' % (lhs, rhs))
+            else:
+                pad = max_width - lhs_width
+                print_(u' * %s%s -> %s' % (lhs, ' ' * pad, rhs))
 
     # Missing and unmatched tracks.
     for track_info in match.extra_tracks:
@@ -263,7 +278,7 @@ def _summary_judment(rec):
     made.
     """
     if config['import']['quiet']:
-        if rec == autotag.RECOMMEND_STRONG:
+        if rec == recommendation.strong:
             return importer.action.APPLY
         else:
             action = config['import']['quiet_fallback'].as_choice({
@@ -271,7 +286,7 @@ def _summary_judment(rec):
                 'asis': importer.action.ASIS,
             })
 
-    elif rec == autotag.RECOMMEND_NONE:
+    elif rec == recommendation.none:
         action = config['import']['none_rec_action'].as_choice({
             'skip': importer.action.SKIP,
             'asis': importer.action.ASIS,
@@ -338,13 +353,13 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
 
     # Is the change good enough?
     bypass_candidates = False
-    if rec != autotag.RECOMMEND_NONE:
+    if rec != recommendation.none:
         match = candidates[0]
         bypass_candidates = True
 
     while True:
         # Display and choose from candidates.
-        require = rec in (autotag.RECOMMEND_NONE, autotag.RECOMMEND_LOW)
+        require = rec <= recommendation.low
 
         if not bypass_candidates:
             # Display list of candidates.
@@ -371,7 +386,13 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                     if match.info.year:
                         disambig.append(unicode(match.info.year))
                     if match.info.media:
-                        disambig.append(match.info.media)
+                        if match.info.mediums > 1:
+                            disambig.append(u'{0}x{1}'.format(
+                              match.info.mediums, match.info.media))
+                        else:
+                            disambig.append(match.info.media)
+                    if match.info.albumdisambig:
+                        disambig.append(match.info.albumdisambig)
                     if disambig:
                         line += u' [{0}]'.format(u', '.join(disambig))
 
@@ -421,7 +442,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             show_change(cur_artist, cur_album, match)
 
         # Exact match => tag automatically if we're not in timid mode.
-        if rec == autotag.RECOMMEND_STRONG and not config['import']['timid']:
+        if rec == recommendation.strong and not config['import']['timid']:
             return match
 
         # Ask for confirmation.
@@ -492,7 +513,7 @@ class TerminalImportSession(importer.ImportSession):
         """
         # Show what we're tagging.
         print_()
-        print_(task.path)
+        print_(displayable_path(task.paths, u'\n'))
 
         # Take immediate action if appropriate.
         action = _summary_judment(task.rec)
@@ -635,11 +656,11 @@ def import_files(lib, paths, query):
     if config['import']['log'].get() is not None:
         logpath = config['import']['log'].as_filename()
         try:
-            logfile = open(syspath(logpath), 'a')
+            logfile = codecs.open(syspath(logpath), 'a', 'utf8')
         except IOError:
             raise ui.UserError(u"could not open log file for writing: %s" %
                                displayable_path(logpath))
-        print('import started', time.asctime(), file=logfile)
+        print(u'import started', time.asctime(), file=logfile)
     else:
         logfile = None
 
@@ -654,7 +675,7 @@ def import_files(lib, paths, query):
     finally:
         # If we were logging, close the file.
         if logfile:
-            print('', file=logfile)
+            print(u'', file=logfile)
             logfile.close()
 
     # Emit event.

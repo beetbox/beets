@@ -36,6 +36,8 @@ CONFIG_FILENAME = 'config.yaml'
 DEFAULT_FILENAME = 'config_default.yaml'
 ROOT_NAME = 'root'
 
+YAML_TAB_PROBLEM = "found character '\\t' that cannot start any token"
+
 
 # Utilities.
 
@@ -81,9 +83,19 @@ class ConfigReadError(ConfigError):
     def __init__(self, filename, reason=None):
         self.filename = filename
         self.reason = reason
+
         message = 'file {0} could not be read'.format(filename)
-        if reason:
+        if isinstance(reason, yaml.scanner.ScannerError) and \
+                reason.problem == YAML_TAB_PROBLEM:
+            # Special-case error message for tab indentation in YAML markup.
+            message += ': found tab character at line {0}, column {1}'.format(
+                reason.problem_mark.line + 1,
+                reason.problem_mark.column + 1,
+            )
+        elif reason:
+            # Generic error message uses exception's message.
             message += ': {0}'.format(reason)
+
         super(ConfigReadError, self).__init__(message)
 
 
@@ -345,7 +357,7 @@ class ConfigView(object):
         if value not in choices:
             raise ConfigValueError(
                 '{0} must be one of {1}, not {2}'.format(
-                    self.name, repr(value), repr(list(choices))
+                    self.name, repr(list(choices)), repr(value)
                 )
             )
 

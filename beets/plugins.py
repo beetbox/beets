@@ -44,8 +44,10 @@ class BeetsPlugin(object):
         self.import_stages = []
         self.name = name or self.__module__.split('.')[-1]
         self.config = beets.config[self.name]
-        self.template_funcs = {}
-        self.template_fields = {}
+        if not self.template_funcs:
+            self.template_funcs = {}
+        if not self.template_fields:
+            self.template_fields = {}
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
@@ -153,7 +155,7 @@ class BeetsPlugin(object):
             return func
         return helper
 
-_classes = set()
+_classes = []
 def load_plugins(names=()):
     """Imports the modules for a sequence of plugin names. Each name
     must be the name of a Python module under the "beetsplug" namespace
@@ -175,7 +177,7 @@ def load_plugins(names=()):
                 for obj in getattr(namespace, name).__dict__.values():
                     if isinstance(obj, type) and issubclass(obj, BeetsPlugin) \
                             and obj != BeetsPlugin:
-                        _classes.add(obj)
+                        _classes.append(obj)
 
         except:
             log.warn('** error loading plugin %s' % name)

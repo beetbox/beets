@@ -140,9 +140,9 @@ def ancestry(path, pathmod=None):
     return out
 
 def sorted_walk(path, ignore=()):
-    """Like ``os.walk``, but yields things in sorted, breadth-first
-    order.  Directory and file names matching any glob pattern in
-    ``ignore`` are skipped.
+    """Like ``os.walk``, but yields things in case-insensitive sorted,
+    breadth-first order.  Directory and file names matching any glob
+    pattern in ``ignore`` are skipped.
     """
     # Make sure the path isn't a Unicode string.
     path = bytestring_path(path)
@@ -169,9 +169,9 @@ def sorted_walk(path, ignore=()):
         else:
             files.append(base)
 
-    # Sort lists and yield the current level.
-    dirs.sort()
-    files.sort()
+    # Sort lists (case-insensitive) and yield the current level.
+    dirs.sort(key=bytes.lower)
+    files.sort(key=bytes.lower)
     yield (path, dirs, files)
 
     # Recurse into directories.
@@ -193,11 +193,25 @@ def mkdirall(path):
                 raise FilesystemError(exc, 'create', (ancestor,),
                                       traceback.format_exc())
 
+def fnmatch_all(names, patterns):
+    """Determine whether all strings in `names` match at least one of
+    the `patterns`, which should be shell glob expressions.
+    """
+    for name in names:
+        matches = False
+        for pattern in patterns:
+            matches = fnmatch.fnmatch(name, pattern)
+            if matches:
+                break
+        if not matches:
+            return False
+    return True
+
 def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
     """If path is an empty directory, then remove it. Recursively remove
     path's ancestry up to root (which is never removed) where there are
     empty directories. If path is not contained in root, then nothing is
-    removed. Filenames in clutter are ignored when determining
+    removed. Glob patterns in clutter are ignored when determining
     emptiness. If root is not provided, then only path may be removed
     (i.e., no recursive removal).
     """
@@ -224,8 +238,7 @@ def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
         if not os.path.exists(directory):
             # Directory gone already.
             continue
-
-        if all(fn in clutter for fn in os.listdir(directory)):
+        if fnmatch_all(os.listdir(directory), clutter):
             # Directory contains only clutter (or nothing).
             try:
                 shutil.rmtree(directory)
@@ -295,11 +308,14 @@ def bytestring_path(path, pathmod=None):
     except (UnicodeError, LookupError):
         return path.encode('utf8')
 
-def displayable_path(path):
+def displayable_path(path, separator=u'; '):
     """Attempts to decode a bytestring path to a unicode object for the
-    purpose of displaying it to the user.
+    purpose of displaying it to the user. If the `path` argument is a
+    list or a tuple, the elements are joined with `separator`.
     """
-    if isinstance(path, unicode):
+    if isinstance(path, (list, tuple)):
+        return separator.join(displayable_path(p) for p in path)
+    elif isinstance(path, unicode):
         return path
     elif not isinstance(path, str):
         # A non-string object: just get its unicode representation.
@@ -478,35 +494,6 @@ def truncate_path(path, pathmod=None, length=MAX_FILENAME_LENGTH):
 
     return pathmod.join(*out)
 
-def sanitize_for_path(value, pathmod=None, key=None):
-    """Sanitize the value for inclusion in a path: replace separators
-    with _, etc. Doesn't guarantee that the whole path will be valid;
-    you should still call sanitize_path on the complete path.
-    """
-    pathmod = pathmod or os.path
-
-    if isinstance(value, basestring):
-        for sep in (pathmod.sep, pathmod.altsep):
-            if sep:
-                value = value.replace(sep, u'_')
-    elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
-        # Pad indices with zeros.
-        value = u'%02i' % (value or 0)
-    elif key == 'year':
-        value = u'%04i' % (value or 0)
-    elif key in ('month', 'day'):
-        value = u'%02i' % (value or 0)
-    elif key == 'bitrate':
-        # Bitrate gets formatted as kbps.
-        value = u'%ikbps' % ((value or 0) // 1000)
-    elif key == 'samplerate':
-        # Sample rate formatted as kHz.
-        value = u'%ikHz' % ((value or 0) // 1000)
-    else:
-        value = unicode(value)
-
-    return value
-
 def str2bool(value):
     """Returns a boolean reflecting a human-entered string."""
     if value.lower() in ('yes', '1', 'true', 't', 'y'):
@@ -614,3 +601,17 @@ def command_output(cmd):
     if proc.returncode:
         raise subprocess.CalledProcessError(proc.returncode, cmd)
     return stdout
+
+def max_filename_length(path, fallback=MAX_FILENAME_LENGTH):
+    """Attempt to determine the maximum filename length for the
+    filesystem containing `path`. If it cannot be determined, return a
+    predetermined fallback value.
+    """
+    if hasattr(os, 'statvfs'):
+        try:
+            res = os.statvfs(path)
+        except OSError:
+            return fallback
+        return res[9]
+    else:
+        return fallback

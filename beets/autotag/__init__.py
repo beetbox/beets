@@ -25,27 +25,25 @@ from beets.util import sorted_walk, ancestry, displayable_path
 from .hooks import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch
 from .match import AutotagError
 from .match import tag_item, tag_album
-from .match import \
-    RECOMMEND_STRONG, RECOMMEND_MEDIUM, RECOMMEND_LOW, RECOMMEND_NONE
+from .match import recommendation
 
 # Global logger.
 log = logging.getLogger('beets')
 
 # Constants for directory walker.
-MULTIDISC_MARKERS = (r'part', r'volume', r'vol\.', r'disc', r'cd')
-MULTIDISC_PAT_FMT = r'%s\s*\d'
+MULTIDISC_MARKERS = (r'disc', r'cd')
+MULTIDISC_PAT_FMT = r'^(.*%s[\W_]*)\d'
 
 
 # Additional utilities for the main interface.
 
 def albums_in_dir(path):
     """Recursively searches the given directory and returns an iterable
-    of (path, items) where path is a containing directory and items is
+    of (paths, items) where paths is a list of directories and items is
     a list of Items that is probably an album. Specifically, any folder
     containing any media files is an album.
     """
-    collapse_root = None
-    collapse_items = None
+    collapse_pat = collapse_paths = collapse_items = None
 
     for root, dirs, files in sorted_walk(path,
                                          ignore=config['ignore'].as_str_seq()):
@@ -63,46 +61,87 @@ def albums_in_dir(path):
             else:
                 items.append(i)
 
-        # If we're collapsing, test to see whether we should continue to
-        # collapse. If so, just add to the collapsed item set;
-        # otherwise, end the collapse and continue as normal.
-        if collapse_root is not None:
-            if collapse_root in ancestry(root):
+        # If we're currently collapsing the constituent directories in a
+        # multi-disc album, check whether we should continue collapsing
+        # and add the current directory. If so, just add the directory
+        # and move on to the next directory. If not, stop collapsing.
+        if collapse_paths:
+            if (not collapse_pat and collapse_paths[0] in ancestry(root)) or \
+                    (collapse_pat and
+                     collapse_pat.match(os.path.basename(root))):
                 # Still collapsing.
+                collapse_paths.append(root)
                 collapse_items += items
                 continue
             else:
                 # Collapse finished. Yield the collapsed directory and
                 # proceed to process the current one.
                 if collapse_items:
-                    yield collapse_root, collapse_items
-                collapse_root = collapse_items = None
+                    yield collapse_paths, collapse_items
+                collapse_pat = collapse_paths = collapse_items = None
 
-        # Does the current directory look like a multi-disc album? If
-        # so, begin collapsing here.
-        if dirs and not items: # Must be only directories.
-            multidisc = False
-            for marker in MULTIDISC_MARKERS:
-                pat = MULTIDISC_PAT_FMT % marker
-                if all(re.search(pat, dirname, re.I) for dirname in dirs):
-                    multidisc = True
+        # Check whether this directory looks like the *first* directory
+        # in a multi-disc sequence. There are two indicators: the file
+        # is named like part of a multi-disc sequence (e.g., "Title Disc
+        # 1") or it contains no items but only directories that are
+        # named in this way.
+        start_collapsing = False
+        for marker in MULTIDISC_MARKERS:
+            marker_pat = re.compile(MULTIDISC_PAT_FMT % marker, re.I)
+            match = marker_pat.match(os.path.basename(root))
+
+            # Is this directory the root of a nested multi-disc album?
+            if dirs and not items:
+                # Check whether all subdirectories have the same prefix.
+                start_collapsing = True
+                subdir_pat = None
+                for subdir in dirs:
+                    # The first directory dictates the pattern for
+                    # the remaining directories.
+                    if not subdir_pat:
+                        match = marker_pat.match(subdir)
+                        if match:
+                            subdir_pat = re.compile(r'^%s\d' %
+                                re.escape(match.group(1)), re.I)
+                        else:
+                            start_collapsing = False
+                            break
+
+                    # Subsequent directories must match the pattern.
+                    elif not subdir_pat.match(subdir):
+                        start_collapsing = False
+                        break
+
+                # If all subdirectories match, don't check other
+                # markers.
+                if start_collapsing:
                     break
 
-            # This becomes True only when all directories match a
-            # pattern for a single marker.
-            if multidisc:
-                # Start collapsing; continue to the next iteration.
-                collapse_root = root
-                collapse_items = []
-                continue
+            # Is this directory the first in a flattened multi-disc album?
+            elif match:
+                start_collapsing = True
+                # Set the current pattern to match directories with the same
+                # prefix as this one, followed by a digit.
+                collapse_pat = re.compile(r'^%s\d' %
+                    re.escape(match.group(1)), re.I)
+                break
+
+        # If either of the above heuristics indicated that this is the
+        # beginning of a multi-disc album, initialize the collapsed
+        # directory and item lists and check the next directory.
+        if start_collapsing:
+            # Start collapsing; continue to the next iteration.
+            collapse_paths = [root]
+            collapse_items = items
+            continue
 
         # If it's nonempty, yield it.
         if items:
-            yield root, items
+            yield [root], items
 
     # Clear out any unfinished collapse.
-    if collapse_root is not None and collapse_items:
-        yield collapse_root, collapse_items
+    if collapse_paths and collapse_items:
+        yield collapse_paths, collapse_items
 
 def apply_item_metadata(item, track_info):
     """Set an item's metadata from its matched TrackInfo object.
@@ -139,12 +178,21 @@ def apply_metadata(album_info, mapping):
         item.albumartist_credit = album_info.artist_credit
 
         # Release date.
-        if album_info.year:
-            item.year = album_info.year
-        if album_info.month:
-            item.month = album_info.month
-        if album_info.day:
-            item.day = album_info.day
+        for prefix in '', 'original_':
+            if config['original_date'] and not prefix:
+                # Ignore specific release date.
+                continue
+
+            for suffix in 'year', 'month', 'day':
+                key = prefix + suffix
+                value = getattr(album_info, key)
+                if value:
+                    setattr(item, key, value)
+                    if config['original_date']:
+                        # If we're using original release date for both
+                        # fields, set item.year = info.original_year,
+                        # etc.
+                        setattr(item, suffix, value)
 
         # Title.
         item.title = track_info.title

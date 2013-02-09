@@ -57,6 +57,11 @@ def fetch_item_tempo(lib, loglevel, item, write):
 
 def get_tempo(artist, title):
     """Get the tempo for a song."""
+    # We must have sufficient metadata for the lookup. Otherwise the API
+    # will just complain.
+    if not artist or not title:
+        return None
+
     for i in range(RETRIES):
         try:
             # Unfortunately, all we can do is search by artist and title.

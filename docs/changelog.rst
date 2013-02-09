@@ -4,35 +4,97 @@ Changelog
 1.1b2 (in development)
 ----------------------
 
+This version introduces one **change to the default behavior** that you should
+be aware of. Previously, when importing new albums matched in MusicBrainz, the
+date fields (``year``, ``month``, and ``day``) would be set to the release date
+of the *original* version of the album, as opposed to the specific date of the
+release selected. Now, these fields reflect the specific release and
+``original_year``, etc., reflect the earlier release date. If you want the old
+behavior, just set :ref:`original_date` to true in your config file.
+
 New configuration options:
 
 * :ref:`default_action` lets you determine the default (just-hit-return) option
   is when considering a candidate.
 * :ref:`none_rec_action` lets you skip the prompt, and automatically choose an
-  action, when there is no good candidate. Thanks to mrmachine.
+  action, when there is no good candidate. Thanks to Tai Lee.
+* :ref:`max_rec` lets you define a maximum recommendation for albums with
+  missing/extra tracks or differing track lengths/numbers. Thanks again to Tai
+  Lee.
+* :ref:`original_date` determines whether, when importing new albums, the
+  ``year``, ``month``, and ``day`` fields should reflect the specific (e.g.,
+  reissue) release date or the original release date. Note that the original
+  release date is always available as ``original_year``, etc.
+* :ref:`clutter` controls which files should be ignored when cleaning up empty
+  directories. Thanks to Steinþór Pálsson.
+* :doc:`/plugins/lastgenre`: A new configuration option lets you choose to
+  retrieve artist-level tags as genres instead of album- or track-level tags.
+  Thanks to Peter Fern and Peter Schnebel.
+* :ref:`max_filename_length` controls truncation of long filenames. Also, beets
+  now tries to determine the filesystem's maximum length automatically if you
+  leave this option unset.
+* You can now customize the character substituted for path separators (e.g., /)
+  in filenames via ``path_sep_replace``. The default is an underscore. Use this
+  setting with caution.
 
 Other new stuff:
 
 * Support for Windows Media/ASF audio files. Thanks to Dave Hayes.
 * New :doc:`/plugins/smartplaylist`: generate and maintain m3u playlist files
   based on beets queries. Thanks to Dang Mai Hai.
-* Two new plugin events were added: *database_change* and *cli_exit*. Thanks
-  again to Dang Mai Hai.
-* Track titles in the importer's difference display are now broken across two
-  lines for readability. Thanks to mrmachine.
+* ReplayGain tags on MPEG-4/AAC files are now supported. And, even more
+  astonishingly, ReplayGain values in MP3 and AAC files are now compatible with
+  `iTunes Sound Check`_. Thanks to Dave Hayes.
+* Track titles in the importer UI's difference display are now either aligned
+  vertically or broken across two lines for readability. Thanks to Tai Lee.
+* Albums and items have new fields reflecting the *original* release date
+  (``original_year``, ``original_month``, and ``original_day``). Previously,
+  when tagging from MusicBrainz, *only* the original date was stored; now, the
+  old fields refer to the *specific* release date (e.g., when the album was
+  reissued).
 * Some changes to the way candidates are recommended for selection, thanks to
-  mrmachine:
+  Tai Lee:
 
-  * Partial album matches are never "strong" recommendations.
+  * According to the new :ref:`max_rec` configuration option, partial album
+    matches are downgraded to a "low" recommendation by default.
   * When a match isn't great but is either better than all the others or the
     only match, it is given a "low" (rather than "medium") recommendation.
   * There is no prompt default (i.e., input is required) when matches are
     bad: "low" or "none" recommendations or when choosing a candidate
     other than the first.
 
-* Album listings in the importer UI now show the release medium (CD, LP,
-  etc.). Thanks to Peter Schnebel.
+* The importer's heuristic for coalescing the directories in a multi-disc album
+  has been improved. It can now detect when two directories alongside each
+  other share a similar prefix but a different number (e.g., "Album Disc 1" and
+  "Album Disc 2") even when they are not alone in a common parent directory.
+  Thanks once again to Tai Lee.
+* Album listings in the importer UI now show the release medium (CD, Vinyl,
+  3xCD, etc.) as well as the disambiguation string. Thanks to Peter Schnebel.
+* :doc:`/plugins/lastgenre`: The plugin can now get different genres for
+  individual tracks on an album. Thanks to Peter Schnebel.
+* When getting data from MusicBrainz, the album disambiguation string
+  (``albumdisambig``) now reflects both the release and the release group.
+* :doc:`/plugins/mpdupdate`: Sends an update message whenever *anything* in the
+  database changes---not just when importing. Thanks to Dang Mai Hai.
+* When the importer UI shows a difference in track numbers or durations, they
+  are now colorized based on the *suffixes* that differ. For example, when
+  showing the difference between 2:01 and 2:09, only the last digit will be
+  highlighted.
+* The importer UI no longer shows a change when the track length difference is
+  less than 10 seconds. (This threshold was previously 2 seconds.)
+* Two new plugin events were added: *database_change* and *cli_exit*. Thanks
+  again to Dang Mai Hai.
+* Plugins are now loaded in the order they appear in the config file. Thanks to
+  Dang Mai Hai.
+* :doc:`/plugins/bpd`: Browse by album artist and album artist sort name.
+  Thanks to Steinþór Pálsson.
+* :doc:`/plugins/echonest_tempo`: Don't attempt a lookup when the artist or
+  track title is missing.
 * Fix an error when migrating the ``.beetsstate`` file on Windows.
+* A nicer error message is now given when the configuration file contains tabs.
+  (YAML doesn't like tabs.)
+
+.. _iTunes Sound Check: http://support.apple.com/kb/HT2425
 
 1.1b1 (January 29, 2013)
 ------------------------

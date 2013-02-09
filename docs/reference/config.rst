@@ -23,8 +23,9 @@ file will look like this::
         key: value
         foo: bar
 
-If you have questions about more sophisticated syntax, take a look at the
-`YAML`_ documentation.
+In YAML, you will need to use spaces (not tabs!) to indent some lines. If you
+have questions about more sophisticated syntax, take a look at the `YAML`_
+documentation.
 
 .. _YAML: http://yaml.org/
 
@@ -148,6 +149,17 @@ Format to use when listing *albums* with :ref:`list-cmd` and other
 commands. Defaults to ``$albumartist - $album``. The ``-f`` command-line
 option overrides this setting.
 
+.. _original_date:
+
+original_date
+~~~~~~~~~~~~~
+
+Either ``yes`` or ``no``, indicating whether matched albums should have their
+``year``, ``month``, and ``day`` fields set to the release date of the
+*original* version of an album rather than the selected version of the release.
+That is, if this option is turned on, then ``year`` will always equal
+``original_year`` and so on. Default: ``no``.
+
 .. _per_disc_numbering:
 
 per_disc_numbering
@@ -177,6 +189,25 @@ standard output. By default, this is determined automatically from the locale
 environment variables.
 
 .. _known to python: http://docs.python.org/2/library/codecs.html#standard-encodings
+
+.. _clutter:
+
+clutter
+~~~~~~~
+
+When beets imports all the files in a directory, it tries to remove the
+directory if it's empty. A directory is considered empty if it only contains
+files whose names match the glob patterns in `clutter`, which should be a list
+of strings. The default list consists of "Thumbs.DB" and ".DS_Store".
+
+.. _max_filename_length:
+
+max_filename_length
+~~~~~~~~~~~~~~~~~~~
+
+Set the maximum number of characters in a filename, after which names will be
+truncated. By default, beets tries to ask the filesystem for the correct
+maximum.
 
 Importer Options
 ----------------
@@ -334,6 +365,34 @@ match is above the *medium* recommendation threshold or the distance between it
 and the next-best match is above the *gap* threshold, the importer will suggest
 that match but not automatically confirm it. Otherwise, you'll see a list of
 options to choose from.
+
+.. _max_rec:
+
+max_rec
+~~~~~~~
+
+As mentioned above, autotagger matches have *recommendations* that control how
+the UI behaves for a certain quality of match. The recommendation for a certain
+match is usually based on the distance calculation. But you can also control
+the recommendation for certain specific situations by defining *maximum*
+recommendations when (a) a match has missing/extra tracks; (b) the track number
+for at least one track differs; or (c) the track length for at least one track
+differs.
+
+To define maxima, use keys under ``max_rec:`` in the ``match`` section::
+
+    match:
+        max_rec:
+            partial: medium
+            tracklength: strong
+            tracknumber: strong
+
+If a recommendation is higher than the configured maximum and the condition is
+met, the recommendation will be downgraded. The maximum for each condition can
+be one of ``none``, ``low``, ``medium`` or ``strong``. When the maximum
+recommendation is ``strong``, no "downgrading" occurs for that situation.
+
+The above example shows the default ``max_rec`` settings.
 
 .. _path-format-config:
 

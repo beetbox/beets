@@ -162,7 +162,7 @@ def _source_urls(album):
         if url:
             yield url
 
-def art_for_album(album, path, maxwidth=None, local_only=False):
+def art_for_album(album, paths, maxwidth=None, local_only=False):
     """Given an Album object, returns a path to downloaded art for the
     album (or None if no art is found). If `maxwidth`, then images are
     resized to this maximum pixel size. If `local_only`, then only local
@@ -172,8 +172,11 @@ def art_for_album(album, path, maxwidth=None, local_only=False):
     out = None
 
     # Local art.
-    if isinstance(path, basestring):
-        out = art_in_path(path)
+    if paths:
+        for path in paths:
+            out = art_in_path(path)
+            if out:
+                break
 
     # Web art sources.
     if not local_only and not out:
@@ -243,7 +246,7 @@ class FetchArtPlugin(BeetsPlugin):
                 return
 
             album = session.lib.get_album(task.album_id)
-            path = art_for_album(album, task.path, self.maxwidth, local)
+            path = art_for_album(album, task.paths, self.maxwidth, local)
 
             if path:
                 self.art_paths[task] = path

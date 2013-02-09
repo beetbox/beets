@@ -161,21 +161,21 @@ def _save_state(state):
 # Utilities for reading and writing the beets progress file, which
 # allows long tagging tasks to be resumed when they pause (or crash).
 PROGRESS_KEY = 'tagprogress'
-def progress_set(toppath, path):
+def progress_set(toppath, paths):
     """Record that tagging for the given `toppath` was successful up to
-    `path`. If path is None, then clear the progress value (indicating
+    `paths`. If paths is None, then clear the progress value (indicating
     that the tagging completed).
     """
     state = _open_state()
     if PROGRESS_KEY not in state:
         state[PROGRESS_KEY] = {}
 
-    if path is None:
+    if paths is None:
         # Remove progress from file.
         if toppath in state[PROGRESS_KEY]:
             del state[PROGRESS_KEY][toppath]
     else:
-        state[PROGRESS_KEY][toppath] = path
+        state[PROGRESS_KEY][toppath] = paths
 
     _save_state(state)
 def progress_get(toppath):
@@ -192,19 +192,19 @@ def progress_get(toppath):
 # This keeps track of all directories that were ever imported, which
 # allows the importer to only import new stuff.
 HISTORY_KEY = 'taghistory'
-def history_add(path):
-    """Indicate that the import of `path` is completed and should not
-    be repeated in incremental imports.
+def history_add(paths):
+    """Indicate that the import of the album in `paths` is completed and
+    should not be repeated in incremental imports.
     """
     state = _open_state()
     if HISTORY_KEY not in state:
         state[HISTORY_KEY] = set()
 
-    state[HISTORY_KEY].add(path)
+    state[HISTORY_KEY].add(tuple(paths))
 
     _save_state(state)
 def history_get():
-    """Get the set of completed paths in incremental imports.
+    """Get the set of completed path tuples in incremental imports.
     """
     state = _open_state()
     if HISTORY_KEY not in state:
@@ -258,12 +258,13 @@ class ImportSession(object):
         if not iconfig['copy']:
             iconfig['delete'] = False
 
-    def tag_log(self, status, path):
+    def tag_log(self, status, paths):
         """Log a message about a given album to logfile. The status should
         reflect the reason the album couldn't be tagged.
         """
         if self.logfile:
-            print('{0} {1}'.format(status, path), file=self.logfile)
+            print(u'{0} {1}'.format(status, displayable_path(paths)),
+                  file=self.logfile)
             self.logfile.flush()
 
     def log_choice(self, task, duplicate=False):
@@ -271,21 +272,21 @@ class ImportSession(object):
         ``duplicate``, then this is a secondary choice after a duplicate was
         detected and a decision was made.
         """
-        path = task.path if task.is_album else task.item.path
+        paths = task.paths if task.is_album else [task.item.path]
         if duplicate:
             # Duplicate: log all three choices (skip, keep both, and trump).
             if task.remove_duplicates:
-                self.tag_log('duplicate-replace', path)
+                self.tag_log('duplicate-replace', paths)
             elif task.choice_flag in (action.ASIS, action.APPLY):
-                self.tag_log('duplicate-keep', path)
+                self.tag_log('duplicate-keep', paths)
             elif task.choice_flag is (action.SKIP):
-                self.tag_log('duplicate-skip', path)
+                self.tag_log('duplicate-skip', paths)
         else:
             # Non-duplicate: log "skip" and "asis" choices.
             if task.choice_flag is action.ASIS:
-                self.tag_log('asis', path)
+                self.tag_log('asis', paths)
             elif task.choice_flag is action.SKIP:
-                self.tag_log('skip', path)
+                self.tag_log('skip', paths)
 
     def should_resume(self, path):
         raise NotImplementedError
@@ -347,9 +348,9 @@ class ImportTask(object):
     """Represents a single set of items to be imported along with its
     intermediate state. May represent an album or a single item.
     """
-    def __init__(self, toppath=None, path=None, items=None):
+    def __init__(self, toppath=None, paths=None, items=None):
         self.toppath = toppath
-        self.path = path
+        self.paths = paths
         self.items = items
         self.sentinel = False
         self.remove_duplicates = False
@@ -365,12 +366,12 @@ class ImportTask(object):
         return obj
 
     @classmethod
-    def progress_sentinel(cls, toppath, path):
+    def progress_sentinel(cls, toppath, paths):
         """Create a task indicating that a single directory in a larger
         import has finished. This is only required for singleton
         imports; progress is implied for album imports.
         """
-        obj = cls(toppath, path)
+        obj = cls(toppath, paths)
         obj.sentinel = True
         return obj
 
@@ -431,19 +432,19 @@ class ImportTask(object):
         """Updates the progress state to indicate that this album has
         finished.
         """
-        if self.sentinel and self.path is None:
+        if self.sentinel and self.paths is None:
             # "Done" sentinel.
             progress_set(self.toppath, None)
         elif self.sentinel or self.is_album:
             # "Directory progress" sentinel for singletons or a real
             # album task, which implies the same.
-            progress_set(self.toppath, self.path)
+            progress_set(self.toppath, self.paths)
 
     def save_history(self):
         """Save the directory in the history for incremental imports.
         """
-        if self.sentinel or self.is_album:
-            history_add(self.path)
+        if self.is_album and not self.sentinel:
+            history_add(self.paths)
 
 
     # Logical decisions.
@@ -512,7 +513,9 @@ class ImportTask(object):
         call when the file in question may not have been removed.
         """
         if self.toppath and not os.path.exists(filename):
-            util.prune_dirs(os.path.dirname(filename), self.toppath)
+            util.prune_dirs(os.path.dirname(filename),
+                            self.toppath,
+                            clutter=config['clutter'].get(list))
 
 
 # Full-album pipeline stages.
@@ -575,7 +578,7 @@ def read_tasks(session):
                 continue
 
             # When incremental, skip paths in the history.
-            if config['import']['incremental'] and path in history_dirs:
+            if config['import']['incremental'] and tuple(path) in history_dirs:
                 log.debug(u'Skipping previously-imported path: %s' %
                           displayable_path(path))
                 incremental_skipped += 1
@@ -613,7 +616,7 @@ def query_tasks(session):
             log.debug('yielding album %i: %s - %s' %
                       (album.id, album.albumartist, album.album))
             items = list(album.items())
-            yield ImportTask(None, album.item_dir(), items)
+            yield ImportTask(None, [album.item_dir()], items)
 
 def initial_lookup(session):
     """A coroutine for performing the initial MusicBrainz lookup for an
@@ -629,7 +632,7 @@ def initial_lookup(session):
 
         plugins.send('import_task_start', session=session, task=task)
 
-        log.debug('Looking up: %s' % task.path)
+        log.debug('Looking up: %s' % displayable_path(task.paths))
         try:
             task.set_candidates(*autotag.tag_album(task.items,
                                                    config['import']['timid']))
@@ -662,7 +665,7 @@ def user_query(session):
             def emitter():
                 for item in task.items:
                     yield ImportTask.item_task(item)
-                yield ImportTask.progress_sentinel(task.toppath, task.path)
+                yield ImportTask.progress_sentinel(task.toppath, task.paths)
             def collector():
                 while True:
                     item_task = yield
@@ -695,7 +698,7 @@ def show_progress(session):
         if task.sentinel:
             continue
 
-        log.info(task.path)
+        log.info(displayable_path(task.paths))
 
         # Behave as if ASIS were selected.
         task.set_null_candidates()

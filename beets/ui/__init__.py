@@ -27,6 +27,7 @@ import logging
 import sqlite3
 import errno
 import re
+import struct
 
 from beets import library
 from beets import plugins
@@ -133,10 +134,9 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
     a particular shortcut is desired; in that case, only that letter
     should be capitalized.
 
-    By default, the first option is the default. If `require` is
-    provided, then there is no default. `default` can be provided to
-    override this. The prompt and fallback prompt are also inferred but
-    can be overridden.
+    By default, the first option is the default. `default` can be provided to
+    override this. If `require` is provided, then there is no default. The
+    prompt and fallback prompt are also inferred but can be overridden.
 
     If numrange is provided, it is a pair of `(high, low)` (both ints)
     indicating that, in addition to `options`, the user may enter an
@@ -172,9 +172,9 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         index = option.index(found_letter)
 
         # Mark the option's shortcut letter for display.
-        if (not require and default is None and not numrange and first) \
-           or (isinstance(default, basestring) and
-               found_letter.lower() == default.lower()):
+        if not require and ((default is None and not numrange and first) or
+                (isinstance(default, basestring) and
+                 found_letter.lower() == default.lower())):
             # The first option is the default; mark it.
             show_letter = '[%s]' % found_letter.upper()
             is_default = True
@@ -195,10 +195,10 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         first = False
 
     # The default is just the first option if unspecified.
-    if default is None:
-        if require:
-            default = None
-        elif numrange:
+    if require:
+        default = None
+    elif default is None:
+        if numrange:
             default = numrange[0]
         else:
             default = display_letters[0].lower()
@@ -413,6 +413,29 @@ def colordiff(a, b, highlight='red'):
     else:
         return unicode(a), unicode(b)
 
+def color_diff_suffix(a, b, highlight='red'):
+    """Colorize the differing suffix between two strings."""
+    a, b = unicode(a), unicode(b)
+    if not config['color']:
+        return a, b
+
+    # Fast path.
+    if a == b:
+        return a, b
+
+    # Find the longest common prefix.
+    first_diff = None
+    for i in range(min(len(a), len(b))):
+        if a[i] != b[i]:
+            first_diff = i
+            break
+    else:
+        first_diff = min(len(a), len(b))
+
+    # Colorize from the first difference on.
+    return a[:first_diff] + colorize(highlight, a[first_diff:]), \
+           b[:first_diff] + colorize(highlight, b[first_diff:])
+
 def get_path_formats():
     """Get the configuration's path formats as a list of query/template
     pairs.
@@ -476,6 +499,28 @@ def print_obj(obj, lib, fmt=None):
         print_(obj.evaluate_template(template))
     else:
         print_(obj.evaluate_template(template, lib=lib))
+
+def term_width():
+    """Get the width (columns) of the terminal."""
+    fallback = config['ui']['terminal_width'].get(int)
+
+    # The fcntl and termios modules are not available on non-Unix
+    # platforms, so we fall back to a constant.
+    try:
+        import fcntl
+        import termios
+    except ImportError:
+        return fallback
+
+    try:
+        buf = fcntl.ioctl(0, termios.TIOCGWINSZ, ' '*4)
+    except IOError:
+        return fallback
+    try:
+        height, width = struct.unpack('hh', buf)
+    except struct.error:
+        return fallback
+    return width
 
 
 # Subcommand parsing infrastructure.

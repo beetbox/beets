@@ -38,6 +38,7 @@ import mutagen.asf
 import datetime
 import re
 import base64
+import math
 import struct
 import imghdr
 import os
@@ -182,12 +183,69 @@ def _pack_asf_image(mime, data, type=3, description=""):
     return tag_data
 
 
+# iTunes Sound Check encoding.
+
+def _sc_decode(soundcheck):
+    """Convert a Sound Check string value to a (gain, peak) tuple as
+    used by ReplayGain.
+    """
+    # SoundCheck tags consist of 10 numbers, each represented by 8
+    # characters of ASCII hex preceded by a space.
+    try:
+        soundcheck = soundcheck.replace(' ', '').decode('hex')
+        soundcheck = struct.unpack('!iiiiiiiiii', soundcheck)
+    except struct.error:
+        # SoundCheck isn't in the format we expect, so return default
+        # values.
+        return 0.0, 0.0
+
+    # SoundCheck stores absolute calculated/measured RMS value in an
+    # unknown unit. We need to find the ratio of this measurement
+    # compared to a reference value of 1000 to get our gain in dB. We
+    # play it safe by using the larger of the two values (i.e., the most
+    # attenuation).
+    gain = math.log10((max(*soundcheck[:2]) or 1000) / 1000.0) * -10
+
+    # SoundCheck stores peak values as the actual value of the sample,
+    # and again separately for the left and right channels. We need to
+    # convert this to a percentage of full scale, which is 32768 for a
+    # 16 bit sample. Once again, we play it safe by using the larger of
+    # the two values.
+    peak = max(soundcheck[6:8]) / 32768.0
+
+    return round(gain, 2), round(peak, 6)
+
+def _sc_encode(gain, peak):
+    """Encode ReplayGain gain/peak values as a Sound Check string.
+    """
+    # SoundCheck stores the peak value as the actual value of the
+    # sample, rather than the percentage of full scale that RG uses, so
+    # we do a simple conversion assuming 16 bit samples.
+    peak *= 32768.0
+
+    # SoundCheck stores absolute RMS values in some unknown units rather
+    # than the dB values RG uses. We can calculate these absolute values
+    # from the gain ratio using a reference value of 1000 units. We also
+    # enforce the maximum value here, which is equivalent to about
+    # -18.2dB.
+    g1 = min(round((10 ** (gain / -10)) * 1000), 65534)
+    # Same as above, except our reference level is 2500 units.
+    g2 = min(round((10 ** (gain / -10)) * 2500), 65534)
+
+    # The purpose of these values are unknown, but they also seem to be
+    # unused so we just use zero.
+    uk = 0
+    values = (g1, g1, g2, g2, uk, uk, peak, peak, uk, uk)
+    return (u' %08X' * 10) % values
+
+
 # Flags for encoding field behavior.
 
 # Determine style of packing, if any.
-packing = enum('SLASHED', # pair delimited by /
-               'TUPLE',   # a python tuple of 2 items
-               'DATE',    # YYYY-MM-DD
+packing = enum('SLASHED',   # pair delimited by /
+               'TUPLE',     # a python tuple of 2 items
+               'DATE',      # YYYY-MM-DD
+               'SC',        # Sound Check gain/peak encoding
                name='packing')
 
 class StorageStyle(object):
@@ -203,19 +261,38 @@ class StorageStyle(object):
        None. (Makes as_type irrelevant).
      - pack_pos: If the value is packed, in which position it is
        stored.
-     - ID3 storage only: match against this 'desc' field as well
-       as the key.
+     - suffix: When `as_type` is a string type, append this before
+       storing the value.
+     - float_places: When the value is a floating-point number and
+       encoded as a string, the number of digits to store after the
+       point.
+
+    For MP3 only:
+      - id3_desc: match against this 'desc' field as well
+        as the key.
+      - id3_frame_field: store the data in this field of the frame
+        object.
+      - id3_lang: set the language field of the frame object.
     """
-    def __init__(self, key, list_elem = True, as_type = unicode,
-                 packing = None, pack_pos = 0, id3_desc = None,
-                 id3_frame_field = 'text'):
+    def __init__(self, key, list_elem=True, as_type=unicode,
+                 packing=None, pack_pos=0, pack_type=int, 
+                 id3_desc=None, id3_frame_field='text',
+                 id3_lang=None, suffix=None, float_places=2):
         self.key = key
         self.list_elem = list_elem
         self.as_type = as_type
         self.packing = packing
         self.pack_pos = pack_pos
+        self.pack_type = pack_type
         self.id3_desc = id3_desc
         self.id3_frame_field = id3_frame_field
+        self.id3_lang = id3_lang
+        self.suffix = suffix
+        self.float_places = float_places
+
+        # Convert suffix to correct string type.
+        if self.suffix and self.as_type in (str, unicode):
+            self.suffix = self.as_type(self.suffix)
 
 
 # Dealing with packings.
@@ -228,7 +305,7 @@ class Packed(object):
         """Create a Packed object for subscripting the packed values in
         items. The items are packed using packstyle, which is a value
         from the packing enum. none_val is returned from a request when
-        no suitable value is found in the items. Vales are converted to
+        no suitable value is found in the items. Values are converted to
         out_type before they are returned.
         """
         self.items = items
@@ -256,6 +333,8 @@ class Packed(object):
             seq = unicode(items).split('-')
         elif self.packstyle == packing.TUPLE:
             seq = items # tuple: items is already indexable
+        elif self.packstyle == packing.SC:
+            seq = _sc_decode(items)
 
         try:
             out = seq[index]
@@ -268,8 +347,8 @@ class Packed(object):
             return _safe_cast(self.out_type, out)
 
     def __setitem__(self, index, value):
-        if self.packstyle in (packing.SLASHED, packing.TUPLE):
-            # SLASHED and TUPLE are always two-item packings
+        if self.packstyle in (packing.SLASHED, packing.TUPLE, packing.SC):
+            # SLASHED, TUPLE and SC are always two-item packings
             length = 2
         else:
             # DATE can have up to three fields
@@ -302,6 +381,8 @@ class Packed(object):
             self.items = '-'.join(elems)
         elif self.packstyle == packing.TUPLE:
             self.items = new_items
+        elif self.packstyle == packing.SC:
+            self.items = _sc_encode(*new_items)
 
 
 # The field itself.
@@ -312,7 +393,7 @@ class MediaField(object):
     can be unicode, int, or bool. id3, mp4, and flac are StorageStyle
     instances parameterizing the field's storage for each type.
     """
-    def __init__(self, out_type = unicode, **kwargs):
+    def __init__(self, out_type=unicode, **kwargs):
         """Creates a new MediaField.
          - out_type: The field's semantic (exterior) type.
          - kwargs: A hash whose keys are 'mp3', 'mp4', 'asf', and 'etc'
@@ -397,12 +478,14 @@ class MediaField(object):
                 # need to make a new frame?
                 if not found:
                     assert isinstance(style.id3_frame_field, str)  # Keyword.
-                    frame = mutagen.id3.Frames[style.key](
-                        encoding=3,
-                        desc=style.id3_desc,
-                        **{style.id3_frame_field: val}
-                    )
-                    obj.mgfile.tags.add(frame)
+                    args = {
+                        'encoding': 3,
+                        'desc': style.id3_desc,
+                        style.id3_frame_field: val,
+                    }
+                    if style.id3_lang:
+                        args['lang'] = style.id3_lang
+                    obj.mgfile.tags.add(mutagen.id3.Frames[style.key](**args))
 
             # Try to match on "owner" field.
             elif style.key.startswith('UFID:'):
@@ -458,7 +541,13 @@ class MediaField(object):
                     break
 
             if style.packing:
-                out = Packed(out, style.packing)[style.pack_pos]
+                p = Packed(out, style.packing, out_type=style.pack_type)
+                out = p[style.pack_pos]
+
+            # Remove suffix.
+            if style.suffix and isinstance(out, (str, unicode)):
+                if out.endswith(style.suffix):
+                    out = out[:len(style.suffix)]
 
             # MPEG-4 freeform frames are (should be?) encoded as UTF-8.
             if obj.type == 'mp4' and style.key.startswith('----:') and \
@@ -478,17 +567,20 @@ class MediaField(object):
         for style in styles:
 
             if style.packing:
-                p = Packed(self._fetchdata(obj, style), style.packing)
+                p = Packed(self._fetchdata(obj, style), style.packing,
+                           out_type=style.pack_type)
                 p[style.pack_pos] = val
                 out = p.items
 
-            else: # unicode, integer, or boolean scalar
+            else:  # Unicode, integer, boolean, or float scalar.
                 out = val
 
                 # deal with Nones according to abstract type if present
                 if out is None:
                     if self.out_type == int:
                         out = 0
+                    elif self.out_type == float:
+                        out = 0.0
                     elif self.out_type == bool:
                         out = False
                     elif self.out_type == unicode:
@@ -497,12 +589,16 @@ class MediaField(object):
 
                 # Convert to correct storage type (irrelevant for
                 # packed values).
-                if style.as_type == unicode:
+                if self.out_type == float and style.as_type in (str, unicode):
+                    # Special case for float-valued data.
+                    out = u'{0:.{1}f}'.format(out, style.float_places)
+                    out = style.as_type(out)
+                elif style.as_type == unicode:
                     if out is None:
                         out = u''
                     else:
                         if self.out_type == bool:
-                            # store bools as 1,0 instead of True,False
+                            # Store bools as 1/0 instead of True/False.
                             out = unicode(int(bool(out)))
                         elif isinstance(out, str):
                             out = out.decode('utf8', 'ignore')
@@ -515,6 +611,10 @@ class MediaField(object):
                         out = int(out)
                 elif style.as_type in (bool, str):
                     out = style.as_type(out)
+
+                # Add a suffix to string storage.
+                if style.as_type in (str, unicode) and style.suffix:
+                    out += style.suffix
 
             # MPEG-4 "freeform" (----) frames must be encoded as UTF-8
             # byte strings.
@@ -724,30 +824,6 @@ class ImageField(object):
                     base64.b64encode(pic.write())
                 ]
 
-class FloatValueField(MediaField):
-    """A field that stores a floating-point number as a string."""
-    def __init__(self, places=2, suffix=None, **kwargs):
-        """Make a field that stores ``places`` digits after the decimal
-        point and appends ``suffix`` (if specified) when encoding as a
-        string.
-        """
-        super(FloatValueField, self).__init__(unicode, **kwargs)
-
-        fmt = ['%.', str(places), 'f']
-        if suffix:
-            fmt += [' ', suffix]
-        self.fmt = ''.join(fmt)
-
-    def __get__(self, obj, owner):
-        valstr = super(FloatValueField, self).__get__(obj, owner)
-        return _safe_cast(float, valstr)
-
-    def __set__(self, obj, val):
-        if not val:
-            val = 0.0
-        valstr = self.fmt % val
-        super(FloatValueField, self).__set__(obj, valstr)
-
 
 # The file (a collection of fields).
 
@@ -852,26 +928,6 @@ class MediaFile(object):
         etc = StorageStyle('GROUPING'),
         asf = StorageStyle('WM/ContentGroupDescription'),
     )
-    year = MediaField(out_type=int,
-        mp3 = StorageStyle('TDRC', packing=packing.DATE, pack_pos=0),
-        mp4 = StorageStyle("\xa9day", packing=packing.DATE, pack_pos=0),
-        etc = [StorageStyle('DATE', packing=packing.DATE, pack_pos=0),
-               StorageStyle('YEAR')],
-        asf = StorageStyle('WM/Year', packing=packing.DATE, pack_pos=0),
-    )
-    month = MediaField(out_type=int,
-        mp3 = StorageStyle('TDRC', packing=packing.DATE, pack_pos=1),
-        mp4 = StorageStyle("\xa9day", packing=packing.DATE, pack_pos=1),
-        etc = StorageStyle('DATE', packing=packing.DATE, pack_pos=1),
-        asf = StorageStyle('WM/Year', packing=packing.DATE, pack_pos=1),
-    )
-    day = MediaField(out_type=int,
-        mp3 = StorageStyle('TDRC', packing=packing.DATE, pack_pos=2),
-        mp4 = StorageStyle("\xa9day", packing=packing.DATE, pack_pos=2),
-        etc = StorageStyle('DATE', packing=packing.DATE, pack_pos=2),
-        asf = StorageStyle('WM/Year', packing=packing.DATE, pack_pos=2),
-    )
-    date = CompositeDateField(year, month, day)
     track = MediaField(out_type=int,
         mp3 = StorageStyle('TRCK', packing=packing.SLASHED, pack_pos=0),
         mp4 = StorageStyle('trkn', packing=packing.TUPLE, pack_pos=0),
@@ -1025,6 +1081,56 @@ class MediaFile(object):
         asf = StorageStyle('MusicBrainz/Album Comment'),
     )
 
+    # Release date.
+    year = MediaField(out_type=int,
+        mp3 = StorageStyle('TDRC', packing=packing.DATE, pack_pos=0),
+        mp4 = StorageStyle("\xa9day", packing=packing.DATE, pack_pos=0),
+        etc = [StorageStyle('DATE', packing=packing.DATE, pack_pos=0),
+               StorageStyle('YEAR')],
+        asf = StorageStyle('WM/Year', packing=packing.DATE, pack_pos=0),
+    )
+    month = MediaField(out_type=int,
+        mp3 = StorageStyle('TDRC', packing=packing.DATE, pack_pos=1),
+        mp4 = StorageStyle("\xa9day", packing=packing.DATE, pack_pos=1),
+        etc = StorageStyle('DATE', packing=packing.DATE, pack_pos=1),
+        asf = StorageStyle('WM/Year', packing=packing.DATE, pack_pos=1),
+    )
+    day = MediaField(out_type=int,
+        mp3 = StorageStyle('TDRC', packing=packing.DATE, pack_pos=2),
+        mp4 = StorageStyle("\xa9day", packing=packing.DATE, pack_pos=2),
+        etc = StorageStyle('DATE', packing=packing.DATE, pack_pos=2),
+        asf = StorageStyle('WM/Year', packing=packing.DATE, pack_pos=2),
+    )
+    date = CompositeDateField(year, month, day)
+
+    # *Original* release date.
+    original_year = MediaField(out_type=int,
+        mp3 = StorageStyle('TDOR', packing=packing.DATE, pack_pos=0),
+        mp4 = StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR',
+                           packing=packing.DATE, pack_pos=0),
+        etc = StorageStyle('ORIGINALDATE', packing=packing.DATE, pack_pos=0),
+        asf = StorageStyle('WM/OriginalReleaseYear', packing=packing.DATE,
+                           pack_pos=0),
+    )
+    original_month = MediaField(out_type=int,
+        mp3 = StorageStyle('TDOR', packing=packing.DATE, pack_pos=1),
+        mp4 = StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR',
+                           packing=packing.DATE, pack_pos=1),
+        etc = StorageStyle('ORIGINALDATE', packing=packing.DATE, pack_pos=1),
+        asf = StorageStyle('WM/OriginalReleaseYear', packing=packing.DATE,
+                           pack_pos=1),
+    )
+    original_day = MediaField(out_type=int,
+        mp3 = StorageStyle('TDOR', packing=packing.DATE, pack_pos=2),
+        mp4 = StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR',
+                           packing=packing.DATE, pack_pos=2),
+        etc = StorageStyle('ORIGINALDATE', packing=packing.DATE, pack_pos=2),
+        asf = StorageStyle('WM/OriginalReleaseYear', packing=packing.DATE,
+                           pack_pos=2),
+    )
+    original_date = CompositeDateField(original_year, original_month,
+                                       original_day)
+
     # Nonstandard metadata.
     artist_credit = MediaField(
         mp3 = StorageStyle('TXXX', id3_desc=u'Artist Credit'),
@@ -1102,29 +1208,53 @@ class MediaFile(object):
     )
 
     # ReplayGain fields.
-    rg_track_gain = FloatValueField(2, 'dB',
-        mp3 = StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_TRACK_GAIN'),
-        mp4 = None,
-        etc = StorageStyle(u'REPLAYGAIN_TRACK_GAIN'),
-        asf = StorageStyle(u'replaygain_track_gain'),
+    rg_track_gain = MediaField(out_type=float,
+        mp3 = [StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_TRACK_GAIN',
+                            float_places=2, suffix=u' dB'),
+               StorageStyle('COMM', id3_desc=u'iTunNORM', id3_lang='eng',
+                            packing=packing.SC, pack_pos=0, pack_type=float)],
+        mp4 = [StorageStyle('----:com.apple.iTunes:replaygain_track_gain',
+                            as_type=str, float_places=2, suffix=b' dB'),
+               StorageStyle('----:com.apple.iTunes:iTunNORM', 
+                            packing=packing.SC, pack_pos=0, pack_type=float)],
+        etc = StorageStyle(u'REPLAYGAIN_TRACK_GAIN',
+                           float_places=2, suffix=u' dB'),
+        asf = StorageStyle(u'replaygain_track_gain',
+                           float_places=2, suffix=u' dB'),
     )
-    rg_album_gain = FloatValueField(2, 'dB',
-        mp3 = StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_ALBUM_GAIN'),
-        mp4 = None,
-        etc = StorageStyle(u'REPLAYGAIN_ALBUM_GAIN'),
-        asf = StorageStyle(u'replaygain_album_gain'),
+    rg_album_gain = MediaField(out_type=float,
+        mp3 = StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_ALBUM_GAIN',
+                            float_places=2, suffix=u' dB'),
+        mp4 = StorageStyle('----:com.apple.iTunes:replaygain_album_gain',
+                           as_type=str, float_places=2, suffix=b' dB'),
+        etc = StorageStyle(u'REPLAYGAIN_ALBUM_GAIN',
+                           float_places=2, suffix=u' dB'),
+        asf = StorageStyle(u'replaygain_album_gain',
+                           float_places=2, suffix=u' dB'),
     )
-    rg_track_peak = FloatValueField(6, None,
-        mp3 = StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_TRACK_PEAK'),
-        mp4 = None,
-        etc = StorageStyle(u'REPLAYGAIN_TRACK_PEAK'),
-        asf = StorageStyle(u'replaygain_track_peak'),
+    rg_track_peak = MediaField(out_type=float,
+        mp3 = [StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_TRACK_PEAK',
+                            float_places=6),
+               StorageStyle('COMM', id3_desc=u'iTunNORM', id3_lang='eng',
+                            packing=packing.SC, pack_pos=1, pack_type=float)],
+        mp4 = [StorageStyle('----:com.apple.iTunes:replaygain_track_peak',
+                            as_type=str, float_places=6),
+               StorageStyle('----:com.apple.iTunes:iTunNORM',
+                            packing=packing.SC, pack_pos=1, pack_type=float)],
+        etc = StorageStyle(u'REPLAYGAIN_TRACK_PEAK',
+                           float_places=6),
+        asf = StorageStyle(u'replaygain_track_peak',
+                           float_places=6),
     )
-    rg_album_peak = FloatValueField(6, None,
-        mp3 = StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_ALBUM_PEAK'),
-        mp4 = None,
-        etc = StorageStyle(u'REPLAYGAIN_ALBUM_PEAK'),
-        asf = StorageStyle(u'replaygain_album_peak'),
+    rg_album_peak = MediaField(out_type=float,
+        mp3 = StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_ALBUM_PEAK',
+                            float_places=6),
+        mp4 = StorageStyle('----:com.apple.iTunes:replaygain_album_peak',
+                           as_type=str, float_places=6),
+        etc = StorageStyle(u'REPLAYGAIN_ALBUM_PEAK',
+                           float_places=6),
+        asf = StorageStyle(u'replaygain_album_peak',
+                           float_places=6),
     )
 
     @property

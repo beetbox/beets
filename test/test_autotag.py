@@ -322,19 +322,34 @@ class MultiDiscAlbumsInDirTest(unittest.TestCase):
         os.mkdir(self.base)
 
         self.dirs = [
-            os.path.join(self.base, 'album1'),
-            os.path.join(self.base, 'album1', 'disc 1'),
-            os.path.join(self.base, 'album1', 'disc 2'),
-            os.path.join(self.base, 'dir2'),
-            os.path.join(self.base, 'dir2', 'disc 1'),
-            os.path.join(self.base, 'dir2', 'something'),
+            # Nested album, multiple subdirs.
+            # Also, false positive marker in root dir, and subtitle for disc 3.
+            os.path.join(self.base, 'ABCD1234'),
+            os.path.join(self.base, 'ABCD1234', 'cd 1'),
+            os.path.join(self.base, 'ABCD1234', 'cd 3 - bonus'),
+
+            # Nested album, single subdir.
+            # Also, punctuation between marker and disc number.
+            os.path.join(self.base, 'album'),
+            os.path.join(self.base, 'album', 'cd _ 1'),
+
+            # Flattened album, case typo.
+            # Also, false positive marker in parent dir.
+            os.path.join(self.base, 'artist [CD5]'),
+            os.path.join(self.base, 'artist [CD5]', 'CAT disc 1'),
+            os.path.join(self.base, 'artist [CD5]', 'CAt disc 2'),
+
+            # Single disc album, sorted between CAT discs.
+            os.path.join(self.base, 'artist [CD5]', 'CATS'),
         ]
         self.files = [
-            os.path.join(self.base, 'album1', 'disc 1', 'song1.mp3'),
-            os.path.join(self.base, 'album1', 'disc 2', 'song2.mp3'),
-            os.path.join(self.base, 'album1', 'disc 2', 'song3.mp3'),
-            os.path.join(self.base, 'dir2', 'disc 1', 'song4.mp3'),
-            os.path.join(self.base, 'dir2', 'something', 'song5.mp3'),
+            os.path.join(self.base, 'ABCD1234', 'cd 1', 'song1.mp3'),
+            os.path.join(self.base, 'ABCD1234', 'cd 3 - bonus', 'song2.mp3'),
+            os.path.join(self.base, 'ABCD1234', 'cd 3 - bonus', 'song3.mp3'),
+            os.path.join(self.base, 'album', 'cd _ 1', 'song4.mp3'),
+            os.path.join(self.base, 'artist [CD5]', 'CAT disc 1', 'song5.mp3'),
+            os.path.join(self.base, 'artist [CD5]', 'CAt disc 2', 'song6.mp3'),
+            os.path.join(self.base, 'artist [CD5]', 'CATS', 'song7.mp3'),
         ]
 
         for path in self.dirs:
@@ -345,25 +360,35 @@ class MultiDiscAlbumsInDirTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.base)
 
-    def test_coalesce_multi_disc_album(self):
+    def test_coalesce_nested_album_multiple_subdirs(self):
         albums = list(autotag.albums_in_dir(self.base))
-        self.assertEquals(len(albums), 3)
+        self.assertEquals(len(albums), 4)
         root, items = albums[0]
-        self.assertEquals(root, os.path.join(self.base, 'album1'))
+        self.assertEquals(root, self.dirs[0:3])
         self.assertEquals(len(items), 3)
 
-    def test_separate_red_herring(self):
+    def test_coalesce_nested_album_single_subdir(self):
         albums = list(autotag.albums_in_dir(self.base))
         root, items = albums[1]
-        self.assertEquals(root, os.path.join(self.base, 'dir2', 'disc 1'))
+        self.assertEquals(root, self.dirs[3:5])
+        self.assertEquals(len(items), 1)
+
+    def test_coalesce_flattened_album_case_typo(self):
+        albums = list(autotag.albums_in_dir(self.base))
         root, items = albums[2]
-        self.assertEquals(root, os.path.join(self.base, 'dir2', 'something'))
+        self.assertEquals(root, self.dirs[6:8])
+        self.assertEquals(len(items), 2)
+
+    def test_single_disc_album(self):
+        albums = list(autotag.albums_in_dir(self.base))
+        root, items = albums[3]
+        self.assertEquals(root, self.dirs[8:])
+        self.assertEquals(len(items), 1)
 
     def test_do_not_yield_empty_album(self):
         # Remove all the MP3s.
         for path in self.files:
             os.remove(path)
-
         albums = list(autotag.albums_in_dir(self.base))
         self.assertEquals(len(albums), 0)
 

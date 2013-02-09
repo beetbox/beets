@@ -950,17 +950,19 @@ class Server(BaseServer):
     # Searching.
 
     tagtype_map = {
-        u'Artist':       u'artist',
-        u'Album':        u'album',
-        u'Title':        u'title',
-        u'Track':        u'track',
+        u'Artist':          u'artist',
+        u'Album':           u'album',
+        u'Title':           u'title',
+        u'Track':           u'track',
+        u'AlbumArtist':     u'albumartist',
+        u'AlbumArtistSort': u'albumartist_sort',
         # Name?
-        u'Genre':        u'genre',
-        u'Date':         u'year',
-        u'Composer':     u'composer',
+        u'Genre':           u'genre',
+        u'Date':            u'year',
+        u'Composer':        u'composer',
         # Performer?
-        u'Disc':         u'disc',
-        u'filename':     u'path', # Suspect.
+        u'Disc':            u'disc',
+        u'filename':        u'path', # Suspect.
     }
 
     def cmd_tagtypes(self, conn):

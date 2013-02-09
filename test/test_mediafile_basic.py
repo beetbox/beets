@@ -120,6 +120,10 @@ CORRECT_DICTS = {
         'albumdisambig':        u'',
         'artist_credit':        u'',
         'albumartist_credit':   u'',
+        'original_year':        0,
+        'original_month':       0,
+        'original_day':         0,
+        'original_date':        datetime.date.min,
     },
 
     # Full release date.

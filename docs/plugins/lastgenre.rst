@@ -51,8 +51,7 @@ be turned into coarser-grained ones that are present in the whitelist. This
 works using a tree of nested genre names, represented using `YAML`_, where the
 leaves of the tree represent the most specific genres.
 
-To enable canonicalization, first install the `pyyaml`_ module (``pip install
-pyyaml``). Then set the ``canonical`` configuration value::
+To enable canonicalization, set the ``canonical`` configuration value::
 
     lastgenre:
         canonical: ''
@@ -62,7 +61,21 @@ tree. You can also set it to a path, just like the ``whitelist`` config value,
 to use your own tree.
 
 .. _YAML: http://www.yaml.org/
-.. _pyyaml: http://pyyaml.org/
+
+
+Genre Source
+------------
+
+When looking up genres for albums or individual tracks, you can choose whether
+to use Last.fm tags on the album, the artist, or the track. For example, you
+might want all the albums for a certain artist to carry the same genre. Set the
+``source`` configuration value to "album", "track", or "artist", like so::
+
+    lastgenre:
+        source: artist
+
+The default is "album". When set to "track", the plugin will fetch *both*
+album-level and track-level genres for your music when importing albums.
 
 
 Running Manually
@@ -71,3 +84,6 @@ Running Manually
 In addition to running automatically on import, the plugin can also run manually
 from the command line. Use the command ``beet lastgenre [QUERY]`` to fetch
 genres for albums matching a certain query.
+
+To disable automatic genre fetching on import, set the ``auto`` config option
+to false.

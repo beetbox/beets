@@ -89,8 +89,6 @@ def compile_inline(python_code):
         return _func_func
 
 class InlinePlugin(BeetsPlugin):
-    template_fields = {}
-
     def __init__(self):
         super(InlinePlugin, self).__init__()
 
@@ -103,4 +101,4 @@ class InlinePlugin(BeetsPlugin):
             log.debug(u'adding template field %s' % key)
             func = compile_inline(view.get(unicode))
             if func is not None:
-                InlinePlugin.template_fields[key] = func
+                self.template_fields[key] = func
