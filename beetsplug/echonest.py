@@ -51,7 +51,8 @@ _echonestsummaries = {}
 _echonestfields = ['danceability', 'duration', 'energy', 'key', 'liveness',
                    'loudness', 'mode', 'speechiness', 'tempo', 'time_signature']
 
-def echonest_match(path):
+
+def _echonest_match(path):
     """Gets metadata for a file from Echonest and populates the
     _matches, _fingerprints, _echonestids, and _echonestsummaries
     dictionaries accordingly.
@@ -76,10 +77,10 @@ def echonest_match(path):
                           str(exc)))
         return None
 
-    _fingerprints[path] = query[0]['code']
     # The echonest codegen binaries always return a list, even for a
     # single file. Since we're only dealing with single files here, it
     # is safe to just grab the one element of said list
+    _fingerprints[path] = query[0]['code']
 
     log.debug('echonest: fingerprinted {0}'
               .format(util.syspath(path)))
@@ -141,8 +142,9 @@ def _all_releases(items):
     """Given an iterable of Items, determines (according to Echonest)
     which releases the items have in common. Generates release IDs.
     """
+
     # Count the number of "hits" for each release.
-    relcounts = defaultdict(int)
+    relcounts = collections.defaultdict(int)
     for item in items:
         if item.path not in _matches:
             continue
@@ -192,11 +194,11 @@ class EchonestPlugin(plugins.BeetsPlugin):
             if track:
                 tracks.append(track)
         log.debug('echonest: item candidates: {0}'.format(len(tracks)))
+
         return tracks
 
 
 # Hooks into import process.
-
 @EchonestPlugin.listen('import_task_start')
 def fingerprint_task(task, session):
     """Fingerprint each item in the task for later use during the
@@ -204,7 +206,7 @@ def fingerprint_task(task, session):
     """
     items = task.items if task.is_album else [task.item]
     for item in items:
-        echonest_match(item.path)
+        _echonest_match(item.path)
 
 @EchonestPlugin.listen('import_task_apply')
 def apply_echonest_metadata(task, session):
