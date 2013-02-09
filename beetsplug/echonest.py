@@ -30,9 +30,7 @@ import pyechonest.song
 import pyechonest.config
 import pyechonest.util
 
-API_KEY = 'O8IIFBUUBEO55GEHU'
 TRACK_ID_WEIGHT = 10.0
-COMMON_REL_THRESH = 0.6  # How many tracks must have an album in common?
 
 log = logging.getLogger('beets')
 
