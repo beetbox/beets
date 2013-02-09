@@ -928,26 +928,6 @@ class MediaFile(object):
         etc = StorageStyle('GROUPING'),
         asf = StorageStyle('WM/ContentGroupDescription'),
     )
-    year = MediaField(out_type=int,
-        mp3 = StorageStyle('TDRC', packing=packing.DATE, pack_pos=0),
-        mp4 = StorageStyle("\xa9day", packing=packing.DATE, pack_pos=0),
-        etc = [StorageStyle('DATE', packing=packing.DATE, pack_pos=0),
-               StorageStyle('YEAR')],
-        asf = StorageStyle('WM/Year', packing=packing.DATE, pack_pos=0),
-    )
-    month = MediaField(out_type=int,
-        mp3 = StorageStyle('TDRC', packing=packing.DATE, pack_pos=1),
-        mp4 = StorageStyle("\xa9day", packing=packing.DATE, pack_pos=1),
-        etc = StorageStyle('DATE', packing=packing.DATE, pack_pos=1),
-        asf = StorageStyle('WM/Year', packing=packing.DATE, pack_pos=1),
-    )
-    day = MediaField(out_type=int,
-        mp3 = StorageStyle('TDRC', packing=packing.DATE, pack_pos=2),
-        mp4 = StorageStyle("\xa9day", packing=packing.DATE, pack_pos=2),
-        etc = StorageStyle('DATE', packing=packing.DATE, pack_pos=2),
-        asf = StorageStyle('WM/Year', packing=packing.DATE, pack_pos=2),
-    )
-    date = CompositeDateField(year, month, day)
     track = MediaField(out_type=int,
         mp3 = StorageStyle('TRCK', packing=packing.SLASHED, pack_pos=0),
         mp4 = StorageStyle('trkn', packing=packing.TUPLE, pack_pos=0),
@@ -1100,6 +1080,56 @@ class MediaFile(object):
         etc = StorageStyle('MUSICBRAINZ_ALBUMCOMMENT'),
         asf = StorageStyle('MusicBrainz/Album Comment'),
     )
+
+    # Release date.
+    year = MediaField(out_type=int,
+        mp3 = StorageStyle('TDRC', packing=packing.DATE, pack_pos=0),
+        mp4 = StorageStyle("\xa9day", packing=packing.DATE, pack_pos=0),
+        etc = [StorageStyle('DATE', packing=packing.DATE, pack_pos=0),
+               StorageStyle('YEAR')],
+        asf = StorageStyle('WM/Year', packing=packing.DATE, pack_pos=0),
+    )
+    month = MediaField(out_type=int,
+        mp3 = StorageStyle('TDRC', packing=packing.DATE, pack_pos=1),
+        mp4 = StorageStyle("\xa9day", packing=packing.DATE, pack_pos=1),
+        etc = StorageStyle('DATE', packing=packing.DATE, pack_pos=1),
+        asf = StorageStyle('WM/Year', packing=packing.DATE, pack_pos=1),
+    )
+    day = MediaField(out_type=int,
+        mp3 = StorageStyle('TDRC', packing=packing.DATE, pack_pos=2),
+        mp4 = StorageStyle("\xa9day", packing=packing.DATE, pack_pos=2),
+        etc = StorageStyle('DATE', packing=packing.DATE, pack_pos=2),
+        asf = StorageStyle('WM/Year', packing=packing.DATE, pack_pos=2),
+    )
+    date = CompositeDateField(year, month, day)
+
+    # *Original* release date.
+    original_year = MediaField(out_type=int,
+        mp3 = StorageStyle('TDOR', packing=packing.DATE, pack_pos=0),
+        mp4 = StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR',
+                           packing=packing.DATE, pack_pos=0),
+        etc = StorageStyle('ORIGINALDATE', packing=packing.DATE, pack_pos=0),
+        asf = StorageStyle('WM/OriginalReleaseYear', packing=packing.DATE,
+                           pack_pos=0),
+    )
+    original_month = MediaField(out_type=int,
+        mp3 = StorageStyle('TDOR', packing=packing.DATE, pack_pos=1),
+        mp4 = StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR',
+                           packing=packing.DATE, pack_pos=1),
+        etc = StorageStyle('ORIGINALDATE', packing=packing.DATE, pack_pos=1),
+        asf = StorageStyle('WM/OriginalReleaseYear', packing=packing.DATE,
+                           pack_pos=1),
+    )
+    original_day = MediaField(out_type=int,
+        mp3 = StorageStyle('TDOR', packing=packing.DATE, pack_pos=2),
+        mp4 = StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR',
+                           packing=packing.DATE, pack_pos=2),
+        etc = StorageStyle('ORIGINALDATE', packing=packing.DATE, pack_pos=2),
+        asf = StorageStyle('WM/OriginalReleaseYear', packing=packing.DATE,
+                           pack_pos=2),
+    )
+    original_date = CompositeDateField(original_year, original_month,
+                                       original_day)
 
     # Nonstandard metadata.
     artist_credit = MediaField(

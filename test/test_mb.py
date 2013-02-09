@@ -95,7 +95,8 @@ class MBAlbumInfoTest(unittest.TestCase):
         self.assertEqual(d.album_id, 'ALBUM ID')
         self.assertEqual(d.artist, 'ARTIST NAME')
         self.assertEqual(d.artist_id, 'ARTIST ID')
-        self.assertEqual(d.year, 1984)
+        self.assertEqual(d.original_year, 1984)
+        self.assertEqual(d.year, 3001)
         self.assertEqual(d.artist_credit, 'ARTIST CREDIT')
 
     def test_parse_release_type(self):
@@ -106,9 +107,9 @@ class MBAlbumInfoTest(unittest.TestCase):
     def test_parse_release_full_date(self):
         release = self._make_release('1987-03-31')
         d = mb.album_info(release)
-        self.assertEqual(d.year, 1987)
-        self.assertEqual(d.month, 3)
-        self.assertEqual(d.day, 31)
+        self.assertEqual(d.original_year, 1987)
+        self.assertEqual(d.original_month, 3)
+        self.assertEqual(d.original_day, 31)
 
     def test_parse_tracks(self):
         tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
@@ -174,8 +175,8 @@ class MBAlbumInfoTest(unittest.TestCase):
     def test_parse_release_year_month_only(self):
         release = self._make_release('1987-03')
         d = mb.album_info(release)
-        self.assertEqual(d.year, 1987)
-        self.assertEqual(d.month, 3)
+        self.assertEqual(d.original_year, 1987)
+        self.assertEqual(d.original_month, 3)
 
     def test_no_durations(self):
         tracks = [self._make_track('TITLE', 'ID', None)]
@@ -186,9 +187,9 @@ class MBAlbumInfoTest(unittest.TestCase):
     def test_no_release_date(self):
         release = self._make_release(None)
         d = mb.album_info(release)
-        self.assertFalse(d.year)
-        self.assertFalse(d.month)
-        self.assertFalse(d.day)
+        self.assertFalse(d.original_year)
+        self.assertFalse(d.original_month)
+        self.assertFalse(d.original_day)
 
     def test_various_artists_defaults_false(self):
         release = self._make_release(None)

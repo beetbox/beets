@@ -60,7 +60,8 @@ class AlbumInfo(object):
                  label=None, mediums=None, artist_sort=None,
                  releasegroup_id=None, catalognum=None, script=None,
                  language=None, country=None, albumstatus=None, media=None,
-                 albumdisambig=None, artist_credit=None):
+                 albumdisambig=None, artist_credit=None, original_year=None,
+                 original_month=None, original_day=None):
         self.album = album
         self.album_id = album_id
         self.artist = artist
@@ -84,6 +85,9 @@ class AlbumInfo(object):
         self.media = media
         self.albumdisambig = albumdisambig
         self.artist_credit = artist_credit
+        self.original_year = original_year
+        self.original_month = original_month
+        self.original_day = original_day
 
     # Work around a bug in python-musicbrainz-ngs that causes some
     # strings to be bytes rather than Unicode.

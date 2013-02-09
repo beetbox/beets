@@ -4,6 +4,14 @@ Changelog
 1.1b2 (in development)
 ----------------------
 
+This version introduces one **change to the default behavior** that you should
+be aware of. Previously, when importing new albums matched in MusicBrainz, the
+date fields (``year``, ``month``, and ``day``) would be set to the release date
+of the *original* version of the album, as opposed to the specific date of the
+release selected. Now, these fields reflect the specific release and
+``original_year``, etc., reflect the earlier release date. If you want the old
+behavior, just set :ref:`original_date` to true in your config file.
+
 New configuration options:
 
 * :ref:`default_action` lets you determine the default (just-hit-return) option
@@ -13,24 +21,37 @@ New configuration options:
 * :ref:`max_rec` lets you define a maximum recommendation for albums with
   missing/extra tracks or differing track lengths/numbers. Thanks again to Tai
   Lee.
+* :ref:`original_date` determines whether, when importing new albums, the
+  ``year``, ``month``, and ``day`` fields should reflect the specific (e.g.,
+  reissue) release date or the original release date. Note that the original
+  release date is always available as ``original_year``, etc.
 * :ref:`clutter` controls which files should be ignored when cleaning up empty
   directories. Thanks to Steinþór Pálsson.
 * :doc:`/plugins/lastgenre`: A new configuration option lets you choose to
   retrieve artist-level tags as genres instead of album- or track-level tags.
   Thanks to Peter Fern and Peter Schnebel.
+* :ref:`max_filename_length` controls truncation of long filenames. Also, beets
+  now tries to determine the filesystem's maximum length automatically if you
+  leave this option unset.
+* You can now customize the character substituted for path separators (e.g., /)
+  in filenames via ``path_sep_replace``. The default is an underscore. Use this
+  setting with caution.
 
 Other new stuff:
 
 * Support for Windows Media/ASF audio files. Thanks to Dave Hayes.
 * New :doc:`/plugins/smartplaylist`: generate and maintain m3u playlist files
   based on beets queries. Thanks to Dang Mai Hai.
-* Two new plugin events were added: *database_change* and *cli_exit*. Thanks
-  again to Dang Mai Hai.
 * ReplayGain tags on MPEG-4/AAC files are now supported. And, even more
   astonishingly, ReplayGain values in MP3 and AAC files are now compatible with
   `iTunes Sound Check`_. Thanks to Dave Hayes.
 * Track titles in the importer UI's difference display are now either aligned
   vertically or broken across two lines for readability. Thanks to Tai Lee.
+* Albums and items have new fields reflecting the *original* release date
+  (``original_year``, ``original_month``, and ``original_day``). Previously,
+  when tagging from MusicBrainz, *only* the original date was stored; now, the
+  old fields refer to the *specific* release date (e.g., when the album was
+  reissued).
 * Some changes to the way candidates are recommended for selection, thanks to
   Tai Lee:
 
@@ -61,6 +82,8 @@ Other new stuff:
   highlighted.
 * The importer UI no longer shows a change when the track length difference is
   less than 10 seconds. (This threshold was previously 2 seconds.)
+* Two new plugin events were added: *database_change* and *cli_exit*. Thanks
+  again to Dang Mai Hai.
 * Plugins are now loaded in the order they appear in the config file. Thanks to
   Dang Mai Hai.
 * :doc:`/plugins/bpd`: Browse by album artist and album artist sort name.

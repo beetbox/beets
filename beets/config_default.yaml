@@ -26,7 +26,9 @@ replace:
     '[<>:"\?\*\|]': _
     '\.$': _
     '\s+$': ''
+path_sep_replace: _
 art_filename: cover
+max_filename_length: 0
 
 plugins: []
 pluginpath: []
@@ -36,6 +38,7 @@ timeout: 5.0
 per_disc_numbering: no
 verbose: no
 terminal_encoding: utf8
+original_date: no
 
 ui:
     terminal_width: 80

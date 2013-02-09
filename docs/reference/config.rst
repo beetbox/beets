@@ -149,6 +149,17 @@ Format to use when listing *albums* with :ref:`list-cmd` and other
 commands. Defaults to ``$albumartist - $album``. The ``-f`` command-line
 option overrides this setting.
 
+.. _original_date:
+
+original_date
+~~~~~~~~~~~~~
+
+Either ``yes`` or ``no``, indicating whether matched albums should have their
+``year``, ``month``, and ``day`` fields set to the release date of the
+*original* version of an album rather than the selected version of the release.
+That is, if this option is turned on, then ``year`` will always equal
+``original_year`` and so on. Default: ``no``.
+
 .. _per_disc_numbering:
 
 per_disc_numbering
@@ -182,12 +193,21 @@ environment variables.
 .. _clutter:
 
 clutter
--------
+~~~~~~~
 
 When beets imports all the files in a directory, it tries to remove the
 directory if it's empty. A directory is considered empty if it only contains
 files whose names match the glob patterns in `clutter`, which should be a list
 of strings. The default list consists of "Thumbs.DB" and ".DS_Store".
+
+.. _max_filename_length:
+
+max_filename_length
+~~~~~~~~~~~~~~~~~~~
+
+Set the maximum number of characters in a filename, after which names will be
+truncated. By default, beets tries to ask the filesystem for the correct
+maximum.
 
 Importer Options
 ----------------

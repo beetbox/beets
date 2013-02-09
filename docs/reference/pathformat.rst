@@ -170,10 +170,9 @@ Ordinary metadata:
 * genre
 * composer
 * grouping
-* year
-* month
-* day
-* track
+* year, month, day: The release date of the specific release.
+* original_year, original_month, original_day: The release date of the original
+  version of the album.
 * tracktotal
 * disc
 * disctotal
