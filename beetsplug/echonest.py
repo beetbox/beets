@@ -22,7 +22,7 @@ codegen binary.
 import logging
 import collections
 
-from beets import ui, util, config, plugins
+from beets import ui, util, config, plugins, mediafile
 from beets.util import confit
 from beets.autotag import hooks
 
@@ -48,8 +48,16 @@ _matches = {}
 _fingerprints = {}
 _echonestids = {}
 _echonestsummaries = {}
-_echonestfields = ['danceability', 'duration', 'energy', 'key', 'liveness',
-                   'loudness', 'mode', 'speechiness', 'tempo', 'time_signature']
+_echonestfields = {'danceability':float,
+                   'duration':float,
+                   'energy':float,
+                   'key':int,
+                   'liveness':float,
+                   'loudness':float,
+                   'mode':int,
+                   'speechiness':float,
+                   'tempo':float,
+                   'time_signature':int}
 
 
 def _echonest_match(path):
@@ -187,6 +195,28 @@ class EchonestPlugin(plugins.BeetsPlugin):
 
         return tracks
 
+    def item_fields(self):
+        def _format(field, fn=str.capitalize, sep=' '):
+            return sep.join(map(fn, field.split('_')))
+
+        descriptors = {}
+        if not config['echonest']['write'].get(bool):
+            return descriptors
+
+        for field, out_type in _echonestfields.iteritems():
+            mp3 = mediafile.StorageStyle('TXXX', id3_desc='Echonest ' + _format(field))
+            mp4 = mediafile.StorageStyle("----:com.apple.iTunes:Echonest {0}".format(_format(field)))
+            etc = mediafile.StorageStyle('ECHONEST_' + _format(field, str.upper, '_'))
+            asf = mediafile.StorageStyle('Echonest/' + _format(field))
+            media_field = mediafile.MediaField(out_type=out_type,
+                                               mp3=mp3,
+                                               mp4=mp4,
+                                               asf=asf,
+                                               etc=etc)
+            descriptors['echonest_' + field] = media_field
+
+        return descriptors
+
 
 # Hooks into import process.
 @EchonestPlugin.listen('import_task_start')
@@ -208,7 +238,7 @@ def apply_echonest_metadata(task, session):
         if item.path in _echonestids:
             item.echonest_id = _echonestids[item.path]
         if item.path in _echonestsummaries:
-            for f in _echonestfields:
+            for f in _echonestfields.keys():
                 setattr(item, 'echonest_' + f, _echonestsummaries[item.path][f])
 
 
@@ -216,7 +246,7 @@ def apply_echonest_metadata(task, session):
 # Additional path fields. Since there's a bunch of them defined in
 # _echonestfields, we define these dynamically
 def _make_templ_function(field):
-    """Build a function definition ready for evaluation string as
+    """Build a function definition string ready for evaluation as
     @template_field expects it"""
     return """\
 @EchonestPlugin.template_field('{f}')
@@ -227,5 +257,5 @@ def _tmpl_{f}(item):
     return v
 """.format(f='echonest_' + field)
 
-for f in _echonestfields:
+for f in _echonestfields.keys():
     exec _make_templ_function(f)
