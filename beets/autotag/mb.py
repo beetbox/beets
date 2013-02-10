@@ -48,16 +48,6 @@ RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits']
 TRACK_INCLUDES = ['artists']
 
-# python-musicbrainz-ngs search functions: tolerate different API versions.
-if hasattr(musicbrainzngs, 'release_search'):
-    # Old API names.
-    _mb_release_search = musicbrainzngs.release_search
-    _mb_recording_search = musicbrainzngs.recording_search
-else:
-    # New API names.
-    _mb_release_search = musicbrainzngs.search_releases
-    _mb_recording_search = musicbrainzngs.search_recordings
-
 def configure():
     """Set up the python-musicbrainz-ngs module according to settings
     from the beets configuration. This should be called at startup.
@@ -264,7 +254,7 @@ def match_album(artist, album, tracks=None, limit=SEARCH_LIMIT):
         return
 
     try:
-        res = _mb_release_search(limit=limit, **criteria)
+        res = musicbrainzngs.search_releases(limit=limit, **criteria)
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, 'release search', criteria,
                                   traceback.format_exc())
@@ -288,7 +278,7 @@ def match_track(artist, title, limit=SEARCH_LIMIT):
         return
 
     try:
-        res = _mb_recording_search(limit=limit, **criteria)
+        res = musicbrainzngs.search_recordings(limit=limit, **criteria)
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, 'recording search', criteria,
                                   traceback.format_exc())
