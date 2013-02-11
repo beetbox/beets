@@ -33,6 +33,8 @@ New configuration options:
 * :ref:`max_filename_length` controls truncation of long filenames. Also, beets
   now tries to determine the filesystem's maximum length automatically if you
   leave this option unset.
+* :doc:`/plugins/fetchart`: The ``remote_priority`` option searches remote
+  (Web) art sources even when local art is present.
 * You can now customize the character substituted for path separators (e.g., /)
   in filenames via ``path_sep_replace``. The default is an underscore. Use this
   setting with caution.
