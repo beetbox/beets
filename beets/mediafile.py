@@ -547,7 +547,7 @@ class MediaField(object):
             # Remove suffix.
             if style.suffix and isinstance(out, (str, unicode)):
                 if out.endswith(style.suffix):
-                    out = out[:len(style.suffix)]
+                    out = out[:-len(style.suffix)]
 
             # MPEG-4 freeform frames are (should be?) encoded as UTF-8.
             if obj.type == 'mp4' and style.key.startswith('----:') and \
