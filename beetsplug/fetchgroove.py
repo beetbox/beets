@@ -28,7 +28,7 @@ from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_obj, Subcommand
 from beets.util import mkdirall
 
-plugin = 'fetchmissing'
+plugin = 'fetchgroove'
 log = logging.getLogger('beets')
 client = grooveshark.Client()
 client.init()
