@@ -113,6 +113,7 @@ Download and automatically import all missing tracks::
 Print out a unicode histogram of the missing track years using `spark`_::
 
     beet missing -f '$year' | spark.py
+    ▆▁▆█▄▇▇▄▇▇▁█▇▆▇▂▄█▁██▂█▁▁██▁█▂▇▆▂▇█▇▇█▆▆▇█▇█▇▆██▂▇
 
 --------------
 
