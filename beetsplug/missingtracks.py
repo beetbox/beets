@@ -36,7 +36,7 @@ client.init()
 
 def _missing(album, lib=None):
     '''Query MusicBrainz to determine items missing from `album`,
-    optionally caching them in `lib` to avoid further queries.
+     caching them in `lib` to avoid further queries.
     '''
     item_paths = filter(None, map(lambda i: i.path, album.items()))
     item_mbids = map(lambda x: x.mb_trackid,
@@ -71,27 +71,8 @@ def _matches(songs, albums, artists):
     `artists`, return an iterator of any `song`s spanning a transitive
     closure over all three collections.
     '''
-    ### FIXME: the commented stuff uses an internal dictionary, and
-    ### provides more matches, for example for tracks prefixed by
-    ### numbers, etc.  The currently uncommented method appears to only
-    ### do exact string matches.  Have to understand why.
-
-    # songs_dict = map(lambda x: x.export(), songs)
-    # albums_dict = map(lambda x: x.export(), albums)
-    # artists_dict = map(lambda x: x.export(), artists)
-    # for artist in artists_dict:
-    #     for album in albums_dict:
-    #         for song in songs_dict:
-    #             song_from_album = song['album_id'] == album['id']
-    #             song_from_artist = song['artist_id'] == artist['id']
-    #             album_from_artist = album['artist_id'] == artist['id']
-    #             if song_from_album and song_from_artist and album_from_artist:
-    #                yield grooveshark.Song.from_export(song, client.connection)
-
     # naive algorithm with O(n*m*p). must profile to check whether problematic
     # TODO: index everything in some data structure for O(n+m+p)
-    # currently checks for songs with associated album and artist.
-    # TODO: account for case of singletons (ie. songs with no albums)
     for artist in artists:
         for album in albums:
             for song in songs:
@@ -99,8 +80,8 @@ def _matches(songs, albums, artists):
                 song_from_artist = song.artist.id == artist.id
                 album_from_artist = album.artist.id == artist.id
                 if song_from_album and song_from_artist and album_from_artist:
-                    log.debug('{0}: found {1} in grooveshark'.format(plugin,
-                                                                     song))
+                    log.debug('{0}: found {1}'.format(plugin,
+                                                      unicode(song.name)))
                     yield song
 
 
@@ -157,9 +138,13 @@ def _candidates(item):
     # the 3 calls are necessary because grooveshark's API does not
     # offer, to my knowledge, an advanced query syntax, so we query for
     # all 3 fields, and then try to filter songs with `_matches`
-    songs = client.search(item.title, type=client.SONGS)
-    albums = client.search(item.album, type=client.ALBUMS)
-    artists = client.search(item.albumartist, type=client.ARTISTS)
+    songs = list(client.search(item.title, type=client.SONGS))
+    albums = list(client.search(item.album, type=client.ALBUMS))
+    artists = list(client.search(item.albumartist, type=client.ARTISTS))
+
+    log.debug('{0}: got {1} potential songs'.format(plugin, len(songs)))
+    log.debug('{0}: got {1} potential albums'.format(plugin, len(albums)))
+    log.debug('{0}: got {1} potential artists'.format(plugin, len(artists)))
 
     for song in _matches(songs, albums, artists):
         yield song
@@ -173,11 +158,23 @@ def _download(song, directory=None):
     path = os.path.join(directory, song.id)
     mkdirall(path)
 
+    data = song.stream.data
+    size = song.stream.size
+    read = 0
+    buff = 512 * 1024
     with open(path, 'wb') as f:
-        data = song.stream.data.read()
-        f.write(data)
-        nbytes = len(data)
-        log.debug('{0}: wrote {1} bytes to {2}'.format(plugin, nbytes, path))
+        while True:
+            chunk = data.read(buff)
+            if not chunk:
+                break
+            nbytes = len(chunk)
+            read += nbytes
+            f.write(chunk)
+            log.debug('{0}: wrote {1}/{2} bytes to {3}'
+                      .format(plugin, nbytes, buff, path))
+
+        log.debug('{0}: wrote {1}/{2} bytes to {3}'
+                  .format(plugin, read, size, path))
 
     return path
 
