@@ -60,6 +60,7 @@ disabled by default, but you can turn them on as described above.
    convert
    info
    smartplaylist
+   missingtracks
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -108,6 +109,8 @@ Miscellaneous
 * :doc:`convert`: Transcode music and embed album art while exporting to
   a different directory.
 * :doc:`info`: Print music files' tags to the console.
+* :doc:`missingtracks`: List and-or download missing tracks in your
+  collection.
 
 .. _MPD: http://mpd.wikia.com/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients
@@ -143,5 +146,5 @@ plugins </plugins/writing>`.
 
 .. toctree::
     :hidden:
-    
+
     writing
