@@ -4,7 +4,7 @@ Missing Tracks Plugin
 This plugin adds a new command, ``missing`` or ``miss``, which finds and
 lists, for every album in your collection, which tracks are missing.
 Optionally, it downloads each track it can find on
-`Grooveshark <https://grooveshark.com/>`_, by default to a temporary
+`Grooveshark`_, by default to a temporary
 directory of your choosing for a later ``import``, or directly into your
 music collection base directory.
 
@@ -14,7 +14,7 @@ the library [#]_.
 
 Downloading missing files requires four additional network calls: three
 to determine with no ambiguity which stream to choose [#]_ and
-one to actually download the file.
+one to actually download the file [#]_.
 
 Installation
 ------------
@@ -112,15 +112,20 @@ Download and automatically import all missing tracks::
 
 Print out a unicode histogram of the missing track years using `spark`_::
 
-    beet missing -f '$year' | spark.py
+    beet missing -f '$year' | spark
     ▆▁▆█▄▇▇▄▇▇▁█▇▆▇▂▄█▁██▂█▁▁██▁█▂▇▆▂▇█▇▇█▆▆▇█▇█▇▆██▂▇
 
 --------------
 
+.. _Grooveshark: https://grooveshark.com/
 .. _pygrooveshark: https://github.com/koehlma/pygrooveshark
 .. _pip: http://www.pip-installer.org/
 .. _Calexico: http://www.casadecalexico.com/
 .. _spark: https://github.com/holman/spark
+
+.. [#] Please be aware that this might well be against Grooveshark's
+       terms of use. I don't know, I'm not a lawyer. You might get your
+       IP and-or account, if you have one, banned.
 
 .. [#] This has the potential to break some use cases that assume each item in
        the collection has a path field (that is, some existing file is attached
