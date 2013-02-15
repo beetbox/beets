@@ -38,6 +38,7 @@ disabled by default, but you can turn them on as described above.
    :hidden:
 
    chroma
+   echonest
    lyrics
    echonest_tempo
    bpd
@@ -67,6 +68,10 @@ Autotagger Extensions
 * :doc:`chroma`: Use acoustic fingerprinting to identify audio files with
   missing or incorrect metadata.
 
+* :doc:`echonest`: Use echonest fingerprinting to identify audio files with
+  missing or incorrect metadata.
+
+
 Metadata
 ''''''''
 
@@ -78,6 +83,9 @@ Metadata
 * :doc:`replaygain`: Calculate volume normalization for players that support it.
 * :doc:`scrub`: Clean extraneous metadata from music files.
 * :doc:`zero`: Nullify fields by pattern or unconditionally.
+* :doc:`echonest`: Automatically fetch audio descriptors
+  (danceability, duration, energy, key, liveness, loudness, mode,
+  speechiness, tempo, time_signature).
 
 Path Formats
 ''''''''''''

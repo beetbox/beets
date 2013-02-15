@@ -105,6 +105,19 @@ ITEM_FIELDS = [
     ('bitdepth',    'int',  False, True),
     ('channels',    'int',  False, True),
     ('mtime',       'int',  False, False),
+
+    ('echonest_fingerprint',    'text', True, False),
+    ('echonest_id',             'text', True, False),
+    ('echonest_danceability',   'real', True, False),
+    ('echonest_duration',       'real', True, False),
+    ('echonest_energy',         'real', True, False),
+    ('echonest_key',            'int',  True, False),
+    ('echonest_liveness',       'real', True, False),
+    ('echonest_loudness',       'real', True, False),
+    ('echonest_mode',           'int',  True, False),
+    ('echonest_speechiness',    'real', True, False),
+    ('echonest_tempo',          'real', True, False),
+    ('echonest_time_signature', 'int',  True, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
@@ -484,6 +497,34 @@ class MatchQuery(FieldQuery):
     def match(self, item):
         return self.pattern == getattr(item, self.field)
 
+class RangeQuery(FieldQuery):
+    """A query that filters on inequalities in an item field."""
+    def clause(self):
+        pattern = self.pattern
+        lower, upper = pattern.strip().split('...')
+        if lower and upper:
+            return self.field + " BETWEEN ? AND ?", [lower, upper]
+        elif lower:
+            return self.field + " > ?", [lower]
+        elif upper:
+            return self.field + " < ?", [upper]
+        else:
+            return self.field + " = ?", [pattern]
+
+    def match(self, item):
+        pattern = self.pattern
+        lower, upper = pattern.strip().split('...')
+        value = getattr(item, self.field)
+        if lower and upper:
+            return value > lower and  value < upper
+        elif lower:
+            return value > lower
+        elif upper:
+            return value < upper
+        else:
+            return value ==  pattern
+
+
 class SubstringQuery(FieldQuery):
     """A query that matches a substring in a specific item field."""
     def clause(self):
@@ -642,6 +683,8 @@ class CollectionQuery(Query):
             elif key.lower() in all_keys:
                 if is_regexp:
                     subqueries.append(RegexpQuery(key.lower(), pattern))
+                elif '...' in pattern:
+                    subqueries.append(RangeQuery(key.lower(), pattern))
                 else:
                     subqueries.append(SubstringQuery(key.lower(), pattern))
 
