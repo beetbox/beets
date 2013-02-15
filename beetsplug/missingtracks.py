@@ -28,7 +28,7 @@ from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_obj, Subcommand
 from beets.util import mkdirall
 
-plugin = 'fetchgroove'
+plugin = 'missingtracks'
 log = logging.getLogger('beets')
 client = grooveshark.Client()
 client.init()
@@ -213,11 +213,11 @@ def _update(item, path):
     return item
 
 
-class GroovesharkPlugin(BeetsPlugin):
+class MissingTracksPlugin(BeetsPlugin):
     '''Fetch tracks missing from albums from grooveshark.
     '''
     def __init__(self):
-        super(GroovesharkPlugin, self).__init__()
+        super(MissingTracksPlugin, self).__init__()
 
         self.config.add({'download': False,
                          'move': False,
