@@ -95,6 +95,7 @@ Other new stuff:
 * Fix an error when migrating the ``.beetsstate`` file on Windows.
 * A nicer error message is now given when the configuration file contains tabs.
   (YAML doesn't like tabs.)
+* Fix the ``-l`` (log path) command-line option for the ``import`` command.
 
 .. _iTunes Sound Check: http://support.apple.com/kb/HT2425
 
