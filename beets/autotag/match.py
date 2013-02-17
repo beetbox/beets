@@ -37,7 +37,7 @@ ALBUM_WEIGHT = 3.0
 TRACK_WEIGHT = 1.0
 # The weight of a missing track.
 MISSING_WEIGHT = 0.9
-# The weight of an extra (umatched) track.
+# The weight of an extra (unmatched) track.
 UNMATCHED_WEIGHT = 0.6
 # These distances are components of the track distance (that is, they
 # compete against each other but not ARTIST_WEIGHT and ALBUM_WEIGHT;
