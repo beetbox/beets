@@ -81,10 +81,6 @@ recommendation = enum('none', 'low', 'medium', 'strong', name='recommendation')
 # differing artists.
 VA_ARTISTS = (u'', u'various artists', u'va', u'unknown')
 
-# Autotagging exceptions.
-class AutotagError(Exception):
-    pass
-
 # Global logger.
 log = logging.getLogger('beets')
 
@@ -418,7 +414,6 @@ def tag_album(items, search_artist=None, search_album=None,
         - A recommendation.
     If search_artist and search_album or search_id are provided, then
     they are used as search terms in place of the current metadata.
-    May raise an AutotagError if existing metadata is insufficient.
     """
     # Get current metadata.
     cur_artist, cur_album, artist_consensus = current_metadata(items)

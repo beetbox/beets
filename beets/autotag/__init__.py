@@ -23,7 +23,6 @@ from beets.util import sorted_walk, ancestry, displayable_path
 
 # Parts of external interface.
 from .hooks import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch
-from .match import AutotagError
 from .match import tag_item, tag_album
 from .match import recommendation
 

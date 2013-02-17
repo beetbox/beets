@@ -539,21 +539,16 @@ class TerminalImportSession(importer.ImportSession):
             elif choice is importer.action.MANUAL:
                 # Try again with manual search terms.
                 search_artist, search_album = manual_search(False)
-                try:
-                    _, _, candidates, rec = \
-                        autotag.tag_album(task.items, search_artist,
-                                          search_album)
-                except autotag.AutotagError:
-                    candidates, rec = None, None
+                _, _, candidates, rec = autotag.tag_album(
+                    task.items, search_artist, search_album
+                )
             elif choice is importer.action.MANUAL_ID:
                 # Try a manually-entered ID.
                 search_id = manual_id(False)
                 if search_id:
-                    try:
-                        _, _, candidates, rec = \
-                            autotag.tag_album(task.items, search_id=search_id)
-                    except autotag.AutotagError:
-                        candidates, rec = None, None
+                    _, _, candidates, rec = autotag.tag_album(
+                        task.items, search_id=search_id
+                    )
             else:
                 # We have a candidate! Finish tagging. Here, choice is an
                 # AlbumMatch object.
