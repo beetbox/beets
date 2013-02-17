@@ -1,8 +1,13 @@
 Changelog
 =========
 
-1.1b2 (in development)
-----------------------
+1.1b2 (February 16, 2013)
+-------------------------
+
+The second beta of beets 1.1 uses the fancy new configuration infrastructure to
+add many, many new config options. The import process is more flexible;
+filenames can be customized in more detail; and more. This release also
+supports Windows Media (ASF) files and iTunes Sound Check volume normalization.
 
 This version introduces one **change to the default behavior** that you should
 be aware of. Previously, when importing new albums matched in MusicBrainz, the
