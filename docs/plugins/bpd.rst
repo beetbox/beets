@@ -27,6 +27,10 @@ with its Python bindings) on your system.
 * On Windows, you may want to try `GStreamer WinBuilds`_ (cavet emptor: I
   haven't tried this).
 
+You will also need the various GStreamer plugin packages to make everything
+work. See the :doc:`/plugins/chroma` documentation for more information on
+installing GStreamer plugins.
+
 .. _MacPorts: http://www.macports.org/
 .. _GStreamer WinBuilds: http://www.gstreamer-winbuild.ylatuya.es/
 .. _Homebrew: http://mxcl.github.com/homebrew/
