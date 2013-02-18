@@ -633,11 +633,9 @@ def initial_lookup(session):
         plugins.send('import_task_start', session=session, task=task)
 
         log.debug('Looking up: %s' % displayable_path(task.paths))
-        try:
-            task.set_candidates(*autotag.tag_album(task.items,
-                                                   config['import']['timid']))
-        except autotag.AutotagError:
-            task.set_null_candidates()
+        task.set_candidates(
+            *autotag.tag_album(task.items, config['import']['timid'].get(bool))
+        )
 
 def user_query(session):
     """A coroutine for interfacing with the user about the tagging

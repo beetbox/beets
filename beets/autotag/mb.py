@@ -164,7 +164,7 @@ def album_info(release):
                             int(medium['position']),
                             int(track['position']))
             if track.get('title'):
-                # Track title may be distinct from underling recording
+                # Track title may be distinct from underlying recording
                 # title.
                 ti.title = track['title']
             ti.disctitle = disctitle
