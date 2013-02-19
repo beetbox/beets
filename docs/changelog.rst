@@ -4,6 +4,9 @@ Changelog
 1.1b3 (in development)
 ----------------------
 
+* :doc:`/plugins/echonest_tempo`: Avoid an error when track metadata contains
+  newlines.
+
 1.1b2 (February 16, 2013)
 -------------------------
 

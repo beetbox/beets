@@ -59,6 +59,8 @@ def get_tempo(artist, title):
     """Get the tempo for a song."""
     # We must have sufficient metadata for the lookup. Otherwise the API
     # will just complain.
+    artist = artist.replace(u'\n', u' ').strip()
+    title = title.replace(u'\n', u' ').strip()
     if not artist or not title:
         return None
 
