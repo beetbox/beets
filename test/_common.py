@@ -86,7 +86,8 @@ class TestCase(unittest.TestCase):
     """A unittest.TestCase subclass that saves and restores beets'
     global configuration. This allows tests to make temporary
     modifications that will then be automatically removed when the test
-    completes. Also provides some additional assertion methods.
+    completes. Also provides some additional assertion methods, a
+    temporary directory, and a DummyIO.
     """
     def setUp(self):
         # A "clean" source list including only the defaults.
@@ -105,10 +106,14 @@ class TestCase(unittest.TestCase):
         self._old_home = os.environ.get('HOME')
         os.environ['HOME'] = self.temp_dir
 
+        # Initialize, but don't install, a DummyIO.
+        self.io = DummyIO()
+
     def tearDown(self):
         if os.path.isdir(self.temp_dir):
             shutil.rmtree(self.temp_dir)
         os.environ['HOME'] = self._old_home
+        self.io.restore()
 
     def assertExists(self, path):
         self.assertTrue(os.path.exists(path),

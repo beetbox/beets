@@ -34,7 +34,7 @@ from beets.util import confit
 
 class ListTest(_common.TestCase):
     def setUp(self):
-        self.io = _common.DummyIO()
+        super(ListTest, self).setUp()
         self.io.install()
 
         self.lib = library.Library(':memory:')
@@ -43,9 +43,6 @@ class ListTest(_common.TestCase):
         self.lib.add(i)
         self.lib.add_album([i])
         self.item = i
-
-    def tearDown(self):
-        self.io.restore()
 
     def _run_list(self, query='', album=False, path=False, fmt=None):
         commands.list_items(self.lib, query, album, fmt)
@@ -119,7 +116,6 @@ class RemoveTest(_common.TestCase):
     def setUp(self):
         super(RemoveTest, self).setUp()
 
-        self.io = _common.DummyIO()
         self.io.install()
 
         self.libdir = os.path.join(self.temp_dir, 'testlibdir')
@@ -129,9 +125,6 @@ class RemoveTest(_common.TestCase):
         self.lib = library.Library(':memory:', self.libdir)
         self.i = library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
         self.lib.add(self.i, True)
-
-    def tearDown(self):
-        self.io.restore()
 
     def test_remove_items_no_delete(self):
         self.io.addinput('y')
@@ -151,7 +144,6 @@ class ModifyTest(_common.TestCase):
     def setUp(self):
         super(ModifyTest, self).setUp()
 
-        self.io = _common.DummyIO()
         self.io.install()
 
         self.libdir = os.path.join(self.temp_dir, 'testlibdir')
@@ -161,9 +153,6 @@ class ModifyTest(_common.TestCase):
         self.i = library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
         self.lib.add(self.i, True)
         self.album = self.lib.add_album([self.i])
-
-    def tearDown(self):
-        self.io.restore()
 
     def _modify(self, mods, query=(), write=False, move=False, album=False):
         self.io.addinput('y')
@@ -230,7 +219,6 @@ class MoveTest(_common.TestCase):
     def setUp(self):
         super(MoveTest, self).setUp()
 
-        self.io = _common.DummyIO()
         self.io.install()
 
         self.libdir = os.path.join(self.temp_dir, 'testlibdir')
@@ -247,9 +235,6 @@ class MoveTest(_common.TestCase):
 
         # Alternate destination directory.
         self.otherdir = os.path.join(self.temp_dir, 'testotherdir')
-
-    def tearDown(self):
-        self.io.restore()
 
     def _move(self, query=(), dest=None, copy=False, album=False):
         commands.move_items(self.lib, dest, query, copy, album)
@@ -300,7 +285,6 @@ class UpdateTest(_common.TestCase):
     def setUp(self):
         super(UpdateTest, self).setUp()
 
-        self.io = _common.DummyIO()
         self.io.install()
 
         self.libdir = os.path.join(self.temp_dir, 'testlibdir')
@@ -316,9 +300,6 @@ class UpdateTest(_common.TestCase):
         _common.touch(artfile)
         self.album.set_art(artfile)
         os.remove(artfile)
-
-    def tearDown(self):
-        self.io.restore()
 
     def _update(self, query=(), album=False, move=False, reset_mtime=True):
         self.io.addinput('y')
@@ -402,10 +383,8 @@ class UpdateTest(_common.TestCase):
 
 class PrintTest(_common.TestCase):
     def setUp(self):
-        self.io = _common.DummyIO()
+        super(PrintTest, self).setUp()
         self.io.install()
-    def tearDown(self):
-        self.io.restore()
 
     def test_print_without_locale(self):
         lang = os.environ.get('LANG')
@@ -443,11 +422,7 @@ class PrintTest(_common.TestCase):
 class AutotagTest(_common.TestCase):
     def setUp(self):
         super(AutotagTest, self).setUp()
-        self.io = _common.DummyIO()
         self.io.install()
-    def tearDown(self):
-        super(AutotagTest, self).tearDown()
-        self.io.restore()
 
     def _no_candidates_test(self, result):
         task = importer.ImportTask(
@@ -478,10 +453,8 @@ class ImportTest(_common.TestCase):
 
 class InputTest(_common.TestCase):
     def setUp(self):
-        self.io = _common.DummyIO()
+        super(InputTest, self).setUp()
         self.io.install()
-    def tearDown(self):
-        self.io.restore()
 
     def test_manual_search_gets_unicode(self):
         self.io.addinput('\xc3\x82me')
@@ -493,13 +466,11 @@ class InputTest(_common.TestCase):
 class ConfigTest(_common.TestCase):
     def setUp(self):
         super(ConfigTest, self).setUp()
-        self.io = _common.DummyIO()
         self.io.install()
         self.test_cmd = ui.Subcommand('test', help='test')
         commands.default_commands.append(self.test_cmd)
     def tearDown(self):
         super(ConfigTest, self).tearDown()
-        self.io.restore()
         commands.default_commands.pop()
     def _run_main(self, args, config_yaml, func):
         self.test_cmd.func = func
@@ -566,11 +537,7 @@ class ConfigTest(_common.TestCase):
 class ShowdiffTest(_common.TestCase):
     def setUp(self):
         super(ShowdiffTest, self).setUp()
-        self.io = _common.DummyIO()
         self.io.install()
-    def tearDown(self):
-        super(ShowdiffTest, self).tearDown()
-        self.io.restore()
 
     def test_showdiff_strings(self):
         commands._showdiff('field', 'old', 'new')
@@ -621,11 +588,9 @@ class ShowdiffTest(_common.TestCase):
 AN_ID = "28e32c71-1450-463e-92bf-e0a46446fc11"
 class ManualIDTest(_common.TestCase):
     def setUp(self):
+        super(ManualIDTest, self).setUp()
         _common.log.setLevel(logging.CRITICAL)
-        self.io = _common.DummyIO()
         self.io.install()
-    def tearDown(self):
-        self.io.restore()
 
     def test_id_accepted(self):
         self.io.addinput(AN_ID)
@@ -645,7 +610,6 @@ class ManualIDTest(_common.TestCase):
 class ShowChangeTest(_common.TestCase):
     def setUp(self):
         super(ShowChangeTest, self).setUp()
-        self.io = _common.DummyIO()
         self.io.install()
 
         self.items = [_common.item()]
@@ -655,10 +619,6 @@ class ShowChangeTest(_common.TestCase):
             'the album', 'album id', 'the artist', 'artist id', [
                 autotag.TrackInfo('the title', 'track id', index=1)
         ])
-
-    def tearDown(self):
-        super(ShowChangeTest, self).tearDown()
-        self.io.restore()
 
     def _show_change(self, items=None, info=None,
                      cur_artist='the artist', cur_album='the album',

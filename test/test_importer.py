@@ -31,7 +31,6 @@ class NonAutotaggedImportTest(_common.TestCase):
     def setUp(self):
         super(NonAutotaggedImportTest, self).setUp()
 
-        self.io = _common.DummyIO()
         self.io.install()
 
         self.libdb = os.path.join(self.temp_dir, 'testlib.blb')
