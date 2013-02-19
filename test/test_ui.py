@@ -117,10 +117,12 @@ class ListTest(_common.TestCase):
 
 class RemoveTest(_common.TestCase):
     def setUp(self):
+        super(RemoveTest, self).setUp()
+
         self.io = _common.DummyIO()
         self.io.install()
 
-        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
         os.mkdir(self.libdir)
 
         # Copy a file into the library.
@@ -130,7 +132,6 @@ class RemoveTest(_common.TestCase):
 
     def tearDown(self):
         self.io.restore()
-        shutil.rmtree(self.libdir)
 
     def test_remove_items_no_delete(self):
         self.io.addinput('y')
@@ -148,11 +149,12 @@ class RemoveTest(_common.TestCase):
 
 class ModifyTest(_common.TestCase):
     def setUp(self):
+        super(ModifyTest, self).setUp()
+
         self.io = _common.DummyIO()
         self.io.install()
 
-        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
-        os.mkdir(self.libdir)
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
 
         # Copy a file into the library.
         self.lib = library.Library(':memory:', self.libdir)
@@ -162,7 +164,6 @@ class ModifyTest(_common.TestCase):
 
     def tearDown(self):
         self.io.restore()
-        shutil.rmtree(self.libdir)
 
     def _modify(self, mods, query=(), write=False, move=False, album=False):
         self.io.addinput('y')
@@ -227,10 +228,12 @@ class ModifyTest(_common.TestCase):
 
 class MoveTest(_common.TestCase):
     def setUp(self):
+        super(MoveTest, self).setUp()
+
         self.io = _common.DummyIO()
         self.io.install()
 
-        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
         os.mkdir(self.libdir)
 
         self.itempath = os.path.join(self.libdir, 'srcfile')
@@ -243,13 +246,10 @@ class MoveTest(_common.TestCase):
         self.album = self.lib.add_album([self.i])
 
         # Alternate destination directory.
-        self.otherdir = os.path.join(_common.RSRC, 'testotherdir')
+        self.otherdir = os.path.join(self.temp_dir, 'testotherdir')
 
     def tearDown(self):
         self.io.restore()
-        shutil.rmtree(self.libdir)
-        if os.path.exists(self.otherdir):
-            shutil.rmtree(self.otherdir)
 
     def _move(self, query=(), dest=None, copy=False, album=False):
         commands.move_items(self.lib, dest, query, copy, album)
@@ -298,11 +298,12 @@ class MoveTest(_common.TestCase):
 
 class UpdateTest(_common.TestCase):
     def setUp(self):
+        super(UpdateTest, self).setUp()
+
         self.io = _common.DummyIO()
         self.io.install()
 
-        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
-        os.mkdir(self.libdir)
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
 
         # Copy a file into the library.
         self.lib = library.Library(':memory:', self.libdir)
@@ -318,7 +319,6 @@ class UpdateTest(_common.TestCase):
 
     def tearDown(self):
         self.io.restore()
-        shutil.rmtree(self.libdir)
 
     def _update(self, query=(), album=False, move=False, reset_mtime=True):
         self.io.addinput('y')
