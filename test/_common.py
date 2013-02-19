@@ -17,8 +17,8 @@ import time
 import sys
 import os
 import logging
-import contextlib
-import copy
+import tempfile
+import shutil
 
 # Use unittest2 on Python < 2.7.
 try:
@@ -80,7 +80,8 @@ def import_session(lib=None, logfile=None, paths=[], query=[], cli=False):
     cls = commands.TerminalImportSession if cli else importer.ImportSession
     return cls(lib, logfile, paths, query)
 
-# Temporary config modifications.
+# A test harness for all beets tests.
+# Provides temporary, isolated configuration.
 class TestCase(unittest.TestCase):
     """A unittest.TestCase subclass that saves and restores beets'
     global configuration. This allows tests to make temporary
@@ -92,8 +93,22 @@ class TestCase(unittest.TestCase):
         beets.config.sources = []
         beets.config.read(user=False, defaults=True)
 
+        # Direct paths to a temporary directory. Tests can also use this
+        # temporary directory.
+        self.temp_dir = tempfile.mkdtemp()
+        beets.config['statefile'] = os.path.join(self.temp_dir, 'state.pickle')
+        beets.config['library'] = os.path.join(self.temp_dir, 'library.db')
+        beets.config['directory'] = os.path.join(self.temp_dir, 'libdir')
+
+        # Set $HOME, which is used by confit's `config_dir()` to create
+        # directories.
+        self._old_home = os.environ.get('HOME')
+        os.environ['HOME'] = self.temp_dir
+
     def tearDown(self):
-        pass
+        if os.path.isdir(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
+        os.environ['HOME'] = self._old_home
 
     def assertExists(self, path):
         self.assertTrue(os.path.exists(path),
