@@ -71,7 +71,7 @@ setup(name='beets',
       },
 
       install_requires=[
-          'mutagen',
+          'mutagen>=1.20',
           'munkres',
           'unidecode',
           'musicbrainzngs>=0.2',
