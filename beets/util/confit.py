@@ -633,7 +633,7 @@ class Configuration(RootView):
         for appdir in self._search_dirs():
             filename = os.path.join(appdir, CONFIG_FILENAME)
             if os.path.isfile(filename):
-                yield ConfigSource(load_yaml(filename), filename)
+                yield ConfigSource(load_yaml(filename) or {}, filename)
 
     def _default_source(self):
         """Return the default-value source for this program or `None` if

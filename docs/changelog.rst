@@ -8,6 +8,8 @@ Changelog
   exiting with an exception. We also avoid an error when track metadata
   contains newlines.
 * Fix a crash when iTunes Sound Check tags contained invalid data.
+* Fix an error when the configuration file (``config.yaml``) is completely
+  empty.
 
 1.1b2 (February 16, 2013)
 -------------------------
