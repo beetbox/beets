@@ -205,6 +205,25 @@ class TypeTest(unittest.TestCase):
         self.mf.year = '2009'
         self.assertEqual(self.mf.year, 2009)
 
+class SoundCheckTest(unittest.TestCase):
+    def test_round_trip(self):
+        data = beets.mediafile._sc_encode(1.0, 1.0)
+        gain, peak = beets.mediafile._sc_decode(data)
+        self.assertEqual(gain, 1.0)
+        self.assertEqual(peak, 1.0)
+
+    def test_decode_zero(self):
+        data = u' 80000000 80000000 00000000 00000000 00000000 00000000 ' \
+               u'00000000 00000000 00000000 00000000'
+        gain, peak = beets.mediafile._sc_decode(data)
+        self.assertEqual(gain, 0.0)
+        self.assertEqual(peak, 0.0)
+
+    def test_malformatted(self):
+        gain, peak = beets.mediafile._sc_decode(u'foo')
+        self.assertEqual(gain, 0.0)
+        self.assertEqual(peak, 0.0)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

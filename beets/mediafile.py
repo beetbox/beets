@@ -204,7 +204,12 @@ def _sc_decode(soundcheck):
     # compared to a reference value of 1000 to get our gain in dB. We
     # play it safe by using the larger of the two values (i.e., the most
     # attenuation).
-    gain = math.log10((max(*soundcheck[:2]) or 1000) / 1000.0) * -10
+    maxgain = max(soundcheck[:2])
+    if maxgain > 0:
+        gain = math.log10(maxgain / 1000.0) * -10
+    else:
+        # Invalid gain value found.
+        gain = 0.0
 
     # SoundCheck stores peak values as the actual value of the sample,
     # and again separately for the left and right channels. We need to

@@ -7,6 +7,7 @@ Changelog
 * :doc:`/plugins/echonest_tempo`: API errors now issue a warning instead of
   exiting with an exception. We also avoid an error when track metadata
   contains newlines.
+* Fix a crash when iTunes Sound Check tags contained invalid data.
 
 1.1b2 (February 16, 2013)
 -------------------------
