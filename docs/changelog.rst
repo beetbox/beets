@@ -7,6 +7,9 @@ Changelog
 * :doc:`/plugins/echonest_tempo`: API errors now issue a warning instead of
   exiting with an exception. We also avoid an error when track metadata
   contains newlines.
+* When the importer encounters an error (insufficient permissions, for
+  example) when walking a directory tree, it now logs an error instead of
+  crashing.
 * Fix a crash when iTunes Sound Check tags contained invalid data.
 * Fix an error when the configuration file (``config.yaml``) is completely
   empty.
