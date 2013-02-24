@@ -10,6 +10,8 @@ Changelog
 * When the importer encounters an error (insufficient permissions, for
   example) when walking a directory tree, it now logs an error instead of
   crashing.
+* Add "System Volume Information" (an internal directory found on some
+  Windows filesystems) to the default ignore list.
 * Fix a crash when iTunes Sound Check tags contained invalid data.
 * Fix an error when the configuration file (``config.yaml``) is completely
   empty.

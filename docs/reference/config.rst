@@ -68,9 +68,10 @@ so::
 ignore
 ~~~~~~
 
-A space-separated list of glob patterns specifying file and directory names
-to be ignored when importing. Defaults to ``.* *~`` (i.e., ignore
-Unix-style hidden files and backup files).
+A list of glob patterns specifying file and directory names to be ignored when
+importing. By default, this consists of ``.*``,  ``*~``, and ``System Volume
+Information`` (i.e., beets ignores Unix-style hidden files, backup files, and
+a directory that appears at the root of some Windows filesystems).
 
 .. _replace:
 

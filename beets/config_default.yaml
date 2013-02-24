@@ -18,7 +18,7 @@ import:
     default_action: apply
 
 clutter: ["Thumbs.DB", ".DS_Store"]
-ignore: [".*", "*~"]
+ignore: [".*", "*~", "System Volume Information"]
 replace:
     '[\\/]': _
     '^\.': _
