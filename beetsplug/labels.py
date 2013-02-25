@@ -30,14 +30,14 @@ CREATE TABLE IF NOT EXISTS labels_items(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         label_id INTEGER,
         item_id INTEGER,
-        FOREIGN KEY (label_id) REFERENCES labels(id),
-        FOREIGN KEY (item_id) REFERENCES items(id));
+        FOREIGN KEY (label_id) REFERENCES labels(id) ON DELETE CASCADE,
+        FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE);
 CREATE TABLE IF NOT EXISTS labels_albums(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         label_id INTEGER,
         album_id INTEGER,
-        FOREIGN KEY (label_id) REFERENCES labels(id),
-        FOREIGN KEY (album_id) REFERENCES albums(id));
+        FOREIGN KEY (label_id) REFERENCES labels(id) ON DELETE CASCADE,
+        FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE);
 """
 
 #Taken from 
@@ -116,10 +116,9 @@ def make_label(lib, label):
         else:
             return tx.mutate(qset, (label,))
 
-def set_labels(lib, query, labels, albums=False):
+def _mutate_labels(lib, query, labels, albums=False, remove=False):
     """
-    Set labels for items or albums matching a query.
-    `query` can be a `Query` like object or a beets query string.
+    Set or remove labels to items/albums matching query.
     """
     if albums:
         table = 'labels_albums'
@@ -129,15 +128,39 @@ def set_labels(lib, query, labels, albums=False):
         table = 'labels_items'
         func = lib.items
         field = 'item_id'
-    qset = 'INSERT INTO %s (%s, label_id) VALUES (?, ?);' % (table, field)
-    labelids = [make_label(lib, a) for a in labels]
+    if remove:
+        qset = '''
+        DELETE FROM {table} 
+        WHERE {table}.{field} = ? 
+        AND {table}.label_id IN (
+        SELECT id FROM labels WHERE label = ?);
+        '''.format(table=table, field=field)
+    else:
+        qset = 'INSERT INTO {} ({}, label_id) VALUES (?, ?);'.format(
+            table, field)
+        labelids = [make_label(lib, a) for a in labels]
     items = func(query=query)
-    for item in items:
-        itemid = item.id
-        with lib.transaction() as tx:
-            for lid in labelids:
-                subvals = (itemid, lid)
-                tx.mutate(qset, subvals)
+    with lib.transaction() as tx:    
+        for item in items:
+            itemid = item.id
+            for i,l in enumerate(labels):
+                if remove:
+                    tx.mutate(qset, (itemid, l))
+                    continue
+                tx.mutate(qset, (itemid, labelids[i]))
+                
+def remove_labels(lib, query, labels, albums=False):
+    """
+    Remove given `labels` from items matching `query`.
+    """
+    _mutate_labels(lib, query, labels, albums=albums, remove=True)    
+
+def set_labels(lib, query, labels, albums=False):
+    """
+    Set labels for items or albums matching a query.
+    `query` can be a `Query` like object or a beets query string.
+    """
+    _mutate_labels(lib, query, labels, albums=albums, remove=False)
 
 def get_items(lib, labels, albums=False):
     """
@@ -185,9 +208,12 @@ def do_labels(lib, opts, args):
         list_labels(lib)
         return
     args = ui.decargs(args)
-    if opts.set_labels:
-        q = ui.decargs(opts.set_labels)
+    if opts.give_labels:
+        q = ui.decargs(opts.give_labels)
         set_labels(lib, q, args, albums=opts.albums)
+    elif opts.strip_labels:
+        q = ui.decargs(opts.strip_labels)
+        remove_labels(lib, q, args, albums=opts.albums)
     else:
         list_items(lib, args, albums=opts.albums)
 
@@ -205,11 +231,16 @@ class LabelsPlugin(BeetsPlugin):
             '-a', '--albums', action='store_true', dest='albums',
             help='Deal in albums instead of individual tracks.')
         cmd.parser.add_option(
-            '-s', '--set-labels', dest='set_labels',
+            '-g', '--give-labels', dest='give_labels',
             callback=vararg_callback, action='callback',
-            help='The given labels are set to all items matching '\
+            help='Adds the given labels to all items matching '\
                 +'a following query.\n'\
-                +'(Everything after -s will be treated as part of the query).')
+                +'(Everything after -g will be treated as part of the query).')
+        cmd.parser.add_option(
+            '-s', '--strip-labels', dest='strip_labels',
+            callback=vararg_callback, action='callback',
+            help='Same as -g, but removes labels from matching items '\
+                 +'instead of giving them.')
         cmd.func = do_labels
         return [cmd]
 
