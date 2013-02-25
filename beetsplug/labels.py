@@ -193,22 +193,23 @@ def do_labels(lib, opts, args):
 
 class LabelsPlugin(BeetsPlugin):
     def commands(self):
-        usage = '''
-        beet labels [labels] [-a][-s query]
-        When no arguments are provided, a list of labels currently in 
-        the database is returned.
-        '''
+        usage = 'beet labels [labels] [-a][-s query]\n'\
+        +'You can provide multiple labels separated by space.\n'\
+        +'When no options orarguments are provided, a list '\
+        +'of labels currently in the database is outputted.'
         cmd = Subcommand(
             'labels', 
             help='Get and set labels for your music.')
         cmd.parser.set_usage(usage)
         cmd.parser.add_option(
-            '-s', '--set-labels', dest='set_labels',
-            callback=vararg_callback, action='callback',
-            help='The given labels are set to all items matching a query.')
-        cmd.parser.add_option(
             '-a', '--albums', action='store_true', dest='albums',
             help='Deal in albums instead of individual tracks.')
+        cmd.parser.add_option(
+            '-s', '--set-labels', dest='set_labels',
+            callback=vararg_callback, action='callback',
+            help='The given labels are set to all items matching '\
+                +'a following query.\n'\
+                +'(Everything after -s will be treated as part of the query).')
         cmd.func = do_labels
         return [cmd]
 
