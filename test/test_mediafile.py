@@ -189,6 +189,7 @@ class ZeroLengthMediaFile(beets.mediafile.MediaFile):
         return 0.0
 class MissingAudioDataTest(unittest.TestCase):
     def setUp(self):
+        super(MissingAudioDataTest, self).setUp()
         path = os.path.join(_common.RSRC, 'full.mp3')
         self.mf = ZeroLengthMediaFile(path)
 
@@ -198,12 +199,29 @@ class MissingAudioDataTest(unittest.TestCase):
 
 class TypeTest(unittest.TestCase):
     def setUp(self):
+        super(TypeTest, self).setUp()
         path = os.path.join(_common.RSRC, 'full.mp3')
         self.mf = beets.mediafile.MediaFile(path)
 
     def test_year_integer_in_string(self):
         self.mf.year = '2009'
         self.assertEqual(self.mf.year, 2009)
+
+    def test_set_replaygain_gain_to_none(self):
+        self.mf.rg_track_gain = None
+        self.assertEqual(self.mf.rg_track_gain, 0.0)
+
+    def test_set_replaygain_peak_to_none(self):
+        self.mf.rg_track_peak = None
+        self.assertEqual(self.mf.rg_track_peak, 0.0)
+
+    def test_set_year_to_none(self):
+        self.mf.year = None
+        self.assertEqual(self.mf.year, 0)
+
+    def test_set_track_to_none(self):
+        self.mf.track = None
+        self.assertEqual(self.mf.track, 0)
 
 class SoundCheckTest(unittest.TestCase):
     def test_round_trip(self):

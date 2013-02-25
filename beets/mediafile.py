@@ -306,17 +306,22 @@ class Packed(object):
     """Makes a packed list of values subscriptable. To access the packed
     output after making changes, use packed_thing.items.
     """
-    def __init__(self, items, packstyle, none_val=0, out_type=int):
+    def __init__(self, items, packstyle, out_type=int):
         """Create a Packed object for subscripting the packed values in
         items. The items are packed using packstyle, which is a value
-        from the packing enum. none_val is returned from a request when
-        no suitable value is found in the items. Values are converted to
-        out_type before they are returned.
+        from the packing enum. Values are converted to out_type before
+        they are returned.
         """
         self.items = items
         self.packstyle = packstyle
-        self.none_val = none_val
         self.out_type = out_type
+
+        if out_type is int:
+            self.none_val = 0
+        elif out_type is float:
+            self.none_val = 0.0
+        else:
+            self.none_val = None
 
     def __getitem__(self, index):
         if not isinstance(index, int):
@@ -352,6 +357,10 @@ class Packed(object):
             return _safe_cast(self.out_type, out)
 
     def __setitem__(self, index, value):
+        # Interpret null values.
+        if value is None:
+            value = self.none_val
+
         if self.packstyle in (packing.SLASHED, packing.TUPLE, packing.SC):
             # SLASHED, TUPLE and SC are always two-item packings
             length = 2
