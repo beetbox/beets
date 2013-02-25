@@ -1,4 +1,15 @@
-import logging
+# Copyright 2013, Steinthor Palsson <steinitzu@gmail.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
@@ -81,34 +92,13 @@ class LabelQuery(Query):
         clause = 'WHERE'+' AND '.join(clauses)
         return clause,self.labels
 
-def _check_env(lib):
-    """
-    Returns True if labels tables exist in the beets database.
-    """
-    t = lib.transaction()
-    r = t.query(
-        """SELECT name FROM sqlite_master 
-        WHERE type='table' and name='labels' 
-        OR name='labels_items'
-        OR name='labels_albums';
-        """)
-    return len(r)==3
-
-def _set_env(lib):
-    """
-    Create labels tables.
-    """
-    t = lib.transaction()
-    t.script(TABLES)
-
 def make_env(lib):
     """
     Set up the environment.
     Create labels tables in the beets database if they don't exist.
     """
     t = lib.transaction()
-    t.script(TABLES)
-    
+    t.script(TABLES)    
 
 def make_label(lib, label):
     """
@@ -128,8 +118,8 @@ def make_label(lib, label):
 
 def set_labels(lib, query, labels, albums=False):
     """
-    Set labels for items matching a query.
-    `query` can be any kind of object accepted by `lib.items()`.
+    Set labels for items or albums matching a query.
+    `query` can be a `Query` like object or a beets query string.
     """
     if albums:
         table = 'labels_albums'
@@ -151,7 +141,7 @@ def set_labels(lib, query, labels, albums=False):
 
 def get_items(lib, labels, albums=False):
     """
-    Returns a `ResultIterator` of items matching given `*labels`.
+    Returns an iterable of items or albums matching given labels.
     """
     q = LabelQuery(labels, albums=albums)
     sql,subvals = q.statement()
@@ -164,7 +154,7 @@ def get_items(lib, labels, albums=False):
             items = ResultIterator(tx.query(sql, subvals))
     return items
 
-def get_labels(lib, albums=False):
+def get_labels(lib):
     """
     Returns a tuple(id,label) list of all existing labels.
     """
@@ -175,14 +165,14 @@ def get_labels(lib, albums=False):
 
 def list_items(lib, labels, albums=False):
     """
-    Print items matching given `*labels`.
+    Print items or albums matching given list of labels.
     """
     tmpl = Template(ui._pick_format(albums, None))
     items = get_items(lib, labels, albums=albums)
     for item in items:
         ui.print_obj(item, lib, tmpl)
 
-def list_labels(lib, albums=False):
+def list_labels(lib):
     """
     List all labels in the database.
     """
