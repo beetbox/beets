@@ -48,6 +48,8 @@ class BeetsPlugin(object):
             self.template_funcs = {}
         if not self.template_fields:
             self.template_fields = {}
+        self.item_fields = []
+        self.album_fields = []
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
@@ -287,6 +289,24 @@ def import_stages():
         if hasattr(plugin, 'import_stages'):
             stages += plugin.import_stages
     return stages
+
+def item_fields():
+    """Get a list of strings indicating registered flexible Item
+    attributes.
+    """
+    fields = []
+    for plugin in find_plugins():
+        fields += plugin.item_fields
+    return fields
+
+def album_fields():
+    """Get a list of strings indicating registered flexible Album
+    attributes.
+    """
+    fields = []
+    for plugin in find_plugins():
+        fields += plugin.album_fields
+    return fields
 
 
 # Event dispatch.

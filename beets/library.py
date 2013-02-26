@@ -273,8 +273,8 @@ class Item(object):
         """If key is an item attribute (i.e., a column in the database),
         returns the record entry for that key.
         """
-        if key in ITEM_KEYS:
-            return self.record[key]
+        if key in ITEM_KEYS or key in plugins.item_fields():
+            return self.record.get(key)
         else:
             raise AttributeError(key + ' is not a valid item field')
 
@@ -293,7 +293,7 @@ class Item(object):
             elif isinstance(value, buffer):
                 value = str(value)
 
-        if key in ITEM_KEYS:
+        if key in ITEM_KEYS or key in plugins.item_fields():
             # If the value changed, mark the field as dirty.
             if (key not in self.record) or (self.record[key] != value):
                 self.record[key] = value
@@ -1067,6 +1067,8 @@ class Library(BaseLibrary):
         # Set up database schema.
         self._make_table('items', item_fields)
         self._make_table('albums', album_fields)
+        self._make_attribute_table('item')
+        self._make_attribute_table('album')
 
     def _make_table(self, table, fields):
         """Set up the schema of the library file. fields is a list of
@@ -1110,6 +1112,22 @@ class Library(BaseLibrary):
 
         with self.transaction() as tx:
             tx.script(setup_sql)
+
+    def _make_attribute_table(self, entity):
+        """Create a table and associated index for flexible attributes
+        for the given entity (if they don't exist).
+        """
+        with self.transaction() as tx:
+            tx.script("""
+                CREATE TABLE IF NOT EXISTS {0}_attributes (
+                    id INTEGER PRIMARY KEY,
+                    entity_id INTEGER,
+                    key TEXT,
+                    value TEXT,
+                    UNIQUE(entity_id, key) ON CONFLICT REPLACE);
+                CREATE INDEX IF NOT EXISTS {0}_id_attribute
+                    ON {0}_attributes (entity_id);
+                """.format(entity))
 
     def _connection(self):
         """Get a SQLite connection object to the underlying database.
@@ -1235,9 +1253,22 @@ class Library(BaseLibrary):
                 subvars.append(value)
 
         # Issue query.
-        query = 'INSERT INTO items (' + columns + ') VALUES (' + values + ')'
         with self.transaction() as tx:
-            new_id = tx.mutate(query, subvars)
+            # Main table insertion.
+            new_id = tx.mutate(
+                'INSERT INTO items (' + columns + ') VALUES (' + values + ')',
+                subvars
+            )
+
+            # Flexible attributes.
+            for key in plugins.item_fields():
+                value = getattr(item, key)
+                if value is not None:
+                    tx.mutate(
+                        'INSERT INTO item_attributes (entity_id, key, value)'
+                        ' VALUES (?, ?, ?)',
+                        (new_id, key, value)
+                    )
 
         item._clear_dirty()
         item.id = new_id
@@ -1269,21 +1300,25 @@ class Library(BaseLibrary):
                 if key == 'path' and isinstance(value, str):
                     value = buffer(value)
                 subvars.append(value)
-
-        if not assignments:
-            # nothing to store (i.e., nothing was dirty)
-            return
-
         assignments = assignments[:-1]  # Knock off last ,
 
-        # Finish the query.
-        query = 'UPDATE items SET ' + assignments + ' WHERE id=?'
-        subvars.append(store_id)
-
         with self.transaction() as tx:
-            tx.mutate(query, subvars)
-        item._clear_dirty()
+            # Main table update.
+            if assignments:
+                query = 'UPDATE items SET ' + assignments + ' WHERE id=?'
+                subvars.append(store_id)
+                tx.mutate(query, subvars)
 
+            # Flexible attributes.
+            for key in plugins.item_fields():
+                if item.dirty.get(key) or store_all:
+                    tx.mutate(
+                        'INSERT INTO item_attributes (entity_id, key, value)'
+                        ' VALUES (?, ?, ?)',
+                        (store_id, key, getattr(item, key))
+                    )
+
+        item._clear_dirty()
         self._memotable = {}
 
     def remove(self, item, delete=False, with_album=True):
