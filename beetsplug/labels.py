@@ -208,18 +208,18 @@ def do_labels(lib, opts, args):
         list_labels(lib)
         return
     args = ui.decargs(args)
-    if opts.give_labels:
-        q = ui.decargs(opts.give_labels)
+    if opts.attach_query:
+        q = ui.decargs(opts.attach_query)
         set_labels(lib, q, args, albums=opts.albums)
-    elif opts.strip_labels:
-        q = ui.decargs(opts.strip_labels)
+    elif opts.remove_query:
+        q = ui.decargs(opts.remove_query)
         remove_labels(lib, q, args, albums=opts.albums)
     else:
         list_items(lib, args, albums=opts.albums)
 
 class LabelsPlugin(BeetsPlugin):
     def commands(self):
-        usage = 'beet labels [labels] [-a][-s query]\n'\
+        usage = 'beet labels args [--albums][-a|-r query]\n'\
         +'You can provide multiple labels separated by space.\n'\
         +'When no options orarguments are provided, a list '\
         +'of labels currently in the database is outputted.'
@@ -228,19 +228,19 @@ class LabelsPlugin(BeetsPlugin):
             help='Get and set labels for your music.')
         cmd.parser.set_usage(usage)
         cmd.parser.add_option(
-            '-a', '--albums', action='store_true', dest='albums',
+            '-a', '--attach-to', dest='attach_query',
+            callback=vararg_callback, action='callback',
+            help='Attaches the given labels to all items matching '\
+                +'the following query.\n'\
+                +'(Everything after -a will be treated as part of the query).')
+        cmd.parser.add_option(
+            '-r', '--remove-from', dest='remove_query',
+            callback=vararg_callback, action='callback',
+            help='Same as -a, but removes labels from matching items '\
+                 +'instead of adding them.')
+        cmd.parser.add_option(
+            '--albums', action='store_true', dest='albums',
             help='Deal in albums instead of individual tracks.')
-        cmd.parser.add_option(
-            '-g', '--give-labels', dest='give_labels',
-            callback=vararg_callback, action='callback',
-            help='Adds the given labels to all items matching '\
-                +'a following query.\n'\
-                +'(Everything after -g will be treated as part of the query).')
-        cmd.parser.add_option(
-            '-s', '--strip-labels', dest='strip_labels',
-            callback=vararg_callback, action='callback',
-            help='Same as -g, but removes labels from matching items '\
-                 +'instead of giving them.')
         cmd.func = do_labels
         return [cmd]
 
