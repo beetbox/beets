@@ -48,7 +48,7 @@ RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits']
 TRACK_INCLUDES = ['artists']
 
-# only versions >= 0.3 support artist aliases
+# Only versions >= 0.3 of python-musicbrainz-ngs support artist aliases.
 if musicbrainzngs.musicbrainz._version >= '0.3':
     RELEASE_INCLUDES.append('aliases')
     TRACK_INCLUDES.append('aliases')
@@ -62,6 +62,33 @@ def configure():
         config['musicbrainz']['ratelimit_interval'].as_number(),
         config['musicbrainz']['ratelimit'].get(int),
     )
+
+def _preferred_alias(aliases):
+    """Given an list of alias structures for an artist credit, select
+    and return the user's preferred alias alias or None if no matching
+    alias is found.
+    """
+    if not aliases:
+        return
+
+    # Only consider aliases that have locales set.
+    aliases = [a for a in aliases if 'locale' in a]
+
+    # Search configured locales in order.
+    for locale in config['import']['artist_aliases'].as_str_seq():
+        # Find matching aliases for this locale.
+        matches = [a for a in aliases if a['locale'] == locale]
+        if not matches:
+            return
+
+        # Find the aliases that have the primary flag set.
+        primaries = [a for a in matches if 'primary' in a]
+        # Take the primary if we have it, otherwise take the first
+        # match with the correct locale.
+        if primaries:
+            return primaries[0]
+        else:
+            return matches[0]
 
 def _flatten_artist_credit(credit):
     """Given a list representing an ``artist-credit`` block, flatten the
@@ -79,41 +106,18 @@ def _flatten_artist_credit(credit):
             artist_sort_parts.append(el)
 
         else:
-            prefered_locales = config['import']['artist_aliases'].as_str_seq()
-            chosen_alias = None
-            if 'alias-list' in el['artist']:
-                alias_list = el['artist']['alias-list']
-                # Get a list of the aliases that have set locales
-                set_locales = [a for a in alias_list if 'locale' in a]
-                # Search locales in order
-                for locale in prefered_locales:
-                    # Does anything match 
-                    matches = [a for a in set_locales if a['locale'] == locale]
-                    # Skip to next locale if no matches
-                    if len(matches) == 0: 
-                        continue
-                    # Find the aliases that have the primary flag set
-                    primaries = [a for a in matches if 'primary' in a]
-                    # Take the primary if we have it, otherwise take the first
-                    # match with the correct locale
-                    if len(primaries) > 0:
-                        chosen_alias = primaries[0]
-                    else:
-                        chosen_alias = matches[0]
-                    # If we get here we must have found an acceptable alias
-                    # so stop looking
-                    break
-                    
+            alias = _preferred_alias(el['artist'].get('alias-list', ()))
+
             # An artist.
-            if chosen_alias is not None:
-                cur_artist_name = chosen_alias['alias']
+            if alias:
+                cur_artist_name = alias['alias']
             else:
                 cur_artist_name = el['artist']['name']
             artist_parts.append(cur_artist_name)
 
             # Artist sort name.
-            if chosen_alias is not None:
-                artist_sort_parts.append(chosen_alias['sort-name'])
+            if alias:
+                artist_sort_parts.append(alias['sort-name'])
             elif 'sort-name' in el['artist']:
                 artist_sort_parts.append(el['artist']['sort-name'])
             else:
