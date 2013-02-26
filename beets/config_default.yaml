@@ -16,7 +16,7 @@ import:
     quiet: no
     singletons: no
     default_action: apply
-    artist_aliases: []
+    languages: []
 
 clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~", "System Volume Information"]

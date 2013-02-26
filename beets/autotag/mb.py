@@ -75,7 +75,7 @@ def _preferred_alias(aliases):
     aliases = [a for a in aliases if 'locale' in a]
 
     # Search configured locales in order.
-    for locale in config['import']['artist_aliases'].as_str_seq():
+    for locale in config['import']['languages'].as_str_seq():
         # Find matching aliases for this locale.
         matches = [a for a in aliases if a['locale'] == locale]
         if not matches:

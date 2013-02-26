@@ -317,6 +317,16 @@ should be the *default* when selecting an action for a given match. This is the
 action that will be taken when you type return without an option letter. The
 default is ``apply``.
 
+.. _languages:
+
+languages
+~~~~~~~~~
+
+A list of locale names to search for preferred aliases. For example, setting
+this to "en" uses the transliterated artist name "Pyotr Ilyich Tchaikovsky"
+instead of the Cyrillic script for the composer's name when tagging from
+MusicBrainz. Defaults to an empty list, meaning that no language is preferred.
+
 .. _musicbrainz-config:
 
 MusicBrainz Options

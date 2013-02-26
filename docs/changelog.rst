@@ -4,6 +4,15 @@ Changelog
 1.1b3 (in development)
 ----------------------
 
+New configuration options:
+
+* :ref:`languages` controls the preferred languages when selecting an alias
+  from MusicBrainz. This feature requires `python-musicbrainz-ngs`_ 0.3 or
+  later, which (at the time of this writing) is not yet released. Thanks to
+  Sam Doshi.
+
+Other stuff:
+
 * :doc:`/plugins/echonest_tempo`: API errors now issue a warning instead of
   exiting with an exception. We also avoid an error when track metadata
   contains newlines.
