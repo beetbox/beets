@@ -30,6 +30,8 @@ Other stuff:
 * Fix a crash when iTunes Sound Check tags contained invalid data.
 * Fix an error when the configuration file (``config.yaml``) is completely
   empty.
+* Fix an error introduced in 1.1b1 when importing using timid mode. Thanks to
+  Sam Doshi.
 
 1.1b2 (February 16, 2013)
 -------------------------
