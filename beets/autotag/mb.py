@@ -78,8 +78,9 @@ def _preferred_alias(aliases):
     for locale in config['import']['languages'].as_str_seq():
         # Find matching aliases for this locale.
         matches = [a for a in aliases if a['locale'] == locale]
+        # Skip to the next locale if we have no matches
         if not matches:
-            return
+            continue
 
         # Find the aliases that have the primary flag set.
         primaries = [a for a in matches if 'primary' in a]
