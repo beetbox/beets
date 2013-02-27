@@ -226,13 +226,17 @@ def show_change(cur_artist, cur_album, match):
 
         if lhs != rhs:
             lines.append((lhs, rhs, lhs_width))
+        elif config['import']['detail']:
+            lines.append((lhs, '', lhs_width))
 
     # Print each track in two columns, or across two lines.
     col_width = (ui.term_width() - len(''.join([' * ', ' -> ']))) // 2
     if lines:
         max_width = max(w for _, _, w in lines)
         for lhs, rhs, lhs_width in lines:
-            if max_width > col_width:
+            if not rhs:
+                print_(u' * {0}'.format(lhs))
+            elif max_width > col_width:
                 print_(u' * %s ->\n   %s' % (lhs, rhs))
             else:
                 pad = max_width - lhs_width

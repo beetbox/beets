@@ -327,6 +327,16 @@ this to "en" uses the transliterated artist name "Pyotr Ilyich Tchaikovsky"
 instead of the Cyrillic script for the composer's name when tagging from
 MusicBrainz. Defaults to an empty list, meaning that no language is preferred.
 
+.. _detail:
+
+detail
+~~~~~~
+
+Whether the importer UI should show detailed information about each match it
+finds. When enabled, this mode prints out the title of every track, regardless
+of whether it matches the original metadata. (The default behavior only shows
+changes.) Default: ``no``.
+
 .. _musicbrainz-config:
 
 MusicBrainz Options
