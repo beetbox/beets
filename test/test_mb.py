@@ -16,6 +16,7 @@
 """
 from _common import unittest
 from beets.autotag import mb
+from beets import config
 
 class MBAlbumInfoTest(unittest.TestCase):
     def _make_release(self, date_str='2009', tracks=None):
@@ -286,6 +287,18 @@ class ArtistFlatteningTest(unittest.TestCase):
             'name': 'CREDIT' + suffix,
         }
 
+    def _add_alias(self, credit_dict, suffix='', locale='', primary=False):
+        alias = {
+            'alias': 'ALIAS' + suffix,
+            'locale': locale,
+            'sort-name': 'ALIASSORT' + suffix
+        }
+        if primary:
+            alias['primary'] = 'primary'
+        if 'alias-list' not in credit_dict['artist']:
+            credit_dict['artist']['alias-list'] = []
+        credit_dict['artist']['alias-list'].append(alias)
+
     def test_single_artist(self):
         a, s, c = mb._flatten_artist_credit([self._credit_dict()])
         self.assertEqual(a, 'NAME')
@@ -299,6 +312,38 @@ class ArtistFlatteningTest(unittest.TestCase):
         self.assertEqual(a, 'NAMEa AND NAMEb')
         self.assertEqual(s, 'SORTa AND SORTb')
         self.assertEqual(c, 'CREDITa AND CREDITb')
+
+    def test_alias(self):
+        credit_dict = self._credit_dict()
+        self._add_alias(credit_dict, suffix='en', locale='en')
+        self._add_alias(credit_dict, suffix='en_GB', locale='en_GB')
+        self._add_alias(credit_dict, suffix='fr', locale='fr')
+        self._add_alias(credit_dict, suffix='fr_P', locale='fr', primary=True)
+
+        # test no alias
+        config['import']['languages'] = ['']
+        flat = mb._flatten_artist_credit([credit_dict])
+        self.assertEqual(flat, ('NAME', 'SORT', 'CREDIT'))
+
+        # test en
+        config['import']['languages'] = ['en']
+        flat = mb._flatten_artist_credit([credit_dict])
+        self.assertEqual(flat, ('ALIASen', 'ALIASSORTen', 'CREDIT'))
+
+        # test en_GB en
+        config['import']['languages'] = ['en_GB', 'en']
+        flat = mb._flatten_artist_credit([credit_dict])
+        self.assertEqual(flat, ('ALIASen_GB', 'ALIASSORTen_GB', 'CREDIT'))
+
+        # test en en_GB
+        config['import']['languages'] = ['en', 'en_GB']
+        flat = mb._flatten_artist_credit([credit_dict])
+        self.assertEqual(flat, ('ALIASen', 'ALIASSORTen', 'CREDIT'))
+
+        # test fr primary
+        config['import']['languages'] = ['fr']
+        flat = mb._flatten_artist_credit([credit_dict])
+        self.assertEqual(flat, ('ALIASfr_P', 'ALIASSORTfr_P', 'CREDIT'))
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
