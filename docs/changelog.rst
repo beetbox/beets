@@ -12,6 +12,9 @@ New configuration options:
   Sam Doshi.
 * :ref:`detail` enables a mode where all tracks are listed in the importer UI,
   as opposed to only changed tracks.
+* The ``--flat`` option to the ``beet import`` command treats an entire
+  directory tree of music files as a single album. This can help in situations
+  where a multi-disc album is split across multiple directories.
 
 Other stuff:
 

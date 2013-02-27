@@ -18,6 +18,7 @@ import:
     default_action: apply
     languages: []
     detail: no
+    flat: no
 
 clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~", "System Volume Information"]

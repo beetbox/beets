@@ -93,6 +93,12 @@ right now; this is something we need to work on. Read the
   instead want to import individual, non-album tracks, use the *singleton*
   mode by supplying the ``-s`` option.
 
+* If you have an album that's split across several directories under a common
+  top directory, use the ``--flat`` option. This takes all the music files
+  under the directory (recursively) and treats them as a single large album
+  instead of as one album per directory. This can help with your more stubborn
+  multi-disc albums.
+
 .. only:: html
 
     Reimporting
