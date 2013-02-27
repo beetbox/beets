@@ -32,6 +32,8 @@ Other stuff:
   empty.
 * Fix an error introduced in 1.1b1 when importing using timid mode. Thanks to
   Sam Doshi.
+* :doc:`/plugins/convert`: Fix a bug when creating files with Unicode
+  pathnames.
 
 1.1b2 (February 16, 2013)
 -------------------------

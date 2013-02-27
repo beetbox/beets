@@ -53,7 +53,7 @@ def convert_item(lib, dest_dir):
         dest = os.path.join(dest_dir, lib.destination(item, fragment=True))
         dest = os.path.splitext(dest)[0] + '.mp3'
 
-        if os.path.exists(dest):
+        if os.path.exists(util.syspath(dest)):
             log.info(u'Skipping {0} (target file exists)'.format(
                 util.displayable_path(item.path)
             ))
