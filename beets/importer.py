@@ -643,7 +643,7 @@ def initial_lookup(session):
 
         log.debug('Looking up: %s' % displayable_path(task.paths))
         task.set_candidates(
-            *autotag.tag_album(task.items, config['import']['timid'].get(bool))
+            *autotag.tag_album(task.items)
         )
 
 def user_query(session):
