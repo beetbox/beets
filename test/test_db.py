@@ -362,6 +362,10 @@ class DestinationTest(unittest.TestCase):
         val = beets.library.format_for_path(12345, 'samplerate', posixpath)
         self.assertEqual(val, u'12kHz')
 
+    def test_component_sanitize_none(self):
+        val = beets.library.format_for_path(None, 'foo', posixpath)
+        self.assertEqual(val, u'')
+
     def test_artist_falls_back_to_albumartist(self):
         self.i.artist = ''
         self.i.albumartist = 'something'

@@ -24,6 +24,8 @@ Other stuff:
 * When the importer encounters an error (insufficient permissions, for
   example) when walking a directory tree, it now logs an error instead of
   crashing.
+* In path formats, null database values now expand to the empty string instead
+  of the string "None".
 * Add "System Volume Information" (an internal directory found on some
   Windows filesystems) to the default ignore list.
 * Fix a crash when ReplayGain values were set to null.
