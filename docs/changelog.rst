@@ -38,6 +38,8 @@ Other stuff:
   pathnames.
 * Fix a spurious warning from the Unidecode module when matching albums that
   are missing all metadata.
+* :doc:`/plugins/mbcollection`: Show friendly, human-readable errors when
+  MusicBrainz exceptions occur.
 
 1.1b2 (February 16, 2013)
 -------------------------
