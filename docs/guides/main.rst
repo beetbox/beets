@@ -29,12 +29,13 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
   ``emerge beets`` to install. There are several USE flags available for
   optional plugin dependencies.
 
+* On **FreeBSD**, there's a `beets port`_ at ``audio/beets``.
+
+.. _beets port: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
 .. _beets from AUR: http://aur.archlinux.org/packages.php?ID=39577
 .. _dev package: http://aur.archlinux.org/packages.php?ID=48617
 .. _Debian details: http://packages.qa.debian.org/b/beets.html
 .. _Ubuntu details: https://launchpad.net/ubuntu/+source/beets
-.. _One by vh4x0r: https://github.com/vh4x0r/apokolips
-.. _one by syranez: https://github.com/syranez/gentoo
 
 If you have `pip`_, just say ``pip install beets`` (you might need ``sudo`` in
 front of that). On Arch, you'll need to use ``pip2`` instead of ``pip``.
@@ -99,8 +100,8 @@ You'll want to set a few basic options before you start using beets. The
 configuration is stored in a text file: on Unix-like OSes, the config file is
 at ``~/.config/beets/config.yaml``; on Windows, it's at
 ``%APPDATA%\beets\config.yaml``. Create and edit the appropriate file with your
-favorite text editor. This file will start out empty, but here's good place to
-start::
+favorite text editor. (You may need to create the enclosing directories also.)
+The file will start out empty, but here's good place to start::
 
     directory: ~/music
     library: ~/data/musiclibrary.blb

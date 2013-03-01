@@ -275,10 +275,12 @@ class AlbumDistanceTest(unittest.TestCase):
 
 def _mkmp3(path):
     shutil.copyfile(os.path.join(_common.RSRC, 'min.mp3'), path)
-class AlbumsInDirTest(unittest.TestCase):
+class AlbumsInDirTest(_common.TestCase):
     def setUp(self):
+        super(AlbumsInDirTest, self).setUp()
+
         # create a directory structure for testing
-        self.base = os.path.abspath(os.path.join(_common.RSRC, 'tempdir'))
+        self.base = os.path.abspath(os.path.join(self.temp_dir, 'tempdir'))
         os.mkdir(self.base)
 
         os.mkdir(os.path.join(self.base, 'album1'))
@@ -292,8 +294,6 @@ class AlbumsInDirTest(unittest.TestCase):
         _mkmp3(os.path.join(self.base, 'album2', 'album2song.mp3'))
         _mkmp3(os.path.join(self.base, 'more', 'album3', 'album3song.mp3'))
         _mkmp3(os.path.join(self.base, 'more', 'album4', 'album4song.mp3'))
-    def tearDown(self):
-        shutil.rmtree(self.base)
 
     def test_finds_all_albums(self):
         albums = list(autotag.albums_in_dir(self.base))
@@ -316,9 +316,11 @@ class AlbumsInDirTest(unittest.TestCase):
             else:
                 self.assertEqual(len(album), 1)
 
-class MultiDiscAlbumsInDirTest(unittest.TestCase):
+class MultiDiscAlbumsInDirTest(_common.TestCase):
     def setUp(self):
-        self.base = os.path.abspath(os.path.join(_common.RSRC, 'tempdir'))
+        super(MultiDiscAlbumsInDirTest, self).setUp()
+
+        self.base = os.path.abspath(os.path.join(self.temp_dir, 'tempdir'))
         os.mkdir(self.base)
 
         self.dirs = [
@@ -356,9 +358,6 @@ class MultiDiscAlbumsInDirTest(unittest.TestCase):
             os.mkdir(path)
         for path in self.files:
             _mkmp3(path)
-
-    def tearDown(self):
-        shutil.rmtree(self.base)
 
     def test_coalesce_nested_album_multiple_subdirs(self):
         albums = list(autotag.albums_in_dir(self.base))

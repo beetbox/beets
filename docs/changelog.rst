@@ -1,8 +1,53 @@
 Changelog
 =========
 
-1.1b2 (in development)
+1.1b3 (in development)
 ----------------------
+
+New configuration options:
+
+* :ref:`languages` controls the preferred languages when selecting an alias
+  from MusicBrainz. This feature requires `python-musicbrainz-ngs`_ 0.3 or
+  later, which (at the time of this writing) is not yet released. Thanks to
+  Sam Doshi.
+* :ref:`detail` enables a mode where all tracks are listed in the importer UI,
+  as opposed to only changed tracks.
+* The ``--flat`` option to the ``beet import`` command treats an entire
+  directory tree of music files as a single album. This can help in situations
+  where a multi-disc album is split across multiple directories.
+
+Other stuff:
+
+* :doc:`/plugins/echonest_tempo`: API errors now issue a warning instead of
+  exiting with an exception. We also avoid an error when track metadata
+  contains newlines.
+* When the importer encounters an error (insufficient permissions, for
+  example) when walking a directory tree, it now logs an error instead of
+  crashing.
+* In path formats, null database values now expand to the empty string instead
+  of the string "None".
+* Add "System Volume Information" (an internal directory found on some
+  Windows filesystems) to the default ignore list.
+* Fix a crash when ReplayGain values were set to null.
+* Fix a crash when iTunes Sound Check tags contained invalid data.
+* Fix an error when the configuration file (``config.yaml``) is completely
+  empty.
+* Fix an error introduced in 1.1b1 when importing using timid mode. Thanks to
+  Sam Doshi.
+* :doc:`/plugins/convert`: Fix a bug when creating files with Unicode
+  pathnames.
+* Fix a spurious warning from the Unidecode module when matching albums that
+  are missing all metadata.
+* :doc:`/plugins/mbcollection`: Show friendly, human-readable errors when
+  MusicBrainz exceptions occur.
+
+1.1b2 (February 16, 2013)
+-------------------------
+
+The second beta of beets 1.1 uses the fancy new configuration infrastructure to
+add many, many new config options. The import process is more flexible;
+filenames can be customized in more detail; and more. This release also
+supports Windows Media (ASF) files and iTunes Sound Check volume normalization.
 
 This version introduces one **change to the default behavior** that you should
 be aware of. Previously, when importing new albums matched in MusicBrainz, the
@@ -33,6 +78,8 @@ New configuration options:
 * :ref:`max_filename_length` controls truncation of long filenames. Also, beets
   now tries to determine the filesystem's maximum length automatically if you
   leave this option unset.
+* :doc:`/plugins/fetchart`: The ``remote_priority`` option searches remote
+  (Web) art sources even when local art is present.
 * You can now customize the character substituted for path separators (e.g., /)
   in filenames via ``path_sep_replace``. The default is an underscore. Use this
   setting with caution.
@@ -93,6 +140,7 @@ Other new stuff:
 * Fix an error when migrating the ``.beetsstate`` file on Windows.
 * A nicer error message is now given when the configuration file contains tabs.
   (YAML doesn't like tabs.)
+* Fix the ``-l`` (log path) command-line option for the ``import`` command.
 
 .. _iTunes Sound Check: http://support.apple.com/kb/HT2425
 

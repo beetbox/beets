@@ -68,9 +68,10 @@ so::
 ignore
 ~~~~~~
 
-A space-separated list of glob patterns specifying file and directory names
-to be ignored when importing. Defaults to ``.* *~`` (i.e., ignore
-Unix-style hidden files and backup files).
+A list of glob patterns specifying file and directory names to be ignored when
+importing. By default, this consists of ``.*``,  ``*~``, and ``System Volume
+Information`` (i.e., beets ignores Unix-style hidden files, backup files, and
+a directory that appears at the root of some Windows filesystems).
 
 .. _replace:
 
@@ -315,6 +316,26 @@ One of ``apply``, ``skip``, ``asis``, or ``none``, indicating which option
 should be the *default* when selecting an action for a given match. This is the
 action that will be taken when you type return without an option letter. The
 default is ``apply``.
+
+.. _languages:
+
+languages
+~~~~~~~~~
+
+A list of locale names to search for preferred aliases. For example, setting
+this to "en" uses the transliterated artist name "Pyotr Ilyich Tchaikovsky"
+instead of the Cyrillic script for the composer's name when tagging from
+MusicBrainz. Defaults to an empty list, meaning that no language is preferred.
+
+.. _detail:
+
+detail
+~~~~~~
+
+Whether the importer UI should show detailed information about each match it
+finds. When enabled, this mode prints out the title of every track, regardless
+of whether it matches the original metadata. (The default behavior only shows
+changes.) Default: ``no``.
 
 .. _musicbrainz-config:
 

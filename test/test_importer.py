@@ -31,29 +31,17 @@ class NonAutotaggedImportTest(_common.TestCase):
     def setUp(self):
         super(NonAutotaggedImportTest, self).setUp()
 
-        self.io = _common.DummyIO()
         self.io.install()
 
-        self.libdb = os.path.join(_common.RSRC, 'testlib.blb')
+        self.libdb = os.path.join(self.temp_dir, 'testlib.blb')
         self.lib = library.Library(self.libdb)
-        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
         self.lib.directory = self.libdir
         self.lib.path_formats = [(
             'default', os.path.join('$artist', '$album', '$title')
         )]
 
-        self.srcdir = os.path.join(_common.RSRC, 'testsrcdir')
-
-    def tearDown(self):
-        super(NonAutotaggedImportTest, self).tearDown()
-
-        self.io.restore()
-        if os.path.exists(self.libdb):
-            os.remove(self.libdb)
-        if os.path.exists(self.libdir):
-            shutil.rmtree(self.libdir)
-        if os.path.exists(self.srcdir):
-            shutil.rmtree(self.srcdir)
+        self.srcdir = os.path.join(self.temp_dir, 'testsrcdir')
 
     def _create_test_file(self, filepath, metadata):
         """Creates an mp3 file at the given path within self.srcdir.
@@ -187,9 +175,9 @@ class ImportApplyTest(_common.TestCase):
     def setUp(self):
         super(ImportApplyTest, self).setUp()
 
-        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
         os.mkdir(self.libdir)
-        self.libpath = os.path.join(_common.RSRC, 'testlib.blb')
+        self.libpath = os.path.join(self.temp_dir, 'testlib.blb')
         self.lib = library.Library(self.libpath, self.libdir)
         self.lib.path_formats = [
             ('default', 'one'),
@@ -198,7 +186,7 @@ class ImportApplyTest(_common.TestCase):
         ]
         self.session = _common.import_session(self.lib)
 
-        self.srcdir = os.path.join(_common.RSRC, 'testsrcdir')
+        self.srcdir = os.path.join(self.temp_dir, 'testsrcdir')
         os.mkdir(self.srcdir)
         os.mkdir(os.path.join(self.srcdir, 'testalbum'))
         self.srcpath = os.path.join(self.srcdir, 'testalbum', 'srcfile.mp3')
@@ -217,15 +205,6 @@ class ImportApplyTest(_common.TestCase):
             artist_id = 'artistid',
             albumtype = 'soundtrack',
         )
-
-    def tearDown(self):
-        super(ImportApplyTest, self).tearDown()
-
-        shutil.rmtree(self.libdir)
-        if os.path.exists(self.srcdir):
-            shutil.rmtree(self.srcdir)
-        if os.path.exists(self.libpath):
-            os.unlink(self.libpath)
 
     def test_finalize_no_delete(self):
         config['import']['delete'] = False
@@ -352,7 +331,9 @@ class ImportApplyTest(_common.TestCase):
 
 class AsIsApplyTest(_common.TestCase):
     def setUp(self):
-        self.dbpath = os.path.join(_common.RSRC, 'templib.blb')
+        super(AsIsApplyTest, self).setUp()
+
+        self.dbpath = os.path.join(self.temp_dir, 'templib.blb')
         self.lib = library.Library(self.dbpath)
         self.session = _common.import_session(self.lib)
 
@@ -367,9 +348,6 @@ class AsIsApplyTest(_common.TestCase):
         i1.comp = i2.comp = i3.comp = False
         i1.albumartist = i2.albumartist = i3.albumartist = ''
         self.items = [i1, i2, i3]
-
-    def tearDown(self):
-        os.remove(self.dbpath)
 
     def _apply_result(self):
         """Run the "apply" coroutines and get the resulting Album."""
@@ -399,10 +377,10 @@ class ApplyExistingItemsTest(_common.TestCase):
     def setUp(self):
         super(ApplyExistingItemsTest, self).setUp()
 
-        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
         os.mkdir(self.libdir)
 
-        self.dbpath = os.path.join(_common.RSRC, 'templib.blb')
+        self.dbpath = os.path.join(self.temp_dir, 'templib.blb')
         self.lib = library.Library(self.dbpath, self.libdir)
         self.lib.path_formats = [
             ('default', '$artist/$title'),
@@ -416,12 +394,6 @@ class ApplyExistingItemsTest(_common.TestCase):
         shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.srcpath)
         self.i = library.Item.from_path(self.srcpath)
         self.i.comp = False
-
-    def tearDown(self):
-        super(ApplyExistingItemsTest, self).tearDown()
-
-        os.remove(self.dbpath)
-        shutil.rmtree(self.libdir)
 
     def _apply_asis(self, items, album=True):
         """Run the "apply" coroutine."""

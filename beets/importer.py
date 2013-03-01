@@ -564,6 +564,15 @@ def read_tasks(session):
             yield ImportTask.item_task(item)
             continue
 
+        # A flat album import merges all items into one album.
+        if config['import']['flat'] and not config['import']['singletons']:
+            all_items = []
+            for _, items in autotag.albums_in_dir(toppath):
+                all_items += items
+            yield ImportTask(toppath, toppath, all_items)
+            yield ImportTask.done_sentinel(toppath)
+            continue
+
         # Produce paths under this directory.
         if _resume():
             resume_dir = resume_dirs.get(toppath)
@@ -633,11 +642,9 @@ def initial_lookup(session):
         plugins.send('import_task_start', session=session, task=task)
 
         log.debug('Looking up: %s' % displayable_path(task.paths))
-        try:
-            task.set_candidates(*autotag.tag_album(task.items,
-                                                   config['import']['timid']))
-        except autotag.AutotagError:
-            task.set_null_candidates()
+        task.set_candidates(
+            *autotag.tag_album(task.items)
+        )
 
 def user_query(session):
     """A coroutine for interfacing with the user about the tagging

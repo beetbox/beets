@@ -16,9 +16,12 @@ import:
     quiet: no
     singletons: no
     default_action: apply
+    languages: []
+    detail: no
+    flat: no
 
 clutter: ["Thumbs.DB", ".DS_Store"]
-ignore: [".*", "*~"]
+ignore: [".*", "*~", "System Volume Information"]
 replace:
     '[\\/]': _
     '^\.': _

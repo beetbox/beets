@@ -23,7 +23,6 @@ from beets.util import sorted_walk, ancestry, displayable_path
 
 # Parts of external interface.
 from .hooks import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch
-from .match import AutotagError
 from .match import tag_item, tag_album
 from .match import recommendation
 
@@ -46,7 +45,8 @@ def albums_in_dir(path):
     collapse_pat = collapse_paths = collapse_items = None
 
     for root, dirs, files in sorted_walk(path,
-                                         ignore=config['ignore'].as_str_seq()):
+                                         ignore=config['ignore'].as_str_seq(),
+                                         logger=log):
         # Get a list of items in the directory.
         items = []
         for filename in files:

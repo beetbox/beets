@@ -218,6 +218,8 @@ def format_for_path(value, key=None, pathmod=None):
     elif key == 'samplerate':
         # Sample rate formatted as kHz.
         value = u'%ikHz' % ((value or 0) // 1000)
+    elif value is None:
+        value = u''
     else:
         value = unicode(value)
 

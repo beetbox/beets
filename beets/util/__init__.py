@@ -139,18 +139,28 @@ def ancestry(path, pathmod=None):
             out.insert(0, path)
     return out
 
-def sorted_walk(path, ignore=()):
-    """Like ``os.walk``, but yields things in case-insensitive sorted,
+def sorted_walk(path, ignore=(), logger=None):
+    """Like `os.walk`, but yields things in case-insensitive sorted,
     breadth-first order.  Directory and file names matching any glob
-    pattern in ``ignore`` are skipped.
+    pattern in `ignore` are skipped. If `logger` is provided, then
+    warning messages are logged there when a directory cannot be listed.
     """
     # Make sure the path isn't a Unicode string.
     path = bytestring_path(path)
 
     # Get all the directories and files at this level.
+    try:
+        contents = os.listdir(syspath(path))
+    except OSError as exc:
+        print('foo', logger, bool(logger))
+        if logger:
+            logger.warn(u'could not list directory {0}: {1}'.format(
+                displayable_path(path), exc.strerror
+            ))
+        return
     dirs = []
     files = []
-    for base in os.listdir(syspath(path)):
+    for base in contents:
         base = bytestring_path(base)
 
         # Skip ignored filenames.
@@ -178,7 +188,7 @@ def sorted_walk(path, ignore=()):
     for base in dirs:
         cur = os.path.join(path, base)
         # yield from sorted_walk(...)
-        for res in sorted_walk(cur, ignore):
+        for res in sorted_walk(cur, ignore, logger):
             yield res
 
 def mkdirall(path):

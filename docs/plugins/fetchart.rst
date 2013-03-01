@@ -75,6 +75,10 @@ When you choose to apply changes during an import, beets searches all sources
 for album art. For "as-is" imports (and non-autotagged imports using the ``-A``
 flag), beets only looks for art on the local filesystem.
 
+By default, remote (Web) art sources are only queried if no local art is found
+in the filesystem. To query remote sources every time, set the
+``remote_priority`` configuration option to false.
+
 Embedding Album Art
 -------------------
 

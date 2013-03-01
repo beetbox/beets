@@ -194,7 +194,7 @@ def _sc_decode(soundcheck):
     try:
         soundcheck = soundcheck.replace(' ', '').decode('hex')
         soundcheck = struct.unpack('!iiiiiiiiii', soundcheck)
-    except struct.error:
+    except (struct.error, TypeError):
         # SoundCheck isn't in the format we expect, so return default
         # values.
         return 0.0, 0.0
@@ -204,7 +204,12 @@ def _sc_decode(soundcheck):
     # compared to a reference value of 1000 to get our gain in dB. We
     # play it safe by using the larger of the two values (i.e., the most
     # attenuation).
-    gain = math.log10((max(*soundcheck[:2]) or 1000) / 1000.0) * -10
+    maxgain = max(soundcheck[:2])
+    if maxgain > 0:
+        gain = math.log10(maxgain / 1000.0) * -10
+    else:
+        # Invalid gain value found.
+        gain = 0.0
 
     # SoundCheck stores peak values as the actual value of the sample,
     # and again separately for the left and right channels. We need to
@@ -301,17 +306,22 @@ class Packed(object):
     """Makes a packed list of values subscriptable. To access the packed
     output after making changes, use packed_thing.items.
     """
-    def __init__(self, items, packstyle, none_val=0, out_type=int):
+    def __init__(self, items, packstyle, out_type=int):
         """Create a Packed object for subscripting the packed values in
         items. The items are packed using packstyle, which is a value
-        from the packing enum. none_val is returned from a request when
-        no suitable value is found in the items. Values are converted to
-        out_type before they are returned.
+        from the packing enum. Values are converted to out_type before
+        they are returned.
         """
         self.items = items
         self.packstyle = packstyle
-        self.none_val = none_val
         self.out_type = out_type
+
+        if out_type is int:
+            self.none_val = 0
+        elif out_type is float:
+            self.none_val = 0.0
+        else:
+            self.none_val = None
 
     def __getitem__(self, index):
         if not isinstance(index, int):
@@ -347,6 +357,10 @@ class Packed(object):
             return _safe_cast(self.out_type, out)
 
     def __setitem__(self, index, value):
+        # Interpret null values.
+        if value is None:
+            value = self.none_val
+
         if self.packstyle in (packing.SLASHED, packing.TUPLE, packing.SC):
             # SLASHED, TUPLE and SC are always two-item packings
             length = 2
@@ -547,7 +561,7 @@ class MediaField(object):
             # Remove suffix.
             if style.suffix and isinstance(out, (str, unicode)):
                 if out.endswith(style.suffix):
-                    out = out[:len(style.suffix)]
+                    out = out[:-len(style.suffix)]
 
             # MPEG-4 freeform frames are (should be?) encoded as UTF-8.
             if obj.type == 'mp4' and style.key.startswith('----:') and \

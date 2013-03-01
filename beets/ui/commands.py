@@ -226,13 +226,17 @@ def show_change(cur_artist, cur_album, match):
 
         if lhs != rhs:
             lines.append((lhs, rhs, lhs_width))
+        elif config['import']['detail']:
+            lines.append((lhs, '', lhs_width))
 
     # Print each track in two columns, or across two lines.
     col_width = (ui.term_width() - len(''.join([' * ', ' -> ']))) // 2
     if lines:
         max_width = max(w for _, _, w in lines)
         for lhs, rhs, lhs_width in lines:
-            if max_width > col_width:
+            if not rhs:
+                print_(u' * {0}'.format(lhs))
+            elif max_width > col_width:
                 print_(u' * %s ->\n   %s' % (lhs, rhs))
             else:
                 pad = max_width - lhs_width
@@ -539,21 +543,16 @@ class TerminalImportSession(importer.ImportSession):
             elif choice is importer.action.MANUAL:
                 # Try again with manual search terms.
                 search_artist, search_album = manual_search(False)
-                try:
-                    _, _, candidates, rec = \
-                        autotag.tag_album(task.items, search_artist,
-                                          search_album)
-                except autotag.AutotagError:
-                    candidates, rec = None, None
+                _, _, candidates, rec = autotag.tag_album(
+                    task.items, search_artist, search_album
+                )
             elif choice is importer.action.MANUAL_ID:
                 # Try a manually-entered ID.
                 search_id = manual_id(False)
                 if search_id:
-                    try:
-                        _, _, candidates, rec = \
-                            autotag.tag_album(task.items, search_id=search_id)
-                    except autotag.AutotagError:
-                        candidates, rec = None, None
+                    _, _, candidates, rec = autotag.tag_album(
+                        task.items, search_id=search_id
+                    )
             else:
                 # We have a candidate! Finish tagging. Here, choice is an
                 # AlbumMatch object.
@@ -702,7 +701,7 @@ import_cmd.parser.add_option('-P', '--noresume', action='store_false',
     dest='resume', help="do not try to resume importing")
 import_cmd.parser.add_option('-q', '--quiet', action='store_true',
     dest='quiet', help="never prompt for input: skip albums instead")
-import_cmd.parser.add_option('-l', '--log', dest='logpath',
+import_cmd.parser.add_option('-l', '--log', dest='log',
     help='file to log untaggable albums for later review')
 import_cmd.parser.add_option('-s', '--singletons', action='store_true',
     help='import individual tracks instead of full albums')
@@ -714,6 +713,8 @@ import_cmd.parser.add_option('-i', '--incremental', dest='incremental',
     action='store_true', help='skip already-imported directories')
 import_cmd.parser.add_option('-I', '--noincremental', dest='incremental',
     action='store_false', help='do not skip already-imported directories')
+import_cmd.parser.add_option('--flat', dest='flat',
+    action='store_true', help='import an entire tree as a single album')
 def import_func(lib, opts, args):
     config['import'].set_args(opts)
 

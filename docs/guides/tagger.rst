@@ -255,7 +255,7 @@ MusicBrainz---so consider adding the data yourself.
 If you think beets is ignoring an album that's listed in MusicBrainz, please
 `file a bug report`_.
 
-.. _file a bug report: http://code.google.com/p/beets/issues/entry
+.. _file a bug report: https://github.com/sampsyo/beets/issues
 
 I Hope That Makes Sense
 -----------------------

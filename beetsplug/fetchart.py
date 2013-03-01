@@ -179,7 +179,8 @@ def art_for_album(album, paths, maxwidth=None, local_only=False):
                 break
 
     # Web art sources.
-    if not local_only and not out:
+    remote_priority = config['fetchart']['remote_priority'].get(bool)
+    if not local_only and (remote_priority or not out):
         for url in _source_urls(album):
             if maxwidth:
                 url = ArtResizer.shared.proxy_url(maxwidth, url)
@@ -219,6 +220,7 @@ class FetchArtPlugin(BeetsPlugin):
         self.config.add({
             'auto': True,
             'maxwidth': 0,
+            'remote_priority': False,
         })
 
         # Holds paths to downloaded images between fetching them and

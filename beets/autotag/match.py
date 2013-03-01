@@ -37,7 +37,7 @@ ALBUM_WEIGHT = 3.0
 TRACK_WEIGHT = 1.0
 # The weight of a missing track.
 MISSING_WEIGHT = 0.9
-# The weight of an extra (umatched) track.
+# The weight of an extra (unmatched) track.
 UNMATCHED_WEIGHT = 0.6
 # These distances are components of the track distance (that is, they
 # compete against each other but not ARTIST_WEIGHT and ALBUM_WEIGHT;
@@ -80,10 +80,6 @@ recommendation = enum('none', 'low', 'medium', 'strong', name='recommendation')
 # release and also on the track level to to remove the penalty for
 # differing artists.
 VA_ARTISTS = (u'', u'various artists', u'va', u'unknown')
-
-# Autotagging exceptions.
-class AutotagError(Exception):
-    pass
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -261,8 +257,8 @@ def distance(items, album_info, mapping):
     `album_info.tracks`.
     """
     cur_artist, cur_album, _ = current_metadata(items)
-    cur_artist = cur_artist or ''
-    cur_album = cur_album or ''
+    cur_artist = cur_artist or u''
+    cur_album = cur_album or u''
 
     # These accumulate the possible distance components. The final
     # distance will be dist/dist_max.
@@ -418,7 +414,6 @@ def tag_album(items, search_artist=None, search_album=None,
         - A recommendation.
     If search_artist and search_album or search_id are provided, then
     they are used as search terms in place of the current metadata.
-    May raise an AutotagError if existing metadata is insufficient.
     """
     # Get current metadata.
     cur_artist, cur_album, artist_consensus = current_metadata(items)
