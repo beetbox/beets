@@ -39,7 +39,8 @@ def encode(source, dest):
     encode.wait()
     if encode.returncode != 0:
         # Something went wrong (probably Ctrl+C), remove temporary files
-        log.info(u'Encoding {0} failed. Cleaning up...'.format(source))
+        log.info(u'Encoding {0} failed. Cleaning up...'
+                 .format(util.displayable_path(source)))
         util.remove(dest)
         util.prune_dirs(os.path.dirname(dest))
         return
