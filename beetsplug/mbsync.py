@@ -23,13 +23,48 @@ log = logging.getLogger('beets')
 
 
 def mbsync_func(lib, opts, args):
-    #album = opts.album
     move = opts.move
     pretend = opts.pretend
     write = opts.write
+    if opts.album and opts.singleton:
+        return
+
     with lib.transaction():
-        # Right now this only works for albums....
-        albums = lib.albums(ui.decargs(args))
+        singletons = [item for item in lib.items(ui.decargs(args))
+                      if item.album_id is None] if not opts.album else []
+        albums = lib.albums(ui.decargs(args)) if not opts.singleton else []
+
+        for s in singletons:
+            if not s.mb_trackid:
+                log.info(u'Skipping singleton {0}: has no mb_trackid'
+                         .format(s.title))
+                continue
+
+            old_data = dict(s.record)
+            candidates, _ = autotag.match.tag_item(s, search_id=s.mb_trackid)
+            match = candidates[0]
+            autotag.apply_item_metadata(s, match.info)
+            changes = {}
+            for key in library.ITEM_KEYS_META:
+                if s.dirty[key]:
+                    changes[key] = old_data[key], getattr(s, key)
+            if changes:
+                # Something changed.
+                ui.print_obj(s, lib)
+                for key, (oldval, newval) in changes.iteritems():
+                    ui.commands._showdiff(key, oldval, newval)
+
+                # If we're just pretending, then don't move or save.
+                if pretend:
+                    continue
+
+                # Move the item if it's in the library.
+                if move and lib.directory in util.ancestry(s.path):
+                    lib.move(s)
+
+                if write:
+                    s.write()
+                lib.store(s)
 
         for a in albums:
             if not a.mb_albumid:
@@ -40,7 +75,7 @@ def mbsync_func(lib, opts, args):
             for item in items:
                 item.old_data = dict(item.record)
 
-            cur_artist, cur_album, candidates, _ = \
+            _, _, candidates, _ = \
                 autotag.match.tag_album(items, search_id=a.mb_albumid)
             match = candidates[0]     # There should only be one match!
             autotag.apply_metadata(match.info, match.mapping)
@@ -88,8 +123,10 @@ class MBSyncPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand('mbsync',
                             help='update metadata from musicbrainz')
-        #cmd.parser.add_option('-a', '--album', action='store_true',
-        #                      help='choose albums instead of tracks')
+        cmd.parser.add_option('-a', '--album', action='store_true',
+                              help='only query for albums')
+        cmd.parser.add_option('-s', '--singleton', action='store_true',
+                              help='only query for singletons')
         cmd.parser.add_option('-p', '--pretend', action='store_true',
                               help='show all changes but do nothing')
         cmd.parser.add_option('-M', '--nomove', action='store_false',
