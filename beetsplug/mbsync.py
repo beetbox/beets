@@ -22,17 +22,38 @@ from beets import autotag, library, ui, util
 log = logging.getLogger('beets')
 
 
+def _print_and_apply_changes(lib, item, move, pretend, write):
+    changes = {}
+    for key in library.ITEM_KEYS_META:
+        if item.dirty[key]:
+            changes[key] = item.old_data[key], getattr(item, key)
+    if not changes:
+        return
+
+    # Something changed.
+    ui.print_obj(item, lib)
+    for key, (oldval, newval) in changes.iteritems():
+        ui.commands._showdiff(key, oldval, newval)
+
+    # If we're just pretending, then don't move or save.
+    if not pretend:
+        # Move the item if it's in the library.
+        if move and lib.directory in util.ancestry(item.path):
+            lib.move(item)
+
+        if write:
+            item.write()
+        lib.store(item)
+
+
 def mbsync_func(lib, opts, args):
     move = opts.move
     pretend = opts.pretend
     write = opts.write
-    if opts.album and opts.singleton:
-        return
 
     with lib.transaction():
-        singletons = [item for item in lib.items(ui.decargs(args))
-                      if item.album_id is None] if not opts.album else []
-        albums = lib.albums(ui.decargs(args)) if not opts.singleton else []
+        singletons = lib.items(ui.decargs(args + ['singleton']))
+        albums = lib.albums(ui.decargs(args))
 
         for s in singletons:
             if not s.mb_trackid:
@@ -40,31 +61,11 @@ def mbsync_func(lib, opts, args):
                          .format(s.title))
                 continue
 
-            old_data = dict(s.record)
+            s.old_data = dict(s.record)
             candidates, _ = autotag.match.tag_item(s, search_id=s.mb_trackid)
             match = candidates[0]
             autotag.apply_item_metadata(s, match.info)
-            changes = {}
-            for key in library.ITEM_KEYS_META:
-                if s.dirty[key]:
-                    changes[key] = old_data[key], getattr(s, key)
-            if changes:
-                # Something changed.
-                ui.print_obj(s, lib)
-                for key, (oldval, newval) in changes.iteritems():
-                    ui.commands._showdiff(key, oldval, newval)
-
-                # If we're just pretending, then don't move or save.
-                if pretend:
-                    continue
-
-                # Move the item if it's in the library.
-                if move and lib.directory in util.ancestry(s.path):
-                    lib.move(s)
-
-                if write:
-                    s.write()
-                lib.store(s)
+            _print_and_apply_changes(lib, s, move, pretend, write)
 
         for a in albums:
             if not a.mb_albumid:
@@ -81,39 +82,17 @@ def mbsync_func(lib, opts, args):
             autotag.apply_metadata(match.info, match.mapping)
 
             for item in items:
-                changes = {}
-                for key in library.ITEM_KEYS_META:
-                    if item.dirty[key]:
-                        changes[key] = item.old_data[key], getattr(item, key)
-                if changes:
-                    # Something changed.
-                    ui.print_obj(item, lib)
-                    for key, (oldval, newval) in changes.iteritems():
-                        ui.commands._showdiff(key, oldval, newval)
+                _print_and_apply_changes(lib, item, move, pretend, write)
 
-                    # If we're just pretending, then don't move or save.
-                    if pretend:
-                        continue
+            if not pretend:
+                # Update album structure to reflect an item in it.
+                for key in library.ALBUM_KEYS_ITEM:
+                    setattr(a, key, getattr(items[0], key))
 
-                    # Move the item if it's in the library.
-                    if move and lib.directory in util.ancestry(item.path):
-                        lib.move(item)
-
-                    if write:
-                        item.write()
-                    lib.store(item)
-
-            if pretend:
-                continue
-
-            # Update album structure to reflect an item in it.
-            for key in library.ALBUM_KEYS_ITEM:
-                setattr(a, key, getattr(items[0], key))
-
-            # Move album art (and any inconsistent items).
-            if move and lib.directory in util.ancestry(items[0].path):
-                log.debug(u'moving album {0}'.format(a.id))
-                a.move()
+                # Move album art (and any inconsistent items).
+                if move and lib.directory in util.ancestry(items[0].path):
+                    log.debug(u'moving album {0}'.format(a.id))
+                    a.move()
 
 
 class MBSyncPlugin(BeetsPlugin):
@@ -123,10 +102,6 @@ class MBSyncPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand('mbsync',
                             help='update metadata from musicbrainz')
-        cmd.parser.add_option('-a', '--album', action='store_true',
-                              help='only query for albums')
-        cmd.parser.add_option('-s', '--singleton', action='store_true',
-                              help='only query for singletons')
         cmd.parser.add_option('-p', '--pretend', action='store_true',
                               help='show all changes but do nothing')
         cmd.parser.add_option('-M', '--nomove', action='store_false',

@@ -15,10 +15,10 @@ Usage
 -----
 
 Enable the plugin and then run ``beet mbsync QUERY`` to fetch updated metadata
-for a part of your collection. By default this will use the given query to
-search for albums and singletons. You can use the  ``-a`` (``--album``) and
-``-s`` (``--singleton``) command line flags to only search for albums or
-singletons respectively.
+for a part of your collection. Since the MusicBrainZ API allows for more
+efficient queries for full albums this will by run separately for all albums and
+all singletons(tracks that are not part of an album) so it will use the given
+query to search for both albums and singletons.
 
 To only preview the changes that would be made, use the ``-p`` (``--pretend``)
 flag. By default all the new metadata will be written to the files and the files
