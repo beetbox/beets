@@ -24,12 +24,12 @@ log = logging.getLogger('beets')
 
 def mbsync_func(lib, opts, args):
     #album = opts.album
-    album = True
-    move = True
+    move = opts.move
     pretend = opts.pretend
+    write = opts.write
     with lib.transaction():
         # Right now this only works for albums....
-        _, albums = ui.commands._do_query(lib, ui.decargs(args), album)
+        albums = lib.albums(ui.decargs(args))
 
         for a in albums:
             if not a.mb_albumid:
@@ -43,7 +43,6 @@ def mbsync_func(lib, opts, args):
             cur_artist, cur_album, candidates, _ = \
                 autotag.match.tag_album(items, search_id=a.mb_albumid)
             match = candidates[0]     # There should only be one match!
-            # ui.commands.show_change(cur_artist, cur_album, match)
             autotag.apply_metadata(match.info, match.mapping)
 
             for item in items:
@@ -64,9 +63,12 @@ def mbsync_func(lib, opts, args):
                     # Move the item if it's in the library.
                     if move and lib.directory in util.ancestry(item.path):
                         lib.move(item)
+
+                    if write:
+                        item.write()
                     lib.store(item)
 
-            if pretend or a.id is None:  # pretend or Singleton
+            if pretend:
                 continue
 
             # Update album structure to reflect an item in it.
@@ -94,7 +96,7 @@ class MBSyncPlugin(BeetsPlugin):
                               default=True, dest='move',
                               help="don't move files in library")
         cmd.parser.add_option('-W', '--nowrite', action='store_false',
-                              default=True, dest='move',
+                              default=True, dest='write',
                               help="don't write updated metadata to files")
         cmd.func = mbsync_func
         return [cmd]
