@@ -25,12 +25,15 @@ log = logging.getLogger('beets')
 
 
 def _print_and_apply_changes(lib, item, move, pretend, write):
+    """Apply changes to an Item and preview them in the console. Return
+    a boolean indicating whether any changes were made.
+    """
     changes = {}
     for key in library.ITEM_KEYS_META:
         if item.dirty[key]:
             changes[key] = item.old_data[key], getattr(item, key)
     if not changes:
-        return
+        return False
 
     # Something changed.
     ui.print_obj(item, lib)
@@ -46,6 +49,8 @@ def _print_and_apply_changes(lib, item, move, pretend, write):
         if write:
             item.write()
         lib.store(item)
+
+    return True
 
 
 def mbsync_singletons(lib, query, move, pretend, write):
@@ -104,8 +109,13 @@ def mbsync_albums(lib, query, move, pretend, write):
         # Apply.
         with lib.transaction():
             autotag.apply_metadata(album_info, mapping)
+            changed = False
             for item in items:
-                _print_and_apply_changes(lib, item, move, pretend, write)
+                changed = changed or \
+                    _print_and_apply_changes(lib, item, move, pretend, write)
+            if not changed:
+                # No change to any item.
+                continue
 
             if not pretend:
                 # Update album structure to reflect an item in it.
