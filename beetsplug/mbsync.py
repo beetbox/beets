@@ -18,6 +18,7 @@ import logging
 
 from beets.plugins import BeetsPlugin
 from beets import autotag, library, ui, util
+from beets.autotag import hooks
 
 log = logging.getLogger('beets')
 
@@ -54,14 +55,20 @@ def mbsync_singletons(lib, query, move, pretend, write):
     for s in lib.items(singletons_query):
         if not s.mb_trackid:
             log.info(u'Skipping singleton {0}: has no mb_trackid'
-                        .format(s.title))
+                     .format(s.title))
             continue
 
         s.old_data = dict(s.record)
-        candidates, _ = autotag.match.tag_item(s, search_id=s.mb_trackid)
-        match = candidates[0]
+
+        # Get the MusicBrainz recording info.
+        track_info = hooks._track_for_id(s.mb_trackid)
+        if not track_info:
+            log.info(u'Recording ID not found: {0}'.format(s.mb_trackid))
+            continue
+
+        # Apply.
         with lib.transaction():
-            autotag.apply_item_metadata(s, match.info)
+            autotag.apply_item_metadata(s, track_info)
             _print_and_apply_changes(lib, s, move, pretend, write)
 
 
@@ -78,12 +85,24 @@ def mbsync_albums(lib, query, move, pretend, write):
         for item in items:
             item.old_data = dict(item.record)
 
-        _, _, candidates, _ = \
-            autotag.match.tag_album(items, search_id=a.mb_albumid)
-        match = candidates[0]     # There should only be one match!
+        # Get the MusicBrainz album information.
+        album_info = hooks._album_for_id(a.mb_albumid)
+        if not album_info:
+            log.info(u'Release ID not found: {0}'.format(a.mb_albumid))
+            continue
 
+        # Construct a track mapping according to MBIDs. This should work
+        # for albums that have missing or extra tracks.
+        mapping = {}
+        for item in items:
+            for track_info in album_info.tracks:
+                if item.mb_trackid == track_info.track_id:
+                    mapping[item] = track_info
+                    break
+
+        # Apply.
         with lib.transaction():
-            autotag.apply_metadata(match.info, match.mapping)
+            autotag.apply_metadata(album_info, mapping)
             for item in items:
                 _print_and_apply_changes(lib, item, move, pretend, write)
 
