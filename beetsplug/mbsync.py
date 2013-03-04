@@ -19,6 +19,7 @@ import logging
 from beets.plugins import BeetsPlugin
 from beets import autotag, library, ui, util
 from beets.autotag import hooks
+from beets import config
 
 log = logging.getLogger('beets')
 
@@ -142,7 +143,7 @@ class MBSyncPlugin(BeetsPlugin):
                               default=True, dest='move',
                               help="don't move files in library")
         cmd.parser.add_option('-W', '--nowrite', action='store_false',
-                              default=True, dest='write',
+                              default=config['import']['write'], dest='write',
                               help="don't write updated metadata to files")
         cmd.func = mbsync_func
         return [cmd]
