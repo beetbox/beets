@@ -229,6 +229,28 @@ def format_for_path(value, key=None, pathmod=None):
 class InvalidFieldError(Exception):
     pass
 
+class FixedDict(dict):
+    """A dict where keys can not be added after creation and keys are marked 
+    as 'dirty' when their values are changed.
+    Accepts a list of `keys` and an optional `values` which should 
+    be a dict compatible object.
+    Any key not in `values` will be implicitly added and given a `None` value.
+    """
+    def __init__(self, keys, values=None):
+        values = values or {}
+        super(FixedDict, self).__init__(values)
+        seti = super(FixedDict, self).__setitem__
+        for key in keys:
+            if not key in self:
+                seti(key, None)
+        self.dirty = {}
+
+    def __setitem__(self, key, value):
+        if key not in self:
+            raise KeyError('{} is not a valid key.'.format(key))
+        elif value != self[key]:
+            super(FixedDict, self).__setitem__(key, value)
+            self.dirty[key] = True
 
 # Library items (songs).
 
@@ -252,11 +274,33 @@ class Item(object):
 
     def _fill_record(self, values):
         self.record = {}
+
         for key in ITEM_KEYS:
             try:
                 setattr(self, key, values[key])
             except KeyError:
                 setattr(self, key, None)
+
+        #make the initial, empty flexible attribute dict
+        flexattrns = plugins.item_fields() 
+        self.flexattrs = FixedDict(flexattrns.keys())
+        for key in self.flexattrs.iterkeys():
+            self.flexattrs[key] = FixedDict(flexattrns[key])
+        
+        #treat flexattrs values as they would come from the database
+        if values['flexkeys'] and values['flexvalues'] and values['flexns']:
+            flexkeys = values['flexkeys'].split(',')
+            flexvalues = values['flexvalues'].split(',')
+            flexns = values['flexns'].split(',')
+            for i, key in enumerate(flexkeys):
+                namespace = flexns[i]
+                if namespace not in self.flexattrs:
+                    #not an active plugin, skip
+                    continue
+                value = flexvalues[i]
+                if not self.flexattrs.has_key(namespace):
+                    self.flexattrs[namespace] = {}
+                    self.flexattrs[flexns[i]][key] = flexvalues[i]
 
     def _clear_dirty(self):
         self.dirty = {}
@@ -265,7 +309,6 @@ class Item(object):
 
     def __repr__(self):
         return 'Item(' + repr(self.record) + ')'
-
 
     # Item field accessors.
 
@@ -293,7 +336,7 @@ class Item(object):
             elif isinstance(value, buffer):
                 value = str(value)
 
-        if key in ITEM_KEYS or key in plugins.item_fields():
+        if key in ITEM_KEYS:
             # If the value changed, mark the field as dirty.
             if (key not in self.record) or (self.record[key] != value):
                 self.record[key] = value
@@ -303,6 +346,15 @@ class Item(object):
         else:
             super(Item, self).__setattr__(key, value)
 
+    def __getitem__(self, key):
+        """Entry point to flexible attributes.
+        `key` should be a plugin name or an otherwise 
+        valid flexible attr namespace.
+        """
+        if key in self.flexattrs:
+            return self.flexattrs[key]
+        else:
+            raise KeyError('{} is not a valid attribute namespace'.format(key))
 
     # Interaction with file metadata.
 
@@ -453,7 +505,7 @@ class Query(object):
         to substitute in for ?s in the query.
         """
         clause, subvals = self.clause()
-        return ('SELECT ' + columns + ' FROM items WHERE ' + clause, subvals)
+        return ('SELECT ' + columns + ' FROM unified_items WHERE ' + clause, subvals)
 
     def count(self, tx):
         """Returns `(num, length)` where `num` is the number of items in
@@ -461,7 +513,7 @@ class Query(object):
         length in seconds.
         """
         clause, subvals = self.clause()
-        statement = 'SELECT COUNT(id), SUM(length) FROM items WHERE ' + clause
+        statement = 'SELECT COUNT(id), SUM(length) FROM unified_items WHERE ' + clause
         result = tx.query(statement, subvals)[0]
         return (result[0], result[1] or 0.0)
 
@@ -1122,11 +1174,22 @@ class Library(BaseLibrary):
                 CREATE TABLE IF NOT EXISTS {0}_attributes (
                     id INTEGER PRIMARY KEY,
                     entity_id INTEGER,
+                    namespace TEXT,
                     key TEXT,
                     value TEXT,
-                    UNIQUE(entity_id, key) ON CONFLICT REPLACE);
+                    UNIQUE(entity_id, key, namespace) ON CONFLICT REPLACE);
                 CREATE INDEX IF NOT EXISTS {0}_id_attribute
                     ON {0}_attributes (entity_id);
+                CREATE VIEW IF NOT EXISTS unified_{0}s AS
+                SELECT 
+                GROUP_CONCAT(ia.key) AS flexkeys, 
+                GROUP_CONCAT(ia.value) AS flexvalues,
+                GROUP_CONCAT(ia.namespace) AS flexns,
+                {0}s.*
+                FROM {0}s  
+                    LEFT JOIN {0}_attributes AS ia
+                    ON {0}s.id == ia.entity_id
+                GROUP BY {0}s.id;
                 """.format(entity))
 
     def _connection(self):
@@ -1280,7 +1343,7 @@ class Library(BaseLibrary):
             load_id = item.id
 
         with self.transaction() as tx:
-            rows = tx.query('SELECT * FROM items WHERE id=?', (load_id,))
+            rows = tx.query('SELECT * FROM unified_items WHERE id=?', (load_id,))
         item._fill_record(rows[0])
         item._clear_dirty()
 
@@ -1309,15 +1372,18 @@ class Library(BaseLibrary):
                 subvars.append(store_id)
                 tx.mutate(query, subvars)
 
-            # Flexible attributes.
-            for key in plugins.item_fields():
-                if item.dirty.get(key) or store_all:
-                    tx.mutate(
-                        'INSERT INTO item_attributes (entity_id, key, value)'
-                        ' VALUES (?, ?, ?)',
-                        (store_id, key, getattr(item, key))
-                    )
-
+            #flexible attributes
+            flexins = '''INSERT INTO item_attributes 
+                      (entity_id, key, value, namespace) 
+                      VALUES (?,?,?);'''
+            flexup = '''UPDATE item_attributes SET value = ? WHERE 
+                     entity_id = ? AND key = ? AND namespace = ?;'''
+            for ns,attrs in item.flexattrs.iteritems():
+                for key in attrs.dirty:
+                    #TODO: use an upsert method to store attrs
+                    tx.mutate(flexins, (store_id, key, attrs[key], ns))
+                attrs.dirty.clear()
+        
         item._clear_dirty()
         self._memotable = {}
 
@@ -1415,7 +1481,7 @@ class Library(BaseLibrary):
         super_query = AndQuery(queries)
         where, subvals = super_query.clause()
 
-        sql = "SELECT * FROM items " + \
+        sql = "SELECT * FROM unified_items " + \
               "WHERE " + where + \
               " ORDER BY %s, album, disc, track" % \
                 _orelse("artist_sort", "artist")
@@ -1431,7 +1497,7 @@ class Library(BaseLibrary):
         """Fetch an Item by its ID. Returns None if no match is found.
         """
         with self.transaction() as tx:
-            rows = tx.query("SELECT * FROM items WHERE id=?", (id,))
+            rows = tx.query("SELECT * FROM unified_items WHERE id=?", (id,))
         it = ResultIterator(rows)
         try:
             return it.next()
@@ -1552,7 +1618,7 @@ class Album(BaseAlbum):
         """
         with self._library.transaction() as tx:
             rows = tx.query(
-                'SELECT * FROM items WHERE album_id=?',
+                'SELECT * FROM unified_items WHERE album_id=?',
                 (self.id,)
             )
         return ResultIterator(rows)
