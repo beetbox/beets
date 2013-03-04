@@ -46,42 +46,44 @@ def _print_and_apply_changes(lib, item, move, pretend, write):
         lib.store(item)
 
 
-def mbsync_func(lib, opts, args):
-    move = opts.move
-    pretend = opts.pretend
-    write = opts.write
+def mbsync_singletons(lib, query, move, pretend, write):
+    """Synchronize matching singleton items.
+    """
+    singletons_query = library.get_query(query, False)
+    singletons_query.subqueries.append(library.SingletonQuery(True))
+    for s in lib.items(singletons_query):
+        if not s.mb_trackid:
+            log.info(u'Skipping singleton {0}: has no mb_trackid'
+                        .format(s.title))
+            continue
 
-    with lib.transaction():
-        # Process matching singletons.
-        singletons_query = library.get_query(ui.decargs(args), False)
-        singletons_query.subqueries.append(library.SingletonQuery(True))
-        for s in lib.items(singletons_query):
-            if not s.mb_trackid:
-                log.info(u'Skipping singleton {0}: has no mb_trackid'
-                         .format(s.title))
-                continue
-
-            s.old_data = dict(s.record)
-            candidates, _ = autotag.match.tag_item(s, search_id=s.mb_trackid)
-            match = candidates[0]
+        s.old_data = dict(s.record)
+        candidates, _ = autotag.match.tag_item(s, search_id=s.mb_trackid)
+        match = candidates[0]
+        with lib.transaction():
             autotag.apply_item_metadata(s, match.info)
             _print_and_apply_changes(lib, s, move, pretend, write)
 
-        # Process matching albums.
-        for a in lib.albums(ui.decargs(args)):
-            if not a.mb_albumid:
-                log.info(u'Skipping album {0}: has no mb_albumid'.format(a.id))
-                continue
 
-            items = list(a.items())
-            for item in items:
-                item.old_data = dict(item.record)
+def mbsync_albums(lib, query, move, pretend, write):
+    """Synchronize matching albums.
+    """
+    # Process matching albums.
+    for a in lib.albums(query):
+        if not a.mb_albumid:
+            log.info(u'Skipping album {0}: has no mb_albumid'.format(a.id))
+            continue
 
-            _, _, candidates, _ = \
-                autotag.match.tag_album(items, search_id=a.mb_albumid)
-            match = candidates[0]     # There should only be one match!
+        items = list(a.items())
+        for item in items:
+            item.old_data = dict(item.record)
+
+        _, _, candidates, _ = \
+            autotag.match.tag_album(items, search_id=a.mb_albumid)
+        match = candidates[0]     # There should only be one match!
+
+        with lib.transaction():
             autotag.apply_metadata(match.info, match.mapping)
-
             for item in items:
                 _print_and_apply_changes(lib, item, move, pretend, write)
 
@@ -94,6 +96,18 @@ def mbsync_func(lib, opts, args):
                 if move and lib.directory in util.ancestry(items[0].path):
                     log.debug(u'moving album {0}'.format(a.id))
                     a.move()
+
+
+def mbsync_func(lib, opts, args):
+    """Command handler for the mbsync function.
+    """
+    move = opts.move
+    pretend = opts.pretend
+    write = opts.write
+    query = ui.decargs(args)
+
+    mbsync_singletons(lib, query, move, pretend, write)
+    mbsync_albums(lib, query, move, pretend, write)
 
 
 class MBSyncPlugin(BeetsPlugin):
