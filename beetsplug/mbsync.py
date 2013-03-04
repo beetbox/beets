@@ -44,7 +44,7 @@ def _print_and_apply_changes(lib, item, move, pretend, write):
     if not pretend:
         # Move the item if it's in the library.
         if move and lib.directory in util.ancestry(item.path):
-            lib.move(item)
+            lib.move(item, with_album=False)
 
         if write:
             item.write()
