@@ -105,10 +105,9 @@ right now; this is something we need to work on. Read the
     ^^^^^^^^^^^
 
     The ``import`` command can also be used to "reimport" music that you've
-    already added to your library. This is useful for updating tags as they are
-    fixed in the MusicBrainz database, for when you change your mind about some
-    selections you made during the initial import, or if you prefer to import
-    everything "as-is" and then correct tags later.
+    already added to your library. This is useful when you change your mind
+    about some selections you made during the initial import, or if you prefer
+    to import everything "as-is" and then correct tags later.
 
     Just point the ``beet import`` command at a directory of files that are
     already catalogged in your library. Beets will automatically detect this
@@ -126,6 +125,11 @@ right now; this is something we need to work on. Read the
     ``-s`` (singleton) flag controls whether the query matches individual items
     or full albums. If you want to retag your whole library, just supply a null
     query, which matches everything: ``beet import -L``
+
+    Note that, if you just want to update your files' tags according to
+    changes in the MusicBrainz database, the :doc:`/plugins/mbsync` is a
+    better choice. Reimporting uses the full matching machinery to guess
+    metadata matches; ``mbsync`` just relies on MusicBrainz IDs.
 
 .. _list-cmd:
 

@@ -18,6 +18,10 @@ New configuration options:
 
 Other stuff:
 
+* A new :doc:`/plugins/mbsync` provides a command that looks up each item and
+  track in MusicBrainz and updates your library to reflect it. This can help
+  you easily correct errors that have been fixed in the MB database. Thanks to
+  Jakob Schnitzer.
 * :doc:`/plugins/echonest_tempo`: API errors now issue a warning instead of
   exiting with an exception. We also avoid an error when track metadata
   contains newlines.
