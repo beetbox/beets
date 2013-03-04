@@ -12,7 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Update local library from MusicBrainz
+"""Update library's tags using MusicBrainz.
 """
 import logging
 
@@ -52,10 +52,10 @@ def mbsync_func(lib, opts, args):
     write = opts.write
 
     with lib.transaction():
-        singletons = lib.items(ui.decargs(args + ['singleton']))
-        albums = lib.albums(ui.decargs(args))
-
-        for s in singletons:
+        # Process matching singletons.
+        singletons_query = library.get_query(ui.decargs(args), False)
+        singletons_query.subqueries.append(library.SingletonQuery(True))
+        for s in lib.items(singletons_query):
             if not s.mb_trackid:
                 log.info(u'Skipping singleton {0}: has no mb_trackid'
                          .format(s.title))
@@ -67,7 +67,8 @@ def mbsync_func(lib, opts, args):
             autotag.apply_item_metadata(s, match.info)
             _print_and_apply_changes(lib, s, move, pretend, write)
 
-        for a in albums:
+        # Process matching albums.
+        for a in lib.albums(ui.decargs(args)):
             if not a.mb_albumid:
                 log.info(u'Skipping album {0}: has no mb_albumid'.format(a.id))
                 continue

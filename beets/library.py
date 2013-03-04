@@ -798,6 +798,33 @@ class ResultIterator(object):
         row = self.rowiter.next()  # May raise StopIteration.
         return Item(row)
 
+def get_query(val, album=False):
+    """Takes a value which may be None, a query string, a query string
+    list, or a Query object, and returns a suitable Query object. album
+    determines whether the query is to match items or albums.
+    """
+    if album:
+        default_fields = ALBUM_DEFAULT_FIELDS
+        all_keys = ALBUM_KEYS
+    else:
+        default_fields = ITEM_DEFAULT_FIELDS
+        all_keys = ITEM_KEYS
+
+    # Convert a single string into a list of space-separated
+    # criteria.
+    if isinstance(val, basestring):
+        val = val.split()
+
+    if val is None:
+        return TrueQuery()
+    elif isinstance(val, list) or isinstance(val, tuple):
+        return AndQuery.from_strings(val, default_fields, all_keys)
+    elif isinstance(val, Query):
+        return val
+    else:
+        raise ValueError('query must be None or have type Query or str')
+
+
 
 # An abstract library.
 
@@ -807,37 +834,6 @@ class BaseLibrary(object):
     """
     def __init__(self):
         raise NotImplementedError
-
-
-    # Helpers.
-
-    @classmethod
-    def _get_query(cls, val=None, album=False):
-        """Takes a value which may be None, a query string, a query
-        string list, or a Query object, and returns a suitable Query
-        object. album determines whether the query is to match items
-        or albums.
-        """
-        if album:
-            default_fields = ALBUM_DEFAULT_FIELDS
-            all_keys = ALBUM_KEYS
-        else:
-            default_fields = ITEM_DEFAULT_FIELDS
-            all_keys = ITEM_KEYS
-
-        # Convert a single string into a list of space-separated
-        # criteria.
-        if isinstance(val, basestring):
-            val = val.split()
-
-        if val is None:
-            return TrueQuery()
-        elif isinstance(val, list) or isinstance(val, tuple):
-            return AndQuery.from_strings(val, default_fields, all_keys)
-        elif isinstance(val, Query):
-            return val
-        elif not isinstance(val, Query):
-            raise ValueError('query must be None or have type Query or str')
 
 
     # Basic operations.
@@ -1358,7 +1354,7 @@ class Library(BaseLibrary):
     # Querying.
 
     def albums(self, query=None, artist=None):
-        query = self._get_query(query, True)
+        query = get_query(query, True)
         if artist is not None:
             # "Add" the artist to the query.
             query = AndQuery((query, MatchQuery('albumartist', artist)))
@@ -1372,7 +1368,7 @@ class Library(BaseLibrary):
         return [Album(self, dict(res)) for res in rows]
 
     def items(self, query=None, artist=None, album=None, title=None):
-        queries = [self._get_query(query, False)]
+        queries = [get_query(query, False)]
         if artist is not None:
             queries.append(MatchQuery('artist', artist))
         if album is not None:
