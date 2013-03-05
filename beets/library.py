@@ -521,16 +521,23 @@ class FieldQuery(Query):
     """An abstract query that searches in a specific field for a
     pattern.
     """
-    def __init__(self, field, pattern):
+    def __init__(self, field, pattern, namespace=None, entity='item'):
         self.field = field
         self.pattern = pattern
+        self.namespace = namespace
+        self.entity = entity
 
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
     def clause(self):
+
         pattern = self.pattern
         if self.field == 'path' and isinstance(pattern, str):
             pattern = buffer(pattern)
+        if self.namespace:
+            #give a flexible attribute clause
+            c = 'key = ? AND value = ? AND namespace = ?'
+            return c, [self.field, pattern, self.namespace]
         return self.field + " = ?", [pattern]
 
     def match(self, item):
@@ -551,7 +558,7 @@ class SubstringQuery(FieldQuery):
 
 class RegexpQuery(FieldQuery):
     """A query that matches a regular expression in a specific item field."""
-    def __init__(self, field, pattern):
+    def __init__(self, field, pattern, namespace=None, entity='item'):
         super(RegexpQuery, self).__init__(field, pattern)
         self.regexp = re.compile(pattern)
 
@@ -605,14 +612,47 @@ class CollectionQuery(Query):
         """Returns a clause created by joining together the clauses of
         all subqueries with the string joiner (padded by spaces).
         """
+        entity = None
+        flexclause_parts = []
+        flexsubvals = []
         clause_parts = []
         subvals = []
         for subq in self.subqueries:
-            subq_clause, subq_subvals = subq.clause()
-            clause_parts.append('(' + subq_clause + ')')
-            subvals += subq_subvals
+            if subq.namespace:
+                #it's a flex attr query, initiate -ugly hack- mode
+                entity = subq.entity
+                clauses = flexclause_parts
+                subs = flexsubvals
+                subq_clause, subq_subvals = subq.clause()
+                if joiner.lower() == 'and':
+                    #flexible attrs need this nested mess for AND queries
+                    subq_clause = '''
+                    EXISTS (SELECT 1 FROM {0}_attributes AS ia
+                    WHERE {1} AND ia.entity_id = unified_{0}s.id)
+                    '''.format(entity, '('+subq_clause+')')
+            else:
+                clauses = clause_parts
+                subs = subvals
+                subq_clause, subq_subvals = subq.clause()
+            clauses.append('(' + subq_clause + ')')
+            subs += subq_subvals
+
         clause = (' ' + joiner + ' ').join(clause_parts)
-        return clause, subvals
+
+        if not flexclause_parts:
+            return clause, subvals
+        
+        fclause = (' ' + joiner + ' ').join(flexclause_parts)
+        if joiner.lower() == 'and':
+            pass
+        else:
+            flexorclause = '''
+            id IN (
+            SELECT entity_id FROM {0}_attributes 
+            WHERE {1})
+            '''
+            fclause = flexorclause.format(entity, fclause)
+        return clause+' '+joiner+' '+fclause, subvals+flexsubvals
 
     # Regular expression for _parse_query_part, below.
     _pq_regex = re.compile(
