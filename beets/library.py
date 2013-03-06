@@ -288,10 +288,13 @@ class Item(object):
             self.flexattrs[key] = FixedDict(flexattrns[key])
         
         #treat flexattrs values as they would come from the database
-        if values['flexkeys'] and values['flexvalues'] and values['flexns']:
+        k = values.keys()
+        if 'flexkeys' in k and 'flexvalues' in k and 'flexns' in k:
             flexkeys = values['flexkeys'].split(',')
             flexvalues = values['flexvalues'].split(',')
             flexns = values['flexns'].split(',')
+            log.debug('flexkeys: %s - flexvals: %s - flexns: %s', 
+                      flexkeys, flexvalues, flexns)
             for i, key in enumerate(flexkeys):
                 namespace = flexns[i]
                 if namespace not in self.flexattrs:
@@ -300,7 +303,7 @@ class Item(object):
                 value = flexvalues[i]
                 if not self.flexattrs.has_key(namespace):
                     self.flexattrs[namespace] = {}
-                    self.flexattrs[flexns[i]][key] = flexvalues[i]
+                self.flexattrs[flexns[i]][key] = flexvalues[i]                    
 
     def _clear_dirty(self):
         self.dirty = {}
@@ -627,7 +630,7 @@ class CollectionQuery(Query):
         clause_parts = []
         subvals = []
         for subq in self.subqueries:
-            if subq.namespace:
+            if hasattr(subq, 'namespace') and subq.namespace:
                 #it's a flex attr query, initiate -ugly hack- mode
                 entity = subq.entity
                 clauses = flexclause_parts
@@ -661,7 +664,13 @@ class CollectionQuery(Query):
             WHERE {1})
             '''
             fclause = flexorclause.format(entity, fclause)
-        return clause+' '+joiner+' '+fclause, subvals+flexsubvals
+        if clause and fclause:
+            clause = clause+' '+joiner+' '+fclause
+        elif clause:
+            clause = clause
+        elif fclause:
+            clause = fclause
+        return clause, subvals+flexsubvals
 
     # Regular expression for _parse_query_part, below.
     _pq_regex = re.compile(
@@ -1424,7 +1433,7 @@ class Library(BaseLibrary):
             #flexible attributes
             flexins = '''INSERT INTO item_attributes 
                       (entity_id, key, value, namespace) 
-                      VALUES (?,?,?);'''
+                      VALUES (?,?,?,?);'''
             for ns,attrs in item.flexattrs.iteritems():
                 for key in attrs.dirty:
                     tx.mutate(flexins, (store_id, key, attrs[key], ns))
@@ -1508,7 +1517,7 @@ class Library(BaseLibrary):
             # "Add" the artist to the query.
             query = AndQuery((query, MatchQuery('albumartist', artist)))
         where, subvals = query.clause()
-        sql = "SELECT * FROM albums " + \
+        sql = "SELECT * FROM unified_albums " + \
               "WHERE " + where + \
               " ORDER BY %s, album" % \
                 _orelse("albumartist_sort", "albumartist")
