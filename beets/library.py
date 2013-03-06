@@ -548,7 +548,12 @@ class SubstringQuery(FieldQuery):
     def clause(self):
         search = '%' + (self.pattern.replace('\\','\\\\').replace('%','\\%')
                             .replace('_','\\_')) + '%'
-        clause = self.field + " like ? escape '\\'"
+        if self.namespace:
+            clause = """key = {0} AND namespace = {1} 
+                     AND value like ? escape '\\'""".format(
+                self.field, self.namespace)
+        else:
+            clause = self.field + " like ? escape '\\'"
         subvals = [search]
         return clause, subvals
 
@@ -559,11 +564,15 @@ class SubstringQuery(FieldQuery):
 class RegexpQuery(FieldQuery):
     """A query that matches a regular expression in a specific item field."""
     def __init__(self, field, pattern, namespace=None, entity='item'):
-        super(RegexpQuery, self).__init__(field, pattern)
+        super(RegexpQuery, self).__init__(field, pattern, namespace, entity)
         self.regexp = re.compile(pattern)
 
     def clause(self):
-        clause = self.field + " REGEXP ?"
+        if self.namespace:
+            clause = 'key = {0} AND namespace = {1} AND value REGEXP ?'.format(
+                self.field, self.namespace)
+        else:
+            clause = self.field + " REGEXP ?"
         subvals = [self.pattern]
         return clause, subvals
 
@@ -1416,11 +1425,8 @@ class Library(BaseLibrary):
             flexins = '''INSERT INTO item_attributes 
                       (entity_id, key, value, namespace) 
                       VALUES (?,?,?);'''
-            flexup = '''UPDATE item_attributes SET value = ? WHERE 
-                     entity_id = ? AND key = ? AND namespace = ?;'''
             for ns,attrs in item.flexattrs.iteritems():
                 for key in attrs.dirty:
-                    #TODO: use an upsert method to store attrs
                     tx.mutate(flexins, (store_id, key, attrs[key], ns))
                 attrs.dirty.clear()
         
