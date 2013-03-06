@@ -252,6 +252,38 @@ class FixedDict(dict):
             super(FixedDict, self).__setitem__(key, value)
             self.dirty[key] = True
 
+
+def set_flexattrs(obj, values):
+    """Create the initial flexible attribute dict for `obj` (e.g. Item/Album)
+    from given `values` which should be a dict compatible row of values 
+    from the database.
+
+    This sets the `flexattrs` attribute on `obj`.
+    """
+    #make the initial, empty flexible attribute dict
+    flexattrns = plugins.item_fields() 
+    flexattrs = FixedDict(flexattrns.keys())
+    for key in flexattrs.iterkeys():
+        flexattrs[key] = FixedDict(flexattrns[key])
+
+    k = values.keys()
+    if 'flexkeys' in k and 'flexvalues' in k and 'flexns' in k \
+            and values['flexkeys']:
+        flexkeys = values['flexkeys'].split(',')
+        flexvalues = values['flexvalues'].split(',')
+        flexns = values['flexns'].split(',')
+        log.debug('flexkeys: %s - flexvals: %s - flexns: %s',
+                  flexkeys, flexvalues, flexns)
+        for i, key in enumerate(flexkeys):
+            namespace = flexns[i]
+            if namespace not in flexattrs:
+                #not an active plugin, skip
+                continue
+            if not flexattrs.has_key(namespace):
+                flexattrs[namespace] = {}
+            flexattrs[flexns[i]][key] = flexvalues[i]
+    object.__setattr__(obj, 'flexattrs', flexattrs)
+
 # Library items (songs).
 
 class Item(object):
@@ -281,29 +313,7 @@ class Item(object):
             except KeyError:
                 setattr(self, key, None)
 
-        #make the initial, empty flexible attribute dict
-        flexattrns = plugins.item_fields() 
-        self.flexattrs = FixedDict(flexattrns.keys())
-        for key in self.flexattrs.iterkeys():
-            self.flexattrs[key] = FixedDict(flexattrns[key])
-        
-        #treat flexattrs values as they would come from the database
-        k = values.keys()
-        if 'flexkeys' in k and 'flexvalues' in k and 'flexns' in k:
-            flexkeys = values['flexkeys'].split(',')
-            flexvalues = values['flexvalues'].split(',')
-            flexns = values['flexns'].split(',')
-            log.debug('flexkeys: %s - flexvals: %s - flexns: %s', 
-                      flexkeys, flexvalues, flexns)
-            for i, key in enumerate(flexkeys):
-                namespace = flexns[i]
-                if namespace not in self.flexattrs:
-                    #not an active plugin, skip
-                    continue
-                value = flexvalues[i]
-                if not self.flexattrs.has_key(namespace):
-                    self.flexattrs[namespace] = {}
-                self.flexattrs[flexns[i]][key] = flexvalues[i]                    
+        set_flexattrs(self, values)
 
     def _clear_dirty(self):
         self.dirty = {}
@@ -1048,6 +1058,7 @@ class BaseAlbum(object):
     def __init__(self, library, record):
         super(BaseAlbum, self).__setattr__('_library', library)
         super(BaseAlbum, self).__setattr__('_record', record)
+        set_flexattrs(self, record)
 
     def __getattr__(self, key):
         """Get the value for an album attribute."""
@@ -1072,6 +1083,16 @@ class BaseAlbum(object):
                 self._library.store(item)
         else:
             super(BaseAlbum, self).__setattr__(key, value)
+
+    def __getitem__(self, key):
+        """Entry point to flexible attributes.
+        `key` should be a plugin name or an otherwise 
+        valid flexible attr namespace.
+        """
+        if key in self.flexattrs:
+            return self.flexattrs[key]
+        else:
+            raise KeyError('{} is not a valid attribute namespace'.format(key))
 
     def load(self):
         """Refresh this album's cached metadata from the library.
