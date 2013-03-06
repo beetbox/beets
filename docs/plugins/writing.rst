@@ -114,7 +114,7 @@ currently available are:
 * *pluginload*: called after all the plugins have been loaded after the ``beet``
   command starts
 
-* *import*: called after a ``beet import`` command fishes (the ``lib`` keyword
+* *import*: called after a ``beet import`` command finishes (the ``lib`` keyword
   argument is a Library object; ``paths`` is a list of paths (strings) that were
   imported)
 
