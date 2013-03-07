@@ -99,7 +99,6 @@ def convert_item(lib, dest_dir, keep_new):
             if keep_new:
                 item.path = os.path.splitext(item.path)[0] + '.mp3'
                 encode(dest, item.path)
-                lib.store(item)
             else:
                 encode(item.path, dest)
 
@@ -107,6 +106,12 @@ def convert_item(lib, dest_dir, keep_new):
         if not keep_new:
             item.path = dest
         item.write()
+
+        # If we're keeping the transcoded file, read it again (after
+        # writing) to get new bitrate, duration, etc.
+        if keep_new:
+            item.read()
+            lib.store(item)  # Store new path and audio data.
 
         if config['convert']['embed']:
             album = lib.get_album(item)
