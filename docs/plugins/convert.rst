@@ -26,7 +26,9 @@ Usage
 To convert a part of your collection, run ``beet convert QUERY``. This
 will display all items matching ``QUERY`` and ask you for confirmation before
 starting the conversion. The ``-a`` (or ``--album``) option causes the command
-to match albums instead of tracks.
+to match albums instead of tracks. The ``-k`` (or ``--keep-new``) allows you to
+keep the new, converted, files in your library and move the origin files to the
+destination directory.
 
 The ``-t`` (``--threads``) and ``-d`` (``--dest``) options allow you to specify
 or overwrite the respective configuration options.

@@ -30,6 +30,26 @@ DEVNULL = open(os.devnull, 'wb')
 _fs_lock = threading.Lock()
 
 
+def _dest_out(lib, dest_dir, item, keep_new):
+    """Path to the files outside the directory"""
+
+    if keep_new:
+        return os.path.join(dest_dir, lib.destination(item, fragment=True))
+
+    dest = os.path.join(dest_dir, lib.destination(item, fragment=True))
+    return os.path.splitext(dest)[0] + '.mp3'
+
+
+def _dest_converted(lib, dest_dir, item, keep_new):
+    """Path to the newly converted files"""
+
+    if keep_new:
+        dest = lib.destination(item)
+        return os.path.splitext(dest)[0] + '.mp3'
+
+    return _dest_out(lib, dest_dir, item, keep_new)
+
+
 def encode(source, dest):
     log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
 
@@ -52,16 +72,10 @@ def convert_item(lib, dest_dir, keep_new):
     while True:
         item = yield
 
-        if keep_new:
-            dest_new = lib.destination(item)
-            dest_new = os.path.splitext(dest_new)[0] + '.mp3'
-            dest = os.path.join(dest_dir, lib.destination(item,
-                                fragment=True))
-        else:
-            dest = os.path.join(dest_dir, lib.destination(item, fragment=True))
-            dest = os.path.splitext(dest)[0] + '.mp3'
+        dest_converted = _dest_converted(lib, dest_dir, item, keep_new)
+        dest_out = _dest_out(lib, dest_dir, item, keep_new)
 
-        if os.path.exists(util.syspath(dest)):
+        if os.path.exists(util.syspath(dest_out)):
             log.info(u'Skipping {0} (target file exists)'.format(
                 util.displayable_path(item.path)
             ))
@@ -71,23 +85,21 @@ def convert_item(lib, dest_dir, keep_new):
         # time. (The existence check is not atomic with the directory
         # creation inside this function.)
         with _fs_lock:
-            util.mkdirall(dest)
+            util.mkdirall(dest_out)
 
         maxbr = config['convert']['max_bitrate'].get(int)
         if item.format == 'MP3' and item.bitrate < 1000 * maxbr:
             log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
-            util.copy(item.path, dest)
+            util.copy(item.path, dest_out)
         else:
-            if keep_new:
-                encode(item.path, dest_new)
-                log.info(u'Copying to destination {0}'.
-                         format(util.displayable_path(dest)))
-                util.move(item.path, dest)
-                item.path = dest_new
-            else:
-                encode(item.path, dest)
-                item.path = dest
+            encode(item.path, dest_converted)
 
+            if keep_new:
+                log.info(u'Moving to destination {0}'.
+                         format(util.displayable_path(dest_out)))
+                util.move(item.path, dest_out)
+
+        item.path = dest_converted
         item.write()
 
         if config['convert']['embed']:
@@ -112,8 +124,7 @@ def convert_func(lib, opts, args):
     threads = opts.threads if opts.threads is not None else \
         config['convert']['threads'].get(int)
 
-    keep_new = opts.keep_new if opts.keep_new is not None \
-        else config['convert']['keep_new'].get()
+    keep_new = opts.keep_new
 
     ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
 
@@ -139,7 +150,6 @@ class ConvertPlugin(BeetsPlugin):
             u'opts': u'-aq 2',
             u'max_bitrate': 500,
             u'embed': True,
-            u'keep_new': False
         })
 
     def commands(self):
