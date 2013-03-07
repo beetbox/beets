@@ -75,6 +75,7 @@ setup(name='beets',
           'munkres',
           'unidecode',
           'musicbrainzngs>=0.2',
+          'discogs_client>=1.1',
           'pyyaml',
       ]
       + (['colorama'] if (sys.platform == 'win32') else [])
