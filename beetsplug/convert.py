@@ -22,11 +22,32 @@ from subprocess import Popen
 from beets.plugins import BeetsPlugin
 from beets import ui, util
 from beetsplug.embedart import _embed
+from beets import library
 from beets import config
 
 log = logging.getLogger('beets')
 DEVNULL = open(os.devnull, 'wb')
 _fs_lock = threading.Lock()
+
+
+def _dest_out(lib, dest_dir, item, keep_new):
+    """Path to the files outside the directory"""
+
+    if keep_new:
+        return os.path.join(dest_dir, lib.destination(item, fragment=True))
+
+    dest = os.path.join(dest_dir, lib.destination(item, fragment=True))
+    return os.path.splitext(dest)[0] + '.mp3'
+
+
+def _dest_converted(lib, dest_dir, item, keep_new):
+    """Path to the newly converted files"""
+
+    if keep_new:
+        dest = lib.destination(item)
+        return os.path.splitext(dest)[0] + '.mp3'
+
+    return _dest_out(lib, dest_dir, item, keep_new)
 
 
 def encode(source, dest):
@@ -47,14 +68,14 @@ def encode(source, dest):
     log.info(u'Finished encoding {0}'.format(util.displayable_path(source)))
 
 
-def convert_item(lib, dest_dir):
+def convert_item(lib, dest_dir, keep_new):
     while True:
         item = yield
 
-        dest = os.path.join(dest_dir, lib.destination(item, fragment=True))
-        dest = os.path.splitext(dest)[0] + '.mp3'
+        dest_converted = _dest_converted(lib, dest_dir, item, keep_new)
+        dest_out = _dest_out(lib, dest_dir, item, keep_new)
 
-        if os.path.exists(util.syspath(dest)):
+        if os.path.exists(util.syspath(dest_out)):
             log.info(u'Skipping {0} (target file exists)'.format(
                 util.displayable_path(item.path)
             ))
@@ -64,16 +85,21 @@ def convert_item(lib, dest_dir):
         # time. (The existence check is not atomic with the directory
         # creation inside this function.)
         with _fs_lock:
-            util.mkdirall(dest)
+            util.mkdirall(dest_out)
 
         maxbr = config['convert']['max_bitrate'].get(int)
         if item.format == 'MP3' and item.bitrate < 1000 * maxbr:
             log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
-            util.copy(item.path, dest)
+            util.copy(item.path, dest_out)
         else:
-            encode(item.path, dest)
+            encode(item.path, dest_converted)
 
-        item.path = dest
+            if keep_new:
+                log.info(u'Moving to destination {0}'.
+                         format(util.displayable_path(dest_out)))
+                util.move(item.path, dest_out)
+
+        item.path = dest_converted
         item.write()
 
         if config['convert']['embed']:
@@ -83,14 +109,22 @@ def convert_item(lib, dest_dir):
                 if artpath:
                     _embed(artpath, [item])
 
+        if keep_new:
+            item.read()
+            log.info(u'Updating new format {0}'.format(item.format))
+            item.write()
+            lib.store(item)
+
 
 def convert_func(lib, opts, args):
     dest = opts.dest if opts.dest is not None else \
-            config['convert']['dest'].get()
+        config['convert']['dest'].get()
     if not dest:
         raise ui.UserError('no convert destination set')
     threads = opts.threads if opts.threads is not None else \
-            config['convert']['threads'].get(int)
+        config['convert']['threads'].get(int)
+
+    keep_new = opts.keep_new
 
     ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
 
@@ -101,7 +135,7 @@ def convert_func(lib, opts, args):
         items = (i for a in lib.albums(ui.decargs(args)) for i in a.items())
     else:
         items = lib.items(ui.decargs(args))
-    convert = [convert_item(lib, dest) for i in range(threads)]
+    convert = [convert_item(lib, dest, keep_new) for i in range(threads)]
     pipe = util.pipeline.Pipeline([items, convert])
     pipe.run_parallel()
 
@@ -125,6 +159,9 @@ class ConvertPlugin(BeetsPlugin):
         cmd.parser.add_option('-t', '--threads', action='store', type='int',
                               help='change the number of threads, \
                               defaults to maximum availble processors ')
+        cmd.parser.add_option('-k', '--keep-new', action='store_true',
+                              dest='keep_new', help='keep only the converted \
+                              and move the old files')
         cmd.parser.add_option('-d', '--dest', action='store',
                               help='set the destination directory')
         cmd.func = convert_func
