@@ -22,6 +22,9 @@ Other stuff:
   track in MusicBrainz and updates your library to reflect it. This can help
   you easily correct errors that have been fixed in the MB database. Thanks to
   Jakob Schnitzer.
+* :doc:`/plugins/convert`: A new ``--keep-new`` option lets you store
+  transcoded files in your library while backing up the originals (instead of
+  vice-versa). Thanks to Lucas Duailibe.
 * :doc:`/plugins/echonest_tempo`: API errors now issue a warning instead of
   exiting with an exception. We also avoid an error when track metadata
   contains newlines.

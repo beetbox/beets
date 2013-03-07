@@ -22,7 +22,6 @@ from subprocess import Popen
 from beets.plugins import BeetsPlugin
 from beets import ui, util
 from beetsplug.embedart import _embed
-from beets import library
 from beets import config
 
 log = logging.getLogger('beets')
@@ -30,24 +29,18 @@ DEVNULL = open(os.devnull, 'wb')
 _fs_lock = threading.Lock()
 
 
-def _dest_out(lib, dest_dir, item, keep_new):
-    """Path to the files outside the directory"""
-
+def _destination(lib, dest_dir, item, keep_new):
+    """Return the path under `dest_dir` where the file should be placed
+    (possibly after conversion).
+    """
+    dest = lib.destination(item, basedir=dest_dir)
     if keep_new:
-        return os.path.join(dest_dir, lib.destination(item, fragment=True))
-
-    dest = os.path.join(dest_dir, lib.destination(item, fragment=True))
-    return os.path.splitext(dest)[0] + '.mp3'
-
-
-def _dest_converted(lib, dest_dir, item, keep_new):
-    """Path to the newly converted files"""
-
-    if keep_new:
-        dest = lib.destination(item)
+        # When we're keeping the converted file, no extension munging
+        # occurs.
+        return dest
+    else:
+        # Otherwise, replace the extension with .mp3.
         return os.path.splitext(dest)[0] + '.mp3'
-
-    return _dest_out(lib, dest_dir, item, keep_new)
 
 
 def encode(source, dest):
@@ -71,11 +64,9 @@ def encode(source, dest):
 def convert_item(lib, dest_dir, keep_new):
     while True:
         item = yield
+        dest = _destination(lib, dest_dir, item, keep_new)
 
-        dest_converted = _dest_converted(lib, dest_dir, item, keep_new)
-        dest_out = _dest_out(lib, dest_dir, item, keep_new)
-
-        if os.path.exists(util.syspath(dest_out)):
+        if os.path.exists(util.syspath(dest)):
             log.info(u'Skipping {0} (target file exists)'.format(
                 util.displayable_path(item.path)
             ))
@@ -85,21 +76,36 @@ def convert_item(lib, dest_dir, keep_new):
         # time. (The existence check is not atomic with the directory
         # creation inside this function.)
         with _fs_lock:
-            util.mkdirall(dest_out)
+            util.mkdirall(dest)
+
+        # When keeping the new file in the library, we first move the
+        # current (pristine) file to the destination. We'll then copy it
+        # back to its old path or transcode it to a new path.
+        if keep_new:
+            log.info(u'Moving to {0}'.
+                     format(util.displayable_path(dest)))
+            util.move(item.path, dest)
 
         maxbr = config['convert']['max_bitrate'].get(int)
         if item.format == 'MP3' and item.bitrate < 1000 * maxbr:
+            # No transcoding necessary.
             log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
-            util.copy(item.path, dest_out)
-        else:
-            encode(item.path, dest_converted)
-
             if keep_new:
-                log.info(u'Moving to destination {0}'.
-                         format(util.displayable_path(dest_out)))
-                util.move(item.path, dest_out)
+                util.copy(dest, item.path)
+            else:
+                util.copy(item.path, dest)
 
-        item.path = dest_converted
+        else:
+            if keep_new:
+                item.path = os.path.splitext(item.path)[0] + '.mp3'
+                encode(dest, item.path)
+                lib.store(item)
+            else:
+                encode(item.path, dest)
+
+        # Write tags from the database to the converted file.
+        if not keep_new:
+            item.path = dest
         item.write()
 
         if config['convert']['embed']:
@@ -109,21 +115,14 @@ def convert_item(lib, dest_dir, keep_new):
                 if artpath:
                     _embed(artpath, [item])
 
-        if keep_new:
-            item.read()
-            log.info(u'Updating new format {0}'.format(item.format))
-            item.write()
-            lib.store(item)
-
 
 def convert_func(lib, opts, args):
     dest = opts.dest if opts.dest is not None else \
-        config['convert']['dest'].get()
+            config['convert']['dest'].get()
     if not dest:
         raise ui.UserError('no convert destination set')
     threads = opts.threads if opts.threads is not None else \
-        config['convert']['threads'].get(int)
-
+            config['convert']['threads'].get(int)
     keep_new = opts.keep_new
 
     ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
