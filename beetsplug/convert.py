@@ -22,6 +22,7 @@ from subprocess import Popen
 from beets.plugins import BeetsPlugin
 from beets import ui, util
 from beetsplug.embedart import _embed
+from beets import library
 from beets import config
 
 log = logging.getLogger('beets')
@@ -47,12 +48,18 @@ def encode(source, dest):
     log.info(u'Finished encoding {0}'.format(util.displayable_path(source)))
 
 
-def convert_item(lib, dest_dir):
+def convert_item(lib, dest_dir, keep_new):
     while True:
         item = yield
 
-        dest = os.path.join(dest_dir, lib.destination(item, fragment=True))
-        dest = os.path.splitext(dest)[0] + '.mp3'
+        if keep_new:
+            dest_new = lib.destination(item)
+            dest_new = os.path.splitext(dest_new)[0] + '.mp3'
+            dest = os.path.join(dest_dir, lib.destination(item,
+                                fragment=True))
+        else:
+            dest = os.path.join(dest_dir, lib.destination(item, fragment=True))
+            dest = os.path.splitext(dest)[0] + '.mp3'
 
         if os.path.exists(util.syspath(dest)):
             log.info(u'Skipping {0} (target file exists)'.format(
@@ -71,9 +78,16 @@ def convert_item(lib, dest_dir):
             log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
             util.copy(item.path, dest)
         else:
-            encode(item.path, dest)
+            if keep_new:
+                encode(item.path, dest_new)
+                log.info(u'Copying to destination {0}'.
+                         format(util.displayable_path(dest)))
+                util.move(item.path, dest)
+                item.path = dest_new
+            else:
+                encode(item.path, dest)
+                item.path = dest
 
-        item.path = dest
         item.write()
 
         if config['convert']['embed']:
@@ -83,14 +97,23 @@ def convert_item(lib, dest_dir):
                 if artpath:
                     _embed(artpath, [item])
 
+        if keep_new:
+            item.read()
+            log.info(u'Updating new format {0}'.format(item.format))
+            item.write()
+            lib.store(item)
+
 
 def convert_func(lib, opts, args):
     dest = opts.dest if opts.dest is not None else \
-            config['convert']['dest'].get()
+        config['convert']['dest'].get()
     if not dest:
         raise ui.UserError('no convert destination set')
     threads = opts.threads if opts.threads is not None else \
-            config['convert']['threads'].get(int)
+        config['convert']['threads'].get(int)
+
+    keep_new = opts.keep_new if opts.keep_new is not None \
+        else config['convert']['keep_new'].get()
 
     ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
 
@@ -101,7 +124,7 @@ def convert_func(lib, opts, args):
         items = (i for a in lib.albums(ui.decargs(args)) for i in a.items())
     else:
         items = lib.items(ui.decargs(args))
-    convert = [convert_item(lib, dest) for i in range(threads)]
+    convert = [convert_item(lib, dest, keep_new) for i in range(threads)]
     pipe = util.pipeline.Pipeline([items, convert])
     pipe.run_parallel()
 
@@ -116,6 +139,7 @@ class ConvertPlugin(BeetsPlugin):
             u'opts': u'-aq 2',
             u'max_bitrate': 500,
             u'embed': True,
+            u'keep_new': False
         })
 
     def commands(self):
@@ -125,6 +149,9 @@ class ConvertPlugin(BeetsPlugin):
         cmd.parser.add_option('-t', '--threads', action='store', type='int',
                               help='change the number of threads, \
                               defaults to maximum availble processors ')
+        cmd.parser.add_option('-k', '--keep-new', action='store_true',
+                              dest='keep_new', help='keep only the converted \
+                              and move the old files')
         cmd.parser.add_option('-d', '--dest', action='store',
                               help='set the destination directory')
         cmd.func = convert_func
