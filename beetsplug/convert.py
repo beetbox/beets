@@ -126,6 +126,7 @@ def convert_func(lib, opts, args):
             config['convert']['dest'].get()
     if not dest:
         raise ui.UserError('no convert destination set')
+    dest = util.bytestring_path(dest)
     threads = opts.threads if opts.threads is not None else \
             config['convert']['threads'].get(int)
     keep_new = opts.keep_new
