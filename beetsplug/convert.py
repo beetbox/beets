@@ -199,6 +199,7 @@ class ConvertPlugin(BeetsPlugin):
 @ConvertPlugin.listen('import_task_files')
 def _cleanup(task, session):
     for path in task.old_paths:
-        if path in _convert_tmp and os.path.isfile(path):
-            util.remove(path)
+        if path in _convert_tmp:
+            if os.path.isfile(path):
+                util.remove(path)
             _convert_tmp.remove(path)
