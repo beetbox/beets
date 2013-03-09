@@ -48,6 +48,8 @@ class BeetsPlugin(object):
             self.template_funcs = {}
         if not self.template_fields:
             self.template_fields = {}
+        self.item_fields = []
+        self.album_fields = []
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
@@ -92,18 +94,6 @@ class BeetsPlugin(object):
         database schema is not (currently) extended.
         """
         return {}
-
-    def item_attributes(self):
-        """Returns a list of registered flexible attribute fields
-        for `Item` entities.
-        """
-        return []
-
-    def album_attributes(self):
-        """Returns a list of registered flexible attribute fields
-        for `Album` entities.
-        """
-        return []
 
     listeners = None
 
@@ -300,23 +290,6 @@ def import_stages():
             stages += plugin.import_stages
     return stages
 
-def item_fields():
-    """Get a dict of string lists indicating registered 
-    flexible Item attributes in the form {'pluginname':[fields...]}.
-    """
-    fields = {}
-    for plugin in find_plugins():
-        fields[plugin.name] = plugin.item_attributes()
-    return fields
-
-def album_fields():
-    """Get a dict of string lists indicating registered 
-    flexible Album attributes in the form {'pluginname':[fields...]}.
-    """
-    fields = {}
-    for plugin in find_plugins():
-        fields[plugin.name] = plugin.album_attributes()
-    return fields
 
 # Event dispatch.
 

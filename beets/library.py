@@ -223,73 +223,28 @@ def format_for_path(value, key=None, pathmod=None):
 
     return value
 
+def get_flexattrs(rows):
+    """Given a list of SQLite result rows, construct a dictionary
+    hierarchy reflecting the contained flexible attribute values.
+    """
+    out = defaultdict(dict)
+    for row in rows:
+        out[row['namespace']][row['key']] = row['value']
+    return dict(out)
+
 
 # Exceptions.
 
 class InvalidFieldError(Exception):
     pass
 
-class FixedDict(dict):
-    """A dict where keys can not be added after creation and keys are marked 
-    as 'dirty' when their values are changed.
-    Accepts a list of `keys` and an optional `values` which should 
-    be a dict compatible object.
-    Any key not in `values` will be implicitly added and given a `None` value.
-    """
-    def __init__(self, keys, values=None):
-        values = values or {}
-        super(FixedDict, self).__init__(values)
-        seti = super(FixedDict, self).__setitem__
-        for key in keys:
-            if not key in self:
-                seti(key, None)
-        self.dirty = {}
-
-    def __setitem__(self, key, value):
-        if key not in self:
-            raise KeyError('{} is not a valid key.'.format(key))
-        elif value != self[key]:
-            super(FixedDict, self).__setitem__(key, value)
-            self.dirty[key] = True
-
-
-def set_flexattrs(obj, values):
-    """Create the initial flexible attribute dict for `obj` (e.g. Item/Album)
-    from given `values` which should be a dict compatible row of values 
-    from the database.
-
-    This sets the `flexattrs` attribute on `obj`.
-    """
-    #make the initial, empty flexible attribute dict
-    flexattrns = plugins.item_fields() 
-    flexattrs = FixedDict(flexattrns.keys())
-    for key in flexattrs.iterkeys():
-        flexattrs[key] = FixedDict(flexattrns[key])
-
-    k = values.keys()
-    if 'flexkeys' in k and 'flexvalues' in k and 'flexns' in k \
-            and values['flexkeys']:
-        flexkeys = values['flexkeys'].split(',')
-        flexvalues = values['flexvalues'].split(',')
-        flexns = values['flexns'].split(',')
-        log.debug('flexkeys: %s - flexvals: %s - flexns: %s',
-                  flexkeys, flexvalues, flexns)
-        for i, key in enumerate(flexkeys):
-            namespace = flexns[i]
-            if namespace not in flexattrs:
-                #not an active plugin, skip
-                continue
-            if not flexattrs.has_key(namespace):
-                flexattrs[namespace] = {}
-            flexattrs[flexns[i]][key] = flexvalues[i]
-    object.__setattr__(obj, 'flexattrs', flexattrs)
 
 # Library items (songs).
 
 class Item(object):
-    def __init__(self, values):
+    def __init__(self, values, flexattrs=None):
         self.dirty = {}
-        self._fill_record(values)
+        self._fill_record(values, flexattrs)
         self._clear_dirty()
 
     @classmethod
@@ -304,16 +259,14 @@ class Item(object):
         i.mtime = i.current_mtime()  # Initial mtime.
         return i
 
-    def _fill_record(self, values):
+    def _fill_record(self, values, flexattrs=None):
         self.record = {}
-
         for key in ITEM_KEYS:
             try:
                 setattr(self, key, values[key])
             except KeyError:
                 setattr(self, key, None)
-
-        set_flexattrs(self, values)
+        self.flexattrs = flexattrs or {}
 
     def _clear_dirty(self):
         self.dirty = {}
@@ -323,13 +276,14 @@ class Item(object):
     def __repr__(self):
         return 'Item(' + repr(self.record) + ')'
 
+
     # Item field accessors.
 
     def __getattr__(self, key):
         """If key is an item attribute (i.e., a column in the database),
         returns the record entry for that key.
         """
-        if key in ITEM_KEYS or key in plugins.item_fields():
+        if key in ITEM_KEYS:
             return self.record.get(key)
         else:
             raise AttributeError(key + ' is not a valid item field')
@@ -359,15 +313,6 @@ class Item(object):
         else:
             super(Item, self).__setattr__(key, value)
 
-    def __getitem__(self, key):
-        """Entry point to flexible attributes.
-        `key` should be a plugin name or an otherwise 
-        valid flexible attr namespace.
-        """
-        if key in self.flexattrs:
-            return self.flexattrs[key]
-        else:
-            raise KeyError('{} is not a valid attribute namespace'.format(key))
 
     # Interaction with file metadata.
 
@@ -512,13 +457,13 @@ class Query(object):
         """
         raise NotImplementedError
 
-    def statement(self, columns='*'):
+    def statement(self):
         """Returns (query, subvals) where clause is a sqlite SELECT
         statement to enact this query and subvals is a list of values
         to substitute in for ?s in the query.
         """
         clause, subvals = self.clause()
-        return ('SELECT ' + columns + ' FROM unified_items WHERE ' + clause, subvals)
+        return ('SELECT * FROM items WHERE ' + clause, subvals)
 
     def count(self, tx):
         """Returns `(num, length)` where `num` is the number of items in
@@ -526,7 +471,7 @@ class Query(object):
         length in seconds.
         """
         clause, subvals = self.clause()
-        statement = 'SELECT COUNT(id), SUM(length) FROM unified_items WHERE ' + clause
+        statement = 'SELECT COUNT(id), SUM(length) FROM items WHERE ' + clause
         result = tx.query(statement, subvals)[0]
         return (result[0], result[1] or 0.0)
 
@@ -534,23 +479,16 @@ class FieldQuery(Query):
     """An abstract query that searches in a specific field for a
     pattern.
     """
-    def __init__(self, field, pattern, namespace=None, entity='item'):
+    def __init__(self, field, pattern):
         self.field = field
         self.pattern = pattern
-        self.namespace = namespace
-        self.entity = entity
 
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
     def clause(self):
-
         pattern = self.pattern
         if self.field == 'path' and isinstance(pattern, str):
             pattern = buffer(pattern)
-        if self.namespace:
-            #give a flexible attribute clause
-            c = 'key = ? AND value = ? AND namespace = ?'
-            return c, [self.field, pattern, self.namespace]
         return self.field + " = ?", [pattern]
 
     def match(self, item):
@@ -561,12 +499,7 @@ class SubstringQuery(FieldQuery):
     def clause(self):
         search = '%' + (self.pattern.replace('\\','\\\\').replace('%','\\%')
                             .replace('_','\\_')) + '%'
-        if self.namespace:
-            clause = """key = {0} AND namespace = {1} 
-                     AND value like ? escape '\\'""".format(
-                self.field, self.namespace)
-        else:
-            clause = self.field + " like ? escape '\\'"
+        clause = self.field + " like ? escape '\\'"
         subvals = [search]
         return clause, subvals
 
@@ -576,16 +509,12 @@ class SubstringQuery(FieldQuery):
 
 class RegexpQuery(FieldQuery):
     """A query that matches a regular expression in a specific item field."""
-    def __init__(self, field, pattern, namespace=None, entity='item'):
-        super(RegexpQuery, self).__init__(field, pattern, namespace, entity)
+    def __init__(self, field, pattern):
+        super(RegexpQuery, self).__init__(field, pattern)
         self.regexp = re.compile(pattern)
 
     def clause(self):
-        if self.namespace:
-            clause = 'key = {0} AND namespace = {1} AND value REGEXP ?'.format(
-                self.field, self.namespace)
-        else:
-            clause = self.field + " REGEXP ?"
+        clause = self.field + " REGEXP ?"
         subvals = [self.pattern]
         return clause, subvals
 
@@ -634,53 +563,14 @@ class CollectionQuery(Query):
         """Returns a clause created by joining together the clauses of
         all subqueries with the string joiner (padded by spaces).
         """
-        entity = None
-        flexclause_parts = []
-        flexsubvals = []
         clause_parts = []
         subvals = []
         for subq in self.subqueries:
-            if hasattr(subq, 'namespace') and subq.namespace:
-                #it's a flex attr query, initiate -ugly hack- mode
-                entity = subq.entity
-                clauses = flexclause_parts
-                subs = flexsubvals
-                subq_clause, subq_subvals = subq.clause()
-                if joiner.lower() == 'and':
-                    #flexible attrs need this nested mess for AND queries
-                    subq_clause = '''
-                    EXISTS (SELECT 1 FROM {0}_attributes AS ia
-                    WHERE {1} AND ia.entity_id = unified_{0}s.id)
-                    '''.format(entity, '('+subq_clause+')')
-            else:
-                clauses = clause_parts
-                subs = subvals
-                subq_clause, subq_subvals = subq.clause()
-            clauses.append('(' + subq_clause + ')')
-            subs += subq_subvals
-
+            subq_clause, subq_subvals = subq.clause()
+            clause_parts.append('(' + subq_clause + ')')
+            subvals += subq_subvals
         clause = (' ' + joiner + ' ').join(clause_parts)
-
-        if not flexclause_parts:
-            return clause, subvals
-        
-        fclause = (' ' + joiner + ' ').join(flexclause_parts)
-        if joiner.lower() == 'and':
-            pass
-        else:
-            flexorclause = '''
-            id IN (
-            SELECT entity_id FROM {0}_attributes 
-            WHERE {1})
-            '''
-            fclause = flexorclause.format(entity, fclause)
-        if clause and fclause:
-            clause = clause+' '+joiner+' '+fclause
-        elif clause:
-            clause = clause
-        elif fclause:
-            clause = fclause
-        return clause, subvals+flexsubvals
+        return clause, subvals
 
     # Regular expression for _parse_query_part, below.
     _pq_regex = re.compile(
@@ -905,16 +795,22 @@ class ResultIterator(object):
     """An iterator into an item query result set. The iterator lazily
     constructs Item objects that reflect database rows.
     """
-    def __init__(self, rows):
+    def __init__(self, rows, lib):
         self.rows = rows
         self.rowiter = iter(self.rows)
+        self.lib = lib
 
     def __iter__(self):
         return self
 
     def next(self):
         row = self.rowiter.next()  # May raise StopIteration.
-        return Item(row)
+        with self.lib.transaction() as tx:
+            flex_rows = tx.query(
+                'SELECT * FROM item_attributes WHERE entity_id=?',
+                (row['id'],)
+            )
+        return Item(row, get_flexattrs(flex_rows))
 
 
 # An abstract library.
@@ -1058,7 +954,6 @@ class BaseAlbum(object):
     def __init__(self, library, record):
         super(BaseAlbum, self).__setattr__('_library', library)
         super(BaseAlbum, self).__setattr__('_record', record)
-        set_flexattrs(self, record)
 
     def __getattr__(self, key):
         """Get the value for an album attribute."""
@@ -1083,16 +978,6 @@ class BaseAlbum(object):
                 self._library.store(item)
         else:
             super(BaseAlbum, self).__setattr__(key, value)
-
-    def __getitem__(self, key):
-        """Entry point to flexible attributes.
-        `key` should be a plugin name or an otherwise 
-        valid flexible attr namespace.
-        """
-        if key in self.flexattrs:
-            return self.flexattrs[key]
-        else:
-            raise KeyError('{} is not a valid attribute namespace'.format(key))
 
     def load(self):
         """Refresh this album's cached metadata from the library.
@@ -1256,19 +1141,9 @@ class Library(BaseLibrary):
                     namespace TEXT,
                     key TEXT,
                     value TEXT,
-                    UNIQUE(entity_id, key, namespace) ON CONFLICT REPLACE);
+                    UNIQUE(entity_id, namespace, key) ON CONFLICT REPLACE);
                 CREATE INDEX IF NOT EXISTS {0}_id_attribute
                     ON {0}_attributes (entity_id);
-                CREATE VIEW IF NOT EXISTS unified_{0}s AS
-                SELECT 
-                GROUP_CONCAT(ia.key) AS flexkeys, 
-                GROUP_CONCAT(ia.value) AS flexvalues,
-                GROUP_CONCAT(ia.namespace) AS flexns,
-                {0}s.*
-                FROM {0}s  
-                    LEFT JOIN {0}_attributes AS ia
-                    ON {0}s.id == ia.entity_id
-                GROUP BY {0}s.id;
                 """.format(entity))
 
     def _connection(self):
@@ -1403,14 +1278,13 @@ class Library(BaseLibrary):
             )
 
             # Flexible attributes.
-            for key in plugins.item_fields():
-                value = getattr(item, key)
-                if value is not None:
-                    tx.mutate(
-                        'INSERT INTO item_attributes (entity_id, key, value)'
-                        ' VALUES (?, ?, ?)',
-                        (new_id, key, value)
-                    )
+            flexins = 'INSERT INTO item_attributes ' \
+                      ' (entity_id, namespace, key, value)' \
+                      ' VALUES (?, ?, ?, ?)'
+            for namespace, attrs in item.flexattrs.items():
+                for key, value in attrs.items():
+                    if value is not None:
+                        tx.mutate(flexins, (new_id, key, value))
 
         item._clear_dirty()
         item.id = new_id
@@ -1422,8 +1296,11 @@ class Library(BaseLibrary):
             load_id = item.id
 
         with self.transaction() as tx:
-            rows = tx.query('SELECT * FROM unified_items WHERE id=?', (load_id,))
-        item._fill_record(rows[0])
+            rows = tx.query('SELECT * FROM items WHERE id=?', (load_id,))
+            flex_rows = tx.query(
+                'SELECT * FROM item_attributes WHERE entity_id=?', (load_id,)
+            )
+        item._fill_record(rows[0], get_flexattrs(flex_rows))
         item._clear_dirty()
 
     def store(self, item, store_id=None, store_all=False):
@@ -1451,15 +1328,14 @@ class Library(BaseLibrary):
                 subvars.append(store_id)
                 tx.mutate(query, subvars)
 
-            #flexible attributes
-            flexins = '''INSERT INTO item_attributes 
-                      (entity_id, key, value, namespace) 
-                      VALUES (?,?,?,?);'''
-            for ns,attrs in item.flexattrs.iteritems():
-                for key in attrs.dirty:
-                    tx.mutate(flexins, (store_id, key, attrs[key], ns))
-                attrs.dirty.clear()
-        
+            # Flexible attributes.
+            flexins = 'INSERT INTO item_attributes ' \
+                      ' (entity_id, namespace, key, value)' \
+                      ' VALUES (?, ?, ?, ?)'
+            for namespace, attrs in item.flexattrs.items():
+                for key, value in attrs.items():
+                    tx.mutate(flexins, (store_id, namespace, key, value))
+
         item._clear_dirty()
         self._memotable = {}
 
@@ -1538,7 +1414,7 @@ class Library(BaseLibrary):
             # "Add" the artist to the query.
             query = AndQuery((query, MatchQuery('albumartist', artist)))
         where, subvals = query.clause()
-        sql = "SELECT * FROM unified_albums " + \
+        sql = "SELECT * FROM albums " + \
               "WHERE " + where + \
               " ORDER BY %s, album" % \
                 _orelse("albumartist_sort", "albumartist")
@@ -1557,14 +1433,14 @@ class Library(BaseLibrary):
         super_query = AndQuery(queries)
         where, subvals = super_query.clause()
 
-        sql = "SELECT * FROM unified_items " + \
+        sql = "SELECT * FROM items " + \
               "WHERE " + where + \
               " ORDER BY %s, album, disc, track" % \
                 _orelse("artist_sort", "artist")
         log.debug('Getting items with SQL: %s' % sql)
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
-        return ResultIterator(rows)
+        return ResultIterator(rows, self)
 
 
     # Convenience accessors.
@@ -1573,11 +1449,13 @@ class Library(BaseLibrary):
         """Fetch an Item by its ID. Returns None if no match is found.
         """
         with self.transaction() as tx:
-            rows = tx.query("SELECT * FROM unified_items WHERE id=?", (id,))
-        it = ResultIterator(rows)
-        try:
-            return it.next()
-        except StopIteration:
+            rows = tx.query("SELECT * FROM items WHERE id=?", (id,))
+            flex_rows = tx.query(
+                'SELECT * FROM item_attributes WHERE entity_id=?', (id,)
+            )
+        if rows:
+            return Item(rows, get_flexattrs(flex_rows))
+        else:
             return None
 
     def get_album(self, item_or_id):
@@ -1694,10 +1572,10 @@ class Album(BaseAlbum):
         """
         with self._library.transaction() as tx:
             rows = tx.query(
-                'SELECT * FROM unified_items WHERE album_id=?',
+                'SELECT * FROM items WHERE album_id=?',
                 (self.id,)
             )
-        return ResultIterator(rows)
+        return ResultIterator(rows, self._library)
 
     def remove(self, delete=False, with_items=True):
         """Removes this album and all its associated items from the
