@@ -47,6 +47,8 @@ Other stuff:
   are missing all metadata.
 * :doc:`/plugins/mbcollection`: Show friendly, human-readable errors when
   MusicBrainz exceptions occur.
+* :doc:`/plugins/echonest_tempo`: Catch socket errors that are not handled by
+  the Echo Nest library.
 
 1.1b2 (February 16, 2013)
 -------------------------
