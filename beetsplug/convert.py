@@ -17,6 +17,7 @@
 import logging
 import os
 import threading
+import pdb
 from subprocess import Popen
 
 from beets.plugins import BeetsPlugin
@@ -121,6 +122,18 @@ def convert_item(lib, dest_dir, keep_new):
                     _embed(artpath, [item])
 
 
+def convert_on_import(lib, item):
+    maxbr = config['convert']['max_bitrate'].get(int)
+    if item.format != 'MP3' or item.bitrate >= 1000 * maxbr:
+        # Transcoding necessary
+        dest = os.path.splitext(item.path)[0] + '.mp3'
+        encode(item.path, dest)
+        item.path = dest
+        item.write()
+        item.read()
+        lib.store(item)
+
+
 def convert_func(lib, opts, args):
     dest = opts.dest if opts.dest is not None else \
             config['convert']['dest'].get()
@@ -154,7 +167,9 @@ class ConvertPlugin(BeetsPlugin):
             u'opts': u'-aq 2',
             u'max_bitrate': 500,
             u'embed': True,
+            u'auto_convert': False
         })
+        self.import_stages = [self.auto_convert]
 
     def commands(self):
         cmd = ui.Subcommand('convert', help='convert to external location')
@@ -170,3 +185,12 @@ class ConvertPlugin(BeetsPlugin):
                               help='set the destination directory')
         cmd.func = convert_func
         return [cmd]
+
+    def auto_convert(self, config, task):
+        if self.config['auto_convert'].get():
+            pdb.set_trace()
+            if not task.is_album:
+                convert_on_import(config.lib, task.item)
+            else:
+                for item in task.items:
+                    convert_on_import(config.lib, item)
