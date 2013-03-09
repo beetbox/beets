@@ -980,7 +980,7 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     fsets = {}
     for mod in mods:
         key, value = mod.split('=', 1)
-        if key not in allowed_keys:
+        if key not in allowed_keys and '-' not in key:
             raise ui.UserError('"%s" is not a valid field' % key)
         fsets[key] = value
 

@@ -266,7 +266,10 @@ class Item(object):
                 setattr(self, key, values[key])
             except KeyError:
                 setattr(self, key, None)
-        self.flexattrs = flexattrs or {}
+
+        self.flexattrs = defaultdict(dict)
+        if flexattrs:
+            self.flexattrs.update(flexattrs)
 
     def _clear_dirty(self):
         self.dirty = {}
@@ -285,6 +288,11 @@ class Item(object):
         """
         if key in ITEM_KEYS:
             return self.record.get(key)
+        elif '-' in key:
+            namespace, key = key.split('-', 1)
+            if namespace in self.flexattrs:
+                return self.flexattrs[namespace].get(key)
+            return None
         else:
             raise AttributeError(key + ' is not a valid item field')
 
@@ -310,6 +318,11 @@ class Item(object):
                 self.dirty[key] = True
                 if key in ITEM_KEYS_WRITABLE:
                     self.mtime = 0 # Reset mtime on dirty.
+
+        elif '-' in key:
+            namespace, key = key.split('-', 1)
+            self.flexattrs[namespace][key] = value
+
         else:
             super(Item, self).__setattr__(key, value)
 
@@ -424,6 +437,13 @@ class Item(object):
             mapping['artist'] = mapping['albumartist']
         if not mapping['albumartist']:
             mapping['albumartist'] = mapping['artist']
+
+        # Flexible attributes.
+        for namespace, attrs in self.flexattrs.items():
+            for key, value in attrs.items():
+                if sanitize:
+                    value = format_for_path(value, None, pathmod)
+                mapping['{}-{}'.format(namespace, key)] = value
 
         # Get values from plugins.
         for key, value in plugins.template_values(self).iteritems():
