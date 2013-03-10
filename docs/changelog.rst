@@ -47,6 +47,8 @@ Other stuff:
   pathnames.
 * Fix a spurious warning from the Unidecode module when matching albums that
   are missing all metadata.
+* Fix Unicode errors when a directory or file doesn't exist when invoking the
+  import command. Thanks to Lucas Duailibe.
 * :doc:`/plugins/mbcollection`: Show friendly, human-readable errors when
   MusicBrainz exceptions occur.
 * :doc:`/plugins/echonest_tempo`: Catch socket errors that are not handled by
