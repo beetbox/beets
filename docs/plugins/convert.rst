@@ -58,7 +58,9 @@ The plugin offers several configuration options, all of which live under the
   <num>".) If you want to specify a bitrate, use "-ab <bitrate>". Refer to the
   `FFmpeg`_ documentation for more details.
 * ``auto`` gives you the option to import transcoded versions of your files
-  automatically during the ``import`` command.
+  automatically during the ``import`` command. With this option enabled, the
+  importer will transcode all non-MP3 files over the maximum bitrate before
+  adding them to your library.
 * Finally, ``threads`` determines the number of threads to use for parallel
   encoding. By default, the plugin will detect the number of processors
   available and use them all.

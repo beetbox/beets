@@ -25,6 +25,8 @@ Other stuff:
 * :doc:`/plugins/convert`: A new ``--keep-new`` option lets you store
   transcoded files in your library while backing up the originals (instead of
   vice-versa). Thanks to Lucas Duailibe.
+* :doc:`/plugins/convert`: Also, a new ``auto`` config option will transcode
+  audio files automatically during import. Thanks again to Lucas Duailibe.
 * :doc:`/plugins/echonest_tempo`: API errors now issue a warning instead of
   exiting with an exception. We also avoid an error when track metadata
   contains newlines.

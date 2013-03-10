@@ -27,7 +27,7 @@ from beets import config
 log = logging.getLogger('beets')
 DEVNULL = open(os.devnull, 'wb')
 _fs_lock = threading.Lock()
-_convert_tmp = []
+_temp_files = []  # Keep track of temporary transcoded files for deletion.
 
 
 def _destination(lib, dest_dir, item, keep_new):
@@ -62,6 +62,14 @@ def encode(source, dest):
     log.info(u'Finished encoding {0}'.format(util.displayable_path(source)))
 
 
+def should_transcode(item):
+    """Determine whether the item should be transcoded as part of
+    conversion (i.e., its bitrate is high or it has the wrong format).
+    """
+    maxbr = config['convert']['max_bitrate'].get(int)
+    return item.format != 'MP3' or item.bitrate >= 1000 * maxbr
+
+
 def convert_item(lib, dest_dir, keep_new):
     while True:
         item = yield
@@ -87,8 +95,7 @@ def convert_item(lib, dest_dir, keep_new):
                      format(util.displayable_path(dest)))
             util.move(item.path, dest)
 
-        maxbr = config['convert']['max_bitrate'].get(int)
-        if item.format == 'MP3' and item.bitrate < 1000 * maxbr:
+        if not should_transcode(item):
             # No transcoding necessary.
             log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
             if keep_new:
@@ -123,15 +130,16 @@ def convert_item(lib, dest_dir, keep_new):
 
 
 def convert_on_import(lib, item):
-    maxbr = config['convert']['max_bitrate'].get(int)
-    if item.format != 'MP3' or item.bitrate >= 1000 * maxbr:
-        # Transcoding necessary
+    """Transcode a file automatically after it is imported into the
+    library.
+    """
+    if should_transcode(item):
         dest = os.path.splitext(item.path)[0] + '.mp3'
-        _convert_tmp.append(dest)
+        _temp_files.append(dest)  # Delete the transcode later.
         encode(item.path, dest)
         item.path = dest
         item.write()
-        item.read()
+        item.read()  # Load new audio information data.
         lib.store(item)
 
 
@@ -200,7 +208,7 @@ class ConvertPlugin(BeetsPlugin):
 @ConvertPlugin.listen('import_task_files')
 def _cleanup(task, session):
     for path in task.old_paths:
-        if path in _convert_tmp:
+        if path in _temp_files:
             if os.path.isfile(path):
                 util.remove(path)
-            _convert_tmp.remove(path)
+            _temp_files.remove(path)
