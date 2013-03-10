@@ -18,6 +18,7 @@ import logging
 import os
 import threading
 from subprocess import Popen
+import tempfile
 
 from beets.plugins import BeetsPlugin
 from beets import ui, util
@@ -48,8 +49,8 @@ def encode(source, dest):
     log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
 
     opts = config['convert']['opts'].get(unicode).split(u' ')
-    encode = Popen([config['convert']['ffmpeg'].get(unicode), '-i', source] +
-                   opts + [dest],
+    encode = Popen([config['convert']['ffmpeg'].get(unicode), '-i',
+                    source, '-y'] + opts + [dest],
                    close_fds=True, stderr=DEVNULL)
     encode.wait()
     if encode.returncode != 0:
@@ -134,7 +135,8 @@ def convert_on_import(lib, item):
     library.
     """
     if should_transcode(item):
-        dest = os.path.splitext(item.path)[0] + '.mp3'
+        fd, dest = tempfile.mkstemp('.mp3')
+        os.close(fd)
         _temp_files.append(dest)  # Delete the transcode later.
         encode(item.path, dest)
         item.path = dest
