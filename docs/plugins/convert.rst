@@ -57,6 +57,8 @@ The plugin offers several configuration options, all of which live under the
   "-aq 2". (Note that "-aq <num>" is equivalent to the LAME option "-V
   <num>".) If you want to specify a bitrate, use "-ab <bitrate>". Refer to the
   `FFmpeg`_ documentation for more details.
+* ``auto`` gives you the option to import transcoded versions of your files
+  automatically during the ``import`` command.
 * Finally, ``threads`` determines the number of threads to use for parallel
   encoding. By default, the plugin will detect the number of processors
   available and use them all.

@@ -27,6 +27,7 @@ from beets import config
 log = logging.getLogger('beets')
 DEVNULL = open(os.devnull, 'wb')
 _fs_lock = threading.Lock()
+_convert_tmp = []
 
 
 def _destination(lib, dest_dir, item, keep_new):
@@ -121,6 +122,19 @@ def convert_item(lib, dest_dir, keep_new):
                     _embed(artpath, [item])
 
 
+def convert_on_import(lib, item):
+    maxbr = config['convert']['max_bitrate'].get(int)
+    if item.format != 'MP3' or item.bitrate >= 1000 * maxbr:
+        # Transcoding necessary
+        dest = os.path.splitext(item.path)[0] + '.mp3'
+        _convert_tmp.append(dest)
+        encode(item.path, dest)
+        item.path = dest
+        item.write()
+        item.read()
+        lib.store(item)
+
+
 def convert_func(lib, opts, args):
     dest = opts.dest if opts.dest is not None else \
             config['convert']['dest'].get()
@@ -155,7 +169,9 @@ class ConvertPlugin(BeetsPlugin):
             u'opts': u'-aq 2',
             u'max_bitrate': 500,
             u'embed': True,
+            u'auto': False
         })
+        self.import_stages = [self.auto_convert]
 
     def commands(self):
         cmd = ui.Subcommand('convert', help='convert to external location')
@@ -171,3 +187,20 @@ class ConvertPlugin(BeetsPlugin):
                               help='set the destination directory')
         cmd.func = convert_func
         return [cmd]
+
+    def auto_convert(self, config, task):
+        if self.config['auto'].get():
+            if not task.is_album:
+                convert_on_import(config.lib, task.item)
+            else:
+                for item in task.items:
+                    convert_on_import(config.lib, item)
+
+
+@ConvertPlugin.listen('import_task_files')
+def _cleanup(task, session):
+    for path in task.old_paths:
+        if path in _convert_tmp:
+            if os.path.isfile(path):
+                util.remove(path)
+            _convert_tmp.remove(path)
