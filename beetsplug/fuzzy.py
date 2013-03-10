@@ -18,8 +18,8 @@
 from beets.plugins import BeetsPlugin
 from beets.library import PluginQuery
 from beets.ui import Subcommand, decargs, print_obj
-from beets import config
 from beets import util
+import beets
 import difflib
 
 
@@ -28,14 +28,15 @@ class FuzzyQuery(PluginQuery):
         super(FuzzyQuery, self).__init__(field, pattern)
         # self.field = field
         self.name = 'PLUGIN'
-        self.prefix = "~"
+        self.prefix = beets.config['fuzzy']['prefix'].get() or '~'
+        self.threshold =  beets.config['fuzzy']['threshold'].as_number() or 0.7
 
     def match(self, pattern, val):
         if pattern is None:
             return False
         val = util.as_string(val)
         queryMatcher = difflib.SequenceMatcher(None, pattern, val)
-        return queryMatcher.quick_ratio() > config['fuzzy']['threshold'].as_number()
+        return queryMatcher.quick_ratio() > self.threshold
 
 
 class FuzzyPlugin(BeetsPlugin):
@@ -43,6 +44,7 @@ class FuzzyPlugin(BeetsPlugin):
         super(FuzzyPlugin, self).__init__(self)
         self.config.add({
             'threshold': 0.7,
+            'prefix': '~',
         })
 
     def queries(self):
