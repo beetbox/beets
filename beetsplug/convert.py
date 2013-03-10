@@ -168,7 +168,7 @@ class ConvertPlugin(BeetsPlugin):
             u'opts': u'-aq 2',
             u'max_bitrate': 500,
             u'embed': True,
-            u'auto_convert': False
+            u'auto': False
         })
         self.import_stages = [self.auto_convert]
 
@@ -188,7 +188,7 @@ class ConvertPlugin(BeetsPlugin):
         return [cmd]
 
     def auto_convert(self, config, task):
-        if self.config['auto_convert'].get():
+        if self.config['auto'].get():
             if not task.is_album:
                 convert_on_import(config.lib, task.item)
             else:
