@@ -35,8 +35,11 @@ class FuzzyQuery(PluginQuery):
         if pattern is None:
             return False
         val = util.as_string(val)
+        # smartcase
+        if(pattern.islower()):
+            val = val.lower()
         queryMatcher = difflib.SequenceMatcher(None, pattern, val)
-        return queryMatcher.quick_ratio() > self.threshold
+        return queryMatcher.quick_ratio() >= self.threshold
 
 
 class FuzzyPlugin(BeetsPlugin):
