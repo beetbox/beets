@@ -22,6 +22,7 @@ from beets import config
 from beets import util
 import difflib
 
+
 class FuzzyQuery(PluginQuery):
     def __init__(self, field, pattern):
         super(FuzzyQuery, self).__init__(field, pattern)
@@ -34,12 +35,15 @@ class FuzzyQuery(PluginQuery):
             return False
         val = util.as_string(val)
         queryMatcher = difflib.SequenceMatcher(None, pattern, val)
-        return queryMatcher.quick_ratio() > 0.7
+        return queryMatcher.quick_ratio() > config['fuzzy']['threshold'].as_number()
 
 
 class FuzzyPlugin(BeetsPlugin):
     def __init__(self):
         super(FuzzyPlugin, self).__init__(self)
+        self.config.add({
+            'threshold': 0.7,
+        })
 
     def queries(self):
         return [FuzzyQuery]

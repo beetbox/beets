@@ -70,6 +70,3 @@ match:
         partial: medium
         tracklength: strong
         tracknumber: strong
-
-fuzzy:
-    threshold: 0.7
