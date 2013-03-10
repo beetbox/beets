@@ -196,7 +196,7 @@ def _fuzzy(expr, val):
         return False
     val = util.as_string(val)
     queryMatcher = difflib.SequenceMatcher(None, expr, val)
-    return queryMatcher.quick_ratio() > 0.7
+    return queryMatcher.quick_ratio() > beets.config['fuzzy']['threshold'].as_number()
 
 # Path element formatting for templating.
 def format_for_path(value, key=None, pathmod=None):
@@ -537,7 +537,7 @@ class FuzzyQuery(FieldQuery):
     def match(self, item):
         value = util.as_string(getattr(item, self.field))
         queryMatcher.set_seq1(item)
-        return queryMatcher.quick_ratio() > 0.7
+        return queryMatcher.quick_ratio() > beets.config['fuzzy']['threshold'].as_number()
 
 class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
