@@ -17,6 +17,7 @@
 import sqlite3
 import os
 import re
+import difflib
 import sys
 import logging
 import shlex
@@ -189,6 +190,13 @@ def _regexp(expr, val):
         # Invalid regular expression.
         return False
     return res is not None
+
+def _fuzzy(expr, val):
+    if expr is None:
+        return False
+    val = util.as_string(val)
+    queryMatcher = difflib.SequenceMatcher(None, expr, val)
+    return queryMatcher.quick_ratio() > 0.7
 
 # Path element formatting for templating.
 def format_for_path(value, key=None, pathmod=None):
@@ -514,6 +522,23 @@ class RegexpQuery(FieldQuery):
         value = util.as_string(getattr(item, self.field))
         return self.regexp.search(value) is not None
 
+class FuzzyQuery(FieldQuery):
+    """A query using fuzzy matching"""
+    def __init__(self, field, pattern):
+        super(FuzzyQuery, self).__init__(field, pattern)
+        self.queryMatcher = difflib.SequenceMatcher(b=pattern)
+
+    def clause(self):
+        # clause = self.field + " FUZZY ?"
+        clause = "FUZZY(" + self.field + ", ?)"
+        subvals = [self.pattern]
+        return clause, subvals
+    
+    def match(self, item):
+        value = util.as_string(getattr(item, self.field))
+        queryMatcher.set_seq1(item)
+        return queryMatcher.quick_ratio() > 0.7
+
 class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
     string reflecting a boolean.
@@ -573,6 +598,7 @@ class CollectionQuery(Query):
         r')?'
 
         r'((?<!\\):?)'   # Unescaped : indicating a regex.
+        r'((?<!\\)~?)'   # Unescaped ~ indicating a fuzzy.
         r'(.+)',         # The term itself.
 
         re.I  # Case-insensitive.
@@ -600,8 +626,9 @@ class CollectionQuery(Query):
         if match:
             return (
                 match.group(1),  # Key.
-                match.group(3).replace(r'\:', ':'),  # Term.
+                match.group(4).replace(r'\:', ':'),  # Term.
                 match.group(2) == ':',  # Regular expression.
+                match.group(3) == '~',  # Fuzzy expression.
             )
 
     @classmethod
@@ -617,7 +644,7 @@ class CollectionQuery(Query):
             res = cls._parse_query_part(part)
             if not res:
                 continue
-            key, pattern, is_regexp = res
+            key, pattern, is_regexp, is_fuzzy = res
 
             # No key specified.
             if key is None:
@@ -644,6 +671,8 @@ class CollectionQuery(Query):
             elif key.lower() in all_keys:
                 if is_regexp:
                     subqueries.append(RegexpQuery(key.lower(), pattern))
+                elif is_fuzzy:
+                    subqueries.append(FuzzyQuery(key.lower(), pattern))
                 else:
                     subqueries.append(SubstringQuery(key.lower(), pattern))
 
@@ -1124,7 +1153,9 @@ class Library(BaseLibrary):
                 # Access SELECT results like dictionaries.
                 conn.row_factory = sqlite3.Row
                 # Add the REGEXP function to SQLite queries.
-                conn.create_function("REGEXP", 2, _regexp)
+                conn.create_function("FUZZY", 2, _fuzzy)
+                conn.create_function("REGEXP", 2, _fuzzy)
+                # conn.create_function("REGEXP", 2, _fuzzy)
 
                 self._connections[thread_id] = conn
                 return conn
