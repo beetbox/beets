@@ -191,13 +191,6 @@ def _regexp(expr, val):
         return False
     return res is not None
 
-def _fuzzy(expr, val):
-    if expr is None:
-        return False
-    val = util.as_string(val)
-    queryMatcher = difflib.SequenceMatcher(None, expr, val)
-    return queryMatcher.quick_ratio() > beets.config['fuzzy']['threshold'].as_number()
-
 # Path element formatting for templating.
 def format_for_path(value, key=None, pathmod=None):
     """Sanitize the value for inclusion in a path: replace separators
@@ -522,22 +515,15 @@ class RegexpQuery(FieldQuery):
         value = util.as_string(getattr(item, self.field))
         return self.regexp.search(value) is not None
 
-class FuzzyQuery(FieldQuery):
-    """A query using fuzzy matching"""
+
+class PluginQuery(FieldQuery):
     def __init__(self, field, pattern):
-        super(FuzzyQuery, self).__init__(field, pattern)
-        self.queryMatcher = difflib.SequenceMatcher(b=pattern)
+        super(PluginQuery, self).__init__(field, pattern)
+        self.name = None
 
     def clause(self):
-        # clause = self.field + " FUZZY ?"
-        clause = "FUZZY(" + self.field + ", ?)"
-        subvals = [self.pattern]
-        return clause, subvals
-    
-    def match(self, item):
-        value = util.as_string(getattr(item, self.field))
-        queryMatcher.set_seq1(item)
-        return queryMatcher.quick_ratio() > beets.config['fuzzy']['threshold'].as_number()
+        clause = "{name}({field}, ?)".format(name=self.name, field=self.field)
+        return clause, [self.pattern]
 
 class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
@@ -597,8 +583,6 @@ class CollectionQuery(Query):
             r'(?<!\\):'  # Unescaped :
         r')?'
 
-        r'((?<!\\):?)'   # Unescaped : indicating a regex.
-        r'((?<!\\)~?)'   # Unescaped ~ indicating a fuzzy.
         r'(.+)',         # The term itself.
 
         re.I  # Case-insensitive.
@@ -623,13 +607,16 @@ class CollectionQuery(Query):
         """
         part = part.strip()
         match = cls._pq_regex.match(part)
+        prefixes = [':'] # default prefixes
+        for q in plugins.queries():
+            prefixes.append(q(None, None).prefix)
         if match:
-            return (
-                match.group(1),  # Key.
-                match.group(4).replace(r'\:', ':'),  # Term.
-                match.group(2) == ':',  # Regular expression.
-                match.group(3) == '~',  # Fuzzy expression.
-            )
+            key = match.group(1)
+            term = match.group(2)
+            for p in prefixes:
+                if term.startswith(p):
+                    return (key, term, p)
+            return (key, term, False)
 
     @classmethod
     def from_strings(cls, query_parts, default_fields=None,
@@ -644,7 +631,13 @@ class CollectionQuery(Query):
             res = cls._parse_query_part(part)
             if not res:
                 continue
-            key, pattern, is_regexp, is_fuzzy = res
+            key, pattern, prefix = res
+            is_regexp = prefix == ':'
+
+            prefix_query = None
+            for q in plugins.queries():
+                if q(None, None).prefix == prefix:
+                    prefix_query = q
 
             # No key specified.
             if key is None:
@@ -655,8 +648,8 @@ class CollectionQuery(Query):
                     # Match any field.
                     if is_regexp:
                         subq = AnyRegexpQuery(pattern, default_fields)
-                    elif is_fuzzy:
-                        subq = AnyFuzzyQuery(pattern, default_fields)
+                    elif prefix_query:
+                        subq = AnyPluginQuery(pattern, default_fields, cls=prefix_query)
                     else:
                         subq = AnySubstringQuery(pattern, default_fields)
                     subqueries.append(subq)
@@ -673,8 +666,8 @@ class CollectionQuery(Query):
             elif key.lower() in all_keys:
                 if is_regexp:
                     subqueries.append(RegexpQuery(key.lower(), pattern))
-                elif is_fuzzy:
-                    subqueries.append(FuzzyQuery(key.lower(), pattern))
+                elif prefix_query is not None:
+                    subqueries.append(prefix_query(key.lower(), pattern))
                 else:
                     subqueries.append(SubstringQuery(key.lower(), pattern))
 
@@ -765,21 +758,19 @@ class AnyRegexpQuery(CollectionQuery):
                self.regexp.match(val) is not None:
                 return True
         return False
-    
-class AnyFuzzyQuery(CollectionQuery):
-    """A query that uses fuzzy matching in any of a list of metadata fields."""
-    def __init__(self, pattern, fields=None):
-        self.sequenceMatcher = difflib.SequenceMatcher(b=pattern)
-        self.fields = fields or ITEM_KEYS_WRITABLE
 
+class AnyPluginQuery(CollectionQuery):
+    def __init__(self, pattern, fields=None, cls=PluginQuery):
         subqueries = []
+        self.pattern = pattern
+        self.fields = fields
         for field in self.fields:
-            subqueries.append(FuzzyQuery(field, pattern))
-        super(AnyFuzzyQuery, self).__init__(subqueries)
+            subqueries.append(cls(field, pattern))
+        super(AnyPluginQuery, self).__init__(subqueries)
 
     def clause(self):
         return self.clause_with_joiner('or')
-    
+
     def match(self, item):
         for field in self.fields:
             try:
@@ -787,11 +778,11 @@ class AnyFuzzyQuery(CollectionQuery):
             except KeyError:
                 continue
             if isinstance(val, basestring):
-                self.sequenceMatcher.set_seq1(val)
-                return self.sequenceMatcher.quick_ratio() > 0.7
+                for subq in self.subqueries:
+                    if subq.match(self.pattern, val):
+                        return True
         return False
-
-
+    
 class MutableCollectionQuery(CollectionQuery):
     """A collection query whose subqueries may be modified after the
     query is initialized.
@@ -1181,9 +1172,12 @@ class Library(BaseLibrary):
                 # Access SELECT results like dictionaries.
                 conn.row_factory = sqlite3.Row
                 # Add the REGEXP function to SQLite queries.
-                conn.create_function("FUZZY", 2, _fuzzy)
-                conn.create_function("REGEXP", 2, _fuzzy)
-                # conn.create_function("REGEXP", 2, _fuzzy)
+                conn.create_function("REGEXP", 2, _regexp)
+
+                # Register plugin queries 
+                for query in plugins.queries():
+                    q = query(None, None)
+                    conn.create_function(q.name, 2, q.match)
 
                 self._connections[thread_id] = conn
                 return conn
