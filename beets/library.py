@@ -522,7 +522,7 @@ class PluginQuery(FieldQuery):
         self.name = None
 
     def clause(self):
-        clause = "{name}({field}, ?)".format(name=self.name, field=self.field)
+        clause = "{name}(?, {field})".format(name=self.name, field=self.field)
         return clause, [self.pattern]
 
 class BooleanQuery(MatchQuery):
