@@ -655,6 +655,8 @@ class CollectionQuery(Query):
                     # Match any field.
                     if is_regexp:
                         subq = AnyRegexpQuery(pattern, default_fields)
+                    elif is_fuzzy:
+                        subq = AnyFuzzyQuery(pattern, default_fields)
                     else:
                         subq = AnySubstringQuery(pattern, default_fields)
                     subqueries.append(subq)
@@ -763,6 +765,32 @@ class AnyRegexpQuery(CollectionQuery):
                self.regexp.match(val) is not None:
                 return True
         return False
+    
+class AnyFuzzyQuery(CollectionQuery):
+    """A query that uses fuzzy matching in any of a list of metadata fields."""
+    def __init__(self, pattern, fields=None):
+        self.sequenceMatcher = difflib.SequenceMatcher(b=pattern)
+        self.fields = fields or ITEM_KEYS_WRITABLE
+
+        subqueries = []
+        for field in self.fields:
+            subqueries.append(FuzzyQuery(field, pattern))
+        super(AnyFuzzyQuery, self).__init__(subqueries)
+
+    def clause(self):
+        return self.clause_with_joiner('or')
+    
+    def match(self, item):
+        for field in self.fields:
+            try:
+                val = getattr(item, field)
+            except KeyError:
+                continue
+            if isinstance(val, basestring):
+                self.sequenceMatcher.set_seq1(val)
+                return self.sequenceMatcher.quick_ratio() > 0.7
+        return False
+
 
 class MutableCollectionQuery(CollectionQuery):
     """A collection query whose subqueries may be modified after the
