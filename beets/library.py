@@ -615,7 +615,7 @@ class CollectionQuery(Query):
             term = match.group(2)
             for p in prefixes:
                 if term.startswith(p):
-                    return (key, term, p)
+                    return (key, term[len(p):], p)
             return (key, term, False)
 
     @classmethod
