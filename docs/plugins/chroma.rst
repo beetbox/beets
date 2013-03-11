@@ -78,6 +78,10 @@ editing your :doc:`configuration file </reference/config>`. Put ``chroma`` on
 your ``plugins:`` line. With that, beets will use fingerprinting the next time
 you run ``beet import``.
 
+You can also use ``beet fingerprint`` to fingerprint the tracks already imported
+without fingerprints. (You can provide a query to fingerprint a subset of your
+library).
+
 .. _submitfp:
 
 Submitting Fingerprints
@@ -94,7 +98,6 @@ value ``apikey`` in a section called ``acoustid`` like so::
 
 Then, run ``beet submit``. (You can also provide a query to submit a subset of
 your library.) The command will use stored fingerprints if they're available;
-otherwise it will fingerprint each file before submitting it. The ``-w``option
-will store the fingerprints in the library.
+otherwise it will fingerprint each file before submitting it.
 
 .. _get an API key: http://acoustid.org/api-key
