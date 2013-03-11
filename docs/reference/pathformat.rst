@@ -195,7 +195,7 @@ Ordinary metadata:
 * encoder
 
 .. _artist credit: http://wiki.musicbrainz.org/Artist_Credit
-.. _list of type names: http://wiki.musicbrainz.org/XMLWebService#Release_Type_and_Status
+.. _list of type names: http://wiki.musicbrainz.org/Development/XML_Web_Service/Version_2#Release_Type_and_Status
 
 Audio information:
 
