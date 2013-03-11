@@ -46,12 +46,11 @@ class FuzzyQuery(PluginQuery):
 class FuzzyPlugin(BeetsPlugin):
     def __init__(self):
         super(FuzzyPlugin, self).__init__(self)
-        self.config.add({
-            'threshold': 0.7,
-            'prefix': '~',
-        })
 
     def queries(self):
-        return {
-                self.config['prefix'].get(): FuzzyQuery,
-        }
+        try:
+            prefix = beets.config['fuzzy']['prefix'].get(basestring)
+        except confit.NotFoundError:
+            prefix = '~'
+
+        return {prefix: FuzzyQuery}
