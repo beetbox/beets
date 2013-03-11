@@ -1166,7 +1166,7 @@ class Library(BaseLibrary):
                 conn.create_function("REGEXP", 2, _regexp)
 
                 # Register plugin queries 
-               for prefix, query in plugins.queries().items():
+                for prefix, query in plugins.queries().items():
                     conn.create_function(query.__name__, 2, query(None, None).match)
 
                 self._connections[thread_id] = conn
