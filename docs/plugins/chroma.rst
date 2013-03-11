@@ -45,7 +45,7 @@ Next, you will need a mechanism for decoding audio files supported by the
 * On Linux, you can install `GStreamer for Python`_, `FFmpeg`_, or `MAD`_ and
   `pymad`_. How you install these will depend on your distribution. For example,
   on Ubuntu, run ``apt-get install python-gst0.10-dev``. On Arch Linux, you want
-  ``pacman -S gstreamer0.10-python``. 
+  ``pacman -S gstreamer0.10-python``.
 
 * On Windows, try the Gstreamer "WinBuilds" from the `OSSBuild`_ project.
 
@@ -77,6 +77,10 @@ Once you have all the dependencies sorted out, you can enable fingerprinting by
 editing your :doc:`configuration file </reference/config>`. Put ``chroma`` on
 your ``plugins:`` line. With that, beets will use fingerprinting the next time
 you run ``beet import``.
+
+You can also use ``beet fingerprint`` to fingerprint the tracks already imported
+without fingerprints. (You can provide a query to fingerprint a subset of your
+library).
 
 .. _submitfp:
 
