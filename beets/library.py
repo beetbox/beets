@@ -612,7 +612,7 @@ class CollectionQuery(Query):
 
         if match:
             key = match.group(1)
-            term = match.group(2)
+            term = match.group(2).replace('\:', ':')
             for p, q in cls.prefixes.items():
                 if term.startswith(p):
                     return (key, term[len(p):], q)
