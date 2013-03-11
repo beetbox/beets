@@ -519,10 +519,9 @@ class RegexpQuery(FieldQuery):
 class PluginQuery(FieldQuery):
     def __init__(self, field, pattern):
         super(PluginQuery, self).__init__(field, pattern)
-        self.name = None
 
     def clause(self):
-        clause = "{name}(?, {field})".format(name=self.name, field=self.field)
+        clause = "{name}(?, {field})".format(name=self.__class__.__name__, field=self.field)
         return clause, [self.pattern]
 
 class BooleanQuery(MatchQuery):
@@ -607,16 +606,17 @@ class CollectionQuery(Query):
         """
         part = part.strip()
         match = cls._pq_regex.match(part)
-        prefixes = [':'] # default prefixes
-        for q in plugins.queries():
-            prefixes.append(q(None, None).prefix)
+
+        cls.prefixes = {':': RegexpQuery}
+        cls.prefixes.update(plugins.queries())
+
         if match:
             key = match.group(1)
             term = match.group(2)
-            for p in prefixes:
+            for p, q in cls.prefixes.items():
                 if term.startswith(p):
-                    return (key, term[len(p):], p)
-            return (key, term, False)
+                    return (key, term[len(p):], q)
+            return (key, term, None)
 
     @classmethod
     def from_strings(cls, query_parts, default_fields=None,
@@ -631,13 +631,8 @@ class CollectionQuery(Query):
             res = cls._parse_query_part(part)
             if not res:
                 continue
-            key, pattern, prefix = res
-            is_regexp = prefix == ':'
 
-            prefix_query = None
-            for q in plugins.queries():
-                if q(None, None).prefix == prefix:
-                    prefix_query = q
+            key, pattern, prefix_query = res
 
             # No key specified.
             if key is None:
@@ -646,9 +641,7 @@ class CollectionQuery(Query):
                     subqueries.append(PathQuery(pattern))
                 else:
                     # Match any field.
-                    if is_regexp:
-                        subq = AnyRegexpQuery(pattern, default_fields)
-                    elif prefix_query:
+                    if prefix_query:
                         subq = AnyPluginQuery(pattern, default_fields, cls=prefix_query)
                     else:
                         subq = AnySubstringQuery(pattern, default_fields)
@@ -664,9 +657,7 @@ class CollectionQuery(Query):
 
             # Other (recognized) field.
             elif key.lower() in all_keys:
-                if is_regexp:
-                    subqueries.append(RegexpQuery(key.lower(), pattern))
-                elif prefix_query is not None:
+                if prefix_query is not None:
                     subqueries.append(prefix_query(key.lower(), pattern))
                 else:
                     subqueries.append(SubstringQuery(key.lower(), pattern))
@@ -1175,9 +1166,8 @@ class Library(BaseLibrary):
                 conn.create_function("REGEXP", 2, _regexp)
 
                 # Register plugin queries 
-                for query in plugins.queries():
-                    q = query(None, None)
-                    conn.create_function(q.name, 2, q.match)
+               for prefix, query in plugins.queries().items():
+                    conn.create_function(query.__name__, 2, query(None, None).match)
 
                 self._connections[thread_id] = conn
                 return conn

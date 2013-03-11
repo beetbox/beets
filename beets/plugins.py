@@ -94,8 +94,8 @@ class BeetsPlugin(object):
         return {}
 
     def queries(self):
-        """Should return a list of beets.library.PluginQuery"""
-        return ()
+        """Should return a dict of {prefix : beets.library.PluginQuery}"""
+        return {}
 
     listeners = None
 
@@ -214,11 +214,11 @@ def commands():
     return out
 
 def queries():
-    """Returns a list of beet.library.PluginQuery objects from all loaded plugins.
+    """Returns a dict of {prefix: beet.library.PluginQuery} objects from all loaded plugins.
     """
-    out = []
+    out = {}
     for plugin in find_plugins():
-        out += plugin.queries()
+        out.update(plugin.queries())
     return out
 
 def track_distance(item, info):
