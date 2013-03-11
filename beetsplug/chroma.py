@@ -112,11 +112,6 @@ def _all_releases(items):
             yield release_id
 
 class AcoustidPlugin(plugins.BeetsPlugin):
-    def __init__(self):
-        super(AcoustidPlugin, self).__init__()
-        self.config.add({
-            u'write': False
-        })
     def track_distance(self, item, info):
         if item.path not in _matches:
             # Match failed.
