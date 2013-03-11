@@ -45,7 +45,7 @@ Next, you will need a mechanism for decoding audio files supported by the
 * On Linux, you can install `GStreamer for Python`_, `FFmpeg`_, or `MAD`_ and
   `pymad`_. How you install these will depend on your distribution. For example,
   on Ubuntu, run ``apt-get install python-gst0.10-dev``. On Arch Linux, you want
-  ``pacman -S gstreamer0.10-python``. 
+  ``pacman -S gstreamer0.10-python``.
 
 * On Windows, try the Gstreamer "WinBuilds" from the `OSSBuild`_ project.
 
@@ -94,6 +94,7 @@ value ``apikey`` in a section called ``acoustid`` like so::
 
 Then, run ``beet submit``. (You can also provide a query to submit a subset of
 your library.) The command will use stored fingerprints if they're available;
-otherwise it will fingerprint each file before submitting it.
+otherwise it will fingerprint each file before submitting it. The ``-w``option
+will store the fingerprints in the library.
 
 .. _get an API key: http://acoustid.org/api-key

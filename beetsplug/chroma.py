@@ -112,6 +112,11 @@ def _all_releases(items):
             yield release_id
 
 class AcoustidPlugin(plugins.BeetsPlugin):
+    def __init__(self):
+        super(AcoustidPlugin, self).__init__()
+        self.config.add({
+            u'write': False
+        })
     def track_distance(self, item, info):
         if item.path not in _matches:
             # Match failed.
@@ -150,12 +155,15 @@ class AcoustidPlugin(plugins.BeetsPlugin):
     def commands(self):
         submit_cmd = ui.Subcommand('submit',
                                    help='submit Acoustid fingerprints')
+        submit_cmd.parser.add_option('-w', '--write', action='store_true',
+            help='store the calculated fingerprints')
         def submit_cmd_func(lib, opts, args):
             try:
                 apikey = config['acoustid']['apikey'].get(unicode)
             except confit.NotFoundError:
                 raise ui.UserError('no Acoustid user API key provided')
-            submit_items(apikey, lib.items(ui.decargs(args)))
+            submit_items(lib, apikey, lib.items(ui.decargs(args)),
+                write=opts.write)
         submit_cmd.func = submit_cmd_func
         return [submit_cmd]
 
@@ -184,7 +192,7 @@ def apply_acoustid_metadata(task, session):
 
 # UI commands.
 
-def submit_items(userkey, items, chunksize=64):
+def submit_items(lib, userkey, items, chunksize=64, write=False):
     """Submit fingerprints for the items to the Acoustid server.
     """
     data = []  # The running list of dictionaries to submit.
@@ -212,6 +220,13 @@ def submit_items(userkey, items, chunksize=64):
             ))
             try:
                 _, fp = acoustid.fingerprint_file(item.path)
+                item.acoustid_fingerprint = fp
+                if write:
+                    log.info(u'{0}: storing fingerprint'.format(
+                        util.displayable_path(item.path)
+                    ))
+                    item.write()
+                    lib.store(item)
             except acoustid.FingerprintGenerationError as exc:
                 log.info(
                     'fingerprint generation failed: {0}'.format(exc)
