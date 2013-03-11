@@ -249,7 +249,7 @@ def fingerprint_item(item, lib=None, write=False):
                 util.displayable_path(item.path)
             ))
             return item.acoustid_fingerprint
-        log.info(u'{0}: skipping. fingerprint exsists'.format(
+        log.info(u'{0}: skipping. fingerprint exists'.format(
                 util.displayable_path(item.path)
         ))
     else:
