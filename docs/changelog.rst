@@ -8,8 +8,7 @@ New configuration options:
 
 * :ref:`languages` controls the preferred languages when selecting an alias
   from MusicBrainz. This feature requires `python-musicbrainz-ngs`_ 0.3 or
-  later, which (at the time of this writing) is not yet released. Thanks to
-  Sam Doshi.
+  later. Thanks to Sam Doshi.
 * :ref:`detail` enables a mode where all tracks are listed in the importer UI,
   as opposed to only changed tracks.
 * The ``--flat`` option to the ``beet import`` command treats an entire
