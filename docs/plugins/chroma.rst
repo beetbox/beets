@@ -78,9 +78,11 @@ editing your :doc:`configuration file </reference/config>`. Put ``chroma`` on
 your ``plugins:`` line. With that, beets will use fingerprinting the next time
 you run ``beet import``.
 
-You can also use ``beet fingerprint`` to fingerprint the tracks already imported
-without fingerprints. (You can provide a query to fingerprint a subset of your
-library).
+You can also use the ``beet fingerprint`` command to generate fingerprints for
+items already in your library. (Provide a query to fingerprint a subset of your
+library.) The generated fingerprints will be stored in the library database.
+If you have the ``import.write`` config option enabled, they will also be
+written to files' metadata.
 
 .. _submitfp:
 
