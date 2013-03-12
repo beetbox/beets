@@ -27,6 +27,9 @@ Other stuff:
   vice-versa). Thanks to Lucas Duailibe.
 * :doc:`/plugins/convert`: Also, a new ``auto`` config option will transcode
   audio files automatically during import. Thanks again to Lucas Duailibe.
+* :doc:`/plugins/chroma`: A new ``fingerprint`` command lets you generate and
+  store fingerprints for items that don't yet have them. One more round of
+  applause for Lucas Duailibe.
 * :doc:`/plugins/echonest_tempo`: API errors now issue a warning instead of
   exiting with an exception. We also avoid an error when track metadata
   contains newlines.
