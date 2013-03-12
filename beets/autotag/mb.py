@@ -45,13 +45,8 @@ class MusicBrainzAPIError(util.HumanReadableException):
 log = logging.getLogger('beets')
 
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
-                    'labels', 'artist-credits']
-TRACK_INCLUDES = ['artists']
-
-# Only versions >= 0.3 of python-musicbrainz-ngs support artist aliases.
-if musicbrainzngs.musicbrainz._version >= '0.3':
-    RELEASE_INCLUDES.append('aliases')
-    TRACK_INCLUDES.append('aliases')
+                    'labels', 'artist-credits', 'aliases']
+TRACK_INCLUDES = ['artists', 'aliases']
 
 def configure():
     """Set up the python-musicbrainz-ngs module according to settings
