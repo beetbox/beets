@@ -55,6 +55,8 @@ Other stuff:
   MusicBrainz exceptions occur.
 * :doc:`/plugins/echonest_tempo`: Catch socket errors that are not handled by
   the Echo Nest library.
+* :doc:`/plugins/chroma`: Catch Acoustid Web service errors when submitting
+  fingerprints.
 
 1.1b2 (February 16, 2013)
 -------------------------

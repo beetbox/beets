@@ -200,7 +200,10 @@ def submit_items(userkey, items, chunksize=64):
     def submit_chunk():
         """Submit the current accumulated fingerprint data."""
         log.info('submitting {0} fingerprints'.format(len(data)))
-        acoustid.submit(API_KEY, userkey, data)
+        try:
+            acoustid.submit(API_KEY, userkey, data)
+        except acoustid.AcoustidError as exc:
+            log.warn(u'acoustid submission error: {}'.format(exc))
         del data[:]
 
     for item in items:
