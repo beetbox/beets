@@ -49,6 +49,8 @@ Other stuff:
   MusicBrainz exceptions occur.
 * :doc:`/plugins/echonest_tempo`: Catch socket errors that are not handled by
   the Echo Nest library.
+* :ref:`extend-query`: Plugins can now extend the query syntax. Thanks to
+  Philippe Mongeau
 
 1.1b2 (February 16, 2013)
 -------------------------
