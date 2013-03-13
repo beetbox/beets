@@ -323,3 +323,34 @@ to register it::
             self.import_stages = [self.stage]
         def stage(self, config, task):
             print('Importing something!')
+
+Extend the Query Syntax
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Beets already support searching using regular expressions by prepending search
+terms with the colon prefix. It is possible to add new prefix by extending the
+``PluginQuery`` class.
+
+The plugin then need to declare its new queries by returning a ``dict`` of
+``{prefix: PluginQuery}`` insied the ``queries`` method.
+
+The following example plugins declares a query using the ``@`` prefix. So the
+plugin will be call if we issue a command like ``beet ls @something`` or
+``beet ls artist:@something``.::
+
+    from beets.plugins import BeetsPlugin
+    from beets.Library import PluginQuery
+
+    class ExampleQuery(PluginQuery):
+        def match(self, pattern, val):
+            return True # this will simply match everything
+
+    class ExamplePlugin(BeetsPlugin):
+        def queries():
+            # plugins need to declare theire queries by
+            # returning a dict of {prefix: PluginQuery}
+            # from the queries() function
+            return {
+                '@': ExampleQuery
+            }
+
