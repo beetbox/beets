@@ -34,7 +34,7 @@ class ImportFeedsPlugin(BeetsPlugin):
             'm3u_name': u'imported.m3u',
             'dir': None,
             'relative_to': None,
-            'absolute_path': False
+            'absolute_path': False,
         })
 
         feeds_dir = self.config['dir'].get()

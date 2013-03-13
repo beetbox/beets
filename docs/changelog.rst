@@ -14,6 +14,8 @@ New configuration options:
 * The ``--flat`` option to the ``beet import`` command treats an entire
   directory tree of music files as a single album. This can help in situations
   where a multi-disc album is split across multiple directories.
+* :doc:`/plugins/importfeeds`: An option was added to use absolute, rather
+  than relative, paths. Thanks to Lucas Duailibe.
 
 Other stuff:
 
