@@ -27,37 +27,37 @@ some_item = _common.item()
 class QueryParseTest(unittest.TestCase):
     def test_one_basic_term(self):
         q = 'test'
-        r = (None, 'test', False)
+        r = (None, 'test', None)
         self.assertEqual(pqp(q), r)
 
     def test_one_keyed_term(self):
         q = 'test:val'
-        r = ('test', 'val', False)
+        r = ('test', 'val', None)
         self.assertEqual(pqp(q), r)
 
     def test_colon_at_end(self):
         q = 'test:'
-        r = (None, 'test:', False)
+        r = (None, 'test:', None)
         self.assertEqual(pqp(q), r)
 
     def test_one_basic_regexp(self):
         q = r':regexp'
-        r = (None, 'regexp', True)
+        r = (None, 'regexp', beets.library.RegexpQuery)
         self.assertEqual(pqp(q), r)
 
     def test_keyed_regexp(self):
         q = r'test::regexp'
-        r = ('test', 'regexp', True)
+        r = ('test', 'regexp', beets.library.RegexpQuery)
         self.assertEqual(pqp(q), r)
 
     def test_escaped_colon(self):
         q = r'test\:val'
-        r = (None, 'test:val', False)
+        r = (None, 'test:val', None)
         self.assertEqual(pqp(q), r)
 
     def test_escaped_colon_in_regexp(self):
         q = r':test\:regexp'
-        r = (None, 'test:regexp', True)
+        r = (None, 'test:regexp', beets.library.RegexpQuery)
         self.assertEqual(pqp(q), r)
 
 class AnySubstringQueryTest(unittest.TestCase):

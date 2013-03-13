@@ -59,6 +59,8 @@ Other stuff:
   the Echo Nest library.
 * :doc:`/plugins/chroma`: Catch Acoustid Web service errors when submitting
   fingerprints.
+* :ref:`extend-query`: Plugins can now extend the query syntax. Thanks to
+  Philippe Mongeau
 
 1.1b2 (February 16, 2013)
 -------------------------
