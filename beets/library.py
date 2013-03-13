@@ -517,6 +517,10 @@ class RegexpQuery(FieldQuery):
 
 
 class PluginQuery(FieldQuery):
+    """The base class to add queries using beets plugins. Plugins can add
+    special queries by defining a subclass of PluginQuery and overriding
+    the match method.
+    """
     def __init__(self, field, pattern):
         super(PluginQuery, self).__init__(field, pattern)
 
@@ -589,19 +593,19 @@ class CollectionQuery(Query):
     @classmethod
     def _parse_query_part(cls, part):
         """Takes a query in the form of a key/value pair separated by a
-        colon. An additional colon before the value indicates that the
-        value is a regular expression. Returns tuple (key, term,
-        is_regexp) where key is None if the search term has no key and
-        is_regexp indicates whether term is a regular expression or an
-        ordinary substring match.
+        colon. The value part is matched against a list of prefixes that can be
+        extended by plugins to add custom query types. For example, the colon
+        prefix denotes a regular exporession query.
+
+        The function returns a tuple of(key, value, Query)
 
         For instance,
-        parse_query('stapler') == (None, 'stapler', false)
-        parse_query('color:red') == ('color', 'red', false)
-        parse_query(':^Quiet') == (None, '^Quiet', true)
-        parse_query('color::b..e') == ('color', 'b..e', true)
+        parse_query('stapler') == (None, 'stapler', None)
+        parse_query('color:red') == ('color', 'red', None)
+        parse_query(':^Quiet') == (None, '^Quiet', RegexpQuery)
+        parse_query('color::b..e') == ('color', 'b..e', RegexpQuery)
 
-        Colons may be 'escaped' with a backslash to disable the keying
+        Prefixes may be 'escaped' with a backslash to disable the keying
         behavior.
         """
         part = part.strip()
@@ -613,10 +617,11 @@ class CollectionQuery(Query):
         if match:
             key = match.group(1)
             term = match.group(2).replace('\:', ':')
-            for p, q in cls.prefixes.items():
-                if term.startswith(p):
-                    return (key, term[len(p):], q)
-            return (key, term, None)
+            # match the search term against the list of prefixes
+            for pre, query in cls.prefixes.items():
+                if term.startswith(pre):
+                    return (key, term[len(pre):], query)
+            return (key, term, None) # None means a normal query
 
     @classmethod
     def from_strings(cls, query_parts, default_fields=None,
@@ -751,6 +756,10 @@ class AnyRegexpQuery(CollectionQuery):
         return False
 
 class AnyPluginQuery(CollectionQuery):
+    """A query that dispatch the matching function to the match method of
+    the cls provided to the contstructor using a list of metadata fields.
+    """
+
     def __init__(self, pattern, fields=None, cls=PluginQuery):
         subqueries = []
         self.pattern = pattern

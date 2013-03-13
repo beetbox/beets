@@ -54,6 +54,10 @@ class BeetsPlugin(object):
         commands that should be added to beets' CLI.
         """
         return ()
+    
+    def queries(self):
+        """Should return a dict of {prefix : beets.library.PluginQuery}"""
+        return {}
 
     def track_distance(self, item, info):
         """Should return a (distance, distance_max) pair to be added
@@ -93,9 +97,6 @@ class BeetsPlugin(object):
         """
         return {}
 
-    def queries(self):
-        """Should return a dict of {prefix : beets.library.PluginQuery}"""
-        return {}
 
     listeners = None
 
@@ -214,8 +215,8 @@ def commands():
     return out
 
 def queries():
-    """Returns a dict of {prefix: beet.library.PluginQuery} objects from all loaded plugins.
-    """
+    """Returns a dict of {prefix: beet.library.PluginQuery} objects from all
+    loaded plugins.  """
     out = {}
     for plugin in find_plugins():
         out.update(plugin.queries())
