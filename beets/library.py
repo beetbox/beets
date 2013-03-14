@@ -456,9 +456,8 @@ class FieldQuery(Query):
     """An abstract query that searches in a specific field for a
     pattern. Subclasses must provide a `value_match` class method, which
     determines whether a certain pattern string matches a certain value
-    string. They may then either override the `clause` method to use
-    native SQLite functionality or get registered to use a callback into
-    Python.
+    string. Subclasses also need to provide `clause` to implement the
+    same matching functionality in SQLite.
     """
     def __init__(self, field, pattern):
         self.field = field
@@ -481,6 +480,11 @@ class FieldQuery(Query):
     def match(self, item):
         return self._raw_value_match(self.pattern, getattr(item, self.field))
 
+class RegisteredFieldQuery(FieldQuery):
+    """A FieldQuery that uses a registered SQLite callback function.
+    Before it can be used to execute queries, the `register` method must
+    be called.
+    """
     def clause(self):
         # Invoke the registered SQLite function.
         clause = "{name}(?, {field})".format(name=self.__class__.__name__,
@@ -522,7 +526,7 @@ class SubstringQuery(FieldQuery):
     def value_match(cls, pattern, value):
         return pattern.lower() in value.lower()
 
-class RegexpQuery(FieldQuery):
+class RegexpQuery(RegisteredFieldQuery):
     """A query that matches a regular expression in a specific item
     field.
     """
@@ -1112,7 +1116,8 @@ class Library(BaseLibrary):
                 # Register plugin queries.
                 RegexpQuery.register(conn)
                 for prefix, query_class in plugins.queries().items():
-                    query_class.register(conn)
+                    if issubclass(query_class, RegisteredFieldQuery):
+                        query_class.register(conn)
 
                 self._connections[thread_id] = conn
                 return conn
