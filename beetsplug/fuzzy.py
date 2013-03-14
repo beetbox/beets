@@ -12,12 +12,11 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Like beet list, but with fuzzy matching
+"""Provides a fuzzy matching query.
 """
 
 from beets.plugins import BeetsPlugin
 from beets.library import PluginQuery
-from beets.ui import Subcommand, decargs, print_obj
 from beets import util
 import beets
 from beets.util import confit
@@ -28,7 +27,7 @@ class FuzzyQuery(PluginQuery):
     def __init__(self, field, pattern):
         super(FuzzyQuery, self).__init__(field, pattern)
         try:
-            self.threshold =  beets.config['fuzzy']['threshold'].as_number()
+            self.threshold = beets.config['fuzzy']['threshold'].as_number()
         except confit.NotFoundError:
             self.threshold = 0.7
 
@@ -37,7 +36,7 @@ class FuzzyQuery(PluginQuery):
             return False
         val = util.as_string(val)
         # smartcase
-        if(pattern.islower()):
+        if pattern.islower():
             val = val.lower()
         queryMatcher = difflib.SequenceMatcher(None, pattern, val)
         return queryMatcher.quick_ratio() >= self.threshold

@@ -23,6 +23,12 @@ Other stuff:
   track in MusicBrainz and updates your library to reflect it. This can help
   you easily correct errors that have been fixed in the MB database. Thanks to
   Jakob Schnitzer.
+* :doc:`/plugins/fuzzy`: The ``fuzzy`` command was removed and replaced with a
+  new query type. To perform fuzzy searches, use the ``~`` prefix with
+  :ref:`list-cmd` or other commands. Thanks to Philippe Mongeau.
+* As part of the above, plugins can now extend the query syntax and new kinds
+  of matching capabilities to beets. See :ref:`extend-query`. Thanks again to
+  Philippe Mongeau.
 * :doc:`/plugins/convert`: A new ``--keep-new`` option lets you store
   transcoded files in your library while backing up the originals (instead of
   vice-versa). Thanks to Lucas Duailibe.
@@ -59,8 +65,6 @@ Other stuff:
   the Echo Nest library.
 * :doc:`/plugins/chroma`: Catch Acoustid Web service errors when submitting
   fingerprints.
-* :ref:`extend-query`: Plugins can now extend the query syntax. Thanks to
-  Philippe Mongeau
 
 1.1b2 (February 16, 2013)
 -------------------------

@@ -327,32 +327,30 @@ to register it::
 .. _extend-query:
 
 Extend the Query Syntax
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
 
-Beets already support searching using regular expressions by prepending search
-terms with the colon prefix. It is possible to add new prefix by extending the
-``PluginQuery`` class.
+You can add new kinds of queries to beets' :doc:`query syntax
+</reference/query>` indicated by a prefix. As an example, beets already
+supports regular expression queries, which are indicated by a colon
+prefix---plugins can do the same.
 
-The plugin then need to declare its new queries by returning a ``dict`` of
-``{prefix: PluginQuery}`` from the ``queries`` method.
+To do so, define a subclass of the ``PluginQuery`` type from the
+``beets.library`` module. Then, in the ``queries`` method of your plugin
+class, return a dictionary mapping prefix strings to query classes.
 
 The following example plugins declares a query using the ``@`` prefix. So the
 plugin will be called if we issue a command like ``beet ls @something`` or
 ``beet ls artist:@something``::
 
     from beets.plugins import BeetsPlugin
-    from beets.Library import PluginQuery
+    from beets.library import PluginQuery
 
     class ExampleQuery(PluginQuery):
         def match(self, pattern, val):
-            return True # this will simply match everything
+            return True  # This will just match everything.
 
     class ExamplePlugin(BeetsPlugin):
         def queries():
-            # plugins need to declare theire queries by
-            # returning a dict of {prefix: PluginQuery}
-            # from the queries() function
             return {
                 '@': ExampleQuery
             }
-

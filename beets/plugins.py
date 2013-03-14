@@ -56,7 +56,9 @@ class BeetsPlugin(object):
         return ()
     
     def queries(self):
-        """Should return a dict of {prefix : beets.library.PluginQuery}"""
+        """Should return a dict mapping prefixes to PluginQuery
+        subclasses.
+        """
         return {}
 
     def track_distance(self, item, info):
@@ -215,8 +217,9 @@ def commands():
     return out
 
 def queries():
-    """Returns a dict of {prefix: beet.library.PluginQuery} objects from all
-    loaded plugins.  """
+    """Returns a dict mapping prefix strings to beet.library.PluginQuery
+    subclasses all loaded plugins.
+    """
     out = {}
     for plugin in find_plugins():
         out.update(plugin.queries())

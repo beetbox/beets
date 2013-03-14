@@ -17,7 +17,6 @@
 import sqlite3
 import os
 import re
-import difflib
 import sys
 import logging
 import shlex
@@ -515,7 +514,6 @@ class RegexpQuery(FieldQuery):
         value = util.as_string(getattr(item, self.field))
         return self.regexp.search(value) is not None
 
-
 class PluginQuery(FieldQuery):
     """The base class to add queries using beets plugins. Plugins can add
     special queries by defining a subclass of PluginQuery and overriding
@@ -525,8 +523,17 @@ class PluginQuery(FieldQuery):
         super(PluginQuery, self).__init__(field, pattern)
 
     def clause(self):
-        clause = "{name}(?, {field})".format(name=self.__class__.__name__, field=self.field)
+        # Invoke the registered SQLite function.
+        clause = "{name}(?, {field})".format(name=self.__class__.__name__,
+                                             field=self.field)
         return clause, [self.pattern]
+
+    @classmethod
+    def register(cls, conn):
+        """Register this query's matching function with the SQLite
+        connection.
+        """
+        conn.create_function(cls.__name__, 2, cls(None, None).match)
 
 class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
@@ -593,11 +600,14 @@ class CollectionQuery(Query):
     @classmethod
     def _parse_query_part(cls, part):
         """Takes a query in the form of a key/value pair separated by a
-        colon. The value part is matched against a list of prefixes that can be
-        extended by plugins to add custom query types. For example, the colon
-        prefix denotes a regular exporession query.
+        colon. The value part is matched against a list of prefixes that
+        can be extended by plugins to add custom query types. For
+        example, the colon prefix denotes a regular expression query.
 
-        The function returns a tuple of(key, value, Query)
+        The function returns a tuple of `(key, value, cls)`. `key` may
+        be None, indicating that any field may be matched. `cls` is
+        either a subclass of `PluginQuery` or `None` indicating a
+        "normal" query.
 
         For instance,
         parse_query('stapler') == (None, 'stapler', None)
@@ -611,17 +621,17 @@ class CollectionQuery(Query):
         part = part.strip()
         match = cls._pq_regex.match(part)
 
-        cls.prefixes = {':': RegexpQuery}
-        cls.prefixes.update(plugins.queries())
+        prefixes = {':': RegexpQuery}
+        prefixes.update(plugins.queries())
 
         if match:
             key = match.group(1)
             term = match.group(2).replace('\:', ':')
-            # match the search term against the list of prefixes
-            for pre, query in cls.prefixes.items():
+            # Match the search term against the list of prefixes.
+            for pre, query_class in prefixes.items():
                 if term.startswith(pre):
-                    return (key, term[len(pre):], query)
-            return (key, term, None) # None means a normal query
+                    return key, term[len(pre):], query_class
+            return key, term, None  # None means a normal query.
 
     @classmethod
     def from_strings(cls, query_parts, default_fields=None,
@@ -637,7 +647,7 @@ class CollectionQuery(Query):
             if not res:
                 continue
 
-            key, pattern, prefix_query = res
+            key, pattern, query_class = res
 
             # No key specified.
             if key is None:
@@ -646,8 +656,9 @@ class CollectionQuery(Query):
                     subqueries.append(PathQuery(pattern))
                 else:
                     # Match any field.
-                    if prefix_query:
-                        subq = AnyPluginQuery(pattern, default_fields, cls=prefix_query)
+                    if query_class:
+                        subq = AnyPluginQuery(pattern, default_fields,
+                                              cls=query_class)
                     else:
                         subq = AnySubstringQuery(pattern, default_fields)
                     subqueries.append(subq)
@@ -662,8 +673,8 @@ class CollectionQuery(Query):
 
             # Other (recognized) field.
             elif key.lower() in all_keys:
-                if prefix_query is not None:
-                    subqueries.append(prefix_query(key.lower(), pattern))
+                if query_class:
+                    subqueries.append(query_class(key.lower(), pattern))
                 else:
                     subqueries.append(SubstringQuery(key.lower(), pattern))
 
@@ -724,42 +735,10 @@ class AnySubstringQuery(CollectionQuery):
                 return True
         return False
 
-class AnyRegexpQuery(CollectionQuery):
-    """A query that matches a regexp in any of a list of metadata
-    fields.
-    """
-    def __init__(self, pattern, fields=None):
-        """Create a query for regexp over the sequence of fields
-        given. If no fields are given, all available fields are
-        used.
-        """
-        self.regexp = re.compile(pattern)
-        self.fields = fields or ITEM_KEYS_WRITABLE
-
-        subqueries = []
-        for field in self.fields:
-            subqueries.append(RegexpQuery(field, pattern))
-        super(AnyRegexpQuery, self).__init__(subqueries)
-
-    def clause(self):
-        return self.clause_with_joiner('or')
-
-    def match(self, item):
-        for fld in self.fields:
-            try:
-                val = getattr(item, fld)
-            except KeyError:
-                continue
-            if isinstance(val, basestring) and \
-               self.regexp.match(val) is not None:
-                return True
-        return False
-
 class AnyPluginQuery(CollectionQuery):
     """A query that dispatch the matching function to the match method of
     the cls provided to the contstructor using a list of metadata fields.
     """
-
     def __init__(self, pattern, fields=None, cls=PluginQuery):
         subqueries = []
         self.pattern = pattern
@@ -1174,9 +1153,9 @@ class Library(BaseLibrary):
                 # Add the REGEXP function to SQLite queries.
                 conn.create_function("REGEXP", 2, _regexp)
 
-                # Register plugin queries 
-                for prefix, query in plugins.queries().items():
-                    conn.create_function(query.__name__, 2, query(None, None).match)
+                # Register plugin queries.
+                for prefix, query_class in plugins.queries().items():
+                    query_class.register(conn)
 
                 self._connections[thread_id] = conn
                 return conn
