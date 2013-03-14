@@ -590,10 +590,9 @@ class CollectionQuery(Query):
         return clause, subvals
 
     @classmethod
-    def from_strings(cls, query_parts, default_fields=None,
-                     all_keys=ITEM_KEYS):
+    def from_strings(cls, query_parts, default_fields, all_keys):
         """Creates a query from a list of strings in the format used by
-        _parse_query_part. If default_fields are specified, they are the
+        parse_query_part. If default_fields are specified, they are the
         fields to be searched by unqualified search terms. Otherwise,
         all fields are searched for those terms.
         """
@@ -607,7 +606,8 @@ class CollectionQuery(Query):
         return cls(subqueries)
 
     @classmethod
-    def from_string(cls, query, default_fields=None, all_keys=ITEM_KEYS):
+    def from_string(cls, query, default_fields=ITEM_DEFAULT_FIELDS,
+                    all_keys=ITEM_KEYS):
         """Creates a query based on a single string. The string is split
         into query parts using shell-style syntax.
         """
@@ -617,8 +617,7 @@ class CollectionQuery(Query):
         if isinstance(query, unicode):
             query = query.encode('utf8')
         parts = [s.decode('utf8') for s in shlex.split(query)]
-        return cls.from_strings(parts, default_fields=default_fields,
-                                all_keys=all_keys)
+        return cls.from_strings(parts, default_fields, all_keys)
 
 class AnyFieldQuery(CollectionQuery):
     """A query that matches if a given FieldQuery subclass matches in

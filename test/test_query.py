@@ -20,7 +20,7 @@ import _common
 from _common import unittest
 import beets.library
 
-pqp = beets.library.CollectionQuery._parse_query_part
+pqp = beets.library.parse_query_part
 
 some_item = _common.item()
 
