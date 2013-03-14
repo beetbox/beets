@@ -589,53 +589,6 @@ class CollectionQuery(Query):
         clause = (' ' + joiner + ' ').join(clause_parts)
         return clause, subvals
 
-    # Regular expression for _parse_query_part, below.
-    _pq_regex = re.compile(
-        # Non-capturing optional segment for the keyword.
-        r'(?:'
-            r'(\S+?)'    # The field key.
-            r'(?<!\\):'  # Unescaped :
-        r')?'
-
-        r'(.+)',         # The term itself.
-
-        re.I  # Case-insensitive.
-    )
-    @classmethod
-    def _parse_query_part(cls, part):
-        """Takes a query in the form of a key/value pair separated by a
-        colon. The value part is matched against a list of prefixes that
-        can be extended by plugins to add custom query types. For
-        example, the colon prefix denotes a regular expression query.
-
-        The function returns a tuple of `(key, value, cls)`. `key` may
-        be None, indicating that any field may be matched. `cls` is a
-        subclass of `FieldQuery`.
-
-        For instance,
-        parse_query('stapler') == (None, 'stapler', None)
-        parse_query('color:red') == ('color', 'red', None)
-        parse_query(':^Quiet') == (None, '^Quiet', RegexpQuery)
-        parse_query('color::b..e') == ('color', 'b..e', RegexpQuery)
-
-        Prefixes may be 'escaped' with a backslash to disable the keying
-        behavior.
-        """
-        part = part.strip()
-        match = cls._pq_regex.match(part)
-
-        prefixes = {':': RegexpQuery}
-        prefixes.update(plugins.queries())
-
-        if match:
-            key = match.group(1)
-            term = match.group(2).replace('\:', ':')
-            # Match the search term against the list of prefixes.
-            for pre, query_class in prefixes.items():
-                if term.startswith(pre):
-                    return key, term[len(pre):], query_class
-            return key, term, SubstringQuery  # The default query type.
-
     @classmethod
     def from_strings(cls, query_parts, default_fields=None,
                      all_keys=ITEM_KEYS):
@@ -646,42 +599,9 @@ class CollectionQuery(Query):
         """
         subqueries = []
         for part in query_parts:
-            res = cls._parse_query_part(part)
-            if not res:
-                continue
-
-            key, pattern, query_class = res
-
-            # No key specified.
-            if key is None:
-                if os.sep in pattern and 'path' in all_keys:
-                    # This looks like a path.
-                    subqueries.append(PathQuery(pattern))
-                else:
-                    # Match any field.
-                    subq = AnyFieldQuery(pattern, default_fields, query_class)
-                    subqueries.append(subq)
-
-            # A boolean field.
-            elif key.lower() == 'comp':
-                subqueries.append(BooleanQuery(key.lower(), pattern))
-
-            # Path field.
-            elif key.lower() == 'path' and 'path' in all_keys:
-                subqueries.append(PathQuery(pattern))
-
-            # Other (recognized) field.
-            elif key.lower() in all_keys:
-                subqueries.append(query_class(key.lower(), pattern))
-
-            # Singleton query (not a real field).
-            elif key.lower() == 'singleton':
-                subqueries.append(SingletonQuery(util.str2bool(pattern)))
-
-            # Unrecognized field.
-            else:
-                log.warn(u'no such field in query: {0}'.format(key))
-
+            subq = construct_query_part(part, default_fields, all_keys)
+            if subq:
+                subqueries.append(subq)
         if not subqueries:  # No terms in query.
             subqueries = [TrueQuery()]
         return cls(subqueries)
@@ -787,6 +707,91 @@ class ResultIterator(object):
         row = self.rowiter.next()  # May raise StopIteration.
         return Item(row)
 
+# Regular expression for parse_query_part, below.
+PARSE_QUERY_PART_REGEX = re.compile(
+    # Non-capturing optional segment for the keyword.
+    r'(?:'
+        r'(\S+?)'    # The field key.
+        r'(?<!\\):'  # Unescaped :
+    r')?'
+
+    r'(.+)',         # The term itself.
+
+    re.I  # Case-insensitive.
+)
+def parse_query_part(part):
+    """Takes a query in the form of a key/value pair separated by a
+    colon. The value part is matched against a list of prefixes that
+    can be extended by plugins to add custom query types. For
+    example, the colon prefix denotes a regular expression query.
+
+    The function returns a tuple of `(key, value, cls)`. `key` may
+    be None, indicating that any field may be matched. `cls` is a
+    subclass of `FieldQuery`.
+
+    For instance,
+    parse_query('stapler') == (None, 'stapler', None)
+    parse_query('color:red') == ('color', 'red', None)
+    parse_query(':^Quiet') == (None, '^Quiet', RegexpQuery)
+    parse_query('color::b..e') == ('color', 'b..e', RegexpQuery)
+
+    Prefixes may be 'escaped' with a backslash to disable the keying
+    behavior.
+    """
+    part = part.strip()
+    match = PARSE_QUERY_PART_REGEX.match(part)
+
+    prefixes = {':': RegexpQuery}
+    prefixes.update(plugins.queries())
+
+    if match:
+        key = match.group(1)
+        term = match.group(2).replace('\:', ':')
+        # Match the search term against the list of prefixes.
+        for pre, query_class in prefixes.items():
+            if term.startswith(pre):
+                return key, term[len(pre):], query_class
+        return key, term, SubstringQuery  # The default query type.
+
+def construct_query_part(query_part, default_fields, all_keys):
+    """Create a query from a single query component. Return a Query
+    instance or None if the value cannot be parsed.
+    """
+    parsed = parse_query_part(query_part)
+    if not parsed:
+        return
+
+    key, pattern, query_class = parsed
+
+    # No key specified.
+    if key is None:
+        if os.sep in pattern and 'path' in all_keys:
+            # This looks like a path.
+            return PathQuery(pattern)
+        else:
+            # Match any field.
+            return AnyFieldQuery(pattern, default_fields, query_class)
+
+    # A boolean field.
+    elif key.lower() == 'comp':
+        return BooleanQuery(key.lower(), pattern)
+
+    # Path field.
+    elif key.lower() == 'path' and 'path' in all_keys:
+        return PathQuery(pattern)
+
+    # Other (recognized) field.
+    elif key.lower() in all_keys:
+        return query_class(key.lower(), pattern)
+
+    # Singleton query (not a real field).
+    elif key.lower() == 'singleton':
+        return SingletonQuery(util.str2bool(pattern))
+
+    # Unrecognized field.
+    else:
+        log.warn(u'no such field in query: {0}'.format(key))
+
 def get_query(val, album=False):
     """Takes a value which may be None, a query string, a query string
     list, or a Query object, and returns a suitable Query object. album
@@ -812,7 +817,6 @@ def get_query(val, album=False):
         return val
     else:
         raise ValueError('query must be None or have type Query or str')
-
 
 
 # An abstract library.
