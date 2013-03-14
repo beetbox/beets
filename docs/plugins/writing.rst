@@ -334,9 +334,11 @@ You can add new kinds of queries to beets' :doc:`query syntax
 supports regular expression queries, which are indicated by a colon
 prefix---plugins can do the same.
 
-To do so, define a subclass of the ``PluginQuery`` type from the
-``beets.library`` module. Then, in the ``queries`` method of your plugin
-class, return a dictionary mapping prefix strings to query classes.
+To do so, define a subclass of the ``FieldQuery`` type from the
+``beets.library`` module. In this subclass, you should override the
+``value_match`` class method. (Remember the ``@classmethod`` decorator!) Then,
+in the ``queries`` method of your plugin class, return a dictionary mapping
+prefix strings to query classes.
 
 The following example plugins declares a query using the ``@`` prefix. So the
 plugin will be called if we issue a command like ``beet ls @something`` or
@@ -346,7 +348,8 @@ plugin will be called if we issue a command like ``beet ls @something`` or
     from beets.library import PluginQuery
 
     class ExampleQuery(PluginQuery):
-        def match(self, pattern, val):
+        @classmethod
+        def value_match(self, pattern, val):
             return True  # This will just match everything.
 
     class ExamplePlugin(BeetsPlugin):

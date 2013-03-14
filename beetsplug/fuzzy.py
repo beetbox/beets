@@ -16,40 +16,31 @@
 """
 
 from beets.plugins import BeetsPlugin
-from beets.library import PluginQuery
-from beets import util
+from beets.library import FieldQuery
 import beets
-from beets.util import confit
 import difflib
 
 
-class FuzzyQuery(PluginQuery):
-    def __init__(self, field, pattern):
-        super(FuzzyQuery, self).__init__(field, pattern)
-        try:
-            self.threshold = beets.config['fuzzy']['threshold'].as_number()
-        except confit.NotFoundError:
-            self.threshold = 0.7
-
-    def match(self, pattern, val):
-        if pattern is None:
-            return False
-        val = util.as_string(val)
+class FuzzyQuery(FieldQuery):
+    @classmethod
+    def value_match(self, pattern, val):
         # smartcase
         if pattern.islower():
             val = val.lower()
         queryMatcher = difflib.SequenceMatcher(None, pattern, val)
-        return queryMatcher.quick_ratio() >= self.threshold
+        threshold = beets.config['fuzzy']['threshold'].as_number()
+        return queryMatcher.quick_ratio() >= threshold
 
 
 class FuzzyPlugin(BeetsPlugin):
     def __init__(self):
+        super(FuzzyPlugin, self).__init__()
+        self.config.add({
+            'prefix': '~',
+            'threshold': 0.7,
+        })
         super(FuzzyPlugin, self).__init__(self)
 
     def queries(self):
-        try:
-            prefix = beets.config['fuzzy']['prefix'].get(basestring)
-        except confit.NotFoundError:
-            prefix = '~'
-
+        prefix = beets.config['fuzzy']['prefix'].get(basestring)
         return {prefix: FuzzyQuery}

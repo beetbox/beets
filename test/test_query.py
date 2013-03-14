@@ -27,17 +27,17 @@ some_item = _common.item()
 class QueryParseTest(unittest.TestCase):
     def test_one_basic_term(self):
         q = 'test'
-        r = (None, 'test', None)
+        r = (None, 'test', beets.library.SubstringQuery)
         self.assertEqual(pqp(q), r)
 
     def test_one_keyed_term(self):
         q = 'test:val'
-        r = ('test', 'val', None)
+        r = ('test', 'val', beets.library.SubstringQuery)
         self.assertEqual(pqp(q), r)
 
     def test_colon_at_end(self):
         q = 'test:'
-        r = (None, 'test:', None)
+        r = (None, 'test:', beets.library.SubstringQuery)
         self.assertEqual(pqp(q), r)
 
     def test_one_basic_regexp(self):
@@ -52,7 +52,7 @@ class QueryParseTest(unittest.TestCase):
 
     def test_escaped_colon(self):
         q = r'test\:val'
-        r = (None, 'test:val', None)
+        r = (None, 'test:val', beets.library.SubstringQuery)
         self.assertEqual(pqp(q), r)
 
     def test_escaped_colon_in_regexp(self):
@@ -60,42 +60,24 @@ class QueryParseTest(unittest.TestCase):
         r = (None, 'test:regexp', beets.library.RegexpQuery)
         self.assertEqual(pqp(q), r)
 
-class AnySubstringQueryTest(unittest.TestCase):
+class AnyFieldQueryTest(unittest.TestCase):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
         self.lib.add(some_item)
 
     def test_no_restriction(self):
-        q = beets.library.AnySubstringQuery('title')
+        q = beets.library.AnyFieldQuery('title', beets.library.ITEM_KEYS,
+                                        beets.library.SubstringQuery)
         self.assertEqual(self.lib.items(q).next().title, 'the title')
 
     def test_restriction_completeness(self):
-        q = beets.library.AnySubstringQuery('title', ['title'])
+        q = beets.library.AnyFieldQuery('title', ['title'],
+                                        beets.library.SubstringQuery)
         self.assertEqual(self.lib.items(q).next().title, 'the title')
 
     def test_restriction_soundness(self):
-        q = beets.library.AnySubstringQuery('title', ['artist'])
-        self.assertRaises(StopIteration, self.lib.items(q).next)
-
-class AnyRegexpQueryTest(unittest.TestCase):
-    def setUp(self):
-        self.lib = beets.library.Library(':memory:')
-        self.lib.add(some_item)
-
-    def test_no_restriction(self):
-        q = beets.library.AnyRegexpQuery(r'^the ti')
-        self.assertEqual(self.lib.items(q).next().title, 'the title')
-
-    def test_restriction_completeness(self):
-        q = beets.library.AnyRegexpQuery(r'^the ti', ['title'])
-        self.assertEqual(self.lib.items(q).next().title, 'the title')
-
-    def test_restriction_soundness(self):
-        q = beets.library.AnyRegexpQuery(r'^the ti', ['artist'])
-        self.assertRaises(StopIteration, self.lib.items(q).next)
-
-    def test_restriction_soundness_2(self):
-        q = beets.library.AnyRegexpQuery(r'the ti$', ['title'])
+        q = beets.library.AnyFieldQuery('title', ['artist'],
+                                        beets.library.SubstringQuery)
         self.assertRaises(StopIteration, self.lib.items(q).next)
 
 # Convenient asserts for matching items.

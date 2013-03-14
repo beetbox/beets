@@ -469,58 +469,32 @@ class Query(object):
 
 class FieldQuery(Query):
     """An abstract query that searches in a specific field for a
-    pattern.
+    pattern. Subclasses must provide a `value_match` class method, which
+    determines whether a certain pattern string matches a certain value
+    string. They may then either override the `clause` method to use
+    native SQLite functionality or get registered to use a callback into
+    Python.
     """
     def __init__(self, field, pattern):
         self.field = field
         self.pattern = pattern
 
-class MatchQuery(FieldQuery):
-    """A query that looks for exact matches in an item field."""
-    def clause(self):
-        pattern = self.pattern
-        if self.field == 'path' and isinstance(pattern, str):
-            pattern = buffer(pattern)
-        return self.field + " = ?", [pattern]
+    @classmethod
+    def value_match(cls, pattern, value):
+        """Determine whether the value matches the pattern. Both
+        arguments are strings.
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def _raw_value_match(cls, pattern, value):
+        """Determine whether the value matches the pattern. The value
+        may have any type.
+        """
+        return cls.value_match(pattern, util.as_string(value))
 
     def match(self, item):
-        return self.pattern == getattr(item, self.field)
-
-class SubstringQuery(FieldQuery):
-    """A query that matches a substring in a specific item field."""
-    def clause(self):
-        search = '%' + (self.pattern.replace('\\','\\\\').replace('%','\\%')
-                            .replace('_','\\_')) + '%'
-        clause = self.field + " like ? escape '\\'"
-        subvals = [search]
-        return clause, subvals
-
-    def match(self, item):
-        value = util.as_string(getattr(item, self.field))
-        return self.pattern.lower() in value.lower()
-
-class RegexpQuery(FieldQuery):
-    """A query that matches a regular expression in a specific item field."""
-    def __init__(self, field, pattern):
-        super(RegexpQuery, self).__init__(field, pattern)
-        self.regexp = re.compile(pattern)
-
-    def clause(self):
-        clause = self.field + " REGEXP ?"
-        subvals = [self.pattern]
-        return clause, subvals
-
-    def match(self, item):
-        value = util.as_string(getattr(item, self.field))
-        return self.regexp.search(value) is not None
-
-class PluginQuery(FieldQuery):
-    """The base class to add queries using beets plugins. Plugins can add
-    special queries by defining a subclass of PluginQuery and overriding
-    the match method.
-    """
-    def __init__(self, field, pattern):
-        super(PluginQuery, self).__init__(field, pattern)
+        return self._raw_value_match(self.pattern, getattr(item, self.field))
 
     def clause(self):
         # Invoke the registered SQLite function.
@@ -531,9 +505,54 @@ class PluginQuery(FieldQuery):
     @classmethod
     def register(cls, conn):
         """Register this query's matching function with the SQLite
-        connection.
+        connection. This method should only be invoked when the query
+        type chooses not to override `clause`.
         """
-        conn.create_function(cls.__name__, 2, cls(None, None).match)
+        conn.create_function(cls.__name__, 2, cls._raw_value_match)
+
+class MatchQuery(FieldQuery):
+    """A query that looks for exact matches in an item field."""
+    def clause(self):
+        pattern = self.pattern
+        if self.field == 'path' and isinstance(pattern, str):
+            pattern = buffer(pattern)
+        return self.field + " = ?", [pattern]
+
+    # We override the "raw" version here as a special case because we
+    # want to compare objects before conversion.
+    @classmethod
+    def _raw_value_match(cls, pattern, value):
+        return pattern == value
+
+class SubstringQuery(FieldQuery):
+    """A query that matches a substring in a specific item field."""
+    def clause(self):
+        search = '%' + (self.pattern.replace('\\','\\\\').replace('%','\\%')
+                            .replace('_','\\_')) + '%'
+        clause = self.field + " like ? escape '\\'"
+        subvals = [search]
+        return clause, subvals
+
+    @classmethod
+    def value_match(cls, pattern, value):
+        return pattern.lower() in value.lower()
+
+class RegexpQuery(FieldQuery):
+    """A query that matches a regular expression in a specific item
+    field.
+    """
+    def __init__(self, field, pattern):
+        super(RegexpQuery, self).__init__(field, pattern)
+        self.regexp = re.compile(pattern)
+
+    def clause(self):
+        clause = self.field + " REGEXP ?"
+        subvals = [self.pattern]
+        return clause, subvals
+
+    @classmethod
+    def value_match(cls, pattern, value):
+        return re.search(pattern, value)
 
 class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
@@ -605,9 +624,8 @@ class CollectionQuery(Query):
         example, the colon prefix denotes a regular expression query.
 
         The function returns a tuple of `(key, value, cls)`. `key` may
-        be None, indicating that any field may be matched. `cls` is
-        either a subclass of `PluginQuery` or `None` indicating a
-        "normal" query.
+        be None, indicating that any field may be matched. `cls` is a
+        subclass of `FieldQuery`.
 
         For instance,
         parse_query('stapler') == (None, 'stapler', None)
@@ -631,7 +649,7 @@ class CollectionQuery(Query):
             for pre, query_class in prefixes.items():
                 if term.startswith(pre):
                     return key, term[len(pre):], query_class
-            return key, term, None  # None means a normal query.
+            return key, term, SubstringQuery  # The default query type.
 
     @classmethod
     def from_strings(cls, query_parts, default_fields=None,
@@ -656,11 +674,7 @@ class CollectionQuery(Query):
                     subqueries.append(PathQuery(pattern))
                 else:
                     # Match any field.
-                    if query_class:
-                        subq = AnyPluginQuery(pattern, default_fields,
-                                              cls=query_class)
-                    else:
-                        subq = AnySubstringQuery(pattern, default_fields)
+                    subq = AnyFieldQuery(pattern, default_fields, query_class)
                     subqueries.append(subq)
 
             # A boolean field.
@@ -673,10 +687,7 @@ class CollectionQuery(Query):
 
             # Other (recognized) field.
             elif key.lower() in all_keys:
-                if query_class:
-                    subqueries.append(query_class(key.lower(), pattern))
-                else:
-                    subqueries.append(SubstringQuery(key.lower(), pattern))
+                subqueries.append(query_class(key.lower(), pattern))
 
             # Singleton query (not a real field).
             elif key.lower() == 'singleton':
@@ -704,62 +715,28 @@ class CollectionQuery(Query):
         return cls.from_strings(parts, default_fields=default_fields,
                                 all_keys=all_keys)
 
-class AnySubstringQuery(CollectionQuery):
-    """A query that matches a substring in any of a list of metadata
-    fields.
+class AnyFieldQuery(CollectionQuery):
+    """A query that matches if a given FieldQuery subclass matches in
+    any field. The individual field query class is provided to the
+    constructor.
     """
-    def __init__(self, pattern, fields=None):
-        """Create a query for pattern over the sequence of fields
-        given. If no fields are given, all available fields are
-        used.
-        """
-        self.pattern = pattern
-        self.fields = fields or ITEM_KEYS_WRITABLE
-
-        subqueries = []
-        for field in self.fields:
-            subqueries.append(SubstringQuery(field, pattern))
-        super(AnySubstringQuery, self).__init__(subqueries)
-
-    def clause(self):
-        return self.clause_with_joiner('or')
-
-    def match(self, item):
-        for fld in self.fields:
-            try:
-                val = getattr(item, fld)
-            except KeyError:
-                continue
-            if isinstance(val, basestring) and \
-               self.pattern.lower() in val.lower():
-                return True
-        return False
-
-class AnyPluginQuery(CollectionQuery):
-    """A query that dispatch the matching function to the match method of
-    the cls provided to the contstructor using a list of metadata fields.
-    """
-    def __init__(self, pattern, fields=None, cls=PluginQuery):
-        subqueries = []
+    def __init__(self, pattern, fields, cls):
         self.pattern = pattern
         self.fields = fields
+        self.query_class = cls
+
+        subqueries = []
         for field in self.fields:
             subqueries.append(cls(field, pattern))
-        super(AnyPluginQuery, self).__init__(subqueries)
+        super(AnyFieldQuery, self).__init__(subqueries)
 
     def clause(self):
         return self.clause_with_joiner('or')
 
     def match(self, item):
-        for field in self.fields:
-            try:
-                val = getattr(item, field)
-            except KeyError:
-                continue
-            if isinstance(val, basestring):
-                for subq in self.subqueries:
-                    if subq.match(self.pattern, val):
-                        return True
+        for subq in self.subqueries:
+            if subq.match(item):
+                return True
         return False
     
 class MutableCollectionQuery(CollectionQuery):
