@@ -175,21 +175,6 @@ def _orelse(exp1, exp2):
                       'WHEN "" THEN {1} '
                       'ELSE {0} END)').format(exp1, exp2)
 
-# An SQLite function for regular expression matching.
-def _regexp(expr, val):
-    """Return a boolean indicating whether the regular expression `expr`
-    matches `val`.
-    """
-    if expr is None:
-        return False
-    val = util.as_string(val)
-    try:
-        res = re.search(expr, val)
-    except re.error:
-        # Invalid regular expression.
-        return False
-    return res is not None
-
 # Path element formatting for templating.
 def format_for_path(value, key=None, pathmod=None):
     """Sanitize the value for inclusion in a path: replace separators
@@ -541,18 +526,14 @@ class RegexpQuery(FieldQuery):
     """A query that matches a regular expression in a specific item
     field.
     """
-    def __init__(self, field, pattern):
-        super(RegexpQuery, self).__init__(field, pattern)
-        self.regexp = re.compile(pattern)
-
-    def clause(self):
-        clause = self.field + " REGEXP ?"
-        subvals = [self.pattern]
-        return clause, subvals
-
     @classmethod
     def value_match(cls, pattern, value):
-        return re.search(pattern, value)
+        try:
+            res = re.search(pattern, value)
+        except re.error:
+            # Invalid regular expression.
+            return False
+        return res is not None
 
 class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
@@ -1127,10 +1108,9 @@ class Library(BaseLibrary):
 
                 # Access SELECT results like dictionaries.
                 conn.row_factory = sqlite3.Row
-                # Add the REGEXP function to SQLite queries.
-                conn.create_function("REGEXP", 2, _regexp)
 
                 # Register plugin queries.
+                RegexpQuery.register(conn)
                 for prefix, query_class in plugins.queries().items():
                     query_class.register(conn)
 
