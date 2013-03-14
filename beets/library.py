@@ -768,9 +768,14 @@ def construct_query_part(query_part, default_fields, all_keys):
         if os.sep in pattern and 'path' in all_keys:
             # This looks like a path.
             return PathQuery(pattern)
-        else:
-            # Match any field.
+        elif issubclass(query_class, FieldQuery):
+            # The query type matches a specific field, but none was
+            # specified. So we use a version of the query that matches
+            # any field.
             return AnyFieldQuery(pattern, default_fields, query_class)
+        else:
+            # Other query type.
+            return query_class(pattern)
 
     # A boolean field.
     elif key.lower() == 'comp':
