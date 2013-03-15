@@ -39,7 +39,6 @@ class FuzzyPlugin(BeetsPlugin):
             'prefix': '~',
             'threshold': 0.7,
         })
-        super(FuzzyPlugin, self).__init__(self)
 
     def queries(self):
         prefix = beets.config['fuzzy']['prefix'].get(basestring)
