@@ -1,8 +1,15 @@
 Changelog
 =========
 
-1.1b3 (in development)
+1.1b3 (March 16, 2013)
 ----------------------
+
+This third beta of beets 1.1 brings a hodgepodge of little new features (and
+internal overhauls that will make improvements easier in the future). There
+are new options for getting metadata in a particular language and seeing more
+detail during the import process. There's also a new plugin for synchronizing
+your metadata with MusicBrainz. Under the hood, plugins can now extend the
+query syntax.
 
 New configuration options:
 
