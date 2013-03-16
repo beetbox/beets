@@ -114,7 +114,7 @@ currently available are:
 * *pluginload*: called after all the plugins have been loaded after the ``beet``
   command starts
 
-* *import*: called after a ``beet import`` command fishes (the ``lib`` keyword
+* *import*: called after a ``beet import`` command finishes (the ``lib`` keyword
   argument is a Library object; ``paths`` is a list of paths (strings) that were
   imported)
 
@@ -323,3 +323,39 @@ to register it::
             self.import_stages = [self.stage]
         def stage(self, config, task):
             print('Importing something!')
+
+.. _extend-query:
+
+Extend the Query Syntax
+^^^^^^^^^^^^^^^^^^^^^^^
+
+You can add new kinds of queries to beets' :doc:`query syntax
+</reference/query>` indicated by a prefix. As an example, beets already
+supports regular expression queries, which are indicated by a colon
+prefix---plugins can do the same.
+
+To do so, define a subclass of the ``Query`` type from the ``beets.library``
+module. Then, in the ``queries`` method of your plugin class, return a
+dictionary mapping prefix strings to query classes.
+
+One simple kind of query you can extend is the ``RegisteredFieldQuery``, which
+implements string comparisons. To use it, create a subclass inheriting from
+that class and override the ``value_match`` class method. (Remember the
+``@classmethod`` decorator!) The following example plugin declares a query
+using the ``@`` prefix to delimit exact string matches. The plugin will be
+used if we issue a command like ``beet ls @something`` or ``beet ls
+artist:@something``::
+
+    from beets.plugins import BeetsPlugin
+    from beets.library import PluginQuery
+
+    class ExactMatchQuery(PluginQuery):
+        @classmethod
+        def value_match(self, pattern, val):
+            return pattern == val
+
+    class ExactMatchPlugin(BeetsPlugin):
+        def queries():
+            return {
+                '@': ExactMatchQuery
+            }

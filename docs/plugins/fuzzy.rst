@@ -1,25 +1,25 @@
 Fuzzy Search Plugin
 ===================
 
-The ``fuzzy`` plugin provides a command that search your library using
-fuzzy pattern matching. This can be useful if you want to find a track with complicated characters in the title.
+The ``fuzzy`` plugin provides a prefixed query that search you library using
+fuzzy pattern matching. This can be useful if you want to find a track with
+complicated characters in the title.
 
 First, enable the plugin named ``fuzzy`` (see :doc:`/plugins/index`).
-You'll then be able to use the ``beet fuzzy`` command::
+You'll then be able to use the ``~`` prefix to use fuzzy matching::
 
-    $ beet fuzzy Vareoldur
+    $ beet ls '~Vareoldur'
     Sigur Rós - Valtari - Varðeldur
 
-The command has several options that resemble those for the ``beet list``
-command (see :doc:`/reference/cli`). To choose an album instead of a single
-track, use ``-a``; to print paths to items instead of metadata, use ``-p``; and
-to use a custom format for printing, use ``-f FORMAT``.
-
-The ``-t NUMBER`` option lets you specify how precise the fuzzy match has to be
-(default is 0.7). To make a fuzzier search, try ``beet fuzzy -t 0.5 Varoeldur``.
-A value of ``1`` will show only perfect matches and a value of ``0`` will match everything.
-
-The default threshold can also be set in the config file::
+The plugin provides config options that let you choose the prefix and the
+threshold.::
 
     fuzzy:
         threshold: 0.8
+        prefix: '@'
+
+A threshold value of 1.0 will show only perfect matches and a value of 0.0
+will match everything.
+
+The default prefix ``~`` needs to be escaped or quoted in most shells. If this
+bothers you, you can change the prefix in your config file.

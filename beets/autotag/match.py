@@ -257,8 +257,8 @@ def distance(items, album_info, mapping):
     `album_info.tracks`.
     """
     cur_artist, cur_album, _ = current_metadata(items)
-    cur_artist = cur_artist or ''
-    cur_album = cur_album or ''
+    cur_artist = cur_artist or u''
+    cur_album = cur_album or u''
 
     # These accumulate the possible distance components. The final
     # distance will be dist/dist_max.

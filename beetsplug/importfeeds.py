@@ -34,10 +34,11 @@ class ImportFeedsPlugin(BeetsPlugin):
             'm3u_name': u'imported.m3u',
             'dir': None,
             'relative_to': None,
+            'absolute_path': False,
         })
-        
+
         feeds_dir = self.config['dir'].get()
-        if feeds_dir: 
+        if feeds_dir:
             feeds_dir = os.path.expanduser(bytestring_path(feeds_dir))
             self.config['dir'] = feeds_dir
             if not os.path.exists(syspath(feeds_dir)):
@@ -92,9 +93,12 @@ def _record_items(lib, basename, items):
 
     paths = []
     for item in items:
-        paths.append(os.path.relpath(
-            item.path, relative_to
-        ))
+        if config['importfeeds']['absolute_path']:
+            paths.append(item.path)
+        else:
+            paths.append(os.path.relpath(
+                item.path, relative_to
+            ))
 
     if 'm3u' in formats:
         basename = bytestring_path(

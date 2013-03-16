@@ -19,9 +19,20 @@ from beets.ui import Subcommand
 from beets import ui
 from beets import config
 import musicbrainzngs
-from musicbrainzngs import musicbrainz
 
 SUBMISSION_CHUNK_SIZE = 200
+
+def mb_call(func, *args, **kwargs):
+    """Call a MusicBrainz API function and catch exceptions.
+    """
+    try:
+        return func(*args, **kwargs)
+    except musicbrainzngs.AuthenticationError:
+        raise ui.UserError('authentication with MusicBrainz failed')
+    except musicbrainzngs.ResponseError as exc:
+        raise ui.UserError('MusicBrainz API error: {0}'.format(exc))
+    except musicbrainzngs.UsageError:
+        raise ui.UserError('MusicBrainz credentials missing')
 
 def submit_albums(collection_id, release_ids):
     """Add all of the release IDs to the indicated collection. Multiple
@@ -29,16 +40,14 @@ def submit_albums(collection_id, release_ids):
     """
     for i in range(0, len(release_ids), SUBMISSION_CHUNK_SIZE):
         chunk = release_ids[i:i+SUBMISSION_CHUNK_SIZE]
-        releaselist = ";".join(chunk)
-        musicbrainz._mb_request(
-            "collection/%s/releases/%s" % (collection_id, releaselist),
-            'PUT', True, True, body='foo')
-        # A non-empty request body is required to avoid a 411 "Length
-        # Required" error from the MB server.
+        mb_call(
+            musicbrainzngs.add_releases_to_collection,
+            collection_id, chunk
+        )
 
 def update_collection(lib, opts, args):
     # Get the collection to modify.
-    collections = musicbrainz._mb_request('collection', 'GET', True, True)
+    collections = mb_call(musicbrainzngs.get_collections)
     if not collections['collection-list']:
         raise ui.UserError('no collections exist for user')
     collection_id = collections['collection-list'][0]['id']
@@ -60,7 +69,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         super(MusicBrainzCollectionPlugin, self).__init__()
         musicbrainzngs.auth(
             config['musicbrainz']['user'].get(unicode),
-            config['musicbrainz']['pass'].get(unicode)
+            config['musicbrainz']['pass'].get(unicode),
         )
 
     def commands(self):

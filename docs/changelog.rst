@@ -1,21 +1,77 @@
 Changelog
 =========
 
-1.1b3 (in development)
+1.1b3 (March 16, 2013)
 ----------------------
 
+This third beta of beets 1.1 brings a hodgepodge of little new features (and
+internal overhauls that will make improvements easier in the future). There
+are new options for getting metadata in a particular language and seeing more
+detail during the import process. There's also a new plugin for synchronizing
+your metadata with MusicBrainz. Under the hood, plugins can now extend the
+query syntax.
+
+New configuration options:
+
+* :ref:`languages` controls the preferred languages when selecting an alias
+  from MusicBrainz. This feature requires `python-musicbrainz-ngs`_ 0.3 or
+  later. Thanks to Sam Doshi.
+* :ref:`detail` enables a mode where all tracks are listed in the importer UI,
+  as opposed to only changed tracks.
+* The ``--flat`` option to the ``beet import`` command treats an entire
+  directory tree of music files as a single album. This can help in situations
+  where a multi-disc album is split across multiple directories.
+* :doc:`/plugins/importfeeds`: An option was added to use absolute, rather
+  than relative, paths. Thanks to Lucas Duailibe.
+
+Other stuff:
+
+* A new :doc:`/plugins/mbsync` provides a command that looks up each item and
+  track in MusicBrainz and updates your library to reflect it. This can help
+  you easily correct errors that have been fixed in the MB database. Thanks to
+  Jakob Schnitzer.
+* :doc:`/plugins/fuzzy`: The ``fuzzy`` command was removed and replaced with a
+  new query type. To perform fuzzy searches, use the ``~`` prefix with
+  :ref:`list-cmd` or other commands. Thanks to Philippe Mongeau.
+* As part of the above, plugins can now extend the query syntax and new kinds
+  of matching capabilities to beets. See :ref:`extend-query`. Thanks again to
+  Philippe Mongeau.
+* :doc:`/plugins/convert`: A new ``--keep-new`` option lets you store
+  transcoded files in your library while backing up the originals (instead of
+  vice-versa). Thanks to Lucas Duailibe.
+* :doc:`/plugins/convert`: Also, a new ``auto`` config option will transcode
+  audio files automatically during import. Thanks again to Lucas Duailibe.
+* :doc:`/plugins/chroma`: A new ``fingerprint`` command lets you generate and
+  store fingerprints for items that don't yet have them. One more round of
+  applause for Lucas Duailibe.
 * :doc:`/plugins/echonest_tempo`: API errors now issue a warning instead of
   exiting with an exception. We also avoid an error when track metadata
   contains newlines.
 * When the importer encounters an error (insufficient permissions, for
   example) when walking a directory tree, it now logs an error instead of
   crashing.
+* In path formats, null database values now expand to the empty string instead
+  of the string "None".
 * Add "System Volume Information" (an internal directory found on some
   Windows filesystems) to the default ignore list.
 * Fix a crash when ReplayGain values were set to null.
 * Fix a crash when iTunes Sound Check tags contained invalid data.
 * Fix an error when the configuration file (``config.yaml``) is completely
   empty.
+* Fix an error introduced in 1.1b1 when importing using timid mode. Thanks to
+  Sam Doshi.
+* :doc:`/plugins/convert`: Fix a bug when creating files with Unicode
+  pathnames.
+* Fix a spurious warning from the Unidecode module when matching albums that
+  are missing all metadata.
+* Fix Unicode errors when a directory or file doesn't exist when invoking the
+  import command. Thanks to Lucas Duailibe.
+* :doc:`/plugins/mbcollection`: Show friendly, human-readable errors when
+  MusicBrainz exceptions occur.
+* :doc:`/plugins/echonest_tempo`: Catch socket errors that are not handled by
+  the Echo Nest library.
+* :doc:`/plugins/chroma`: Catch Acoustid Web service errors when submitting
+  fingerprints.
 
 1.1b2 (February 16, 2013)
 -------------------------
