@@ -1314,13 +1314,8 @@ class Library(BaseLibrary):
     def load(self, item, load_id=None):
         if load_id is None:
             load_id = item.id
-
-        with self.transaction() as tx:
-            rows = tx.query('SELECT * FROM items WHERE id=?', (load_id,))
-            flex_rows = tx.query(
-                'SELECT * FROM item_attributes WHERE entity_id=?', (load_id,)
-            )
-        item._fill_record(rows[0], get_flexattrs(flex_rows))
+        stored_item = self.get_item(load_id)
+        item._fill_record(stored_item.record, stored_item.flexattrs)
         item._clear_dirty()
 
     def store(self, item, store_id=None, store_all=False):
@@ -1468,14 +1463,10 @@ class Library(BaseLibrary):
     def get_item(self, id):
         """Fetch an Item by its ID. Returns None if no match is found.
         """
-        with self.transaction() as tx:
-            rows = tx.query("SELECT * FROM items WHERE id=?", (id,))
-            flex_rows = tx.query(
-                'SELECT * FROM item_attributes WHERE entity_id=?', (id,)
-            )
-        if rows:
-            return Item(rows, get_flexattrs(flex_rows))
-        else:
+        items = self.items(MatchQuery('id', id))
+        try:
+            return items.next()
+        except StopIteration:
             return None
 
     def get_album(self, item_or_id):
@@ -1590,12 +1581,7 @@ class Album(BaseAlbum):
         """Returns an iterable over the items associated with this
         album.
         """
-        with self._library.transaction() as tx:
-            rows = tx.query(
-                'SELECT * FROM items WHERE album_id=?',
-                (self.id,)
-            )
-        return ResultIterator(rows, self._library)
+        return self._library.items(MatchQuery('album_id', self.id))
 
     def remove(self, delete=False, with_items=True):
         """Removes this album and all its associated items from the
