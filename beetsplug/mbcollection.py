@@ -19,15 +19,14 @@ from beets.ui import Subcommand
 from beets import ui
 from beets import config
 import musicbrainzngs
-from musicbrainzngs import musicbrainz
 
 SUBMISSION_CHUNK_SIZE = 200
 
-def mb_request(*args, **kwargs):
-    """Send a MusicBrainz API request and process exceptions.
+def mb_call(func, *args, **kwargs):
+    """Call a MusicBrainz API function and catch exceptions.
     """
     try:
-        return musicbrainz._mb_request(*args, **kwargs)
+        return func(*args, **kwargs)
     except musicbrainzngs.AuthenticationError:
         raise ui.UserError('authentication with MusicBrainz failed')
     except musicbrainzngs.ResponseError as exc:
@@ -41,17 +40,14 @@ def submit_albums(collection_id, release_ids):
     """
     for i in range(0, len(release_ids), SUBMISSION_CHUNK_SIZE):
         chunk = release_ids[i:i+SUBMISSION_CHUNK_SIZE]
-        releaselist = ";".join(chunk)
-        mb_request(
-            "collection/%s/releases/%s" % (collection_id, releaselist),
-            'PUT', True, True, body='foo'
+        mb_call(
+            musicbrainzngs.add_releases_to_collection,
+            collection_id, chunk
         )
-        # A non-empty request body is required to avoid a 411 "Length
-        # Required" error from the MB server.
 
 def update_collection(lib, opts, args):
     # Get the collection to modify.
-    collections = mb_request('collection', 'GET', True, True)
+    collections = mb_call(musicbrainzngs.get_collections)
     if not collections['collection-list']:
         raise ui.UserError('no collections exist for user')
     collection_id = collections['collection-list'][0]['id']

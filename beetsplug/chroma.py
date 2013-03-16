@@ -157,7 +157,16 @@ class AcoustidPlugin(plugins.BeetsPlugin):
                 raise ui.UserError('no Acoustid user API key provided')
             submit_items(apikey, lib.items(ui.decargs(args)))
         submit_cmd.func = submit_cmd_func
-        return [submit_cmd]
+
+        fingerprint_cmd = ui.Subcommand('fingerprint',
+            help='generate fingerprints for items without them')
+        def fingerprint_cmd_func(lib, opts, args):
+            for item in lib.items(ui.decargs(args)):
+                fingerprint_item(item, lib=lib,
+                                 write=config['import']['write'].get(bool))
+        fingerprint_cmd.func = fingerprint_cmd_func
+
+        return [submit_cmd, fingerprint_cmd]
 
 
 # Hooks into import process.
@@ -191,32 +200,14 @@ def submit_items(userkey, items, chunksize=64):
     def submit_chunk():
         """Submit the current accumulated fingerprint data."""
         log.info('submitting {0} fingerprints'.format(len(data)))
-        acoustid.submit(API_KEY, userkey, data)
+        try:
+            acoustid.submit(API_KEY, userkey, data)
+        except acoustid.AcoustidError as exc:
+            log.warn(u'acoustid submission error: {}'.format(exc))
         del data[:]
 
     for item in items:
-        # Get a fingerprint and length for this track.
-        if not item.length:
-            log.info(u'{0}: no duration available'.format(
-                util.displayable_path(item.path)
-            ))
-            continue
-        elif item.acoustid_fingerprint:
-            log.info(u'{0}: using existing fingerprint'.format(
-                util.displayable_path(item.path)
-            ))
-            fp = item.acoustid_fingerprint
-        else:
-            log.info(u'{0}: fingerprinting'.format(
-                util.displayable_path(item.path)
-            ))
-            try:
-                _, fp = acoustid.fingerprint_file(item.path)
-            except acoustid.FingerprintGenerationError as exc:
-                log.info(
-                    'fingerprint generation failed: {0}'.format(exc)
-                )
-                continue
+        fp = fingerprint_item(item)
 
         # Construct a submission dictionary for this item.
         item_data = {
@@ -246,3 +237,46 @@ def submit_items(userkey, items, chunksize=64):
     # Submit remaining data in a final chunk.
     if data:
         submit_chunk()
+
+
+def fingerprint_item(item, lib=None, write=False):
+    """Get the fingerprint for an Item. If the item already has a
+    fingerprint, it is not regenerated. If fingerprint generation fails,
+    return None. If `lib` is provided, then new fingerprints are saved
+    to the database. If `write` is set, then the new fingerprints are
+    also written to files' metadata.
+    """
+    # Get a fingerprint and length for this track.
+    if not item.length:
+        log.info(u'{0}: no duration available'.format(
+            util.displayable_path(item.path)
+        ))
+    elif item.acoustid_fingerprint:
+        if write:
+            log.info(u'{0}: fingerprint exists, skipping'.format(
+                    util.displayable_path(item.path)
+            ))
+        else:
+            log.info(u'{0}: using existing fingerprint'.format(
+                util.displayable_path(item.path)
+            ))
+            return item.acoustid_fingerprint
+    else:
+        log.info(u'{0}: fingerprinting'.format(
+            util.displayable_path(item.path)
+        ))
+        try:
+            _, fp = acoustid.fingerprint_file(item.path)
+            item.acoustid_fingerprint = fp
+            if write:
+                log.info(u'{0}: writing fingerprint'.format(
+                    util.displayable_path(item.path)
+                ))
+                item.write()
+            if lib:
+                lib.store(item)
+            return item.acoustid_fingerprint
+        except acoustid.FingerprintGenerationError as exc:
+            log.info(
+                'fingerprint generation failed: {0}'.format(exc)
+            )

@@ -8,13 +8,14 @@ New configuration options:
 
 * :ref:`languages` controls the preferred languages when selecting an alias
   from MusicBrainz. This feature requires `python-musicbrainz-ngs`_ 0.3 or
-  later, which (at the time of this writing) is not yet released. Thanks to
-  Sam Doshi.
+  later. Thanks to Sam Doshi.
 * :ref:`detail` enables a mode where all tracks are listed in the importer UI,
   as opposed to only changed tracks.
 * The ``--flat`` option to the ``beet import`` command treats an entire
   directory tree of music files as a single album. This can help in situations
   where a multi-disc album is split across multiple directories.
+* :doc:`/plugins/importfeeds`: An option was added to use absolute, rather
+  than relative, paths. Thanks to Lucas Duailibe.
 
 Other stuff:
 
@@ -22,6 +23,20 @@ Other stuff:
   track in MusicBrainz and updates your library to reflect it. This can help
   you easily correct errors that have been fixed in the MB database. Thanks to
   Jakob Schnitzer.
+* :doc:`/plugins/fuzzy`: The ``fuzzy`` command was removed and replaced with a
+  new query type. To perform fuzzy searches, use the ``~`` prefix with
+  :ref:`list-cmd` or other commands. Thanks to Philippe Mongeau.
+* As part of the above, plugins can now extend the query syntax and new kinds
+  of matching capabilities to beets. See :ref:`extend-query`. Thanks again to
+  Philippe Mongeau.
+* :doc:`/plugins/convert`: A new ``--keep-new`` option lets you store
+  transcoded files in your library while backing up the originals (instead of
+  vice-versa). Thanks to Lucas Duailibe.
+* :doc:`/plugins/convert`: Also, a new ``auto`` config option will transcode
+  audio files automatically during import. Thanks again to Lucas Duailibe.
+* :doc:`/plugins/chroma`: A new ``fingerprint`` command lets you generate and
+  store fingerprints for items that don't yet have them. One more round of
+  applause for Lucas Duailibe.
 * :doc:`/plugins/echonest_tempo`: API errors now issue a warning instead of
   exiting with an exception. We also avoid an error when track metadata
   contains newlines.
@@ -42,8 +57,14 @@ Other stuff:
   pathnames.
 * Fix a spurious warning from the Unidecode module when matching albums that
   are missing all metadata.
+* Fix Unicode errors when a directory or file doesn't exist when invoking the
+  import command. Thanks to Lucas Duailibe.
 * :doc:`/plugins/mbcollection`: Show friendly, human-readable errors when
   MusicBrainz exceptions occur.
+* :doc:`/plugins/echonest_tempo`: Catch socket errors that are not handled by
+  the Echo Nest library.
+* :doc:`/plugins/chroma`: Catch Acoustid Web service errors when submitting
+  fingerprints.
 
 1.1b2 (February 16, 2013)
 -------------------------

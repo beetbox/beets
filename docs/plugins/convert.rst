@@ -31,6 +31,12 @@ to match albums instead of tracks.
 The ``-t`` (``--threads``) and ``-d`` (``--dest``) options allow you to specify
 or overwrite the respective configuration options.
 
+By default, the command places converted files into the destination directory
+and leaves your library pristine. To instead back up your original files into
+the destination directory and keep converted files in your library, use the
+``-k`` (or ``--keep-new``) option.
+
+
 Configuration
 -------------
 
@@ -51,6 +57,10 @@ The plugin offers several configuration options, all of which live under the
   "-aq 2". (Note that "-aq <num>" is equivalent to the LAME option "-V
   <num>".) If you want to specify a bitrate, use "-ab <bitrate>". Refer to the
   `FFmpeg`_ documentation for more details.
+* ``auto`` gives you the option to import transcoded versions of your files
+  automatically during the ``import`` command. With this option enabled, the
+  importer will transcode all non-MP3 files over the maximum bitrate before
+  adding them to your library.
 * Finally, ``threads`` determines the number of threads to use for parallel
   encoding. By default, the plugin will detect the number of processors
   available and use them all.

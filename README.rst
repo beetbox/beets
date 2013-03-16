@@ -33,7 +33,7 @@ shockingly simple if you know a little Python.
 
 .. _plugins: http://beets.readthedocs.org/page/plugins/
 .. _MPD: http://mpd.wikia.com/
-.. _MusicBrainz music collection: http://musicbrainz.org/show/collection/
+.. _MusicBrainz music collection: http://musicbrainz.org/doc/Collections/
 .. _writing your own plugin:
     http://beets.readthedocs.org/page/plugins/#writing-plugins
 .. _HTML5 Audio:

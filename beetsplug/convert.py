@@ -18,6 +18,7 @@ import logging
 import os
 import threading
 from subprocess import Popen
+import tempfile
 
 from beets.plugins import BeetsPlugin
 from beets import ui, util
@@ -27,14 +28,29 @@ from beets import config
 log = logging.getLogger('beets')
 DEVNULL = open(os.devnull, 'wb')
 _fs_lock = threading.Lock()
+_temp_files = []  # Keep track of temporary transcoded files for deletion.
+
+
+def _destination(lib, dest_dir, item, keep_new):
+    """Return the path under `dest_dir` where the file should be placed
+    (possibly after conversion).
+    """
+    dest = lib.destination(item, basedir=dest_dir)
+    if keep_new:
+        # When we're keeping the converted file, no extension munging
+        # occurs.
+        return dest
+    else:
+        # Otherwise, replace the extension with .mp3.
+        return os.path.splitext(dest)[0] + '.mp3'
 
 
 def encode(source, dest):
     log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
 
     opts = config['convert']['opts'].get(unicode).split(u' ')
-    encode = Popen([config['convert']['ffmpeg'].get(unicode), '-i', source] +
-                   opts + [dest],
+    encode = Popen([config['convert']['ffmpeg'].get(unicode), '-i',
+                    source, '-y'] + opts + [dest],
                    close_fds=True, stderr=DEVNULL)
     encode.wait()
     if encode.returncode != 0:
@@ -47,12 +63,18 @@ def encode(source, dest):
     log.info(u'Finished encoding {0}'.format(util.displayable_path(source)))
 
 
-def convert_item(lib, dest_dir):
+def should_transcode(item):
+    """Determine whether the item should be transcoded as part of
+    conversion (i.e., its bitrate is high or it has the wrong format).
+    """
+    maxbr = config['convert']['max_bitrate'].get(int)
+    return item.format != 'MP3' or item.bitrate >= 1000 * maxbr
+
+
+def convert_item(lib, dest_dir, keep_new):
     while True:
         item = yield
-
-        dest = os.path.join(dest_dir, lib.destination(item, fragment=True))
-        dest = os.path.splitext(dest)[0] + '.mp3'
+        dest = _destination(lib, dest_dir, item, keep_new)
 
         if os.path.exists(util.syspath(dest)):
             log.info(u'Skipping {0} (target file exists)'.format(
@@ -66,15 +88,39 @@ def convert_item(lib, dest_dir):
         with _fs_lock:
             util.mkdirall(dest)
 
-        maxbr = config['convert']['max_bitrate'].get(int)
-        if item.format == 'MP3' and item.bitrate < 1000 * maxbr:
-            log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
-            util.copy(item.path, dest)
-        else:
-            encode(item.path, dest)
+        # When keeping the new file in the library, we first move the
+        # current (pristine) file to the destination. We'll then copy it
+        # back to its old path or transcode it to a new path.
+        if keep_new:
+            log.info(u'Moving to {0}'.
+                     format(util.displayable_path(dest)))
+            util.move(item.path, dest)
 
-        item.path = dest
+        if not should_transcode(item):
+            # No transcoding necessary.
+            log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
+            if keep_new:
+                util.copy(dest, item.path)
+            else:
+                util.copy(item.path, dest)
+
+        else:
+            if keep_new:
+                item.path = os.path.splitext(item.path)[0] + '.mp3'
+                encode(dest, item.path)
+            else:
+                encode(item.path, dest)
+
+        # Write tags from the database to the converted file.
+        if not keep_new:
+            item.path = dest
         item.write()
+
+        # If we're keeping the transcoded file, read it again (after
+        # writing) to get new bitrate, duration, etc.
+        if keep_new:
+            item.read()
+            lib.store(item)  # Store new path and audio data.
 
         if config['convert']['embed']:
             album = lib.get_album(item)
@@ -84,13 +130,30 @@ def convert_item(lib, dest_dir):
                     _embed(artpath, [item])
 
 
+def convert_on_import(lib, item):
+    """Transcode a file automatically after it is imported into the
+    library.
+    """
+    if should_transcode(item):
+        fd, dest = tempfile.mkstemp('.mp3')
+        os.close(fd)
+        _temp_files.append(dest)  # Delete the transcode later.
+        encode(item.path, dest)
+        item.path = dest
+        item.write()
+        item.read()  # Load new audio information data.
+        lib.store(item)
+
+
 def convert_func(lib, opts, args):
     dest = opts.dest if opts.dest is not None else \
             config['convert']['dest'].get()
     if not dest:
         raise ui.UserError('no convert destination set')
+    dest = util.bytestring_path(dest)
     threads = opts.threads if opts.threads is not None else \
             config['convert']['threads'].get(int)
+    keep_new = opts.keep_new
 
     ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
 
@@ -101,7 +164,7 @@ def convert_func(lib, opts, args):
         items = (i for a in lib.albums(ui.decargs(args)) for i in a.items())
     else:
         items = lib.items(ui.decargs(args))
-    convert = [convert_item(lib, dest) for i in range(threads)]
+    convert = [convert_item(lib, dest, keep_new) for i in range(threads)]
     pipe = util.pipeline.Pipeline([items, convert])
     pipe.run_parallel()
 
@@ -116,7 +179,9 @@ class ConvertPlugin(BeetsPlugin):
             u'opts': u'-aq 2',
             u'max_bitrate': 500,
             u'embed': True,
+            u'auto': False
         })
+        self.import_stages = [self.auto_convert]
 
     def commands(self):
         cmd = ui.Subcommand('convert', help='convert to external location')
@@ -125,7 +190,27 @@ class ConvertPlugin(BeetsPlugin):
         cmd.parser.add_option('-t', '--threads', action='store', type='int',
                               help='change the number of threads, \
                               defaults to maximum availble processors ')
+        cmd.parser.add_option('-k', '--keep-new', action='store_true',
+                              dest='keep_new', help='keep only the converted \
+                              and move the old files')
         cmd.parser.add_option('-d', '--dest', action='store',
                               help='set the destination directory')
         cmd.func = convert_func
         return [cmd]
+
+    def auto_convert(self, config, task):
+        if self.config['auto'].get():
+            if not task.is_album:
+                convert_on_import(config.lib, task.item)
+            else:
+                for item in task.items:
+                    convert_on_import(config.lib, item)
+
+
+@ConvertPlugin.listen('import_task_files')
+def _cleanup(task, session):
+    for path in task.old_paths:
+        if path in _temp_files:
+            if os.path.isfile(path):
+                util.remove(path)
+            _temp_files.remove(path)

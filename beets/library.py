@@ -175,21 +175,6 @@ def _orelse(exp1, exp2):
                       'WHEN "" THEN {1} '
                       'ELSE {0} END)').format(exp1, exp2)
 
-# An SQLite function for regular expression matching.
-def _regexp(expr, val):
-    """Return a boolean indicating whether the regular expression `expr`
-    matches `val`.
-    """
-    if expr is None:
-        return False
-    val = util.as_string(val)
-    try:
-        res = re.search(expr, val)
-    except re.error:
-        # Invalid regular expression.
-        return False
-    return res is not None
-
 # Path element formatting for templating.
 def format_for_path(value, key=None, pathmod=None):
     """Sanitize the value for inclusion in a path: replace separators
@@ -469,11 +454,50 @@ class Query(object):
 
 class FieldQuery(Query):
     """An abstract query that searches in a specific field for a
-    pattern.
+    pattern. Subclasses must provide a `value_match` class method, which
+    determines whether a certain pattern string matches a certain value
+    string. Subclasses also need to provide `clause` to implement the
+    same matching functionality in SQLite.
     """
     def __init__(self, field, pattern):
         self.field = field
         self.pattern = pattern
+
+    @classmethod
+    def value_match(cls, pattern, value):
+        """Determine whether the value matches the pattern. Both
+        arguments are strings.
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def _raw_value_match(cls, pattern, value):
+        """Determine whether the value matches the pattern. The value
+        may have any type.
+        """
+        return cls.value_match(pattern, util.as_string(value))
+
+    def match(self, item):
+        return self._raw_value_match(self.pattern, getattr(item, self.field))
+
+class RegisteredFieldQuery(FieldQuery):
+    """A FieldQuery that uses a registered SQLite callback function.
+    Before it can be used to execute queries, the `register` method must
+    be called.
+    """
+    def clause(self):
+        # Invoke the registered SQLite function.
+        clause = "{name}(?, {field})".format(name=self.__class__.__name__,
+                                             field=self.field)
+        return clause, [self.pattern]
+
+    @classmethod
+    def register(cls, conn):
+        """Register this query's matching function with the SQLite
+        connection. This method should only be invoked when the query
+        type chooses not to override `clause`.
+        """
+        conn.create_function(cls.__name__, 2, cls._raw_value_match)
 
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
@@ -483,8 +507,11 @@ class MatchQuery(FieldQuery):
             pattern = buffer(pattern)
         return self.field + " = ?", [pattern]
 
-    def match(self, item):
-        return self.pattern == getattr(item, self.field)
+    # We override the "raw" version here as a special case because we
+    # want to compare objects before conversion.
+    @classmethod
+    def _raw_value_match(cls, pattern, value):
+        return pattern == value
 
 class SubstringQuery(FieldQuery):
     """A query that matches a substring in a specific item field."""
@@ -495,24 +522,22 @@ class SubstringQuery(FieldQuery):
         subvals = [search]
         return clause, subvals
 
-    def match(self, item):
-        value = util.as_string(getattr(item, self.field))
-        return self.pattern.lower() in value.lower()
+    @classmethod
+    def value_match(cls, pattern, value):
+        return pattern.lower() in value.lower()
 
-class RegexpQuery(FieldQuery):
-    """A query that matches a regular expression in a specific item field."""
-    def __init__(self, field, pattern):
-        super(RegexpQuery, self).__init__(field, pattern)
-        self.regexp = re.compile(pattern)
-
-    def clause(self):
-        clause = self.field + " REGEXP ?"
-        subvals = [self.pattern]
-        return clause, subvals
-
-    def match(self, item):
-        value = util.as_string(getattr(item, self.field))
-        return self.regexp.search(value) is not None
+class RegexpQuery(RegisteredFieldQuery):
+    """A query that matches a regular expression in a specific item
+    field.
+    """
+    @classmethod
+    def value_match(cls, pattern, value):
+        try:
+            res = re.search(pattern, value)
+        except re.error:
+            # Invalid regular expression.
+            return False
+        return res is not None
 
 class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
@@ -564,103 +589,25 @@ class CollectionQuery(Query):
         clause = (' ' + joiner + ' ').join(clause_parts)
         return clause, subvals
 
-    # Regular expression for _parse_query_part, below.
-    _pq_regex = re.compile(
-        # Non-capturing optional segment for the keyword.
-        r'(?:'
-            r'(\S+?)'    # The field key.
-            r'(?<!\\):'  # Unescaped :
-        r')?'
-
-        r'((?<!\\):?)'   # Unescaped : indicating a regex.
-        r'(.+)',         # The term itself.
-
-        re.I  # Case-insensitive.
-    )
     @classmethod
-    def _parse_query_part(cls, part):
-        """Takes a query in the form of a key/value pair separated by a
-        colon. An additional colon before the value indicates that the
-        value is a regular expression. Returns tuple (key, term,
-        is_regexp) where key is None if the search term has no key and
-        is_regexp indicates whether term is a regular expression or an
-        ordinary substring match.
-
-        For instance,
-        parse_query('stapler') == (None, 'stapler', false)
-        parse_query('color:red') == ('color', 'red', false)
-        parse_query(':^Quiet') == (None, '^Quiet', true)
-        parse_query('color::b..e') == ('color', 'b..e', true)
-
-        Colons may be 'escaped' with a backslash to disable the keying
-        behavior.
-        """
-        part = part.strip()
-        match = cls._pq_regex.match(part)
-        if match:
-            return (
-                match.group(1),  # Key.
-                match.group(3).replace(r'\:', ':'),  # Term.
-                match.group(2) == ':',  # Regular expression.
-            )
-
-    @classmethod
-    def from_strings(cls, query_parts, default_fields=None,
-                     all_keys=ITEM_KEYS):
+    def from_strings(cls, query_parts, default_fields, all_keys):
         """Creates a query from a list of strings in the format used by
-        _parse_query_part. If default_fields are specified, they are the
+        parse_query_part. If default_fields are specified, they are the
         fields to be searched by unqualified search terms. Otherwise,
         all fields are searched for those terms.
         """
         subqueries = []
         for part in query_parts:
-            res = cls._parse_query_part(part)
-            if not res:
-                continue
-            key, pattern, is_regexp = res
-
-            # No key specified.
-            if key is None:
-                if os.sep in pattern and 'path' in all_keys:
-                    # This looks like a path.
-                    subqueries.append(PathQuery(pattern))
-                else:
-                    # Match any field.
-                    if is_regexp:
-                        subq = AnyRegexpQuery(pattern, default_fields)
-                    else:
-                        subq = AnySubstringQuery(pattern, default_fields)
-                    subqueries.append(subq)
-
-            # A boolean field.
-            elif key.lower() == 'comp':
-                subqueries.append(BooleanQuery(key.lower(), pattern))
-
-            # Path field.
-            elif key.lower() == 'path' and 'path' in all_keys:
-                subqueries.append(PathQuery(pattern))
-
-            # Other (recognized) field.
-            elif key.lower() in all_keys:
-                if is_regexp:
-                    subqueries.append(RegexpQuery(key.lower(), pattern))
-                else:
-                    subqueries.append(SubstringQuery(key.lower(), pattern))
-
-            # Singleton query (not a real field).
-            elif key.lower() == 'singleton':
-                subqueries.append(SingletonQuery(util.str2bool(pattern)))
-
-            # Unrecognized field.
-            else:
-                log.warn(u'no such field in query: {0}'.format(key))
-
+            subq = construct_query_part(part, default_fields, all_keys)
+            if subq:
+                subqueries.append(subq)
         if not subqueries:  # No terms in query.
             subqueries = [TrueQuery()]
         return cls(subqueries)
 
     @classmethod
-    def from_string(cls, query, default_fields=None, all_keys=ITEM_KEYS):
+    def from_string(cls, query, default_fields=ITEM_DEFAULT_FIELDS,
+                    all_keys=ITEM_KEYS):
         """Creates a query based on a single string. The string is split
         into query parts using shell-style syntax.
         """
@@ -670,71 +617,32 @@ class CollectionQuery(Query):
         if isinstance(query, unicode):
             query = query.encode('utf8')
         parts = [s.decode('utf8') for s in shlex.split(query)]
-        return cls.from_strings(parts, default_fields=default_fields,
-                                all_keys=all_keys)
+        return cls.from_strings(parts, default_fields, all_keys)
 
-class AnySubstringQuery(CollectionQuery):
-    """A query that matches a substring in any of a list of metadata
-    fields.
+class AnyFieldQuery(CollectionQuery):
+    """A query that matches if a given FieldQuery subclass matches in
+    any field. The individual field query class is provided to the
+    constructor.
     """
-    def __init__(self, pattern, fields=None):
-        """Create a query for pattern over the sequence of fields
-        given. If no fields are given, all available fields are
-        used.
-        """
+    def __init__(self, pattern, fields, cls):
         self.pattern = pattern
-        self.fields = fields or ITEM_KEYS_WRITABLE
+        self.fields = fields
+        self.query_class = cls
 
         subqueries = []
         for field in self.fields:
-            subqueries.append(SubstringQuery(field, pattern))
-        super(AnySubstringQuery, self).__init__(subqueries)
+            subqueries.append(cls(field, pattern))
+        super(AnyFieldQuery, self).__init__(subqueries)
 
     def clause(self):
         return self.clause_with_joiner('or')
 
     def match(self, item):
-        for fld in self.fields:
-            try:
-                val = getattr(item, fld)
-            except KeyError:
-                continue
-            if isinstance(val, basestring) and \
-               self.pattern.lower() in val.lower():
+        for subq in self.subqueries:
+            if subq.match(item):
                 return True
         return False
-
-class AnyRegexpQuery(CollectionQuery):
-    """A query that matches a regexp in any of a list of metadata
-    fields.
-    """
-    def __init__(self, pattern, fields=None):
-        """Create a query for regexp over the sequence of fields
-        given. If no fields are given, all available fields are
-        used.
-        """
-        self.regexp = re.compile(pattern)
-        self.fields = fields or ITEM_KEYS_WRITABLE
-
-        subqueries = []
-        for field in self.fields:
-            subqueries.append(RegexpQuery(field, pattern))
-        super(AnyRegexpQuery, self).__init__(subqueries)
-
-    def clause(self):
-        return self.clause_with_joiner('or')
-
-    def match(self, item):
-        for fld in self.fields:
-            try:
-                val = getattr(item, fld)
-            except KeyError:
-                continue
-            if isinstance(val, basestring) and \
-               self.regexp.match(val) is not None:
-                return True
-        return False
-
+    
 class MutableCollectionQuery(CollectionQuery):
     """A collection query whose subqueries may be modified after the
     query is initialized.
@@ -798,6 +706,96 @@ class ResultIterator(object):
         row = self.rowiter.next()  # May raise StopIteration.
         return Item(row)
 
+# Regular expression for parse_query_part, below.
+PARSE_QUERY_PART_REGEX = re.compile(
+    # Non-capturing optional segment for the keyword.
+    r'(?:'
+        r'(\S+?)'    # The field key.
+        r'(?<!\\):'  # Unescaped :
+    r')?'
+
+    r'(.+)',         # The term itself.
+
+    re.I  # Case-insensitive.
+)
+def parse_query_part(part):
+    """Takes a query in the form of a key/value pair separated by a
+    colon. The value part is matched against a list of prefixes that
+    can be extended by plugins to add custom query types. For
+    example, the colon prefix denotes a regular expression query.
+
+    The function returns a tuple of `(key, value, cls)`. `key` may
+    be None, indicating that any field may be matched. `cls` is a
+    subclass of `FieldQuery`.
+
+    For instance,
+    parse_query('stapler') == (None, 'stapler', None)
+    parse_query('color:red') == ('color', 'red', None)
+    parse_query(':^Quiet') == (None, '^Quiet', RegexpQuery)
+    parse_query('color::b..e') == ('color', 'b..e', RegexpQuery)
+
+    Prefixes may be 'escaped' with a backslash to disable the keying
+    behavior.
+    """
+    part = part.strip()
+    match = PARSE_QUERY_PART_REGEX.match(part)
+
+    prefixes = {':': RegexpQuery}
+    prefixes.update(plugins.queries())
+
+    if match:
+        key = match.group(1)
+        term = match.group(2).replace('\:', ':')
+        # Match the search term against the list of prefixes.
+        for pre, query_class in prefixes.items():
+            if term.startswith(pre):
+                return key, term[len(pre):], query_class
+        return key, term, SubstringQuery  # The default query type.
+
+def construct_query_part(query_part, default_fields, all_keys):
+    """Create a query from a single query component. Return a Query
+    instance or None if the value cannot be parsed.
+    """
+    parsed = parse_query_part(query_part)
+    if not parsed:
+        return
+
+    key, pattern, query_class = parsed
+
+    # No key specified.
+    if key is None:
+        if os.sep in pattern and 'path' in all_keys:
+            # This looks like a path.
+            return PathQuery(pattern)
+        elif issubclass(query_class, FieldQuery):
+            # The query type matches a specific field, but none was
+            # specified. So we use a version of the query that matches
+            # any field.
+            return AnyFieldQuery(pattern, default_fields, query_class)
+        else:
+            # Other query type.
+            return query_class(pattern)
+
+    # A boolean field.
+    elif key.lower() == 'comp':
+        return BooleanQuery(key.lower(), pattern)
+
+    # Path field.
+    elif key.lower() == 'path' and 'path' in all_keys:
+        return PathQuery(pattern)
+
+    # Other (recognized) field.
+    elif key.lower() in all_keys:
+        return query_class(key.lower(), pattern)
+
+    # Singleton query (not a real field).
+    elif key.lower() == 'singleton':
+        return SingletonQuery(util.str2bool(pattern))
+
+    # Unrecognized field.
+    else:
+        log.warn(u'no such field in query: {0}'.format(key))
+
 def get_query(val, album=False):
     """Takes a value which may be None, a query string, a query string
     list, or a Query object, and returns a suitable Query object. album
@@ -823,7 +821,6 @@ def get_query(val, album=False):
         return val
     else:
         raise ValueError('query must be None or have type Query or str')
-
 
 
 # An abstract library.
@@ -1123,8 +1120,12 @@ class Library(BaseLibrary):
 
                 # Access SELECT results like dictionaries.
                 conn.row_factory = sqlite3.Row
-                # Add the REGEXP function to SQLite queries.
-                conn.create_function("REGEXP", 2, _regexp)
+
+                # Register plugin queries.
+                RegexpQuery.register(conn)
+                for prefix, query_class in plugins.queries().items():
+                    if issubclass(query_class, RegisteredFieldQuery):
+                        query_class.register(conn)
 
                 self._connections[thread_id] = conn
                 return conn

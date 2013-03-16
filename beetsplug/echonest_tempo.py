@@ -22,6 +22,7 @@ from beets import ui
 from beets import config
 import pyechonest.config
 import pyechonest.song
+import socket
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -79,7 +80,7 @@ def get_tempo(artist, title):
             else:
                 log.warn(u'echonest_tempo: {0}'.format(e.args[0][0]))
                 return None
-        except pyechonest.util.EchoNestIOError as e:
+        except (pyechonest.util.EchoNestIOError, socket.error) as e:
             log.debug(u'echonest_tempo: IO error: {0}'.format(e))
             time.sleep(RETRY_INTERVAL)
         else:
