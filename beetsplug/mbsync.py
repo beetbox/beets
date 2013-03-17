@@ -111,8 +111,8 @@ def mbsync_albums(lib, query, move, pretend, write):
             autotag.apply_metadata(album_info, mapping)
             changed = False
             for item in items:
-                changed = changed or \
-                    _print_and_apply_changes(lib, item, move, pretend, write)
+                changed = _print_and_apply_changes(lib, item, move, pretend,
+                    write) or changed
             if not changed:
                 # No change to any item.
                 continue
