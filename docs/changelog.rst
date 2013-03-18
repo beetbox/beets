@@ -1,6 +1,13 @@
 Changelog
 =========
 
+1.1.0 (in development)
+----------------------
+
+* :doc:`/plugins/embedart`: The ``embedart`` command now embeds each album's
+  associated art by default. The ``--file`` option invokes the old behavior,
+  in which a specific image file is used.
+
 1.1b3 (March 16, 2013)
 ----------------------
 
