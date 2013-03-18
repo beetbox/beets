@@ -70,15 +70,15 @@ class EmbedCoverArtPlugin(BeetsPlugin):
     def commands(self):
         # Embed command.
         embed_cmd = ui.Subcommand('embedart',
-                                  help='embed an image file into file metadata')
-        embed_cmd.parser.add_option('-c', '--current', help='embed the current\
-            album art into metadata', action='store_true')
+            help='embed image files into file metadata')
+        embed_cmd.parser.add_option('-f', '--file', metavar='PATH',
+            help='the image file to embed')
         def embed_func(lib, opts, args):
-            if opts.current:
-                embed_current(lib, decargs(args))
-            else:
-                imagepath = normpath(args.pop(0))
+            if opts.file:
+                imagepath = normpath(opts.file)
                 embed(lib, imagepath, decargs(args))
+            else:
+                embed_current(lib, decargs(args))
         embed_cmd.func = embed_func
 
         # Extract command.
@@ -100,7 +100,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         return [embed_cmd, extract_cmd, clear_cmd]
 
-# "embedart" command.
+# "embedart" command with --file argument.
 def embed(lib, imagepath, query):
     albums = lib.albums(query)
     for i_album in albums:
@@ -115,16 +115,16 @@ def embed(lib, imagepath, query):
     _embed(imagepath, album.items(),
            config['embedart']['maxwidth'].get(int))
 
-
+# "embedart" command without explicit file.
 def embed_current(lib, query):
     albums = lib.albums(query)
     for album in albums:
         if not album.artpath:
-            log.info(u'No album art found: {0} - {1}'.
+            log.info(u'No album art present: {0} - {1}'.
                      format(album.albumartist, album.album))
             continue
 
-        log.info('Embedding album art into {0} - {1}'.
+        log.info(u'Embedding album art into {0} - {1}'.
                  format(album.albumartist, album.album))
         _embed(album.artpath, album.items(),
                config['embedart']['maxwidth'].get(int))

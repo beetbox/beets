@@ -25,10 +25,10 @@ Manually Embedding and Extracting Art
 The ``embedart`` plugin provides a couple of commands for manually managing
 embedded album art:
 
-* ``beet embedart IMAGE QUERY``: given an image file and a query matching an
-  album, embed the image into the metadata of every track on the album. Using
-  the ``-c`` or ``--current`` option and a query matching albums, the current
-  album art is embeded.
+* ``beet embedart [-f IMAGE] QUERY``: embed images into the every track on the
+  albums matching the query. If the ``-f`` (``--file``) option is given, then
+  use a specific image file from the filesystem; otherwise, each album embeds
+  its own currently associated album art.
 
 * ``beet extractart [-o FILE] QUERY``: extracts the image from an item matching
   the query and stores it in a file. You can specify the destination file using
