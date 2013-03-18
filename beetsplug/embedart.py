@@ -71,11 +71,14 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         # Embed command.
         embed_cmd = ui.Subcommand('embedart',
                                   help='embed an image file into file metadata')
+        embed_cmd.parser.add_option('-c', '--current', help='embed the current\
+            album art into metadata', action='store_true')
         def embed_func(lib, opts, args):
-            if not args:
-                raise ui.UserError('specify an image file')
-            imagepath = normpath(args.pop(0))
-            embed(lib, imagepath, decargs(args))
+            if opts.current:
+                embed_current(lib, decargs(args))
+            else:
+                imagepath = normpath(args.pop(0))
+                embed(lib, imagepath, decargs(args))
         embed_cmd.func = embed_func
 
         # Extract command.
@@ -111,6 +114,20 @@ def embed(lib, imagepath, query):
              (album.albumartist, album.album))
     _embed(imagepath, album.items(),
            config['embedart']['maxwidth'].get(int))
+
+
+def embed_current(lib, query):
+    albums = lib.albums(query)
+    for album in albums:
+        if not album.artpath:
+            log.info(u'No album art found: {0} - {1}'.
+                     format(album.albumartist, album.album))
+            continue
+
+        log.info('Embedding album art into {0} - {1}'.
+                 format(album.albumartist, album.album))
+        _embed(album.artpath, album.items(),
+               config['embedart']['maxwidth'].get(int))
 
 # "extractart" command.
 def extract(lib, outpath, query):

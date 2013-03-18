@@ -26,7 +26,9 @@ The ``embedart`` plugin provides a couple of commands for manually managing
 embedded album art:
 
 * ``beet embedart IMAGE QUERY``: given an image file and a query matching an
-  album, embed the image into the metadata of every track on the album.
+  album, embed the image into the metadata of every track on the album. Using
+  the ``-c`` or ``--current`` option and a query matching albums, the current
+  album art is embeded.
 
 * ``beet extractart [-o FILE] QUERY``: extracts the image from an item matching
   the query and stores it in a file. You can specify the destination file using
@@ -40,7 +42,7 @@ embedded album art:
 Configuring
 -----------
 
-The ``auto`` option  lets you disable automatic album art embedding. 
+The ``auto`` option  lets you disable automatic album art embedding.
 To do so, add this to your ``config.yaml``::
 
     embedart:
