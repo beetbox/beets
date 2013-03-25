@@ -20,7 +20,7 @@ from beets.plugins import BeetsPlugin
 from beets import mediafile
 from beets import ui
 from beets.ui import decargs
-from beets.util import syspath, normpath
+from beets.util import syspath, normpath, displayable_path
 from beets.util.artresizer import ArtResizer
 from beets import config
 
@@ -46,7 +46,7 @@ def _embed(path, items, maxwidth=0):
             f = mediafile.MediaFile(syspath(item.path))
         except mediafile.UnreadableFileError as exc:
             log.warn('Could not embed art in {0}: {1}'.format(
-                repr(item.path), exc
+                displayable_path(item.path), exc
             ))
             continue
         f.art = data
@@ -140,7 +140,14 @@ def extract(lib, outpath, query):
         return
 
     # Extract the art.
-    mf = mediafile.MediaFile(syspath(item.path))
+    try:
+        mf = mediafile.MediaFile(syspath(item.path))
+    except mediafile.UnreadableFileError as exc:
+        log.error(u'Could not extract art from {0}: {1}'.format(
+            displayable_path(item.path), exc
+        ))
+        return
+
     art = mf.art
     if not art:
         log.error('No album art present in %s - %s.' %
@@ -165,7 +172,13 @@ def clear(lib, query):
     log.info('Clearing album art from items:')
     for item in lib.items(query):
         log.info(u'%s - %s' % (item.artist, item.title))
-        mf = mediafile.MediaFile(syspath(item.path))
+        try:
+            mf = mediafile.MediaFile(syspath(item.path))
+        except mediafile.UnreadableFileError as exc:
+            log.error(u'Could not clear art from {0}: {1}'.format(
+                displayable_path(item.path), exc
+            ))
+            continue
         mf.art = None
         mf.save()
 
