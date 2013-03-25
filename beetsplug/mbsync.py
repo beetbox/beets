@@ -47,7 +47,12 @@ def _print_and_apply_changes(lib, item, move, pretend, write):
             lib.move(item, with_album=False)
 
         if write:
-            item.write()
+            try:
+                item.write()
+            except Exception as exc:
+                log.error(u'could not sync {0}: {1}'.format(
+                    repr(item.path), exc))
+                return False
         lib.store(item)
 
     return True
