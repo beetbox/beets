@@ -140,7 +140,14 @@ def extract(lib, outpath, query):
         return
 
     # Extract the art.
-    mf = mediafile.MediaFile(syspath(item.path))
+    try:
+        mf = mediafile.MediaFile(syspath(item.path))
+    except mediafile.UnreadableFileError as exc:
+        log.error('Could not extract art from {0}: {1}'.format(
+            repr(item.path), exc
+        ))
+        return
+
     art = mf.art
     if not art:
         log.error('No album art present in %s - %s.' %
@@ -165,7 +172,13 @@ def clear(lib, query):
     log.info('Clearing album art from items:')
     for item in lib.items(query):
         log.info(u'%s - %s' % (item.artist, item.title))
-        mf = mediafile.MediaFile(syspath(item.path))
+        try:
+            mf = mediafile.MediaFile(syspath(item.path))
+        except mediafile.UnreadableFileError as exc:
+            log.error('Could not clear art from {0}: {1}'.format(
+                repr(item.path), exc
+            ))
+            continue
         mf.art = None
         mf.save()
 
