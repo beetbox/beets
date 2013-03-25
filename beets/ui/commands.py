@@ -802,7 +802,7 @@ def update_items(lib, query, album, move, pretend):
                 item.read()
             except Exception as exc:
                 log.error(u'error reading {0}: {1}'.format(
-                    repr(item.path), exc))
+                    displayable_path(item.path), exc))
                 continue
 
             # Special-case album artist when it matches track artist. (Hacky

@@ -51,7 +51,7 @@ def _print_and_apply_changes(lib, item, move, pretend, write):
                 item.write()
             except Exception as exc:
                 log.error(u'could not sync {0}: {1}'.format(
-                    repr(item.path), exc))
+                    util.displayable_path(item.path), exc))
                 return False
         lib.store(item)
 

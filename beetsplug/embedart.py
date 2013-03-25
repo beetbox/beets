@@ -20,7 +20,7 @@ from beets.plugins import BeetsPlugin
 from beets import mediafile
 from beets import ui
 from beets.ui import decargs
-from beets.util import syspath, normpath
+from beets.util import syspath, normpath, displayable_path
 from beets.util.artresizer import ArtResizer
 from beets import config
 
@@ -46,7 +46,7 @@ def _embed(path, items, maxwidth=0):
             f = mediafile.MediaFile(syspath(item.path))
         except mediafile.UnreadableFileError as exc:
             log.warn('Could not embed art in {0}: {1}'.format(
-                repr(item.path), exc
+                displayable_path(item.path), exc
             ))
             continue
         f.art = data
@@ -143,8 +143,8 @@ def extract(lib, outpath, query):
     try:
         mf = mediafile.MediaFile(syspath(item.path))
     except mediafile.UnreadableFileError as exc:
-        log.error('Could not extract art from {0}: {1}'.format(
-            repr(item.path), exc
+        log.error(u'Could not extract art from {0}: {1}'.format(
+            displayable_path(item.path), exc
         ))
         return
 
@@ -175,8 +175,8 @@ def clear(lib, query):
         try:
             mf = mediafile.MediaFile(syspath(item.path))
         except mediafile.UnreadableFileError as exc:
-            log.error('Could not clear art from {0}: {1}'.format(
-                repr(item.path), exc
+            log.error(u'Could not clear art from {0}: {1}'.format(
+                displayable_path(item.path), exc
             ))
             continue
         mf.art = None
