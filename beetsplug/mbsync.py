@@ -47,7 +47,12 @@ def _print_and_apply_changes(lib, item, move, pretend, write):
             lib.move(item, with_album=False)
 
         if write:
-            item.write()
+            try:
+                item.write()
+            except Exception as exc:
+                log.error(u'could not sync {0}: {1}'.format(
+                    util.displayable_path(item.path), exc))
+                return False
         lib.store(item)
 
     return True
@@ -111,8 +116,8 @@ def mbsync_albums(lib, query, move, pretend, write):
             autotag.apply_metadata(album_info, mapping)
             changed = False
             for item in items:
-                changed = changed or \
-                    _print_and_apply_changes(lib, item, move, pretend, write)
+                changed = _print_and_apply_changes(lib, item, move, pretend,
+                    write) or changed
             if not changed:
                 # No change to any item.
                 continue

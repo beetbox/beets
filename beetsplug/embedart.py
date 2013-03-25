@@ -20,7 +20,7 @@ from beets.plugins import BeetsPlugin
 from beets import mediafile
 from beets import ui
 from beets.ui import decargs
-from beets.util import syspath, normpath
+from beets.util import syspath, normpath, displayable_path
 from beets.util.artresizer import ArtResizer
 from beets import config
 
@@ -46,7 +46,7 @@ def _embed(path, items, maxwidth=0):
             f = mediafile.MediaFile(syspath(item.path))
         except mediafile.UnreadableFileError as exc:
             log.warn('Could not embed art in {0}: {1}'.format(
-                repr(item.path), exc
+                displayable_path(item.path), exc
             ))
             continue
         f.art = data
@@ -70,12 +70,15 @@ class EmbedCoverArtPlugin(BeetsPlugin):
     def commands(self):
         # Embed command.
         embed_cmd = ui.Subcommand('embedart',
-                                  help='embed an image file into file metadata')
+            help='embed image files into file metadata')
+        embed_cmd.parser.add_option('-f', '--file', metavar='PATH',
+            help='the image file to embed')
         def embed_func(lib, opts, args):
-            if not args:
-                raise ui.UserError('specify an image file')
-            imagepath = normpath(args.pop(0))
-            embed(lib, imagepath, decargs(args))
+            if opts.file:
+                imagepath = normpath(opts.file)
+                embed(lib, imagepath, decargs(args))
+            else:
+                embed_current(lib, decargs(args))
         embed_cmd.func = embed_func
 
         # Extract command.
@@ -97,7 +100,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         return [embed_cmd, extract_cmd, clear_cmd]
 
-# "embedart" command.
+# "embedart" command with --file argument.
 def embed(lib, imagepath, query):
     albums = lib.albums(query)
     for i_album in albums:
@@ -112,6 +115,20 @@ def embed(lib, imagepath, query):
     _embed(imagepath, album.items(),
            config['embedart']['maxwidth'].get(int))
 
+# "embedart" command without explicit file.
+def embed_current(lib, query):
+    albums = lib.albums(query)
+    for album in albums:
+        if not album.artpath:
+            log.info(u'No album art present: {0} - {1}'.
+                     format(album.albumartist, album.album))
+            continue
+
+        log.info(u'Embedding album art into {0} - {1}'.
+                 format(album.albumartist, album.album))
+        _embed(album.artpath, album.items(),
+               config['embedart']['maxwidth'].get(int))
+
 # "extractart" command.
 def extract(lib, outpath, query):
     items = lib.items(query)
@@ -123,7 +140,14 @@ def extract(lib, outpath, query):
         return
 
     # Extract the art.
-    mf = mediafile.MediaFile(syspath(item.path))
+    try:
+        mf = mediafile.MediaFile(syspath(item.path))
+    except mediafile.UnreadableFileError as exc:
+        log.error(u'Could not extract art from {0}: {1}'.format(
+            displayable_path(item.path), exc
+        ))
+        return
+
     art = mf.art
     if not art:
         log.error('No album art present in %s - %s.' %
@@ -148,7 +172,13 @@ def clear(lib, query):
     log.info('Clearing album art from items:')
     for item in lib.items(query):
         log.info(u'%s - %s' % (item.artist, item.title))
-        mf = mediafile.MediaFile(syspath(item.path))
+        try:
+            mf = mediafile.MediaFile(syspath(item.path))
+        except mediafile.UnreadableFileError as exc:
+            log.error(u'Could not clear art from {0}: {1}'.format(
+                displayable_path(item.path), exc
+            ))
+            continue
         mf.art = None
         mf.save()
 

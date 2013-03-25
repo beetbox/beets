@@ -798,7 +798,12 @@ def update_items(lib, query, album, move, pretend):
 
             # Read new data.
             old_data = dict(item.record)
-            item.read()
+            try:
+                item.read()
+            except Exception as exc:
+                log.error(u'error reading {0}: {1}'.format(
+                    displayable_path(item.path), exc))
+                continue
 
             # Special-case album artist when it matches track artist. (Hacky
             # but necessary for preserving album-level metadata for non-
