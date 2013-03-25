@@ -7,6 +7,9 @@ Changelog
 * :doc:`/plugins/embedart`: The ``embedart`` command now embeds each album's
   associated art by default. The ``--file`` option invokes the old behavior,
   in which a specific image file is used.
+* Avoid some error cases in the ``update`` command and the ``embedart`` and
+  ``mbsync`` plugins. Invalid or missing files now cause error logs instead of
+  crashing beets. Thanks to Lucas Duailibe.
 
 1.1b3 (March 16, 2013)
 ----------------------
