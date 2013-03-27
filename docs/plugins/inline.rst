@@ -33,12 +33,13 @@ referenced in path templates like so::
 
 If you need to use statements like ``import``, you can write a Python function
 body instead of a single expression. In this case, you'll need to ``return``
-a result for the value of the path field. Here's a silly, contrived example::
+a result for the value of the path field, like so::
 
     pathfields:
-        track_radius: |
-            import math
-            return 2.0 * math.pi * track
+        filename: |
+            import os
+            from beets.util import bytestring_path 
+            return bytestring_path(os.path.basename(path))
 
 You might want to use the YAML syntax for "block literals," in which a leading
 ``|`` character indicates a multi-line block of text.
