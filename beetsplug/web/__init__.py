@@ -24,7 +24,7 @@ import os
 
 # Utilities.
 
-def _rep(obj):
+def _rep(obj, expand=True):
     """Get a flat -- i.e., JSON-ish -- representation of a beets Item or
     Album object.
     """
@@ -44,7 +44,8 @@ def _rep(obj):
     elif isinstance(obj, beets.library.Album):
         out = dict(obj._record)
         del out['artpath']
-        out['items'] = [_rep(item) for item in obj.items()]
+        if expand:
+            out['items'] = [_rep(item) for item in obj.items()]
         return out
 
 
@@ -97,6 +98,12 @@ def all_albums():
     all_ids = [row[0] for row in rows]
     return flask.jsonify(album_ids=all_ids)
 
+@app.route('/album/artist/<artist>')
+def albums_for_artist(artist):
+    albums = g.lib.albums(artist=artist)
+    # Expanding album items would cost a lot of runtime which is not needed here
+    return flask.jsonify(results=[_rep(album, False) for album in albums])
+
 @app.route('/album/query/<path:query>')
 def album_query(query):
     parts = query.split('/')
@@ -108,6 +115,13 @@ def album_art(album_id):
     album = g.lib.get_album(album_id)
     return flask.send_file(album.artpath)
 
+# Artists.
+@app.route('/artist/')
+def all_artists():
+    with g.lib.transaction() as tx:
+        rows = tx.query("SELECT DISTINCT albumartist FROM albums")
+    all_artists = [row[0] for row in rows]
+    return flask.jsonify(artist_names=all_artists)
 
 # UI.
 
