@@ -10,6 +10,12 @@ Changelog
 * Avoid some error cases in the ``update`` command and the ``embedart`` and
   ``mbsync`` plugins. Invalid or missing files now cause error logs instead of
   crashing beets. Thanks to Lucas Duailibe.
+* :doc:`/plugins/web`: Fix an error when specifying the hostname on the
+  command line.
+* :doc:`/plugins/web`: The underlying API was expanded slightly to support
+  `Tomahawk`_ collections. Thanks to Uwe L. Korn.
+
+.. _Tomahawk: http://www.tomahawk-player.org/
 
 1.1b3 (March 16, 2013)
 ----------------------

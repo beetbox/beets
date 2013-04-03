@@ -24,9 +24,10 @@ import os
 
 # Utilities.
 
-def _rep(obj, expand=True):
+def _rep(obj, expand=False):
     """Get a flat -- i.e., JSON-ish -- representation of a beets Item or
-    Album object.
+    Album object. For Albums, `expand` dictates whether tracks are
+    included.
     """
     if isinstance(obj, beets.library.Item):
         out = dict(obj.record)
@@ -98,12 +99,6 @@ def all_albums():
     all_ids = [row[0] for row in rows]
     return flask.jsonify(album_ids=all_ids)
 
-@app.route('/album/artist/<artist>')
-def albums_for_artist(artist):
-    albums = g.lib.albums(artist=artist)
-    # Expanding album items would cost a lot of runtime which is not needed here
-    return flask.jsonify(results=[_rep(album, False) for album in albums])
-
 @app.route('/album/query/<path:query>')
 def album_query(query):
     parts = query.split('/')
@@ -115,13 +110,16 @@ def album_art(album_id):
     album = g.lib.get_album(album_id)
     return flask.send_file(album.artpath)
 
+
 # Artists.
+
 @app.route('/artist/')
 def all_artists():
     with g.lib.transaction() as tx:
         rows = tx.query("SELECT DISTINCT albumartist FROM albums")
     all_artists = [row[0] for row in rows]
     return flask.jsonify(artist_names=all_artists)
+
 
 # UI.
 
@@ -145,6 +143,7 @@ class WebPlugin(BeetsPlugin):
         cmd.parser.add_option('-d', '--debug', action='store_true',
                               default=False, help='debug mode')
         def func(lib, opts, args):
+            args = ui.decargs(args)
             if args:
                 self.config['host'] = args.pop(0)
             if args:
