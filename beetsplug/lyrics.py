@@ -206,6 +206,9 @@ class LyricsPlugin(BeetsPlugin):
         self.import_stages = [self.imported]
         self.config.add({
             'auto': True,
+            # The "write to files" option corresponds to the
+            # import_write config value.
+            'write': config['import']['write'].get(bool)
         })
 
     def commands(self):
@@ -214,11 +217,9 @@ class LyricsPlugin(BeetsPlugin):
                               action='store_true', default=False,
                               help='print lyrics to console')
         def func(lib, opts, args):
-            # The "write to files" option corresponds to the
-            # import_write config value.
-            write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
-                fetch_item_lyrics(lib, logging.INFO, item, write)
+                fetch_item_lyrics(lib, logging.INFO, item, 
+                                  self.config['write'].get())
                 if opts.printlyr and item.lyrics:
                     ui.print_(item.lyrics)
         cmd.func = func
@@ -228,4 +229,5 @@ class LyricsPlugin(BeetsPlugin):
     def imported(self, session, task):
         if self.config['auto']:
             for item in task.imported_items():
-                fetch_item_lyrics(session.lib, logging.DEBUG, item, False)
+                fetch_item_lyrics(session.lib, logging.DEBUG, item, 
+                                  self.config['write'].get())
