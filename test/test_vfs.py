@@ -18,8 +18,9 @@ from _common import unittest
 from beets import library
 from beets import vfs
 
-class VFSTest(unittest.TestCase):
+class VFSTest(_common.TestCase):
     def setUp(self):
+        super(VFSTest, self).setUp()
         self.lib = library.Library(':memory:', path_formats=[
             ('default', 'albums/$album/$title'),
             ('singleton:true', 'tracks/$artist/$title'),
