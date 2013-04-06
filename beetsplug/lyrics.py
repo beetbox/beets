@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2012, Adrian Sampson.
+# Copyright 2013, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -90,8 +90,7 @@ def extract_text(html, starttag):
         print('no closing tag found!')
         return
     lyrics = ''.join(parts)
-
-    lyrics = strip_cruft(lyrics)
+    return strip_cruft(lyrics)
 
 
 def strip_cruft(lyrics, wscollapse=True):
@@ -108,6 +107,16 @@ def strip_cruft(lyrics, wscollapse=True):
     lyrics = lyrics.strip()
     return lyrics
 
+def _encode(s):
+    """Encode the string for inclusion in a URL (common to both
+    LyricsWiki and Lyrics.com).
+    """
+    if isinstance(s, unicode):
+        # Replace "fancy" apostrophes with straight ones.
+        s = s.replace(u'\u2019', u"'")
+        s = s.encode('utf8', 'ignore')
+    return urllib.quote(s)
+
 #
 # Wikia db
 #
@@ -120,9 +129,7 @@ def _lw_encode(s):
     s = s.replace("#", "Number_")
     s = re.sub(r'[\[\{]', '(', s)
     s = re.sub(r'[\]\}]', ')', s)
-    if isinstance(s, unicode):
-        s = s.encode('utf8', 'ignore')
-    return urllib.quote(s)
+    return _encode(s)
 
 def fetch_lyricswiki(artist, title):
     """Fetch lyrics from LyricsWiki."""
@@ -146,9 +153,8 @@ LYRICSCOM_NOT_FOUND = (
 )
 def _lc_encode(s):
     s = re.sub(r'\s+', '-', s)
-    if isinstance(s, unicode):
-        s = s.encode('utf8', 'ignore')
-    return urllib.quote(s)
+    return _encode(s)
+
 def fetch_lyricscom(artist, title):
     """Fetch lyrics from Lyrics.com."""
     url = LYRICSCOM_URL_PATTERN % (_lc_encode(title), _lc_encode(artist))
@@ -426,7 +432,7 @@ class LyricsPlugin(BeetsPlugin):
             'auto': True,
             'google_API_key': None,
             'google_engine_ID': u'009217259823014548361:lndtuqkycfu',
-            'write': config['import']['write'].get(bool)
+            'fallback':False
         })
                  
         if self.config['google_API_key'].get():
@@ -439,13 +445,12 @@ class LyricsPlugin(BeetsPlugin):
         cmd.parser.add_option('-p', '--print', dest='printlyr',
                               action='store_true', default=False,
                               help='print lyrics to console')
-        def func(lib, config, opts, args):
+        def func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
-
+            write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
-                self.fetch_item_lyrics(lib, logging.INFO, item, 
-                                  self.config['write'].get())
+                fetch_item_lyrics(lib, logging.INFO, item, write)
                 if opts.printlyr and item.lyrics:
                     ui.print_(item.lyrics)
         cmd.func = func
@@ -453,11 +458,10 @@ class LyricsPlugin(BeetsPlugin):
 
 
     # Auto-fetch lyrics on import.
-    def imported(self, config, task):
-        if self.config['auto'].get():
+    def imported(self, session, task):
+        if self.config['auto']:
             for item in task.imported_items():
-                self.fetch_item_lyrics(config.lib, logging.DEBUG, item, 
-                    self.config['write'].get())
+                self.fetch_item_lyrics(session.lib, logging.DEBUG, item, False)
 
 
     def fetch_item_lyrics(self, lib, loglevel, item, write):
