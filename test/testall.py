@@ -24,6 +24,13 @@ pkgpath = os.path.dirname(__file__) or '.'
 sys.path.append(pkgpath)
 os.chdir(pkgpath)
 
+# Make sure we use local version of beetsplug and not system namespaced version
+# for tests
+try:
+    del sys.modules["beetsplug"]
+except KeyError:
+    pass
+
 def suite():
     s = unittest.TestSuite()
     # Get the suite() of every module in this directory beginning with
