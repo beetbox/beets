@@ -903,6 +903,10 @@ class MediaFile(object):
     def save(self):
         self.mgfile.save()
 
+    def delete(self):
+        """Removes current metadata information associated with the path/file."""
+        self.mgfile.delete()
+
 
     # Field definitions.
 
