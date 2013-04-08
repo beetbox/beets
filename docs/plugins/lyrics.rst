@@ -11,7 +11,7 @@ Namely, the current version of the plugin uses `Lyric Wiki`_ and `Lyrics.com`_.
 
 By default if no lyrics are found, the file will be left unchanged. To specify a placeholder for the lyrics tags when none are found, use the ``fallback`` configuration option.
 
-    lastgenre:
+    lyrics:
         fallback: 'No lyrics found'
 
 Fetch Lyrics During Import

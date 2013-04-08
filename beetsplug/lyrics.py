@@ -198,9 +198,9 @@ def slugify(text, jokerChar=False, spaceChar=' '):
     return urllib.quote(text)
 
 
-def isPageCandidate(urlLink, urlTitle, title, artist):
-    '''Return True if the url title makes it a good candidate to be a 
-    page that contains lyrics of title by artist '''
+def is_page_candidate(urlLink, urlTitle, title, artist):
+    """Return True if the url title makes it a good candidate to be a 
+    page that contains lyrics of title by artist """
 
     title = slugify(title.lower())
     artist = slugify(artist.lower())
@@ -223,7 +223,7 @@ def isPageCandidate(urlLink, urlTitle, title, artist):
     return difflib.SequenceMatcher(None, songTitle, title).ratio() > typoRatio
 
 
-def insertLineFeeds(text):
+def insert_line_feeds(text):
     """Insert \n before upcased characters"""
     
     tokensStr = re.split("([a-z][A-Z])", text)
@@ -233,7 +233,7 @@ def insertLineFeeds(text):
     return ''.join(tokensStr)
 
 
-def decimateLineFeeds(text):
+def decimate_line_feeds(text):
     """Decimate \n characters.  By default une only one \n as eol marker. Keep
     at most two \n in a row (eg. to separate verses)."""
     
@@ -244,7 +244,7 @@ def decimateLineFeeds(text):
     return text.strip('\n')
 
 
-def lyricsSanetizer(text):
+def sanetize_lyrics(text):
     """Clean text, returning raw lyrics as output or None if it happens that
     input text is actually not lyrics content.  Clean (x)html tags in text,
     correct layout and syntax ..."""
@@ -253,7 +253,7 @@ def lyricsSanetizer(text):
 
     # Restore \n in input text
     if text.find('\n') == -1:
-        text = insertLineFeeds(text)
+        text = insert_line_feeds(text)
 
     # Supress advertisements regexps 
     textLines = text.splitlines(True)
@@ -267,20 +267,20 @@ def lyricsSanetizer(text):
            (re.match(reAdTxt, line) != None):
             textLines.remove(line)
 
-    # \n might have been duplicated during the scrapping.
+    # \n might have been duplicated during the scraping.
     # decimate \n while number of \n represent more than half the number of 
     # lines
     while len([x for x in textLines if x=='\n']) >= (len(textLines)/2 - 1):
         if len(textLines) <= 3:
             break
         text = ''.join(textLines)
-        text = decimateLineFeeds(text)
+        text = decimate_line_feeds(text)
         textLines = [line.strip(' ') for line in text.splitlines(True)]
 
     return ''.join(textLines)
 
 
-def isLyricsAccepted(text, artist):
+def is_lyrics_accepted(text, artist):
     """Returns True if text is considered as valid lyrics"""
 
     badTriggers = []
@@ -300,8 +300,8 @@ def isLyricsAccepted(text, artist):
     return len(badTriggers) < 2
 
 
-def scrapLyricsFromUrl(url):
-    '''Scrap lyrics from url'''
+def scrape_lyrics_from_url(url):
+    """Scrape lyrics from url"""
     
     from bs4 import BeautifulSoup, Tag
     print (url)
@@ -381,15 +381,15 @@ def fetch_google(artist, title):
         for item in data['items']:
             urlLink = item['link'] 
             urlTitle = item['title']
-            if not isPageCandidate(urlLink, urlTitle, title, artist):
+            if not is_page_candidate(urlLink, urlTitle, title, artist):
                 continue
-            lyrics = scrapLyricsFromUrl(urlLink)
+            lyrics = scrape_lyrics_from_url(urlLink)
             if (lyrics == None or len(lyrics)== 0):
                 continue
 
-            lyrics = lyricsSanetizer(lyrics)
+            lyrics = sanetize_lyrics(lyrics)
 
-            if isLyricsAccepted(lyrics, artist):
+            if is_lyrics_accepted(lyrics, artist):
                 return lyrics
 
 # Lyrics scrapers.
