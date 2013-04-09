@@ -612,16 +612,18 @@ def command_output(cmd):
         raise subprocess.CalledProcessError(proc.returncode, cmd)
     return stdout
 
-def max_filename_length(path, fallback=MAX_FILENAME_LENGTH):
+def max_filename_length(path, limit=MAX_FILENAME_LENGTH):
     """Attempt to determine the maximum filename length for the
-    filesystem containing `path`. If it cannot be determined, return a
-    predetermined fallback value.
+    filesystem containing `path`. If the value is greater than `limit`,
+    then `limit` is used instead (to prevent errors when a filesystem
+    misreports its capacity). If it cannot be determined (e.g., on
+    Windows), return `limit`.
     """
     if hasattr(os, 'statvfs'):
         try:
             res = os.statvfs(path)
         except OSError:
-            return fallback
-        return res[9]
+            return limit
+        return min(res[9], limit)
     else:
-        return fallback
+        return limit
