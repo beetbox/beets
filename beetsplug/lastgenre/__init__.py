@@ -299,9 +299,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 return result, 'artist'
 
         # Filter the existing genre.
-        result = _strings_to_genre([obj.genre])
-        if result:
-            return result, 'original'
+        if obj.genre:
+            result = _strings_to_genre([obj.genre])
+            if result:
+                return result, 'original'
 
         # Fallback string.
         fallback = self.config['fallback'].get()

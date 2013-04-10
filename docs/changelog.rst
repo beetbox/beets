@@ -19,6 +19,7 @@ Changelog
 * :doc:`/plugins/web`: The underlying API was expanded slightly to support
   `Tomahawk`_ collections. And file transfers now have a "Content-Length"
   header. Thanks to Uwe L. Korn.
+* :doc:`/plugins/lastgenre`: Fix an error when using genre canonicalization.
 
 .. _Tomahawk: http://www.tomahawk-player.org/
 
