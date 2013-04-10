@@ -17,7 +17,8 @@ Changelog
 * :doc:`/plugins/web`: Fix an error when specifying the hostname on the
   command line.
 * :doc:`/plugins/web`: The underlying API was expanded slightly to support
-  `Tomahawk`_ collections. Thanks to Uwe L. Korn.
+  `Tomahawk`_ collections. And file transfers now have a "Content-Length"
+  header. Thanks to Uwe L. Korn.
 
 .. _Tomahawk: http://www.tomahawk-player.org/
 
