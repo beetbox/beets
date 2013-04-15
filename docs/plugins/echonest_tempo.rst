@@ -28,7 +28,7 @@ free from the EchoNest.  To specify your own API key, add the key to your
 :doc:`configuration file </reference/config>` as the value for ``apikey`` under
 the key ``echonest_tempo`` like so::
 
-    echonest_temo:
+    echonest_tempo:
         apikey: YOUR_API_KEY
 
 In addition, the ``autofetch`` config option lets you disable automatic tempo
