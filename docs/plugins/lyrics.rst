@@ -2,17 +2,12 @@ Lyrics Plugin
 =============
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
-Namely, the current version of the plugin uses `Lyric Wiki`_ and `Lyrics.com`_.
+Namely, the current version of the plugin uses `Lyric Wiki`_, `Lyrics.com`_,
+and, optionally, the Google custom search API.
 
 .. _Lyric Wiki: http://lyrics.wikia.com/
 .. _Lyrics.com: http://www.lyrics.com/
 
-:ref:`_activate-google-custom-search` to expand the plugin firepower, by using google search to harvest lyrics from your own websites list.
-
-By default if no lyrics are found, the file will be left unchanged. To specify a placeholder for the lyrics tags when none are found, use the ``fallback`` configuration option.
-
-    lyrics:
-        fallback: 'No lyrics found'
 
 Fetch Lyrics During Import
 --------------------------
@@ -25,6 +20,7 @@ database. If the ``import.write`` config option is on, then the lyrics will also
 be written to the files' tags.
 
 This behavior can be disabled with the ``auto`` config option (see below).
+
 
 Fetching Lyrics Manually
 ------------------------
@@ -40,36 +36,53 @@ embedded into files' metadata.
 The ``-p`` option to the ``lyrics`` command makes it print lyrics out to the
 console so you can view the fetched (or previously-stored) lyrics.
 
+
 Configuring
 -----------
 
-The plugin has one configuration option, ``auto``, which lets you disable
-automatic lyrics fetching during import. To do so, add this to your
-``config.yaml``::
+To disable automatic lyric fetching during import, set the ``auto`` option to
+false, like so::
 
     lyrics:
         auto: no
 
+By default, if no lyrics are found, the file will be left unchanged. To
+specify a placeholder for the lyrics tag when none are found, use the
+``fallback`` configuration option::
+
+    lyrics:
+        fallback: 'No lyrics found'
+
 .. _activate-google-custom-search:
+
 
 Activate Google custom search
 ------------------------------
 
-Using Google backend requires `beautifulsoup`_, which you can install using `pip`_ by typing::
+Using the Google backend requires `BeautifulSoup`_, which you can install
+using `pip`_ by typing::
 
     pip install beautifulsoup4
 
-To activate google search you must first register an API key on https://code.google.com/apis/console. Then click *API Access* and use that key for the `google_API_key` plugin option.
+You also need to `register for a Google API key`_. Set the ``google_API_key``
+configuration option to your key. This enables the Google backend.
 
-Optionally, you can define a custom search engine on http://www.google.com/cse/all. Click the *Search engine ID* button to display the token to copy into the `google_engine_ID` option.
-By default, beets use a list of sources known to be scrapable.
- 
+.. _register for a Google API key: https://code.google.com/apis/console.
 
-Example of ``config.yaml``::
+Optionally, you can `define a custom search engine`_. Get your search engine's
+token and use it for your ``google_engine_ID`` configuration option. By
+default, beets use a list of sources known to be scrapeable.
+
+.. _define a custom search engine: http://www.google.com/cse/all
+
+Here's an example example of ``config.yaml``::
 
     lyrics:
       google_API_key: AZERTYUIOPQSDFGHJKLMWXCVBN1234567890_ab
       google_engine_ID: 009217259823014548361:lndtuqkycfu
 
+Note that the Google custom search API is limited to 100 queries per day.
+After that, the lyrics plugin will fall back on its other data sources.
+
 .. _pip: http://www.pip-installer.org/
-.. _beautifulsoup: http://www.crummy.com/software/BeautifulSoup/bs4/doc/
+.. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/bs4/doc/

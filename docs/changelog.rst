@@ -7,6 +7,9 @@ Changelog
 * :doc:`/plugins/embedart`: The ``embedart`` command now embeds each album's
   associated art by default. The ``--file`` option invokes the old behavior,
   in which a specific image file is used.
+* :doc:`/plugins/lyrics`: A new (optional) Google Custom Search backend was
+  added for finding lyrics on a wide array of sites. Thanks to Fabrice
+  Laporte.
 * When automatically detecting the filesystem's maximum filename length, never
   guess more than 200 characters. This prevents errors on systems where the
   maximum length was misreported. You can, of course, override this default
@@ -14,6 +17,9 @@ Changelog
 * Avoid some error cases in the ``update`` command and the ``embedart`` and
   ``mbsync`` plugins. Invalid or missing files now cause error logs instead of
   crashing beets. Thanks to Lucas Duailibe.
+* :doc:`/plugins/lyrics`: Searches now strip "featuring" artists when
+  searching for lyrics, which should increase the hit rate for these tracks.
+  Thanks to Fabrice Laporte.
 * :doc:`/plugins/web`: Fix an error when specifying the hostname on the
   command line.
 * :doc:`/plugins/web`: The underlying API was expanded slightly to support
