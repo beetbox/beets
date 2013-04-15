@@ -75,7 +75,7 @@ default, beets use a list of sources known to be scrapeable.
 
 .. _define a custom search engine: http://www.google.com/cse/all
 
-Here's an example example of ``config.yaml``::
+Here's an example of ``config.yaml``::
 
     lyrics:
       google_API_key: AZERTYUIOPQSDFGHJKLMWXCVBN1234567890_ab
