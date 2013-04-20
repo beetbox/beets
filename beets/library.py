@@ -1516,7 +1516,7 @@ class Album(BaseAlbum):
         """
         with self._library.transaction() as tx:
             rows = tx.query(
-                'SELECT * FROM items WHERE album_id=?',
+                'SELECT * FROM items WHERE album_id=? ORDER BY track',
                 (self.id,)
             )
         return ResultIterator(rows)
