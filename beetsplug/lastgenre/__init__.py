@@ -39,7 +39,6 @@ log = logging.getLogger('beets')
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 C14N_TREE = os.path.join(os.path.dirname(__file__), 'genres-tree.yaml')
-WHITELIST = os.path.join(os.path.dirname(__file__), 'genres.txt')
 
 PYLAST_EXCEPTIONS = (
     pylast.WSError,
@@ -199,7 +198,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         super(LastGenrePlugin, self).__init__()
 
         self.config.add({
-            'whitelist': WHITELIST,
+            'whitelist': os.path.join(os.path.dirname(__file__), 'genres.txt'),
             'fallback': None,
             'canonical': None,
             'source': 'album',
@@ -348,8 +347,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     def imported(self, session, task):
         """Event hook called when an import task finishes."""
-        # Force a "real" lookup during import if no custom whitelist set
-        if self.config['whitelist'].get() == WHITELIST:
+        # Always force a "real" lookup during import.
+        if not self.config['force']:
             self.config['force'] = True
 
         if task.is_album:
