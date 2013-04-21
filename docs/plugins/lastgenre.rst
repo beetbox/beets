@@ -35,6 +35,9 @@ Wikipedia`_.
 .. _pylast: http://code.google.com/p/pylast/
 .. _script that scrapes Wikipedia: https://gist.github.com/1241307
 
+Switch ``force`` flag to False to keep the original genre when member 
+of the whitelist.
+
 If no genre is found, the file will be left unchanged. To instead specify a
 fallback genre, use the ``fallback`` configuration option. You can, of
 course, use the empty string as a fallback, like so::

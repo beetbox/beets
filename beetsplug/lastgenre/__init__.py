@@ -202,7 +202,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'fallback': None,
             'canonical': None,
             'source': 'album',
-            'force': False,
+            'force': True,
             'auto': True,
         })
 
@@ -315,6 +315,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         lastgenre_cmd = ui.Subcommand('lastgenre', help='fetch genres')
         lastgenre_cmd.parser.add_option('-f', '--force', dest='force',
                               action='store_true',
+                              default=False,
                               help='re-download genre when already present')
         lastgenre_cmd.parser.add_option('-s', '--source', dest='source',
                               type='string',
@@ -347,9 +348,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     def imported(self, session, task):
         """Event hook called when an import task finishes."""
-        # Always force a "real" lookup during import.
-        if not self.config['force']:
-            self.config['force'] = True
 
         if task.is_album:
             album = session.lib.get_album(task.album_id)
