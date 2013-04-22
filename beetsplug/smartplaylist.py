@@ -17,7 +17,7 @@
 from __future__ import print_function
 
 from beets.plugins import BeetsPlugin
-from beets import config, ui
+from beets import config, ui, library
 from beets.util import normpath, syspath
 from beets.util.functemplate import Template
 import os
@@ -36,7 +36,7 @@ def update_playlists(lib):
         relative_to = normpath(relative_to)
 
     for playlist in playlists:
-        items = lib.items(playlist['query'])
+        items = lib.items(library.AndQuery.from_string(playlist['query']))
         m3us = {}
         basename = playlist['name'].encode('utf8')
         # As we allow tags in the m3u names, we'll need to iterate through

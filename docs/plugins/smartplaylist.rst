@@ -30,8 +30,10 @@ If you intend to use this plugin to generate playlists for MPD, you should set
 You can generate as many playlists as you want by adding them to the
 ``playlists`` section, using beets query syntax (see
 :doc:`/reference/query`) for ``query`` and the file name to be generated for
-``name``. If you have existing files with the same names, you should
-back them up---they will be overwritten when the plugin runs.
+``name``. The query will be split using shell-like syntax, so if you need to
+use spaces in the query, be sure to quote them (e.g., ``artist:"The Beatles"``).
+If you have existing files with the same names, you should back them up---they
+will be overwritten when the plugin runs.
 
 For more advanced usage, you can use template syntax (see
 :doc:`/reference/pathformat/`) in the ``name`` field. For example::
