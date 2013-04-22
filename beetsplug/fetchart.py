@@ -124,16 +124,19 @@ def art_in_path(path):
                 images.append(fn)
 
     # Look for "preferred" filenames.
+    pattern = r"^(.*[^0-9a-z])?(%s)([^0-9a-z].*)?$" % \
+                '|'.join(COVER_NAMES)
+    r=re.compile(pattern,re.I)
     for fn in images:
-        for name in COVER_NAMES:
-            if fn.lower().startswith(name):
-                log.debug(u'fetchart: using well-named art file {0}'.format(
-                    util.displayable_path(fn)
-                ))
-                return os.path.join(path, fn)
+        if re.match(r, os.path.splitext(fn)[0]):
+            log.debug(u'fetchart: using well-named art file {0}'.format(
+                util.displayable_path(fn)
+            ))
+            return os.path.join(path, fn)
 
     # Fall back to any image in the folder.
-    if images:
+    cautious = config['fetchart']['cautious'].get(bool)
+    if not cautious and images:
         log.debug(u'fetchart: using fallback art file {0}'.format(
             util.displayable_path(images[0])
         ))
@@ -221,6 +224,7 @@ class FetchArtPlugin(BeetsPlugin):
             'auto': True,
             'maxwidth': 0,
             'remote_priority': False,
+            'cautious': True
         })
 
         # Holds paths to downloaded images between fetching them and
