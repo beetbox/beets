@@ -29,6 +29,9 @@ Changelog
   `Tomahawk`_ collections. And file transfers now have a "Content-Length"
   header. Thanks to Uwe L. Korn.
 * :doc:`/plugins/lastgenre`: Fix an error when using genre canonicalization.
+* :doc:`/plugins/lastgenre`: The ``force`` config option now defaults to true
+  and controls the behavior of the import hook. (Previously, new genres were
+  always forced during import.)
 
 .. _Tomahawk: http://www.tomahawk-player.org/
 

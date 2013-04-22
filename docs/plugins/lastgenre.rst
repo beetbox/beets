@@ -35,8 +35,9 @@ Wikipedia`_.
 .. _pylast: http://code.google.com/p/pylast/
 .. _script that scrapes Wikipedia: https://gist.github.com/1241307
 
-Switch ``force`` flag to False to keep the original genre when member 
-of the whitelist.
+By default, beets will always fetch new genres, even if the files already have
+once. To instead leave genres in place in when they pass the whitelist, set
+the ``force`` option to "no".
 
 If no genre is found, the file will be left unchanged. To instead specify a
 fallback genre, use the ``fallback`` configuration option. You can, of
