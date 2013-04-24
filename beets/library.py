@@ -569,7 +569,10 @@ class YearQuery(FieldQuery):
 
     @classmethod
     def _expanded_years(self, pattern):
-        ranges = [[int(y) for y in se.split('-')] for se in pattern.split(',')]
+        try:
+            ranges = [[int(y) for y in se.split('-')] for se in pattern.split(',')]
+        except ValueError:
+            raise ValueError('invalid year')
         years = [range(r[0], r[1] + 1) if len(r) > 1 else [r[0]] for r in ranges]
         return [str(y) for yrs in years for y in yrs]
 
