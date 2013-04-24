@@ -75,7 +75,6 @@ class QueryParseTest(unittest.TestCase):
         r = ('year', '1999-2001', beets.library.YearQuery)
         self.assertEqual(pqp(q), r)
 
-
 class AnyFieldQueryTest(unittest.TestCase):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
@@ -257,6 +256,10 @@ class GetTest(unittest.TestCase, AssertsMixin):
         self.assert_matched(results, 'Lovers Who Uncover')
         self.assert_matched(results, 'Boracay')
         self.assert_done(results)
+
+    def test_bad_year(self):
+        q = 'year:delete from items'
+        self.assertRaises(ValueError, self.lib.items, q)
 
 class MemoryGetTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
