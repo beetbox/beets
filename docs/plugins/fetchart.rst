@@ -67,17 +67,19 @@ Currently, this plugin searches for art in the local filesystem as well as on
 the Cover Art Archive, Amazon, and AlbumArt.org (in that order).
 
 When looking for local album art, beets checks for image files located in the
-same folder as the music files you're importing. If you have an image file
-called "cover," "front," "art," "album," for "folder" alongside your music,
-beets will treat it as album art and skip searching any online databases.
-
-When you choose to apply changes during an import, beets searches all sources
-for album art. For "as-is" imports (and non-autotagged imports using the ``-A``
-flag), beets only looks for art on the local filesystem.
+same folder as the music files you're importing.  beets prefers to use an image
+file named "cover," "front," "art," "album," or "folder," but in the absence of
+those well-known names it will use any image file in the same folder as your
+music files.
 
 By default, remote (Web) art sources are only queried if no local art is found
 in the filesystem. To query remote sources every time, set the
-``remote_priority`` configuration option to false.
+``remote_priority`` configuration option to true, which will cause beets to
+prefer remote cover art over any local image files.
+
+When you choose to apply changes during an import, beets will search for art as
+described above.  For "as-is" imports (and non-autotagged imports using the
+``-A`` flag), beets only looks for art on the local filesystem.
 
 Embedding Album Art
 -------------------
