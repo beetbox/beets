@@ -54,23 +54,31 @@ class FSArtTest(_common.TestCase):
     def setUp(self):
         super(FSArtTest, self).setUp()
         self.dpath = os.path.join(self.temp_dir, 'arttest')
-        fetchart.FetchArtPlugin()
         os.mkdir(self.dpath)
 
     def test_finds_jpg_in_directory(self):
-        _common.touch(os.path.join(self.dpath, 'art.jpg'))
-        fn = fetchart.art_in_path(self.dpath)
-        self.assertEqual(fn, os.path.join(self.dpath, 'art.jpg'))
+        _common.touch(os.path.join(self.dpath, 'a.jpg'))
+        fn = fetchart.art_in_path(self.dpath, ('art',), False)
+        self.assertEqual(fn, os.path.join(self.dpath, 'a.jpg'))
 
     def test_appropriately_named_file_takes_precedence(self):
         _common.touch(os.path.join(self.dpath, 'a.jpg'))
-        _common.touch(os.path.join(self.dpath, 'cover.jpg'))
-        fn = fetchart.art_in_path(self.dpath)
-        self.assertEqual(fn, os.path.join(self.dpath, 'cover.jpg'))
+        _common.touch(os.path.join(self.dpath, 'art.jpg'))
+        fn = fetchart.art_in_path(self.dpath, ('art',), False)
+        self.assertEqual(fn, os.path.join(self.dpath, 'art.jpg'))
 
     def test_non_image_file_not_identified(self):
         _common.touch(os.path.join(self.dpath, 'a.txt'))
-        fn = fetchart.art_in_path(self.dpath)
+        fn = fetchart.art_in_path(self.dpath, ('art',), False)
+        self.assertEqual(fn, None)
+
+    def test_cautious_skips_fallback(self):
+        _common.touch(os.path.join(self.dpath, 'a.jpg'))
+        fn = fetchart.art_in_path(self.dpath, ('art',), True)
+        self.assertEqual(fn, None)
+
+    def test_empty_dir(self):
+        fn = fetchart.art_in_path(self.dpath, ('art',), True)
         self.assertEqual(fn, None)
 
 class CombinedTest(_common.TestCase):
