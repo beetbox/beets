@@ -110,8 +110,7 @@ def aao_art(asin):
 
 
 # Art from the filesystem.
-
-def art_in_path(path):
+def art_in_path(path, cover_names=COVER_NAMES):
     """Look for album art files in a specified directory."""
     if not os.path.isdir(path):
         return
@@ -124,11 +123,9 @@ def art_in_path(path):
                 images.append(fn)
 
     # Look for "preferred" filenames.
-    pattern = r"^(.*[^0-9a-z])?(%s)([^0-9a-z].*)?$" % \
-                '|'.join(COVER_NAMES)
-    r=re.compile(pattern,re.I)
+    cover_pat = r"(\b|_)(%s)(\b|_)" % '|'.join(cover_names)
     for fn in images:
-        if re.match(r, os.path.splitext(fn)[0]):
+        if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
             log.debug(u'fetchart: using well-named art file {0}'.format(
                 util.displayable_path(fn)
             ))
@@ -175,9 +172,10 @@ def art_for_album(album, paths, maxwidth=None, local_only=False):
     out = None
 
     # Local art.
+    cover_names = config['fetchart']['cover_names'].as_str_seq()
     if paths:
         for path in paths:
-            out = art_in_path(path)
+            out = art_in_path(path, cover_names)
             if out:
                 break
 
@@ -224,7 +222,8 @@ class FetchArtPlugin(BeetsPlugin):
             'auto': True,
             'maxwidth': 0,
             'remote_priority': False,
-            'cautious': True
+            'cautious': True,
+            'cover_names': COVER_NAMES
         })
 
         # Holds paths to downloaded images between fetching them and
