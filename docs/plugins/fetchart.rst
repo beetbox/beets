@@ -72,12 +72,12 @@ file whose name contains "cover", "front", "art", "album" or "folder", but in
 the absence of well-known names, it will use any image file in the same folder
 as your music files.
 
-You can change the list of filename keywords using the ``server_names`` config
+You can change the list of filename keywords using the ``cover_names`` config
 option. Or, to use *only* filenames containing the keywords and not fall back
 to any image, set ``cautious`` to true. For example::
 
     fetchart:
-        cautious: false
+        cautious: true
         cover_names: front back
 
 By default, remote (Web) art sources are only queried if no local art is found
