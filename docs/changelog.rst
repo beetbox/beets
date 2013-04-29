@@ -1,8 +1,16 @@
 Changelog
 =========
 
-1.1.0 (in development)
-----------------------
+1.1.0 (April 29, 203)
+---------------------
+
+This final release of 1.1 brings a little polish to the betas that introduced
+the new configuration system. The album art and lyrics plugins also got a
+little love.
+
+If you're upgrading from 1.0.0 or earlier, this release (like the 1.1 betas)
+will automatically migrate your configuration to the new system. See
+:doc:`/guides/migration`.
 
 * :doc:`/plugins/embedart`: The ``embedart`` command now embeds each album's
   associated art by default. The ``--file`` option invokes the old behavior,
