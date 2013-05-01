@@ -189,7 +189,7 @@ class ConvertPlugin(BeetsPlugin):
                               help='choose albums instead of tracks')
         cmd.parser.add_option('-t', '--threads', action='store', type='int',
                               help='change the number of threads, \
-                              defaults to maximum availble processors ')
+                              defaults to maximum available processors')
         cmd.parser.add_option('-k', '--keep-new', action='store_true',
                               dest='keep_new', help='keep only the converted \
                               and move the old files')

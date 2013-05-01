@@ -28,7 +28,6 @@ from beets import util
 from beets import config
 
 IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
-COVER_NAMES = ['cover', 'front', 'art', 'album', 'folder']
 CONTENT_TYPES = ('image/jpeg',)
 DOWNLOAD_EXTENSION = '.jpg'
 
@@ -111,7 +110,7 @@ def aao_art(asin):
 
 # Art from the filesystem.
 
-def art_in_path(path):
+def art_in_path(path, cover_names, cautious):
     """Look for album art files in a specified directory."""
     if not os.path.isdir(path):
         return
@@ -124,16 +123,16 @@ def art_in_path(path):
                 images.append(fn)
 
     # Look for "preferred" filenames.
+    cover_pat = r"(\b|_)({0})(\b|_)".format('|'.join(cover_names))
     for fn in images:
-        for name in COVER_NAMES:
-            if fn.lower().startswith(name):
-                log.debug(u'fetchart: using well-named art file {0}'.format(
-                    util.displayable_path(fn)
-                ))
-                return os.path.join(path, fn)
+        if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
+            log.debug(u'fetchart: using well-named art file {0}'.format(
+                util.displayable_path(fn)
+            ))
+            return os.path.join(path, fn)
 
     # Fall back to any image in the folder.
-    if images:
+    if images and not cautious:
         log.debug(u'fetchart: using fallback art file {0}'.format(
             util.displayable_path(images[0])
         ))
@@ -172,9 +171,11 @@ def art_for_album(album, paths, maxwidth=None, local_only=False):
     out = None
 
     # Local art.
+    cover_names = config['fetchart']['cover_names'].as_str_seq()
+    cautious = config['fetchart']['cautious'].get(bool)
     if paths:
         for path in paths:
-            out = art_in_path(path)
+            out = art_in_path(path, cover_names, cautious)
             if out:
                 break
 
@@ -221,6 +222,8 @@ class FetchArtPlugin(BeetsPlugin):
             'auto': True,
             'maxwidth': 0,
             'remote_priority': False,
+            'cautious': False,
+            'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
         })
 
         # Holds paths to downloaded images between fetching them and

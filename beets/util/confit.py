@@ -667,7 +667,7 @@ class Configuration(RootView):
         """
         dirs = list(self._search_dirs())
 
-        # First, look for an existant configuration file.
+        # First, look for an existent configuration file.
         for appdir in dirs:
             if os.path.isfile(os.path.join(appdir, CONFIG_FILENAME)):
                 return appdir

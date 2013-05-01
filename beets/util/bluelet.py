@@ -51,7 +51,7 @@ class WaitableEvent(Event):
         return (), (), ()
 
     def fire(self):
-        """Called when an assoicated file descriptor becomes ready
+        """Called when an associated file descriptor becomes ready
         (i.e., is returned from a select() call).
         """
         pass

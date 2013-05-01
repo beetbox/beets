@@ -1,8 +1,16 @@
 Changelog
 =========
 
-1.1.0 (in development)
-----------------------
+1.1.0 (April 29, 203)
+---------------------
+
+This final release of 1.1 brings a little polish to the betas that introduced
+the new configuration system. The album art and lyrics plugins also got a
+little love.
+
+If you're upgrading from 1.0.0 or earlier, this release (like the 1.1 betas)
+will automatically migrate your configuration to the new system. See
+:doc:`/guides/migration`.
 
 * :doc:`/plugins/embedart`: The ``embedart`` command now embeds each album's
   associated art by default. The ``--file`` option invokes the old behavior,
@@ -14,6 +22,10 @@ Changelog
   guess more than 200 characters. This prevents errors on systems where the
   maximum length was misreported. You can, of course, override this default
   with the :ref:`max_filename_length` option.
+* :doc:`/plugins/fetchart`: Two new configuration options were added:
+  ``cover_names``, the list of keywords used to identify preferred images, and
+  ``cautious``, which lets you avoid falling back to images that don't contain
+  those keywords. Thanks to Fabrice Laporte.
 * Avoid some error cases in the ``update`` command and the ``embedart`` and
   ``mbsync`` plugins. Invalid or missing files now cause error logs instead of
   crashing beets. Thanks to Lucas Duailibe.
