@@ -24,6 +24,7 @@ import unicodedata
 import threading
 import contextlib
 import traceback
+import datetime
 from collections import defaultdict
 from unidecode import unidecode
 from beets.mediafile import MediaFile
@@ -105,6 +106,10 @@ ITEM_FIELDS = [
     ('bitdepth',    'int',  False, True),
     ('channels',    'int',  False, True),
     ('mtime',       'int',  False, False),
+
+    ('year_added',      'int',  False, False),
+    ('month_added',     'int',  False, False),
+    ('day_added',       'int',  False, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
@@ -146,6 +151,10 @@ ALBUM_FIELDS = [
     ('original_year',      'int',  True),
     ('original_month',     'int',  True),
     ('original_day',       'int',  True),
+
+    ('year_added',      'int',  False),
+    ('month_added',     'int',  False),
+    ('day_added',       'int',  False),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
@@ -164,6 +173,11 @@ log = logging.getLogger('beets')
 if not log.handlers:
     log.addHandler(logging.StreamHandler())
 log.propagate = False  # Don't propagate to root handler.
+
+# Return a tuple for the current date (year, month, date)
+def _date_tuple():
+    date = datetime.datetime.now()
+    return (date.year, date.month, date.day)
 
 # A little SQL utility.
 def _orelse(exp1, exp2):
@@ -708,9 +722,9 @@ class AnyFieldQuery(CollectionQuery):
 
     def match(self, item):
         for subq in self.subqueries:
-            if subq.match(item):
-                return True
-        return False
+	    if subq.match(item):
+		return True
+	return False
 
 class MutableCollectionQuery(CollectionQuery):
     """A collection query whose subqueries may be modified after the
@@ -1289,6 +1303,7 @@ class Library(BaseLibrary):
     # Item manipulation.
 
     def add(self, item, copy=False):
+	item.day_added, item.month_added, item.year_added = _date_tuple()
         item.library = self
         if copy:
             self.move(item, copy=True)
@@ -1498,15 +1513,21 @@ class Library(BaseLibrary):
         from its items. The items are added to the database if they
         don't yet have an ID. Returns an Album object.
         """
+	album_keys = ALBUM_KEYS_ITEM + ['day_added', 'month_added', 'year_added']
+
         # Set the metadata from the first item.
-        item_values = dict(
+	album_values = dict(
             (key, getattr(items[0], key)) for key in ALBUM_KEYS_ITEM)
+
+	# Manually set the date when the album was added,
+	# because the items don't yet have these
+	album_values['day_added'], album_values['month_added'], album_values['year_added'] = _date_tuple()
 
         with self.transaction() as tx:
             sql = 'INSERT INTO albums (%s) VALUES (%s)' % \
-                (', '.join(ALBUM_KEYS_ITEM),
-                ', '.join(['?'] * len(ALBUM_KEYS_ITEM)))
-            subvals = [item_values[key] for key in ALBUM_KEYS_ITEM]
+		(', '.join(album_keys),
+		', '.join(['?'] * len(album_keys)))
+	    subvals = [album_values[key] for key in album_keys]
             album_id = tx.mutate(sql, subvals)
 
             # Add the items to the library.
@@ -1520,8 +1541,8 @@ class Library(BaseLibrary):
         # Construct the new Album object.
         record = {}
         for key in ALBUM_KEYS:
-            if key in ALBUM_KEYS_ITEM:
-                record[key] = item_values[key]
+	    if key in album_keys:
+		record[key] = album_values[key]
             else:
                 # Non-item fields default to None.
                 record[key] = None

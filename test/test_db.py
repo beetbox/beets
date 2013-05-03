@@ -967,6 +967,24 @@ class MtimeTest(unittest.TestCase):
         self.i.read()
         self.assertGreaterEqual(self.i.mtime, self._mtime())
 
+class AtimeTest(unittest.TestCase):
+    def setUp(self):
+	self.lib = beets.library.Library(':memory:')
+
+    def test_atime_for_album(self):
+	self.track = item()
+	self.album = self.lib.add_album((self.track,))
+	self.assertGreater(self.album.day_added, 0)
+	self.assertGreater(self.album.month_added, 0)
+	self.assertGreater(self.album.year_added, 0)
+
+    def test_atime_for_singleton(self):
+	self.singleton = item()
+	self.lib.add(self.singleton)
+	self.assertGreater(self.singleton.day_added, 0)
+	self.assertGreater(self.singleton.month_added, 0)
+	self.assertGreater(self.singleton.year_added, 0)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
