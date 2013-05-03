@@ -19,6 +19,8 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs, print_obj
 from beets.util.functemplate import Template
 import random
+from operator import attrgetter
+from itertools import groupby
 
 def random_item(lib, opts, args):
     query = decargs(args)
@@ -32,8 +34,18 @@ def random_item(lib, opts, args):
         objs = list(lib.albums(query=query))
     else:
         objs = list(lib.items(query=query))
+    if opts.equal_chance:
+        key = attrgetter('albumartist')
+        objs.sort(key=key)
+        # Now the objs are list of albums or items
+        objs = [list(v) for k, v in groupby(objs, key)]
+
     number = min(len(objs), opts.number)
     objs = random.sample(objs, number)
+
+    if opts.equal_chance:
+        # Select one random item from that artist
+        objs = map(random.choice, objs)
 
     for item in objs:
         print_obj(item, lib, template)
@@ -48,6 +60,8 @@ random_cmd.parser.add_option('-f', '--format', action='store',
         help='print with custom format', default=None)
 random_cmd.parser.add_option('-n', '--number', action='store', type="int",
         help='number of objects to choose', default=1)
+random_cmd.parser.add_option('-e', '--equal-chance', action='store_true',
+        help='each artist has the same chance')
 random_cmd.func = random_item
 
 class Random(BeetsPlugin):
