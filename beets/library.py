@@ -37,6 +37,10 @@ import beets
 
 MAX_FILENAME_LENGTH = 200
 
+# This is the default format when printing the import time
+# of an object. This needs to be a format accepted by time.strftime()
+ITIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
 # vulnerable to injection if accessible to the user.
@@ -397,6 +401,9 @@ class Item(object):
         # Additional fields in non-sanitized case.
         if not sanitize:
             mapping['path'] = displayable_path(self.path)
+
+	# Convert the import time to human readable
+	mapping['itime'] = time.strftime(ITIME_FORMAT, time.localtime(getattr(self, 'itime')))
 
         # Use the album artist if the track artist is not set and
         # vice-versa.
@@ -1741,6 +1748,9 @@ class Album(BaseAlbum):
         mapping['artpath'] = displayable_path(mapping['artpath'])
         mapping['path'] = displayable_path(self.item_dir())
 
+	# Convert the import time to human readable format
+	mapping['itime'] = time.strftime(ITIME_FORMAT, time.localtime(mapping['itime']))
+
         # Get template functions.
         funcs = DefaultTemplateFunctions().functions()
         funcs.update(plugins.template_funcs())
@@ -1828,6 +1838,12 @@ class DefaultTemplateFunctions(object):
         """Translate non-ASCII characters to their ASCII equivalents.
         """
         return unidecode(s)
+
+    @staticmethod
+    def tmpl_format(s, format):
+	"""Format the import time to any format according to time.strfime()
+	"""
+	return time.strftime(format, time.strptime(s, ITIME_FORMAT))
 
     def tmpl_aunique(self, keys=None, disam=None):
         """Generate a string that is guaranteed to be unique among all
