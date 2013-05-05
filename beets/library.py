@@ -168,7 +168,7 @@ def _str_to_bool(value):
     raise ValueError('could not convert string to bool: {0}'.format(value))
 
 # Mapping the correspondent Python constructor to SQLite field types
-TYPE_MAPPING = {
+CONSTRUCTOR_MAPPING = {
     'int': int,
     'bool': _str_to_bool,
     'real': float,
@@ -177,9 +177,9 @@ TYPE_MAPPING = {
 # Convert a string (from user input) to the correct Python type
 def _convert_type(fields, key, value):
     sqlite_type = [f[1] for f in fields if f[0] == key][0]
-    if value and sqlite_type in TYPE_MAPPING:
-        python_type = TYPE_MAPPING[sqlite_type]
-        return python_type(value)
+    if value and sqlite_type in CONSTRUCTOR_MAPPING:
+        constructor = CONSTRUCTOR_MAPPING[sqlite_type]
+        return constructor(value)
     return value
 
 # Logger.
