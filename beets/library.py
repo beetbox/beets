@@ -159,6 +159,28 @@ ITEM_DEFAULT_FIELDS = ARTIST_DEFAULT_FIELDS + ALBUM_DEFAULT_FIELDS + \
 # Special path format key.
 PF_KEY_DEFAULT = 'default'
 
+# Convert 'true' and 'false' to correspondent boolean
+def _str_to_bool(value):
+    if value.lower() == 'true':
+        return True
+    if value.lower() == 'false':
+        return False
+    raise ValueError('could not convert string to bool: {0}'.format(value))
+
+# Mapping the correspondent Python constructor to SQLite field types
+TYPE_MAPPING = {
+    'int': int,
+    'bool': _str_to_bool,
+    'real': float,
+}
+
+# Convert a string (from user input) to the correct Python type
+def _convert_type(fields, key, value):
+    sqlite_type = [f[1] for f in fields if f[0] == key][0]
+    if value and sqlite_type in TYPE_MAPPING:
+        python_type = TYPE_MAPPING[sqlite_type]
+        return python_type(value)
+    return value
 
 # Logger.
 log = logging.getLogger('beets')
@@ -642,7 +664,7 @@ class AnyFieldQuery(CollectionQuery):
             if subq.match(item):
                 return True
         return False
-    
+
 class MutableCollectionQuery(CollectionQuery):
     """A collection query whose subqueries may be modified after the
     query is initialized.
