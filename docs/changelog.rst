@@ -4,6 +4,9 @@ Changelog
 1.1.1 (in development)
 ----------------------
 
+* The importer output now shows the number of audio files in each album.
+  Thanks to jayme on GitHub.
+
 1.1.0 (April 29, 203)
 ---------------------
 
