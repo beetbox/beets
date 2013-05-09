@@ -62,17 +62,12 @@ class QueryParseTest(unittest.TestCase):
 
     def test_single_year(self):
         q = 'year:1999'
-        r = ('year', '1999', beets.library.YearQuery)
+        r = ('year', '1999', beets.library.NumericQuery)
         self.assertEqual(pqp(q), r)
 
     def test_multiple_years(self):
-        q = 'year:1999,2002,2010'
-        r = ('year', '1999,2002,2010', beets.library.YearQuery)
-        self.assertEqual(pqp(q), r)
-
-    def test_year_range(self):
-        q = 'year:1999-2001'
-        r = ('year', '1999-2001', beets.library.YearQuery)
+        q = 'year:1999..2010'
+        r = ('year', '1999..2010', beets.library.NumericQuery)
         self.assertEqual(pqp(q), r)
 
 class AnyFieldQueryTest(unittest.TestCase):
@@ -242,19 +237,11 @@ class GetTest(unittest.TestCase, AssertsMixin):
         self.assert_done(results)
 
     def test_year_range(self):
-        q = 'year:2000-2010'
+        q = 'year:2000..2010'
         results = self.lib.items(q)
         self.assert_matched(results, 'Littlest Things')
         self.assert_matched(results, 'Take Pills')
         self.assert_matched(results, 'Lovers Who Uncover')
-        self.assert_done(results)
-
-    def test_multiple_years(self):
-        q = 'year:1987,2004-2006'
-        results = self.lib.items(q)
-        self.assert_matched(results, 'Littlest Things')
-        self.assert_matched(results, 'Lovers Who Uncover')
-        self.assert_matched(results, 'Boracay')
         self.assert_done(results)
 
     def test_bad_year(self):
@@ -355,11 +342,11 @@ class MatchTest(unittest.TestCase):
         self.assertTrue(q.match(self.item))
 
     def test_year_match_positive(self):
-        q = beets.library.YearQuery('year', '1')
+        q = beets.library.NumericQuery('year', '1')
         self.assertTrue(q.match(self.item))
 
     def test_year_match_negative(self):
-        q = beets.library.YearQuery('year', '10')
+        q = beets.library.NumericQuery('year', '10')
         self.assertFalse(q.match(self.item))
 
 class PathQueryTest(unittest.TestCase, AssertsMixin):
