@@ -349,6 +349,14 @@ class MatchTest(unittest.TestCase):
         q = beets.library.NumericQuery('year', '10')
         self.assertFalse(q.match(self.item))
 
+    def test_bitrate_range_positive(self):
+        q = beets.library.NumericQuery('bitrate', '100000..200000')
+        self.assertTrue(q.match(self.item))
+
+    def test_bitrate_range_negative(self):
+        q = beets.library.NumericQuery('bitrate', '200000..300000')
+        self.assertFalse(q.match(self.item))
+
 class PathQueryTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
