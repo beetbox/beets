@@ -4,11 +4,15 @@ Changelog
 1.1.1 (in development)
 ----------------------
 
-* The importer output now shows the number of audio files in each album.
-  Thanks to jayme on GitHub.
+* When using queries to match on quantitative fields, you can now use
+  **numeric ranges**. For example, you can get a list of albums from the '90s
+  by typing ``beet ls year:1990..1999`` or find high-bitrate music with
+  ``bitrate:128000..``. See :ref:`numericquery`. Thanks to Michael Schuerig.
 * The :ref:`modify-cmd` now correctly converts types when modifying non-string
   fields. You can now safely modify the "comp" flag and the "year" field, for
   example. Thanks to Lucas Duailibe.
+* The importer output now shows the number of audio files in each album.
+  Thanks to jayme on GitHub.
 
 1.1.0 (April 29, 203)
 ---------------------
