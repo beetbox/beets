@@ -548,6 +548,34 @@ class BooleanQuery(MatchQuery):
             self.pattern = util.str2bool(pattern)
         self.pattern = int(self.pattern)
 
+class YearQuery(FieldQuery):
+    """Matches a year or years against a year field.
+    """
+    @classmethod
+    def applies_to(cls, field):
+        return field in ['year', 'original_year']
+
+    @classmethod
+    def value_match(cls, pattern, value):
+        """Determine whether the value matches the pattern. Both
+        arguments are strings.
+        """
+        return value in cls._expanded_years(pattern)
+
+    def clause(self):
+        years = YearQuery._expanded_years(self.pattern)
+        return self.field + " IN (" + ",".join(years) + ")", ()
+
+    @classmethod
+    def _expanded_years(self, pattern):
+        try:
+            ranges = [[int(y) for y in se.split('-')] for se in pattern.split(',')]
+        except ValueError:
+            raise ValueError('invalid year')
+        years = [range(r[0], r[1] + 1) if len(r) > 1 else [r[0]] for r in ranges]
+        return [str(y) for yrs in years for y in yrs]
+
+
 class SingletonQuery(Query):
     """Matches either singleton or non-singleton items."""
     def __init__(self, sense):
@@ -749,6 +777,8 @@ def parse_query_part(part):
         for pre, query_class in prefixes.items():
             if term.startswith(pre):
                 return key, term[len(pre):], query_class
+        if YearQuery.applies_to(key):
+          return key, term, YearQuery
         return key, term, SubstringQuery  # The default query type.
 
 def construct_query_part(query_part, default_fields, all_keys):
