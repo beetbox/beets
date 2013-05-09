@@ -6,6 +6,9 @@ Changelog
 
 * The importer output now shows the number of audio files in each album.
   Thanks to jayme on GitHub.
+* The :ref:`modify-cmd` now correctly converts types when modifying non-string
+  fields. You can now safely modify the "comp" flag and the "year" field, for
+  example. Thanks to Lucas Duailibe.
 
 1.1.0 (April 29, 203)
 ---------------------
