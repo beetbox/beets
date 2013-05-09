@@ -152,7 +152,6 @@ def sorted_walk(path, ignore=(), logger=None):
     try:
         contents = os.listdir(syspath(path))
     except OSError as exc:
-        print('foo', logger, bool(logger))
         if logger:
             logger.warn(u'could not list directory {0}: {1}'.format(
                 displayable_path(path), exc.strerror

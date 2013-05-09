@@ -31,6 +31,7 @@ from beets import autotag
 from beets.autotag import recommendation
 from beets import plugins
 from beets import importer
+from beets import util
 from beets.util import syspath, normpath, ancestry, displayable_path
 from beets.util.functemplate import Template
 from beets import library
@@ -987,17 +988,38 @@ default_commands.append(version_cmd)
 
 # modify: Declaratively change metadata.
 
+# Mapping from SQLite type names to conversion functions.
+CONSTRUCTOR_MAPPING = {
+    'int': int,
+    'bool': util.str2bool,
+    'real': float,
+}
+
+# Convert a string (from user input) to the correct Python type
+def _convert_type(key, value, album=False):
+    """Convert a string to the appropriate type for the given field.
+    `album` indicates whether to use album or item field definitions.
+    """
+    fields = library.ALBUM_FIELDS if album else library.ITEM_FIELDS
+    sqlite_type = [f[1] for f in fields if f[0] == key][0]
+    if value and sqlite_type in CONSTRUCTOR_MAPPING:
+        constructor = CONSTRUCTOR_MAPPING[sqlite_type]
+        try:
+            return constructor(value)
+        except ValueError:
+            raise ui.UserError(u'wrong type for {0}: {1}'.format(key, value))
+    return value
+
 def modify_items(lib, mods, query, write, move, album, confirm):
     """Modifies matching items according to key=value assignments."""
     # Parse key=value specifications into a dictionary.
-    fields = library.ALBUM_FIELDS if album else library.ITEM_FIELDS
     allowed_keys = library.ALBUM_KEYS if album else library.ITEM_KEYS_WRITABLE
     fsets = {}
     for mod in mods:
         key, value = mod.split('=', 1)
         if key not in allowed_keys:
             raise ui.UserError('"%s" is not a valid field' % key)
-        fsets[key] = library._convert_type(fields, key, value)
+        fsets[key] = _convert_type(key, value, album)
 
     # Get the items to modify.
     items, albums = _do_query(lib, query, album, False)
