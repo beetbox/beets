@@ -990,13 +990,14 @@ default_commands.append(version_cmd)
 def modify_items(lib, mods, query, write, move, album, confirm):
     """Modifies matching items according to key=value assignments."""
     # Parse key=value specifications into a dictionary.
+    fields = library.ALBUM_FIELDS if album else library.ITEM_FIELDS
     allowed_keys = library.ALBUM_KEYS if album else library.ITEM_KEYS_WRITABLE
     fsets = {}
     for mod in mods:
         key, value = mod.split('=', 1)
         if key not in allowed_keys:
             raise ui.UserError('"%s" is not a valid field' % key)
-        fsets[key] = value
+        fsets[key] = library._convert_type(fields, key, value)
 
     # Get the items to modify.
     items, albums = _do_query(lib, query, album, False)
