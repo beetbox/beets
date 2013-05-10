@@ -25,6 +25,12 @@ plugin = 'missing'
 log = logging.getLogger('beets')
 
 
+def _missing_count(album):
+    '''Return number of missing items in `album`.
+    '''
+    return album.tracktotal - len([i for i in album.items()])
+
+
 def _missing(album):
     '''Query MusicBrainz to determine items missing from `album`.
     '''
