@@ -110,7 +110,7 @@ ITEM_FIELDS = [
     ('bitdepth',    'int',  False, True),
     ('channels',    'int',  False, True),
     ('mtime',       'int',  False, False),
-    ('itime',       'int',  False, False),
+    ('itime',       'datetime',  False, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
@@ -153,7 +153,7 @@ ALBUM_FIELDS = [
     ('original_month',     'int',  True),
     ('original_day',       'int',  True),
 
-    ('itime',       'int',  False),
+    ('itime',       'datetime',  False),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
