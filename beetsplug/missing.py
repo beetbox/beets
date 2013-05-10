@@ -47,15 +47,6 @@ def _missing(album, lib=None):
                 yield item
 
 
-def _format(song):
-    '''
-    Format unicode-encoded representation of a pygrooveshark song.
-    '''
-    return " - ".join([song.artist.name.encode('utf-8'),
-                       song.album.name.encode('utf-8'),
-                       song.name.encode('utf-8')])
-
-
 def _item(track_info, album_info, album_id):
     '''Build and return `item` from `track_info` and `album info`
     objects. `item` is missing what fields cannot be obtained from
