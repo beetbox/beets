@@ -34,11 +34,9 @@ def _missing_count(album):
 def _missing(album):
     '''Query MusicBrainz to determine items missing from `album`.
     '''
-    item_paths = filter(None, map(lambda i: i.path, album.items()))
-    item_mbids = map(lambda x: x.mb_trackid,
-                     filter(lambda i: i.path is not None, album.items()))
+    item_mbids = map(lambda x: x.mb_trackid, album.items())
 
-    if len(item_paths) < album.tracktotal:
+    if len([i for i in album.items()]) < album.tracktotal:
         # fetch missing items
         # TODO: Implement caching that without breaking other stuff
         album_info = hooks._album_for_id(album.mb_albumid)
