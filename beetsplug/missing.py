@@ -25,9 +25,8 @@ plugin = 'missing'
 log = logging.getLogger('beets')
 
 
-def _missing(album, lib=None):
-    '''Query MusicBrainz to determine items missing from `album`,
-     caching them in `lib` to avoid further queries.
+def _missing(album):
+    '''Query MusicBrainz to determine items missing from `album`.
     '''
     item_paths = filter(None, map(lambda i: i.path, album.items()))
     item_mbids = map(lambda x: x.mb_trackid,
@@ -116,7 +115,7 @@ class MissingPlugin(BeetsPlugin):
             fmt = self.config['format'].get()
 
             for album in lib.albums(decargs(args)):
-                for item in _missing(album, lib):
+                for item in _missing(album):
                     print_obj(item, lib, fmt=fmt)
 
         self._command.func = _miss
