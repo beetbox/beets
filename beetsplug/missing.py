@@ -105,6 +105,8 @@ class MissingPlugin(BeetsPlugin):
         super(MissingPlugin, self).__init__()
 
         self.config.add({'format': None})
+        self.config.add({'count': False})
+        self.config.add({'total': False})
 
         self._command = Subcommand('missing',
                                    help=__doc__,
@@ -115,10 +117,21 @@ class MissingPlugin(BeetsPlugin):
                                         help='print with custom FORMAT',
                                         metavar='FORMAT')
 
+        self._command.parser.add_option('-c', '--count', dest='count',
+                                        action='store_true',
+                                        help='count missing tracks per album')
+
+        self._command.parser.add_option('-t', '--total', dest='total',
+                                        action='store_true',
+                                        help='count total of missing tracks')
+
     def commands(self):
         def _miss(lib, opts, args):
             self.config.set_args(opts)
             fmt = self.config['format'].get()
+            count = self.config['count'].get()
+            total = self.config['total'].get()
+
 
             for album in lib.albums(decargs(args)):
                 for item in _missing(album):
