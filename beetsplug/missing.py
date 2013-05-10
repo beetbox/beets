@@ -132,8 +132,19 @@ class MissingPlugin(BeetsPlugin):
             count = self.config['count'].get()
             total = self.config['total'].get()
 
+            albums = lib.albums(decargs(args))
+            if total:
+                print(sum([_missing_count(a) for a in albums]))
+                return
 
-            for album in lib.albums(decargs(args)):
+            for album in albums:
+                if count:
+                    missing = _missing_count(album)
+                    if missing:
+                        fmt = "$album: {}".format(missing)
+                        print_obj(album, lib, fmt=fmt)
+                    continue
+
                 for item in _missing(album):
                     print_obj(item, lib, fmt=fmt)
 
