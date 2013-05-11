@@ -104,7 +104,7 @@ ITEM_FIELDS = [
     ('bitdepth',    'int',       False, True),
     ('channels',    'int',       False, True),
     ('mtime',       'int',       False, False),
-    ('itime',       'datetime',  False, False),
+    ('added',       'datetime',  False, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
@@ -116,7 +116,7 @@ ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 ALBUM_FIELDS = [
     ('id',      'integer primary key', False),
     ('artpath', 'blob',                False),
-    ('itime',   'datetime',            True),
+    ('added',   'datetime',            True),
 
     ('albumartist',        'text', True),
     ('albumartist_sort',   'text', True),
@@ -203,7 +203,7 @@ def format_for_path(value, key=None, pathmod=None):
     elif key == 'samplerate':
         # Sample rate formatted as kHz.
         value = u'%ikHz' % ((value or 0) // 1000)
-    elif key in ('itime', 'mtime'):
+    elif key in ('added', 'mtime'):
         # Times are formatted to be human-readable.
         value = time.strftime(beets.config['time_format'].get(unicode),
                               time.localtime(value))
@@ -1295,7 +1295,7 @@ class Library(BaseLibrary):
     # Item manipulation.
 
     def add(self, item, copy=False):
-        item.itime = time.time()
+        item.added = time.time()
         if copy:
             self.move(item, copy=True)
 
@@ -1510,7 +1510,7 @@ class Library(BaseLibrary):
 
         # When adding an album and its items for the first time, the
         # items do not yet have a timestamp.
-        album_values['itime'] = time.time()
+        album_values['added'] = time.time()
 
         with self.transaction() as tx:
             sql = 'INSERT INTO albums (%s) VALUES (%s)' % \
@@ -1826,8 +1826,8 @@ class DefaultTemplateFunctions(object):
         return unidecode(s)
 
     @staticmethod
-    def tmpl_format(s, format):
-        """Format the import time to any format according to time.strfime()
+    def tmpl_time(s, format):
+        """Format a time value using `strftime`.
         """
         cur_fmt = beets.config['time_format'].get(unicode)
         return time.strftime(format, time.strptime(s, cur_fmt))

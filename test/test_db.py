@@ -365,7 +365,7 @@ class DestinationTest(unittest.TestCase):
         self.assertEqual(val, u'12kHz')
 
     def test_component_sanitize_datetime(self):
-        val = beets.library.format_for_path(1368302461.210265, 'itime',
+        val = beets.library.format_for_path(1368302461.210265, 'added',
                                             posixpath)
         self.assertTrue(val.startswith('2013'))
 
@@ -985,16 +985,16 @@ class ImportTimeTest(_common.TestCase):
         super(ImportTimeTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
 
-    def test_itime_for_album(self):
+    def added(self):
         self.track = item()
         self.album = self.lib.add_album((self.track,))
-        self.assertGreater(self.album.itime, 0)
-        self.assertGreater(self.track.itime, 0)
+        self.assertGreater(self.album.added, 0)
+        self.assertGreater(self.track.added, 0)
 
     def test_atime_for_singleton(self):
         self.singleton = item()
         self.lib.add(self.singleton)
-        self.assertGreater(self.singleton.itime, 0)
+        self.assertGreater(self.singleton.added, 0)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

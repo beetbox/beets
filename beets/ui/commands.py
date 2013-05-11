@@ -1014,7 +1014,10 @@ def _convert_type(key, value, album=False):
 def modify_items(lib, mods, query, write, move, album, confirm):
     """Modifies matching items according to key=value assignments."""
     # Parse key=value specifications into a dictionary.
-    allowed_keys = library.ALBUM_KEYS if album else library.ITEM_KEYS_WRITABLE + ['itime']
+    if album:
+        allowed_keys = library.ALBUM_KEYS
+    else:
+        allowed_keys = library.ITEM_KEYS_WRITABLE + ['added']
     fsets = {}
     for mod in mods:
         key, value = mod.split('=', 1)
