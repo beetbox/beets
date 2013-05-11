@@ -103,13 +103,13 @@ ITEM_FIELDS = [
     ('original_month',       'int',  True, True),
     ('original_day',         'int',  True, True),
 
-    ('length',      'real', False, True),
-    ('bitrate',     'int',  False, True),
-    ('format',      'text', False, True),
-    ('samplerate',  'int',  False, True),
-    ('bitdepth',    'int',  False, True),
-    ('channels',    'int',  False, True),
-    ('mtime',       'int',  False, False),
+    ('length',      'real',      False, True),
+    ('bitrate',     'int',       False, True),
+    ('format',      'text',      False, True),
+    ('samplerate',  'int',       False, True),
+    ('bitdepth',    'int',       False, True),
+    ('channels',    'int',       False, True),
+    ('mtime',       'int',       False, False),
     ('itime',       'datetime',  False, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
@@ -122,10 +122,11 @@ ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 ALBUM_FIELDS = [
     ('id',      'integer primary key', False),
     ('artpath', 'blob',                False),
+    ('itime',   'datetime',            False),
 
     ('albumartist',        'text', True),
     ('albumartist_sort',   'text', True),
-    ('albumartist_credit', 'text', True, True),
+    ('albumartist_credit', 'text', True),
     ('album',              'text', True),
     ('genre',              'text', True),
     ('year',               'int',  True),
@@ -148,12 +149,10 @@ ALBUM_FIELDS = [
     ('media',              'text', True),
     ('albumdisambig',      'text', True),
     ('rg_album_gain',      'real', True),
-    ('rg_album_peak',      'real', True),®
+    ('rg_album_peak',      'real', True),
     ('original_year',      'int',  True),
     ('original_month',     'int',  True),
     ('original_day',       'int',  True),
-
-    ('itime',       'datetime',  False),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
