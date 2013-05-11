@@ -116,7 +116,7 @@ ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 ALBUM_FIELDS = [
     ('id',      'integer primary key', False),
     ('artpath', 'blob',                False),
-    ('itime',   'datetime',            False),
+    ('itime',   'datetime',            True),
 
     ('albumartist',        'text', True),
     ('albumartist_sort',   'text', True),
@@ -1296,7 +1296,6 @@ class Library(BaseLibrary):
 
     def add(self, item, copy=False):
         item.itime = time.time()
-        item.library = self
         if copy:
             self.move(item, copy=True)
 
@@ -1505,21 +1504,19 @@ class Library(BaseLibrary):
         from its items. The items are added to the database if they
         don't yet have an ID. Returns an Album object.
         """
-        album_keys = ALBUM_KEYS_ITEM + ['itime']
-
         # Set the metadata from the first item.
         album_values = dict(
             (key, getattr(items[0], key)) for key in ALBUM_KEYS_ITEM)
 
-        # Manually set the date when the album was added,
-        # because the items don't yet have these
+        # When adding an album and its items for the first time, the
+        # items do not yet have a timestamp.
         album_values['itime'] = time.time()
 
         with self.transaction() as tx:
             sql = 'INSERT INTO albums (%s) VALUES (%s)' % \
-                (', '.join(album_keys),
-                ', '.join(['?'] * len(album_keys)))
-            subvals = [album_values[key] for key in album_keys]
+                (', '.join(ALBUM_KEYS_ITEM),
+                ', '.join(['?'] * len(ALBUM_KEYS_ITEM)))
+            subvals = [album_values[key] for key in ALBUM_KEYS_ITEM]
             album_id = tx.mutate(sql, subvals)
 
             # Add the items to the library.
@@ -1533,11 +1530,8 @@ class Library(BaseLibrary):
         # Construct the new Album object.
         record = {}
         for key in ALBUM_KEYS:
-            if key in album_keys:
-                record[key] = album_values[key]
-            else:
-                # Non-item fields default to None.
-                record[key] = None
+            # Unset (non-item) fields default to None.
+            record[key] = album_values.get(key)
         record['id'] = album_id
         album = Album(self, record)
 
