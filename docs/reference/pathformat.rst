@@ -56,7 +56,7 @@ track's artists.
 
 These functions are built in to beets:
 
-* ``%lower{text}``: Convert ``text`` to lowercase. 
+* ``%lower{text}``: Convert ``text`` to lowercase.
 * ``%upper{text}``: Convert ``text`` to UPPERCASE.
 * ``%title{text}``: Convert ``text`` to Title Case.
 * ``%left{text,n}``: Return the first ``n`` characters of ``text``.
@@ -70,8 +70,12 @@ These functions are built in to beets:
   `unidecode module`_.
 * ``%aunique{identifiers,disambiguators}``: Provides a unique string to
   disambiguate similar albums in the database. See :ref:`aunique`, below.
+* ``%format{date_time,format}``: Return the date and time in any format accepted
+  by the `time.strfime() method`_. Should probably be used together with the
+  ``itime`` field (import time).
 
 .. _unidecode module: http://pypi.python.org/pypi/Unidecode
+.. _time.strftime() method: http://docs.python.org/2/library/time.html#time.strftime
 
 Plugins can extend beets with more template functions (see
 :ref:`writing-plugins`).
