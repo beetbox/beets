@@ -149,9 +149,11 @@ class GetSetTest(unittest.TestCase):
 
 class DestinationTest(unittest.TestCase):
     def setUp(self):
+        super(DestinationTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
         self.i = item()
     def tearDown(self):
+        super(DestinationTest, self).tearDown()
         self.lib._connection().close()
 
     def test_directory_works_with_trailing_slash(self):
@@ -361,6 +363,11 @@ class DestinationTest(unittest.TestCase):
     def test_component_sanitize_uses_khz_samplerate(self):
         val = beets.library.format_for_path(12345, 'samplerate', posixpath)
         self.assertEqual(val, u'12kHz')
+
+    def test_component_sanitize_datetime(self):
+        val = beets.library.format_for_path(1368302461.210265, 'itime',
+                                            posixpath)
+        self.assertTrue(val.startswith('2013'))
 
     def test_component_sanitize_none(self):
         val = beets.library.format_for_path(None, 'foo', posixpath)
@@ -591,6 +598,7 @@ class PluginDestinationTest(unittest.TestCase):
     def _template_values(self, item):
         return self._tv_map
     def setUp(self):
+        super(PluginDestinationTest, self).setUp()
         self._tv_map = {}
         self.old_template_values = plugins.template_values
         plugins.template_values = self._template_values
@@ -600,6 +608,7 @@ class PluginDestinationTest(unittest.TestCase):
         self.lib.path_formats = [('default', u'$artist $foo')]
         self.i = item()
     def tearDown(self):
+        super(PluginDestinationTest, self).tearDown()
         plugins.template_values = self.old_template_values
 
     def _assert_dest(self, dest):
@@ -814,7 +823,7 @@ class AlbumInfoTest(unittest.TestCase):
         self.lib.remove(self.i)
         self.assertEqual(len(self.lib.albums()), 0)
 
-class BaseAlbumTest(unittest.TestCase):
+class BaseAlbumTest(_common.TestCase):
     def test_field_access(self):
         album = beets.library.BaseAlbum(None, {'fld1':'foo'})
         self.assertEqual(album.fld1, 'foo')
@@ -823,8 +832,9 @@ class BaseAlbumTest(unittest.TestCase):
         album = beets.library.BaseAlbum(None, {})
         self.assertRaises(AttributeError, getattr, album, 'field')
 
-class ArtDestinationTest(unittest.TestCase):
+class ArtDestinationTest(_common.TestCase):
     def setUp(self):
+        super(ArtDestinationTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
         self.i = item()
         self.i.path = self.lib.destination(self.i)
@@ -840,8 +850,9 @@ class ArtDestinationTest(unittest.TestCase):
         track = self.lib.destination(self.i)
         self.assertEqual(os.path.dirname(art), os.path.dirname(track))
 
-class PathStringTest(unittest.TestCase):
+class PathStringTest(_common.TestCase):
     def setUp(self):
+        super(PathStringTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
         self.i = item()
         self.lib.add(self.i)
@@ -922,7 +933,7 @@ class PathStringTest(unittest.TestCase):
         alb = self.lib.get_album(alb.id)
         self.assert_(isinstance(alb.artpath, str))
 
-class PathTruncationTest(unittest.TestCase):
+class PathTruncationTest(_common.TestCase):
     def test_truncate_bytestring(self):
         p = util.truncate_path('abcde/fgh', posixpath, 4)
         self.assertEqual(p, 'abcd/fgh')
@@ -935,8 +946,9 @@ class PathTruncationTest(unittest.TestCase):
         p = util.truncate_path(u'abcde/fgh.ext', posixpath, 5)
         self.assertEqual(p, u'abcde/f.ext')
 
-class MtimeTest(unittest.TestCase):
+class MtimeTest(_common.TestCase):
     def setUp(self):
+        super(MtimeTest, self).setUp()
         self.ipath = os.path.join(_common.RSRC, 'testfile.mp3')
         shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.ipath)
         self.i = beets.library.Item.from_path(self.ipath)
@@ -944,6 +956,7 @@ class MtimeTest(unittest.TestCase):
         self.lib.add(self.i)
 
     def tearDown(self):
+        super(MtimeTest, self).tearDown()
         if os.path.exists(self.ipath):
             os.remove(self.ipath)
 

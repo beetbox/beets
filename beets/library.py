@@ -209,6 +209,10 @@ def format_for_path(value, key=None, pathmod=None):
     elif key == 'samplerate':
         # Sample rate formatted as kHz.
         value = u'%ikHz' % ((value or 0) // 1000)
+    elif key in ('itime', 'mtime'):
+        # Times are formatted to be human-readable.
+        value = time.strftime(ITIME_FORMAT, time.localtime(value))
+        value = unicode(value)
     elif value is None:
         value = u''
     else:
@@ -400,9 +404,6 @@ class Item(object):
         # Additional fields in non-sanitized case.
         if not sanitize:
             mapping['path'] = displayable_path(self.path)
-
-        # Convert the import time to human readable
-        mapping['itime'] = time.strftime(ITIME_FORMAT, time.localtime(getattr(self, 'itime')))
 
         # Use the album artist if the track artist is not set and
         # vice-versa.
@@ -1742,13 +1743,10 @@ class Album(BaseAlbum):
         # Get template field values.
         mapping = {}
         for key in ALBUM_KEYS:
-            mapping[key] = getattr(self, key)
+            mapping[key] = format_for_path(getattr(self, key), key)
 
         mapping['artpath'] = displayable_path(mapping['artpath'])
         mapping['path'] = displayable_path(self.item_dir())
-
-        # Convert the import time to human readable format
-        mapping['itime'] = time.strftime(ITIME_FORMAT, time.localtime(mapping['itime']))
 
         # Get template functions.
         funcs = DefaultTemplateFunctions().functions()
