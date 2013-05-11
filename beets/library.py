@@ -34,77 +34,78 @@ from beets.util import bytestring_path, syspath, normpath, samefile,\
     displayable_path
 from beets.util.functemplate import Template
 import beets
+from datetime import datetime
 
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
 # vulnerable to injection if accessible to the user.
 # Each tuple has the following values:
 # - The name of the field.
-# - The (SQLite) type of the field.
+# - The (Python) type of the field.
 # - Is the field writable?
 # - Does the field reflect an attribute of a MediaFile?
 ITEM_FIELDS = [
-    ('id',          'integer primary key', False, False),
-    ('path',        'blob', False, False),
-    ('album_id',    'int',  False, False),
+    ('id',          int, False, False),
+    ('path',        str, False, False),
+    ('album_id',    int, False, False),
 
-    ('title',                'text', True, True),
-    ('artist',               'text', True, True),
-    ('artist_sort',          'text', True, True),
-    ('artist_credit',        'text', True, True),
-    ('album',                'text', True, True),
-    ('albumartist',          'text', True, True),
-    ('albumartist_sort',     'text', True, True),
-    ('albumartist_credit',   'text', True, True),
-    ('genre',                'text', True, True),
-    ('composer',             'text', True, True),
-    ('grouping',             'text', True, True),
-    ('year',                 'int',  True, True),
-    ('month',                'int',  True, True),
-    ('day',                  'int',  True, True),
-    ('track',                'int',  True, True),
-    ('tracktotal',           'int',  True, True),
-    ('disc',                 'int',  True, True),
-    ('disctotal',            'int',  True, True),
-    ('lyrics',               'text', True, True),
-    ('comments',             'text', True, True),
-    ('bpm',                  'int',  True, True),
-    ('comp',                 'bool', True, True),
-    ('mb_trackid',           'text', True, True),
-    ('mb_albumid',           'text', True, True),
-    ('mb_artistid',          'text', True, True),
-    ('mb_albumartistid',     'text', True, True),
-    ('albumtype',            'text', True, True),
-    ('label',                'text', True, True),
-    ('acoustid_fingerprint', 'text', True, True),
-    ('acoustid_id',          'text', True, True),
-    ('mb_releasegroupid',    'text', True, True),
-    ('asin',                 'text', True, True),
-    ('catalognum',           'text', True, True),
-    ('script',               'text', True, True),
-    ('language',             'text', True, True),
-    ('country',              'text', True, True),
-    ('albumstatus',          'text', True, True),
-    ('media',                'text', True, True),
-    ('albumdisambig',        'text', True, True),
-    ('disctitle',            'text', True, True),
-    ('encoder',              'text', True, True),
-    ('rg_track_gain',        'real', True, True),
-    ('rg_track_peak',        'real', True, True),
-    ('rg_album_gain',        'real', True, True),
-    ('rg_album_peak',        'real', True, True),
-    ('original_year',        'int',  True, True),
-    ('original_month',       'int',  True, True),
-    ('original_day',         'int',  True, True),
+    ('title',                unicode, True, True),
+    ('artist',               unicode, True, True),
+    ('artist_sort',          unicode, True, True),
+    ('artist_credit',        unicode, True, True),
+    ('album',                unicode, True, True),
+    ('albumartist',          unicode, True, True),
+    ('albumartist_sort',     unicode, True, True),
+    ('albumartist_credit',   unicode, True, True),
+    ('genre',                unicode, True, True),
+    ('composer',             unicode, True, True),
+    ('grouping',             unicode, True, True),
+    ('year',                 int,     True, True),
+    ('month',                int,     True, True),
+    ('day',                  int,     True, True),
+    ('track',                int,     True, True),
+    ('tracktotal',           int,     True, True),
+    ('disc',                 int,     True, True),
+    ('disctotal',            int,     True, True),
+    ('lyrics',               unicode, True, True),
+    ('comments',             unicode, True, True),
+    ('bpm',                  int,     True, True),
+    ('comp',                 bool,    True, True),
+    ('mb_trackid',           unicode, True, True),
+    ('mb_albumid',           unicode, True, True),
+    ('mb_artistid',          unicode, True, True),
+    ('mb_albumartistid',     unicode, True, True),
+    ('albumtype',            unicode, True, True),
+    ('label',                unicode, True, True),
+    ('acoustid_fingerprint', unicode, True, True),
+    ('acoustid_id',          unicode, True, True),
+    ('mb_releasegroupid',    unicode, True, True),
+    ('asin',                 unicode, True, True),
+    ('catalognum',           unicode, True, True),
+    ('script',               unicode, True, True),
+    ('language',             unicode, True, True),
+    ('country',              unicode, True, True),
+    ('albumstatus',          unicode, True, True),
+    ('media',                unicode, True, True),
+    ('albumdisambig',        unicode, True, True),
+    ('disctitle',            unicode, True, True),
+    ('encoder',              unicode, True, True),
+    ('rg_track_gain',        float,   True, True),
+    ('rg_track_peak',        float,   True, True),
+    ('rg_album_gain',        float,   True, True),
+    ('rg_album_peak',        float,   True, True),
+    ('original_year',        int,     True, True),
+    ('original_month',       int,     True, True),
+    ('original_day',         int,     True, True),
 
-    ('length',      'real',      False, True),
-    ('bitrate',     'int',       False, True),
-    ('format',      'text',      False, True),
-    ('samplerate',  'int',       False, True),
-    ('bitdepth',    'int',       False, True),
-    ('channels',    'int',       False, True),
-    ('mtime',       'int',       False, False),
-    ('added',       'datetime',  False, False),
+    ('length',      float,    False, True),
+    ('bitrate',     int,      False, True),
+    ('format',      unicode,  False, True),
+    ('samplerate',  int,      False, True),
+    ('bitdepth',    int,      False, True),
+    ('channels',    int,      False, True),
+    ('mtime',       int,      False, False),
+    ('added',       datetime, False, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
@@ -114,42 +115,53 @@ ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 # The third entry in each tuple indicates whether the field reflects an
 # identically-named field in the items table.
 ALBUM_FIELDS = [
-    ('id',      'integer primary key', False),
-    ('artpath', 'blob',                False),
-    ('added',   'datetime',            True),
+    ('id',      int,      False),
+    ('artpath', str,      False),
+    ('added',   datetime, True),
 
-    ('albumartist',        'text', True),
-    ('albumartist_sort',   'text', True),
-    ('albumartist_credit', 'text', True),
-    ('album',              'text', True),
-    ('genre',              'text', True),
-    ('year',               'int',  True),
-    ('month',              'int',  True),
-    ('day',                'int',  True),
-    ('tracktotal',         'int',  True),
-    ('disctotal',          'int',  True),
-    ('comp',               'bool', True),
-    ('mb_albumid',         'text', True),
-    ('mb_albumartistid',   'text', True),
-    ('albumtype',          'text', True),
-    ('label',              'text', True),
-    ('mb_releasegroupid',  'text', True),
-    ('asin',               'text', True),
-    ('catalognum',         'text', True),
-    ('script',             'text', True),
-    ('language',           'text', True),
-    ('country',            'text', True),
-    ('albumstatus',        'text', True),
-    ('media',              'text', True),
-    ('albumdisambig',      'text', True),
-    ('rg_album_gain',      'real', True),
-    ('rg_album_peak',      'real', True),
-    ('original_year',      'int',  True),
-    ('original_month',     'int',  True),
-    ('original_day',       'int',  True),
+    ('albumartist',        unicode, True),
+    ('albumartist_sort',   unicode, True),
+    ('albumartist_credit', unicode, True),
+    ('album',              unicode, True),
+    ('genre',              unicode, True),
+    ('year',               int,     True),
+    ('month',              int,     True),
+    ('day',                int,     True),
+    ('tracktotal',         int,     True),
+    ('disctotal',          int,     True),
+    ('comp',               bool,    True),
+    ('mb_albumid',         unicode, True),
+    ('mb_albumartistid',   unicode, True),
+    ('albumtype',          unicode, True),
+    ('label',              unicode, True),
+    ('mb_releasegroupid',  unicode, True),
+    ('asin',               unicode, True),
+    ('catalognum',         unicode, True),
+    ('script',             unicode, True),
+    ('language',           unicode, True),
+    ('country',            unicode, True),
+    ('albumstatus',        unicode, True),
+    ('media',              unicode, True),
+    ('albumdisambig',      unicode, True),
+    ('rg_album_gain',      float,   True),
+    ('rg_album_peak',      float,   True),
+    ('original_year',      int,     True),
+    ('original_month',     int,     True),
+    ('original_day',       int,     True),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
+
+# SQLite type names.
+SQLITE_TYPES = {
+    int:      'INT',
+    float:    'REAL',
+    datetime: 'FLOAT',
+    str:      'BLOB',
+    unicode:  'TEXT',
+    bool:     'INT',
+}
+SQLITE_KEY_TYPE = 'INTEGER PRIMARY KEY'
 
 # Default search fields for various granularities.
 ARTIST_DEFAULT_FIELDS = ('artist',)
@@ -566,7 +578,7 @@ class NumericQuery(FieldQuery):
         """Determine whether a field has numeric type. NumericQuery
         should only be used with such fields.
         """
-        return cls.kinds.get(field) in ('int', 'real')
+        return cls.kinds.get(field) in (int, float)
 
     def _convert(self, s):
         """Convert a string to the appropriate numeric type. If the
@@ -579,10 +591,7 @@ class NumericQuery(FieldQuery):
 
     def __init__(self, field, pattern):
         super(NumericQuery, self).__init__(field, pattern)
-        if self.kinds[field] == 'int':
-            self.numtype = int
-        else:
-            self.numtype = float
+        self.numtype = self.kinds[field]
 
         parts = pattern.split('..', 1)
         if len(parts) == 1:
@@ -1157,9 +1166,16 @@ class Library(BaseLibrary):
 
         if not current_fields:
             # No table exists.
-            setup_sql =  'CREATE TABLE %s (' % table
-            setup_sql += ', '.join(['%s %s' % f[:2] for f in fields])
-            setup_sql += ');\n'
+            columns = []
+            for field in fields:
+                name, typ = field[:2]
+                if name == 'id':
+                    sql_type = SQLITE_KEY_TYPE
+                else:
+                    sql_type = SQLITE_TYPES[typ]
+                columns.append('{0} {1}'.format(name, sql_type))
+            setup_sql = 'CREATE TABLE {0} ({1});\n'.format(table,
+                                                           ', '.join(columns))
 
         else:
             # Table exists but is missing fields.
@@ -1170,8 +1186,9 @@ class Library(BaseLibrary):
                         break
                 else:
                     assert False
-                setup_sql += 'ALTER TABLE %s ' % table
-                setup_sql += 'ADD COLUMN %s %s;\n' % field[:2]
+                setup_sql += 'ALTER TABLE {0} ADD COLUMN {1} {2};\n'.format(
+                    table, field[0], SQLITE_TYPES[field[1]]
+                )
 
         # Special case. If we're moving from a version without
         # albumartist, copy all the "artist" values to "albumartist"

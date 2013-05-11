@@ -23,6 +23,7 @@ import time
 import itertools
 import re
 import codecs
+from datetime import datetime
 
 import beets
 from beets import ui
@@ -988,28 +989,26 @@ default_commands.append(version_cmd)
 
 # modify: Declaratively change metadata.
 
-# Mapping from SQLite type names to conversion functions.
-CONSTRUCTOR_MAPPING = {
-    'int': int,
-    'bool': util.str2bool,
-    'real': float,
-    'datetime': lambda v: int(time.mktime(time.strptime(v, library.ITIME_FORMAT))),
-}
-
-# Convert a string (from user input) to the correct Python type
 def _convert_type(key, value, album=False):
     """Convert a string to the appropriate type for the given field.
     `album` indicates whether to use album or item field definitions.
     """
     fields = library.ALBUM_FIELDS if album else library.ITEM_FIELDS
-    sqlite_type = [f[1] for f in fields if f[0] == key][0]
-    if value and sqlite_type in CONSTRUCTOR_MAPPING:
-        constructor = CONSTRUCTOR_MAPPING[sqlite_type]
+    typ = [f[1] for f in fields if f[0] == key][0]
+
+    if typ is bool:
+        return util.str2bool(value)
+    elif typ is datetime:
+        fmt = config['time_format'].get(unicode)
         try:
-            return constructor(value)
+            return time.mktime(time.strptime(value, fmt))
         except ValueError:
-            raise ui.UserError(u'wrong type for {0}: {1}'.format(key, value))
-    return value
+            raise ui.UserError(u'{0} must have format {1}'.format(key, fmt))
+    else:
+        try:
+            return typ(value)
+        except ValueError:
+            raise ui.UserError(u'{0} must be a {1}'.format(key, typ))
 
 def modify_items(lib, mods, query, write, move, album, confirm):
     """Modifies matching items according to key=value assignments."""

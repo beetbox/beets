@@ -642,10 +642,10 @@ class MigrationTest(unittest.TestCase):
     """
     def setUp(self):
         # Three different "schema versions".
-        self.older_fields = [('field_one', 'int')]
-        self.old_fields = self.older_fields + [('field_two', 'int')]
-        self.new_fields = self.old_fields + [('field_three', 'int')]
-        self.newer_fields = self.new_fields + [('field_four', 'int')]
+        self.older_fields = [('field_one', int)]
+        self.old_fields = self.older_fields + [('field_two', int)]
+        self.new_fields = self.old_fields + [('field_three', int)]
+        self.newer_fields = self.new_fields + [('field_four', int)]
 
         # Set up a library with old_fields.
         self.libfile = os.path.join(_common.RSRC, 'templib.blb')
