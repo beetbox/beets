@@ -70,12 +70,12 @@ These functions are built in to beets:
   `unidecode module`_.
 * ``%aunique{identifiers,disambiguators}``: Provides a unique string to
   disambiguate similar albums in the database. See :ref:`aunique`, below.
-* ``%format{date_time,format}``: Return the date and time in any format accepted
-  by the `time.strfime() method`_. Should probably be used together with the
-  ``itime`` field (import time).
+* ``%time{date_time,format}``: Return the date and time in any format accepted
+  by `strfime`_. For example, to get the year some music was added to your
+  library, use ``%time{$added,%Y}``.
 
 .. _unidecode module: http://pypi.python.org/pypi/Unidecode
-.. _time.strftime() method: http://docs.python.org/2/library/time.html#time.strftime
+.. _strftime: http://docs.python.org/2/library/time.html#time.strftime
 
 Plugins can extend beets with more template functions (see
 :ref:`writing-plugins`).
@@ -219,3 +219,8 @@ MusicBrainz and fingerprint information:
 * mb_releasegroupid
 * acoustid_fingerprint
 * acoustid_id
+
+Library metadata:
+
+* mtime: The modification time of the audio file.
+* added: The date and time that the music was added to your library.

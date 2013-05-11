@@ -4,8 +4,12 @@ Changelog
 1.1.1 (in development)
 ----------------------
 
-* New :doc:`/plugins/missing`: Find albums in your library that are missing
-  tracks. Thanks to Pedro Silva.
+* New :doc:`/plugins/missing`: Find albums in your library that are **missing
+  tracks**. Thanks to Pedro Silva.
+* Your library now keeps track of **when music was added** to it. The new
+  ``added`` field is a timestamp reflecting when each item and album was
+  imported and the new ``%time{}`` template function lets you format this
+  timestamp for humans. Thanks to Lucas Duailibe.
 * When using queries to match on quantitative fields, you can now use
   **numeric ranges**. For example, you can get a list of albums from the '90s
   by typing ``beet ls year:1990..1999`` or find high-bitrate music with
