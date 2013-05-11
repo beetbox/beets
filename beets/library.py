@@ -148,7 +148,7 @@ ALBUM_FIELDS = [
     ('media',              'text', True),
     ('albumdisambig',      'text', True),
     ('rg_album_gain',      'real', True),
-    ('rg_album_peak',      'real', True),
+    ('rg_album_peak',      'real', True),®
     ('original_year',      'int',  True),
     ('original_month',     'int',  True),
     ('original_day',       'int',  True),
@@ -402,8 +402,8 @@ class Item(object):
         if not sanitize:
             mapping['path'] = displayable_path(self.path)
 
-	# Convert the import time to human readable
-	mapping['itime'] = time.strftime(ITIME_FORMAT, time.localtime(getattr(self, 'itime')))
+        # Convert the import time to human readable
+        mapping['itime'] = time.strftime(ITIME_FORMAT, time.localtime(getattr(self, 'itime')))
 
         # Use the album artist if the track artist is not set and
         # vice-versa.
@@ -719,9 +719,9 @@ class AnyFieldQuery(CollectionQuery):
 
     def match(self, item):
         for subq in self.subqueries:
-	    if subq.match(item):
-		return True
-	return False
+            if subq.match(item):
+                return True
+        return False
 
 class MutableCollectionQuery(CollectionQuery):
     """A collection query whose subqueries may be modified after the
@@ -1300,10 +1300,10 @@ class Library(BaseLibrary):
     # Item manipulation.
 
     def add(self, item, copy=False):
-	item.itime = time.time()
-	item.library = self
-	if copy:
-	    self.move(item, copy=True)
+        item.itime = time.time()
+        item.library = self
+        if copy:
+            self.move(item, copy=True)
 
         # Build essential parts of query.
         columns = ','.join([key for key in ITEM_KEYS if key != 'id'])
@@ -1507,24 +1507,24 @@ class Library(BaseLibrary):
 
     def add_album(self, items):
         """Create a new album in the database with metadata derived
-	from its items. The items are added to the database if they
-	don't yet have an ID. Returns an Album object.
-	"""
-	album_keys = ALBUM_KEYS_ITEM + ['itime']
+        from its items. The items are added to the database if they
+        don't yet have an ID. Returns an Album object.
+        """
+        album_keys = ALBUM_KEYS_ITEM + ['itime']
 
-	# Set the metadata from the first item.
-	album_values = dict(
+        # Set the metadata from the first item.
+        album_values = dict(
             (key, getattr(items[0], key)) for key in ALBUM_KEYS_ITEM)
 
-	# Manually set the date when the album was added,
-	# because the items don't yet have these
-	album_values['itime'] = time.time()
+        # Manually set the date when the album was added,
+        # because the items don't yet have these
+        album_values['itime'] = time.time()
 
-	with self.transaction() as tx:
-	    sql = 'INSERT INTO albums (%s) VALUES (%s)' % \
-		(', '.join(album_keys),
-		', '.join(['?'] * len(album_keys)))
-	    subvals = [album_values[key] for key in album_keys]
+        with self.transaction() as tx:
+            sql = 'INSERT INTO albums (%s) VALUES (%s)' % \
+                (', '.join(album_keys),
+                ', '.join(['?'] * len(album_keys)))
+            subvals = [album_values[key] for key in album_keys]
             album_id = tx.mutate(sql, subvals)
 
             # Add the items to the library.
@@ -1538,8 +1538,8 @@ class Library(BaseLibrary):
         # Construct the new Album object.
         record = {}
         for key in ALBUM_KEYS:
-	    if key in album_keys:
-		record[key] = album_values[key]
+            if key in album_keys:
+                record[key] = album_values[key]
             else:
                 # Non-item fields default to None.
                 record[key] = None
@@ -1748,8 +1748,8 @@ class Album(BaseAlbum):
         mapping['artpath'] = displayable_path(mapping['artpath'])
         mapping['path'] = displayable_path(self.item_dir())
 
-	# Convert the import time to human readable format
-	mapping['itime'] = time.strftime(ITIME_FORMAT, time.localtime(mapping['itime']))
+        # Convert the import time to human readable format
+        mapping['itime'] = time.strftime(ITIME_FORMAT, time.localtime(mapping['itime']))
 
         # Get template functions.
         funcs = DefaultTemplateFunctions().functions()
@@ -1841,9 +1841,9 @@ class DefaultTemplateFunctions(object):
 
     @staticmethod
     def tmpl_format(s, format):
-	"""Format the import time to any format according to time.strfime()
-	"""
-	return time.strftime(format, time.strptime(s, ITIME_FORMAT))
+        """Format the import time to any format according to time.strfime()
+        """
+        return time.strftime(format, time.strptime(s, ITIME_FORMAT))
 
     def tmpl_aunique(self, keys=None, disam=None):
         """Generate a string that is guaranteed to be unique among all

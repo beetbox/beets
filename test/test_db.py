@@ -964,23 +964,23 @@ class MtimeTest(unittest.TestCase):
 
     def test_mtime_up_to_date_after_read(self):
         self.i.title = 'something else'
-	self.i.read()
-	self.assertGreaterEqual(self.i.mtime, self._mtime())
+        self.i.read()
+        self.assertGreaterEqual(self.i.mtime, self._mtime())
 
 class ImportTimeTest(unittest.TestCase):
     def setUp(self):
-	self.lib = beets.library.Library(':memory:')
+        self.lib = beets.library.Library(':memory:')
 
     def test_itime_for_album(self):
-	self.track = item()
-	self.album = self.lib.add_album((self.track,))
-	self.assertGreater(self.album.itime, 0)
-	self.assertGreater(self.track.itime, 0)
+        self.track = item()
+        self.album = self.lib.add_album((self.track,))
+        self.assertGreater(self.album.itime, 0)
+        self.assertGreater(self.track.itime, 0)
 
     def test_atime_for_singleton(self):
-	self.singleton = item()
-	self.lib.add(self.singleton)
-	self.assertGreater(self.singleton.itime, 0)
+        self.singleton = item()
+        self.lib.add(self.singleton)
+        self.assertGreater(self.singleton.itime, 0)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
