@@ -37,10 +37,6 @@ import beets
 
 MAX_FILENAME_LENGTH = 200
 
-# This is the default format when printing the import time
-# of an object. This needs to be a format accepted by time.strftime()
-ITIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
 # vulnerable to injection if accessible to the user.
@@ -211,7 +207,8 @@ def format_for_path(value, key=None, pathmod=None):
         value = u'%ikHz' % ((value or 0) // 1000)
     elif key in ('itime', 'mtime'):
         # Times are formatted to be human-readable.
-        value = time.strftime(ITIME_FORMAT, time.localtime(value))
+        value = time.strftime(beets.config['time_format'].get(unicode),
+                              time.localtime(value))
         value = unicode(value)
     elif value is None:
         value = u''
@@ -1840,7 +1837,8 @@ class DefaultTemplateFunctions(object):
     def tmpl_format(s, format):
         """Format the import time to any format according to time.strfime()
         """
-        return time.strftime(format, time.strptime(s, ITIME_FORMAT))
+        cur_fmt = beets.config['time_format'].get(unicode)
+        return time.strftime(format, time.strptime(s, cur_fmt))
 
     def tmpl_aunique(self, keys=None, disam=None):
         """Generate a string that is guaranteed to be unique among all

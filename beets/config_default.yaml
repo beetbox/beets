@@ -49,6 +49,7 @@ ui:
 
 list_format_item: $artist - $album - $title
 list_format_album: $albumartist - $album
+time_format: '%Y-%m-%d %H:%M:%S'
 
 paths:
     default: $albumartist/$album%aunique{}/$track $title

@@ -980,8 +980,9 @@ class MtimeTest(_common.TestCase):
         self.i.read()
         self.assertGreaterEqual(self.i.mtime, self._mtime())
 
-class ImportTimeTest(unittest.TestCase):
+class ImportTimeTest(_common.TestCase):
     def setUp(self):
+        super(ImportTimeTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
 
     def test_itime_for_album(self):
