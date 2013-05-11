@@ -24,6 +24,7 @@ import unicodedata
 import threading
 import contextlib
 import traceback
+import time
 from collections import defaultdict
 from unidecode import unidecode
 from beets.mediafile import MediaFile
@@ -35,6 +36,10 @@ from beets.util.functemplate import Template
 import beets
 
 MAX_FILENAME_LENGTH = 200
+
+# This is the default format when printing the import time
+# of an object. This needs to be a format accepted by time.strftime()
+ITIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
@@ -105,6 +110,7 @@ ITEM_FIELDS = [
     ('bitdepth',    'int',  False, True),
     ('channels',    'int',  False, True),
     ('mtime',       'int',  False, False),
+    ('itime',       'datetime',  False, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
@@ -142,10 +148,12 @@ ALBUM_FIELDS = [
     ('media',              'text', True),
     ('albumdisambig',      'text', True),
     ('rg_album_gain',      'real', True),
-    ('rg_album_peak',      'real', True),
+    ('rg_album_peak',      'real', True),®
     ('original_year',      'int',  True),
     ('original_month',     'int',  True),
     ('original_day',       'int',  True),
+
+    ('itime',       'datetime',  False),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
@@ -393,6 +401,9 @@ class Item(object):
         # Additional fields in non-sanitized case.
         if not sanitize:
             mapping['path'] = displayable_path(self.path)
+
+        # Convert the import time to human readable
+        mapping['itime'] = time.strftime(ITIME_FORMAT, time.localtime(getattr(self, 'itime')))
 
         # Use the album artist if the track artist is not set and
         # vice-versa.
@@ -1289,6 +1300,7 @@ class Library(BaseLibrary):
     # Item manipulation.
 
     def add(self, item, copy=False):
+        item.itime = time.time()
         item.library = self
         if copy:
             self.move(item, copy=True)
@@ -1498,15 +1510,21 @@ class Library(BaseLibrary):
         from its items. The items are added to the database if they
         don't yet have an ID. Returns an Album object.
         """
+        album_keys = ALBUM_KEYS_ITEM + ['itime']
+
         # Set the metadata from the first item.
-        item_values = dict(
+        album_values = dict(
             (key, getattr(items[0], key)) for key in ALBUM_KEYS_ITEM)
+
+        # Manually set the date when the album was added,
+        # because the items don't yet have these
+        album_values['itime'] = time.time()
 
         with self.transaction() as tx:
             sql = 'INSERT INTO albums (%s) VALUES (%s)' % \
-                (', '.join(ALBUM_KEYS_ITEM),
-                ', '.join(['?'] * len(ALBUM_KEYS_ITEM)))
-            subvals = [item_values[key] for key in ALBUM_KEYS_ITEM]
+                (', '.join(album_keys),
+                ', '.join(['?'] * len(album_keys)))
+            subvals = [album_values[key] for key in album_keys]
             album_id = tx.mutate(sql, subvals)
 
             # Add the items to the library.
@@ -1520,8 +1538,8 @@ class Library(BaseLibrary):
         # Construct the new Album object.
         record = {}
         for key in ALBUM_KEYS:
-            if key in ALBUM_KEYS_ITEM:
-                record[key] = item_values[key]
+            if key in album_keys:
+                record[key] = album_values[key]
             else:
                 # Non-item fields default to None.
                 record[key] = None
@@ -1730,6 +1748,9 @@ class Album(BaseAlbum):
         mapping['artpath'] = displayable_path(mapping['artpath'])
         mapping['path'] = displayable_path(self.item_dir())
 
+        # Convert the import time to human readable format
+        mapping['itime'] = time.strftime(ITIME_FORMAT, time.localtime(mapping['itime']))
+
         # Get template functions.
         funcs = DefaultTemplateFunctions().functions()
         funcs.update(plugins.template_funcs())
@@ -1817,6 +1838,12 @@ class DefaultTemplateFunctions(object):
         """Translate non-ASCII characters to their ASCII equivalents.
         """
         return unidecode(s)
+
+    @staticmethod
+    def tmpl_format(s, format):
+        """Format the import time to any format according to time.strfime()
+        """
+        return time.strftime(format, time.strptime(s, ITIME_FORMAT))
 
     def tmpl_aunique(self, keys=None, disam=None):
         """Generate a string that is guaranteed to be unique among all
