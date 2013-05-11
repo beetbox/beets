@@ -12,8 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-'''list missing tracks
-'''
+"""List missing tracks.
+"""
 import logging
 
 from beets.autotag import hooks
@@ -21,19 +21,19 @@ from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_obj, Subcommand
 
-plugin = 'missing'
+PLUGIN = 'missing'
 log = logging.getLogger('beets')
 
 
 def _missing_count(album):
-    '''Return number of missing items in `album`.
-    '''
+    """Return number of missing items in `album`.
+    """
     return album.tracktotal - len([i for i in album.items()])
 
 
 def _missing(album):
-    '''Query MusicBrainz to determine items missing from `album`.
-    '''
+    """Query MusicBrainz to determine items missing from `album`.
+    """
     item_mbids = map(lambda x: x.mb_trackid, album.items())
 
     if len([i for i in album.items()]) < album.tracktotal:
@@ -44,20 +44,20 @@ def _missing(album):
             if track_info.track_id not in item_mbids:
                 item = _item(track_info, album_info, album.id)
                 log.debug('{}: track {} in album {}'
-                          .format(plugin,
+                          .format(PLUGIN,
                                   track_info.track_id,
                                   album_info.album_id))
                 yield item
 
 
 def _item(track_info, album_info, album_id):
-    '''Build and return `item` from `track_info` and `album info`
+    """Build and return `item` from `track_info` and `album info`
     objects. `item` is missing what fields cannot be obtained from
     MusicBrainz alone (encoder, rg_track_gain, rg_track_peak,
     rg_album_gain, rg_album_peak, original_year, original_month,
     original_day, length, bitrate, format, samplerate, bitdepth,
     channels, mtime.)
-    '''
+    """
     t = track_info
     a = album_info
 
@@ -97,8 +97,8 @@ def _item(track_info, album_info, album_id):
 
 
 class MissingPlugin(BeetsPlugin):
-    '''List missing tracks
-    '''
+    """List missing tracks
+    """
     def __init__(self):
         super(MissingPlugin, self).__init__()
 

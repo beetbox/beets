@@ -4,6 +4,8 @@ Changelog
 1.1.1 (in development)
 ----------------------
 
+* New :doc:`/plugins/missing`: Find albums in your library that are missing
+  tracks. Thanks to Pedro Silva.
 * When using queries to match on quantitative fields, you can now use
   **numeric ranges**. For example, you can get a list of albums from the '90s
   by typing ``beet ls year:1990..1999`` or find high-bitrate music with

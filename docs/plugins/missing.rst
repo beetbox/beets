@@ -19,21 +19,19 @@ Enable the plugin by putting ``missing`` on your ``plugins`` line in
 Configuration
 -------------
 
-The plugin accepts the following configuration directives, either in
-your configuration file::
+By default, the ``beet missing`` command lists the names of tracks that your
+library is missing from each album. You can customize the output format, count
+the number of missing tracks per album, or total up the number of missing
+tracks over your whole library. These options can either be specified in the
+config file::
 
     missing:
-        format: FMTSTR
-        count: bool
-        total: bool
+        format: $albumartist - $album - $title
+        count: no
+        total: no
 
-or in the command-line::
+or on the command-line::
 
-    $ beet missing --help
-    Usage: beet missing [options]
-
-    Options:
-      -h, --help            show this help message and exit
       -f FORMAT, --format=FORMAT
                             print with custom FORMAT
       -c, --count           count missing tracks per album
@@ -43,27 +41,26 @@ or in the command-line::
 format
 ~~~~~~
 
-The ``format`` option (default: ``None``) lets you specify a specific
-format with which to print every track. This uses the same template
-syntax as beets’ :doc:`path formats </reference/pathformat>`.  The usage
-is inspired by, and therefore similar to, the :ref:`list <list-cmd>`
-command.
+The ``format`` option (default: :ref:`list_format_item`) lets you specify a
+specific format with which to print every track. This uses the same template
+syntax as beets’ :doc:`path formats </reference/pathformat>`.  The usage is
+inspired by, and therefore similar to, the :ref:`list <list-cmd>` command.
 
 count
 ~~~~~
 
-The ``count` option (default: ``False``) prints a count of missing
+The ``count`` option (default: false) prints a count of missing
 tracks per album, with ``format`` hard-coded to ``'$album: $count'``.
 
 total
 ~~~~~
 
-The ``total`` option (default: ``False``) prints a single
+The ``total`` option (default: false) prints a single
 count of missing tracks in all albums
 
 
 Examples
--------------------------
+--------
 
 List all missing tracks in your collection::
 
@@ -91,7 +88,5 @@ TODO
 ----
 
 - Add caching.
-
---------------
 
 .. _spark: https://github.com/holman/spark
