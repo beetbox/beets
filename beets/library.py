@@ -35,8 +35,6 @@ from beets.util import bytestring_path, syspath, normpath, samefile,\
 from beets.util.functemplate import Template
 import beets
 
-MAX_FILENAME_LENGTH = 200
-
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
 # vulnerable to injection if accessible to the user.
