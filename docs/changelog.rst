@@ -19,6 +19,8 @@ Changelog
   example. Thanks to Lucas Duailibe.
 * The importer output now shows the number of audio files in each album.
   Thanks to jayme on GitHub.
+* :doc:`/plugins/lyrics`: Lyrics searches should now turn up more results due
+  to some fixes in dealing with special characters.
 
 1.1.0 (April 29, 203)
 ---------------------

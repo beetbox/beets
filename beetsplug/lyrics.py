@@ -153,8 +153,9 @@ LYRICSCOM_NOT_FOUND = (
     'Submit Lyrics',
 )
 def _lc_encode(s):
+    s = re.sub(r'[^\w\s-]', '', s)
     s = re.sub(r'\s+', '-', s)
-    return _encode(s)
+    return _encode(s).lower()
 
 def fetch_lyricscom(artist, title):
     """Fetch lyrics from Lyrics.com."""
