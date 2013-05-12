@@ -36,6 +36,20 @@ DIV_RE = re.compile(r'<(/?)div>?')
 COMMENT_RE = re.compile(r'<!--.*-->', re.S)
 TAG_RE = re.compile(r'<[^>]*>')
 BREAK_RE = re.compile(r'<br\s*/?>')
+URL_CHARACTERS = {
+    u'\u2018': u"'",
+    u'\u2019': u"'",
+    u'\u201c': u'"',
+    u'\u201d': u'"',
+    u'\u2010': u'-',
+    u'\u2011': u'-',
+    u'\u2012': u'-',
+    u'\u2013': u'-',
+    u'\u2014': u'-',
+    u'\u2015': u'-',
+    u'\u2016': u'-',
+    u'\u2026': u'...',
+}
 
 
 # Utilities.
@@ -115,8 +129,8 @@ def _encode(s):
     LyricsWiki and Lyrics.com).
     """
     if isinstance(s, unicode):
-        # Replace "fancy" apostrophes with straight ones.
-        s = s.replace(u'\u2019', u"'")
+        for char, repl in URL_CHARACTERS.items():
+            s = s.replace(char, repl)
         s = s.encode('utf8', 'ignore')
     return urllib.quote(s)
 
