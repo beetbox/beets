@@ -28,6 +28,7 @@ import sqlite3
 import errno
 import re
 import struct
+import traceback
 
 from beets import library
 from beets import plugins
@@ -785,5 +786,5 @@ def main(args=None):
         else:
             raise
     except KeyboardInterrupt:
-        # Silently ignore ^C.
-        pass
+        # Silently ignore ^C except in verbose mode.
+        log.debug(traceback.format_exc())
