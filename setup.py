@@ -74,7 +74,7 @@ setup(name='beets',
           'mutagen>=1.21',
           'munkres',
           'unidecode',
-          'musicbrainzngs>=0.3',
+          'musicbrainzngs>=0.4',
           'pyyaml',
       ]
       + (['colorama'] if (sys.platform == 'win32') else [])
