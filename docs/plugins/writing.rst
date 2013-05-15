@@ -261,6 +261,17 @@ that adds a ``$disc_and_track`` field::
 With this plugin enabled, templates can reference ``$disc_and_track`` as they
 can any standard metadata field.
 
+Note that the above idiom expects the argument ``item`` to be an
+actual *track* item. If you'd like to provide a template field for
+*albums*, you'll need to check the argument::
+
+    @MyPlugin.template_field('field')
+    def _tmpl_field(album):
+        """Return stuff.
+        """
+        if isinstance(album, beets.library.Album):
+            return 'stuff'
+
 Extend MediaFile
 ^^^^^^^^^^^^^^^^
 
