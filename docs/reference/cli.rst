@@ -250,11 +250,13 @@ fields
 ``````
 ::
 
-    beet fields
+    beet fields [-p]
 
 Show the item and album metadata fields available for use in :doc:`query` and
 :doc:`pathformat`.
 
+The ``-p`` (``--plugins``) option shows available plugin fields in
+addition to the standard ones.
 
 Global Flags
 ------------
