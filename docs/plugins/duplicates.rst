@@ -1,5 +1,5 @@
 Duplicates Plugin
-==============
+=================
 
 This plugin adds a new command, ``duplicates`` or ``dup``, which finds
 and lists duplicate tracks or albums in your collection.
@@ -8,11 +8,9 @@ Installation
 ------------
 
 Enable the plugin by putting ``duplicates`` on your ``plugins`` line in
-:doc:`config file </reference/config>`::
+your :doc:`config file </reference/config>`::
 
-    plugins:
-        duplicates
-        ...
+    plugins: duplicates
 
 Configuration
 -------------

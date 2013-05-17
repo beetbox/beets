@@ -5,9 +5,9 @@ Changelog
 ----------------------
 
 * New :doc:`/plugins/duplicates`: Find tracks or albums in your
-  library that are **duplicated**.
+  library that are **duplicated**. Thanks to Pedro Silva.
 * New :doc:`/plugins/missing`: Find albums in your library that are **missing
-  tracks**. Thanks to Pedro Silva.
+  tracks**. Thanks once more to Pedro Silva.
 * Your library now keeps track of **when music was added** to it. The new
   ``added`` field is a timestamp reflecting when each item and album was
   imported and the new ``%time{}`` template function lets you format this
