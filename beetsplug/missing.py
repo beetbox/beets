@@ -135,17 +135,19 @@ class MissingPlugin(BeetsPlugin):
                 print(sum([_missing_count(a) for a in albums]))
                 return
 
+            # Default format string for count mode.
+            if count and not fmt:
+                fmt = '$albumartist - $album: $missing'
+
             for album in albums:
                 if count:
                     missing = _missing_count(album)
                     if missing:
-                        if not fmt:
-                            fmt = '$albumartist - $album: $missing'
-                        print_obj(album, lib, fmt=fmt.format(missing))
-                    continue
+                        print_obj(album, lib, fmt=fmt)
 
-                for item in _missing(album):
-                    print_obj(item, lib, fmt=fmt)
+                else:
+                    for item in _missing(album):
+                        print_obj(item, lib, fmt=fmt)
 
         self._command.func = _miss
         return [self._command]

@@ -60,12 +60,11 @@ total
 The ``total`` option (default: false) prints a single
 count of missing tracks in all albums
 
-Metadata fields
+Template Fields
 ---------------
 
-With this plugin enabled, templates can reference ``$missing`` as they
-can any standard metadata field for use in :doc:`Queries
-</reference/query>` and :doc:`Path Formats </reference/pathformat>`.
+With this plugin enabled, the ``$missing`` template field expands to the
+number of tracks missing from each album.
 
 Examples
 --------
