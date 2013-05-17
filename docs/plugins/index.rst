@@ -62,7 +62,8 @@ disabled by default, but you can turn them on as described above.
    smartplaylist
    mbsync
    missing
-   
+   duplicates
+
 Autotagger Extensions
 ''''''''''''''''''''''
 
@@ -112,7 +113,8 @@ Miscellaneous
   a different directory.
 * :doc:`info`: Print music files' tags to the console.
 * :doc:`missing`: List missing tracks.
-  
+* :doc:`duplicates`: List duplicate tracks or albums.
+
 .. _MPD: http://mpd.wikia.com/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients
 
@@ -147,5 +149,5 @@ plugins </plugins/writing>`.
 
 .. toctree::
     :hidden:
-    
+
     writing
