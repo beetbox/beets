@@ -4,6 +4,8 @@ Changelog
 1.1.1 (in development)
 ----------------------
 
+* New :doc:`/plugins/duplicates`: Find tracks or albums in your
+  library that are **duplicated**.
 * New :doc:`/plugins/missing`: Find albums in your library that are **missing
   tracks**. Thanks to Pedro Silva.
 * Your library now keeps track of **when music was added** to it. The new
