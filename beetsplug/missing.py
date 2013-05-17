@@ -17,7 +17,7 @@
 import logging
 
 from beets.autotag import hooks
-from beets.library import Item
+from beets.library import Item, Album
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_obj, Subcommand
 
@@ -139,8 +139,9 @@ class MissingPlugin(BeetsPlugin):
                 if count:
                     missing = _missing_count(album)
                     if missing:
-                        fmt = "$album: {}".format(missing)
-                        print_obj(album, lib, fmt=fmt)
+                        if not fmt:
+                            fmt = '$albumartist - $album: $missing'
+                        print_obj(album, lib, fmt=fmt.format(missing))
                     continue
 
                 for item in _missing(album):
@@ -148,3 +149,13 @@ class MissingPlugin(BeetsPlugin):
 
         self._command.func = _miss
         return [self._command]
+
+
+@MissingPlugin.template_field('missing')
+def _tmpl_missing(album):
+    """Return number of missing items in 'album'.
+    """
+    if isinstance(album, Album):
+        return _missing_count(album)
+    else:
+        return ''

@@ -2,9 +2,10 @@ Missing Plugin
 ==============
 
 This plugin adds a new command, ``missing`` or ``miss``, which finds
-and lists, for every album in your collection, which tracks are
-missing. Listing missing files requires one network call to
-MusicBrainz.
+and lists, for every album in your collection, which or how many
+tracks are missing. Listing missing files requires one network call to
+MusicBrainz. Merely counting missing files avoids any network calls.
+
 
 Installation
 ------------
@@ -49,8 +50,9 @@ inspired by, and therefore similar to, the :ref:`list <list-cmd>` command.
 count
 ~~~~~
 
-The ``count`` option (default: false) prints a count of missing
-tracks per album, with ``format`` hard-coded to ``'$album: $count'``.
+The ``count`` option (default: false) prints a count of missing tracks
+per album, with ``format`` defaulting to ``$albumartist - $album:
+$missing``.
 
 total
 ~~~~~
@@ -58,6 +60,12 @@ total
 The ``total`` option (default: false) prints a single
 count of missing tracks in all albums
 
+Metadata fields
+---------------
+
+With this plugin enabled, templates can reference ``$missing`` as they
+can any standard metadata field for use in :doc:`Queries
+</reference/query>` and :doc:`Path Formats </reference/pathformat>`.
 
 Examples
 --------
@@ -83,6 +91,9 @@ Print out a count of the total number of missing tracks::
 
   beet missing -t
 
+Call this plugin from other beet commands::
+
+  beet ls -a -f '$albumartist - $album: $missing'
 
 TODO
 ----
