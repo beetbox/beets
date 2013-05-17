@@ -23,25 +23,26 @@ PLUGIN = 'duplicates'
 log = logging.getLogger('beets')
 
 
-def _counts(items):
-    """Return count of ITEMS indexed by item_id.
+def _group_by_id(objs):
+    """Return a dictionary whose keys are MBIDs and whose values are
+    lists of objects (Albums or Items) with that ID.
     """
     import collections
     counts = collections.defaultdict(list)
-    for item in items:
-        item_id = getattr(item, 'mb_trackid', item.mb_albumid)
-        counts[item_id].append(item)
+    for obj in objs:
+        mbid = getattr(obj, 'mb_trackid', obj.mb_albumid)
+        counts[mbid].append(obj)
     return counts
 
 
-def _duplicates(items, full):
-    """Return duplicate ITEMS.
+def _duplicates(objs, full):
+    """Generate triples of MBIDs, duplicate counts, and constituent
+    objects.
     """
-    counts = _counts(items)
     offset = 0 if full else 1
-    for item_id, items in counts.iteritems():
-        if len(items) > 1:
-            yield (item_id, len(items)-offset, items[offset:])
+    for mbid, objs in _group_by_id(objs).iteritems():
+        if len(objs) > 1:
+            yield (mbid, len(objs) - offset, objs[offset:])
 
 
 class DuplicatesPlugin(BeetsPlugin):
@@ -92,18 +93,18 @@ class DuplicatesPlugin(BeetsPlugin):
             else:
                 items = lib.items(decargs(args))
 
-            orig_fmt = fmt
+            # Default format string for count mode.
+            if count and not fmt:
+                if album:
+                    fmt = '$albumartist - $album'
+                else:
+                    fmt = '$albumartist - $album - $title'
+                fmt += ': {}'
+
             for obj_id, obj_count, objs in _duplicates(items, full):
-                if count:
-                    if not fmt:
-                        if album:
-                            fmt = '$albumartist - $album'
-                        else:
-                            fmt = '$albumartist - $album - $title'
-                    fmt += ': {}'
-                for o in objs:
-                    print_obj(o, lib, fmt=fmt.format(obj_count))
-                fmt = orig_fmt
+                if obj_id:  # Skip empty IDs.
+                    for o in objs:
+                        print_obj(o, lib, fmt=fmt.format(obj_count))
 
         self._command.func = _dup
         return [self._command]
