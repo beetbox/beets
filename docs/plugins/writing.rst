@@ -242,35 +242,28 @@ This plugin provides a function ``%initial`` to path templates where
 ``%initial{$artist}`` expands to the artist's initial (its capitalized first
 character).
 
-Plugins can also add template *fields*, which are computed values referenced as
-``$name`` in templates. To add a new field, decorate a function taking a single
-parameter, ``item``, with ``MyPlugin.template_field("name")``. Here's an example
-that adds a ``$disc_and_track`` field::
+Plugins can also add template *fields*, which are computed values referenced
+as ``$name`` in templates. To add a new field, decorate a function taking a
+single parameter, which may be an Item or an Album, with
+``MyPlugin.template_field("name")``. Here's an example that adds a
+``$disc_and_track`` field::
 
     @MyPlugin.template_field('disc_and_track')
-    def _tmpl_disc_and_track(item):
+    def _tmpl_disc_and_track(obj):
         """Expand to the disc number and track number if this is a
         multi-disc release. Otherwise, just exapnds to the track
         number.
         """
-        if item.disctotal > 1:
-            return u'%02i.%02i' % (item.disc, item.track)
+        if isinstance(obj, beets.library.Album):
+            return u''
+        if obj.disctotal > 1:
+            return u'%02i.%02i' % (obj.disc, obj.track)
         else:
-            return u'%02i' % (item.track)
+            return u'%02i' % (obj.track)
 
 With this plugin enabled, templates can reference ``$disc_and_track`` as they
-can any standard metadata field.
-
-Note that the above idiom expects the argument ``item`` to be an
-actual *track* item. If you'd like to provide a template field for
-*albums*, you'll need to check the argument::
-
-    @MyPlugin.template_field('field')
-    def _tmpl_field(album):
-        """Return stuff.
-        """
-        if isinstance(album, beets.library.Album):
-            return 'stuff'
+can any standard metadata field. Since the field is only meaningful for Items,
+it expands to the empty string when used in an Album context.
 
 Extend MediaFile
 ^^^^^^^^^^^^^^^^

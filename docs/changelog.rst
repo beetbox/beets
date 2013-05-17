@@ -21,6 +21,8 @@ Changelog
   Thanks to jayme on GitHub.
 * :doc:`/plugins/lyrics`: Lyrics searches should now turn up more results due
   to some fixes in dealing with special characters.
+* Plugin-provided template fields now work for both Albums and Items. Thanks
+  to Pedro Silva.
 
 1.1.0 (April 29, 203)
 ---------------------
