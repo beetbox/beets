@@ -92,6 +92,7 @@ class TestCase(unittest.TestCase):
     def setUp(self):
         # A "clean" source list including only the defaults.
         beets.config.sources = []
+        beets.config._materialized = True
         beets.config.read(user=False, defaults=True)
 
         # Direct paths to a temporary directory. Tests can also use this
