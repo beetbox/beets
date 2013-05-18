@@ -689,9 +689,13 @@ class LazyConfig(Configuration):
         self._lazy_prefix = []  # Pre-materialization calls to set().
         self._lazy_suffix = []  # Calls to add().
 
+    def read(self, user=True, defaults=True):
+        self._materialized = True
+        super(LazyConfig, self).read(user, defaults)
+
     def resolve(self):
         if not self._materialized:
-            self._materialized = True
+            # Read files and unspool buffers.
             self.read()
             self.sources += self._lazy_suffix
             self.sources[:0] = self._lazy_prefix
