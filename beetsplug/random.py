@@ -21,6 +21,7 @@ from beets.util.functemplate import Template
 import random
 from operator import attrgetter
 from itertools import groupby
+import collections
 
 def random_item(lib, opts, args):
     query = decargs(args)
@@ -34,18 +35,29 @@ def random_item(lib, opts, args):
         objs = list(lib.albums(query=query))
     else:
         objs = list(lib.items(query=query))
+
     if opts.equal_chance:
         key = attrgetter('albumartist')
         objs.sort(key=key)
-        # Now the objs are list of albums or items
-        objs = [list(v) for k, v in groupby(objs, key)]
 
-    number = min(len(objs), opts.number)
-    objs = random.sample(objs, number)
+        # {artists: objects}
+        objs_by_artists = {artist: list(v) for artist, v in groupby(objs, key)}
+        artists = objs_by_artists.keys()
 
-    if opts.equal_chance:
-        # Select one random item from that artist
-        objs = map(random.choice, objs)
+        # {artist: count}
+        selected_artists = collections.defaultdict(int)
+        for _ in range(opts.number):
+            selected_artists[random.choice(artists)] += 1
+
+        objs = []
+        for artist, count in selected_artists.items():
+            objs_from_artist = objs_by_artists[artist]
+            number = min(count, len(objs_from_artist))
+            objs.extend(random.sample(objs_from_artist, number))
+
+    else:
+        number = min(len(objs), opts.number)
+        objs = random.sample(objs, number)
 
     for item in objs:
         print_obj(item, lib, template)
