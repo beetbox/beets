@@ -19,7 +19,7 @@ imagine for your music collection. Via [plugins][], beets becomes a panacea:
 * Fetch lyrics for all your songs from databases on the Web.
 * Guess genres based on Last.fm tags.
 * Clean up crufty tags left behind by other, less-awesome tools.
-* Automatically build ``smart playlists'' based on queries over your library
+* Automatically build "smart playlists" based on queries over your library
   database.
 * Transcode music for your mobile device.
 * Manage your [MusicBrainz music collection][coll].
