@@ -6,6 +6,8 @@ Changelog
 
 * New :doc:`/plugins/missing`: Find albums in your library that are **missing
   tracks**. Thanks to Pedro Silva.
+* New :doc:`/plugins/discogs`: Extends the autotagger to include matches from
+  the `discogs`_ database.
 * Your library now keeps track of **when music was added** to it. The new
   ``added`` field is a timestamp reflecting when each item and album was
   imported and the new ``%time{}`` template function lets you format this
@@ -21,6 +23,8 @@ Changelog
   Thanks to jayme on GitHub.
 * :doc:`/plugins/lyrics`: Lyrics searches should now turn up more results due
   to some fixes in dealing with special characters.
+
+.. _discogs: http://discogs.com/
 
 1.1.0 (April 29, 203)
 ---------------------

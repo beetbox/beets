@@ -51,6 +51,7 @@ class AlbumInfo(object):
     - ``media``: delivery mechanism (Vinyl, etc.)
     - ``albumdisambig``: MusicBrainz release disambiguation comment
     - ``artist_credit``: Release-specific artist name
+    - ``data_source``: The original data source (MusicBrainz, Discogs, etc.)
 
     The fields up through ``tracks`` are required. The others are
     optional and may be None.
@@ -61,7 +62,7 @@ class AlbumInfo(object):
                  releasegroup_id=None, catalognum=None, script=None,
                  language=None, country=None, albumstatus=None, media=None,
                  albumdisambig=None, artist_credit=None, original_year=None,
-                 original_month=None, original_day=None):
+                 original_month=None, original_day=None, data_source=None):
         self.album = album
         self.album_id = album_id
         self.artist = artist
@@ -88,6 +89,7 @@ class AlbumInfo(object):
         self.original_year = original_year
         self.original_month = original_month
         self.original_day = original_day
+        self.data_source = data_source or 'Unknown'
 
     # Work around a bug in python-musicbrainz-ngs that causes some
     # strings to be bytes rather than Unicode.
@@ -199,7 +201,7 @@ def _album_candidates(items, artist, album, va_likely):
             exc.log(log)
 
     # Candidates from plugins.
-    out.extend(plugins.candidates(items))
+    out.extend(plugins.candidates(items, artist, album, va_likely))
 
     return out
 
@@ -218,6 +220,6 @@ def _item_candidates(item, artist, title):
             exc.log(log)
 
     # Plugin candidates.
-    out.extend(plugins.item_candidates(item))
+    out.extend(plugins.item_candidates(item, artist, title))
 
     return out

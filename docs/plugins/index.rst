@@ -62,12 +62,14 @@ disabled by default, but you can turn them on as described above.
    smartplaylist
    mbsync
    missing
+   discogs
    
 Autotagger Extensions
 ''''''''''''''''''''''
 
 * :doc:`chroma`: Use acoustic fingerprinting to identify audio files with
   missing or incorrect metadata.
+* :doc:`discogs`: Search for releases in the discogs database.
 
 Metadata
 ''''''''
