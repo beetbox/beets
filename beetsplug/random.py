@@ -37,23 +37,27 @@ def random_item(lib, opts, args):
         objs = list(lib.items(query=query))
 
     if opts.equal_chance:
+        # Group the objects by artist so we can sample from them.
         key = attrgetter('albumartist')
         objs.sort(key=key)
-
-        # {artists: objects}
         objs_by_artists = {artist: list(v) for artist, v in groupby(objs, key)}
-        artists = objs_by_artists.keys()
-
-        # {artist: count}
-        selected_artists = collections.defaultdict(int)
-        for _ in range(opts.number):
-            selected_artists[random.choice(artists)] += 1
 
         objs = []
-        for artist, count in selected_artists.items():
+        for _ in range(opts.number):
+            # Terminate early if we're out of objects to select.
+            if not objs_by_artists:
+                break
+
+            # Choose an artist and an object for that artist, removing
+            # this choice from the pool.
+            artist = random.choice(objs_by_artists.keys())
             objs_from_artist = objs_by_artists[artist]
-            number = min(count, len(objs_from_artist))
-            objs.extend(random.sample(objs_from_artist, number))
+            i = random.randint(0, len(objs_from_artist) - 1)
+            objs.append(objs_from_artist.pop(i))
+
+            # Remove the artist if we've used up all of its objects.
+            if not objs_from_artist:
+                del objs_by_artists[artist]
 
     else:
         number = min(len(objs), opts.number)
