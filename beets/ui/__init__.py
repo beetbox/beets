@@ -729,7 +729,6 @@ def _raw_main(args):
             dbpath,
             config['directory'].as_filename(),
             get_path_formats(),
-            config['timeout'].as_number(),
             get_replacements(),
         )
     except sqlite3.OperationalError:

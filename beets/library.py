@@ -1113,7 +1113,6 @@ class Library(BaseLibrary):
                        directory='~/Music',
                        path_formats=((PF_KEY_DEFAULT,
                                       '$artist/$album/$track $title'),),
-                       timeout=5.0,
                        replacements=None,
                        item_fields=ITEM_FIELDS,
                        album_fields=ALBUM_FIELDS):
@@ -1127,7 +1126,6 @@ class Library(BaseLibrary):
 
         self._memotable = {}  # Used for template substitution performance.
 
-        self.timeout = timeout
         self._connections = {}
         self._tx_stacks = defaultdict(list)
         # A lock to protect the _connections and _tx_stacks maps, which
@@ -1208,7 +1206,10 @@ class Library(BaseLibrary):
                 return self._connections[thread_id]
             else:
                 # Make a new connection.
-                conn = sqlite3.connect(self.path, timeout=self.timeout)
+                conn = sqlite3.connect(
+                    self.path,
+                    timeout=beets.config['timeout'].as_number(),
+                )
 
                 # Access SELECT results like dictionaries.
                 conn.row_factory = sqlite3.Row
