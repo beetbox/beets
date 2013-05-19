@@ -1703,9 +1703,9 @@ class Album(BaseAlbum):
         item_dir = item_dir or self.item_dir()
 
         filename_tmpl = Template(beets.config['art_filename'].get(unicode))
-        subpath = util.sanitize_path(format_for_path(
-            self.evaluate_template(filename_tmpl)
-        ))
+        subpath = format_for_path(self.evaluate_template(filename_tmpl))
+        subpath = util.sanitize_path(subpath,
+                                     replacements=self._library.replacements)
         subpath = bytestring_path(subpath)
 
         _, ext = os.path.splitext(image)

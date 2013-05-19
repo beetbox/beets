@@ -27,6 +27,7 @@ Changelog
   to Pedro Silva.
 * The :ref:`fields-cmd` command shows template fields provided by plugins.
   Thanks again to Pedro Silva.
+* Album art filenames now respect the :ref:`replace` configuration.
 
 1.1.0 (April 29, 203)
 ---------------------

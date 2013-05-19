@@ -837,7 +837,10 @@ class ArtDestinationTest(_common.TestCase):
     def setUp(self):
         super(ArtDestinationTest, self).setUp()
         config['art_filename'] = u'artimage'
-        self.lib = beets.library.Library(':memory:')
+        config['replace'] = {u'X': u'Y'}
+        self.lib = beets.library.Library(
+            ':memory:', replacements=[(re.compile(u'X'), u'Y')]
+        )
         self.i = item()
         self.i.path = self.lib.destination(self.i)
         self.ai = self.lib.add_album((self.i,))
@@ -850,6 +853,11 @@ class ArtDestinationTest(_common.TestCase):
         art = self.ai.art_destination('something.jpg')
         track = self.lib.destination(self.i)
         self.assertEqual(os.path.dirname(art), os.path.dirname(track))
+
+    def test_art_path_sanitized(self):
+        config['art_filename'] = u'artXimage'
+        art = self.ai.art_destination('something.jpg')
+        self.assert_('artYimage' in art)
 
 class PathStringTest(_common.TestCase):
     def setUp(self):
