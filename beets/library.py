@@ -1113,7 +1113,6 @@ class Library(BaseLibrary):
                        directory='~/Music',
                        path_formats=((PF_KEY_DEFAULT,
                                       '$artist/$album/$track $title'),),
-                       art_filename='cover',
                        timeout=5.0,
                        replacements=None,
                        item_fields=ITEM_FIELDS,
@@ -1124,7 +1123,6 @@ class Library(BaseLibrary):
             self.path = bytestring_path(normpath(path))
         self.directory = bytestring_path(normpath(directory))
         self.path_formats = path_formats
-        self.art_filename = art_filename
         self.replacements = replacements
 
         self._memotable = {}  # Used for template substitution performance.
@@ -1703,11 +1701,9 @@ class Album(BaseAlbum):
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
-        if not isinstance(self._library.art_filename,Template):
-            self._library.art_filename = Template(self._library.art_filename)
-
+        filename_tmpl = Template(beets.config['art_filename'].get(unicode))
         subpath = util.sanitize_path(format_for_path(
-            self.evaluate_template(self._library.art_filename)
+            self.evaluate_template(filename_tmpl)
         ))
         subpath = bytestring_path(subpath)
 

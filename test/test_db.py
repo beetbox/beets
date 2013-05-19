@@ -29,6 +29,7 @@ from _common import item
 import beets.library
 from beets import util
 from beets import plugins
+from beets import config
 
 TEMP_LIB = os.path.join(_common.RSRC, 'test_copy.blb')
 
@@ -835,10 +836,10 @@ class BaseAlbumTest(_common.TestCase):
 class ArtDestinationTest(_common.TestCase):
     def setUp(self):
         super(ArtDestinationTest, self).setUp()
+        config['art_filename'] = u'artimage'
         self.lib = beets.library.Library(':memory:')
         self.i = item()
         self.i.path = self.lib.destination(self.i)
-        self.lib.art_filename = 'artimage'
         self.ai = self.lib.add_album((self.i,))
 
     def test_art_filename_respects_setting(self):
