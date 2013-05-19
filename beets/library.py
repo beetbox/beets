@@ -196,12 +196,12 @@ def format_for_path(value, key=None, pathmod=None):
     pathmod = pathmod or os.path
 
     if isinstance(value, basestring):
+        if isinstance(value, str):
+            value = value.decode('utf8', 'ignore')
+        sep_repl = beets.config['path_sep_replace'].get(unicode)
         for sep in (pathmod.sep, pathmod.altsep):
             if sep:
-                value = value.replace(
-                    sep,
-                    beets.config['path_sep_replace'].get(unicode),
-                )
+                value = value.replace(sep, sep_repl)
     elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
         # Pad indices with zeros.
         value = u'%02i' % (value or 0)
