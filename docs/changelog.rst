@@ -16,6 +16,9 @@ Changelog
   **numeric ranges**. For example, you can get a list of albums from the '90s
   by typing ``beet ls year:1990..1999`` or find high-bitrate music with
   ``bitrate:128000..``. See :ref:`numericquery`. Thanks to Michael Schuerig.
+* :doc:`/plugins/random`: A new ``-e`` option gives an equal chance to each
+  artist in your collection to avoid biasing random samples to prolific
+  artists. Thanks to Georges Dubus.
 * The :ref:`modify-cmd` now correctly converts types when modifying non-string
   fields. You can now safely modify the "comp" flag and the "year" field, for
   example. Thanks to Lucas Duailibe.

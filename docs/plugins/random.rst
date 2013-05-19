@@ -17,7 +17,7 @@ track, use ``-a``; to print paths to items instead of metadata, use ``-p``; and
 to use a custom format for printing, use ``-f FORMAT``.
 
 If the ``-e`` option is passed, the random choice will be even among
-artists (the albumartist field) This makes sure that your antholofgy
+artists (the albumartist field). This makes sure that your anthology
 of Bob Dylan won't make you listen to Bob Dylan 50% of the time.
 
 The ``-n NUMBER`` option controls the number of objects that are selected and
