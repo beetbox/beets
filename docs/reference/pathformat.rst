@@ -43,6 +43,8 @@ probably don't want that! So use ``$albumartist``.
 As a convenience, however, beets allows ``$albumartist`` to fall back to the value for ``$artist`` and vice-versa if one tag is present but the other is not.
 
 
+.. _template-functions:
+
 Functions
 ---------
 

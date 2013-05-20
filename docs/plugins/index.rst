@@ -5,6 +5,8 @@ Plugins can extend beets' core functionality. Plugins can add new commands to
 the command-line interface, respond to events in beets, augment the autotagger,
 or provide new path template functions.
 
+.. _using-plugins:
+
 Using Plugins
 -------------
 

@@ -199,6 +199,8 @@ overridden with ``-w`` (write tags, the default) and ``-W`` (don't write tags).
 Finally, this command politely asks for your permission before making any
 changes, but you can skip that prompt with the ``-y`` switch.
 
+.. _move-cmd:
+
 move
 ````
 ::
