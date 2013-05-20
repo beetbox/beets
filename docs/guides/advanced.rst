@@ -5,9 +5,9 @@ So you have beets up and running and you've started :doc:`importing your
 music </guides/tagger>`. There's a lot more that beets can do now that it has
 cataloged your collection. Here's a few features to get you started.
 
-Most of these tips involve :doc:`plugins </plugins>` and fiddling with beets'
-:doc:`configuration </reference/config>`. So use your favorite text editor
-create a config file before you continue.
+Most of these tips involve :doc:`plugins </plugins/index>` and fiddling with
+beets' :doc:`configuration </reference/config>`. So use your favorite text
+editor create a config file before you continue.
 
 
 Fetch album art, genres, and lyrics
