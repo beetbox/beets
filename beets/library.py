@@ -320,11 +320,9 @@ class Item(object):
             read_path = normpath(read_path)
         try:
             f = MediaFile(syspath(read_path))
-        except Exception:
-            log.debug(u'failed reading file: {0}'.format(
-                displayable_path(read_path))
-            )
-            raise
+        except (OSError, IOError) as exc:
+            raise util.FilesystemError(exc, 'read', (self.path,),
+                                       traceback.format_exc())
 
         for key in ITEM_KEYS_META:
             setattr(self, key, getattr(f, key))
@@ -340,7 +338,12 @@ class Item(object):
         """
         plugins.send('write', item=self)
 
-        f = MediaFile(syspath(self.path))
+        try:
+            f = MediaFile(syspath(self.path))
+        except (OSError, IOError) as exc:
+            raise util.FilesystemError(exc, 'read', (self.path,),
+                                       traceback.format_exc())
+
         for key in ITEM_KEYS_WRITABLE:
             setattr(f, key, getattr(self, key))
 

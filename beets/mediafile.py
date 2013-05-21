@@ -59,6 +59,10 @@ log = logging.getLogger('beets')
 class UnreadableFileError(IOError):
     pass
 
+class FileIOError(UnreadableFileError, IOError):
+    def __init__(self, exc):
+        IOError.__init__(self, exc.errno, exc.strerror, exc.filename)
+
 # Raised for files that don't seem to have a type MediaFile supports.
 class FileTypeError(UnreadableFileError):
     pass
@@ -864,8 +868,8 @@ class MediaFile(object):
         except unreadable_exc as exc:
             log.debug(u'header parsing failed: {0}'.format(unicode(exc)))
             raise UnreadableFileError('Mutagen could not read file')
-        except IOError:
-            raise UnreadableFileError('could not read file')
+        except IOError as exc:
+            raise FileIOError(exc)
         except Exception as exc:
             # Hide bugs in Mutagen.
             log.debug(traceback.format_exc())
