@@ -205,9 +205,10 @@ def show_change(cur_artist, cur_album, match):
         print_(message)
 
     # Info line.
-    print_('from {0}, similarity: {1}'.format(
+    print_('from {0}, similarity: {1} [{2}]'.format(
         source_string(match.info.data_source),
         dist_string(match.distance),
+        ui.colorize('lightgray', album_disambig(match.info)),
     ))
 
     # Tracks.
@@ -341,6 +342,24 @@ def _summary_judment(rec):
         print_('Importing as-is.')
     return action
 
+def album_disambig(info):
+    # Label, year and media disambiguation, if available.
+    disambig = []
+    if info.label:
+        disambig.append(info.label)
+    if info.year:
+        disambig.append(unicode(info.year))
+    if info.media:
+        if info.mediums > 1:
+            disambig.append(u'{0}x{1}'.format(
+              info.mediums, info.media))
+        else:
+            disambig.append(info.media)
+    if info.albumdisambig:
+        disambig.append(info.albumdisambig)
+    if disambig:
+        return u', '.join(disambig)
+
 def choose_candidate(candidates, singleton, rec, cur_artist=None,
                      cur_album=None, item=None, itemcount=None):
     """Given a sorted list of candidates, ask the user for a selection
@@ -418,22 +437,10 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                     line = '%i. %s - %s' % (i + 1, match.info.artist,
                                             match.info.album)
 
-                    # Label, year and media disambiguation, if available.
-                    disambig = []
-                    if match.info.label:
-                        disambig.append(match.info.label)
-                    if match.info.year:
-                        disambig.append(unicode(match.info.year))
-                    if match.info.media:
-                        if match.info.mediums > 1:
-                            disambig.append(u'{0}x{1}'.format(
-                              match.info.mediums, match.info.media))
-                        else:
-                            disambig.append(match.info.media)
-                    if match.info.albumdisambig:
-                        disambig.append(match.info.albumdisambig)
+                    disambig = album_disambig(match.info)
                     if disambig:
-                        line += u' [{0}]'.format(u', '.join(disambig))
+                        line += u' [{0}]'.format(ui.colorize('lightgray',
+                                                             disambig))
 
                     line += ' (%s)' % dist_string(match.distance)
 
