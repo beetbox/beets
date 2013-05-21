@@ -198,7 +198,8 @@ def show_change(cur_artist, cur_album, match):
         print_("To:")
         show_album(artist_r, album_r)
     else:
-        message = u"Tagging: %s - %s" % (match.info.artist, match.info.album)
+        message = u"Tagging:\n    %s - %s" % (match.info.artist,
+                                              match.info.album)
         if match.extra_items or match.extra_tracks:
             message += u' (%s)' % ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
         print_(message)
