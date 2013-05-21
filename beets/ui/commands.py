@@ -163,14 +163,22 @@ def show_change(cur_artist, cur_album, match):
         """Return a string representing the track index of the given
         TrackInfo object.
         """
-        if config['per_disc_numbering'].get(bool):
-            if match.info.mediums > 1:
-                return u'{0}-{1}'.format(track_info.medium,
-                                         track_info.medium_index)
-            else:
-                return unicode(track_info.medium_index)
+        if isinstance(track_info, autotag.hooks.TrackInfo):
+            index = track_info.index
+            medium_index = track_info.medium_index
+            medium = track_info.medium
+            mediums = match.info.mediums
         else:
-            return unicode(track_info.index)
+            index = medium_index = track_info.track
+            medium = track_info.disc
+            mediums = track_info.disctotal
+        if config['per_disc_numbering'].get(bool):
+            if mediums > 1:
+                return u'{0}-{1}'.format(medium, medium_index)
+            else:
+                return unicode(medium_index)
+        else:
+            return unicode(index)
 
     # Identify the album in question.
     if cur_artist != match.info.artist or \
@@ -222,9 +230,14 @@ def show_change(cur_artist, cur_album, match):
         lhs_width = len(cur_title)
 
         # Track number change.
-        if item.track not in (track_info.index, track_info.medium_index):
-            cur_track, new_track = unicode(item.track), format_index(track_info)
-            lhs_track, rhs_track = ui.color_diff_suffix(cur_track, new_track)
+        cur_track, new_track = format_index(item), format_index(track_info)
+        if cur_track != new_track:
+            if (cur_track + new_track).count('-') == 1:
+                lhs_track, rhs_track = ui.colorize('red', cur_track), \
+                                       ui.colorize('red', new_track)
+            else:
+                lhs_track, rhs_track = ui.color_diff_suffix(cur_track,
+                                                            new_track)
             templ = ui.colorize('red', u' (#') + u'{0}' + \
                     ui.colorize('red', u')')
             lhs += templ.format(lhs_track)
