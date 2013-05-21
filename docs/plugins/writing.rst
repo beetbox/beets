@@ -166,7 +166,7 @@ A plugin can extend three parts of the autotagger's process: the track distance
 function, the album distance function, and the initial MusicBrainz search. The
 distance functions determine how "good" a match is at the track and album
 levels; the initial search controls which candidates are presented to the
-matching algorithm. Plugins implement these extensions by implementing three
+matching algorithm. Plugins implement these extensions by implementing four
 methods on the plugin class:
 
 * ``track_distance(self, item, info)``: adds a component to the distance
@@ -181,12 +181,13 @@ methods on the plugin class:
   object; and ``mapping`` is a dictionary that maps Items to their corresponding
   TrackInfo objects.
 
-* ``candidates(self, items)``: given a list of items comprised by an album to be
-  matched, return a list of ``AlbumInfo`` objects for candidate albums to be
-  compared and matched.
+* ``candidates(self, items, artist, album, va_likely)``: given a list of items
+  comprised by an album to be matched, return a list of ``AlbumInfo`` objects
+  for candidate albums to be compared and matched.
 
-* ``item_candidates(self, item)``: given a *singleton* item, return a list of
-  ``TrackInfo`` objects for candidate tracks to be compared and matched.
+* ``item_candidates(self, item, artist, album)``: given a *singleton* item,
+  return a list of ``TrackInfo`` objects for candidate tracks to be compared and
+  matched.
 
 When implementing these functions, it will probably be very necessary to use the
 functions from the ``beets.autotag`` and ``beets.autotag.mb`` modules, both of
