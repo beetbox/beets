@@ -91,11 +91,20 @@ def _showdiff(field, oldval, newval):
 
 fields_cmd = ui.Subcommand('fields',
     help='show fields available for queries and format strings')
+
 def fields_func(lib, opts, args):
-    print("Available item fields:")
+    print("Item fields:")
     print("  " + "\n  ".join([key for key in library.ITEM_KEYS]))
-    print("\nAvailable album fields:")
+
+    print("\nAlbum fields:")
     print("  " + "\n  ".join([key for key in library.ALBUM_KEYS]))
+
+    plugin_fields = []
+    for plugin in plugins.find_plugins():
+        plugin_fields += plugin.template_fields.keys()
+    if plugin_fields:
+        print("\nTemplate fields from plugins:")
+        print("  " + "\n  ".join(plugin_fields))
 
 fields_cmd.func = fields_func
 default_commands.append(fields_cmd)

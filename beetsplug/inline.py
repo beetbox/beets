@@ -18,6 +18,7 @@ import logging
 import traceback
 
 from beets.plugins import BeetsPlugin
+from beets.library import Item, Album
 from beets import config
 
 log = logging.getLogger('beets')
@@ -46,6 +47,14 @@ def _compile_func(body):
     eval(code, env)
     return env[FUNC_NAME]
 
+def _record(obj):
+    """Get a dictionary of values for an Item or Album object.
+    """
+    if isinstance(obj, Item):
+        return dict(obj.record)
+    else:
+        return dict(obj._record)
+
 def compile_inline(python_code):
     """Given a Python expression or function body, compile it as a path
     field function. The returned function takes a single argument, an
@@ -70,8 +79,8 @@ def compile_inline(python_code):
 
     if is_expr:
         # For expressions, just evaluate and return the result.
-        def _expr_func(item):
-            values = dict(item.record)
+        def _expr_func(obj):
+            values = _record(obj)
             try:
                 return eval(code, values)
             except Exception as exc:
@@ -80,8 +89,8 @@ def compile_inline(python_code):
     else:
         # For function bodies, invoke the function with values as global
         # variables.
-        def _func_func(item):
-            func.__globals__.update(item.record)
+        def _func_func(obj):
+            func.__globals__.update(_record(obj))
             try:
                 return func()
             except Exception as exc:

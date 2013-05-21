@@ -199,6 +199,8 @@ overridden with ``-w`` (write tags, the default) and ``-W`` (don't write tags).
 Finally, this command politely asks for your permission before making any
 changes, but you can skip that prompt with the ``-y`` switch.
 
+.. _move-cmd:
+
 move
 ````
 ::
@@ -246,6 +248,8 @@ Show some statistics on your entire library (if you don't provide a
 The ``-e`` (``--exact``) option makes the calculation of total file size more
 accurate but slower.
 
+.. _fields-cmd:
+
 fields
 ``````
 ::
@@ -253,8 +257,7 @@ fields
     beet fields
 
 Show the item and album metadata fields available for use in :doc:`query` and
-:doc:`pathformat`.
-
+:doc:`pathformat`. Includes any template fields provided by plugins.
 
 Global Flags
 ------------

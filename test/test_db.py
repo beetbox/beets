@@ -29,6 +29,7 @@ from _common import item
 import beets.library
 from beets import util
 from beets import plugins
+from beets import config
 
 TEMP_LIB = os.path.join(_common.RSRC, 'test_copy.blb')
 
@@ -835,10 +836,13 @@ class BaseAlbumTest(_common.TestCase):
 class ArtDestinationTest(_common.TestCase):
     def setUp(self):
         super(ArtDestinationTest, self).setUp()
-        self.lib = beets.library.Library(':memory:')
+        config['art_filename'] = u'artimage'
+        config['replace'] = {u'X': u'Y'}
+        self.lib = beets.library.Library(
+            ':memory:', replacements=[(re.compile(u'X'), u'Y')]
+        )
         self.i = item()
         self.i.path = self.lib.destination(self.i)
-        self.lib.art_filename = 'artimage'
         self.ai = self.lib.add_album((self.i,))
 
     def test_art_filename_respects_setting(self):
@@ -849,6 +853,11 @@ class ArtDestinationTest(_common.TestCase):
         art = self.ai.art_destination('something.jpg')
         track = self.lib.destination(self.i)
         self.assertEqual(os.path.dirname(art), os.path.dirname(track))
+
+    def test_art_path_sanitized(self):
+        config['art_filename'] = u'artXimage'
+        art = self.ai.art_destination('something.jpg')
+        self.assert_('artYimage' in art)
 
 class PathStringTest(_common.TestCase):
     def setUp(self):

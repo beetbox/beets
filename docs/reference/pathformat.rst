@@ -43,6 +43,8 @@ probably don't want that! So use ``$albumartist``.
 As a convenience, however, beets allows ``$albumartist`` to fall back to the value for ``$artist`` and vice-versa if one tag is present but the other is not.
 
 
+.. _template-functions:
+
 Functions
 ---------
 
@@ -71,7 +73,7 @@ These functions are built in to beets:
 * ``%aunique{identifiers,disambiguators}``: Provides a unique string to
   disambiguate similar albums in the database. See :ref:`aunique`, below.
 * ``%time{date_time,format}``: Return the date and time in any format accepted
-  by `strfime`_. For example, to get the year some music was added to your
+  by `strftime`_. For example, to get the year some music was added to your
   library, use ``%time{$added,%Y}``.
 
 .. _unidecode module: http://pypi.python.org/pypi/Unidecode

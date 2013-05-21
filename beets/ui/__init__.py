@@ -689,18 +689,13 @@ class SubcommandsOptionParser(optparse.OptionParser):
 
 # The root parser and its main function.
 
-def _raw_main(args, load_config=True):
+def _raw_main(args):
     """A helper function for `main` without top-level exception
     handling.
     """
-    # Load global configuration files.
-    if load_config:
-        config.read()
-
     # Temporary: Migrate from 1.0-style configuration.
     from beets.ui import migrate
-    if load_config:
-        migrate.automigrate()
+    migrate.automigrate()
 
     # Get the default subcommands.
     from beets.ui.commands import default_commands
@@ -734,8 +729,6 @@ def _raw_main(args, load_config=True):
             dbpath,
             config['directory'].as_filename(),
             get_path_formats(),
-            Template(config['art_filename'].get(unicode)),
-            config['timeout'].as_number(),
             get_replacements(),
         )
     except sqlite3.OperationalError:

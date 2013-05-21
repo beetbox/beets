@@ -196,12 +196,12 @@ def format_for_path(value, key=None, pathmod=None):
     pathmod = pathmod or os.path
 
     if isinstance(value, basestring):
+        if isinstance(value, str):
+            value = value.decode('utf8', 'ignore')
+        sep_repl = beets.config['path_sep_replace'].get(unicode)
         for sep in (pathmod.sep, pathmod.altsep):
             if sep:
-                value = value.replace(
-                    sep,
-                    beets.config['path_sep_replace'].get(unicode),
-                )
+                value = value.replace(sep, sep_repl)
     elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
         # Pad indices with zeros.
         value = u'%02i' % (value or 0)
@@ -1113,8 +1113,6 @@ class Library(BaseLibrary):
                        directory='~/Music',
                        path_formats=((PF_KEY_DEFAULT,
                                       '$artist/$album/$track $title'),),
-                       art_filename='cover',
-                       timeout=5.0,
                        replacements=None,
                        item_fields=ITEM_FIELDS,
                        album_fields=ALBUM_FIELDS):
@@ -1124,12 +1122,10 @@ class Library(BaseLibrary):
             self.path = bytestring_path(normpath(path))
         self.directory = bytestring_path(normpath(directory))
         self.path_formats = path_formats
-        self.art_filename = art_filename
         self.replacements = replacements
 
         self._memotable = {}  # Used for template substitution performance.
 
-        self.timeout = timeout
         self._connections = {}
         self._tx_stacks = defaultdict(list)
         # A lock to protect the _connections and _tx_stacks maps, which
@@ -1210,7 +1206,10 @@ class Library(BaseLibrary):
                 return self._connections[thread_id]
             else:
                 # Make a new connection.
-                conn = sqlite3.connect(self.path, timeout=self.timeout)
+                conn = sqlite3.connect(
+                    self.path,
+                    timeout=beets.config['timeout'].as_number(),
+                )
 
                 # Access SELECT results like dictionaries.
                 conn.row_factory = sqlite3.Row
@@ -1703,12 +1702,10 @@ class Album(BaseAlbum):
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
-        if not isinstance(self._library.art_filename,Template):
-            self._library.art_filename = Template(self._library.art_filename)
-
-        subpath = util.sanitize_path(format_for_path(
-            self.evaluate_template(self._library.art_filename)
-        ))
+        filename_tmpl = Template(beets.config['art_filename'].get(unicode))
+        subpath = format_for_path(self.evaluate_template(filename_tmpl))
+        subpath = util.sanitize_path(subpath,
+                                     replacements=self._library.replacements)
         subpath = bytestring_path(subpath)
 
         _, ext = os.path.splitext(image)
@@ -1753,6 +1750,10 @@ class Album(BaseAlbum):
 
         mapping['artpath'] = displayable_path(mapping['artpath'])
         mapping['path'] = displayable_path(self.item_dir())
+
+        # Get values from plugins.
+        for key, value in plugins.template_values(self).iteritems():
+            mapping[key] = value
 
         # Get template functions.
         funcs = DefaultTemplateFunctions().functions()

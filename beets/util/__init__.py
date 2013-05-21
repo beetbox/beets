@@ -468,14 +468,11 @@ def sanitize_path(path, pathmod=None, replacements=None):
     reliably on Windows when a path begins with a drive letter. Path
     separators (including altsep!) should already be cleaned from the
     path components. If replacements is specified, it is used *instead*
-    of the default set of replacements for the platform; it must be a
-    list of (compiled regex, replacement string) pairs.
+    of the default set of replacements; it must be a list of (compiled
+    regex, replacement string) pairs.
     """
     pathmod = pathmod or os.path
-
-    # Choose the appropriate replacements.
-    if not replacements:
-        replacements = list(CHAR_REPLACE)
+    replacements = replacements or CHAR_REPLACE
 
     comps = components(path, pathmod)
     if not comps:

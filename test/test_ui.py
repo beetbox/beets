@@ -478,7 +478,7 @@ class ConfigTest(_common.TestCase):
         if config_yaml:
             config_data = yaml.load(config_yaml, Loader=confit.Loader)
             config.set(config_data)
-        ui._raw_main(args + ['test'], False)
+        ui._raw_main(args + ['test'])
 
     def test_paths_section_respected(self):
         def func(lib, opts, args):

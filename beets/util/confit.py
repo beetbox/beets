@@ -677,3 +677,40 @@ class Configuration(RootView):
         if not os.path.isdir(appdir):
             os.makedirs(appdir)
         return appdir
+
+class LazyConfig(Configuration):
+    """A Configuration at reads files on demand when it is first
+    accessed. This is appropriate for using as a global config object at
+    the module level.
+    """
+    def __init__(self, appname, modname=None):
+        super(LazyConfig, self).__init__(appname, modname, False)
+        self._materialized = False  # Have we read the files yet?
+        self._lazy_prefix = []  # Pre-materialization calls to set().
+        self._lazy_suffix = []  # Calls to add().
+
+    def read(self, user=True, defaults=True):
+        self._materialized = True
+        super(LazyConfig, self).read(user, defaults)
+
+    def resolve(self):
+        if not self._materialized:
+            # Read files and unspool buffers.
+            self.read()
+            self.sources += self._lazy_suffix
+            self.sources[:0] = self._lazy_prefix
+        return super(LazyConfig, self).resolve()
+
+    def add(self, value):
+        super(LazyConfig, self).add(value)
+        if not self._materialized:
+            # Buffer additions to end.
+            self._lazy_suffix += self.sources
+            del self.sources[:]
+
+    def set(self, value):
+        super(LazyConfig, self).set(value)
+        if not self._materialized:
+            # Buffer additions to beginning.
+            self._lazy_prefix[:0] = self.sources
+            del self.sources[:]

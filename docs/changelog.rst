@@ -4,8 +4,10 @@ Changelog
 1.1.1 (in development)
 ----------------------
 
+* New :doc:`/plugins/duplicates`: Find tracks or albums in your
+  library that are **duplicated**. Thanks to Pedro Silva.
 * New :doc:`/plugins/missing`: Find albums in your library that are **missing
-  tracks**. Thanks to Pedro Silva.
+  tracks**. Thanks once more to Pedro Silva.
 * New :doc:`/plugins/discogs`: Extends the autotagger to include matches from
   the `discogs`_ database.
 * Your library now keeps track of **when music was added** to it. The new
@@ -16,6 +18,9 @@ Changelog
   **numeric ranges**. For example, you can get a list of albums from the '90s
   by typing ``beet ls year:1990..1999`` or find high-bitrate music with
   ``bitrate:128000..``. See :ref:`numericquery`. Thanks to Michael Schuerig.
+* :doc:`/plugins/random`: A new ``-e`` option gives an equal chance to each
+  artist in your collection to avoid biasing random samples to prolific
+  artists. Thanks to Georges Dubus.
 * The :ref:`modify-cmd` now correctly converts types when modifying non-string
   fields. You can now safely modify the "comp" flag and the "year" field, for
   example. Thanks to Lucas Duailibe.
@@ -23,6 +28,11 @@ Changelog
   Thanks to jayme on GitHub.
 * :doc:`/plugins/lyrics`: Lyrics searches should now turn up more results due
   to some fixes in dealing with special characters.
+* Plugin-provided template fields now work for both Albums and Items. Thanks
+  to Pedro Silva.
+* The :ref:`fields-cmd` command shows template fields provided by plugins.
+  Thanks again to Pedro Silva.
+* Album art filenames now respect the :ref:`replace` configuration.
 
 .. _discogs: http://discogs.com/
 
