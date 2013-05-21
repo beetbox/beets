@@ -134,7 +134,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         log.debug('acoustid album candidates: %i' % len(albums))
         return albums
 
-    def item_candidates(self, item):
+    def item_candidates(self, item, artist, title):
         if item.path not in _matches:
             return []
 
