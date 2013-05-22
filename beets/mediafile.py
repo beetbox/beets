@@ -56,7 +56,7 @@ log = logging.getLogger('beets')
 # Exceptions.
 
 # Raised for any file MediaFile can't read.
-class UnreadableFileError(IOError):
+class UnreadableFileError(Exception):
     pass
 
 class FileIOError(UnreadableFileError, IOError):
