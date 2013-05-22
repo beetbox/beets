@@ -161,7 +161,7 @@ def show_change(cur_artist, cur_album, match):
 
     def format_index(track_info):
         """Return a string representing the track index of the given
-        TrackInfo object.
+        TrackInfo or Item object.
         """
         if isinstance(track_info, autotag.hooks.TrackInfo):
             index = track_info.index
@@ -234,14 +234,18 @@ def show_change(cur_artist, cur_album, match):
         # Track number change.
         cur_track, new_track = format_index(item), format_index(track_info)
         if cur_track != new_track:
+            if item.track in (track_info.index, track_info.medium_index):
+                color = 'yellow'
+            else:
+                color = 'red'
             if (cur_track + new_track).count('-') == 1:
-                lhs_track, rhs_track = ui.colorize('red', cur_track), \
-                                       ui.colorize('red', new_track)
+                lhs_track, rhs_track = ui.colorize(color, cur_track), \
+                                       ui.colorize(color, new_track)
             else:
                 lhs_track, rhs_track = ui.color_diff_suffix(cur_track,
                                                             new_track)
-            templ = ui.colorize('red', u' (#') + u'{0}' + \
-                    ui.colorize('red', u')')
+            templ = ui.colorize(color, u' (#') + u'{0}' + \
+                    ui.colorize(color, u')')
             lhs += templ.format(lhs_track)
             rhs += templ.format(rhs_track)
             lhs_width += len(cur_track) + 4
