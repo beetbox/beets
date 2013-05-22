@@ -61,6 +61,9 @@ The plugin offers several configuration options, all of which live under the
   automatically during the ``import`` command. With this option enabled, the
   importer will transcode all non-MP3 files over the maximum bitrate before
   adding them to your library.
+* ``paths`` lets you specify the directory structure and naming scheme for the
+  converted files (and only them), i.e. it does not affect the path formats of
+  imported files. (see :doc:`/reference/pathformat`)
 * Finally, ``threads`` determines the number of threads to use for parallel
   encoding. By default, the plugin will detect the number of processors
   available and use them all.
