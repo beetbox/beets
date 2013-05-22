@@ -235,7 +235,7 @@ def track_distance(item, track_info, incl_artist=False):
         dist_max += TRACK_INDEX_WEIGHT
 
     # MusicBrainz track ID.
-    if item.mb_trackid:
+    if item.mb_trackid and track_info.track_id:
         if item.mb_trackid != track_info.track_id:
             dist += TRACK_ID_WEIGHT
         dist_max += TRACK_ID_WEIGHT
