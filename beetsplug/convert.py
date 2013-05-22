@@ -185,7 +185,7 @@ class ConvertPlugin(BeetsPlugin):
             u'max_bitrate': 500,
             u'embed': True,
             u'auto': False,
-            u'paths': dict(),
+            u'paths': {},
         })
         self.import_stages = [self.auto_convert]
 

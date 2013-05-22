@@ -62,8 +62,9 @@ The plugin offers several configuration options, all of which live under the
   importer will transcode all non-MP3 files over the maximum bitrate before
   adding them to your library.
 * ``paths`` lets you specify the directory structure and naming scheme for the
-  converted files (and only them), i.e. it does not affect the path formats of
-  imported files. (see :doc:`/reference/pathformat`)
+  converted files. Use the same format as the top-level ``paths`` section (see
+  :ref:`path-format-config`). By default, the plugin reuses your top-level
+  path format settings.
 * Finally, ``threads`` determines the number of threads to use for parallel
   encoding. By default, the plugin will detect the number of processors
   available and use them all.
@@ -76,3 +77,5 @@ Here's an example configuration::
         opts: -aq 4
         dest: /home/user/MusicForPhone
         threads: 4
+        paths:
+            default: $albumartist/$title

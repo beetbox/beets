@@ -24,6 +24,9 @@ Changelog
 * The :ref:`modify-cmd` now correctly converts types when modifying non-string
   fields. You can now safely modify the "comp" flag and the "year" field, for
   example. Thanks to Lucas Duailibe.
+* :doc:`/plugins/convert`: You can now configure the path formats for
+  converted files separately from your main library. Thanks again to Lucas
+  Duailibe.
 * The importer output now shows the number of audio files in each album.
   Thanks to jayme on GitHub.
 * :doc:`/plugins/lyrics`: Lyrics searches should now turn up more results due
