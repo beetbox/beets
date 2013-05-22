@@ -1243,7 +1243,7 @@ class Library(BaseLibrary):
         return Transaction(self)
 
     def destination(self, item, pathmod=None, fragment=False,
-                    basedir=None, platform=None):
+                    basedir=None, platform=None, path_formats=None):
         """Returns the path in the library directory designated for item
         item (i.e., where the file ought to be). fragment makes this
         method return just the path fragment underneath the root library
@@ -1254,10 +1254,11 @@ class Library(BaseLibrary):
         pathmod = pathmod or os.path
         platform = platform or sys.platform
         basedir = basedir or self.directory
+        path_formats = path_formats or self.path_formats
 
         # Use a path format based on a query, falling back on the
         # default.
-        for query, path_format in self.path_formats:
+        for query, path_format in path_formats:
             if query == PF_KEY_DEFAULT:
                 continue
             query = AndQuery.from_string(query)
@@ -1267,7 +1268,7 @@ class Library(BaseLibrary):
                 break
         else:
             # No query matched; fall back to default.
-            for query, path_format in self.path_formats:
+            for query, path_format in path_formats:
                 if query == PF_KEY_DEFAULT:
                     break
             else:

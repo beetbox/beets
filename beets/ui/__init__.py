@@ -437,12 +437,13 @@ def color_diff_suffix(a, b, highlight='red'):
     return a[:first_diff] + colorize(highlight, a[first_diff:]), \
            b[:first_diff] + colorize(highlight, b[first_diff:])
 
-def get_path_formats():
+def get_path_formats(subview=None):
     """Get the configuration's path formats as a list of query/template
     pairs.
     """
     path_formats = []
-    for query, view in config['paths'].items():
+    subview = subview or config['paths']
+    for query, view in subview.items():
         query = PF_KEY_QUERIES.get(query, query)  # Expand common queries.
         path_formats.append((query, Template(view.get(unicode))))
     return path_formats
