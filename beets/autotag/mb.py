@@ -213,6 +213,7 @@ def album_info(release):
         mediums=len(release['medium-list']),
         artist_sort=artist_sort_name,
         artist_credit=artist_credit_name,
+        data_source='MusicBrainz',
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
     info.asin = release.get('asin')
