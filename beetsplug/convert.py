@@ -75,8 +75,7 @@ def convert_item(lib, dest_dir, keep_new, path_formats):
     while True:
         item = yield
         dest = _destination(lib, dest_dir, item, keep_new, path_formats)
-        print dest
-        continue
+
         if os.path.exists(util.syspath(dest)):
             log.info(u'Skipping {0} (target file exists)'.format(
                 util.displayable_path(item.path)
