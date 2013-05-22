@@ -13,4 +13,4 @@ First, enable the ``discogs`` plugin (see :doc:`/plugins/index`).
 
 Then you will need to install the ``discogs-client`` library::
 
-    pip install discogs-client>=1.1.1
+    pip install discogs-client

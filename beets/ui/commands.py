@@ -132,11 +132,11 @@ def dist_string(dist):
     return out
 
 def source_string(source):
-    colors = {
-        'MusicBrainz': 'green',
-        'Unknown': 'red',
-    }
-    return ui.colorize(colors.get(source, 'yellow'), source)
+    """Colorize a data_source string.
+    """
+    if source == 'MusicBrainz':
+        return source
+    return ui.colorize('yellow', source)
 
 def show_change(cur_artist, cur_album, match):
     """Print out a representation of the changes that will be made if an
@@ -196,12 +196,10 @@ def show_change(cur_artist, cur_album, match):
         print_(message)
 
     # Info line.
-    info = []
-    # Distance/similarity.
-    info.append('(Similarity: %s)' % dist_string(match.distance))
-    # Source.
-    info.append('(Source: %s)' % source_string(match.info.data_source))
-    print_(' '.join(info))
+    print_('from {0}, similarity: {1}'.format(
+        source_string(match.info.data_source),
+        dist_string(match.distance),
+    ))
 
     # Tracks.
     pairs = match.mapping.items()
