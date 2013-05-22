@@ -197,12 +197,10 @@ def assign_items(items, tracks):
     return mapping, extra_items, extra_tracks
 
 def track_index_changed(item, track_info):
-    if config['per_disc_numbering'].get(bool):
-        if item.track != track_info.medium_index:
-            return True
-    elif item.track != track_info.index:
-        return True
-    return False
+    """Returns True if the item and track info index is different. Tolerates
+    per disc and per release numbering.
+    """
+    return item.track not in (track_info.medium_index, track_info.index)
 
 def track_distance(item, track_info, incl_artist=False):
     """Determines the significance of a track metadata change. Returns a
