@@ -73,13 +73,13 @@ class BeetsPlugin(object):
         """
         return 0.0, 0.0
 
-    def candidates(self, items):
+    def candidates(self, items, artist, album, va_likely):
         """Should return a sequence of AlbumInfo objects that match the
         album whose items are provided.
         """
         return ()
 
-    def item_candidates(self, item):
+    def item_candidates(self, item, artist, title):
         """Should return a sequence of TrackInfo objects that match the
         item provided.
         """
@@ -247,20 +247,20 @@ def album_distance(items, album_info, mapping):
         dist_max += dm
     return dist, dist_max
 
-def candidates(items):
+def candidates(items, artist, album, va_likely):
     """Gets MusicBrainz candidates for an album from each plugin.
     """
     out = []
     for plugin in find_plugins():
-        out.extend(plugin.candidates(items))
+        out.extend(plugin.candidates(items, artist, album, va_likely))
     return out
 
-def item_candidates(item):
+def item_candidates(item, artist, title):
     """Gets MusicBrainz candidates for an item from the plugins.
     """
     out = []
     for plugin in find_plugins():
-        out.extend(plugin.item_candidates(item))
+        out.extend(plugin.item_candidates(item, artist, title))
     return out
 
 def configure(config):

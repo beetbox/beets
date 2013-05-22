@@ -65,12 +65,14 @@ disabled by default, but you can turn them on as described above.
    mbsync
    missing
    duplicates
+   discogs
 
 Autotagger Extensions
 ''''''''''''''''''''''
 
 * :doc:`chroma`: Use acoustic fingerprinting to identify audio files with
   missing or incorrect metadata.
+* :doc:`discogs`: Search for releases in the discogs database.
 
 Metadata
 ''''''''

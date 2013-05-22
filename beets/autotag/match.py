@@ -79,7 +79,7 @@ recommendation = enum('none', 'low', 'medium', 'strong', name='recommendation')
 # album level to determine whether a given release is likely a VA
 # release and also on the track level to to remove the penalty for
 # differing artists.
-VA_ARTISTS = (u'', u'various artists', u'va', u'unknown')
+VA_ARTISTS = (u'', u'various artists', u'various', u'va', u'unknown')
 
 # Global logger.
 log = logging.getLogger('beets')
