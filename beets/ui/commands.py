@@ -114,7 +114,7 @@ default_commands.append(fields_cmd)
 
 VARIOUS_ARTISTS = u'Various Artists'
 
-PARTIAL_MATCH_MESSAGE = u'partial match!'
+PARTIAL_MATCH_MESSAGE = u'(partial match!)'
 
 # Importer utilities and support.
 
@@ -155,7 +155,7 @@ def show_change(cur_artist, cur_album, match):
 
         # Add a suffix if this is a partial match.
         if partial:
-            out += u' (%s)' % ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
+            out += u' %s' % ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
 
         print_(out)
 
@@ -201,7 +201,7 @@ def show_change(cur_artist, cur_album, match):
         message = u"Tagging:\n    %s - %s" % (match.info.artist,
                                               match.info.album)
         if match.extra_items or match.extra_tracks:
-            message += u' (%s)' % ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
+            message += u' %s' % ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
         print_(message)
 
     # Info line.
