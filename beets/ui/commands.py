@@ -118,6 +118,25 @@ PARTIAL_MATCH_MESSAGE = u'(partial match!)'
 
 # Importer utilities and support.
 
+def disambig_string(info):
+    """Returns label, year and media disambiguation, if available.
+    """
+    disambig = []
+    if info.label:
+        disambig.append(info.label)
+    if info.year:
+        disambig.append(unicode(info.year))
+    if info.media:
+        if info.mediums > 1:
+            disambig.append(u'{0}x{1}'.format(
+              info.mediums, info.media))
+        else:
+            disambig.append(info.media)
+    if info.albumdisambig:
+        disambig.append(info.albumdisambig)
+    if disambig:
+        return u', '.join(disambig)
+
 def dist_string(dist):
     """Formats a distance (a float) as a colorized similarity percentage
     string.
@@ -203,7 +222,7 @@ def show_change(cur_artist, cur_album, match):
     if match.info.data_source != 'MusicBrainz':
         info.append(ui.colorize('yellow',
                                 '(%s)' % match.info.data_source))
-    disambig = album_disambig(match.info)
+    disambig = disambig_string(match.info)
     if disambig:
         info.append(ui.colorize('lightgray', '(%s)' % disambig))
     print_(' '.join(info))
@@ -343,24 +362,6 @@ def _summary_judment(rec):
         print_('Importing as-is.')
     return action
 
-def album_disambig(info):
-    # Label, year and media disambiguation, if available.
-    disambig = []
-    if info.label:
-        disambig.append(info.label)
-    if info.year:
-        disambig.append(unicode(info.year))
-    if info.media:
-        if info.mediums > 1:
-            disambig.append(u'{0}x{1}'.format(
-              info.mediums, info.media))
-        else:
-            disambig.append(info.media)
-    if info.albumdisambig:
-        disambig.append(info.albumdisambig)
-    if disambig:
-        return u', '.join(disambig)
-
 def choose_candidate(candidates, singleton, rec, cur_artist=None,
                      cur_album=None, item=None, itemcount=None):
     """Given a sorted list of candidates, ask the user for a selection
@@ -435,23 +436,20 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                        (cur_artist, cur_album))
                 print_('Candidates:')
                 for i, match in enumerate(candidates):
-                    line = '%i. %s - %s' % (i + 1, match.info.artist,
-                                            match.info.album)
-
-                    disambig = album_disambig(match.info)
-                    if disambig:
-                        line += u' [{0}]'.format(ui.colorize('lightgray',
-                                                             disambig))
-
-                    line += ' (%s)' % dist_string(match.distance)
+                    line = ['%i. %s - %s (%s)' % (i + 1, match.info.artist,
+                                                  match.info.album,
+                                                  dist_string(match.distance))]
 
                     # Point out the partial matches.
                     if match.extra_items or match.extra_tracks:
-                        warning = PARTIAL_MATCH_MESSAGE
-                        warning = ui.colorize('yellow', warning)
-                        line += u' (%s)' % warning
+                        line.append(ui.colorize('yellow',
+                                                PARTIAL_MATCH_MESSAGE))
 
-                    print_(line)
+                    disambig = disambig_string(match.info)
+                    if disambig:
+                        line.append(ui.colorize('lightgray', '(%s)' % disambig))
+
+                    print_(' '.join(line))
 
             # Ask the user for a choice.
             if singleton:
