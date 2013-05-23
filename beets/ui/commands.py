@@ -131,13 +131,6 @@ def dist_string(dist):
         out = ui.colorize('red', out)
     return out
 
-def source_string(source):
-    """Colorize a data_source string.
-    """
-    if source == 'MusicBrainz':
-        return source
-    return ui.colorize('yellow', source)
-
 def show_change(cur_artist, cur_album, match):
     """Print out a representation of the changes that will be made if an
     album's tags are changed according to `match`, which must be an AlbumMatch
@@ -205,11 +198,15 @@ def show_change(cur_artist, cur_album, match):
         print_(message)
 
     # Info line.
-    print_('from {0}, similarity: {1} [{2}]'.format(
-        source_string(match.info.data_source),
-        dist_string(match.distance),
-        ui.colorize('lightgray', album_disambig(match.info)),
-    ))
+    info = []
+    info.append('(Similarity: %s)' % dist_string(match.distance))
+    if match.info.data_source != 'MusicBrainz':
+        info.append(ui.colorize('yellow',
+                                '(%s)' % match.info.data_source))
+    disambig = album_disambig(match.info)
+    if disambig:
+        info.append(ui.colorize('lightgray', '(%s)' % disambig))
+    print_(' '.join(info))
 
     # Tracks.
     pairs = match.mapping.items()
