@@ -196,6 +196,12 @@ def assign_items(items, tracks):
     extra_tracks = set(tracks) - set(mapping.values())
     return mapping, extra_items, extra_tracks
 
+def track_index_changed(item, track_info):
+    """Returns True if the item and track info index is different. Tolerates
+    per disc and per release numbering.
+    """
+    return item.track not in (track_info.medium_index, track_info.index)
+
 def track_distance(item, track_info, incl_artist=False):
     """Determines the significance of a track metadata change. Returns a
     float in [0.0,1.0]. `incl_artist` indicates that a distance
@@ -230,7 +236,7 @@ def track_distance(item, track_info, incl_artist=False):
 
     # Track index.
     if track_info.index and item.track:
-        if item.track not in (track_info.index, track_info.medium_index):
+        if track_index_changed(item, track_info):
             dist += TRACK_INDEX_WEIGHT
         dist_max += TRACK_INDEX_WEIGHT
 
@@ -374,8 +380,8 @@ def _recommendation(results):
                 rec = max_rec['tracklength']
 
             # Track number differs.
-            elif rec > max_rec['tracknumber'] and item.track not in \
-                    (track_info.index, track_info.medium_index):
+            elif rec > max_rec['tracknumber'] and \
+                    track_index_changed(item, track_info):
                 rec = max_rec['tracknumber']
 
     return rec
