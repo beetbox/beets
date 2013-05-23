@@ -118,6 +118,25 @@ PARTIAL_MATCH_MESSAGE = u'(partial match!)'
 
 # Importer utilities and support.
 
+def disambig_string(info):
+    """Returns label, year and media disambiguation, if available.
+    """
+    disambig = []
+    if info.label:
+        disambig.append(info.label)
+    if info.year:
+        disambig.append(unicode(info.year))
+    if info.media:
+        if info.mediums > 1:
+            disambig.append(u'{0}x{1}'.format(
+              info.mediums, info.media))
+        else:
+            disambig.append(info.media)
+    if info.albumdisambig:
+        disambig.append(info.albumdisambig)
+    if disambig:
+        return u', '.join(disambig)
+
 def dist_string(dist):
     """Formats a distance (a float) as a colorized similarity percentage
     string.
@@ -130,13 +149,6 @@ def dist_string(dist):
     else:
         out = ui.colorize('red', out)
     return out
-
-def source_string(source):
-    """Colorize a data_source string.
-    """
-    if source == 'MusicBrainz':
-        return source
-    return ui.colorize('yellow', source)
 
 def show_change(cur_artist, cur_album, match):
     """Print out a representation of the changes that will be made if an
@@ -155,22 +167,30 @@ def show_change(cur_artist, cur_album, match):
 
         # Add a suffix if this is a partial match.
         if partial:
-            out += u' ' + ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
+            out += u' %s' % ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
 
         print_(out)
 
     def format_index(track_info):
         """Return a string representing the track index of the given
-        TrackInfo object.
+        TrackInfo or Item object.
         """
-        if config['per_disc_numbering'].get(bool):
-            if match.info.mediums > 1:
-                return u'{0}-{1}'.format(track_info.medium,
-                                         track_info.medium_index)
-            else:
-                return unicode(track_info.medium_index)
+        if isinstance(track_info, autotag.hooks.TrackInfo):
+            index = track_info.index
+            medium_index = track_info.medium_index
+            medium = track_info.medium
+            mediums = match.info.mediums
         else:
-            return unicode(track_info.index)
+            index = medium_index = track_info.track
+            medium = track_info.disc
+            mediums = track_info.disctotal
+        if config['per_disc_numbering'].get(bool):
+            if mediums > 1:
+                return u'{0}-{1}'.format(medium, medium_index)
+            else:
+                return unicode(medium_index)
+        else:
+            return unicode(index)
 
     # Identify the album in question.
     if cur_artist != match.info.artist or \
@@ -190,16 +210,22 @@ def show_change(cur_artist, cur_album, match):
         print_("To:")
         show_album(artist_r, album_r)
     else:
-        message = u"Tagging: %s - %s" % (match.info.artist, match.info.album)
+        message = u"Tagging:\n    %s - %s" % (match.info.artist,
+                                              match.info.album)
         if match.extra_items or match.extra_tracks:
-            message += u' ' + ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
+            message += u' %s' % ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
         print_(message)
 
     # Info line.
-    print_('from {0}, similarity: {1}'.format(
-        source_string(match.info.data_source),
-        dist_string(match.distance),
-    ))
+    info = []
+    info.append('(Similarity: %s)' % dist_string(match.distance))
+    if match.info.data_source != 'MusicBrainz':
+        info.append(ui.colorize('yellow',
+                                '(%s)' % match.info.data_source))
+    disambig = disambig_string(match.info)
+    if disambig:
+        info.append(ui.colorize('lightgray', '(%s)' % disambig))
+    print_(' '.join(info))
 
     # Tracks.
     pairs = match.mapping.items()
@@ -222,11 +248,20 @@ def show_change(cur_artist, cur_album, match):
         lhs_width = len(cur_title)
 
         # Track number change.
-        if item.track not in (track_info.index, track_info.medium_index):
-            cur_track, new_track = unicode(item.track), format_index(track_info)
-            lhs_track, rhs_track = ui.color_diff_suffix(cur_track, new_track)
-            templ = ui.colorize('red', u' (#') + u'{0}' + \
-                    ui.colorize('red', u')')
+        cur_track, new_track = format_index(item), format_index(track_info)
+        if cur_track != new_track:
+            if item.track in (track_info.index, track_info.medium_index):
+                color = 'yellow'
+            else:
+                color = 'red'
+            if (cur_track + new_track).count('-') == 1:
+                lhs_track, rhs_track = ui.colorize(color, cur_track), \
+                                       ui.colorize(color, new_track)
+            else:
+                lhs_track, rhs_track = ui.color_diff_suffix(cur_track,
+                                                            new_track)
+            templ = ui.colorize(color, u' (#') + u'{0}' + \
+                    ui.colorize(color, u')')
             lhs += templ.format(lhs_track)
             rhs += templ.format(rhs_track)
             lhs_width += len(cur_track) + 4
@@ -401,35 +436,20 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                        (cur_artist, cur_album))
                 print_('Candidates:')
                 for i, match in enumerate(candidates):
-                    line = '%i. %s - %s' % (i + 1, match.info.artist,
-                                            match.info.album)
-
-                    # Label, year and media disambiguation, if available.
-                    disambig = []
-                    if match.info.label:
-                        disambig.append(match.info.label)
-                    if match.info.year:
-                        disambig.append(unicode(match.info.year))
-                    if match.info.media:
-                        if match.info.mediums > 1:
-                            disambig.append(u'{0}x{1}'.format(
-                              match.info.mediums, match.info.media))
-                        else:
-                            disambig.append(match.info.media)
-                    if match.info.albumdisambig:
-                        disambig.append(match.info.albumdisambig)
-                    if disambig:
-                        line += u' [{0}]'.format(u', '.join(disambig))
-
-                    line += ' (%s)' % dist_string(match.distance)
+                    line = ['%i. %s - %s (%s)' % (i + 1, match.info.artist,
+                                                  match.info.album,
+                                                  dist_string(match.distance))]
 
                     # Point out the partial matches.
                     if match.extra_items or match.extra_tracks:
-                        warning = PARTIAL_MATCH_MESSAGE
-                        warning = ui.colorize('yellow', warning)
-                        line += u' %s' % warning
+                        line.append(ui.colorize('yellow',
+                                                PARTIAL_MATCH_MESSAGE))
 
-                    print_(line)
+                    disambig = disambig_string(match.info)
+                    if disambig:
+                        line.append(ui.colorize('lightgray', '(%s)' % disambig))
+
+                    print_(' '.join(line))
 
             # Ask the user for a choice.
             if singleton:
