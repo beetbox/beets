@@ -396,14 +396,18 @@ As mentioned above, autotagger matches have *recommendations* that control how
 the UI behaves for a certain quality of match. The recommendation for a certain
 match is usually based on the distance calculation. But you can also control
 the recommendation for certain specific situations by defining *maximum*
-recommendations when (a) a match has missing/extra tracks; (b) the track number
-for at least one track differs; or (c) the track length for at least one track
-differs.
+recommendations when:
+
+* a match has missing/extra tracks;
+* the track number for at least one track differs;
+* the track length for at least one track differs; or
+* a match came from the optional :doc:`Discogs </plugins/discogs>` plugin.
 
 To define maxima, use keys under ``max_rec:`` in the ``match`` section::
 
     match:
         max_rec:
+            discogs: strong
             partial: medium
             tracklength: strong
             tracknumber: strong
