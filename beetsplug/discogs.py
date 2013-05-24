@@ -137,7 +137,15 @@ class DiscogsPlugin(BeetsPlugin):
         medium = None
         medium_count, index_count = 0, 0
         for track in tracks:
-            if medium != track.medium:
+            # Handle special case where a different medium does not indicate a
+            # new disc, when there is no medium_index and the ordinal of medium
+            # is not sequential. For example, I, II, III, IV, V. Assume these
+            # are the track index, not the medium.
+            medium_is_index = track.medium and not track.medium_index and (
+                    len(track.medium) != 1 or
+                    ord(track.medium) - 64 != medium_count + 1)
+
+            if not medium_is_index and medium != track.medium:
                 # Increment medium_count and reset index_count when medium
                 # changes.
                 medium = track.medium
@@ -173,7 +181,9 @@ class DiscogsPlugin(BeetsPlugin):
     def get_track_index(self, position):
         """Returns the medium and medium index for a discogs track position.
         """
-        match = re.match(r'^(.*?)(\d*)$', position, re.I)
+        # medium_index is a number at the end of position. medium is everything
+        # else. E.g. (A)(1), (Side A, Track )(1), (A)(), ()(1), etc.
+        match = re.match(r'^(.*?)(\d*)$', position.upper())
         if match:
             medium, index = match.groups()
         else:
