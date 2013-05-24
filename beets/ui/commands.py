@@ -312,7 +312,7 @@ def show_change(cur_artist, cur_album, match):
         if item.mb_trackid and item.mb_trackid != track_info.track_id:
             penalties.append('ID')
         if penalties:
-            rhs += ' %s' % ui.colorize('lightgray',
+            rhs += ' %s' % ui.colorize('red',
                                        '(%s)' % ', '.join(penalties))
 
         if lhs != rhs:
