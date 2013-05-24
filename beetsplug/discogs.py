@@ -122,12 +122,16 @@ class DiscogsPlugin(BeetsPlugin):
         """Returns a list of TrackInfo objects for a discogs tracklist.
         """
         tracks = []
+        index_tracks = {}
         index = 0
         for track in tracklist:
             # Only real tracks have `position`. Otherwise, it's an index track.
             if track['position']:
                 index += 1
                 tracks.append(self.get_track_info(track, index))
+            else:
+                index_tracks[index+1] = track['title']
+
         # Fix up medium and medium_index for each track. Discogs position is
         # unreliable, but tracks are in order.
         medium = None
@@ -141,6 +145,17 @@ class DiscogsPlugin(BeetsPlugin):
                 index_count = 0
             index_count += 1
             track.medium, track.medium_index = medium_count, index_count
+
+        # Get `disctitle` from Discogs index tracks. Assume that an index track
+        # before the first track of each medium is a disc title.
+        for track in tracks:
+            if track.medium_index == 1:
+                if track.index in index_tracks:
+                    disctitle = index_tracks[track.index]
+                else:
+                    disctitle = None
+            track.disctitle = disctitle
+
         return tracks
 
     def get_track_info(self, track, index):
