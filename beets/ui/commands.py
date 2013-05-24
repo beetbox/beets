@@ -280,6 +280,19 @@ def show_change(cur_artist, cur_album, match):
             rhs += templ.format(rhs_length)
             lhs_width += len(cur_length) + 3
 
+        # Hidden penalties. No LHS/RHS diff is displayed, but we still want to
+        # indicate that a penalty has been applied to explain the similarity
+        # score.
+        penalties = []
+        if match.info.va and track_info.artist and \
+                item.artist.lower() not in VA_ARTISTS:
+            penalties.append('artist')
+        if item.mb_trackid and item.mb_trackid != track_info.track_id:
+            penalties.append('ID')
+        if penalties:
+            rhs += ' %s' % ui.colorize('lightgray',
+                                       '(%s)' % ', '.join(penalties))
+
         if lhs != rhs:
             lines.append((lhs, rhs, lhs_width))
         elif config['import']['detail']:

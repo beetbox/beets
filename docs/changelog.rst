@@ -38,6 +38,7 @@ Changelog
 * Album art filenames now respect the :ref:`replace` configuration.
 * Friendly error messages are now printed when trying to read or write files
   that go missing.
+* More consistent display and colorization of album and track metadata.
 
 .. _discogs: http://discogs.com/
 
