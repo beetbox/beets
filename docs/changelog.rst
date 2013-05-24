@@ -38,7 +38,17 @@ Changelog
 * Album art filenames now respect the :ref:`replace` configuration.
 * Friendly error messages are now printed when trying to read or write files
   that go missing.
-* More consistent display and colorization of album and track metadata.
+* Various UI enhancements:
+  * More consistent format and colorization of album and track metadata.
+  * Display data source URL for :doc:`/plugins/discogs` matches. This should
+    make it easier for people who would rather import and correct data from
+    Discogs into MusicBrainz.
+  * Display album disambiguation and disc titles in the track listing, when
+    available.
+  * Track changes highlighted in yellow indicate a change in format to or from
+    :ref:`per_disc_numbering`. No penalty is applied because the track number
+    is still "correct", just in a different format.
+  * Sort missing and unmatched tracks by index and title.
 
 .. _Discogs: http://discogs.com/
 
