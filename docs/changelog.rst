@@ -38,7 +38,7 @@ Changelog
 * Album art filenames now respect the :ref:`replace` configuration.
 * Friendly error messages are now printed when trying to read or write files
   that go missing.
-* Various UI enhancements:
+* Various UI enhancements to the importer due to Tai Lee:
 
   * More consistent format and colorization of album and track metadata.
   * Display data source URL for :doc:`/plugins/discogs` matches. This should
@@ -49,7 +49,9 @@ Changelog
   * Track changes highlighted in yellow indicate a change in format to or from
     :ref:`per_disc_numbering`. No penalty is applied because the track number
     is still "correct", just in a different format.
-  * Sort missing and unmatched tracks by index and title.
+  * Sort missing and unmatched tracks by index and title and group them
+    together for better readability.
+  * Indicate MusicBrainz ID mismatches.
 
 .. _Discogs: http://discogs.com/
 
