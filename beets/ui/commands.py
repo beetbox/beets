@@ -234,11 +234,29 @@ def show_change(cur_artist, cur_album, match):
     pairs = match.mapping.items()
     pairs.sort(key=lambda (_, track_info): track_info.index)
 
-    # Build up LHS and RHS for track difference display. The `lines`
-    # list contains ``(current title, new title, width)`` tuples where
-    # `width` is the length (in characters) of the uncolorized LHS.
+    # Build up LHS and RHS for track difference display. The `lines` list
+    # contains ``(lhs, rhs, width)`` tuples where `width` is the length (in
+    # characters) of the uncolorized LHS.
     lines = []
+    medium = disctitle = None
     for item, track_info in pairs:
+
+        # Medium number and title.
+        if medium != track_info.medium or disctitle != track_info.disctitle:
+            media = match.info.media or 'Media'
+            if match.info.mediums > 1 and track_info.disctitle:
+                lhs = '%s %s: %s' % (media, track_info.medium,
+                                     track_info.disctitle)
+            elif match.info.mediums > 1:
+                lhs = '%s %s' % (media, track_info.medium)
+            elif track_info.disctitle:
+                lhs = '%s: %s' % (media, track_info.disctitle)
+            else:
+                lhs = None
+            if lhs:
+                lines.append((lhs, '', 0))
+            medium, disctitle = track_info.medium, track_info.disctitle
+
         # Titles.
         new_title = track_info.title
         if not item.title.strip():
@@ -297,9 +315,9 @@ def show_change(cur_artist, cur_album, match):
                                        '(%s)' % ', '.join(penalties))
 
         if lhs != rhs:
-            lines.append((lhs, rhs, lhs_width))
+            lines.append((' * %s' % lhs, rhs, lhs_width))
         elif config['import']['detail']:
-            lines.append((lhs, '', lhs_width))
+            lines.append((' * %s' % lhs, '', lhs_width))
 
     # Print each track in two columns, or across two lines.
     col_width = (ui.term_width() - len(''.join([' * ', ' -> ']))) // 2
@@ -307,12 +325,12 @@ def show_change(cur_artist, cur_album, match):
         max_width = max(w for _, _, w in lines)
         for lhs, rhs, lhs_width in lines:
             if not rhs:
-                print_(u' * {0}'.format(lhs))
+                print_(lhs)
             elif max_width > col_width:
-                print_(u' * %s ->\n   %s' % (lhs, rhs))
+                print_(u'%s ->\n   %s' % (lhs, rhs))
             else:
                 pad = max_width - lhs_width
-                print_(u' * %s%s -> %s' % (lhs, ' ' * pad, rhs))
+                print_(u'%s%s -> %s' % (lhs, ' ' * pad, rhs))
 
     # Missing and unmatched tracks.
     for track_info in match.extra_tracks:
