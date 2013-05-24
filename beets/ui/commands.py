@@ -279,6 +279,7 @@ def show_change(cur_artist, cur_album, match):
                 lhs_track, rhs_track = ui.colorize(color, cur_track), \
                                        ui.colorize(color, new_track)
             else:
+                color = 'red'
                 lhs_track, rhs_track = ui.color_diff_suffix(cur_track,
                                                             new_track)
             templ = ui.colorize(color, u' (#') + u'{0}' + \
