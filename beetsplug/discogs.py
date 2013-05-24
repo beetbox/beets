@@ -116,7 +116,7 @@ class DiscogsPlugin(BeetsPlugin):
             if artist['join']:
                 bits.append(artist['join'])
         # Remove discogs artist disambiguation number if needed.
-        bits = [re.sub(r'\(\d+\)$', '', bit) for bit in bits]
+        bits = [re.sub(r' \(\d+\)$', '', bit) for bit in bits]
         artist = ' '.join(bits).replace(' ,', ',') or None
         return artist, artist_id
 
