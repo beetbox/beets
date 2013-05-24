@@ -333,15 +333,20 @@ def show_change(cur_artist, cur_album, match):
                 print_(u'%s%s -> %s' % (lhs, ' ' * pad, rhs))
 
     # Missing and unmatched tracks.
+    if match.extra_tracks:
+        print_('Missing tracks:')
     for track_info in match.extra_tracks:
-        line = u' * Missing track: {0} ({1})'.format(track_info.title,
-                                                     format_index(track_info))
-        line = ui.colorize('yellow', line)
-        print_(line)
+        line = ' ! %s (#%s)' % (track_info.title, format_index(track_info))
+        if track_info.length:
+            line += ' (%s)' % ui.human_seconds_short(track_info.length)
+        print_(ui.colorize('yellow', line))
+    if match.extra_items:
+        print_('Unmatched tracks:')
     for item in match.extra_items:
-        line = u' * Unmatched track: {0} ({1})'.format(item.title, item.track)
-        line = ui.colorize('yellow', line)
-        print_(line)
+        line = ' ! %s (#%s)' % (item.title, format_index(item))
+        if item.length:
+            line += ' (%s)' % ui.human_seconds_short(item.length)
+        print_(ui.colorize('yellow', line))
 
 def show_item_change(item, match):
     """Print out the change that would occur by tagging `item` with the
