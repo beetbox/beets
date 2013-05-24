@@ -440,6 +440,11 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                                                   match.info.album,
                                                   dist_string(match.distance))]
 
+                    # Sources other than MusicBrainz.
+                    source = match.info.data_source
+                    if source != 'MusicBrainz':
+                        line.append(ui.colorize('yellow', '(%s)' % source))
+
                     # Point out the partial matches.
                     if match.extra_items or match.extra_tracks:
                         line.append(ui.colorize('yellow',
