@@ -52,6 +52,7 @@ class AlbumInfo(object):
     - ``albumdisambig``: MusicBrainz release disambiguation comment
     - ``artist_credit``: Release-specific artist name
     - ``data_source``: The original data source (MusicBrainz, Discogs, etc.)
+    - ``data_url``: The data source release URL.
 
     The fields up through ``tracks`` are required. The others are
     optional and may be None.
@@ -62,7 +63,8 @@ class AlbumInfo(object):
                  releasegroup_id=None, catalognum=None, script=None,
                  language=None, country=None, albumstatus=None, media=None,
                  albumdisambig=None, artist_credit=None, original_year=None,
-                 original_month=None, original_day=None, data_source=None):
+                 original_month=None, original_day=None, data_source=None,
+                 data_url=None):
         self.album = album
         self.album_id = album_id
         self.artist = artist
@@ -90,6 +92,7 @@ class AlbumInfo(object):
         self.original_month = original_month
         self.original_day = original_day
         self.data_source = data_source or 'Unknown'
+        self.data_url = data_url
 
     # Work around a bug in python-musicbrainz-ngs that causes some
     # strings to be bytes rather than Unicode.

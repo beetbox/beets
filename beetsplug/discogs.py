@@ -91,6 +91,7 @@ class DiscogsPlugin(BeetsPlugin):
             catalogno = None
         country = result.data.get('country')
         media = result.data['formats'][0]['name']
+        data_url = result.data['uri']
         return AlbumInfo(album, album_id, artist, artist_id, tracks, asin=None,
                          albumtype=albumtype, va=va, year=year, month=None,
                          day=None, label=label, mediums=mediums,
@@ -99,7 +100,8 @@ class DiscogsPlugin(BeetsPlugin):
                          country=country, albumstatus=None, media=media,
                          albumdisambig=None, artist_credit=None,
                          original_year=None, original_month=None,
-                         original_day=None, data_source='Discogs')
+                         original_day=None, data_source='Discogs',
+                         data_url=data_url)
 
     def get_artist(self, artists):
         """Returns an artist string (all artists) and an artist_id (the main
