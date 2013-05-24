@@ -357,7 +357,7 @@ def _recommendation(results):
     if isinstance(results[0], hooks.AlbumMatch):
         # Load the configured recommendation maxima.
         max_rec = {}
-        for trigger in 'partial', 'tracklength', 'tracknumber':
+        for trigger in 'discogs', 'partial', 'tracklength', 'tracknumber':
             max_rec[trigger] = \
                 config['match']['max_rec'][trigger].as_choice({
                     'strong': recommendation.strong,
@@ -365,6 +365,11 @@ def _recommendation(results):
                     'low': recommendation.low,
                     'none': recommendation.none,
                 })
+
+        # Discogs.
+        if rec > max_rec['discogs'] and \
+                results[0].info.data_source == 'Discogs':
+            rec = max_rec['discogs']
 
         # Partial match.
         if rec > max_rec['partial'] and \

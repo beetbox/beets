@@ -40,7 +40,7 @@ Changelog
   that go missing.
 * More consistent display and colorization of album and track metadata.
 
-.. _discogs: http://discogs.com/
+.. _Discogs: http://discogs.com/
 
 1.1.0 (April 29, 203)
 ---------------------
