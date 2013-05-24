@@ -39,6 +39,7 @@ Changelog
 * Friendly error messages are now printed when trying to read or write files
   that go missing.
 * Various UI enhancements:
+
   * More consistent format and colorization of album and track metadata.
   * Display data source URL for :doc:`/plugins/discogs` matches. This should
     make it easier for people who would rather import and correct data from
