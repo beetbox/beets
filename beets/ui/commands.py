@@ -224,8 +224,7 @@ def show_change(cur_artist, cur_album, match):
     info = []
     info.append('(Similarity: %s)' % dist_string(match.distance))
     if match.info.data_source != 'MusicBrainz':
-        info.append(ui.colorize('yellow',
-                                '(%s)' % match.info.data_source))
+        info.append(ui.colorize('turquoise', '(%s)' % match.info.data_source))
     disambig = disambig_string(match.info)
     if disambig:
         info.append(ui.colorize('lightgray', '(%s)' % disambig))
@@ -460,7 +459,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                     # Sources other than MusicBrainz.
                     source = match.info.data_source
                     if source != 'MusicBrainz':
-                        line.append(ui.colorize('yellow', '(%s)' % source))
+                        line.append(ui.colorize('turquoise', '(%s)' % source))
 
                     # Point out the partial matches.
                     if match.extra_items or match.extra_tracks:
