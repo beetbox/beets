@@ -192,8 +192,10 @@ def assign_items(items, tracks):
 
     # Produce the output matching.
     mapping = dict((items[i], tracks[j]) for (i, j) in matching)
-    extra_items = set(items) - set(mapping.keys())
-    extra_tracks = set(tracks) - set(mapping.values())
+    extra_items = list(set(items) - set(mapping.keys()))
+    extra_items.sort(key=lambda i: (i.disc, i.track, i.title))
+    extra_tracks = list(set(tracks) - set(mapping.values()))
+    extra_tracks.sort(key=lambda t: (t.index, t.title))
     return mapping, extra_items, extra_tracks
 
 def track_index_changed(item, track_info):

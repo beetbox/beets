@@ -409,8 +409,8 @@ class AssignmentTest(unittest.TestCase):
         trackinfo.append(TrackInfo(u'three', None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
-        self.assertEqual(extra_items, set())
-        self.assertEqual(extra_tracks, set())
+        self.assertEqual(extra_items, [])
+        self.assertEqual(extra_tracks, [])
         self.assertEqual(mapping, {
             items[0]: trackinfo[0],
             items[1]: trackinfo[2],
@@ -428,8 +428,8 @@ class AssignmentTest(unittest.TestCase):
         trackinfo.append(TrackInfo(u'three', None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
-        self.assertEqual(extra_items, set())
-        self.assertEqual(extra_tracks, set())
+        self.assertEqual(extra_items, [])
+        self.assertEqual(extra_tracks, [])
         self.assertEqual(mapping, {
             items[0]: trackinfo[0],
             items[1]: trackinfo[2],
@@ -446,8 +446,8 @@ class AssignmentTest(unittest.TestCase):
         trackinfo.append(TrackInfo(u'three', None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
-        self.assertEqual(extra_items, set())
-        self.assertEqual(extra_tracks, set([trackinfo[1]]))
+        self.assertEqual(extra_items, [])
+        self.assertEqual(extra_tracks, [[trackinfo[1]]])
         self.assertEqual(mapping, {
             items[0]: trackinfo[0],
             items[1]: trackinfo[2],
@@ -463,8 +463,8 @@ class AssignmentTest(unittest.TestCase):
         trackinfo.append(TrackInfo(u'three', None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
-        self.assertEqual(extra_items, set([items[1]]))
-        self.assertEqual(extra_tracks, set())
+        self.assertEqual(extra_items, [[items[1]]])
+        self.assertEqual(extra_tracks, [])
         self.assertEqual(mapping, {
             items[0]: trackinfo[0],
             items[2]: trackinfo[1],
@@ -513,8 +513,8 @@ class AssignmentTest(unittest.TestCase):
 
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
-        self.assertEqual(extra_items, set())
-        self.assertEqual(extra_tracks, set())
+        self.assertEqual(extra_items, [])
+        self.assertEqual(extra_tracks, [])
         for item, info in mapping.iteritems():
             self.assertEqual(items.index(item), trackinfo.index(info))
 
