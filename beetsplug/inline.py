@@ -80,6 +80,8 @@ def compile_inline(python_code):
     if is_expr:
         # For expressions, just evaluate and return the result.
         def _expr_func(obj):
+            if not isinstance(obj, Item):
+                return u''
             values = _record(obj)
             try:
                 return eval(code, values)
@@ -90,6 +92,8 @@ def compile_inline(python_code):
         # For function bodies, invoke the function with values as global
         # variables.
         def _func_func(obj):
+            if not isinstance(obj, Item):
+                return u''
             func.__globals__.update(_record(obj))
             try:
                 return func()
