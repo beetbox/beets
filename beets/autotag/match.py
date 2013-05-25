@@ -359,7 +359,7 @@ def _recommendation(results):
     if isinstance(results[0], hooks.AlbumMatch):
         # Load the configured recommendation maxima.
         max_rec = {}
-        for trigger in 'discogs', 'partial', 'tracklength', 'tracknumber':
+        for trigger in 'non_mb_source', 'partial', 'tracklength', 'tracknumber':
             max_rec[trigger] = \
                 config['match']['max_rec'][trigger].as_choice({
                     'strong': recommendation.strong,
@@ -368,10 +368,10 @@ def _recommendation(results):
                     'none': recommendation.none,
                 })
 
-        # Discogs.
-        if rec > max_rec['discogs'] and \
-                results[0].info.data_source == 'Discogs':
-            rec = max_rec['discogs']
+        # Non-MusicBrainz source.
+        if rec > max_rec['non_mb_source'] and \
+                results[0].info.data_source != 'MusicBrainz':
+            rec = max_rec['non_mb_source']
 
         # Partial match.
         if rec > max_rec['partial'] and \
