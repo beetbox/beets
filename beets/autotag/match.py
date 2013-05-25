@@ -31,29 +31,29 @@ from beets.autotag import hooks
 # Distance parameters.
 # Text distance weights: proportions on the normalized intuitive edit
 # distance.
-ARTIST_WEIGHT = 3.0
-ALBUM_WEIGHT = 3.0
+ARTIST_WEIGHT = config['match']['weight']['artist'].as_number()
+ALBUM_WEIGHT = config['match']['weight']['album'].as_number()
 # The weight of the entire distance calculated for a given track.
-TRACK_WEIGHT = 1.0
+TRACK_WEIGHT = config['match']['weight']['track'].as_number()
 # The weight of a missing track.
-MISSING_WEIGHT = 0.9
+MISSING_WEIGHT = config['match']['weight']['missing'].as_number()
 # The weight of an extra (unmatched) track.
-UNMATCHED_WEIGHT = 0.6
+UNMATCHED_WEIGHT = config['match']['weight']['unmatched'].as_number()
 # These distances are components of the track distance (that is, they
 # compete against each other but not ARTIST_WEIGHT and ALBUM_WEIGHT;
 # the overall TRACK_WEIGHT does that).
-TRACK_TITLE_WEIGHT = 3.0
+TRACK_TITLE_WEIGHT = config['match']['weight']['track_title'].as_number()
 # Used instead of a global artist penalty for various-artist matches.
-TRACK_ARTIST_WEIGHT = 2.0
+TRACK_ARTIST_WEIGHT = config['match']['weight']['track_artist'].as_number()
 # Added when the indices of tracks don't match.
-TRACK_INDEX_WEIGHT = 1.0
+TRACK_INDEX_WEIGHT = config['match']['weight']['track_index'].as_number()
 # Track length weights: no penalty before GRACE, maximum (WEIGHT)
 # penalty at GRACE+MAX discrepancy.
-TRACK_LENGTH_GRACE = 10
-TRACK_LENGTH_MAX = 30
-TRACK_LENGTH_WEIGHT = 2.0
+TRACK_LENGTH_GRACE = config['match']['weight']['track_length_grace'].as_number()
+TRACK_LENGTH_MAX = config['match']['weight']['track_length_max'].as_number()
+TRACK_LENGTH_WEIGHT = config['match']['weight']['track_length'].as_number()
 # MusicBrainz track ID matches.
-TRACK_ID_WEIGHT = 5.0
+TRACK_ID_WEIGHT = config['match']['weight']['track_id'].as_number()
 
 # Parameters for string distance function.
 # Words that can be moved to the end of a string using a comma.

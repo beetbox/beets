@@ -72,3 +72,16 @@ match:
         partial: medium
         tracklength: strong
         tracknumber: strong
+    weight:
+        artist: 3.0
+        album: 3.0
+        track: 1.0
+        missing: 0.9
+        unmatched: 0.6
+        track_title: 3.0
+        track_artist: 2.0
+        track_index: 1.0
+        track_length_grace: 10
+        track_length_max: 30
+        track_length: 2.0
+        track_id: 5.0
