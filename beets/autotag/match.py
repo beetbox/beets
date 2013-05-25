@@ -387,7 +387,7 @@ def _recommendation(results):
                 rec = max_rec['tracklength']
 
             # Track number differs.
-            elif rec > max_rec['tracknumber'] and \
+            if rec > max_rec['tracknumber'] and \
                     track_index_changed(item, track_info):
                 rec = max_rec['tracknumber']
 
