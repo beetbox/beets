@@ -30,6 +30,7 @@ from beets import ui
 from beets.ui import print_, input_, decargs
 from beets import autotag
 from beets.autotag import recommendation
+from beets.autotag.match import VA_ARTISTS
 from beets import plugins
 from beets import importer
 from beets import util
