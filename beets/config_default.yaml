@@ -73,6 +73,7 @@ match:
         tracklength: strong
         tracknumber: strong
     weight:
+        source: 3.0
         artist: 3.0
         album: 3.0
         track: 1.0
@@ -85,3 +86,6 @@ match:
         track_length_max: 30
         track_length: 2.0
         track_id: 5.0
+
+discogs:
+    source_weight: 0.5
