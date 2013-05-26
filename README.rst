@@ -8,12 +8,13 @@ It then provides a bouquet of tools for manipulating and accessing your music.
 Here's an example of beets' brainy tag corrector doing its thing::
 
   $ beet import ~/music/ladytron
-  Tagging: Ladytron - Witching Hour
+  Tagging:
+      Ladytron - Witching Hour
   (Similarity: 98.4%)
-   * Last One Standing -> The Last One Standing
-   * Beauty -> Beauty*2
+   * Last One Standing      -> The Last One Standing
+   * Beauty                 -> Beauty*2
    * White Light Generation -> Whitelightgenerator
-   * All the Way -> All the Way...
+   * All the Way            -> All the Way...
 
 Because beets is designed as a library, it can do almost anything you can
 imagine for your music collection. Via `plugins`_, beets becomes a panacea:

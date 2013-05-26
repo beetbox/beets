@@ -113,12 +113,13 @@ Similarity
 So you import an album into your beets library. It goes like this::
 
     $ beet imp witchinghour
-    Tagging: Ladytron - Witching Hour
+    Tagging:
+        Ladytron - Witching Hour
     (Similarity: 98.4%)
-    * Last One Standing -> The Last One Standing
-    * Beauty -> Beauty*2
+    * Last One Standing      -> The Last One Standing
+    * Beauty                 -> Beauty*2
     * White Light Generation -> Whitelightgenerator
-    * All the Way -> All the Way...
+    * All the Way            -> All the Way...
 
 Here, beets gives you a preview of the album match it has found. It shows you
 which track titles will be changed if the match is applied. In this case, beets
@@ -138,7 +139,8 @@ Choices
 
 When beets needs your input about a match, it says something like this::
 
-    Tagging: Beirut - Lon Gisland
+    Tagging:
+        Beirut - Lon Gisland
     (Similarity: 94.4%)
     * Scenic World (Second Version) -> Scenic World
     [A]pply, More candidates, Skip, Use as-is, as Tracks, Enter search, or aBort?
