@@ -1107,6 +1107,9 @@ def modify_items(lib, mods, query, write, move, album, confirm):
         key, value = mod.split('=', 1)
         if key not in allowed_keys:
             raise ui.UserError('"%s" is not a valid field' % key)
+
+        if key == 'artpath':
+            value = util.bytestring_path(value)
         fsets[key] = _convert_type(key, value, album)
 
     # Get the items to modify.
