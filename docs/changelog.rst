@@ -53,6 +53,19 @@ Changelog
     together for better readability.
   * Indicate MusicBrainz ID mismatches.
 
+* Improve calculation of similarity score:
+
+  * Strongly prefer releases with a matching MusicBrainz album ID. This helps
+    beets re-identify the same release when re-importing existing files.
+  * Prefer releases that are closest to the tagged ``year``. Tolerate files
+    tagged with release or original year.
+  * Prefer CD releases by default, when there is no ``media`` tagged in the
+    files being imported. This can be changed with the :ref:`preferred_media`
+    setting.
+  * Apply minor penalties across a range of fields to differentiate between
+    nearly identical releases: ``disctotal``, ``label``, ``catalognum``,
+    ``country`` and ``albumdisambig``.
+
 .. _Discogs: http://discogs.com/
 
 1.1.0 (April 29, 203)

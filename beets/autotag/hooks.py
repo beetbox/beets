@@ -102,8 +102,8 @@ class AlbumInfo(object):
         constituent `TrackInfo` objects, are decoded to Unicode.
         """
         for fld in ['album', 'artist', 'albumtype', 'label', 'artist_sort',
-                    'script', 'language', 'country', 'albumstatus',
-                    'albumdisambig', 'artist_credit', 'media']:
+                    'catalognum', 'script', 'language', 'country',
+                    'albumstatus', 'albumdisambig', 'artist_credit', 'media']:
             value = getattr(self, fld)
             if isinstance(value, str):
                 setattr(self, fld, value.decode(codec, 'ignore'))

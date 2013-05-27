@@ -420,6 +420,15 @@ recommendation is ``strong``, no "downgrading" occurs for that situation.
 
 The above example shows the default ``max_rec`` settings.
 
+.. _preferred_media:
+
+preferred_media
+~~~~~~~~~~~~~~~
+
+When comparing files that have no ``media`` tagged, prefer releases that more
+closely resemble this media (using a string distance). When files are already
+tagged with media, this setting is ignored. Default: ``CD``.
+
 .. _path-format-config:
 
 Path Format Configuration
