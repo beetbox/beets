@@ -585,28 +585,6 @@ class ShowdiffTest(_common.TestCase):
 
         self.assertEqual(complete_diff, partial_diff)
 
-AN_ID = "28e32c71-1450-463e-92bf-e0a46446fc11"
-class ManualIDTest(_common.TestCase):
-    def setUp(self):
-        super(ManualIDTest, self).setUp()
-        _common.log.setLevel(logging.CRITICAL)
-        self.io.install()
-
-    def test_id_accepted(self):
-        self.io.addinput(AN_ID)
-        out = commands.manual_id(False)
-        self.assertEqual(out, AN_ID)
-
-    def test_non_id_returns_none(self):
-        self.io.addinput("blah blah")
-        out = commands.manual_id(False)
-        self.assertEqual(out, None)
-
-    def test_url_finds_id(self):
-        self.io.addinput("http://musicbrainz.org/entity/%s?something" % AN_ID)
-        out = commands.manual_id(False)
-        self.assertEqual(out, AN_ID)
-
 class ShowChangeTest(_common.TestCase):
     def setUp(self):
         super(ShowChangeTest, self).setUp()
