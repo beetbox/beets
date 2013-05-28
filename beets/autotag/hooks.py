@@ -167,11 +167,15 @@ TrackMatch = namedtuple('TrackMatch', ['distance', 'info'])
 # Aggregation of sources.
 
 def _album_for_id(album_id):
-    """Get an album corresponding to a MusicBrainz release ID."""
+    """Get an album corresponding to a release ID."""
+    out = None
     try:
-        return mb.album_for_id(album_id)
+        out = mb.album_for_id(album_id)
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
+    if not out:
+        out = plugins.album_for_id(album_id)
+    return out
 
 def _track_for_id(track_id):
     """Get an item for a recording MBID."""
