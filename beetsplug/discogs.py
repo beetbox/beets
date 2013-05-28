@@ -60,6 +60,26 @@ class DiscogsPlugin(BeetsPlugin):
             log.debug('Discogs API Error: %s (query: %s' % (e, query))
             return []
 
+    def album_for_id(self, album_id):
+        """Fetches an album by its Discogs ID and returns an AlbumInfo object
+        or None if the album is not found.
+        """
+        log.debug('Searching for release with id %s' % str(album_id))
+        # discogs-client can handle both int and str, so we just strip
+        # the leading 'r' that might be accidentally pasted into the form
+        if not isinstance(album_id, int) and album_id.startswith('r'):
+            album_id = album_id[1:]
+        result = Release(album_id)
+        # Try to obtain title to verify that we indeed have a valid Release
+        try:
+            getattr(result, 'title')
+        except DiscogsAPIError as e:
+            if e.message != '404 Not Found':
+                log.debug('Discogs API Error: %s (query: %s)'
+                          % (e, result._uri))
+            return None
+        return self.get_album_info(result)
+
     def get_albums(self, query):
         """Returns a list of AlbumInfo objects for a discogs search query.
         """
