@@ -270,14 +270,15 @@ def item_candidates(item, artist, title):
     return out
 
 def album_for_id(album_id):
-    out = None
+    out = []
     for plugin in find_plugins():
         try:
-            out = plugin.album_for_id(album_id)
-        except Exception as exc:
-            exc.log(log)
-        if out:
-            return out
+            out.append(plugin.album_for_id(album_id))
+        except Exception:
+            log.warn('** error running album_for_id in plugin %s'
+                     % plugin.name)
+            log.warn(traceback.format_exc())
+    return out
 
 def configure(config):
     """Sends the configuration object to each plugin."""

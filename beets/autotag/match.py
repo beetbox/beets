@@ -437,11 +437,7 @@ def tag_album(items, search_artist=None, search_album=None,
     candidates = {}
 
     # Try to find album indicated by MusicBrainz IDs.
-    if search_id:
-        log.debug('Searching for album ID: ' + search_id)
-        id_info = hooks._album_for_id(search_id)
-    else:
-        id_info = match_by_id(items)
+    id_info = match_by_id(items)
     if id_info:
         _add_candidate(items, candidates, id_info)
         rec = _recommendation(candidates.values())
@@ -453,13 +449,6 @@ def tag_album(items, search_artist=None, search_album=None,
             if rec == recommendation.strong:
                 log.debug('ID match.')
                 return cur_artist, cur_album, candidates.values(), rec
-
-    # If searching by ID, don't continue to metadata search.
-    if search_id is not None:
-        if candidates:
-            return cur_artist, cur_album, candidates.values(), rec
-        else:
-            return cur_artist, cur_album, [], recommendation.none
 
     # Search terms.
     if not (search_artist and search_album):
@@ -474,8 +463,12 @@ def tag_album(items, search_artist=None, search_album=None,
     log.debug(u'Album might be VA: %s' % str(va_likely))
 
     # Get the results from the data sources.
-    search_cands = hooks._album_candidates(items, search_artist, search_album,
-                                           va_likely)
+    if search_id:
+        log.debug('Searching for album ID: ' + search_id)
+        search_cands = hooks._album_for_id(search_id)
+    else:
+        search_cands = hooks._album_candidates(items, search_artist,
+                                               search_album, va_likely)
     log.debug(u'Evaluating %i candidates.' % len(search_cands))
     for info in search_cands:
         _add_candidate(items, candidates, info)
