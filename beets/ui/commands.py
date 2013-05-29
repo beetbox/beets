@@ -1089,6 +1089,8 @@ def _convert_type(key, value, album=False):
             return time.mktime(time.strptime(value, fmt))
         except ValueError:
             raise ui.UserError(u'{0} must have format {1}'.format(key, fmt))
+    elif typ is bytes:  # A path.
+        return util.bytestring_path(value)
     else:
         try:
             return typ(value)
@@ -1107,9 +1109,6 @@ def modify_items(lib, mods, query, write, move, album, confirm):
         key, value = mod.split('=', 1)
         if key not in allowed_keys:
             raise ui.UserError('"%s" is not a valid field' % key)
-
-        if key == 'artpath':
-            value = util.bytestring_path(value)
         fsets[key] = _convert_type(key, value, album)
 
     # Get the items to modify.

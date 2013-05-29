@@ -381,8 +381,8 @@ def _colordiff(a, b, highlight='red'):
         else:
             return colorize(highlight, a), colorize(highlight, b)
 
-    if not isinstance(a, unicode) or not isinstance(b, unicode):
-        # This is probably a path
+    if isinstance(a, bytes) or isinstance(b, bytes):
+        # A path field.
         a = util.displayable_path(a)
         b = util.displayable_path(b)
 

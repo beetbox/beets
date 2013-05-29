@@ -38,6 +38,8 @@ Changelog
 * Album art filenames now respect the :ref:`replace` configuration.
 * Friendly error messages are now printed when trying to read or write files
   that go missing.
+* The :ref:`modify-cmd` command can now change albums' album art paths (i.e.,
+  ``beet modify artpath=...`` works).
 * Various UI enhancements to the importer due to Tai Lee:
 
   * More consistent format and colorization of album and track metadata.

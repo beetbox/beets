@@ -45,9 +45,9 @@ from datetime import datetime
 # - Is the field writable?
 # - Does the field reflect an attribute of a MediaFile?
 ITEM_FIELDS = [
-    ('id',          int, False, False),
-    ('path',        str, False, False),
-    ('album_id',    int, False, False),
+    ('id',          int,   False, False),
+    ('path',        bytes, False, False),
+    ('album_id',    int,   False, False),
 
     ('title',                unicode, True, True),
     ('artist',               unicode, True, True),
@@ -116,7 +116,7 @@ ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 # identically-named field in the items table.
 ALBUM_FIELDS = [
     ('id',      int,      False),
-    ('artpath', str,      False),
+    ('artpath', bytes,    False),
     ('added',   datetime, True),
 
     ('albumartist',        unicode, True),
@@ -157,7 +157,7 @@ SQLITE_TYPES = {
     int:      'INT',
     float:    'REAL',
     datetime: 'FLOAT',
-    str:      'BLOB',
+    bytes:    'BLOB',
     unicode:  'TEXT',
     bool:     'INT',
 }
