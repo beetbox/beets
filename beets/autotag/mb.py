@@ -16,6 +16,7 @@
 """
 import logging
 import musicbrainzngs
+import re
 import traceback
 
 import beets.autotag.hooks
@@ -326,13 +327,19 @@ def album_for_id(albumid):
     object or None if the album is not found. May raise a
     MusicBrainzAPIError.
     """
+    # Find the first thing that looks like a UUID/MBID.
+    match = re.search('[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', albumid)
+    if not match:
+        log.error('Invalid MBID.')
+        return None
     try:
-        res = musicbrainzngs.get_release_by_id(albumid, RELEASE_INCLUDES)
+        res = musicbrainzngs.get_release_by_id(match.group(),
+                                               RELEASE_INCLUDES)
     except musicbrainzngs.ResponseError:
         log.debug('Album ID match failed.')
         return None
     except musicbrainzngs.MusicBrainzError as exc:
-        raise MusicBrainzAPIError(exc, 'get release by ID', albumid,
+        raise MusicBrainzAPIError(exc, 'get release by ID', match.group(),
                                   traceback.format_exc())
     return album_info(res['release'])
 
