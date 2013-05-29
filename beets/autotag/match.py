@@ -29,43 +29,8 @@ from beets.util import levenshtein, plurality
 from beets.util.enumeration import enum
 from beets.autotag import hooks
 
-# Distance parameters.
-# Text distance weights: proportions on the normalized intuitive edit
-# distance.
-ARTIST_WEIGHT = config['match']['weight']['artist'].as_number()
-ALBUM_WEIGHT = config['match']['weight']['album'].as_number()
-# MusicBrainz album ID matches.
-ALBUM_ID_WEIGHT = config['match']['weight']['album_id'].as_number()
-# The distance between the tagged year and the suggested year.
-YEAR_WEIGHT = config['match']['weight']['year'].as_number()
-# Difference between actual or preferred media.
-MEDIA_WEIGHT = config['match']['weight']['media'].as_number()
-# Differences in minor metadata, disctotal, label, etc.
-MINOR_WEIGHT = config['match']['weight']['minor'].as_number()
-# The weight of the entire distance calculated for a given track.
-TRACK_WEIGHT = config['match']['weight']['track'].as_number()
-# The weight of a missing track.
-MISSING_WEIGHT = config['match']['weight']['missing'].as_number()
-# The weight of an extra (unmatched) track.
-UNMATCHED_WEIGHT = config['match']['weight']['unmatched'].as_number()
-# These distances are components of the track distance (that is, they
-# compete against each other but not ARTIST_WEIGHT and ALBUM_WEIGHT;
-# the overall TRACK_WEIGHT does that).
-TRACK_TITLE_WEIGHT = config['match']['weight']['track_title'].as_number()
-# Used instead of a global artist penalty for various-artist matches.
-TRACK_ARTIST_WEIGHT = config['match']['weight']['track_artist'].as_number()
-# Added when the indices of tracks don't match.
-TRACK_INDEX_WEIGHT = config['match']['weight']['track_index'].as_number()
-# Track length weights: no penalty before GRACE, maximum (WEIGHT)
-# penalty at GRACE+MAX discrepancy.
-TRACK_LENGTH_GRACE = config['match']['weight']['track_length_grace'].as_number()
-TRACK_LENGTH_MAX = config['match']['weight']['track_length_max'].as_number()
-TRACK_LENGTH_WEIGHT = config['match']['weight']['track_length'].as_number()
-# MusicBrainz track ID matches.
-TRACK_ID_WEIGHT = config['match']['weight']['track_id'].as_number()
-
-# Preferred media.
-PREFERRED_MEDIA = config['match']['preferred_media'].get()
+# A configuration view for the distance weights.
+weights = config['match']['weight']
 
 # Parameters for string distance function.
 # Words that can be moved to the end of a string using a comma.
@@ -235,14 +200,16 @@ def track_distance(item, track_info, incl_artist=False):
     # If there's no length to check, apply no penalty.
     if track_info.length:
         diff = abs(item.length - track_info.length)
-        diff = max(diff - TRACK_LENGTH_GRACE, 0.0)
-        diff = min(diff, TRACK_LENGTH_MAX)
-        dist += (diff / TRACK_LENGTH_MAX) * TRACK_LENGTH_WEIGHT
-    dist_max += TRACK_LENGTH_WEIGHT
+        diff = max(diff - weights['track_length_grace'].as_number(), 0.0)
+        diff = min(diff, weights['track_length_max'].as_number())
+        dist += (diff / weights['track_length_max'].as_number()) * \
+                weights['track_length'].as_number()
+    dist_max += weights['track_length'].as_number()
 
     # Track title.
-    dist += string_dist(item.title, track_info.title) * TRACK_TITLE_WEIGHT
-    dist_max += TRACK_TITLE_WEIGHT
+    dist += string_dist(item.title, track_info.title) * \
+        weights['track_title'].as_number()
+    dist_max += weights['track_title'].as_number()
 
     # Track artist, if included.
     # Attention: MB DB does not have artist info for all compilations,
@@ -251,20 +218,20 @@ def track_distance(item, track_info, incl_artist=False):
     if incl_artist and track_info.artist and \
             item.artist.lower() not in VA_ARTISTS:
         dist += string_dist(item.artist, track_info.artist) * \
-                TRACK_ARTIST_WEIGHT
-        dist_max += TRACK_ARTIST_WEIGHT
+                weights['track_artist'].as_number()
+        dist_max += weights['track_artist'].as_number()
 
     # Track index.
     if track_info.index and item.track:
         if track_index_changed(item, track_info):
-            dist += TRACK_INDEX_WEIGHT
-        dist_max += TRACK_INDEX_WEIGHT
+            dist += weights['track_index'].as_number()
+        dist_max += weights['track_index'].as_number()
 
     # MusicBrainz track ID.
     if item.mb_trackid:
         if item.mb_trackid != track_info.track_id:
-            dist += TRACK_ID_WEIGHT
-        dist_max += TRACK_ID_WEIGHT
+            dist += weights['track_id'].as_number()
+        dist_max += weights['track_id'].as_number()
 
     # Plugin distances.
     plugin_d, plugin_dm = plugins.track_distance(item, track_info)
@@ -291,73 +258,82 @@ def distance(items, album_info, mapping):
 
     # Artist/album metadata.
     if not album_info.va:
-        dist += string_dist(likelies['artist'],
-                            album_info.artist) * ARTIST_WEIGHT
-        dist_max += ARTIST_WEIGHT
-    dist += string_dist(likelies['album'], album_info.album) * ALBUM_WEIGHT
-    dist_max += ALBUM_WEIGHT
+        dist += string_dist(likelies['artist'], album_info.artist) * \
+                weights['artist'].as_number()
+        dist_max += weights['artist'].as_number()
+    dist += string_dist(likelies['album'], album_info.album) * \
+            weights['album'].as_number()
+    dist_max += weights['album'].as_number()
 
     # Year. No penalty for matching release or original year.
     if likelies['year'] and album_info.year:
         if likelies['year'] not in (album_info.year, album_info.original_year):
             diff = abs(album_info.year - likelies['year'])
             if diff:
-                dist += (1.0 - 1.0 / diff) * YEAR_WEIGHT
-        dist_max += YEAR_WEIGHT
+                dist += (1.0 - 1.0 / diff) * weights['year'].as_number()
+        dist_max += weights['year'].as_number()
 
     # Actual or preferred media.
+    preferred_media = config['match']['preferred_media'].get()
     if likelies['media'] and album_info.media:
-        dist += string_dist(likelies['media'], album_info.media) * MEDIA_WEIGHT
-        dist_max += MEDIA_WEIGHT
-    elif album_info.media and PREFERRED_MEDIA:
-        dist += string_dist(album_info.media, PREFERRED_MEDIA) * MEDIA_WEIGHT
-        dist_max += MEDIA_WEIGHT
+        dist += string_dist(likelies['media'], album_info.media) * \
+                weights['media'].as_number()
+        dist_max += weights['media'].as_number()
+    elif album_info.media and preferred_media:
+        dist += string_dist(album_info.media, preferred_media) * \
+                weights['media'].as_number()
+        dist_max += weights['media'].as_number()
 
     # MusicBrainz album ID.
     if likelies['mb_albumid']:
         if likelies['mb_albumid'] != album_info.album_id:
-            dist += ALBUM_ID_WEIGHT
-        dist_max += ALBUM_ID_WEIGHT
+            dist += weights['album_id'].as_number()
+        dist_max += weights['album_id'].as_number()
 
     # Apply a small penalty for differences across many minor metadata. This
     # helps prioritise releases that are nearly identical.
 
     if likelies['disctotal']:
         if likelies['disctotal'] != album_info.mediums:
-            dist += MINOR_WEIGHT
-        dist_max += MINOR_WEIGHT
+            dist += weights['minor'].as_number()
+        dist_max += weights['minor'].as_number()
 
     if likelies['label'] and album_info.label:
-        dist += string_dist(likelies['label'], album_info.label) * MINOR_WEIGHT
-        dist_max += MINOR_WEIGHT
+        dist += string_dist(likelies['label'], album_info.label) * \
+                weights['minor'].as_number()
+        dist_max += weights['minor'].as_number()
 
     if likelies['catalognum'] and album_info.catalognum:
         dist += string_dist(likelies['catalognum'],
-                            album_info.catalognum) * MINOR_WEIGHT
-        dist_max += MINOR_WEIGHT
+                            album_info.catalognum) * \
+                weights['minor'].as_number()
+        dist_max += weights['minor'].as_number()
 
     if likelies['country'] and album_info.country:
         dist += string_dist(likelies['country'],
-                            album_info.country) * MINOR_WEIGHT
-        dist_max += MINOR_WEIGHT
+                            album_info.country) * \
+                weights['minor'].as_number()
+        dist_max += weights['minor'].as_number()
 
     if likelies['albumdisambig'] and album_info.albumdisambig:
         dist += string_dist(likelies['albumdisambig'],
-                            album_info.albumdisambig) * MINOR_WEIGHT
-        dist_max += MINOR_WEIGHT
+                            album_info.albumdisambig) * \
+                weights['minor'].as_number()
+        dist_max += weights['minor'].as_number()
 
     # Matched track distances.
     for item, track in mapping.iteritems():
-        dist += track_distance(item, track, album_info.va) * TRACK_WEIGHT
-        dist_max += TRACK_WEIGHT
+        dist += track_distance(item, track, album_info.va) * \
+                weights['track'].as_number()
+        dist_max += weights['track'].as_number()
 
     # Extra and unmatched tracks.
     for track in set(album_info.tracks) - set(mapping.values()):
-        dist += MISSING_WEIGHT
-        dist_max += MISSING_WEIGHT
+        dist += weights['missing'].as_number()
+        dist_max += weights['missing'].as_number()
     for item in set(items) - set(mapping.keys()):
-        dist += UNMATCHED_WEIGHT
-        dist_max += UNMATCHED_WEIGHT
+        dist += weights['unmatched'].as_number()
+        dist_max += weights['unmatched'].as_number()
 
     # Plugin distances.
     plugin_d, plugin_dm = plugins.album_distance(items, album_info, mapping)
