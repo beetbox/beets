@@ -277,6 +277,22 @@ class MBAlbumInfoTest(unittest.TestCase):
         self.assertEqual(track.artist_sort, 'TRACK ARTIST SORT NAME')
         self.assertEqual(track.artist_credit, 'TRACK ARTIST CREDIT')
 
+    def test_album_for_id_correct(self):
+        id_string = "28e32c71-1450-463e-92bf-e0a46446fc11"
+        out = mb.album_for_id(id_string)
+        self.assertEqual(out.album_id, id_string)
+
+    def test_album_for_id_non_id_returns_none(self):
+        id_string = "blah blah"
+        out = mb.album_for_id(id_string)
+        self.assertEqual(out, None)
+
+    def test_album_for_id_url_finds_id(self):
+        id_string = "28e32c71-1450-463e-92bf-e0a46446fc11"
+        id_url = "http://musicbrainz.org/entity/%s" % id_string
+        out = mb.album_for_id(id_url)
+        self.assertEqual(out.album_id, id_string)
+
 class ArtistFlatteningTest(unittest.TestCase):
     def _credit_dict(self, suffix=''):
         return {
