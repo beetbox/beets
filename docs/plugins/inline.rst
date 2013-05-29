@@ -31,6 +31,10 @@ referenced in path templates like so::
     paths:
         default: $initial/$artist/$album%aunique{}/$disc_and_track $title
 
+
+Function Fields
+---------------
+
 If you need to use statements like ``import``, you can write a Python function
 body instead of a single expression. In this case, you'll need to ``return``
 a result for the value of the path field, like so::
@@ -43,3 +47,22 @@ a result for the value of the path field, like so::
 
 You might want to use the YAML syntax for "block literals," in which a leading
 ``|`` character indicates a multi-line block of text.
+
+
+Album Fields
+------------
+
+The above examples define fields for *item* templates, but you can also define
+fields for *album* templates. Use the ``album_fields`` configuration section.
+In this context, all existing album fields are available as variables along
+with ``items``, which is a list of items in the album.
+
+This example defines a ``$bitrate`` field for albums as the average of the
+tracks' fields::
+
+    album_fields:
+        bitrate: |
+            total = 0
+            for item in items:
+                total += item.bitrate
+            return total / len(items)

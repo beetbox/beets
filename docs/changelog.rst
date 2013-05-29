@@ -31,8 +31,9 @@ Changelog
   Thanks to jayme on GitHub.
 * :doc:`/plugins/lyrics`: Lyrics searches should now turn up more results due
   to some fixes in dealing with special characters.
-* Plugins can now provide fields for both Album and Item templates. Thanks
-  to Pedro Silva.
+* Plugins can now provide fields for both Album and Item templates, thanks
+  to Pedro Silva. Accordingly, the :doc:`/plugins/inline` can also now define
+  album fields.
 * The :ref:`fields-cmd` command shows template fields provided by plugins.
   Thanks again to Pedro Silva.
 * Album art filenames now respect the :ref:`replace` configuration.
