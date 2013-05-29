@@ -72,7 +72,7 @@ class DiscogsPlugin(BeetsPlugin):
         match = re.search(r'(\d+)\]*$', album_id)
         if not match:
             return None
-        result = Release(match.group())
+        result = Release(match.group(1))
         # Try to obtain title to verify that we indeed have a valid Release
         try:
             getattr(result, 'title')
