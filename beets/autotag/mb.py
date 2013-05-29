@@ -322,24 +322,32 @@ def match_track(artist, title, limit=SEARCH_LIMIT):
     for recording in res['recording-list']:
         yield track_info(recording)
 
+def _parse_id(s):
+    """Search for a MusicBrainz ID in the given string and return it. If
+    no ID can be found, return None.
+    """
+    # Find the first thing that looks like a UUID/MBID.
+    match = re.search('[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', s)
+    if match:
+        log.error('Invalid MBID.')
+        return match.group()
+
 def album_for_id(albumid):
     """Fetches an album by its MusicBrainz ID and returns an AlbumInfo
     object or None if the album is not found. May raise a
     MusicBrainzAPIError.
     """
-    # Find the first thing that looks like a UUID/MBID.
-    match = re.search('[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', albumid)
-    if not match:
-        log.error('Invalid MBID.')
-        return None
+    albumid = _parse_id(albumid)
+    if not albumid:
+        return
     try:
-        res = musicbrainzngs.get_release_by_id(match.group(),
+        res = musicbrainzngs.get_release_by_id(albumid,
                                                RELEASE_INCLUDES)
     except musicbrainzngs.ResponseError:
         log.debug('Album ID match failed.')
         return None
     except musicbrainzngs.MusicBrainzError as exc:
-        raise MusicBrainzAPIError(exc, 'get release by ID', match.group(),
+        raise MusicBrainzAPIError(exc, 'get release by ID', albumid,
                                   traceback.format_exc())
     return album_info(res['release'])
 
@@ -347,6 +355,9 @@ def track_for_id(trackid):
     """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
     or None if no track is found. May raise a MusicBrainzAPIError.
     """
+    trackid = _parse_id(trackid)
+    if not trackid:
+        return
     try:
         res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
     except musicbrainzngs.ResponseError:
