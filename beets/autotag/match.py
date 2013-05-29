@@ -525,8 +525,7 @@ def tag_album(items, search_artist=None, search_album=None,
         _add_candidate(items, candidates, info)
 
     # Sort and get the recommendation.
-    candidates = sorted(candidates.itervalues(),
-            key=lambda i: (i.distance, i.info.data_source != 'MusicBrainz'))
+    candidates = sorted(candidates.itervalues())
     rec = _recommendation(candidates)
     return cur_artist, cur_album, candidates, rec
 
