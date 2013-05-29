@@ -37,11 +37,17 @@ discogs_client.user_agent = 'beets/%s +http://beets.radbox.org/' % \
     beets.__version__
 
 class DiscogsPlugin(BeetsPlugin):
+    def __init__(self):
+        super(DiscogsPlugin, self).__init__(self)
+        self.config.add({
+            'source_weight': 0.5,
+        })
+
     def album_distance(self, items, album_info, mapping):
         """Returns the discogs source weight and the maximum source weight.
         """
         if album_info.data_source == 'Discogs':
-            return config['discogs']['source_weight'].as_number() * \
+            return self.config['source_weight'].as_number() * \
                     config['match']['weight']['source'].as_number(), \
                     config['match']['weight']['source'].as_number()
         else:

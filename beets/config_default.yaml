@@ -91,6 +91,3 @@ match:
         track_length_max: 30
         track_length: 2.0
         track_id: 5.0
-
-discogs:
-    source_weight: 0.5
