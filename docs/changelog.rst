@@ -33,7 +33,9 @@ Changelog
   to some fixes in dealing with special characters.
 * Plugins can now provide fields for both Album and Item templates, thanks
   to Pedro Silva. Accordingly, the :doc:`/plugins/inline` can also now define
-  album fields.
+  album fields. For consistency, the ``pathfields`` configuration section has
+  been renamed ``item_fields`` (although the old name will still work for
+  compatibility).
 * The :ref:`fields-cmd` command shows template fields provided by plugins.
   Thanks again to Pedro Silva.
 * Album art filenames now respect the :ref:`replace` configuration.

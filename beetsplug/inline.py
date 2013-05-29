@@ -16,6 +16,7 @@
 """
 import logging
 import traceback
+import itertools
 
 from beets.plugins import BeetsPlugin
 from beets import config
@@ -101,17 +102,20 @@ class InlinePlugin(BeetsPlugin):
         super(InlinePlugin, self).__init__()
 
         config.add({
-            'pathfields': {},
+            'pathfields': {},  # Legacy name.
+            'item_fields': {},
             'album_fields': {},
         })
 
-        # Add field expressions.
-        for key, view in config['pathfields'].items():
+        # Item fields.
+        for key, view in itertools.chain(config['item_fields'].items(),
+                                         config['pathfields'].items()):
             log.debug(u'inline: adding item field %s' % key)
             func = compile_inline(view.get(unicode), False)
             if func is not None:
                 self.template_fields[key] = func
 
+        # Album fields.
         for key, view in config['album_fields'].items():
             log.debug(u'inline: adding album field %s' % key)
             func = compile_inline(view.get(unicode), True)
