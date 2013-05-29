@@ -167,9 +167,13 @@ def string_dist(str1, str2):
     return dist
 
 def current_metadata(items):
-    """Returns the most likely artist and album for a set of Items.
-    Each is determined by tag reflected by the plurality of the Items.
+    """Extract the likely current metadata for an album given a list of its
+    items. Return two dictionaries:
+     - The most common value for each field.
+     - Whether each field's value was unanimous (values are booleans).
     """
+    assert items  # Must be nonempty.
+
     likelies = {}
     consensus = {}
     fields = ['artist', 'album', 'albumartist', 'year', 'disctotal',
@@ -180,12 +184,11 @@ def current_metadata(items):
         likelies[key], freq = plurality(values)
         consensus[key] = (freq == len(values))
 
+    # If there's an album artist consensus, use this for the artist.
     if consensus['albumartist'] and likelies['albumartist']:
-        artist = likelies['albumartist']
-    else:
-        artist = likelies['artist']
+        likelies['artist'] = likelies['albumartist']
 
-    return artist, likelies['album'], consensus['artist'], likelies
+    return likelies, consensus
 
 def assign_items(items, tracks):
     """Given a list of Items and a list of TrackInfo objects, find the
@@ -279,9 +282,7 @@ def distance(items, album_info, mapping):
     keys are a subset of `items` and the values are a subset of
     `album_info.tracks`.
     """
-    cur_artist, cur_album, _, likelies = current_metadata(items)
-    cur_artist = cur_artist or u''
-    cur_album = cur_album or u''
+    likelies, _ = current_metadata(items)
 
     # These accumulate the possible distance components. The final
     # distance will be dist/dist_max.
@@ -290,9 +291,10 @@ def distance(items, album_info, mapping):
 
     # Artist/album metadata.
     if not album_info.va:
-        dist += string_dist(cur_artist, album_info.artist) * ARTIST_WEIGHT
+        dist += string_dist(likelies['artist'],
+                            album_info.artist) * ARTIST_WEIGHT
         dist_max += ARTIST_WEIGHT
-    dist += string_dist(cur_album,  album_info.album) * ALBUM_WEIGHT
+    dist += string_dist(likelies['album'], album_info.album) * ALBUM_WEIGHT
     dist_max += ALBUM_WEIGHT
 
     # Year. No penalty for matching release or original year.
@@ -493,7 +495,9 @@ def tag_album(items, search_artist=None, search_album=None,
     they are used as search terms in place of the current metadata.
     """
     # Get current metadata.
-    cur_artist, cur_album, artist_consensus, _ = current_metadata(items)
+    likelies, consensus = current_metadata(items)
+    cur_artist = likelies['artist']
+    cur_album = likelies['album']
     log.debug('Tagging %s - %s' % (cur_artist, cur_album))
 
     # The output result (distance, AlbumInfo) tuples (keyed by MB album
@@ -532,7 +536,7 @@ def tag_album(items, search_artist=None, search_album=None,
     log.debug(u'Search terms: %s - %s' % (search_artist, search_album))
 
     # Is this album likely to be a "various artist" release?
-    va_likely = ((not artist_consensus) or
+    va_likely = ((not consensus['artist']) or
                  (search_artist.lower() in VA_ARTISTS) or
                  any(item.comp for item in items))
     log.debug(u'Album might be VA: %s' % str(va_likely))

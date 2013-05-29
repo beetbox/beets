@@ -55,19 +55,19 @@ class PluralityTest(unittest.TestCase):
         items = [Item({'artist': 'The Beetles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'Teh White Album'})]
-        l_artist, l_album, artist_consensus, _ = match.current_metadata(items)
-        self.assertEqual(l_artist, 'The Beatles')
-        self.assertEqual(l_album, 'The White Album')
-        self.assertFalse(artist_consensus)
+        likelies, consensus = match.current_metadata(items)
+        self.assertEqual(likelies['artist'], 'The Beatles')
+        self.assertEqual(likelies['album'], 'The White Album')
+        self.assertFalse(consensus['artist'])
 
     def test_current_metadata_artist_consensus(self):
         items = [Item({'artist': 'The Beatles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'Teh White Album'})]
-        l_artist, l_album, artist_consensus, _ = match.current_metadata(items)
-        self.assertEqual(l_artist, 'The Beatles')
-        self.assertEqual(l_album, 'The White Album')
-        self.assertTrue(artist_consensus)
+        likelies, consensus = match.current_metadata(items)
+        self.assertEqual(likelies['artist'], 'The Beatles')
+        self.assertEqual(likelies['album'], 'The White Album')
+        self.assertTrue(consensus['artist'])
 
     def test_albumartist_consensus(self):
         items = [Item({'artist': 'tartist1', 'album': 'album',
@@ -76,9 +76,9 @@ class PluralityTest(unittest.TestCase):
                        'albumartist': 'aartist'}),
                  Item({'artist': 'tartist3', 'album': 'album',
                        'albumartist': 'aartist'})]
-        l_artist, l_album, artist_consensus, _ = match.current_metadata(items)
-        self.assertEqual(l_artist, 'aartist')
-        self.assertFalse(artist_consensus)
+        likelies, consensus = match.current_metadata(items)
+        self.assertEqual(likelies['artist'], 'aartist')
+        self.assertFalse(consensus['artist'])
 
     def test_current_metadata_likelies(self):
         fields = ['artist', 'album', 'albumartist', 'year', 'disctotal',
@@ -86,7 +86,7 @@ class PluralityTest(unittest.TestCase):
                   'albumdisambig']
         items = [Item(dict((f, '%s_%s' % (f, i or 1)) for f in fields))
                  for i in range(5)]
-        _, _, _, likelies = match.current_metadata(items)
+        likelies, _ = match.current_metadata(items)
         for f in fields:
             self.assertEqual(likelies[f], '%s_1' % f)
 
