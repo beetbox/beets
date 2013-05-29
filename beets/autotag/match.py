@@ -481,37 +481,40 @@ def tag_album(items, search_artist=None, search_album=None,
     # ID).
     candidates = {}
 
-    # Try to find album indicated by MusicBrainz IDs.
-    id_info = match_by_id(items)
-    if id_info:
-        _add_candidate(items, candidates, id_info)
-        rec = _recommendation(candidates.values())
-        log.debug('Album ID match recommendation is ' + str(rec))
-        if candidates and not config['import']['timid']:
-            # If we have a very good MBID match, return immediately.
-            # Otherwise, this match will compete against metadata-based
-            # matches.
-            if rec == recommendation.strong:
-                log.debug('ID match.')
-                return cur_artist, cur_album, candidates.values(), rec
-
-    # Search terms.
-    if not (search_artist and search_album):
-        # No explicit search terms -- use current metadata.
-        search_artist, search_album = cur_artist, cur_album
-    log.debug(u'Search terms: %s - %s' % (search_artist, search_album))
-
-    # Is this album likely to be a "various artist" release?
-    va_likely = ((not consensus['artist']) or
-                 (search_artist.lower() in VA_ARTISTS) or
-                 any(item.comp for item in items))
-    log.debug(u'Album might be VA: %s' % str(va_likely))
-
-    # Get the results from the data sources.
-    if search_id:
+    # Search by explicit ID.
+    if search_id is not None:
         log.debug('Searching for album ID: ' + search_id)
         search_cands = hooks._album_for_id(search_id)
+
+    # Use existing metadata or text search.
     else:
+        # Try search based on current ID.
+        id_info = match_by_id(items)
+        if id_info:
+            _add_candidate(items, candidates, id_info)
+            rec = _recommendation(candidates.values())
+            log.debug('Album ID match recommendation is ' + str(rec))
+            if candidates and not config['import']['timid']:
+                # If we have a very good MBID match, return immediately.
+                # Otherwise, this match will compete against metadata-based
+                # matches.
+                if rec == recommendation.strong:
+                    log.debug('ID match.')
+                    return cur_artist, cur_album, candidates.values(), rec
+
+        # Search terms.
+        if not (search_artist and search_album):
+            # No explicit search terms -- use current metadata.
+            search_artist, search_album = cur_artist, cur_album
+        log.debug(u'Search terms: %s - %s' % (search_artist, search_album))
+
+        # Is this album likely to be a "various artist" release?
+        va_likely = ((not consensus['artist']) or
+                    (search_artist.lower() in VA_ARTISTS) or
+                    any(item.comp for item in items))
+        log.debug(u'Album might be VA: %s' % str(va_likely))
+
+        # Get the results from the data sources.
         search_cands = hooks._album_candidates(items, search_artist,
                                                search_album, va_likely)
     log.debug(u'Evaluating %i candidates.' % len(search_cands))
