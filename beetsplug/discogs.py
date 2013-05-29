@@ -65,9 +65,11 @@ class DiscogsPlugin(BeetsPlugin):
         or None if the album is not found.
         """
         log.debug('Searching discogs for release %s' % str(album_id))
-        # discogs-client can handle both int and str, so we just strip
-        # the leading 'r' that might be accidentally pasted into the form
-        match = re.search('\d+', album_id)
+        # Discogs-IDs are simple integers. We only look for those at the end
+        # of an input string as to avoid confusion with other metadata plugins.
+        # An optional bracket can follow the integer, as this is how discogs
+        # displays the release ID on its webpage.
+        match = re.search(r'(\d+)\]*$', album_id)
         if not match:
             return None
         result = Release(match.group())
