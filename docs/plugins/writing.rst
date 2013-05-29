@@ -189,9 +189,15 @@ methods on the plugin class:
   return a list of ``TrackInfo`` objects for candidate tracks to be compared and
   matched.
 
-When implementing these functions, it will probably be very necessary to use the
-functions from the ``beets.autotag`` and ``beets.autotag.mb`` modules, both of
-which have somewhat helpful docstrings.
+* ``album_for_id(self, album_id)``: given an ID from user input or an album's
+  tags, return a candidate AlbumInfo object (or None).
+
+* ``track_for_id(self, track_id)``: given an ID from user input or a file's
+  tags, return a candidate TrackInfo object (or None).
+
+When implementing these functions, you may want to use the functions from the
+``beets.autotag`` and ``beets.autotag.mb`` modules, both of which have
+somewhat helpful docstrings.
 
 Read Configuration Options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

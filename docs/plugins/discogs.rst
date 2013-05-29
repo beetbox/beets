@@ -17,4 +17,7 @@ install the `discogs-client`_ library by typing::
 That's it! Matches from Discogs will now show up during import alongside
 matches from MusicBrainz.
 
+If you have a Discogs ID for an album you want to tag, you can also enter it
+at the "enter Id" prompt in the importer.
+
 .. _discogs-client: https://github.com/discogs/discogs_client

@@ -36,6 +36,10 @@ Changelog
   album fields. For consistency, the ``pathfields`` configuration section has
   been renamed ``item_fields`` (although the old name will still work for
   compatibility).
+* Plugins can also provide metadata matches for ID searches. For example, the
+  new Discogs plugin lets you search for an album by its Discogs ID from the
+  same prompt that previously just accepted MusicBrainz IDs. Thanks to
+  Johannes Baiter.
 * The :ref:`fields-cmd` command shows template fields provided by plugins.
   Thanks again to Pedro Silva.
 * Album art filenames now respect the :ref:`replace` configuration.
