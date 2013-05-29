@@ -69,10 +69,11 @@ class DiscogsPlugin(BeetsPlugin):
         # of an input string as to avoid confusion with other metadata plugins.
         # An optional bracket can follow the integer, as this is how discogs
         # displays the release ID on its webpage.
-        match = re.search(r'(\d+)\]*$', album_id)
+        match  = re.search(r'(^|\[*r|discogs\.com/.+/release/)(\d+)($|\])',
+                           album_id)
         if not match:
             return None
-        result = Release(match.group(1))
+        result = Release(match.group(2))
         # Try to obtain title to verify that we indeed have a valid Release
         try:
             getattr(result, 'title')
