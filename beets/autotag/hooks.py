@@ -182,11 +182,19 @@ def _album_for_id(album_id):
     return filter(None, candidates)
 
 def _track_for_id(track_id):
-    """Get an item for a recording MBID."""
+    """Get an item for a recording ID."""
+    candidates = []
+
+    # From MusicBrainz.
     try:
-        return mb.track_for_id(track_id)
+        candidates.append(mb.track_for_id(track_id))
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
+
+    # From plugins.
+    candidates.extend(plugins.track_for_id(track_id))
+
+    return filter(None, candidates)
 
 def _album_candidates(items, artist, album, va_likely):
     """Search for album matches. ``items`` is a list of Item objects

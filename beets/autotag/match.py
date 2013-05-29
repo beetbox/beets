@@ -544,8 +544,7 @@ def tag_item(item, search_artist=None, search_title=None,
     trackid = search_id or item.mb_trackid
     if trackid:
         log.debug('Searching for track ID: ' + trackid)
-        track_info = hooks._track_for_id(trackid)
-        if track_info:
+        for track_info in hooks._track_for_id(trackid):
             dist = track_distance(item, track_info, incl_artist=True)
             candidates[track_info.track_id] = \
                     hooks.TrackMatch(dist, track_info)

@@ -330,7 +330,6 @@ def _parse_id(s):
     match = re.search('[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', s)
     if match:
         return match.group()
-    log.error('Invalid MBID.')
 
 def album_for_id(albumid):
     """Fetches an album by its MusicBrainz ID and returns an AlbumInfo
@@ -339,6 +338,7 @@ def album_for_id(albumid):
     """
     albumid = _parse_id(albumid)
     if not albumid:
+        log.error('Invalid MBID.')
         return
     try:
         res = musicbrainzngs.get_release_by_id(albumid,
@@ -357,6 +357,7 @@ def track_for_id(trackid):
     """
     trackid = _parse_id(trackid)
     if not trackid:
+        log.error('Invalid MBID.')
         return
     try:
         res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
