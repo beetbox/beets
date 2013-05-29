@@ -17,6 +17,7 @@ releases and tracks.
 """
 from __future__ import division
 
+import datetime
 import logging
 import re
 from munkres import Munkres
@@ -33,6 +34,14 @@ from beets.autotag import hooks
 # distance.
 ARTIST_WEIGHT = config['match']['weight']['artist'].as_number()
 ALBUM_WEIGHT = config['match']['weight']['album'].as_number()
+# MusicBrainz album ID matches.
+ALBUM_ID_WEIGHT = config['match']['weight']['album_id'].as_number()
+# The distance between the tagged year and the suggested year.
+YEAR_WEIGHT = config['match']['weight']['year'].as_number()
+# Difference between actual or preferred media.
+MEDIA_WEIGHT = config['match']['weight']['media'].as_number()
+# Differences in minor metadata, disctotal, label, etc.
+MINOR_WEIGHT = config['match']['weight']['minor'].as_number()
 # The weight of the entire distance calculated for a given track.
 TRACK_WEIGHT = config['match']['weight']['track'].as_number()
 # The weight of a missing track.
@@ -54,6 +63,9 @@ TRACK_LENGTH_MAX = config['match']['weight']['track_length_max'].as_number()
 TRACK_LENGTH_WEIGHT = config['match']['weight']['track_length'].as_number()
 # MusicBrainz track ID matches.
 TRACK_ID_WEIGHT = config['match']['weight']['track_id'].as_number()
+
+# Preferred media.
+PREFERRED_MEDIA = config['match']['preferred_media'].get()
 
 # Parameters for string distance function.
 # Words that can be moved to the end of a string using a comma.
@@ -160,7 +172,10 @@ def current_metadata(items):
     """
     likelies = {}
     consensus = {}
-    for key in 'artist', 'album', 'albumartist':
+    fields = ['artist', 'album', 'albumartist', 'year', 'disctotal',
+              'mb_albumid', 'label', 'catalognum', 'country', 'media',
+              'albumdisambig']
+    for key in fields:
         values = [getattr(item, key) for item in items if item]
         likelies[key], freq = plurality(values)
         consensus[key] = (freq == len(values))
@@ -170,7 +185,7 @@ def current_metadata(items):
     else:
         artist = likelies['artist']
 
-    return artist, likelies['album'], consensus['artist']
+    return artist, likelies['album'], consensus['artist'], likelies
 
 def assign_items(items, tracks):
     """Given a list of Items and a list of TrackInfo objects, find the
@@ -264,7 +279,7 @@ def distance(items, album_info, mapping):
     keys are a subset of `items` and the values are a subset of
     `album_info.tracks`.
     """
-    cur_artist, cur_album, _ = current_metadata(items)
+    cur_artist, cur_album, _, likelies = current_metadata(items)
     cur_artist = cur_artist or u''
     cur_album = cur_album or u''
 
@@ -279,6 +294,55 @@ def distance(items, album_info, mapping):
         dist_max += ARTIST_WEIGHT
     dist += string_dist(cur_album,  album_info.album) * ALBUM_WEIGHT
     dist_max += ALBUM_WEIGHT
+
+    # Year. No penalty for matching release or original year.
+    if likelies['year'] and album_info.year:
+        if likelies['year'] not in (album_info.year, album_info.original_year):
+            diff = abs(album_info.year - likelies['year'])
+            if diff:
+                dist += (1.0 - 1.0 / diff) * YEAR_WEIGHT
+        dist_max += YEAR_WEIGHT
+
+    # Actual or preferred media.
+    if likelies['media'] and album_info.media:
+        dist += string_dist(likelies['media'], album_info.media) * MEDIA_WEIGHT
+        dist_max += MEDIA_WEIGHT
+    elif album_info.media and PREFERRED_MEDIA:
+        dist += string_dist(album_info.media, PREFERRED_MEDIA) * MEDIA_WEIGHT
+        dist_max += MEDIA_WEIGHT
+
+    # MusicBrainz album ID.
+    if likelies['mb_albumid']:
+        if likelies['mb_albumid'] != album_info.album_id:
+            dist += ALBUM_ID_WEIGHT
+        dist_max += ALBUM_ID_WEIGHT
+
+    # Apply a small penalty for differences across many minor metadata. This
+    # helps prioritise releases that are nearly identical.
+
+    if likelies['disctotal']:
+        if likelies['disctotal'] != album_info.mediums:
+            dist += MINOR_WEIGHT
+        dist_max += MINOR_WEIGHT
+
+    if likelies['label'] and album_info.label:
+        dist += string_dist(likelies['label'], album_info.label) * MINOR_WEIGHT
+        dist_max += MINOR_WEIGHT
+
+    if likelies['catalognum'] and album_info.catalognum:
+        dist += string_dist(likelies['catalognum'],
+                            album_info.catalognum) * MINOR_WEIGHT
+        dist_max += MINOR_WEIGHT
+
+    if likelies['country'] and album_info.country:
+        dist += string_dist(likelies['country'],
+                            album_info.country) * MINOR_WEIGHT
+        dist_max += MINOR_WEIGHT
+
+    if likelies['albumdisambig'] and album_info.albumdisambig:
+        dist += string_dist(likelies['albumdisambig'],
+                            album_info.albumdisambig) * MINOR_WEIGHT
+        dist_max += MINOR_WEIGHT
 
     # Matched track distances.
     for item, track in mapping.iteritems():
@@ -429,7 +493,7 @@ def tag_album(items, search_artist=None, search_album=None,
     they are used as search terms in place of the current metadata.
     """
     # Get current metadata.
-    cur_artist, cur_album, artist_consensus = current_metadata(items)
+    cur_artist, cur_album, artist_consensus, _ = current_metadata(items)
     log.debug('Tagging %s - %s' % (cur_artist, cur_album))
 
     # The output result (distance, AlbumInfo) tuples (keyed by MB album
