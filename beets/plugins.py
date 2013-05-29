@@ -273,14 +273,13 @@ def item_candidates(item, artist, title):
     return out
 
 def album_for_id(album_id):
+    """Get AlbumInfo objects for a given ID string.
+    """
     out = []
     for plugin in find_plugins():
-        try:
-            out.append(plugin.album_for_id(album_id))
-        except Exception:
-            log.warn('** error running album_for_id in plugin %s'
-                     % plugin.name)
-            log.warn(traceback.format_exc())
+        res = plugin.album_for_id(album_id)
+        if res:
+            out.append(res)
     return out
 
 def configure(config):
