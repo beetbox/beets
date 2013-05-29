@@ -423,10 +423,15 @@ class Item(object):
             mapping['albumartist'] = mapping['artist']
 
         # Get values from plugins.
-        for key, value in plugins.template_values(self).iteritems():
+        for key, value in plugins.template_values(self).items():
             if sanitize:
                 value = format_for_path(value, key, pathmod)
             mapping[key] = value
+        if album:
+            for key, value in plugins.album_template_values(album).items():
+                if sanitize:
+                    value = format_for_path(value, key, pathmod)
+                mapping[key] = value
 
         # Get template functions.
         funcs = DefaultTemplateFunctions(self, lib, pathmod).functions()
