@@ -94,18 +94,28 @@ fields_cmd = ui.Subcommand('fields',
     help='show fields available for queries and format strings')
 
 def fields_func(lib, opts, args):
+    def _print_rows(names):
+        print("  " + "\n  ".join(names))
+
+    def _show_plugin_fields(album):
+        plugin_fields = []
+        for plugin in plugins.find_plugins():
+            if album:
+                fdict = plugin.album_template_fields
+            else:
+                fdict = plugin.template_fields
+            plugin_fields += fdict.keys()
+        if plugin_fields:
+            print("Template fields from plugins:")
+            _print_rows(plugin_fields)
+
     print("Item fields:")
-    print("  " + "\n  ".join([key for key in library.ITEM_KEYS]))
+    _print_rows(library.ITEM_KEYS)
+    _show_plugin_fields(False)
 
     print("\nAlbum fields:")
-    print("  " + "\n  ".join([key for key in library.ALBUM_KEYS]))
-
-    plugin_fields = []
-    for plugin in plugins.find_plugins():
-        plugin_fields += plugin.template_fields.keys()
-    if plugin_fields:
-        print("\nTemplate fields from plugins:")
-        print("  " + "\n  ".join(plugin_fields))
+    _print_rows(library.ALBUM_KEYS)
+    _show_plugin_fields(True)
 
 fields_cmd.func = fields_func
 default_commands.append(fields_cmd)

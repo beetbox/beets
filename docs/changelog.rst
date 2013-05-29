@@ -31,7 +31,7 @@ Changelog
   Thanks to jayme on GitHub.
 * :doc:`/plugins/lyrics`: Lyrics searches should now turn up more results due
   to some fixes in dealing with special characters.
-* Plugin-provided template fields now work for both Albums and Items. Thanks
+* Plugins can now provide fields for both Album and Item templates. Thanks
   to Pedro Silva.
 * The :ref:`fields-cmd` command shows template fields provided by plugins.
   Thanks again to Pedro Silva.

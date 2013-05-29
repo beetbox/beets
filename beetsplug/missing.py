@@ -102,9 +102,13 @@ class MissingPlugin(BeetsPlugin):
     def __init__(self):
         super(MissingPlugin, self).__init__()
 
-        self.config.add({'format': None})
-        self.config.add({'count': False})
-        self.config.add({'total': False})
+        self.config.add({
+            'format': None,
+            'count': False,
+            'total': False,
+        })
+
+        self.album_template_fields['missing'] = _missing_count
 
         self._command = Subcommand('missing',
                                    help=__doc__,
@@ -151,13 +155,3 @@ class MissingPlugin(BeetsPlugin):
 
         self._command.func = _miss
         return [self._command]
-
-
-@MissingPlugin.template_field('missing')
-def _tmpl_missing(album):
-    """Return number of missing items in 'album'.
-    """
-    if isinstance(album, Album):
-        return _missing_count(album)
-    else:
-        return ''

@@ -48,6 +48,8 @@ class BeetsPlugin(object):
             self.template_funcs = {}
         if not self.template_fields:
             self.template_fields = {}
+        if not self.album_template_fields:
+            self.album_template_fields = {}
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
@@ -134,6 +136,7 @@ class BeetsPlugin(object):
 
     template_funcs = None
     template_fields = None
+    album_template_fields = None
 
     @classmethod
     def template_func(cls, name):
@@ -287,6 +290,16 @@ def template_values(item):
         if plugin.template_fields:
             for name, func in plugin.template_fields.iteritems():
                 values[name] = unicode(func(item))
+    return values
+
+def album_template_values(album):
+    """Get the plugin-defined template values for an Album.
+    """
+    values = {}
+    for plugin in find_plugins():
+        if plugin.album_template_fields:
+            for name, func in plugin.album_template_fields.iteritems():
+                values[name] = unicode(func(album))
     return values
 
 def _add_media_fields(fields):

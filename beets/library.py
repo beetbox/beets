@@ -1756,7 +1756,7 @@ class Album(BaseAlbum):
         mapping['path'] = displayable_path(self.item_dir())
 
         # Get values from plugins.
-        for key, value in plugins.template_values(self).iteritems():
+        for key, value in plugins.album_template_values(self).iteritems():
             mapping[key] = value
 
         # Get template functions.
