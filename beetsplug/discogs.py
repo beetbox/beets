@@ -38,7 +38,7 @@ discogs_client.user_agent = 'beets/%s +http://beets.radbox.org/' % \
 
 class DiscogsPlugin(BeetsPlugin):
     def __init__(self):
-        super(DiscogsPlugin, self).__init__(self)
+        super(DiscogsPlugin, self).__init__()
         self.config.add({
             'source_weight': 0.5,
         })
