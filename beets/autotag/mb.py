@@ -329,8 +329,8 @@ def _parse_id(s):
     # Find the first thing that looks like a UUID/MBID.
     match = re.search('[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', s)
     if match:
-        log.error('Invalid MBID.')
         return match.group()
+    log.error('Invalid MBID.')
 
 def album_for_id(albumid):
     """Fetches an album by its MusicBrainz ID and returns an AlbumInfo

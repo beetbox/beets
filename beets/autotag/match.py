@@ -361,10 +361,11 @@ def match_by_id(items):
     if bool(reduce(lambda x,y: x if x==y else (), albumids)):
         albumid = albumids[0]
         log.debug('Searching for discovered album ID: ' + albumid)
-        return hooks._album_for_id(albumid)
+        matches = hooks._album_for_id(albumid)
+        if matches:
+            return matches[0]
     else:
         log.debug('No album ID consensus.')
-        return None
 
 def _recommendation(results):
     """Given a sorted list of AlbumMatch or TrackMatch objects, return a
@@ -517,6 +518,7 @@ def tag_album(items, search_artist=None, search_album=None,
         # Get the results from the data sources.
         search_cands = hooks._album_candidates(items, search_artist,
                                                search_album, va_likely)
+
     log.debug(u'Evaluating %i candidates.' % len(search_cands))
     for info in search_cands:
         _add_candidate(items, candidates, info)
