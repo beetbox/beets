@@ -398,11 +398,11 @@ match is usually based on the distance calculation. But you can also control
 the recommendation for certain specific situations by defining *maximum*
 recommendations when:
 
-* a match came from a source other than MusicBrainz, e.g. the
-  :doc:`Discogs </plugins/discogs>` plugin;
+* a match came from a source other than MusicBrainz (e.g., the
+  :doc:`Discogs </plugins/discogs>` plugin);
 * a match has missing or extra tracks;
 * the length (duration) of at least one track differs; or
-* at least one track number differs;
+* at least one track number differs.
 
 To define maxima, use keys under ``max_rec:`` in the ``match`` section::
 
