@@ -425,7 +425,8 @@ def _recommendation(results):
             # Track length differs.
             if rec > max_rec['tracklength'] and \
                     item.length and track_info.length and \
-                    abs(item.length - track_info.length) > TRACK_LENGTH_GRACE:
+                    abs(item.length - track_info.length) > \
+                    weights['track_length_grace'].as_number():
                 rec = max_rec['tracklength']
 
             # Track number differs.
