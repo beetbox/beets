@@ -885,6 +885,8 @@ class MediaFile(object):
             raise FileTypeError('file type unsupported by Mutagen')
         elif type(self.mgfile).__name__ == 'M4A' or \
              type(self.mgfile).__name__ == 'MP4':
+            # This hack differentiates aac and alac until we find a more
+            # deterministic approach.
             if hasattr(self.mgfile.info, 'sample_rate') and \
                self.mgfile.info.sample_rate > 0:
                 self.type = 'aac'
