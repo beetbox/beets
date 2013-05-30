@@ -83,6 +83,8 @@ TYPES = {
     'asf':  'Windows Media',
 }
 
+MP4_TYPES = ('aac', 'alac')
+
 
 # Utility.
 
@@ -535,7 +537,7 @@ class MediaField(object):
     def _styles(self, obj):
         if obj.type in ('mp3', 'asf'):
             styles = self.styles[obj.type]
-        elif obj.type in ('aac', 'alac'):
+        elif obj.type in MP4_TYPES:
             styles = self.styles['mp4']
         else:
             styles = self.styles['etc']  # Sane styles.
@@ -571,7 +573,7 @@ class MediaField(object):
                     out = out[:-len(style.suffix)]
 
             # MPEG-4 freeform frames are (should be?) encoded as UTF-8.
-            if obj.type in ('aac', 'alac') and style.key.startswith('----:') and \
+            if obj.type in MP4_TYPES and style.key.startswith('----:') and \
                     isinstance(out, str):
                 out = out.decode('utf8')
 
@@ -639,7 +641,7 @@ class MediaField(object):
 
             # MPEG-4 "freeform" (----) frames must be encoded as UTF-8
             # byte strings.
-            if obj.type in ('aac', 'alac') and style.key.startswith('----:') and \
+            if obj.type in MP4_TYPES and style.key.startswith('----:') and \
                     isinstance(out, unicode):
                 out = out.encode('utf8')
 
@@ -726,7 +728,7 @@ class ImageField(object):
 
             return picframe.data
 
-        elif obj.type in ('aac', 'alac'):
+        elif obj.type in MP4_TYPES:
             if 'covr' in obj.mgfile:
                 covers = obj.mgfile['covr']
                 if covers:
@@ -798,7 +800,7 @@ class ImageField(object):
             )
             obj.mgfile['APIC'] = picframe
 
-        elif obj.type in ('aac', 'alac'):
+        elif obj.type in MP4_TYPES:
             if val is None:
                 if 'covr' in obj.mgfile:
                     del obj.mgfile['covr']
