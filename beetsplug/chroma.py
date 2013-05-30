@@ -127,9 +127,9 @@ class AcoustidPlugin(plugins.BeetsPlugin):
     def candidates(self, items, artist, album, va_likely):
         albums = []
         for relid in _all_releases(items):
-            album = hooks._album_for_id(relid)
-            if album:
-                albums.append(album)
+            matches = hooks._album_for_id(relid)
+            if matches:
+                albums.extend(matches)
 
         log.debug('acoustid album candidates: %i' % len(albums))
         return albums

@@ -97,10 +97,11 @@ def mbsync_albums(lib, query, move, pretend, write):
             item.old_data = dict(item.record)
 
         # Get the MusicBrainz album information.
-        album_info = hooks._album_for_id(a.mb_albumid)
-        if not album_info:
+        matches = hooks._album_for_id(a.mb_albumid)
+        if not matches:
             log.info(u'Release ID not found: {0}'.format(a.mb_albumid))
             continue
+        album_info = matches[0]
 
         # Construct a track mapping according to MBIDs. This should work
         # for albums that have missing or extra tracks.
