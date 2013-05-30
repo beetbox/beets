@@ -157,7 +157,7 @@ class DiscogsPlugin(BeetsPlugin):
             # Strip disambiguation number.
             name = re.sub(r' \(\d+\)$', '', name)
             # Move articles to the front.
-            name = re.sub(r'^(.*?), (a|an|the)$', r'\2 \1', name, flags=re.I)
+            name = re.sub(r'(?i)^(.*?), (a|an|the)$', r'\2 \1', name)
             bits.append(name)
             if artist['join']:
                 bits.append(artist['join'])
