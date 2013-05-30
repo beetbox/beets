@@ -133,16 +133,18 @@ def disambig_string(info):
     """Returns label, year and media disambiguation, if available.
     """
     disambig = []
-    if info.label:
-        disambig.append(info.label)
-    if info.year:
-        disambig.append(unicode(info.year))
     if info.media:
         if info.mediums > 1:
             disambig.append(u'{0}x{1}'.format(
               info.mediums, info.media))
         else:
             disambig.append(info.media)
+    if info.year:
+        disambig.append(unicode(info.year))
+    if info.country:
+        disambig.append(info.country)
+    if info.label:
+        disambig.append(info.label)
     if info.albumdisambig:
         disambig.append(info.albumdisambig)
     if disambig:
