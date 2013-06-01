@@ -27,10 +27,6 @@ from beets.plugins import BeetsPlugin
 
 log = logging.getLogger('beets')
 
-# Distance parameters.
-BEATPORT_SOURCE_WEIGHT = config['beatport']['source_weight'].as_number()
-SOURCE_WEIGHT = config['match']['weight']['source'].as_number()
-
 
 class BeatportAPIError(Exception):
     pass
@@ -152,17 +148,33 @@ class BeatportTrack(BeatportObject):
 
 
 class BeatportPlugin(BeetsPlugin):
+    def __init__(self):
+        super(BeatportPlugin, self).__init__()
+        self.config.add({
+            'source_weight': 0.5,
+        })
+
     def album_distance(self, items, album_info, mapping):
         """Returns the beatport source weight and the maximum source weight
         for albums.
         """
-        return BEATPORT_SOURCE_WEIGHT * SOURCE_WEIGHT, SOURCE_WEIGHT
+        if album_info.data_source == 'Beatport':
+            return self.config['source_weight'].as_number() * \
+                    config['match']['weight']['source'].as_number(), \
+                    config['match']['weight']['source'].as_number()
+        else:
+            return 0.0, 0.0
 
     def track_distance(self, item, info):
         """Returns the beatport source weight and the maximum source weight
         for individual tracks.
         """
-        return BEATPORT_SOURCE_WEIGHT * SOURCE_WEIGHT, SOURCE_WEIGHT
+        if info.data_source == 'Beatport':
+            return self.config['source_weight'].as_number() * \
+                    config['match']['weight']['source'].as_number(), \
+                    config['match']['weight']['source'].as_number()
+        else:
+            return 0.0, 0.0
 
     def candidates(self, items, artist, release, va_likely):
         """Returns a list of AlbumInfo objects for beatport search results
