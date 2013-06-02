@@ -546,7 +546,7 @@ def _recommendation(results):
 
     # Downgrade to the max rec if it is lower than the current rec for an
     # applied penalty.
-    for dist, key in results[0].distance.sorted:
+    for _, key in results[0].distance.sorted:
         max_rec = config['match']['max_rec'][key].as_choice({
             'strong': recommendation.strong,
             'medium': recommendation.medium,
