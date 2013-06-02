@@ -166,37 +166,37 @@ TrackMatch = namedtuple('TrackMatch', ['distance', 'info'])
 
 # Aggregation of sources.
 
-def _album_for_id(album_id):
-    """Get a list of albums corresponding to a release ID."""
-    candidates = []
-
-    # Candidates from MusicBrainz.
+def album_for_mbid(release_id):
+    """Get an AlbumInfo object for a MusicBrainz release ID. Return None
+    if the ID is not found.
+    """
     try:
-        candidates.append(mb.album_for_id(album_id))
+        return mb.album_for_id(release_id)
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
 
-    # From plugins.
+def track_for_mbid(recording_id):
+    """Get a TrackInfo object for a MusicBrainz recording ID. Return None
+    if the ID is not found.
+    """
+    try:
+        return mb.track_for_id(recording_id)
+    except mb.MusicBrainzAPIError as exc:
+        exc.log(log)
+
+def albums_for_id(album_id):
+    """Get a list of albums for an ID."""
+    candidates = [album_for_mbid(album_id)]
     candidates.extend(plugins.album_for_id(album_id))
-
     return filter(None, candidates)
 
-def _track_for_id(track_id):
-    """Get an item for a recording ID."""
-    candidates = []
-
-    # From MusicBrainz.
-    try:
-        candidates.append(mb.track_for_id(track_id))
-    except mb.MusicBrainzAPIError as exc:
-        exc.log(log)
-
-    # From plugins.
+def tracks_for_id(track_id):
+    """Get a list of tracks for an ID."""
+    candidates = [track_for_mbid(track_id)]
     candidates.extend(plugins.track_for_id(track_id))
-
     return filter(None, candidates)
 
-def _album_candidates(items, artist, album, va_likely):
+def album_candidates(items, artist, album, va_likely):
     """Search for album matches. ``items`` is a list of Item objects
     that make up the album. ``artist`` and ``album`` are the respective
     names (strings), which may be derived from the item list or may be
@@ -224,7 +224,7 @@ def _album_candidates(items, artist, album, va_likely):
 
     return out
 
-def _item_candidates(item, artist, title):
+def item_candidates(item, artist, title):
     """Search for item matches. ``item`` is the Item to be matched.
     ``artist`` and ``title`` are strings and either reflect the item or
     are specified by the user.

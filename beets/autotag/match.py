@@ -361,9 +361,7 @@ def match_by_id(items):
     if bool(reduce(lambda x,y: x if x==y else (), albumids)):
         albumid = albumids[0]
         log.debug('Searching for discovered album ID: ' + albumid)
-        matches = hooks._album_for_id(albumid)
-        if matches:
-            return matches[0]
+        return hooks.album_for_mbid(albumid)
     else:
         log.debug('No album ID consensus.')
 
@@ -485,7 +483,7 @@ def tag_album(items, search_artist=None, search_album=None,
     # Search by explicit ID.
     if search_id is not None:
         log.debug('Searching for album ID: ' + search_id)
-        search_cands = hooks._album_for_id(search_id)
+        search_cands = hooks.albums_for_id(search_id)
 
     # Use existing metadata or text search.
     else:
@@ -516,8 +514,8 @@ def tag_album(items, search_artist=None, search_album=None,
         log.debug(u'Album might be VA: %s' % str(va_likely))
 
         # Get the results from the data sources.
-        search_cands = hooks._album_candidates(items, search_artist,
-                                               search_album, va_likely)
+        search_cands = hooks.album_candidates(items, search_artist,
+                                              search_album, va_likely)
 
     log.debug(u'Evaluating %i candidates.' % len(search_cands))
     for info in search_cands:
@@ -544,7 +542,7 @@ def tag_item(item, search_artist=None, search_title=None,
     trackid = search_id or item.mb_trackid
     if trackid:
         log.debug('Searching for track ID: ' + trackid)
-        for track_info in hooks._track_for_id(trackid):
+        for track_info in hooks.tracks_for_id(trackid):
             dist = track_distance(item, track_info, incl_artist=True)
             candidates[track_info.track_id] = \
                     hooks.TrackMatch(dist, track_info)
@@ -567,7 +565,7 @@ def tag_item(item, search_artist=None, search_title=None,
     log.debug(u'Item search terms: %s - %s' % (search_artist, search_title))
 
     # Get and evaluate candidate metadata.
-    for track_info in hooks._item_candidates(item, search_artist, search_title):
+    for track_info in hooks.item_candidates(item, search_artist, search_title):
         dist = track_distance(item, track_info, incl_artist=True)
         candidates[track_info.track_id] = hooks.TrackMatch(dist, track_info)
 
