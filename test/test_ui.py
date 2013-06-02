@@ -607,7 +607,7 @@ class ShowChangeTest(_common.TestCase):
         mapping = dict(zip(items, info.tracks))
         config['color'] = False
         album_dist = distance(items, info, mapping)
-        album_dist.penalties = {'album': [dist]}
+        album_dist._penalties = {'album': [dist]}
         commands.show_change(
             cur_artist,
             cur_album,

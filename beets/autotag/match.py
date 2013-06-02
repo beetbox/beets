@@ -201,14 +201,14 @@ class Distance(object):
     def __getitem__(self, key):
         """Returns the weighted distance for a named penalty.
         """
-        dist = sum(self.penalties[key]) * weights[key].as_number()
+        dist = sum(self._penalties[key]) * weights[key].as_number()
         dist_max = self.max_distance
         if dist_max:
             return dist / dist_max
         return 0.0
 
     def __init__(self):
-        self.penalties = {}
+        self._penalties = {}
 
     def __sub__(self, other):
         return self.distance - other
@@ -233,7 +233,7 @@ class Distance(object):
         if not 0.0 <= dist <= 1.0:
             raise ValueError(
                     '`dist` must be between 0.0 and 1.0. It is: %r' % dist)
-        self.penalties.setdefault(key, []).append(dist)
+        self._penalties.setdefault(key, []).append(dist)
 
     def add_equality(self, key, value, options):
         """Adds a distance penalty of 1.0 if `value` doesn't match any of the
@@ -311,7 +311,7 @@ class Distance(object):
         """Returns an overall weighted distance across all penalties.
         """
         dist = 0.0
-        for key, penalty in self.penalties.iteritems():
+        for key, penalty in self._penalties.iteritems():
             dist += sum(penalty) * weights[key].as_number()
         dist_max = self.max_distance
         if dist_max:
@@ -323,7 +323,7 @@ class Distance(object):
         """Returns the maximum distance penalty.
         """
         dist_max = 0.0
-        for key, penalty in self.penalties.iteritems():
+        for key, penalty in self._penalties.iteritems():
             dist_max += len(penalty) * weights[key].as_number()
         return dist_max
 
@@ -332,7 +332,7 @@ class Distance(object):
         """Returns a list of (dist, key) pairs, with `dist` being the weighted
         distance, sorted from highest to lowest.
         """
-        list_ = [(self[key], key) for key in self.penalties]
+        list_ = [(self[key], key) for key in self._penalties]
         return sorted(list_, key=lambda (dist, key): (0-dist, key))
 
     def update(self, dist):
@@ -341,8 +341,8 @@ class Distance(object):
         if not isinstance(dist, Distance):
             raise ValueError(
                     '`dist` must be a Distance object. It is: %r' % dist)
-        for key, penalties in dist.penalties.iteritems():
-            self.penalties.setdefault(key, []).extend(penalties)
+        for key, penalties in dist._penalties.iteritems():
+            self._penalties.setdefault(key, []).extend(penalties)
 
 def track_distance(item, track_info, incl_artist=False):
     """Determines the significance of a track metadata change. Returns a

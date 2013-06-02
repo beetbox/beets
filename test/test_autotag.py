@@ -112,72 +112,73 @@ class DistanceTest(unittest.TestCase):
 
     def test_add(self):
         self.dist.add('add', 1.0)
-        self.assertEqual(self.dist.penalties, {'add': [1.0]})
+        self.assertEqual(self.dist._penalties, {'add': [1.0]})
 
     def test_add_equality(self):
         self.dist.add_equality('equality', 'ghi', ['abc', 'def', 'ghi'])
-        self.assertEqual(self.dist.penalties['equality'], [0.0])
+        self.assertEqual(self.dist._penalties['equality'], [0.0])
 
         self.dist.add_equality('equality', 'xyz', ['abc', 'def', 'ghi'])
-        self.assertEqual(self.dist.penalties['equality'], [0.0, 1.0])
+        self.assertEqual(self.dist._penalties['equality'], [0.0, 1.0])
 
         self.dist.add_equality('equality', 'abc', re.compile(r'ABC', re.I))
-        self.assertEqual(self.dist.penalties['equality'], [0.0, 1.0, 0.0])
+        self.assertEqual(self.dist._penalties['equality'], [0.0, 1.0, 0.0])
 
     def test_add_expr(self):
         self.dist.add_expr('expr', True)
-        self.assertEqual(self.dist.penalties['expr'], [1.0])
+        self.assertEqual(self.dist._penalties['expr'], [1.0])
 
         self.dist.add_expr('expr', False)
-        self.assertEqual(self.dist.penalties['expr'], [1.0, 0.0])
+        self.assertEqual(self.dist._penalties['expr'], [1.0, 0.0])
 
     def test_add_number(self):
         # Add a full penalty for each number of difference between two numbers.
 
         self.dist.add_number('number', 1, 1)
-        self.assertEqual(self.dist.penalties['number'], [0.0])
+        self.assertEqual(self.dist._penalties['number'], [0.0])
 
         self.dist.add_number('number', 1, 2)
-        self.assertEqual(self.dist.penalties['number'], [0.0, 1.0])
+        self.assertEqual(self.dist._penalties['number'], [0.0, 1.0])
 
         self.dist.add_number('number', 2, 1)
-        self.assertEqual(self.dist.penalties['number'], [0.0, 1.0, 1.0])
+        self.assertEqual(self.dist._penalties['number'], [0.0, 1.0, 1.0])
 
         self.dist.add_number('number', -1, 2)
-        self.assertEqual(self.dist.penalties['number'], [0.0, 1.0, 1.0, 1.0,
-                                                         1.0, 1.0])
+        self.assertEqual(self.dist._penalties['number'], [0.0, 1.0, 1.0, 1.0,
+                                                          1.0, 1.0])
 
     def test_add_priority(self):
         self.dist.add_priority('priority', 'abc', 'abc')
-        self.assertEqual(self.dist.penalties['priority'], [0.0])
+        self.assertEqual(self.dist._penalties['priority'], [0.0])
 
         self.dist.add_priority('priority', 'def', ['abc', 'def', 'ghi'])
-        self.assertEqual(self.dist.penalties['priority'], [0.0, 0.25])
+        self.assertEqual(self.dist._penalties['priority'], [0.0, 0.25])
 
         self.dist.add_priority('priority', 'ghi', ['abc', 'def',
-                                              re.compile('GHI', re.I)])
-        self.assertEqual(self.dist.penalties['priority'], [0.0, 0.25, 0.5])
+                                                   re.compile('GHI', re.I)])
+        self.assertEqual(self.dist._penalties['priority'], [0.0, 0.25, 0.5])
 
         self.dist.add_priority('priority', 'xyz', ['abc', 'def'])
-        self.assertEqual(self.dist.penalties['priority'], [0.0, 0.25, 0.5, 1.0])
+        self.assertEqual(self.dist._penalties['priority'], [0.0, 0.25, 0.5,
+                                                            1.0])
 
     def test_add_ratio(self):
         self.dist.add_ratio('ratio', 25, 100)
-        self.assertEqual(self.dist.penalties['ratio'], [0.25])
+        self.assertEqual(self.dist._penalties['ratio'], [0.25])
 
         self.dist.add_ratio('ratio', 10, 5)
-        self.assertEqual(self.dist.penalties['ratio'], [0.25, 1.0])
+        self.assertEqual(self.dist._penalties['ratio'], [0.25, 1.0])
 
         self.dist.add_ratio('ratio', -5, 5)
-        self.assertEqual(self.dist.penalties['ratio'], [0.25, 1.0, 0.0])
+        self.assertEqual(self.dist._penalties['ratio'], [0.25, 1.0, 0.0])
 
         self.dist.add_ratio('ratio', 5, 0)
-        self.assertEqual(self.dist.penalties['ratio'], [0.25, 1.0, 0.0, 0.0])
+        self.assertEqual(self.dist._penalties['ratio'], [0.25, 1.0, 0.0, 0.0])
 
     def test_add_string(self):
         dist = match.string_dist(u'abc', u'bcd')
         self.dist.add_string('string', u'abc', u'bcd')
-        self.assertEqual(self.dist.penalties['string'], [dist])
+        self.assertEqual(self.dist._penalties['string'], [dist])
 
     def test_distance(self):
         config['match']['distance_weights']['album'] = 2.0
@@ -224,8 +225,8 @@ class DistanceTest(unittest.TestCase):
 
         self.dist.update(dist)
 
-        self.assertEqual(self.dist.penalties, {'album': [0.5, 0.75, 0.25],
-                                               'media': [1.0, 0.05]})
+        self.assertEqual(self.dist._penalties, {'album': [0.5, 0.75, 0.25],
+                                                'media': [1.0, 0.05]})
 
 class TrackDistanceTest(unittest.TestCase):
     def test_identical_tracks(self):
