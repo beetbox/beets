@@ -308,14 +308,11 @@ class Distance(object):
 
     @property
     def distance(self):
-        """Returns an overall weighted distance across all penalties.
+        """Returns a weighted and normalised distance across all penalties.
         """
-        dist = 0.0
-        for key, penalty in self._penalties.iteritems():
-            dist += sum(penalty) * weights[key].as_number()
         dist_max = self.max_distance
         if dist_max:
-            return dist / dist_max
+            return self.raw_distance / self.max_distance
         return 0.0
 
     @property
@@ -326,6 +323,15 @@ class Distance(object):
         for key, penalty in self._penalties.iteritems():
             dist_max += len(penalty) * weights[key].as_number()
         return dist_max
+
+    @property
+    def raw_distance(self):
+        """Returns the raw (denormalised) distance.
+        """
+        dist_raw = 0.0
+        for key, penalty in self._penalties.iteritems():
+            dist_raw += sum(penalty) * weights[key].as_number()
+        return dist_raw
 
     @property
     def sorted(self):

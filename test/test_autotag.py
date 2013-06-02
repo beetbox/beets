@@ -200,6 +200,14 @@ class DistanceTest(unittest.TestCase):
         self.dist.add('medium', 0.0)
         self.assertEqual(self.dist.max_distance, 5.0)
 
+    def test_raw_distance(self):
+        config['match']['distance_weights']['album'] = 3.0
+        config['match']['distance_weights']['medium'] = 1.0
+        self.dist.add('album', 0.5)
+        self.dist.add('medium', 0.25)
+        self.dist.add('medium', 0.5)
+        self.assertEqual(self.dist.raw_distance, 2.25)
+
     def test_sorted(self):
         config['match']['distance_weights']['album'] = 4.0
         config['match']['distance_weights']['medium'] = 2.0
