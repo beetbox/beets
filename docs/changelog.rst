@@ -53,30 +53,36 @@ Changelog
   None.
 * Various UI enhancements to the importer due to Tai Lee:
 
-  * More consistent format and colorization of album and track metadata.
-  * Display data source URL for :doc:`/plugins/discogs` matches. This should
-    make it easier for people who would rather import and correct data from
-    Discogs into MusicBrainz.
+  * Display data source URL and source name in album disambiguation for
+    non-MusicBrainz matches. This should make it easier for people who want to
+    import and correct data from other sources into MusicBrainz.
+  * The top 3 distance penalties are now displayed on the release listing,
+    and all album and track penalties are now displayed on the track changes
+    list. This should make it clear exactly which metadata is contributing to a
+    low similarity score.
   * Display album disambiguation and disc titles in the track listing, when
     available.
-  * Track changes highlighted in yellow indicate a change in format to or from
-    :ref:`per_disc_numbering`. No penalty is applied because the track number
-    is still "correct", just in a different format.
+  * More consistent format and colorization of album and track metadata.
+  * Track changes highlighted in turquoise indicate a change in format to or
+    from :ref:`per_disc_numbering`. No penalty is applied because the track
+    number is still "correct", just in a different format.
   * Sort missing and unmatched tracks by index and title and group them
     together for better readability.
-  * Indicate MusicBrainz ID mismatches.
 
-* Improve calculation of similarity score:
+* Improve calculation of similarity score and recommendation:
 
+  * It is now possible to configure a :ref:`max_rec` for any field that is used
+    to calculate the similarity score. The recommendation will be downgraded if
+    a penalty is being applied to the specified field.
   * Strongly prefer releases with a matching MusicBrainz album ID. This helps
     beets re-identify the same release when re-importing existing files.
   * Prefer releases that are closest to the tagged ``year``. Tolerate files
     tagged with release or original year.
-  * Prefer CD releases by default, when there is no ``media`` tagged in the
-    files being imported. This can be changed with the :ref:`preferred_media`
-    setting.
-  * Apply minor penalties across a range of fields to differentiate between
-    nearly identical releases: ``disctotal``, ``label``, ``catalognum``,
+  * Add a :ref:`preferred` collection of settings, which allow the user to
+    specify a sorted list of preferred countries and media types, or prefer
+    releases closest to the original year for an album.
+  * Apply minor distance penalties across a range of fields to differentiate
+    between nearly identical releases: ``mediums``, ``label``, ``catalognum``,
     ``country`` and ``albumdisambig``.
 
 .. _Discogs: http://discogs.com/
