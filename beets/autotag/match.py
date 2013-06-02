@@ -415,14 +415,18 @@ def distance(items, album_info, mapping):
 
     # Year.
     if likelies['year'] and album_info.year:
-        # No penalty for matching release or original year.
         if likelies['year'] in (album_info.year, album_info.original_year):
+            # No penalty for matching release or original year.
             dist.add('year', 0.0)
-        else:
+        elif album_info.original_year:
+            # Prefer matchest closest to the release year.
             diff = abs(likelies['year'] - album_info.year)
             diff_max = abs(datetime.date.today().year -
                            album_info.original_year)
             dist.add_ratio('year', diff, diff_max)
+        else:
+            # Full penalty when there is no original year.
+            dist.add('year', 1.0)
 
     # Prefer earlier releases.
     if album_info.year and album_info.original_year and \
