@@ -437,9 +437,13 @@ preferred
 
 In addition to comparing the tagged metadata with the match metadata for
 similarity, you can also specify an ordered list of preferred countries and
-media types. A distance penalty will be applied if the country or media type
-from the match metadata doesn't match. The order is important, the first item
-will be most preferred.
+media types.
+
+A distance penalty will be applied if the country or media type from the match
+metadata doesn't match. The order is important, the first item will be most
+preferred. Each item may be a regular expression, and will be matched case
+insensitively. The number of media will be stripped when matching preferred
+media (e.g. "2x" in "2xCD").
 
 You can also tell the autotagger to prefer matches that have a release year
 closest to the original year for an album.
@@ -448,8 +452,8 @@ Here's an example::
 
     match:
         preferred:
-            countries: ['US', 'GB', 'UK']
-            media: ['CD', 'Digital Media']
+            countries: ['US', 'GB|UK']
+            media: ['CD', 'Digital Media|File']
             original_year: yes
 
 By default, none of these options are enabled.

@@ -415,7 +415,7 @@ def distance(items, album_info, mapping):
         dist.add_string('media', likelies['media'], album_info.media)
 
     # Preferred media.
-    preferred_media = [re.compile(r'(\d+x)?%s' % pattern, re.I) for pattern
+    preferred_media = [re.compile(r'(\d+x)?(%s)' % pattern, re.I) for pattern
                        in config['match']['preferred']['media'].get()]
     if album_info.media and preferred_media:
         dist.add_priority('media', album_info.media, preferred_media)
