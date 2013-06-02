@@ -353,9 +353,8 @@ def track_distance(item, track_info, incl_artist=False):
 
     # Length.
     if track_info.length:
-        diff = abs(item.length - track_info.length)
-        diff = max(diff - weights['track_length_grace'].as_number(), 0.0)
-        diff = min(diff, weights['track_length_max'].as_number())
+        diff = abs(item.length - track_info.length) - \
+               weights['track_length_grace'].as_number()
         dist.add_ratio('track_length', diff,
                        weights['track_length_max'].as_number())
 
