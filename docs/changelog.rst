@@ -47,6 +47,8 @@ Changelog
   that go missing.
 * The :ref:`modify-cmd` command can now change albums' album art paths (i.e.,
   ``beet modify artpath=...`` works). Thanks to Lucas Duailibe.
+* :doc:`/plugins/zero`: Fix a crash when nulling out a field that contains
+  None.
 * Various UI enhancements to the importer due to Tai Lee:
 
   * More consistent format and colorization of album and track metadata.
