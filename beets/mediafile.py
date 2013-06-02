@@ -73,7 +73,8 @@ class FileTypeError(UnreadableFileError):
 # Human-readable type names.
 TYPES = {
     'mp3':  'MP3',
-    'mp4':  'AAC',
+    'aac':  'AAC',
+    'alac':  'ALAC',
     'ogg':  'OGG',
     'flac': 'FLAC',
     'ape':  'APE',
@@ -81,6 +82,8 @@ TYPES = {
     'mpc':  'Musepack',
     'asf':  'Windows Media',
 }
+
+MP4_TYPES = ('aac', 'alac')
 
 
 # Utility.
@@ -532,8 +535,10 @@ class MediaField(object):
             obj.mgfile[style.key] = out
 
     def _styles(self, obj):
-        if obj.type in ('mp3', 'mp4', 'asf'):
+        if obj.type in ('mp3', 'asf'):
             styles = self.styles[obj.type]
+        elif obj.type in MP4_TYPES:
+            styles = self.styles['mp4']
         else:
             styles = self.styles['etc']  # Sane styles.
 
@@ -568,7 +573,7 @@ class MediaField(object):
                     out = out[:-len(style.suffix)]
 
             # MPEG-4 freeform frames are (should be?) encoded as UTF-8.
-            if obj.type == 'mp4' and style.key.startswith('----:') and \
+            if obj.type in MP4_TYPES and style.key.startswith('----:') and \
                     isinstance(out, str):
                 out = out.decode('utf8')
 
@@ -636,7 +641,7 @@ class MediaField(object):
 
             # MPEG-4 "freeform" (----) frames must be encoded as UTF-8
             # byte strings.
-            if obj.type == 'mp4' and style.key.startswith('----:') and \
+            if obj.type in MP4_TYPES and style.key.startswith('----:') and \
                     isinstance(out, unicode):
                 out = out.encode('utf8')
 
@@ -723,7 +728,7 @@ class ImageField(object):
 
             return picframe.data
 
-        elif obj.type == 'mp4':
+        elif obj.type in MP4_TYPES:
             if 'covr' in obj.mgfile:
                 covers = obj.mgfile['covr']
                 if covers:
@@ -795,7 +800,7 @@ class ImageField(object):
             )
             obj.mgfile['APIC'] = picframe
 
-        elif obj.type == 'mp4':
+        elif obj.type in MP4_TYPES:
             if val is None:
                 if 'covr' in obj.mgfile:
                     del obj.mgfile['covr']
@@ -880,7 +885,13 @@ class MediaFile(object):
             raise FileTypeError('file type unsupported by Mutagen')
         elif type(self.mgfile).__name__ == 'M4A' or \
              type(self.mgfile).__name__ == 'MP4':
-            self.type = 'mp4'
+            # This hack differentiates aac and alac until we find a more
+            # deterministic approach.
+            if hasattr(self.mgfile.info, 'sample_rate') and \
+               self.mgfile.info.sample_rate > 0:
+                self.type = 'aac'
+            else:
+                self.type = 'alac'
         elif type(self.mgfile).__name__ == 'ID3' or \
              type(self.mgfile).__name__ == 'MP3':
             self.type = 'mp3'
