@@ -63,7 +63,7 @@ Changelog
   * Display album disambiguation and disc titles in the track listing, when
     available.
   * More consistent format and colorization of album and track metadata.
-  * Track changes highlighted in turquoise indicate a change in format to or
+  * Track changes highlighted in light gray indicate a change in format to or
     from :ref:`per_disc_numbering`. No penalty is applied because the track
     number is still "correct", just in a different format.
   * Sort missing and unmatched tracks by index and title and group them

@@ -293,7 +293,7 @@ def show_change(cur_artist, cur_album, match):
         cur_track, new_track = format_index(item), format_index(track_info)
         if cur_track != new_track:
             if item.track in (track_info.index, track_info.medium_index):
-                color = 'yellow'
+                color = 'lightgray'
             else:
                 color = 'red'
             if (cur_track + new_track).count('-') == 1:
