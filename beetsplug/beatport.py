@@ -32,13 +32,6 @@ class BeatportAPIError(Exception):
 
 
 class BeatportObject(object):
-    beatport_id = None
-    name = None
-    release_date = None
-    artists = []
-    genres = []
-    url = None
-
     def __init__(self, data):
         self.beatport_id = data['id']
         self.name = unicode(data['name'])
@@ -98,9 +91,6 @@ class BeatportSearch(object):
 
 class BeatportRelease(BeatportObject):
     API_ENDPOINT = 'catalog/3/beatport/release'
-    catalog_number = None
-    label_name = None
-    category = None
 
     def __unicode__(self):
         if len(self.artists) < 4:
@@ -135,10 +125,7 @@ class BeatportRelease(BeatportObject):
 
 
 class BeatportTrack(BeatportObject):
-    API_ENDPOINT = 'catalog/3/beatport/release'
-    title = None
-    mix_name = None
-    length = None
+    API_ENDPOINT = 'catalog/3/beatport/track'
 
     def __unicode__(self):
         artist_str = ", ".join(x[1] for x in self.artists)
