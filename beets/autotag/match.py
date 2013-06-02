@@ -420,12 +420,17 @@ def distance(items, album_info, mapping):
         if likelies['year'] in (album_info.year, album_info.original_year):
             dist.add('year', 0.0)
         else:
-            dist.add_number('year', likelies['year'], album_info.year)
+            diff = abs(likelies['year'] - album_info.year)
+            diff_max = abs(datetime.date.today().year -
+                           album_info.original_year)
+            dist.add_ratio('year', diff, diff_max)
 
     # Prefer earlier releases.
     if album_info.year and album_info.original_year and \
             config['match']['preferred']['original_year'].get():
-        dist.add_number('year', album_info.year, album_info.original_year)
+        diff = abs(album_info.year - album_info.original_year)
+        diff_max = abs(datetime.date.today().year - album_info.original_year)
+        dist.add_ratio('year', diff, diff_max)
 
     # Country.
     if likelies['country'] and album_info.country:
