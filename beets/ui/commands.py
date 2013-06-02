@@ -128,7 +128,7 @@ VARIOUS_ARTISTS = u'Various Artists'
 # Importer utilities and support.
 
 def disambig_string(info):
-    """Returns source, media, year, country, and album disambiguation.
+    """Returns source, media, year, country, label and album disambiguation.
     """
     disambig = []
     if info.data_source != 'MusicBrainz':
