@@ -336,9 +336,14 @@ class Distance(object):
     @property
     def sorted(self):
         """Returns a list of (dist, key) pairs, with `dist` being the weighted
-        distance, sorted from highest to lowest.
+        distance, sorted from highest to lowest. Does not include penalties
+        with a zero value.
         """
-        list_ = [(self[key], key) for key in self._penalties]
+        list_ = []
+        for key in self._penalties:
+            dist = self[key]
+            if dist:
+                list_.append((dist, key))
         return sorted(list_, key=lambda (dist, key): (0-dist, key))
 
     def update(self, dist):
@@ -542,14 +547,13 @@ def _recommendation(results):
     # Downgrade to the max rec if it is lower than the current rec for an
     # applied penalty.
     for dist, key in results[0].distance.sorted:
-        if dist:
-            max_rec = config['match']['max_rec'][key].as_choice({
-                'strong': recommendation.strong,
-                'medium': recommendation.medium,
-                'low': recommendation.low,
-                'none': recommendation.none,
-            })
-            rec = min(rec, max_rec)
+        max_rec = config['match']['max_rec'][key].as_choice({
+            'strong': recommendation.strong,
+            'medium': recommendation.medium,
+            'low': recommendation.low,
+            'none': recommendation.none,
+        })
+        rec = min(rec, max_rec)
 
     return rec
 

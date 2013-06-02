@@ -169,11 +169,10 @@ def penalty_string(distance, limit=None):
     """
     penalties = []
     for dist, key in distance.sorted:
-        if dist:
-            key = key.replace('album_', '')
-            key = key.replace('track_', '')
-            key = key.replace('_', ' ')
-            penalties.append(key)
+        key = key.replace('album_', '')
+        key = key.replace('track_', '')
+        key = key.replace('_', ' ')
+        penalties.append(key)
     if penalties:
         if limit and len(penalties) > limit:
             penalties = penalties[:limit] + ['...']
