@@ -72,6 +72,7 @@ Changelog
     together for better readability.
   * Don't show potential matches that have specific penalties applied, as
     configured by the :ref:`ignored` setting.
+  * Don't bypass candidate selection in timid mode. Always show all candidates.
 
 * Improve calculation of similarity score and recommendation:
 

@@ -466,7 +466,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
 
     # Is the change good enough?
     bypass_candidates = False
-    if rec != recommendation.none:
+    if rec != recommendation.none and not config['import']['timid']:
         match = candidates[0]
         bypass_candidates = True
 
