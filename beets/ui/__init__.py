@@ -37,6 +37,7 @@ from beets.util.functemplate import Template
 from beets import config
 from beets.util import confit
 from beets.autotag import mb
+from beets.autotag.match import string_dist
 
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
@@ -366,7 +367,7 @@ def colorize(color, text):
     else:
         return text
 
-def _colordiff(a, b, highlight='red'):
+def _colordiff(a, b, highlight='red', second_highlight='lightgray'):
     """Given two values, return the same pair of strings except with
     their differences highlighted in the specified color. Strings are
     highlighted intelligently to show differences; other values are
@@ -402,9 +403,14 @@ def _colordiff(a, b, highlight='red'):
             # Left only.
             a_out.append(colorize(highlight, a[a_start:a_end]))
         elif op == 'replace':
-            # Right and left differ.
-            a_out.append(colorize(highlight, a[a_start:a_end]))
-            b_out.append(colorize(highlight, b[b_start:b_end]))
+            # Right and left differ. Colorise with second highlight if
+            # there's no distance penalty.
+            if string_dist(a[a_start:a_end], b[b_start:b_end]):
+                color = highlight
+            else:
+                color = second_highlight
+            a_out.append(colorize(color, a[a_start:a_end]))
+            b_out.append(colorize(color, b[b_start:b_end]))
         else:
             assert(False)
 
