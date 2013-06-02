@@ -18,6 +18,8 @@ Changelog
   **numeric ranges**. For example, you can get a list of albums from the '90s
   by typing ``beet ls year:1990..1999`` or find high-bitrate music with
   ``bitrate:128000..``. See :ref:`numericquery`. Thanks to Michael Schuerig.
+* **ALAC files** are now marked as ALAC instead of being conflated with AAC
+  audio. Thanks to Simon Luijk.
 * :doc:`/plugins/random`: A new ``-e`` option gives an equal chance to each
   artist in your collection to avoid biasing random samples to prolific
   artists. Thanks to Georges Dubus.
