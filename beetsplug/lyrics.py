@@ -311,13 +311,11 @@ def scrape_lyrics_from_url(url):
 
     # Simplify the code by replacing some markers by the <p> marker
     try:
-        for tag in soup.findAll(['center', 'blockquote']):
-            pTag = Tag(soup, "p")
-            pTag.contents = tag.contents
-            tag.replaceWith(pTag)
+        for tag in soup.findAll(['center', 'blockquote','section']):
+            tag.name = 'p'          # keep tag contents
 
         for tag in soup.findAll(['script', 'a', 'font']):
-            tag.replaceWith('<p>')
+            tag.replaceWith('<p>')  # skip tag contents
 
     except Exception, e:
         log.debug('Error %s when replacing containing marker by p marker' % e,
