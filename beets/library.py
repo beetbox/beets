@@ -399,7 +399,7 @@ class Item(object):
         # Build the mapping for substitution in the template,
         # beginning with the values from the database.
         mapping = {}
-        for key in ITEM_KEYS_META:
+        for key in ITEM_KEYS:
             # Get the values from either the item or its album.
             if key in ALBUM_KEYS_ITEM and album is not None:
                 # From album.
@@ -411,8 +411,10 @@ class Item(object):
                 value = format_for_path(value, key, pathmod)
             mapping[key] = value
 
-        # Additional fields in non-sanitized case.
-        if not sanitize:
+        # Include the path if we're not sanitizing to construct a path.
+        if sanitize:
+            del mapping['path']
+        else:
             mapping['path'] = displayable_path(self.path)
 
         # Use the album artist if the track artist is not set and

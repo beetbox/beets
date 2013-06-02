@@ -51,6 +51,8 @@ Changelog
   ``beet modify artpath=...`` works). Thanks to Lucas Duailibe.
 * :doc:`/plugins/zero`: Fix a crash when nulling out a field that contains
   None.
+* Templates can now refer to non-tag item fields (e.g., ``$id`` and
+  ``$album_id``).
 * Various UI enhancements to the importer due to Tai Lee:
 
   * More consistent format and colorization of album and track metadata.
