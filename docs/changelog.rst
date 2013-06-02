@@ -68,6 +68,8 @@ Changelog
     number is still "correct", just in a different format.
   * Sort missing and unmatched tracks by index and title and group them
     together for better readability.
+  * Don't show potential matches that have specific penalties applied, as
+    configured by the :ref:`ignored` setting.
 
 * Improve calculation of similarity score and recommendation:
 

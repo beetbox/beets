@@ -458,6 +458,17 @@ Here's an example::
 
 By default, none of these options are enabled.
 
+.. _ignored:
+
+ignored
+~~~~~~~
+
+You can completely avoid matches that have certain penalties applied by adding
+the penalty name to the ``ignored`` setting::
+
+    match:
+        ignored: missing_tracks unmatched_tracks
+
 .. _path-format-config:
 
 Path Format Configuration

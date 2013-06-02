@@ -575,8 +575,15 @@ def _add_candidate(items, results, info):
 
     # Get the change distance.
     dist = distance(items, info, mapping)
-    log.debug('Success. Distance: %f' % dist)
 
+    # Skip matches with ignored penalties.
+    penalties = [key for _, key in dist.sorted]
+    for penalty in config['match']['ignored'].as_str_seq():
+        if penalty in penalties:
+            log.debug('Ignored. Penalty: %s' % penalty)
+            return
+
+    log.debug('Success. Distance: %f' % dist)
     results[info.album_id] = hooks.AlbumMatch(dist, info, mapping,
                                               extra_items, extra_tracks)
 
