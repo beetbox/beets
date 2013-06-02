@@ -409,7 +409,7 @@ def distance(items, album_info, mapping):
     if album_info.media and preferred_media:
         dist.add_priority('media', album_info.media, preferred_media)
 
-    # Number of discs.
+    # Mediums.
     if likelies['disctotal'] and album_info.mediums:
         dist.add_number('mediums', likelies['disctotal'], album_info.mediums)
 
@@ -430,7 +430,7 @@ def distance(items, album_info, mapping):
 
     # Prefer earlier releases.
     if album_info.year and album_info.original_year and \
-            config['match']['preferred']['original_year'].get():
+            config['match']['preferred']['original_year']:
         diff = abs(album_info.year - album_info.original_year)
         diff_max = abs(datetime.date.today().year - album_info.original_year)
         dist.add_ratio('year', diff, diff_max)
