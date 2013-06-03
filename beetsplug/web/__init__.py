@@ -20,6 +20,8 @@ import beets.library
 import flask
 from flask import g
 import os
+from werkzeug.serving import run_simple
+from werkzeug.wsgi import DispatcherMiddleware
 
 
 # Utilities.
@@ -139,6 +141,7 @@ class WebPlugin(BeetsPlugin):
         self.config.add({
             'host': u'',
             'port': 8337,
+            'base_path': u'',
         })
 
     def commands(self):
@@ -151,10 +154,20 @@ class WebPlugin(BeetsPlugin):
                 self.config['host'] = args.pop(0)
             if args:
                 self.config['port'] = int(args.pop(0))
+            if args:
+                self.config['base_path'] = args.pop(0)
 
             app.config['lib'] = lib
-            app.run(host=self.config['host'].get(unicode),
-                    port=self.config['port'].get(int),
-                    debug=opts.debug, threaded=True)
+            if self.config['base_path']:
+                print self.config['base_path']
+                application = DispatcherMiddleware(flask.Flask('dummy_app'), {
+                    self.config['base_path'].get(unicode): app,
+                })
+            else:
+                application = app
+            run_simple(hostname=self.config['host'].get(unicode),
+                       port=self.config['port'].get(int),
+                       application=application, use_debugger=opts.debug,
+                       threaded=True)
         cmd.func = func
         return [cmd]

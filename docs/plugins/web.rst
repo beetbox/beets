@@ -31,16 +31,17 @@ http://localhost:8337/. This is what it looks like:
 
 .. image:: beetsweb.png
 
-You can also specify the hostname and port number used by the Web server. These
-can be specified on the command line or in the ``[web]`` section of your
-:doc:`configuration file </reference/config>`.
+You can also specify the hostname, port number and base path used by the Web
+server. These can be specified on the command line or in the ``[web]`` section
+of your :doc:`configuration file </reference/config>`.
 
-On the command line, use ``beet web [HOSTNAME] [PORT]``. In the config file, use
-something like this::
+On the command line, use ``beet web [HOSTNAME] [PORT] [BASE_URL]``. In the
+config file, use something like this::
 
     web:
         host: 127.0.0.1
         port: 8888
+        base_url: /beets
 
 Usage
 -----
