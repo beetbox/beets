@@ -867,6 +867,7 @@ class MediaFile(object):
         unreadable_exc = (
             mutagen.mp3.HeaderNotFoundError,
             mutagen.flac.FLACNoHeaderError,
+            mutagen.flac.FLACVorbisError,
             mutagen.monkeysaudio.MonkeysAudioHeaderError,
             mutagen.mp4.MP4StreamInfoError,
             mutagen.oggvorbis.OggVorbisHeaderError,
