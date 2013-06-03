@@ -279,7 +279,7 @@ class Distance(object):
         """
         if not isinstance(options, (list, tuple)):
             options = [options]
-        unit = 1.0 / (len(options) + 1)
+        unit = 1.0 / (len(options) or 1)
         for i, opt in enumerate(options):
             if self._eq(opt, value):
                 dist = i * unit

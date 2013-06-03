@@ -151,15 +151,15 @@ class DistanceTest(unittest.TestCase):
         self.dist.add_priority('priority', 'abc', 'abc')
         self.assertEqual(self.dist._penalties['priority'], [0.0])
 
-        self.dist.add_priority('priority', 'def', ['abc', 'def', 'ghi'])
-        self.assertEqual(self.dist._penalties['priority'], [0.0, 0.25])
+        self.dist.add_priority('priority', 'def', ['abc', 'def'])
+        self.assertEqual(self.dist._penalties['priority'], [0.0, 0.5])
 
-        self.dist.add_priority('priority', 'ghi', ['abc', 'def',
-                                                   re.compile('GHI', re.I)])
-        self.assertEqual(self.dist._penalties['priority'], [0.0, 0.25, 0.5])
+        self.dist.add_priority('priority', 'gh', ['ab', 'cd', 'ef',
+                                                  re.compile('GH', re.I)])
+        self.assertEqual(self.dist._penalties['priority'], [0.0, 0.5, 0.75])
 
         self.dist.add_priority('priority', 'xyz', ['abc', 'def'])
-        self.assertEqual(self.dist._penalties['priority'], [0.0, 0.25, 0.5,
+        self.assertEqual(self.dist._penalties['priority'], [0.0, 0.5, 0.75,
                                                             1.0])
 
     def test_add_ratio(self):
