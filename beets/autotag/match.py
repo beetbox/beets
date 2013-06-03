@@ -546,7 +546,11 @@ def _recommendation(results):
 
     # Downgrade to the max rec if it is lower than the current rec for an
     # applied penalty.
-    for _, key in results[0].distance.sorted:
+    keys = set(key for _, key in min_dist.sorted)
+    if isinstance(results[0], hooks.AlbumMatch):
+        for track_dist in min_dist.tracks.values():
+            keys.update(key for _, key in track_dist.sorted)
+    for key in keys:
         max_rec = config['match']['max_rec'][key].as_choice({
             'strong': recommendation.strong,
             'medium': recommendation.medium,
