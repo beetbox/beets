@@ -151,7 +151,7 @@ class SafetyTest(unittest.TestCase):
         fn = os.path.join(_common.RSRC, 'brokenlink')
         os.symlink('does_not_exist', fn)
         try:
-            self.assertRaises(beets.mediafile.UnreadableFileError,
+            self.assertRaises(IOError,
                               beets.mediafile.MediaFile, fn)
         finally:
             os.unlink(fn)
