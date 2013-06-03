@@ -236,8 +236,9 @@ class MoveTest(_common.TestCase):
         # Alternate destination directory.
         self.otherdir = os.path.join(self.temp_dir, 'testotherdir')
 
-    def _move(self, query=(), dest=None, copy=False, album=False):
-        commands.move_items(self.lib, dest, query, copy, album)
+    def _move(self, query=(), dest=None, copy=False, album=False,
+              pretend=False):
+        commands.move_items(self.lib, dest, query, copy, album, pretend)
 
     def test_move_item(self):
         self._move()
