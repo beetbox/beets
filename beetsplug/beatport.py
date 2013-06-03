@@ -137,7 +137,7 @@ class BeatportTrack(BeatportObject):
         if 'title' in data:
             self.title = unicode(data['title'])
         if 'mixName' in data:
-            self.mix_name = data['mixName']
+            self.mix_name = unicode(data['mixName'])
         if 'length' in data:
             self.length = timedelta(milliseconds=data['lengthMs'])
         if 'slug' in data:
@@ -265,7 +265,7 @@ class BeatportPlugin(BeetsPlugin):
         """
         title = track.name
         if track.mix_name != "Original Mix":
-            title += " ({})".format(track.mix_name)
+            title += u" ({})".format(track.mix_name)
         artist, artist_id = self._get_artist(track.artists)
         length = track.length.total_seconds()
 
