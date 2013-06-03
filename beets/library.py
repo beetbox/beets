@@ -321,7 +321,7 @@ class Item(object):
         try:
             f = MediaFile(syspath(read_path))
         except (OSError, IOError) as exc:
-            raise util.FilesystemError(exc, 'read', (self.path,),
+            raise util.FilesystemError(exc, 'read', (read_path,),
                                        traceback.format_exc())
 
         for key in ITEM_KEYS_META:

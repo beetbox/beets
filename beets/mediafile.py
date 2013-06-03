@@ -61,7 +61,11 @@ class UnreadableFileError(Exception):
 
 class FileIOError(UnreadableFileError, IOError):
     def __init__(self, exc):
-        IOError.__init__(self, exc.errno, exc.strerror, exc.filename)
+        if exc.errno is not None:
+            # A valid underlying IOError.
+            IOError.__init__(self, exc.errno, exc.strerror, exc.filename)
+        else:
+            UnreadableFileError.__init__(self, unicode(exc))
 
 # Raised for files that don't seem to have a type MediaFile supports.
 class FileTypeError(UnreadableFileError):
