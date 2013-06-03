@@ -410,22 +410,29 @@ def distance(items, album_info, mapping):
     # Album.
     dist.add_string('album', likelies['album'], album_info.album)
 
-    # Media.
-    if likelies['media'] and album_info.media:
-        dist.add_string('media', likelies['media'], album_info.media)
-
     # Preferred media.
-    preferred_media = [re.compile(r'(\d+x)?(%s)' % pattern, re.I) for pattern
-                       in config['match']['preferred']['media'].get()]
-    if album_info.media and preferred_media:
-        dist.add_priority('media', album_info.media, preferred_media)
+    patterns = config['match']['preferred']['media'].as_str_seq()
+    options = [re.compile(r'(\d+x)?(%s)' % pat, re.I) for pat in patterns]
+    if album_info.media and options:
+        dist.add_priority('media', album_info.media, options)
+    # Media.
+    elif likelies['media'] and album_info.media:
+        dist.add_string('media', likelies['media'], album_info.media)
 
     # Mediums.
     if likelies['disctotal'] and album_info.mediums:
         dist.add_number('mediums', likelies['disctotal'], album_info.mediums)
 
+    # Prefer earliest release.
+    if album_info.year and config['match']['preferred']['original_year']:
+        # Assume 1889 (earliest first gramophone discs) if we don't know the
+        # original year.
+        original = album_info.original_year or 1889
+        diff = abs(album_info.year - original)
+        diff_max = abs(datetime.date.today().year - original)
+        dist.add_ratio('year', diff, diff_max)
     # Year.
-    if likelies['year'] and album_info.year:
+    elif likelies['year'] and album_info.year:
         if likelies['year'] in (album_info.year, album_info.original_year):
             # No penalty for matching release or original year.
             dist.add('year', 0.0)
@@ -439,22 +446,14 @@ def distance(items, album_info, mapping):
             # Full penalty when there is no original year.
             dist.add('year', 1.0)
 
-    # Prefer earlier releases.
-    if album_info.year and album_info.original_year and \
-            config['match']['preferred']['original_year']:
-        diff = abs(album_info.year - album_info.original_year)
-        diff_max = abs(datetime.date.today().year - album_info.original_year)
-        dist.add_ratio('year', diff, diff_max)
-
-    # Country.
-    if likelies['country'] and album_info.country:
-        dist.add_string('country', likelies['country'], album_info.country)
-
     # Preferred countries.
-    preferred_countries = [re.compile(pattern, re.I) for pattern
-                           in config['match']['preferred']['countries'].get()]
-    if album_info.country and preferred_countries:
-        dist.add_priority('country', album_info.country, preferred_countries)
+    patterns = config['match']['preferred']['countries'].as_str_seq()
+    options = [re.compile(pat, re.I) for pat in patterns]
+    if album_info.country and options:
+        dist.add_priority('country', album_info.country, options)
+    # Country.
+    elif likelies['country'] and album_info.country:
+        dist.add_string('country', likelies['country'], album_info.country)
 
     # Label.
     if likelies['label'] and album_info.label:
