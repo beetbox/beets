@@ -10,6 +10,8 @@ Changelog
   tracks**. Thanks once more to Pedro Silva.
 * New :doc:`/plugins/discogs`: Extends the autotagger to include matches from
   the `Discogs`_ database. Thanks to Artem Ponomarenko and Tai Lee.
+* New :doc:`/plugins/beatport`: Get matches from the `Beatport`_ database.
+  Thanks to Johannes Baiter.
 * Your library now keeps track of **when music was added** to it. The new
   ``added`` field is a timestamp reflecting when each item and album was
   imported and the new ``%time{}`` template function lets you format this
@@ -82,6 +84,8 @@ Changelog
     ``country`` and ``albumdisambig``.
 
 .. _Discogs: http://discogs.com/
+.. _Beatport: http://www.beatport.com/
+
 
 1.1.0 (April 29, 203)
 ---------------------
