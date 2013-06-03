@@ -246,7 +246,7 @@ class BeatportPlugin(BeetsPlugin):
         va = len(release.artists) > 3
         artist, artist_id = self._get_artist(release.artists)
         if va:
-            artist = "Various Artists"
+            artist = u"Various Artists"
         tracks = [self._get_track_info(x, index=idx)
                   for idx, x in enumerate(release.tracks, 1)]
 
@@ -257,14 +257,14 @@ class BeatportPlugin(BeetsPlugin):
                          month=release.release_date.month,
                          day=release.release_date.day,
                          label=release.label_name,
-                         catalognum=release.catalog_number, media='Digital',
-                         data_source='Beatport', data_url=release.url)
+                         catalognum=release.catalog_number, media=u'Digital',
+                         data_source=u'Beatport', data_url=release.url)
 
     def _get_track_info(self, track, index=None):
         """Returns a TrackInfo object for a Beatport Track object.
         """
         title = track.name
-        if track.mix_name != "Original Mix":
+        if track.mix_name != u"Original Mix":
             title += u" ({})".format(track.mix_name)
         artist, artist_id = self._get_artist(track.artists)
         length = track.length.total_seconds()
