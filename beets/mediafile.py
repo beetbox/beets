@@ -59,14 +59,6 @@ log = logging.getLogger('beets')
 class UnreadableFileError(Exception):
     pass
 
-class FileIOError(UnreadableFileError, IOError):
-    def __init__(self, exc):
-        if exc.errno is not None:
-            # A valid underlying IOError.
-            IOError.__init__(self, exc.errno, exc.strerror, exc.filename)
-        else:
-            UnreadableFileError.__init__(self, unicode(exc))
-
 # Raised for files that don't seem to have a type MediaFile supports.
 class FileTypeError(UnreadableFileError):
     pass
@@ -865,13 +857,15 @@ class MediaFile(object):
         self.path = path
 
         unreadable_exc = (
-            mutagen.mp3.HeaderNotFoundError,
-            mutagen.flac.FLACNoHeaderError,
-            mutagen.flac.FLACVorbisError,
+            mutagen.mp3.error,
+            mutagen.id3.error,
+            mutagen.flac.error,
             mutagen.monkeysaudio.MonkeysAudioHeaderError,
-            mutagen.mp4.MP4StreamInfoError,
-            mutagen.oggvorbis.OggVorbisHeaderError,
-            mutagen.asf.ASFHeaderError,
+            mutagen.mp4.error,
+            mutagen.oggvorbis.error,
+            mutagen.ogg.error,
+            mutagen.asf.error,
+            mutagen.apev2.error,
         )
         try:
             self.mgfile = mutagen.File(path)
@@ -879,7 +873,13 @@ class MediaFile(object):
             log.debug(u'header parsing failed: {0}'.format(unicode(exc)))
             raise UnreadableFileError('Mutagen could not read file')
         except IOError as exc:
-            raise FileIOError(exc)
+            if type(exc) == IOError:
+                # This is a base IOError, not a subclass from Mutagen or
+                # anywhere else.
+                raise
+            else:
+                log.debug(traceback.format_exc())
+                raise UnreadableFileError('Mutagen raised an exception')
         except Exception as exc:
             # Hide bugs in Mutagen.
             log.debug(traceback.format_exc())
