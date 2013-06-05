@@ -4,23 +4,31 @@ Changelog
 1.2.0 (in development)
 ----------------------
 
-Two new plugins that add new **data sources** to beets that augment
-MusicBrainz in the importer:
+There's a *lot* of new stuff in this release: new data sources for the
+autotagger, new plugins to look for problems in your library, tracking the
+date that you acquired new music, an awesome new syntax for doing queries over
+numeric fields, support for ALAC files, and major enhancements to the
+importer's UI and distance calculations. A special thanks goes out to all the
+contributors who helped make this release awesome.
 
-* New :doc:`/plugins/discogs`: Extends the autotagger to include matches from
-  the `Discogs`_ database. Thanks to Artem Ponomarenko and Tai Lee.
+For the first time, beets can now tag your music using additional **data
+sources** to augment the matches from MusicBrainz. When you enable either of
+these plugins, the importer will start showing you new kinds of matches:
+
+* New :doc:`/plugins/discogs`: Get matches from the `Discogs`_ database.
+  Thanks to Artem Ponomarenko and Tai Lee.
 * New :doc:`/plugins/beatport`: Get matches from the `Beatport`_ database.
   Thanks to Johannes Baiter.
 
-Two new plugins that can check your library for common problems, both by Pedro
-Silva:
+We also have two other new plugins that can scan your library to check for
+common problems, both by Pedro Silva:
 
 * New :doc:`/plugins/duplicates`: Find tracks or albums in your
   library that are **duplicated**.
 * New :doc:`/plugins/missing`: Find albums in your library that are **missing
   tracks**.
 
-A few more big features:
+There are also three more big features added to beets core:
 
 * Your library now keeps track of **when music was added** to it. The new
   ``added`` field is a timestamp reflecting when each item and album was
@@ -33,22 +41,26 @@ A few more big features:
 * **ALAC files** are now marked as ALAC instead of being conflated with AAC
   audio. Thanks to Simon Luijk.
 
-Various UI enhancements to the importer due to Tai Lee:
+In addition, the importer saw various UI enhancements, thanks to Tai Lee:
 
 * More consistent format and colorization of album and track metadata.
-* Display data source URL for :doc:`/plugins/discogs` matches. This should
-  make it easier for people who would rather import and correct data from
-  Discogs into MusicBrainz.
+* Display data source URL for matches from the new data source plugins. This
+  should make it easier to migrate data from Discogs or Beatport into
+  MusicBrainz.
 * Display album disambiguation and disc titles in the track listing, when
   available.
-* Track changes highlighted in yellow indicate a change in format to or from
-  :ref:`per_disc_numbering`. No penalty is applied because the track number
-  is still "correct", just in a different format.
+* Track changes are highlighted in yellow when they indicate a change in
+  format to or from the style of :ref:`per_disc_numbering`. (As before, no
+  penalty is applied because the track number is still "correct", just in a
+  different format.)
 * Sort missing and unmatched tracks by index and title and group them
   together for better readability.
 * Indicate MusicBrainz ID mismatches.
 
-Improve calculation of similarity score, also thanks to Tai Lee:
+The calculation of the similarity score for autotagger matches was also
+approved, again thanks to Tai Lee. These changes, in general, help deal with
+the new metadata sources and help disambiguate between similar releases in the
+same MusicBrainz release group:
 
 * Strongly prefer releases with a matching MusicBrainz album ID. This helps
   beets re-identify the same release when re-importing existing files.
@@ -61,7 +73,7 @@ Improve calculation of similarity score, also thanks to Tai Lee:
   nearly identical releases: ``disctotal``, ``label``, ``catalognum``,
   ``country`` and ``albumdisambig``.
 
-Lots of little enhancements:
+As usual, there were also lots of other great littler enhancements:
 
 * :doc:`/plugins/random`: A new ``-e`` option gives an equal chance to each
   artist in your collection to avoid biasing random samples to prolific
