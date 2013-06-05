@@ -4,14 +4,24 @@ Changelog
 1.1.1 (in development)
 ----------------------
 
-* New :doc:`/plugins/duplicates`: Find tracks or albums in your
-  library that are **duplicated**. Thanks to Pedro Silva.
-* New :doc:`/plugins/missing`: Find albums in your library that are **missing
-  tracks**. Thanks once more to Pedro Silva.
+Two new plugins that add new **data sources** to beets that augment
+MusicBrainz in the importer:
+
 * New :doc:`/plugins/discogs`: Extends the autotagger to include matches from
   the `Discogs`_ database. Thanks to Artem Ponomarenko and Tai Lee.
 * New :doc:`/plugins/beatport`: Get matches from the `Beatport`_ database.
   Thanks to Johannes Baiter.
+
+Two new plugins that can check your library for common problems, both by Pedro
+Silva:
+
+* New :doc:`/plugins/duplicates`: Find tracks or albums in your
+  library that are **duplicated**.
+* New :doc:`/plugins/missing`: Find albums in your library that are **missing
+  tracks**.
+
+A few more big features:
+
 * Your library now keeps track of **when music was added** to it. The new
   ``added`` field is a timestamp reflecting when each item and album was
   imported and the new ``%time{}`` template function lets you format this
@@ -22,6 +32,37 @@ Changelog
   ``bitrate:128000..``. See :ref:`numericquery`. Thanks to Michael Schuerig.
 * **ALAC files** are now marked as ALAC instead of being conflated with AAC
   audio. Thanks to Simon Luijk.
+
+Various UI enhancements to the importer due to Tai Lee:
+
+* More consistent format and colorization of album and track metadata.
+* Display data source URL for :doc:`/plugins/discogs` matches. This should
+  make it easier for people who would rather import and correct data from
+  Discogs into MusicBrainz.
+* Display album disambiguation and disc titles in the track listing, when
+  available.
+* Track changes highlighted in yellow indicate a change in format to or from
+  :ref:`per_disc_numbering`. No penalty is applied because the track number
+  is still "correct", just in a different format.
+* Sort missing and unmatched tracks by index and title and group them
+  together for better readability.
+* Indicate MusicBrainz ID mismatches.
+
+Improve calculation of similarity score, also thanks to Tai Lee:
+
+* Strongly prefer releases with a matching MusicBrainz album ID. This helps
+  beets re-identify the same release when re-importing existing files.
+* Prefer releases that are closest to the tagged ``year``. Tolerate files
+  tagged with release or original year.
+* Prefer CD releases by default, when there is no ``media`` tagged in the
+  files being imported. This can be changed with the :ref:`preferred_media`
+  setting.
+* Apply minor penalties across a range of fields to differentiate between
+  nearly identical releases: ``disctotal``, ``label``, ``catalognum``,
+  ``country`` and ``albumdisambig``.
+
+Lots of little enhancements:
+
 * :doc:`/plugins/random`: A new ``-e`` option gives an equal chance to each
   artist in your collection to avoid biasing random samples to prolific
   artists. Thanks to Georges Dubus.
@@ -33,8 +74,6 @@ Changelog
   Duailibe.
 * The importer output now shows the number of audio files in each album.
   Thanks to jayme on GitHub.
-* :doc:`/plugins/lyrics`: Lyrics searches should now turn up more results due
-  to some fixes in dealing with special characters.
 * Plugins can now provide fields for both Album and Item templates, thanks
   to Pedro Silva. Accordingly, the :doc:`/plugins/inline` can also now define
   album fields. For consistency, the ``pathfields`` configuration section has
@@ -46,6 +85,9 @@ Changelog
   Johannes Baiter.
 * The :ref:`fields-cmd` command shows template fields provided by plugins.
   Thanks again to Pedro Silva.
+
+And a batch of fixes:
+
 * Album art filenames now respect the :ref:`replace` configuration.
 * Friendly error messages are now printed when trying to read or write files
   that go missing.
@@ -55,33 +97,8 @@ Changelog
   None.
 * Templates can now refer to non-tag item fields (e.g., ``$id`` and
   ``$album_id``).
-* Various UI enhancements to the importer due to Tai Lee:
-
-  * More consistent format and colorization of album and track metadata.
-  * Display data source URL for :doc:`/plugins/discogs` matches. This should
-    make it easier for people who would rather import and correct data from
-    Discogs into MusicBrainz.
-  * Display album disambiguation and disc titles in the track listing, when
-    available.
-  * Track changes highlighted in yellow indicate a change in format to or from
-    :ref:`per_disc_numbering`. No penalty is applied because the track number
-    is still "correct", just in a different format.
-  * Sort missing and unmatched tracks by index and title and group them
-    together for better readability.
-  * Indicate MusicBrainz ID mismatches.
-
-* Improve calculation of similarity score:
-
-  * Strongly prefer releases with a matching MusicBrainz album ID. This helps
-    beets re-identify the same release when re-importing existing files.
-  * Prefer releases that are closest to the tagged ``year``. Tolerate files
-    tagged with release or original year.
-  * Prefer CD releases by default, when there is no ``media`` tagged in the
-    files being imported. This can be changed with the :ref:`preferred_media`
-    setting.
-  * Apply minor penalties across a range of fields to differentiate between
-    nearly identical releases: ``disctotal``, ``label``, ``catalognum``,
-    ``country`` and ``albumdisambig``.
+* :doc:`/plugins/lyrics`: Lyrics searches should now turn up more results due
+  to some fixes in dealing with special characters.
 
 .. _Discogs: http://discogs.com/
 .. _Beatport: http://www.beatport.com/

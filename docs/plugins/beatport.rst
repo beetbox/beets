@@ -1,5 +1,5 @@
 Beatport Plugin
-==============
+===============
 
 The ``beatport`` plugin adds support for querying the `Beatport`_ catalogue
 during the autotagging process. This can potentially be helpful for users
