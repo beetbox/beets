@@ -210,6 +210,12 @@ class Distance(object):
     def __init__(self):
         self._penalties = {}
 
+    def __iter__(self):
+        return iter(self.sorted)
+
+    def __len__(self):
+        return len(self.sorted)
+
     def __sub__(self, other):
         return self.distance - other
 
@@ -344,6 +350,9 @@ class Distance(object):
             dist = self[key]
             if dist:
                 list_.append((dist, key))
+        # Convert distance into a negative float we can sort items in ascending
+        # order (for keys, when the penalty is equal) and still get the items
+        # with the biggest distance first.
         return sorted(list_, key=lambda (dist, key): (0-dist, key))
 
     def update(self, dist):
@@ -545,10 +554,10 @@ def _recommendation(results):
 
     # Downgrade to the max rec if it is lower than the current rec for an
     # applied penalty.
-    keys = set(key for _, key in min_dist.sorted)
+    keys = set(key for _, key in min_dist)
     if isinstance(results[0], hooks.AlbumMatch):
         for track_dist in min_dist.tracks.values():
-            keys.update(key for _, key in track_dist.sorted)
+            keys.update(key for _, key in track_dist)
     for key in keys:
         max_rec = config['match']['max_rec'][key].as_choice({
             'strong': recommendation.strong,
@@ -580,7 +589,7 @@ def _add_candidate(items, results, info):
     dist = distance(items, info, mapping)
 
     # Skip matches with ignored penalties.
-    penalties = [key for _, key in dist.sorted]
+    penalties = [key for _, key in dist]
     for penalty in config['match']['ignored'].as_str_seq():
         if penalty in penalties:
             log.debug('Ignored. Penalty: %s' % penalty)
