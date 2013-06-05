@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.1.1 (in development)
+1.2.0 (in development)
 ----------------------
 
 Two new plugins that add new **data sources** to beets that augment
