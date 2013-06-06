@@ -275,14 +275,10 @@ def distance(items, album_info, mapping):
 
     # Actual or preferred media.
     if album_info.media:
-        preferred_media = config['match']['preferred_media'].get()
-        if likelies['media']:
-            dist += string_dist(likelies['media'], album_info.media) * \
-                    weights['media'].as_number()
-            dist_max += weights['media'].as_number()
-        elif preferred_media:
-            dist += string_dist(album_info.media, preferred_media) * \
-                    weights['media'].as_number()
+        compare_media = likelies['media'] or \
+                        config['match']['preferred_media'].get()
+        if compare_media and compare_media != album_info.media:
+            dist += weights['media'].as_number()
             dist_max += weights['media'].as_number()
 
     # MusicBrainz album ID.
