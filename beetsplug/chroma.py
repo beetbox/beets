@@ -21,6 +21,7 @@ from beets import util
 from beets import config
 from beets.util import confit
 from beets.autotag import hooks
+from beets.autotag.match import Distance
 import acoustid
 import logging
 from collections import defaultdict
@@ -113,16 +114,14 @@ def _all_releases(items):
 
 class AcoustidPlugin(plugins.BeetsPlugin):
     def track_distance(self, item, info):
+        dist = Distance()
         if item.path not in _matches or not info.track_id:
             # Match failed or no track ID.
-            return 0.0, 0.0
+            return dist
 
         recording_ids, _ = _matches[item.path]
-        if info.track_id in recording_ids:
-            dist = 0.0
-        else:
-            dist = TRACK_ID_WEIGHT
-        return dist, TRACK_ID_WEIGHT
+        dist.add_expr('track_id', info.track_id not in recording_ids)
+        return dist
 
     def candidates(self, items, artist, album, va_likely):
         albums = []

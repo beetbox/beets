@@ -366,7 +366,7 @@ def colorize(color, text):
     else:
         return text
 
-def _colordiff(a, b, highlight='red'):
+def _colordiff(a, b, highlight='red', second_highlight='lightgray'):
     """Given two values, return the same pair of strings except with
     their differences highlighted in the specified color. Strings are
     highlighted intelligently to show differences; other values are
@@ -402,9 +402,14 @@ def _colordiff(a, b, highlight='red'):
             # Left only.
             a_out.append(colorize(highlight, a[a_start:a_end]))
         elif op == 'replace':
-            # Right and left differ.
-            a_out.append(colorize(highlight, a[a_start:a_end]))
-            b_out.append(colorize(highlight, b[b_start:b_end]))
+            # Right and left differ. Colorise with second highlight if
+            # it's just a case change.
+            if a[a_start:a_end].lower() != b[b_start:b_end].lower():
+                color = highlight
+            else:
+                color = second_highlight
+            a_out.append(colorize(color, a[a_start:a_end]))
+            b_out.append(colorize(color, b[b_start:b_end]))
         else:
             assert(False)
 

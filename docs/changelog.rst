@@ -49,22 +49,29 @@ There are also three more big features added to beets core:
 
 In addition, the importer saw various UI enhancements, thanks to Tai Lee:
 
-* More consistent format and colorization of album and track metadata.
 * Display data source URL for matches from the new data source plugins. This
   should make it easier to migrate data from Discogs or Beatport into
   MusicBrainz.
+* The top 3 distance penalties are now displayed on the release listing,
+  and all album and track penalties are now displayed on the track changes
+  list. This should make it clear exactly which metadata is contributing to a
+  low similarity score.
 * Display album disambiguation and disc titles in the track listing, when
   available.
+* More consistent format and colorization of album and track metadata. Red
+  for an actual difference, yellow to indicate that a distance penalty is being
+  applied, and light gray for no-penalty or disambiguation data.
 * Track changes are highlighted in yellow when they indicate a change in
   format to or from the style of :ref:`per_disc_numbering`. (As before, no
   penalty is applied because the track number is still "correct", just in a
   different format.)
 * Sort missing and unmatched tracks by index and title and group them
   together for better readability.
-* Indicate MusicBrainz ID mismatches.
+* Don't show potential matches that have specific penalties applied, as
+  configured by the :ref:`ignored` setting.
 
 The calculation of the similarity score for autotagger matches was also
-approved, again thanks to Tai Lee. These changes, in general, help deal with
+improved, again thanks to Tai Lee. These changes, in general, help deal with
 the new metadata sources and help disambiguate between similar releases in the
 same MusicBrainz release group:
 
@@ -72,8 +79,12 @@ same MusicBrainz release group:
   beets re-identify the same release when re-importing existing files.
 * Prefer releases that are closest to the tagged ``year``. Tolerate files
   tagged with release or original year.
-* The new :ref:`preferred_media` config option lets you prefer a certain media
-  type when the ``media`` field is unset on an album.
+* Add a :ref:`preferred` collection of settings, which allow the user to
+  specify a sorted list of preferred countries and media types, or prefer
+  releases closest to the original year for an album.
+* It is now possible to configure a :ref:`max_rec` for any field that is used
+  to calculate the similarity score. The recommendation will be downgraded if
+  a penalty is being applied to the specified field.
 * Apply minor penalties across a range of fields to differentiate between
   nearly identical releases: ``disctotal``, ``label``, ``catalognum``,
   ``country`` and ``albumdisambig``.

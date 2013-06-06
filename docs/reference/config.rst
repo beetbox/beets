@@ -394,43 +394,80 @@ max_rec
 
 As mentioned above, autotagger matches have *recommendations* that control how
 the UI behaves for a certain quality of match. The recommendation for a certain
-match is usually based on the distance calculation. But you can also control
-the recommendation for certain specific situations by defining *maximum*
-recommendations when:
+match is based on the overall distance calculation. But you can also control
+the recommendation when a distance penalty is being applied for a specific
+field by defining *maximum* recommendations for each field:
 
-* a match came from a source other than MusicBrainz (e.g., the
-  :doc:`Discogs </plugins/discogs>` plugin);
-* a match has missing or extra tracks;
-* the length (duration) of at least one track differs; or
-* at least one track number differs.
-
-To define maxima, use keys under ``max_rec:`` in the ``match`` section::
+To define maxima, use keys under ``max_rec:`` in the ``match`` section. Here
+are the defaults::
 
     match:
         max_rec:
-            non_mb_source: strong
-            partial: medium
-            tracklength: strong
-            tracknumber: strong
+            source: strong
+            artist: strong
+            album: strong
+            media: strong
+            mediums: strong
+            year: strong
+            country: strong
+            label: strong
+            catalognum: strong
+            albumdisambig: strong
+            album_id: strong
+            tracks: strong
+            missing_tracks: medium
+            unmatched_tracks: medium
+            track_title: strong
+            track_artist: strong
+            track_index: strong
+            track_length_grace: strong
+            track_length_max: strong
+            track_length: strong
+            track_id: strong
 
-If a recommendation is higher than the configured maximum and the condition is
-met, the recommendation will be downgraded. The maximum for each condition can
-be one of ``none``, ``low``, ``medium`` or ``strong``. When the maximum
-recommendation is ``strong``, no "downgrading" occurs for that situation.
+If a recommendation is higher than the configured maximum and a penalty is
+being applied, the recommendation will be downgraded. The maximum for each
+field can be one of ``none``, ``low``, ``medium`` or ``strong``. When the
+maximum recommendation is ``strong``, no "downgrading" occurs.
 
-The above example shows the default ``max_rec`` settings.
+.. _preferred:
 
-.. _preferred_media:
+preferred
+~~~~~~~~~
 
-preferred_media
-~~~~~~~~~~~~~~~
+In addition to comparing the tagged metadata with the match metadata for
+similarity, you can also specify an ordered list of preferred countries and
+media types.
 
-When an album has its ``media`` field set, it is compared against matches to
-prefer releases of the same media type. But this option lets you control what
-happens when an album *doesn't* have ``media`` set (which is the case for most
-albums that haven't already been run through a MusicBrainz tagger). Set this
-option to ``CD``, for example, to prefer CD releases. Defaults to ``null``,
-indicating no preference.
+A distance penalty will be applied if the country or media type from the match
+metadata doesn't match. The order is important, the first item will be most
+preferred. Each item may be a regular expression, and will be matched case
+insensitively. The number of media will be stripped when matching preferred
+media (e.g. "2x" in "2xCD").
+
+You can also tell the autotagger to prefer matches that have a release year
+closest to the original year for an album.
+
+Here's an example::
+
+    match:
+        preferred:
+            countries: ['US', 'GB|UK']
+            media: ['CD', 'Digital Media|File']
+            original_year: yes
+
+By default, none of these options are enabled.
+
+.. _ignored:
+
+ignored
+~~~~~~~
+
+You can completely avoid matches that have certain penalties applied by adding
+the penalty name to the ``ignored`` setting::
+
+    match:
+        ignored: missing_tracks unmatched_tracks
 
 .. _path-format-config:
 
