@@ -97,6 +97,8 @@ As usual, there were also lots of other great littler enhancements:
   Johannes Baiter.
 * The :ref:`fields-cmd` command shows template fields provided by plugins.
   Thanks again to Pedro Silva.
+* :doc:`/plugins/mpdupdate`: You can now communicate with MPD over a Unix
+  domain socket. Thanks to John Hawthorn.
 
 And a batch of fixes:
 
