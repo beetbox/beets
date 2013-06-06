@@ -4,7 +4,29 @@ Changelog
 1.2.1 (in development)
 ----------------------
 
-Coming soon.
+This release introduces a major internal change in the way that similarity
+scores are handled. The changes you'll notice while using the autotagger
+are:
+
+* The top 3 distance penalties are now displayed on the release listing,
+  and all album and track penalties are now displayed on the track changes
+  list. This should make it clear exactly which metadata is contributing to a
+  low similarity score.
+* Even more consistent format and colorization of album and track metadata. Red
+  for an actual difference, yellow to indicate that a distance penalty is being
+  applied, and light gray for no-penalty or disambiguation data.
+
+There are also three new configuration options that let you customize the way
+that matches are selected:
+
+* Don't show potential matches that have specific penalties applied, as
+  configured by the :ref:`ignored` setting.
+* Add a :ref:`preferred` collection of settings, which allow the user to
+  specify a sorted list of preferred countries and media types, or prefer
+  releases closest to the original year for an album.
+* It is now possible to configure a :ref:`max_rec` for any field that is used
+  to calculate the similarity score. The recommendation will be downgraded if
+  a penalty is being applied to the specified field.
 
 
 1.2.0 (June 5, 2013)
@@ -49,26 +71,19 @@ There are also three more big features added to beets core:
 
 In addition, the importer saw various UI enhancements, thanks to Tai Lee:
 
+* More consistent format and colorization of album and track metadata.
 * Display data source URL for matches from the new data source plugins. This
   should make it easier to migrate data from Discogs or Beatport into
   MusicBrainz.
-* The top 3 distance penalties are now displayed on the release listing,
-  and all album and track penalties are now displayed on the track changes
-  list. This should make it clear exactly which metadata is contributing to a
-  low similarity score.
 * Display album disambiguation and disc titles in the track listing, when
   available.
-* More consistent format and colorization of album and track metadata. Red
-  for an actual difference, yellow to indicate that a distance penalty is being
-  applied, and light gray for no-penalty or disambiguation data.
 * Track changes are highlighted in yellow when they indicate a change in
   format to or from the style of :ref:`per_disc_numbering`. (As before, no
   penalty is applied because the track number is still "correct", just in a
   different format.)
 * Sort missing and unmatched tracks by index and title and group them
   together for better readability.
-* Don't show potential matches that have specific penalties applied, as
-  configured by the :ref:`ignored` setting.
+* Indicate MusicBrainz ID mismatches.
 
 The calculation of the similarity score for autotagger matches was also
 improved, again thanks to Tai Lee. These changes, in general, help deal with
@@ -79,12 +94,8 @@ same MusicBrainz release group:
   beets re-identify the same release when re-importing existing files.
 * Prefer releases that are closest to the tagged ``year``. Tolerate files
   tagged with release or original year.
-* Add a :ref:`preferred` collection of settings, which allow the user to
-  specify a sorted list of preferred countries and media types, or prefer
-  releases closest to the original year for an album.
-* It is now possible to configure a :ref:`max_rec` for any field that is used
-  to calculate the similarity score. The recommendation will be downgraded if
-  a penalty is being applied to the specified field.
+* The new :ref:`preferred_media` config option lets you prefer a certain media
+  type when the ``media`` field is unset on an album.
 * Apply minor penalties across a range of fields to differentiate between
   nearly identical releases: ``disctotal``, ``label``, ``catalognum``,
   ``country`` and ``albumdisambig``.
