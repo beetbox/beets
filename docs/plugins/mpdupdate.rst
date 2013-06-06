@@ -17,3 +17,8 @@ MPD server. You can do that using an ``mpdupdate:`` section in your
         password: seekrit
 
 With that all in place, you'll see beets send the "update" command to your MPD server every time you change your beets library.
+
+If you want to communicate with MPD over a Unix domain socket instead over
+TCP, just give the path to the socket in the filesystem for the ``host``
+setting. (Any ``host`` value starting with a slash is interpreted as a domain
+socket.)
