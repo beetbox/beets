@@ -277,7 +277,7 @@ def distance(items, album_info, mapping):
     if album_info.media:
         compare_media = likelies['media'] or \
                         config['match']['preferred_media'].get()
-        if compare_media and compare_media != album_info.media:
+        if compare_media and compare_media.lower() != album_info.media.lower():
             dist += weights['media'].as_number()
             dist_max += weights['media'].as_number()
 
