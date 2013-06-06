@@ -66,13 +66,18 @@ disabled by default, but you can turn them on as described above.
    missing
    duplicates
    discogs
+   beatport
 
 Autotagger Extensions
 ''''''''''''''''''''''
 
 * :doc:`chroma`: Use acoustic fingerprinting to identify audio files with
   missing or incorrect metadata.
-* :doc:`discogs`: Search for releases in the discogs database.
+* :doc:`discogs`: Search for releases in the `Discogs`_ database.
+* :doc:`beatport`: Search for tracks and releases in the `Beatport`_ database.
+
+.. _Beatport: http://www.beatport.com/
+.. _Discogs: http://www.discogs.com/
 
 Metadata
 ''''''''

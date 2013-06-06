@@ -1,15 +1,35 @@
 Changelog
 =========
 
-1.1.1 (in development)
+1.2.0 (in development)
 ----------------------
 
+There's a *lot* of new stuff in this release: new data sources for the
+autotagger, new plugins to look for problems in your library, tracking the
+date that you acquired new music, an awesome new syntax for doing queries over
+numeric fields, support for ALAC files, and major enhancements to the
+importer's UI and distance calculations. A special thanks goes out to all the
+contributors who helped make this release awesome.
+
+For the first time, beets can now tag your music using additional **data
+sources** to augment the matches from MusicBrainz. When you enable either of
+these plugins, the importer will start showing you new kinds of matches:
+
+* New :doc:`/plugins/discogs`: Get matches from the `Discogs`_ database.
+  Thanks to Artem Ponomarenko and Tai Lee.
+* New :doc:`/plugins/beatport`: Get matches from the `Beatport`_ database.
+  Thanks to Johannes Baiter.
+
+We also have two other new plugins that can scan your library to check for
+common problems, both by Pedro Silva:
+
 * New :doc:`/plugins/duplicates`: Find tracks or albums in your
-  library that are **duplicated**. Thanks to Pedro Silva.
+  library that are **duplicated**.
 * New :doc:`/plugins/missing`: Find albums in your library that are **missing
-  tracks**. Thanks once more to Pedro Silva.
-* New :doc:`/plugins/discogs`: Extends the autotagger to include matches from
-  the `Discogs`_ database. Thanks to Artem Ponomarenko and Tai Lee.
+  tracks**.
+
+There are also three more big features added to beets core:
+
 * Your library now keeps track of **when music was added** to it. The new
   ``added`` field is a timestamp reflecting when each item and album was
   imported and the new ``%time{}`` template function lets you format this
@@ -20,6 +40,51 @@ Changelog
   ``bitrate:128000..``. See :ref:`numericquery`. Thanks to Michael Schuerig.
 * **ALAC files** are now marked as ALAC instead of being conflated with AAC
   audio. Thanks to Simon Luijk.
+
+In addition, the importer saw various UI enhancements, thanks to Tai Lee:
+
+* Display data source URL for matches from the new data source plugins. This
+  should make it easier to migrate data from Discogs or Beatport into
+  MusicBrainz.
+* The top 3 distance penalties are now displayed on the release listing,
+  and all album and track penalties are now displayed on the track changes
+  list. This should make it clear exactly which metadata is contributing to a
+  low similarity score.
+* Display album disambiguation and disc titles in the track listing, when
+  available.
+* More consistent format and colorization of album and track metadata. Red
+  for an actual difference, yellow to indicate that a distance penalty is being
+  applied, and light gray for no-penalty or disambiguation data.
+* Track changes are highlighted in yellow when they indicate a change in
+  format to or from the style of :ref:`per_disc_numbering`. (As before, no
+  penalty is applied because the track number is still "correct", just in a
+  different format.)
+* Sort missing and unmatched tracks by index and title and group them
+  together for better readability.
+* Don't show potential matches that have specific penalties applied, as
+  configured by the :ref:`ignored` setting.
+
+The calculation of the similarity score for autotagger matches was also
+improved, again thanks to Tai Lee. These changes, in general, help deal with
+the new metadata sources and help disambiguate between similar releases in the
+same MusicBrainz release group:
+
+* Strongly prefer releases with a matching MusicBrainz album ID. This helps
+  beets re-identify the same release when re-importing existing files.
+* Prefer releases that are closest to the tagged ``year``. Tolerate files
+  tagged with release or original year.
+* Add a :ref:`preferred` collection of settings, which allow the user to
+  specify a sorted list of preferred countries and media types, or prefer
+  releases closest to the original year for an album.
+* It is now possible to configure a :ref:`max_rec` for any field that is used
+  to calculate the similarity score. The recommendation will be downgraded if
+  a penalty is being applied to the specified field.
+* Apply minor penalties across a range of fields to differentiate between
+  nearly identical releases: ``disctotal``, ``label``, ``catalognum``,
+  ``country`` and ``albumdisambig``.
+
+As usual, there were also lots of other great littler enhancements:
+
 * :doc:`/plugins/random`: A new ``-e`` option gives an equal chance to each
   artist in your collection to avoid biasing random samples to prolific
   artists. Thanks to Georges Dubus.
@@ -31,8 +96,6 @@ Changelog
   Duailibe.
 * The importer output now shows the number of audio files in each album.
   Thanks to jayme on GitHub.
-* :doc:`/plugins/lyrics`: Lyrics searches should now turn up more results due
-  to some fixes in dealing with special characters.
 * Plugins can now provide fields for both Album and Item templates, thanks
   to Pedro Silva. Accordingly, the :doc:`/plugins/inline` can also now define
   album fields. For consistency, the ``pathfields`` configuration section has
@@ -44,6 +107,9 @@ Changelog
   Johannes Baiter.
 * The :ref:`fields-cmd` command shows template fields provided by plugins.
   Thanks again to Pedro Silva.
+
+And a batch of fixes:
+
 * Album art filenames now respect the :ref:`replace` configuration.
 * Friendly error messages are now printed when trying to read or write files
   that go missing.
@@ -51,45 +117,14 @@ Changelog
   ``beet modify artpath=...`` works). Thanks to Lucas Duailibe.
 * :doc:`/plugins/zero`: Fix a crash when nulling out a field that contains
   None.
-* Various UI enhancements to the importer due to Tai Lee:
-
-  * Display data source URL and source name in album disambiguation for
-    non-MusicBrainz matches. This should make it easier for people who want to
-    import and correct data from other sources into MusicBrainz.
-  * The top 3 distance penalties are now displayed on the release listing,
-    and all album and track penalties are now displayed on the track changes
-    list. This should make it clear exactly which metadata is contributing to a
-    low similarity score.
-  * Display album disambiguation and disc titles in the track listing, when
-    available.
-  * More consistent format and colorization of album and track metadata. Red
-    for actual differences, yellow to indicate that a penalty is being applied,
-    and light gray for no-penalty supplementary data.
-  * Track changes highlighted in light gray indicate a change in format to or
-    from :ref:`per_disc_numbering`. No penalty is applied because the track
-    number is still "correct", just in a different format.
-  * Sort missing and unmatched tracks by index and title and group them
-    together for better readability.
-  * Don't show potential matches that have specific penalties applied, as
-    configured by the :ref:`ignored` setting.
-
-* Improve calculation of similarity score and recommendation:
-
-  * It is now possible to configure a :ref:`max_rec` for any field that is used
-    to calculate the similarity score. The recommendation will be downgraded if
-    a penalty is being applied to the specified field.
-  * Strongly prefer releases with a matching MusicBrainz album ID. This helps
-    beets re-identify the same release when re-importing existing files.
-  * Prefer releases that are closest to the tagged ``year``. Tolerate files
-    tagged with release or original year.
-  * Add a :ref:`preferred` collection of settings, which allow the user to
-    specify a sorted list of preferred countries and media types, or prefer
-    releases closest to the original year for an album.
-  * Apply minor distance penalties across a range of fields to differentiate
-    between nearly identical releases: ``mediums``, ``label``, ``catalognum``,
-    ``country`` and ``albumdisambig``.
+* Templates can now refer to non-tag item fields (e.g., ``$id`` and
+  ``$album_id``).
+* :doc:`/plugins/lyrics`: Lyrics searches should now turn up more results due
+  to some fixes in dealing with special characters.
 
 .. _Discogs: http://discogs.com/
+.. _Beatport: http://www.beatport.com/
+
 
 1.1.0 (April 29, 203)
 ---------------------
