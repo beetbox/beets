@@ -68,22 +68,42 @@ match:
     medium_rec_thresh: 0.25
     rec_gap_thresh: 0.25
     max_rec:
-        non_mb_source: strong
-        partial: medium
-        tracklength: strong
-        tracknumber: strong
-    preferred_media: null
-    weight:
+        source: strong
+        artist: strong
+        album: strong
+        media: strong
+        mediums: strong
+        year: strong
+        country: strong
+        label: strong
+        catalognum: strong
+        albumdisambig: strong
+        album_id: strong
+        tracks: strong
+        missing_tracks: medium
+        unmatched_tracks: medium
+        track_title: strong
+        track_artist: strong
+        track_index: strong
+        track_length_grace: strong
+        track_length_max: strong
+        track_length: strong
+        track_id: strong
+    distance_weights:
         source: 2.0
         artist: 3.0
         album: 3.0
-        year: 1.0
         media: 1.0
+        mediums: 1.0
+        year: 1.0
+        country: 0.5
+        label: 0.5
+        catalognum: 0.5
+        albumdisambig: 0.5
         album_id: 5.0
-        minor: 0.5
-        track: 1.0
-        missing: 0.9
-        unmatched: 0.6
+        tracks: 2.0
+        missing_tracks: 0.9
+        unmatched_tracks: 0.6
         track_title: 3.0
         track_artist: 2.0
         track_index: 1.0
@@ -91,3 +111,8 @@ match:
         track_length_max: 30
         track_length: 2.0
         track_id: 5.0
+    preferred:
+        countries: []
+        media: []
+        original_year: no
+    ignored: []

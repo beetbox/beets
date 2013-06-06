@@ -64,16 +64,16 @@ class BeetsPlugin(object):
         return {}
 
     def track_distance(self, item, info):
-        """Should return a (distance, distance_max) pair to be added
-        to the distance value for every track comparison.
+        """Should return a Distance object to be added to the
+        distance for every track comparison.
         """
-        return 0.0, 0.0
+        return beets.autotag.match.Distance()
 
     def album_distance(self, items, album_info, mapping):
-        """Should return a (distance, distance_max) pair to be added
-        to the distance value for every album-level comparison.
+        """Should return a Distance object to be added to the
+        distance for every album-level comparison.
         """
-        return 0.0, 0.0
+        return beets.autotag.match.Distance()
 
     def candidates(self, items, artist, album, va_likely):
         """Should return a sequence of AlbumInfo objects that match the
@@ -242,25 +242,19 @@ def queries():
 
 def track_distance(item, info):
     """Gets the track distance calculated by all loaded plugins.
-    Returns a (distance, distance_max) pair.
+    Returns a Distance object.
     """
-    dist = 0.0
-    dist_max = 0.0
+    dist = beets.autotag.match.Distance()
     for plugin in find_plugins():
-        d, dm = plugin.track_distance(item, info)
-        dist += d
-        dist_max += dm
-    return dist, dist_max
+        dist.update(plugin.track_distance(item, info))
+    return dist
 
 def album_distance(items, album_info, mapping):
     """Returns the album distance calculated by plugins."""
-    dist = 0.0
-    dist_max = 0.0
+    dist = beets.autotag.match.Distance()
     for plugin in find_plugins():
-        d, dm = plugin.album_distance(items, album_info, mapping)
-        dist += d
-        dist_max += dm
-    return dist, dist_max
+        dist.update(plugin.album_distance(items, album_info, mapping))
+    return dist
 
 def candidates(items, artist, album, va_likely):
     """Gets MusicBrainz candidates for an album from each plugin.
