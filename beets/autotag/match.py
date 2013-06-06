@@ -419,14 +419,16 @@ def distance(items, album_info, mapping):
     # Album.
     dist.add_string('album', likelies['album'], album_info.album)
 
-    # Preferred media.
-    patterns = config['match']['preferred']['media'].as_str_seq()
-    options = [re.compile(r'(\d+x)?(%s)' % pat, re.I) for pat in patterns]
-    if album_info.media and options:
-        dist.add_priority('media', album_info.media, options)
-    # Media.
-    elif likelies['media'] and album_info.media:
-        dist.add_string('media', likelies['media'], album_info.media)
+    # Current or preferred media.
+    if album_info.media:
+        # Preferred media options.
+        patterns = config['match']['preferred']['media'].as_str_seq()
+        options = [re.compile(r'(\d+x)?(%s)' % pat, re.I) for pat in patterns]
+        if options:
+            dist.add_priority('media', album_info.media, options)
+        # Current media.
+        elif likelies['media']:
+            dist.add_equality('media', album_info.media, likelies['media'])
 
     # Mediums.
     if likelies['disctotal'] and album_info.mediums:
