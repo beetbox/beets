@@ -5,28 +5,29 @@ Changelog
 ----------------------
 
 This release introduces a major internal change in the way that similarity
-scores are handled. The changes you'll notice while using the autotagger
-are:
+scores are handled, thanks to the continued efforts of Tai Lee. The changes
+you'll notice while using the autotagger are:
 
 * The top 3 distance penalties are now displayed on the release listing,
   and all album and track penalties are now displayed on the track changes
   list. This should make it clear exactly which metadata is contributing to a
   low similarity score.
-* Even more consistent format and colorization of album and track metadata. Red
-  for an actual difference, yellow to indicate that a distance penalty is being
-  applied, and light gray for no-penalty or disambiguation data.
+* When displaying differences, the colorization has been made more consistent
+  and helpful: red for an actual difference, yellow to indicate that a
+  distance penalty is being applied, and light gray for no penalty (e.g., case
+  changes) or disambiguation data.
 
-There are also three new configuration options that let you customize the way
-that matches are selected:
+There are also three new (or overhauled) configuration options that let you
+customize the way that matches are selected:
 
-* Don't show potential matches that have specific penalties applied, as
-  configured by the :ref:`ignored` setting.
-* Add a :ref:`preferred` collection of settings, which allow the user to
-  specify a sorted list of preferred countries and media types, or prefer
-  releases closest to the original year for an album.
-* It is now possible to configure a :ref:`max_rec` for any field that is used
-  to calculate the similarity score. The recommendation will be downgraded if
-  a penalty is being applied to the specified field.
+* The :ref:`ignored` setting lets you instruct the importer not to show you
+  matches that have a certain penalty applied.
+* The :ref:`preferred` collection of settings specifies a sorted list of
+  preferred countries and media types, or prefer releases closest to the
+  original year for an album.
+* The :ref:`max_rec` settings can now be used for any distance penalty
+  component. The recommendation will be downgraded if a penalty is being
+  applied to the specified field.
 
 
 1.2.0 (June 5, 2013)
