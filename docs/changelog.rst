@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.2.0 (in development)
-----------------------
+1.2.0 (June 5, 2013)
+--------------------
 
 There's a *lot* of new stuff in this release: new data sources for the
 autotagger, new plugins to look for problems in your library, tracking the
