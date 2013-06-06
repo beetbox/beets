@@ -35,13 +35,15 @@ database_changed = False
 # easier.
 class BufferedSocket(object):
     """Socket abstraction that allows reading by line."""
-    def __init__(self, sep='\n'):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    def __init__(self, host, port, sep='\n'):
+        if host[0] == '/':
+            self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self.sock.connect(host)
+        else:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.connect((host, port))
         self.buf = ''
         self.sep = sep
-
-    def connect(self, host, port):
-        self.sock.connect((host, port))
 
     def readline(self):
         while self.sep not in self.buf:
@@ -67,8 +69,7 @@ def update_mpd(host='localhost', port=6600, password=None):
     """
     print('Updating MPD database...')
 
-    s = BufferedSocket()
-    s.connect(host, port)
+    s = BufferedSocket(host, port)
     resp = s.readline()
     if 'OK MPD' not in resp:
         print('MPD connection failed:', repr(resp))
