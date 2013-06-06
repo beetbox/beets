@@ -72,7 +72,7 @@ match:
         partial: medium
         tracklength: strong
         tracknumber: strong
-    preferred_media: CD
+    preferred_media: null
     weight:
         source: 2.0
         artist: 3.0

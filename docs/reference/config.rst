@@ -425,9 +425,12 @@ The above example shows the default ``max_rec`` settings.
 preferred_media
 ~~~~~~~~~~~~~~~
 
-When comparing files that have no ``media`` tagged, prefer releases that more
-closely resemble this media (using a string distance). When files are already
-tagged with media, this setting is ignored. Default: ``CD``.
+When an album has its ``media`` field set, it is compared against matches to
+prefer releases of the same media type. But this option lets you control what
+happens when an album *doesn't* have ``media`` set (which is the case for most
+albums that haven't already been run through a MusicBrainz tagger). Set this
+option to ``CD``, for example, to prefer CD releases. Defaults to ``null``,
+indicating no preference.
 
 .. _path-format-config:
 

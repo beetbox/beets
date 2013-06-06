@@ -274,15 +274,16 @@ def distance(items, album_info, mapping):
         dist_max += weights['year'].as_number()
 
     # Actual or preferred media.
-    preferred_media = config['match']['preferred_media'].get()
-    if likelies['media'] and album_info.media:
-        dist += string_dist(likelies['media'], album_info.media) * \
-                weights['media'].as_number()
-        dist_max += weights['media'].as_number()
-    elif album_info.media and preferred_media:
-        dist += string_dist(album_info.media, preferred_media) * \
-                weights['media'].as_number()
-        dist_max += weights['media'].as_number()
+    if album_info.media:
+        preferred_media = config['match']['preferred_media'].get()
+        if likelies['media']:
+            dist += string_dist(likelies['media'], album_info.media) * \
+                    weights['media'].as_number()
+            dist_max += weights['media'].as_number()
+        elif preferred_media:
+            dist += string_dist(album_info.media, preferred_media) * \
+                    weights['media'].as_number()
+            dist_max += weights['media'].as_number()
 
     # MusicBrainz album ID.
     if likelies['mb_albumid']:
