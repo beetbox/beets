@@ -20,8 +20,8 @@ from datetime import datetime, timedelta
 
 import requests
 
-from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag.match import Distance
 from beets.plugins import BeetsPlugin
 
 log = logging.getLogger('beets')
@@ -161,20 +161,16 @@ class BeatportPlugin(BeetsPlugin):
         """Returns the beatport source weight and the maximum source weight
         for albums.
         """
+        dist = Distance()
         if album_info.data_source == 'Beatport':
-            return self.config['source_weight'].as_number() * \
-                config['match']['weight']['source'].as_number(), \
-                config['match']['weight']['source'].as_number()
-        else:
-            return 0.0, 0.0
+            dist.add('source', self.config['source_weight'].as_number())
+        return dist
 
     def track_distance(self, item, info):
         """Returns the beatport source weight and the maximum source weight
         for individual tracks.
         """
-        return self.config['source_weight'].as_number() * \
-            config['match']['weight']['source'].as_number(), \
-            config['match']['weight']['source'].as_number()
+        return Distance()  # FIXME: Need source information for tracks.
 
     def candidates(self, items, artist, release, va_likely):
         """Returns a list of AlbumInfo objects for beatport search results
