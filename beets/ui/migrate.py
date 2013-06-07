@@ -251,6 +251,15 @@ def migrate_config(replace=False):
     config.yaml will be moved aside. Otherwise, the process is aborted
     when the file exists.
     """
+
+    # Load legacy configuration data, if any.
+    config, configpath = get_config()
+    if not config:
+        log.debug(u'no config file found at {0}'.format(
+            util.displayable_path(configpath)
+            ))
+        return
+
     # Get the new configuration file path and possibly move it out of
     # the way.
     destfn = os.path.join(beets.config.config_dir(), confit.CONFIG_FILENAME)
@@ -264,13 +273,6 @@ def migrate_config(replace=False):
             # File exists and we won't replace it. We're done.
             return
 
-    # Load legacy configuration data, if any.
-    config, configpath = get_config()
-    if not config:
-        log.debug(u'no config file found at {0}'.format(
-            util.displayable_path(configpath)
-        ))
-        return
     log.debug(u'migrating config file {0}'.format(
         util.displayable_path(configpath)
     ))
