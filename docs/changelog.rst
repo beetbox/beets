@@ -29,6 +29,10 @@ customize the way that matches are selected:
   component. The recommendation will be downgraded if a penalty is being
   applied to the specified field.
 
+And some bug fixes:
+
+* Python 2.6 compatibility for :doc:`/plugins/beatport`. Thanks Wesley Bitter.
+
 
 1.2.0 (June 5, 2013)
 --------------------

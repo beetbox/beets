@@ -68,7 +68,7 @@ class BeatportSearch(object):
     release_type = None
 
     def __unicode__(self):
-        return u"<BeatportSearch for {0} \"{1}\" with {2} results>".format(
+        return u'<BeatportSearch for {0} "{1}" with {2} results>'.format(
             self.release_type, self.query, len(self.results))
 
     def __init__(self, query, release_type='release', details=True):
@@ -97,10 +97,9 @@ class BeatportRelease(BeatportObject):
             artist_str = ", ".join(x[1] for x in self.artists)
         else:
             artist_str = "Various Artists"
-        return u"<BeatportRelease: {0} - {1} ({2})>".format(
-            artist_str, self.name,
-            self.catalog_number
-        )
+        return u"<BeatportRelease: {0} - {1} ({2})>".format(artist_str,
+                                                            self.name,
+                                                            self.catalog_number)
 
     def __init__(self, data):
         BeatportObject.__init__(self, data)
@@ -131,8 +130,8 @@ class BeatportTrack(BeatportObject):
 
     def __unicode__(self):
         artist_str = ", ".join(x[1] for x in self.artists)
-        return u"<BeatportTrack: {0} - {1} ({2})>".format(
-            artist_str, self.name, self.mix_name)
+        return u"<BeatportTrack: {0} - {1} ({2})>".format(artist_str, self.name,
+                                                          self.mix_name)
 
     def __init__(self, data):
         BeatportObject.__init__(self, data)
@@ -143,8 +142,8 @@ class BeatportTrack(BeatportObject):
         if 'length' in data:
             self.length = timedelta(milliseconds=data['lengthMs'])
         if 'slug' in data:
-            self.url = "http://beatport.com/track/{0}/{1}".format(
-                data['slug'], data['id'])
+            self.url = "http://beatport.com/track/{0}/{1}".format(data['slug'],
+                                                                  data['id'])
 
     @classmethod
     def from_id(cls, beatport_id):
