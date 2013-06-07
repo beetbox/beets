@@ -32,6 +32,8 @@ customize the way that matches are selected:
 And some bug fixes:
 
 * Python 2.6 compatibility for :doc:`/plugins/beatport`. Thanks Wesley Bitter.
+* Don't move the config file during a null migration. Thanks to Theofilos
+  Intzoglou.
 
 
 1.2.0 (June 5, 2013)
