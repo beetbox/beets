@@ -17,7 +17,7 @@ discogs-client library.
 """
 from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.autotag.match import current_metadata, VA_ARTISTS
+from beets.autotag.match import current_metadata, Distance, VA_ARTISTS
 from beets.plugins import BeetsPlugin
 from discogs_client import Artist, DiscogsAPIError, Release, Search
 import beets
@@ -44,14 +44,12 @@ class DiscogsPlugin(BeetsPlugin):
         })
 
     def album_distance(self, items, album_info, mapping):
-        """Returns the discogs source weight and the maximum source weight.
+        """Returns the album distance.
         """
+        dist = Distance()
         if album_info.data_source == 'Discogs':
-            return self.config['source_weight'].as_number() * \
-                    config['match']['weight']['source'].as_number(), \
-                    config['match']['weight']['source'].as_number()
-        else:
-            return 0.0, 0.0
+            dist.add('source', self.config['source_weight'].as_number())
+        return dist
 
     def candidates(self, items, artist, album, va_likely):
         """Returns a list of AlbumInfo objects for discogs search results

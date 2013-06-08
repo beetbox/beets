@@ -60,9 +60,9 @@ all of these limitations.
   plugin if you're willing to spend a little more CPU power to get tags for
   unidentified albums.
 
-* Currently, MP3, AAC, FLAC, Ogg Vorbis, Monkey's Audio, WavPack, Musepack, and
-  Windows Media files are supported. (Do you use some other format? `Let me
-  know!`_)
+* Currently, MP3, AAC, FLAC, ALAC, Ogg Vorbis, Monkey's Audio, WavPack,
+  Musepack, and Windows Media files are supported. (Do you use some other
+  format? `Let me know!`_)
 
 .. _Let me know!: mailto:adrian@radbox.org
 

@@ -39,9 +39,7 @@ def _missing(album):
     if len([i for i in album.items()]) < album.tracktotal:
         # fetch missing items
         # TODO: Implement caching that without breaking other stuff
-        matches = hooks._album_for_id(album.mb_albumid)
-        if matches:
-            album_info = matches[0]
+        album_info = hooks.album_for_mbid(album.mb_albumid)
         for track_info in getattr(album_info, 'tracks', []):
             if track_info.track_id not in item_mbids:
                 item = _item(track_info, album_info, album.id)

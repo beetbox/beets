@@ -89,6 +89,7 @@ class ZeroPlugin(BeetsPlugin):
                     continue
                 self._log.debug(u'[zero] \"{0}\" ({1}) match: {2}'
                                 .format(fval, fn, ' '.join(patterns)))
-                setattr(item, fn, type(fval)())
+                new_val = None if fval is None else type(fval)()
+                setattr(item, fn, new_val)
                 self._log.debug(u'[zero] {0}={1}'
                                 .format(fn, getattr(item, fn)))

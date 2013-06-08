@@ -30,7 +30,7 @@ from beets.util.enumeration import enum
 from beets.autotag import hooks
 
 # A configuration view for the distance weights.
-weights = config['match']['weight']
+weights = config['match']['distance_weights']
 
 # Parameters for string distance function.
 # Words that can be moved to the end of a string using a comma.
@@ -187,62 +187,221 @@ def track_index_changed(item, track_info):
     """
     return item.track not in (track_info.medium_index, track_info.index)
 
+class Distance(object):
+    """Keeps track of multiple distance penalties. Provides a single weighted
+    distance for all penalties as well as a weighted distance for each
+    individual penalty.
+    """
+    def __cmp__(self, other):
+        return cmp(self.distance, other)
+
+    def __float__(self):
+        return self.distance
+
+    def __getitem__(self, key):
+        """Returns the weighted distance for a named penalty.
+        """
+        dist = sum(self._penalties[key]) * weights[key].as_number()
+        dist_max = self.max_distance
+        if dist_max:
+            return dist / dist_max
+        return 0.0
+
+    def __init__(self):
+        self._penalties = {}
+
+    def __iter__(self):
+        return iter(self.sorted)
+
+    def __len__(self):
+        return len(self.sorted)
+
+    def __sub__(self, other):
+        return self.distance - other
+
+    def __rsub__(self, other):
+        return other - self.distance
+
+    def _eq(self, value1, value2):
+        """Returns True if `value1` is equal to `value2`. `value1` may be a
+        compiled regular expression, in which case it will be matched against
+        `value2`.
+        """
+        if isinstance(value1, re._pattern_type):
+            return bool(value1.match(value2))
+        return value1 == value2
+
+    def add(self, key, dist):
+        """Adds a distance penalty. `key` must correspond with a configured
+        weight setting. `dist` must be a float between 0.0 and 1.0, and will be
+        added to any existing distance penalties for the same key.
+        """
+        if not 0.0 <= dist <= 1.0:
+            raise ValueError(
+                    '`dist` must be between 0.0 and 1.0. It is: %r' % dist)
+        self._penalties.setdefault(key, []).append(dist)
+
+    def add_equality(self, key, value, options):
+        """Adds a distance penalty of 1.0 if `value` doesn't match any of the
+        values in `options`. If an option is a compiled regular expression, it
+        will be considered equal if it matches against `value`.
+        """
+        if not isinstance(options, (list, tuple)):
+            options = [options]
+        for opt in options:
+            if self._eq(opt, value):
+                dist = 0.0
+                break
+        else:
+            dist = 1.0
+        self.add(key, dist)
+
+    def add_expr(self, key, expr):
+        """Adds a distance penalty of 1.0 if `expr` evaluates to True, or 0.0.
+        """
+        if expr:
+            self.add(key, 1.0)
+        else:
+            self.add(key, 0.0)
+
+    def add_number(self, key, number1, number2):
+        """Adds a distance penalty of 1.0 for each number of difference between
+        `number1` and `number2`, or 0.0 when there is no difference. Use this
+        when there is no upper limit on the difference between the two numbers.
+        """
+        diff = abs(number1 - number2)
+        if diff:
+            for i in range(diff):
+                self.add(key, 1.0)
+        else:
+            self.add(key, 0.0)
+
+    def add_priority(self, key, value, options):
+        """Adds a distance penalty that corresponds to the position at which
+        `value` appears in `options`. A distance penalty of 0.0 for the first
+        option, or 1.0 if there is no matching option. If an option is a
+        compiled regular expression, it will be considered equal if it matches
+        against `value`.
+        """
+        if not isinstance(options, (list, tuple)):
+            options = [options]
+        unit = 1.0 / (len(options) or 1)
+        for i, opt in enumerate(options):
+            if self._eq(opt, value):
+                dist = i * unit
+                break
+        else:
+            dist = 1.0
+        self.add(key, dist)
+
+    def add_ratio(self, key, number1, number2):
+        """Adds a distance penalty for `number1` as a ratio of `number2`.
+        `number1` is bound at 0 and `number2`.
+        """
+        number = float(max(min(number1, number2), 0))
+        if number2:
+            dist = number / number2
+        else:
+            dist = 0.0
+        self.add(key, dist)
+
+    def add_string(self, key, str1, str2):
+        """Adds a distance penalty based on the edit distance between `str1`
+        and `str2`.
+        """
+        dist = string_dist(str1, str2)
+        self.add(key, dist)
+
+    @property
+    def distance(self):
+        """Returns a weighted and normalised distance across all penalties.
+        """
+        dist_max = self.max_distance
+        if dist_max:
+            return self.raw_distance / self.max_distance
+        return 0.0
+
+    @property
+    def max_distance(self):
+        """Returns the maximum distance penalty.
+        """
+        dist_max = 0.0
+        for key, penalty in self._penalties.iteritems():
+            dist_max += len(penalty) * weights[key].as_number()
+        return dist_max
+
+    @property
+    def raw_distance(self):
+        """Returns the raw (denormalised) distance.
+        """
+        dist_raw = 0.0
+        for key, penalty in self._penalties.iteritems():
+            dist_raw += sum(penalty) * weights[key].as_number()
+        return dist_raw
+
+    @property
+    def sorted(self):
+        """Returns a list of (dist, key) pairs, with `dist` being the weighted
+        distance, sorted from highest to lowest. Does not include penalties
+        with a zero value.
+        """
+        list_ = []
+        for key in self._penalties:
+            dist = self[key]
+            if dist:
+                list_.append((dist, key))
+        # Convert distance into a negative float we can sort items in ascending
+        # order (for keys, when the penalty is equal) and still get the items
+        # with the biggest distance first.
+        return sorted(list_, key=lambda (dist, key): (0-dist, key))
+
+    def update(self, dist):
+        """Adds all the distance penalties from `dist`.
+        """
+        if not isinstance(dist, Distance):
+            raise ValueError(
+                    '`dist` must be a Distance object. It is: %r' % dist)
+        for key, penalties in dist._penalties.iteritems():
+            self._penalties.setdefault(key, []).extend(penalties)
+
 def track_distance(item, track_info, incl_artist=False):
     """Determines the significance of a track metadata change. Returns a
-    float in [0.0,1.0]. `incl_artist` indicates that a distance
-    component should be included for the track artist (i.e., for
-    various-artist releases).
+    Distance object. `incl_artist` indicates that a distance component should
+    be included for the track artist (i.e., for various-artist releases).
     """
-    # Distance and normalization accumulators.
-    dist, dist_max = 0.0, 0.0
+    dist = Distance()
 
-    # Check track length.
-    # If there's no length to check, apply no penalty.
+    # Length.
     if track_info.length:
-        diff = abs(item.length - track_info.length)
-        diff = max(diff - weights['track_length_grace'].as_number(), 0.0)
-        diff = min(diff, weights['track_length_max'].as_number())
-        dist += (diff / weights['track_length_max'].as_number()) * \
-                weights['track_length'].as_number()
-    dist_max += weights['track_length'].as_number()
+        diff = abs(item.length - track_info.length) - \
+               weights['track_length_grace'].as_number()
+        dist.add_ratio('track_length', diff,
+                       weights['track_length_max'].as_number())
 
-    # Track title.
-    dist += string_dist(item.title, track_info.title) * \
-        weights['track_title'].as_number()
-    dist_max += weights['track_title'].as_number()
+    # Title.
+    dist.add_string('track_title', item.title, track_info.title)
 
-    # Track artist, if included.
-    # Attention: MB DB does not have artist info for all compilations,
-    # so only check artist distance if there is actually an artist in
-    # the MB track data.
+    # Artist. Only check if there is actually an artist in the track data.
     if incl_artist and track_info.artist and \
             item.artist.lower() not in VA_ARTISTS:
-        dist += string_dist(item.artist, track_info.artist) * \
-                weights['track_artist'].as_number()
-        dist_max += weights['track_artist'].as_number()
+        dist.add_string('track_artist', item.artist, track_info.artist)
 
     # Track index.
     if track_info.index and item.track:
-        if track_index_changed(item, track_info):
-            dist += weights['track_index'].as_number()
-        dist_max += weights['track_index'].as_number()
+        dist.add_expr('track_index', track_index_changed(item, track_info))
 
-    # MusicBrainz track ID.
+    # Track ID.
     if item.mb_trackid:
-        if item.mb_trackid != track_info.track_id:
-            dist += weights['track_id'].as_number()
-        dist_max += weights['track_id'].as_number()
+        dist.add_expr('track_id', item.mb_trackid != track_info.track_id)
 
-    # Plugin distances.
-    plugin_d, plugin_dm = plugins.track_distance(item, track_info)
-    dist += plugin_d
-    dist_max += plugin_dm
+    # Plugins.
+    dist.update(plugins.track_distance(item, track_info))
 
-    return dist / dist_max
+    return dist
 
 def distance(items, album_info, mapping):
     """Determines how "significant" an album metadata change would be.
-    Returns a float in [0.0,1.0]. `album_info` is an AlbumInfo object
+    Returns a Distance object. `album_info` is an AlbumInfo object
     reflecting the album to be compared. `items` is a sequence of all
     Item objects that will be matched (order is not important).
     `mapping` is a dictionary mapping Items to TrackInfo objects; the
@@ -251,100 +410,99 @@ def distance(items, album_info, mapping):
     """
     likelies, _ = current_metadata(items)
 
-    # These accumulate the possible distance components. The final
-    # distance will be dist/dist_max.
-    dist = 0.0
-    dist_max = 0.0
+    dist = Distance()
 
-    # Artist/album metadata.
+    # Artist, if not various.
     if not album_info.va:
-        dist += string_dist(likelies['artist'], album_info.artist) * \
-                weights['artist'].as_number()
-        dist_max += weights['artist'].as_number()
-    dist += string_dist(likelies['album'], album_info.album) * \
-            weights['album'].as_number()
-    dist_max += weights['album'].as_number()
+        dist.add_string('artist', likelies['artist'], album_info.artist)
 
-    # Year. No penalty for matching release or original year.
-    if likelies['year'] and album_info.year:
-        if likelies['year'] not in (album_info.year, album_info.original_year):
-            diff = abs(album_info.year - likelies['year'])
-            if diff:
-                dist += (1.0 - 1.0 / diff) * weights['year'].as_number()
-        dist_max += weights['year'].as_number()
+    # Album.
+    dist.add_string('album', likelies['album'], album_info.album)
 
-    # Actual or preferred media.
-    preferred_media = config['match']['preferred_media'].get()
-    if likelies['media'] and album_info.media:
-        dist += string_dist(likelies['media'], album_info.media) * \
-                weights['media'].as_number()
-        dist_max += weights['media'].as_number()
-    elif album_info.media and preferred_media:
-        dist += string_dist(album_info.media, preferred_media) * \
-                weights['media'].as_number()
-        dist_max += weights['media'].as_number()
+    # Current or preferred media.
+    if album_info.media:
+        # Preferred media options.
+        patterns = config['match']['preferred']['media'].as_str_seq()
+        options = [re.compile(r'(\d+x)?(%s)' % pat, re.I) for pat in patterns]
+        if options:
+            dist.add_priority('media', album_info.media, options)
+        # Current media.
+        elif likelies['media']:
+            dist.add_equality('media', album_info.media, likelies['media'])
 
-    # MusicBrainz album ID.
-    if likelies['mb_albumid']:
-        if likelies['mb_albumid'] != album_info.album_id:
-            dist += weights['album_id'].as_number()
-        dist_max += weights['album_id'].as_number()
+    # Mediums.
+    if likelies['disctotal'] and album_info.mediums:
+        dist.add_number('mediums', likelies['disctotal'], album_info.mediums)
 
-    # Apply a small penalty for differences across many minor metadata. This
-    # helps prioritise releases that are nearly identical.
+    # Prefer earliest release.
+    if album_info.year and config['match']['preferred']['original_year']:
+        # Assume 1889 (earliest first gramophone discs) if we don't know the
+        # original year.
+        original = album_info.original_year or 1889
+        diff = abs(album_info.year - original)
+        diff_max = abs(datetime.date.today().year - original)
+        dist.add_ratio('year', diff, diff_max)
+    # Year.
+    elif likelies['year'] and album_info.year:
+        if likelies['year'] in (album_info.year, album_info.original_year):
+            # No penalty for matching release or original year.
+            dist.add('year', 0.0)
+        elif album_info.original_year:
+            # Prefer matchest closest to the release year.
+            diff = abs(likelies['year'] - album_info.year)
+            diff_max = abs(datetime.date.today().year -
+                           album_info.original_year)
+            dist.add_ratio('year', diff, diff_max)
+        else:
+            # Full penalty when there is no original year.
+            dist.add('year', 1.0)
 
-    if likelies['disctotal']:
-        if likelies['disctotal'] != album_info.mediums:
-            dist += weights['minor'].as_number()
-        dist_max += weights['minor'].as_number()
+    # Preferred countries.
+    patterns = config['match']['preferred']['countries'].as_str_seq()
+    options = [re.compile(pat, re.I) for pat in patterns]
+    if album_info.country and options:
+        dist.add_priority('country', album_info.country, options)
+    # Country.
+    elif likelies['country'] and album_info.country:
+        dist.add_string('country', likelies['country'], album_info.country)
 
+    # Label.
     if likelies['label'] and album_info.label:
-        dist += string_dist(likelies['label'], album_info.label) * \
-                weights['minor'].as_number()
-        dist_max += weights['minor'].as_number()
+        dist.add_string('label', likelies['label'], album_info.label)
 
+    # Catalog number.
     if likelies['catalognum'] and album_info.catalognum:
-        dist += string_dist(likelies['catalognum'],
-                            album_info.catalognum) * \
-                weights['minor'].as_number()
-        dist_max += weights['minor'].as_number()
+        dist.add_string('catalognum', likelies['catalognum'],
+                        album_info.catalognum)
 
-    if likelies['country'] and album_info.country:
-        dist += string_dist(likelies['country'],
-                            album_info.country) * \
-                weights['minor'].as_number()
-        dist_max += weights['minor'].as_number()
-
+    # Disambiguation.
     if likelies['albumdisambig'] and album_info.albumdisambig:
-        dist += string_dist(likelies['albumdisambig'],
-                            album_info.albumdisambig) * \
-                weights['minor'].as_number()
-        dist_max += weights['minor'].as_number()
+        dist.add_string('albumdisambig', likelies['albumdisambig'],
+                        album_info.albumdisambig)
 
-    # Matched track distances.
+    # Album ID.
+    if likelies['mb_albumid']:
+        dist.add_equality('album_id', likelies['mb_albumid'],
+                          album_info.album_id)
+
+    # Tracks.
+    dist.tracks = {}
     for item, track in mapping.iteritems():
-        dist += track_distance(item, track, album_info.va) * \
-                weights['track'].as_number()
-        dist_max += weights['track'].as_number()
+        dist.tracks[track] = track_distance(item, track, album_info.va)
+        dist.add('tracks', dist.tracks[track].distance)
 
-    # Extra and unmatched tracks.
-    for track in set(album_info.tracks) - set(mapping.values()):
-        dist += weights['missing'].as_number()
-        dist_max += weights['missing'].as_number()
-    for item in set(items) - set(mapping.keys()):
-        dist += weights['unmatched'].as_number()
-        dist_max += weights['unmatched'].as_number()
+    # Missing tracks.
+    for i in range(len(album_info.tracks) - len(mapping)):
+        dist.add('missing_tracks', 1.0)
 
-    # Plugin distances.
-    plugin_d, plugin_dm = plugins.album_distance(items, album_info, mapping)
-    dist += plugin_d
-    dist_max += plugin_dm
+    # Unmatched tracks.
+    for i in range(len(items) - len(mapping)):
+        dist.add('unmatched_tracks', 1.0)
 
-    # Normalize distance, avoiding divide-by-zero.
-    if dist_max == 0.0:
-        return 0.0
-    else:
-        return dist / dist_max
+    # Plugins.
+    dist.update(plugins.album_distance(items, album_info, mapping))
+
+    return dist
 
 def match_by_id(items):
     """If the items are tagged with a MusicBrainz album ID, returns an
@@ -361,9 +519,7 @@ def match_by_id(items):
     if bool(reduce(lambda x,y: x if x==y else (), albumids)):
         albumid = albumids[0]
         log.debug('Searching for discovered album ID: ' + albumid)
-        matches = hooks._album_for_id(albumid)
-        if matches:
-            return matches[0]
+        return hooks.album_for_mbid(albumid)
     else:
         log.debug('No album ID consensus.')
 
@@ -372,8 +528,8 @@ def _recommendation(results):
     recommendation based on the results' distances.
 
     If the recommendation is higher than the configured maximum for
-    certain situations, the recommendation will be downgraded to the
-    configured maximum.
+    an applied penalty, the recommendation will be downgraded to the
+    configured maximum for that penalty.
     """
     if not results:
         # No candidates: no recommendation.
@@ -395,45 +551,23 @@ def _recommendation(results):
         # Gap between first two candidates is large.
         rec = recommendation.low
     else:
-        # No conclusion.
-        rec = recommendation.none
+        # No conclusion. Return immediately. Can't be downgraded any further.
+        return recommendation.none
 
-    # "Downgrades" in certain configured situations.
+    # Downgrade to the max rec if it is lower than the current rec for an
+    # applied penalty.
+    keys = set(key for _, key in min_dist)
     if isinstance(results[0], hooks.AlbumMatch):
-        # Load the configured recommendation maxima.
-        max_rec = {}
-        for trigger in 'non_mb_source', 'partial', 'tracklength', 'tracknumber':
-            max_rec[trigger] = \
-                config['match']['max_rec'][trigger].as_choice({
-                    'strong': recommendation.strong,
-                    'medium': recommendation.medium,
-                    'low': recommendation.low,
-                    'none': recommendation.none,
-                })
-
-        # Non-MusicBrainz source.
-        if rec > max_rec['non_mb_source'] and \
-                results[0].info.data_source != 'MusicBrainz':
-            rec = max_rec['non_mb_source']
-
-        # Partial match.
-        if rec > max_rec['partial'] and \
-                (results[0].extra_items or results[0].extra_tracks):
-            rec = max_rec['partial']
-
-        # Check track number and duration for each item.
-        for item, track_info in results[0].mapping.items():
-            # Track length differs.
-            if rec > max_rec['tracklength'] and \
-                    item.length and track_info.length and \
-                    abs(item.length - track_info.length) > \
-                    weights['track_length_grace'].as_number():
-                rec = max_rec['tracklength']
-
-            # Track number differs.
-            if rec > max_rec['tracknumber'] and \
-                    track_index_changed(item, track_info):
-                rec = max_rec['tracknumber']
+        for track_dist in min_dist.tracks.values():
+            keys.update(key for _, key in track_dist)
+    for key in keys:
+        max_rec = config['match']['max_rec'][key].as_choice({
+            'strong': recommendation.strong,
+            'medium': recommendation.medium,
+            'low': recommendation.low,
+            'none': recommendation.none,
+        })
+        rec = min(rec, max_rec)
 
     return rec
 
@@ -455,8 +589,15 @@ def _add_candidate(items, results, info):
 
     # Get the change distance.
     dist = distance(items, info, mapping)
-    log.debug('Success. Distance: %f' % dist)
 
+    # Skip matches with ignored penalties.
+    penalties = [key for _, key in dist]
+    for penalty in config['match']['ignored'].as_str_seq():
+        if penalty in penalties:
+            log.debug('Ignored. Penalty: %s' % penalty)
+            return
+
+    log.debug('Success. Distance: %f' % dist)
     results[info.album_id] = hooks.AlbumMatch(dist, info, mapping,
                                               extra_items, extra_tracks)
 
@@ -467,7 +608,7 @@ def tag_album(items, search_artist=None, search_album=None,
         - The current artist.
         - The current album.
         - A list of AlbumMatch objects. The candidates are sorted by
-        distance (i.e., best match first).
+          distance (i.e., best match first).
         - A recommendation.
     If search_artist and search_album or search_id are provided, then
     they are used as search terms in place of the current metadata.
@@ -485,7 +626,7 @@ def tag_album(items, search_artist=None, search_album=None,
     # Search by explicit ID.
     if search_id is not None:
         log.debug('Searching for album ID: ' + search_id)
-        search_cands = hooks._album_for_id(search_id)
+        search_cands = hooks.albums_for_id(search_id)
 
     # Use existing metadata or text search.
     else:
@@ -516,8 +657,8 @@ def tag_album(items, search_artist=None, search_album=None,
         log.debug(u'Album might be VA: %s' % str(va_likely))
 
         # Get the results from the data sources.
-        search_cands = hooks._album_candidates(items, search_artist,
-                                               search_album, va_likely)
+        search_cands = hooks.album_candidates(items, search_artist,
+                                              search_album, va_likely)
 
     log.debug(u'Evaluating %i candidates.' % len(search_cands))
     for info in search_cands:
@@ -544,7 +685,7 @@ def tag_item(item, search_artist=None, search_title=None,
     trackid = search_id or item.mb_trackid
     if trackid:
         log.debug('Searching for track ID: ' + trackid)
-        for track_info in hooks._track_for_id(trackid):
+        for track_info in hooks.tracks_for_id(trackid):
             dist = track_distance(item, track_info, incl_artist=True)
             candidates[track_info.track_id] = \
                     hooks.TrackMatch(dist, track_info)
@@ -567,7 +708,7 @@ def tag_item(item, search_artist=None, search_title=None,
     log.debug(u'Item search terms: %s - %s' % (search_artist, search_title))
 
     # Get and evaluate candidate metadata.
-    for track_info in hooks._item_candidates(item, search_artist, search_title):
+    for track_info in hooks.item_candidates(item, search_artist, search_title):
         dist = track_distance(item, track_info, incl_artist=True)
         candidates[track_info.track_id] = hooks.TrackMatch(dist, track_info)
 

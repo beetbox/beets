@@ -23,6 +23,7 @@ import _common
 from _common import unittest
 from beets import autotag
 from beets.autotag import match
+from beets.autotag.match import Distance
 from beets.library import Item
 from beets.util import plurality
 from beets.autotag import AlbumInfo, TrackInfo
@@ -104,6 +105,153 @@ def _make_trackinfo():
         TrackInfo(u'two', None, u'some artist', length=1, index=2),
         TrackInfo(u'three', None, u'some artist', length=1, index=3),
     ]
+
+class DistanceTest(unittest.TestCase):
+    def setUp(self):
+        self.dist = Distance()
+
+    def test_add(self):
+        self.dist.add('add', 1.0)
+        self.assertEqual(self.dist._penalties, {'add': [1.0]})
+
+    def test_add_equality(self):
+        self.dist.add_equality('equality', 'ghi', ['abc', 'def', 'ghi'])
+        self.assertEqual(self.dist._penalties['equality'], [0.0])
+
+        self.dist.add_equality('equality', 'xyz', ['abc', 'def', 'ghi'])
+        self.assertEqual(self.dist._penalties['equality'], [0.0, 1.0])
+
+        self.dist.add_equality('equality', 'abc', re.compile(r'ABC', re.I))
+        self.assertEqual(self.dist._penalties['equality'], [0.0, 1.0, 0.0])
+
+    def test_add_expr(self):
+        self.dist.add_expr('expr', True)
+        self.assertEqual(self.dist._penalties['expr'], [1.0])
+
+        self.dist.add_expr('expr', False)
+        self.assertEqual(self.dist._penalties['expr'], [1.0, 0.0])
+
+    def test_add_number(self):
+        # Add a full penalty for each number of difference between two numbers.
+
+        self.dist.add_number('number', 1, 1)
+        self.assertEqual(self.dist._penalties['number'], [0.0])
+
+        self.dist.add_number('number', 1, 2)
+        self.assertEqual(self.dist._penalties['number'], [0.0, 1.0])
+
+        self.dist.add_number('number', 2, 1)
+        self.assertEqual(self.dist._penalties['number'], [0.0, 1.0, 1.0])
+
+        self.dist.add_number('number', -1, 2)
+        self.assertEqual(self.dist._penalties['number'], [0.0, 1.0, 1.0, 1.0,
+                                                          1.0, 1.0])
+
+    def test_add_priority(self):
+        self.dist.add_priority('priority', 'abc', 'abc')
+        self.assertEqual(self.dist._penalties['priority'], [0.0])
+
+        self.dist.add_priority('priority', 'def', ['abc', 'def'])
+        self.assertEqual(self.dist._penalties['priority'], [0.0, 0.5])
+
+        self.dist.add_priority('priority', 'gh', ['ab', 'cd', 'ef',
+                                                  re.compile('GH', re.I)])
+        self.assertEqual(self.dist._penalties['priority'], [0.0, 0.5, 0.75])
+
+        self.dist.add_priority('priority', 'xyz', ['abc', 'def'])
+        self.assertEqual(self.dist._penalties['priority'], [0.0, 0.5, 0.75,
+                                                            1.0])
+
+    def test_add_ratio(self):
+        self.dist.add_ratio('ratio', 25, 100)
+        self.assertEqual(self.dist._penalties['ratio'], [0.25])
+
+        self.dist.add_ratio('ratio', 10, 5)
+        self.assertEqual(self.dist._penalties['ratio'], [0.25, 1.0])
+
+        self.dist.add_ratio('ratio', -5, 5)
+        self.assertEqual(self.dist._penalties['ratio'], [0.25, 1.0, 0.0])
+
+        self.dist.add_ratio('ratio', 5, 0)
+        self.assertEqual(self.dist._penalties['ratio'], [0.25, 1.0, 0.0, 0.0])
+
+    def test_add_string(self):
+        dist = match.string_dist(u'abc', u'bcd')
+        self.dist.add_string('string', u'abc', u'bcd')
+        self.assertEqual(self.dist._penalties['string'], [dist])
+
+    def test_distance(self):
+        config['match']['distance_weights']['album'] = 2.0
+        config['match']['distance_weights']['medium'] = 1.0
+        self.dist.add('album', 0.5)
+        self.dist.add('media', 0.25)
+        self.dist.add('media', 0.75)
+        self.assertEqual(self.dist.distance, 0.5)
+
+        # __getitem__()
+        self.assertEqual(self.dist['album'], 0.25)
+        self.assertEqual(self.dist['media'], 0.25)
+
+    def test_max_distance(self):
+        config['match']['distance_weights']['album'] = 3.0
+        config['match']['distance_weights']['medium'] = 1.0
+        self.dist.add('album', 0.5)
+        self.dist.add('medium', 0.0)
+        self.dist.add('medium', 0.0)
+        self.assertEqual(self.dist.max_distance, 5.0)
+
+    def test_operators(self):
+        config['match']['distance_weights']['source'] = 1.0
+        config['match']['distance_weights']['album'] = 2.0
+        config['match']['distance_weights']['medium'] = 1.0
+        self.dist.add('source', 0.0)
+        self.dist.add('album', 0.5)
+        self.dist.add('medium', 0.25)
+        self.dist.add('medium', 0.75)
+        self.assertEqual(len(self.dist), 2)
+        self.assertEqual(list(self.dist), [(0.2, 'album'), (0.2, 'medium')])
+        self.assertTrue(self.dist == 0.4)
+        self.assertTrue(self.dist < 1.0)
+        self.assertTrue(self.dist > 0.0)
+        self.assertEqual(self.dist - 0.4, 0.0)
+        self.assertEqual(0.4 - self.dist, 0.0)
+        self.assertEqual(float(self.dist), 0.4)
+
+    def test_raw_distance(self):
+        config['match']['distance_weights']['album'] = 3.0
+        config['match']['distance_weights']['medium'] = 1.0
+        self.dist.add('album', 0.5)
+        self.dist.add('medium', 0.25)
+        self.dist.add('medium', 0.5)
+        self.assertEqual(self.dist.raw_distance, 2.25)
+
+    def test_sorted(self):
+        config['match']['distance_weights']['album'] = 4.0
+        config['match']['distance_weights']['medium'] = 2.0
+
+        self.dist.add('album', 0.1875)
+        self.dist.add('medium', 0.75)
+        self.assertEqual(self.dist.sorted, [(0.25, 'medium'), (0.125, 'album')])
+
+        # Sort by key if distance is equal.
+        dist = Distance()
+        dist.add('album', 0.375)
+        dist.add('medium', 0.75)
+        self.assertEqual(dist.sorted, [(0.25, 'album'), (0.25, 'medium')])
+
+    def test_update(self):
+        self.dist.add('album', 0.5)
+        self.dist.add('media', 1.0)
+
+        dist = Distance()
+        dist.add('album', 0.75)
+        dist.add('album', 0.25)
+        self.dist.add('media', 0.05)
+
+        self.dist.update(dist)
+
+        self.assertEqual(self.dist._penalties, {'album': [0.5, 0.75, 0.25],
+                                                'media': [1.0, 0.05]})
 
 class TrackDistanceTest(unittest.TestCase):
     def test_identical_tracks(self):

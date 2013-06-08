@@ -125,14 +125,14 @@ default_commands.append(fields_cmd)
 
 VARIOUS_ARTISTS = u'Various Artists'
 
-PARTIAL_MATCH_MESSAGE = u'(partial match!)'
-
 # Importer utilities and support.
 
 def disambig_string(info):
-    """Returns label, year and media disambiguation, if available.
+    """Returns source, media, year, country, label and album disambiguation.
     """
     disambig = []
+    if info.data_source != 'MusicBrainz':
+        disambig.append(info.data_source)
     if info.media:
         if info.mediums > 1:
             disambig.append(u'{0}x{1}'.format(
@@ -163,26 +163,34 @@ def dist_string(dist):
         out = ui.colorize('red', out)
     return out
 
+def penalty_string(distance, limit=None):
+    """Returns a colorized string that indicates all the penalties applied to
+    a distance object.
+    """
+    penalties = []
+    for _, key in distance:
+        key = key.replace('album_', '')
+        key = key.replace('track_', '')
+        key = key.replace('_', ' ')
+        penalties.append(key)
+    if penalties:
+        if limit and len(penalties) > limit:
+            penalties = penalties[:limit] + ['...']
+        return ui.colorize('yellow', '(%s)' % ', '.join(penalties))
+
 def show_change(cur_artist, cur_album, match):
     """Print out a representation of the changes that will be made if an
     album's tags are changed according to `match`, which must be an AlbumMatch
     object.
     """
-    def show_album(artist, album, partial=False):
+    def show_album(artist, album):
         if artist:
             album_description = u'    %s - %s' % (artist, album)
         elif album:
             album_description = u'    %s' % album
         else:
             album_description = u'    (unknown album)'
-
-        out = album_description
-
-        # Add a suffix if this is a partial match.
-        if partial:
-            out += u' %s' % ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
-
-        print_(out)
+        print_(album_description)
 
     def format_index(track_info):
         """Return a string representing the track index of the given
@@ -223,11 +231,7 @@ def show_change(cur_artist, cur_album, match):
         print_("To:")
         show_album(artist_r, album_r)
     else:
-        message = u"Tagging:\n    %s - %s" % (match.info.artist,
-                                              match.info.album)
-        if match.extra_items or match.extra_tracks:
-            message += u' %s' % ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
-        print_(message)
+        print_(u"Tagging:\n    %s - %s" % (match.info.artist, match.info.album))
 
     # Data URL.
     if match.info.data_url:
@@ -235,9 +239,13 @@ def show_change(cur_artist, cur_album, match):
 
     # Info line.
     info = []
+    # Similarity.
     info.append('(Similarity: %s)' % dist_string(match.distance))
-    if match.info.data_source != 'MusicBrainz':
-        info.append(ui.colorize('turquoise', '(%s)' % match.info.data_source))
+    # Penalties.
+    penalties = penalty_string(match.distance)
+    if penalties:
+        info.append(penalties)
+    # Disambiguation.
     disambig = disambig_string(match.info)
     if disambig:
         info.append(ui.colorize('lightgray', '(%s)' % disambig))
@@ -285,7 +293,7 @@ def show_change(cur_artist, cur_album, match):
         cur_track, new_track = format_index(item), format_index(track_info)
         if cur_track != new_track:
             if item.track in (track_info.index, track_info.medium_index):
-                color = 'yellow'
+                color = 'lightgray'
             else:
                 color = 'red'
             if (cur_track + new_track).count('-') == 1:
@@ -315,18 +323,10 @@ def show_change(cur_artist, cur_album, match):
             rhs += templ.format(rhs_length)
             lhs_width += len(cur_length) + 3
 
-        # Hidden penalties. No LHS/RHS diff is displayed, but we still want to
-        # indicate that a penalty has been applied to explain the similarity
-        # score.
-        penalties = []
-        if match.info.va and track_info.artist and \
-                item.artist.lower() not in VA_ARTISTS:
-            penalties.append('artist')
-        if item.mb_trackid and item.mb_trackid != track_info.track_id:
-            penalties.append('ID')
+        # Penalties.
+        penalties = penalty_string(match.distance.tracks[track_info])
         if penalties:
-            rhs += ' %s' % ui.colorize('red',
-                                       '(%s)' % ', '.join(penalties))
+            rhs += ' %s' % penalties
 
         if lhs != rhs:
             lines.append((' * %s' % lhs, rhs, lhs_width))
@@ -489,20 +489,17 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                        (cur_artist, cur_album))
                 print_('Candidates:')
                 for i, match in enumerate(candidates):
+                    # Artist, album and distance.
                     line = ['%i. %s - %s (%s)' % (i + 1, match.info.artist,
                                                   match.info.album,
                                                   dist_string(match.distance))]
 
-                    # Point out the partial matches.
-                    if match.extra_items or match.extra_tracks:
-                        line.append(ui.colorize('yellow',
-                                                PARTIAL_MATCH_MESSAGE))
+                    # Penalties.
+                    penalties = penalty_string(match.distance, 3)
+                    if penalties:
+                        line.append(penalties)
 
-                    # Sources other than MusicBrainz.
-                    source = match.info.data_source
-                    if source != 'MusicBrainz':
-                        line.append(ui.colorize('turquoise', '(%s)' % source))
-
+                    # Disambiguation
                     disambig = disambig_string(match.info)
                     if disambig:
                         line.append(ui.colorize('lightgray', '(%s)' % disambig))

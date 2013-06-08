@@ -59,10 +59,6 @@ log = logging.getLogger('beets')
 class UnreadableFileError(Exception):
     pass
 
-class FileIOError(UnreadableFileError, IOError):
-    def __init__(self, exc):
-        IOError.__init__(self, exc.errno, exc.strerror, exc.filename)
-
 # Raised for files that don't seem to have a type MediaFile supports.
 class FileTypeError(UnreadableFileError):
     pass
@@ -73,7 +69,8 @@ class FileTypeError(UnreadableFileError):
 # Human-readable type names.
 TYPES = {
     'mp3':  'MP3',
-    'mp4':  'AAC',
+    'aac':  'AAC',
+    'alac':  'ALAC',
     'ogg':  'OGG',
     'flac': 'FLAC',
     'ape':  'APE',
@@ -81,6 +78,8 @@ TYPES = {
     'mpc':  'Musepack',
     'asf':  'Windows Media',
 }
+
+MP4_TYPES = ('aac', 'alac')
 
 
 # Utility.
@@ -532,8 +531,10 @@ class MediaField(object):
             obj.mgfile[style.key] = out
 
     def _styles(self, obj):
-        if obj.type in ('mp3', 'mp4', 'asf'):
+        if obj.type in ('mp3', 'asf'):
             styles = self.styles[obj.type]
+        elif obj.type in MP4_TYPES:
+            styles = self.styles['mp4']
         else:
             styles = self.styles['etc']  # Sane styles.
 
@@ -568,7 +569,7 @@ class MediaField(object):
                     out = out[:-len(style.suffix)]
 
             # MPEG-4 freeform frames are (should be?) encoded as UTF-8.
-            if obj.type == 'mp4' and style.key.startswith('----:') and \
+            if obj.type in MP4_TYPES and style.key.startswith('----:') and \
                     isinstance(out, str):
                 out = out.decode('utf8')
 
@@ -636,7 +637,7 @@ class MediaField(object):
 
             # MPEG-4 "freeform" (----) frames must be encoded as UTF-8
             # byte strings.
-            if obj.type == 'mp4' and style.key.startswith('----:') and \
+            if obj.type in MP4_TYPES and style.key.startswith('----:') and \
                     isinstance(out, unicode):
                 out = out.encode('utf8')
 
@@ -723,7 +724,7 @@ class ImageField(object):
 
             return picframe.data
 
-        elif obj.type == 'mp4':
+        elif obj.type in MP4_TYPES:
             if 'covr' in obj.mgfile:
                 covers = obj.mgfile['covr']
                 if covers:
@@ -795,7 +796,7 @@ class ImageField(object):
             )
             obj.mgfile['APIC'] = picframe
 
-        elif obj.type == 'mp4':
+        elif obj.type in MP4_TYPES:
             if val is None:
                 if 'covr' in obj.mgfile:
                     del obj.mgfile['covr']
@@ -856,12 +857,15 @@ class MediaFile(object):
         self.path = path
 
         unreadable_exc = (
-            mutagen.mp3.HeaderNotFoundError,
-            mutagen.flac.FLACNoHeaderError,
+            mutagen.mp3.error,
+            mutagen.id3.error,
+            mutagen.flac.error,
             mutagen.monkeysaudio.MonkeysAudioHeaderError,
-            mutagen.mp4.MP4StreamInfoError,
-            mutagen.oggvorbis.OggVorbisHeaderError,
-            mutagen.asf.ASFHeaderError,
+            mutagen.mp4.error,
+            mutagen.oggvorbis.error,
+            mutagen.ogg.error,
+            mutagen.asf.error,
+            mutagen.apev2.error,
         )
         try:
             self.mgfile = mutagen.File(path)
@@ -869,7 +873,13 @@ class MediaFile(object):
             log.debug(u'header parsing failed: {0}'.format(unicode(exc)))
             raise UnreadableFileError('Mutagen could not read file')
         except IOError as exc:
-            raise FileIOError(exc)
+            if type(exc) == IOError:
+                # This is a base IOError, not a subclass from Mutagen or
+                # anywhere else.
+                raise
+            else:
+                log.debug(traceback.format_exc())
+                raise UnreadableFileError('Mutagen raised an exception')
         except Exception as exc:
             # Hide bugs in Mutagen.
             log.debug(traceback.format_exc())
@@ -880,7 +890,15 @@ class MediaFile(object):
             raise FileTypeError('file type unsupported by Mutagen')
         elif type(self.mgfile).__name__ == 'M4A' or \
              type(self.mgfile).__name__ == 'MP4':
-            self.type = 'mp4'
+            # This hack differentiates AAC and ALAC until we find a more
+            # deterministic approach. Mutagen only sets the sample rate
+            # for AAC files. See:
+            # https://github.com/sampsyo/beets/pull/295
+            if hasattr(self.mgfile.info, 'sample_rate') and \
+               self.mgfile.info.sample_rate > 0:
+                self.type = 'aac'
+            else:
+                self.type = 'alac'
         elif type(self.mgfile).__name__ == 'ID3' or \
              type(self.mgfile).__name__ == 'MP3':
             self.type = 'mp3'
