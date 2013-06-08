@@ -34,6 +34,8 @@ And some bug fixes:
 * Python 2.6 compatibility for :doc:`/plugins/beatport`. Thanks Wesley Bitter.
 * Don't move the config file during a null migration. Thanks to Theofilos
   Intzoglou.
+* Fix an occasional crash in the :doc:`/plugins/beatport` when a length
+  field was missing from the API response. Thanks to Timothy Appnel.
 
 
 1.2.0 (June 5, 2013)

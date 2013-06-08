@@ -139,10 +139,13 @@ class BeatportTrack(BeatportObject):
             self.title = unicode(data['title'])
         if 'mixName' in data:
             self.mix_name = unicode(data['mixName'])
-        self.length = timedelta(milliseconds=data.get('lengthMs',0) or 0)
-        if self.length == 0:
-            (min, sec) = data.get('length','0:0').split(':')
-            self.length = timedelta(minutes=min, seconds=sec)
+        self.length = timedelta(milliseconds=data.get('lengthMs', 0) or 0)
+        if not self.length:
+            try:
+                min, sec = data.get('length', '0:0').split(':')
+                self.length = timedelta(minutes=int(min), seconds=int(sec))
+            except ValueError:
+                pass
         if 'slug' in data:
             self.url = "http://beatport.com/track/{0}/{1}".format(data['slug'],
                                                                   data['id'])
