@@ -121,6 +121,7 @@ def strip_cruft(lyrics, wscollapse=True):
     lyrics = re.sub(r'\n +', '\n', lyrics)
     lyrics = re.sub(r' +\n', '\n', lyrics)
     lyrics = TAG_RE.sub('', lyrics) # Strip remaining HTML tags.
+    lyrics = lyrics.replace('\r','\n')
     lyrics = lyrics.strip()
     return lyrics
 
@@ -204,13 +205,17 @@ def slugify(text):
         log.exception("Failing to normalize '%s'" % (text))
     return urllib.quote(text)
 
+
+BY_TRANS     = ['by', 'par']
+LYRICS_TRANS = ['lyrics', 'paroles']
+
 def is_page_candidate(urlLink, urlTitle, title, artist):
     """Return True if the URL title makes it a good candidate to be a
     page that contains lyrics of title by artist.
     """
     title = slugify(title.lower())
     artist = slugify(artist.lower())
-    urlLink = slugify(urlLink.lower())
+    sitename = re.search(u"//([^/]+)/.*", slugify(urlLink.lower())).group(1)
     urlTitle = slugify(urlTitle.lower())
 
     # Check if URL title contains song title (exact match)
@@ -218,14 +223,17 @@ def is_page_candidate(urlLink, urlTitle, title, artist):
         return True
     # or try extracting song title from URL title and check if
     # they are close enough
-    songTitle = urlTitle.replace('lyrics', '') \
-                        .replace(artist, '').strip('%20')
+    tokens = [by+'%20'+artist for by in BY_TRANS] + \
+             [artist, sitename, sitename.replace('www.','')] + LYRICS_TRANS
+    songTitle = re.sub(u'(%s)' % u'|'.join(tokens) ,u'', urlTitle).strip('%20')
+
     if songTitle:
-        log.debug("Match ratio of '%s' with title: %s" %
+        log.debug("Match ratio of '%s' with '%s': %s" %
                   (songTitle,
+                   title, 
                    difflib.SequenceMatcher(None, songTitle, title).ratio()))
 
-    typoRatio = .8
+    typoRatio = .75
     return difflib.SequenceMatcher(None, songTitle, title).ratio() > typoRatio
 
 def insert_line_feeds(text):
@@ -237,17 +245,6 @@ def insert_line_feeds(text):
         tokensStr[idx] = ltoken[0] + '\n' + ltoken[1]
     return ''.join(tokensStr)
 
-def decimate_line_feeds(text):
-    """Decimate newline characters. By default use only one newline as
-    an end-of-line marker. Keep at most two newlines in a row (e.g., to
-    separate verses).
-    """
-    # Remove first occurrence of \n for each sequence of \n
-    text = re.sub(r'\n(\n+)', '\g<1>', text)
-    # Keep at most two \n in a row
-    text = re.sub(r'\n\n+', '\n\n', text)
-    return text.strip('\n')
-
 def sanitize_lyrics(text):
     """Clean text, returning raw lyrics as output or None if it happens
     that input text is actually not lyrics content.  Clean (x)html tags
@@ -255,32 +252,26 @@ def sanitize_lyrics(text):
     """
     text = strip_cruft(text, False)
 
+    # Suppress advertisements.
+    # Match lines with an opening bracket but no ending one, ie lines that
+    # contained html link that has been wiped out when scraping.
+    LINK1_RE = re.compile(r'(\(|\[).*[^\)\]]$')
+    # Match lines containing url between brackets
+    LINK2_RE = re.compile(r'(\(|\[).*[http|www].*(\]|\))')
+    text = LINK1_RE.sub('', text)
+    text = LINK2_RE.sub('', text)
+
     # Restore \n in input text
     if '\n' not in text:
         text = insert_line_feeds(text)
 
-    # Suppress advertisements.
-    textLines = text.splitlines(True)
-    # Match lines with an opening bracket but no ending one, ie lines that
-    # contained html link that has been wiped out when scraping.
-    reAdHtml = re.compile(r'(\(|\[).*[^\)\]]$')
-    # Match lines containing url between brackets
-    reAdTxt  = re.compile(r'(\(|\[).*[http|www].*(\]|\))')
-    for line in textLines:
-        if re.match(reAdHtml, line) or re.match(reAdTxt, line):
-            textLines.remove(line)
+    while text.count('\n\n') > text.count('\n')/4:
+        # Remove first occurrence of \n for each sequence of \n
+        text = re.sub(r'\n(\n+)', '\g<1>', text)
 
-    # \n might have been duplicated during the scraping.
-    # decimate \n while number of \n represent more than half the number of
-    # lines
-    while len([x for x in textLines if x == '\n']) >= len(textLines) / 2 - 1:
-        if len(textLines) <= 3:
-            break
-        text = ''.join(textLines)
-        text = decimate_line_feeds(text)
-        textLines = [line.strip(' ') for line in text.splitlines(True)]
+    text = re.sub(r'\n\n+', '\n\n', text)   # keep at most two \n in a row
 
-    return ''.join(textLines)
+    return text
 
 def is_lyrics(text, artist):
     """Determine whether the text seems to be valid lyrics.
@@ -305,30 +296,25 @@ def scrape_lyrics_from_url(url):
     """Scrape lyrics from a URL. If no lyrics can be found, return None
     instead.
     """
-    from bs4 import BeautifulSoup, Tag
+    from bs4 import BeautifulSoup, Tag, Comment
     html = fetch_url(url)
     soup = BeautifulSoup(html)
-
-    # Simplify the code by replacing some markers by the <p> marker
-    try:
-        for tag in soup.findAll(['center', 'blockquote','section']):
-            tag.name = 'p'          # keep tag contents
-
-        for tag in soup.findAll(['script', 'a', 'font']):
-            tag.replaceWith('<p>')  # skip tag contents
-
-    except Exception, e:
-        log.debug('Error %s when replacing containing marker by p marker' % e,
-            exc_info=True)
 
     for tag in soup.findAll('br'):
         tag.replaceWith('\n')
 
-    # Keep only tags that can possibly be parent tags and eol
-    for tag in soup.findAll(True):
-        containers = ['div', 'p', 'html', 'body', 'table', 'tr', 'td', 'br']
-        if tag.name not in containers:
-            tag.extract()
+    # Remove non relevant html parts
+    [s.extract() for s in soup(['head', 'script'])]
+    comments = soup.findAll(text=lambda text:isinstance(text, Comment))
+    [s.extract() for s in comments]
+
+    try:
+        for tag in soup.findAll(True):
+            tag.name = 'p'          # keep tag contents
+
+    except Exception, e:
+        log.debug('Error %s when replacing containing marker by p marker' % e,
+            exc_info=True)
 
     # Make better soup from current soup! The previous unclosed <p> sections
     # are now closed.  Use str() rather than prettify() as it's more
@@ -344,6 +330,7 @@ def scrape_lyrics_from_url(url):
         pTag.insert(0, bodyTag)
 
     tagTokens = []
+
     for tag in soup.findAll('p'):
         soup2 = BeautifulSoup(str(tag))
         # Extract all text of <p> section.
@@ -353,8 +340,6 @@ def scrape_lyrics_from_url(url):
         # Lyrics are expected to be the longest paragraph
         tagTokens = sorted(tagTokens, key=len, reverse=True)
         soup = BeautifulSoup(tagTokens[0])
-        if soup.findAll(['div', 'a']):
-            return None
         return unescape(tagTokens[0].strip("\n\r: "))
 
 def fetch_google(artist, title):
@@ -457,6 +442,7 @@ class LyricsPlugin(BeetsPlugin):
                               (item.artist, item.title))
 
         item.lyrics = lyrics
+
         if write:
             item.write()
         lib.store(item)
