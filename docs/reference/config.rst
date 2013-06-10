@@ -395,40 +395,45 @@ max_rec
 As mentioned above, autotagger matches have *recommendations* that control how
 the UI behaves for a certain quality of match. The recommendation for a certain
 match is based on the overall distance calculation. But you can also control
-the recommendation when a distance penalty is being applied for a specific
-field by defining *maximum* recommendations for each field:
+the recommendation when a specific distance penalty is applied by defining
+*maximum* recommendations for each field:
 
-To define maxima, use keys under ``max_rec:`` in the ``match`` section. Here
-are the defaults::
+To define maxima, use keys under ``max_rec:`` in the ``match`` section. The
+defaults are "medium" for missing and unmatched tracks and "strong" (i.e., no
+maximum) for everything else::
 
     match:
         max_rec:
-            source: strong
-            artist: strong
-            album: strong
-            media: strong
-            mediums: strong
-            year: strong
-            country: strong
-            label: strong
-            catalognum: strong
-            albumdisambig: strong
-            album_id: strong
-            tracks: strong
             missing_tracks: medium
             unmatched_tracks: medium
-            track_title: strong
-            track_artist: strong
-            track_index: strong
-            track_length_grace: strong
-            track_length_max: strong
-            track_length: strong
-            track_id: strong
 
-If a recommendation is higher than the configured maximum and a penalty is
-being applied, the recommendation will be downgraded. The maximum for each
-field can be one of ``none``, ``low``, ``medium`` or ``strong``. When the
-maximum recommendation is ``strong``, no "downgrading" occurs.
+If a recommendation is higher than the configured maximum and the indicated
+penalty is applied, the recommendation is downgraded. The setting for
+each field can be one of ``none``, ``low``, ``medium`` or ``strong``. When the
+maximum recommendation is ``strong``, no "downgrading" occurs. The available
+penalty names here are:
+
+* source
+* artist
+* album
+* media
+* mediums
+* year
+* country
+* label
+* catalognum
+* albumdisambig
+* album_id
+* tracks
+* missing_tracks
+* unmatched_tracks
+* track_title
+* track_artist
+* track_index
+* track_length_grace
+* track_length_max
+* track_length
+* track_id
 
 .. _preferred:
 
@@ -440,10 +445,10 @@ similarity, you can also specify an ordered list of preferred countries and
 media types.
 
 A distance penalty will be applied if the country or media type from the match
-metadata doesn't match. The order is important, the first item will be most
-preferred. Each item may be a regular expression, and will be matched case
-insensitively. The number of media will be stripped when matching preferred
-media (e.g. "2x" in "2xCD").
+metadata doesn't match. The specified values are preferred in descending order
+(i.e., the first item will be most preferred). Each item may be a regular
+expression, and will be matched case insensitively. The number of media will
+be stripped when matching preferred media (e.g. "2x" in "2xCD").
 
 You can also tell the autotagger to prefer matches that have a release year
 closest to the original year for an album.
@@ -468,6 +473,8 @@ the penalty name to the ``ignored`` setting::
 
     match:
         ignored: missing_tracks unmatched_tracks
+
+The available penalties are the same as those for the :ref:`max_rec` setting.
 
 .. _path-format-config:
 
