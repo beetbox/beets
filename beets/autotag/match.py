@@ -295,14 +295,16 @@ def _recommendation(results):
     if isinstance(results[0], hooks.AlbumMatch):
         for track_dist in min_dist.tracks.values():
             keys.update(track_dist.keys())
+    max_rec_view = config['match']['max_rec']
     for key in keys:
-        max_rec = config['match']['max_rec'][key].as_choice({
-            'strong': recommendation.strong,
-            'medium': recommendation.medium,
-            'low': recommendation.low,
-            'none': recommendation.none,
-        })
-        rec = min(rec, max_rec)
+        if key in max_rec_view.keys():
+            max_rec = max_rec_view[key].as_choice({
+                'strong': recommendation.strong,
+                'medium': recommendation.medium,
+                'low': recommendation.low,
+                'none': recommendation.none,
+            })
+            rec = min(rec, max_rec)
 
     return rec
 

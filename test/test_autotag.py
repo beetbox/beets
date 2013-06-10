@@ -245,7 +245,7 @@ class DistanceTest(_common.TestCase):
         dist = Distance()
         dist.add('album', 0.375)
         dist.add('medium', 0.75)
-        self.assertEqual(dist.items, [('album', 0.25), ('medium', 0.25)])
+        self.assertEqual(dist.items(), [('album', 0.25), ('medium', 0.25)])
 
     def test_update(self):
         dist1 = Distance()

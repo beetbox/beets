@@ -68,25 +68,8 @@ match:
     medium_rec_thresh: 0.25
     rec_gap_thresh: 0.25
     max_rec:
-        source: strong
-        artist: strong
-        album: strong
-        media: strong
-        mediums: strong
-        year: strong
-        country: strong
-        label: strong
-        catalognum: strong
-        albumdisambig: strong
-        album_id: strong
-        tracks: strong
         missing_tracks: medium
         unmatched_tracks: medium
-        track_title: strong
-        track_artist: strong
-        track_index: strong
-        track_length: strong
-        track_id: strong
     distance_weights:
         source: 2.0
         artist: 3.0

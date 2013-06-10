@@ -430,8 +430,6 @@ penalty names here are:
 * track_title
 * track_artist
 * track_index
-* track_length_grace
-* track_length_max
 * track_length
 * track_id
 
