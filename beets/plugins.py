@@ -67,13 +67,13 @@ class BeetsPlugin(object):
         """Should return a Distance object to be added to the
         distance for every track comparison.
         """
-        return beets.autotag.match.Distance()
+        return beets.autotag.hooks.Distance()
 
     def album_distance(self, items, album_info, mapping):
         """Should return a Distance object to be added to the
         distance for every album-level comparison.
         """
-        return beets.autotag.match.Distance()
+        return beets.autotag.hooks.Distance()
 
     def candidates(self, items, artist, album, va_likely):
         """Should return a sequence of AlbumInfo objects that match the
@@ -244,14 +244,16 @@ def track_distance(item, info):
     """Gets the track distance calculated by all loaded plugins.
     Returns a Distance object.
     """
-    dist = beets.autotag.match.Distance()
+    from beets.autotag.hooks import Distance
+    dist = Distance()
     for plugin in find_plugins():
         dist.update(plugin.track_distance(item, info))
     return dist
 
 def album_distance(items, album_info, mapping):
     """Returns the album distance calculated by plugins."""
-    dist = beets.autotag.match.Distance()
+    from beets.autotag.hooks import Distance
+    dist = Distance()
     for plugin in find_plugins():
         dist.update(plugin.album_distance(items, album_info, mapping))
     return dist

@@ -20,8 +20,7 @@ from datetime import datetime, timedelta
 
 import requests
 
-from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.autotag.match import Distance
+from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
 from beets.plugins import BeetsPlugin
 
 log = logging.getLogger('beets')
