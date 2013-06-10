@@ -168,7 +168,7 @@ def penalty_string(distance, limit=None):
     applied to a distance object.
     """
     penalties = []
-    for key, _ in distance:
+    for key in distance.keys():
         key = key.replace('album_', '')
         key = key.replace('track_', '')
         key = key.replace('_', ' ')
