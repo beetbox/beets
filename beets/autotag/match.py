@@ -28,9 +28,6 @@ from beets.util import plurality
 from beets.util.enumeration import enum
 from beets.autotag import hooks
 
-# A configuration view for the distance weights.
-weights = config['match']['distance_weights']
-
 # Recommendation enumeration.
 recommendation = enum('none', 'low', 'medium', 'strong', name='recommendation')
 
@@ -112,9 +109,9 @@ def track_distance(item, track_info, incl_artist=False):
     # Length.
     if track_info.length:
         diff = abs(item.length - track_info.length) - \
-               weights['track_length_grace'].as_number()
+               config['match']['track_length_grace'].as_number()
         dist.add_ratio('track_length', diff,
-                       weights['track_length_max'].as_number())
+                       config['match']['track_length_max'].as_number())
 
     # Title.
     dist.add_string('track_title', item.title, track_info.title)
@@ -294,10 +291,10 @@ def _recommendation(results):
 
     # Downgrade to the max rec if it is lower than the current rec for an
     # applied penalty.
-    keys = set(key for _, key in min_dist)
+    keys = set(key for key, _ in min_dist)
     if isinstance(results[0], hooks.AlbumMatch):
         for track_dist in min_dist.tracks.values():
-            keys.update(key for _, key in track_dist)
+            keys.update(key for key, _ in track_dist)
     for key in keys:
         max_rec = config['match']['max_rec'][key].as_choice({
             'strong': recommendation.strong,

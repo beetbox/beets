@@ -85,8 +85,6 @@ match:
         track_title: strong
         track_artist: strong
         track_index: strong
-        track_length_grace: strong
-        track_length_max: strong
         track_length: strong
         track_id: strong
     distance_weights:
@@ -107,8 +105,6 @@ match:
         track_title: 3.0
         track_artist: 2.0
         track_index: 1.0
-        track_length_grace: 10
-        track_length_max: 30
         track_length: 2.0
         track_id: 5.0
     preferred:
@@ -116,3 +112,5 @@ match:
         media: []
         original_year: no
     ignored: []
+    track_length_grace: 10
+    track_length_max: 30
