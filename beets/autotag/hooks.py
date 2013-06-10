@@ -294,8 +294,8 @@ class Distance(object):
         return dist_raw
 
     @property
-    def sorted(self):
-        """Returns a list of (dist, key) pairs, with `dist` being the
+    def items(self):
+        """Returns a list of (key, dist) pairs, with `dist` being the
         weighted distance, sorted from highest to lowest. Does not
         include penalties with a zero value.
         """
@@ -303,11 +303,11 @@ class Distance(object):
         for key in self._penalties:
             dist = self[key]
             if dist:
-                list_.append((dist, key))
-        # Convert distance into a negative float we can sort items in ascending
-        # order (for keys, when the penalty is equal) and still get the items
-        # with the biggest distance first.
-        return sorted(list_, key=lambda (dist, key): (0-dist, key))
+                list_.append((key, dist))
+        # Convert distance into a negative float we can sort items in
+        # ascending order (for keys, when the penalty is equal) and
+        # still get the items with the biggest distance first.
+        return sorted(list_, key=lambda (key, dist): (0-dist, key))
 
 
     # Behave like a float.
@@ -336,10 +336,10 @@ class Distance(object):
         return 0.0
 
     def __iter__(self):
-        return iter(self.sorted)
+        return iter(self.items)
 
     def __len__(self):
-        return len(self.sorted)
+        return len(self.items)
 
     def update(self, dist):
         """Adds all the distance penalties from `dist`.

@@ -216,7 +216,7 @@ class DistanceTest(_common.TestCase):
         dist.add('medium', 0.25)
         dist.add('medium', 0.75)
         self.assertEqual(len(dist), 2)
-        self.assertEqual(list(dist), [(0.2, 'album'), (0.2, 'medium')])
+        self.assertEqual(list(dist), [('album', 0.2), ('medium', 0.2)])
         self.assertTrue(dist == 0.4)
         self.assertTrue(dist < 1.0)
         self.assertTrue(dist > 0.0)
@@ -233,19 +233,19 @@ class DistanceTest(_common.TestCase):
         dist.add('medium', 0.5)
         self.assertEqual(dist.raw_distance, 2.25)
 
-    def test_sorted(self):
+    def test_items(self):
         config['match']['distance_weights']['album'] = 4.0
         config['match']['distance_weights']['medium'] = 2.0
         dist = Distance()
         dist.add('album', 0.1875)
         dist.add('medium', 0.75)
-        self.assertEqual(dist.sorted, [(0.25, 'medium'), (0.125, 'album')])
+        self.assertEqual(dist.items, [('medium', 0.25), ('album', 0.125)])
 
         # Sort by key if distance is equal.
         dist = Distance()
         dist.add('album', 0.375)
         dist.add('medium', 0.75)
-        self.assertEqual(dist.sorted, [(0.25, 'album'), (0.25, 'medium')])
+        self.assertEqual(dist.items, [('album', 0.25), ('medium', 0.25)])
 
     def test_update(self):
         dist1 = Distance()
