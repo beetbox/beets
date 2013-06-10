@@ -36,6 +36,7 @@ And some bug fixes:
   Intzoglou.
 * Fix an occasional crash in the :doc:`/plugins/beatport` when a length
   field was missing from the API response. Thanks to Timothy Appnel.
+* :doc:`/plugins/scrub`: Handle and log I/O errors.
 
 
 1.2.0 (June 5, 2013)
