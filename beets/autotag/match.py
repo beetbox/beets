@@ -21,33 +21,12 @@ import datetime
 import logging
 import re
 from munkres import Munkres
-from unidecode import unidecode
 
 from beets import plugins
 from beets import config
-from beets.util import levenshtein, plurality
+from beets.util import plurality
 from beets.util.enumeration import enum
 from beets.autotag import hooks
-
-# A configuration view for the distance weights.
-weights = config['match']['distance_weights']
-
-# Parameters for string distance function.
-# Words that can be moved to the end of a string using a comma.
-SD_END_WORDS = ['the', 'a', 'an']
-# Reduced weights for certain portions of the string.
-SD_PATTERNS = [
-    (r'^the ', 0.1),
-    (r'[\[\(]?(ep|single)[\]\)]?', 0.0),
-    (r'[\[\(]?(featuring|feat|ft)[\. :].+', 0.1),
-    (r'\(.*?\)', 0.3),
-    (r'\[.*?\]', 0.3),
-    (r'(, )?(pt\.|part) .+', 0.2),
-]
-# Replacements to use before testing distance.
-SD_REPLACE = [
-    (r'&', 'and'),
-]
 
 # Recommendation enumeration.
 recommendation = enum('none', 'low', 'medium', 'strong', name='recommendation')
@@ -63,73 +42,6 @@ log = logging.getLogger('beets')
 
 
 # Primary matching functionality.
-
-def _string_dist_basic(str1, str2):
-    """Basic edit distance between two strings, ignoring
-    non-alphanumeric characters and case. Comparisons are based on a
-    transliteration/lowering to ASCII characters. Normalized by string
-    length.
-    """
-    str1 = unidecode(str1)
-    str2 = unidecode(str2)
-    str1 = re.sub(r'[^a-z0-9]', '', str1.lower())
-    str2 = re.sub(r'[^a-z0-9]', '', str2.lower())
-    if not str1 and not str2:
-        return 0.0
-    return levenshtein(str1, str2) / float(max(len(str1), len(str2)))
-
-def string_dist(str1, str2):
-    """Gives an "intuitive" edit distance between two strings. This is
-    an edit distance, normalized by the string length, with a number of
-    tweaks that reflect intuition about text.
-    """
-    str1 = str1.lower()
-    str2 = str2.lower()
-
-    # Don't penalize strings that move certain words to the end. For
-    # example, "the something" should be considered equal to
-    # "something, the".
-    for word in SD_END_WORDS:
-        if str1.endswith(', %s' % word):
-            str1 = '%s %s' % (word, str1[:-len(word)-2])
-        if str2.endswith(', %s' % word):
-            str2 = '%s %s' % (word, str2[:-len(word)-2])
-
-    # Perform a couple of basic normalizing substitutions.
-    for pat, repl in SD_REPLACE:
-        str1 = re.sub(pat, repl, str1)
-        str2 = re.sub(pat, repl, str2)
-
-    # Change the weight for certain string portions matched by a set
-    # of regular expressions. We gradually change the strings and build
-    # up penalties associated with parts of the string that were
-    # deleted.
-    base_dist = _string_dist_basic(str1, str2)
-    penalty = 0.0
-    for pat, weight in SD_PATTERNS:
-        # Get strings that drop the pattern.
-        case_str1 = re.sub(pat, '', str1)
-        case_str2 = re.sub(pat, '', str2)
-
-        if case_str1 != str1 or case_str2 != str2:
-            # If the pattern was present (i.e., it is deleted in the
-            # the current case), recalculate the distances for the
-            # modified strings.
-            case_dist = _string_dist_basic(case_str1, case_str2)
-            case_delta = max(0.0, base_dist - case_dist)
-            if case_delta == 0.0:
-                continue
-
-            # Shift our baseline strings down (to avoid rematching the
-            # same part of the string) and add a scaled distance
-            # amount to the penalties.
-            str1 = case_str1
-            str2 = case_str2
-            base_dist = case_dist
-            penalty += weight * case_delta
-    dist = base_dist + penalty
-
-    return dist
 
 def current_metadata(items):
     """Extract the likely current metadata for an album given a list of its
@@ -187,196 +99,19 @@ def track_index_changed(item, track_info):
     """
     return item.track not in (track_info.medium_index, track_info.index)
 
-class Distance(object):
-    """Keeps track of multiple distance penalties. Provides a single weighted
-    distance for all penalties as well as a weighted distance for each
-    individual penalty.
-    """
-    def __cmp__(self, other):
-        return cmp(self.distance, other)
-
-    def __float__(self):
-        return self.distance
-
-    def __getitem__(self, key):
-        """Returns the weighted distance for a named penalty.
-        """
-        dist = sum(self._penalties[key]) * weights[key].as_number()
-        dist_max = self.max_distance
-        if dist_max:
-            return dist / dist_max
-        return 0.0
-
-    def __init__(self):
-        self._penalties = {}
-
-    def __iter__(self):
-        return iter(self.sorted)
-
-    def __len__(self):
-        return len(self.sorted)
-
-    def __sub__(self, other):
-        return self.distance - other
-
-    def __rsub__(self, other):
-        return other - self.distance
-
-    def _eq(self, value1, value2):
-        """Returns True if `value1` is equal to `value2`. `value1` may be a
-        compiled regular expression, in which case it will be matched against
-        `value2`.
-        """
-        if isinstance(value1, re._pattern_type):
-            return bool(value1.match(value2))
-        return value1 == value2
-
-    def add(self, key, dist):
-        """Adds a distance penalty. `key` must correspond with a configured
-        weight setting. `dist` must be a float between 0.0 and 1.0, and will be
-        added to any existing distance penalties for the same key.
-        """
-        if not 0.0 <= dist <= 1.0:
-            raise ValueError(
-                    '`dist` must be between 0.0 and 1.0. It is: %r' % dist)
-        self._penalties.setdefault(key, []).append(dist)
-
-    def add_equality(self, key, value, options):
-        """Adds a distance penalty of 1.0 if `value` doesn't match any of the
-        values in `options`. If an option is a compiled regular expression, it
-        will be considered equal if it matches against `value`.
-        """
-        if not isinstance(options, (list, tuple)):
-            options = [options]
-        for opt in options:
-            if self._eq(opt, value):
-                dist = 0.0
-                break
-        else:
-            dist = 1.0
-        self.add(key, dist)
-
-    def add_expr(self, key, expr):
-        """Adds a distance penalty of 1.0 if `expr` evaluates to True, or 0.0.
-        """
-        if expr:
-            self.add(key, 1.0)
-        else:
-            self.add(key, 0.0)
-
-    def add_number(self, key, number1, number2):
-        """Adds a distance penalty of 1.0 for each number of difference between
-        `number1` and `number2`, or 0.0 when there is no difference. Use this
-        when there is no upper limit on the difference between the two numbers.
-        """
-        diff = abs(number1 - number2)
-        if diff:
-            for i in range(diff):
-                self.add(key, 1.0)
-        else:
-            self.add(key, 0.0)
-
-    def add_priority(self, key, value, options):
-        """Adds a distance penalty that corresponds to the position at which
-        `value` appears in `options`. A distance penalty of 0.0 for the first
-        option, or 1.0 if there is no matching option. If an option is a
-        compiled regular expression, it will be considered equal if it matches
-        against `value`.
-        """
-        if not isinstance(options, (list, tuple)):
-            options = [options]
-        unit = 1.0 / (len(options) or 1)
-        for i, opt in enumerate(options):
-            if self._eq(opt, value):
-                dist = i * unit
-                break
-        else:
-            dist = 1.0
-        self.add(key, dist)
-
-    def add_ratio(self, key, number1, number2):
-        """Adds a distance penalty for `number1` as a ratio of `number2`.
-        `number1` is bound at 0 and `number2`.
-        """
-        number = float(max(min(number1, number2), 0))
-        if number2:
-            dist = number / number2
-        else:
-            dist = 0.0
-        self.add(key, dist)
-
-    def add_string(self, key, str1, str2):
-        """Adds a distance penalty based on the edit distance between `str1`
-        and `str2`.
-        """
-        dist = string_dist(str1, str2)
-        self.add(key, dist)
-
-    @property
-    def distance(self):
-        """Returns a weighted and normalised distance across all penalties.
-        """
-        dist_max = self.max_distance
-        if dist_max:
-            return self.raw_distance / self.max_distance
-        return 0.0
-
-    @property
-    def max_distance(self):
-        """Returns the maximum distance penalty.
-        """
-        dist_max = 0.0
-        for key, penalty in self._penalties.iteritems():
-            dist_max += len(penalty) * weights[key].as_number()
-        return dist_max
-
-    @property
-    def raw_distance(self):
-        """Returns the raw (denormalised) distance.
-        """
-        dist_raw = 0.0
-        for key, penalty in self._penalties.iteritems():
-            dist_raw += sum(penalty) * weights[key].as_number()
-        return dist_raw
-
-    @property
-    def sorted(self):
-        """Returns a list of (dist, key) pairs, with `dist` being the weighted
-        distance, sorted from highest to lowest. Does not include penalties
-        with a zero value.
-        """
-        list_ = []
-        for key in self._penalties:
-            dist = self[key]
-            if dist:
-                list_.append((dist, key))
-        # Convert distance into a negative float we can sort items in ascending
-        # order (for keys, when the penalty is equal) and still get the items
-        # with the biggest distance first.
-        return sorted(list_, key=lambda (dist, key): (0-dist, key))
-
-    def update(self, dist):
-        """Adds all the distance penalties from `dist`.
-        """
-        if not isinstance(dist, Distance):
-            raise ValueError(
-                    '`dist` must be a Distance object. It is: %r' % dist)
-        for key, penalties in dist._penalties.iteritems():
-            self._penalties.setdefault(key, []).extend(penalties)
-
 def track_distance(item, track_info, incl_artist=False):
     """Determines the significance of a track metadata change. Returns a
     Distance object. `incl_artist` indicates that a distance component should
     be included for the track artist (i.e., for various-artist releases).
     """
-    dist = Distance()
+    dist = hooks.Distance()
 
     # Length.
     if track_info.length:
         diff = abs(item.length - track_info.length) - \
-               weights['track_length_grace'].as_number()
+               config['match']['track_length_grace'].as_number()
         dist.add_ratio('track_length', diff,
-                       weights['track_length_max'].as_number())
+                       config['match']['track_length_max'].as_number())
 
     # Title.
     dist.add_string('track_title', item.title, track_info.title)
@@ -410,7 +145,7 @@ def distance(items, album_info, mapping):
     """
     likelies, _ = current_metadata(items)
 
-    dist = Distance()
+    dist = hooks.Distance()
 
     # Artist, if not various.
     if not album_info.va:
@@ -556,18 +291,20 @@ def _recommendation(results):
 
     # Downgrade to the max rec if it is lower than the current rec for an
     # applied penalty.
-    keys = set(key for _, key in min_dist)
+    keys = set(min_dist.keys())
     if isinstance(results[0], hooks.AlbumMatch):
         for track_dist in min_dist.tracks.values():
-            keys.update(key for _, key in track_dist)
+            keys.update(track_dist.keys())
+    max_rec_view = config['match']['max_rec']
     for key in keys:
-        max_rec = config['match']['max_rec'][key].as_choice({
-            'strong': recommendation.strong,
-            'medium': recommendation.medium,
-            'low': recommendation.low,
-            'none': recommendation.none,
-        })
-        rec = min(rec, max_rec)
+        if key in max_rec_view.keys():
+            max_rec = max_rec_view[key].as_choice({
+                'strong': recommendation.strong,
+                'medium': recommendation.medium,
+                'low': recommendation.low,
+                'none': recommendation.none,
+            })
+            rec = min(rec, max_rec)
 
     return rec
 

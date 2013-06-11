@@ -108,6 +108,11 @@ def _scrub(path):
             # remove them. In this case, we just remove all the tags.
             for tag in f.keys():
                 del f[tag]
+        except IOError as exc:
+            log.error(u'could not scrub {0}: {1}'.format(
+                util.displayable_path(path),
+                exc,
+            ))
         f.save()
 
 # Automatically embed art into imported albums.

@@ -164,11 +164,11 @@ def dist_string(dist):
     return out
 
 def penalty_string(distance, limit=None):
-    """Returns a colorized string that indicates all the penalties applied to
-    a distance object.
+    """Returns a colorized string that indicates all the penalties
+    applied to a distance object.
     """
     penalties = []
-    for _, key in distance:
+    for key in distance.keys():
         key = key.replace('album_', '')
         key = key.replace('track_', '')
         key = key.replace('_', ' ')

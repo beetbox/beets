@@ -36,6 +36,7 @@ And some bug fixes:
   Intzoglou.
 * Fix an occasional crash in the :doc:`/plugins/beatport` when a length
   field was missing from the API response. Thanks to Timothy Appnel.
+* :doc:`/plugins/scrub`: Handle and log I/O errors.
 
 
 1.2.0 (June 5, 2013)
@@ -103,7 +104,7 @@ same MusicBrainz release group:
   beets re-identify the same release when re-importing existing files.
 * Prefer releases that are closest to the tagged ``year``. Tolerate files
   tagged with release or original year.
-* The new :ref:`preferred_media` config option lets you prefer a certain media
+* The new ``preferred_media`` config option lets you prefer a certain media
   type when the ``media`` field is unset on an album.
 * Apply minor penalties across a range of fields to differentiate between
   nearly identical releases: ``disctotal``, ``label``, ``catalognum``,
