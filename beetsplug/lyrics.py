@@ -228,12 +228,11 @@ def is_page_candidate(urlLink, urlTitle, title, artist):
     songTitle = re.sub(u'(%s)' % u'|'.join(tokens) ,u'', urlTitle).strip('%20')
 
     if songTitle:
-        log.debug("Match ratio of '%s' with '%s': %s" %
+        log.debug("Match ratio of '%s' with title: %s" %
                   (songTitle,
-                   title, 
                    difflib.SequenceMatcher(None, songTitle, title).ratio()))
 
-    typoRatio = .75
+    typoRatio = .8
     return difflib.SequenceMatcher(None, songTitle, title).ratio() > typoRatio
 
 def insert_line_feeds(text):
