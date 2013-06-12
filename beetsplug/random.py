@@ -40,7 +40,9 @@ def random_item(lib, opts, args):
         # Group the objects by artist so we can sample from them.
         key = attrgetter('albumartist')
         objs.sort(key=key)
-        objs_by_artists = {artist: list(v) for artist, v in groupby(objs, key)}
+        objs_by_artists = {}
+        for artist, v in groupby(objs, key):
+            objs_by_artists[artist] = list(v)
 
         objs = []
         for _ in range(opts.number):

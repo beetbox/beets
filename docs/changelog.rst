@@ -39,6 +39,8 @@ And some bug fixes:
 * :doc:`/plugins/scrub`: Handle and log I/O errors.
 * :doc:`/plugins/lyrics`: The Google backend should now turn up more results.
   Thanks to Fabrice Laporte.
+* :doc:`/plugins/random`: Fix compatibility with Python 2.6. Thanks to
+  Matthias Drochner.
 
 
 1.2.0 (June 5, 2013)
