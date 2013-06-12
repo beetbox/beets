@@ -21,7 +21,6 @@ import logging
 import os
 import time
 import itertools
-import re
 import codecs
 from datetime import datetime
 
@@ -30,7 +29,7 @@ from beets import ui
 from beets.ui import print_, input_, decargs
 from beets import autotag
 from beets.autotag import recommendation
-from beets.autotag.match import VA_ARTISTS
+from beets.autotag import hooks
 from beets import plugins
 from beets import importer
 from beets import util
@@ -128,25 +127,30 @@ VARIOUS_ARTISTS = u'Various Artists'
 # Importer utilities and support.
 
 def disambig_string(info):
-    """Returns source, media, year, country, label and album disambiguation.
+    """Generate a string for an AlbumInfo or TrackInfo object that
+    provides context that helps disambiguate similar-looking albums and
+    tracks.
     """
     disambig = []
-    if info.data_source != 'MusicBrainz':
+    if info.data_source and info.data_source != 'MusicBrainz':
         disambig.append(info.data_source)
-    if info.media:
-        if info.mediums > 1:
-            disambig.append(u'{0}x{1}'.format(
-              info.mediums, info.media))
-        else:
-            disambig.append(info.media)
-    if info.year:
-        disambig.append(unicode(info.year))
-    if info.country:
-        disambig.append(info.country)
-    if info.label:
-        disambig.append(info.label)
-    if info.albumdisambig:
-        disambig.append(info.albumdisambig)
+
+    if isinstance(info, hooks.AlbumInfo):
+        if info.media:
+            if info.mediums > 1:
+                disambig.append(u'{0}x{1}'.format(
+                info.mediums, info.media))
+            else:
+                disambig.append(info.media)
+        if info.year:
+            disambig.append(unicode(info.year))
+        if info.country:
+            disambig.append(info.country)
+        if info.label:
+            disambig.append(info.label)
+        if info.albumdisambig:
+            disambig.append(info.albumdisambig)
+
     if disambig:
         return u', '.join(disambig)
 
@@ -196,7 +200,7 @@ def show_change(cur_artist, cur_album, match):
         """Return a string representing the track index of the given
         TrackInfo or Item object.
         """
-        if isinstance(track_info, autotag.hooks.TrackInfo):
+        if isinstance(track_info, hooks.TrackInfo):
             index = track_info.index
             medium_index = track_info.medium_index
             medium = track_info.medium
@@ -381,7 +385,19 @@ def show_item_change(item, match):
     else:
         print_("Tagging track: %s - %s" % (cur_artist, cur_title))
 
-    print_('(Similarity: %s)' % dist_string(match.distance))
+    # Info line.
+    info = []
+    # Similarity.
+    info.append('(Similarity: %s)' % dist_string(match.distance))
+    # Penalties.
+    penalties = penalty_string(match.distance)
+    if penalties:
+        info.append(penalties)
+    # Disambiguation.
+    disambig = disambig_string(match.info)
+    if disambig:
+        info.append(ui.colorize('lightgray', '(%s)' % disambig))
+    print_(' '.join(info))
 
 def _summary_judment(rec):
     """Determines whether a decision should be made without even asking
