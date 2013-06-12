@@ -37,6 +37,8 @@ And some bug fixes:
 * Fix an occasional crash in the :doc:`/plugins/beatport` when a length
   field was missing from the API response. Thanks to Timothy Appnel.
 * :doc:`/plugins/scrub`: Handle and log I/O errors.
+* :doc:`/plugins/lyrics`: The Google backend should now turn up more results.
+  Thanks to Fabrice Laporte.
 
 
 1.2.0 (June 5, 2013)
