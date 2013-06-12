@@ -492,35 +492,35 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
 
         if not bypass_candidates:
             # Display list of candidates.
-            if singleton:
-                print_('Finding tags for track "%s - %s".' %
-                       (item.artist, item.title))
-                print_('Candidates:')
-                for i, match in enumerate(candidates):
-                    print_('%i. %s - %s (%s)' %
-                           (i + 1, match.info.artist, match.info.title,
-                            dist_string(match.distance)))
-            else:
-                print_('Finding tags for album "%s - %s".' %
-                       (cur_artist, cur_album))
-                print_('Candidates:')
-                for i, match in enumerate(candidates):
-                    # Artist, album and distance.
-                    line = ['%i. %s - %s (%s)' % (i + 1, match.info.artist,
-                                                  match.info.album,
-                                                  dist_string(match.distance))]
+            print_(u'Finding tags for {0} "{1} - {2}".'.format(
+                u'track' if singleton else u'album',
+                item.artist if singleton else cur_artist,
+                item.title if singleton else cur_album,
+            ))
 
-                    # Penalties.
-                    penalties = penalty_string(match.distance, 3)
-                    if penalties:
-                        line.append(penalties)
+            print_(u'Candidates:')
+            for i, match in enumerate(candidates):
+                # Index, metadata, and distance.
+                line = [
+                    u'{0}.'.format(i + 1),
+                    u'{0} - {1}'.format(
+                        match.info.artist,
+                        match.info.title if singleton else match.info.album,
+                    ),
+                    u'({0})'.format(dist_string(match.distance)),
+                ]
 
-                    # Disambiguation
-                    disambig = disambig_string(match.info)
-                    if disambig:
-                        line.append(ui.colorize('lightgray', '(%s)' % disambig))
+                # Penalties.
+                penalties = penalty_string(match.distance, 3)
+                if penalties:
+                    line.append(penalties)
 
-                    print_(' '.join(line))
+                # Disambiguation
+                disambig = disambig_string(match.info)
+                if disambig:
+                    line.append(ui.colorize('lightgray', '(%s)' % disambig))
+
+                print_(' '.join(line))
 
             # Ask the user for a choice.
             if singleton:
