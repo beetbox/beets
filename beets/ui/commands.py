@@ -385,6 +385,10 @@ def show_item_change(item, match):
     else:
         print_("Tagging track: %s - %s" % (cur_artist, cur_title))
 
+    # Data URL.
+    if match.info.data_url:
+        print_('URL:\n    %s' % match.info.data_url)
+
     # Info line.
     info = []
     # Similarity.
