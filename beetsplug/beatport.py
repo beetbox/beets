@@ -171,11 +171,14 @@ class BeatportPlugin(BeetsPlugin):
             dist.add('source', self.config['source_weight'].as_number())
         return dist
 
-    def track_distance(self, item, info):
+    def track_distance(self, item, track_info):
         """Returns the beatport source weight and the maximum source weight
         for individual tracks.
         """
-        return Distance()  # FIXME: Need source information for tracks.
+        dist = Distance()
+        if track_info.data_source == 'Beatport':
+            dist.add('source', self.config['source_weight'].as_number())
+        return dist
 
     def candidates(self, items, artist, release, va_likely):
         """Returns a list of AlbumInfo objects for beatport search results
@@ -272,7 +275,8 @@ class BeatportPlugin(BeetsPlugin):
 
         return TrackInfo(title=title, track_id=track.beatport_id,
                          artist=artist, artist_id=artist_id,
-                         length=length, index=index)
+                         length=length, index=index,
+                         data_source=u'Beatport', data_url=track.url)
 
     def _get_artist(self, artists):
         """Returns an artist string (all artists) and an artist_id (the main

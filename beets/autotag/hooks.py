@@ -95,7 +95,7 @@ class AlbumInfo(object):
         self.original_year = original_year
         self.original_month = original_month
         self.original_day = original_day
-        self.data_source = data_source or 'Unknown'
+        self.data_source = data_source
         self.data_url = data_url
 
     # Work around a bug in python-musicbrainz-ngs that causes some
@@ -138,7 +138,8 @@ class TrackInfo(object):
     """
     def __init__(self, title, track_id, artist=None, artist_id=None,
                  length=None, index=None, medium=None, medium_index=None,
-                 artist_sort=None, disctitle=None, artist_credit=None):
+                 artist_sort=None, disctitle=None, artist_credit=None,
+                 data_source=None, data_url=None):
         self.title = title
         self.track_id = track_id
         self.artist = artist
@@ -150,6 +151,8 @@ class TrackInfo(object):
         self.artist_sort = artist_sort
         self.disctitle = disctitle
         self.artist_credit = artist_credit
+        self.data_source = data_source
+        self.data_url = data_url
 
     # As above, work around a bug in python-musicbrainz-ngs.
     def decode(self, codec='utf8'):
