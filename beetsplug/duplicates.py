@@ -99,7 +99,7 @@ class DuplicatesPlugin(BeetsPlugin):
                     fmt = '$albumartist - $album'
                 else:
                     fmt = '$albumartist - $album - $title'
-                fmt += ': {}'
+                fmt += ': {0}'
 
             for obj_id, obj_count, objs in _duplicates(items, full):
                 if obj_id:  # Skip empty IDs.
