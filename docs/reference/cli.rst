@@ -234,6 +234,15 @@ To perform a "dry run" an update, just use the ``-p`` (for "pretend") flag. This
 will show you all the proposed changes but won't actually change anything on
 disk.
 
+When an updated track is part of an album, the album-level fields of *all*
+tracks from the album are also updated. (Specifically, the command copies
+album-level data from the first track on the album and applies it to the
+rest of the tracks.) This means that, if album-level fields aren't identical
+within an album, some changes shown by the ``update`` command may be
+overridden by data from other tracks on the same album. This means that
+running the ``update`` command multiple times may show the same changes being
+applied.
+
 .. _stats-cmd:
 
 stats
