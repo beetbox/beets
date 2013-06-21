@@ -73,12 +73,6 @@ def all_items():
     all_ids = [row[0] for row in rows]
     return flask.jsonify(item_ids=all_ids)
 
-@app.route('/item/count')
-def iten_count():
-    with g.lib.transaction() as tx:
-        rows = tx.query("SELECT COUNT(*) FROM items")
-    return flask.jsonify({'itemcount': rows[0][0]})
-
 @app.route('/item/<int:item_id>/file')
 def item_file(item_id):
     item = g.lib.get_item(item_id)
@@ -128,6 +122,19 @@ def all_artists():
         rows = tx.query("SELECT DISTINCT albumartist FROM albums")
     all_artists = [row[0] for row in rows]
     return flask.jsonify(artist_names=all_artists)
+
+
+# Library information.
+
+@app.route('/stats')
+def stats():
+    with g.lib.transaction() as tx:
+        item_rows = tx.query("SELECT COUNT(*) FROM items")
+        album_rows = tx.query("SELECT COUNT(*) FROM albums")
+    return flask.jsonify({
+        'items': item_rows[0][0],
+        'albums': album_rows[0][0],
+    })
 
 
 # UI.

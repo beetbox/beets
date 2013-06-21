@@ -33,6 +33,8 @@ And some little enhancements and bug fixes:
 
 * Multi-disc directory names can now contain "disk" (in addition to "disc").
   Thanks to John Hawthorn.
+* :doc:`/plugins/web`: An item count is now exposed through the API for use
+  with the Tomahawk resolver. Thanks to Uwe L. Korn.
 * Python 2.6 compatibility for :doc:`/plugins/beatport`,
   :doc:`/plugins/missing`, and `/plugins/duplicates`. Thanks to Wesley
   Bitter and Pedro Silva.
