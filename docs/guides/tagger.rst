@@ -48,8 +48,8 @@ all of these limitations.
 
   There is one exception to this rule: directories that look like separate parts
   of a *multi-disc album* are tagged together as a single release. If two
-  adjacent albums have a common prefix, followed by "disc" or "CD" and then a
-  number, they are tagged together.
+  adjacent albums have a common prefix, followed by "disc," "disk," or "CD"
+  and then a number, they are tagged together.
 
 * The music may have bad tags, but it's not completely untagged. (This is
   actually not a hard-and-fast rule: using the *E* option described below, it's

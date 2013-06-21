@@ -29,8 +29,10 @@ customize the way that matches are selected:
   component. The recommendation will be downgraded if a penalty is being
   applied to the specified field.
 
-And some bug fixes:
+And some little enhancements and bug fixes:
 
+* Multi-disc directory names can now contain "disk" (in addition to "disc").
+  Thanks to John Hawthorn.
 * Python 2.6 compatibility for :doc:`/plugins/beatport`,
   :doc:`/plugins/missing`, and `/plugins/duplicates`. Thanks to Wesley
   Bitter and Pedro Silva.
