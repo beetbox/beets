@@ -1,12 +1,17 @@
 Changelog
 =========
 
-1.2.1 (in development)
-----------------------
+1.2.1 (June 22, 2013)
+---------------------
 
 This release introduces a major internal change in the way that similarity
-scores are handled, thanks to the continued efforts of Tai Lee. The changes
-you'll notice while using the autotagger are:
+scores are handled. It means that the importer interface can now show you
+exactly why a match is assigned its score and that the autotagger gained a few
+new options that let you customize how matches are prioritized and
+recommended.
+
+The refactoring work is due to the continued efforts of Tai Lee. The
+changes you'll notice while using the autotagger are:
 
 * The top 3 distance penalties are now displayed on the release listing,
   and all album and track penalties are now displayed on the track changes
@@ -23,20 +28,20 @@ customize the way that matches are selected:
 * The :ref:`ignored` setting lets you instruct the importer not to show you
   matches that have a certain penalty applied.
 * The :ref:`preferred` collection of settings specifies a sorted list of
-  preferred countries and media types, or prefer releases closest to the
+  preferred countries and media types, or prioritizes releases closest to the
   original year for an album.
 * The :ref:`max_rec` settings can now be used for any distance penalty
-  component. The recommendation will be downgraded if a penalty is being
-  applied to the specified field.
+  component. The recommendation will be downgraded if a non-zero penalty is
+  being applied to the specified field.
 
 And some little enhancements and bug fixes:
 
 * Multi-disc directory names can now contain "disk" (in addition to "disc").
   Thanks to John Hawthorn.
-* :doc:`/plugins/web`: An item count is now exposed through the API for use
-  with the Tomahawk resolver. Thanks to Uwe L. Korn.
+* :doc:`/plugins/web`: Item and album counts are now exposed through the API
+  for use with the Tomahawk resolver. Thanks to Uwe L. Korn.
 * Python 2.6 compatibility for :doc:`/plugins/beatport`,
-  :doc:`/plugins/missing`, and `/plugins/duplicates`. Thanks to Wesley
+  :doc:`/plugins/missing`, and :doc:`/plugins/duplicates`. Thanks to Wesley
   Bitter and Pedro Silva.
 * Don't move the config file during a null migration. Thanks to Theofilos
   Intzoglou.
