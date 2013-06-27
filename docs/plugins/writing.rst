@@ -126,6 +126,9 @@ currently available are:
   singleton to the library (not called for full-album imports). Parameters:
   ``lib``, ``item``
 
+* *item_moved*: called with an ``Item`` object whenever its file is moved.
+  Parameters: ``item``, ``source`` path, ``destination`` path
+
 * *write*: called with an ``Item`` object just before a file's metadata is
   written to disk (i.e., just before the file on disk is opened).
 
