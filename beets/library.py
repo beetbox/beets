@@ -370,7 +370,8 @@ class Item(object):
             util.copy(self.path, dest)
         else:
             util.move(self.path, dest)
-            plugins.send("item_moved", source=self.path, destination=dest)
+            plugins.send("item_moved", item=self, source=self.path,
+                         destination=dest)
 
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
