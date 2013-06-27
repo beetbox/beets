@@ -1,6 +1,13 @@
 Changelog
 =========
 
+1.2.2 (in development)
+----------------------
+
+* A new plugin event, ``item_moved``, is sent when files are moved on disk.
+  Thanks to dsedivec.
+
+
 1.2.1 (June 22, 2013)
 ---------------------
 
