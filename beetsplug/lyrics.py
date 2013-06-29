@@ -198,6 +198,10 @@ def slugify(text):
     """
     # http://stackoverflow.com/questions/295135/turn-a-string-into-a-valid-
     # filename-in-python
+
+    # Remove content within parentheses
+    pat = "([^,\(]*)\((.*?)\)"
+    text = re.sub(pat,'\g<1>', text).strip()
     try:
         text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore')
         text = unicode(re.sub('[-\s]+', ' ', text))
@@ -227,13 +231,8 @@ def is_page_candidate(urlLink, urlTitle, title, artist):
              [artist, sitename, sitename.replace('www.','')] + LYRICS_TRANS
     songTitle = re.sub(u'(%s)' % u'|'.join(tokens) ,u'', urlTitle).strip('%20')
 
-    if songTitle:
-        log.debug("Match ratio of '%s' with title: %s" %
-                  (songTitle,
-                   difflib.SequenceMatcher(None, songTitle, title).ratio()))
-
     typoRatio = .8
-    return difflib.SequenceMatcher(None, songTitle, title).ratio() > typoRatio
+    return difflib.SequenceMatcher(None, songTitle, title).ratio() >= typoRatio
 
 def insert_line_feeds(text):
     """Insert newlines before upper-case characters.
@@ -250,15 +249,6 @@ def sanitize_lyrics(text):
     in text, correct layout and syntax...
     """
     text = strip_cruft(text, False)
-
-    # Suppress advertisements.
-    # Match lines with an opening bracket but no ending one, ie lines that
-    # contained html link that has been wiped out when scraping.
-    LINK1_RE = re.compile(r'(\(|\[).*[^\)\]]$')
-    # Match lines containing url between brackets
-    LINK2_RE = re.compile(r'(\(|\[).*[http|www].*(\]|\))')
-    text = LINK1_RE.sub('', text)
-    text = LINK2_RE.sub('', text)
 
     # Restore \n in input text
     if '\n' not in text:
@@ -282,6 +272,15 @@ def is_lyrics(text, artist):
         return 0
     elif nbLines < 5:
         badTriggers.append('too_short')
+    else:
+        # Don't penalize long text because of lyrics keyword in credits
+        textlines = text.split('\n')
+        popped = False
+        for i in [len(textlines)-1, 0]:
+            if 'lyrics' in textlines[i].lower():
+                popped = textlines.pop(i)
+        if popped:
+            text = '\n'.join(textlines)
 
     for item in artist, 'lyrics', 'copyright', 'property':
         badTriggers += [item] * len(re.findall(r'\W%s\W' % item, text, re.I))
@@ -370,6 +369,7 @@ def fetch_google(artist, title):
             lyrics = sanitize_lyrics(lyrics)
 
             if is_lyrics(lyrics, artist):
+                log.debug(u'got lyrics from %s' % item['displayLink'])
                 return lyrics
 
 
