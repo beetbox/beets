@@ -231,11 +231,6 @@ def is_page_candidate(urlLink, urlTitle, title, artist):
              [artist, sitename, sitename.replace('www.','')] + LYRICS_TRANS
     songTitle = re.sub(u'(%s)' % u'|'.join(tokens) ,u'', urlTitle).strip('%20')
 
-    if songTitle:
-        log.debug("Match ratio of '%s' with title: %s" %
-                  (songTitle,
-                   difflib.SequenceMatcher(None, songTitle, title).ratio()))
-
     typoRatio = .8
     return difflib.SequenceMatcher(None, songTitle, title).ratio() >= typoRatio
 
@@ -374,6 +369,7 @@ def fetch_google(artist, title):
             lyrics = sanitize_lyrics(lyrics)
 
             if is_lyrics(lyrics, artist):
+                log.debug(u'got lyrics from %s' % item['displayLink'])
                 return lyrics
 
 
