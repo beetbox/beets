@@ -198,6 +198,10 @@ def slugify(text):
     """
     # http://stackoverflow.com/questions/295135/turn-a-string-into-a-valid-
     # filename-in-python
+
+    # Remove content within parentheses
+    pat = "([^,\(]*)\((.*?)\)"
+    text = re.sub(pat,'\g<1>', text).strip()
     try:
         text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore')
         text = unicode(re.sub('[-\s]+', ' ', text))
