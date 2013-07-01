@@ -6,6 +6,8 @@ Changelog
 
 * A new plugin event, ``item_moved``, is sent when files are moved on disk.
   Thanks to dsedivec.
+* :doc:`/plugins/lyrics`: More improvements to the Google backend by Fabrice
+  Laporte.
 
 
 1.2.1 (June 22, 2013)
