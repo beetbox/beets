@@ -31,6 +31,7 @@ import beets.ui
 from beets import vfs
 from beets import config
 from beets.util import bluelet
+from beets.library import ITEM_KEYS_WRITABLE
 
 PROTOCOL_VERSION = '0.13.0'
 BUFSIZE = 1024
@@ -997,7 +998,7 @@ class Server(BaseServer):
             for tag, value in zip(it, it):
                 if tag.lower() == u'any':
                     if any_query_type:
-                        queries.append(any_query_type(value))
+                        queries.append(any_query_type(value, ITEM_KEYS_WRITABLE, query_type))
                     else:
                         raise BPDError(ERROR_UNKNOWN, u'no such tagtype')
                 else:
@@ -1010,7 +1011,7 @@ class Server(BaseServer):
     def cmd_search(self, conn, *kv):
         """Perform a substring match for items."""
         query = self._metadata_query(beets.library.SubstringQuery,
-                                     beets.library.AnySubstringQuery,
+                                     beets.library.AnyFieldQuery,
                                      kv)
         for item in self.lib.items(query):
             yield self._item_info(item)
