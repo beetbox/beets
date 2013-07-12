@@ -230,9 +230,9 @@ This will scan all the matched files and read their tags, populating the
 database with the new values. By default, files will be renamed according to
 their new metadata; disable this with ``-M``.
 
-To perform a "dry run" an update, just use the ``-p`` (for "pretend") flag. This
-will show you all the proposed changes but won't actually change anything on
-disk.
+To perform a "dry run" of an update, just use the ``-p`` (for "pretend") flag.
+This will show you all the proposed changes but won't actually change anything
+on disk.
 
 When an updated track is part of an album, the album-level fields of *all*
 tracks from the album are also updated. (Specifically, the command copies
