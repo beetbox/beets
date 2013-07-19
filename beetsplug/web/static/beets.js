@@ -198,6 +198,7 @@ var ItemEntryView = Backbone.View.extend({
 });
 var ItemDetailView = Backbone.View.extend({
     tagName: "div",
+    id: "innerdetail",
     template: _.template($('#item-detail-template').html()),
     events: {
         'click .play': 'play',
