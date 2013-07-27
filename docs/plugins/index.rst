@@ -17,7 +17,7 @@ To use a plugin, you have two options:
   `setup.py` script or a command like `pip` or `easy_install`).
 
 * Set the `pluginpath` config variable to point to the directory containing the
-  plugin. (See :doc:`/reference/cli`.)
+  plugin. (See :doc:`/reference/config`.)
 
 Then, set the `plugins` option in your `config.yaml` file, like so::
 
