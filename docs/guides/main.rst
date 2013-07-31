@@ -22,8 +22,9 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
   ``apt-get install beets``. To build from source, you can get everything you
   need by running: ``apt-get install python-dev python-setuptools python-pip``
 
-* For **Arch Linux**, try getting `beets from AUR`_. (There's also a
-  bleeding-edge `dev package`_, which will probably set your computer on fire.)
+* On **Arch Linux**, `beets is in [community]`_, so just run ``pacman -S
+  beets``. (There's also a bleeding-edge `dev package`_ in the AUR, which will
+  probably set your computer on fire.)
 
 * For **Gentoo Linux**, beets is in Portage as ``media-sound/beets``. Just run
   ``emerge beets`` to install. There are several USE flags available for
@@ -36,6 +37,7 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
 .. _dev package: http://aur.archlinux.org/packages.php?ID=48617
 .. _Debian details: http://packages.qa.debian.org/b/beets.html
 .. _Ubuntu details: https://launchpad.net/ubuntu/+source/beets
+.. _beets is in [community]: https://www.archlinux.org/packages/community/any/beets/
 
 If you have `pip`_, just say ``pip install beets`` (you might need ``sudo`` in
 front of that). On Arch, you'll need to use ``pip2`` instead of ``pip``.
