@@ -180,7 +180,7 @@ And a batch of fixes:
 .. _Beatport: http://www.beatport.com/
 
 
-1.1.0 (April 29, 203)
+1.1.0 (April 29, 2013)
 ---------------------
 
 This final release of 1.1 brings a little polish to the betas that introduced
