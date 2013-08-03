@@ -86,7 +86,7 @@ right now; this is something we need to work on. Read the
   ``incremental`` configuration option.
 
 * By default, beets will proceed without asking if it finds a very close
-  metadata match. To disable this and have the importer as you every time,
+  metadata match. To disable this and have the importer ask you every time,
   use the ``-t`` (for *timid*) option.
 
 * The importer typically works in a whole-album-at-a-time mode. If you
