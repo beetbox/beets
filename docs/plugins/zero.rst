@@ -20,7 +20,7 @@ For example::
         comments: [EAC, LAME, from.+collection, 'ripped by']
         genre: [rnb, 'power metal']
 
-If custom pattern is not defined for a given field, the field will be nulled
+If a custom pattern is not defined for a given field, the field will be nulled
 unconditionally.
 
 Note that the plugin currently does not zero fields when importing "as-is".
