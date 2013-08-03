@@ -59,7 +59,7 @@ right now; this is something we need to work on. Read the
 * During a long tagging import, it can be useful to keep track of albums
   that weren't tagged successfully---either because they're not in the
   MusicBrainz database or because something's wrong with the files. Use the
-  ``-l`` option to specify a filename to log every time you skip and album
+  ``-l`` option to specify a filename to log every time you skip an album
   or import it "as-is" or an album gets skipped as a duplicate.
 
 * Relatedly, the ``-q`` (quiet) option can help with large imports by
