@@ -880,7 +880,12 @@ def construct_query_part(query_part, default_fields, all_keys):
 
     # Path field.
     elif key.lower() == 'path' and 'path' in all_keys:
-        return PathQuery(pattern)
+        if query_class is SubstringQuery:
+            # By default, use special path matching logic.
+            return PathQuery(pattern)
+        else:
+            # Specific query type requested.
+            return query_class('path', pattern)
 
     # Other (recognized) field.
     elif key.lower() in all_keys:

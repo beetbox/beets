@@ -416,6 +416,12 @@ class PathQueryTest(unittest.TestCase, AssertsMixin):
         results = self.lib.items(q)
         self.assert_done(results)
 
+    def test_path_regex(self):
+        q = 'path::\\.mp3$'
+        results = self.lib.items(q)
+        self.assert_matched(results, 'path item')
+        self.assert_done(results)
+
 class BrowseTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
         self.lib = beets.library.Library(
