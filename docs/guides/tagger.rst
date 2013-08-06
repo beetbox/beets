@@ -262,7 +262,7 @@ If you think beets is ignoring an album that's listed in MusicBrainz, please
 I Hope That Makes Sense
 -----------------------
 
-I haven't made the process clear, please `drop me an email`_ and I'll try to
+If I haven't made the process clear, please `drop me an email`_ and I'll try to
 improve this guide.
 
 .. _drop me an email: mailto:adrian@radbox.org
