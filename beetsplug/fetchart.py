@@ -19,7 +19,6 @@ import re
 import logging
 import os
 import tempfile
-import requests
 
 from beets.plugins import BeetsPlugin
 from beets.util.artresizer import ArtResizer
@@ -73,11 +72,12 @@ def caa_art(release_id):
     """
     return CAA_URL.format(mbid=release_id)
 
-def caa_group(release_group_id):
+def caa_group_art(release_group_id):
     """Return the Cover Art Archive release group URL given a MusicBrainz
     release group ID.
     """
     return CAA_GROUP_URL.format(mbid=release_group_id)
+
 
 # Art from Amazon.
 
@@ -155,15 +155,11 @@ def _source_urls(album):
     through this sequence early to avoid the cost of scraping when not
     necessary.
     """
+    # Cover Art Archive.
     if album.mb_albumid:
-        url = caa_art(album.mb_albumid)
-        if url:
-            yield url
-
+        yield caa_art(album.mb_albumid)
     if album.mb_releasegroupid:
-        url = caa_group(album.mb_releasegroupid)
-        if url:
-            yield url
+        yield caa_group_art(album.mb_releasegroupid)
 
     # Amazon and AlbumArt.org.
     if album.asin:

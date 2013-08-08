@@ -11,6 +11,9 @@ Changelog
 * :doc:`/plugins/bpd`: Fix for a crash when searching, thanks to Simon Chopin.
 * Regular expression queries (and other query types) over paths now work.
   (Previously, special query types were ignored for the ``path`` field.)
+* :doc:`/plugins/fetchart`: Look for images in the Cover Art Archive for
+  the release group in addition to the specific release. Thanks to Filipe
+  Fortes.
 
 
 1.2.1 (June 22, 2013)
