@@ -66,7 +66,7 @@ def _fetch_image(url):
 # Cover Art Archive.
 
 CAA_URL = 'http://coverartarchive.org/release/{mbid}/front-500.jpg'
-CAA_GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/'
+CAA_GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front-500.jpg'
 
 def caa_art(release_id):
     """Return the Cover Art Archive URL given a MusicBrainz release ID.
@@ -78,8 +78,6 @@ def caa_group(release_group_id):
     release group ID.
     """
     return CAA_GROUP_URL.format(mbid=release_group_id)
-
-RELEASE_ID_PAT = r'^http://musicbrainz.org/release/([^/]+)'
 
 # Art from Amazon.
 
@@ -163,17 +161,9 @@ def _source_urls(album):
             yield url
 
     if album.mb_releasegroupid:
-        group_url = caa_group(album.mb_releasegroupid)
-        response = requests.get(group_url)
-        if response.status_code == 200:
-            json = response.json()
-            if json.has_key('release'):
-                # URL in the form of http://musicbrainz.org/release/{mbid}
-                m = re.search(RELEASE_ID_PAT, json['release'])
-                if m:
-                    url = caa_art(m.group(1))
-                    if url:
-                        yield url
+        url = caa_group(album.mb_releasegroupid)
+        if url:
+            yield url
 
     # Amazon and AlbumArt.org.
     if album.asin:
