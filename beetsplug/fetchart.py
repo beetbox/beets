@@ -19,6 +19,7 @@ import re
 import logging
 import os
 import tempfile
+import requests
 
 from beets.plugins import BeetsPlugin
 from beets.util.artresizer import ArtResizer
@@ -65,12 +66,18 @@ def _fetch_image(url):
 # Cover Art Archive.
 
 CAA_URL = 'http://coverartarchive.org/release/{mbid}/front-500.jpg'
+CAA_GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front-500.jpg'
 
 def caa_art(release_id):
     """Return the Cover Art Archive URL given a MusicBrainz release ID.
     """
     return CAA_URL.format(mbid=release_id)
 
+def caa_group(release_group_id):
+    """Return the Cover Art Archive release group URL given a MusicBrainz
+    release group ID.
+    """
+    return CAA_GROUP_URL.format(mbid=release_group_id)
 
 # Art from Amazon.
 
@@ -150,6 +157,11 @@ def _source_urls(album):
     """
     if album.mb_albumid:
         url = caa_art(album.mb_albumid)
+        if url:
+            yield url
+
+    if album.mb_releasegroupid:
+        url = caa_group(album.mb_releasegroupid)
         if url:
             yield url
 
