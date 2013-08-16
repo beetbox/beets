@@ -511,12 +511,23 @@ class FieldQuery(Query):
     """An abstract query that searches in a specific field for a
     pattern. Subclasses must provide a `value_match` class method, which
     determines whether a certain pattern string matches a certain value
-    string. Subclasses also need to provide `clause` to implement the
+    string. Subclasses may also provide `col_clause` to implement the
     same matching functionality in SQLite.
     """
-    def __init__(self, field, pattern):
+    def __init__(self, field, pattern, fast=True):
         self.field = field
         self.pattern = pattern
+        self.fast = fast
+
+    def col_clause(self):
+        return None, ()
+
+    def clause(self):
+        if self.fast:
+            return self.col_clause()
+        else:
+            # Matching a flexattr. This is a slow query.
+            return None, ()
 
     @classmethod
     def value_match(cls, pattern, value):
@@ -533,11 +544,11 @@ class FieldQuery(Query):
         return cls.value_match(pattern, util.as_string(value))
 
     def match(self, item):
-        return self._raw_value_match(self.pattern, getattr(item, self.field))
+        return self._raw_value_match(self.pattern, item.get(self.field))
 
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
-    def clause(self):
+    def col_clause(self):
         pattern = self.pattern
         if self.field == 'path' and isinstance(pattern, str):
             pattern = buffer(pattern)
@@ -551,7 +562,7 @@ class MatchQuery(FieldQuery):
 
 class SubstringQuery(FieldQuery):
     """A query that matches a substring in a specific item field."""
-    def clause(self):
+    def col_clause(self):
         search = '%' + (self.pattern.replace('\\','\\\\').replace('%','\\%')
                             .replace('_','\\_')) + '%'
         clause = self.field + " like ? escape '\\'"
@@ -638,7 +649,7 @@ class NumericQuery(FieldQuery):
                 return False
             return True
 
-    def clause(self):
+    def col_clause(self):
         if self.point is not None:
             return self.field + '=?', (self.point,)
         else:
@@ -737,7 +748,7 @@ class AnyFieldQuery(CollectionQuery):
 
         subqueries = []
         for field in self.fields:
-            subqueries.append(cls(field, pattern))
+            subqueries.append(cls(field, pattern, True))
         super(AnyFieldQuery, self).__init__(subqueries)
 
     def clause(self):
@@ -895,12 +906,14 @@ def construct_query_part(query_part, default_fields, all_keys):
             # Other query type.
             return query_class(pattern)
 
+    key = key.lower()
+
     # A boolean field.
-    elif key.lower() == 'comp':
-        return BooleanQuery(key.lower(), pattern)
+    if key.lower() == 'comp':
+        return BooleanQuery(key, pattern)
 
     # Path field.
-    elif key.lower() == 'path' and 'path' in all_keys:
+    elif key == 'path' and 'path' in all_keys:
         if query_class is SubstringQuery:
             # By default, use special path matching logic.
             return PathQuery(pattern)
@@ -908,17 +921,13 @@ def construct_query_part(query_part, default_fields, all_keys):
             # Specific query type requested.
             return query_class('path', pattern)
 
-    # Other (recognized) field.
-    elif key.lower() in all_keys:
-        return query_class(key.lower(), pattern)
-
     # Singleton query (not a real field).
-    elif key.lower() == 'singleton':
+    elif key == 'singleton':
         return SingletonQuery(util.str2bool(pattern))
 
-    # Unrecognized field.
+    # Other field.
     else:
-        log.warn(u'no such field in query: {0}'.format(key))
+        return query_class(key.lower(), pattern, key in all_keys)
 
 def get_query(val, album=False):
     """Takes a value which may be None, a query string, a query string
