@@ -1099,6 +1099,8 @@ def _convert_type(key, value, album=False):
     `album` indicates whether to use album or item field definitions.
     """
     fields = library.ALBUM_FIELDS if album else library.ITEM_FIELDS
+    if key not in fields:
+        return value
     typ = [f[1] for f in fields if f[0] == key][0]
 
     if typ is bool:
@@ -1120,15 +1122,9 @@ def _convert_type(key, value, album=False):
 def modify_items(lib, mods, query, write, move, album, confirm):
     """Modifies matching items according to key=value assignments."""
     # Parse key=value specifications into a dictionary.
-    if album:
-        allowed_keys = library.ALBUM_KEYS
-    else:
-        allowed_keys = library.ITEM_KEYS_WRITABLE + ['added']
     fsets = {}
     for mod in mods:
         key, value = mod.split('=', 1)
-        if key not in allowed_keys and '-' not in key:
-            raise ui.UserError('"%s" is not a valid field' % key)
         fsets[key] = _convert_type(key, value, album)
 
     # Get the items to modify.
@@ -1143,8 +1139,7 @@ def modify_items(lib, mods, query, write, move, album, confirm):
 
         # Show each change.
         for field, value in fsets.iteritems():
-            curval = getattr(obj, field)
-            _showdiff(field, curval, value)
+            _showdiff(field, obj.get(field), value)
 
     # Confirm.
     if confirm:
@@ -1156,7 +1151,7 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     with lib.transaction():
         for obj in objs:
             for field, value in fsets.iteritems():
-                setattr(obj, field, value)
+                obj[field] = value
 
             if move:
                 cur_path = obj.item_dir() if album else obj.path

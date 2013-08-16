@@ -229,12 +229,9 @@ def format_for_path(value, key=None, pathmod=None):
 
 def get_flexattrs(rows):
     """Given a list of SQLite result rows, construct a dictionary
-    hierarchy reflecting the contained flexible attribute values.
+    reflecting the contained flexible attribute values.
     """
-    out = defaultdict(dict)
-    for row in rows:
-        out[row['namespace']][row['key']] = row['value']
-    return dict(out)
+    return {row['key']: row['value'] for row in rows}
 
 
 # Exceptions.
@@ -246,9 +243,15 @@ class InvalidFieldError(Exception):
 # Library items (songs).
 
 class Item(object):
-    def __init__(self, values, flexattrs=None):
+    def __init__(self, values=None, flexattrs=None):
         self.dirty = {}
-        self._fill_record(values, flexattrs)
+        self.record = {k: None for k in ITEM_KEYS}
+        self.flexattrs = {}
+
+        if values:
+            self.update(values)
+        if flexattrs:
+            self.update(flexattrs)
         self._clear_dirty()
 
     @classmethod
@@ -263,50 +266,32 @@ class Item(object):
         i.mtime = i.current_mtime()  # Initial mtime.
         return i
 
-    def _fill_record(self, values, flexattrs=None):
-        self.record = {}
-        for key in ITEM_KEYS:
-            try:
-                setattr(self, key, values[key])
-            except KeyError:
-                setattr(self, key, None)
-
-        self.flexattrs = defaultdict(dict)
-        if flexattrs:
-            self.flexattrs.update(flexattrs)
-
     def _clear_dirty(self):
         self.dirty = {}
         for key in ITEM_KEYS:
             self.dirty[key] = False
 
     def __repr__(self):
-        return 'Item(' + repr(self.record) + ')'
+        return 'Item({0!r}, {1!r})'.format(self.record, self.flexattrs)
 
 
     # Item field accessors.
 
-    def __getattr__(self, key):
-        """If key is an item attribute (i.e., a column in the database),
-        returns the record entry for that key.
+    def __getitem__(self, key):
+        """Get the item's value for a standard field or a flexattr.
         """
         if key in ITEM_KEYS:
             return self.record.get(key)
-        elif '-' in key:
-            namespace, key = key.split('-', 1)
-            if namespace in self.flexattrs:
-                return self.flexattrs[namespace].get(key)
-            return None
+        elif key in self.flexattrs:
+            return self.flexattrs[key]
         else:
-            raise AttributeError(key + ' is not a valid item field')
+            raise KeyError('item does not have the key {0}'.format(key))
 
-    def __setattr__(self, key, value):
-        """If key is an item attribute (i.e., a column in the database),
-        sets the record entry for that key to value. Note that to change
-        the attribute in the database or in the file's tags, one must
-        call store() or write().
+    def __contains__(self, key):
+        return key in ITEM_KEYS or key in self.flexattrs
 
-        Otherwise, performs an ordinary setattr.
+    def __setitem__(self, key, value):
+        """Set the item's value for a standard field or a flexattr.
         """
         # Encode unicode paths and read buffers.
         if key == 'path':
@@ -323,12 +308,39 @@ class Item(object):
                 if key in ITEM_KEYS_WRITABLE:
                     self.mtime = 0 # Reset mtime on dirty.
 
-        elif '-' in key:
-            namespace, key = key.split('-', 1)
-            self.flexattrs[namespace][key] = value
-
         else:
+            self.flexattrs[key] = value
+
+    def update(self, values):
+        for key, value in values.items():
+            self[key] = value
+
+    def get(self, key, default=None):
+        if key in self:
+            return self[key]
+        else:
+            return default
+
+    def __getattr__(self, key):
+        """If key is an item attribute (i.e., a column in the database),
+        returns the record entry for that key.
+        """
+        try:
+            return super(Item, self).__getattr__(key)
+        except AttributeError:
+            if key in self:
+                return self[key]
+            else:
+                raise AttributeError(key + ' is not an item field')
+
+    def __setattr__(self, key, value):
+        """Set the item's value for a standard field or a flexattr.
+        """
+        # FIXME hack to allow self.x = y in __init__
+        if key in ('record', 'flexattrs', 'dirty'):
             super(Item, self).__setattr__(key, value)
+        else:
+            self[key] = value
 
 
     # Interaction with file metadata.
@@ -450,11 +462,10 @@ class Item(object):
             mapping['albumartist'] = mapping['artist']
 
         # Flexible attributes.
-        for namespace, attrs in self.flexattrs.items():
-            for key, value in attrs.items():
-                if sanitize:
-                    value = format_for_path(value, None, pathmod)
-                mapping['{}-{}'.format(namespace, key)] = value
+        for key, value in self.flexattrs.items():
+            if sanitize:
+                value = format_for_path(value, None, pathmod)
+            mapping[key] = value
 
         # Get values from plugins.
         for key, value in plugins.template_values(self).items():
@@ -836,7 +847,7 @@ class ResultIterator(object):
                 'SELECT * FROM item_attributes WHERE entity_id=?',
                 (row['id'],)
             )
-        return Item(row, get_flexattrs(flex_rows))
+        return Item(dict(row), get_flexattrs(flex_rows))
 
 # Regular expression for parse_query_part, below.
 PARSE_QUERY_PART_REGEX = re.compile(
@@ -1152,7 +1163,6 @@ class Transaction(object):
         """Execute an SQL statement with substitution values and return
         the row ID of the last affected row.
         """
-        print statement, subvals
         cursor = self.lib._connection().execute(statement, subvals)
         plugins.send('database_change', lib=self.lib)
         return cursor.lastrowid
@@ -1261,10 +1271,9 @@ class Library(BaseLibrary):
                 CREATE TABLE IF NOT EXISTS {0}_attributes (
                     id INTEGER PRIMARY KEY,
                     entity_id INTEGER,
-                    namespace TEXT,
                     key TEXT,
                     value TEXT,
-                    UNIQUE(entity_id, namespace, key) ON CONFLICT REPLACE);
+                    UNIQUE(entity_id, key) ON CONFLICT REPLACE);
                 CREATE INDEX IF NOT EXISTS {0}_id_attribute
                     ON {0}_attributes (entity_id);
                 """.format(entity))
@@ -1410,12 +1419,11 @@ class Library(BaseLibrary):
 
             # Flexible attributes.
             flexins = 'INSERT INTO item_attributes ' \
-                      ' (entity_id, namespace, key, value)' \
+                      ' (entity_id, key, value)' \
                       ' VALUES (?, ?, ?, ?)'
-            for namespace, attrs in item.flexattrs.items():
-                for key, value in attrs.items():
-                    if value is not None:
-                        tx.mutate(flexins, (new_id, key, value))
+            for key, value in item.flexattrs.items():
+                if value is not None:
+                    tx.mutate(flexins, (new_id, key, value))
 
         item._clear_dirty()
         item.id = new_id
@@ -1426,7 +1434,8 @@ class Library(BaseLibrary):
         if load_id is None:
             load_id = item.id
         stored_item = self.get_item(load_id)
-        item._fill_record(stored_item.record, stored_item.flexattrs)
+        item.update(stored_item.record)
+        item.update(stored_item.flexattrs)
         item._clear_dirty()
 
     def store(self, item, store_id=None, store_all=False):
@@ -1456,11 +1465,10 @@ class Library(BaseLibrary):
 
             # Flexible attributes.
             flexins = 'INSERT INTO item_attributes ' \
-                      ' (entity_id, namespace, key, value)' \
-                      ' VALUES (?, ?, ?, ?)'
-            for namespace, attrs in item.flexattrs.items():
-                for key, value in attrs.items():
-                    tx.mutate(flexins, (store_id, namespace, key, value))
+                      ' (entity_id, key, value)' \
+                      ' VALUES (?, ?, ?)'
+            for key, value in item.flexattrs.items():
+                tx.mutate(flexins, (store_id, key, value))
 
         item._clear_dirty()
         self._memotable = {}
