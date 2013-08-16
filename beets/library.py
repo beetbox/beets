@@ -492,35 +492,20 @@ class Query(object):
     """An abstract class representing a query into the item database.
     """
     def clause(self):
-        """Returns (clause, subvals) where clause is a valid sqlite
+        """Generate an SQLite expression implementing the query.
+        Return a clause string, a sequence of substitution values for
+        the clause, and a Query object representing the "remainder" 
+        Returns (clause, subvals) where clause is a valid sqlite
         WHERE clause implementing the query and subvals is a list of
         items to be substituted for ?s in the clause.
         """
-        raise NotImplementedError
+        return None, ()
 
     def match(self, item):
         """Check whether this query matches a given Item. Can be used to
         perform queries on arbitrary sets of Items.
         """
         raise NotImplementedError
-
-    def statement(self):
-        """Returns (query, subvals) where clause is a sqlite SELECT
-        statement to enact this query and subvals is a list of values
-        to substitute in for ?s in the query.
-        """
-        clause, subvals = self.clause()
-        return ('SELECT * FROM items WHERE ' + clause, subvals)
-
-    def count(self, tx):
-        """Returns `(num, length)` where `num` is the number of items in
-        the library matching this query and `length` is their total
-        length in seconds.
-        """
-        clause, subvals = self.clause()
-        statement = 'SELECT COUNT(id), SUM(length) FROM items WHERE ' + clause
-        result = tx.query(statement, subvals)[0]
-        return (result[0], result[1] or 0.0)
 
 class FieldQuery(Query):
     """An abstract query that searches in a specific field for a
@@ -550,25 +535,6 @@ class FieldQuery(Query):
     def match(self, item):
         return self._raw_value_match(self.pattern, getattr(item, self.field))
 
-class RegisteredFieldQuery(FieldQuery):
-    """A FieldQuery that uses a registered SQLite callback function.
-    Before it can be used to execute queries, the `register` method must
-    be called.
-    """
-    def clause(self):
-        # Invoke the registered SQLite function.
-        clause = "{name}(?, {field})".format(name=self.__class__.__name__,
-                                             field=self.field)
-        return clause, [self.pattern]
-
-    @classmethod
-    def register(cls, conn):
-        """Register this query's matching function with the SQLite
-        connection. This method should only be invoked when the query
-        type chooses not to override `clause`.
-        """
-        conn.create_function(cls.__name__, 2, cls._raw_value_match)
-
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
     def clause(self):
@@ -596,7 +562,7 @@ class SubstringQuery(FieldQuery):
     def value_match(cls, pattern, value):
         return pattern.lower() in value.lower()
 
-class RegexpQuery(RegisteredFieldQuery):
+class RegexpQuery(FieldQuery):
     """A query that matches a regular expression in a specific item
     field.
     """
@@ -721,6 +687,9 @@ class CollectionQuery(Query):
         subvals = []
         for subq in self.subqueries:
             subq_clause, subq_subvals = subq.clause()
+            if not subq_clause:
+                # Fall back to slow query.
+                return None, ()
             clause_parts.append('(' + subq_clause + ')')
             subvals += subq_subvals
         clause = (' ' + joiner + ' ').join(clause_parts)
@@ -832,22 +801,27 @@ class ResultIterator(object):
     """An iterator into an item query result set. The iterator lazily
     constructs Item objects that reflect database rows.
     """
-    def __init__(self, rows, lib):
+    def __init__(self, rows, lib, query=None):
         self.rows = rows
         self.rowiter = iter(self.rows)
         self.lib = lib
+        self.query = query
 
     def __iter__(self):
         return self
 
     def next(self):
-        row = self.rowiter.next()  # May raise StopIteration.
-        with self.lib.transaction() as tx:
-            flex_rows = tx.query(
-                'SELECT * FROM item_attributes WHERE entity_id=?',
-                (row['id'],)
-            )
-        return Item(dict(row), get_flexattrs(flex_rows))
+        for row in self.rowiter:  # Iterate until we get a hit.
+            with self.lib.transaction() as tx:
+                flex_rows = tx.query(
+                    'SELECT * FROM item_attributes WHERE entity_id=?',
+                    (row['id'],)
+                )
+            item = Item(dict(row), get_flexattrs(flex_rows))
+            if self.query and not self.query.match(item):
+                continue
+            return item
+        raise StopIteration()  # Reached the end of the DB rows.
 
 # Regular expression for parse_query_part, below.
 PARSE_QUERY_PART_REGEX = re.compile(
@@ -1296,12 +1270,6 @@ class Library(BaseLibrary):
                 # Access SELECT results like dictionaries.
                 conn.row_factory = sqlite3.Row
 
-                # Register plugin queries.
-                RegexpQuery.register(conn)
-                for prefix, query_class in plugins.queries().items():
-                    if issubclass(query_class, RegisteredFieldQuery):
-                        query_class.register(conn)
-
                 self._connections[thread_id] = conn
                 return conn
 
@@ -1547,14 +1515,30 @@ class Library(BaseLibrary):
         if artist is not None:
             # "Add" the artist to the query.
             query = AndQuery((query, MatchQuery('albumartist', artist)))
+
         where, subvals = query.clause()
-        sql = "SELECT * FROM albums " + \
-              "WHERE " + where + \
-              " ORDER BY %s, album" % \
-                _orelse("albumartist_sort", "albumartist")
         with self.transaction() as tx:
-            rows = tx.query(sql, subvals)
-        return [Album(self, dict(res)) for res in rows]
+            rows = tx.query(
+                "SELECT * FROM albums WHERE {0} "
+                "ORDER BY {1}, album".format(
+                    where or '1',
+                    _orelse("albumartist_sort", "albumartist"),
+                ),
+                subvals,
+            )
+
+        if where:
+            # Fast query.
+            return [Album(self, dict(res)) for res in rows]
+        else:
+            # Slow query.
+            # FIXME both should be iterators.
+            out = []
+            for row in rows:
+                album = Album(self, dict(res))
+                if query.match(album):
+                    out.append(album)
+            return out
 
     def items(self, query=None, artist=None, album=None, title=None):
         queries = [get_query(query, False)]
@@ -1564,17 +1548,25 @@ class Library(BaseLibrary):
             queries.append(MatchQuery('album', album))
         if title is not None:
             queries.append(MatchQuery('title', title))
-        super_query = AndQuery(queries)
-        where, subvals = super_query.clause()
+        query = AndQuery(queries)
+        where, subvals = query.clause()
 
-        sql = "SELECT * FROM items " + \
-              "WHERE " + where + \
-              " ORDER BY %s, album, disc, track" % \
-                _orelse("artist_sort", "artist")
-        log.debug('Getting items with SQL: %s' % sql)
         with self.transaction() as tx:
-            rows = tx.query(sql, subvals)
-        return ResultIterator(rows, self)
+            rows = tx.query(
+                "SELECT * FROM items WHERE {0} "
+                "ORDER BY {1}, album, disc, track".format(
+                    where or '1',
+                    _orelse("artist_sort", "artist"),
+                ),
+                subvals
+            )
+
+        if where:
+            # Fast query.
+            return ResultIterator(rows, self)
+        else:
+            # Slow query.
+            return ResultIterator(rows, self, query)
 
 
     # Convenience accessors.

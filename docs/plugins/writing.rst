@@ -357,18 +357,18 @@ To do so, define a subclass of the ``Query`` type from the ``beets.library``
 module. Then, in the ``queries`` method of your plugin class, return a
 dictionary mapping prefix strings to query classes.
 
-One simple kind of query you can extend is the ``RegisteredFieldQuery``, which
-implements string comparisons. To use it, create a subclass inheriting from
-that class and override the ``value_match`` class method. (Remember the
-``@classmethod`` decorator!) The following example plugin declares a query
-using the ``@`` prefix to delimit exact string matches. The plugin will be
-used if we issue a command like ``beet ls @something`` or ``beet ls
-artist:@something``::
+One simple kind of query you can extend is the ``FieldQuery``, which
+implements string comparisons on fields. To use it, create a subclass
+inheriting from that class and override the ``value_match`` class method.
+(Remember the ``@classmethod`` decorator!) The following example plugin
+declares a query using the ``@`` prefix to delimit exact string matches. The
+plugin will be used if we issue a command like ``beet ls @something`` or
+``beet ls artist:@something``::
 
     from beets.plugins import BeetsPlugin
-    from beets.library import PluginQuery
+    from beets.library import FieldQuery
 
-    class ExactMatchQuery(PluginQuery):
+    class ExactMatchQuery(FieldQuery):
         @classmethod
         def value_match(self, pattern, val):
             return pattern == val
