@@ -104,7 +104,7 @@ def im_resize(maxwidth, path_in, path_out=None):
     # "-resize widthxheight>" shrinks images with dimension(s) larger
     # than the corresponding width and/or height dimension(s). The >
     # "only shrink" flag is prefixed by ^ escape char for Windows
-    # compatability.
+    # compatibility.
     call([
         'convert', util.syspath(path_in),
         '-resize', '{0}x^>'.format(maxwidth), path_out

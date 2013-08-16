@@ -31,11 +31,11 @@ _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.
 
 
-def _destination(lib, dest_dir, item, keep_new):
+def _destination(lib, dest_dir, item, keep_new, path_formats):
     """Return the path under `dest_dir` where the file should be placed
     (possibly after conversion).
     """
-    dest = lib.destination(item, basedir=dest_dir)
+    dest = lib.destination(item, basedir=dest_dir, path_formats=path_formats)
     if keep_new:
         # When we're keeping the converted file, no extension munging
         # occurs.
@@ -71,10 +71,10 @@ def should_transcode(item):
     return item.format != 'MP3' or item.bitrate >= 1000 * maxbr
 
 
-def convert_item(lib, dest_dir, keep_new):
+def convert_item(lib, dest_dir, keep_new, path_formats):
     while True:
         item = yield
-        dest = _destination(lib, dest_dir, item, keep_new)
+        dest = _destination(lib, dest_dir, item, keep_new, path_formats)
 
         if os.path.exists(util.syspath(dest)):
             log.info(u'Skipping {0} (target file exists)'.format(
@@ -155,6 +155,11 @@ def convert_func(lib, opts, args):
             config['convert']['threads'].get(int)
     keep_new = opts.keep_new
 
+    if not config['convert']['paths']:
+        path_formats = ui.get_path_formats()
+    else:
+        path_formats = ui.get_path_formats(config['convert']['paths'])
+
     ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
 
     if not ui.input_yn("Convert? (Y/n)"):
@@ -164,7 +169,7 @@ def convert_func(lib, opts, args):
         items = (i for a in lib.albums(ui.decargs(args)) for i in a.items())
     else:
         items = lib.items(ui.decargs(args))
-    convert = [convert_item(lib, dest, keep_new) for i in range(threads)]
+    convert = [convert_item(lib, dest, keep_new, path_formats) for i in range(threads)]
     pipe = util.pipeline.Pipeline([items, convert])
     pipe.run_parallel()
 
@@ -179,7 +184,8 @@ class ConvertPlugin(BeetsPlugin):
             u'opts': u'-aq 2',
             u'max_bitrate': 500,
             u'embed': True,
-            u'auto': False
+            u'auto': False,
+            u'paths': {},
         })
         self.import_stages = [self.auto_convert]
 
@@ -189,7 +195,7 @@ class ConvertPlugin(BeetsPlugin):
                               help='choose albums instead of tracks')
         cmd.parser.add_option('-t', '--threads', action='store', type='int',
                               help='change the number of threads, \
-                              defaults to maximum availble processors ')
+                              defaults to maximum available processors')
         cmd.parser.add_option('-k', '--keep-new', action='store_true',
                               dest='keep_new', help='keep only the converted \
                               and move the old files')

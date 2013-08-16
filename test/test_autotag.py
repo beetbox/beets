@@ -23,12 +23,13 @@ import _common
 from _common import unittest
 from beets import autotag
 from beets.autotag import match
+from beets.autotag.hooks import Distance, string_dist
 from beets.library import Item
 from beets.util import plurality
 from beets.autotag import AlbumInfo, TrackInfo
 from beets import config
 
-class PluralityTest(unittest.TestCase):
+class PluralityTest(_common.TestCase):
     def test_plurality_consensus(self):
         objs = [1, 1, 1, 1]
         obj, freq = plurality(objs)
@@ -55,19 +56,19 @@ class PluralityTest(unittest.TestCase):
         items = [Item({'artist': 'The Beetles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'Teh White Album'})]
-        l_artist, l_album, artist_consensus = match.current_metadata(items)
-        self.assertEqual(l_artist, 'The Beatles')
-        self.assertEqual(l_album, 'The White Album')
-        self.assertFalse(artist_consensus)
+        likelies, consensus = match.current_metadata(items)
+        self.assertEqual(likelies['artist'], 'The Beatles')
+        self.assertEqual(likelies['album'], 'The White Album')
+        self.assertFalse(consensus['artist'])
 
     def test_current_metadata_artist_consensus(self):
         items = [Item({'artist': 'The Beatles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'The White Album'}),
                  Item({'artist': 'The Beatles', 'album': 'Teh White Album'})]
-        l_artist, l_album, artist_consensus = match.current_metadata(items)
-        self.assertEqual(l_artist, 'The Beatles')
-        self.assertEqual(l_album, 'The White Album')
-        self.assertTrue(artist_consensus)
+        likelies, consensus = match.current_metadata(items)
+        self.assertEqual(likelies['artist'], 'The Beatles')
+        self.assertEqual(likelies['album'], 'The White Album')
+        self.assertTrue(consensus['artist'])
 
     def test_albumartist_consensus(self):
         items = [Item({'artist': 'tartist1', 'album': 'album',
@@ -76,9 +77,19 @@ class PluralityTest(unittest.TestCase):
                        'albumartist': 'aartist'}),
                  Item({'artist': 'tartist3', 'album': 'album',
                        'albumartist': 'aartist'})]
-        l_artist, l_album, artist_consensus = match.current_metadata(items)
-        self.assertEqual(l_artist, 'aartist')
-        self.assertFalse(artist_consensus)
+        likelies, consensus = match.current_metadata(items)
+        self.assertEqual(likelies['artist'], 'aartist')
+        self.assertFalse(consensus['artist'])
+
+    def test_current_metadata_likelies(self):
+        fields = ['artist', 'album', 'albumartist', 'year', 'disctotal',
+                  'mb_albumid', 'label', 'catalognum', 'country', 'media',
+                  'albumdisambig']
+        items = [Item(dict((f, '%s_%s' % (f, i or 1)) for f in fields))
+                 for i in range(5)]
+        likelies, _ = match.current_metadata(items)
+        for f in fields:
+            self.assertEqual(likelies[f], '%s_1' % f)
 
 def _make_item(title, track, artist=u'some artist'):
     return Item({
@@ -95,7 +106,163 @@ def _make_trackinfo():
         TrackInfo(u'three', None, u'some artist', length=1, index=3),
     ]
 
-class TrackDistanceTest(unittest.TestCase):
+class DistanceTest(_common.TestCase):
+    def test_add(self):
+        dist = Distance()
+        dist.add('add', 1.0)
+        self.assertEqual(dist._penalties, {'add': [1.0]})
+
+    def test_add_equality(self):
+        dist = Distance()
+        dist.add_equality('equality', 'ghi', ['abc', 'def', 'ghi'])
+        self.assertEqual(dist._penalties['equality'], [0.0])
+
+        dist.add_equality('equality', 'xyz', ['abc', 'def', 'ghi'])
+        self.assertEqual(dist._penalties['equality'], [0.0, 1.0])
+
+        dist.add_equality('equality', 'abc', re.compile(r'ABC', re.I))
+        self.assertEqual(dist._penalties['equality'], [0.0, 1.0, 0.0])
+
+    def test_add_expr(self):
+        dist = Distance()
+        dist.add_expr('expr', True)
+        self.assertEqual(dist._penalties['expr'], [1.0])
+
+        dist.add_expr('expr', False)
+        self.assertEqual(dist._penalties['expr'], [1.0, 0.0])
+
+    def test_add_number(self):
+        dist = Distance()
+        # Add a full penalty for each number of difference between two numbers.
+
+        dist.add_number('number', 1, 1)
+        self.assertEqual(dist._penalties['number'], [0.0])
+
+        dist.add_number('number', 1, 2)
+        self.assertEqual(dist._penalties['number'], [0.0, 1.0])
+
+        dist.add_number('number', 2, 1)
+        self.assertEqual(dist._penalties['number'], [0.0, 1.0, 1.0])
+
+        dist.add_number('number', -1, 2)
+        self.assertEqual(dist._penalties['number'], [0.0, 1.0, 1.0, 1.0,
+                                                          1.0, 1.0])
+
+    def test_add_priority(self):
+        dist = Distance()
+        dist.add_priority('priority', 'abc', 'abc')
+        self.assertEqual(dist._penalties['priority'], [0.0])
+
+        dist.add_priority('priority', 'def', ['abc', 'def'])
+        self.assertEqual(dist._penalties['priority'], [0.0, 0.5])
+
+        dist.add_priority('priority', 'gh', ['ab', 'cd', 'ef',
+                                                  re.compile('GH', re.I)])
+        self.assertEqual(dist._penalties['priority'], [0.0, 0.5, 0.75])
+
+        dist.add_priority('priority', 'xyz', ['abc', 'def'])
+        self.assertEqual(dist._penalties['priority'], [0.0, 0.5, 0.75,
+                                                            1.0])
+
+    def test_add_ratio(self):
+        dist = Distance()
+        dist.add_ratio('ratio', 25, 100)
+        self.assertEqual(dist._penalties['ratio'], [0.25])
+
+        dist.add_ratio('ratio', 10, 5)
+        self.assertEqual(dist._penalties['ratio'], [0.25, 1.0])
+
+        dist.add_ratio('ratio', -5, 5)
+        self.assertEqual(dist._penalties['ratio'], [0.25, 1.0, 0.0])
+
+        dist.add_ratio('ratio', 5, 0)
+        self.assertEqual(dist._penalties['ratio'], [0.25, 1.0, 0.0, 0.0])
+
+    def test_add_string(self):
+        dist = Distance()
+        sdist = string_dist(u'abc', u'bcd')
+        dist.add_string('string', u'abc', u'bcd')
+        self.assertEqual(dist._penalties['string'], [sdist])
+
+    def test_distance(self):
+        config['match']['distance_weights']['album'] = 2.0
+        config['match']['distance_weights']['medium'] = 1.0
+        dist = Distance()
+        dist.add('album', 0.5)
+        dist.add('media', 0.25)
+        dist.add('media', 0.75)
+        self.assertEqual(dist.distance, 0.5)
+
+        # __getitem__()
+        self.assertEqual(dist['album'], 0.25)
+        self.assertEqual(dist['media'], 0.25)
+
+    def test_max_distance(self):
+        config['match']['distance_weights']['album'] = 3.0
+        config['match']['distance_weights']['medium'] = 1.0
+        dist = Distance()
+        dist.add('album', 0.5)
+        dist.add('medium', 0.0)
+        dist.add('medium', 0.0)
+        self.assertEqual(dist.max_distance, 5.0)
+
+    def test_operators(self):
+        config['match']['distance_weights']['source'] = 1.0
+        config['match']['distance_weights']['album'] = 2.0
+        config['match']['distance_weights']['medium'] = 1.0
+        dist = Distance()
+        dist.add('source', 0.0)
+        dist.add('album', 0.5)
+        dist.add('medium', 0.25)
+        dist.add('medium', 0.75)
+        self.assertEqual(len(dist), 2)
+        self.assertEqual(list(dist), [('album', 0.2), ('medium', 0.2)])
+        self.assertTrue(dist == 0.4)
+        self.assertTrue(dist < 1.0)
+        self.assertTrue(dist > 0.0)
+        self.assertEqual(dist - 0.4, 0.0)
+        self.assertEqual(0.4 - dist, 0.0)
+        self.assertEqual(float(dist), 0.4)
+
+    def test_raw_distance(self):
+        config['match']['distance_weights']['album'] = 3.0
+        config['match']['distance_weights']['medium'] = 1.0
+        dist = Distance()
+        dist.add('album', 0.5)
+        dist.add('medium', 0.25)
+        dist.add('medium', 0.5)
+        self.assertEqual(dist.raw_distance, 2.25)
+
+    def test_items(self):
+        config['match']['distance_weights']['album'] = 4.0
+        config['match']['distance_weights']['medium'] = 2.0
+        dist = Distance()
+        dist.add('album', 0.1875)
+        dist.add('medium', 0.75)
+        self.assertEqual(dist.items(), [('medium', 0.25), ('album', 0.125)])
+
+        # Sort by key if distance is equal.
+        dist = Distance()
+        dist.add('album', 0.375)
+        dist.add('medium', 0.75)
+        self.assertEqual(dist.items(), [('album', 0.25), ('medium', 0.25)])
+
+    def test_update(self):
+        dist1 = Distance()
+        dist1.add('album', 0.5)
+        dist1.add('media', 1.0)
+
+        dist2 = Distance()
+        dist2.add('album', 0.75)
+        dist2.add('album', 0.25)
+        dist2.add('media', 0.05)
+
+        dist1.update(dist2)
+
+        self.assertEqual(dist1._penalties, {'album': [0.5, 0.75, 0.25],
+                                             'media': [1.0, 0.05]})
+
+class TrackDistanceTest(_common.TestCase):
     def test_identical_tracks(self):
         item = _make_item(u'one', 1)
         info = _make_trackinfo()[0]
@@ -122,7 +289,7 @@ class TrackDistanceTest(unittest.TestCase):
         dist = match.track_distance(item, info, incl_artist=True)
         self.assertEqual(dist, 0.0)
 
-class AlbumDistanceTest(unittest.TestCase):
+class AlbumDistanceTest(_common.TestCase):
     def _mapping(self, items, info):
         out = {}
         for i, t in zip(items, info.tracks):
@@ -409,8 +576,8 @@ class AssignmentTest(unittest.TestCase):
         trackinfo.append(TrackInfo(u'three', None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
-        self.assertEqual(extra_items, set())
-        self.assertEqual(extra_tracks, set())
+        self.assertEqual(extra_items, [])
+        self.assertEqual(extra_tracks, [])
         self.assertEqual(mapping, {
             items[0]: trackinfo[0],
             items[1]: trackinfo[2],
@@ -428,8 +595,8 @@ class AssignmentTest(unittest.TestCase):
         trackinfo.append(TrackInfo(u'three', None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
-        self.assertEqual(extra_items, set())
-        self.assertEqual(extra_tracks, set())
+        self.assertEqual(extra_items, [])
+        self.assertEqual(extra_tracks, [])
         self.assertEqual(mapping, {
             items[0]: trackinfo[0],
             items[1]: trackinfo[2],
@@ -446,8 +613,8 @@ class AssignmentTest(unittest.TestCase):
         trackinfo.append(TrackInfo(u'three', None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
-        self.assertEqual(extra_items, set())
-        self.assertEqual(extra_tracks, set([trackinfo[1]]))
+        self.assertEqual(extra_items, [])
+        self.assertEqual(extra_tracks, [trackinfo[1]])
         self.assertEqual(mapping, {
             items[0]: trackinfo[0],
             items[1]: trackinfo[2],
@@ -463,8 +630,8 @@ class AssignmentTest(unittest.TestCase):
         trackinfo.append(TrackInfo(u'three', None))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
-        self.assertEqual(extra_items, set([items[1]]))
-        self.assertEqual(extra_tracks, set())
+        self.assertEqual(extra_items, [items[1]])
+        self.assertEqual(extra_tracks, [])
         self.assertEqual(mapping, {
             items[0]: trackinfo[0],
             items[2]: trackinfo[1],
@@ -513,8 +680,8 @@ class AssignmentTest(unittest.TestCase):
 
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
-        self.assertEqual(extra_items, set())
-        self.assertEqual(extra_tracks, set())
+        self.assertEqual(extra_items, [])
+        self.assertEqual(extra_tracks, [])
         for item, info in mapping.iteritems():
             self.assertEqual(items.index(item), trackinfo.index(info))
 
@@ -705,77 +872,77 @@ class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
 
 class StringDistanceTest(unittest.TestCase):
     def test_equal_strings(self):
-        dist = match.string_dist(u'Some String', u'Some String')
+        dist = string_dist(u'Some String', u'Some String')
         self.assertEqual(dist, 0.0)
 
     def test_different_strings(self):
-        dist = match.string_dist(u'Some String', u'Totally Different')
+        dist = string_dist(u'Some String', u'Totally Different')
         self.assertNotEqual(dist, 0.0)
 
     def test_punctuation_ignored(self):
-        dist = match.string_dist(u'Some String', u'Some.String!')
+        dist = string_dist(u'Some String', u'Some.String!')
         self.assertEqual(dist, 0.0)
 
     def test_case_ignored(self):
-        dist = match.string_dist(u'Some String', u'sOME sTring')
+        dist = string_dist(u'Some String', u'sOME sTring')
         self.assertEqual(dist, 0.0)
 
     def test_leading_the_has_lower_weight(self):
-        dist1 = match.string_dist(u'XXX Band Name', u'Band Name')
-        dist2 = match.string_dist(u'The Band Name', u'Band Name')
+        dist1 = string_dist(u'XXX Band Name', u'Band Name')
+        dist2 = string_dist(u'The Band Name', u'Band Name')
         self.assert_(dist2 < dist1)
 
     def test_parens_have_lower_weight(self):
-        dist1 = match.string_dist(u'One .Two.', u'One')
-        dist2 = match.string_dist(u'One (Two)', u'One')
+        dist1 = string_dist(u'One .Two.', u'One')
+        dist2 = string_dist(u'One (Two)', u'One')
         self.assert_(dist2 < dist1)
 
     def test_brackets_have_lower_weight(self):
-        dist1 = match.string_dist(u'One .Two.', u'One')
-        dist2 = match.string_dist(u'One [Two]', u'One')
+        dist1 = string_dist(u'One .Two.', u'One')
+        dist2 = string_dist(u'One [Two]', u'One')
         self.assert_(dist2 < dist1)
 
     def test_ep_label_has_zero_weight(self):
-        dist = match.string_dist(u'My Song (EP)', u'My Song')
+        dist = string_dist(u'My Song (EP)', u'My Song')
         self.assertEqual(dist, 0.0)
 
     def test_featured_has_lower_weight(self):
-        dist1 = match.string_dist(u'My Song blah Someone', u'My Song')
-        dist2 = match.string_dist(u'My Song feat Someone', u'My Song')
+        dist1 = string_dist(u'My Song blah Someone', u'My Song')
+        dist2 = string_dist(u'My Song feat Someone', u'My Song')
         self.assert_(dist2 < dist1)
 
     def test_postfix_the(self):
-        dist = match.string_dist(u'The Song Title', u'Song Title, The')
+        dist = string_dist(u'The Song Title', u'Song Title, The')
         self.assertEqual(dist, 0.0)
 
     def test_postfix_a(self):
-        dist = match.string_dist(u'A Song Title', u'Song Title, A')
+        dist = string_dist(u'A Song Title', u'Song Title, A')
         self.assertEqual(dist, 0.0)
 
     def test_postfix_an(self):
-        dist = match.string_dist(u'An Album Title', u'Album Title, An')
+        dist = string_dist(u'An Album Title', u'Album Title, An')
         self.assertEqual(dist, 0.0)
 
     def test_empty_strings(self):
-        dist = match.string_dist(u'', u'')
+        dist = string_dist(u'', u'')
         self.assertEqual(dist, 0.0)
 
     def test_solo_pattern(self):
         # Just make sure these don't crash.
-        match.string_dist(u'The ', u'')
-        match.string_dist(u'(EP)', u'(EP)')
-        match.string_dist(u', An', u'')
+        string_dist(u'The ', u'')
+        string_dist(u'(EP)', u'(EP)')
+        string_dist(u', An', u'')
 
     def test_heuristic_does_not_harm_distance(self):
-        dist = match.string_dist(u'Untitled', u'[Untitled]')
+        dist = string_dist(u'Untitled', u'[Untitled]')
         self.assertEqual(dist, 0.0)
 
     def test_ampersand_expansion(self):
-        dist = match.string_dist(u'And', u'&')
+        dist = string_dist(u'And', u'&')
         self.assertEqual(dist, 0.0)
 
     def test_accented_characters(self):
-        dist = match.string_dist(u'\xe9\xe1\xf1', u'ean')
+        dist = string_dist(u'\xe9\xe1\xf1', u'ean')
         self.assertEqual(dist, 0.0)
 
 def suite():

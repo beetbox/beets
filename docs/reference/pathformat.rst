@@ -43,6 +43,8 @@ probably don't want that! So use ``$albumartist``.
 As a convenience, however, beets allows ``$albumartist`` to fall back to the value for ``$artist`` and vice-versa if one tag is present but the other is not.
 
 
+.. _template-functions:
+
 Functions
 ---------
 
@@ -56,7 +58,7 @@ track's artists.
 
 These functions are built in to beets:
 
-* ``%lower{text}``: Convert ``text`` to lowercase. 
+* ``%lower{text}``: Convert ``text`` to lowercase.
 * ``%upper{text}``: Convert ``text`` to UPPERCASE.
 * ``%title{text}``: Convert ``text`` to Title Case.
 * ``%left{text,n}``: Return the first ``n`` characters of ``text``.
@@ -70,8 +72,12 @@ These functions are built in to beets:
   `unidecode module`_.
 * ``%aunique{identifiers,disambiguators}``: Provides a unique string to
   disambiguate similar albums in the database. See :ref:`aunique`, below.
+* ``%time{date_time,format}``: Return the date and time in any format accepted
+  by `strftime`_. For example, to get the year some music was added to your
+  library, use ``%time{$added,%Y}``.
 
 .. _unidecode module: http://pypi.python.org/pypi/Unidecode
+.. _strftime: http://docs.python.org/2/library/time.html#time.strftime
 
 Plugins can extend beets with more template functions (see
 :ref:`writing-plugins`).
@@ -173,6 +179,7 @@ Ordinary metadata:
 * year, month, day: The release date of the specific release.
 * original_year, original_month, original_day: The release date of the original
   version of the album.
+* track
 * tracktotal
 * disc
 * disctotal
@@ -195,7 +202,7 @@ Ordinary metadata:
 * encoder
 
 .. _artist credit: http://wiki.musicbrainz.org/Artist_Credit
-.. _list of type names: http://wiki.musicbrainz.org/Development/XML_Web_Service/Version_2#Release_Type_and_Status
+.. _list of type names: http://musicbrainz.org/doc/Release_Group/Type
 
 Audio information:
 
@@ -215,3 +222,8 @@ MusicBrainz and fingerprint information:
 * mb_releasegroupid
 * acoustid_fingerprint
 * acoustid_id
+
+Library metadata:
+
+* mtime: The modification time of the audio file.
+* added: The date and time that the music was added to your library.

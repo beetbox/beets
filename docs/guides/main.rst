@@ -22,8 +22,9 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
   ``apt-get install beets``. To build from source, you can get everything you
   need by running: ``apt-get install python-dev python-setuptools python-pip``
 
-* For **Arch Linux**, try getting `beets from AUR`_. (There's also a
-  bleeding-edge `dev package`_, which will probably set your computer on fire.)
+* On **Arch Linux**, `beets is in [community]`_, so just run ``pacman -S
+  beets``. (There's also a bleeding-edge `dev package`_ in the AUR, which will
+  probably set your computer on fire.)
 
 * For **Gentoo Linux**, beets is in Portage as ``media-sound/beets``. Just run
   ``emerge beets`` to install. There are several USE flags available for
@@ -36,6 +37,7 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
 .. _dev package: http://aur.archlinux.org/packages.php?ID=48617
 .. _Debian details: http://packages.qa.debian.org/b/beets.html
 .. _Ubuntu details: https://launchpad.net/ubuntu/+source/beets
+.. _beets is in [community]: https://www.archlinux.org/packages/community/any/beets/
 
 If you have `pip`_, just say ``pip install beets`` (you might need ``sudo`` in
 front of that). On Arch, you'll need to use ``pip2`` instead of ``pip``.
@@ -152,9 +154,8 @@ metadata for every album you import. Option (a) is really fast, but option (b)
 makes sure all your songs' tags are exactly right from the get-go. The point
 about speed bears repeating: using the autotagger on a large library can take a
 very long time, and it's an interactive process. So set aside a good chunk of
-time if you're going to go that route. (I'm working on improving the
-autotagger's performance and automation.) For more information on the
-interactive tagging process, see :doc:`tagger`.
+time if you're going to go that route. For more on the interactive
+tagging process, see :doc:`tagger`.
 
 If you've got time and want to tag all your music right once and for all, do
 this::
@@ -228,35 +229,14 @@ you have::
     Artists: 548
     Albums: 1094
 
-Playing Music
--------------
-
-Beets is primarily intended as a music organizer, not a player. It's designed to
-be used in conjunction with other players (consider `Decibel`_ or `cmus`_;
-there's even :ref:`a cmus plugin for beets <other-plugins>`). However, it does
-include a simple music player---it doesn't have a ton of features, but it gets
-the job done.
-
-.. _Decibel: http://decibel.silent-blade.org/
-.. _cmus: http://cmus.sourceforge.net/
-
-The player, called BPD, is a clone of an excellent music player called `MPD`_.
-Like MPD, it runs as a daemon (i.e., without a user interface). Another program,
-called an MPD client, controls the player and provides the user with an
-interface. You'll need to enable the BPD plugin before you can use it. Check out
-:doc:`/plugins/bpd`.
-
-.. _MPD: http://mpd.wikia.com/
-
-You can, of course, use the bona fide MPD server with your beets library. MPD is
-a great player and has more features than BPD. BPD just provides a convenient,
-built-in player that integrates tightly with your beets database.
-
 Keep Playing
 ------------
 
-The :doc:`/reference/cli` page has more detailed description of all of beets'
-functionality.  (Like deleting music! That's important.) Start exploring!
+This is only the beginning of your long and prosperous journey with beets. To
+keep learning, take a look at :doc:`advanced` for a sampling of what else
+is possible. You'll also want to glance over the :doc:`/reference/cli` page
+for a more detailed description of all of beets' functionality.  (Like
+deleting music! That's important.)
 
 Also, check out :ref:`included-plugins` as well as :ref:`other-plugins`.  The
 real power of beets is in its extensibility---with plugins, beets can do almost

@@ -21,16 +21,18 @@ import logging
 import os
 import time
 import itertools
-import re
 import codecs
+from datetime import datetime
 
 import beets
 from beets import ui
 from beets.ui import print_, input_, decargs
 from beets import autotag
 from beets.autotag import recommendation
+from beets.autotag import hooks
 from beets import plugins
 from beets import importer
+from beets import util
 from beets.util import syspath, normpath, ancestry, displayable_path
 from beets.util.functemplate import Template
 from beets import library
@@ -89,11 +91,30 @@ def _showdiff(field, oldval, newval):
 
 fields_cmd = ui.Subcommand('fields',
     help='show fields available for queries and format strings')
+
 def fields_func(lib, opts, args):
-    print("Available item fields:")
-    print("  " + "\n  ".join([key for key in library.ITEM_KEYS]))
-    print("\nAvailable album fields:")
-    print("  " + "\n  ".join([key for key in library.ALBUM_KEYS]))
+    def _print_rows(names):
+        print("  " + "\n  ".join(names))
+
+    def _show_plugin_fields(album):
+        plugin_fields = []
+        for plugin in plugins.find_plugins():
+            if album:
+                fdict = plugin.album_template_fields
+            else:
+                fdict = plugin.template_fields
+            plugin_fields += fdict.keys()
+        if plugin_fields:
+            print("Template fields from plugins:")
+            _print_rows(plugin_fields)
+
+    print("Item fields:")
+    _print_rows(library.ITEM_KEYS)
+    _show_plugin_fields(False)
+
+    print("\nAlbum fields:")
+    _print_rows(library.ALBUM_KEYS)
+    _show_plugin_fields(True)
 
 fields_cmd.func = fields_func
 default_commands.append(fields_cmd)
@@ -103,9 +124,35 @@ default_commands.append(fields_cmd)
 
 VARIOUS_ARTISTS = u'Various Artists'
 
-PARTIAL_MATCH_MESSAGE = u'(partial match!)'
-
 # Importer utilities and support.
+
+def disambig_string(info):
+    """Generate a string for an AlbumInfo or TrackInfo object that
+    provides context that helps disambiguate similar-looking albums and
+    tracks.
+    """
+    disambig = []
+    if info.data_source and info.data_source != 'MusicBrainz':
+        disambig.append(info.data_source)
+
+    if isinstance(info, hooks.AlbumInfo):
+        if info.media:
+            if info.mediums > 1:
+                disambig.append(u'{0}x{1}'.format(
+                info.mediums, info.media))
+            else:
+                disambig.append(info.media)
+        if info.year:
+            disambig.append(unicode(info.year))
+        if info.country:
+            disambig.append(info.country)
+        if info.label:
+            disambig.append(info.label)
+        if info.albumdisambig:
+            disambig.append(info.albumdisambig)
+
+    if disambig:
+        return u', '.join(disambig)
 
 def dist_string(dist):
     """Formats a distance (a float) as a colorized similarity percentage
@@ -120,39 +167,55 @@ def dist_string(dist):
         out = ui.colorize('red', out)
     return out
 
+def penalty_string(distance, limit=None):
+    """Returns a colorized string that indicates all the penalties
+    applied to a distance object.
+    """
+    penalties = []
+    for key in distance.keys():
+        key = key.replace('album_', '')
+        key = key.replace('track_', '')
+        key = key.replace('_', ' ')
+        penalties.append(key)
+    if penalties:
+        if limit and len(penalties) > limit:
+            penalties = penalties[:limit] + ['...']
+        return ui.colorize('yellow', '(%s)' % ', '.join(penalties))
+
 def show_change(cur_artist, cur_album, match):
     """Print out a representation of the changes that will be made if an
     album's tags are changed according to `match`, which must be an AlbumMatch
     object.
     """
-    def show_album(artist, album, partial=False):
+    def show_album(artist, album):
         if artist:
             album_description = u'    %s - %s' % (artist, album)
         elif album:
             album_description = u'    %s' % album
         else:
             album_description = u'    (unknown album)'
-
-        out = album_description
-
-        # Add a suffix if this is a partial match.
-        if partial:
-            out += u' ' + ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
-
-        print_(out)
+        print_(album_description)
 
     def format_index(track_info):
         """Return a string representing the track index of the given
-        TrackInfo object.
+        TrackInfo or Item object.
         """
-        if config['per_disc_numbering'].get(bool):
-            if match.info.mediums > 1:
-                return u'{0}-{1}'.format(track_info.medium,
-                                         track_info.medium_index)
-            else:
-                return unicode(track_info.medium_index)
+        if isinstance(track_info, hooks.TrackInfo):
+            index = track_info.index
+            medium_index = track_info.medium_index
+            medium = track_info.medium
+            mediums = match.info.mediums
         else:
-            return unicode(track_info.index)
+            index = medium_index = track_info.track
+            medium = track_info.disc
+            mediums = track_info.disctotal
+        if config['per_disc_numbering'].get(bool):
+            if mediums > 1:
+                return u'{0}-{1}'.format(medium, medium_index)
+            else:
+                return unicode(medium_index)
+        else:
+            return unicode(index)
 
     # Identify the album in question.
     if cur_artist != match.info.artist or \
@@ -172,23 +235,53 @@ def show_change(cur_artist, cur_album, match):
         print_("To:")
         show_album(artist_r, album_r)
     else:
-        message = u"Tagging: %s - %s" % (match.info.artist, match.info.album)
-        if match.extra_items or match.extra_tracks:
-            message += u' ' + ui.colorize('yellow', PARTIAL_MATCH_MESSAGE)
-        print_(message)
+        print_(u"Tagging:\n    %s - %s" % (match.info.artist, match.info.album))
 
-    # Distance/similarity.
-    print_('(Similarity: %s)' % dist_string(match.distance))
+    # Data URL.
+    if match.info.data_url:
+        print_('URL:\n    %s' % match.info.data_url)
+
+    # Info line.
+    info = []
+    # Similarity.
+    info.append('(Similarity: %s)' % dist_string(match.distance))
+    # Penalties.
+    penalties = penalty_string(match.distance)
+    if penalties:
+        info.append(penalties)
+    # Disambiguation.
+    disambig = disambig_string(match.info)
+    if disambig:
+        info.append(ui.colorize('lightgray', '(%s)' % disambig))
+    print_(' '.join(info))
 
     # Tracks.
     pairs = match.mapping.items()
     pairs.sort(key=lambda (_, track_info): track_info.index)
 
-    # Build up LHS and RHS for track difference display. The `lines`
-    # list contains ``(current title, new title, width)`` tuples where
-    # `width` is the length (in characters) of the uncolorized LHS.
+    # Build up LHS and RHS for track difference display. The `lines` list
+    # contains ``(lhs, rhs, width)`` tuples where `width` is the length (in
+    # characters) of the uncolorized LHS.
     lines = []
+    medium = disctitle = None
     for item, track_info in pairs:
+
+        # Medium number and title.
+        if medium != track_info.medium or disctitle != track_info.disctitle:
+            media = match.info.media or 'Media'
+            if match.info.mediums > 1 and track_info.disctitle:
+                lhs = '%s %s: %s' % (media, track_info.medium,
+                                     track_info.disctitle)
+            elif match.info.mediums > 1:
+                lhs = '%s %s' % (media, track_info.medium)
+            elif track_info.disctitle:
+                lhs = '%s: %s' % (media, track_info.disctitle)
+            else:
+                lhs = None
+            if lhs:
+                lines.append((lhs, '', 0))
+            medium, disctitle = track_info.medium, track_info.disctitle
+
         # Titles.
         new_title = track_info.title
         if not item.title.strip():
@@ -201,11 +294,21 @@ def show_change(cur_artist, cur_album, match):
         lhs_width = len(cur_title)
 
         # Track number change.
-        if item.track not in (track_info.index, track_info.medium_index):
-            cur_track, new_track = unicode(item.track), format_index(track_info)
-            lhs_track, rhs_track = ui.color_diff_suffix(cur_track, new_track)
-            templ = ui.colorize('red', u' (#') + u'{0}' + \
-                    ui.colorize('red', u')')
+        cur_track, new_track = format_index(item), format_index(track_info)
+        if cur_track != new_track:
+            if item.track in (track_info.index, track_info.medium_index):
+                color = 'lightgray'
+            else:
+                color = 'red'
+            if (cur_track + new_track).count('-') == 1:
+                lhs_track, rhs_track = ui.colorize(color, cur_track), \
+                                       ui.colorize(color, new_track)
+            else:
+                color = 'red'
+                lhs_track, rhs_track = ui.color_diff_suffix(cur_track,
+                                                            new_track)
+            templ = ui.colorize(color, u' (#') + u'{0}' + \
+                    ui.colorize(color, u')')
             lhs += templ.format(lhs_track)
             rhs += templ.format(rhs_track)
             lhs_width += len(cur_track) + 4
@@ -224,10 +327,15 @@ def show_change(cur_artist, cur_album, match):
             rhs += templ.format(rhs_length)
             lhs_width += len(cur_length) + 3
 
+        # Penalties.
+        penalties = penalty_string(match.distance.tracks[track_info])
+        if penalties:
+            rhs += ' %s' % penalties
+
         if lhs != rhs:
-            lines.append((lhs, rhs, lhs_width))
+            lines.append((' * %s' % lhs, rhs, lhs_width))
         elif config['import']['detail']:
-            lines.append((lhs, '', lhs_width))
+            lines.append((' * %s' % lhs, '', lhs_width))
 
     # Print each track in two columns, or across two lines.
     col_width = (ui.term_width() - len(''.join([' * ', ' -> ']))) // 2
@@ -235,23 +343,28 @@ def show_change(cur_artist, cur_album, match):
         max_width = max(w for _, _, w in lines)
         for lhs, rhs, lhs_width in lines:
             if not rhs:
-                print_(u' * {0}'.format(lhs))
+                print_(lhs)
             elif max_width > col_width:
-                print_(u' * %s ->\n   %s' % (lhs, rhs))
+                print_(u'%s ->\n   %s' % (lhs, rhs))
             else:
                 pad = max_width - lhs_width
-                print_(u' * %s%s -> %s' % (lhs, ' ' * pad, rhs))
+                print_(u'%s%s -> %s' % (lhs, ' ' * pad, rhs))
 
     # Missing and unmatched tracks.
+    if match.extra_tracks:
+        print_('Missing tracks:')
     for track_info in match.extra_tracks:
-        line = u' * Missing track: {0} ({1})'.format(track_info.title,
-                                                     format_index(track_info))
-        line = ui.colorize('yellow', line)
-        print_(line)
+        line = ' ! %s (#%s)' % (track_info.title, format_index(track_info))
+        if track_info.length:
+            line += ' (%s)' % ui.human_seconds_short(track_info.length)
+        print_(ui.colorize('yellow', line))
+    if match.extra_items:
+        print_('Unmatched tracks:')
     for item in match.extra_items:
-        line = u' * Unmatched track: {0} ({1})'.format(item.title, item.track)
-        line = ui.colorize('yellow', line)
-        print_(line)
+        line = ' ! %s (#%s)' % (item.title, format_index(item))
+        if item.length:
+            line += ' (%s)' % ui.human_seconds_short(item.length)
+        print_(ui.colorize('yellow', line))
 
 def show_item_change(item, match):
     """Print out the change that would occur by tagging `item` with the
@@ -272,7 +385,23 @@ def show_item_change(item, match):
     else:
         print_("Tagging track: %s - %s" % (cur_artist, cur_title))
 
-    print_('(Similarity: %s)' % dist_string(match.distance))
+    # Data URL.
+    if match.info.data_url:
+        print_('URL:\n    %s' % match.info.data_url)
+
+    # Info line.
+    info = []
+    # Similarity.
+    info.append('(Similarity: %s)' % dist_string(match.distance))
+    # Penalties.
+    penalties = penalty_string(match.distance)
+    if penalties:
+        info.append(penalties)
+    # Disambiguation.
+    disambig = disambig_string(match.info)
+    if disambig:
+        info.append(ui.colorize('lightgray', '(%s)' % disambig))
+    print_(' '.join(info))
 
 def _summary_judment(rec):
     """Determines whether a decision should be made without even asking
@@ -367,48 +496,35 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
 
         if not bypass_candidates:
             # Display list of candidates.
-            if singleton:
-                print_('Finding tags for track "%s - %s".' %
-                       (item.artist, item.title))
-                print_('Candidates:')
-                for i, match in enumerate(candidates):
-                    print_('%i. %s - %s (%s)' %
-                           (i + 1, match.info.artist, match.info.title,
-                            dist_string(match.distance)))
-            else:
-                print_('Finding tags for album "%s - %s".' %
-                       (cur_artist, cur_album))
-                print_('Candidates:')
-                for i, match in enumerate(candidates):
-                    line = '%i. %s - %s' % (i + 1, match.info.artist,
-                                            match.info.album)
+            print_(u'Finding tags for {0} "{1} - {2}".'.format(
+                u'track' if singleton else u'album',
+                item.artist if singleton else cur_artist,
+                item.title if singleton else cur_album,
+            ))
 
-                    # Label, year and media disambiguation, if available.
-                    disambig = []
-                    if match.info.label:
-                        disambig.append(match.info.label)
-                    if match.info.year:
-                        disambig.append(unicode(match.info.year))
-                    if match.info.media:
-                        if match.info.mediums > 1:
-                            disambig.append(u'{0}x{1}'.format(
-                              match.info.mediums, match.info.media))
-                        else:
-                            disambig.append(match.info.media)
-                    if match.info.albumdisambig:
-                        disambig.append(match.info.albumdisambig)
-                    if disambig:
-                        line += u' [{0}]'.format(u', '.join(disambig))
+            print_(u'Candidates:')
+            for i, match in enumerate(candidates):
+                # Index, metadata, and distance.
+                line = [
+                    u'{0}.'.format(i + 1),
+                    u'{0} - {1}'.format(
+                        match.info.artist,
+                        match.info.title if singleton else match.info.album,
+                    ),
+                    u'({0})'.format(dist_string(match.distance)),
+                ]
 
-                    line += ' (%s)' % dist_string(match.distance)
+                # Penalties.
+                penalties = penalty_string(match.distance, 3)
+                if penalties:
+                    line.append(penalties)
 
-                    # Point out the partial matches.
-                    if match.extra_items or match.extra_tracks:
-                        warning = PARTIAL_MATCH_MESSAGE
-                        warning = ui.colorize('yellow', warning)
-                        line += u' %s' % warning
+                # Disambiguation
+                disambig = disambig_string(match.info)
+                if disambig:
+                    line.append(ui.colorize('lightgray', '(%s)' % disambig))
 
-                    print_(line)
+                print_(' '.join(line))
 
             # Ask the user for a choice.
             if singleton:
@@ -492,20 +608,11 @@ def manual_search(singleton):
     return artist.strip(), name.strip()
 
 def manual_id(singleton):
-    """Input a MusicBrainz ID, either for an album ("release") or a
-    track ("recording"). If no valid ID is entered, returns None.
+    """Input an ID, either for an album ("release") or a track ("recording").
     """
-    prompt = 'Enter MusicBrainz %s ID:' % \
+    prompt = 'Enter %s ID:' % \
              ('recording' if singleton else 'release')
-    entry = input_(prompt).strip()
-
-    # Find the first thing that looks like a UUID/MBID.
-    match = re.search('[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', entry)
-    if match:
-        return match.group()
-    else:
-        log.error('Invalid MBID.')
-        return None
+    return input_(prompt).strip()
 
 class TerminalImportSession(importer.ImportSession):
     """An import session that runs in a terminal.
@@ -517,7 +624,8 @@ class TerminalImportSession(importer.ImportSession):
         """
         # Show what we're tagging.
         print_()
-        print_(displayable_path(task.paths, u'\n'))
+        print_(displayable_path(task.paths, u'\n') +
+               u' ({0} items)'.format(len(task.items)))
 
         # Take immediate action if appropriate.
         action = _summary_judment(task.rec)
@@ -798,7 +906,12 @@ def update_items(lib, query, album, move, pretend):
 
             # Read new data.
             old_data = dict(item.record)
-            item.read()
+            try:
+                item.read()
+            except Exception as exc:
+                log.error(u'error reading {0}: {1}'.format(
+                    displayable_path(item.path), exc))
+                continue
 
             # Special-case album artist when it matches track artist. (Hacky
             # but necessary for preserving album-level metadata for non-
@@ -981,16 +1094,42 @@ default_commands.append(version_cmd)
 
 # modify: Declaratively change metadata.
 
+def _convert_type(key, value, album=False):
+    """Convert a string to the appropriate type for the given field.
+    `album` indicates whether to use album or item field definitions.
+    """
+    fields = library.ALBUM_FIELDS if album else library.ITEM_FIELDS
+    typ = [f[1] for f in fields if f[0] == key][0]
+
+    if typ is bool:
+        return util.str2bool(value)
+    elif typ is datetime:
+        fmt = config['time_format'].get(unicode)
+        try:
+            return time.mktime(time.strptime(value, fmt))
+        except ValueError:
+            raise ui.UserError(u'{0} must have format {1}'.format(key, fmt))
+    elif typ is bytes:  # A path.
+        return util.bytestring_path(value)
+    else:
+        try:
+            return typ(value)
+        except ValueError:
+            raise ui.UserError(u'{0} must be a {1}'.format(key, typ))
+
 def modify_items(lib, mods, query, write, move, album, confirm):
     """Modifies matching items according to key=value assignments."""
     # Parse key=value specifications into a dictionary.
-    allowed_keys = library.ALBUM_KEYS if album else library.ITEM_KEYS_WRITABLE
+    if album:
+        allowed_keys = library.ALBUM_KEYS
+    else:
+        allowed_keys = library.ITEM_KEYS_WRITABLE + ['added']
     fsets = {}
     for mod in mods:
         key, value = mod.split('=', 1)
         if key not in allowed_keys and '-' not in key:
             raise ui.UserError('"%s" is not a valid field' % key)
-        fsets[key] = value
+        fsets[key] = _convert_type(key, value, album)
 
     # Get the items to modify.
     items, albums = _do_query(lib, query, album, False)

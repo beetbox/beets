@@ -12,7 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-__version__ = '1.1.0-beta.3'
+__version__ = '1.2.2'
 __author__ = 'Adrian Sampson <adrian@radbox.org>'
 
 import beets.library
@@ -20,4 +20,4 @@ from beets.util import confit
 
 Library = beets.library.Library
 
-config = confit.Configuration('beets', __name__, False)
+config = confit.LazyConfig('beets', __name__)

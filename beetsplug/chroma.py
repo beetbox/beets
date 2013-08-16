@@ -113,35 +113,33 @@ def _all_releases(items):
 
 class AcoustidPlugin(plugins.BeetsPlugin):
     def track_distance(self, item, info):
-        if item.path not in _matches:
-            # Match failed.
-            return 0.0, 0.0
+        dist = hooks.Distance()
+        if item.path not in _matches or not info.track_id:
+            # Match failed or no track ID.
+            return dist
 
         recording_ids, _ = _matches[item.path]
-        if info.track_id in recording_ids:
-            dist = 0.0
-        else:
-            dist = TRACK_ID_WEIGHT
-        return dist, TRACK_ID_WEIGHT
+        dist.add_expr('track_id', info.track_id not in recording_ids)
+        return dist
 
-    def candidates(self, items):
+    def candidates(self, items, artist, album, va_likely):
         albums = []
         for relid in _all_releases(items):
-            album = hooks._album_for_id(relid)
+            album = hooks.album_for_mbid(relid)
             if album:
                 albums.append(album)
 
         log.debug('acoustid album candidates: %i' % len(albums))
         return albums
 
-    def item_candidates(self, item):
+    def item_candidates(self, item, artist, title):
         if item.path not in _matches:
             return []
 
         recording_ids, _ = _matches[item.path]
         tracks = []
         for recording_id in recording_ids:
-            track = hooks._track_for_id(recording_id)
+            track = hooks.track_for_mbid(recording_id)
             if track:
                 tracks.append(track)
         log.debug('acoustid item candidates: {0}'.format(len(tracks)))

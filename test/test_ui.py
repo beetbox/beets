@@ -27,6 +27,7 @@ from beets import library
 from beets import ui
 from beets.ui import commands
 from beets import autotag
+from beets.autotag.match import distance
 from beets import importer
 from beets.mediafile import MediaFile
 from beets import config
@@ -478,7 +479,7 @@ class ConfigTest(_common.TestCase):
         if config_yaml:
             config_data = yaml.load(config_yaml, Loader=confit.Loader)
             config.set(config_data)
-        ui._raw_main(args + ['test'], False)
+        ui._raw_main(args + ['test'])
 
     def test_paths_section_respected(self):
         def func(lib, opts, args):
@@ -585,28 +586,6 @@ class ShowdiffTest(_common.TestCase):
 
         self.assertEqual(complete_diff, partial_diff)
 
-AN_ID = "28e32c71-1450-463e-92bf-e0a46446fc11"
-class ManualIDTest(_common.TestCase):
-    def setUp(self):
-        super(ManualIDTest, self).setUp()
-        _common.log.setLevel(logging.CRITICAL)
-        self.io.install()
-
-    def test_id_accepted(self):
-        self.io.addinput(AN_ID)
-        out = commands.manual_id(False)
-        self.assertEqual(out, AN_ID)
-
-    def test_non_id_returns_none(self):
-        self.io.addinput("blah blah")
-        out = commands.manual_id(False)
-        self.assertEqual(out, None)
-
-    def test_url_finds_id(self):
-        self.io.addinput("http://musicbrainz.org/entity/%s?something" % AN_ID)
-        out = commands.manual_id(False)
-        self.assertEqual(out, AN_ID)
-
 class ShowChangeTest(_common.TestCase):
     def setUp(self):
         super(ShowChangeTest, self).setUp()
@@ -616,21 +595,23 @@ class ShowChangeTest(_common.TestCase):
         self.items[0].track = 1
         self.items[0].path = '/path/to/file.mp3'
         self.info = autotag.AlbumInfo(
-            'the album', 'album id', 'the artist', 'artist id', [
-                autotag.TrackInfo('the title', 'track id', index=1)
+            u'the album', u'album id', u'the artist', u'artist id', [
+                autotag.TrackInfo(u'the title', u'track id', index=1)
         ])
 
     def _show_change(self, items=None, info=None,
-                     cur_artist='the artist', cur_album='the album',
+                     cur_artist=u'the artist', cur_album=u'the album',
                      dist=0.1):
         items = items or self.items
         info = info or self.info
         mapping = dict(zip(items, info.tracks))
         config['color'] = False
+        album_dist = distance(items, info, mapping)
+        album_dist._penalties = {'album': [dist]}
         commands.show_change(
             cur_artist,
             cur_album,
-            autotag.AlbumMatch(0.1, info, mapping, set(), set()),
+            autotag.AlbumMatch(album_dist, info, mapping, set(), set()),
         )
         return self.io.getoutput().lower()
 
@@ -645,7 +626,7 @@ class ShowChangeTest(_common.TestCase):
         self.assertTrue('correcting tags from:' in msg)
 
     def test_item_data_change(self):
-        self.items[0].title = 'different'
+        self.items[0].title = u'different'
         msg = self._show_change()
         self.assertTrue('different -> the title' in msg)
 
@@ -660,12 +641,12 @@ class ShowChangeTest(_common.TestCase):
         self.assertTrue('correcting tags from:' in msg)
 
     def test_item_data_change_title_missing(self):
-        self.items[0].title = ''
+        self.items[0].title = u''
         msg = re.sub(r'  +', ' ', self._show_change())
         self.assertTrue('file.mp3 -> the title' in msg)
 
     def test_item_data_change_title_missing_with_unicode_filename(self):
-        self.items[0].title = ''
+        self.items[0].title = u''
         self.items[0].path = u'/path/to/caf\xe9.mp3'.encode('utf8')
         msg = re.sub(r'  +', ' ', self._show_change().decode('utf8'))
         self.assertTrue(u'caf\xe9.mp3 -> the title' in msg

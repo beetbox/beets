@@ -208,6 +208,15 @@ READ_ONLY_CORRECT_DICTS = {
         'bitdepth': 0,
         'channels': 1,
     },
+
+    'full.alac.m4a': {
+        'length': 1.0,
+        'bitrate': 55072,
+        'format': 'ALAC',
+        'samplerate': 0,
+        'bitdepth': 0,
+        'channels': 0,
+    },
 }
 
 TEST_FILES = {
@@ -266,6 +275,9 @@ class AllFilesMixin(object):
 
     def test_wma(self):
         self._run('full', 'wma')
+
+    def test_alac(self):
+        self._run('full', 'alac.m4a')
 
     # Special test for advanced release date.
     def test_date_mp3(self):
@@ -428,6 +440,9 @@ class ReadOnlyTest(unittest.TestCase):
 
     def test_wma(self):
         self._run('full.wma')
+
+    def test_alac(self):
+        self._run('full.alac.m4a')
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

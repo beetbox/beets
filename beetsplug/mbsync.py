@@ -47,7 +47,12 @@ def _print_and_apply_changes(lib, item, move, pretend, write):
             lib.move(item, with_album=False)
 
         if write:
-            item.write()
+            try:
+                item.write()
+            except Exception as exc:
+                log.error(u'could not sync {0}: {1}'.format(
+                    util.displayable_path(item.path), exc))
+                return False
         lib.store(item)
 
     return True
@@ -67,7 +72,7 @@ def mbsync_singletons(lib, query, move, pretend, write):
         s.old_data = dict(s.record)
 
         # Get the MusicBrainz recording info.
-        track_info = hooks._track_for_id(s.mb_trackid)
+        track_info = hooks.track_for_mbid(s.mb_trackid)
         if not track_info:
             log.info(u'Recording ID not found: {0}'.format(s.mb_trackid))
             continue
@@ -92,7 +97,7 @@ def mbsync_albums(lib, query, move, pretend, write):
             item.old_data = dict(item.record)
 
         # Get the MusicBrainz album information.
-        album_info = hooks._album_for_id(a.mb_albumid)
+        album_info = hooks.album_for_mbid(a.mb_albumid)
         if not album_info:
             log.info(u'Release ID not found: {0}'.format(a.mb_albumid))
             continue
@@ -111,8 +116,8 @@ def mbsync_albums(lib, query, move, pretend, write):
             autotag.apply_metadata(album_info, mapping)
             changed = False
             for item in items:
-                changed = changed or \
-                    _print_and_apply_changes(lib, item, move, pretend, write)
+                changed = _print_and_apply_changes(lib, item, move, pretend,
+                    write) or changed
             if not changed:
                 # No change to any item.
                 continue

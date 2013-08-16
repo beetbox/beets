@@ -17,9 +17,12 @@ Before you can use BPD, you'll need the media library called GStreamer (along
 with its Python bindings) on your system.
 
 * On Mac OS X, you can use `MacPorts`_ or `Homebrew`_. For MacPorts, just run
-  ``port install py27-gst-python``. For Homebrew, use ``brew install
-  gst-python``. (Note that you'll need the Mac OS X Developer Tools in either
-  case.)
+  ``port install py27-gst-python``. For Homebrew, the appropriate formulae are
+  in `homebrew-versions`_, so run ``brew tap homebrew/versions`` and then
+  ``brew install gst-python010``. (Note that you'll need the Mac OS X
+  Developer Tools in either case.)
+
+.. _homebrew-versions: https://github.com/Homebrew/homebrew-versions
 
 * On Linux, it's likely that you already have gst-python. (If not, your
   distribution almost certainly has a package for it.)

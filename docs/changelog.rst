@@ -1,6 +1,239 @@
 Changelog
 =========
 
+1.2.2 (in development)
+----------------------
+
+* A new plugin event, ``item_moved``, is sent when files are moved on disk.
+  Thanks to dsedivec.
+* :doc:`/plugins/lyrics`: More improvements to the Google backend by Fabrice
+  Laporte.
+* :doc:`/plugins/bpd`: Fix for a crash when searching, thanks to Simon Chopin.
+* Regular expression queries (and other query types) over paths now work.
+  (Previously, special query types were ignored for the ``path`` field.)
+* :doc:`/plugins/fetchart`: Look for images in the Cover Art Archive for
+  the release group in addition to the specific release. Thanks to Filipe
+  Fortes.
+
+
+1.2.1 (June 22, 2013)
+---------------------
+
+This release introduces a major internal change in the way that similarity
+scores are handled. It means that the importer interface can now show you
+exactly why a match is assigned its score and that the autotagger gained a few
+new options that let you customize how matches are prioritized and
+recommended.
+
+The refactoring work is due to the continued efforts of Tai Lee. The
+changes you'll notice while using the autotagger are:
+
+* The top 3 distance penalties are now displayed on the release listing,
+  and all album and track penalties are now displayed on the track changes
+  list. This should make it clear exactly which metadata is contributing to a
+  low similarity score.
+* When displaying differences, the colorization has been made more consistent
+  and helpful: red for an actual difference, yellow to indicate that a
+  distance penalty is being applied, and light gray for no penalty (e.g., case
+  changes) or disambiguation data.
+
+There are also three new (or overhauled) configuration options that let you
+customize the way that matches are selected:
+
+* The :ref:`ignored` setting lets you instruct the importer not to show you
+  matches that have a certain penalty applied.
+* The :ref:`preferred` collection of settings specifies a sorted list of
+  preferred countries and media types, or prioritizes releases closest to the
+  original year for an album.
+* The :ref:`max_rec` settings can now be used for any distance penalty
+  component. The recommendation will be downgraded if a non-zero penalty is
+  being applied to the specified field.
+
+And some little enhancements and bug fixes:
+
+* Multi-disc directory names can now contain "disk" (in addition to "disc").
+  Thanks to John Hawthorn.
+* :doc:`/plugins/web`: Item and album counts are now exposed through the API
+  for use with the Tomahawk resolver. Thanks to Uwe L. Korn.
+* Python 2.6 compatibility for :doc:`/plugins/beatport`,
+  :doc:`/plugins/missing`, and :doc:`/plugins/duplicates`. Thanks to Wesley
+  Bitter and Pedro Silva.
+* Don't move the config file during a null migration. Thanks to Theofilos
+  Intzoglou.
+* Fix an occasional crash in the :doc:`/plugins/beatport` when a length
+  field was missing from the API response. Thanks to Timothy Appnel.
+* :doc:`/plugins/scrub`: Handle and log I/O errors.
+* :doc:`/plugins/lyrics`: The Google backend should now turn up more results.
+  Thanks to Fabrice Laporte.
+* :doc:`/plugins/random`: Fix compatibility with Python 2.6. Thanks to
+  Matthias Drochner.
+
+
+1.2.0 (June 5, 2013)
+--------------------
+
+There's a *lot* of new stuff in this release: new data sources for the
+autotagger, new plugins to look for problems in your library, tracking the
+date that you acquired new music, an awesome new syntax for doing queries over
+numeric fields, support for ALAC files, and major enhancements to the
+importer's UI and distance calculations. A special thanks goes out to all the
+contributors who helped make this release awesome.
+
+For the first time, beets can now tag your music using additional **data
+sources** to augment the matches from MusicBrainz. When you enable either of
+these plugins, the importer will start showing you new kinds of matches:
+
+* New :doc:`/plugins/discogs`: Get matches from the `Discogs`_ database.
+  Thanks to Artem Ponomarenko and Tai Lee.
+* New :doc:`/plugins/beatport`: Get matches from the `Beatport`_ database.
+  Thanks to Johannes Baiter.
+
+We also have two other new plugins that can scan your library to check for
+common problems, both by Pedro Silva:
+
+* New :doc:`/plugins/duplicates`: Find tracks or albums in your
+  library that are **duplicated**.
+* New :doc:`/plugins/missing`: Find albums in your library that are **missing
+  tracks**.
+
+There are also three more big features added to beets core:
+
+* Your library now keeps track of **when music was added** to it. The new
+  ``added`` field is a timestamp reflecting when each item and album was
+  imported and the new ``%time{}`` template function lets you format this
+  timestamp for humans. Thanks to Lucas Duailibe.
+* When using queries to match on quantitative fields, you can now use
+  **numeric ranges**. For example, you can get a list of albums from the '90s
+  by typing ``beet ls year:1990..1999`` or find high-bitrate music with
+  ``bitrate:128000..``. See :ref:`numericquery`. Thanks to Michael Schuerig.
+* **ALAC files** are now marked as ALAC instead of being conflated with AAC
+  audio. Thanks to Simon Luijk.
+
+In addition, the importer saw various UI enhancements, thanks to Tai Lee:
+
+* More consistent format and colorization of album and track metadata.
+* Display data source URL for matches from the new data source plugins. This
+  should make it easier to migrate data from Discogs or Beatport into
+  MusicBrainz.
+* Display album disambiguation and disc titles in the track listing, when
+  available.
+* Track changes are highlighted in yellow when they indicate a change in
+  format to or from the style of :ref:`per_disc_numbering`. (As before, no
+  penalty is applied because the track number is still "correct", just in a
+  different format.)
+* Sort missing and unmatched tracks by index and title and group them
+  together for better readability.
+* Indicate MusicBrainz ID mismatches.
+
+The calculation of the similarity score for autotagger matches was also
+improved, again thanks to Tai Lee. These changes, in general, help deal with
+the new metadata sources and help disambiguate between similar releases in the
+same MusicBrainz release group:
+
+* Strongly prefer releases with a matching MusicBrainz album ID. This helps
+  beets re-identify the same release when re-importing existing files.
+* Prefer releases that are closest to the tagged ``year``. Tolerate files
+  tagged with release or original year.
+* The new ``preferred_media`` config option lets you prefer a certain media
+  type when the ``media`` field is unset on an album.
+* Apply minor penalties across a range of fields to differentiate between
+  nearly identical releases: ``disctotal``, ``label``, ``catalognum``,
+  ``country`` and ``albumdisambig``.
+
+As usual, there were also lots of other great littler enhancements:
+
+* :doc:`/plugins/random`: A new ``-e`` option gives an equal chance to each
+  artist in your collection to avoid biasing random samples to prolific
+  artists. Thanks to Georges Dubus.
+* The :ref:`modify-cmd` now correctly converts types when modifying non-string
+  fields. You can now safely modify the "comp" flag and the "year" field, for
+  example. Thanks to Lucas Duailibe.
+* :doc:`/plugins/convert`: You can now configure the path formats for
+  converted files separately from your main library. Thanks again to Lucas
+  Duailibe.
+* The importer output now shows the number of audio files in each album.
+  Thanks to jayme on GitHub.
+* Plugins can now provide fields for both Album and Item templates, thanks
+  to Pedro Silva. Accordingly, the :doc:`/plugins/inline` can also now define
+  album fields. For consistency, the ``pathfields`` configuration section has
+  been renamed ``item_fields`` (although the old name will still work for
+  compatibility).
+* Plugins can also provide metadata matches for ID searches. For example, the
+  new Discogs plugin lets you search for an album by its Discogs ID from the
+  same prompt that previously just accepted MusicBrainz IDs. Thanks to
+  Johannes Baiter.
+* The :ref:`fields-cmd` command shows template fields provided by plugins.
+  Thanks again to Pedro Silva.
+* :doc:`/plugins/mpdupdate`: You can now communicate with MPD over a Unix
+  domain socket. Thanks to John Hawthorn.
+
+And a batch of fixes:
+
+* Album art filenames now respect the :ref:`replace` configuration.
+* Friendly error messages are now printed when trying to read or write files
+  that go missing.
+* The :ref:`modify-cmd` command can now change albums' album art paths (i.e.,
+  ``beet modify artpath=...`` works). Thanks to Lucas Duailibe.
+* :doc:`/plugins/zero`: Fix a crash when nulling out a field that contains
+  None.
+* Templates can now refer to non-tag item fields (e.g., ``$id`` and
+  ``$album_id``).
+* :doc:`/plugins/lyrics`: Lyrics searches should now turn up more results due
+  to some fixes in dealing with special characters.
+
+.. _Discogs: http://discogs.com/
+.. _Beatport: http://www.beatport.com/
+
+
+1.1.0 (April 29, 2013)
+----------------------
+
+This final release of 1.1 brings a little polish to the betas that introduced
+the new configuration system. The album art and lyrics plugins also got a
+little love.
+
+If you're upgrading from 1.0.0 or earlier, this release (like the 1.1 betas)
+will automatically migrate your configuration to the new system. See
+:doc:`/guides/migration`.
+
+* :doc:`/plugins/embedart`: The ``embedart`` command now embeds each album's
+  associated art by default. The ``--file`` option invokes the old behavior,
+  in which a specific image file is used.
+* :doc:`/plugins/lyrics`: A new (optional) Google Custom Search backend was
+  added for finding lyrics on a wide array of sites. Thanks to Fabrice
+  Laporte.
+* When automatically detecting the filesystem's maximum filename length, never
+  guess more than 200 characters. This prevents errors on systems where the
+  maximum length was misreported. You can, of course, override this default
+  with the :ref:`max_filename_length` option.
+* :doc:`/plugins/fetchart`: Two new configuration options were added:
+  ``cover_names``, the list of keywords used to identify preferred images, and
+  ``cautious``, which lets you avoid falling back to images that don't contain
+  those keywords. Thanks to Fabrice Laporte.
+* Avoid some error cases in the ``update`` command and the ``embedart`` and
+  ``mbsync`` plugins. Invalid or missing files now cause error logs instead of
+  crashing beets. Thanks to Lucas Duailibe.
+* :doc:`/plugins/lyrics`: Searches now strip "featuring" artists when
+  searching for lyrics, which should increase the hit rate for these tracks.
+  Thanks to Fabrice Laporte.
+* When listing the items in an album, the items are now always in track-number
+  order. This should lead to more predictable listings from the
+  :doc:`/plugins/importfeeds`.
+* :doc:`/plugins/smartplaylist`: Queries are now split using shell-like syntax
+  instead of just whitespace, so you can now construct terms that contain
+  spaces.
+* :doc:`/plugins/lastgenre`: The ``force`` config option now defaults to true
+  and controls the behavior of the import hook. (Previously, new genres were
+  always forced during import.)
+* :doc:`/plugins/web`: Fix an error when specifying the hostname on the
+  command line.
+* :doc:`/plugins/web`: The underlying API was expanded slightly to support
+  `Tomahawk`_ collections. And file transfers now have a "Content-Length"
+  header. Thanks to Uwe L. Korn.
+* :doc:`/plugins/lastgenre`: Fix an error when using genre canonicalization.
+
+.. _Tomahawk: http://www.tomahawk-player.org/
+
 1.1b3 (March 16, 2013)
 ----------------------
 

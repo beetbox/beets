@@ -29,6 +29,7 @@ from _common import item
 import beets.library
 from beets import util
 from beets import plugins
+from beets import config
 
 TEMP_LIB = os.path.join(_common.RSRC, 'test_copy.blb')
 
@@ -149,9 +150,11 @@ class GetSetTest(unittest.TestCase):
 
 class DestinationTest(unittest.TestCase):
     def setUp(self):
+        super(DestinationTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
         self.i = item()
     def tearDown(self):
+        super(DestinationTest, self).tearDown()
         self.lib._connection().close()
 
     def test_directory_works_with_trailing_slash(self):
@@ -361,6 +364,11 @@ class DestinationTest(unittest.TestCase):
     def test_component_sanitize_uses_khz_samplerate(self):
         val = beets.library.format_for_path(12345, 'samplerate', posixpath)
         self.assertEqual(val, u'12kHz')
+
+    def test_component_sanitize_datetime(self):
+        val = beets.library.format_for_path(1368302461.210265, 'added',
+                                            posixpath)
+        self.assertTrue(val.startswith('2013'))
 
     def test_component_sanitize_none(self):
         val = beets.library.format_for_path(None, 'foo', posixpath)
@@ -591,6 +599,7 @@ class PluginDestinationTest(unittest.TestCase):
     def _template_values(self, item):
         return self._tv_map
     def setUp(self):
+        super(PluginDestinationTest, self).setUp()
         self._tv_map = {}
         self.old_template_values = plugins.template_values
         plugins.template_values = self._template_values
@@ -600,6 +609,7 @@ class PluginDestinationTest(unittest.TestCase):
         self.lib.path_formats = [('default', u'$artist $foo')]
         self.i = item()
     def tearDown(self):
+        super(PluginDestinationTest, self).tearDown()
         plugins.template_values = self.old_template_values
 
     def _assert_dest(self, dest):
@@ -633,10 +643,10 @@ class MigrationTest(unittest.TestCase):
     """
     def setUp(self):
         # Three different "schema versions".
-        self.older_fields = [('field_one', 'int')]
-        self.old_fields = self.older_fields + [('field_two', 'int')]
-        self.new_fields = self.old_fields + [('field_three', 'int')]
-        self.newer_fields = self.new_fields + [('field_four', 'int')]
+        self.older_fields = [('field_one', int)]
+        self.old_fields = self.older_fields + [('field_two', int)]
+        self.new_fields = self.old_fields + [('field_three', int)]
+        self.newer_fields = self.new_fields + [('field_four', int)]
 
         # Set up a library with old_fields.
         self.libfile = os.path.join(_common.RSRC, 'templib.blb')
@@ -814,7 +824,7 @@ class AlbumInfoTest(unittest.TestCase):
         self.lib.remove(self.i)
         self.assertEqual(len(self.lib.albums()), 0)
 
-class BaseAlbumTest(unittest.TestCase):
+class BaseAlbumTest(_common.TestCase):
     def test_field_access(self):
         album = beets.library.BaseAlbum(None, {'fld1':'foo'})
         self.assertEqual(album.fld1, 'foo')
@@ -823,12 +833,16 @@ class BaseAlbumTest(unittest.TestCase):
         album = beets.library.BaseAlbum(None, {})
         self.assertRaises(AttributeError, getattr, album, 'field')
 
-class ArtDestinationTest(unittest.TestCase):
+class ArtDestinationTest(_common.TestCase):
     def setUp(self):
-        self.lib = beets.library.Library(':memory:')
+        super(ArtDestinationTest, self).setUp()
+        config['art_filename'] = u'artimage'
+        config['replace'] = {u'X': u'Y'}
+        self.lib = beets.library.Library(
+            ':memory:', replacements=[(re.compile(u'X'), u'Y')]
+        )
         self.i = item()
         self.i.path = self.lib.destination(self.i)
-        self.lib.art_filename = 'artimage'
         self.ai = self.lib.add_album((self.i,))
 
     def test_art_filename_respects_setting(self):
@@ -840,8 +854,14 @@ class ArtDestinationTest(unittest.TestCase):
         track = self.lib.destination(self.i)
         self.assertEqual(os.path.dirname(art), os.path.dirname(track))
 
-class PathStringTest(unittest.TestCase):
+    def test_art_path_sanitized(self):
+        config['art_filename'] = u'artXimage'
+        art = self.ai.art_destination('something.jpg')
+        self.assert_('artYimage' in art)
+
+class PathStringTest(_common.TestCase):
     def setUp(self):
+        super(PathStringTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
         self.i = item()
         self.lib.add(self.i)
@@ -922,7 +942,7 @@ class PathStringTest(unittest.TestCase):
         alb = self.lib.get_album(alb.id)
         self.assert_(isinstance(alb.artpath, str))
 
-class PathTruncationTest(unittest.TestCase):
+class PathTruncationTest(_common.TestCase):
     def test_truncate_bytestring(self):
         p = util.truncate_path('abcde/fgh', posixpath, 4)
         self.assertEqual(p, 'abcd/fgh')
@@ -935,8 +955,9 @@ class PathTruncationTest(unittest.TestCase):
         p = util.truncate_path(u'abcde/fgh.ext', posixpath, 5)
         self.assertEqual(p, u'abcde/f.ext')
 
-class MtimeTest(unittest.TestCase):
+class MtimeTest(_common.TestCase):
     def setUp(self):
+        super(MtimeTest, self).setUp()
         self.ipath = os.path.join(_common.RSRC, 'testfile.mp3')
         shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.ipath)
         self.i = beets.library.Item.from_path(self.ipath)
@@ -944,6 +965,7 @@ class MtimeTest(unittest.TestCase):
         self.lib.add(self.i)
 
     def tearDown(self):
+        super(MtimeTest, self).tearDown()
         if os.path.exists(self.ipath):
             os.remove(self.ipath)
 
@@ -966,6 +988,22 @@ class MtimeTest(unittest.TestCase):
         self.i.title = 'something else'
         self.i.read()
         self.assertGreaterEqual(self.i.mtime, self._mtime())
+
+class ImportTimeTest(_common.TestCase):
+    def setUp(self):
+        super(ImportTimeTest, self).setUp()
+        self.lib = beets.library.Library(':memory:')
+
+    def added(self):
+        self.track = item()
+        self.album = self.lib.add_album((self.track,))
+        self.assertGreater(self.album.added, 0)
+        self.assertGreater(self.track.added, 0)
+
+    def test_atime_for_singleton(self):
+        self.singleton = item()
+        self.lib.add(self.singleton)
+        self.assertGreater(self.singleton.added, 0)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

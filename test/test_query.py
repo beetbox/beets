@@ -60,6 +60,16 @@ class QueryParseTest(unittest.TestCase):
         r = (None, 'test:regexp', beets.library.RegexpQuery)
         self.assertEqual(pqp(q), r)
 
+    def test_single_year(self):
+        q = 'year:1999'
+        r = ('year', '1999', beets.library.NumericQuery)
+        self.assertEqual(pqp(q), r)
+
+    def test_multiple_years(self):
+        q = 'year:1999..2010'
+        r = ('year', '1999..2010', beets.library.NumericQuery)
+        self.assertEqual(pqp(q), r)
+
 class AnyFieldQueryTest(unittest.TestCase):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
@@ -219,6 +229,25 @@ class GetTest(unittest.TestCase, AssertsMixin):
         self.assert_matched(results, 'Littlest Things')
         self.assert_done(results)
 
+    def test_single_year(self):
+        q = 'year:2006'
+        results = self.lib.items(q)
+        self.assert_matched(results, 'Littlest Things')
+        self.assert_matched(results, 'Lovers Who Uncover')
+        self.assert_done(results)
+
+    def test_year_range(self):
+        q = 'year:2000..2010'
+        results = self.lib.items(q)
+        self.assert_matched(results, 'Littlest Things')
+        self.assert_matched(results, 'Take Pills')
+        self.assert_matched(results, 'Lovers Who Uncover')
+        self.assert_done(results)
+
+    def test_bad_year(self):
+        q = 'year:delete from items'
+        self.assertRaises(ValueError, self.lib.items, q)
+
 class MemoryGetTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
         self.album_item = _common.item()
@@ -312,6 +341,22 @@ class MatchTest(unittest.TestCase):
         q = beets.library.SubstringQuery('disc', '6')
         self.assertTrue(q.match(self.item))
 
+    def test_year_match_positive(self):
+        q = beets.library.NumericQuery('year', '1')
+        self.assertTrue(q.match(self.item))
+
+    def test_year_match_negative(self):
+        q = beets.library.NumericQuery('year', '10')
+        self.assertFalse(q.match(self.item))
+
+    def test_bitrate_range_positive(self):
+        q = beets.library.NumericQuery('bitrate', '100000..200000')
+        self.assertTrue(q.match(self.item))
+
+    def test_bitrate_range_negative(self):
+        q = beets.library.NumericQuery('bitrate', '200000..300000')
+        self.assertFalse(q.match(self.item))
+
 class PathQueryTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
@@ -369,6 +414,12 @@ class PathQueryTest(unittest.TestCase, AssertsMixin):
     def test_slashes_in_explicit_field_does_not_match_path(self):
         q = 'title:/a/b'
         results = self.lib.items(q)
+        self.assert_done(results)
+
+    def test_path_regex(self):
+        q = 'path::\\.mp3$'
+        results = self.lib.items(q)
+        self.assert_matched(results, 'path item')
         self.assert_done(results)
 
 class BrowseTest(unittest.TestCase, AssertsMixin):

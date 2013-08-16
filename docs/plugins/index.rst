@@ -5,6 +5,8 @@ Plugins can extend beets' core functionality. Plugins can add new commands to
 the command-line interface, respond to events in beets, augment the autotagger,
 or provide new path template functions.
 
+.. _using-plugins:
+
 Using Plugins
 -------------
 
@@ -15,7 +17,7 @@ To use a plugin, you have two options:
   `setup.py` script or a command like `pip` or `easy_install`).
 
 * Set the `pluginpath` config variable to point to the directory containing the
-  plugin. (See :doc:`/reference/cli`.)
+  plugin. (See :doc:`/reference/config`.)
 
 Then, set the `plugins` option in your `config.yaml` file, like so::
 
@@ -61,12 +63,21 @@ disabled by default, but you can turn them on as described above.
    info
    smartplaylist
    mbsync
+   missing
+   duplicates
+   discogs
+   beatport
 
 Autotagger Extensions
 ''''''''''''''''''''''
 
 * :doc:`chroma`: Use acoustic fingerprinting to identify audio files with
   missing or incorrect metadata.
+* :doc:`discogs`: Search for releases in the `Discogs`_ database.
+* :doc:`beatport`: Search for tracks and releases in the `Beatport`_ database.
+
+.. _Beatport: http://www.beatport.com/
+.. _Discogs: http://www.discogs.com/
 
 Metadata
 ''''''''
@@ -110,6 +121,8 @@ Miscellaneous
 * :doc:`convert`: Transcode music and embed album art while exporting to
   a different directory.
 * :doc:`info`: Print music files' tags to the console.
+* :doc:`missing`: List missing tracks.
+* :doc:`duplicates`: List duplicate tracks or albums.
 
 .. _MPD: http://mpd.wikia.com/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients
@@ -145,5 +158,5 @@ plugins </plugins/writing>`.
 
 .. toctree::
     :hidden:
-    
+
     writing

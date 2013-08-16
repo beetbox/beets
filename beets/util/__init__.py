@@ -97,7 +97,7 @@ class FilesystemError(HumanReadableException):
             clause = 'while {0} {1} to {2}'.format(
                 self._gerund(), repr(self.paths[0]), repr(self.paths[1])
             )
-        elif self.verb in ('delete', 'write', 'create'):
+        elif self.verb in ('delete', 'write', 'create', 'read'):
             clause = 'while {0} {1}'.format(
                 self._gerund(), repr(self.paths[0])
             )
@@ -152,7 +152,6 @@ def sorted_walk(path, ignore=(), logger=None):
     try:
         contents = os.listdir(syspath(path))
     except OSError as exc:
-        print('foo', logger, bool(logger))
         if logger:
             logger.warn(u'could not list directory {0}: {1}'.format(
                 displayable_path(path), exc.strerror
@@ -469,14 +468,11 @@ def sanitize_path(path, pathmod=None, replacements=None):
     reliably on Windows when a path begins with a drive letter. Path
     separators (including altsep!) should already be cleaned from the
     path components. If replacements is specified, it is used *instead*
-    of the default set of replacements for the platform; it must be a
-    list of (compiled regex, replacement string) pairs.
+    of the default set of replacements; it must be a list of (compiled
+    regex, replacement string) pairs.
     """
     pathmod = pathmod or os.path
-
-    # Choose the appropriate replacements.
-    if not replacements:
-        replacements = list(CHAR_REPLACE)
+    replacements = replacements or CHAR_REPLACE
 
     comps = components(path, pathmod)
     if not comps:
@@ -612,16 +608,18 @@ def command_output(cmd):
         raise subprocess.CalledProcessError(proc.returncode, cmd)
     return stdout
 
-def max_filename_length(path, fallback=MAX_FILENAME_LENGTH):
+def max_filename_length(path, limit=MAX_FILENAME_LENGTH):
     """Attempt to determine the maximum filename length for the
-    filesystem containing `path`. If it cannot be determined, return a
-    predetermined fallback value.
+    filesystem containing `path`. If the value is greater than `limit`,
+    then `limit` is used instead (to prevent errors when a filesystem
+    misreports its capacity). If it cannot be determined (e.g., on
+    Windows), return `limit`.
     """
     if hasattr(os, 'statvfs'):
         try:
             res = os.statvfs(path)
         except OSError:
-            return fallback
-        return res[9]
+            return limit
+        return min(res[9], limit)
     else:
-        return fallback
+        return limit

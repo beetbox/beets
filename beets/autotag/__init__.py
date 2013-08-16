@@ -30,7 +30,7 @@ from .match import recommendation
 log = logging.getLogger('beets')
 
 # Constants for directory walker.
-MULTIDISC_MARKERS = (r'disc', r'cd')
+MULTIDISC_MARKERS = (r'dis[ck]', r'cd')
 MULTIDISC_PAT_FMT = r'^(.*%s[\W_]*)\d'
 
 

@@ -48,8 +48,8 @@ all of these limitations.
 
   There is one exception to this rule: directories that look like separate parts
   of a *multi-disc album* are tagged together as a single release. If two
-  adjacent albums have a common prefix, followed by "disc" or "CD" and then a
-  number, they are tagged together.
+  adjacent albums have a common prefix, followed by "disc," "disk," or "CD"
+  and then a number, they are tagged together.
 
 * The music may have bad tags, but it's not completely untagged. (This is
   actually not a hard-and-fast rule: using the *E* option described below, it's
@@ -60,9 +60,9 @@ all of these limitations.
   plugin if you're willing to spend a little more CPU power to get tags for
   unidentified albums.
 
-* Currently, MP3, AAC, FLAC, Ogg Vorbis, Monkey's Audio, WavPack, Musepack, and
-  Windows Media files are supported. (Do you use some other format? `Let me
-  know!`_)
+* Currently, MP3, AAC, FLAC, ALAC, Ogg Vorbis, Monkey's Audio, WavPack,
+  Musepack, and Windows Media files are supported. (Do you use some other
+  format? `Let me know!`_)
 
 .. _Let me know!: mailto:adrian@radbox.org
 
@@ -113,12 +113,13 @@ Similarity
 So you import an album into your beets library. It goes like this::
 
     $ beet imp witchinghour
-    Tagging: Ladytron - Witching Hour
+    Tagging:
+        Ladytron - Witching Hour
     (Similarity: 98.4%)
-    * Last One Standing -> The Last One Standing
-    * Beauty -> Beauty*2
+    * Last One Standing      -> The Last One Standing
+    * Beauty                 -> Beauty*2
     * White Light Generation -> Whitelightgenerator
-    * All the Way -> All the Way...
+    * All the Way            -> All the Way...
 
 Here, beets gives you a preview of the album match it has found. It shows you
 which track titles will be changed if the match is applied. In this case, beets
@@ -138,7 +139,8 @@ Choices
 
 When beets needs your input about a match, it says something like this::
 
-    Tagging: Beirut - Lon Gisland
+    Tagging:
+        Beirut - Lon Gisland
     (Similarity: 94.4%)
     * Scenic World (Second Version) -> Scenic World
     [A]pply, More candidates, Skip, Use as-is, as Tracks, Enter search, or aBort?
@@ -260,7 +262,7 @@ If you think beets is ignoring an album that's listed in MusicBrainz, please
 I Hope That Makes Sense
 -----------------------
 
-I haven't made the process clear, please `drop me an email`_ and I'll try to
+If I haven't made the process clear, please `drop me an email`_ and I'll try to
 improve this guide.
 
 .. _drop me an email: mailto:adrian@radbox.org

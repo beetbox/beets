@@ -126,6 +126,9 @@ currently available are:
   singleton to the library (not called for full-album imports). Parameters:
   ``lib``, ``item``
 
+* *item_moved*: called with an ``Item`` object whenever its file is moved.
+  Parameters: ``item``, ``source`` path, ``destination`` path
+
 * *write*: called with an ``Item`` object just before a file's metadata is
   written to disk (i.e., just before the file on disk is opened).
 
@@ -166,7 +169,7 @@ A plugin can extend three parts of the autotagger's process: the track distance
 function, the album distance function, and the initial MusicBrainz search. The
 distance functions determine how "good" a match is at the track and album
 levels; the initial search controls which candidates are presented to the
-matching algorithm. Plugins implement these extensions by implementing three
+matching algorithm. Plugins implement these extensions by implementing four
 methods on the plugin class:
 
 * ``track_distance(self, item, info)``: adds a component to the distance
@@ -181,16 +184,23 @@ methods on the plugin class:
   object; and ``mapping`` is a dictionary that maps Items to their corresponding
   TrackInfo objects.
 
-* ``candidates(self, items)``: given a list of items comprised by an album to be
-  matched, return a list of ``AlbumInfo`` objects for candidate albums to be
-  compared and matched.
+* ``candidates(self, items, artist, album, va_likely)``: given a list of items
+  comprised by an album to be matched, return a list of ``AlbumInfo`` objects
+  for candidate albums to be compared and matched.
 
-* ``item_candidates(self, item)``: given a *singleton* item, return a list of
-  ``TrackInfo`` objects for candidate tracks to be compared and matched.
+* ``item_candidates(self, item, artist, album)``: given a *singleton* item,
+  return a list of ``TrackInfo`` objects for candidate tracks to be compared and
+  matched.
 
-When implementing these functions, it will probably be very necessary to use the
-functions from the ``beets.autotag`` and ``beets.autotag.mb`` modules, both of
-which have somewhat helpful docstrings.
+* ``album_for_id(self, album_id)``: given an ID from user input or an album's
+  tags, return a candidate AlbumInfo object (or None).
+
+* ``track_for_id(self, track_id)``: given an ID from user input or a file's
+  tags, return a candidate TrackInfo object (or None).
+
+When implementing these functions, you may want to use the functions from the
+``beets.autotag`` and ``beets.autotag.mb`` modules, both of which have
+somewhat helpful docstrings.
 
 Read Configuration Options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -223,15 +233,16 @@ Add Path Format Functions and Fields
 
 Beets supports *function calls* in its path format syntax (see
 :doc:`/reference/pathformat`). Beets includes a few built-in functions, but
-plugins can add new functions using the ``template_func`` decorator. To use it,
-decorate a function with ``MyPlugin.template_func("name")`` where ``name`` is
-the name of the function as it should appear in template strings.
+plugins can register new functions by adding them to the ``template_funcs``
+dictionary.
 
 Here's an example::
 
     class MyPlugin(BeetsPlugin):
-        pass
-    @MyPlugin.template_func('initial')
+        def __init__(self):
+            super(MyPlugin, self).__init__()
+            self.template_funcs['initial'] = _tmpl_initial
+
     def _tmpl_initial(text):
         if text:
             return text[0].upper()
@@ -242,12 +253,16 @@ This plugin provides a function ``%initial`` to path templates where
 ``%initial{$artist}`` expands to the artist's initial (its capitalized first
 character).
 
-Plugins can also add template *fields*, which are computed values referenced as
-``$name`` in templates. To add a new field, decorate a function taking a single
-parameter, ``item``, with ``MyPlugin.template_field("name")``. Here's an example
-that adds a ``$disc_and_track`` field::
+Plugins can also add template *fields*, which are computed values referenced
+as ``$name`` in templates. To add a new field, add a function that takes an
+``Item`` object to the ``template_fields`` dictionary on the plugin object.
+Here's an example that adds a ``$disc_and_track`` field::
 
-    @MyPlugin.template_field('disc_and_track')
+    class MyPlugin(BeetsPlugin):
+        def __init__(self):
+            super(MyPlugin, self).__init__()
+            self.template_fields['disc_and_track'] = _tmpl_disc_and_track
+
     def _tmpl_disc_and_track(item):
         """Expand to the disc number and track number if this is a
         multi-disc release. Otherwise, just exapnds to the track
@@ -260,6 +275,10 @@ that adds a ``$disc_and_track`` field::
 
 With this plugin enabled, templates can reference ``$disc_and_track`` as they
 can any standard metadata field.
+
+This field works for *item* templates. Similarly, you can register *album*
+template fields by adding a function accepting an ``Album`` argument to the
+``album_template_fields`` dict.
 
 Extend MediaFile
 ^^^^^^^^^^^^^^^^

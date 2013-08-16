@@ -14,11 +14,12 @@
 
 """Tests for MusicBrainz API wrapper.
 """
+import _common
 from _common import unittest
 from beets.autotag import mb
 from beets import config
 
-class MBAlbumInfoTest(unittest.TestCase):
+class MBAlbumInfoTest(_common.TestCase):
     def _make_release(self, date_str='2009', tracks=None):
         release = {
             'title': 'ALBUM TITLE',
@@ -277,7 +278,24 @@ class MBAlbumInfoTest(unittest.TestCase):
         self.assertEqual(track.artist_sort, 'TRACK ARTIST SORT NAME')
         self.assertEqual(track.artist_credit, 'TRACK ARTIST CREDIT')
 
-class ArtistFlatteningTest(unittest.TestCase):
+class ParseIDTest(_common.TestCase):
+    def test_parse_id_correct(self):
+        id_string = "28e32c71-1450-463e-92bf-e0a46446fc11"
+        out = mb._parse_id(id_string)
+        self.assertEqual(out, id_string)
+
+    def test_parse_id_non_id_returns_none(self):
+        id_string = "blah blah"
+        out = mb._parse_id(id_string)
+        self.assertEqual(out, None)
+
+    def test_parse_id_url_finds_id(self):
+        id_string = "28e32c71-1450-463e-92bf-e0a46446fc11"
+        id_url = "http://musicbrainz.org/entity/%s" % id_string
+        out = mb._parse_id(id_url)
+        self.assertEqual(out, id_string)
+
+class ArtistFlatteningTest(_common.TestCase):
     def _credit_dict(self, suffix=''):
         return {
             'artist': {

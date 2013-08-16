@@ -58,18 +58,27 @@ class FSArtTest(_common.TestCase):
 
     def test_finds_jpg_in_directory(self):
         _common.touch(os.path.join(self.dpath, 'a.jpg'))
-        fn = fetchart.art_in_path(self.dpath)
+        fn = fetchart.art_in_path(self.dpath, ('art',), False)
         self.assertEqual(fn, os.path.join(self.dpath, 'a.jpg'))
 
     def test_appropriately_named_file_takes_precedence(self):
         _common.touch(os.path.join(self.dpath, 'a.jpg'))
-        _common.touch(os.path.join(self.dpath, 'cover.jpg'))
-        fn = fetchart.art_in_path(self.dpath)
-        self.assertEqual(fn, os.path.join(self.dpath, 'cover.jpg'))
+        _common.touch(os.path.join(self.dpath, 'art.jpg'))
+        fn = fetchart.art_in_path(self.dpath, ('art',), False)
+        self.assertEqual(fn, os.path.join(self.dpath, 'art.jpg'))
 
     def test_non_image_file_not_identified(self):
         _common.touch(os.path.join(self.dpath, 'a.txt'))
-        fn = fetchart.art_in_path(self.dpath)
+        fn = fetchart.art_in_path(self.dpath, ('art',), False)
+        self.assertEqual(fn, None)
+
+    def test_cautious_skips_fallback(self):
+        _common.touch(os.path.join(self.dpath, 'a.jpg'))
+        fn = fetchart.art_in_path(self.dpath, ('art',), True)
+        self.assertEqual(fn, None)
+
+    def test_empty_dir(self):
+        fn = fetchart.art_in_path(self.dpath, ('art',), True)
         self.assertEqual(fn, None)
 
 class CombinedTest(_common.TestCase):
@@ -107,11 +116,11 @@ class CombinedTest(_common.TestCase):
         self.assertEqual(artpath, None)
 
     def test_main_interface_gives_precedence_to_fs_art(self):
-        _common.touch(os.path.join(self.dpath, 'a.jpg'))
+        _common.touch(os.path.join(self.dpath, 'art.jpg'))
         fetchart.urllib.urlretrieve = MockUrlRetrieve('image/jpeg')
         album = _common.Bag(asin='xxxx')
         artpath = fetchart.art_for_album(album, [self.dpath])
-        self.assertEqual(artpath, os.path.join(self.dpath, 'a.jpg'))
+        self.assertEqual(artpath, os.path.join(self.dpath, 'art.jpg'))
 
     def test_main_interface_falls_back_to_amazon(self):
         fetchart.urllib.urlretrieve = MockUrlRetrieve('image/jpeg')
@@ -150,12 +159,12 @@ class CombinedTest(_common.TestCase):
         self.assertFalse(mock_retrieve.fetched)
 
     def test_local_only_gets_fs_image(self):
-        _common.touch(os.path.join(self.dpath, 'a.jpg'))
+        _common.touch(os.path.join(self.dpath, 'art.jpg'))
         mock_retrieve = MockUrlRetrieve('image/jpeg')
         fetchart.urllib.urlretrieve = mock_retrieve
         album = _common.Bag(mb_albumid='releaseid', asin='xxxx')
-        artpath = fetchart.art_for_album(album, [self.dpath], local_only=True)
-        self.assertEqual(artpath, os.path.join(self.dpath, 'a.jpg'))
+        artpath = fetchart.art_for_album(album, [self.dpath], None, local_only=True)
+        self.assertEqual(artpath, os.path.join(self.dpath, 'art.jpg'))
         self.assertFalse(self.urlopen_called)
         self.assertFalse(mock_retrieve.fetched)
 

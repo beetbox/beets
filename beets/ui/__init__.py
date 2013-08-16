@@ -28,6 +28,7 @@ import sqlite3
 import errno
 import re
 import struct
+import traceback
 
 from beets import library
 from beets import plugins
@@ -365,7 +366,7 @@ def colorize(color, text):
     else:
         return text
 
-def _colordiff(a, b, highlight='red'):
+def _colordiff(a, b, highlight='red', minor_highlight='lightgray'):
     """Given two values, return the same pair of strings except with
     their differences highlighted in the specified color. Strings are
     highlighted intelligently to show differences; other values are
@@ -379,6 +380,11 @@ def _colordiff(a, b, highlight='red'):
             return a, b
         else:
             return colorize(highlight, a), colorize(highlight, b)
+
+    if isinstance(a, bytes) or isinstance(b, bytes):
+        # A path field.
+        a = util.displayable_path(a)
+        b = util.displayable_path(b)
 
     a_out = []
     b_out = []
@@ -396,9 +402,14 @@ def _colordiff(a, b, highlight='red'):
             # Left only.
             a_out.append(colorize(highlight, a[a_start:a_end]))
         elif op == 'replace':
-            # Right and left differ.
-            a_out.append(colorize(highlight, a[a_start:a_end]))
-            b_out.append(colorize(highlight, b[b_start:b_end]))
+            # Right and left differ. Colorise with second highlight if
+            # it's just a case change.
+            if a[a_start:a_end].lower() != b[b_start:b_end].lower():
+                color = highlight
+            else:
+                color = minor_highlight
+            a_out.append(colorize(color, a[a_start:a_end]))
+            b_out.append(colorize(color, b[b_start:b_end]))
         else:
             assert(False)
 
@@ -436,12 +447,13 @@ def color_diff_suffix(a, b, highlight='red'):
     return a[:first_diff] + colorize(highlight, a[first_diff:]), \
            b[:first_diff] + colorize(highlight, b[first_diff:])
 
-def get_path_formats():
+def get_path_formats(subview=None):
     """Get the configuration's path formats as a list of query/template
     pairs.
     """
     path_formats = []
-    for query, view in config['paths'].items():
+    subview = subview or config['paths']
+    for query, view in subview.items():
         query = PF_KEY_QUERIES.get(query, query)  # Expand common queries.
         path_formats.append((query, Template(view.get(unicode))))
     return path_formats
@@ -688,18 +700,13 @@ class SubcommandsOptionParser(optparse.OptionParser):
 
 # The root parser and its main function.
 
-def _raw_main(args, load_config=True):
+def _raw_main(args):
     """A helper function for `main` without top-level exception
     handling.
     """
-    # Load global configuration files.
-    if load_config:
-        config.read()
-
     # Temporary: Migrate from 1.0-style configuration.
     from beets.ui import migrate
-    if load_config:
-        migrate.automigrate()
+    migrate.automigrate()
 
     # Get the default subcommands.
     from beets.ui.commands import default_commands
@@ -733,8 +740,6 @@ def _raw_main(args, load_config=True):
             dbpath,
             config['directory'].as_filename(),
             get_path_formats(),
-            Template(config['art_filename'].get(unicode)),
-            config['timeout'].as_number(),
             get_replacements(),
         )
     except sqlite3.OperationalError:
@@ -785,5 +790,5 @@ def main(args=None):
         else:
             raise
     except KeyboardInterrupt:
-        # Silently ignore ^C.
-        pass
+        # Silently ignore ^C except in verbose mode.
+        log.debug(traceback.format_exc())

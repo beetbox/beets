@@ -8,12 +8,13 @@ It then provides a bouquet of tools for manipulating and accessing your music.
 Here's an example of beets' brainy tag corrector doing its thing::
 
   $ beet import ~/music/ladytron
-  Tagging: Ladytron - Witching Hour
+  Tagging:
+      Ladytron - Witching Hour
   (Similarity: 98.4%)
-   * Last One Standing -> The Last One Standing
-   * Beauty -> Beauty*2
+   * Last One Standing      -> The Last One Standing
+   * Beauty                 -> Beauty*2
    * White Light Generation -> Whitelightgenerator
-   * All the Way -> All the Way...
+   * All the Way            -> All the Way...
 
 Because beets is designed as a library, it can do almost anything you can
 imagine for your music collection. Via `plugins`_, beets becomes a panacea:
@@ -45,14 +46,12 @@ Read More
 Learn more about beets at `its Web site`_. Follow `@b33ts`_ on Twitter for
 news and updates.
 
-You can install beets by typing ``pip install beets``. (Or, to live on the
-cutting edge, type ``pip install beets==dev`` for the `latest source`_.) Check
-out the `Getting Started`_ guide to learn more about installing and using beets.
+You can install beets by typing ``pip install beets``. Then check out the
+`Getting Started`_ guide.
 
 .. _its Web site: http://beets.radbox.org/
 .. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
 .. _@b33ts: http://twitter.com/b33ts/
-.. _latest source: https://github.com/sampsyo/beets/tarball/master#egg=beets-dev
 
 Authors
 -------

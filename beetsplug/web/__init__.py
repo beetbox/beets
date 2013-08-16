@@ -24,9 +24,10 @@ import os
 
 # Utilities.
 
-def _rep(obj):
+def _rep(obj, expand=False):
     """Get a flat -- i.e., JSON-ish -- representation of a beets Item or
-    Album object.
+    Album object. For Albums, `expand` dictates whether tracks are
+    included.
     """
     if isinstance(obj, beets.library.Item):
         out = dict(obj.record)
@@ -44,7 +45,8 @@ def _rep(obj):
     elif isinstance(obj, beets.library.Album):
         out = dict(obj._record)
         del out['artpath']
-        out['items'] = [_rep(item) for item in obj.items()]
+        if expand:
+            out['items'] = [_rep(item) for item in obj.items()]
         return out
 
 
@@ -74,7 +76,10 @@ def all_items():
 @app.route('/item/<int:item_id>/file')
 def item_file(item_id):
     item = g.lib.get_item(item_id)
-    return flask.send_file(item.path, as_attachment=True, attachment_filename=os.path.basename(item.path))
+    response = flask.send_file(item.path, as_attachment=True,
+                               attachment_filename=os.path.basename(item.path))
+    response.headers['Content-Length'] = os.path.getsize(item.path)
+    return response
 
 @app.route('/item/query/<path:query>')
 def item_query(query):
@@ -109,6 +114,29 @@ def album_art(album_id):
     return flask.send_file(album.artpath)
 
 
+# Artists.
+
+@app.route('/artist/')
+def all_artists():
+    with g.lib.transaction() as tx:
+        rows = tx.query("SELECT DISTINCT albumartist FROM albums")
+    all_artists = [row[0] for row in rows]
+    return flask.jsonify(artist_names=all_artists)
+
+
+# Library information.
+
+@app.route('/stats')
+def stats():
+    with g.lib.transaction() as tx:
+        item_rows = tx.query("SELECT COUNT(*) FROM items")
+        album_rows = tx.query("SELECT COUNT(*) FROM albums")
+    return flask.jsonify({
+        'items': item_rows[0][0],
+        'albums': album_rows[0][0],
+    })
+
+
 # UI.
 
 @app.route('/')
@@ -131,6 +159,7 @@ class WebPlugin(BeetsPlugin):
         cmd.parser.add_option('-d', '--debug', action='store_true',
                               default=False, help='debug mode')
         def func(lib, opts, args):
+            args = ui.decargs(args)
             if args:
                 self.config['host'] = args.pop(0)
             if args:

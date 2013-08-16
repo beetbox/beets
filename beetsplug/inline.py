@@ -16,6 +16,7 @@
 """
 import logging
 import traceback
+import itertools
 
 from beets.plugins import BeetsPlugin
 from beets import config
@@ -46,7 +47,7 @@ def _compile_func(body):
     eval(code, env)
     return env[FUNC_NAME]
 
-def compile_inline(python_code):
+def compile_inline(python_code, album):
     """Given a Python expression or function body, compile it as a path
     field function. The returned function takes a single argument, an
     Item, and returns a Unicode string. If the expression cannot be
@@ -68,10 +69,18 @@ def compile_inline(python_code):
     else:
         is_expr = True
 
+    def _dict_for(obj):
+        if album:
+            out = dict(obj._record)
+            out['items'] = list(obj.items())
+            return out
+        else:
+            return dict(obj.record)
+
     if is_expr:
         # For expressions, just evaluate and return the result.
-        def _expr_func(item):
-            values = dict(item.record)
+        def _expr_func(obj):
+            values = _dict_for(obj)
             try:
                 return eval(code, values)
             except Exception as exc:
@@ -80,8 +89,8 @@ def compile_inline(python_code):
     else:
         # For function bodies, invoke the function with values as global
         # variables.
-        def _func_func(item):
-            func.__globals__.update(item.record)
+        def _func_func(obj):
+            func.__globals__.update(_dict_for(obj))
             try:
                 return func()
             except Exception as exc:
@@ -93,12 +102,22 @@ class InlinePlugin(BeetsPlugin):
         super(InlinePlugin, self).__init__()
 
         config.add({
-            'pathfields': {},
+            'pathfields': {},  # Legacy name.
+            'item_fields': {},
+            'album_fields': {},
         })
 
-        # Add field expressions.
-        for key, view in config['pathfields'].items():
-            log.debug(u'adding template field %s' % key)
-            func = compile_inline(view.get(unicode))
+        # Item fields.
+        for key, view in itertools.chain(config['item_fields'].items(),
+                                         config['pathfields'].items()):
+            log.debug(u'inline: adding item field %s' % key)
+            func = compile_inline(view.get(unicode), False)
             if func is not None:
                 self.template_fields[key] = func
+
+        # Album fields.
+        for key, view in config['album_fields'].items():
+            log.debug(u'inline: adding album field %s' % key)
+            func = compile_inline(view.get(unicode), True)
+            if func is not None:
+                self.album_template_fields[key] = func

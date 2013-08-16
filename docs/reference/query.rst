@@ -107,6 +107,28 @@ implementation`_. See Python's documentation for specifics on regex syntax.
 .. _Python's built-in implementation: http://docs.python.org/library/re.html
 
 
+.. _numericquery:
+
+Numeric Range Queries
+---------------------
+
+For numeric fields, such as year, bitrate, and track, you can query using one-
+or two-sided intervals. That is, you can find music that falls within a
+*range* of values. To use ranges, write a query that has two dots (``..``) at
+the beginning, middle, or end of a string of numbers. Dots in the beginning
+let you specify a maximum (e.g., ``..7``); dots at the end mean a minimum
+(``4..``); dots in the middle mean a range (``4..7``).
+
+For example, this command finds all your albums that were released in the
+'90s::
+
+    $ beet list -a year:1990..1999
+
+and this command finds MP3 files with bitrates of 128k or lower::
+
+    $ beet list format:MP3 bitrate:..128000
+
+
 Path Queries
 ------------
 

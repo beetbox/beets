@@ -24,6 +24,7 @@ import unicodedata
 import threading
 import contextlib
 import traceback
+import time
 from collections import defaultdict
 from unidecode import unidecode
 from beets.mediafile import MediaFile
@@ -33,78 +34,78 @@ from beets.util import bytestring_path, syspath, normpath, samefile,\
     displayable_path
 from beets.util.functemplate import Template
 import beets
-
-MAX_FILENAME_LENGTH = 200
+from datetime import datetime
 
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
 # vulnerable to injection if accessible to the user.
 # Each tuple has the following values:
 # - The name of the field.
-# - The (SQLite) type of the field.
+# - The (Python) type of the field.
 # - Is the field writable?
 # - Does the field reflect an attribute of a MediaFile?
 ITEM_FIELDS = [
-    ('id',          'integer primary key', False, False),
-    ('path',        'blob', False, False),
-    ('album_id',    'int',  False, False),
+    ('id',          int,   False, False),
+    ('path',        bytes, False, False),
+    ('album_id',    int,   False, False),
 
-    ('title',                'text', True, True),
-    ('artist',               'text', True, True),
-    ('artist_sort',          'text', True, True),
-    ('artist_credit',        'text', True, True),
-    ('album',                'text', True, True),
-    ('albumartist',          'text', True, True),
-    ('albumartist_sort',     'text', True, True),
-    ('albumartist_credit',   'text', True, True),
-    ('genre',                'text', True, True),
-    ('composer',             'text', True, True),
-    ('grouping',             'text', True, True),
-    ('year',                 'int',  True, True),
-    ('month',                'int',  True, True),
-    ('day',                  'int',  True, True),
-    ('track',                'int',  True, True),
-    ('tracktotal',           'int',  True, True),
-    ('disc',                 'int',  True, True),
-    ('disctotal',            'int',  True, True),
-    ('lyrics',               'text', True, True),
-    ('comments',             'text', True, True),
-    ('bpm',                  'int',  True, True),
-    ('comp',                 'bool', True, True),
-    ('mb_trackid',           'text', True, True),
-    ('mb_albumid',           'text', True, True),
-    ('mb_artistid',          'text', True, True),
-    ('mb_albumartistid',     'text', True, True),
-    ('albumtype',            'text', True, True),
-    ('label',                'text', True, True),
-    ('acoustid_fingerprint', 'text', True, True),
-    ('acoustid_id',          'text', True, True),
-    ('mb_releasegroupid',    'text', True, True),
-    ('asin',                 'text', True, True),
-    ('catalognum',           'text', True, True),
-    ('script',               'text', True, True),
-    ('language',             'text', True, True),
-    ('country',              'text', True, True),
-    ('albumstatus',          'text', True, True),
-    ('media',                'text', True, True),
-    ('albumdisambig',        'text', True, True),
-    ('disctitle',            'text', True, True),
-    ('encoder',              'text', True, True),
-    ('rg_track_gain',        'real', True, True),
-    ('rg_track_peak',        'real', True, True),
-    ('rg_album_gain',        'real', True, True),
-    ('rg_album_peak',        'real', True, True),
-    ('original_year',        'int',  True, True),
-    ('original_month',       'int',  True, True),
-    ('original_day',         'int',  True, True),
+    ('title',                unicode, True, True),
+    ('artist',               unicode, True, True),
+    ('artist_sort',          unicode, True, True),
+    ('artist_credit',        unicode, True, True),
+    ('album',                unicode, True, True),
+    ('albumartist',          unicode, True, True),
+    ('albumartist_sort',     unicode, True, True),
+    ('albumartist_credit',   unicode, True, True),
+    ('genre',                unicode, True, True),
+    ('composer',             unicode, True, True),
+    ('grouping',             unicode, True, True),
+    ('year',                 int,     True, True),
+    ('month',                int,     True, True),
+    ('day',                  int,     True, True),
+    ('track',                int,     True, True),
+    ('tracktotal',           int,     True, True),
+    ('disc',                 int,     True, True),
+    ('disctotal',            int,     True, True),
+    ('lyrics',               unicode, True, True),
+    ('comments',             unicode, True, True),
+    ('bpm',                  int,     True, True),
+    ('comp',                 bool,    True, True),
+    ('mb_trackid',           unicode, True, True),
+    ('mb_albumid',           unicode, True, True),
+    ('mb_artistid',          unicode, True, True),
+    ('mb_albumartistid',     unicode, True, True),
+    ('albumtype',            unicode, True, True),
+    ('label',                unicode, True, True),
+    ('acoustid_fingerprint', unicode, True, True),
+    ('acoustid_id',          unicode, True, True),
+    ('mb_releasegroupid',    unicode, True, True),
+    ('asin',                 unicode, True, True),
+    ('catalognum',           unicode, True, True),
+    ('script',               unicode, True, True),
+    ('language',             unicode, True, True),
+    ('country',              unicode, True, True),
+    ('albumstatus',          unicode, True, True),
+    ('media',                unicode, True, True),
+    ('albumdisambig',        unicode, True, True),
+    ('disctitle',            unicode, True, True),
+    ('encoder',              unicode, True, True),
+    ('rg_track_gain',        float,   True, True),
+    ('rg_track_peak',        float,   True, True),
+    ('rg_album_gain',        float,   True, True),
+    ('rg_album_peak',        float,   True, True),
+    ('original_year',        int,     True, True),
+    ('original_month',       int,     True, True),
+    ('original_day',         int,     True, True),
 
-    ('length',      'real', False, True),
-    ('bitrate',     'int',  False, True),
-    ('format',      'text', False, True),
-    ('samplerate',  'int',  False, True),
-    ('bitdepth',    'int',  False, True),
-    ('channels',    'int',  False, True),
-    ('mtime',       'int',  False, False),
+    ('length',      float,    False, True),
+    ('bitrate',     int,      False, True),
+    ('format',      unicode,  False, True),
+    ('samplerate',  int,      False, True),
+    ('bitdepth',    int,      False, True),
+    ('channels',    int,      False, True),
+    ('mtime',       int,      False, False),
+    ('added',       datetime, False, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
@@ -114,41 +115,53 @@ ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 # The third entry in each tuple indicates whether the field reflects an
 # identically-named field in the items table.
 ALBUM_FIELDS = [
-    ('id',      'integer primary key', False),
-    ('artpath', 'blob',                False),
+    ('id',      int,      False),
+    ('artpath', bytes,    False),
+    ('added',   datetime, True),
 
-    ('albumartist',        'text', True),
-    ('albumartist_sort',   'text', True),
-    ('albumartist_credit', 'text', True, True),
-    ('album',              'text', True),
-    ('genre',              'text', True),
-    ('year',               'int',  True),
-    ('month',              'int',  True),
-    ('day',                'int',  True),
-    ('tracktotal',         'int',  True),
-    ('disctotal',          'int',  True),
-    ('comp',               'bool', True),
-    ('mb_albumid',         'text', True),
-    ('mb_albumartistid',   'text', True),
-    ('albumtype',          'text', True),
-    ('label',              'text', True),
-    ('mb_releasegroupid',  'text', True),
-    ('asin',               'text', True),
-    ('catalognum',         'text', True),
-    ('script',             'text', True),
-    ('language',           'text', True),
-    ('country',            'text', True),
-    ('albumstatus',        'text', True),
-    ('media',              'text', True),
-    ('albumdisambig',      'text', True),
-    ('rg_album_gain',      'real', True),
-    ('rg_album_peak',      'real', True),
-    ('original_year',      'int',  True),
-    ('original_month',     'int',  True),
-    ('original_day',       'int',  True),
+    ('albumartist',        unicode, True),
+    ('albumartist_sort',   unicode, True),
+    ('albumartist_credit', unicode, True),
+    ('album',              unicode, True),
+    ('genre',              unicode, True),
+    ('year',               int,     True),
+    ('month',              int,     True),
+    ('day',                int,     True),
+    ('tracktotal',         int,     True),
+    ('disctotal',          int,     True),
+    ('comp',               bool,    True),
+    ('mb_albumid',         unicode, True),
+    ('mb_albumartistid',   unicode, True),
+    ('albumtype',          unicode, True),
+    ('label',              unicode, True),
+    ('mb_releasegroupid',  unicode, True),
+    ('asin',               unicode, True),
+    ('catalognum',         unicode, True),
+    ('script',             unicode, True),
+    ('language',           unicode, True),
+    ('country',            unicode, True),
+    ('albumstatus',        unicode, True),
+    ('media',              unicode, True),
+    ('albumdisambig',      unicode, True),
+    ('rg_album_gain',      float,   True),
+    ('rg_album_peak',      float,   True),
+    ('original_year',      int,     True),
+    ('original_month',     int,     True),
+    ('original_day',       int,     True),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
+
+# SQLite type names.
+SQLITE_TYPES = {
+    int:      'INT',
+    float:    'REAL',
+    datetime: 'FLOAT',
+    bytes:    'BLOB',
+    unicode:  'TEXT',
+    bool:     'INT',
+}
+SQLITE_KEY_TYPE = 'INTEGER PRIMARY KEY'
 
 # Default search fields for various granularities.
 ARTIST_DEFAULT_FIELDS = ('artist',)
@@ -158,7 +171,6 @@ ITEM_DEFAULT_FIELDS = ARTIST_DEFAULT_FIELDS + ALBUM_DEFAULT_FIELDS + \
 
 # Special path format key.
 PF_KEY_DEFAULT = 'default'
-
 
 # Logger.
 log = logging.getLogger('beets')
@@ -184,12 +196,12 @@ def format_for_path(value, key=None, pathmod=None):
     pathmod = pathmod or os.path
 
     if isinstance(value, basestring):
+        if isinstance(value, str):
+            value = value.decode('utf8', 'ignore')
+        sep_repl = beets.config['path_sep_replace'].get(unicode)
         for sep in (pathmod.sep, pathmod.altsep):
             if sep:
-                value = value.replace(
-                    sep,
-                    beets.config['path_sep_replace'].get(unicode),
-                )
+                value = value.replace(sep, sep_repl)
     elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
         # Pad indices with zeros.
         value = u'%02i' % (value or 0)
@@ -203,6 +215,11 @@ def format_for_path(value, key=None, pathmod=None):
     elif key == 'samplerate':
         # Sample rate formatted as kHz.
         value = u'%ikHz' % ((value or 0) // 1000)
+    elif key in ('added', 'mtime'):
+        # Times are formatted to be human-readable.
+        value = time.strftime(beets.config['time_format'].get(unicode),
+                              time.localtime(value))
+        value = unicode(value)
     elif value is None:
         value = u''
     else:
@@ -326,11 +343,9 @@ class Item(object):
             read_path = normpath(read_path)
         try:
             f = MediaFile(syspath(read_path))
-        except Exception:
-            log.debug(u'failed reading file: {0}'.format(
-                displayable_path(read_path))
-            )
-            raise
+        except (OSError, IOError) as exc:
+            raise util.FilesystemError(exc, 'read', (read_path,),
+                                       traceback.format_exc())
 
         for key in ITEM_KEYS_META:
             setattr(self, key, getattr(f, key))
@@ -346,7 +361,12 @@ class Item(object):
         """
         plugins.send('write', item=self)
 
-        f = MediaFile(syspath(self.path))
+        try:
+            f = MediaFile(syspath(self.path))
+        except (OSError, IOError) as exc:
+            raise util.FilesystemError(exc, 'read', (self.path,),
+                                       traceback.format_exc())
+
         for key in ITEM_KEYS_WRITABLE:
             setattr(f, key, getattr(self, key))
 
@@ -373,6 +393,8 @@ class Item(object):
             util.copy(self.path, dest)
         else:
             util.move(self.path, dest)
+            plugins.send("item_moved", item=self, source=self.path,
+                         destination=dest)
 
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
@@ -402,7 +424,7 @@ class Item(object):
         # Build the mapping for substitution in the template,
         # beginning with the values from the database.
         mapping = {}
-        for key in ITEM_KEYS_META:
+        for key in ITEM_KEYS:
             # Get the values from either the item or its album.
             if key in ALBUM_KEYS_ITEM and album is not None:
                 # From album.
@@ -414,8 +436,10 @@ class Item(object):
                 value = format_for_path(value, key, pathmod)
             mapping[key] = value
 
-        # Additional fields in non-sanitized case.
-        if not sanitize:
+        # Include the path if we're not sanitizing to construct a path.
+        if sanitize:
+            del mapping['path']
+        else:
             mapping['path'] = displayable_path(self.path)
 
         # Use the album artist if the track artist is not set and
@@ -433,10 +457,15 @@ class Item(object):
                 mapping['{}-{}'.format(namespace, key)] = value
 
         # Get values from plugins.
-        for key, value in plugins.template_values(self).iteritems():
+        for key, value in plugins.template_values(self).items():
             if sanitize:
                 value = format_for_path(value, key, pathmod)
             mapping[key] = value
+        if album:
+            for key, value in plugins.album_template_values(album).items():
+                if sanitize:
+                    value = format_for_path(value, key, pathmod)
+                mapping[key] = value
 
         # Get template functions.
         funcs = DefaultTemplateFunctions(self, lib, pathmod).functions()
@@ -579,6 +608,73 @@ class BooleanQuery(MatchQuery):
             self.pattern = util.str2bool(pattern)
         self.pattern = int(self.pattern)
 
+class NumericQuery(FieldQuery):
+    """Matches numeric fields. A syntax using Ruby-style range ellipses
+    (``..``) lets users specify one- or two-sided ranges. For example,
+    ``year:2001..`` finds music released since the turn of the century.
+    """
+    kinds = dict((r[0], r[1]) for r in ITEM_FIELDS)
+
+    @classmethod
+    def applies_to(cls, field):
+        """Determine whether a field has numeric type. NumericQuery
+        should only be used with such fields.
+        """
+        return cls.kinds.get(field) in (int, float)
+
+    def _convert(self, s):
+        """Convert a string to the appropriate numeric type. If the
+        string cannot be converted, return None.
+        """
+        try:
+            return self.numtype(s)
+        except ValueError:
+            return None
+
+    def __init__(self, field, pattern):
+        super(NumericQuery, self).__init__(field, pattern)
+        self.numtype = self.kinds[field]
+
+        parts = pattern.split('..', 1)
+        if len(parts) == 1:
+            # No range.
+            self.point = self._convert(parts[0])
+            self.rangemin = None
+            self.rangemax = None
+        else:
+            # One- or two-sided range.
+            self.point = None
+            self.rangemin = self._convert(parts[0])
+            self.rangemax = self._convert(parts[1])
+
+    def match(self, item):
+        value = getattr(item, self.field)
+        if isinstance(value, basestring):
+            value = self._convert(value)
+
+        if self.point is not None:
+            return value == self.point
+        else:
+            if self.rangemin is not None and value < self.rangemin:
+                return False
+            if self.rangemax is not None and value > self.rangemax:
+                return False
+            return True
+
+    def clause(self):
+        if self.point is not None:
+            return self.field + '=?', (self.point,)
+        else:
+            if self.rangemin is not None and self.rangemax is not None:
+                return (u'{0} >= ? AND {0} <= ?'.format(self.field),
+                        (self.rangemin, self.rangemax))
+            elif self.rangemin is not None:
+                return u'{0} >= ?'.format(self.field), (self.rangemin,)
+            elif self.rangemax is not None:
+                return u'{0} <= ?'.format(self.field), (self.rangemax,)
+            else:
+                return '1'
+
 class SingletonQuery(Query):
     """Matches either singleton or non-singleton items."""
     def __init__(self, sense):
@@ -672,7 +768,7 @@ class AnyFieldQuery(CollectionQuery):
             if subq.match(item):
                 return True
         return False
-    
+
 class MutableCollectionQuery(CollectionQuery):
     """A collection query whose subqueries may be modified after the
     query is initialized.
@@ -786,6 +882,8 @@ def parse_query_part(part):
         for pre, query_class in prefixes.items():
             if term.startswith(pre):
                 return key, term[len(pre):], query_class
+        if key and NumericQuery.applies_to(key):
+            return key, term, NumericQuery
         return key, term, SubstringQuery  # The default query type.
 
 def construct_query_part(query_part, default_fields, all_keys):
@@ -818,7 +916,12 @@ def construct_query_part(query_part, default_fields, all_keys):
 
     # Path field.
     elif key.lower() == 'path' and 'path' in all_keys:
-        return PathQuery(pattern)
+        if query_class is SubstringQuery:
+            # By default, use special path matching logic.
+            return PathQuery(pattern)
+        else:
+            # Specific query type requested.
+            return query_class('path', pattern)
 
     # Other (recognized) field.
     elif key.lower() in all_keys:
@@ -1049,6 +1152,7 @@ class Transaction(object):
         """Execute an SQL statement with substitution values and return
         the row ID of the last affected row.
         """
+        print statement, subvals
         cursor = self.lib._connection().execute(statement, subvals)
         plugins.send('database_change', lib=self.lib)
         return cursor.lastrowid
@@ -1063,8 +1167,6 @@ class Library(BaseLibrary):
                        directory='~/Music',
                        path_formats=((PF_KEY_DEFAULT,
                                       '$artist/$album/$track $title'),),
-                       art_filename='cover',
-                       timeout=5.0,
                        replacements=None,
                        item_fields=ITEM_FIELDS,
                        album_fields=ALBUM_FIELDS):
@@ -1074,12 +1176,10 @@ class Library(BaseLibrary):
             self.path = bytestring_path(normpath(path))
         self.directory = bytestring_path(normpath(directory))
         self.path_formats = path_formats
-        self.art_filename = art_filename
         self.replacements = replacements
 
         self._memotable = {}  # Used for template substitution performance.
 
-        self.timeout = timeout
         self._connections = {}
         self._tx_stacks = defaultdict(list)
         # A lock to protect the _connections and _tx_stacks maps, which
@@ -1118,9 +1218,16 @@ class Library(BaseLibrary):
 
         if not current_fields:
             # No table exists.
-            setup_sql =  'CREATE TABLE %s (' % table
-            setup_sql += ', '.join(['%s %s' % f[:2] for f in fields])
-            setup_sql += ');\n'
+            columns = []
+            for field in fields:
+                name, typ = field[:2]
+                if name == 'id':
+                    sql_type = SQLITE_KEY_TYPE
+                else:
+                    sql_type = SQLITE_TYPES[typ]
+                columns.append('{0} {1}'.format(name, sql_type))
+            setup_sql = 'CREATE TABLE {0} ({1});\n'.format(table,
+                                                           ', '.join(columns))
 
         else:
             # Table exists but is missing fields.
@@ -1131,8 +1238,9 @@ class Library(BaseLibrary):
                         break
                 else:
                     assert False
-                setup_sql += 'ALTER TABLE %s ' % table
-                setup_sql += 'ADD COLUMN %s %s;\n' % field[:2]
+                setup_sql += 'ALTER TABLE {0} ADD COLUMN {1} {2};\n'.format(
+                    table, field[0], SQLITE_TYPES[field[1]]
+                )
 
         # Special case. If we're moving from a version without
         # albumartist, copy all the "artist" values to "albumartist"
@@ -1171,7 +1279,10 @@ class Library(BaseLibrary):
                 return self._connections[thread_id]
             else:
                 # Make a new connection.
-                conn = sqlite3.connect(self.path, timeout=self.timeout)
+                conn = sqlite3.connect(
+                    self.path,
+                    timeout=beets.config['timeout'].as_number(),
+                )
 
                 # Access SELECT results like dictionaries.
                 conn.row_factory = sqlite3.Row
@@ -1202,7 +1313,7 @@ class Library(BaseLibrary):
         return Transaction(self)
 
     def destination(self, item, pathmod=None, fragment=False,
-                    basedir=None, platform=None):
+                    basedir=None, platform=None, path_formats=None):
         """Returns the path in the library directory designated for item
         item (i.e., where the file ought to be). fragment makes this
         method return just the path fragment underneath the root library
@@ -1213,10 +1324,11 @@ class Library(BaseLibrary):
         pathmod = pathmod or os.path
         platform = platform or sys.platform
         basedir = basedir or self.directory
+        path_formats = path_formats or self.path_formats
 
         # Use a path format based on a query, falling back on the
         # default.
-        for query, path_format in self.path_formats:
+        for query, path_format in path_formats:
             if query == PF_KEY_DEFAULT:
                 continue
             query = AndQuery.from_string(query)
@@ -1226,7 +1338,7 @@ class Library(BaseLibrary):
                 break
         else:
             # No query matched; fall back to default.
-            for query, path_format in self.path_formats:
+            for query, path_format in path_formats:
                 if query == PF_KEY_DEFAULT:
                     break
             else:
@@ -1273,7 +1385,7 @@ class Library(BaseLibrary):
     # Item manipulation.
 
     def add(self, item, copy=False):
-        item.library = self
+        item.added = time.time()
         if copy:
             self.move(item, copy=True)
 
@@ -1494,14 +1606,18 @@ class Library(BaseLibrary):
         don't yet have an ID. Returns an Album object.
         """
         # Set the metadata from the first item.
-        item_values = dict(
+        album_values = dict(
             (key, getattr(items[0], key)) for key in ALBUM_KEYS_ITEM)
+
+        # When adding an album and its items for the first time, the
+        # items do not yet have a timestamp.
+        album_values['added'] = time.time()
 
         with self.transaction() as tx:
             sql = 'INSERT INTO albums (%s) VALUES (%s)' % \
                 (', '.join(ALBUM_KEYS_ITEM),
                 ', '.join(['?'] * len(ALBUM_KEYS_ITEM)))
-            subvals = [item_values[key] for key in ALBUM_KEYS_ITEM]
+            subvals = [album_values[key] for key in ALBUM_KEYS_ITEM]
             album_id = tx.mutate(sql, subvals)
 
             # Add the items to the library.
@@ -1515,11 +1631,8 @@ class Library(BaseLibrary):
         # Construct the new Album object.
         record = {}
         for key in ALBUM_KEYS:
-            if key in ALBUM_KEYS_ITEM:
-                record[key] = item_values[key]
-            else:
-                # Non-item fields default to None.
-                record[key] = None
+            # Unset (non-item) fields default to None.
+            record[key] = album_values.get(key)
         record['id'] = album_id
         album = Album(self, record)
 
@@ -1669,12 +1782,10 @@ class Album(BaseAlbum):
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
-        if not isinstance(self._library.art_filename,Template):
-            self._library.art_filename = Template(self._library.art_filename)
-
-        subpath = util.sanitize_path(format_for_path(
-            self.evaluate_template(self._library.art_filename)
-        ))
+        filename_tmpl = Template(beets.config['art_filename'].get(unicode))
+        subpath = format_for_path(self.evaluate_template(filename_tmpl))
+        subpath = util.sanitize_path(subpath,
+                                     replacements=self._library.replacements)
         subpath = bytestring_path(subpath)
 
         _, ext = os.path.splitext(image)
@@ -1715,10 +1826,14 @@ class Album(BaseAlbum):
         # Get template field values.
         mapping = {}
         for key in ALBUM_KEYS:
-            mapping[key] = getattr(self, key)
+            mapping[key] = format_for_path(getattr(self, key), key)
 
         mapping['artpath'] = displayable_path(mapping['artpath'])
         mapping['path'] = displayable_path(self.item_dir())
+
+        # Get values from plugins.
+        for key, value in plugins.album_template_values(self).iteritems():
+            mapping[key] = value
 
         # Get template functions.
         funcs = DefaultTemplateFunctions().functions()
@@ -1807,6 +1922,13 @@ class DefaultTemplateFunctions(object):
         """Translate non-ASCII characters to their ASCII equivalents.
         """
         return unidecode(s)
+
+    @staticmethod
+    def tmpl_time(s, format):
+        """Format a time value using `strftime`.
+        """
+        cur_fmt = beets.config['time_format'].get(unicode)
+        return time.strftime(format, time.strptime(s, cur_fmt))
 
     def tmpl_aunique(self, keys=None, disam=None):
         """Generate a string that is guaranteed to be unique among all
