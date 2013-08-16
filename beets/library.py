@@ -1116,6 +1116,7 @@ class Transaction(object):
         """Execute an SQL statement with substitution values and return
         the row ID of the last affected row.
         """
+        print statement, subvals
         cursor = self.lib._connection().execute(statement, subvals)
         plugins.send('database_change', lib=self.lib)
         return cursor.lastrowid

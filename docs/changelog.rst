@@ -186,7 +186,7 @@ And a batch of fixes:
 
 
 1.1.0 (April 29, 2013)
----------------------
+----------------------
 
 This final release of 1.1 brings a little polish to the betas that introduced
 the new configuration system. The album art and lyrics plugins also got a
