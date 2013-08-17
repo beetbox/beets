@@ -75,7 +75,7 @@ def compile_inline(python_code, album):
             out['items'] = list(obj.items())
             return out
         else:
-            return dict(obj.record)
+            return dict(obj)
 
     if is_expr:
         # For expressions, just evaluate and return the result.

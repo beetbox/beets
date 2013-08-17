@@ -227,12 +227,6 @@ def format_for_path(value, key=None, pathmod=None):
 
     return value
 
-def get_flexattrs(rows):
-    """Given a list of SQLite result rows, construct a dictionary
-    reflecting the contained flexible attribute values.
-    """
-    return {row['key']: row['value'] for row in rows}
-
 
 # Exceptions.
 
@@ -242,17 +236,103 @@ class InvalidFieldError(Exception):
 
 # Library items (songs).
 
-class Item(object):
-    def __init__(self, values=None, flexattrs=None):
-        self.dirty = {}
-        self.record = {k: None for k in ITEM_KEYS}
-        self.flexattrs = {}
+class FlexModel(object):
+    """An abstract object that consists of a set of "fast" (fixed)
+    fields and an arbitrary number of flexible fields.
+    """
 
-        if values:
-            self.update(values)
-        if flexattrs:
-            self.update(flexattrs)
-        self._clear_dirty()
+    _fields = ()
+    """The available "fixed" fields on this type.
+    """
+
+    def __init__(self, **values):
+        """Create a new object with the given field values (which may be
+        fixed or flex fields).
+        """
+        self._dirty = set()
+        self._values_fixed = {}
+        self._values_flex = {}
+        self.update(values)
+        self.clear_dirty()
+
+    def __repr__(self):
+        return '{0}({1})'.format(
+            type(self).__name__,
+            ', '.join('{0}={1!r}'.format(k, v) for k, v in dict(self).items()),
+        )
+
+    def clear_dirty(self):
+        self._dirty = set()
+
+
+    # Act like a dictionary.
+
+    def __getitem__(self, key):
+        """Get the value for a field. Fixed fields always return a value
+        (which may be None); flex fields may raise a KeyError.
+        """
+        if key in self._fields:
+            return self._values_fixed.get(key)
+        elif key in self._values_flex:
+            return self._values_flex[key]
+        else:
+            raise KeyError(key)
+
+    def __setitem__(self, key, value):
+        """Assign the value for a field.
+        """
+        if key in self._fields:
+            self._values_fixed[key] = value
+        else:
+            self._values_flex[key] = value
+        self._dirty.add(key)
+
+    def update(self, values):
+        """Assign all values in the given dict.
+        """
+        for key, value in values.items():
+            self[key] = value
+
+    def keys(self):
+        """Get all the keys (both fixed and flex) on this object.
+        """
+        return list(self._fields) + self._values_flex.keys()
+
+    def get(self, key, default=None):
+        """Get the value for a given key or `default` if it does not
+        exist.
+        """
+        if key in self:
+            return self[key]
+        else:
+            return default
+
+    def __contains__(self, key):
+        """Determine whether `key` is a fixed or flex attribute on this
+        object.
+        """
+        return key in self._fields or key in self._values_flex
+
+
+    # Convenient attribute access.
+
+    def __getattr__(self, key):
+        if key.startswith('_'):
+            return super(FlexModel, self).__getattr__(key)
+        else:
+            try:
+                return self[key]
+            except KeyError:
+                raise AttributeError(key)
+
+    def __setattr__(self, key, value):
+        if key.startswith('_'):
+            super(FlexModel, self).__setattr__(key, value)
+        else:
+            self[key] = value
+
+class Item(FlexModel):
+    _fields = ITEM_FIELDS
 
     @classmethod
     def from_path(cls, path):
@@ -266,30 +346,6 @@ class Item(object):
         i.mtime = i.current_mtime()  # Initial mtime.
         return i
 
-    def _clear_dirty(self):
-        self.dirty = {}
-        for key in ITEM_KEYS:
-            self.dirty[key] = False
-
-    def __repr__(self):
-        return 'Item({0!r}, {1!r})'.format(self.record, self.flexattrs)
-
-
-    # Item field accessors.
-
-    def __getitem__(self, key):
-        """Get the item's value for a standard field or a flexattr.
-        """
-        if key in ITEM_KEYS:
-            return self.record.get(key)
-        elif key in self.flexattrs:
-            return self.flexattrs[key]
-        else:
-            raise KeyError('item does not have the key {0}'.format(key))
-
-    def __contains__(self, key):
-        return key in ITEM_KEYS or key in self.flexattrs
-
     def __setitem__(self, key, value):
         """Set the item's value for a standard field or a flexattr.
         """
@@ -300,47 +356,10 @@ class Item(object):
             elif isinstance(value, buffer):
                 value = str(value)
 
-        if key in ITEM_KEYS:
-            # If the value changed, mark the field as dirty.
-            if (key not in self.record) or (self.record[key] != value):
-                self.record[key] = value
-                self.dirty[key] = True
-                if key in ITEM_KEYS_WRITABLE:
-                    self.mtime = 0 # Reset mtime on dirty.
+        if key in ITEM_KEYS_WRITABLE:
+            self.mtime = 0 # Reset mtime on dirty.
 
-        else:
-            self.flexattrs[key] = value
-
-    def update(self, values):
-        for key, value in values.items():
-            self[key] = value
-
-    def get(self, key, default=None):
-        if key in self:
-            return self[key]
-        else:
-            return default
-
-    def __getattr__(self, key):
-        """If key is an item attribute (i.e., a column in the database),
-        returns the record entry for that key.
-        """
-        try:
-            return super(Item, self).__getattr__(key)
-        except AttributeError:
-            if key in self:
-                return self[key]
-            else:
-                raise AttributeError(key + ' is not an item field')
-
-    def __setattr__(self, key, value):
-        """Set the item's value for a standard field or a flexattr.
-        """
-        # FIXME hack to allow self.x = y in __init__
-        if key in ('record', 'flexattrs', 'dirty'):
-            super(Item, self).__setattr__(key, value)
-        else:
-            self[key] = value
+        super(Item, self).__setitem__(key, value)
 
 
     # Interaction with file metadata.
@@ -462,7 +481,7 @@ class Item(object):
             mapping['albumartist'] = mapping['artist']
 
         # Flexible attributes.
-        for key, value in self.flexattrs.items():
+        for key, value in self._values_flex.items():
             if sanitize:
                 value = format_for_path(value, None, pathmod)
             mapping[key] = value
@@ -828,7 +847,9 @@ class ResultIterator(object):
                     'SELECT * FROM item_attributes WHERE entity_id=?',
                     (row['id'],)
                 )
-            item = Item(dict(row), get_flexattrs(flex_rows))
+            values = dict(row)
+            values.update({row['key']: row['value'] for row in flex_rows})
+            item = Item(**values)
             if self.query and not self.query.match(item):
                 continue
             return item
