@@ -1162,8 +1162,9 @@ def modify_items(lib, mods, query, write, move, album, confirm):
                     else:
                         lib.move(obj)
 
-            # When modifying items, we have to store them to the database.
-            if not album:
+            if album:
+                obj.store()
+            else:
                 lib.store(obj)
 
     # Apply tags if requested.

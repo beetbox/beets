@@ -318,12 +318,12 @@ class FlexModel(object):
 
     def __getattr__(self, key):
         if key.startswith('_'):
-            return super(FlexModel, self).__getattr__(key)
+            raise AttributeError('model has no attribute {0!r}'.format(key))
         else:
             try:
                 return self[key]
             except KeyError:
-                raise AttributeError(key)
+                raise AttributeError('no such field {0!r}'.format(key))
 
     def __setattr__(self, key, value):
         if key.startswith('_'):
@@ -331,17 +331,77 @@ class FlexModel(object):
         else:
             self[key] = value
 
-class Item(FlexModel):
-    _fields = ITEM_FIELDS
+class LibModel(FlexModel):
+    """A model base class that includes a reference to a Library object.
+    It knows how to load and store itself from the database.
+    """
+
+    _table = None
+    """The main SQLite table name.
+    """
+
+    _flex_table = None
+    """The flex field SQLite table name.
+    """
+
+    def __init__(self, lib=None, **values):
+        self._lib = lib
+        super(LibModel, self).__init__(**values)
+
+    def store(self, store_id=None, store_all=False):
+        """Save the object's metadata into the library database. If
+        store_id is specified, use it instead of the current id. If
+        store_all is true, save the entire record instead of just the
+        dirty fields.
+        """
+        if store_id is None:
+            store_id = self.id
+
+        # Build assignments for query.
+        assignments = ''
+        subvars = []
+        for key in self._fields:
+            if (key != 'id') and (key in self._dirty or store_all):
+                assignments += key + '=?,'
+                value = getattr(item, key)
+                # Wrap path strings in buffers so they get stored
+                # "in the raw".
+                if key == 'path' and isinstance(value, str):
+                    value = buffer(value)
+                subvars.append(value)
+        assignments = assignments[:-1]  # Knock off last ,
+
+        with self._lib.transaction() as tx:
+            # Main table update.
+            if assignments:
+                query = 'UPDATE {0} SET {1} WHERE id=?'.format(
+                    self._table, assignments
+                )
+                subvars.append(store_id)
+                tx.mutate(query, subvars)
+
+            # Flexible attributes.
+            for key, value in self._values_flex.items():
+                tx.mutate(
+                    'INSERT INTO {0} '
+                    '(entity_id, key, value) '
+                    'VALUES (?, ?, ?);'.format(self._flex_table),
+                    (store_id, key, value),
+                )
+
+        self.clear_dirty()
+
+class Item(LibModel):
+    _fields = ITEM_KEYS
+    _table = 'items'
+    _flex_table = 'item_attributes'
 
     @classmethod
     def from_path(cls, path):
         """Creates a new item from the media file at the specified path.
         """
         # Initiate with values that aren't read from files.
-        i = cls({
-            'album_id': None,
-        })
+        i = cls(album_id=None)
         i.read(path)
         i.mtime = i.current_mtime()  # Initial mtime.
         return i
@@ -829,9 +889,10 @@ class PathQuery(Query):
 
 class ResultIterator(object):
     """An iterator into an item query result set. The iterator lazily
-    constructs Item objects that reflect database rows.
+    constructs LibModel objects that reflect database rows.
     """
-    def __init__(self, rows, lib, query=None):
+    def __init__(self, model_class, rows, lib, query=None):
+        self.model_class = model_class
         self.rows = rows
         self.rowiter = iter(self.rows)
         self.lib = lib
@@ -844,15 +905,17 @@ class ResultIterator(object):
         for row in self.rowiter:  # Iterate until we get a hit.
             with self.lib.transaction() as tx:
                 flex_rows = tx.query(
-                    'SELECT * FROM item_attributes WHERE entity_id=?',
+                    'SELECT * FROM {0} WHERE entity_id=?'.format(
+                        self.model_class._flex_table
+                    ),
                     (row['id'],)
                 )
             values = dict(row)
             values.update({row['key']: row['value'] for row in flex_rows})
-            item = Item(**values)
-            if self.query and not self.query.match(item):
+            obj = self.model_class(self.lib, **values)
+            if self.query and not self.query.match(obj):
                 continue
-            return item
+            return obj
         raise StopIteration()  # Reached the end of the DB rows.
 
 # Regular expression for parse_query_part, below.
@@ -975,54 +1038,6 @@ def get_query(val, album=False):
         return val
     else:
         raise ValueError('query must be None or have type Query or str')
-
-
-# An abstract library.
-
-class BaseAlbum(object):
-    """Represents an album in the library, which in turn consists of a
-    collection of items in the library.
-
-    This base version just reflects the metadata of the album's items
-    and therefore isn't particularly useful. The items are referenced
-    by the record's album and artist fields. Implementations can add
-    album-level metadata or use distinct backing stores.
-    """
-    def __init__(self, library, record):
-        super(BaseAlbum, self).__setattr__('_library', library)
-        super(BaseAlbum, self).__setattr__('_record', record)
-
-    def __getattr__(self, key):
-        """Get the value for an album attribute."""
-        if key in self._record:
-            return self._record[key]
-        else:
-            raise AttributeError('no such field %s' % key)
-
-    def __setattr__(self, key, value):
-        """Set the value of an album attribute, modifying each of the
-        album's items.
-        """
-        if key in self._record:
-            # Reflect change in this object.
-            self._record[key] = value
-            # Modify items.
-            if key in ALBUM_KEYS_ITEM:
-                items = self._library.items(albumartist=self.albumartist,
-                                            album=self.album)
-                for item in items:
-                    setattr(item, key, value)
-                self._library.store(item)
-        else:
-            super(BaseAlbum, self).__setattr__(key, value)
-
-    def load(self):
-        """Refresh this album's cached metadata from the library.
-        """
-        items = self._library.items(artist=self.artist, album=self.album)
-        item = iter(items).next()
-        for key in ALBUM_KEYS_ITEM:
-            self._record[key] = getattr(item, key)
 
 
 # The Library: interface to the database.
@@ -1328,11 +1343,11 @@ class Library(object):
             flexins = 'INSERT INTO item_attributes ' \
                       ' (entity_id, key, value)' \
                       ' VALUES (?, ?, ?, ?)'
-            for key, value in item.flexattrs.items():
+            for key, value in item._values_flex.items():
                 if value is not None:
                     tx.mutate(flexins, (new_id, key, value))
 
-        item._clear_dirty()
+        item.clear_dirty()
         item.id = new_id
         self._memotable = {}
         return new_id
@@ -1344,9 +1359,8 @@ class Library(object):
         if load_id is None:
             load_id = item.id
         stored_item = self.get_item(load_id)
-        item.update(stored_item.record)
-        item.update(stored_item.flexattrs)
-        item._clear_dirty()
+        item.update(dict(stored_item))
+        item.clear_dirty()
 
     def store(self, item, store_id=None, store_all=False):
         """Save the item's metadata into the library database. If
@@ -1361,7 +1375,7 @@ class Library(object):
         assignments = ''
         subvars = []
         for key in ITEM_KEYS:
-            if (key != 'id') and (item.dirty[key] or store_all):
+            if (key != 'id') and (key in item._dirty or store_all):
                 assignments += key + '=?,'
                 value = getattr(item, key)
                 # Wrap path strings in buffers so they get stored
@@ -1382,10 +1396,10 @@ class Library(object):
             flexins = 'INSERT INTO item_attributes ' \
                       ' (entity_id, key, value)' \
                       ' VALUES (?, ?, ?)'
-            for key, value in item.flexattrs.items():
+            for key, value in item._values_flex.items():
                 tx.mutate(flexins, (store_id, key, value))
 
-        item._clear_dirty()
+        item.clear_dirty()
         self._memotable = {}
 
     def remove(self, item, delete=False, with_album=True):
@@ -1479,18 +1493,7 @@ class Library(object):
                 subvals,
             )
 
-        if where:
-            # Fast query.
-            return [Album(self, dict(res)) for res in rows]
-        else:
-            # Slow query.
-            # FIXME both should be iterators.
-            out = []
-            for row in rows:
-                album = Album(self, dict(res))
-                if query.match(album):
-                    out.append(album)
-            return out
+        return ResultIterator(Album, rows, self, None if where else query)
 
     def items(self, query=None, artist=None, album=None, title=None):
         """Returns a sequence of the items matching the given artist,
@@ -1519,12 +1522,7 @@ class Library(object):
                 subvals
             )
 
-        if where:
-            # Fast query.
-            return ResultIterator(rows, self)
-        else:
-            # Slow query.
-            return ResultIterator(rows, self, query)
+        return ResultIterator(Item, rows, self, None if where else query)
 
 
     # Convenience accessors.
@@ -1550,13 +1548,11 @@ class Library(object):
         if album_id is None:
             return None
 
-        with self.transaction() as tx:
-            rows = tx.query(
-                'SELECT * FROM albums WHERE id=?',
-                (album_id,)
-            )
-        if rows:
-            return Album(self, dict(rows[0]))
+        albums = self.albums(MatchQuery('id', album_id))
+        try:
+            return albums.next()
+        except StopIteration:
+            return None
 
     def add_album(self, items):
         """Create a new album in the database with metadata derived
@@ -1587,71 +1583,33 @@ class Library(object):
                     self.store(item)
 
         # Construct the new Album object.
-        record = {}
-        for key in ALBUM_KEYS:
-            # Unset (non-item) fields default to None.
-            record[key] = album_values.get(key)
-        record['id'] = album_id
-        album = Album(self, record)
-
+        album_values['id'] = album_id
+        album = Album(self, **album_values)
         return album
 
-class Album(BaseAlbum):
+class Album(LibModel):
     """Provides access to information about albums stored in a
     library. Reflects the library's "albums" table, including album
     art.
     """
-    def __init__(self, lib, record):
-        # Decode Unicode paths in database.
-        if 'artpath' in record and isinstance(record['artpath'], unicode):
-            record['artpath'] = bytestring_path(record['artpath'])
-        super(Album, self).__init__(lib, record)
+    _fields = ALBUM_KEYS
+    _table = 'album'
+    _flex_table = 'album_attributes'
 
-    def __setattr__(self, key, value):
+    def __setitem__(self, key, value):
         """Set the value of an album attribute."""
-        if key == 'id':
-            raise AttributeError("can't modify album id")
-
-        elif key in ALBUM_KEYS:
-            # Make sure paths are bytestrings.
-            if key == 'artpath' and isinstance(value, unicode):
+        if key == 'artpath':
+            if isinstance(value, unicode):
                 value = bytestring_path(value)
-
-            # Reflect change in this object.
-            self._record[key] = value
-
-            # Store art path as a buffer.
-            if key == 'artpath' and isinstance(value, str):
-                value = buffer(value)
-
-            # Change album table.
-            sql = 'UPDATE albums SET %s=? WHERE id=?' % key
-            with self._library.transaction() as tx:
-                tx.mutate(sql, (value, self.id))
-
-            # Possibly make modification on items as well.
-            if key in ALBUM_KEYS_ITEM:
-                for item in self.items():
-                    setattr(item, key, value)
-                    self._library.store(item)
-
-        else:
-            object.__setattr__(self, key, value)
-
-    def __getattr__(self, key):
-        value = super(Album, self).__getattr__(key)
-
-        # Unwrap art path from buffer object.
-        if key == 'artpath' and isinstance(value, buffer):
-            value = str(value)
-
-        return value
+            elif isinstance(value, buffer):
+                value = bytes(value)
+        super(Album, self).__setitem__(key, value)
 
     def items(self):
         """Returns an iterable over the items associated with this
         album.
         """
-        return self._library.items(MatchQuery('album_id', self.id))
+        return self._lib.items(MatchQuery('album_id', self.id))
 
     def remove(self, delete=False, with_items=True):
         """Removes this album and all its associated items from the
@@ -1666,11 +1624,11 @@ class Album(BaseAlbum):
             if artpath:
                 util.remove(artpath)
 
-        with self._library.transaction() as tx:
+        with self._lib.transaction() as tx:
             if with_items:
                 # Remove items.
                 for item in self.items():
-                    self._library.remove(item, delete, False)
+                    self._lib.remove(item, delete, False)
 
             # Remove album from database.
             tx.mutate(
@@ -1701,22 +1659,22 @@ class Album(BaseAlbum):
         # Prune old path when moving.
         if not copy:
             util.prune_dirs(os.path.dirname(old_art),
-                            self._library.directory)
+                            self._lib.directory)
 
     def move(self, copy=False, basedir=None):
         """Moves (or copies) all items to their destination.  Any album
         art moves along with them. basedir overrides the library base
         directory for the destination.
         """
-        basedir = basedir or self._library.directory
+        basedir = basedir or self._lib.directory
 
         # Move items.
         items = list(self.items())
         for item in items:
-            self._library.move(item, copy, basedir=basedir, with_album=False)
+            self._lib.move(item, copy, basedir=basedir, with_album=False)
 
         # Move art.
-        self.move_art(copy)
+        self.move_art(lib, copy)
 
     def item_dir(self):
         """Returns the directory containing the album's first item,
@@ -1743,7 +1701,7 @@ class Album(BaseAlbum):
         filename_tmpl = Template(beets.config['art_filename'].get(unicode))
         subpath = format_for_path(self.evaluate_template(filename_tmpl))
         subpath = util.sanitize_path(subpath,
-                                     replacements=self._library.replacements)
+                                     replacements=self._lib.replacements)
         subpath = bytestring_path(subpath)
 
         _, ext = os.path.splitext(image)
@@ -1783,8 +1741,8 @@ class Album(BaseAlbum):
         """
         # Get template field values.
         mapping = {}
-        for key in ALBUM_KEYS:
-            mapping[key] = format_for_path(getattr(self, key), key)
+        for key, value in dict(self).items():
+            mapping[key] = format_for_path(value, key)
 
         mapping['artpath'] = displayable_path(mapping['artpath'])
         mapping['path'] = displayable_path(self.item_dir())
@@ -1799,6 +1757,14 @@ class Album(BaseAlbum):
 
         # Perform substitution.
         return template.substitute(mapping, funcs)
+
+    def load(self):
+        """Refresh this album's cached metadata from the library.
+        """
+        items = self._lib.items(artist=self.artist, album=self.album)
+        item = iter(items).next()
+        for key in ALBUM_KEYS_ITEM:
+            self[key] = item[key]
 
 
 # Default path template resources.

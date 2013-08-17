@@ -70,12 +70,10 @@ def compile_inline(python_code, album):
         is_expr = True
 
     def _dict_for(obj):
+        out = dict(obj)
         if album:
-            out = dict(obj._record)
             out['items'] = list(obj.items())
-            return out
-        else:
-            return dict(obj)
+        return out
 
     if is_expr:
         # For expressions, just evaluate and return the result.
