@@ -979,102 +979,6 @@ def get_query(val, album=False):
 
 # An abstract library.
 
-class BaseLibrary(object):
-    """Abstract base class for music libraries, which are loosely
-    defined as sets of Items.
-    """
-    def __init__(self):
-        raise NotImplementedError
-
-
-    # Basic operations.
-
-    def add(self, item, copy=False):
-        """Add the item as a new object to the library database. The id
-        field will be updated; the new id is returned. If copy, then
-        each item is copied to the destination location before it is
-        added.
-        """
-        raise NotImplementedError
-
-    def load(self, item, load_id=None):
-        """Refresh the item's metadata from the library database. If
-        fetch_id is not specified, use the item's current id.
-        """
-        raise NotImplementedError
-
-    def store(self, item, store_id=None, store_all=False):
-        """Save the item's metadata into the library database. If
-        store_id is specified, use it instead of the item's current id.
-        If store_all is true, save the entire record instead of just
-        the dirty fields.
-        """
-        raise NotImplementedError
-
-    def remove(self, item):
-        """Removes the item from the database (leaving the file on
-        disk).
-        """
-        raise NotImplementedError
-
-
-    # Browsing operations.
-    # Naive implementations are provided, but these methods should be
-    # overridden if a better implementation exists.
-
-    def _get(self, query=None, default_fields=None):
-        """Returns a sequence of the items matching query, which may
-        be None (match the entire library), a Query object, or a query
-        string. If default_fields is specified, it restricts the fields
-        that may be matched by unqualified query string terms.
-        """
-        raise NotImplementedError
-
-    def albums(self, artist=None, query=None):
-        """Returns a sorted list of BaseAlbum objects, possibly filtered
-        by an artist name or an arbitrary query. Unqualified query
-        string terms only match fields that apply at an album
-        granularity: artist, album, and genre.
-        """
-        # Gather the unique album/artist names and associated example
-        # Items.
-        specimens = {}
-        for item in self._get(query, ALBUM_DEFAULT_FIELDS):
-            if (artist is None or item.artist == artist):
-                key = (item.artist, item.album)
-                if key not in specimens:
-                    specimens[key] = item
-
-        # Build album objects.
-        for k in sorted(specimens.keys()):
-            item = specimens[k]
-            record = {}
-            for key in ALBUM_KEYS_ITEM:
-                record[key] = getattr(item, key)
-            yield BaseAlbum(self, record)
-
-    def items(self, artist=None, album=None, title=None, query=None):
-        """Returns a sequence of the items matching the given artist,
-        album, title, and query (if present). Sorts in such a way as to
-        group albums appropriately. Unqualified query string terms only
-        match intuitively relevant fields: artist, album, genre, title,
-        and comments.
-        """
-        out = []
-        for item in self._get(query, ITEM_DEFAULT_FIELDS):
-            if (artist is None or item.artist == artist) and \
-               (album is None  or item.album == album) and \
-               (title is None  or item.title == title):
-                out.append(item)
-
-        # Sort by: artist, album, disc, track.
-        def compare(a, b):
-            return cmp(a.artist, b.artist) or \
-                   cmp(a.album, b.album) or \
-                   cmp(a.disc, b.disc) or \
-                   cmp(a.track, b.track)
-        return sorted(out, compare)
-
 class BaseAlbum(object):
     """Represents an album in the library, which in turn consists of a
     collection of items in the library.
@@ -1121,7 +1025,7 @@ class BaseAlbum(object):
             self._record[key] = getattr(item, key)
 
 
-# Concrete DB-backed library.
+# The Library: interface to the database.
 
 class Transaction(object):
     """A context manager for safe, concurrent access to the database.
@@ -1175,7 +1079,7 @@ class Transaction(object):
         """Execute a string containing multiple SQL statements."""
         self.lib._connection().executescript(statements)
 
-class Library(BaseLibrary):
+class Library(object):
     """A music library using an SQLite database as a metadata store."""
     def __init__(self, path='library.blb',
                        directory='~/Music',
@@ -1392,6 +1296,11 @@ class Library(BaseLibrary):
     # Item manipulation.
 
     def add(self, item, copy=False):
+        """Add the item as a new object to the library database. The id
+        field will be updated; the new id is returned. If copy, then
+        each item is copied to the destination location before it is
+        added.
+        """
         item.added = time.time()
         if copy:
             self.move(item, copy=True)
@@ -1429,6 +1338,9 @@ class Library(BaseLibrary):
         return new_id
 
     def load(self, item, load_id=None):
+        """Refresh the item's metadata from the library database. If
+        fetch_id is not specified, use the item's current id.
+        """
         if load_id is None:
             load_id = item.id
         stored_item = self.get_item(load_id)
@@ -1437,6 +1349,11 @@ class Library(BaseLibrary):
         item._clear_dirty()
 
     def store(self, item, store_id=None, store_all=False):
+        """Save the item's metadata into the library database. If
+        store_id is specified, use it instead of the item's current id.
+        If store_all is true, save the entire record instead of just
+        the dirty fields.
+        """
         if store_id is None:
             store_id = item.id
 
@@ -1541,6 +1458,11 @@ class Library(BaseLibrary):
     # Querying.
 
     def albums(self, query=None, artist=None):
+        """Returns a sorted list of Album objects, possibly filtered
+        by an artist name or an arbitrary query. Unqualified query
+        string terms only match fields that apply at an album
+        granularity: artist, album, and genre.
+        """
         query = get_query(query, True)
         if artist is not None:
             # "Add" the artist to the query.
@@ -1571,6 +1493,12 @@ class Library(BaseLibrary):
             return out
 
     def items(self, query=None, artist=None, album=None, title=None):
+        """Returns a sequence of the items matching the given artist,
+        album, title, and query (if present). Sorts in such a way as to
+        group albums appropriately. Unqualified query string terms only
+        match intuitively relevant fields: artist, album, genre, title,
+        and comments.
+        """
         queries = [get_query(query, False)]
         if artist is not None:
             queries.append(MatchQuery('artist', artist))
