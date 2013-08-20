@@ -461,25 +461,6 @@ class BrowseTest(unittest.TestCase, AssertsMixin):
         items = self.lib.items('2007')
         self.assert_done(items)
 
-class CountTest(unittest.TestCase):
-    def setUp(self):
-        self.lib = beets.library.Library(':memory:')
-        self.item = some_item
-        self.lib.add(self.item)
-
-    def test_count_gets_single_item(self):
-        with self.lib.transaction() as tx:
-            songs, totaltime = beets.library.TrueQuery().count(tx)
-        self.assertEqual(songs, 1)
-        self.assertEqual(totaltime, self.item.length)
-
-    def test_count_works_for_empty_library(self):
-        self.lib.remove(self.item)
-        with self.lib.transaction() as tx:
-            songs, totaltime = beets.library.TrueQuery().count(tx)
-        self.assertEqual(songs, 0)
-        self.assertEqual(totaltime, 0.0)
-
 class StringParseTest(unittest.TestCase):
     def test_single_field_query(self):
         q = beets.library.AndQuery.from_string(u'albumtype:soundtrack')
