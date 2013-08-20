@@ -533,21 +533,21 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
     def test_unique_with_default_arguments_uses_albumtype(self):
         album2 = self.lib.get_album(self.i1)
         album2.albumtype = 'bar'
-        self.lib._connection().commit()
+        album2.store()
         self._setf(u'foo%aunique{}/$title')
         self._assert_dest('/base/foo [bar]/the title', self.i1)
 
     def test_unique_expands_to_nothing_for_distinct_albums(self):
         album2 = self.lib.get_album(self.i2)
         album2.album = 'different album'
-        self.lib._connection().commit()
+        album2.store()
 
         self._assert_dest('/base/foo/the title', self.i1)
 
     def test_use_fallback_numbers_when_identical(self):
         album2 = self.lib.get_album(self.i2)
         album2.year = 2001
-        self.lib._connection().commit()
+        album2.store()
 
         self._assert_dest('/base/foo 1/the title', self.i1)
         self._assert_dest('/base/foo 2/the title', self.i2)
@@ -561,6 +561,8 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
         album2.year = 2001
         album1 = self.lib.get_album(self.i1)
         album1.albumtype = 'foo/bar'
+        album2.store()
+        album1.store()
         self._setf(u'foo%aunique{albumartist album,albumtype}/$title')
         self._assert_dest('/base/foo [foo_bar]/the title', self.i1)
 
@@ -757,6 +759,7 @@ class AlbumInfoTest(unittest.TestCase):
     def test_albuminfo_stores_art(self):
         ai = self.lib.get_album(self.i)
         ai.artpath = '/my/great/art'
+        ai.store()
         new_ai = self.lib.get_album(self.i)
         self.assertEqual(new_ai.artpath, '/my/great/art')
 
@@ -906,9 +909,10 @@ class PathStringTest(_common.TestCase):
         self.assert_(isinstance(dest, str))
 
     def test_artpath_stores_special_chars(self):
-        path = 'b\xe1r'
+        path = b'b\xe1r'
         alb = self.lib.add_album([self.i])
         alb.artpath = path
+        alb.store()
         alb = self.lib.get_album(self.i)
         self.assertEqual(path, alb.artpath)
 

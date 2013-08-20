@@ -281,11 +281,12 @@ class FlexModel(object):
     def __setitem__(self, key, value):
         """Assign the value for a field.
         """
-        if key in self._fields:
-            self._values_fixed[key] = value
-        else:
-            self._values_flex[key] = value
-        self._dirty.add(key)
+        source = self._values_fixed if key in self._fields \
+                 else self._values_flex
+        old_value = source.get(key)
+        source[key] = value
+        if old_value != value:
+            self._dirty.add(key)
 
     def update(self, values):
         """Assign all values in the given dict.
@@ -344,6 +345,11 @@ class LibModel(FlexModel):
     """The flex field SQLite table name.
     """
 
+    _bytes_keys = ('path', 'artpath')
+    """Keys whose values should be stored as raw bytes blobs rather than
+    strings.
+    """
+
     def __init__(self, lib=None, **values):
         self._lib = lib
         super(LibModel, self).__init__(**values)
@@ -355,7 +361,7 @@ class LibModel(FlexModel):
         """
         if not self._lib:
             raise ValueError('{0} has no library'.format(type(self).__name__))
-        if not self._id:
+        if not self.id:
             raise ValueError('{0} has no id'.format(type(self).__name__))
 
     def store(self):
@@ -372,7 +378,7 @@ class LibModel(FlexModel):
                 value = self[key]
                 # Wrap path strings in buffers so they get stored
                 # "in the raw".
-                if key == 'path' and isinstance(value, str):
+                if key in self._bytes_keys and isinstance(value, str):
                     value = buffer(value)
                 subvars.append(value)
         assignments = assignments[:-1]  # Knock off last ,
@@ -1727,7 +1733,7 @@ class Album(LibModel):
             self._lib.move(item, copy, basedir=basedir, with_album=False)
 
         # Move art.
-        self.move_art(self._lib, copy)
+        self.move_art(copy)
 
     def item_dir(self):
         """Returns the directory containing the album's first item,
