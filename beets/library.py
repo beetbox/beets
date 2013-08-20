@@ -348,20 +348,26 @@ class LibModel(FlexModel):
         self._lib = lib
         super(LibModel, self).__init__(**values)
 
-    def store(self, store_id=None, store_all=False):
-        """Save the object's metadata into the library database. If
-        store_id is specified, use it instead of the current id. If
-        store_all is true, save the entire record instead of just the
-        dirty fields.
+    def _check_db(self):
+        """Ensure that this object is associated with a database row: it
+        has a reference to a library (`_lib`) and an id. A ValueError
+        exception is raised otherwise.
         """
-        if store_id is None:
-            store_id = self.id
+        if not self._lib:
+            raise ValueError('{0} has no library'.format(type(self).__name__))
+        if not self._id:
+            raise ValueError('{0} has no id'.format(type(self).__name__))
+
+    def store(self):
+        """Save the object's metadata into the library database.
+        """
+        self._check_db()
 
         # Build assignments for query.
         assignments = ''
         subvars = []
         for key in self._fields:
-            if (key != 'id') and (key in self._dirty or store_all):
+            if key != 'id' and key in self._dirty:
                 assignments += key + '=?,'
                 value = self[key]
                 # Wrap path strings in buffers so they get stored
@@ -377,7 +383,7 @@ class LibModel(FlexModel):
                 query = 'UPDATE {0} SET {1} WHERE id=?'.format(
                     self._table, assignments
                 )
-                subvars.append(store_id)
+                subvars.append(self.id)
                 tx.mutate(query, subvars)
 
             # Flexible attributes.
@@ -386,9 +392,26 @@ class LibModel(FlexModel):
                     'INSERT INTO {0} '
                     '(entity_id, key, value) '
                     'VALUES (?, ?, ?);'.format(self._flex_table),
-                    (store_id, key, value),
+                    (self.id, key, value),
                 )
 
+        self.clear_dirty()
+
+    def load(self):
+        """Refresh the object's metadata from the library database.
+        """
+        self._check_db()
+
+        # Get a fresh copy of this object from the DB.
+        with self._lib.transaction() as tx:
+            rows = tx.query(
+                'SELECT * FROM {0} WHERE id=?;'.format(self._table),
+                (self.id,)
+            )
+        results = Results(type(self), rows, self._lib)
+        stored_obj = results.get()
+
+        self.update(dict(stored_obj))
         self.clear_dirty()
 
 class Item(LibModel):
@@ -1401,32 +1424,23 @@ class Library(object):
         self._memotable = {}
         return new_id
 
-    def load(self, item, load_id=None):
-        """Refresh the item's metadata from the library database. If
-        fetch_id is not specified, use the item's current id.
+    def load(self, item):
+        """Refresh the item's metadata from the library database.
         """
-        if load_id is None:
-            load_id = item.id
-            if load_id is None:
-                raise ValueError('cannot load item with no id')
-        stored_item = self.get_item(load_id)
+        if item.id is None:
+            raise ValueError('cannot load item with no id')
+        stored_item = self.get_item(item.id)
         item.update(dict(stored_item))
         item.clear_dirty()
 
-    def store(self, item, store_id=None, store_all=False):
-        """Save the item's metadata into the library database. If
-        store_id is specified, use it instead of the item's current id.
-        If store_all is true, save the entire record instead of just
-        the dirty fields.
+    def store(self, item):
+        """Save the item's metadata into the library database.
         """
-        if store_id is None:
-            store_id = item.id
-
         # Build assignments for query.
         assignments = ''
         subvars = []
         for key in ITEM_KEYS:
-            if (key != 'id') and (key in item._dirty or store_all):
+            if key != 'id' and key in item._dirty:
                 assignments += key + '=?,'
                 value = getattr(item, key)
                 # Wrap path strings in buffers so they get stored
@@ -1440,7 +1454,7 @@ class Library(object):
             # Main table update.
             if assignments:
                 query = 'UPDATE items SET ' + assignments + ' WHERE id=?'
-                subvars.append(store_id)
+                subvars.append(item.id)
                 tx.mutate(query, subvars)
 
             # Flexible attributes.
@@ -1448,7 +1462,7 @@ class Library(object):
                       ' (entity_id, key, value)' \
                       ' VALUES (?, ?, ?)'
             for key, value in item._values_flex.items():
-                tx.mutate(flexins, (store_id, key, value))
+                tx.mutate(flexins, (item.id, key, value))
 
         item.clear_dirty()
         self._memotable = {}
@@ -1713,7 +1727,7 @@ class Album(LibModel):
             self._lib.move(item, copy, basedir=basedir, with_album=False)
 
         # Move art.
-        self.move_art(lib, copy)
+        self.move_art(self._lib, copy)
 
     def item_dir(self):
         """Returns the directory containing the album's first item,
