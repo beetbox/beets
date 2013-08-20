@@ -887,22 +887,29 @@ class PathQuery(Query):
         file_blob = buffer(self.file_path)
         return '(path = ?) || (path LIKE ?)', (file_blob, dir_pat)
 
-class ResultIterator(object):
-    """An iterator into an item query result set. The iterator lazily
+class Results(object):
+    """An item query result set. Iterating over the collection lazily
     constructs LibModel objects that reflect database rows.
     """
     def __init__(self, model_class, rows, lib, query=None):
+        """Create a result set that will construct objects of type
+        `model_class`, which should be a subclass of `LibModel`, out of
+        the query result mapping in `rows`. The new objects are
+        associated with the library `lib`. If `query` is provided, it is
+        used as a predicate to filter the results for a "slow query" that
+        cannot be evaluated by the database directly.
+        """
         self.model_class = model_class
         self.rows = rows
-        self.rowiter = iter(self.rows)
         self.lib = lib
         self.query = query
 
     def __iter__(self):
-        return self
-
-    def next(self):
-        for row in self.rowiter:  # Iterate until we get a hit.
+        """Construct Python objects for all rows that pass the query
+        predicate.
+        """
+        for row in self.rows:
+            # Get the flexible attributes for the object.
             with self.lib.transaction() as tx:
                 flex_rows = tx.query(
                     'SELECT * FROM {0} WHERE entity_id=?'.format(
@@ -912,11 +919,53 @@ class ResultIterator(object):
                 )
             values = dict(row)
             values.update({row['key']: row['value'] for row in flex_rows})
+
+            # Construct the Python object and yield it if it passes the
+            # predicate.
             obj = self.model_class(self.lib, **values)
-            if self.query and not self.query.match(obj):
-                continue
-            return obj
-        raise StopIteration()  # Reached the end of the DB rows.
+            if not self.query or self.query.match(obj):
+                yield obj
+
+    def __len__(self):
+        """Get the number of matching objects.
+        """
+        if self.query:
+            # A slow query. Fall back to testing every object.
+            count = 0
+            for obj in self:
+                count += 1
+            return count
+
+        else:
+            # A fast query. Just count the rows.
+            return len(self.rows)
+
+    def __nonzero__(self):
+        """Does this result contain any objects?
+        """
+        return bool(len(self))
+
+    def __getitem__(self, n):
+        """Get the nth item in this result set. This is inefficient: all
+        items up to n are materialized and thrown away.
+        """
+        it = iter(self)
+        try:
+            for i in range(n):
+                it.next()
+            return it.next()
+        except StopIteration:
+            raise IndexError('result index {0} out of range'.format(n))
+
+    def get(self):
+        """Return the first matching object, or None if no objects
+        match.
+        """
+        it = iter(self)
+        try:
+            return it.next()
+        except StopIteration:
+            return None
 
 # Regular expression for parse_query_part, below.
 PARSE_QUERY_PART_REGEX = re.compile(
@@ -1412,13 +1461,9 @@ class Library(object):
         with self.transaction() as tx:
             tx.mutate('DELETE FROM items WHERE id=?', (item.id,))
 
-        if album:
-            item_iter = album.items()
-            try:
-                item_iter.next()
-            except StopIteration:
-                # Album is empty.
-                album.remove(delete, False)
+        # Remove the album if it is empty.
+        if album and not album.items():
+            album.remove(delete, False)
 
         if delete:
             util.remove(item.path)
@@ -1493,7 +1538,7 @@ class Library(object):
                 subvals,
             )
 
-        return ResultIterator(Album, rows, self, None if where else query)
+        return Results(Album, rows, self, None if where else query)
 
     def items(self, query=None, artist=None, album=None, title=None):
         """Returns a sequence of the items matching the given artist,
@@ -1522,7 +1567,7 @@ class Library(object):
                 subvals
             )
 
-        return ResultIterator(Item, rows, self, None if where else query)
+        return Results(Item, rows, self, None if where else query)
 
 
     # Convenience accessors.
@@ -1530,11 +1575,7 @@ class Library(object):
     def get_item(self, id):
         """Fetch an Item by its ID. Returns None if no match is found.
         """
-        items = self.items(MatchQuery('id', id))
-        try:
-            return items.next()
-        except StopIteration:
-            return None
+        return self.items(MatchQuery('id', id)).get()
 
     def get_album(self, item_or_id):
         """Given an album ID or an item associated with an album,
@@ -1548,11 +1589,7 @@ class Library(object):
         if album_id is None:
             return None
 
-        albums = self.albums(MatchQuery('id', album_id))
-        try:
-            return albums.next()
-        except StopIteration:
-            return None
+        return self.albums(MatchQuery('id', album_id)).get()
 
     def add_album(self, items):
         """Create a new album in the database with metadata derived
@@ -1680,9 +1717,8 @@ class Album(LibModel):
         """Returns the directory containing the album's first item,
         provided that such an item exists.
         """
-        try:
-            item = self.items().next()
-        except StopIteration:
+        item = self.items().get()
+        if not item:
             raise ValueError('empty album')
         return os.path.dirname(item.path)
 
@@ -1757,14 +1793,6 @@ class Album(LibModel):
 
         # Perform substitution.
         return template.substitute(mapping, funcs)
-
-    def load(self):
-        """Refresh this album's cached metadata from the library.
-        """
-        items = self._lib.items(artist=self.artist, album=self.album)
-        item = iter(items).next()
-        for key in ALBUM_KEYS_ITEM:
-            self[key] = item[key]
 
 
 # Default path template resources.
