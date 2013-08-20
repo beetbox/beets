@@ -1420,7 +1420,7 @@ class Library(object):
             # Flexible attributes.
             flexins = 'INSERT INTO item_attributes ' \
                       ' (entity_id, key, value)' \
-                      ' VALUES (?, ?, ?, ?)'
+                      ' VALUES (?, ?, ?)'
             for key, value in item._values_flex.items():
                 if value is not None:
                     tx.mutate(flexins, (new_id, key, value))
