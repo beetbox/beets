@@ -363,7 +363,7 @@ class LibModel(FlexModel):
         for key in self._fields:
             if (key != 'id') and (key in self._dirty or store_all):
                 assignments += key + '=?,'
-                value = getattr(item, key)
+                value = self[key]
                 # Wrap path strings in buffers so they get stored
                 # "in the raw".
                 if key == 'path' and isinstance(value, str):
@@ -1407,6 +1407,8 @@ class Library(object):
         """
         if load_id is None:
             load_id = item.id
+            if load_id is None:
+                raise ValueError('cannot load item with no id')
         stored_item = self.get_item(load_id)
         item.update(dict(stored_item))
         item.clear_dirty()
@@ -1630,7 +1632,7 @@ class Album(LibModel):
     art.
     """
     _fields = ALBUM_KEYS
-    _table = 'album'
+    _table = 'albums'
     _flex_table = 'album_attributes'
 
     def __setitem__(self, key, value):
@@ -1793,6 +1795,24 @@ class Album(LibModel):
 
         # Perform substitution.
         return template.substitute(mapping, funcs)
+
+    def store(self):
+        """Update the database with the album information. The album's
+        tracks are also updated.
+        """
+        # Get modified track fields.
+        track_updates = {}
+        for key in ALBUM_KEYS_ITEM:
+            if key in self._dirty:
+                track_updates[key] = self[key]
+
+        with self._lib.transaction():
+            super(Album, self).store()
+            if track_updates:
+                for item in self.items():
+                    for key, value in track_updates.items():
+                        item[key] = value
+                    item.store()
 
 
 # Default path template resources.

@@ -41,7 +41,7 @@ def remove_lib():
         os.unlink(TEMP_LIB)
 def boracay(l):
     return beets.library.Item(
-        l._connection().execute('select * from items where id=3').fetchone()
+        **l._connection().execute('select * from items where id=3').fetchone()
     )
 np = util.normpath
 
@@ -62,7 +62,7 @@ class LoadTest(unittest.TestCase):
     def test_load_clears_dirty_flags(self):
         self.i.artist = 'something'
         self.lib.load(self.i)
-        self.assertTrue(not self.i.dirty['artist'])
+        self.assertTrue('artist' not in self.i._dirty)
 
 class StoreTest(unittest.TestCase):
     def setUp(self):
@@ -82,7 +82,7 @@ class StoreTest(unittest.TestCase):
 
     def test_store_only_writes_dirty_fields(self):
         original_genre = self.i.genre
-        self.i.record['genre'] = 'beatboxing' # change value w/o dirtying
+        self.i._values_fixed['genre'] = 'beatboxing' # change w/o dirtying
         self.lib.store(self.i)
         new_genre = self.lib._connection().execute(
             'select genre from items where '
@@ -92,7 +92,7 @@ class StoreTest(unittest.TestCase):
     def test_store_clears_dirty_flags(self):
         self.i.composer = 'tvp'
         self.lib.store(self.i)
-        self.assertTrue(not self.i.dirty['composer'])
+        self.assertTrue('composer' not in self.i._dirty)
 
 class AddTest(unittest.TestCase):
     def setUp(self):
@@ -139,11 +139,11 @@ class GetSetTest(unittest.TestCase):
 
     def test_set_sets_dirty_flag(self):
         self.i.comp = not self.i.comp
-        self.assertTrue(self.i.dirty['comp'])
+        self.assertTrue('comp' in self.i._dirty)
 
     def test_set_does_not_dirty_if_value_unchanged(self):
         self.i.title = self.i.title
-        self.assertTrue(not self.i.dirty['title'])
+        self.assertTrue('title' not in self.i._dirty)
 
     def test_invalid_field_raises_attributeerror(self):
         self.assertRaises(AttributeError, getattr, self.i, 'xyzzy')
@@ -795,20 +795,23 @@ class AlbumInfoTest(unittest.TestCase):
     def test_albuminfo_changes_affect_items(self):
         ai = self.lib.get_album(self.i)
         ai.album = 'myNewAlbum'
-        i = self.lib.items().next()
+        ai.store()
+        i = self.lib.items()[0]
         self.assertEqual(i.album, 'myNewAlbum')
 
     def test_albuminfo_change_albumartist_changes_items(self):
         ai = self.lib.get_album(self.i)
         ai.albumartist = 'myNewArtist'
-        i = self.lib.items().next()
+        ai.store()
+        i = self.lib.items()[0]
         self.assertEqual(i.albumartist, 'myNewArtist')
         self.assertNotEqual(i.artist, 'myNewArtist')
 
     def test_albuminfo_change_artist_does_not_change_items(self):
         ai = self.lib.get_album(self.i)
         ai.artist = 'myNewArtist'
-        i = self.lib.items().next()
+        ai.store()
+        i = self.lib.items()[0]
         self.assertNotEqual(i.artist, 'myNewArtist')
 
     def test_albuminfo_remove_removes_items(self):
@@ -823,15 +826,6 @@ class AlbumInfoTest(unittest.TestCase):
         self.assertEqual(len(self.lib.albums()), 1)
         self.lib.remove(self.i)
         self.assertEqual(len(self.lib.albums()), 0)
-
-class BaseAlbumTest(_common.TestCase):
-    def test_field_access(self):
-        album = beets.library.BaseAlbum(None, {'fld1':'foo'})
-        self.assertEqual(album.fld1, 'foo')
-
-    def test_field_access_unset_values(self):
-        album = beets.library.BaseAlbum(None, {})
-        self.assertRaises(AttributeError, getattr, album, 'field')
 
 class ArtDestinationTest(_common.TestCase):
     def setUp(self):
