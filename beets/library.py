@@ -727,8 +727,8 @@ class NumericQuery(FieldQuery):
         except ValueError:
             return None
 
-    def __init__(self, field, pattern):
-        super(NumericQuery, self).__init__(field, pattern)
+    def __init__(self, field, pattern, fast=True):
+        super(NumericQuery, self).__init__(field, pattern, fast)
         self.numtype = self.kinds[field]
 
         parts = pattern.split('..', 1)

@@ -78,30 +78,30 @@ class AnyFieldQueryTest(unittest.TestCase):
     def test_no_restriction(self):
         q = beets.library.AnyFieldQuery('title', beets.library.ITEM_KEYS,
                                         beets.library.SubstringQuery)
-        self.assertEqual(self.lib.items(q).next().title, 'the title')
+        self.assertEqual(self.lib.items(q).get().title, 'the title')
 
     def test_restriction_completeness(self):
         q = beets.library.AnyFieldQuery('title', ['title'],
                                         beets.library.SubstringQuery)
-        self.assertEqual(self.lib.items(q).next().title, 'the title')
+        self.assertEqual(self.lib.items(q).get().title, 'the title')
 
     def test_restriction_soundness(self):
         q = beets.library.AnyFieldQuery('title', ['artist'],
                                         beets.library.SubstringQuery)
-        self.assertRaises(StopIteration, self.lib.items(q).next)
+        self.assertEqual(self.lib.items(q).get(), None)
 
 # Convenient asserts for matching items.
 class AssertsMixin(object):
-    def assert_matched(self, result_iterator, title):
-        self.assertEqual(result_iterator.next().title, title)
-    def assert_done(self, result_iterator):
-        self.assertRaises(StopIteration, result_iterator.next)
-    def assert_matched_all(self, result_iterator):
-        self.assert_matched(result_iterator, 'Littlest Things')
-        self.assert_matched(result_iterator, 'Take Pills')
-        self.assert_matched(result_iterator, 'Lovers Who Uncover')
-        self.assert_matched(result_iterator, 'Boracay')
-        self.assert_done(result_iterator)
+    def assert_matched(self, results, titles):
+        self.assertEqual([i.title for i in results], titles)
+
+    def assert_matched_all(self, results):
+        self.assert_matched(results, [
+            'Littlest Things',
+            'Take Pills',
+            'Lovers Who Uncover',
+            'Boracay',
+        ])
 
 class GetTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
@@ -122,31 +122,27 @@ class GetTest(unittest.TestCase, AssertsMixin):
     def test_get_one_keyed_term(self):
         q = 'artist:Lil'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Littlest Things')
-        self.assert_done(results)
+        self.assert_matched(results, ['Littlest Things'])
 
     def test_get_one_keyed_regexp(self):
         q = r'artist::L.+y'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Littlest Things')
-        self.assert_done(results)
+        self.assert_matched(results, ['Littlest Things'])
 
     def test_get_one_unkeyed_term(self):
         q = 'Terry'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Boracay')
-        self.assert_done(results)
+        self.assert_matched(results, ['Boracay'])
 
     def test_get_one_unkeyed_regexp(self):
         q = r':y$'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Boracay')
-        self.assert_done(results)
+        self.assert_matched(results, ['Boracay'])
 
     def test_get_no_matches(self):
         q = 'popebear'
         results = self.lib.items(q)
-        self.assert_done(results)
+        self.assert_matched(results, [])
 
     def test_invalid_key(self):
         q = 'pope:bear'
@@ -156,93 +152,94 @@ class GetTest(unittest.TestCase, AssertsMixin):
     def test_term_case_insensitive(self):
         q = 'UNCoVER'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Lovers Who Uncover')
-        self.assert_done(results)
+        self.assert_matched(results, ['Lovers Who Uncover'])
 
     def test_regexp_case_sensitive(self):
         q = r':UNCoVER'
         results = self.lib.items(q)
-        self.assert_done(results)
+        self.assert_matched(results, [])
         q = r':Uncover'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Lovers Who Uncover')
-        self.assert_done(results)
+        self.assert_matched(results, ['Lovers Who Uncover'])
 
     def test_term_case_insensitive_with_key(self):
         q = 'album:stiLL'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Littlest Things')
-        self.assert_done(results)
+        self.assert_matched(results, ['Littlest Things'])
 
     def test_key_case_insensitive(self):
         q = 'ArTiST:Allen'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Littlest Things')
-        self.assert_done(results)
+        self.assert_matched(results, ['Littlest Things'])
 
     def test_unkeyed_term_matches_multiple_columns(self):
         q = 'little'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Littlest Things')
-        self.assert_matched(results, 'Lovers Who Uncover')
-        self.assert_matched(results, 'Boracay')
-        self.assert_done(results)
+        self.assert_matched(results, [
+            'Littlest Things',
+            'Lovers Who Uncover',
+            'Boracay',
+        ])
 
     def test_unkeyed_regexp_matches_multiple_columns(self):
         q = r':^T'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Take Pills')
-        self.assert_matched(results, 'Lovers Who Uncover')
-        self.assert_matched(results, 'Boracay')
-        self.assert_done(results)
+        self.assert_matched(results, [
+            'Take Pills',
+            'Lovers Who Uncover',
+            'Boracay',
+        ])
 
     def test_keyed_term_matches_only_one_column(self):
         q = 'artist:little'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Lovers Who Uncover')
-        self.assert_matched(results, 'Boracay')
-        self.assert_done(results)
+        self.assert_matched(results, [
+            'Lovers Who Uncover',
+            'Boracay',
+        ])
 
     def test_keyed_regexp_matches_only_one_column(self):
         q = r'album::\sS'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Littlest Things')
-        self.assert_matched(results, 'Lovers Who Uncover')
-        self.assert_done(results)
+        self.assert_matched(results, [
+            'Littlest Things',
+            'Lovers Who Uncover',
+        ])
 
     def test_multiple_terms_narrow_search(self):
         q = 'little ones'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Lovers Who Uncover')
-        self.assert_matched(results, 'Boracay')
-        self.assert_done(results)
+        self.assert_matched(results, [
+            'Lovers Who Uncover',
+            'Boracay',
+        ])
 
     def test_multiple_regexps_narrow_search(self):
         q = r':\sS :^T'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Lovers Who Uncover')
-        self.assert_done(results)
+        self.assert_matched(results, ['Lovers Who Uncover'])
 
     def test_mixed_terms_regexps_narrow_search(self):
         q = r':\sS lily'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Littlest Things')
-        self.assert_done(results)
+        self.assert_matched(results, ['Littlest Things'])
 
     def test_single_year(self):
         q = 'year:2006'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Littlest Things')
-        self.assert_matched(results, 'Lovers Who Uncover')
-        self.assert_done(results)
+        self.assert_matched(results, [
+            'Littlest Things',
+            'Lovers Who Uncover',
+        ])
 
     def test_year_range(self):
         q = 'year:2000..2010'
         results = self.lib.items(q)
-        self.assert_matched(results, 'Littlest Things')
-        self.assert_matched(results, 'Take Pills')
-        self.assert_matched(results, 'Lovers Who Uncover')
-        self.assert_done(results)
+        self.assert_matched(results, [
+            'Littlest Things',
+            'Take Pills',
+            'Lovers Who Uncover',
+        ])
 
     def test_bad_year(self):
         q = 'year:delete from items'
@@ -263,26 +260,22 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
     def test_singleton_true(self):
         q = 'singleton:true'
         results = self.lib.items(q)
-        self.assert_matched(results, 'singleton item')
-        self.assert_done(results)
+        self.assert_matched(results, ['singleton item'])
 
     def test_singleton_false(self):
         q = 'singleton:false'
         results = self.lib.items(q)
-        self.assert_matched(results, 'album item')
-        self.assert_done(results)
+        self.assert_matched(results, ['album item'])
 
     def test_compilation_true(self):
         q = 'comp:true'
         results = self.lib.items(q)
-        self.assert_matched(results, 'album item')
-        self.assert_done(results)
+        self.assert_matched(results, ['album item'])
 
     def test_compilation_false(self):
         q = 'comp:false'
         results = self.lib.items(q)
-        self.assert_matched(results, 'singleton item')
-        self.assert_done(results)
+        self.assert_matched(results, ['singleton item'])
 
     def test_unknown_field_name_ignored(self):
         q = 'xyzzy:nonsense'
@@ -310,8 +303,7 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
 
         q = u'title:caf\xe9'
         results = self.lib.items(q)
-        self.assert_matched(results, u'caf\xe9')
-        self.assert_done(results)
+        self.assert_matched(results, [u'caf\xe9'])
 
 class MatchTest(unittest.TestCase):
     def setUp(self):
@@ -369,58 +361,52 @@ class PathQueryTest(unittest.TestCase, AssertsMixin):
     def test_path_exact_match(self):
         q = 'path:/a/b/c.mp3'
         results = self.lib.items(q)
-        self.assert_matched(results, 'path item')
-        self.assert_done(results)
+        self.assert_matched(results, ['path item'])
 
     def test_parent_directory_no_slash(self):
         q = 'path:/a'
         results = self.lib.items(q)
-        self.assert_matched(results, 'path item')
-        self.assert_done(results)
+        self.assert_matched(results, ['path item'])
 
     def test_parent_directory_with_slash(self):
         q = 'path:/a/'
         results = self.lib.items(q)
-        self.assert_matched(results, 'path item')
-        self.assert_done(results)
+        self.assert_matched(results, ['path item'])
 
     def test_no_match(self):
         q = 'path:/xyzzy/'
         results = self.lib.items(q)
-        self.assert_done(results)
+        self.assert_matched(results, [])
 
     def test_fragment_no_match(self):
         q = 'path:/b/'
         results = self.lib.items(q)
-        self.assert_done(results)
+        self.assert_matched(results, [])
 
     def test_nonnorm_path(self):
         q = 'path:/x/../a/b'
         results = self.lib.items(q)
-        self.assert_matched(results, 'path item')
-        self.assert_done(results)
+        self.assert_matched(results, ['path item'])
 
     def test_slashed_query_matches_path(self):
         q = '/a/b'
         results = self.lib.items(q)
-        self.assert_matched(results, 'path item')
-        self.assert_done(results)
+        self.assert_matched(results, ['path item'])
 
     def test_non_slashed_does_not_match_path(self):
         q = 'c.mp3'
         results = self.lib.items(q)
-        self.assert_done(results)
+        self.assert_matched(results, [])
 
     def test_slashes_in_explicit_field_does_not_match_path(self):
         q = 'title:/a/b'
         results = self.lib.items(q)
-        self.assert_done(results)
+        self.assert_matched(results, [])
 
     def test_path_regex(self):
         q = 'path::\\.mp3$'
         results = self.lib.items(q)
-        self.assert_matched(results, 'path item')
-        self.assert_done(results)
+        self.assert_matched(results, ['path item'])
 
 class BrowseTest(unittest.TestCase, AssertsMixin):
     def setUp(self):
@@ -438,11 +424,12 @@ class BrowseTest(unittest.TestCase, AssertsMixin):
 
     def test_item_list(self):
         items = self.lib.items()
-        self.assert_matched(items, 'Littlest Things')
-        self.assert_matched(items, 'Take Pills')
-        self.assert_matched(items, 'Lovers Who Uncover')
-        self.assert_matched(items, 'Boracay')
-        self.assert_done(items)
+        self.assert_matched(items, [
+            'Littlest Things',
+            'Take Pills',
+            'Lovers Who Uncover',
+            'Boracay',
+        ])
 
     def test_albums_matches_album(self):
         albums = list(self.lib.albums('person'))
@@ -454,12 +441,11 @@ class BrowseTest(unittest.TestCase, AssertsMixin):
 
     def test_items_matches_title(self):
         items = self.lib.items('boracay')
-        self.assert_matched(items, 'Boracay')
-        self.assert_done(items)
+        self.assert_matched(items, ['Boracay'])
 
     def test_items_does_not_match_year(self):
         items = self.lib.items('2007')
-        self.assert_done(items)
+        self.assert_matched(items, [])
 
 class StringParseTest(unittest.TestCase):
     def test_single_field_query(self):
