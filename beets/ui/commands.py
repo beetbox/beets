@@ -905,7 +905,7 @@ def update_items(lib, query, album, move, pretend):
                 continue
 
             # Read new data.
-            old_data = dict(item.record)
+            old_data = dict(item)
             try:
                 item.read()
             except Exception as exc:
@@ -920,12 +920,12 @@ def update_items(lib, query, album, move, pretend):
                     old_data['albumartist'] == old_data['artist'] == \
                         item.artist:
                 item.albumartist = old_data['albumartist']
-                item.dirty['albumartist'] = False
+                item._dirty.remove('albumartist')
 
             # Get and save metadata changes.
             changes = {}
             for key in library.ITEM_KEYS_META:
-                if item.dirty[key]:
+                if key in item._dirty:
                     changes[key] = old_data[key], getattr(item, key)
             if changes:
                 # Something changed.

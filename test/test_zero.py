@@ -7,11 +7,12 @@ from beetsplug.zero import ZeroPlugin
 
 class ZeroPluginTest(unittest.TestCase):
     def test_no_patterns(self):
-        v = {'comments' : 'test comment',
-             'day' : 13,
-             'month' : 3,
-             'year' : 2012}
-        i=Item(v)
+        i = Item(
+            comments='test comment',
+            day=13,
+            month=3,
+            year=2012,
+        )
         z = ZeroPlugin()
         z.debug = False
         z.fields = ['comments', 'month', 'day']
@@ -25,9 +26,10 @@ class ZeroPluginTest(unittest.TestCase):
         self.assertEqual(i.year, 2012)
 
     def test_patterns(self):
-        v = {'comments' : 'from lame collection, ripped by eac',
-             'year' : 2012}
-        i=Item(v)
+        i = Item(
+            comments='from lame collection, ripped by eac',
+            year=2012,
+        )
         z = ZeroPlugin()
         z.debug = False
         z.fields = ['comments', 'year']

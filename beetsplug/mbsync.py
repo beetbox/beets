@@ -30,7 +30,7 @@ def _print_and_apply_changes(lib, item, move, pretend, write):
     """
     changes = {}
     for key in library.ITEM_KEYS_META:
-        if item.dirty[key]:
+        if 'key' in item._dirty:
             changes[key] = item.old_data[key], getattr(item, key)
     if not changes:
         return False
@@ -69,7 +69,7 @@ def mbsync_singletons(lib, query, move, pretend, write):
                      .format(s.title))
             continue
 
-        s.old_data = dict(s.record)
+        s.old_data = dict(s)
 
         # Get the MusicBrainz recording info.
         track_info = hooks.track_for_mbid(s.mb_trackid)
@@ -94,7 +94,7 @@ def mbsync_albums(lib, query, move, pretend, write):
 
         items = list(a.items())
         for item in items:
-            item.old_data = dict(item.record)
+            item.old_data = dict(item)
 
         # Get the MusicBrainz album information.
         album_info = hooks.album_for_mbid(a.mb_albumid)

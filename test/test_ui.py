@@ -17,7 +17,6 @@
 import os
 import shutil
 import textwrap
-import logging
 import re
 import yaml
 
@@ -162,7 +161,7 @@ class ModifyTest(_common.TestCase):
 
     def test_modify_item_dbdata(self):
         self._modify(["title=newTitle"])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertEqual(item.title, 'newTitle')
 
     def test_modify_album_dbdata(self):
@@ -172,47 +171,47 @@ class ModifyTest(_common.TestCase):
 
     def test_modify_item_tag_unmodified(self):
         self._modify(["title=newTitle"], write=False)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         item.read()
         self.assertEqual(item.title, 'full')
 
     def test_modify_album_tag_unmodified(self):
         self._modify(["album=newAlbum"], write=False, album=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         item.read()
         self.assertEqual(item.album, 'the album')
 
     def test_modify_item_tag(self):
         self._modify(["title=newTitle"], write=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         item.read()
         self.assertEqual(item.title, 'newTitle')
 
     def test_modify_album_tag(self):
         self._modify(["album=newAlbum"], write=True, album=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         item.read()
         self.assertEqual(item.album, 'newAlbum')
 
     def test_item_move(self):
         self._modify(["title=newTitle"], move=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertTrue('newTitle' in item.path)
 
     def test_album_move(self):
         self._modify(["album=newAlbum"], move=True, album=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         item.read()
         self.assertTrue('newAlbum' in item.path)
 
     def test_item_not_move(self):
         self._modify(["title=newTitle"], move=False)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertFalse('newTitle' in item.path)
 
     def test_album_not_move(self):
         self._modify(["album=newAlbum"], move=False, album=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         item.read()
         self.assertFalse('newAlbum' in item.path)
 
@@ -333,7 +332,7 @@ class UpdateTest(_common.TestCase):
         mf.title = 'differentTitle'
         mf.save()
         self._update()
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertEqual(item.title, 'differentTitle')
 
     def test_modified_metadata_moved(self):
@@ -341,7 +340,7 @@ class UpdateTest(_common.TestCase):
         mf.title = 'differentTitle'
         mf.save()
         self._update(move=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertTrue('differentTitle' in item.path)
 
     def test_modified_metadata_not_moved(self):
@@ -349,7 +348,7 @@ class UpdateTest(_common.TestCase):
         mf.title = 'differentTitle'
         mf.save()
         self._update(move=False)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertTrue('differentTitle' not in item.path)
 
     def test_modified_album_metadata_moved(self):
@@ -357,7 +356,7 @@ class UpdateTest(_common.TestCase):
         mf.album = 'differentAlbum'
         mf.save()
         self._update(move=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertTrue('differentAlbum' in item.path)
 
     def test_modified_album_metadata_art_moved(self):
@@ -379,7 +378,7 @@ class UpdateTest(_common.TestCase):
         self.lib.store(self.i)
 
         self._update(reset_mtime=False)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertEqual(item.title, 'full')
 
 class PrintTest(_common.TestCase):
