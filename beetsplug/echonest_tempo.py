@@ -54,7 +54,7 @@ def fetch_item_tempo(lib, loglevel, item, write):
     item.bpm = tempo
     if write:
         item.write()
-    lib.store(item)
+    item.store()
 
 def get_tempo(artist, title):
     """Get the tempo for a song."""

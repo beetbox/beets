@@ -53,7 +53,7 @@ def _print_and_apply_changes(lib, item, move, pretend, write):
                 log.error(u'could not sync {0}: {1}'.format(
                     util.displayable_path(item.path), exc))
                 return False
-        lib.store(item)
+        item.store()
 
     return True
 

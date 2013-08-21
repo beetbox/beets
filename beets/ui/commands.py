@@ -941,14 +941,14 @@ def update_items(lib, query, album, move, pretend):
                 if move and lib.directory in ancestry(item.path):
                     lib.move(item)
 
-                lib.store(item)
+                item.store()
                 affected_albums.add(item.album_id)
             elif not pretend:
                 # The file's mtime was different, but there were no changes
                 # to the metadata. Store the new mtime, which is set in the
                 # call to read(), so we don't check this again in the
                 # future.
-                lib.store(item)
+                item.store()
 
         # Skip album changes while pretending.
         if pretend:
@@ -1163,10 +1163,7 @@ def modify_items(lib, mods, query, write, move, album, confirm):
                     else:
                         lib.move(obj)
 
-            if album:
-                obj.store()
-            else:
-                lib.store(obj)
+            obj.store()
 
     # Apply tags if requested.
     if write:
@@ -1223,7 +1220,7 @@ def move_items(lib, dest, query, copy, album):
             obj.move(copy, basedir=dest)
         else:
             lib.move(obj, copy, basedir=dest)
-            lib.store(obj)
+        obj.store()
 
 move_cmd = ui.Subcommand('move',
     help='move or copy items', aliases=('mv',))

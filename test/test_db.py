@@ -40,7 +40,7 @@ def remove_lib():
     if os.path.exists(TEMP_LIB):
         os.unlink(TEMP_LIB)
 def boracay(l):
-    return beets.library.Item(
+    return beets.library.Item(l,
         **l._connection().execute('select * from items where id=3').fetchone()
     )
 np = util.normpath
@@ -56,12 +56,12 @@ class LoadTest(unittest.TestCase):
     def test_load_restores_data_from_db(self):
         original_title = self.i.title
         self.i.title = 'something'
-        self.lib.load(self.i)
+        self.i.load()
         self.assertEqual(original_title, self.i.title)
 
     def test_load_clears_dirty_flags(self):
         self.i.artist = 'something'
-        self.lib.load(self.i)
+        self.i.load()
         self.assertTrue('artist' not in self.i._dirty)
 
 class StoreTest(unittest.TestCase):
@@ -74,7 +74,7 @@ class StoreTest(unittest.TestCase):
 
     def test_store_changes_database_value(self):
         self.i.year = 1987
-        self.lib.store(self.i)
+        self.i.store()
         new_year = self.lib._connection().execute(
             'select year from items where '
             'title="Boracay"').fetchone()['year']
@@ -83,7 +83,7 @@ class StoreTest(unittest.TestCase):
     def test_store_only_writes_dirty_fields(self):
         original_genre = self.i.genre
         self.i._values_fixed['genre'] = 'beatboxing' # change w/o dirtying
-        self.lib.store(self.i)
+        self.i.store()
         new_genre = self.lib._connection().execute(
             'select genre from items where '
             'title="Boracay"').fetchone()['genre']
@@ -91,7 +91,7 @@ class StoreTest(unittest.TestCase):
 
     def test_store_clears_dirty_flags(self):
         self.i.composer = 'tvp'
-        self.lib.store(self.i)
+        self.i.store()
         self.assertTrue('composer' not in self.i._dirty)
 
 class AddTest(unittest.TestCase):
@@ -884,7 +884,7 @@ class PathStringTest(_common.TestCase):
     def test_special_chars_preserved_in_database(self):
         path = 'b\xe1r'
         self.i.path = path
-        self.lib.store(self.i)
+        self.i.store()
         i = list(self.lib.items())[0]
         self.assertEqual(i.path, path)
 

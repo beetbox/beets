@@ -1405,6 +1405,8 @@ class Library(object):
         item.added = time.time()
         if copy:
             self.move(item, copy=True)
+        if not item._lib:
+            item._lib = self
 
         # Build essential parts of query.
         columns = ','.join([key for key in ITEM_KEYS if key != 'id'])
@@ -1437,49 +1439,6 @@ class Library(object):
         item.id = new_id
         self._memotable = {}
         return new_id
-
-    def load(self, item):
-        """Refresh the item's metadata from the library database.
-        """
-        if item.id is None:
-            raise ValueError('cannot load item with no id')
-        stored_item = self.get_item(item.id)
-        item.update(dict(stored_item))
-        item.clear_dirty()
-
-    def store(self, item):
-        """Save the item's metadata into the library database.
-        """
-        # Build assignments for query.
-        assignments = ''
-        subvars = []
-        for key in ITEM_KEYS:
-            if key != 'id' and key in item._dirty:
-                assignments += key + '=?,'
-                value = getattr(item, key)
-                # Wrap path strings in buffers so they get stored
-                # "in the raw".
-                if key == 'path' and isinstance(value, str):
-                    value = buffer(value)
-                subvars.append(value)
-        assignments = assignments[:-1]  # Knock off last ,
-
-        with self.transaction() as tx:
-            # Main table update.
-            if assignments:
-                query = 'UPDATE items SET ' + assignments + ' WHERE id=?'
-                subvars.append(item.id)
-                tx.mutate(query, subvars)
-
-            # Flexible attributes.
-            flexins = 'INSERT INTO item_attributes ' \
-                      ' (entity_id, key, value)' \
-                      ' VALUES (?, ?, ?)'
-            for key, value in item._values_flex.items():
-                tx.mutate(flexins, (item.id, key, value))
-
-        item.clear_dirty()
-        self._memotable = {}
 
     def remove(self, item, delete=False, with_album=True):
         """Removes this item. If delete, then the associated file is
@@ -1531,7 +1490,7 @@ class Library(object):
         old_path = item.path
         item.move(dest, copy)
         if item.id is not None:
-            self.store(item)
+            item.store()
 
         # If this item is in an album, move its art.
         if with_album:
@@ -1648,7 +1607,7 @@ class Library(object):
                 if item.id is None:
                     self.add(item)
                 else:
-                    self.store(item)
+                    item.store()
 
         # Construct the new Album object.
         album_values['id'] = album_id

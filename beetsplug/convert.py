@@ -120,7 +120,7 @@ def convert_item(lib, dest_dir, keep_new, path_formats):
         # writing) to get new bitrate, duration, etc.
         if keep_new:
             item.read()
-            lib.store(item)  # Store new path and audio data.
+            item.store()  # Store new path and audio data.
 
         if config['convert']['embed']:
             album = lib.get_album(item)
@@ -142,7 +142,7 @@ def convert_on_import(lib, item):
         item.path = dest
         item.write()
         item.read()  # Load new audio information data.
-        lib.store(item)
+        item.store()
 
 
 def convert_func(lib, opts, args):

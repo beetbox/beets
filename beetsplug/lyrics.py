@@ -444,7 +444,7 @@ class LyricsPlugin(BeetsPlugin):
 
         if write:
             item.write()
-        lib.store(item)
+        item.store()
 
     def get_lyrics(self, artist, title):
         """Fetch lyrics, trying each source in turn. Return a string or

@@ -193,6 +193,7 @@ class ImportApplyTest(_common.TestCase):
         shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.srcpath)
         self.i = library.Item.from_path(self.srcpath)
         self.i.comp = False
+        self.lib.add(self.i)
 
         trackinfo = TrackInfo('one',  'trackid', 'some artist',
                               'artistid', 1)

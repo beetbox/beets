@@ -299,7 +299,7 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
 
     def test_unicode_query(self):
         self.single_item.title = u'caf\xe9'
-        self.lib.store(self.single_item)
+        self.single_item.store()
 
         q = u'title:caf\xe9'
         results = self.lib.items(q)

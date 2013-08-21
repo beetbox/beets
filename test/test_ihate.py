@@ -16,7 +16,7 @@ class IHatePluginTest(unittest.TestCase):
         task = ImportTask()
         task.cur_artist = u'Test Artist'
         task.cur_album = u'Test Album'
-        task.items = [Item({'genre': 'Test Genre'})]
+        task.items = [Item(genre='Test Genre')]
         self.assertFalse(IHatePlugin.do_i_hate_this(task, genre_p, artist_p, 
                                                     album_p, white_p))
         genre_p = 'some_genre test\sgenre'.split()

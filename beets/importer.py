@@ -811,7 +811,7 @@ def plugin_stage(session, func):
 
         # Stage may modify DB, so re-load cached item data.
         for item in task.imported_items():
-            session.lib.load(item)
+            item.load()
 
 def manipulate_files(session):
     """A coroutine (pipeline stage) that performs necessary file
@@ -858,7 +858,7 @@ def manipulate_files(session):
         # Save new paths.
         with session.lib.transaction():
             for item in items:
-                session.lib.store(item)
+                item.store()
 
         # Plugin event.
         plugins.send('import_task_files', session=session, task=task)
