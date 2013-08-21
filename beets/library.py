@@ -1530,6 +1530,7 @@ class Library(object):
             album = self.get_album(item)
             if album:
                 album.move_art(copy)
+                album.store()
 
         # Prune vacated directory.
         if not copy:
@@ -1739,6 +1740,7 @@ class Album(LibModel):
 
         # Move art.
         self.move_art(copy)
+        self.store()
 
     def item_dir(self):
         """Returns the directory containing the album's first item,

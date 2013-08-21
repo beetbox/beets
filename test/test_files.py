@@ -350,7 +350,8 @@ class ArtFileTest(_common.TestCase):
         self.assertExists(oldartpath)
 
         self.ai.album = 'different_album'
-        self.lib.move(self.i)
+        self.ai.store()
+        self.lib.move(self.ai.items()[0])
 
         artpath = self.lib.albums()[0].artpath
         self.assertTrue('different_album' in artpath)
@@ -427,6 +428,7 @@ class RemoveTest(_common.TestCase):
         artfile = os.path.join(self.temp_dir, 'testart.jpg')
         touch(artfile)
         self.ai.set_art(artfile)
+        self.ai.store()
 
         parent = os.path.dirname(self.i.path)
         self.lib.remove(self.i, True)
