@@ -299,6 +299,7 @@ class UpdateTest(_common.TestCase):
         artfile = os.path.join(_common.RSRC, 'testart.jpg')
         _common.touch(artfile)
         self.album.set_art(artfile)
+        self.album.store()
         os.remove(artfile)
 
     def _update(self, query=(), album=False, move=False, reset_mtime=True):

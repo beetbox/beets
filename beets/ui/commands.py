@@ -959,17 +959,18 @@ def update_items(lib, query, album, move, pretend):
             if album_id is None:  # Singletons.
                 continue
             album = lib.get_album(album_id)
-            if not album: # Empty albums have already been removed.
+            if not album:  # Empty albums have already been removed.
                 log.debug('emptied album %i' % album_id)
                 continue
-            al_items = list(album.items())
+            first_item = album.items().get()
 
             # Update album structure to reflect an item in it.
             for key in library.ALBUM_KEYS_ITEM:
-                setattr(album, key, getattr(al_items[0], key))
+                album[key] = first_item[key]
+            album.store()
 
             # Move album art (and any inconsistent items).
-            if move and lib.directory in ancestry(al_items[0].path):
+            if move and lib.directory in ancestry(first_item.path):
                 log.debug('moving album %i' % album_id)
                 album.move()
 
