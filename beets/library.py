@@ -1721,11 +1721,16 @@ class Album(LibModel):
                             self._lib.directory)
 
     def move(self, copy=False, basedir=None):
-        """Moves (or copies) all items to their destination.  Any album
+        """Moves (or copies) all items to their destination. Any album
         art moves along with them. basedir overrides the library base
-        directory for the destination.
+        directory for the destination. The album is stored to the
+        database, persisting any modifications to its metadata.
         """
         basedir = basedir or self._lib.directory
+
+        # Ensure new metadata is available to items for destination
+        # computation.
+        self.store()
 
         # Move items.
         items = list(self.items())
