@@ -147,7 +147,9 @@ class GetTest(unittest.TestCase, AssertsMixin):
     def test_invalid_key(self):
         q = 'pope:bear'
         results = self.lib.items(q)
-        self.assert_matched_all(results)
+        # Matches nothing since the flexattr is not present on the
+        # objects.
+        self.assert_matched(results, [])
 
     def test_term_case_insensitive(self):
         q = 'UNCoVER'
@@ -277,25 +279,23 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
         results = self.lib.items(q)
         self.assert_matched(results, ['singleton item'])
 
-    def test_unknown_field_name_ignored(self):
+    def test_unknown_field_name_no_results(self):
         q = 'xyzzy:nonsense'
         results = self.lib.items(q)
         titles = [i.title for i in results]
-        self.assertTrue('singleton item' in titles)
-        self.assertTrue('album item' in titles)
-        self.assertEqual(len(titles), 2)
+        self.assertEqual(titles, [])
 
-    def test_unknown_field_name_ignored_in_album_query(self):
+    def test_unknown_field_name_no_results_in_album_query(self):
         q = 'xyzzy:nonsense'
         results = self.lib.albums(q)
         names = [a.album for a in results]
-        self.assertEqual(names, ['the album'])
+        self.assertEqual(names, [])
 
-    def test_item_field_name_ignored_in_album_query(self):
+    def test_item_field_name_matches_nothing_in_album_query(self):
         q = 'format:nonsense'
         results = self.lib.albums(q)
         names = [a.album for a in results]
-        self.assertEqual(names, ['the album'])
+        self.assertEqual(names, [])
 
     def test_unicode_query(self):
         self.single_item.title = u'caf\xe9'
