@@ -446,9 +446,17 @@ class Item(LibModel):
                 value = str(value)
 
         if key in ITEM_KEYS_WRITABLE:
-            self.mtime = 0 # Reset mtime on dirty.
+            self.mtime = 0  # Reset mtime on dirty.
 
         super(Item, self).__setitem__(key, value)
+
+    def update(self, values):
+        """Sett all key/value pairs in the mapping. If mtime is
+        specified, it is not reset (as it might otherwise be).
+        """
+        super(Item, self).update(values)
+        if self.mtime == 0 and 'mtime' in values:
+            self.mtime = values['mtime']
 
 
     # Interaction with file metadata.
