@@ -1,6 +1,39 @@
 Changelog
 =========
 
+1.3.0 (in development)
+----------------------
+
+Albums and items now have **flexible attributes**. This means that, when you
+want to store information about your music in the beets database, you're no
+longer constrained to the set of fields it supports out of the box (title,
+artist, track, etc.). Instead, you can use any field name you can think of and
+treat it just like the built-in fields.
+
+For example, you can use the :ref:`modify-cmd` command to set a new field on a
+track::
+
+    $ beet modify mood=sexy artist:miguel
+
+and then query your music based on that field::
+
+    $ beet ls mood:sunny
+
+or use templates to see the value of the field::
+
+    $ beet ls -f '$title: $mood'
+
+While this feature is nifty when used directly with the usual command-line
+suspects, it's especially useful for plugin authors and for future beets
+features. Stay tuned for great things built on this flexible attribute
+infrastructure.
+
+One side effect of this change: queries that include unknown fields will now
+match *nothing* instead of *everything*. So if you type ``beet ls
+fieldThatDoesNotExist:foo``, beets will now return no results, whereas
+previous versions would spit out a warning and then list your entire library.
+
+
 1.2.2 (in development)
 ----------------------
 
