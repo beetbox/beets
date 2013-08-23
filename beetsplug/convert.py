@@ -168,7 +168,7 @@ def convert_func(lib, opts, args):
     if opts.album:
         items = (i for a in lib.albums(ui.decargs(args)) for i in a.items())
     else:
-        items = lib.items(ui.decargs(args))
+        items = iter(lib.items(ui.decargs(args)))
     convert = [convert_item(lib, dest, keep_new, path_formats) for i in range(threads)]
     pipe = util.pipeline.Pipeline([items, convert])
     pipe.run_parallel()
