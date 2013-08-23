@@ -24,14 +24,14 @@ from beets import config
 log = logging.getLogger('beets')
 
 
-def _print_and_apply_changes(lib, item, move, pretend, write):
+def _print_and_apply_changes(lib, item, old_data, move, pretend, write):
     """Apply changes to an Item and preview them in the console. Return
     a boolean indicating whether any changes were made.
     """
     changes = {}
     for key in library.ITEM_KEYS_META:
-        if 'key' in item._dirty:
-            changes[key] = item.old_data[key], getattr(item, key)
+        if key in item._dirty:
+            changes[key] = old_data[key], getattr(item, key)
     if not changes:
         return False
 
@@ -69,7 +69,7 @@ def mbsync_singletons(lib, query, move, pretend, write):
                      .format(s.title))
             continue
 
-        s.old_data = dict(s)
+        old_data = dict(s)
 
         # Get the MusicBrainz recording info.
         track_info = hooks.track_for_mbid(s.mb_trackid)
@@ -80,7 +80,7 @@ def mbsync_singletons(lib, query, move, pretend, write):
         # Apply.
         with lib.transaction():
             autotag.apply_item_metadata(s, track_info)
-            _print_and_apply_changes(lib, s, move, pretend, write)
+            _print_and_apply_changes(lib, s, old_data, move, pretend, write)
 
 
 def mbsync_albums(lib, query, move, pretend, write):
@@ -93,8 +93,7 @@ def mbsync_albums(lib, query, move, pretend, write):
             continue
 
         items = list(a.items())
-        for item in items:
-            item.old_data = dict(item)
+        old_data = {item: dict(item) for item in items}
 
         # Get the MusicBrainz album information.
         album_info = hooks.album_for_mbid(a.mb_albumid)
@@ -116,8 +115,8 @@ def mbsync_albums(lib, query, move, pretend, write):
             autotag.apply_metadata(album_info, mapping)
             changed = False
             for item in items:
-                changed = _print_and_apply_changes(lib, item, move, pretend,
-                    write) or changed
+                changed |= _print_and_apply_changes(lib, item, old_data[item],
+                                                    move, pretend, write)
             if not changed:
                 # No change to any item.
                 continue
