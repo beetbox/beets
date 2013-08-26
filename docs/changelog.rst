@@ -14,6 +14,11 @@ Changelog
 * :doc:`/plugins/fetchart`: Look for images in the Cover Art Archive for
   the release group in addition to the specific release. Thanks to Filipe
   Fortes.
+* Fix a race in the importer that could cause files to be deleted before they
+  were imported. This happened when importing one album, importing a duplicate
+  album, and then asking for the first album to be replaced with the second.
+  The situation could only arise when importing music from the library
+  directory and when the two albums are imported close in time.
 
 
 1.2.1 (June 22, 2013)

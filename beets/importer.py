@@ -768,13 +768,12 @@ def apply_choices(session):
 
             # Delete duplicate files that are located inside the library
             # directory.
+            task.duplicate_paths = []
             for duplicate_path in [i.path for i in duplicate_items]:
                 if session.lib.directory in util.ancestry(duplicate_path):
-                    log.debug(u'deleting replaced duplicate %s' %
-                              util.displayable_path(duplicate_path))
-                    util.remove(duplicate_path)
-                    util.prune_dirs(os.path.dirname(duplicate_path),
-                                    session.lib.directory)
+                    # Mark the path for deletion in the manipulate_files
+                    # stage.
+                    task.duplicate_paths.append(duplicate_path)
 
         # Add items -- before path changes -- to the library. We add the
         # items now (rather than at the end) so that album structures
@@ -822,6 +821,15 @@ def manipulate_files(session):
         task = yield task
         if task.should_skip():
             continue
+
+        # Remove duplicate files marked for deletion.
+        if task.remove_duplicates:
+            for duplicate_path in task.duplicate_paths:
+                log.debug(u'deleting replaced duplicate %s' %
+                          util.displayable_path(duplicate_path))
+                util.remove(duplicate_path)
+                util.prune_dirs(os.path.dirname(duplicate_path),
+                                session.lib.directory)
 
         # Move/copy/write files.
         items = task.imported_items()
