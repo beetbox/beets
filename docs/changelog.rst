@@ -1,8 +1,14 @@
 Changelog
 =========
 
-1.2.2 (in development)
-----------------------
+1.2.2 (August 27, 2013)
+-----------------------
+
+This is a bugfix release. We're in the midst of preparing for a large change
+in beets 1.3, so 1.2.2 resolves some issues that came up over the last few
+weeks. Stay tuned!
+
+The improvements in this release are:
 
 * A new plugin event, ``item_moved``, is sent when files are moved on disk.
   Thanks to dsedivec.
