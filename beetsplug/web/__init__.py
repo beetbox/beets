@@ -30,7 +30,7 @@ def _rep(obj, expand=False):
     included.
     """
     if isinstance(obj, beets.library.Item):
-        out = dict(obj.record)
+        out = dict(obj)
         del out['path']
 
         # Get the size (in bytes) of the backing file. This is useful

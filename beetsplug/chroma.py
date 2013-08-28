@@ -160,7 +160,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
             help='generate fingerprints for items without them')
         def fingerprint_cmd_func(lib, opts, args):
             for item in lib.items(ui.decargs(args)):
-                fingerprint_item(item, lib=lib,
+                fingerprint_item(item,
                                  write=config['import']['write'].get(bool))
         fingerprint_cmd.func = fingerprint_cmd_func
 
@@ -237,12 +237,12 @@ def submit_items(userkey, items, chunksize=64):
         submit_chunk()
 
 
-def fingerprint_item(item, lib=None, write=False):
+def fingerprint_item(item, write=False):
     """Get the fingerprint for an Item. If the item already has a
     fingerprint, it is not regenerated. If fingerprint generation fails,
-    return None. If `lib` is provided, then new fingerprints are saved
-    to the database. If `write` is set, then the new fingerprints are
-    also written to files' metadata.
+    return None. If the items are associated with a library, they are
+    saved to the database. If `write` is set, then the new fingerprints
+    are also written to files' metadata.
     """
     # Get a fingerprint and length for this track.
     if not item.length:
@@ -271,8 +271,8 @@ def fingerprint_item(item, lib=None, write=False):
                     util.displayable_path(item.path)
                 ))
                 item.write()
-            if lib:
-                lib.store(item)
+            if item._lib:
+                item.store()
             return item.acoustid_fingerprint
         except acoustid.FingerprintGenerationError as exc:
             log.info(

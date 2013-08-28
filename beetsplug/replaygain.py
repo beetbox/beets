@@ -225,7 +225,7 @@ class ReplayGainPlugin(BeetsPlugin):
         for item, info in zip(items, rgain_infos):
             item.rg_track_gain = info['gain']
             item.rg_track_peak = info['peak']
-            lib.store(item)
+            item.store()
 
             log.debug(u'replaygain: applied track gain {0}, peak {1}'.format(
                 item.rg_track_gain,
@@ -241,3 +241,4 @@ class ReplayGainPlugin(BeetsPlugin):
                 album.rg_album_gain,
                 album.rg_album_peak
             ))
+            album.store()

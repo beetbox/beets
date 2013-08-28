@@ -216,6 +216,7 @@ def batch_fetch_art(lib, albums, force, maxwidth=None):
 
             if path:
                 album.set_art(path, False)
+                album.store()
                 message = 'found album art'
             else:
                 message = 'no art found'
@@ -274,6 +275,7 @@ class FetchArtPlugin(BeetsPlugin):
             src_removed = config['import']['delete'].get(bool) or \
                           config['import']['move'].get(bool)
             album.set_art(path, not src_removed)
+            album.store()
             if src_removed:
                 task.prune(path)
 

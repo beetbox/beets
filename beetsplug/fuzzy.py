@@ -16,12 +16,12 @@
 """
 
 from beets.plugins import BeetsPlugin
-from beets.library import RegisteredFieldQuery
+from beets.library import FieldQuery
 import beets
 import difflib
 
 
-class FuzzyQuery(RegisteredFieldQuery):
+class FuzzyQuery(FieldQuery):
     @classmethod
     def value_match(self, pattern, val):
         # smartcase

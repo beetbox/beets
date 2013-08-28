@@ -29,7 +29,6 @@ import beets
 from beets.plugins import BeetsPlugin
 import beets.ui
 from beets import vfs
-from beets import config
 from beets.util import bluelet
 from beets.library import ITEM_KEYS_WRITABLE
 
@@ -931,12 +930,12 @@ class Server(BaseServer):
     def cmd_stats(self, conn):
         """Sends some statistics about the library."""
         with self.lib.transaction() as tx:
-            songs, totaltime = beets.library.TrueQuery().count(tx)
-
             statement = 'SELECT COUNT(DISTINCT artist), ' \
-                        'COUNT(DISTINCT album) FROM items'
-            result = tx.query(statement)[0]
-            artists, albums = result[0], result[1]
+                        'COUNT(DISTINCT album), ' \
+                        'COUNT(id), ' \
+                        'SUM(length) ' \
+                        'FROM items'
+            artists, albums, songs, totaltime = tx.query(statement)[0]
 
         yield (u'artists: ' + unicode(artists),
                u'albums: ' + unicode(albums),
@@ -1046,8 +1045,11 @@ class Server(BaseServer):
         tag/value query.
         """
         _, key = self._tagtype_lookup(tag)
-        query = beets.library.MatchQuery(key, value)
-        songs, playtime = query.count(self.lib)
+        songs = 0
+        playtime = 0.0
+        for item in self.lib.items(beets.library.MatchQuery(key, value)):
+            songs += 1
+            playtime += item.length
         yield u'songs: ' + unicode(songs)
         yield u'playtime: ' + unicode(int(playtime))
 

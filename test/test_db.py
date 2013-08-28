@@ -40,8 +40,8 @@ def remove_lib():
     if os.path.exists(TEMP_LIB):
         os.unlink(TEMP_LIB)
 def boracay(l):
-    return beets.library.Item(
-        l._connection().execute('select * from items where id=3').fetchone()
+    return beets.library.Item(l,
+        **l._connection().execute('select * from items where id=3').fetchone()
     )
 np = util.normpath
 
@@ -56,13 +56,13 @@ class LoadTest(unittest.TestCase):
     def test_load_restores_data_from_db(self):
         original_title = self.i.title
         self.i.title = 'something'
-        self.lib.load(self.i)
+        self.i.load()
         self.assertEqual(original_title, self.i.title)
 
     def test_load_clears_dirty_flags(self):
         self.i.artist = 'something'
-        self.lib.load(self.i)
-        self.assertTrue(not self.i.dirty['artist'])
+        self.i.load()
+        self.assertTrue('artist' not in self.i._dirty)
 
 class StoreTest(unittest.TestCase):
     def setUp(self):
@@ -74,7 +74,7 @@ class StoreTest(unittest.TestCase):
 
     def test_store_changes_database_value(self):
         self.i.year = 1987
-        self.lib.store(self.i)
+        self.i.store()
         new_year = self.lib._connection().execute(
             'select year from items where '
             'title="Boracay"').fetchone()['year']
@@ -82,8 +82,8 @@ class StoreTest(unittest.TestCase):
 
     def test_store_only_writes_dirty_fields(self):
         original_genre = self.i.genre
-        self.i.record['genre'] = 'beatboxing' # change value w/o dirtying
-        self.lib.store(self.i)
+        self.i._values_fixed['genre'] = 'beatboxing' # change w/o dirtying
+        self.i.store()
         new_genre = self.lib._connection().execute(
             'select genre from items where '
             'title="Boracay"').fetchone()['genre']
@@ -91,8 +91,8 @@ class StoreTest(unittest.TestCase):
 
     def test_store_clears_dirty_flags(self):
         self.i.composer = 'tvp'
-        self.lib.store(self.i)
-        self.assertTrue(not self.i.dirty['composer'])
+        self.i.store()
+        self.assertTrue('composer' not in self.i._dirty)
 
 class AddTest(unittest.TestCase):
     def setUp(self):
@@ -139,11 +139,11 @@ class GetSetTest(unittest.TestCase):
 
     def test_set_sets_dirty_flag(self):
         self.i.comp = not self.i.comp
-        self.assertTrue(self.i.dirty['comp'])
+        self.assertTrue('comp' in self.i._dirty)
 
     def test_set_does_not_dirty_if_value_unchanged(self):
         self.i.title = self.i.title
-        self.assertTrue(not self.i.dirty['title'])
+        self.assertTrue('title' not in self.i._dirty)
 
     def test_invalid_field_raises_attributeerror(self):
         self.assertRaises(AttributeError, getattr, self.i, 'xyzzy')
@@ -533,21 +533,21 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
     def test_unique_with_default_arguments_uses_albumtype(self):
         album2 = self.lib.get_album(self.i1)
         album2.albumtype = 'bar'
-        self.lib._connection().commit()
+        album2.store()
         self._setf(u'foo%aunique{}/$title')
         self._assert_dest('/base/foo [bar]/the title', self.i1)
 
     def test_unique_expands_to_nothing_for_distinct_albums(self):
         album2 = self.lib.get_album(self.i2)
         album2.album = 'different album'
-        self.lib._connection().commit()
+        album2.store()
 
         self._assert_dest('/base/foo/the title', self.i1)
 
     def test_use_fallback_numbers_when_identical(self):
         album2 = self.lib.get_album(self.i2)
         album2.year = 2001
-        self.lib._connection().commit()
+        album2.store()
 
         self._assert_dest('/base/foo 1/the title', self.i1)
         self._assert_dest('/base/foo 2/the title', self.i2)
@@ -561,6 +561,8 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
         album2.year = 2001
         album1 = self.lib.get_album(self.i1)
         album1.albumtype = 'foo/bar'
+        album2.store()
+        album1.store()
         self._setf(u'foo%aunique{albumartist album,albumtype}/$title')
         self._assert_dest('/base/foo [foo_bar]/the title', self.i1)
 
@@ -757,6 +759,7 @@ class AlbumInfoTest(unittest.TestCase):
     def test_albuminfo_stores_art(self):
         ai = self.lib.get_album(self.i)
         ai.artpath = '/my/great/art'
+        ai.store()
         new_ai = self.lib.get_album(self.i)
         self.assertEqual(new_ai.artpath, '/my/great/art')
 
@@ -795,20 +798,23 @@ class AlbumInfoTest(unittest.TestCase):
     def test_albuminfo_changes_affect_items(self):
         ai = self.lib.get_album(self.i)
         ai.album = 'myNewAlbum'
-        i = self.lib.items().next()
+        ai.store()
+        i = self.lib.items()[0]
         self.assertEqual(i.album, 'myNewAlbum')
 
     def test_albuminfo_change_albumartist_changes_items(self):
         ai = self.lib.get_album(self.i)
         ai.albumartist = 'myNewArtist'
-        i = self.lib.items().next()
+        ai.store()
+        i = self.lib.items()[0]
         self.assertEqual(i.albumartist, 'myNewArtist')
         self.assertNotEqual(i.artist, 'myNewArtist')
 
     def test_albuminfo_change_artist_does_not_change_items(self):
         ai = self.lib.get_album(self.i)
         ai.artist = 'myNewArtist'
-        i = self.lib.items().next()
+        ai.store()
+        i = self.lib.items()[0]
         self.assertNotEqual(i.artist, 'myNewArtist')
 
     def test_albuminfo_remove_removes_items(self):
@@ -823,15 +829,6 @@ class AlbumInfoTest(unittest.TestCase):
         self.assertEqual(len(self.lib.albums()), 1)
         self.lib.remove(self.i)
         self.assertEqual(len(self.lib.albums()), 0)
-
-class BaseAlbumTest(_common.TestCase):
-    def test_field_access(self):
-        album = beets.library.BaseAlbum(None, {'fld1':'foo'})
-        self.assertEqual(album.fld1, 'foo')
-
-    def test_field_access_unset_values(self):
-        album = beets.library.BaseAlbum(None, {})
-        self.assertRaises(AttributeError, getattr, album, 'field')
 
 class ArtDestinationTest(_common.TestCase):
     def setUp(self):
@@ -887,7 +884,7 @@ class PathStringTest(_common.TestCase):
     def test_special_chars_preserved_in_database(self):
         path = 'b\xe1r'
         self.i.path = path
-        self.lib.store(self.i)
+        self.i.store()
         i = list(self.lib.items())[0]
         self.assertEqual(i.path, path)
 
@@ -912,9 +909,10 @@ class PathStringTest(_common.TestCase):
         self.assert_(isinstance(dest, str))
 
     def test_artpath_stores_special_chars(self):
-        path = 'b\xe1r'
+        path = b'b\xe1r'
         alb = self.lib.add_album([self.i])
         alb.artpath = path
+        alb.store()
         alb = self.lib.get_album(self.i)
         self.assertEqual(path, alb.artpath)
 

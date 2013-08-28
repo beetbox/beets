@@ -193,6 +193,7 @@ class ImportApplyTest(_common.TestCase):
         shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.srcpath)
         self.i = library.Item.from_path(self.srcpath)
         self.i.comp = False
+        self.lib.add(self.i)
 
         trackinfo = TrackInfo('one',  'trackid', 'some artist',
                               'artistid', 1)
@@ -406,7 +407,7 @@ class ApplyExistingItemsTest(_common.TestCase):
         self._apply_asis([self.i])
 
         # Get the item's path and import it again.
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         new_item = library.Item.from_path(item.path)
         self._apply_asis([new_item])
 
@@ -416,7 +417,7 @@ class ApplyExistingItemsTest(_common.TestCase):
     def test_apply_existing_album_does_not_duplicate_album(self):
         # As above.
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         new_item = library.Item.from_path(item.path)
         self._apply_asis([new_item])
 
@@ -425,7 +426,7 @@ class ApplyExistingItemsTest(_common.TestCase):
 
     def test_apply_existing_singleton_does_not_duplicate_album(self):
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         new_item = library.Item.from_path(item.path)
         self._apply_asis([new_item], False)
 
@@ -440,7 +441,7 @@ class ApplyExistingItemsTest(_common.TestCase):
         self._apply_asis([self.i])
 
         # Import again with new metadata.
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         new_item = library.Item.from_path(item.path)
         new_item.title = 'differentTitle'
         self._apply_asis([new_item])
@@ -454,12 +455,12 @@ class ApplyExistingItemsTest(_common.TestCase):
         config['import']['copy'] = True
 
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         new_item = library.Item.from_path(item.path)
         new_item.title = 'differentTitle'
         self._apply_asis([new_item])
 
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertTrue('differentTitle' in item.path)
         self.assertExists(item.path)
 
@@ -468,12 +469,12 @@ class ApplyExistingItemsTest(_common.TestCase):
         config['import']['copy'] = False
 
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         new_item = library.Item.from_path(item.path)
         new_item.title = 'differentTitle'
         self._apply_asis([new_item])
 
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertFalse('differentTitle' in item.path)
         self.assertExists(item.path)
 
@@ -481,13 +482,13 @@ class ApplyExistingItemsTest(_common.TestCase):
         config['import']['copy'] = True
 
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         oldpath = item.path
         new_item = library.Item.from_path(item.path)
         new_item.title = 'differentTitle'
         self._apply_asis([new_item])
 
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertNotExists(oldpath)
 
     def test_apply_existing_item_new_metadata_delete_enabled(self):
@@ -497,13 +498,13 @@ class ApplyExistingItemsTest(_common.TestCase):
         config['import']['delete'] = True  # !
 
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         oldpath = item.path
         new_item = library.Item.from_path(item.path)
         new_item.title = 'differentTitle'
         self._apply_asis([new_item])
 
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertNotExists(oldpath)
         self.assertTrue('differentTitle' in item.path)
         self.assertExists(item.path)
@@ -513,13 +514,13 @@ class ApplyExistingItemsTest(_common.TestCase):
         config['import']['copy'] = True
 
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         oldpath = item.path
         new_item = library.Item.from_path(item.path)
         self._apply_asis([new_item])
 
         self.assertEqual(len(list(self.lib.items())), 1)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertEqual(oldpath, item.path)
         self.assertExists(oldpath)
 
@@ -528,19 +529,19 @@ class ApplyExistingItemsTest(_common.TestCase):
         config['import']['delete'] = True  # !
 
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         new_item = library.Item.from_path(item.path)
         self._apply_asis([new_item])
 
         self.assertEqual(len(list(self.lib.items())), 1)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertExists(item.path)
 
     def test_same_album_does_not_duplicate(self):
         # With the -L flag, exactly the same item (with the same ID)
         # is re-imported. This test simulates that situation.
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self._apply_asis([item])
 
         # Should not be duplicated.
@@ -704,6 +705,7 @@ class DuplicateCheckTest(_common.TestCase):
 
     def test_duplicate_va_album(self):
         self.album.albumartist = 'an album artist'
+        self.album.store()
         res = importer._duplicate_check(self.lib,
                     self._album_task(False, 'an album artist'))
         self.assertTrue(res)

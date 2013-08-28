@@ -905,7 +905,7 @@ def update_items(lib, query, album, move, pretend):
                 continue
 
             # Read new data.
-            old_data = dict(item.record)
+            old_data = dict(item)
             try:
                 item.read()
             except Exception as exc:
@@ -920,12 +920,12 @@ def update_items(lib, query, album, move, pretend):
                     old_data['albumartist'] == old_data['artist'] == \
                         item.artist:
                 item.albumartist = old_data['albumartist']
-                item.dirty['albumartist'] = False
+                item._dirty.remove('albumartist')
 
             # Get and save metadata changes.
             changes = {}
             for key in library.ITEM_KEYS_META:
-                if item.dirty[key]:
+                if key in item._dirty:
                     changes[key] = old_data[key], getattr(item, key)
             if changes:
                 # Something changed.
@@ -941,14 +941,14 @@ def update_items(lib, query, album, move, pretend):
                 if move and lib.directory in ancestry(item.path):
                     lib.move(item)
 
-                lib.store(item)
+                item.store()
                 affected_albums.add(item.album_id)
             elif not pretend:
                 # The file's mtime was different, but there were no changes
                 # to the metadata. Store the new mtime, which is set in the
                 # call to read(), so we don't check this again in the
                 # future.
-                lib.store(item)
+                item.store()
 
         # Skip album changes while pretending.
         if pretend:
@@ -959,17 +959,18 @@ def update_items(lib, query, album, move, pretend):
             if album_id is None:  # Singletons.
                 continue
             album = lib.get_album(album_id)
-            if not album: # Empty albums have already been removed.
+            if not album:  # Empty albums have already been removed.
                 log.debug('emptied album %i' % album_id)
                 continue
-            al_items = list(album.items())
+            first_item = album.items().get()
 
             # Update album structure to reflect an item in it.
             for key in library.ALBUM_KEYS_ITEM:
-                setattr(album, key, getattr(al_items[0], key))
+                album[key] = first_item[key]
+            album.store()
 
             # Move album art (and any inconsistent items).
-            if move and lib.directory in ancestry(al_items[0].path):
+            if move and lib.directory in ancestry(first_item.path):
                 log.debug('moving album %i' % album_id)
                 album.move()
 
@@ -1099,6 +1100,8 @@ def _convert_type(key, value, album=False):
     `album` indicates whether to use album or item field definitions.
     """
     fields = library.ALBUM_FIELDS if album else library.ITEM_FIELDS
+    if key not in fields:
+        return value
     typ = [f[1] for f in fields if f[0] == key][0]
 
     if typ is bool:
@@ -1120,15 +1123,9 @@ def _convert_type(key, value, album=False):
 def modify_items(lib, mods, query, write, move, album, confirm):
     """Modifies matching items according to key=value assignments."""
     # Parse key=value specifications into a dictionary.
-    if album:
-        allowed_keys = library.ALBUM_KEYS
-    else:
-        allowed_keys = library.ITEM_KEYS_WRITABLE + ['added']
     fsets = {}
     for mod in mods:
         key, value = mod.split('=', 1)
-        if key not in allowed_keys:
-            raise ui.UserError('"%s" is not a valid field' % key)
         fsets[key] = _convert_type(key, value, album)
 
     # Get the items to modify.
@@ -1143,8 +1140,7 @@ def modify_items(lib, mods, query, write, move, album, confirm):
 
         # Show each change.
         for field, value in fsets.iteritems():
-            curval = getattr(obj, field)
-            _showdiff(field, curval, value)
+            _showdiff(field, obj.get(field), value)
 
     # Confirm.
     if confirm:
@@ -1156,7 +1152,7 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     with lib.transaction():
         for obj in objs:
             for field, value in fsets.iteritems():
-                setattr(obj, field, value)
+                obj[field] = value
 
             if move:
                 cur_path = obj.item_dir() if album else obj.path
@@ -1167,9 +1163,7 @@ def modify_items(lib, mods, query, write, move, album, confirm):
                     else:
                         lib.move(obj)
 
-            # When modifying items, we have to store them to the database.
-            if not album:
-                lib.store(obj)
+            obj.store()
 
     # Apply tags if requested.
     if write:
@@ -1226,7 +1220,7 @@ def move_items(lib, dest, query, copy, album):
             obj.move(copy, basedir=dest)
         else:
             lib.move(obj, copy, basedir=dest)
-            lib.store(obj)
+        obj.store()
 
 move_cmd = ui.Subcommand('move',
     help='move or copy items', aliases=('mv',))

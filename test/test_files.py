@@ -170,7 +170,8 @@ class AlbumFileTest(_common.TestCase):
     def test_albuminfo_move_changes_paths(self):
         self.ai.album = 'newAlbumName'
         self.ai.move()
-        self.lib.load(self.i)
+        self.ai.store()
+        self.i.load()
 
         self.assert_('newAlbumName' in self.i.path)
 
@@ -178,7 +179,8 @@ class AlbumFileTest(_common.TestCase):
         oldpath = self.i.path
         self.ai.album = 'newAlbumName'
         self.ai.move()
-        self.lib.load(self.i)
+        self.ai.store()
+        self.i.load()
 
         self.assertFalse(os.path.exists(oldpath))
         self.assertTrue(os.path.exists(self.i.path))
@@ -187,14 +189,16 @@ class AlbumFileTest(_common.TestCase):
         oldpath = self.i.path
         self.ai.album = 'newAlbumName'
         self.ai.move(True)
-        self.lib.load(self.i)
+        self.ai.store()
+        self.i.load()
 
         self.assertTrue(os.path.exists(oldpath))
         self.assertTrue(os.path.exists(self.i.path))
 
     def test_albuminfo_move_to_custom_dir(self):
         self.ai.move(basedir=self.otherdir)
-        self.lib.load(self.i)
+        self.i.load()
+        self.ai.store()
         self.assertTrue('testotherdir' in self.i.path)
 
 class ArtFileTest(_common.TestCase):
@@ -216,6 +220,7 @@ class ArtFileTest(_common.TestCase):
         self.art = self.lib.get_album(self.i).art_destination('something.jpg')
         touch(self.art)
         self.ai.artpath = self.art
+        self.ai.store()
         # Alternate destination dir.
         self.otherdir = os.path.join(self.temp_dir, 'testotherdir')
 
@@ -229,7 +234,7 @@ class ArtFileTest(_common.TestCase):
         oldpath = self.i.path
         self.ai.album = 'newAlbum'
         self.ai.move()
-        self.lib.load(self.i)
+        self.i.load()
 
         self.assertNotEqual(self.i.path, oldpath)
         self.assertFalse(os.path.exists(self.art))
@@ -239,7 +244,8 @@ class ArtFileTest(_common.TestCase):
     def test_art_moves_with_album_to_custom_dir(self):
         # Move the album to another directory.
         self.ai.move(basedir=self.otherdir)
-        self.lib.load(self.i)
+        self.ai.store()
+        self.i.load()
 
         # Art should be in new directory.
         self.assertNotExists(self.art)
@@ -344,7 +350,8 @@ class ArtFileTest(_common.TestCase):
         self.assertExists(oldartpath)
 
         self.ai.album = 'different_album'
-        self.lib.move(self.i)
+        self.ai.store()
+        self.lib.move(self.ai.items()[0])
 
         artpath = self.lib.albums()[0].artpath
         self.assertTrue('different_album' in artpath)
@@ -421,6 +428,7 @@ class RemoveTest(_common.TestCase):
         artfile = os.path.join(self.temp_dir, 'testart.jpg')
         touch(artfile)
         self.ai.set_art(artfile)
+        self.ai.store()
 
         parent = os.path.dirname(self.i.path)
         self.lib.remove(self.i, True)

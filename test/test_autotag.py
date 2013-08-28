@@ -53,30 +53,30 @@ class PluralityTest(_common.TestCase):
             plurality([])
 
     def test_current_metadata_finds_pluralities(self):
-        items = [Item({'artist': 'The Beetles', 'album': 'The White Album'}),
-                 Item({'artist': 'The Beatles', 'album': 'The White Album'}),
-                 Item({'artist': 'The Beatles', 'album': 'Teh White Album'})]
+        items = [Item(artist='The Beetles', album='The White Album'),
+                 Item(artist='The Beatles', album='The White Album'),
+                 Item(artist='The Beatles', album='Teh White Album')]
         likelies, consensus = match.current_metadata(items)
         self.assertEqual(likelies['artist'], 'The Beatles')
         self.assertEqual(likelies['album'], 'The White Album')
         self.assertFalse(consensus['artist'])
 
     def test_current_metadata_artist_consensus(self):
-        items = [Item({'artist': 'The Beatles', 'album': 'The White Album'}),
-                 Item({'artist': 'The Beatles', 'album': 'The White Album'}),
-                 Item({'artist': 'The Beatles', 'album': 'Teh White Album'})]
+        items = [Item(artist='The Beatles', album='The White Album'),
+                 Item(artist='The Beatles', album='The White Album'),
+                 Item(artist='The Beatles', album='Teh White Album')]
         likelies, consensus = match.current_metadata(items)
         self.assertEqual(likelies['artist'], 'The Beatles')
         self.assertEqual(likelies['album'], 'The White Album')
         self.assertTrue(consensus['artist'])
 
     def test_albumartist_consensus(self):
-        items = [Item({'artist': 'tartist1', 'album': 'album',
-                       'albumartist': 'aartist'}),
-                 Item({'artist': 'tartist2', 'album': 'album',
-                       'albumartist': 'aartist'}),
-                 Item({'artist': 'tartist3', 'album': 'album',
-                       'albumartist': 'aartist'})]
+        items = [Item(artist='tartist1', album='album',
+                      albumartist='aartist'),
+                 Item(artist='tartist2', album='album',
+                      albumartist='aartist'),
+                 Item(artist='tartist3', album='album',
+                      albumartist='aartist')]
         likelies, consensus = match.current_metadata(items)
         self.assertEqual(likelies['artist'], 'aartist')
         self.assertFalse(consensus['artist'])
@@ -85,19 +85,17 @@ class PluralityTest(_common.TestCase):
         fields = ['artist', 'album', 'albumartist', 'year', 'disctotal',
                   'mb_albumid', 'label', 'catalognum', 'country', 'media',
                   'albumdisambig']
-        items = [Item(dict((f, '%s_%s' % (f, i or 1)) for f in fields))
+        items = [Item(**dict((f, '%s_%s' % (f, i or 1)) for f in fields))
                  for i in range(5)]
         likelies, _ = match.current_metadata(items)
         for f in fields:
             self.assertEqual(likelies[f], '%s_1' % f)
 
 def _make_item(title, track, artist=u'some artist'):
-    return Item({
-        'title': title, 'track': track,
-        'artist': artist, 'album': u'some album',
-        'length': 1,
-        'mb_trackid': '', 'mb_albumid': '', 'mb_artistid': '',
-    })
+    return Item(title=title, track=track,
+                artist=artist, album=u'some album',
+                length=1,
+                mb_trackid='', mb_albumid='', mb_artistid='')
 
 def _make_trackinfo():
     return [
@@ -560,10 +558,10 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
 
 class AssignmentTest(unittest.TestCase):
     def item(self, title, track):
-        return Item({
-            'title': title, 'track': track,
-            'mb_trackid': '', 'mb_albumid': '', 'mb_artistid': '',
-        })
+        return Item(
+            title=title, track=track,
+            mb_trackid='', mb_albumid='', mb_artistid='',
+        )
 
     def test_reorder_when_track_numbers_incorrect(self):
         items = []
@@ -640,14 +638,14 @@ class AssignmentTest(unittest.TestCase):
     def test_order_works_when_track_names_are_entirely_wrong(self):
         # A real-world test case contributed by a user.
         def item(i, length):
-            return Item({
-                'artist': u'ben harper',
-                'album': u'burn to shine',
-                'title': u'ben harper - Burn to Shine ' + str(i),
-                'track': i,
-                'length': length,
-                'mb_trackid': '', 'mb_albumid': '', 'mb_artistid': '',
-            })
+            return Item(
+                artist=u'ben harper',
+                album=u'burn to shine',
+                title=u'ben harper - Burn to Shine ' + str(i),
+                track=i,
+                length=length,
+                mb_trackid='', mb_albumid='', mb_artistid='',
+            )
         items = []
         items.append(item(1, 241.37243007106997))
         items.append(item(2, 342.27781704375036))
