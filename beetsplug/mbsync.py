@@ -93,7 +93,7 @@ def mbsync_albums(lib, query, move, pretend, write):
             continue
 
         items = list(a.items())
-        old_data = {item: dict(item) for item in items}
+        old_data = dict((item, dict(item)) for item in items)
 
         # Get the MusicBrainz album information.
         album_info = hooks.album_for_mbid(a.mb_albumid)

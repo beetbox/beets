@@ -955,7 +955,9 @@ class Results(object):
                     (row['id'],)
                 )
             values = dict(row)
-            values.update({row['key']: row['value'] for row in flex_rows})
+            values.update(
+                dict((row['key'], row['value']) for row in flex_rows)
+            )
 
             # Construct the Python object and yield it if it passes the
             # predicate.
