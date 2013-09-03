@@ -153,12 +153,14 @@ or <a href="http://news.ycombinator.com/submitlink?u={{ site.url | cgi_escape }}
 <section>
 {% if page.section == 'main' %}
 <h3><a href="http://twitter.com/b33ts">News from @b33ts</a></h3>
-<ul id="twitterStatus" class="newslist">
-</ul>
+<a class="twitter-timeline" href="https://twitter.com/b33ts"
+    data-widget-id="374710568583573504"
+    height="300"
+    data-chrome="nofooter noheader noscrollbar"
+    data-tweet-limit="2"
+    >Tweets by @b33ts</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
 {% endif %}
-<p id="twitterFollow">
-    <a href="http://twitter.com/b33ts" class="twitter-follow-button">Follow @b33ts</a>
-</p>
 </section>
 <section>
 <h3>Contact</h3>
@@ -176,8 +178,6 @@ or <a href="http://news.ycombinator.com/submitlink?u={{ site.url | cgi_escape }}
 data-text="Beets: an awesome open-source music library manager and MusicBrainz tagger."
 data-count="none" data-via="b33ts"
 data-url="http://beets.radbox.org/">tweet beets</a>
-<script type="text/javascript"
-src="http://platform.twitter.com/widgets.js"></script>
 
 <!-- google +1 button -->
 <g:plusone count="false" size="medium"
