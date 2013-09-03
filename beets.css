@@ -9,8 +9,8 @@
     display: none;
 }
 
-/* Landscape phone to portrait tablet */
-@media (max-width: 767px) {
+/* up to "small devices" */
+@media (max-width: 992px) {
     #header.leader {
         height: auto;
         margin-bottom: 10px;
