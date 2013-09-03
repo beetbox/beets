@@ -34,6 +34,9 @@
 #sidebar h3 a:hover {
     text-decoration: none;
 }
+#sidebar ul.project {
+    padding-left: 1.5em;
+}
 
 li {
     color: inherit;

@@ -115,7 +115,7 @@ or <a href="http://news.ycombinator.com/submitlink?u={{ site.url | cgi_escape }}
 </section>
 <section>
 <h3>Project</h3>
-<ul>
+<ul class="project">
     <li>
         <a href="http://github.com/sampsyo/beets">github</a>,
         <a href="http://bitbucket.org/adrian/beets">bitbucket</a>
@@ -158,7 +158,6 @@ or <a href="http://news.ycombinator.com/submitlink?u={{ site.url | cgi_escape }}
     data-chrome="nofooter noheader noscrollbar"
     data-tweet-limit="2"
     >Tweets by @b33ts</a>
-<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
 {% endif %}
 </section>
 <section>
@@ -178,10 +177,6 @@ data-text="Beets: an awesome open-source music library manager and MusicBrainz t
 data-count="none" data-via="b33ts"
 data-url="http://beets.radbox.org/">tweet beets</a>
 
-<!-- google +1 button -->
-<g:plusone count="false" size="medium"
-href="http://beets.radbox.org/"></g:plusone>
-
 <!-- flattr button -->
 <a class="FlattrButton" style="display:none;"
     rev="flattr;button:compact;" href="http://beets.radbox.org/"></a>
@@ -199,5 +194,6 @@ href="http://beets.radbox.org/"></g:plusone>
 
         <a id="fork-me" href="https://github.com/sampsyo/beets">Fork me on GitHub</a>
         <script type="text/javascript" src="http://apis.google.com/js/plusone.js"></script>
+        <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
     </body>
 </html>
