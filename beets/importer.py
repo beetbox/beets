@@ -564,6 +564,15 @@ def read_tasks(session):
             yield ImportTask.item_task(item)
             continue
 
+        # A flat album import merges all items into one album.
+        if config['import']['flat'] and not config['import']['singletons']:
+            all_items = []
+            for _, items in autotag.albums_in_dir(toppath):
+                all_items += items
+            yield ImportTask(toppath, toppath, all_items)
+            yield ImportTask.done_sentinel(toppath)
+            continue
+
         # Produce paths under this directory.
         if _resume():
             resume_dir = resume_dirs.get(toppath)
@@ -634,7 +643,7 @@ def initial_lookup(session):
 
         log.debug('Looking up: %s' % displayable_path(task.paths))
         task.set_candidates(
-            *autotag.tag_album(task.items, config['import']['timid'].get(bool))
+            *autotag.tag_album(task.items)
         )
 
 def user_query(session):
@@ -759,13 +768,12 @@ def apply_choices(session):
 
             # Delete duplicate files that are located inside the library
             # directory.
+            task.duplicate_paths = []
             for duplicate_path in [i.path for i in duplicate_items]:
                 if session.lib.directory in util.ancestry(duplicate_path):
-                    log.debug(u'deleting replaced duplicate %s' %
-                              util.displayable_path(duplicate_path))
-                    util.remove(duplicate_path)
-                    util.prune_dirs(os.path.dirname(duplicate_path),
-                                    session.lib.directory)
+                    # Mark the path for deletion in the manipulate_files
+                    # stage.
+                    task.duplicate_paths.append(duplicate_path)
 
         # Add items -- before path changes -- to the library. We add the
         # items now (rather than at the end) so that album structures
@@ -802,7 +810,7 @@ def plugin_stage(session, func):
 
         # Stage may modify DB, so re-load cached item data.
         for item in task.imported_items():
-            session.lib.load(item)
+            item.load()
 
 def manipulate_files(session):
     """A coroutine (pipeline stage) that performs necessary file
@@ -813,6 +821,15 @@ def manipulate_files(session):
         task = yield task
         if task.should_skip():
             continue
+
+        # Remove duplicate files marked for deletion.
+        if task.remove_duplicates:
+            for duplicate_path in task.duplicate_paths:
+                log.debug(u'deleting replaced duplicate %s' %
+                          util.displayable_path(duplicate_path))
+                util.remove(duplicate_path)
+                util.prune_dirs(os.path.dirname(duplicate_path),
+                                session.lib.directory)
 
         # Move/copy/write files.
         items = task.imported_items()
@@ -849,7 +866,7 @@ def manipulate_files(session):
         # Save new paths.
         with session.lib.transaction():
             for item in items:
-                session.lib.store(item)
+                item.store()
 
         # Plugin event.
         plugins.send('import_task_files', session=session, task=task)

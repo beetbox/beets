@@ -24,6 +24,7 @@ import unicodedata
 import threading
 import contextlib
 import traceback
+import time
 from collections import defaultdict
 from unidecode import unidecode
 from beets.mediafile import MediaFile
@@ -33,78 +34,78 @@ from beets.util import bytestring_path, syspath, normpath, samefile,\
     displayable_path
 from beets.util.functemplate import Template
 import beets
-
-MAX_FILENAME_LENGTH = 200
+from datetime import datetime
 
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
 # vulnerable to injection if accessible to the user.
 # Each tuple has the following values:
 # - The name of the field.
-# - The (SQLite) type of the field.
+# - The (Python) type of the field.
 # - Is the field writable?
 # - Does the field reflect an attribute of a MediaFile?
 ITEM_FIELDS = [
-    ('id',          'integer primary key', False, False),
-    ('path',        'blob', False, False),
-    ('album_id',    'int',  False, False),
+    ('id',          int,   False, False),
+    ('path',        bytes, False, False),
+    ('album_id',    int,   False, False),
 
-    ('title',                'text', True, True),
-    ('artist',               'text', True, True),
-    ('artist_sort',          'text', True, True),
-    ('artist_credit',        'text', True, True),
-    ('album',                'text', True, True),
-    ('albumartist',          'text', True, True),
-    ('albumartist_sort',     'text', True, True),
-    ('albumartist_credit',   'text', True, True),
-    ('genre',                'text', True, True),
-    ('composer',             'text', True, True),
-    ('grouping',             'text', True, True),
-    ('year',                 'int',  True, True),
-    ('month',                'int',  True, True),
-    ('day',                  'int',  True, True),
-    ('track',                'int',  True, True),
-    ('tracktotal',           'int',  True, True),
-    ('disc',                 'int',  True, True),
-    ('disctotal',            'int',  True, True),
-    ('lyrics',               'text', True, True),
-    ('comments',             'text', True, True),
-    ('bpm',                  'int',  True, True),
-    ('comp',                 'bool', True, True),
-    ('mb_trackid',           'text', True, True),
-    ('mb_albumid',           'text', True, True),
-    ('mb_artistid',          'text', True, True),
-    ('mb_albumartistid',     'text', True, True),
-    ('albumtype',            'text', True, True),
-    ('label',                'text', True, True),
-    ('acoustid_fingerprint', 'text', True, True),
-    ('acoustid_id',          'text', True, True),
-    ('mb_releasegroupid',    'text', True, True),
-    ('asin',                 'text', True, True),
-    ('catalognum',           'text', True, True),
-    ('script',               'text', True, True),
-    ('language',             'text', True, True),
-    ('country',              'text', True, True),
-    ('albumstatus',          'text', True, True),
-    ('media',                'text', True, True),
-    ('albumdisambig',        'text', True, True),
-    ('disctitle',            'text', True, True),
-    ('encoder',              'text', True, True),
-    ('rg_track_gain',        'real', True, True),
-    ('rg_track_peak',        'real', True, True),
-    ('rg_album_gain',        'real', True, True),
-    ('rg_album_peak',        'real', True, True),
-    ('original_year',        'int',  True, True),
-    ('original_month',       'int',  True, True),
-    ('original_day',         'int',  True, True),
+    ('title',                unicode, True, True),
+    ('artist',               unicode, True, True),
+    ('artist_sort',          unicode, True, True),
+    ('artist_credit',        unicode, True, True),
+    ('album',                unicode, True, True),
+    ('albumartist',          unicode, True, True),
+    ('albumartist_sort',     unicode, True, True),
+    ('albumartist_credit',   unicode, True, True),
+    ('genre',                unicode, True, True),
+    ('composer',             unicode, True, True),
+    ('grouping',             unicode, True, True),
+    ('year',                 int,     True, True),
+    ('month',                int,     True, True),
+    ('day',                  int,     True, True),
+    ('track',                int,     True, True),
+    ('tracktotal',           int,     True, True),
+    ('disc',                 int,     True, True),
+    ('disctotal',            int,     True, True),
+    ('lyrics',               unicode, True, True),
+    ('comments',             unicode, True, True),
+    ('bpm',                  int,     True, True),
+    ('comp',                 bool,    True, True),
+    ('mb_trackid',           unicode, True, True),
+    ('mb_albumid',           unicode, True, True),
+    ('mb_artistid',          unicode, True, True),
+    ('mb_albumartistid',     unicode, True, True),
+    ('albumtype',            unicode, True, True),
+    ('label',                unicode, True, True),
+    ('acoustid_fingerprint', unicode, True, True),
+    ('acoustid_id',          unicode, True, True),
+    ('mb_releasegroupid',    unicode, True, True),
+    ('asin',                 unicode, True, True),
+    ('catalognum',           unicode, True, True),
+    ('script',               unicode, True, True),
+    ('language',             unicode, True, True),
+    ('country',              unicode, True, True),
+    ('albumstatus',          unicode, True, True),
+    ('media',                unicode, True, True),
+    ('albumdisambig',        unicode, True, True),
+    ('disctitle',            unicode, True, True),
+    ('encoder',              unicode, True, True),
+    ('rg_track_gain',        float,   True, True),
+    ('rg_track_peak',        float,   True, True),
+    ('rg_album_gain',        float,   True, True),
+    ('rg_album_peak',        float,   True, True),
+    ('original_year',        int,     True, True),
+    ('original_month',       int,     True, True),
+    ('original_day',         int,     True, True),
 
-    ('length',      'real', False, True),
-    ('bitrate',     'int',  False, True),
-    ('format',      'text', False, True),
-    ('samplerate',  'int',  False, True),
-    ('bitdepth',    'int',  False, True),
-    ('channels',    'int',  False, True),
-    ('mtime',       'int',  False, False),
+    ('length',      float,    False, True),
+    ('bitrate',     int,      False, True),
+    ('format',      unicode,  False, True),
+    ('samplerate',  int,      False, True),
+    ('bitdepth',    int,      False, True),
+    ('channels',    int,      False, True),
+    ('mtime',       int,      False, False),
+    ('added',       datetime, False, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
@@ -114,41 +115,53 @@ ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 # The third entry in each tuple indicates whether the field reflects an
 # identically-named field in the items table.
 ALBUM_FIELDS = [
-    ('id',      'integer primary key', False),
-    ('artpath', 'blob',                False),
+    ('id',      int,      False),
+    ('artpath', bytes,    False),
+    ('added',   datetime, True),
 
-    ('albumartist',        'text', True),
-    ('albumartist_sort',   'text', True),
-    ('albumartist_credit', 'text', True, True),
-    ('album',              'text', True),
-    ('genre',              'text', True),
-    ('year',               'int',  True),
-    ('month',              'int',  True),
-    ('day',                'int',  True),
-    ('tracktotal',         'int',  True),
-    ('disctotal',          'int',  True),
-    ('comp',               'bool', True),
-    ('mb_albumid',         'text', True),
-    ('mb_albumartistid',   'text', True),
-    ('albumtype',          'text', True),
-    ('label',              'text', True),
-    ('mb_releasegroupid',  'text', True),
-    ('asin',               'text', True),
-    ('catalognum',         'text', True),
-    ('script',             'text', True),
-    ('language',           'text', True),
-    ('country',            'text', True),
-    ('albumstatus',        'text', True),
-    ('media',              'text', True),
-    ('albumdisambig',      'text', True),
-    ('rg_album_gain',      'real', True),
-    ('rg_album_peak',      'real', True),
-    ('original_year',      'int',  True),
-    ('original_month',     'int',  True),
-    ('original_day',       'int',  True),
+    ('albumartist',        unicode, True),
+    ('albumartist_sort',   unicode, True),
+    ('albumartist_credit', unicode, True),
+    ('album',              unicode, True),
+    ('genre',              unicode, True),
+    ('year',               int,     True),
+    ('month',              int,     True),
+    ('day',                int,     True),
+    ('tracktotal',         int,     True),
+    ('disctotal',          int,     True),
+    ('comp',               bool,    True),
+    ('mb_albumid',         unicode, True),
+    ('mb_albumartistid',   unicode, True),
+    ('albumtype',          unicode, True),
+    ('label',              unicode, True),
+    ('mb_releasegroupid',  unicode, True),
+    ('asin',               unicode, True),
+    ('catalognum',         unicode, True),
+    ('script',             unicode, True),
+    ('language',           unicode, True),
+    ('country',            unicode, True),
+    ('albumstatus',        unicode, True),
+    ('media',              unicode, True),
+    ('albumdisambig',      unicode, True),
+    ('rg_album_gain',      float,   True),
+    ('rg_album_peak',      float,   True),
+    ('original_year',      int,     True),
+    ('original_month',     int,     True),
+    ('original_day',       int,     True),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
+
+# SQLite type names.
+SQLITE_TYPES = {
+    int:      'INT',
+    float:    'REAL',
+    datetime: 'FLOAT',
+    bytes:    'BLOB',
+    unicode:  'TEXT',
+    bool:     'INT',
+}
+SQLITE_KEY_TYPE = 'INTEGER PRIMARY KEY'
 
 # Default search fields for various granularities.
 ARTIST_DEFAULT_FIELDS = ('artist',)
@@ -158,7 +171,6 @@ ITEM_DEFAULT_FIELDS = ARTIST_DEFAULT_FIELDS + ALBUM_DEFAULT_FIELDS + \
 
 # Special path format key.
 PF_KEY_DEFAULT = 'default'
-
 
 # Logger.
 log = logging.getLogger('beets')
@@ -175,21 +187,6 @@ def _orelse(exp1, exp2):
                       'WHEN "" THEN {1} '
                       'ELSE {0} END)').format(exp1, exp2)
 
-# An SQLite function for regular expression matching.
-def _regexp(expr, val):
-    """Return a boolean indicating whether the regular expression `expr`
-    matches `val`.
-    """
-    if expr is None:
-        return False
-    val = util.as_string(val)
-    try:
-        res = re.search(expr, val)
-    except re.error:
-        # Invalid regular expression.
-        return False
-    return res is not None
-
 # Path element formatting for templating.
 def format_for_path(value, key=None, pathmod=None):
     """Sanitize the value for inclusion in a path: replace separators
@@ -199,12 +196,12 @@ def format_for_path(value, key=None, pathmod=None):
     pathmod = pathmod or os.path
 
     if isinstance(value, basestring):
+        if isinstance(value, str):
+            value = value.decode('utf8', 'ignore')
+        sep_repl = beets.config['path_sep_replace'].get(unicode)
         for sep in (pathmod.sep, pathmod.altsep):
             if sep:
-                value = value.replace(
-                    sep,
-                    beets.config['path_sep_replace'].get(unicode),
-                )
+                value = value.replace(sep, sep_repl)
     elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
         # Pad indices with zeros.
         value = u'%02i' % (value or 0)
@@ -218,6 +215,13 @@ def format_for_path(value, key=None, pathmod=None):
     elif key == 'samplerate':
         # Sample rate formatted as kHz.
         value = u'%ikHz' % ((value or 0) // 1000)
+    elif key in ('added', 'mtime'):
+        # Times are formatted to be human-readable.
+        value = time.strftime(beets.config['time_format'].get(unicode),
+                              time.localtime(value))
+        value = unicode(value)
+    elif value is None:
+        value = u''
     else:
         value = unicode(value)
 
@@ -232,59 +236,207 @@ class InvalidFieldError(Exception):
 
 # Library items (songs).
 
-class Item(object):
-    def __init__(self, values):
-        self.dirty = {}
-        self._fill_record(values)
-        self._clear_dirty()
+class FlexModel(object):
+    """An abstract object that consists of a set of "fast" (fixed)
+    fields and an arbitrary number of flexible fields.
+    """
+
+    _fields = ()
+    """The available "fixed" fields on this type.
+    """
+
+    def __init__(self, **values):
+        """Create a new object with the given field values (which may be
+        fixed or flex fields).
+        """
+        self._dirty = set()
+        self._values_fixed = {}
+        self._values_flex = {}
+        self.update(values)
+        self.clear_dirty()
+
+    def __repr__(self):
+        return '{0}({1})'.format(
+            type(self).__name__,
+            ', '.join('{0}={1!r}'.format(k, v) for k, v in dict(self).items()),
+        )
+
+    def clear_dirty(self):
+        self._dirty = set()
+
+
+    # Act like a dictionary.
+
+    def __getitem__(self, key):
+        """Get the value for a field. Fixed fields always return a value
+        (which may be None); flex fields may raise a KeyError.
+        """
+        if key in self._fields:
+            return self._values_fixed.get(key)
+        elif key in self._values_flex:
+            return self._values_flex[key]
+        else:
+            raise KeyError(key)
+
+    def __setitem__(self, key, value):
+        """Assign the value for a field.
+        """
+        source = self._values_fixed if key in self._fields \
+                 else self._values_flex
+        old_value = source.get(key)
+        source[key] = value
+        if old_value != value:
+            self._dirty.add(key)
+
+    def update(self, values):
+        """Assign all values in the given dict.
+        """
+        for key, value in values.items():
+            self[key] = value
+
+    def keys(self):
+        """Get all the keys (both fixed and flex) on this object.
+        """
+        return list(self._fields) + self._values_flex.keys()
+
+    def get(self, key, default=None):
+        """Get the value for a given key or `default` if it does not
+        exist.
+        """
+        if key in self:
+            return self[key]
+        else:
+            return default
+
+    def __contains__(self, key):
+        """Determine whether `key` is a fixed or flex attribute on this
+        object.
+        """
+        return key in self._fields or key in self._values_flex
+
+
+    # Convenient attribute access.
+
+    def __getattr__(self, key):
+        if key.startswith('_'):
+            raise AttributeError('model has no attribute {0!r}'.format(key))
+        else:
+            try:
+                return self[key]
+            except KeyError:
+                raise AttributeError('no such field {0!r}'.format(key))
+
+    def __setattr__(self, key, value):
+        if key.startswith('_'):
+            super(FlexModel, self).__setattr__(key, value)
+        else:
+            self[key] = value
+
+class LibModel(FlexModel):
+    """A model base class that includes a reference to a Library object.
+    It knows how to load and store itself from the database.
+    """
+
+    _table = None
+    """The main SQLite table name.
+    """
+
+    _flex_table = None
+    """The flex field SQLite table name.
+    """
+
+    _bytes_keys = ('path', 'artpath')
+    """Keys whose values should be stored as raw bytes blobs rather than
+    strings.
+    """
+
+    def __init__(self, lib=None, **values):
+        self._lib = lib
+        super(LibModel, self).__init__(**values)
+
+    def _check_db(self):
+        """Ensure that this object is associated with a database row: it
+        has a reference to a library (`_lib`) and an id. A ValueError
+        exception is raised otherwise.
+        """
+        if not self._lib:
+            raise ValueError('{0} has no library'.format(type(self).__name__))
+        if not self.id:
+            raise ValueError('{0} has no id'.format(type(self).__name__))
+
+    def store(self):
+        """Save the object's metadata into the library database.
+        """
+        self._check_db()
+
+        # Build assignments for query.
+        assignments = ''
+        subvars = []
+        for key in self._fields:
+            if key != 'id' and key in self._dirty:
+                assignments += key + '=?,'
+                value = self[key]
+                # Wrap path strings in buffers so they get stored
+                # "in the raw".
+                if key in self._bytes_keys and isinstance(value, str):
+                    value = buffer(value)
+                subvars.append(value)
+        assignments = assignments[:-1]  # Knock off last ,
+
+        with self._lib.transaction() as tx:
+            # Main table update.
+            if assignments:
+                query = 'UPDATE {0} SET {1} WHERE id=?'.format(
+                    self._table, assignments
+                )
+                subvars.append(self.id)
+                tx.mutate(query, subvars)
+
+            # Flexible attributes.
+            for key, value in self._values_flex.items():
+                tx.mutate(
+                    'INSERT INTO {0} '
+                    '(entity_id, key, value) '
+                    'VALUES (?, ?, ?);'.format(self._flex_table),
+                    (self.id, key, value),
+                )
+
+        self.clear_dirty()
+
+    def load(self):
+        """Refresh the object's metadata from the library database.
+        """
+        self._check_db()
+
+        # Get a fresh copy of this object from the DB.
+        with self._lib.transaction() as tx:
+            rows = tx.query(
+                'SELECT * FROM {0} WHERE id=?;'.format(self._table),
+                (self.id,)
+            )
+        results = Results(type(self), rows, self._lib)
+        stored_obj = results.get()
+
+        self.update(dict(stored_obj))
+        self.clear_dirty()
+
+class Item(LibModel):
+    _fields = ITEM_KEYS
+    _table = 'items'
+    _flex_table = 'item_attributes'
 
     @classmethod
     def from_path(cls, path):
         """Creates a new item from the media file at the specified path.
         """
         # Initiate with values that aren't read from files.
-        i = cls({
-            'album_id': None,
-        })
+        i = cls(album_id=None)
         i.read(path)
         i.mtime = i.current_mtime()  # Initial mtime.
         return i
 
-    def _fill_record(self, values):
-        self.record = {}
-        for key in ITEM_KEYS:
-            try:
-                setattr(self, key, values[key])
-            except KeyError:
-                setattr(self, key, None)
-
-    def _clear_dirty(self):
-        self.dirty = {}
-        for key in ITEM_KEYS:
-            self.dirty[key] = False
-
-    def __repr__(self):
-        return 'Item(' + repr(self.record) + ')'
-
-
-    # Item field accessors.
-
-    def __getattr__(self, key):
-        """If key is an item attribute (i.e., a column in the database),
-        returns the record entry for that key.
-        """
-        if key in ITEM_KEYS:
-            return self.record[key]
-        else:
-            raise AttributeError(key + ' is not a valid item field')
-
-    def __setattr__(self, key, value):
-        """If key is an item attribute (i.e., a column in the database),
-        sets the record entry for that key to value. Note that to change
-        the attribute in the database or in the file's tags, one must
-        call store() or write().
-
-        Otherwise, performs an ordinary setattr.
+    def __setitem__(self, key, value):
+        """Set the item's value for a standard field or a flexattr.
         """
         # Encode unicode paths and read buffers.
         if key == 'path':
@@ -293,15 +445,18 @@ class Item(object):
             elif isinstance(value, buffer):
                 value = str(value)
 
-        if key in ITEM_KEYS:
-            # If the value changed, mark the field as dirty.
-            if (key not in self.record) or (self.record[key] != value):
-                self.record[key] = value
-                self.dirty[key] = True
-                if key in ITEM_KEYS_WRITABLE:
-                    self.mtime = 0 # Reset mtime on dirty.
-        else:
-            super(Item, self).__setattr__(key, value)
+        if key in ITEM_KEYS_WRITABLE:
+            self.mtime = 0  # Reset mtime on dirty.
+
+        super(Item, self).__setitem__(key, value)
+
+    def update(self, values):
+        """Sett all key/value pairs in the mapping. If mtime is
+        specified, it is not reset (as it might otherwise be).
+        """
+        super(Item, self).update(values)
+        if self.mtime == 0 and 'mtime' in values:
+            self.mtime = values['mtime']
 
 
     # Interaction with file metadata.
@@ -316,11 +471,9 @@ class Item(object):
             read_path = normpath(read_path)
         try:
             f = MediaFile(syspath(read_path))
-        except Exception:
-            log.debug(u'failed reading file: {0}'.format(
-                displayable_path(read_path))
-            )
-            raise
+        except (OSError, IOError) as exc:
+            raise util.FilesystemError(exc, 'read', (read_path,),
+                                       traceback.format_exc())
 
         for key in ITEM_KEYS_META:
             setattr(self, key, getattr(f, key))
@@ -336,7 +489,12 @@ class Item(object):
         """
         plugins.send('write', item=self)
 
-        f = MediaFile(syspath(self.path))
+        try:
+            f = MediaFile(syspath(self.path))
+        except (OSError, IOError) as exc:
+            raise util.FilesystemError(exc, 'read', (self.path,),
+                                       traceback.format_exc())
+
         for key in ITEM_KEYS_WRITABLE:
             setattr(f, key, getattr(self, key))
 
@@ -363,6 +521,8 @@ class Item(object):
             util.copy(self.path, dest)
         else:
             util.move(self.path, dest)
+            plugins.send("item_moved", item=self, source=self.path,
+                         destination=dest)
 
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
@@ -392,7 +552,7 @@ class Item(object):
         # Build the mapping for substitution in the template,
         # beginning with the values from the database.
         mapping = {}
-        for key in ITEM_KEYS_META:
+        for key in ITEM_KEYS:
             # Get the values from either the item or its album.
             if key in ALBUM_KEYS_ITEM and album is not None:
                 # From album.
@@ -404,8 +564,10 @@ class Item(object):
                 value = format_for_path(value, key, pathmod)
             mapping[key] = value
 
-        # Additional fields in non-sanitized case.
-        if not sanitize:
+        # Include the path if we're not sanitizing to construct a path.
+        if sanitize:
+            del mapping['path']
+        else:
             mapping['path'] = displayable_path(self.path)
 
         # Use the album artist if the track artist is not set and
@@ -415,11 +577,22 @@ class Item(object):
         if not mapping['albumartist']:
             mapping['albumartist'] = mapping['artist']
 
+        # Flexible attributes.
+        for key, value in self._values_flex.items():
+            if sanitize:
+                value = format_for_path(value, None, pathmod)
+            mapping[key] = value
+
         # Get values from plugins.
-        for key, value in plugins.template_values(self).iteritems():
+        for key, value in plugins.template_values(self).items():
             if sanitize:
                 value = format_for_path(value, key, pathmod)
             mapping[key] = value
+        if album:
+            for key, value in plugins.album_template_values(album).items():
+                if sanitize:
+                    value = format_for_path(value, key, pathmod)
+                mapping[key] = value
 
         # Get template functions.
         funcs = DefaultTemplateFunctions(self, lib, pathmod).functions()
@@ -435,11 +608,14 @@ class Query(object):
     """An abstract class representing a query into the item database.
     """
     def clause(self):
-        """Returns (clause, subvals) where clause is a valid sqlite
+        """Generate an SQLite expression implementing the query.
+        Return a clause string, a sequence of substitution values for
+        the clause, and a Query object representing the "remainder" 
+        Returns (clause, subvals) where clause is a valid sqlite
         WHERE clause implementing the query and subvals is a list of
         items to be substituted for ?s in the clause.
         """
-        raise NotImplementedError
+        return None, ()
 
     def match(self, item):
         """Check whether this query matches a given Item. Can be used to
@@ -447,70 +623,84 @@ class Query(object):
         """
         raise NotImplementedError
 
-    def statement(self, columns='*'):
-        """Returns (query, subvals) where clause is a sqlite SELECT
-        statement to enact this query and subvals is a list of values
-        to substitute in for ?s in the query.
-        """
-        clause, subvals = self.clause()
-        return ('SELECT ' + columns + ' FROM items WHERE ' + clause, subvals)
-
-    def count(self, tx):
-        """Returns `(num, length)` where `num` is the number of items in
-        the library matching this query and `length` is their total
-        length in seconds.
-        """
-        clause, subvals = self.clause()
-        statement = 'SELECT COUNT(id), SUM(length) FROM items WHERE ' + clause
-        result = tx.query(statement, subvals)[0]
-        return (result[0], result[1] or 0.0)
-
 class FieldQuery(Query):
     """An abstract query that searches in a specific field for a
-    pattern.
+    pattern. Subclasses must provide a `value_match` class method, which
+    determines whether a certain pattern string matches a certain value
+    string. Subclasses may also provide `col_clause` to implement the
+    same matching functionality in SQLite.
     """
-    def __init__(self, field, pattern):
+    def __init__(self, field, pattern, fast=True):
         self.field = field
         self.pattern = pattern
+        self.fast = fast
+
+    def col_clause(self):
+        return None, ()
+
+    def clause(self):
+        if self.fast:
+            return self.col_clause()
+        else:
+            # Matching a flexattr. This is a slow query.
+            return None, ()
+
+    @classmethod
+    def value_match(cls, pattern, value):
+        """Determine whether the value matches the pattern. Both
+        arguments are strings.
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def _raw_value_match(cls, pattern, value):
+        """Determine whether the value matches the pattern. The value
+        may have any type.
+        """
+        return cls.value_match(pattern, util.as_string(value))
+
+    def match(self, item):
+        return self._raw_value_match(self.pattern, item.get(self.field))
 
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
-    def clause(self):
+    def col_clause(self):
         pattern = self.pattern
         if self.field == 'path' and isinstance(pattern, str):
             pattern = buffer(pattern)
         return self.field + " = ?", [pattern]
 
-    def match(self, item):
-        return self.pattern == getattr(item, self.field)
+    # We override the "raw" version here as a special case because we
+    # want to compare objects before conversion.
+    @classmethod
+    def _raw_value_match(cls, pattern, value):
+        return pattern == value
 
 class SubstringQuery(FieldQuery):
     """A query that matches a substring in a specific item field."""
-    def clause(self):
+    def col_clause(self):
         search = '%' + (self.pattern.replace('\\','\\\\').replace('%','\\%')
                             .replace('_','\\_')) + '%'
         clause = self.field + " like ? escape '\\'"
         subvals = [search]
         return clause, subvals
 
-    def match(self, item):
-        value = util.as_string(getattr(item, self.field))
-        return self.pattern.lower() in value.lower()
+    @classmethod
+    def value_match(cls, pattern, value):
+        return pattern.lower() in value.lower()
 
 class RegexpQuery(FieldQuery):
-    """A query that matches a regular expression in a specific item field."""
-    def __init__(self, field, pattern):
-        super(RegexpQuery, self).__init__(field, pattern)
-        self.regexp = re.compile(pattern)
-
-    def clause(self):
-        clause = self.field + " REGEXP ?"
-        subvals = [self.pattern]
-        return clause, subvals
-
-    def match(self, item):
-        value = util.as_string(getattr(item, self.field))
-        return self.regexp.search(value) is not None
+    """A query that matches a regular expression in a specific item
+    field.
+    """
+    @classmethod
+    def value_match(cls, pattern, value):
+        try:
+            res = re.search(pattern, value)
+        except re.error:
+            # Invalid regular expression.
+            return False
+        return res is not None
 
 class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
@@ -521,6 +711,73 @@ class BooleanQuery(MatchQuery):
         if isinstance(pattern, basestring):
             self.pattern = util.str2bool(pattern)
         self.pattern = int(self.pattern)
+
+class NumericQuery(FieldQuery):
+    """Matches numeric fields. A syntax using Ruby-style range ellipses
+    (``..``) lets users specify one- or two-sided ranges. For example,
+    ``year:2001..`` finds music released since the turn of the century.
+    """
+    kinds = dict((r[0], r[1]) for r in ITEM_FIELDS)
+
+    @classmethod
+    def applies_to(cls, field):
+        """Determine whether a field has numeric type. NumericQuery
+        should only be used with such fields.
+        """
+        return cls.kinds.get(field) in (int, float)
+
+    def _convert(self, s):
+        """Convert a string to the appropriate numeric type. If the
+        string cannot be converted, return None.
+        """
+        try:
+            return self.numtype(s)
+        except ValueError:
+            return None
+
+    def __init__(self, field, pattern, fast=True):
+        super(NumericQuery, self).__init__(field, pattern, fast)
+        self.numtype = self.kinds[field]
+
+        parts = pattern.split('..', 1)
+        if len(parts) == 1:
+            # No range.
+            self.point = self._convert(parts[0])
+            self.rangemin = None
+            self.rangemax = None
+        else:
+            # One- or two-sided range.
+            self.point = None
+            self.rangemin = self._convert(parts[0])
+            self.rangemax = self._convert(parts[1])
+
+    def match(self, item):
+        value = getattr(item, self.field)
+        if isinstance(value, basestring):
+            value = self._convert(value)
+
+        if self.point is not None:
+            return value == self.point
+        else:
+            if self.rangemin is not None and value < self.rangemin:
+                return False
+            if self.rangemax is not None and value > self.rangemax:
+                return False
+            return True
+
+    def col_clause(self):
+        if self.point is not None:
+            return self.field + '=?', (self.point,)
+        else:
+            if self.rangemin is not None and self.rangemax is not None:
+                return (u'{0} >= ? AND {0} <= ?'.format(self.field),
+                        (self.rangemin, self.rangemax))
+            elif self.rangemin is not None:
+                return u'{0} >= ?'.format(self.field), (self.rangemin,)
+            elif self.rangemax is not None:
+                return u'{0} <= ?'.format(self.field), (self.rangemax,)
+            else:
+                return '1'
 
 class SingletonQuery(Query):
     """Matches either singleton or non-singleton items."""
@@ -557,108 +814,33 @@ class CollectionQuery(Query):
         subvals = []
         for subq in self.subqueries:
             subq_clause, subq_subvals = subq.clause()
+            if not subq_clause:
+                # Fall back to slow query.
+                return None, ()
             clause_parts.append('(' + subq_clause + ')')
             subvals += subq_subvals
         clause = (' ' + joiner + ' ').join(clause_parts)
         return clause, subvals
 
-    # Regular expression for _parse_query_part, below.
-    _pq_regex = re.compile(
-        # Non-capturing optional segment for the keyword.
-        r'(?:'
-            r'(\S+?)'    # The field key.
-            r'(?<!\\):'  # Unescaped :
-        r')?'
-
-        r'((?<!\\):?)'   # Unescaped : indicating a regex.
-        r'(.+)',         # The term itself.
-
-        re.I  # Case-insensitive.
-    )
     @classmethod
-    def _parse_query_part(cls, part):
-        """Takes a query in the form of a key/value pair separated by a
-        colon. An additional colon before the value indicates that the
-        value is a regular expression. Returns tuple (key, term,
-        is_regexp) where key is None if the search term has no key and
-        is_regexp indicates whether term is a regular expression or an
-        ordinary substring match.
-
-        For instance,
-        parse_query('stapler') == (None, 'stapler', false)
-        parse_query('color:red') == ('color', 'red', false)
-        parse_query(':^Quiet') == (None, '^Quiet', true)
-        parse_query('color::b..e') == ('color', 'b..e', true)
-
-        Colons may be 'escaped' with a backslash to disable the keying
-        behavior.
-        """
-        part = part.strip()
-        match = cls._pq_regex.match(part)
-        if match:
-            return (
-                match.group(1),  # Key.
-                match.group(3).replace(r'\:', ':'),  # Term.
-                match.group(2) == ':',  # Regular expression.
-            )
-
-    @classmethod
-    def from_strings(cls, query_parts, default_fields=None,
-                     all_keys=ITEM_KEYS):
+    def from_strings(cls, query_parts, default_fields, all_keys):
         """Creates a query from a list of strings in the format used by
-        _parse_query_part. If default_fields are specified, they are the
+        parse_query_part. If default_fields are specified, they are the
         fields to be searched by unqualified search terms. Otherwise,
         all fields are searched for those terms.
         """
         subqueries = []
         for part in query_parts:
-            res = cls._parse_query_part(part)
-            if not res:
-                continue
-            key, pattern, is_regexp = res
-
-            # No key specified.
-            if key is None:
-                if os.sep in pattern and 'path' in all_keys:
-                    # This looks like a path.
-                    subqueries.append(PathQuery(pattern))
-                else:
-                    # Match any field.
-                    if is_regexp:
-                        subq = AnyRegexpQuery(pattern, default_fields)
-                    else:
-                        subq = AnySubstringQuery(pattern, default_fields)
-                    subqueries.append(subq)
-
-            # A boolean field.
-            elif key.lower() == 'comp':
-                subqueries.append(BooleanQuery(key.lower(), pattern))
-
-            # Path field.
-            elif key.lower() == 'path' and 'path' in all_keys:
-                subqueries.append(PathQuery(pattern))
-
-            # Other (recognized) field.
-            elif key.lower() in all_keys:
-                if is_regexp:
-                    subqueries.append(RegexpQuery(key.lower(), pattern))
-                else:
-                    subqueries.append(SubstringQuery(key.lower(), pattern))
-
-            # Singleton query (not a real field).
-            elif key.lower() == 'singleton':
-                subqueries.append(SingletonQuery(util.str2bool(pattern)))
-
-            # Unrecognized field.
-            else:
-                log.warn(u'no such field in query: {0}'.format(key))
-
+            subq = construct_query_part(part, default_fields, all_keys)
+            if subq:
+                subqueries.append(subq)
         if not subqueries:  # No terms in query.
             subqueries = [TrueQuery()]
         return cls(subqueries)
 
     @classmethod
-    def from_string(cls, query, default_fields=None, all_keys=ITEM_KEYS):
+    def from_string(cls, query, default_fields=ITEM_DEFAULT_FIELDS,
+                    all_keys=ITEM_KEYS):
         """Creates a query based on a single string. The string is split
         into query parts using shell-style syntax.
         """
@@ -668,68 +850,29 @@ class CollectionQuery(Query):
         if isinstance(query, unicode):
             query = query.encode('utf8')
         parts = [s.decode('utf8') for s in shlex.split(query)]
-        return cls.from_strings(parts, default_fields=default_fields,
-                                all_keys=all_keys)
+        return cls.from_strings(parts, default_fields, all_keys)
 
-class AnySubstringQuery(CollectionQuery):
-    """A query that matches a substring in any of a list of metadata
-    fields.
+class AnyFieldQuery(CollectionQuery):
+    """A query that matches if a given FieldQuery subclass matches in
+    any field. The individual field query class is provided to the
+    constructor.
     """
-    def __init__(self, pattern, fields=None):
-        """Create a query for pattern over the sequence of fields
-        given. If no fields are given, all available fields are
-        used.
-        """
+    def __init__(self, pattern, fields, cls):
         self.pattern = pattern
-        self.fields = fields or ITEM_KEYS_WRITABLE
+        self.fields = fields
+        self.query_class = cls
 
         subqueries = []
         for field in self.fields:
-            subqueries.append(SubstringQuery(field, pattern))
-        super(AnySubstringQuery, self).__init__(subqueries)
+            subqueries.append(cls(field, pattern, True))
+        super(AnyFieldQuery, self).__init__(subqueries)
 
     def clause(self):
         return self.clause_with_joiner('or')
 
     def match(self, item):
-        for fld in self.fields:
-            try:
-                val = getattr(item, fld)
-            except KeyError:
-                continue
-            if isinstance(val, basestring) and \
-               self.pattern.lower() in val.lower():
-                return True
-        return False
-
-class AnyRegexpQuery(CollectionQuery):
-    """A query that matches a regexp in any of a list of metadata
-    fields.
-    """
-    def __init__(self, pattern, fields=None):
-        """Create a query for regexp over the sequence of fields
-        given. If no fields are given, all available fields are
-        used.
-        """
-        self.regexp = re.compile(pattern)
-        self.fields = fields or ITEM_KEYS_WRITABLE
-
-        subqueries = []
-        for field in self.fields:
-            subqueries.append(RegexpQuery(field, pattern))
-        super(AnyRegexpQuery, self).__init__(subqueries)
-
-    def clause(self):
-        return self.clause_with_joiner('or')
-
-    def match(self, item):
-        for fld in self.fields:
-            try:
-                val = getattr(item, fld)
-            except KeyError:
-                continue
-            if isinstance(val, basestring) and \
-               self.regexp.match(val) is not None:
+        for subq in self.subqueries:
+            if subq.match(item):
                 return True
         return False
 
@@ -781,198 +924,211 @@ class PathQuery(Query):
         file_blob = buffer(self.file_path)
         return '(path = ?) || (path LIKE ?)', (file_blob, dir_pat)
 
-class ResultIterator(object):
-    """An iterator into an item query result set. The iterator lazily
-    constructs Item objects that reflect database rows.
+class Results(object):
+    """An item query result set. Iterating over the collection lazily
+    constructs LibModel objects that reflect database rows.
     """
-    def __init__(self, rows):
+    def __init__(self, model_class, rows, lib, query=None):
+        """Create a result set that will construct objects of type
+        `model_class`, which should be a subclass of `LibModel`, out of
+        the query result mapping in `rows`. The new objects are
+        associated with the library `lib`. If `query` is provided, it is
+        used as a predicate to filter the results for a "slow query" that
+        cannot be evaluated by the database directly.
+        """
+        self.model_class = model_class
         self.rows = rows
-        self.rowiter = iter(self.rows)
+        self.lib = lib
+        self.query = query
 
     def __iter__(self):
-        return self
+        """Construct Python objects for all rows that pass the query
+        predicate.
+        """
+        for row in self.rows:
+            # Get the flexible attributes for the object.
+            with self.lib.transaction() as tx:
+                flex_rows = tx.query(
+                    'SELECT * FROM {0} WHERE entity_id=?'.format(
+                        self.model_class._flex_table
+                    ),
+                    (row['id'],)
+                )
+            values = dict(row)
+            values.update(
+                dict((row['key'], row['value']) for row in flex_rows)
+            )
 
-    def next(self):
-        row = self.rowiter.next()  # May raise StopIteration.
-        return Item(row)
+            # Construct the Python object and yield it if it passes the
+            # predicate.
+            obj = self.model_class(self.lib, **values)
+            if not self.query or self.query.match(obj):
+                yield obj
 
+    def __len__(self):
+        """Get the number of matching objects.
+        """
+        if self.query:
+            # A slow query. Fall back to testing every object.
+            count = 0
+            for obj in self:
+                count += 1
+            return count
 
-# An abstract library.
+        else:
+            # A fast query. Just count the rows.
+            return len(self.rows)
 
-class BaseLibrary(object):
-    """Abstract base class for music libraries, which are loosely
-    defined as sets of Items.
+    def __nonzero__(self):
+        """Does this result contain any objects?
+        """
+        return bool(len(self))
+
+    def __getitem__(self, n):
+        """Get the nth item in this result set. This is inefficient: all
+        items up to n are materialized and thrown away.
+        """
+        it = iter(self)
+        try:
+            for i in range(n):
+                it.next()
+            return it.next()
+        except StopIteration:
+            raise IndexError('result index {0} out of range'.format(n))
+
+    def get(self):
+        """Return the first matching object, or None if no objects
+        match.
+        """
+        it = iter(self)
+        try:
+            return it.next()
+        except StopIteration:
+            return None
+
+# Regular expression for parse_query_part, below.
+PARSE_QUERY_PART_REGEX = re.compile(
+    # Non-capturing optional segment for the keyword.
+    r'(?:'
+        r'(\S+?)'    # The field key.
+        r'(?<!\\):'  # Unescaped :
+    r')?'
+
+    r'(.+)',         # The term itself.
+
+    re.I  # Case-insensitive.
+)
+def parse_query_part(part):
+    """Takes a query in the form of a key/value pair separated by a
+    colon. The value part is matched against a list of prefixes that
+    can be extended by plugins to add custom query types. For
+    example, the colon prefix denotes a regular expression query.
+
+    The function returns a tuple of `(key, value, cls)`. `key` may
+    be None, indicating that any field may be matched. `cls` is a
+    subclass of `FieldQuery`.
+
+    For instance,
+    parse_query('stapler') == (None, 'stapler', None)
+    parse_query('color:red') == ('color', 'red', None)
+    parse_query(':^Quiet') == (None, '^Quiet', RegexpQuery)
+    parse_query('color::b..e') == ('color', 'b..e', RegexpQuery)
+
+    Prefixes may be 'escaped' with a backslash to disable the keying
+    behavior.
     """
-    def __init__(self):
-        raise NotImplementedError
+    part = part.strip()
+    match = PARSE_QUERY_PART_REGEX.match(part)
 
+    prefixes = {':': RegexpQuery}
+    prefixes.update(plugins.queries())
 
-    # Helpers.
+    if match:
+        key = match.group(1)
+        term = match.group(2).replace('\:', ':')
+        # Match the search term against the list of prefixes.
+        for pre, query_class in prefixes.items():
+            if term.startswith(pre):
+                return key, term[len(pre):], query_class
+        if key and NumericQuery.applies_to(key):
+            return key, term, NumericQuery
+        return key, term, SubstringQuery  # The default query type.
 
-    @classmethod
-    def _get_query(cls, val=None, album=False):
-        """Takes a value which may be None, a query string, a query
-        string list, or a Query object, and returns a suitable Query
-        object. album determines whether the query is to match items
-        or albums.
-        """
-        if album:
-            default_fields = ALBUM_DEFAULT_FIELDS
-            all_keys = ALBUM_KEYS
-        else:
-            default_fields = ITEM_DEFAULT_FIELDS
-            all_keys = ITEM_KEYS
-
-        # Convert a single string into a list of space-separated
-        # criteria.
-        if isinstance(val, basestring):
-            val = val.split()
-
-        if val is None:
-            return TrueQuery()
-        elif isinstance(val, list) or isinstance(val, tuple):
-            return AndQuery.from_strings(val, default_fields, all_keys)
-        elif isinstance(val, Query):
-            return val
-        elif not isinstance(val, Query):
-            raise ValueError('query must be None or have type Query or str')
-
-
-    # Basic operations.
-
-    def add(self, item, copy=False):
-        """Add the item as a new object to the library database. The id
-        field will be updated; the new id is returned. If copy, then
-        each item is copied to the destination location before it is
-        added.
-        """
-        raise NotImplementedError
-
-    def load(self, item, load_id=None):
-        """Refresh the item's metadata from the library database. If
-        fetch_id is not specified, use the item's current id.
-        """
-        raise NotImplementedError
-
-    def store(self, item, store_id=None, store_all=False):
-        """Save the item's metadata into the library database. If
-        store_id is specified, use it instead of the item's current id.
-        If store_all is true, save the entire record instead of just
-        the dirty fields.
-        """
-        raise NotImplementedError
-
-    def remove(self, item):
-        """Removes the item from the database (leaving the file on
-        disk).
-        """
-        raise NotImplementedError
-
-
-    # Browsing operations.
-    # Naive implementations are provided, but these methods should be
-    # overridden if a better implementation exists.
-
-    def _get(self, query=None, default_fields=None):
-        """Returns a sequence of the items matching query, which may
-        be None (match the entire library), a Query object, or a query
-        string. If default_fields is specified, it restricts the fields
-        that may be matched by unqualified query string terms.
-        """
-        raise NotImplementedError
-
-    def albums(self, artist=None, query=None):
-        """Returns a sorted list of BaseAlbum objects, possibly filtered
-        by an artist name or an arbitrary query. Unqualified query
-        string terms only match fields that apply at an album
-        granularity: artist, album, and genre.
-        """
-        # Gather the unique album/artist names and associated example
-        # Items.
-        specimens = {}
-        for item in self._get(query, ALBUM_DEFAULT_FIELDS):
-            if (artist is None or item.artist == artist):
-                key = (item.artist, item.album)
-                if key not in specimens:
-                    specimens[key] = item
-
-        # Build album objects.
-        for k in sorted(specimens.keys()):
-            item = specimens[k]
-            record = {}
-            for key in ALBUM_KEYS_ITEM:
-                record[key] = getattr(item, key)
-            yield BaseAlbum(self, record)
-
-    def items(self, artist=None, album=None, title=None, query=None):
-        """Returns a sequence of the items matching the given artist,
-        album, title, and query (if present). Sorts in such a way as to
-        group albums appropriately. Unqualified query string terms only
-        match intuitively relevant fields: artist, album, genre, title,
-        and comments.
-        """
-        out = []
-        for item in self._get(query, ITEM_DEFAULT_FIELDS):
-            if (artist is None or item.artist == artist) and \
-               (album is None  or item.album == album) and \
-               (title is None  or item.title == title):
-                out.append(item)
-
-        # Sort by: artist, album, disc, track.
-        def compare(a, b):
-            return cmp(a.artist, b.artist) or \
-                   cmp(a.album, b.album) or \
-                   cmp(a.disc, b.disc) or \
-                   cmp(a.track, b.track)
-        return sorted(out, compare)
-
-class BaseAlbum(object):
-    """Represents an album in the library, which in turn consists of a
-    collection of items in the library.
-
-    This base version just reflects the metadata of the album's items
-    and therefore isn't particularly useful. The items are referenced
-    by the record's album and artist fields. Implementations can add
-    album-level metadata or use distinct backing stores.
+def construct_query_part(query_part, default_fields, all_keys):
+    """Create a query from a single query component. Return a Query
+    instance or None if the value cannot be parsed.
     """
-    def __init__(self, library, record):
-        super(BaseAlbum, self).__setattr__('_library', library)
-        super(BaseAlbum, self).__setattr__('_record', record)
+    parsed = parse_query_part(query_part)
+    if not parsed:
+        return
 
-    def __getattr__(self, key):
-        """Get the value for an album attribute."""
-        if key in self._record:
-            return self._record[key]
+    key, pattern, query_class = parsed
+
+    # No key specified.
+    if key is None:
+        if os.sep in pattern and 'path' in all_keys:
+            # This looks like a path.
+            return PathQuery(pattern)
+        elif issubclass(query_class, FieldQuery):
+            # The query type matches a specific field, but none was
+            # specified. So we use a version of the query that matches
+            # any field.
+            return AnyFieldQuery(pattern, default_fields, query_class)
         else:
-            raise AttributeError('no such field %s' % key)
+            # Other query type.
+            return query_class(pattern)
 
-    def __setattr__(self, key, value):
-        """Set the value of an album attribute, modifying each of the
-        album's items.
-        """
-        if key in self._record:
-            # Reflect change in this object.
-            self._record[key] = value
-            # Modify items.
-            if key in ALBUM_KEYS_ITEM:
-                items = self._library.items(albumartist=self.albumartist,
-                                            album=self.album)
-                for item in items:
-                    setattr(item, key, value)
-                self._library.store(item)
+    key = key.lower()
+
+    # A boolean field.
+    if key.lower() == 'comp':
+        return BooleanQuery(key, pattern)
+
+    # Path field.
+    elif key == 'path' and 'path' in all_keys:
+        if query_class is SubstringQuery:
+            # By default, use special path matching logic.
+            return PathQuery(pattern)
         else:
-            super(BaseAlbum, self).__setattr__(key, value)
+            # Specific query type requested.
+            return query_class('path', pattern)
 
-    def load(self):
-        """Refresh this album's cached metadata from the library.
-        """
-        items = self._library.items(artist=self.artist, album=self.album)
-        item = iter(items).next()
-        for key in ALBUM_KEYS_ITEM:
-            self._record[key] = getattr(item, key)
+    # Singleton query (not a real field).
+    elif key == 'singleton':
+        return SingletonQuery(util.str2bool(pattern))
+
+    # Other field.
+    else:
+        return query_class(key.lower(), pattern, key in all_keys)
+
+def get_query(val, album=False):
+    """Takes a value which may be None, a query string, a query string
+    list, or a Query object, and returns a suitable Query object. album
+    determines whether the query is to match items or albums.
+    """
+    if album:
+        default_fields = ALBUM_DEFAULT_FIELDS
+        all_keys = ALBUM_KEYS
+    else:
+        default_fields = ITEM_DEFAULT_FIELDS
+        all_keys = ITEM_KEYS
+
+    # Convert a single string into a list of space-separated
+    # criteria.
+    if isinstance(val, basestring):
+        val = val.split()
+
+    if val is None:
+        return TrueQuery()
+    elif isinstance(val, list) or isinstance(val, tuple):
+        return AndQuery.from_strings(val, default_fields, all_keys)
+    elif isinstance(val, Query):
+        return val
+    else:
+        raise ValueError('query must be None or have type Query or str')
 
 
-# Concrete DB-backed library.
+# The Library: interface to the database.
 
 class Transaction(object):
     """A context manager for safe, concurrent access to the database.
@@ -1026,14 +1182,12 @@ class Transaction(object):
         """Execute a string containing multiple SQL statements."""
         self.lib._connection().executescript(statements)
 
-class Library(BaseLibrary):
+class Library(object):
     """A music library using an SQLite database as a metadata store."""
     def __init__(self, path='library.blb',
                        directory='~/Music',
                        path_formats=((PF_KEY_DEFAULT,
                                       '$artist/$album/$track $title'),),
-                       art_filename='cover',
-                       timeout=5.0,
                        replacements=None,
                        item_fields=ITEM_FIELDS,
                        album_fields=ALBUM_FIELDS):
@@ -1043,12 +1197,10 @@ class Library(BaseLibrary):
             self.path = bytestring_path(normpath(path))
         self.directory = bytestring_path(normpath(directory))
         self.path_formats = path_formats
-        self.art_filename = art_filename
         self.replacements = replacements
 
         self._memotable = {}  # Used for template substitution performance.
 
-        self.timeout = timeout
         self._connections = {}
         self._tx_stacks = defaultdict(list)
         # A lock to protect the _connections and _tx_stacks maps, which
@@ -1067,6 +1219,8 @@ class Library(BaseLibrary):
         # Set up database schema.
         self._make_table('items', item_fields)
         self._make_table('albums', album_fields)
+        self._make_attribute_table('item')
+        self._make_attribute_table('album')
 
     def _make_table(self, table, fields):
         """Set up the schema of the library file. fields is a list of
@@ -1085,9 +1239,16 @@ class Library(BaseLibrary):
 
         if not current_fields:
             # No table exists.
-            setup_sql =  'CREATE TABLE %s (' % table
-            setup_sql += ', '.join(['%s %s' % f[:2] for f in fields])
-            setup_sql += ');\n'
+            columns = []
+            for field in fields:
+                name, typ = field[:2]
+                if name == 'id':
+                    sql_type = SQLITE_KEY_TYPE
+                else:
+                    sql_type = SQLITE_TYPES[typ]
+                columns.append('{0} {1}'.format(name, sql_type))
+            setup_sql = 'CREATE TABLE {0} ({1});\n'.format(table,
+                                                           ', '.join(columns))
 
         else:
             # Table exists but is missing fields.
@@ -1098,8 +1259,9 @@ class Library(BaseLibrary):
                         break
                 else:
                     assert False
-                setup_sql += 'ALTER TABLE %s ' % table
-                setup_sql += 'ADD COLUMN %s %s;\n' % field[:2]
+                setup_sql += 'ALTER TABLE {0} ADD COLUMN {1} {2};\n'.format(
+                    table, field[0], SQLITE_TYPES[field[1]]
+                )
 
         # Special case. If we're moving from a version without
         # albumartist, copy all the "artist" values to "albumartist"
@@ -1111,6 +1273,22 @@ class Library(BaseLibrary):
         with self.transaction() as tx:
             tx.script(setup_sql)
 
+    def _make_attribute_table(self, entity):
+        """Create a table and associated index for flexible attributes
+        for the given entity (if they don't exist).
+        """
+        with self.transaction() as tx:
+            tx.script("""
+                CREATE TABLE IF NOT EXISTS {0}_attributes (
+                    id INTEGER PRIMARY KEY,
+                    entity_id INTEGER,
+                    key TEXT,
+                    value TEXT,
+                    UNIQUE(entity_id, key) ON CONFLICT REPLACE);
+                CREATE INDEX IF NOT EXISTS {0}_id_attribute
+                    ON {0}_attributes (entity_id);
+                """.format(entity))
+
     def _connection(self):
         """Get a SQLite connection object to the underlying database.
         One connection object is created per thread.
@@ -1121,12 +1299,13 @@ class Library(BaseLibrary):
                 return self._connections[thread_id]
             else:
                 # Make a new connection.
-                conn = sqlite3.connect(self.path, timeout=self.timeout)
+                conn = sqlite3.connect(
+                    self.path,
+                    timeout=beets.config['timeout'].as_number(),
+                )
 
                 # Access SELECT results like dictionaries.
                 conn.row_factory = sqlite3.Row
-                # Add the REGEXP function to SQLite queries.
-                conn.create_function("REGEXP", 2, _regexp)
 
                 self._connections[thread_id] = conn
                 return conn
@@ -1148,7 +1327,7 @@ class Library(BaseLibrary):
         return Transaction(self)
 
     def destination(self, item, pathmod=None, fragment=False,
-                    basedir=None, platform=None):
+                    basedir=None, platform=None, path_formats=None):
         """Returns the path in the library directory designated for item
         item (i.e., where the file ought to be). fragment makes this
         method return just the path fragment underneath the root library
@@ -1159,10 +1338,11 @@ class Library(BaseLibrary):
         pathmod = pathmod or os.path
         platform = platform or sys.platform
         basedir = basedir or self.directory
+        path_formats = path_formats or self.path_formats
 
         # Use a path format based on a query, falling back on the
         # default.
-        for query, path_format in self.path_formats:
+        for query, path_format in path_formats:
             if query == PF_KEY_DEFAULT:
                 continue
             query = AndQuery.from_string(query)
@@ -1172,7 +1352,7 @@ class Library(BaseLibrary):
                 break
         else:
             # No query matched; fall back to default.
-            for query, path_format in self.path_formats:
+            for query, path_format in path_formats:
                 if query == PF_KEY_DEFAULT:
                     break
             else:
@@ -1219,9 +1399,16 @@ class Library(BaseLibrary):
     # Item manipulation.
 
     def add(self, item, copy=False):
-        item.library = self
+        """Add the item as a new object to the library database. The id
+        field will be updated; the new id is returned. If copy, then
+        each item is copied to the destination location before it is
+        added.
+        """
+        item.added = time.time()
         if copy:
             self.move(item, copy=True)
+        if not item._lib:
+            item._lib = self
 
         # Build essential parts of query.
         columns = ','.join([key for key in ITEM_KEYS if key != 'id'])
@@ -1235,56 +1422,25 @@ class Library(BaseLibrary):
                 subvars.append(value)
 
         # Issue query.
-        query = 'INSERT INTO items (' + columns + ') VALUES (' + values + ')'
         with self.transaction() as tx:
-            new_id = tx.mutate(query, subvars)
+            # Main table insertion.
+            new_id = tx.mutate(
+                'INSERT INTO items (' + columns + ') VALUES (' + values + ')',
+                subvars
+            )
 
-        item._clear_dirty()
+            # Flexible attributes.
+            flexins = 'INSERT INTO item_attributes ' \
+                      ' (entity_id, key, value)' \
+                      ' VALUES (?, ?, ?)'
+            for key, value in item._values_flex.items():
+                if value is not None:
+                    tx.mutate(flexins, (new_id, key, value))
+
+        item.clear_dirty()
         item.id = new_id
         self._memotable = {}
         return new_id
-
-    def load(self, item, load_id=None):
-        if load_id is None:
-            load_id = item.id
-
-        with self.transaction() as tx:
-            rows = tx.query('SELECT * FROM items WHERE id=?', (load_id,))
-        item._fill_record(rows[0])
-        item._clear_dirty()
-
-    def store(self, item, store_id=None, store_all=False):
-        if store_id is None:
-            store_id = item.id
-
-        # Build assignments for query.
-        assignments = ''
-        subvars = []
-        for key in ITEM_KEYS:
-            if (key != 'id') and (item.dirty[key] or store_all):
-                assignments += key + '=?,'
-                value = getattr(item, key)
-                # Wrap path strings in buffers so they get stored
-                # "in the raw".
-                if key == 'path' and isinstance(value, str):
-                    value = buffer(value)
-                subvars.append(value)
-
-        if not assignments:
-            # nothing to store (i.e., nothing was dirty)
-            return
-
-        assignments = assignments[:-1]  # Knock off last ,
-
-        # Finish the query.
-        query = 'UPDATE items SET ' + assignments + ' WHERE id=?'
-        subvars.append(store_id)
-
-        with self.transaction() as tx:
-            tx.mutate(query, subvars)
-        item._clear_dirty()
-
-        self._memotable = {}
 
     def remove(self, item, delete=False, with_album=True):
         """Removes this item. If delete, then the associated file is
@@ -1296,13 +1452,9 @@ class Library(BaseLibrary):
         with self.transaction() as tx:
             tx.mutate('DELETE FROM items WHERE id=?', (item.id,))
 
-        if album:
-            item_iter = album.items()
-            try:
-                item_iter.next()
-            except StopIteration:
-                # Album is empty.
-                album.remove(delete, False)
+        # Remove the album if it is empty.
+        if album and not album.items():
+            album.remove(delete, False)
 
         if delete:
             util.remove(item.path)
@@ -1340,13 +1492,14 @@ class Library(BaseLibrary):
         old_path = item.path
         item.move(dest, copy)
         if item.id is not None:
-            self.store(item)
+            item.store()
 
         # If this item is in an album, move its art.
         if with_album:
             album = self.get_album(item)
             if album:
                 album.move_art(copy)
+                album.store()
 
         # Prune vacated directory.
         if not copy:
@@ -1356,38 +1509,57 @@ class Library(BaseLibrary):
     # Querying.
 
     def albums(self, query=None, artist=None):
-        query = self._get_query(query, True)
+        """Returns a sorted list of Album objects, possibly filtered
+        by an artist name or an arbitrary query. Unqualified query
+        string terms only match fields that apply at an album
+        granularity: artist, album, and genre.
+        """
+        query = get_query(query, True)
         if artist is not None:
             # "Add" the artist to the query.
             query = AndQuery((query, MatchQuery('albumartist', artist)))
+
         where, subvals = query.clause()
-        sql = "SELECT * FROM albums " + \
-              "WHERE " + where + \
-              " ORDER BY %s, album" % \
-                _orelse("albumartist_sort", "albumartist")
         with self.transaction() as tx:
-            rows = tx.query(sql, subvals)
-        return [Album(self, dict(res)) for res in rows]
+            rows = tx.query(
+                "SELECT * FROM albums WHERE {0} "
+                "ORDER BY {1}, album".format(
+                    where or '1',
+                    _orelse("albumartist_sort", "albumartist"),
+                ),
+                subvals,
+            )
+
+        return Results(Album, rows, self, None if where else query)
 
     def items(self, query=None, artist=None, album=None, title=None):
-        queries = [self._get_query(query, False)]
+        """Returns a sequence of the items matching the given artist,
+        album, title, and query (if present). Sorts in such a way as to
+        group albums appropriately. Unqualified query string terms only
+        match intuitively relevant fields: artist, album, genre, title,
+        and comments.
+        """
+        queries = [get_query(query, False)]
         if artist is not None:
             queries.append(MatchQuery('artist', artist))
         if album is not None:
             queries.append(MatchQuery('album', album))
         if title is not None:
             queries.append(MatchQuery('title', title))
-        super_query = AndQuery(queries)
-        where, subvals = super_query.clause()
+        query = AndQuery(queries)
+        where, subvals = query.clause()
 
-        sql = "SELECT * FROM items " + \
-              "WHERE " + where + \
-              " ORDER BY %s, album, disc, track" % \
-                _orelse("artist_sort", "artist")
-        log.debug('Getting items with SQL: %s' % sql)
         with self.transaction() as tx:
-            rows = tx.query(sql, subvals)
-        return ResultIterator(rows)
+            rows = tx.query(
+                "SELECT * FROM items WHERE {0} "
+                "ORDER BY {1}, album, disc, track".format(
+                    where or '1',
+                    _orelse("artist_sort", "artist"),
+                ),
+                subvals
+            )
+
+        return Results(Item, rows, self, None if where else query)
 
 
     # Convenience accessors.
@@ -1395,13 +1567,7 @@ class Library(BaseLibrary):
     def get_item(self, id):
         """Fetch an Item by its ID. Returns None if no match is found.
         """
-        with self.transaction() as tx:
-            rows = tx.query("SELECT * FROM items WHERE id=?", (id,))
-        it = ResultIterator(rows)
-        try:
-            return it.next()
-        except StopIteration:
-            return None
+        return self.items(MatchQuery('id', id)).get()
 
     def get_album(self, item_or_id):
         """Given an album ID or an item associated with an album,
@@ -1415,13 +1581,7 @@ class Library(BaseLibrary):
         if album_id is None:
             return None
 
-        with self.transaction() as tx:
-            rows = tx.query(
-                'SELECT * FROM albums WHERE id=?',
-                (album_id,)
-            )
-        if rows:
-            return Album(self, dict(rows[0]))
+        return self.albums(MatchQuery('id', album_id)).get()
 
     def add_album(self, items):
         """Create a new album in the database with metadata derived
@@ -1429,14 +1589,18 @@ class Library(BaseLibrary):
         don't yet have an ID. Returns an Album object.
         """
         # Set the metadata from the first item.
-        item_values = dict(
+        album_values = dict(
             (key, getattr(items[0], key)) for key in ALBUM_KEYS_ITEM)
+
+        # When adding an album and its items for the first time, the
+        # items do not yet have a timestamp.
+        album_values['added'] = time.time()
 
         with self.transaction() as tx:
             sql = 'INSERT INTO albums (%s) VALUES (%s)' % \
                 (', '.join(ALBUM_KEYS_ITEM),
                 ', '.join(['?'] * len(ALBUM_KEYS_ITEM)))
-            subvals = [item_values[key] for key in ALBUM_KEYS_ITEM]
+            subvals = [album_values[key] for key in ALBUM_KEYS_ITEM]
             album_id = tx.mutate(sql, subvals)
 
             # Add the items to the library.
@@ -1445,82 +1609,36 @@ class Library(BaseLibrary):
                 if item.id is None:
                     self.add(item)
                 else:
-                    self.store(item)
+                    item.store()
 
         # Construct the new Album object.
-        record = {}
-        for key in ALBUM_KEYS:
-            if key in ALBUM_KEYS_ITEM:
-                record[key] = item_values[key]
-            else:
-                # Non-item fields default to None.
-                record[key] = None
-        record['id'] = album_id
-        album = Album(self, record)
-
+        album_values['id'] = album_id
+        album = Album(self, **album_values)
         return album
 
-class Album(BaseAlbum):
+class Album(LibModel):
     """Provides access to information about albums stored in a
     library. Reflects the library's "albums" table, including album
     art.
     """
-    def __init__(self, lib, record):
-        # Decode Unicode paths in database.
-        if 'artpath' in record and isinstance(record['artpath'], unicode):
-            record['artpath'] = bytestring_path(record['artpath'])
-        super(Album, self).__init__(lib, record)
+    _fields = ALBUM_KEYS
+    _table = 'albums'
+    _flex_table = 'album_attributes'
 
-    def __setattr__(self, key, value):
+    def __setitem__(self, key, value):
         """Set the value of an album attribute."""
-        if key == 'id':
-            raise AttributeError("can't modify album id")
-
-        elif key in ALBUM_KEYS:
-            # Make sure paths are bytestrings.
-            if key == 'artpath' and isinstance(value, unicode):
+        if key == 'artpath':
+            if isinstance(value, unicode):
                 value = bytestring_path(value)
-
-            # Reflect change in this object.
-            self._record[key] = value
-
-            # Store art path as a buffer.
-            if key == 'artpath' and isinstance(value, str):
-                value = buffer(value)
-
-            # Change album table.
-            sql = 'UPDATE albums SET %s=? WHERE id=?' % key
-            with self._library.transaction() as tx:
-                tx.mutate(sql, (value, self.id))
-
-            # Possibly make modification on items as well.
-            if key in ALBUM_KEYS_ITEM:
-                for item in self.items():
-                    setattr(item, key, value)
-                    self._library.store(item)
-
-        else:
-            object.__setattr__(self, key, value)
-
-    def __getattr__(self, key):
-        value = super(Album, self).__getattr__(key)
-
-        # Unwrap art path from buffer object.
-        if key == 'artpath' and isinstance(value, buffer):
-            value = str(value)
-
-        return value
+            elif isinstance(value, buffer):
+                value = bytes(value)
+        super(Album, self).__setitem__(key, value)
 
     def items(self):
         """Returns an iterable over the items associated with this
         album.
         """
-        with self._library.transaction() as tx:
-            rows = tx.query(
-                'SELECT * FROM items WHERE album_id=?',
-                (self.id,)
-            )
-        return ResultIterator(rows)
+        return self._lib.items(MatchQuery('album_id', self.id))
 
     def remove(self, delete=False, with_items=True):
         """Removes this album and all its associated items from the
@@ -1535,11 +1653,11 @@ class Album(BaseAlbum):
             if artpath:
                 util.remove(artpath)
 
-        with self._library.transaction() as tx:
+        with self._lib.transaction() as tx:
             if with_items:
                 # Remove items.
                 for item in self.items():
-                    self._library.remove(item, delete, False)
+                    self._lib.remove(item, delete, False)
 
             # Remove album from database.
             tx.mutate(
@@ -1570,30 +1688,35 @@ class Album(BaseAlbum):
         # Prune old path when moving.
         if not copy:
             util.prune_dirs(os.path.dirname(old_art),
-                            self._library.directory)
+                            self._lib.directory)
 
     def move(self, copy=False, basedir=None):
-        """Moves (or copies) all items to their destination.  Any album
+        """Moves (or copies) all items to their destination. Any album
         art moves along with them. basedir overrides the library base
-        directory for the destination.
+        directory for the destination. The album is stored to the
+        database, persisting any modifications to its metadata.
         """
-        basedir = basedir or self._library.directory
+        basedir = basedir or self._lib.directory
+
+        # Ensure new metadata is available to items for destination
+        # computation.
+        self.store()
 
         # Move items.
         items = list(self.items())
         for item in items:
-            self._library.move(item, copy, basedir=basedir, with_album=False)
+            self._lib.move(item, copy, basedir=basedir, with_album=False)
 
         # Move art.
         self.move_art(copy)
+        self.store()
 
     def item_dir(self):
         """Returns the directory containing the album's first item,
         provided that such an item exists.
         """
-        try:
-            item = self.items().next()
-        except StopIteration:
+        item = self.items().get()
+        if not item:
             raise ValueError('empty album')
         return os.path.dirname(item.path)
 
@@ -1609,12 +1732,10 @@ class Album(BaseAlbum):
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
-        if not isinstance(self._library.art_filename,Template):
-            self._library.art_filename = Template(self._library.art_filename)
-
-        subpath = util.sanitize_path(format_for_path(
-            self.evaluate_template(self._library.art_filename)
-        ))
+        filename_tmpl = Template(beets.config['art_filename'].get(unicode))
+        subpath = format_for_path(self.evaluate_template(filename_tmpl))
+        subpath = util.sanitize_path(subpath,
+                                     replacements=self._lib.replacements)
         subpath = bytestring_path(subpath)
 
         _, ext = os.path.splitext(image)
@@ -1654,11 +1775,15 @@ class Album(BaseAlbum):
         """
         # Get template field values.
         mapping = {}
-        for key in ALBUM_KEYS:
-            mapping[key] = getattr(self, key)
+        for key, value in dict(self).items():
+            mapping[key] = format_for_path(value, key)
 
         mapping['artpath'] = displayable_path(mapping['artpath'])
         mapping['path'] = displayable_path(self.item_dir())
+
+        # Get values from plugins.
+        for key, value in plugins.album_template_values(self).iteritems():
+            mapping[key] = value
 
         # Get template functions.
         funcs = DefaultTemplateFunctions().functions()
@@ -1666,6 +1791,24 @@ class Album(BaseAlbum):
 
         # Perform substitution.
         return template.substitute(mapping, funcs)
+
+    def store(self):
+        """Update the database with the album information. The album's
+        tracks are also updated.
+        """
+        # Get modified track fields.
+        track_updates = {}
+        for key in ALBUM_KEYS_ITEM:
+            if key in self._dirty:
+                track_updates[key] = self[key]
+
+        with self._lib.transaction():
+            super(Album, self).store()
+            if track_updates:
+                for item in self.items():
+                    for key, value in track_updates.items():
+                        item[key] = value
+                    item.store()
 
 
 # Default path template resources.
@@ -1747,6 +1890,13 @@ class DefaultTemplateFunctions(object):
         """Translate non-ASCII characters to their ASCII equivalents.
         """
         return unidecode(s)
+
+    @staticmethod
+    def tmpl_time(s, format):
+        """Format a time value using `strftime`.
+        """
+        cur_fmt = beets.config['time_format'].get(unicode)
+        return time.strftime(format, time.strptime(s, cur_fmt))
 
     def tmpl_aunique(self, keys=None, disam=None):
         """Generate a string that is guaranteed to be unique among all

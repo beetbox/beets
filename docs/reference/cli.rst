@@ -59,7 +59,7 @@ right now; this is something we need to work on. Read the
 * During a long tagging import, it can be useful to keep track of albums
   that weren't tagged successfully---either because they're not in the
   MusicBrainz database or because something's wrong with the files. Use the
-  ``-l`` option to specify a filename to log every time you skip and album
+  ``-l`` option to specify a filename to log every time you skip an album
   or import it "as-is" or an album gets skipped as a duplicate.
 
 * Relatedly, the ``-q`` (quiet) option can help with large imports by
@@ -86,12 +86,18 @@ right now; this is something we need to work on. Read the
   ``incremental`` configuration option.
 
 * By default, beets will proceed without asking if it finds a very close
-  metadata match. To disable this and have the importer as you every time,
+  metadata match. To disable this and have the importer ask you every time,
   use the ``-t`` (for *timid*) option.
 
 * The importer typically works in a whole-album-at-a-time mode. If you
   instead want to import individual, non-album tracks, use the *singleton*
   mode by supplying the ``-s`` option.
+
+* If you have an album that's split across several directories under a common
+  top directory, use the ``--flat`` option. This takes all the music files
+  under the directory (recursively) and treats them as a single large album
+  instead of as one album per directory. This can help with your more stubborn
+  multi-disc albums.
 
 .. only:: html
 
@@ -99,10 +105,9 @@ right now; this is something we need to work on. Read the
     ^^^^^^^^^^^
 
     The ``import`` command can also be used to "reimport" music that you've
-    already added to your library. This is useful for updating tags as they are
-    fixed in the MusicBrainz database, for when you change your mind about some
-    selections you made during the initial import, or if you prefer to import
-    everything "as-is" and then correct tags later.
+    already added to your library. This is useful when you change your mind
+    about some selections you made during the initial import, or if you prefer
+    to import everything "as-is" and then correct tags later.
 
     Just point the ``beet import`` command at a directory of files that are
     already catalogged in your library. Beets will automatically detect this
@@ -120,6 +125,11 @@ right now; this is something we need to work on. Read the
     ``-s`` (singleton) flag controls whether the query matches individual items
     or full albums. If you want to retag your whole library, just supply a null
     query, which matches everything: ``beet import -L``
+
+    Note that, if you just want to update your files' tags according to
+    changes in the MusicBrainz database, the :doc:`/plugins/mbsync` is a
+    better choice. Reimporting uses the full matching machinery to guess
+    metadata matches; ``mbsync`` just relies on MusicBrainz IDs.
 
 .. _list-cmd:
 
@@ -189,6 +199,8 @@ overridden with ``-w`` (write tags, the default) and ``-W`` (don't write tags).
 Finally, this command politely asks for your permission before making any
 changes, but you can skip that prompt with the ``-y`` switch.
 
+.. _move-cmd:
+
 move
 ````
 ::
@@ -218,9 +230,18 @@ This will scan all the matched files and read their tags, populating the
 database with the new values. By default, files will be renamed according to
 their new metadata; disable this with ``-M``.
 
-To perform a "dry run" an update, just use the ``-p`` (for "pretend") flag. This
-will show you all the proposed changes but won't actually change anything on
-disk.
+To perform a "dry run" of an update, just use the ``-p`` (for "pretend") flag.
+This will show you all the proposed changes but won't actually change anything
+on disk.
+
+When an updated track is part of an album, the album-level fields of *all*
+tracks from the album are also updated. (Specifically, the command copies
+album-level data from the first track on the album and applies it to the
+rest of the tracks.) This means that, if album-level fields aren't identical
+within an album, some changes shown by the ``update`` command may be
+overridden by data from other tracks on the same album. This means that
+running the ``update`` command multiple times may show the same changes being
+applied.
 
 .. _stats-cmd:
 
@@ -236,6 +257,8 @@ Show some statistics on your entire library (if you don't provide a
 The ``-e`` (``--exact``) option makes the calculation of total file size more
 accurate but slower.
 
+.. _fields-cmd:
+
 fields
 ``````
 ::
@@ -243,8 +266,7 @@ fields
     beet fields
 
 Show the item and album metadata fields available for use in :doc:`query` and
-:doc:`pathformat`.
-
+:doc:`pathformat`. Includes any template fields provided by plugins.
 
 Global Flags
 ------------

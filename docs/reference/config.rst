@@ -68,9 +68,10 @@ so::
 ignore
 ~~~~~~
 
-A space-separated list of glob patterns specifying file and directory names
-to be ignored when importing. Defaults to ``.* *~`` (i.e., ignore
-Unix-style hidden files and backup files).
+A list of glob patterns specifying file and directory names to be ignored when
+importing. By default, this consists of ``.*``,  ``*~``, and ``System Volume
+Information`` (i.e., beets ignores Unix-style hidden files, backup files, and
+a directory that appears at the root of some Windows filesystems).
 
 .. _replace:
 
@@ -316,6 +317,26 @@ should be the *default* when selecting an action for a given match. This is the
 action that will be taken when you type return without an option letter. The
 default is ``apply``.
 
+.. _languages:
+
+languages
+~~~~~~~~~
+
+A list of locale names to search for preferred aliases. For example, setting
+this to "en" uses the transliterated artist name "Pyotr Ilyich Tchaikovsky"
+instead of the Cyrillic script for the composer's name when tagging from
+MusicBrainz. Defaults to an empty list, meaning that no language is preferred.
+
+.. _detail:
+
+detail
+~~~~~~
+
+Whether the importer UI should show detailed information about each match it
+finds. When enabled, this mode prints out the title of every track, regardless
+of whether it matches the original metadata. (The default behavior only shows
+changes.) Default: ``no``.
+
 .. _musicbrainz-config:
 
 MusicBrainz Options
@@ -373,26 +394,85 @@ max_rec
 
 As mentioned above, autotagger matches have *recommendations* that control how
 the UI behaves for a certain quality of match. The recommendation for a certain
-match is usually based on the distance calculation. But you can also control
-the recommendation for certain specific situations by defining *maximum*
-recommendations when (a) a match has missing/extra tracks; (b) the track number
-for at least one track differs; or (c) the track length for at least one track
-differs.
+match is based on the overall distance calculation. But you can also control
+the recommendation when a specific distance penalty is applied by defining
+*maximum* recommendations for each field:
 
-To define maxima, use keys under ``max_rec:`` in the ``match`` section::
+To define maxima, use keys under ``max_rec:`` in the ``match`` section. The
+defaults are "medium" for missing and unmatched tracks and "strong" (i.e., no
+maximum) for everything else::
 
     match:
         max_rec:
-            partial: medium
-            tracklength: strong
-            tracknumber: strong
+            missing_tracks: medium
+            unmatched_tracks: medium
 
-If a recommendation is higher than the configured maximum and the condition is
-met, the recommendation will be downgraded. The maximum for each condition can
-be one of ``none``, ``low``, ``medium`` or ``strong``. When the maximum
-recommendation is ``strong``, no "downgrading" occurs for that situation.
+If a recommendation is higher than the configured maximum and the indicated
+penalty is applied, the recommendation is downgraded. The setting for
+each field can be one of ``none``, ``low``, ``medium`` or ``strong``. When the
+maximum recommendation is ``strong``, no "downgrading" occurs. The available
+penalty names here are:
 
-The above example shows the default ``max_rec`` settings.
+* source
+* artist
+* album
+* media
+* mediums
+* year
+* country
+* label
+* catalognum
+* albumdisambig
+* album_id
+* tracks
+* missing_tracks
+* unmatched_tracks
+* track_title
+* track_artist
+* track_index
+* track_length
+* track_id
+
+.. _preferred:
+
+preferred
+~~~~~~~~~
+
+In addition to comparing the tagged metadata with the match metadata for
+similarity, you can also specify an ordered list of preferred countries and
+media types.
+
+A distance penalty will be applied if the country or media type from the match
+metadata doesn't match. The specified values are preferred in descending order
+(i.e., the first item will be most preferred). Each item may be a regular
+expression, and will be matched case insensitively. The number of media will
+be stripped when matching preferred media (e.g. "2x" in "2xCD").
+
+You can also tell the autotagger to prefer matches that have a release year
+closest to the original year for an album.
+
+Here's an example::
+
+    match:
+        preferred:
+            countries: ['US', 'GB|UK']
+            media: ['CD', 'Digital Media|File']
+            original_year: yes
+
+By default, none of these options are enabled.
+
+.. _ignored:
+
+ignored
+~~~~~~~
+
+You can completely avoid matches that have certain penalties applied by adding
+the penalty name to the ``ignored`` setting::
+
+    match:
+        ignored: missing_tracks unmatched_tracks
+
+The available penalties are the same as those for the :ref:`max_rec` setting.
 
 .. _path-format-config:
 

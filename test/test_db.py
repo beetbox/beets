@@ -29,6 +29,7 @@ from _common import item
 import beets.library
 from beets import util
 from beets import plugins
+from beets import config
 
 TEMP_LIB = os.path.join(_common.RSRC, 'test_copy.blb')
 
@@ -39,8 +40,8 @@ def remove_lib():
     if os.path.exists(TEMP_LIB):
         os.unlink(TEMP_LIB)
 def boracay(l):
-    return beets.library.Item(
-        l._connection().execute('select * from items where id=3').fetchone()
+    return beets.library.Item(l,
+        **l._connection().execute('select * from items where id=3').fetchone()
     )
 np = util.normpath
 
@@ -55,13 +56,13 @@ class LoadTest(unittest.TestCase):
     def test_load_restores_data_from_db(self):
         original_title = self.i.title
         self.i.title = 'something'
-        self.lib.load(self.i)
+        self.i.load()
         self.assertEqual(original_title, self.i.title)
 
     def test_load_clears_dirty_flags(self):
         self.i.artist = 'something'
-        self.lib.load(self.i)
-        self.assertTrue(not self.i.dirty['artist'])
+        self.i.load()
+        self.assertTrue('artist' not in self.i._dirty)
 
 class StoreTest(unittest.TestCase):
     def setUp(self):
@@ -73,7 +74,7 @@ class StoreTest(unittest.TestCase):
 
     def test_store_changes_database_value(self):
         self.i.year = 1987
-        self.lib.store(self.i)
+        self.i.store()
         new_year = self.lib._connection().execute(
             'select year from items where '
             'title="Boracay"').fetchone()['year']
@@ -81,8 +82,8 @@ class StoreTest(unittest.TestCase):
 
     def test_store_only_writes_dirty_fields(self):
         original_genre = self.i.genre
-        self.i.record['genre'] = 'beatboxing' # change value w/o dirtying
-        self.lib.store(self.i)
+        self.i._values_fixed['genre'] = 'beatboxing' # change w/o dirtying
+        self.i.store()
         new_genre = self.lib._connection().execute(
             'select genre from items where '
             'title="Boracay"').fetchone()['genre']
@@ -90,8 +91,8 @@ class StoreTest(unittest.TestCase):
 
     def test_store_clears_dirty_flags(self):
         self.i.composer = 'tvp'
-        self.lib.store(self.i)
-        self.assertTrue(not self.i.dirty['composer'])
+        self.i.store()
+        self.assertTrue('composer' not in self.i._dirty)
 
 class AddTest(unittest.TestCase):
     def setUp(self):
@@ -138,20 +139,22 @@ class GetSetTest(unittest.TestCase):
 
     def test_set_sets_dirty_flag(self):
         self.i.comp = not self.i.comp
-        self.assertTrue(self.i.dirty['comp'])
+        self.assertTrue('comp' in self.i._dirty)
 
     def test_set_does_not_dirty_if_value_unchanged(self):
         self.i.title = self.i.title
-        self.assertTrue(not self.i.dirty['title'])
+        self.assertTrue('title' not in self.i._dirty)
 
     def test_invalid_field_raises_attributeerror(self):
         self.assertRaises(AttributeError, getattr, self.i, 'xyzzy')
 
 class DestinationTest(unittest.TestCase):
     def setUp(self):
+        super(DestinationTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
         self.i = item()
     def tearDown(self):
+        super(DestinationTest, self).tearDown()
         self.lib._connection().close()
 
     def test_directory_works_with_trailing_slash(self):
@@ -362,6 +365,15 @@ class DestinationTest(unittest.TestCase):
         val = beets.library.format_for_path(12345, 'samplerate', posixpath)
         self.assertEqual(val, u'12kHz')
 
+    def test_component_sanitize_datetime(self):
+        val = beets.library.format_for_path(1368302461.210265, 'added',
+                                            posixpath)
+        self.assertTrue(val.startswith('2013'))
+
+    def test_component_sanitize_none(self):
+        val = beets.library.format_for_path(None, 'foo', posixpath)
+        self.assertEqual(val, u'')
+
     def test_artist_falls_back_to_albumartist(self):
         self.i.artist = ''
         self.i.albumartist = 'something'
@@ -521,21 +533,21 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
     def test_unique_with_default_arguments_uses_albumtype(self):
         album2 = self.lib.get_album(self.i1)
         album2.albumtype = 'bar'
-        self.lib._connection().commit()
+        album2.store()
         self._setf(u'foo%aunique{}/$title')
         self._assert_dest('/base/foo [bar]/the title', self.i1)
 
     def test_unique_expands_to_nothing_for_distinct_albums(self):
         album2 = self.lib.get_album(self.i2)
         album2.album = 'different album'
-        self.lib._connection().commit()
+        album2.store()
 
         self._assert_dest('/base/foo/the title', self.i1)
 
     def test_use_fallback_numbers_when_identical(self):
         album2 = self.lib.get_album(self.i2)
         album2.year = 2001
-        self.lib._connection().commit()
+        album2.store()
 
         self._assert_dest('/base/foo 1/the title', self.i1)
         self._assert_dest('/base/foo 2/the title', self.i2)
@@ -549,6 +561,8 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
         album2.year = 2001
         album1 = self.lib.get_album(self.i1)
         album1.albumtype = 'foo/bar'
+        album2.store()
+        album1.store()
         self._setf(u'foo%aunique{albumartist album,albumtype}/$title')
         self._assert_dest('/base/foo [foo_bar]/the title', self.i1)
 
@@ -587,6 +601,7 @@ class PluginDestinationTest(unittest.TestCase):
     def _template_values(self, item):
         return self._tv_map
     def setUp(self):
+        super(PluginDestinationTest, self).setUp()
         self._tv_map = {}
         self.old_template_values = plugins.template_values
         plugins.template_values = self._template_values
@@ -596,6 +611,7 @@ class PluginDestinationTest(unittest.TestCase):
         self.lib.path_formats = [('default', u'$artist $foo')]
         self.i = item()
     def tearDown(self):
+        super(PluginDestinationTest, self).tearDown()
         plugins.template_values = self.old_template_values
 
     def _assert_dest(self, dest):
@@ -629,10 +645,10 @@ class MigrationTest(unittest.TestCase):
     """
     def setUp(self):
         # Three different "schema versions".
-        self.older_fields = [('field_one', 'int')]
-        self.old_fields = self.older_fields + [('field_two', 'int')]
-        self.new_fields = self.old_fields + [('field_three', 'int')]
-        self.newer_fields = self.new_fields + [('field_four', 'int')]
+        self.older_fields = [('field_one', int)]
+        self.old_fields = self.older_fields + [('field_two', int)]
+        self.new_fields = self.old_fields + [('field_three', int)]
+        self.newer_fields = self.new_fields + [('field_four', int)]
 
         # Set up a library with old_fields.
         self.libfile = os.path.join(_common.RSRC, 'templib.blb')
@@ -743,6 +759,7 @@ class AlbumInfoTest(unittest.TestCase):
     def test_albuminfo_stores_art(self):
         ai = self.lib.get_album(self.i)
         ai.artpath = '/my/great/art'
+        ai.store()
         new_ai = self.lib.get_album(self.i)
         self.assertEqual(new_ai.artpath, '/my/great/art')
 
@@ -781,20 +798,23 @@ class AlbumInfoTest(unittest.TestCase):
     def test_albuminfo_changes_affect_items(self):
         ai = self.lib.get_album(self.i)
         ai.album = 'myNewAlbum'
-        i = self.lib.items().next()
+        ai.store()
+        i = self.lib.items()[0]
         self.assertEqual(i.album, 'myNewAlbum')
 
     def test_albuminfo_change_albumartist_changes_items(self):
         ai = self.lib.get_album(self.i)
         ai.albumartist = 'myNewArtist'
-        i = self.lib.items().next()
+        ai.store()
+        i = self.lib.items()[0]
         self.assertEqual(i.albumartist, 'myNewArtist')
         self.assertNotEqual(i.artist, 'myNewArtist')
 
     def test_albuminfo_change_artist_does_not_change_items(self):
         ai = self.lib.get_album(self.i)
         ai.artist = 'myNewArtist'
-        i = self.lib.items().next()
+        ai.store()
+        i = self.lib.items()[0]
         self.assertNotEqual(i.artist, 'myNewArtist')
 
     def test_albuminfo_remove_removes_items(self):
@@ -810,21 +830,16 @@ class AlbumInfoTest(unittest.TestCase):
         self.lib.remove(self.i)
         self.assertEqual(len(self.lib.albums()), 0)
 
-class BaseAlbumTest(unittest.TestCase):
-    def test_field_access(self):
-        album = beets.library.BaseAlbum(None, {'fld1':'foo'})
-        self.assertEqual(album.fld1, 'foo')
-
-    def test_field_access_unset_values(self):
-        album = beets.library.BaseAlbum(None, {})
-        self.assertRaises(AttributeError, getattr, album, 'field')
-
-class ArtDestinationTest(unittest.TestCase):
+class ArtDestinationTest(_common.TestCase):
     def setUp(self):
-        self.lib = beets.library.Library(':memory:')
+        super(ArtDestinationTest, self).setUp()
+        config['art_filename'] = u'artimage'
+        config['replace'] = {u'X': u'Y'}
+        self.lib = beets.library.Library(
+            ':memory:', replacements=[(re.compile(u'X'), u'Y')]
+        )
         self.i = item()
         self.i.path = self.lib.destination(self.i)
-        self.lib.art_filename = 'artimage'
         self.ai = self.lib.add_album((self.i,))
 
     def test_art_filename_respects_setting(self):
@@ -836,8 +851,14 @@ class ArtDestinationTest(unittest.TestCase):
         track = self.lib.destination(self.i)
         self.assertEqual(os.path.dirname(art), os.path.dirname(track))
 
-class PathStringTest(unittest.TestCase):
+    def test_art_path_sanitized(self):
+        config['art_filename'] = u'artXimage'
+        art = self.ai.art_destination('something.jpg')
+        self.assert_('artYimage' in art)
+
+class PathStringTest(_common.TestCase):
     def setUp(self):
+        super(PathStringTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
         self.i = item()
         self.lib.add(self.i)
@@ -863,7 +884,7 @@ class PathStringTest(unittest.TestCase):
     def test_special_chars_preserved_in_database(self):
         path = 'b\xe1r'
         self.i.path = path
-        self.lib.store(self.i)
+        self.i.store()
         i = list(self.lib.items())[0]
         self.assertEqual(i.path, path)
 
@@ -888,9 +909,10 @@ class PathStringTest(unittest.TestCase):
         self.assert_(isinstance(dest, str))
 
     def test_artpath_stores_special_chars(self):
-        path = 'b\xe1r'
+        path = b'b\xe1r'
         alb = self.lib.add_album([self.i])
         alb.artpath = path
+        alb.store()
         alb = self.lib.get_album(self.i)
         self.assertEqual(path, alb.artpath)
 
@@ -918,7 +940,7 @@ class PathStringTest(unittest.TestCase):
         alb = self.lib.get_album(alb.id)
         self.assert_(isinstance(alb.artpath, str))
 
-class PathTruncationTest(unittest.TestCase):
+class PathTruncationTest(_common.TestCase):
     def test_truncate_bytestring(self):
         p = util.truncate_path('abcde/fgh', posixpath, 4)
         self.assertEqual(p, 'abcd/fgh')
@@ -931,8 +953,9 @@ class PathTruncationTest(unittest.TestCase):
         p = util.truncate_path(u'abcde/fgh.ext', posixpath, 5)
         self.assertEqual(p, u'abcde/f.ext')
 
-class MtimeTest(unittest.TestCase):
+class MtimeTest(_common.TestCase):
     def setUp(self):
+        super(MtimeTest, self).setUp()
         self.ipath = os.path.join(_common.RSRC, 'testfile.mp3')
         shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.ipath)
         self.i = beets.library.Item.from_path(self.ipath)
@@ -940,6 +963,7 @@ class MtimeTest(unittest.TestCase):
         self.lib.add(self.i)
 
     def tearDown(self):
+        super(MtimeTest, self).tearDown()
         if os.path.exists(self.ipath):
             os.remove(self.ipath)
 
@@ -962,6 +986,22 @@ class MtimeTest(unittest.TestCase):
         self.i.title = 'something else'
         self.i.read()
         self.assertGreaterEqual(self.i.mtime, self._mtime())
+
+class ImportTimeTest(_common.TestCase):
+    def setUp(self):
+        super(ImportTimeTest, self).setUp()
+        self.lib = beets.library.Library(':memory:')
+
+    def added(self):
+        self.track = item()
+        self.album = self.lib.add_album((self.track,))
+        self.assertGreater(self.album.added, 0)
+        self.assertGreater(self.track.added, 0)
+
+    def test_atime_for_singleton(self):
+        self.singleton = item()
+        self.lib.add(self.singleton)
+        self.assertGreater(self.singleton.added, 0)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

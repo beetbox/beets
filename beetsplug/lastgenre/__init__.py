@@ -202,7 +202,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'fallback': None,
             'canonical': None,
             'source': 'album',
-            'force': False,
+            'force': True,
             'auto': True,
         })
 
@@ -299,9 +299,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 return result, 'artist'
 
         # Filter the existing genre.
-        result = _strings_to_genre([obj.genre])
-        if result:
-            return result, 'original'
+        if obj.genre:
+            result = _strings_to_genre([obj.genre])
+            if result:
+                return result, 'original'
 
         # Fallback string.
         fallback = self.config['fallback'].get()
@@ -314,6 +315,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         lastgenre_cmd = ui.Subcommand('lastgenre', help='fetch genres')
         lastgenre_cmd.parser.add_option('-f', '--force', dest='force',
                               action='store_true',
+                              default=False,
                               help='re-download genre when already present')
         lastgenre_cmd.parser.add_option('-s', '--source', dest='source',
                               type='string',
@@ -333,7 +335,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     # track on the album.
                     if 'track' in self.sources:
                         item.genre, src = self._get_genre(item)
-                        lib.store(item)
+                        item.store()
                         log.info(u'genre for track {0} - {1} ({2}): {3}'.format(
                             item.artist, item.title, src, item.genre
                         ))
@@ -346,26 +348,23 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     def imported(self, session, task):
         """Event hook called when an import task finishes."""
-        # Always force a "real" lookup during import.
-        if not self.config['force']:
-            self.config['force'] = True
-
         if task.is_album:
             album = session.lib.get_album(task.album_id)
             album.genre, src = self._get_genre(album)
             log.debug(u'added last.fm album genre ({0}): {1}'.format(
                   src, album.genre))
+            album.store()
 
             if 'track' in self.sources:
                 for item in album.items():
                     item.genre, src = self._get_genre(item)
                     log.debug(u'added last.fm item genre ({0}): {1}'.format(
                           src, item.genre))
-                    session.lib.store(item)
+                    item.store()
 
         else:
             item = task.item
             item.genre, src = self._get_genre(item)
             log.debug(u'added last.fm item genre ({0}): {1}'.format(
                   src, item.genre))
-            session.lib.store(item)
+            item.store()

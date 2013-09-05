@@ -16,6 +16,7 @@
 """
 import logging
 import musicbrainzngs
+import re
 import traceback
 
 import beets.autotag.hooks
@@ -45,8 +46,8 @@ class MusicBrainzAPIError(util.HumanReadableException):
 log = logging.getLogger('beets')
 
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
-                    'labels', 'artist-credits']
-TRACK_INCLUDES = ['artists']
+                    'labels', 'artist-credits', 'aliases']
+TRACK_INCLUDES = ['artists', 'aliases']
 
 def configure():
     """Set up the python-musicbrainz-ngs module according to settings
@@ -57,6 +58,34 @@ def configure():
         config['musicbrainz']['ratelimit_interval'].as_number(),
         config['musicbrainz']['ratelimit'].get(int),
     )
+
+def _preferred_alias(aliases):
+    """Given an list of alias structures for an artist credit, select
+    and return the user's preferred alias alias or None if no matching
+    alias is found.
+    """
+    if not aliases:
+        return
+
+    # Only consider aliases that have locales set.
+    aliases = [a for a in aliases if 'locale' in a]
+
+    # Search configured locales in order.
+    for locale in config['import']['languages'].as_str_seq():
+        # Find matching aliases for this locale.
+        matches = [a for a in aliases if a['locale'] == locale]
+        # Skip to the next locale if we have no matches
+        if not matches:
+            continue
+
+        # Find the aliases that have the primary flag set.
+        primaries = [a for a in matches if 'primary' in a]
+        # Take the primary if we have it, otherwise take the first
+        # match with the correct locale.
+        if primaries:
+            return primaries[0]
+        else:
+            return matches[0]
 
 def _flatten_artist_credit(credit):
     """Given a list representing an ``artist-credit`` block, flatten the
@@ -74,12 +103,19 @@ def _flatten_artist_credit(credit):
             artist_sort_parts.append(el)
 
         else:
+            alias = _preferred_alias(el['artist'].get('alias-list', ()))
+
             # An artist.
-            cur_artist_name = el['artist']['name']
+            if alias:
+                cur_artist_name = alias['alias']
+            else:
+                cur_artist_name = el['artist']['name']
             artist_parts.append(cur_artist_name)
 
             # Artist sort name.
-            if 'sort-name' in el['artist']:
+            if alias:
+                artist_sort_parts.append(alias['sort-name'])
+            elif 'sort-name' in el['artist']:
                 artist_sort_parts.append(el['artist']['sort-name'])
             else:
                 artist_sort_parts.append(cur_artist_name)
@@ -178,6 +214,7 @@ def album_info(release):
         mediums=len(release['medium-list']),
         artist_sort=artist_sort_name,
         artist_credit=artist_credit_name,
+        data_source='MusicBrainz',
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
     info.asin = release.get('asin')
@@ -285,13 +322,27 @@ def match_track(artist, title, limit=SEARCH_LIMIT):
     for recording in res['recording-list']:
         yield track_info(recording)
 
+def _parse_id(s):
+    """Search for a MusicBrainz ID in the given string and return it. If
+    no ID can be found, return None.
+    """
+    # Find the first thing that looks like a UUID/MBID.
+    match = re.search('[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', s)
+    if match:
+        return match.group()
+
 def album_for_id(albumid):
     """Fetches an album by its MusicBrainz ID and returns an AlbumInfo
     object or None if the album is not found. May raise a
     MusicBrainzAPIError.
     """
+    albumid = _parse_id(albumid)
+    if not albumid:
+        log.error('Invalid MBID.')
+        return
     try:
-        res = musicbrainzngs.get_release_by_id(albumid, RELEASE_INCLUDES)
+        res = musicbrainzngs.get_release_by_id(albumid,
+                                               RELEASE_INCLUDES)
     except musicbrainzngs.ResponseError:
         log.debug('Album ID match failed.')
         return None
@@ -304,6 +355,10 @@ def track_for_id(trackid):
     """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
     or None if no track is found. May raise a MusicBrainzAPIError.
     """
+    trackid = _parse_id(trackid)
+    if not trackid:
+        log.error('Invalid MBID.')
+        return
     try:
         res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
     except musicbrainzngs.ResponseError:

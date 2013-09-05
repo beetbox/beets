@@ -31,29 +31,17 @@ class NonAutotaggedImportTest(_common.TestCase):
     def setUp(self):
         super(NonAutotaggedImportTest, self).setUp()
 
-        self.io = _common.DummyIO()
         self.io.install()
 
-        self.libdb = os.path.join(_common.RSRC, 'testlib.blb')
+        self.libdb = os.path.join(self.temp_dir, 'testlib.blb')
         self.lib = library.Library(self.libdb)
-        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
         self.lib.directory = self.libdir
         self.lib.path_formats = [(
             'default', os.path.join('$artist', '$album', '$title')
         )]
 
-        self.srcdir = os.path.join(_common.RSRC, 'testsrcdir')
-
-    def tearDown(self):
-        super(NonAutotaggedImportTest, self).tearDown()
-
-        self.io.restore()
-        if os.path.exists(self.libdb):
-            os.remove(self.libdb)
-        if os.path.exists(self.libdir):
-            shutil.rmtree(self.libdir)
-        if os.path.exists(self.srcdir):
-            shutil.rmtree(self.srcdir)
+        self.srcdir = os.path.join(self.temp_dir, 'testsrcdir')
 
     def _create_test_file(self, filepath, metadata):
         """Creates an mp3 file at the given path within self.srcdir.
@@ -187,9 +175,9 @@ class ImportApplyTest(_common.TestCase):
     def setUp(self):
         super(ImportApplyTest, self).setUp()
 
-        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
         os.mkdir(self.libdir)
-        self.libpath = os.path.join(_common.RSRC, 'testlib.blb')
+        self.libpath = os.path.join(self.temp_dir, 'testlib.blb')
         self.lib = library.Library(self.libpath, self.libdir)
         self.lib.path_formats = [
             ('default', 'one'),
@@ -198,13 +186,14 @@ class ImportApplyTest(_common.TestCase):
         ]
         self.session = _common.import_session(self.lib)
 
-        self.srcdir = os.path.join(_common.RSRC, 'testsrcdir')
+        self.srcdir = os.path.join(self.temp_dir, 'testsrcdir')
         os.mkdir(self.srcdir)
         os.mkdir(os.path.join(self.srcdir, 'testalbum'))
         self.srcpath = os.path.join(self.srcdir, 'testalbum', 'srcfile.mp3')
         shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.srcpath)
         self.i = library.Item.from_path(self.srcpath)
         self.i.comp = False
+        self.lib.add(self.i)
 
         trackinfo = TrackInfo('one',  'trackid', 'some artist',
                               'artistid', 1)
@@ -217,15 +206,6 @@ class ImportApplyTest(_common.TestCase):
             artist_id = 'artistid',
             albumtype = 'soundtrack',
         )
-
-    def tearDown(self):
-        super(ImportApplyTest, self).tearDown()
-
-        shutil.rmtree(self.libdir)
-        if os.path.exists(self.srcdir):
-            shutil.rmtree(self.srcdir)
-        if os.path.exists(self.libpath):
-            os.unlink(self.libpath)
 
     def test_finalize_no_delete(self):
         config['import']['delete'] = False
@@ -352,7 +332,9 @@ class ImportApplyTest(_common.TestCase):
 
 class AsIsApplyTest(_common.TestCase):
     def setUp(self):
-        self.dbpath = os.path.join(_common.RSRC, 'templib.blb')
+        super(AsIsApplyTest, self).setUp()
+
+        self.dbpath = os.path.join(self.temp_dir, 'templib.blb')
         self.lib = library.Library(self.dbpath)
         self.session = _common.import_session(self.lib)
 
@@ -367,9 +349,6 @@ class AsIsApplyTest(_common.TestCase):
         i1.comp = i2.comp = i3.comp = False
         i1.albumartist = i2.albumartist = i3.albumartist = ''
         self.items = [i1, i2, i3]
-
-    def tearDown(self):
-        os.remove(self.dbpath)
 
     def _apply_result(self):
         """Run the "apply" coroutines and get the resulting Album."""
@@ -399,10 +378,10 @@ class ApplyExistingItemsTest(_common.TestCase):
     def setUp(self):
         super(ApplyExistingItemsTest, self).setUp()
 
-        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
         os.mkdir(self.libdir)
 
-        self.dbpath = os.path.join(_common.RSRC, 'templib.blb')
+        self.dbpath = os.path.join(self.temp_dir, 'templib.blb')
         self.lib = library.Library(self.dbpath, self.libdir)
         self.lib.path_formats = [
             ('default', '$artist/$title'),
@@ -417,12 +396,6 @@ class ApplyExistingItemsTest(_common.TestCase):
         self.i = library.Item.from_path(self.srcpath)
         self.i.comp = False
 
-    def tearDown(self):
-        super(ApplyExistingItemsTest, self).tearDown()
-
-        os.remove(self.dbpath)
-        shutil.rmtree(self.libdir)
-
     def _apply_asis(self, items, album=True):
         """Run the "apply" coroutine."""
         _call_stages(self.session, items, importer.action.ASIS, album=album,
@@ -434,7 +407,7 @@ class ApplyExistingItemsTest(_common.TestCase):
         self._apply_asis([self.i])
 
         # Get the item's path and import it again.
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         new_item = library.Item.from_path(item.path)
         self._apply_asis([new_item])
 
@@ -444,7 +417,7 @@ class ApplyExistingItemsTest(_common.TestCase):
     def test_apply_existing_album_does_not_duplicate_album(self):
         # As above.
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         new_item = library.Item.from_path(item.path)
         self._apply_asis([new_item])
 
@@ -453,7 +426,7 @@ class ApplyExistingItemsTest(_common.TestCase):
 
     def test_apply_existing_singleton_does_not_duplicate_album(self):
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         new_item = library.Item.from_path(item.path)
         self._apply_asis([new_item], False)
 
@@ -468,7 +441,7 @@ class ApplyExistingItemsTest(_common.TestCase):
         self._apply_asis([self.i])
 
         # Import again with new metadata.
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         new_item = library.Item.from_path(item.path)
         new_item.title = 'differentTitle'
         self._apply_asis([new_item])
@@ -482,12 +455,12 @@ class ApplyExistingItemsTest(_common.TestCase):
         config['import']['copy'] = True
 
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         new_item = library.Item.from_path(item.path)
         new_item.title = 'differentTitle'
         self._apply_asis([new_item])
 
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertTrue('differentTitle' in item.path)
         self.assertExists(item.path)
 
@@ -496,12 +469,12 @@ class ApplyExistingItemsTest(_common.TestCase):
         config['import']['copy'] = False
 
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         new_item = library.Item.from_path(item.path)
         new_item.title = 'differentTitle'
         self._apply_asis([new_item])
 
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertFalse('differentTitle' in item.path)
         self.assertExists(item.path)
 
@@ -509,13 +482,13 @@ class ApplyExistingItemsTest(_common.TestCase):
         config['import']['copy'] = True
 
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         oldpath = item.path
         new_item = library.Item.from_path(item.path)
         new_item.title = 'differentTitle'
         self._apply_asis([new_item])
 
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertNotExists(oldpath)
 
     def test_apply_existing_item_new_metadata_delete_enabled(self):
@@ -525,13 +498,13 @@ class ApplyExistingItemsTest(_common.TestCase):
         config['import']['delete'] = True  # !
 
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         oldpath = item.path
         new_item = library.Item.from_path(item.path)
         new_item.title = 'differentTitle'
         self._apply_asis([new_item])
 
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertNotExists(oldpath)
         self.assertTrue('differentTitle' in item.path)
         self.assertExists(item.path)
@@ -541,13 +514,13 @@ class ApplyExistingItemsTest(_common.TestCase):
         config['import']['copy'] = True
 
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         oldpath = item.path
         new_item = library.Item.from_path(item.path)
         self._apply_asis([new_item])
 
         self.assertEqual(len(list(self.lib.items())), 1)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertEqual(oldpath, item.path)
         self.assertExists(oldpath)
 
@@ -556,19 +529,19 @@ class ApplyExistingItemsTest(_common.TestCase):
         config['import']['delete'] = True  # !
 
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         new_item = library.Item.from_path(item.path)
         self._apply_asis([new_item])
 
         self.assertEqual(len(list(self.lib.items())), 1)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertExists(item.path)
 
     def test_same_album_does_not_duplicate(self):
         # With the -L flag, exactly the same item (with the same ID)
         # is re-imported. This test simulates that situation.
         self._apply_asis([self.i])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self._apply_asis([item])
 
         # Should not be duplicated.
@@ -732,6 +705,7 @@ class DuplicateCheckTest(_common.TestCase):
 
     def test_duplicate_va_album(self):
         self.album.albumartist = 'an album artist'
+        self.album.store()
         res = importer._duplicate_check(self.lib,
                     self._album_task(False, 'an album artist'))
         self.assertTrue(res)

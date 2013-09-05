@@ -17,8 +17,8 @@ import time
 import sys
 import os
 import logging
-import contextlib
-import copy
+import tempfile
+import shutil
 
 # Use unittest2 on Python < 2.7.
 try:
@@ -45,55 +45,75 @@ _item_ident = 0
 def item():
     global _item_ident
     _item_ident += 1
-    return beets.library.Item({
-        'title':            u'the title',
-        'artist':           u'the artist',
-        'albumartist':      u'the album artist',
-        'album':            u'the album',
-        'genre':            u'the genre',
-        'composer':         u'the composer',
-        'grouping':         u'the grouping',
-        'year':             1,
-        'month':            2,
-        'day':              3,
-        'track':            4,
-        'tracktotal':       5,
-        'disc':             6,
-        'disctotal':        7,
-        'lyrics':           u'the lyrics',
-        'comments':         u'the comments',
-        'bpm':              8,
-        'comp':             True,
-        'path':             'somepath' + str(_item_ident),
-        'length':           60.0,
-        'bitrate':          128000,
-        'format':           'FLAC',
-        'mb_trackid':       'someID-1',
-        'mb_albumid':       'someID-2',
-        'mb_artistid':      'someID-3',
-        'mb_albumartistid': 'someID-4',
-        'album_id':         None,
-    })
+    return beets.library.Item(
+        title =            u'the title',
+        artist =           u'the artist',
+        albumartist =      u'the album artist',
+        album =            u'the album',
+        genre =            u'the genre',
+        composer =         u'the composer',
+        grouping =         u'the grouping',
+        year =             1,
+        month =            2,
+        day =              3,
+        track =            4,
+        tracktotal =       5,
+        disc =             6,
+        disctotal =        7,
+        lyrics =           u'the lyrics',
+        comments =         u'the comments',
+        bpm =              8,
+        comp =             True,
+        path =             'somepath' + str(_item_ident),
+        length =           60.0,
+        bitrate =          128000,
+        format =           'FLAC',
+        mb_trackid =       'someID-1',
+        mb_albumid =       'someID-2',
+        mb_artistid =      'someID-3',
+        mb_albumartistid = 'someID-4',
+        album_id =         None,
+    )
 
 # Dummy import session.
 def import_session(lib=None, logfile=None, paths=[], query=[], cli=False):
     cls = commands.TerminalImportSession if cli else importer.ImportSession
     return cls(lib, logfile, paths, query)
 
-# Temporary config modifications.
+# A test harness for all beets tests.
+# Provides temporary, isolated configuration.
 class TestCase(unittest.TestCase):
     """A unittest.TestCase subclass that saves and restores beets'
     global configuration. This allows tests to make temporary
     modifications that will then be automatically removed when the test
-    completes. Also provides some additional assertion methods.
+    completes. Also provides some additional assertion methods, a
+    temporary directory, and a DummyIO.
     """
     def setUp(self):
         # A "clean" source list including only the defaults.
         beets.config.sources = []
         beets.config.read(user=False, defaults=True)
 
+        # Direct paths to a temporary directory. Tests can also use this
+        # temporary directory.
+        self.temp_dir = tempfile.mkdtemp()
+        beets.config['statefile'] = os.path.join(self.temp_dir, 'state.pickle')
+        beets.config['library'] = os.path.join(self.temp_dir, 'library.db')
+        beets.config['directory'] = os.path.join(self.temp_dir, 'libdir')
+
+        # Set $HOME, which is used by confit's `config_dir()` to create
+        # directories.
+        self._old_home = os.environ.get('HOME')
+        os.environ['HOME'] = self.temp_dir
+
+        # Initialize, but don't install, a DummyIO.
+        self.io = DummyIO()
+
     def tearDown(self):
-        pass
+        if os.path.isdir(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
+        os.environ['HOME'] = self._old_home
+        self.io.restore()
 
     def assertExists(self, path):
         self.assertTrue(os.path.exists(path),

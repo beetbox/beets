@@ -19,6 +19,9 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs, print_obj
 from beets.util.functemplate import Template
 import random
+from operator import attrgetter
+from itertools import groupby
+import collections
 
 def random_item(lib, opts, args):
     query = decargs(args)
@@ -32,8 +35,35 @@ def random_item(lib, opts, args):
         objs = list(lib.albums(query=query))
     else:
         objs = list(lib.items(query=query))
-    number = min(len(objs), opts.number)
-    objs = random.sample(objs, number)
+
+    if opts.equal_chance:
+        # Group the objects by artist so we can sample from them.
+        key = attrgetter('albumartist')
+        objs.sort(key=key)
+        objs_by_artists = {}
+        for artist, v in groupby(objs, key):
+            objs_by_artists[artist] = list(v)
+
+        objs = []
+        for _ in range(opts.number):
+            # Terminate early if we're out of objects to select.
+            if not objs_by_artists:
+                break
+
+            # Choose an artist and an object for that artist, removing
+            # this choice from the pool.
+            artist = random.choice(objs_by_artists.keys())
+            objs_from_artist = objs_by_artists[artist]
+            i = random.randint(0, len(objs_from_artist) - 1)
+            objs.append(objs_from_artist.pop(i))
+
+            # Remove the artist if we've used up all of its objects.
+            if not objs_from_artist:
+                del objs_by_artists[artist]
+
+    else:
+        number = min(len(objs), opts.number)
+        objs = random.sample(objs, number)
 
     for item in objs:
         print_obj(item, lib, template)
@@ -48,6 +78,8 @@ random_cmd.parser.add_option('-f', '--format', action='store',
         help='print with custom format', default=None)
 random_cmd.parser.add_option('-n', '--number', action='store', type="int",
         help='number of objects to choose', default=1)
+random_cmd.parser.add_option('-e', '--equal-chance', action='store_true',
+        help='each artist has the same chance')
 random_cmd.func = random_item
 
 class Random(BeetsPlugin):

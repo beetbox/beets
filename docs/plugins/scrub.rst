@@ -34,7 +34,7 @@ whatsoever.
 Configuring
 -----------
 
-The plugin has one configuration option, ``autoscrub``, which lets you disable
+The plugin has one configuration option, ``auto``, which lets you disable
 automatic metadata stripping. To do so, add this to your ``config.yaml``::
 
     scrub:

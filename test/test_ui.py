@@ -17,7 +17,6 @@
 import os
 import shutil
 import textwrap
-import logging
 import re
 import yaml
 
@@ -27,6 +26,7 @@ from beets import library
 from beets import ui
 from beets.ui import commands
 from beets import autotag
+from beets.autotag.match import distance
 from beets import importer
 from beets.mediafile import MediaFile
 from beets import config
@@ -34,7 +34,7 @@ from beets.util import confit
 
 class ListTest(_common.TestCase):
     def setUp(self):
-        self.io = _common.DummyIO()
+        super(ListTest, self).setUp()
         self.io.install()
 
         self.lib = library.Library(':memory:')
@@ -43,9 +43,6 @@ class ListTest(_common.TestCase):
         self.lib.add(i)
         self.lib.add_album([i])
         self.item = i
-
-    def tearDown(self):
-        self.io.restore()
 
     def _run_list(self, query='', album=False, path=False, fmt=None):
         commands.list_items(self.lib, query, album, fmt)
@@ -57,7 +54,7 @@ class ListTest(_common.TestCase):
 
     def test_list_unicode_query(self):
         self.item.title = u'na\xefve'
-        self.lib.store(self.item)
+        self.item.store()
         self.lib._connection().commit()
 
         self._run_list([u'na\xefve'])
@@ -117,20 +114,17 @@ class ListTest(_common.TestCase):
 
 class RemoveTest(_common.TestCase):
     def setUp(self):
-        self.io = _common.DummyIO()
+        super(RemoveTest, self).setUp()
+
         self.io.install()
 
-        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
         os.mkdir(self.libdir)
 
         # Copy a file into the library.
         self.lib = library.Library(':memory:', self.libdir)
         self.i = library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
         self.lib.add(self.i, True)
-
-    def tearDown(self):
-        self.io.restore()
-        shutil.rmtree(self.libdir)
 
     def test_remove_items_no_delete(self):
         self.io.addinput('y')
@@ -148,21 +142,17 @@ class RemoveTest(_common.TestCase):
 
 class ModifyTest(_common.TestCase):
     def setUp(self):
-        self.io = _common.DummyIO()
+        super(ModifyTest, self).setUp()
+
         self.io.install()
 
-        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
-        os.mkdir(self.libdir)
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
 
         # Copy a file into the library.
         self.lib = library.Library(':memory:', self.libdir)
         self.i = library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
         self.lib.add(self.i, True)
         self.album = self.lib.add_album([self.i])
-
-    def tearDown(self):
-        self.io.restore()
-        shutil.rmtree(self.libdir)
 
     def _modify(self, mods, query=(), write=False, move=False, album=False):
         self.io.addinput('y')
@@ -171,7 +161,7 @@ class ModifyTest(_common.TestCase):
 
     def test_modify_item_dbdata(self):
         self._modify(["title=newTitle"])
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertEqual(item.title, 'newTitle')
 
     def test_modify_album_dbdata(self):
@@ -181,56 +171,57 @@ class ModifyTest(_common.TestCase):
 
     def test_modify_item_tag_unmodified(self):
         self._modify(["title=newTitle"], write=False)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         item.read()
         self.assertEqual(item.title, 'full')
 
     def test_modify_album_tag_unmodified(self):
         self._modify(["album=newAlbum"], write=False, album=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         item.read()
         self.assertEqual(item.album, 'the album')
 
     def test_modify_item_tag(self):
         self._modify(["title=newTitle"], write=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         item.read()
         self.assertEqual(item.title, 'newTitle')
 
     def test_modify_album_tag(self):
         self._modify(["album=newAlbum"], write=True, album=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         item.read()
         self.assertEqual(item.album, 'newAlbum')
 
     def test_item_move(self):
         self._modify(["title=newTitle"], move=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertTrue('newTitle' in item.path)
 
     def test_album_move(self):
         self._modify(["album=newAlbum"], move=True, album=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         item.read()
         self.assertTrue('newAlbum' in item.path)
 
     def test_item_not_move(self):
         self._modify(["title=newTitle"], move=False)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertFalse('newTitle' in item.path)
 
     def test_album_not_move(self):
         self._modify(["album=newAlbum"], move=False, album=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         item.read()
         self.assertFalse('newAlbum' in item.path)
 
 class MoveTest(_common.TestCase):
     def setUp(self):
-        self.io = _common.DummyIO()
+        super(MoveTest, self).setUp()
+
         self.io.install()
 
-        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
         os.mkdir(self.libdir)
 
         self.itempath = os.path.join(self.libdir, 'srcfile')
@@ -243,66 +234,60 @@ class MoveTest(_common.TestCase):
         self.album = self.lib.add_album([self.i])
 
         # Alternate destination directory.
-        self.otherdir = os.path.join(_common.RSRC, 'testotherdir')
-
-    def tearDown(self):
-        self.io.restore()
-        shutil.rmtree(self.libdir)
-        if os.path.exists(self.otherdir):
-            shutil.rmtree(self.otherdir)
+        self.otherdir = os.path.join(self.temp_dir, 'testotherdir')
 
     def _move(self, query=(), dest=None, copy=False, album=False):
         commands.move_items(self.lib, dest, query, copy, album)
 
     def test_move_item(self):
         self._move()
-        self.lib.load(self.i)
+        self.i.load()
         self.assertTrue('testlibdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
     def test_copy_item(self):
         self._move(copy=True)
-        self.lib.load(self.i)
+        self.i.load()
         self.assertTrue('testlibdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertExists(self.itempath)
 
     def test_move_album(self):
         self._move(album=True)
-        self.lib.load(self.i)
+        self.i.load()
         self.assertTrue('testlibdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
     def test_copy_album(self):
         self._move(copy=True, album=True)
-        self.lib.load(self.i)
+        self.i.load()
         self.assertTrue('testlibdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertExists(self.itempath)
 
     def test_move_item_custom_dir(self):
         self._move(dest=self.otherdir)
-        self.lib.load(self.i)
+        self.i.load()
         self.assertTrue('testotherdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
     def test_move_album_custom_dir(self):
         self._move(dest=self.otherdir, album=True)
-        self.lib.load(self.i)
+        self.i.load()
         self.assertTrue('testotherdir' in self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
 class UpdateTest(_common.TestCase):
     def setUp(self):
-        self.io = _common.DummyIO()
+        super(UpdateTest, self).setUp()
+
         self.io.install()
 
-        self.libdir = os.path.join(_common.RSRC, 'testlibdir')
-        os.mkdir(self.libdir)
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
 
         # Copy a file into the library.
         self.lib = library.Library(':memory:', self.libdir)
@@ -314,17 +299,14 @@ class UpdateTest(_common.TestCase):
         artfile = os.path.join(_common.RSRC, 'testart.jpg')
         _common.touch(artfile)
         self.album.set_art(artfile)
+        self.album.store()
         os.remove(artfile)
-
-    def tearDown(self):
-        self.io.restore()
-        shutil.rmtree(self.libdir)
 
     def _update(self, query=(), album=False, move=False, reset_mtime=True):
         self.io.addinput('y')
         if reset_mtime:
             self.i.mtime = 0
-            self.lib.store(self.i)
+            self.i.store()
         commands.update_items(self.lib, query, album, move, False)
 
     def test_delete_removes_item(self):
@@ -351,7 +333,7 @@ class UpdateTest(_common.TestCase):
         mf.title = 'differentTitle'
         mf.save()
         self._update()
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertEqual(item.title, 'differentTitle')
 
     def test_modified_metadata_moved(self):
@@ -359,7 +341,7 @@ class UpdateTest(_common.TestCase):
         mf.title = 'differentTitle'
         mf.save()
         self._update(move=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertTrue('differentTitle' in item.path)
 
     def test_modified_metadata_not_moved(self):
@@ -367,7 +349,7 @@ class UpdateTest(_common.TestCase):
         mf.title = 'differentTitle'
         mf.save()
         self._update(move=False)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertTrue('differentTitle' not in item.path)
 
     def test_modified_album_metadata_moved(self):
@@ -375,7 +357,7 @@ class UpdateTest(_common.TestCase):
         mf.album = 'differentAlbum'
         mf.save()
         self._update(move=True)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertTrue('differentAlbum' in item.path)
 
     def test_modified_album_metadata_art_moved(self):
@@ -394,18 +376,16 @@ class UpdateTest(_common.TestCase):
 
         # Make in-memory mtime match on-disk mtime.
         self.i.mtime = os.path.getmtime(self.i.path)
-        self.lib.store(self.i)
+        self.i.store()
 
         self._update(reset_mtime=False)
-        item = self.lib.items().next()
+        item = self.lib.items().get()
         self.assertEqual(item.title, 'full')
 
 class PrintTest(_common.TestCase):
     def setUp(self):
-        self.io = _common.DummyIO()
+        super(PrintTest, self).setUp()
         self.io.install()
-    def tearDown(self):
-        self.io.restore()
 
     def test_print_without_locale(self):
         lang = os.environ.get('LANG')
@@ -443,11 +423,7 @@ class PrintTest(_common.TestCase):
 class AutotagTest(_common.TestCase):
     def setUp(self):
         super(AutotagTest, self).setUp()
-        self.io = _common.DummyIO()
         self.io.install()
-    def tearDown(self):
-        super(AutotagTest, self).tearDown()
-        self.io.restore()
 
     def _no_candidates_test(self, result):
         task = importer.ImportTask(
@@ -478,10 +454,8 @@ class ImportTest(_common.TestCase):
 
 class InputTest(_common.TestCase):
     def setUp(self):
-        self.io = _common.DummyIO()
+        super(InputTest, self).setUp()
         self.io.install()
-    def tearDown(self):
-        self.io.restore()
 
     def test_manual_search_gets_unicode(self):
         self.io.addinput('\xc3\x82me')
@@ -493,13 +467,11 @@ class InputTest(_common.TestCase):
 class ConfigTest(_common.TestCase):
     def setUp(self):
         super(ConfigTest, self).setUp()
-        self.io = _common.DummyIO()
         self.io.install()
         self.test_cmd = ui.Subcommand('test', help='test')
         commands.default_commands.append(self.test_cmd)
     def tearDown(self):
         super(ConfigTest, self).tearDown()
-        self.io.restore()
         commands.default_commands.pop()
     def _run_main(self, args, config_yaml, func):
         self.test_cmd.func = func
@@ -507,7 +479,7 @@ class ConfigTest(_common.TestCase):
         if config_yaml:
             config_data = yaml.load(config_yaml, Loader=confit.Loader)
             config.set(config_data)
-        ui._raw_main(args + ['test'], False)
+        ui._raw_main(args + ['test'])
 
     def test_paths_section_respected(self):
         def func(lib, opts, args):
@@ -566,11 +538,7 @@ class ConfigTest(_common.TestCase):
 class ShowdiffTest(_common.TestCase):
     def setUp(self):
         super(ShowdiffTest, self).setUp()
-        self.io = _common.DummyIO()
         self.io.install()
-    def tearDown(self):
-        super(ShowdiffTest, self).tearDown()
-        self.io.restore()
 
     def test_showdiff_strings(self):
         commands._showdiff('field', 'old', 'new')
@@ -618,59 +586,32 @@ class ShowdiffTest(_common.TestCase):
 
         self.assertEqual(complete_diff, partial_diff)
 
-AN_ID = "28e32c71-1450-463e-92bf-e0a46446fc11"
-class ManualIDTest(_common.TestCase):
-    def setUp(self):
-        _common.log.setLevel(logging.CRITICAL)
-        self.io = _common.DummyIO()
-        self.io.install()
-    def tearDown(self):
-        self.io.restore()
-
-    def test_id_accepted(self):
-        self.io.addinput(AN_ID)
-        out = commands.manual_id(False)
-        self.assertEqual(out, AN_ID)
-
-    def test_non_id_returns_none(self):
-        self.io.addinput("blah blah")
-        out = commands.manual_id(False)
-        self.assertEqual(out, None)
-
-    def test_url_finds_id(self):
-        self.io.addinput("http://musicbrainz.org/entity/%s?something" % AN_ID)
-        out = commands.manual_id(False)
-        self.assertEqual(out, AN_ID)
-
 class ShowChangeTest(_common.TestCase):
     def setUp(self):
         super(ShowChangeTest, self).setUp()
-        self.io = _common.DummyIO()
         self.io.install()
 
         self.items = [_common.item()]
         self.items[0].track = 1
         self.items[0].path = '/path/to/file.mp3'
         self.info = autotag.AlbumInfo(
-            'the album', 'album id', 'the artist', 'artist id', [
-                autotag.TrackInfo('the title', 'track id', index=1)
+            u'the album', u'album id', u'the artist', u'artist id', [
+                autotag.TrackInfo(u'the title', u'track id', index=1)
         ])
 
-    def tearDown(self):
-        super(ShowChangeTest, self).tearDown()
-        self.io.restore()
-
     def _show_change(self, items=None, info=None,
-                     cur_artist='the artist', cur_album='the album',
+                     cur_artist=u'the artist', cur_album=u'the album',
                      dist=0.1):
         items = items or self.items
         info = info or self.info
         mapping = dict(zip(items, info.tracks))
         config['color'] = False
+        album_dist = distance(items, info, mapping)
+        album_dist._penalties = {'album': [dist]}
         commands.show_change(
             cur_artist,
             cur_album,
-            autotag.AlbumMatch(0.1, info, mapping, set(), set()),
+            autotag.AlbumMatch(album_dist, info, mapping, set(), set()),
         )
         return self.io.getoutput().lower()
 
@@ -685,7 +626,7 @@ class ShowChangeTest(_common.TestCase):
         self.assertTrue('correcting tags from:' in msg)
 
     def test_item_data_change(self):
-        self.items[0].title = 'different'
+        self.items[0].title = u'different'
         msg = self._show_change()
         self.assertTrue('different -> the title' in msg)
 
@@ -700,12 +641,12 @@ class ShowChangeTest(_common.TestCase):
         self.assertTrue('correcting tags from:' in msg)
 
     def test_item_data_change_title_missing(self):
-        self.items[0].title = ''
+        self.items[0].title = u''
         msg = re.sub(r'  +', ' ', self._show_change())
         self.assertTrue('file.mp3 -> the title' in msg)
 
     def test_item_data_change_title_missing_with_unicode_filename(self):
-        self.items[0].title = ''
+        self.items[0].title = u''
         self.items[0].path = u'/path/to/caf\xe9.mp3'.encode('utf8')
         msg = re.sub(r'  +', ' ', self._show_change().decode('utf8'))
         self.assertTrue(u'caf\xe9.mp3 -> the title' in msg

@@ -50,39 +50,53 @@ class FetchImageTest(unittest.TestCase):
         artpath = fetchart._fetch_image('http://example.com')
         self.assertNotEqual(artpath, None)
 
-class FSArtTest(unittest.TestCase):
+class FSArtTest(_common.TestCase):
     def setUp(self):
-        self.dpath = os.path.join(_common.RSRC, 'arttest')
+        super(FSArtTest, self).setUp()
+        self.dpath = os.path.join(self.temp_dir, 'arttest')
         os.mkdir(self.dpath)
-    def tearDown(self):
-        shutil.rmtree(self.dpath)
 
     def test_finds_jpg_in_directory(self):
         _common.touch(os.path.join(self.dpath, 'a.jpg'))
-        fn = fetchart.art_in_path(self.dpath)
+        fn = fetchart.art_in_path(self.dpath, ('art',), False)
         self.assertEqual(fn, os.path.join(self.dpath, 'a.jpg'))
 
     def test_appropriately_named_file_takes_precedence(self):
         _common.touch(os.path.join(self.dpath, 'a.jpg'))
-        _common.touch(os.path.join(self.dpath, 'cover.jpg'))
-        fn = fetchart.art_in_path(self.dpath)
-        self.assertEqual(fn, os.path.join(self.dpath, 'cover.jpg'))
+        _common.touch(os.path.join(self.dpath, 'art.jpg'))
+        fn = fetchart.art_in_path(self.dpath, ('art',), False)
+        self.assertEqual(fn, os.path.join(self.dpath, 'art.jpg'))
 
     def test_non_image_file_not_identified(self):
         _common.touch(os.path.join(self.dpath, 'a.txt'))
-        fn = fetchart.art_in_path(self.dpath)
+        fn = fetchart.art_in_path(self.dpath, ('art',), False)
         self.assertEqual(fn, None)
 
-class CombinedTest(unittest.TestCase):
+    def test_cautious_skips_fallback(self):
+        _common.touch(os.path.join(self.dpath, 'a.jpg'))
+        fn = fetchart.art_in_path(self.dpath, ('art',), True)
+        self.assertEqual(fn, None)
+
+    def test_empty_dir(self):
+        fn = fetchart.art_in_path(self.dpath, ('art',), True)
+        self.assertEqual(fn, None)
+
+class CombinedTest(_common.TestCase):
     def setUp(self):
-        self.dpath = os.path.join(_common.RSRC, 'arttest')
+        super(CombinedTest, self).setUp()
+
+        self.dpath = os.path.join(self.temp_dir, 'arttest')
         os.mkdir(self.dpath)
         self.old_urlopen = fetchart.urllib.urlopen
         fetchart.urllib.urlopen = self._urlopen
         self.page_text = ""
         self.urlopen_called = False
+
+        # Set up configuration.
+        fetchart.FetchArtPlugin()
+
     def tearDown(self):
-        shutil.rmtree(self.dpath)
+        super(CombinedTest, self).tearDown()
         fetchart.urllib.urlopen = self.old_urlopen
 
     def _urlopen(self, url):
@@ -102,11 +116,11 @@ class CombinedTest(unittest.TestCase):
         self.assertEqual(artpath, None)
 
     def test_main_interface_gives_precedence_to_fs_art(self):
-        _common.touch(os.path.join(self.dpath, 'a.jpg'))
+        _common.touch(os.path.join(self.dpath, 'art.jpg'))
         fetchart.urllib.urlretrieve = MockUrlRetrieve('image/jpeg')
         album = _common.Bag(asin='xxxx')
         artpath = fetchart.art_for_album(album, [self.dpath])
-        self.assertEqual(artpath, os.path.join(self.dpath, 'a.jpg'))
+        self.assertEqual(artpath, os.path.join(self.dpath, 'art.jpg'))
 
     def test_main_interface_falls_back_to_amazon(self):
         fetchart.urllib.urlretrieve = MockUrlRetrieve('image/jpeg')
@@ -145,12 +159,12 @@ class CombinedTest(unittest.TestCase):
         self.assertFalse(mock_retrieve.fetched)
 
     def test_local_only_gets_fs_image(self):
-        _common.touch(os.path.join(self.dpath, 'a.jpg'))
+        _common.touch(os.path.join(self.dpath, 'art.jpg'))
         mock_retrieve = MockUrlRetrieve('image/jpeg')
         fetchart.urllib.urlretrieve = mock_retrieve
         album = _common.Bag(mb_albumid='releaseid', asin='xxxx')
-        artpath = fetchart.art_for_album(album, [self.dpath], local_only=True)
-        self.assertEqual(artpath, os.path.join(self.dpath, 'a.jpg'))
+        artpath = fetchart.art_for_album(album, [self.dpath], None, local_only=True)
+        self.assertEqual(artpath, os.path.join(self.dpath, 'art.jpg'))
         self.assertFalse(self.urlopen_called)
         self.assertFalse(mock_retrieve.fetched)
 
@@ -184,7 +198,7 @@ class ArtImporterTest(_common.TestCase):
         super(ArtImporterTest, self).setUp()
 
         # Mock the album art fetcher to always return our test file.
-        self.art_file = os.path.join(_common.RSRC, 'tmpcover.jpg')
+        self.art_file = os.path.join(self.temp_dir, 'tmpcover.jpg')
         _common.touch(self.art_file)
         self.old_afa = fetchart.art_for_album
         self.afa_response = self.art_file
@@ -193,8 +207,8 @@ class ArtImporterTest(_common.TestCase):
         fetchart.art_for_album = art_for_album
 
         # Test library.
-        self.libpath = os.path.join(_common.RSRC, 'tmplib.blb')
-        self.libdir = os.path.join(_common.RSRC, 'tmplib')
+        self.libpath = os.path.join(self.temp_dir, 'tmplib.blb')
+        self.libdir = os.path.join(self.temp_dir, 'tmplib')
         os.mkdir(self.libdir)
         os.mkdir(os.path.join(self.libdir, 'album'))
         itempath = os.path.join(self.libdir, 'album', 'test.mp3')
@@ -224,14 +238,7 @@ class ArtImporterTest(_common.TestCase):
 
     def tearDown(self):
         super(ArtImporterTest, self).tearDown()
-
         fetchart.art_for_album = self.old_afa
-        if os.path.exists(self.art_file):
-            os.remove(self.art_file)
-        if os.path.exists(self.libpath):
-            os.remove(self.libpath)
-        if os.path.exists(self.libdir):
-            shutil.rmtree(self.libdir)
 
     def _fetch_art(self, should_exist):
         """Execute the fetch_art coroutine for the task and return the

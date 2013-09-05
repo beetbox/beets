@@ -18,7 +18,7 @@ where you think this documentation can be improved.
 
 .. _beets: http://beets.radbox.org/
 .. _email the author: mailto:adrian@radbox.org
-.. _file a bug: http://code.google.com/p/beets/issues/entry
+.. _file a bug: https://github.com/sampsyo/beets/issues
 
 Contents
 --------

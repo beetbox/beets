@@ -22,18 +22,18 @@ The default configuration moves all English articles to the end of the string,
 but you can override these defaults to make more complex changes::
 
     the:
-        # handle The, default is on
-        the=yes
-        # handle A/An, default is on
-        a=yes
+        # handle "The" (on by default)
+        the: yes
+        # handle "A/An" (on by default)
+        a: yes
         # format string, {0} - part w/o article, {1} - article
         # spaces already trimmed from ends of both parts
         # default is '{0}, {1}'
-        format={0}, {1}
+        format: '{0}, {1}'
         # strip instead of moving to the end, default is off
-        strip=no
-        # custom regexp patterns, separated by space
-        patterns=
+        strip: no
+        # custom regexp patterns, space-separated
+        patterns: ...
 
 Custom patterns are case-insensitive regular expressions. Patterns can be
 matched anywhere in the string (not just the beginning), so use ``^`` if you
