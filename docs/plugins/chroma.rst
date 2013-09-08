@@ -27,25 +27,48 @@ To get fingerprinting working, you'll need to install three things: the
 `Chromaprint`_ library or command-line tool, an audio decoder, and the
 `pyacoustid`_ Python library (version 0.6 or later).
 
-First, you will need to install `Chromaprint`_, either as a dynamic library or
-in the form of a command-line tool (``fpcalc``). The Chromaprint site has links
-to packages for major Linux distributions. If you use `Homebrew`_ on Mac OS X,
-you can install the library with ``brew install chromaprint``. Otherwise, on Mac
-OS X and Windows, download the appropriate binary package and place the
-``fpcalc`` (or ``fpcalc.exe``) on your shell search path (e.g., in
-``/usr/local/bin`` on Mac OS X or ``C:\\Program Files`` on Windows).
+First, install pyacoustid itself. You can do this using `pip`_, like so::
+
+    $ pip install pyacoustid
+
+.. _pip: http://pip.openplans.org/
+
+Then, you will need to install `Chromaprint`_, either as a dynamic library or
+in the form of a command-line tool (``fpcalc``).
+
+Installing the Binary Command-Line Tool
+'''''''''''''''''''''''''''''''''''''''
+
+The simplest way to get up and running, especially on Windows, is to
+`download`_ the appropriate Chromaprint binary package and place the
+``fpcalc`` (or ``fpcalc.exe``) on your shell search path. On Windows, this
+means something like ``C:\\Program Files``. On OS X or Linux, put the
+executable somewhere like ``/usr/local/bin``.
+
+.. _download: http://acoustid.org/chromaprint
+
+Installing the Library
+''''''''''''''''''''''
+
+On OS X and Linux, you can also use a library installed by your package
+manager, which has some advantages (automatic upgrades, etc.). The Chromaprint
+site has links to packages for major Linux distributions. If you use
+`Homebrew`_ on Mac OS X, you can install the library with ``brew install
+chromaprint``.
 
 .. _Homebrew: http://mxcl.github.com/homebrew/
 
-Next, you will need a mechanism for decoding audio files supported by the
+You will also need a mechanism for decoding audio files supported by the
 `audioread`_ library:
 
-* Mac OS X has a number of decoders already built into Core Audio
+* OS X has a number of decoders already built into Core Audio, so there's no
+  need to install anything.
 
 * On Linux, you can install `GStreamer for Python`_, `FFmpeg`_, or `MAD`_ and
   `pymad`_. How you install these will depend on your distribution. For example,
   on Ubuntu, run ``apt-get install python-gst0.10-dev``. On Arch Linux, you want
-  ``pacman -S gstreamer0.10-python``.
+  ``pacman -S gstreamer0.10-python``. If you use GStreamer, be sure to install
+  its codec plugins also.
 
 * On Windows, try the Gstreamer "WinBuilds" from the `OSSBuild`_ project.
 
@@ -63,12 +86,6 @@ To decode audio formats (MP3, FLAC, etc.) with GStreamer, you'll need the
 standard set of Gstreamer plugins. For example, on Ubuntu, install the packages
 ``gstreamer0.10-plugins-good``, ``gstreamer0.10-plugins-bad``, and
 ``gstreamer0.10-plugins-ugly``.
-
-Then, install pyacoustid itself. You can do this using `pip`_, like so::
-
-    $ pip install pyacoustid
-
-.. _pip: http://pip.openplans.org/
 
 Using
 -----
