@@ -32,9 +32,9 @@ def random_item(lib, opts, args):
     template = Template(fmt) if fmt else None
 
     if opts.album:
-        objs = list(lib.albums(query=query))
+        objs = list(lib.albums(query))
     else:
-        objs = list(lib.items(query=query))
+        objs = list(lib.items(query))
 
     if opts.equal_chance:
         # Group the objects by artist so we can sample from them.

@@ -65,7 +65,7 @@ def _duplicate_check(lib, task):
 
     found_albums = []
     cur_paths = set(i.path for i in task.items if i)
-    for album_cand in lib.albums(artist=artist):
+    for album_cand in lib.albums(library.MatchQuery('albumartist', artist)):
         if album_cand.album == album:
             # Check whether the album is identical in contents, in which
             # case it is not a duplicate (will be replaced).
@@ -83,7 +83,11 @@ def _item_duplicate_check(lib, task):
     artist, title = task.chosen_ident()
 
     found_items = []
-    for other_item in lib.items(artist=artist, title=title):
+    query = library.AndQuery((
+        library.MatchQuery('artist', artist),
+        library.MatchQuery('title', title),
+    ))
+    for other_item in lib.items(query):
         # Existing items not considered duplicates.
         if other_item.path == task.item.path:
             continue
@@ -296,7 +300,7 @@ class ImportSession(object):
 
     def resolve_duplicate(self, task):
         raise NotImplementedError
-    
+
     def choose_item(self, task):
         raise NotImplementedError
 
@@ -533,7 +537,7 @@ def read_tasks(session):
             if resume_dir:
 
                 # Either accept immediately or prompt for input to decide.
-                if _resume() == True:
+                if _resume() is True:
                     do_resume = True
                     log.warn('Resuming interrupted import of %s' % path)
                 else:
@@ -746,7 +750,9 @@ def apply_choices(session):
         # when the last item is removed.
         task.replaced_items = defaultdict(list)
         for item in items:
-            dup_items = session.lib.items(library.MatchQuery('path', item.path))
+            dup_items = session.lib.items(
+                library.MatchQuery('path', item.path)
+            )
             for dup_item in dup_items:
                 task.replaced_items[item].append(dup_item)
                 log.debug('replacing item %i: %s' %

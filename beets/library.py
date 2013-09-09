@@ -1508,58 +1508,42 @@ class Library(object):
 
     # Querying.
 
-    def albums(self, query=None, artist=None):
-        """Returns a sorted list of Album objects, possibly filtered
-        by an artist name or an arbitrary query. Unqualified query
-        string terms only match fields that apply at an album
-        granularity: artist, album, and genre.
+    def _fetch(self, model_cls, order_by, query):
+        """Fetch the objects of type `model_cls` matching the given
+        query. The query may be given as a string, string sequence, a
+        Query object, or None (to fetch everything).
         """
-        query = get_query(query, True)
-        if artist is not None:
-            # "Add" the artist to the query.
-            query = AndQuery((query, MatchQuery('albumartist', artist)))
+        query = get_query(query, model_cls is Album)
 
         where, subvals = query.clause()
         with self.transaction() as tx:
             rows = tx.query(
-                "SELECT * FROM albums WHERE {0} "
-                "ORDER BY {1}, album".format(
-                    where or '1',
-                    _orelse("albumartist_sort", "albumartist"),
-                ),
-                subvals,
-            )
-
-        return Results(Album, rows, self, None if where else query)
-
-    def items(self, query=None, artist=None, album=None, title=None):
-        """Returns a sequence of the items matching the given artist,
-        album, title, and query (if present). Sorts in such a way as to
-        group albums appropriately. Unqualified query string terms only
-        match intuitively relevant fields: artist, album, genre, title,
-        and comments.
-        """
-        queries = [get_query(query, False)]
-        if artist is not None:
-            queries.append(MatchQuery('artist', artist))
-        if album is not None:
-            queries.append(MatchQuery('album', album))
-        if title is not None:
-            queries.append(MatchQuery('title', title))
-        query = AndQuery(queries)
-        where, subvals = query.clause()
-
-        with self.transaction() as tx:
-            rows = tx.query(
-                "SELECT * FROM items WHERE {0} "
-                "ORDER BY {1}, album, disc, track".format(
-                    where or '1',
-                    _orelse("artist_sort", "artist"),
+                "SELECT * FROM {table} WHERE {where} "
+                "ORDER BY {order_by}".format(
+                    table=model_cls._table,
+                    where=where or '1',
+                    order_by=order_by
                 ),
                 subvals
             )
 
-        return Results(Item, rows, self, None if where else query)
+        return Results(model_cls, rows, self, None if where else query)
+
+    def albums(self, query=None):
+        """Get a sorted list of Album objects matching the given query.
+        """
+        order = '{0}, album'.format(
+            _orelse("albumartist_sort", "albumartist")
+        )
+        return self._fetch(Album, order, query)
+
+    def items(self, query=None):
+        """Get a sorted list of Item objects matching the given query.
+        """
+        order = '{0}, album'.format(
+            _orelse("artist_sort", "artist")
+        )
+        return self._fetch(Item, order, query)
 
 
     # Convenience accessors.
@@ -1932,7 +1916,7 @@ class DefaultTemplateFunctions(object):
         for key in keys:
             value = getattr(album, key)
             subqueries.append(MatchQuery(key, value))
-        albums = self.lib.albums(query=AndQuery(subqueries))
+        albums = self.lib.albums(AndQuery(subqueries))
 
         # If there's only one album to matching these details, then do
         # nothing.
