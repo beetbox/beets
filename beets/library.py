@@ -163,11 +163,9 @@ SQLITE_TYPES = {
 }
 SQLITE_KEY_TYPE = 'INTEGER PRIMARY KEY'
 
-# Default search fields for various granularities.
-ARTIST_DEFAULT_FIELDS = ('artist',)
+# Default search fields for each model.
 ALBUM_DEFAULT_FIELDS = ('album', 'albumartist', 'genre')
-ITEM_DEFAULT_FIELDS = ARTIST_DEFAULT_FIELDS + ALBUM_DEFAULT_FIELDS + \
-    ('title', 'comments')
+ITEM_DEFAULT_FIELDS = ALBUM_DEFAULT_FIELDS + ('artist', 'title', 'comments')
 
 # Special path format key.
 PF_KEY_DEFAULT = 'default'
@@ -350,6 +348,11 @@ class LibModel(FlexModel):
     strings.
     """
 
+    _search_fields = ()
+    """The fields that should be queried by default by unqualified query
+    terms.
+    """
+
     def __init__(self, lib=None, **values):
         self._lib = lib
         super(LibModel, self).__init__(**values)
@@ -424,6 +427,7 @@ class Item(LibModel):
     _fields = ITEM_KEYS
     _table = 'items'
     _flex_table = 'item_attributes'
+    _search_fields = ITEM_DEFAULT_FIELDS
 
     @classmethod
     def from_path(cls, path):
@@ -610,7 +614,7 @@ class Query(object):
     def clause(self):
         """Generate an SQLite expression implementing the query.
         Return a clause string, a sequence of substitution values for
-        the clause, and a Query object representing the "remainder" 
+        the clause, and a Query object representing the "remainder"
         Returns (clause, subvals) where clause is a valid sqlite
         WHERE clause implementing the query and subvals is a list of
         items to be substituted for ?s in the clause.
@@ -1101,18 +1105,13 @@ def construct_query_part(query_part, default_fields, all_keys):
     else:
         return query_class(key.lower(), pattern, key in all_keys)
 
-def get_query(val, album=False):
+def get_query(val, model_cls):
     """Takes a value which may be None, a query string, a query string
-    list, or a Query object, and returns a suitable Query object. album
-    determines whether the query is to match items or albums.
+    list, or a Query object, and returns a suitable Query object.
+    `model_cls` is the subclass of LibModel indicating which entity this
+    is a query for (i.e., Album or Item) and is used to determine which
+    fields are searched.
     """
-    if album:
-        default_fields = ALBUM_DEFAULT_FIELDS
-        all_keys = ALBUM_KEYS
-    else:
-        default_fields = ITEM_DEFAULT_FIELDS
-        all_keys = ITEM_KEYS
-
     # Convert a single string into a list of space-separated
     # criteria.
     if isinstance(val, basestring):
@@ -1121,7 +1120,8 @@ def get_query(val, album=False):
     if val is None:
         return TrueQuery()
     elif isinstance(val, list) or isinstance(val, tuple):
-        return AndQuery.from_strings(val, default_fields, all_keys)
+        return AndQuery.from_strings(val, model_cls._search_fields,
+                                     model_cls._fields)
     elif isinstance(val, Query):
         return val
     else:
@@ -1513,7 +1513,7 @@ class Library(object):
         query. The query may be given as a string, string sequence, a
         Query object, or None (to fetch everything).
         """
-        query = get_query(query, model_cls is Album)
+        query = get_query(query, model_cls)
 
         where, subvals = query.clause()
         with self.transaction() as tx:
@@ -1608,6 +1608,7 @@ class Album(LibModel):
     _fields = ALBUM_KEYS
     _table = 'albums'
     _flex_table = 'album_attributes'
+    _search_fields = ALBUM_DEFAULT_FIELDS
 
     def __setitem__(self, key, value):
         """Set the value of an album attribute."""

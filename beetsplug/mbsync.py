@@ -61,7 +61,7 @@ def _print_and_apply_changes(lib, item, old_data, move, pretend, write):
 def mbsync_singletons(lib, query, move, pretend, write):
     """Synchronize matching singleton items.
     """
-    singletons_query = library.get_query(query, False)
+    singletons_query = library.get_query(query, library.Item)
     singletons_query.subqueries.append(library.SingletonQuery(True))
     for s in lib.items(singletons_query):
         if not s.mb_trackid:
