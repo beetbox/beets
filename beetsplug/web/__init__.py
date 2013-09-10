@@ -29,8 +29,9 @@ def _rep(obj, expand=False):
     Album object. For Albums, `expand` dictates whether tracks are
     included.
     """
+    out = dict(obj)
+
     if isinstance(obj, beets.library.Item):
-        out = dict(obj)
         del out['path']
 
         # Get the size (in bytes) of the backing file. This is useful
@@ -43,7 +44,6 @@ def _rep(obj, expand=False):
         return out
 
     elif isinstance(obj, beets.library.Album):
-        out = dict(obj._record)
         del out['artpath']
         if expand:
             out['items'] = [_rep(item) for item in obj.items()]
