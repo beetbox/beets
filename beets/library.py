@@ -410,16 +410,7 @@ class LibModel(FlexModel):
         """Refresh the object's metadata from the library database.
         """
         self._check_db()
-
-        # Get a fresh copy of this object from the DB.
-        with self._lib.transaction() as tx:
-            rows = tx.query(
-                'SELECT * FROM {0} WHERE id=?;'.format(self._table),
-                (self.id,)
-            )
-        results = Results(type(self), rows, self._lib)
-        stored_obj = results.get()
-
+        stored_obj = self._lib._get(type(self), self.id)
         self.update(dict(stored_obj))
         self.clear_dirty()
 
@@ -1508,24 +1499,23 @@ class Library(object):
 
     # Querying.
 
-    def _fetch(self, model_cls, order_by, query):
+    def _fetch(self, model_cls, query, order_by=None):
         """Fetch the objects of type `model_cls` matching the given
         query. The query may be given as a string, string sequence, a
-        Query object, or None (to fetch everything).
+        Query object, or None (to fetch everything). If provided,
+        `order_by` is a SQLite ORDER BY clause for sorting.
         """
         query = get_query(query, model_cls)
-
         where, subvals = query.clause()
+
+        sql = "SELECT * FROM {0} WHERE {1}".format(
+            model_cls._table,
+            where or '1',
+        )
+        if order_by:
+            sql += " ORDER BY {0}".format(order_by)
         with self.transaction() as tx:
-            rows = tx.query(
-                "SELECT * FROM {table} WHERE {where} "
-                "ORDER BY {order_by}".format(
-                    table=model_cls._table,
-                    where=where or '1',
-                    order_by=order_by
-                ),
-                subvals
-            )
+            rows = tx.query(sql, subvals)
 
         return Results(model_cls, rows, self, None if where else query)
 
@@ -1535,7 +1525,7 @@ class Library(object):
         order = '{0}, album'.format(
             _orelse("albumartist_sort", "albumartist")
         )
-        return self._fetch(Album, order, query)
+        return self._fetch(Album, query, order)
 
     def items(self, query=None):
         """Get a sorted list of Item objects matching the given query.
@@ -1543,15 +1533,21 @@ class Library(object):
         order = '{0}, album'.format(
             _orelse("artist_sort", "artist")
         )
-        return self._fetch(Item, order, query)
+        return self._fetch(Item, query, order)
 
 
     # Convenience accessors.
 
+    def _get(self, model_cls, id):
+        """Get a LibModel object by its id or None if the id does not
+        exist.
+        """
+        return self._fetch(model_cls, MatchQuery('id', id)).get()
+
     def get_item(self, id):
         """Fetch an Item by its ID. Returns None if no match is found.
         """
-        return self.items(MatchQuery('id', id)).get()
+        return self._get(Item, id)
 
     def get_album(self, item_or_id):
         """Given an album ID or an item associated with an album,
@@ -1564,8 +1560,7 @@ class Library(object):
             album_id = item_or_id.album_id
         if album_id is None:
             return None
-
-        return self.albums(MatchQuery('id', album_id)).get()
+        return self._get(Album, album_id)
 
     def add_album(self, items):
         """Create a new album in the database with metadata derived
@@ -1573,8 +1568,7 @@ class Library(object):
         don't yet have an ID. Returns an Album object.
         """
         # Set the metadata from the first item.
-        album_values = dict(
-            (key, getattr(items[0], key)) for key in ALBUM_KEYS_ITEM)
+        album_values = dict((key, items[0][key]) for key in ALBUM_KEYS_ITEM)
 
         # When adding an album and its items for the first time, the
         # items do not yet have a timestamp.
