@@ -775,6 +775,9 @@ class ImageField(object):
             else:
                 return None
 
+            if pic.data == '':
+                return None
+
             return pic.data
 
     def __set__(self, obj, val):

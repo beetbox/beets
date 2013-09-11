@@ -175,9 +175,8 @@ READ_ONLY_CORRECT_DICTS = {
 
     'full.opus': {
         'length': 1.0,
-        'bitrate': 64000,
+        'bitrate': 63216,
         'format': 'Opus',
-        'samplerate': 48000,
         'bitdepth': 0,
         'channels': 1,
     },
