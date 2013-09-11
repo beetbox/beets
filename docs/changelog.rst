@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.3.0 (in development)
-----------------------
+1.3.0 (September 11, 2013)
+--------------------------
 
 Albums and items now have **flexible attributes**. This means that, when you
 want to store information about your music in the beets database, you're no
@@ -32,6 +32,10 @@ One side effect of this change: queries that include unknown fields will now
 match *nothing* instead of *everything*. So if you type ``beet ls
 fieldThatDoesNotExist:foo``, beets will now return no results, whereas
 previous versions would spit out a warning and then list your entire library.
+
+There's more detail than you could ever need `on the beets blog`_.
+
+.. _on the beets blog: http://beets.radbox.org/blog/flexattr.html
 
 
 1.2.2 (August 27, 2013)
@@ -1341,7 +1345,7 @@ issue involves correct ordering of autotagged albums.
 
 * BPD now uses a pure-Python socket library and no longer requires
   eventlet/greenlet (the latter of which is a C extension). For the curious, the
-  socket library in question is called `Bluelet`_. 
+  socket library in question is called `Bluelet`_.
 
 * Non-autotagged imports are now resumable (just like autotagged imports).
 
