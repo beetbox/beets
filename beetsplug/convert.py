@@ -49,7 +49,7 @@ def _destination(lib, dest_dir, item, keep_new, path_formats):
 def encode(source, dest):
     log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
 
-    command = config['transport']['command'].get(unicode).split(u' ')
+    command = config['convert']['command'].get(unicode).split(u' ')
     opts = []
 
     for arg in command:
