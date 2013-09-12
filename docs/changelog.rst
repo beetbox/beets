@@ -4,7 +4,14 @@ Changelog
 1.3.1 (in development)
 ----------------------
 
+New stuff:
+
 * Add `Opus`_ audio support. Thanks to Rowan Lewis.
+
+And some fixes:
+
+* :doc:`/plugins/fetchart`: Better error message when the image file has an
+  unrecognized type.
 
 .. _Ogg Opus: http://www.opus-codec.org/
 
