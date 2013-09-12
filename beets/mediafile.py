@@ -756,9 +756,9 @@ class ImageField(object):
             return None
 
         else:
-            # Here we're assuming everything but MP3, MPEG-4, and FLAC
-            # use the Xiph/Vorbis Comments standard. This may not be
-            # valid. http://wiki.xiph.org/VorbisComment#Cover_art
+            # Here we're assuming everything but MP3, MPEG-4, FLAC, and
+            # ASF/WMA use the Xiph/Vorbis Comments standard. This may
+            # not be valid. http://wiki.xiph.org/VorbisComment#Cover_art
 
             if 'metadata_block_picture' not in obj.mgfile:
                 # Try legacy COVERART tags.
@@ -775,7 +775,7 @@ class ImageField(object):
             else:
                 return None
 
-            if pic.data == '':
+            if not pic.data:
                 return None
 
             return pic.data
