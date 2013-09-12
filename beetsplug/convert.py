@@ -53,6 +53,7 @@ def encode(source, dest):
     opts = []
 
     for arg in command:
+        arg = arg.encode('utf-8')
         opts.append(Template(arg).substitute({
             'source':   source,
             'dest':     dest
