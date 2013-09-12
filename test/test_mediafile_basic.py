@@ -173,6 +173,14 @@ READ_ONLY_CORRECT_DICTS = {
         'channels': 1,
     },
 
+    'full.opus': {
+        'length': 1.0,
+        'bitrate': 63216,
+        'format': 'Opus',
+        'bitdepth': 0,
+        'channels': 1,
+    },
+
     'full.ape': {
         'length': 1.0,
         'bitrate': 112040,
@@ -224,6 +232,7 @@ TEST_FILES = {
     'mp3': ['full', 'partial', 'min'],
     'flac': ['full', 'partial', 'min'],
     'ogg': ['full'],
+    'opus': ['full'],
     'ape': ['full'],
     'wv': ['full'],
     'mpc': ['full'],
@@ -264,6 +273,9 @@ class AllFilesMixin(object):
     def test_ogg(self):
         self._run('full', 'ogg')
 
+    def test_opus(self):
+        self._run('full', 'opus')
+
     def test_ape(self):
         self._run('full', 'ape')
 
@@ -293,7 +305,7 @@ class ReadingTest(unittest.TestCase, AllFilesMixin):
             self.assertAlmostEqual(got, correct, msg=message)
         else:
             self.assertEqual(got, correct, message)
-    
+
     def _run(self, tagset, kind):
         correct_dict = CORRECT_DICTS[tagset]
         path = os.path.join(_common.RSRC, tagset + '.' + kind)
@@ -389,7 +401,7 @@ class WritingTest(unittest.TestCase, AllFilesMixin):
             else:
                 raise ValueError('unknown field type ' + \
                         str(type(correct_dict[field])))
-            
+
             # Make a copy of the file we'll work on.
             root, ext = os.path.splitext(path)
             tpath = root + '_test' + ext
@@ -428,6 +440,9 @@ class ReadOnlyTest(unittest.TestCase):
 
     def test_ogg(self):
         self._run('full.ogg')
+
+    def test_opus(self):
+        self._run('full.opus')
 
     def test_ape(self):
         self._run('full.ape')
