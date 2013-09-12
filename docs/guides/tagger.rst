@@ -61,8 +61,8 @@ all of these limitations.
   unidentified albums.
 
 * Currently, MP3, AAC, FLAC, ALAC, Ogg Vorbis, Monkey's Audio, WavPack,
-  Musepack, and Windows Media files are supported. (Do you use some other
-  format? `Let me know!`_)
+  Musepack, Windows Media, and Opus files are supported. (Do you use some
+  other format? `Let me know!`_)
 
 .. _Let me know!: mailto:adrian@radbox.org
 
@@ -185,7 +185,7 @@ candidates), like so::
     Candidates:
     1. Panther - Yourself (66.8%)
     2. Tav Falco's Panther Burns - Return of the Blue Panther (30.4%)
-    # selection (default 1), Skip, Use as-is, or Enter search, or aBort? 
+    # selection (default 1), Skip, Use as-is, or Enter search, or aBort?
 
 Here, you have many of the same options as before, but you can also enter a
 number to choose one of the options that beets has found. Don't worry about

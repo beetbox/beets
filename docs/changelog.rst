@@ -4,7 +4,9 @@ Changelog
 1.3.1 (in development)
 ----------------------
 
-TK
+* Add `Opus`_ audio support. Thanks to Rowan Lewis.
+
+.. _Ogg Opus: http://www.opus-codec.org/
 
 
 1.3.0 (September 11, 2013)
