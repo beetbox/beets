@@ -13,7 +13,7 @@ And some fixes:
 * :doc:`/plugins/fetchart`: Better error message when the image file has an
   unrecognized type.
 
-.. _Ogg Opus: http://www.opus-codec.org/
+.. _Opus: http://www.opus-codec.org/
 
 
 1.3.0 (September 11, 2013)
