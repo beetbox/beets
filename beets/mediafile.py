@@ -30,6 +30,7 @@ if no tag is present. If no value is available, the value will be false
 """
 import mutagen
 import mutagen.mp3
+import mutagen.oggopus
 import mutagen.oggvorbis
 import mutagen.mp4
 import mutagen.flac
@@ -72,6 +73,7 @@ TYPES = {
     'aac':  'AAC',
     'alac':  'ALAC',
     'ogg':  'OGG',
+    'opus': 'Opus',
     'flac': 'FLAC',
     'ape':  'APE',
     'wv':   'WavPack',
@@ -283,7 +285,7 @@ class StorageStyle(object):
       - id3_lang: set the language field of the frame object.
     """
     def __init__(self, key, list_elem=True, as_type=unicode,
-                 packing=None, pack_pos=0, pack_type=int, 
+                 packing=None, pack_pos=0, pack_type=int,
                  id3_desc=None, id3_frame_field='text',
                  id3_lang=None, suffix=None, float_places=2):
         self.key = key
@@ -741,7 +743,7 @@ class ImageField(object):
                 return pictures[0].data or None
             else:
                 return None
-        
+
         elif obj.type == 'asf':
             if 'WM/Picture' in obj.mgfile:
                 pictures = obj.mgfile['WM/Picture']
@@ -771,6 +773,9 @@ class ImageField(object):
                 except TypeError:
                     pass
             else:
+                return None
+
+            if pic.data == '':
                 return None
 
             return pic.data
@@ -862,6 +867,7 @@ class MediaFile(object):
             mutagen.flac.error,
             mutagen.monkeysaudio.MonkeysAudioHeaderError,
             mutagen.mp4.error,
+            mutagen.oggopus.error,
             mutagen.oggvorbis.error,
             mutagen.ogg.error,
             mutagen.asf.error,
@@ -904,6 +910,8 @@ class MediaFile(object):
             self.type = 'mp3'
         elif type(self.mgfile).__name__ == 'FLAC':
             self.type = 'flac'
+        elif type(self.mgfile).__name__ == 'OggOpus':
+            self.type = 'opus'
         elif type(self.mgfile).__name__ == 'OggVorbis':
             self.type = 'ogg'
         elif type(self.mgfile).__name__ == 'MonkeysAudio':
@@ -1262,7 +1270,7 @@ class MediaFile(object):
                             packing=packing.SC, pack_pos=0, pack_type=float)],
         mp4 = [StorageStyle('----:com.apple.iTunes:replaygain_track_gain',
                             as_type=str, float_places=2, suffix=b' dB'),
-               StorageStyle('----:com.apple.iTunes:iTunNORM', 
+               StorageStyle('----:com.apple.iTunes:iTunNORM',
                             packing=packing.SC, pack_pos=0, pack_type=float)],
         etc = StorageStyle(u'REPLAYGAIN_TRACK_GAIN',
                            float_places=2, suffix=u' dB'),
