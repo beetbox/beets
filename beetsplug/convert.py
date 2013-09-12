@@ -19,6 +19,7 @@ import os
 import threading
 from subprocess import Popen
 import tempfile
+from string import Template
 
 from beets.plugins import BeetsPlugin
 from beets import ui, util
@@ -41,17 +42,29 @@ def _destination(lib, dest_dir, item, keep_new, path_formats):
         # occurs.
         return dest
     else:
-        # Otherwise, replace the extension with .mp3.
-        return os.path.splitext(dest)[0] + '.mp3'
+        # Otherwise, replace the extension.
+        return os.path.splitext(dest)[0] + '.' + config['convert']['extension'].get(unicode)
 
 
 def encode(source, dest):
     log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
 
-    opts = config['convert']['opts'].get(unicode).split(u' ')
-    encode = Popen([config['convert']['ffmpeg'].get(unicode), '-i',
-                    source, '-y'] + opts + [dest],
-                   close_fds=True, stderr=DEVNULL)
+    command = config['transport']['command'].get(unicode).split(u' ')
+    opts = []
+
+    for arg in command:
+        opts.append(Template(arg).substitute({
+            'source':   source,
+            'dest':     dest
+        }))
+
+    encode = Popen(opts, close_fds=True, stderr=DEVNULL)
+
+    #opts = config['convert']['opts'].get(unicode).split(u' ')
+    #encode = Popen([config['convert']['ffmpeg'].get(unicode), '-i',
+    #                source, '-y'] + opts + [dest],
+    #               close_fds=True, stderr=DEVNULL)
+
     encode.wait()
     if encode.returncode != 0:
         # Something went wrong (probably Ctrl+C), remove temporary files
@@ -106,7 +119,7 @@ def convert_item(lib, dest_dir, keep_new, path_formats):
 
         else:
             if keep_new:
-                item.path = os.path.splitext(item.path)[0] + '.mp3'
+                item.path = os.path.splitext(item.path)[0] + '.' + config['convert']['extension'].get(unicode)
                 encode(dest, item.path)
             else:
                 encode(item.path, dest)
@@ -135,7 +148,7 @@ def convert_on_import(lib, item):
     library.
     """
     if should_transcode(item):
-        fd, dest = tempfile.mkstemp('.mp3')
+        fd, dest = tempfile.mkstemp('.' + config['convert']['extension'].get(unicode))
         os.close(fd)
         _temp_files.append(dest)  # Delete the transcode later.
         encode(item.path, dest)
@@ -180,8 +193,8 @@ class ConvertPlugin(BeetsPlugin):
         self.config.add({
             u'dest': None,
             u'threads': util.cpu_count(),
-            u'ffmpeg': u'ffmpeg',
-            u'opts': u'-aq 2',
+            u'command': u'ffmpeg -i $source -y -aq 2 $dest',
+            u'extension': u'mp3',
             u'max_bitrate': 500,
             u'embed': True,
             u'auto': False,
