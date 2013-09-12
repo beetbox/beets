@@ -10,7 +10,7 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
@@ -42,7 +42,7 @@ if 'sdist' in sys.argv:
     shutil.copytree(os.path.join(docdir, '_build', 'man'), mandir)
 
 setup(name='beets',
-      version='1.3.0',
+      version='1.3.1',
       description='music tagger and library organizer',
       author='Adrian Sampson',
       author_email='adrian@radbox.org',
