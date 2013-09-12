@@ -110,7 +110,7 @@ def should_transcode(item):
     conversion (i.e., its bitrate is high or it has the wrong format).
     """
     maxbr = config['convert']['max_bitrate'].get(int)
-    return item.format != 'MP3' or item.bitrate >= 1000 * maxbr
+    return item.format not in ['MP3', 'Opus', 'OGG'] or item.bitrate >= 1000 * maxbr
 
 
 def convert_item(lib, dest_dir, keep_new, path_formats):
