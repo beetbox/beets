@@ -234,7 +234,7 @@ class ConvertPlugin(BeetsPlugin):
                     u'command': u'ffmpeg -i $source -y -acodec libopus -vn -ab 96k $dest',
                     u'extension': u'opus',
                 },
-                u'ogg': {
+                u'vorbis': {
                     u'command': u'ffmpeg -i $source -y -acodec libvorbis -vn -aq 2 $dest',
                     u'extension': u'ogg',
                 },
