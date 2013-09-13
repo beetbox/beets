@@ -122,7 +122,8 @@ def should_transcode(item):
     conversion (i.e., its bitrate is high or it has the wrong format).
     """
     maxbr = config['convert']['max_bitrate'].get(int)
-    return item.format not in ['MP3', 'Opus', 'OGG'] or item.bitrate >= 1000 * maxbr
+
+    return item.format not in ['AAC', 'MP3', 'Opus', 'OGG', 'Windows Media'] or item.bitrate >= 1000 * maxbr
 
 
 def convert_item(lib, dest_dir, keep_new, path_formats):
@@ -238,6 +239,18 @@ class ConvertPlugin(BeetsPlugin):
             u'threads': util.cpu_count(),
             u'format': u'mp3',
             u'formats': {
+                u'aac': {
+                    u'command': u'ffmpeg -i $source -y -acodec libfaac -aq 100 $dest',
+                    u'extension': u'm4a',
+                },
+                u'alac': {
+                    u'command': u'ffmpeg -i $source -y -acodec alac $dest',
+                    u'extension': u'm4a',
+                },
+                u'flac': {
+                    u'command': u'ffmpeg -i $source -y -acodec flac $dest',
+                    u'extension': u'flac',
+                },
                 u'mp3': {
                     u'command': u'ffmpeg -i $source -y -aq 2 $dest',
                     u'extension': u'mp3',
@@ -249,6 +262,10 @@ class ConvertPlugin(BeetsPlugin):
                 u'vorbis': {
                     u'command': u'ffmpeg -i $source -y -acodec libvorbis -vn -aq 2 $dest',
                     u'extension': u'ogg',
+                },
+                u'wma': {
+                    u'command': u'ffmpeg -i $source -y -acodec wmav2 -vn $dest',
+                    u'extension': u'wma',
                 },
             },
             u'max_bitrate': 500,

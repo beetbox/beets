@@ -48,15 +48,15 @@ The plugin offers several configuration options, all of which live under the
   or on the command line using the ``-d`` flag.
 * ``embed`` indicates whether or not to embed album art in converted items.
   Default: true.
-* If you set ``max_bitrate``, all MP3 files with a higher bitrate will be
+* If you set ``max_bitrate``, all lossy files with a higher bitrate will be
   transcoded and those with a lower bitrate will simply be copied. Note that
   this does not guarantee that all converted files will have a lower
-  bitrate---that depends on the encoder and its configuration. By default MP3s
-  will be copied without transcoding and all other formats will be converted.
-* ``opts`` are the encoding options that are passed to ``ffmpeg``. Default:
-  "-aq 2". (Note that "-aq <num>" is equivalent to the LAME option "-V
-  <num>".) If you want to specify a bitrate, use "-ab <bitrate>". Refer to the
-  `FFmpeg`_ documentation for more details.
+  bitrate---that depends on the encoder and its configuration.
+* ``format`` specify which format preset you would like to use. Default: mp3.
+* ``formats`` lets you specify additional formats to convert to. Presets for
+  AAC, ALAC, FLAC, MP3, Opus, Vorbis and Windows Meda are provided, however
+  support may vary depending on your ffmpeg library. Each format is defined as
+  a command and a file extension.
 * ``auto`` gives you the option to import transcoded versions of your files
   automatically during the ``import`` command. With this option enabled, the
   importer will transcode all non-MP3 files over the maximum bitrate before
@@ -73,9 +73,26 @@ Here's an example configuration::
 
     convert:
         embed: false
+        format: aac
         max_bitrate: 200
-        opts: -aq 4
         dest: /home/user/MusicForPhone
         threads: 4
         paths:
             default: $albumartist/$title
+
+Here's how formats are configured::
+
+    convert:
+        format: mp3_high
+        formats:
+            mp3_high:
+                command: ffmpeg -i $source -y -aq 4 $dest
+                extension: mp3
+
+The ``$source`` and ``$dest`` tokens are automatically replaced with the paths
+to each file. Because ``$`` is used to delineate a field reference, you can
+use ``$$`` to emit a dollars sign.
+
+In this example ``-aq <num>`` is equivalent to the LAME option ``-V num``. If
+you want to specify a bitrate, use ``-ab <bitrate>``. Refer to the `FFmpeg`_
+documentation for more details.
