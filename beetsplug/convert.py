@@ -93,16 +93,28 @@ def validate_config():
     """Validate the format configuration, make sure all of the required values are set for the current format.
     """
     format = config['convert']['format'].get(unicode)
-    formats = config['convert']['formats'].get()
+    formats = config['convert']['formats']
 
-    if format not in formats:
-        raise ui.UserError(u'specified format {0} not configured in formats'.format(format))
+    try:
+        formats[format].get()
+    except:
+        raise ui.UserError(
+            'Format {0} does not appear to exist, please check your convert plugin configuration.'.format(format)
+        )
 
-    if 'command' not in formats[format]:
-        raise ui.UserError(u'specified format {0} does not have a command defined'.format(format))
+    try:
+        formats[format]['command'].get(unicode)
+    except:
+        raise ui.UserError(
+            'Format {0} does not define a command, please check your convert plugin configuration.'.format(format)
+        )
 
-    if 'extension' not in formats[format]:
-        raise ui.UserError(u'specified format {0} does not have a file extension defined'.format(format))
+    try:
+        formats[format]['extension'].get(unicode)
+    except:
+        raise ui.UserError(
+            'Format {0} does not define a file extension, please check your convert plugin configuration.'.format(format)
+        )
 
 
 def should_transcode(item):
