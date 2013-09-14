@@ -129,15 +129,16 @@ def should_transcode(item):
     return item.format not in ['AAC', 'MP3', 'Opus', 'OGG', 'Windows Media'] or item.bitrate >= 1000 * maxbr
 
 
-def convert_item(lib, dest_dir, keep_new, path_formats):
+def convert_item(lib, dest_dir, keep_new, quiet, path_formats):
     while True:
         item = yield
         dest = _destination(lib, dest_dir, item, keep_new, path_formats)
 
         if os.path.exists(util.syspath(dest)):
-            log.info(u'Skipping {0} (target file exists)'.format(
-                util.displayable_path(item.path)
-            ))
+            if not quiet:
+                log.info(u'Skipping {0} (target file exists)'.format(
+                    util.displayable_path(item.path)
+                ))
             continue
 
         # Ensure that only one thread tries to create directories at a
@@ -150,13 +151,16 @@ def convert_item(lib, dest_dir, keep_new, path_formats):
         # current (pristine) file to the destination. We'll then copy it
         # back to its old path or transcode it to a new path.
         if keep_new:
-            log.info(u'Moving to {0}'.
-                     format(util.displayable_path(dest)))
+            if not quiet:
+                log.info(u'Moving to {0}'.format(util.displayable_path(dest)))
+
             util.move(item.path, dest)
 
         if not should_transcode(item):
             # No transcoding necessary.
-            log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
+            if not quiet:
+                log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
+
             if keep_new:
                 util.copy(dest, item.path)
             else:
@@ -214,6 +218,9 @@ def convert_func(lib, opts, args):
     threads = opts.threads if opts.threads is not None else \
             config['convert']['threads'].get(int)
     keep_new = opts.keep_new
+    quiet = opts.quiet
+
+    print opts
 
     if not config['convert']['paths']:
         path_formats = ui.get_path_formats()
@@ -222,14 +229,15 @@ def convert_func(lib, opts, args):
 
     ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
 
-    if not ui.input_yn("Convert? (Y/n)"):
+    if not opts.yes and not ui.input_yn("Convert? (Y/n)"):
         return
 
     if opts.album:
         items = (i for a in lib.albums(ui.decargs(args)) for i in a.items())
     else:
         items = iter(lib.items(ui.decargs(args)))
-    convert = [convert_item(lib, dest, keep_new, path_formats) for i in range(threads)]
+
+    convert = [convert_item(lib, dest, keep_new, quiet, path_formats) for i in range(threads)]
     pipe = util.pipeline.Pipeline([items, convert])
     pipe.run_parallel()
 
@@ -292,6 +300,10 @@ class ConvertPlugin(BeetsPlugin):
                               and move the old files')
         cmd.parser.add_option('-d', '--dest', action='store',
                               help='set the destination directory')
+        cmd.parser.add_option('-q', '--quiet', action='store_true', dest='quiet',
+                              help='do not announce each converted file')
+        cmd.parser.add_option('-y', '--yes', action='store_true',
+                              help='skip confirmation')
         cmd.func = convert_func
         return [cmd]
 
