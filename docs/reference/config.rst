@@ -237,7 +237,7 @@ copy
 Either ``yes`` or ``no``, indicating whether to **copy** files into the
 library directory when using ``beet import``. Defaults to ``yes``.  Can be
 overridden with the ``-c`` and ``-C`` command-line options.
-    
+
 The option is ignored if ``move`` is enabled (i.e., beets can move or
 copy files but it doesn't make sense to do both).
 
@@ -246,7 +246,7 @@ move
 
 Either ``yes`` or ``no``, indicating whether to **move** files into the
 library directory when using ``beet import``.
-Defaults to ``no``. 
+Defaults to ``no``.
 
 The effect is similar to the ``copy`` option but you end up with only
 one copy of the imported file. ("Moving" works even across filesystems; if
@@ -347,14 +347,15 @@ instead of the main server. Use the ``host`` and ``ratelimit`` options under a
 ``musicbrainz:`` header, like so::
 
     musicbrainz:
-        host: localhost
+        host: localhost:5000
         ratelimit: 100
 
-The ``host`` key, of course, controls the Web server that will be contacted by
-beets (default: musicbrainz.org). The ``ratelimit`` option, an integer,
-controls the number of Web service requests per second (default: 1). **Do not
-change the rate limit setting** if you're using the main MusicBrainz
-server---on this public server, you're `limited`_ to one request per second.
+The ``host`` key, of course, controls the Web server hostname (and port,
+optionally) that will be contacted by beets (default: musicbrainz.org). The
+``ratelimit`` option, an integer, controls the number of Web service requests
+per second (default: 1). **Do not change the rate limit setting** if you're
+using the main MusicBrainz server---on this public server, you're `limited`_
+to one request per second.
 
 .. _limited: http://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
 .. _MusicBrainz: http://musicbrainz.org/

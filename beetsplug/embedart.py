@@ -34,8 +34,15 @@ def _embed(path, items, maxwidth=0):
 
     data = open(syspath(path), 'rb').read()
     kindstr = imghdr.what(None, data)
-    if kindstr not in ('jpeg', 'png'):
-        log.error('A file of type %s is not allowed as coverart.' % kindstr)
+    if kindstr is None:
+        log.error(u'Could not embed art of unkown type: {0}'.format(
+            displayable_path(path)
+        ))
+        return
+    elif kindstr not in ('jpeg', 'png'):
+        log.error(u'Image type {0} is not allowed as cover art: {1}'.format(
+            kindstr, displayable_path(path)
+        ))
         return
 
     # Add art to each file.
@@ -110,8 +117,9 @@ def embed(lib, imagepath, query):
         log.error('No album matches query.')
         return
 
-    log.info('Embedding album art into %s - %s.' % \
-             (album.albumartist, album.album))
+    log.info(u'Embedding album art into {0.albumartist} - {0.album}.'.format(
+        album
+    ))
     _embed(imagepath, album.items(),
            config['embedart']['maxwidth'].get(int))
 
@@ -161,9 +169,8 @@ def extract(lib, outpath, query):
         return
     outpath += '.' + ext
 
-    log.info('Extracting album art from: %s - %s\n'
-             'To: %s' % \
-             (item.artist, item.title, outpath))
+    log.info(u'Extracting album art from: {0.artist} - {0.title}\n'
+             u'To: {1}'.format(item, displayable_path(outpath)))
     with open(syspath(outpath), 'wb') as f:
         f.write(art)
 
