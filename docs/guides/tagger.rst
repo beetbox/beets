@@ -51,14 +51,21 @@ all of these limitations.
   adjacent albums have a common prefix, followed by "disc," "disk," or "CD"
   and then a number, they are tagged together.
 
-* The music may have bad tags, but it's not completely untagged. (This is
-  actually not a hard-and-fast rule: using the *E* option described below, it's
-  entirely possible to search for a release to tag a given album.) This is
-  because beets by default infers tags based on existing metadata. The
-  :doc:`Acoustid plugin </plugins/chroma>` extends the autotagger to use
-  acoustic fingerprinting to find information for arbitrary audio. Install that
-  plugin if you're willing to spend a little more CPU power to get tags for
-  unidentified albums.
+* The music may have bad tags, but it's not completely untagged. This is
+  because beets by default infers tags based on existing metadata. But this is
+  not a hard and fast rule---there are a few ways to tag metadata-poor music:
+
+    * You can use the *E* option described below to search in MusicBrainz for
+      a specific album or song.
+    * The :doc:`Acoustid plugin </plugins/chroma>` extends the autotagger to
+      use acoustic fingerprinting to find information for arbitrary audio.
+      Install that plugin if you're willing to spend a little more CPU power
+      to get tags for unidentified albums. (But be aware that it does slow
+      down the process.)
+    * The :doc:`FromFilename plugin </plugins/fromfilename>` adds the ability
+      to guess tags from the filenames. Use this plugin if your tracks have
+      useful names (like "03 Call Me Maybe.mp3") but their tags don't reflect
+      that.
 
 * Currently, MP3, AAC, FLAC, ALAC, Ogg Vorbis, Monkey's Audio, WavPack,
   Musepack, Windows Media, and Opus files are supported. (Do you use some

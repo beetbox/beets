@@ -9,6 +9,8 @@ New stuff:
 * Add `Opus`_ audio support. Thanks to Rowan Lewis.
 * :doc:`/plugins/convert`: You can now transcode files to any audio format,
   rather than just MP3. Thanks again to Rowan Lewis.
+* The new :doc:`/plugins/fromfilename` guesses tags from the filenames during
+  import when metadata tags themselves are missing. Thanks to Jan-Erik Dahlin.
 
 And some fixes:
 

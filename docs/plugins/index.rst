@@ -67,6 +67,7 @@ disabled by default, but you can turn them on as described above.
    duplicates
    discogs
    beatport
+   fromfilename
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -75,6 +76,8 @@ Autotagger Extensions
   missing or incorrect metadata.
 * :doc:`discogs`: Search for releases in the `Discogs`_ database.
 * :doc:`beatport`: Search for tracks and releases in the `Beatport`_ database.
+* :doc:`fromfilename`: Guess metadata for untagged tracks from their
+  filenames.
 
 .. _Beatport: http://www.beatport.com/
 .. _Discogs: http://www.discogs.com/
