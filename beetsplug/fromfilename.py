@@ -20,6 +20,7 @@ import os
 import re
 
 
+# Filename field extraction patterns.
 PATTERNS = [
     # "01 - Track 01" and "01": do nothing
     r'^(\d+)\s*-\s*track\s*\d$',
@@ -37,6 +38,12 @@ PATTERNS = [
     r'^(?P<track>\d+)\s(?P<title>.+)$',
 ]
 
+# Titles considered "empty" and in need of replacement.
+BAD_TITLE_PATTERNS = [
+    r'^$',
+    r'\d+?\s?-?\s*track\s*\d+',
+]
+
 
 def equal(seq):
     """Determine whether a sequence holds identical elements.
@@ -44,12 +51,12 @@ def equal(seq):
     return len(set(seq)) <= 1
 
 
-def equal_fields(matchdict, tag):
-    """Do all items in `matchdict`, whose values are regular expression
-    match objects, have the same value for `tag`? (If they do, the tag
-    is probably not the title.)
+def equal_fields(matchdict, field):
+    """Do all items in `matchdict`, whose values are dictionaries, have
+    the same value for `field`? (If they do, the field is probably not
+    the title.)
     """
-    return equal(m[tag] for m in matchdict.values())
+    return equal(m[field] for m in matchdict.values())
 
 
 def all_matches(names, pattern):
@@ -68,22 +75,22 @@ def all_matches(names, pattern):
     return matches
 
 
-def set_title_and_track(d, title_tag):
-    """If the title is empty, set it to whatever we got from the
-    filename. It is unlikely to be any worse than an empty title.
+def bad_title(title):
+    """Determine whether a given title is "bad" (empty or otherwise
+    meaningless) and in need of replacement.
     """
-    for item in d:
-        if item.title == '':  # FIXME
-            item.title = unicode(d[item][title_tag])
-        if item.track == 0:
-            item.track = int(d[item]['track'])
+    for pat in BAD_TITLE_PATTERNS:
+        if re.match(pat, title, re.IGNORECASE):
+            return True
+    return False
 
 
 def apply_matches(d):
     """Given a mapping from items to field dicts, apply the fields to
     the objects.
     """
-    keys = d.values()[0].keys()
+    some_map = d.values()[0]
+    keys = some_map.keys()
 
     # Only proceed if the "tag" field is equal across all filenames.
     if 'tag' in keys and not equal_fields(d, 'tag'):
@@ -94,22 +101,35 @@ def apply_matches(d):
     # for the title. This, of course, won't work for VA albums.
     if 'artist' in keys:
         if equal_fields(d, 'artist'):
-            set_title_and_track(d, 'title')
-            # FIXME set artist
+            artist = some_map['artist']
+            title_field = 'title'
         elif equal_fields(d, 'title'):
-            set_title_and_track(d, 'artist')
+            artist = some_map['title']
+            title_field = 'artist'
         else:
+            # Both vary. Abort.
             return
 
-    set_title_and_track(d, 'title')
+        for item in d:
+            if not item.artist:
+                item.artist = artist
+
+    # No artist field: remaining field is the title.
+    else:
+        title_field = 'title'
+
+    # Apply the title and track.
+    for item in d:
+        if bad_title(item.title):
+            item.title = unicode(d[item][title_field])
+        if item.track == 0:
+            item.track = int(d[item]['track'])
 
 
-# Plugin structure and autotagging logic.
+# Plugin structure and hook into import process.
 
 class FromFilenamePlugin(plugins.BeetsPlugin):
     pass
-
-# Hooks into import process.
 
 @FromFilenamePlugin.listen('import_task_start')
 def filename_task(task, session):
@@ -127,13 +147,11 @@ def filename_task(task, session):
     missing_titles = 0
     for item in items:
         name, _ = os.path.splitext(os.path.basename(item.path))
-        name = name.lower().replace('_', ' ')
         names.append((item, name))
-        if item.title == '':
-            missing_titles += 1
-        elif re.match("\d+?\s?-?\s*track\s*\d+", item.title, re.IGNORECASE):
+        if bad_title(item.title):
             missing_titles += 1
 
+    # Look for useful information in the filenames.
     if missing_titles:
         for pattern in PATTERNS:
             d = all_matches(names, pattern)
