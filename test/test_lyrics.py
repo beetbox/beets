@@ -129,9 +129,7 @@ class LyricsScrapingPluginTest(unittest.TestCase):
         for s in self.sourcesIncomplete:
             url = s['url']+s['path']
             res = lyrics.scrape_lyrics_from_url(url)
-            print(res)
 
-            print(s['url'])
             self.assertTrue(lyrics.is_lyrics(res))
             # these sources may pass if the html source evolve or after 
             # a random improvement in the scraping algo: we want to
