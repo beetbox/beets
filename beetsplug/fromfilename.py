@@ -20,6 +20,24 @@ import os
 import re
 
 
+PATTERNS = [
+    # "01 - Track 01" and "01": do nothing
+    r'^(\d+)\s*-\s*track\s*\d$',
+    r'^\d+$',
+
+    # Useful patterns.
+    r'^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
+    r'^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
+    r'^(?P<track>\d+)\.\s*(?P<artist>.+)-(?P<title>.+)$',
+    r'^(?P<track>\d+)\s*-\s*(?P<artist>.+)-(?P<title>.+)$',
+    r'^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)$',
+    r'^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)$',
+    r'^(?P<track>\d+)\.\s*(?P<title>.+)$',
+    r'^(?P<track>\d+)\s*-\s*(?P<title>.+)$',
+    r'^(?P<track>\d+)\s(?P<title>.+)$',
+]
+
+
 def equal(seq):
     """Determine whether a sequence holds identical elements.
     """
@@ -31,19 +49,20 @@ def equal_fields(matchdict, tag):
     match objects, have the same value for `tag`? (If they do, the tag
     is probably not the title.)
     """
-    return equal(m.group(tag) for m in matchdict.values())
+    return equal(m[tag] for m in matchdict.values())
 
 
 def all_matches(names, pattern):
     """If all the filenames in the item/filename pair list match the
-    pattern, return a dictionary mapping the items to their match
-    objects. Otherwise, return None.
+    pattern, return a dictionary mapping the items to dictionaries
+    giving the value for each named subpattern in the match. Otherwise,
+    return None.
     """
     matches = {}
     for item, name in names:
         m = re.match(pattern, name, re.IGNORECASE)
         if m:
-            matches[item] = m
+            matches[item] = m.groupdict()
         else:
             return None
     return matches
@@ -55,41 +74,37 @@ def set_title_and_track(d, title_tag):
     """
     for item in d:
         if item.title == '':  # FIXME
-            item.title = unicode(d[item].group(title_tag))
+            item.title = unicode(d[item][title_tag])
         if item.track == 0:
-            item.track = int(d[item].group('track'))
+            item.track = int(d[item]['track'])
 
 
-def handle2fields(d):
-    """We only have one value beside the track number.
+def apply_matches(d):
+    """Given a mapping from items to field dicts, apply the fields to
+    the objects.
     """
+    keys = d.values()[0].keys()
+
+    # Only proceed if the "tag" field is equal across all filenames.
+    if 'tag' in keys and not equal_fields(d, 'tag'):
+        return
+
+    # Given both an "artist" and "title" field, assume that one is
+    # *actually* the artist, which must be uniform, and use the other
+    # for the title. This, of course, won't work for VA albums.
+    if 'artist' in keys:
+        if equal_fields(d, 'artist'):
+            set_title_and_track(d, 'title')
+            # FIXME set artist
+        elif equal_fields(d, 'title'):
+            set_title_and_track(d, 'artist')
+        else:
+            return
+
     set_title_and_track(d, 'title')
 
 
-def handle3fields(d):
-    """Some files are named <title>-<artist> and some  are named
-    <artist>-<title>. If all item of the dict has the same value in
-    either artist or title we assume the other field is the title.
-
-    At present we don't know what to do about VA albums. Could set
-    both artist and track, but which one is which?
-    """
-    if equal_fields(d, 'artist'):
-        set_title_and_track(d, 'title')
-    elif equal_fields(d, 'title'):
-        set_title_and_track(d, 'artist')
-
-
-def handle4fields(d):
-    """Filenames matching the four field regex usually have a group
-    tag at the end. Ignore it.
-    """
-    if equal_fields(d, 'tag'):
-        handle3fields(d)
-
-
 # Plugin structure and autotagging logic.
-
 
 class FromFilenamePlugin(plugins.BeetsPlugin):
     pass
@@ -120,48 +135,7 @@ def filename_task(task, session):
             missing_titles += 1
 
     if missing_titles:
-        #filter out stupid case: 01 - track 01
-        d = all_matches(names, '^(\d+)\s*-\s*track\s*\d$')
-        if d:
-            return
-        #filter out stupid case: 01
-        d = all_matches(names, '^\d+$')
-        if d:
-            return
-
-        d = all_matches(names, '^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$')
-        if d:
-            return handle4fields(d)
-
-        d = all_matches(names, '^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$')
-        if d:
-            return handle4fields(d)
-
-        d = all_matches(names, '^(?P<track>\d+)\.\s*(?P<artist>.+)-(?P<title>.+)$')
-        if d:
-            return handle3fields(d)
-
-        d = all_matches(names, '^(?P<track>\d+)\s*-\s*(?P<artist>.+)-(?P<title>.+)$')
-        if d:
-            return handle3fields(d)
-
-        d = all_matches(names, '^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)$')
-        if d:
-            return handle3fields(d)
-
-        d = all_matches(names, '^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)$')
-        if d:
-            return handle3fields(d)
-
-        d = all_matches(names, '^(?P<track>\d+)\.\s*(?P<title>.+)$')
-        if d:
-            return handle2fields(d)
-
-        d = all_matches(names, '^(?P<track>\d+)\s*-\s*(?P<title>.+)$')
-        if d:
-            return handle2fields(d)
-
-        d = all_matches(names, '^(?P<track>\d+)\s(?P<title>.+)$')
-        if d:
-            return handle2fields(d)
-
+        for pattern in PATTERNS:
+            d = all_matches(names, pattern)
+            if d:
+                apply_matches(d)
