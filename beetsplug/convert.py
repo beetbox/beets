@@ -19,6 +19,7 @@ import os
 import threading
 from subprocess import Popen
 import tempfile
+from string import Template
 
 from beets.plugins import BeetsPlugin
 from beets import ui, util
@@ -41,18 +42,44 @@ def _destination(lib, dest_dir, item, keep_new, path_formats):
         # occurs.
         return dest
     else:
-        # Otherwise, replace the extension with .mp3.
-        return os.path.splitext(dest)[0] + '.mp3'
+        # Otherwise, replace the extension.
+        return os.path.splitext(dest)[0] + get_file_extension()
+
+
+def get_command():
+    """Get the currently configured format command.
+    """
+    format = config['convert']['format'].get(unicode)
+
+    return config['convert']['formats'][format]['command'].get(unicode).split(u' ')
+
+
+def get_file_extension():
+    """Get the currently configured format file extension.
+    """
+    format = config['convert']['format'].get(unicode)
+
+    return u'.' + config['convert']['formats'][format]['extension'].get(unicode)
 
 
 def encode(source, dest):
-    log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
+    command = get_command()
+    quiet = config['convert']['quiet'].get()
+    opts = []
 
-    opts = config['convert']['opts'].get(unicode).split(u' ')
-    encode = Popen([config['convert']['ffmpeg'].get(unicode), '-i',
-                    source, '-y'] + opts + [dest],
-                   close_fds=True, stderr=DEVNULL)
+    if not quiet:
+        log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
+
+    for arg in command:
+        arg = arg.encode('utf-8')
+        opts.append(Template(arg).substitute({
+            'source':   source,
+            'dest':     dest
+        }))
+
+    encode = Popen(opts, close_fds=True, stderr=DEVNULL)
     encode.wait()
+
     if encode.returncode != 0:
         # Something went wrong (probably Ctrl+C), remove temporary files
         log.info(u'Encoding {0} failed. Cleaning up...'
@@ -60,7 +87,37 @@ def encode(source, dest):
         util.remove(dest)
         util.prune_dirs(os.path.dirname(dest))
         return
-    log.info(u'Finished encoding {0}'.format(util.displayable_path(source)))
+
+    if not quiet:
+      log.info(u'Finished encoding {0}'.format(util.displayable_path(source)))
+
+
+def validate_config():
+    """Validate the format configuration, make sure all of the required values are set for the current format.
+    """
+    format = config['convert']['format'].get(unicode)
+    formats = config['convert']['formats']
+
+    try:
+        formats[format].get()
+    except:
+        raise ui.UserError(
+            'Format {0} does not appear to exist, please check your convert plugin configuration.'.format(format)
+        )
+
+    try:
+        formats[format]['command'].get(unicode)
+    except:
+        raise ui.UserError(
+            'Format {0} does not define a command, please check your convert plugin configuration.'.format(format)
+        )
+
+    try:
+        formats[format]['extension'].get(unicode)
+    except:
+        raise ui.UserError(
+            'Format {0} does not define a file extension, please check your convert plugin configuration.'.format(format)
+        )
 
 
 def should_transcode(item):
@@ -68,7 +125,8 @@ def should_transcode(item):
     conversion (i.e., its bitrate is high or it has the wrong format).
     """
     maxbr = config['convert']['max_bitrate'].get(int)
-    return item.format != 'MP3' or item.bitrate >= 1000 * maxbr
+
+    return item.format not in ['AAC', 'MP3', 'Opus', 'OGG', 'Windows Media'] or item.bitrate >= 1000 * maxbr
 
 
 def convert_item(lib, dest_dir, keep_new, path_formats):
@@ -106,7 +164,7 @@ def convert_item(lib, dest_dir, keep_new, path_formats):
 
         else:
             if keep_new:
-                item.path = os.path.splitext(item.path)[0] + '.mp3'
+                item.path = os.path.splitext(item.path)[0] + get_file_extension()
                 encode(dest, item.path)
             else:
                 encode(item.path, dest)
@@ -135,7 +193,7 @@ def convert_on_import(lib, item):
     library.
     """
     if should_transcode(item):
-        fd, dest = tempfile.mkstemp('.mp3')
+        fd, dest = tempfile.mkstemp(get_file_extension())
         os.close(fd)
         _temp_files.append(dest)  # Delete the transcode later.
         encode(item.path, dest)
@@ -148,8 +206,10 @@ def convert_on_import(lib, item):
 def convert_func(lib, opts, args):
     dest = opts.dest if opts.dest is not None else \
             config['convert']['dest'].get()
+
     if not dest:
         raise ui.UserError('no convert destination set')
+
     dest = util.bytestring_path(dest)
     threads = opts.threads if opts.threads is not None else \
             config['convert']['threads'].get(int)
@@ -180,13 +240,44 @@ class ConvertPlugin(BeetsPlugin):
         self.config.add({
             u'dest': None,
             u'threads': util.cpu_count(),
-            u'ffmpeg': u'ffmpeg',
-            u'opts': u'-aq 2',
+            u'format': u'mp3',
+            u'formats': {
+                u'aac': {
+                    u'command': u'ffmpeg -i $source -y -acodec libfaac -aq 100 $dest',
+                    u'extension': u'm4a',
+                },
+                u'alac': {
+                    u'command': u'ffmpeg -i $source -y -acodec alac $dest',
+                    u'extension': u'm4a',
+                },
+                u'flac': {
+                    u'command': u'ffmpeg -i $source -y -acodec flac $dest',
+                    u'extension': u'flac',
+                },
+                u'mp3': {
+                    u'command': u'ffmpeg -i $source -y -aq 2 $dest',
+                    u'extension': u'mp3',
+                },
+                u'opus': {
+                    u'command': u'ffmpeg -i $source -y -acodec libopus -vn -ab 96k $dest',
+                    u'extension': u'opus',
+                },
+                u'vorbis': {
+                    u'command': u'ffmpeg -i $source -y -acodec libvorbis -vn -aq 2 $dest',
+                    u'extension': u'ogg',
+                },
+                u'wma': {
+                    u'command': u'ffmpeg -i $source -y -acodec wmav2 -vn $dest',
+                    u'extension': u'wma',
+                },
+            },
             u'max_bitrate': 500,
-            u'embed': True,
             u'auto': False,
+            u'quiet': False,
+            u'embed': True,
             u'paths': {},
         })
+        validate_config()
         self.import_stages = [self.auto_convert]
 
     def commands(self):
