@@ -60,13 +60,13 @@ def equal_fields(matchdict, field):
 
 
 def all_matches(names, pattern):
-    """If all the filenames in the item/filename pair list match the
+    """If all the filenames in the item/filename mapping match the
     pattern, return a dictionary mapping the items to dictionaries
     giving the value for each named subpattern in the match. Otherwise,
     return None.
     """
     matches = {}
-    for item, name in names:
+    for item, name in names.items():
         m = re.match(pattern, name, re.IGNORECASE)
         if m:
             matches[item] = m.groupdict()
@@ -143,16 +143,16 @@ def filename_task(task, session):
     items = task.items if task.is_album else [task.item]
 
     # Look for suspicious (empty or meaningless) titles.
-    names = []
-    missing_titles = 0
-    for item in items:
-        name, _ = os.path.splitext(os.path.basename(item.path))
-        names.append((item, name))
-        if bad_title(item.title):
-            missing_titles += 1
+    missing_titles = sum(bad_title(i.title) for i in items)
 
-    # Look for useful information in the filenames.
     if missing_titles:
+        # Get the base filenames (no path or extension).
+        names = {}
+        for item in items:
+            name, _ = os.path.splitext(os.path.basename(item.path))
+            names[item] = name
+
+        # Look for useful information in the filenames.
         for pattern in PATTERNS:
             d = all_matches(names, pattern)
             if d:
