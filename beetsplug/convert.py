@@ -63,10 +63,12 @@ def get_file_extension():
 
 
 def encode(source, dest):
-    log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
-
     command = get_command()
+    quiet = config['convert']['quiet'].get()
     opts = []
+
+    if not quiet:
+        log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
 
     for arg in command:
         arg = arg.encode('utf-8')
@@ -86,7 +88,8 @@ def encode(source, dest):
         util.prune_dirs(os.path.dirname(dest))
         return
 
-    log.info(u'Finished encoding {0}'.format(util.displayable_path(source)))
+    if not quiet:
+      log.info(u'Finished encoding {0}'.format(util.displayable_path(source)))
 
 
 def validate_config():
@@ -269,8 +272,9 @@ class ConvertPlugin(BeetsPlugin):
                 },
             },
             u'max_bitrate': 500,
-            u'embed': True,
             u'auto': False,
+            u'quiet': False,
+            u'embed': True,
             u'paths': {},
         })
         validate_config()
