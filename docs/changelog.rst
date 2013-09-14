@@ -12,6 +12,8 @@ And some fixes:
 
 * :doc:`/plugins/fetchart`: Better error message when the image file has an
   unrecognized type.
+* :doc:`/plugins/mbcollection`: Detect, log, and skip invalid MusicBrainz IDs
+  (instead of failing with an API error).
 
 .. _Opus: http://www.opus-codec.org/
 

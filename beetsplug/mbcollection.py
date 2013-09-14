@@ -20,7 +20,13 @@ from beets import ui
 from beets import config
 import musicbrainzngs
 
+import re
+import logging
+
 SUBMISSION_CHUNK_SIZE = 200
+UUID_REGEX = r'^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$'
+
+log = logging.getLogger('beets.bpd')
 
 def mb_call(func, *args, **kwargs):
     """Call a MusicBrainz API function and catch exceptions.
@@ -39,7 +45,7 @@ def submit_albums(collection_id, release_ids):
     requests are made if there are many release IDs to submit.
     """
     for i in range(0, len(release_ids), SUBMISSION_CHUNK_SIZE):
-        chunk = release_ids[i:i+SUBMISSION_CHUNK_SIZE]
+        chunk = release_ids[i:i + SUBMISSION_CHUNK_SIZE]
         mb_call(
             musicbrainzngs.add_releases_to_collection,
             collection_id, chunk
@@ -52,12 +58,19 @@ def update_collection(lib, opts, args):
         raise ui.UserError('no collections exist for user')
     collection_id = collections['collection-list'][0]['id']
 
-    # Get a list of all the albums.
-    albums = [a.mb_albumid for a in lib.albums() if a.mb_albumid]
+    # Get a list of all the album IDs.
+    album_ids = []
+    for album in lib.albums():
+        aid = album.mb_albumid
+        if aid:
+            if re.match(UUID_REGEX, aid):
+                album_ids.append(aid)
+            else:
+                log.info(u'skipping invalid MBID: {0}'.format(aid))
 
     # Submit to MusicBrainz.
     print('Updating MusicBrainz collection {0}...'.format(collection_id))
-    submit_albums(collection_id, albums)
+    submit_albums(collection_id, album_ids)
     print('...MusicBrainz collection updated.')
 
 update_mb_collection_cmd = Subcommand('mbupdate',
