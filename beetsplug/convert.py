@@ -220,8 +220,6 @@ def convert_func(lib, opts, args):
     keep_new = opts.keep_new
     quiet = opts.quiet
 
-    print opts
-
     if not config['convert']['paths']:
         path_formats = ui.get_path_formats()
     else:
