@@ -36,6 +36,10 @@ and leaves your library pristine. To instead back up your original files into
 the destination directory and keep converted files in your library, use the
 ``-k`` (or ``--keep-new``) option.
 
+If you don't want to be prompted for confirmation you can use the ``-y`` (or
+``--yes`` option). Additionally you can silence any start/finished announcements
+by using the ``-q`` (or ``--quiet``) option.
+
 
 Configuration
 -------------
