@@ -24,16 +24,18 @@ import pyechonest.config
 import pyechonest.song
 import socket
 
+
 # Global logger.
 log = logging.getLogger('beets')
 
 RETRY_INTERVAL = 10  # Seconds.
 RETRIES = 10
 
+
 def fetch_item_tempo(lib, loglevel, item, write):
     """Fetch and store tempo for a single item. If ``write``, then the
-    tempo will also be written to the file itself in the bpm field. The 
-    ``loglevel`` parameter controls the visibility of the function's 
+    tempo will also be written to the file itself in the bpm field. The
+    ``loglevel`` parameter controls the visibility of the function's
     status log messages.
     """
     # Skip if the item already has the tempo field.
@@ -56,6 +58,7 @@ def fetch_item_tempo(lib, loglevel, item, write):
         item.write()
     item.store()
 
+
 def get_tempo(artist, title):
     """Get the tempo for a song."""
     # We must have sufficient metadata for the lookup. Otherwise the API
@@ -71,7 +74,8 @@ def get_tempo(artist, title):
             # EchoNest supports foreign ids from MusicBrainz, but currently
             # only for artists, not individual tracks/recordings.
             results = pyechonest.song.search(
-                artist=artist, title=title, results=1, buckets=['audio_summary']
+                artist=artist, title=title, results=1,
+                buckets=['audio_summary']
             )
         except pyechonest.util.EchoNestAPIError as e:
             if e.code == 3:
@@ -91,10 +95,14 @@ def get_tempo(artist, title):
         log.debug(u'echonest_tempo: exceeded retries')
         return None
 
-    if len(results) > 0:
-        return results[0].audio_summary['tempo']
-    else:
-        return None
+    # The Echo Nest API can return songs that are not perfect matches.
+    # So we look through the results for songs that have the right
+    # artist and title. The API also doesn't have MusicBrainz track IDs;
+    # otherwise we could use those for a more robust match.
+    for result in results:
+        if result.artist_name == artist and result.title == title:
+            return results[0].audio_summary['tempo']
+
 
 class EchoNestTempoPlugin(BeetsPlugin):
     def __init__(self):

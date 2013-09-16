@@ -20,6 +20,8 @@ And some fixes:
   (instead of failing with an API error).
 * :doc:`/plugins/info`: Fail gracefully when used erroneously with a
   directory.
+* :doc:`/plugins/echonest_tempo`: Fix an issue where the plugin could use the
+  tempo from the wrong song when the API did not contain the requested song.
 
 .. _Opus: http://www.opus-codec.org/
 
