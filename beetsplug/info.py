@@ -15,11 +15,14 @@
 """Shows file metadata.
 """
 
+import os
+
 from beets.plugins import BeetsPlugin
 from beets import library
 from beets import ui
 from beets import mediafile
 from beets import util
+
 
 def info(paths):
     # Set up fields to output.
@@ -39,11 +42,18 @@ def info(paths):
             ui.print_()
 
         path = util.normpath(path)
+        if not os.path.isfile(path):
+            ui.print_(u'not a file: {0}'.format(
+                util.displayable_path(path)
+            ))
+            continue
         ui.print_(path)
         try:
             mf = mediafile.MediaFile(path)
         except mediafile.UnreadableFileError:
-            ui.print_('cannot read file')
+            ui.print_('cannot read file: {0}'.format(
+                util.displayable_path(path)
+            ))
             continue
 
         # Basic fields.
@@ -52,8 +62,8 @@ def info(paths):
         # Extra stuff.
         ui.print_(lineformat.format('album art', mf.art is not None))
 
-
         first = False
+
 
 class InfoPlugin(BeetsPlugin):
     def commands(self):

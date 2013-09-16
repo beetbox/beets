@@ -18,6 +18,8 @@ And some fixes:
   unrecognized type.
 * :doc:`/plugins/mbcollection`: Detect, log, and skip invalid MusicBrainz IDs
   (instead of failing with an API error).
+* :doc:`/plugins/info`: Fail gracefully when used erroneously with a
+  directory.
 
 .. _Opus: http://www.opus-codec.org/
 
