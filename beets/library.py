@@ -471,7 +471,12 @@ class Item(LibModel):
                                        traceback.format_exc())
 
         for key in ITEM_KEYS_META:
-            setattr(self, key, getattr(f, key))
+            value = getattr(f, key)
+            if isinstance(value, (int, long)) and value.bit_length() > 63:
+                # Filter values wider than 64 bits (in signed
+                # representation). SQLite cannot store them.
+                value = 0
+            setattr(self, key, value)
 
         # Database's mtime should now reflect the on-disk value.
         if read_path == self.path:

@@ -22,6 +22,9 @@ And some fixes:
   directory.
 * :doc:`/plugins/echonest_tempo`: Fix an issue where the plugin could use the
   tempo from the wrong song when the API did not contain the requested song.
+* Fix a crash when a file's metadata included a very large number (one wider
+  than 64 bits). These huge numbers are now replaced with zeroes in the
+  database.
 
 .. _Opus: http://www.opus-codec.org/
 
