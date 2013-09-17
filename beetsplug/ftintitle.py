@@ -16,6 +16,7 @@
 """
 from beets.plugins import BeetsPlugin
 from beets import ui
+from beets.util import displayable_path
 import re
 
 
@@ -48,25 +49,19 @@ def contains_feat(title):
 
 def update_metadata(item, feat_part):
     """Choose how to add new artists to the title and write the new
-    metadata.
+    metadata. Also, print out messages about any changes that are made.
     """
-    print item.path
-
     # In all cases, update the artist fields.
+    ui.print_(u'artist: {0} -> {1}'.format(item.artist, item.albumartist))
     item.artist = item.albumartist
     item.artist_sort, _ = split_on_feat(item.artist_sort)  # Strip featured.
 
-    # If the title already contains a featured artist, leave it alone.
-    if contains_feat(item.title):
-        print u"new artist field", item.artist
-
-    # Otherwise, add "feat. (artist)" to the title.
-    else:
-        # do replace title.
-        print u"artist:", item.artist
-        print u"title:", item.title
-        print u"featured artist:", feat_part
-        item.title = u"{0} feat. {1}".format(item.title, feat_part)
+    # Only update the title if it does not already contain a featured
+    # artist.
+    if not contains_feat(item.title):
+        new_title = u"{0} feat. {1}".format(item.title, feat_part)
+        ui.print_(u'title: {0} -> {1}'.format(item.title, new_title))
+        item.title = new_title
 
     item.write()
 
@@ -83,13 +78,14 @@ def ft_in_title(item):
     # that case, we attempt to move the featured artist to the title.
     _, featured = split_on_feat(artist)
     if featured and albumartist != artist:
+        ui.print_(displayable_path(item.path))
         feat_part = None
 
         # Look for the album artist in the artist field. If it's not
         # present, give up.
         albumartist_split = artist.split(albumartist)
         if len(albumartist_split) <= 1:
-            print 'album artist not present in artist; skipping:', item.path
+            ui.print_('album artist not present in artist')
 
         # If the last element of the split (the right-hand side of the
         # album artist) is nonempty, then it probably contains the
@@ -109,7 +105,9 @@ def ft_in_title(item):
         if feat_part:
             update_metadata(item, feat_part)
         else:
-            print 'found no featuring artists:', item.path
+            ui.print_(u'no featuring artists found')
+
+        ui.print_()
 
 
 class FtInTitlePlugin(BeetsPlugin):
