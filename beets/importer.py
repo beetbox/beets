@@ -788,9 +788,9 @@ def apply_choices(session):
             # Remove old items.
             for replaced in task.replaced_items.itervalues():
                 for item in replaced:
-                    session.lib.remove(item)
+                    item.remove()
             for item in duplicate_items:
-                session.lib.remove(item)
+                item.remove()
 
             # Add new ones.
             if task.is_album:

@@ -125,7 +125,7 @@ class RemoveTest(unittest.TestCase):
         remove_lib()
 
     def test_remove_deletes_from_db(self):
-        self.lib.remove(self.i)
+        self.i.remove()
         c = self.lib._connection().execute('select * from items where id=3')
         self.assertEqual(c.fetchone(), None)
 
@@ -827,7 +827,7 @@ class AlbumInfoTest(unittest.TestCase):
 
     def test_removing_last_item_removes_album(self):
         self.assertEqual(len(self.lib.albums()), 1)
-        self.lib.remove(self.i)
+        self.i.remove()
         self.assertEqual(len(self.lib.albums()), 0)
 
 class ArtDestinationTest(_common.TestCase):
@@ -889,7 +889,7 @@ class PathStringTest(_common.TestCase):
         self.assertEqual(i.path, path)
 
     def test_special_char_path_added_to_database(self):
-        self.lib.remove(self.i)
+        self.i.remove()
         path = 'b\xe1r'
         i = item()
         i.path = path

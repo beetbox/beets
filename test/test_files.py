@@ -394,34 +394,34 @@ class RemoveTest(_common.TestCase):
     def test_removing_last_item_prunes_empty_dir(self):
         parent = os.path.dirname(self.i.path)
         self.assertExists(parent)
-        self.lib.remove(self.i, True)
+        self.i.remove(True)
         self.assertNotExists(parent)
 
     def test_removing_last_item_preserves_nonempty_dir(self):
         parent = os.path.dirname(self.i.path)
         touch(os.path.join(parent, 'dummy.txt'))
-        self.lib.remove(self.i, True)
+        self.i.remove(True)
         self.assertExists(parent)
 
     def test_removing_last_item_prunes_dir_with_blacklisted_file(self):
         parent = os.path.dirname(self.i.path)
         touch(os.path.join(parent, '.DS_Store'))
-        self.lib.remove(self.i, True)
+        self.i.remove(True)
         self.assertNotExists(parent)
 
     def test_removing_without_delete_leaves_file(self):
         path = self.i.path
-        self.lib.remove(self.i)
+        self.i.remove(False)
         self.assertExists(path)
 
     def test_removing_last_item_preserves_library_dir(self):
-        self.lib.remove(self.i, True)
+        self.i.remove(True)
         self.assertExists(self.libdir)
 
     def test_removing_item_outside_of_library_deletes_nothing(self):
         self.lib.directory = os.path.abspath(os.path.join(self.temp_dir, 'xxx'))
         parent = os.path.dirname(self.i.path)
-        self.lib.remove(self.i, True)
+        self.i.remove(True)
         self.assertExists(parent)
 
     def test_removing_last_item_in_album_with_albumart_prunes_dir(self):
@@ -431,7 +431,7 @@ class RemoveTest(_common.TestCase):
         self.ai.store()
 
         parent = os.path.dirname(self.i.path)
-        self.lib.remove(self.i, True)
+        self.i.remove(True)
         self.assertNotExists(parent)
 
 # Tests that we can "delete" nonexistent files.

@@ -419,6 +419,20 @@ class LibModel(FlexModel):
         self.update(dict(stored_obj))
         self.clear_dirty()
 
+    def remove(self):
+        """Remove the object's associated rows from the database.
+        """
+        self._check_db()
+        with self._lib.transaction() as tx:
+            tx.mutate(
+                'DELETE FROM {0} WHERE id=?'.format(self._table),
+                (self.id,)
+            )
+            tx.mutate(
+                'DELETE FROM {0} WHERE entity_id=?'.format(self._flex_table),
+                (self.id,)
+            )
+
 
 class Item(LibModel):
     _fields = ITEM_KEYS
@@ -542,6 +556,26 @@ class Item(LibModel):
         """
         return int(os.path.getmtime(syspath(self.path)))
 
+    def remove(self, delete=False, with_album=True):
+        """Removes the item. If `delete`, then the associated file is
+        removed from disk. If `with_album`, then the item's album (if
+        any) is removed if it the item was the last in the album.
+        """
+        super(Item, self).remove()
+
+        # Remove the album if it is empty.
+        if with_album:
+            album = self._lib.get_album(self)
+            if album and not album.items():
+                album.remove(delete, False)
+
+        # Delete the associated file.
+        if delete:
+            util.remove(self.path)
+            util.prune_dirs(os.path.dirname(self.path), self._lib.directory)
+
+        self._lib._memotable = {}
+
 
     # Templating.
 
@@ -643,23 +677,18 @@ class Album(LibModel):
         containing the album are also removed (recursively) if empty.
         Set with_items to False to avoid removing the album's items.
         """
+        super(Album, self).remove()
+
+        # Delete art file.
         if delete:
-            # Delete art file.
             artpath = self.artpath
             if artpath:
                 util.remove(artpath)
 
-        with self._lib.transaction() as tx:
-            if with_items:
-                # Remove items.
-                for item in self.items():
-                    self._lib.remove(item, delete, False)
-
-            # Remove album from database.
-            tx.mutate(
-                'DELETE FROM albums WHERE id=?',
-                (self.id,)
-            )
+        # Remove (and possibly delete) the constituent items.
+        if with_items:
+            for item in self.items():
+                item.remove(delete, False)
 
     def move_art(self, copy=False):
         """Move or copy any existing album art so that it remains in the
@@ -1627,7 +1656,7 @@ class Library(object):
             return normpath(os.path.join(basedir, subpath))
 
 
-    # Item manipulation.
+    # Adding objects to the database.
 
     def add(self, item, copy=False):
         """Add the item as a new object to the library database. The id
@@ -1673,25 +1702,37 @@ class Library(object):
         self._memotable = {}
         return new_id
 
-    def remove(self, item, delete=False, with_album=True):
-        """Removes this item. If delete, then the associated file is
-        removed from disk. If with_album, then the item's album (if any)
-        is removed if it the item was the last in the album.
+    def add_album(self, items):
+        """Create a new album in the database with metadata derived
+        from its items. The items are added to the database if they
+        don't yet have an ID. Returns an Album object.
         """
-        album = self.get_album(item) if with_album else None
+        # Set the metadata from the first item.
+        album_values = dict((key, items[0][key]) for key in ALBUM_KEYS_ITEM)
+
+        # When adding an album and its items for the first time, the
+        # items do not yet have a timestamp.
+        album_values['added'] = time.time()
 
         with self.transaction() as tx:
-            tx.mutate('DELETE FROM items WHERE id=?', (item.id,))
+            sql = 'INSERT INTO albums (%s) VALUES (%s)' % \
+                (', '.join(ALBUM_KEYS_ITEM),
+                ', '.join(['?'] * len(ALBUM_KEYS_ITEM)))
+            subvals = [album_values[key] for key in ALBUM_KEYS_ITEM]
+            album_id = tx.mutate(sql, subvals)
 
-        # Remove the album if it is empty.
-        if album and not album.items():
-            album.remove(delete, False)
+            # Add the items to the library.
+            for item in items:
+                item.album_id = album_id
+                if item.id is None:
+                    self.add(item)
+                else:
+                    item.store()
 
-        if delete:
-            util.remove(item.path)
-            util.prune_dirs(os.path.dirname(item.path), self.directory)
-
-        self._memotable = {}
+        # Construct the new Album object.
+        album_values['id'] = album_id
+        album = Album(self, **album_values)
+        return album
 
     def move(self, item, copy=False, basedir=None,
              with_album=True):
@@ -1802,38 +1843,6 @@ class Library(object):
             return None
         return self._get(Album, album_id)
 
-    def add_album(self, items):
-        """Create a new album in the database with metadata derived
-        from its items. The items are added to the database if they
-        don't yet have an ID. Returns an Album object.
-        """
-        # Set the metadata from the first item.
-        album_values = dict((key, items[0][key]) for key in ALBUM_KEYS_ITEM)
-
-        # When adding an album and its items for the first time, the
-        # items do not yet have a timestamp.
-        album_values['added'] = time.time()
-
-        with self.transaction() as tx:
-            sql = 'INSERT INTO albums (%s) VALUES (%s)' % \
-                (', '.join(ALBUM_KEYS_ITEM),
-                ', '.join(['?'] * len(ALBUM_KEYS_ITEM)))
-            subvals = [album_values[key] for key in ALBUM_KEYS_ITEM]
-            album_id = tx.mutate(sql, subvals)
-
-            # Add the items to the library.
-            for item in items:
-                item.album_id = album_id
-                if item.id is None:
-                    self.add(item)
-                else:
-                    item.store()
-
-        # Construct the new Album object.
-        album_values['id'] = album_id
-        album = Album(self, **album_values)
-        return album
-
 
 
 # Default path template resources.
@@ -1844,6 +1853,7 @@ def _int_arg(s):
     function.  May raise a ValueError.
     """
     return int(s.strip())
+
 
 class DefaultTemplateFunctions(object):
     """A container class for the default functions provided to path
@@ -1989,6 +1999,7 @@ class DefaultTemplateFunctions(object):
         res = u' [{0}]'.format(disam_value)
         self.lib._memotable[memokey] = res
         return res
+
 
 # Get the name of tmpl_* functions in the above class.
 DefaultTemplateFunctions._func_names = \

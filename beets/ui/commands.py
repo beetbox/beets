@@ -894,7 +894,7 @@ def update_items(lib, query, album, move, pretend):
             if not os.path.exists(syspath(item.path)):
                 ui.print_obj(item, lib)
                 if not pretend:
-                    lib.remove(item, True)
+                    item.remove(True)
                 affected_albums.add(item.album_id)
                 continue
 
@@ -1015,12 +1015,8 @@ def remove_items(lib, query, album, delete):
 
     # Remove (and possibly delete) items.
     with lib.transaction():
-        if album:
-            for al in albums:
-                al.remove(delete)
-        else:
-            for item in items:
-                lib.remove(item, delete)
+        for obj in (albums if album else items):
+            obj.remove(delete)
 
 remove_cmd = ui.Subcommand('remove',
     help='remove matching items from the library', aliases=('rm',))
