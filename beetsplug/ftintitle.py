@@ -115,7 +115,7 @@ class FtInTitlePlugin(BeetsPlugin):
                             help='move featured artists to the title field')
         def func(lib, opts, args):
             write = config['import']['write'].get(bool)
-            for item in lib.items():
+            for item in lib.items(ui.decargs(args)):
                 ft_in_title(item)
                 item.store()
                 if write:
