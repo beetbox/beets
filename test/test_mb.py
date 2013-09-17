@@ -20,7 +20,7 @@ from beets.autotag import mb
 from beets import config
 
 class MBAlbumInfoTest(_common.TestCase):
-    def _make_release(self, date_str='2009', tracks=None):
+    def _make_release(self, date_str='2009', tracks=None, track_length=None):
         release = {
             'title': 'ALBUM TITLE',
             'id': 'ALBUM ID',
@@ -57,11 +57,15 @@ class MBAlbumInfoTest(_common.TestCase):
         }
         if tracks:
             track_list = []
-            for i, track in enumerate(tracks):
-                track_list.append({
-                    'recording': track,
-                    'position': str(i+1),
-                })
+            for i, recording in enumerate(tracks):
+                track = {
+                    'recording': recording,
+                    'position': str(i + 1),
+                }
+                if track_length:
+                    # Track lengths are distinct from recording lengths.
+                    track['length'] = track_length
+                track_list.append(track)
             release['medium-list'].append({
                 'position': '1',
                 'track-list': track_list,
@@ -185,6 +189,12 @@ class MBAlbumInfoTest(_common.TestCase):
         release = self._make_release(tracks=tracks)
         d = mb.album_info(release)
         self.assertEqual(d.tracks[0].length, None)
+
+    def test_track_length_overrides_recording_length(self):
+        tracks = [self._make_track('TITLE', 'ID', 1.0 * 1000.0)]
+        release = self._make_release(tracks=tracks, track_length=2.0 * 1000.0)
+        d = mb.album_info(release)
+        self.assertEqual(d.tracks[0].length, 2.0)
 
     def test_no_release_date(self):
         release = self._make_release(None)

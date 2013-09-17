@@ -156,7 +156,7 @@ def track_info(recording, index=None, medium=None, medium_index=None):
         info.artist_id = artist['id']
 
     if recording.get('length'):
-        info.length = int(recording['length'])/(1000.0)
+        info.length = int(recording['length']) / (1000.0)
 
     info.decode()
     return info
@@ -203,6 +203,10 @@ def album_info(release):
                 # Track title may be distinct from underlying recording
                 # title.
                 ti.title = track['title']
+            if track.get('length'):
+                # Track duration is preferred over the recording
+                # duration.
+                ti.length = int(track['length']) / (1000.0)
             ti.disctitle = disctitle
             track_infos.append(ti)
     info = beets.autotag.hooks.AlbumInfo(

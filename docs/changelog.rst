@@ -25,6 +25,8 @@ And some fixes:
 * Fix a crash when a file's metadata included a very large number (one wider
   than 64 bits). These huge numbers are now replaced with zeroes in the
   database.
+* When a track on a MusicBrainz release has a different length from the
+  underlying recording's length, the track length is now used instead.
 
 .. _Opus: http://www.opus-codec.org/
 
