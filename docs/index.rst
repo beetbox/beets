@@ -33,4 +33,5 @@ Contents
 .. toctree::
    :maxdepth: 1
 
+   faq
    changelog
