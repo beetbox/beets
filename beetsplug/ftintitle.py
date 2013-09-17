@@ -19,112 +19,98 @@ from beets import ui
 import re
 
 
-def find_supplementary_artists(artistfield):
-    return re.split(
+def split_on_feat(artist):
+    """Given an artist string, split the "main" artist from any artist
+    on the right-hand side of a string like "feat". Return the main
+    artist, which is always a string, and the featuring artist, which
+    may be a string or None if none is present.
+    """
+    parts = re.split(
         r'[fF]t\.|[fF]eaturing|[fF]eat\.|\b[wW]ith\b|&|vs\.|and',
-        artistfield,
-        1  # Only split on the first.
+        artist,
+        1,  # Only split on the first "feat".
     )
+    if len(parts) == 1:
+        return parts[0], None
+    else:
+        return parts
 
 
-def detect_if_featuring_artist_already_in_title(title):
-    return re.split(
+def contains_feat(title):
+    """Determine whether the title contains a "featured" marker.
+    """
+    return bool(re.search(
         r'[fF]t\.|[fF]eaturing|[fF]eat\.|\b[wW]ith\b|&',
-        title
-    )
+        title,
+    ))
 
 
-def write_artist_field_only_and_print_edited_file_loc(track, albumartist,
-                                                      sort_artist):
-    """In the case where the featured artist is already in the title, just
-    rewrite the artist fields.
-    """
-    print track.__getattr__("path")
-    print "new artist field",albumartist.strip()
-    track.artist = albumartist
-    track.artist_sort = rewrite_sort_artist(sort_artist)
-    track.write()
-
-
-def write_artist_and_title_field_and_print_edited_file_loc(track, albumartist,
-                                                           title, feat_part,
-                                                           sort_artist):
-    """Modify both the artist and title fields.
-    """
-    print track.__getattr__("path")
-    print "albumartist:",albumartist," title:",title," featuartist:",feat_part
-    track.artist = albumartist
-    track.artist_sort = rewrite_sort_artist(sort_artist)
-    track.title = title.strip() + " feat." + feat_part
-    track.write()
-
-
-def choose_writing_of_title_and_write(track, albumartist, title,
-                                      feat_part, sort_artist):
+def update_metadata(track, albumartist, title, feat_part, sort_artist):
     """Choose how to add new artists to the title and write the new
     metadata.
     """
-    # If already in title, only replace the artist field.
-    if len(detect_if_featuring_artist_already_in_title(title)) > 1:
-        # no replace title
-        write_artist_field_only_and_print_edited_file_loc(
-            track, albumartist, sort_artist
-        )
+    print track.path
+
+    # In all cases, update the artist fields.
+    track.artist = albumartist
+    track.artist_sort, _ = split_on_feat(sort_artist)  # Strip featured.
+
+    # If the title already contains a featured artist, leave it alone.
+    if contains_feat(title):
+        print "new artist field", albumartist.strip()
+
+    # Otherwise, add "feat. (artist)" to the title.
     else:
         # do replace title.
-        write_artist_and_title_field_and_print_edited_file_loc(
-            track, albumartist, title, feat_part, sort_artist
-        )
+        print "albumartist:", albumartist
+        print "title:", title
+        print "featured artist:", feat_part
+        track.title = title.strip() + " feat." + feat_part
 
-
-def rewrite_sort_artist(sort_artist):
-    """Remove featuring artists from the artist sort field.
-    """
-    return find_supplementary_artists(sort_artist)[0].strip()
+    track.write()
 
 
 def ft_in_title(item):
     """Look for featured artists in the item's artist fields and move
     them to the title.
     """
-    artistfield  = item.artist.strip()
+    artist = item.artist.strip()
     title = item.title.strip()
     albumartist = item.albumartist.strip()
     sort_artist = item.artist_sort.strip()
-    supp_artists = find_supplementary_artists(artistfield)
 
-    if len(supp_artists) > 1 and albumartist != artistfield:
-        # Found supplementary artist, and the albumArtist is
-        # not a perfect match.
+    # Check whether there is a featured artist on this track and the
+    # artist field does not exactly match the album artist field. In
+    # that case, we attempt to move the featured artist to the title.
+    _, featured = split_on_feat(artist)
+    if featured and albumartist != artist:
+        feat_part = None
 
-        albumartist_split = artistfield.split(albumartist)
-        if len(albumartist_split) > 1 and albumartist_split[-1] != '':
-            # Check if the artist field is composed of the
-            # albumartist, AND check if the last element of
-            # the split is not empty.
-            # Last elements:
-            feat_part = find_supplementary_artists(albumartist_split[-1])[-1]
-            choose_writing_of_title_and_write(item, albumartist, title,
-                                              feat_part, sort_artist)
+        # Look for the album artist in the artist field. If it's not
+        # present, give up.
+        albumartist_split = artist.split(albumartist)
+        if len(albumartist_split) <= 1:
+            print 'album artist not present in artist; skipping:', item.path
 
-        elif len(albumartist_split) > 1 and \
-                len(find_supplementary_artists(albumartist_split[0])) > 1:
-            # Check for inversion of artist and featuring,
-            # if feat is listed on the first split.
-            # First elements because of inversion:
-            feat_part = find_supplementary_artists(albumartist_split[0])[0]
-            choose_writing_of_title_and_write(item, albumartist, title,
-                                              feat_part, sort_artist)
+        # If the last element of the split (the right-hand side of the
+        # album artist) is nonempty, then it probably contains the
+        # featured artist.
+        elif albumartist_split[-1] != '':
+            # Extract the featured artist from the right-hand side.
+            _, feat_part = split_on_feat(albumartist_split[-1])
 
+        # Otherwise, if there's nothing on the right-hand side, look for a
+        # featuring artist on the left-hand side.
         else:
-            print "#############################"
-            print "ftInTitle has not touched this track, " \
-                  "unsure what to do with this one.:"
-            print "artistfield: ",artistfield
-            print "albumArtist",albumartist
-            print "titleField: ",title
-            print item.__getattr__("path")
-            print "#############################"
+            lhs, rhs = split_on_feat(albumartist_split[0])
+            if rhs:
+                feat_part = lhs
+
+        # If we have a featuring artist, move it to the title.
+        if feat_part:
+            update_metadata(item, albumartist, title, feat_part, sort_artist)
+        else:
+            print 'found no featuring artists:', item.path
 
 
 class FtInTitlePlugin(BeetsPlugin):
