@@ -30,6 +30,7 @@ def split_on_feat(artist):
         artist,
         1,  # Only split on the first "feat".
     )
+    parts = [s.strip() for s in parts]
     if len(parts) == 1:
         return parts[0], None
     else:
@@ -45,29 +46,29 @@ def contains_feat(title):
     ))
 
 
-def update_metadata(track, albumartist, title, feat_part, sort_artist):
+def update_metadata(item, feat_part):
     """Choose how to add new artists to the title and write the new
     metadata.
     """
-    print track.path
+    print item.path
 
     # In all cases, update the artist fields.
-    track.artist = albumartist
-    track.artist_sort, _ = split_on_feat(sort_artist)  # Strip featured.
+    item.artist = item.albumartist
+    item.artist_sort, _ = split_on_feat(item.artist_sort)  # Strip featured.
 
     # If the title already contains a featured artist, leave it alone.
-    if contains_feat(title):
-        print "new artist field", albumartist.strip()
+    if contains_feat(item.title):
+        print u"new artist field", item.artist
 
     # Otherwise, add "feat. (artist)" to the title.
     else:
         # do replace title.
-        print "albumartist:", albumartist
-        print "title:", title
-        print "featured artist:", feat_part
-        track.title = title.strip() + " feat." + feat_part
+        print u"artist:", item.artist
+        print u"title:", item.title
+        print u"featured artist:", feat_part
+        item.title = u"{0} feat. {1}".format(item.title, feat_part)
 
-    track.write()
+    item.write()
 
 
 def ft_in_title(item):
@@ -75,9 +76,7 @@ def ft_in_title(item):
     them to the title.
     """
     artist = item.artist.strip()
-    title = item.title.strip()
     albumartist = item.albumartist.strip()
-    sort_artist = item.artist_sort.strip()
 
     # Check whether there is a featured artist on this track and the
     # artist field does not exactly match the album artist field. In
@@ -108,7 +107,7 @@ def ft_in_title(item):
 
         # If we have a featuring artist, move it to the title.
         if feat_part:
-            update_metadata(item, albumartist, title, feat_part, sort_artist)
+            update_metadata(item, feat_part)
         else:
             print 'found no featuring artists:', item.path
 
