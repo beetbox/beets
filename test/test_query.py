@@ -305,6 +305,16 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
         results = self.lib.items(q)
         self.assert_matched(results, [u'caf\xe9'])
 
+    def test_numeric_search_positive(self):
+        q = beets.library.NumericQuery('year', '1')
+        results = self.lib.items(q)
+        self.assertTrue(results)
+
+    def test_numeric_search_negative(self):
+        q = beets.library.NumericQuery('year', '10')
+        results = self.lib.items(q)
+        self.assertFalse(results)
+
 class MatchTest(unittest.TestCase):
     def setUp(self):
         self.item = _common.item()
