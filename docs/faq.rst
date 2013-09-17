@@ -1,8 +1,8 @@
 FAQ
-===
+###
 
 Here are some answers to frequently-asked questions from IRC and elsewhere.
-Got a question that isn't answered? Try `IRC`_, the `mailing list`_, or
+Got a question that isn't answered here? Try `IRC`_, the `mailing list`_, or
 :ref:`filing an issue <bugs>` in the bug tracker.
 
 .. _IRC: irc://irc.freenode.net/beets
@@ -10,37 +10,60 @@ Got a question that isn't answered? Try `IRC`_, the `mailing list`_, or
 
 .. contents::
     :local:
-    :depth: 1
+    :depth: 2
 
-.. _nomatch:
 
-Why can't beets find a match?
------------------------------
+How do I…
+=========
 
-Yes, this can happen. There are a number of possibilities:
 
--  First, make sure the album is in `the MusicBrainz
-   database <http://musicbrainz.org/>`__ the MusicBrainz database. You
-   can search on their site to make sure it's cataloged there. (If not,
-   anyone can edit MusicBrainz---so consider adding the data yourself.)
--  If the album in question is a multi-disc release, see the relevant
-   FAQ answer below.
--  The music files' metadata might be insufficient. Try using the "enter
-   search" or "enter ID" options to help the matching process find the
-   right MusicBrainz entry.
--  If you have a lot of files that are missing metadata, consider using
-   :doc:`acoustic fingerprinting </plugins/chroma>` or
-   :doc:`filename-based guesses </plugins/fromfilename>`
-   for that music.
+.. _move:
 
-If none of these situations apply and you're still having trouble
-tagging something, please :ref:`file a bug report <bugs>`.
+…rename my files according to a new path format configuration?
+--------------------------------------------------------------
+
+Just run the :ref:`move-cmd` command. Use a :doc:`query </reference/query>`
+to rename a subset of your music or leave the query off to rename
+everything.
+
+
+.. _asispostfacto:
+
+…find all the albums I imported "as-is"?
+----------------------------------------
+
+Enable the :ref:`import log <import_log>`
+to automatically record whenever you skip an album or accept one
+"as-is".
+
+Alternatively, you can find all the albums in your library that are
+missing MBIDs using a command like this::
+
+    beet ls -a mb_albumid::^$
+
+Assuming your files didn't have MBIDs already, then this will roughly
+correspond to those albums that didn't get autotagged.
+
+
+.. _discdir:
+
+…create "Disc N" directories for multi-disc albums?
+---------------------------------------------------
+
+Use the :doc:`/plugins/inline` along
+with the ``%if{}`` function to accomplish this::
+
+    plugins: inline
+    paths:
+        default: $albumartist/$album%aunique{}/%if{$multidisc,Disc $disc/}$track $title
+    item_fields:
+        multidisc: 1 if disctotal > 1 else 0
 
 
 .. _multidisc:
 
-How does beets handle multi-disc albums?
-----------------------------------------
+…import a multi-disc album?
+---------------------------
 
 As of 1.0b11, beets tags multi-disc albums as a *single unit*. To get a
 good match, it needs to treat all of the album's parts together as a
@@ -65,8 +88,8 @@ the tracks into a single directory to force them to be tagged together.
 
 .. _mbid:
 
-What is a MusicBrainz ID?
--------------------------
+…enter a MusicBrainz ID?
+------------------------
 
 An MBID looks like one of these:
 
@@ -86,31 +109,26 @@ link together different versions of the same album. Use *release* IDs
 here.
 
 
-.. _plugins:
+.. _upgrade:
 
-Why can't I use some of the included plugins?
----------------------------------------------
+…upgrade to the latest version of beets?
+----------------------------------------
 
-Please make sure you're using the latest version of beets---you might
-be using a version earlier than the one that introduced the plugin. In
-many cases, the plugin may be introduced in beets "trunk" (the latest
-source version) and might not be released yet. Take a look at :doc:`the
-changelog </changelog>`
-to see which version added the plugin. (You can type ``beet version`` to
-check which version of beets you have installed.)
+Run a command like this::
 
-If you want to live on the bleeding edge and use the latest source
-version of beets, you can check out the source (see the next question).
+    pip install -U beets
 
-To see the beets documentation for your version (and avoid confusion
-with new features in trunk), select your version from the
-left-hand sidebar (or the buttons at the bottom of the window).
+The ``-U`` flag tells `pip <http://www.pip-installer.org>`__ to upgrade
+beets to the latest version. If you want a specific version, you can
+specify with using ``==`` like so::
+
+    pip install beets==1.0rc2
 
 
 .. _src:
 
-How can I run the latest source version of beets?
--------------------------------------------------
+…run the latest source version of beets?
+----------------------------------------
 
 Beets sees regular releases (about every six weeks or so), but sometimes
 it's helpful to run on the "bleeding edge". To run the latest source:
@@ -137,8 +155,8 @@ page.
 
 .. _bugs:
 
-How do I report a bug in beets?
--------------------------------
+…report a bug in beets?
+-----------------------
 
 We use the `issue tracker <https://github.com/sampsyo/beets/issues>`__
 on GitHub. `Enter a new issue <https://github.com/sampsyo/beets/issues/new>`__
@@ -173,10 +191,59 @@ If you've never reported a bug before, Mozilla has some well-written
 reports <http://www.mozilla.org/bugs/>`__.
 
 
+Why does beets…
+===============
+
+.. _nomatch:
+
+…complain that it can't find a match?
+-------------------------------------
+
+There are a number of possibilities:
+
+-  First, make sure the album is in `the MusicBrainz
+   database <http://musicbrainz.org/>`__ the MusicBrainz database. You
+   can search on their site to make sure it's cataloged there. (If not,
+   anyone can edit MusicBrainz---so consider adding the data yourself.)
+-  If the album in question is a multi-disc release, see the relevant
+   FAQ answer above.
+-  The music files' metadata might be insufficient. Try using the "enter
+   search" or "enter ID" options to help the matching process find the
+   right MusicBrainz entry.
+-  If you have a lot of files that are missing metadata, consider using
+   :doc:`acoustic fingerprinting </plugins/chroma>` or
+   :doc:`filename-based guesses </plugins/fromfilename>`
+   for that music.
+
+If none of these situations apply and you're still having trouble
+tagging something, please :ref:`file a bug report <bugs>`.
+
+
+.. _plugins:
+
+…appear to be missing some plugins?
+-----------------------------------
+
+Please make sure you're using the latest version of beets---you might
+be using a version earlier than the one that introduced the plugin. In
+many cases, the plugin may be introduced in beets "trunk" (the latest
+source version) and might not be released yet. Take a look at :doc:`the
+changelog </changelog>`
+to see which version added the plugin. (You can type ``beet version`` to
+check which version of beets you have installed.)
+
+If you want to live on the bleeding edge and use the latest source
+version of beets, you can check out the source (see the next question).
+
+To see the beets documentation for your version (and avoid confusion
+with new features in trunk), select your version from the
+left-hand sidebar (or the buttons at the bottom of the window).
+
+
 .. _kill:
 
-Why doesn't control-C cancel a "beet import"?
----------------------------------------------
+…ignore control-C during an import?
+-----------------------------------
 
 Typing a ^C (control-C) control sequence will not halt beets'
 multithreaded importer while it is waiting at a prompt for user input.
@@ -193,20 +260,10 @@ trying to close all pipeline stages in the exception handler by setting
 a flag. There is no simple way to remedy this.)
 
 
-.. _move:
-
-How do I rename my files according to a new path format configuration?
-----------------------------------------------------------------------
-
-Just run the :ref:`move-cmd` command. Use a :doc:`query </reference/query>`
-to rename a subset of your music or leave the query off to rename
-everything.
-
-
 .. _id3v24:
 
-Why doesn't beets seem to update ID3 tags?
-------------------------------------------
+…not change my ID3 tags?
+------------------------
 
 Beets writes `ID3v2.4 <http://www.id3.org/id3v2.4.0-structure>`__ tags.
 Some software, including Windows (i.e., Windows Explorer and Windows
@@ -218,26 +275,10 @@ This is due to `a limitation in the Mutagen
 library <http://code.google.com/p/mutagen/wiki/FAQ>`__.
 
 
-.. _upgrade:
-
-How do I upgrade to the latest version of beets?
-------------------------------------------------
-
-Run a command like this::
-
-    pip install -U beets
-
-The ``-U`` flag tells `pip <http://www.pip-installer.org>`__ to upgrade
-beets to the latest version. If you want a specific version, you can
-specify with using ``==`` like so::
-
-    pip install beets==1.0rc2
-
-
 .. _invalid:
 
-Why does beets complain that a file is "unreadable"?
-----------------------------------------------------
+…complain that a file is "unreadable"?
+--------------------------------------
 
 Beets will log a message like "unreadable file: /path/to/music.mp3" when
 it encounters files that *look* like music files (according to their
@@ -256,43 +297,10 @@ it. There's always a possibility that there's a bug "upstream" in the
 in which case we'll forward the bug to that project's tracker.
 
 
-.. _asispostfacto:
-
-How can I tell, after the fact, which albums I imported "as-is"?
-----------------------------------------------------------------
-
-Enable the :ref:`import log <import_log>`
-to automatically record whenever you skip an album or accept one
-"as-is".
-
-Alternatively, you can find all the albums in your library that are
-missing MBIDs using a command like this::
-
-    beet ls -a mb_albumid::^$
-
-Assuming your files didn't have MBIDs already, then this will roughly
-correspond to those albums that didn't get autotagged.
-
-
-.. _discdir:
-
-Can I create "Disc N" directories for multi-disc albums?
---------------------------------------------------------
-
-Use the :doc:`/plugins/inline` along
-with the ``%if{}`` function to accomplish this::
-
-    plugins: inline
-    paths:
-        default: $albumartist/$album%aunique{}/%if{$multidisc,Disc $disc/}$track $title
-    item_fields:
-        multidisc: 1 if disctotal > 1 else 0
-
-
 .. _importhang:
 
-Why does beets seem to "hang" after an import finishes?
--------------------------------------------------------
+…seem to "hang" after an import finishes?
+-----------------------------------------
 
 Probably not. Beets uses a *multithreaded importer* that overlaps many
 different activities: it can prompt you for decisions while, in the
@@ -305,8 +313,8 @@ after you see all the albums go by, have patience.
 
 .. _replaceq:
 
-Why do some of my filenames have underscores (\_s)?
----------------------------------------------------
+…put a bunch of underscores in my filenames?
+--------------------------------------------
 
 When naming files, beets replaces certain characters to avoid causing
 problems on the filesystem. For example, leading dots can confusingly

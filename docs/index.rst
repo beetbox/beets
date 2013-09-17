@@ -29,9 +29,9 @@ Contents
    guides/index
    reference/index
    plugins/index
+   faq
 
 .. toctree::
    :maxdepth: 1
 
-   faq
    changelog
