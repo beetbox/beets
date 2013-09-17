@@ -111,7 +111,7 @@ class MoveTest(_common.TestCase):
 
     def test_move_avoids_collision_with_existing_file(self):
         # Make a conflicting file at the destination.
-        dest = self.lib.destination(self.i)
+        dest = self.i.destination()
         os.makedirs(os.path.dirname(dest))
         touch(dest)
 
@@ -157,9 +157,9 @@ class AlbumFileTest(_common.TestCase):
             [('default', join('$albumartist', '$album', '$title'))]
         self.libdir = os.path.join(self.temp_dir, 'testlibdir')
         self.lib.directory = self.libdir
-        self.i = item()
+        self.i = item(self.lib)
         # Make a file for the item.
-        self.i.path = self.lib.destination(self.i)
+        self.i.path = self.i.destination()
         util.mkdirall(self.i.path)
         touch(self.i.path)
         # Make an album.
@@ -209,8 +209,8 @@ class ArtFileTest(_common.TestCase):
         self.lib = beets.library.Library(':memory:')
         self.libdir = os.path.abspath(os.path.join(self.temp_dir, 'testlibdir'))
         self.lib.directory = self.libdir
-        self.i = item()
-        self.i.path = self.lib.destination(self.i)
+        self.i = item(self.lib)
+        self.i.path = self.i.destination()
         # Make a music file.
         util.mkdirall(self.i.path)
         touch(self.i.path)
@@ -383,8 +383,8 @@ class RemoveTest(_common.TestCase):
         self.lib = beets.library.Library(':memory:')
         self.libdir = os.path.abspath(os.path.join(self.temp_dir, 'testlibdir'))
         self.lib.directory = self.libdir
-        self.i = item()
-        self.i.path = self.lib.destination(self.i)
+        self.i = item(self.lib)
+        self.i.path = self.i.destination()
         # Make a music file.
         util.mkdirall(self.i.path)
         touch(self.i.path)

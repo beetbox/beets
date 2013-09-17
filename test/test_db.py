@@ -152,7 +152,7 @@ class DestinationTest(unittest.TestCase):
     def setUp(self):
         super(DestinationTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
-        self.i = item()
+        self.i = item(self.lib)
     def tearDown(self):
         super(DestinationTest, self).tearDown()
         self.lib._connection().close()
@@ -160,12 +160,12 @@ class DestinationTest(unittest.TestCase):
     def test_directory_works_with_trailing_slash(self):
         self.lib.directory = 'one/'
         self.lib.path_formats = [('default', 'two')]
-        self.assertEqual(self.lib.destination(self.i), np('one/two'))
+        self.assertEqual(self.i.destination(), np('one/two'))
 
     def test_directory_works_without_trailing_slash(self):
         self.lib.directory = 'one'
         self.lib.path_formats = [('default', 'two')]
-        self.assertEqual(self.lib.destination(self.i), np('one/two'))
+        self.assertEqual(self.i.destination(), np('one/two'))
 
     def test_destination_substitues_metadata_values(self):
         self.lib.directory = 'base'
@@ -173,21 +173,21 @@ class DestinationTest(unittest.TestCase):
         self.i.title = 'three'
         self.i.artist = 'two'
         self.i.album = 'one'
-        self.assertEqual(self.lib.destination(self.i),
+        self.assertEqual(self.i.destination(),
                          np('base/one/two three'))
 
     def test_destination_preserves_extension(self):
         self.lib.directory = 'base'
         self.lib.path_formats = [('default', '$title')]
         self.i.path = 'hey.audioformat'
-        self.assertEqual(self.lib.destination(self.i),
+        self.assertEqual(self.i.destination(),
                          np('base/the title.audioformat'))
 
     def test_lower_case_extension(self):
         self.lib.directory = 'base'
         self.lib.path_formats = [('default', '$title')]
         self.i.path = 'hey.MP3'
-        self.assertEqual(self.lib.destination(self.i),
+        self.assertEqual(self.i.destination(),
                          np('base/the title.mp3'))
 
     def test_destination_pads_some_indices(self):
@@ -199,7 +199,7 @@ class DestinationTest(unittest.TestCase):
         self.i.disc = 3
         self.i.disctotal = 4
         self.i.bpm = 5
-        self.assertEqual(self.lib.destination(self.i),
+        self.assertEqual(self.i.destination(),
                          np('base/01 02 03 04 5'))
 
     def test_destination_pads_date_values(self):
@@ -208,43 +208,43 @@ class DestinationTest(unittest.TestCase):
         self.i.year = 1
         self.i.month = 2
         self.i.day = 3
-        self.assertEqual(self.lib.destination(self.i),
+        self.assertEqual(self.i.destination(),
                          np('base/0001-02-03'))
 
     def test_destination_escapes_slashes(self):
         self.i.album = 'one/two'
-        dest = self.lib.destination(self.i)
+        dest = self.i.destination()
         self.assertTrue('one' in dest)
         self.assertTrue('two' in dest)
         self.assertFalse('one/two' in dest)
 
     def test_destination_escapes_leading_dot(self):
         self.i.album = '.something'
-        dest = self.lib.destination(self.i)
+        dest = self.i.destination()
         self.assertTrue('something' in dest)
         self.assertFalse('/.' in dest)
 
     def test_destination_preserves_legitimate_slashes(self):
         self.i.artist = 'one'
         self.i.album = 'two'
-        dest = self.lib.destination(self.i)
+        dest = self.i.destination()
         self.assertTrue(os.path.join('one', 'two') in dest)
 
     def test_destination_long_names_truncated(self):
         self.i.title = 'X'*300
         self.i.artist = 'Y'*300
-        for c in self.lib.destination(self.i).split(os.path.sep):
+        for c in self.i.destination().split(os.path.sep):
             self.assertTrue(len(c) <= 255)
 
     def test_destination_long_names_keep_extension(self):
         self.i.title = 'X'*300
         self.i.path = 'something.extn'
-        dest = self.lib.destination(self.i)
+        dest = self.i.destination()
         self.assertEqual(dest[-5:], '.extn')
 
     def test_distination_windows_removes_both_separators(self):
         self.i.title = 'one \\ two / three.mp3'
-        p = self.lib.destination(self.i, ntpath)
+        p = self.i.destination(pathmod=ntpath)
         self.assertFalse('one \\ two' in p)
         self.assertFalse('one / two' in p)
         self.assertFalse('two \\ three' in p)
@@ -270,7 +270,7 @@ class DestinationTest(unittest.TestCase):
 
     def test_path_with_format(self):
         self.lib.path_formats = [('default', '$artist/$album ($format)')]
-        p = self.lib.destination(self.i)
+        p = self.i.destination()
         self.assert_('(FLAC)' in p)
 
     def test_heterogeneous_album_gets_single_directory(self):
@@ -278,7 +278,7 @@ class DestinationTest(unittest.TestCase):
         self.lib.add_album([i1, i2])
         i1.year, i2.year = 2009, 2010
         self.lib.path_formats = [('default', '$album ($year)/$track $title')]
-        dest1, dest2 = self.lib.destination(i1), self.lib.destination(i2)
+        dest1, dest2 = i1.destination(), i2.destination()
         self.assertEqual(os.path.dirname(dest1), os.path.dirname(dest2))
 
     def test_default_path_for_non_compilations(self):
@@ -287,20 +287,20 @@ class DestinationTest(unittest.TestCase):
         self.lib.directory = 'one'
         self.lib.path_formats = [('default', 'two'),
                                  ('comp:true', 'three')]
-        self.assertEqual(self.lib.destination(self.i), np('one/two'))
+        self.assertEqual(self.i.destination(), np('one/two'))
 
     def test_singleton_path(self):
-        i = item()
+        i = item(self.lib)
         self.lib.directory = 'one'
         self.lib.path_formats = [
             ('default', 'two'),
             ('singleton:true', 'four'),
             ('comp:true', 'three'),
         ]
-        self.assertEqual(self.lib.destination(i), np('one/four'))
+        self.assertEqual(i.destination(), np('one/four'))
 
     def test_comp_before_singleton_path(self):
-        i = item()
+        i = item(self.lib)
         i.comp = True
         self.lib.directory = 'one'
         self.lib.path_formats = [
@@ -308,7 +308,7 @@ class DestinationTest(unittest.TestCase):
             ('comp:true', 'three'),
             ('singleton:true', 'four'),
         ]
-        self.assertEqual(self.lib.destination(i), np('one/three'))
+        self.assertEqual(i.destination(), np('one/three'))
 
     def test_comp_path(self):
         self.i.comp = True
@@ -318,7 +318,7 @@ class DestinationTest(unittest.TestCase):
             ('default', 'two'),
             ('comp:true', 'three'),
         ]
-        self.assertEqual(self.lib.destination(self.i), np('one/three'))
+        self.assertEqual(self.i.destination(), np('one/three'))
 
     def test_albumtype_query_path(self):
         self.i.comp = True
@@ -330,7 +330,7 @@ class DestinationTest(unittest.TestCase):
             ('albumtype:sometype', 'four'),
             ('comp:true', 'three'),
         ]
-        self.assertEqual(self.lib.destination(self.i), np('one/four'))
+        self.assertEqual(self.i.destination(), np('one/four'))
 
     def test_albumtype_path_fallback_to_comp(self):
         self.i.comp = True
@@ -342,7 +342,7 @@ class DestinationTest(unittest.TestCase):
             ('albumtype:anothertype', 'four'),
             ('comp:true', 'three'),
         ]
-        self.assertEqual(self.lib.destination(self.i), np('one/three'))
+        self.assertEqual(self.i.destination(), np('one/three'))
 
     def test_sanitize_windows_replaces_trailing_space(self):
         p = util.sanitize_path(u'one/two /three', ntpath)
@@ -378,28 +378,28 @@ class DestinationTest(unittest.TestCase):
         self.i.artist = ''
         self.i.albumartist = 'something'
         self.lib.path_formats = [('default', '$artist')]
-        p = self.lib.destination(self.i)
+        p = self.i.destination()
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'something')
 
     def test_albumartist_falls_back_to_artist(self):
         self.i.artist = 'trackartist'
         self.i.albumartist = ''
         self.lib.path_formats = [('default', '$albumartist')]
-        p = self.lib.destination(self.i)
+        p = self.i.destination()
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'trackartist')
 
     def test_artist_overrides_albumartist(self):
         self.i.artist = 'theartist'
         self.i.albumartist = 'something'
         self.lib.path_formats = [('default', '$artist')]
-        p = self.lib.destination(self.i)
+        p = self.i.destination()
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'theartist')
 
     def test_albumartist_overrides_artist(self):
         self.i.artist = 'theartist'
         self.i.albumartist = 'something'
         self.lib.path_formats = [('default', '$albumartist')]
-        p = self.lib.destination(self.i)
+        p = self.i.destination()
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'something')
 
     def test_sanitize_path_works_on_empty_string(self):
@@ -421,13 +421,13 @@ class DestinationTest(unittest.TestCase):
     def test_unicode_normalized_nfd_on_mac(self):
         instr = unicodedata.normalize('NFC', u'caf\xe9')
         self.lib.path_formats = [('default', instr)]
-        dest = self.lib.destination(self.i, platform='darwin', fragment=True)
+        dest = self.i.destination(platform='darwin', fragment=True)
         self.assertEqual(dest, unicodedata.normalize('NFD', instr))
 
     def test_unicode_normalized_nfc_on_linux(self):
         instr = unicodedata.normalize('NFD', u'caf\xe9')
         self.lib.path_formats = [('default', instr)]
-        dest = self.lib.destination(self.i, platform='linux2', fragment=True)
+        dest = self.i.destination(platform='linux2', fragment=True)
         self.assertEqual(dest, unicodedata.normalize('NFC', instr))
 
     def test_non_mbcs_characters_on_windows(self):
@@ -436,7 +436,7 @@ class DestinationTest(unittest.TestCase):
         try:
             self.i.title = u'h\u0259d'
             self.lib.path_formats = [('default', '$title')]
-            p = self.lib.destination(self.i)
+            p = self.i.destination()
             self.assertFalse('?' in p)
             # We use UTF-8 to encode Windows paths now.
             self.assertTrue(u'h\u0259d'.encode('utf8') in p)
@@ -446,7 +446,7 @@ class DestinationTest(unittest.TestCase):
     def test_unicode_extension_in_fragment(self):
         self.lib.path_formats = [('default', u'foo')]
         self.i.path = util.bytestring_path(u'bar.caf\xe9')
-        dest = self.lib.destination(self.i, platform='linux2', fragment=True)
+        dest = self.i.destination(platform='linux2', fragment=True)
         self.assertEqual(dest, u'foo.caf\xe9')
 
 class PathFormattingMixin(object):
@@ -456,15 +456,14 @@ class PathFormattingMixin(object):
     def _assert_dest(self, dest, i=None):
         if i is None:
             i = self.i
-        self.assertEqual(self.lib.destination(i, pathmod=posixpath),
-                         dest)
+        self.assertEqual(i.destination(pathmod=posixpath), dest)
 
 class DestinationFunctionTest(unittest.TestCase, PathFormattingMixin):
     def setUp(self):
         self.lib = beets.library.Library(':memory:')
         self.lib.directory = '/base'
         self.lib.path_formats = [('default', u'path')]
-        self.i = item()
+        self.i = item(self.lib)
     def tearDown(self):
         self.lib._connection().close()
 
@@ -609,13 +608,13 @@ class PluginDestinationTest(unittest.TestCase):
         self.lib = beets.library.Library(':memory:')
         self.lib.directory = '/base'
         self.lib.path_formats = [('default', u'$artist $foo')]
-        self.i = item()
+        self.i = item(self.lib)
     def tearDown(self):
         super(PluginDestinationTest, self).tearDown()
         plugins.template_values = self.old_template_values
 
     def _assert_dest(self, dest):
-        self.assertEqual(self.lib.destination(self.i, pathmod=posixpath),
+        self.assertEqual(self.i.destination(pathmod=posixpath),
                          '/base/' + dest)
 
     def test_undefined_value_not_substituted(self):
@@ -764,8 +763,7 @@ class AlbumInfoTest(unittest.TestCase):
         self.assertEqual(new_ai.artpath, '/my/great/art')
 
     def test_albuminfo_for_two_items_doesnt_duplicate_row(self):
-        i2 = item()
-        self.lib.add(i2)
+        i2 = item(self.lib)
         self.lib.get_album(self.i)
         self.lib.get_album(i2)
 
@@ -838,8 +836,8 @@ class ArtDestinationTest(_common.TestCase):
         self.lib = beets.library.Library(
             ':memory:', replacements=[(re.compile(u'X'), u'Y')]
         )
-        self.i = item()
-        self.i.path = self.lib.destination(self.i)
+        self.i = item(self.lib)
+        self.i.path = self.i.destination()
         self.ai = self.lib.add_album((self.i,))
 
     def test_art_filename_respects_setting(self):
@@ -848,7 +846,7 @@ class ArtDestinationTest(_common.TestCase):
 
     def test_art_path_in_item_dir(self):
         art = self.ai.art_destination('something.jpg')
-        track = self.lib.destination(self.i)
+        track = self.i.destination()
         self.assertEqual(os.path.dirname(art), os.path.dirname(track))
 
     def test_art_path_sanitized(self):
@@ -860,8 +858,7 @@ class PathStringTest(_common.TestCase):
     def setUp(self):
         super(PathStringTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
-        self.i = item()
-        self.lib.add(self.i)
+        self.i = item(self.lib)
 
     def test_item_path_is_bytestring(self):
         self.assert_(isinstance(self.i.path, str))
@@ -899,7 +896,7 @@ class PathStringTest(_common.TestCase):
 
     def test_destination_returns_bytestring(self):
         self.i.artist = u'b\xe1r'
-        dest = self.lib.destination(self.i)
+        dest = self.i.destination()
         self.assert_(isinstance(dest, str))
 
     def test_art_destination_returns_bytestring(self):
@@ -999,8 +996,7 @@ class ImportTimeTest(_common.TestCase):
         self.assertGreater(self.track.added, 0)
 
     def test_atime_for_singleton(self):
-        self.singleton = item()
-        self.lib.add(self.singleton)
+        self.singleton = item(self.lib)
         self.assertGreater(self.singleton.added, 0)
 
 def suite():

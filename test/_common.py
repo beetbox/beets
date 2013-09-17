@@ -42,10 +42,10 @@ RSRC = os.path.join(os.path.dirname(__file__), 'rsrc')
 
 # Dummy item creation.
 _item_ident = 0
-def item():
+def item(lib=None):
     global _item_ident
     _item_ident += 1
-    return beets.library.Item(
+    i = beets.library.Item(
         title =            u'the title',
         artist =           u'the artist',
         albumartist =      u'the album artist',
@@ -74,6 +74,9 @@ def item():
         mb_albumartistid = 'someID-4',
         album_id =         None,
     )
+    if lib:
+        lib.add(i)
+    return i
 
 # Dummy import session.
 def import_session(lib=None, logfile=None, paths=[], query=[], cli=False):

@@ -751,7 +751,7 @@ class Server(BaseServer):
     # Metadata helper functions.
 
     def _item_info(self, item):
-        info_lines = [u'file: ' + self.lib.destination(item, fragment=True),
+        info_lines = [u'file: ' + item.destination(fragment=True),
                       u'Time: ' + unicode(int(item.length)),
                       u'Title: ' + item.title,
                       u'Artist: ' + item.artist,
