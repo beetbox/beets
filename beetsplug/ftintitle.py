@@ -17,6 +17,7 @@
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets.util import displayable_path
+from beets import config
 import re
 
 
@@ -62,8 +63,6 @@ def update_metadata(item, feat_part):
         new_title = u"{0} feat. {1}".format(item.title, feat_part)
         ui.print_(u'title: {0} -> {1}'.format(item.title, new_title))
         item.title = new_title
-
-    item.write()
 
 
 def ft_in_title(item):
@@ -115,8 +114,11 @@ class FtInTitlePlugin(BeetsPlugin):
         cmd = ui.Subcommand('ftintitle',
                             help='move featured artists to the title field')
         def func(lib, opts, args):
+            write = config['import']['write'].get(bool)
             for item in lib.items():
                 ft_in_title(item)
-            print "Manual 'beet update' run is recommended. "
+                item.store()
+                if write:
+                    item.write()
         cmd.func = func
         return [cmd]
