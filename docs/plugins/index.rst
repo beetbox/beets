@@ -68,6 +68,7 @@ disabled by default, but you can turn them on as described above.
    discogs
    beatport
    fromfilename
+   ftintitle
 
 Autotagger Extensions
 ''''''''''''''''''''''
@@ -94,6 +95,8 @@ Metadata
 * :doc:`replaygain`: Calculate volume normalization for players that support it.
 * :doc:`scrub`: Clean extraneous metadata from music files.
 * :doc:`zero`: Nullify fields by pattern or unconditionally.
+* :doc:`ftintitle`: Move "featured" artists from the artist field to the title
+  field.
 
 Path Formats
 ''''''''''''

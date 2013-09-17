@@ -11,6 +11,9 @@ New stuff:
   rather than just MP3. Thanks again to Rowan Lewis.
 * The new :doc:`/plugins/fromfilename` guesses tags from the filenames during
   import when metadata tags themselves are missing. Thanks to Jan-Erik Dahlin.
+* The :doc:`/plugins/ftintitle`, by `@Verrus`_, is now distributed with beets.
+  It helps you rewrite tags to move "featured" artists from the artist field
+  to the title field.
 
 And some fixes:
 
@@ -29,6 +32,7 @@ And some fixes:
   underlying recording's length, the track length is now used instead.
 
 .. _Opus: http://www.opus-codec.org/
+.. _@Verrus: https://github.com/Verrus
 
 
 1.3.0 (September 11, 2013)
