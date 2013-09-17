@@ -177,8 +177,8 @@ reports <http://www.mozilla.org/bugs/>`__.
 
 .. _kill:
 
-Control-C does not cancel a "beet import". How do I kill a running import?
---------------------------------------------------------------------------
+Why doesn't control-C cancel a "beet import"?
+---------------------------------------------
 
 Typing a ^C (control-C) control sequence will not halt beets'
 multithreaded importer while it is waiting at a prompt for user input.
@@ -197,8 +197,8 @@ a flag. There is no simple way to remedy this.)
 
 .. _move:
 
-I changed my path format configuration. How can I rename all my music to match the new templates?
--------------------------------------------------------------------------------------------------
+How do I rename my files according to a new path format configuration?
+----------------------------------------------------------------------
 
 Just run the `"beet
 move" <http://beets.readthedocs.org/en/latest/reference/cli.html#move>`__
@@ -210,8 +210,8 @@ everything.
 
 .. _id3v24:
 
-Why doesn't beets update ID3 tags? Or, why are my MP3s missing ID3 tags altogether?
------------------------------------------------------------------------------------
+Why doesn't beets seem to update ID3 tags?
+------------------------------------------
 
 Beets writes `ID3v2.4 <http://www.id3.org/id3v2.4.0-structure>`__ tags.
 Some software, including Windows (i.e., Windows Explorer and Windows
@@ -282,8 +282,8 @@ correspond to those albums that didn't get autotagged.
 
 .. _discdir:
 
-Is there a path format that uses a "Disc N" directory only for multi-disc albums?
----------------------------------------------------------------------------------
+Can I create "Disc N" directories for multi-disc albums?
+--------------------------------------------------------
 
 Use the `inline
 plugin <http://beets.readthedocs.org/page/plugins/inline.html>`__ along
@@ -298,8 +298,8 @@ with the ``%if{}`` function to accomplish this::
 
 .. _importhang:
 
-An import seems to have finished, but beets is still running. Did it hang?
---------------------------------------------------------------------------
+Why does beets seem to "hang" after an import finishes?
+-------------------------------------------------------
 
 Probably not. Beets uses a *multithreaded importer* that overlaps many
 different activities: it can prompt you for decisions while, in the
