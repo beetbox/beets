@@ -2,8 +2,11 @@ FAQ
 ===
 
 Here are some answers to frequently-asked questions from IRC and elsewhere.
-Got a question that isn't answered? Try IRC, the mailing list, or filing an
-issue.
+Got a question that isn't answered? Try `IRC`_, the `mailing list`_, or
+:ref:`filing an issue <bugs>` in the bug tracker.
+
+.. _IRC: irc://irc.freenode.net/beets
+.. _mailing list: http://groups.google.com/group/beets-users
 
 .. contents::
     :local:
@@ -19,20 +22,19 @@ Yes, this can happen. There are a number of possibilities:
 -  First, make sure the album is in `the MusicBrainz
    database <http://musicbrainz.org/>`__ the MusicBrainz database. You
    can search on their site to make sure it's cataloged there. (If not,
-   anyone can edit MusicBrainz -- so consider adding the data yourself.)
+   anyone can edit MusicBrainz---so consider adding the data yourself.)
 -  If the album in question is a multi-disc release, see the relevant
    FAQ answer below.
 -  The music files' metadata might be insufficient. Try using the "enter
    search" or "enter ID" options to help the matching process find the
    right MusicBrainz entry.
 -  If you have a lot of files that are missing metadata, consider using
-   `acoustic
-   fingerprinting <http://beets.readthedocs.org/en/latest/plugins/chroma.html>`__
+   :doc:`acoustic fingerprinting </plugins/chroma>` or
+   :doc:`filename-based guesses </plugins/fromfilename>`
    for that music.
 
 If none of these situations apply and you're still having trouble
-tagging something, please `file a bug
-report <https://github.com/sampsyo/beets/issues/new>`__.
+tagging something, please :ref:`file a bug report <bugs>`.
 
 
 .. _multidisc:
@@ -89,11 +91,11 @@ here.
 Why can't I use some of the included plugins?
 ---------------------------------------------
 
-Please make sure you're using the latest version of beets -- you might
+Please make sure you're using the latest version of beets---you might
 be using a version earlier than the one that introduced the plugin. In
 many cases, the plugin may be introduced in beets "trunk" (the latest
-source version) and might not be released yet. Take a look at `the
-changelog <http://readthedocs.org/docs/beets/en/latest/changelog.html>`__
+source version) and might not be released yet. Take a look at :doc:`the
+changelog </changelog>`
 to see which version added the plugin. (You can type ``beet version`` to
 check which version of beets you have installed.)
 
@@ -101,9 +103,8 @@ If you want to live on the bleeding edge and use the latest source
 version of beets, you can check out the source (see the next question).
 
 To see the beets documentation for your version (and avoid confusion
-with new features in trunk), `head to the
-docs <http://beets.readthedocs.org/>`__ and select your version from the
-left-hand sidebar (or the buttons at the bottom of the screen).
+with new features in trunk), select your version from the
+left-hand sidebar (or the buttons at the bottom of the window).
 
 
 .. _src:
@@ -140,10 +141,8 @@ How do I report a bug in beets?
 -------------------------------
 
 We use the `issue tracker <https://github.com/sampsyo/beets/issues>`__
-on GitHub. (Older issues are still on Google Code; these will be
-migrated eventually.) `Enter a new
-issue <https://github.com/sampsyo/beets/issues/new>`__ there to report a
-bug. Please follow these guidelines when reporting an issue:
+on GitHub. `Enter a new issue <https://github.com/sampsyo/beets/issues/new>`__
+there to report a bug. Please follow these guidelines when reporting an issue:
 
 -  Most importantly: if beets is crashing, please `include the
    traceback <http://imgur.com/jacoj>`__. Tracebacks can be more
@@ -157,8 +156,7 @@ bug. Please follow these guidelines when reporting an issue:
    problem.
 -  If you can, try installing the latest beets source code to see if the
    bug is fixed in an unreleased version. You can also look at the
-   `latest changelog
-   entries <http://beets.readthedocs.org/en/latest/changelog.html>`__
+   :doc:`latest changelog entries </changelog>`
    for descriptions of the problem you're seeing.
 -  Try to narrow your problem down to something specific. Is a
    particular plugin causing the problem? (You can disable plugins to
@@ -200,10 +198,7 @@ a flag. There is no simple way to remedy this.)
 How do I rename my files according to a new path format configuration?
 ----------------------------------------------------------------------
 
-Just run the `"beet
-move" <http://beets.readthedocs.org/en/latest/reference/cli.html#move>`__
-command. Use a
-`query <http://beets.readthedocs.org/en/latest/reference/query.html>`__
+Just run the :ref:`move-cmd` command. Use a :doc:`query </reference/query>`
 to rename a subset of your music or leave the query off to rename
 everything.
 
@@ -266,8 +261,7 @@ in which case we'll forward the bug to that project's tracker.
 How can I tell, after the fact, which albums I imported "as-is"?
 ----------------------------------------------------------------
 
-Enable the `import
-log <http://beets.readthedocs.org/en/1.0rc2/reference/config.html#import-log>`__
+Enable the :ref:`import log <import_log>`
 to automatically record whenever you skip an album or accept one
 "as-is".
 
@@ -285,8 +279,7 @@ correspond to those albums that didn't get autotagged.
 Can I create "Disc N" directories for multi-disc albums?
 --------------------------------------------------------
 
-Use the `inline
-plugin <http://beets.readthedocs.org/page/plugins/inline.html>`__ along
+Use the :doc:`/plugins/inline` along
 with the ``%if{}`` function to accomplish this::
 
     plugins: inline
@@ -320,8 +313,7 @@ problems on the filesystem. For example, leading dots can confusingly
 hide files on Unix and several non-alphanumeric characters are forbidden
 on Windows.
 
-The ```replace`` config
-option <http://beets.readthedocs.org/page/reference/config.html#replace>`__
+The :ref:`replace` config option
 controls which replacements are made. By default, beets makes filenames
 safe for all known platforms by replacing several patterns with
 underscores. This means that, even on Unix, filenames are made

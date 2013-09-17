@@ -300,6 +300,8 @@ mode, in which it asks for confirmation on every autotagging match, even the
 ones that seem very close. Defaults to ``no``. The ``-t`` command-line flag
 controls the same setting.
 
+.. _import_log:
+
 log
 ~~~
 
