@@ -473,6 +473,13 @@ class Item(LibModel):
         if self.mtime == 0 and 'mtime' in values:
             self.mtime = values['mtime']
 
+    def get_album(self):
+        """Get the Album object that this item belongs to, if any, or
+        None if the item is a singleton.
+        """
+        self._check_db()
+        return self._lib.get_album(self.id)
+
 
     # Interaction with file metadata.
 
@@ -568,7 +575,7 @@ class Item(LibModel):
 
         # Remove the album if it is empty.
         if with_album:
-            album = self._lib.get_album(self)
+            album = self.get_album()
             if album and not album.items():
                 album.remove(delete, False)
 
@@ -612,7 +619,7 @@ class Item(LibModel):
 
         # If this item is in an album, move its art.
         if with_album:
-            album = self._lib.get_album(self)
+            album = self.get_album()
             if album:
                 album.move_art(copy)
                 album.store()
@@ -624,18 +631,16 @@ class Item(LibModel):
 
     # Templating.
 
-    def evaluate_template(self, template, lib=None, sanitize=False,
+    def evaluate_template(self, template, sanitize=False,
                           pathmod=None):
-        """Evaluates a Template object using the item's fields. If `lib`
-        is provided, it is used to map some fields to the item's album
-        (if available) and is made available to template functions. If
+        """Evaluates a Template object using the item's fields. If
         `sanitize`, then each value will be sanitized for inclusion in a
         file path.
         """
         pathmod = pathmod or os.path
 
         # Get the item's Album if it has one.
-        album = lib.get_album(self)
+        album = self.get_album()
 
         # Build the mapping for substitution in the template,
         # beginning with the values from the database.
@@ -683,7 +688,7 @@ class Item(LibModel):
                 mapping[key] = value
 
         # Get template functions.
-        funcs = DefaultTemplateFunctions(self, lib, pathmod).functions()
+        funcs = DefaultTemplateFunctions(self, self._lib, pathmod).functions()
         funcs.update(plugins.template_funcs())
 
         # Perform substitution.
@@ -1668,7 +1673,7 @@ class Library(object):
             subpath_tmpl = Template(path_format)
 
         # Evaluate the selected template.
-        subpath = item.evaluate_template(subpath_tmpl, self, True, pathmod)
+        subpath = item.evaluate_template(subpath_tmpl, True, pathmod)
 
         # Prepare path for output: normalize Unicode characters.
         if platform == 'darwin':

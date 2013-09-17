@@ -507,10 +507,7 @@ def print_obj(obj, lib, fmt=None):
         template = fmt
     else:
         template = Template(fmt)
-    if album:
-        print_(obj.evaluate_template(template))
-    else:
-        print_(obj.evaluate_template(template, lib=lib))
+    print_(obj.evaluate_template(template))
 
 def term_width():
     """Get the width (columns) of the terminal."""
