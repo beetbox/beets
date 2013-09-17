@@ -939,7 +939,7 @@ def update_items(lib, query, album, move, pretend):
 
                 # Move the item if it's in the library.
                 if move and lib.directory in ancestry(item.path):
-                    lib.move(item)
+                    item.move()
 
                 item.store()
                 affected_albums.add(item.album_id)
@@ -1154,10 +1154,7 @@ def modify_items(lib, mods, query, write, move, album, confirm):
                 cur_path = obj.item_dir() if album else obj.path
                 if lib.directory in ancestry(cur_path): # In library?
                     log.debug('moving object %s' % cur_path)
-                    if album:
-                        obj.move()
-                    else:
-                        lib.move(obj)
+                    obj.move()
 
             obj.store()
 
@@ -1212,10 +1209,7 @@ def move_items(lib, dest, query, copy, album):
         old_path = obj.item_dir() if album else obj.path
         logging.debug('moving: %s' % old_path)
 
-        if album:
-            obj.move(copy, basedir=dest)
-        else:
-            lib.move(obj, copy, basedir=dest)
+        obj.move(copy, basedir=dest)
         obj.store()
 
 move_cmd = ui.Subcommand('move',

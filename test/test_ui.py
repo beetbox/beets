@@ -124,7 +124,8 @@ class RemoveTest(_common.TestCase):
         # Copy a file into the library.
         self.lib = library.Library(':memory:', self.libdir)
         self.i = library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
-        self.lib.add(self.i, True)
+        self.lib.add(self.i)
+        self.i.move(True)
 
     def test_remove_items_no_delete(self):
         self.io.addinput('y')
@@ -151,7 +152,8 @@ class ModifyTest(_common.TestCase):
         # Copy a file into the library.
         self.lib = library.Library(':memory:', self.libdir)
         self.i = library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
-        self.lib.add(self.i, True)
+        self.lib.add(self.i)
+        self.i.move(True)
         self.album = self.lib.add_album([self.i])
 
     def _modify(self, mods, query=(), write=False, move=False, album=False):
@@ -230,7 +232,7 @@ class MoveTest(_common.TestCase):
         # Add a file to the library but don't copy it in yet.
         self.lib = library.Library(':memory:', self.libdir)
         self.i = library.Item.from_path(self.itempath)
-        self.lib.add(self.i, False)
+        self.lib.add(self.i)
         self.album = self.lib.add_album([self.i])
 
         # Alternate destination directory.
@@ -292,7 +294,8 @@ class UpdateTest(_common.TestCase):
         # Copy a file into the library.
         self.lib = library.Library(':memory:', self.libdir)
         self.i = library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
-        self.lib.add(self.i, True)
+        self.lib.add(self.i)
+        self.i.move(True)
         self.album = self.lib.add_album([self.i])
 
         # Album art.

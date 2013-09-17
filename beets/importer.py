@@ -844,7 +844,7 @@ def manipulate_files(session):
             if config['import']['move']:
                 # Just move the file.
                 old_path = item.path
-                session.lib.move(item, False)
+                item.move(False)
                 task.prune(old_path)
             elif config['import']['copy']:
                 # If it's a reimport, move in-library files and copy
@@ -855,16 +855,16 @@ def manipulate_files(session):
                     # This is a reimport. Move in-library files and copy
                     # out-of-library files.
                     if session.lib.directory in util.ancestry(old_path):
-                        session.lib.move(item, False)
+                        item.move(False)
                         # We moved the item, so remove the
                         # now-nonexistent file from old_paths.
                         task.old_paths.remove(old_path)
                     else:
-                        session.lib.move(item, True)
+                        item.move(True)
                 else:
                     # A normal import. Just copy files and keep track of
                     # old paths.
-                    session.lib.move(item, True)
+                    item.move(True)
 
             if config['import']['write'] and task.should_write_tags():
                 item.write()

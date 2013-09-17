@@ -324,7 +324,7 @@ class ImportApplyTest(_common.TestCase):
         """It should be possible to "move" a file even when the file is
         already at the destination.
         """
-        self.lib.move(self.i)  # Already at destination.
+        self.i.move()  # Already at destination.
         config['import']['move'] = True
         _call_stages(self.session, [self.i], self.info, toppath=self.srcdir,
                      stages=[importer.manipulate_files])

@@ -533,7 +533,7 @@ class Item(LibModel):
 
     # Files themselves.
 
-    def move(self, dest, copy=False):
+    def move_file(self, dest, copy=False):
         """Moves or copies the item's file, updating the path value if
         the move succeeds. If a file exists at ``dest``, then it is
         slightly modified to be unique.
@@ -556,6 +556,9 @@ class Item(LibModel):
         """
         return int(os.path.getmtime(syspath(self.path)))
 
+
+    # Model methods.
+
     def remove(self, delete=False, with_album=True):
         """Removes the item. If `delete`, then the associated file is
         removed from disk. If `with_album`, then the item's album (if
@@ -575,6 +578,48 @@ class Item(LibModel):
             util.prune_dirs(os.path.dirname(self.path), self._lib.directory)
 
         self._lib._memotable = {}
+
+    def move(self, copy=False, basedir=None, with_album=True):
+        """Move the item to its designated location within the library
+        directory (provided by destination()). Subdirectories are
+        created as needed. If the operation succeeds, the item's path
+        field is updated to reflect the new location.
+
+        If copy is True, moving the file is copied rather than moved.
+
+        basedir overrides the library base directory for the
+        destination.
+
+        If the item is in an album, the album is given an opportunity to
+        move its art. (This can be disabled by passing
+        with_album=False.)
+
+        The item is stored to the database if it is in the database, so
+        any dirty fields prior to the move() call will be written as a
+        side effect. You probably want to call save() to commit the DB
+        transaction.
+        """
+        self._check_db()
+        dest = self._lib.destination(self, basedir=basedir)
+
+        # Create necessary ancestry for the move.
+        util.mkdirall(dest)
+
+        # Perform the move and store the change.
+        old_path = self.path
+        self.move_file(dest, copy)
+        self.store()
+
+        # If this item is in an album, move its art.
+        if with_album:
+            album = self._lib.get_album(self)
+            if album:
+                album.move_art(copy)
+                album.store()
+
+        # Prune vacated directory.
+        if not copy:
+            util.prune_dirs(os.path.dirname(old_path), self._lib.directory)
 
 
     # Templating.
@@ -730,7 +775,7 @@ class Album(LibModel):
         # Move items.
         items = list(self.items())
         for item in items:
-            self._lib.move(item, copy, basedir=basedir, with_album=False)
+            item.move(copy, basedir=basedir, with_album=False)
 
         # Move art.
         self.move_art(copy)
@@ -1658,15 +1703,13 @@ class Library(object):
 
     # Adding objects to the database.
 
-    def add(self, item, copy=False):
+    def add(self, item):
         """Add the item as a new object to the library database. The id
         field will be updated; the new id is returned. If copy, then
         each item is copied to the destination location before it is
         added.
         """
         item.added = time.time()
-        if copy:
-            self.move(item, copy=True)
         if not item._lib:
             item._lib = self
 
@@ -1733,49 +1776,6 @@ class Library(object):
         album_values['id'] = album_id
         album = Album(self, **album_values)
         return album
-
-    def move(self, item, copy=False, basedir=None,
-             with_album=True):
-        """Move the item to its designated location within the library
-        directory (provided by destination()). Subdirectories are
-        created as needed. If the operation succeeds, the item's path
-        field is updated to reflect the new location.
-
-        If copy is True, moving the file is copied rather than moved.
-
-        basedir overrides the library base directory for the
-        destination.
-
-        If the item is in an album, the album is given an opportunity to
-        move its art. (This can be disabled by passing
-        with_album=False.)
-
-        The item is stored to the database if it is in the database, so
-        any dirty fields prior to the move() call will be written as a
-        side effect. You probably want to call save() to commit the DB
-        transaction.
-        """
-        dest = self.destination(item, basedir=basedir)
-
-        # Create necessary ancestry for the move.
-        util.mkdirall(dest)
-
-        # Perform the move and store the change.
-        old_path = item.path
-        item.move(dest, copy)
-        if item.id is not None:
-            item.store()
-
-        # If this item is in an album, move its art.
-        if with_album:
-            album = self.get_album(item)
-            if album:
-                album.move_art(copy)
-                album.store()
-
-        # Prune vacated directory.
-        if not copy:
-            util.prune_dirs(os.path.dirname(old_path), self.directory)
 
 
     # Querying.
