@@ -36,6 +36,7 @@ from beets.util.functemplate import Template
 import beets
 from datetime import datetime
 
+
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
 # vulnerable to injection if accessible to the user.
@@ -111,6 +112,7 @@ ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
 ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 
+
 # Database fields for the "albums" table.
 # The third entry in each tuple indicates whether the field reflects an
 # identically-named field in the items table.
@@ -152,6 +154,7 @@ ALBUM_FIELDS = [
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
 
+
 # SQLite type names.
 SQLITE_TYPES = {
     int:      'INT',
@@ -163,18 +166,22 @@ SQLITE_TYPES = {
 }
 SQLITE_KEY_TYPE = 'INTEGER PRIMARY KEY'
 
+
 # Default search fields for each model.
 ALBUM_DEFAULT_FIELDS = ('album', 'albumartist', 'genre')
 ITEM_DEFAULT_FIELDS = ALBUM_DEFAULT_FIELDS + ('artist', 'title', 'comments')
 
+
 # Special path format key.
 PF_KEY_DEFAULT = 'default'
+
 
 # Logger.
 log = logging.getLogger('beets')
 if not log.handlers:
     log.addHandler(logging.StreamHandler())
 log.propagate = False  # Don't propagate to root handler.
+
 
 # A little SQL utility.
 def _orelse(exp1, exp2):
@@ -184,6 +191,7 @@ def _orelse(exp1, exp2):
     return ('(CASE {0} WHEN NULL THEN {1} '
                       'WHEN "" THEN {1} '
                       'ELSE {0} END)').format(exp1, exp2)
+
 
 # Path element formatting for templating.
 def format_for_path(value, key=None, pathmod=None):
@@ -226,13 +234,9 @@ def format_for_path(value, key=None, pathmod=None):
     return value
 
 
-# Exceptions.
 
-class InvalidFieldError(Exception):
-    pass
+# Items (songs), albums, and their common bases.
 
-
-# Library items (songs).
 
 class FlexModel(object):
     """An abstract object that consists of a set of "fast" (fixed)
@@ -330,6 +334,7 @@ class FlexModel(object):
         else:
             self[key] = value
 
+
 class LibModel(FlexModel):
     """A model base class that includes a reference to a Library object.
     It knows how to load and store itself from the database.
@@ -413,6 +418,7 @@ class LibModel(FlexModel):
         stored_obj = self._lib._get(type(self), self.id)
         self.update(dict(stored_obj))
         self.clear_dirty()
+
 
 class Item(LibModel):
     _fields = ITEM_KEYS
@@ -605,7 +611,205 @@ class Item(LibModel):
         return template.substitute(mapping, funcs)
 
 
-# Library queries.
+class Album(LibModel):
+    """Provides access to information about albums stored in a
+    library. Reflects the library's "albums" table, including album
+    art.
+    """
+    _fields = ALBUM_KEYS
+    _table = 'albums'
+    _flex_table = 'album_attributes'
+    _search_fields = ALBUM_DEFAULT_FIELDS
+
+    def __setitem__(self, key, value):
+        """Set the value of an album attribute."""
+        if key == 'artpath':
+            if isinstance(value, unicode):
+                value = bytestring_path(value)
+            elif isinstance(value, buffer):
+                value = bytes(value)
+        super(Album, self).__setitem__(key, value)
+
+    def items(self):
+        """Returns an iterable over the items associated with this
+        album.
+        """
+        return self._lib.items(MatchQuery('album_id', self.id))
+
+    def remove(self, delete=False, with_items=True):
+        """Removes this album and all its associated items from the
+        library. If delete, then the items' files are also deleted
+        from disk, along with any album art. The directories
+        containing the album are also removed (recursively) if empty.
+        Set with_items to False to avoid removing the album's items.
+        """
+        if delete:
+            # Delete art file.
+            artpath = self.artpath
+            if artpath:
+                util.remove(artpath)
+
+        with self._lib.transaction() as tx:
+            if with_items:
+                # Remove items.
+                for item in self.items():
+                    self._lib.remove(item, delete, False)
+
+            # Remove album from database.
+            tx.mutate(
+                'DELETE FROM albums WHERE id=?',
+                (self.id,)
+            )
+
+    def move_art(self, copy=False):
+        """Move or copy any existing album art so that it remains in the
+        same directory as the items.
+        """
+        old_art = self.artpath
+        if not old_art:
+            return
+
+        new_art = self.art_destination(old_art)
+        if new_art == old_art:
+            return
+
+        new_art = util.unique_path(new_art)
+        log.debug('moving album art %s to %s' % (old_art, new_art))
+        if copy:
+            util.copy(old_art, new_art)
+        else:
+            util.move(old_art, new_art)
+        self.artpath = new_art
+
+        # Prune old path when moving.
+        if not copy:
+            util.prune_dirs(os.path.dirname(old_art),
+                            self._lib.directory)
+
+    def move(self, copy=False, basedir=None):
+        """Moves (or copies) all items to their destination. Any album
+        art moves along with them. basedir overrides the library base
+        directory for the destination. The album is stored to the
+        database, persisting any modifications to its metadata.
+        """
+        basedir = basedir or self._lib.directory
+
+        # Ensure new metadata is available to items for destination
+        # computation.
+        self.store()
+
+        # Move items.
+        items = list(self.items())
+        for item in items:
+            self._lib.move(item, copy, basedir=basedir, with_album=False)
+
+        # Move art.
+        self.move_art(copy)
+        self.store()
+
+    def item_dir(self):
+        """Returns the directory containing the album's first item,
+        provided that such an item exists.
+        """
+        item = self.items().get()
+        if not item:
+            raise ValueError('empty album')
+        return os.path.dirname(item.path)
+
+    def art_destination(self, image, item_dir=None):
+        """Returns a path to the destination for the album art image
+        for the album. `image` is the path of the image that will be
+        moved there (used for its extension).
+
+        The path construction uses the existing path of the album's
+        items, so the album must contain at least one item or
+        item_dir must be provided.
+        """
+        image = bytestring_path(image)
+        item_dir = item_dir or self.item_dir()
+
+        filename_tmpl = Template(beets.config['art_filename'].get(unicode))
+        subpath = format_for_path(self.evaluate_template(filename_tmpl))
+        subpath = util.sanitize_path(subpath,
+                                     replacements=self._lib.replacements)
+        subpath = bytestring_path(subpath)
+
+        _, ext = os.path.splitext(image)
+        dest = os.path.join(item_dir, subpath + ext)
+
+        return bytestring_path(dest)
+
+    def set_art(self, path, copy=True):
+        """Sets the album's cover art to the image at the given path.
+        The image is copied (or moved) into place, replacing any
+        existing art.
+        """
+        path = bytestring_path(path)
+        oldart = self.artpath
+        artdest = self.art_destination(path)
+
+        if oldart and samefile(path, oldart):
+            # Art already set.
+            return
+        elif samefile(path, artdest):
+            # Art already in place.
+            self.artpath = path
+            return
+
+        # Normal operation.
+        if oldart == artdest:
+            util.remove(oldart)
+        artdest = util.unique_path(artdest)
+        if copy:
+            util.copy(path, artdest)
+        else:
+            util.move(path, artdest)
+        self.artpath = artdest
+
+    def evaluate_template(self, template):
+        """Evaluates a Template object using the album's fields.
+        """
+        # Get template field values.
+        mapping = {}
+        for key, value in dict(self).items():
+            mapping[key] = format_for_path(value, key)
+
+        mapping['artpath'] = displayable_path(mapping['artpath'])
+        mapping['path'] = displayable_path(self.item_dir())
+
+        # Get values from plugins.
+        for key, value in plugins.album_template_values(self).iteritems():
+            mapping[key] = value
+
+        # Get template functions.
+        funcs = DefaultTemplateFunctions().functions()
+        funcs.update(plugins.template_funcs())
+
+        # Perform substitution.
+        return template.substitute(mapping, funcs)
+
+    def store(self):
+        """Update the database with the album information. The album's
+        tracks are also updated.
+        """
+        # Get modified track fields.
+        track_updates = {}
+        for key in ALBUM_KEYS_ITEM:
+            if key in self._dirty:
+                track_updates[key] = self[key]
+
+        with self._lib.transaction():
+            super(Album, self).store()
+            if track_updates:
+                for item in self.items():
+                    for key, value in track_updates.items():
+                        item[key] = value
+                    item.store()
+
+
+
+# Query abstraction hierarchy.
+
 
 class Query(object):
     """An abstract class representing a query into the item database.
@@ -625,6 +829,7 @@ class Query(object):
         perform queries on arbitrary sets of Items.
         """
         raise NotImplementedError
+
 
 class FieldQuery(Query):
     """An abstract query that searches in a specific field for a
@@ -665,6 +870,7 @@ class FieldQuery(Query):
     def match(self, item):
         return self._raw_value_match(self.pattern, item.get(self.field))
 
+
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
     def col_clause(self):
@@ -679,6 +885,7 @@ class MatchQuery(FieldQuery):
     def _raw_value_match(cls, pattern, value):
         return pattern == value
 
+
 class SubstringQuery(FieldQuery):
     """A query that matches a substring in a specific item field."""
     def col_clause(self):
@@ -691,6 +898,7 @@ class SubstringQuery(FieldQuery):
     @classmethod
     def value_match(cls, pattern, value):
         return pattern.lower() in value.lower()
+
 
 class RegexpQuery(FieldQuery):
     """A query that matches a regular expression in a specific item
@@ -705,6 +913,7 @@ class RegexpQuery(FieldQuery):
             return False
         return res is not None
 
+
 class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
     string reflecting a boolean.
@@ -714,6 +923,7 @@ class BooleanQuery(MatchQuery):
         if isinstance(pattern, basestring):
             self.pattern = util.str2bool(pattern)
         self.pattern = int(self.pattern)
+
 
 class NumericQuery(FieldQuery):
     """Matches numeric fields. A syntax using Ruby-style range ellipses
@@ -782,6 +992,7 @@ class NumericQuery(FieldQuery):
             else:
                 return '1'
 
+
 class SingletonQuery(Query):
     """Matches either singleton or non-singleton items."""
     def __init__(self, sense):
@@ -795,6 +1006,7 @@ class SingletonQuery(Query):
 
     def match(self, item):
         return (not item.album_id) == self.sense
+
 
 class CollectionQuery(Query):
     """An abstract query class that aggregates other queries. Can be
@@ -855,6 +1067,7 @@ class CollectionQuery(Query):
         parts = [s.decode('utf8') for s in shlex.split(query)]
         return cls.from_strings(parts, default_fields, all_keys)
 
+
 class AnyFieldQuery(CollectionQuery):
     """A query that matches if a given FieldQuery subclass matches in
     any field. The individual field query class is provided to the
@@ -879,12 +1092,17 @@ class AnyFieldQuery(CollectionQuery):
                 return True
         return False
 
+
 class MutableCollectionQuery(CollectionQuery):
     """A collection query whose subqueries may be modified after the
     query is initialized.
     """
-    def __setitem__(self, key, value): self.subqueries[key] = value
-    def __delitem__(self, key): del self.subqueries[key]
+    def __setitem__(self, key, value):
+        self.subqueries[key] = value
+
+    def __delitem__(self, key):
+        del self.subqueries[key]
+
 
 class AndQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
@@ -894,6 +1112,7 @@ class AndQuery(MutableCollectionQuery):
     def match(self, item):
         return all([q.match(item) for q in self.subqueries])
 
+
 class TrueQuery(Query):
     """A query that always matches."""
     def clause(self):
@@ -902,6 +1121,7 @@ class TrueQuery(Query):
     def match(self, item):
         return True
 
+
 class FalseQuery(Query):
     """A query that never matches."""
     def clause(self):
@@ -909,6 +1129,7 @@ class FalseQuery(Query):
 
     def match(self, item):
         return False
+
 
 class PathQuery(Query):
     """A query that matches all items under a given path."""
@@ -926,6 +1147,135 @@ class PathQuery(Query):
         dir_pat = buffer(self.dir_path + '%')
         file_blob = buffer(self.file_path)
         return '(path = ?) || (path LIKE ?)', (file_blob, dir_pat)
+
+
+
+# Query construction and parsing helpers.
+
+
+PARSE_QUERY_PART_REGEX = re.compile(
+    # Non-capturing optional segment for the keyword.
+    r'(?:'
+        r'(\S+?)'    # The field key.
+        r'(?<!\\):'  # Unescaped :
+    r')?'
+
+    r'(.+)',         # The term itself.
+
+    re.I  # Case-insensitive.
+)
+
+def parse_query_part(part):
+    """Takes a query in the form of a key/value pair separated by a
+    colon. The value part is matched against a list of prefixes that
+    can be extended by plugins to add custom query types. For
+    example, the colon prefix denotes a regular expression query.
+
+    The function returns a tuple of `(key, value, cls)`. `key` may
+    be None, indicating that any field may be matched. `cls` is a
+    subclass of `FieldQuery`.
+
+    For instance,
+    parse_query('stapler') == (None, 'stapler', None)
+    parse_query('color:red') == ('color', 'red', None)
+    parse_query(':^Quiet') == (None, '^Quiet', RegexpQuery)
+    parse_query('color::b..e') == ('color', 'b..e', RegexpQuery)
+
+    Prefixes may be 'escaped' with a backslash to disable the keying
+    behavior.
+    """
+    part = part.strip()
+    match = PARSE_QUERY_PART_REGEX.match(part)
+
+    prefixes = {':': RegexpQuery}
+    prefixes.update(plugins.queries())
+
+    if match:
+        key = match.group(1)
+        term = match.group(2).replace('\:', ':')
+        # Match the search term against the list of prefixes.
+        for pre, query_class in prefixes.items():
+            if term.startswith(pre):
+                return key, term[len(pre):], query_class
+        if key and NumericQuery.applies_to(key):
+            return key, term, NumericQuery
+        return key, term, SubstringQuery  # The default query type.
+
+
+def construct_query_part(query_part, default_fields, all_keys):
+    """Create a query from a single query component. Return a Query
+    instance or None if the value cannot be parsed.
+    """
+    parsed = parse_query_part(query_part)
+    if not parsed:
+        return
+
+    key, pattern, query_class = parsed
+
+    # No key specified.
+    if key is None:
+        if os.sep in pattern and 'path' in all_keys:
+            # This looks like a path.
+            return PathQuery(pattern)
+        elif issubclass(query_class, FieldQuery):
+            # The query type matches a specific field, but none was
+            # specified. So we use a version of the query that matches
+            # any field.
+            return AnyFieldQuery(pattern, default_fields, query_class)
+        else:
+            # Other query type.
+            return query_class(pattern)
+
+    key = key.lower()
+
+    # A boolean field.
+    if key.lower() == 'comp':
+        return BooleanQuery(key, pattern)
+
+    # Path field.
+    elif key == 'path' and 'path' in all_keys:
+        if query_class is SubstringQuery:
+            # By default, use special path matching logic.
+            return PathQuery(pattern)
+        else:
+            # Specific query type requested.
+            return query_class('path', pattern)
+
+    # Singleton query (not a real field).
+    elif key == 'singleton':
+        return SingletonQuery(util.str2bool(pattern))
+
+    # Other field.
+    else:
+        return query_class(key.lower(), pattern, key in all_keys)
+
+
+def get_query(val, model_cls):
+    """Takes a value which may be None, a query string, a query string
+    list, or a Query object, and returns a suitable Query object.
+    `model_cls` is the subclass of LibModel indicating which entity this
+    is a query for (i.e., Album or Item) and is used to determine which
+    fields are searched.
+    """
+    # Convert a single string into a list of space-separated
+    # criteria.
+    if isinstance(val, basestring):
+        val = val.split()
+
+    if val is None:
+        return TrueQuery()
+    elif isinstance(val, list) or isinstance(val, tuple):
+        return AndQuery.from_strings(val, model_cls._search_fields,
+                                     model_cls._fields)
+    elif isinstance(val, Query):
+        return val
+    else:
+        raise ValueError('query must be None or have type Query or str')
+
+
+
+# The Library: interface to the database.
+
 
 class Results(object):
     """An item query result set. Iterating over the collection lazily
@@ -1009,125 +1359,6 @@ class Results(object):
         except StopIteration:
             return None
 
-# Regular expression for parse_query_part, below.
-PARSE_QUERY_PART_REGEX = re.compile(
-    # Non-capturing optional segment for the keyword.
-    r'(?:'
-        r'(\S+?)'    # The field key.
-        r'(?<!\\):'  # Unescaped :
-    r')?'
-
-    r'(.+)',         # The term itself.
-
-    re.I  # Case-insensitive.
-)
-def parse_query_part(part):
-    """Takes a query in the form of a key/value pair separated by a
-    colon. The value part is matched against a list of prefixes that
-    can be extended by plugins to add custom query types. For
-    example, the colon prefix denotes a regular expression query.
-
-    The function returns a tuple of `(key, value, cls)`. `key` may
-    be None, indicating that any field may be matched. `cls` is a
-    subclass of `FieldQuery`.
-
-    For instance,
-    parse_query('stapler') == (None, 'stapler', None)
-    parse_query('color:red') == ('color', 'red', None)
-    parse_query(':^Quiet') == (None, '^Quiet', RegexpQuery)
-    parse_query('color::b..e') == ('color', 'b..e', RegexpQuery)
-
-    Prefixes may be 'escaped' with a backslash to disable the keying
-    behavior.
-    """
-    part = part.strip()
-    match = PARSE_QUERY_PART_REGEX.match(part)
-
-    prefixes = {':': RegexpQuery}
-    prefixes.update(plugins.queries())
-
-    if match:
-        key = match.group(1)
-        term = match.group(2).replace('\:', ':')
-        # Match the search term against the list of prefixes.
-        for pre, query_class in prefixes.items():
-            if term.startswith(pre):
-                return key, term[len(pre):], query_class
-        if key and NumericQuery.applies_to(key):
-            return key, term, NumericQuery
-        return key, term, SubstringQuery  # The default query type.
-
-def construct_query_part(query_part, default_fields, all_keys):
-    """Create a query from a single query component. Return a Query
-    instance or None if the value cannot be parsed.
-    """
-    parsed = parse_query_part(query_part)
-    if not parsed:
-        return
-
-    key, pattern, query_class = parsed
-
-    # No key specified.
-    if key is None:
-        if os.sep in pattern and 'path' in all_keys:
-            # This looks like a path.
-            return PathQuery(pattern)
-        elif issubclass(query_class, FieldQuery):
-            # The query type matches a specific field, but none was
-            # specified. So we use a version of the query that matches
-            # any field.
-            return AnyFieldQuery(pattern, default_fields, query_class)
-        else:
-            # Other query type.
-            return query_class(pattern)
-
-    key = key.lower()
-
-    # A boolean field.
-    if key.lower() == 'comp':
-        return BooleanQuery(key, pattern)
-
-    # Path field.
-    elif key == 'path' and 'path' in all_keys:
-        if query_class is SubstringQuery:
-            # By default, use special path matching logic.
-            return PathQuery(pattern)
-        else:
-            # Specific query type requested.
-            return query_class('path', pattern)
-
-    # Singleton query (not a real field).
-    elif key == 'singleton':
-        return SingletonQuery(util.str2bool(pattern))
-
-    # Other field.
-    else:
-        return query_class(key.lower(), pattern, key in all_keys)
-
-def get_query(val, model_cls):
-    """Takes a value which may be None, a query string, a query string
-    list, or a Query object, and returns a suitable Query object.
-    `model_cls` is the subclass of LibModel indicating which entity this
-    is a query for (i.e., Album or Item) and is used to determine which
-    fields are searched.
-    """
-    # Convert a single string into a list of space-separated
-    # criteria.
-    if isinstance(val, basestring):
-        val = val.split()
-
-    if val is None:
-        return TrueQuery()
-    elif isinstance(val, list) or isinstance(val, tuple):
-        return AndQuery.from_strings(val, model_cls._search_fields,
-                                     model_cls._fields)
-    elif isinstance(val, Query):
-        return val
-    else:
-        raise ValueError('query must be None or have type Query or str')
-
-
-# The Library: interface to the database.
 
 class Transaction(object):
     """A context manager for safe, concurrent access to the database.
@@ -1180,6 +1411,7 @@ class Transaction(object):
     def script(self, statements):
         """Execute a string containing multiple SQL statements."""
         self.lib._connection().executescript(statements)
+
 
 class Library(object):
     """A music library using an SQLite database as a metadata store."""
@@ -1602,203 +1834,10 @@ class Library(object):
         album = Album(self, **album_values)
         return album
 
-class Album(LibModel):
-    """Provides access to information about albums stored in a
-    library. Reflects the library's "albums" table, including album
-    art.
-    """
-    _fields = ALBUM_KEYS
-    _table = 'albums'
-    _flex_table = 'album_attributes'
-    _search_fields = ALBUM_DEFAULT_FIELDS
-
-    def __setitem__(self, key, value):
-        """Set the value of an album attribute."""
-        if key == 'artpath':
-            if isinstance(value, unicode):
-                value = bytestring_path(value)
-            elif isinstance(value, buffer):
-                value = bytes(value)
-        super(Album, self).__setitem__(key, value)
-
-    def items(self):
-        """Returns an iterable over the items associated with this
-        album.
-        """
-        return self._lib.items(MatchQuery('album_id', self.id))
-
-    def remove(self, delete=False, with_items=True):
-        """Removes this album and all its associated items from the
-        library. If delete, then the items' files are also deleted
-        from disk, along with any album art. The directories
-        containing the album are also removed (recursively) if empty.
-        Set with_items to False to avoid removing the album's items.
-        """
-        if delete:
-            # Delete art file.
-            artpath = self.artpath
-            if artpath:
-                util.remove(artpath)
-
-        with self._lib.transaction() as tx:
-            if with_items:
-                # Remove items.
-                for item in self.items():
-                    self._lib.remove(item, delete, False)
-
-            # Remove album from database.
-            tx.mutate(
-                'DELETE FROM albums WHERE id=?',
-                (self.id,)
-            )
-
-    def move_art(self, copy=False):
-        """Move or copy any existing album art so that it remains in the
-        same directory as the items.
-        """
-        old_art = self.artpath
-        if not old_art:
-            return
-
-        new_art = self.art_destination(old_art)
-        if new_art == old_art:
-            return
-
-        new_art = util.unique_path(new_art)
-        log.debug('moving album art %s to %s' % (old_art, new_art))
-        if copy:
-            util.copy(old_art, new_art)
-        else:
-            util.move(old_art, new_art)
-        self.artpath = new_art
-
-        # Prune old path when moving.
-        if not copy:
-            util.prune_dirs(os.path.dirname(old_art),
-                            self._lib.directory)
-
-    def move(self, copy=False, basedir=None):
-        """Moves (or copies) all items to their destination. Any album
-        art moves along with them. basedir overrides the library base
-        directory for the destination. The album is stored to the
-        database, persisting any modifications to its metadata.
-        """
-        basedir = basedir or self._lib.directory
-
-        # Ensure new metadata is available to items for destination
-        # computation.
-        self.store()
-
-        # Move items.
-        items = list(self.items())
-        for item in items:
-            self._lib.move(item, copy, basedir=basedir, with_album=False)
-
-        # Move art.
-        self.move_art(copy)
-        self.store()
-
-    def item_dir(self):
-        """Returns the directory containing the album's first item,
-        provided that such an item exists.
-        """
-        item = self.items().get()
-        if not item:
-            raise ValueError('empty album')
-        return os.path.dirname(item.path)
-
-    def art_destination(self, image, item_dir=None):
-        """Returns a path to the destination for the album art image
-        for the album. `image` is the path of the image that will be
-        moved there (used for its extension).
-
-        The path construction uses the existing path of the album's
-        items, so the album must contain at least one item or
-        item_dir must be provided.
-        """
-        image = bytestring_path(image)
-        item_dir = item_dir or self.item_dir()
-
-        filename_tmpl = Template(beets.config['art_filename'].get(unicode))
-        subpath = format_for_path(self.evaluate_template(filename_tmpl))
-        subpath = util.sanitize_path(subpath,
-                                     replacements=self._lib.replacements)
-        subpath = bytestring_path(subpath)
-
-        _, ext = os.path.splitext(image)
-        dest = os.path.join(item_dir, subpath + ext)
-
-        return bytestring_path(dest)
-
-    def set_art(self, path, copy=True):
-        """Sets the album's cover art to the image at the given path.
-        The image is copied (or moved) into place, replacing any
-        existing art.
-        """
-        path = bytestring_path(path)
-        oldart = self.artpath
-        artdest = self.art_destination(path)
-
-        if oldart and samefile(path, oldart):
-            # Art already set.
-            return
-        elif samefile(path, artdest):
-            # Art already in place.
-            self.artpath = path
-            return
-
-        # Normal operation.
-        if oldart == artdest:
-            util.remove(oldart)
-        artdest = util.unique_path(artdest)
-        if copy:
-            util.copy(path, artdest)
-        else:
-            util.move(path, artdest)
-        self.artpath = artdest
-
-    def evaluate_template(self, template):
-        """Evaluates a Template object using the album's fields.
-        """
-        # Get template field values.
-        mapping = {}
-        for key, value in dict(self).items():
-            mapping[key] = format_for_path(value, key)
-
-        mapping['artpath'] = displayable_path(mapping['artpath'])
-        mapping['path'] = displayable_path(self.item_dir())
-
-        # Get values from plugins.
-        for key, value in plugins.album_template_values(self).iteritems():
-            mapping[key] = value
-
-        # Get template functions.
-        funcs = DefaultTemplateFunctions().functions()
-        funcs.update(plugins.template_funcs())
-
-        # Perform substitution.
-        return template.substitute(mapping, funcs)
-
-    def store(self):
-        """Update the database with the album information. The album's
-        tracks are also updated.
-        """
-        # Get modified track fields.
-        track_updates = {}
-        for key in ALBUM_KEYS_ITEM:
-            if key in self._dirty:
-                track_updates[key] = self[key]
-
-        with self._lib.transaction():
-            super(Album, self).store()
-            if track_updates:
-                for item in self.items():
-                    for key, value in track_updates.items():
-                        item[key] = value
-                    item.store()
 
 
 # Default path template resources.
+
 
 def _int_arg(s):
     """Convert a string argument to an integer for use in a template
