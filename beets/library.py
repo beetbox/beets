@@ -1597,10 +1597,10 @@ class Library(object):
         self._db_lock = threading.Lock()
 
         # Set up database schema.
-        self._make_table('items', item_fields)
-        self._make_table('albums', album_fields)
-        self._make_attribute_table('item')
-        self._make_attribute_table('album')
+        self._make_table(Item._table, item_fields)
+        self._make_table(Album._table, album_fields)
+        self._make_attribute_table(Item._flex_table)
+        self._make_attribute_table(Album._flex_table)
 
     def _make_table(self, table, fields):
         """Set up the schema of the library file. fields is a list of
@@ -1653,21 +1653,21 @@ class Library(object):
         with self.transaction() as tx:
             tx.script(setup_sql)
 
-    def _make_attribute_table(self, entity):
+    def _make_attribute_table(self, flex_table):
         """Create a table and associated index for flexible attributes
         for the given entity (if they don't exist).
         """
         with self.transaction() as tx:
             tx.script("""
-                CREATE TABLE IF NOT EXISTS {0}_attributes (
+                CREATE TABLE IF NOT EXISTS {0} (
                     id INTEGER PRIMARY KEY,
                     entity_id INTEGER,
                     key TEXT,
                     value TEXT,
                     UNIQUE(entity_id, key) ON CONFLICT REPLACE);
-                CREATE INDEX IF NOT EXISTS {0}_id_attribute
-                    ON {0}_attributes (entity_id);
-                """.format(entity))
+                CREATE INDEX IF NOT EXISTS {0}_by_entity
+                    ON {0} (entity_id);
+                """.format(flex_table))
 
     def _connection(self):
         """Get a SQLite connection object to the underlying database.
