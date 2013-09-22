@@ -35,6 +35,7 @@ _MUTAGEN_FORMATS = {
     'oggspeex': 'OggSpeex',
     'oggtheora': 'OggTheora',
     'oggvorbis': 'OggVorbis',
+    'oggopus': 'OggOpus',
     'trueaudio': 'TrueAudio',
     'wavpack': 'WavPack',
     'monkeysaudio': 'MonkeysAudio',
