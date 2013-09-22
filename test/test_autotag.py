@@ -701,13 +701,23 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.items.append(Item({}))
         trackinfo = []
         trackinfo.append(TrackInfo(
-            u'oneNew', 'dfa939ec-118c-4d0f-84a0-60f3d1e6522c', medium=1,
-            medium_index=1, artist_credit='trackArtistCredit',
-            artist_sort='trackArtistSort', index=1,
+            u'oneNew',
+            'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
+            medium=1,
+            medium_index=1,
+            medium_total=1,
+            index=1,
+            artist_credit='trackArtistCredit',
+            artist_sort='trackArtistSort',
         ))
-        trackinfo.append(TrackInfo(u'twoNew',
-                                   '40130ed1-a27c-42fd-a328-1ebefb6caef4',
-                                   medium=2, medium_index=1, index=2))
+        trackinfo.append(TrackInfo(
+            u'twoNew',
+            '40130ed1-a27c-42fd-a328-1ebefb6caef4',
+            medium=2,
+            medium_index=1,
+            index=2,
+            medium_total=1,
+        ))
         self.info = AlbumInfo(
             tracks = trackinfo,
             artist = u'artistNew',
@@ -757,6 +767,11 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self._apply(per_disc_numbering=True)
         self.assertEqual(self.items[0].track, 1)
         self.assertEqual(self.items[1].track, 1)
+
+    def test_per_disc_numbering_track_total(self):
+        self._apply(per_disc_numbering=True)
+        self.assertEqual(self.items[0].tracktotal, 1)
+        self.assertEqual(self.items[1].tracktotal, 1)
 
     def test_mb_trackid_applied(self):
         self._apply()

@@ -132,19 +132,23 @@ def _flatten_artist_credit(credit):
         ''.join(artist_credit_parts),
     )
 
-def track_info(recording, index=None, medium=None, medium_index=None):
+def track_info(recording, index=None, medium=None, medium_index=None,
+               medium_total=None):
     """Translates a MusicBrainz recording result dictionary into a beets
     ``TrackInfo`` object. Three parameters are optional and are used
     only for tracks that appear on releases (non-singletons): ``index``,
     the overall track number; ``medium``, the disc number;
-    ``medium_index``, the track's index on its medium. Each number is a
-    1-based index.
+    ``medium_index``, the track's index on its medium; ``medium_total``,
+    the number of tracks on the medium. Each number is a 1-based index.
     """
-    info = beets.autotag.hooks.TrackInfo(recording['title'],
-                                         recording['id'],
-                                         index=index,
-                                         medium=medium,
-                                         medium_index=medium_index)
+    info = beets.autotag.hooks.TrackInfo(
+        recording['title'],
+        recording['id'],
+        index=index,
+        medium=medium,
+        medium_index=medium_index,
+        medium_total=medium_total,
+    )
 
     if recording.get('artist-credit'):
         # Get the artist names.
@@ -195,10 +199,13 @@ def album_info(release):
         disctitle = medium.get('title')
         for track in medium['track-list']:
             index += 1
-            ti = track_info(track['recording'],
-                            index,
-                            int(medium['position']),
-                            int(track['position']))
+            ti = track_info(
+                track['recording'],
+                index,
+                int(medium['position']),
+                int(track['position']),
+                len(medium['track-list']),
+            )
             if track.get('title'):
                 # Track title may be distinct from underlying recording
                 # title.

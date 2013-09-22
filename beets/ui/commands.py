@@ -209,7 +209,7 @@ def show_change(cur_artist, cur_album, match):
             index = medium_index = track_info.track
             medium = track_info.disc
             mediums = track_info.disctotal
-        if config['per_disc_numbering'].get(bool):
+        if config['per_disc_numbering']:
             if mediums > 1:
                 return u'{0}-{1}'.format(medium, medium_index)
             else:

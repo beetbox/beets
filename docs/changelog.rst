@@ -30,6 +30,8 @@ And some fixes:
   database.
 * When a track on a MusicBrainz release has a different length from the
   underlying recording's length, the track length is now used instead.
+* With :ref:`per_disc_numbering` enabled, the ``tracktotal`` field is now set
+  correctly (i.e., to the number of tracks on the disc).
 
 .. _Opus: http://www.opus-codec.org/
 .. _@Verrus: https://github.com/Verrus

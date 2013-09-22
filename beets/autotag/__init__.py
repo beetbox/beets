@@ -168,7 +168,6 @@ def apply_metadata(album_info, mapping):
             item.artist = album_info.artist
         item.albumartist = album_info.artist
         item.album = album_info.album
-        item.tracktotal = len(album_info.tracks)
 
         # Artist sort and credit names.
         item.artist_sort = track_info.artist_sort or album_info.artist_sort
@@ -199,8 +198,10 @@ def apply_metadata(album_info, mapping):
 
         if config['per_disc_numbering']:
             item.track = track_info.medium_index
+            item.tracktotal = track_info.medium_total
         else:
             item.track = track_info.index
+            item.tracktotal = len(album_info.tracks)
 
         # Disc and disc count.
         item.disc = track_info.medium
