@@ -32,6 +32,8 @@ And some fixes:
   underlying recording's length, the track length is now used instead.
 * With :ref:`per_disc_numbering` enabled, the ``tracktotal`` field is now set
   correctly (i.e., to the number of tracks on the disc).
+* :doc:`/plugins/scrub`: The ``scrub`` command now restores album art in
+  addition to other (database-backed) tags.
 
 .. _Opus: http://www.opus-codec.org/
 .. _@Verrus: https://github.com/Verrus

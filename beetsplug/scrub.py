@@ -21,6 +21,7 @@ from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import util
 from beets import config
+from beets import mediafile
 
 log = logging.getLogger('beets')
 
@@ -40,7 +41,9 @@ _MUTAGEN_FORMATS = {
     'optimfrog': 'OptimFROG',
 }
 
+
 scrubbing = False
+
 
 class ScrubPlugin(BeetsPlugin):
     """Removes extraneous metadata from files' tags."""
@@ -60,11 +63,24 @@ class ScrubPlugin(BeetsPlugin):
             # Walk through matching files and remove tags.
             for item in lib.items(ui.decargs(args)):
                 log.info(u'scrubbing: %s' % util.displayable_path(item.path))
+
+                # Get album art if we need to restore it.
+                if opts.write:
+                    mf = mediafile.MediaFile(item.path)
+                    art = mf.art
+
+                # Remove all tags.
                 _scrub(item.path)
 
+                # Restore tags, if enabled.
                 if opts.write:
                     log.debug(u'writing new tags after scrub')
                     item.write()
+                    if art:
+                        print('restoring art')
+                        mf = mediafile.MediaFile(item.path)
+                        mf.art = art
+                        mf.save()
 
             scrubbing = False
 
@@ -76,6 +92,7 @@ class ScrubPlugin(BeetsPlugin):
 
         return [scrub_cmd]
 
+
 def _mutagen_classes():
     """Get a list of file type classes from the Mutagen module.
     """
@@ -85,6 +102,7 @@ def _mutagen_classes():
                          fromlist=[clsname])
         classes.append(getattr(mod, clsname))
     return classes
+
 
 def _scrub(path):
     """Remove all tags from a file.
@@ -114,6 +132,7 @@ def _scrub(path):
                 exc,
             ))
         f.save()
+
 
 # Automatically embed art into imported albums.
 @ScrubPlugin.listen('write')
