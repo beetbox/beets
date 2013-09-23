@@ -21,7 +21,7 @@ import beets.library
 pqp = beets.library.parse_query_part
 
 
-class QueryParseTest(unittest.TestCase):
+class QueryParseTest(_common.TestCase):
     def test_one_basic_term(self):
         q = 'test'
         r = (None, 'test', beets.library.SubstringQuery)
@@ -68,11 +68,7 @@ class QueryParseTest(unittest.TestCase):
         self.assertEqual(pqp(q), r)
 
 
-class AnyFieldQueryTest(unittest.TestCase):
-    def setUp(self):
-        self.lib = beets.library.Library(':memory:')
-        _common.item(self.lib)
-
+class AnyFieldQueryTest(_common.LibTestCase):
     def test_no_restriction(self):
         q = beets.library.AnyFieldQuery('title', beets.library.ITEM_KEYS,
                                         beets.library.SubstringQuery)
@@ -295,7 +291,7 @@ class GetTest(DummyDataTestCase):
         self.assertEqual(names, [])
 
     def test_unicode_query(self):
-        item = self.items().get()
+        item = self.lib.items().get()
         item.title = u'caf\xe9'
         item.store()
 
@@ -314,8 +310,9 @@ class GetTest(DummyDataTestCase):
         self.assertFalse(results)
 
 
-class MatchTest(unittest.TestCase):
+class MatchTest(_common.TestCase):
     def setUp(self):
+        super(MatchTest, self).setUp()
         self.item = _common.item()
 
     def test_regex_match_positive(self):
@@ -359,14 +356,12 @@ class MatchTest(unittest.TestCase):
         self.assertFalse(q.match(self.item))
 
 
-class PathQueryTest(unittest.TestCase, AssertsMixin):
+class PathQueryTest(_common.LibTestCase, AssertsMixin):
     def setUp(self):
-        self.lib = beets.library.Library(':memory:')
-
-        path_item = _common.item()
-        path_item.path = '/a/b/c.mp3'
-        path_item.title = 'path item'
-        self.lib.add(path_item)
+        super(PathQueryTest, self).setUp()
+        self.i.path = '/a/b/c.mp3'
+        self.i.title = 'path item'
+        self.i.store()
 
     def test_path_exact_match(self):
         q = 'path:/a/b/c.mp3'
@@ -437,7 +432,7 @@ class DefaultSearchFieldsTest(DummyDataTestCase):
         self.assert_matched(items, [])
 
 
-class StringParseTest(unittest.TestCase):
+class StringParseTest(_common.TestCase):
     def test_single_field_query(self):
         q = beets.library.AndQuery.from_string(u'albumtype:soundtrack')
         self.assertEqual(len(q.subqueries), 1)
