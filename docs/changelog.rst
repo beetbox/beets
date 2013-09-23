@@ -34,6 +34,9 @@ And some fixes:
   correctly (i.e., to the number of tracks on the disc).
 * :doc:`/plugins/scrub`: The ``scrub`` command now restores album art in
   addition to other (database-backed) tags.
+* :doc:`/plugins/mpdupdate`: Domain sockets can now begin with a tilde (which
+  is correctly expanded to ``$HOME``) as well as a slash. Thanks to Johann
+  Klähn.
 
 .. _Opus: http://www.opus-codec.org/
 .. _@Verrus: https://github.com/Verrus
