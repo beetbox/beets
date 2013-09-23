@@ -33,28 +33,11 @@ from beets import config
 
 TEMP_LIB = os.path.join(_common.RSRC, 'test_copy.blb')
 
-def lib():
-    shutil.copy(os.path.join(_common.RSRC, 'test.blb'), TEMP_LIB)
-    return beets.library.Library(TEMP_LIB)
-def remove_lib():
-    if os.path.exists(TEMP_LIB):
-        os.unlink(TEMP_LIB)
-def boracay(l):
-    return beets.library.Item(l,
-        **l._connection().execute('select * from items where id=3').fetchone()
-    )
+# Shortcut to path normalization.
 np = util.normpath
 
-class LoadTest(_common.TestCase):
-    def setUp(self):
-        super(LoadTest, self).setUp()
-        self.lib = lib()
-        self.i = boracay(self.lib)
-    def tearDown(self):
-        super(LoadTest, self).tearDown()
-        self.lib._connection().close()
-        remove_lib()
 
+class LoadTest(_common.LibTestCase):
     def test_load_restores_data_from_db(self):
         original_title = self.i.title
         self.i.title = 'something'
@@ -63,25 +46,18 @@ class LoadTest(_common.TestCase):
 
     def test_load_clears_dirty_flags(self):
         self.i.artist = 'something'
+        self.assertTrue('artist' in self.i._dirty)
         self.i.load()
         self.assertTrue('artist' not in self.i._dirty)
 
-class StoreTest(_common.TestCase):
-    def setUp(self):
-        super(StoreTest, self).setUp()
-        self.lib = lib()
-        self.i = boracay(self.lib)
-    def tearDown(self):
-        super(StoreTest, self).tearDown()
-        self.lib._connection().close()
-        remove_lib()
 
+class StoreTest(_common.LibTestCase):
     def test_store_changes_database_value(self):
         self.i.year = 1987
         self.i.store()
         new_year = self.lib._connection().execute(
             'select year from items where '
-            'title="Boracay"').fetchone()['year']
+            'title="the title"').fetchone()['year']
         self.assertEqual(new_year, 1987)
 
     def test_store_only_writes_dirty_fields(self):
@@ -90,7 +66,7 @@ class StoreTest(_common.TestCase):
         self.i.store()
         new_genre = self.lib._connection().execute(
             'select genre from items where '
-            'title="Boracay"').fetchone()['genre']
+            'title="the title"').fetchone()['genre']
         self.assertEqual(new_genre, original_genre)
 
     def test_store_clears_dirty_flags(self):
@@ -98,14 +74,12 @@ class StoreTest(_common.TestCase):
         self.i.store()
         self.assertTrue('composer' not in self.i._dirty)
 
+
 class AddTest(_common.TestCase):
     def setUp(self):
         super(AddTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
         self.i = item()
-    def tearDown(self):
-        super(AddTest, self).tearDown()
-        self.lib._connection().close()
 
     def test_item_add_inserts_row(self):
         self.lib.add(self.i)
@@ -122,20 +96,13 @@ class AddTest(_common.TestCase):
             'where composer="the composer"').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
 
-class RemoveTest(_common.TestCase):
-    def setUp(self):
-        super(RemoveTest, self).setUp()
-        self.lib = lib()
-        self.i = boracay(self.lib)
-    def tearDown(self):
-        super(RemoveTest, self).tearDown()
-        self.lib._connection().close()
-        remove_lib()
 
+class RemoveTest(_common.LibTestCase):
     def test_remove_deletes_from_db(self):
         self.i.remove()
-        c = self.lib._connection().execute('select * from items where id=3')
+        c = self.lib._connection().execute('select * from items')
         self.assertEqual(c.fetchone(), None)
+
 
 class GetSetTest(_common.TestCase):
     def setUp(self):
@@ -156,6 +123,7 @@ class GetSetTest(_common.TestCase):
 
     def test_invalid_field_raises_attributeerror(self):
         self.assertRaises(AttributeError, getattr, self.i, 'xyzzy')
+
 
 class DestinationTest(_common.TestCase):
     def setUp(self):
@@ -458,6 +426,7 @@ class DestinationTest(_common.TestCase):
         dest = self.i.destination(platform='linux2', fragment=True)
         self.assertEqual(dest, u'foo.caf\xe9')
 
+
 class PathFormattingMixin(object):
     """Utilities for testing path formatting."""
     def _setf(self, fmt):
@@ -466,6 +435,7 @@ class PathFormattingMixin(object):
         if i is None:
             i = self.i
         self.assertEqual(i.destination(pathmod=posixpath), dest)
+
 
 class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
     def setUp(self):
@@ -517,6 +487,7 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
     def test_nonexistent_function(self):
         self._setf(u'%foo{bar}')
         self._assert_dest('/base/%foo{bar}')
+
 
 class DisambiguationTest(_common.TestCase, PathFormattingMixin):
     def setUp(self):
@@ -578,6 +549,7 @@ class DisambiguationTest(_common.TestCase, PathFormattingMixin):
         self._setf(u'foo%aunique{albumartist album,albumtype}/$title')
         self._assert_dest('/base/foo [foo_bar]/the title', self.i1)
 
+
 class PathConversionTest(_common.TestCase):
     def test_syspath_windows_format(self):
         path = ntpath.join('a', 'b', 'c')
@@ -607,6 +579,7 @@ class PathConversionTest(_common.TestCase):
         path = u'\\\\?\\C:\\caf\xe9'
         outpath = self._windows_bytestring_path(path)
         self.assertEqual(outpath, u'C:\\caf\xe9'.encode('utf8'))
+
 
 class PluginDestinationTest(_common.TestCase):
     # Mock the plugins.template_values(item) function.
@@ -650,6 +623,7 @@ class PluginDestinationTest(_common.TestCase):
             'foo': 'bar/baz',
         }
         self._assert_dest('the artist bar_baz')
+
 
 class MigrationTest(_common.TestCase):
     """Tests the ability to change the database schema between
@@ -758,6 +732,7 @@ class MigrationTest(_common.TestCase):
         album = c.fetchone()
         self.assertEqual(album['albumartist'], 'theartist')
 
+
 class AlbumInfoTest(_common.TestCase):
     def setUp(self):
         super(AlbumInfoTest, self).setUp()
@@ -845,6 +820,7 @@ class AlbumInfoTest(_common.TestCase):
         self.i.remove()
         self.assertEqual(len(self.lib.albums()), 0)
 
+
 class ArtDestinationTest(_common.TestCase):
     def setUp(self):
         super(ArtDestinationTest, self).setUp()
@@ -870,6 +846,7 @@ class ArtDestinationTest(_common.TestCase):
         config['art_filename'] = u'artXimage'
         art = self.ai.art_destination('something.jpg')
         self.assert_('artYimage' in art)
+
 
 class PathStringTest(_common.TestCase):
     def setUp(self):
@@ -954,6 +931,7 @@ class PathStringTest(_common.TestCase):
         alb = self.lib.get_album(alb.id)
         self.assert_(isinstance(alb.artpath, str))
 
+
 class PathTruncationTest(_common.TestCase):
     def test_truncate_bytestring(self):
         p = util.truncate_path('abcde/fgh', posixpath, 4)
@@ -966,6 +944,7 @@ class PathTruncationTest(_common.TestCase):
     def test_truncate_preserves_extension(self):
         p = util.truncate_path(u'abcde/fgh.ext', posixpath, 5)
         self.assertEqual(p, u'abcde/f.ext')
+
 
 class MtimeTest(_common.TestCase):
     def setUp(self):
@@ -1001,6 +980,7 @@ class MtimeTest(_common.TestCase):
         self.i.read()
         self.assertGreaterEqual(self.i.mtime, self._mtime())
 
+
 class ImportTimeTest(_common.TestCase):
     def setUp(self):
         super(ImportTimeTest, self).setUp()
@@ -1016,8 +996,10 @@ class ImportTimeTest(_common.TestCase):
         self.singleton = item(self.lib)
         self.assertGreater(self.singleton.added, 0)
 
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

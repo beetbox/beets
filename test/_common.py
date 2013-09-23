@@ -126,6 +126,16 @@ class TestCase(unittest.TestCase):
         self.assertFalse(os.path.exists(path),
                         'file exists: %s' % path)
 
+class LibTestCase(TestCase):
+    """A test case that includes an in-memory library object (`lib`) and
+    an item added to the library (`i`).
+    """
+    def setUp(self):
+        super(LibTestCase, self).setUp()
+        self.lib = beets.library.Library(':memory:')
+        self.i = item(self.lib)
+
+
 
 
 # Mock timing.
