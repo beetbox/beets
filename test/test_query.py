@@ -14,8 +14,6 @@
 
 """Various tests for querying the library database.
 """
-import os
-
 import _common
 from _common import unittest
 import beets.library
@@ -107,14 +105,17 @@ class DummyDataTestCase(_common.TestCase, AssertsMixin):
         items[0].artist = 'one'
         items[0].album = 'baz'
         items[0].year = 2001
+        items[0].comp = True
         items[1].title = 'baz qux'
         items[1].artist = 'two'
         items[1].album = 'baz'
         items[1].year = 2002
+        items[1].comp = True
         items[2].title = 'beets 4 eva'
         items[2].artist = 'three'
         items[2].album = 'foo'
         items[2].year = 2003
+        items[2].comp = False
         for item in items:
             self.lib.add(item)
         self.lib.add_album(items[:2])
@@ -255,38 +256,25 @@ class GetTest(DummyDataTestCase):
         q = 'year:delete from items'
         self.assertRaises(ValueError, self.lib.items, q)
 
-
-class MemoryGetTest(unittest.TestCase, AssertsMixin):
-    def setUp(self):
-        self.album_item = _common.item()
-        self.album_item.title = 'album item'
-        self.single_item = _common.item()
-        self.single_item.title = 'singleton item'
-        self.single_item.comp = False
-
-        self.lib = beets.library.Library(':memory:')
-        self.lib.add(self.single_item)
-        self.album = self.lib.add_album([self.album_item])
-
     def test_singleton_true(self):
         q = 'singleton:true'
         results = self.lib.items(q)
-        self.assert_matched(results, ['singleton item'])
+        self.assert_matched(results, ['beets 4 eva'])
 
     def test_singleton_false(self):
         q = 'singleton:false'
         results = self.lib.items(q)
-        self.assert_matched(results, ['album item'])
+        self.assert_matched(results, ['foo bar', 'baz qux'])
 
     def test_compilation_true(self):
         q = 'comp:true'
         results = self.lib.items(q)
-        self.assert_matched(results, ['album item'])
+        self.assert_matched(results, ['foo bar', 'baz qux'])
 
     def test_compilation_false(self):
         q = 'comp:false'
         results = self.lib.items(q)
-        self.assert_matched(results, ['singleton item'])
+        self.assert_matched(results, ['beets 4 eva'])
 
     def test_unknown_field_name_no_results(self):
         q = 'xyzzy:nonsense'
@@ -307,20 +295,21 @@ class MemoryGetTest(unittest.TestCase, AssertsMixin):
         self.assertEqual(names, [])
 
     def test_unicode_query(self):
-        self.single_item.title = u'caf\xe9'
-        self.single_item.store()
+        item = self.items().get()
+        item.title = u'caf\xe9'
+        item.store()
 
         q = u'title:caf\xe9'
         results = self.lib.items(q)
         self.assert_matched(results, [u'caf\xe9'])
 
     def test_numeric_search_positive(self):
-        q = beets.library.NumericQuery('year', '1')
+        q = beets.library.NumericQuery('year', '2001')
         results = self.lib.items(q)
         self.assertTrue(results)
 
     def test_numeric_search_negative(self):
-        q = beets.library.NumericQuery('year', '10')
+        q = beets.library.NumericQuery('year', '1999')
         results = self.lib.items(q)
         self.assertFalse(results)
 
