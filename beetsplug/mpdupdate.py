@@ -23,6 +23,7 @@ Put something like the following in your config.yaml to configure:
 from __future__ import print_function
 
 from beets.plugins import BeetsPlugin
+import os
 import socket
 from beets import config
 
@@ -36,9 +37,9 @@ database_changed = False
 class BufferedSocket(object):
     """Socket abstraction that allows reading by line."""
     def __init__(self, host, port, sep='\n'):
-        if host[0] == '/':
+        if host[0] in ['/', '~']:
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self.sock.connect(host)
+            self.sock.connect(os.path.expanduser(host))
         else:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect((host, port))
