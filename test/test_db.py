@@ -45,11 +45,13 @@ def boracay(l):
     )
 np = util.normpath
 
-class LoadTest(unittest.TestCase):
+class LoadTest(_common.TestCase):
     def setUp(self):
+        super(LoadTest, self).setUp()
         self.lib = lib()
         self.i = boracay(self.lib)
     def tearDown(self):
+        super(LoadTest, self).tearDown()
         self.lib._connection().close()
         remove_lib()
 
@@ -64,11 +66,13 @@ class LoadTest(unittest.TestCase):
         self.i.load()
         self.assertTrue('artist' not in self.i._dirty)
 
-class StoreTest(unittest.TestCase):
+class StoreTest(_common.TestCase):
     def setUp(self):
+        super(StoreTest, self).setUp()
         self.lib = lib()
         self.i = boracay(self.lib)
     def tearDown(self):
+        super(StoreTest, self).tearDown()
         self.lib._connection().close()
         remove_lib()
 
@@ -94,11 +98,13 @@ class StoreTest(unittest.TestCase):
         self.i.store()
         self.assertTrue('composer' not in self.i._dirty)
 
-class AddTest(unittest.TestCase):
+class AddTest(_common.TestCase):
     def setUp(self):
+        super(AddTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
         self.i = item()
     def tearDown(self):
+        super(AddTest, self).tearDown()
         self.lib._connection().close()
 
     def test_item_add_inserts_row(self):
@@ -116,11 +122,13 @@ class AddTest(unittest.TestCase):
             'where composer="the composer"').fetchone()['grouping']
         self.assertEqual(new_grouping, self.i.grouping)
 
-class RemoveTest(unittest.TestCase):
+class RemoveTest(_common.TestCase):
     def setUp(self):
+        super(RemoveTest, self).setUp()
         self.lib = lib()
         self.i = boracay(self.lib)
     def tearDown(self):
+        super(RemoveTest, self).tearDown()
         self.lib._connection().close()
         remove_lib()
 
@@ -129,8 +137,9 @@ class RemoveTest(unittest.TestCase):
         c = self.lib._connection().execute('select * from items where id=3')
         self.assertEqual(c.fetchone(), None)
 
-class GetSetTest(unittest.TestCase):
+class GetSetTest(_common.TestCase):
     def setUp(self):
+        super(GetSetTest, self).setUp()
         self.i = item()
 
     def test_set_changes_value(self):
@@ -148,7 +157,7 @@ class GetSetTest(unittest.TestCase):
     def test_invalid_field_raises_attributeerror(self):
         self.assertRaises(AttributeError, getattr, self.i, 'xyzzy')
 
-class DestinationTest(unittest.TestCase):
+class DestinationTest(_common.TestCase):
     def setUp(self):
         super(DestinationTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
@@ -458,13 +467,15 @@ class PathFormattingMixin(object):
             i = self.i
         self.assertEqual(i.destination(pathmod=posixpath), dest)
 
-class DestinationFunctionTest(unittest.TestCase, PathFormattingMixin):
+class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
     def setUp(self):
+        super(DestinationFunctionTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
         self.lib.directory = '/base'
         self.lib.path_formats = [('default', u'path')]
         self.i = item(self.lib)
     def tearDown(self):
+        super(DestinationFunctionTest, self).tearDown()
         self.lib._connection().close()
 
     def test_upper_case_literal(self):
@@ -507,8 +518,9 @@ class DestinationFunctionTest(unittest.TestCase, PathFormattingMixin):
         self._setf(u'%foo{bar}')
         self._assert_dest('/base/%foo{bar}')
 
-class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
+class DisambiguationTest(_common.TestCase, PathFormattingMixin):
     def setUp(self):
+        super(DisambiguationTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
         self.lib.directory = '/base'
         self.lib.path_formats = [('default', u'path')]
@@ -524,6 +536,7 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
         self._setf(u'foo%aunique{albumartist album,year}/$title')
 
     def tearDown(self):
+        super(DisambiguationTest, self).tearDown()
         self.lib._connection().close()
 
     def test_unique_expands_to_disambiguating_year(self):
@@ -565,7 +578,7 @@ class DisambiguationTest(unittest.TestCase, PathFormattingMixin):
         self._setf(u'foo%aunique{albumartist album,albumtype}/$title')
         self._assert_dest('/base/foo [foo_bar]/the title', self.i1)
 
-class PathConversionTest(unittest.TestCase):
+class PathConversionTest(_common.TestCase):
     def test_syspath_windows_format(self):
         path = ntpath.join('a', 'b', 'c')
         outpath = util.syspath(path, pathmod=ntpath)
@@ -595,7 +608,7 @@ class PathConversionTest(unittest.TestCase):
         outpath = self._windows_bytestring_path(path)
         self.assertEqual(outpath, u'C:\\caf\xe9'.encode('utf8'))
 
-class PluginDestinationTest(unittest.TestCase):
+class PluginDestinationTest(_common.TestCase):
     # Mock the plugins.template_values(item) function.
     def _template_values(self, item):
         return self._tv_map
@@ -638,11 +651,13 @@ class PluginDestinationTest(unittest.TestCase):
         }
         self._assert_dest('the artist bar_baz')
 
-class MigrationTest(unittest.TestCase):
+class MigrationTest(_common.TestCase):
     """Tests the ability to change the database schema between
     versions.
     """
     def setUp(self):
+        super(MigrationTest, self).setUp()
+
         # Three different "schema versions".
         self.older_fields = [('field_one', int)]
         self.old_fields = self.older_fields + [('field_two', int)]
@@ -661,6 +676,7 @@ class MigrationTest(unittest.TestCase):
         del old_lib
 
     def tearDown(self):
+        super(MigrationTest, self).tearDown()
         os.unlink(self.libfile)
 
     def test_open_with_same_fields_leaves_untouched(self):
@@ -742,8 +758,9 @@ class MigrationTest(unittest.TestCase):
         album = c.fetchone()
         self.assertEqual(album['albumartist'], 'theartist')
 
-class AlbumInfoTest(unittest.TestCase):
+class AlbumInfoTest(_common.TestCase):
     def setUp(self):
+        super(AlbumInfoTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
         self.i = item()
         self.lib.add_album((self.i,))
