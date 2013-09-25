@@ -37,6 +37,8 @@ And some fixes:
 * :doc:`/plugins/mpdupdate`: Domain sockets can now begin with a tilde (which
   is correctly expanded to ``$HOME``) as well as a slash. Thanks to Johann
   Klähn.
+* :doc:`/plugins/lastgenre`: Fix a regression that could cause new genres
+  found during import not to be persisted.
 
 .. _Opus: http://www.opus-codec.org/
 .. _@Verrus: https://github.com/Verrus
