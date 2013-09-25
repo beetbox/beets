@@ -238,7 +238,7 @@ is possible. You'll also want to glance over the :doc:`/reference/cli` page
 for a more detailed description of all of beets' functionality.  (Like
 deleting music! That's important.)
 
-Also, check out :ref:`included-plugins` as well as :ref:`other-plugins`.  The
+Also, check out :doc:`beets' plugins </plugins/index>`.  The
 real power of beets is in its extensibility---with plugins, beets can do almost
 anything for your music collection.
 

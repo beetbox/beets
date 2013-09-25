@@ -20,7 +20,7 @@ comes from MusicBrainz. Plugins can provide :doc:`album art
 
 If you want beets to get any of this data automatically during the import
 process, just enable any of the three relevant plugins (see
-:ref:`using-plugins`). For example, put this line in your :doc:`config file
+:doc:`/plugins/index`). For example, put this line in your :doc:`config file
 </reference/config>` to enable all three::
 
     plugins: fetchart lyrics lastgenre
@@ -67,7 +67,7 @@ but play it at work (without copying my whole library locally). The
 :doc:`/plugins/web` makes streaming your music easy---it's sort of like having
 your own personal Spotify.
 
-First, enable the ``web`` plugin (see :ref:`using-plugins`). Run the server by
+First, enable the ``web`` plugin (see :doc:`/plugins/index`). Run the server by
 typing ``beet web`` and head to http://localhost:8337 in a browser. You can
 browse your collection with queries and, if your browser supports it, play
 music using HTML5 audio.

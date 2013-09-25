@@ -10,7 +10,7 @@ to build your music library.
 
 Then you can get a more detailed look at beets' features in the
 :doc:`/reference/cli/` and :doc:`/reference/config` references. You might also
-be interested in exploring the :ref:`included-plugins`.
+be interested in exploring the :doc:`plugins </plugins/index>`.
 
 If you still need help, your can drop by the ``#beets`` IRC channel on Freenode,
 `email the author`_, or `file a bug`_ in the issue tracker. Please let me know
@@ -30,6 +30,7 @@ Contents
    reference/index
    plugins/index
    faq
+   dev/index
 
 .. toctree::
    :maxdepth: 1
