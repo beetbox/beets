@@ -49,6 +49,10 @@ PYLAST_EXCEPTIONS = (
 
 # Core genre identification routine.
 
+def _split_genre_string(genre):
+    genres = genre.split(',')
+    return genres
+
 def _tags_for(obj):
     """Given a pylast entity (album or track), returns a list of
     tag names for that entity. Returns an empty list if the entity is
@@ -82,10 +86,25 @@ def _find_allowed(genres):
     """Return the first string in the sequence `genres` that is present
     in the genre whitelist or None if no genre is suitable.
     """
+    allowed_genres = []
+    allowed_genres_copy = []
     for genre in list(genres):
         if _is_allowed(genre):
-            return genre.title()  # Title case.
-    return None
+            allowed_genres.append(genre.title())
+
+#    pdb.set_trace()
+
+    for genre in allowed_genres[:-1]:
+        genre = genre + ', '
+        allowed_genres_copy.append(genre)
+    else:
+        if allowed_genres:
+            allowed_genres_copy.append(allowed_genres[-1])
+    
+    genre_str = ''
+    return genre_str.join(allowed_genres_copy)
+#    return genre.title()  # Title case.
+#    return None
 
 def _strings_to_genre(tags):
     """Given a list of strings, return a genre. Returns the first string
@@ -107,7 +126,7 @@ def _strings_to_genre(tags):
 
 def fetch_genre(lastfm_obj):
     """Return the genre for a pylast entity or None if no suitable genre
-    can be found.
+    can be found. Ex. 'Electronic, House, Dance'
     """
     return _strings_to_genre(_tags_for(lastfm_obj))
 
