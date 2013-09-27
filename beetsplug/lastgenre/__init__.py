@@ -79,25 +79,18 @@ def _is_allowed(genre):
     return False
 
 def _find_allowed(genres):
-    """Return the first string in the sequence `genres` that is present
-    in the genre whitelist or None if no genre is suitable.
+    """Return a string composed of comma delimited genres in the sequence
+    `genres` that is present in the genre whitelist or an empty string
+    if no genre is suitable.
     """
     allowed_genres = []
-    allowed_genres_copy = []
+
     for genre in list(genres):
         if _is_allowed(genre):
             allowed_genres.append(genre.title())
 
-    for genre in allowed_genres[:-1]:
-        genre = genre + ', '
-        allowed_genres_copy.append(genre)
-    else:
-        if allowed_genres:
-            allowed_genres_copy.append(allowed_genres[-1])
-    
-    genre_str = ''
-    return genre_str.join(allowed_genres_copy)
-
+    return ','.join(allowed_genres)
+   
 def _strings_to_genre(tags):
     """Given a list of strings, return a genre. Returns the first string
     that is present in the genre whitelist (or the canonicalization
