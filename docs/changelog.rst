@@ -14,6 +14,9 @@ New stuff:
 * The :doc:`/plugins/ftintitle`, by `@Verrus`_, is now distributed with beets.
   It helps you rewrite tags to move "featured" artists from the artist field
   to the title field.
+* The MusicBrainz data source now uses track artists over recording
+  artists. This leads to better metadata when tagging classical music. Thanks
+  to Henrique Ferreiro.
 
 And some fixes:
 

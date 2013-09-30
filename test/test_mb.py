@@ -20,7 +20,8 @@ from beets.autotag import mb
 from beets import config
 
 class MBAlbumInfoTest(_common.TestCase):
-    def _make_release(self, date_str='2009', tracks=None, track_length=None):
+    def _make_release(self, date_str='2009', tracks=None, track_length=None,
+                      track_artist=False):
         release = {
             'title': 'ALBUM TITLE',
             'id': 'ALBUM ID',
@@ -65,6 +66,19 @@ class MBAlbumInfoTest(_common.TestCase):
                 if track_length:
                     # Track lengths are distinct from recording lengths.
                     track['length'] = track_length
+                if track_artist:
+                    # Similarly, track artists can differ from recording
+                    # artists.
+                    track['artist-credit'] = [
+                        {
+                            'artist': {
+                                'name': 'TRACK ARTIST NAME',
+                                'id': 'TRACK ARTIST ID',
+                                'sort-name': 'TRACK ARTIST SORT NAME',
+                            },
+                            'name': 'TRACK ARTIST CREDIT',
+                        }
+                    ]
                 track_list.append(track)
             release['medium-list'].append({
                 'position': '1',
@@ -85,11 +99,11 @@ class MBAlbumInfoTest(_common.TestCase):
             track['artist-credit'] = [
                 {
                     'artist': {
-                        'name': 'TRACK ARTIST NAME',
-                        'id': 'TRACK ARTIST ID',
-                        'sort-name': 'TRACK ARTIST SORT NAME',
+                        'name': 'RECORDING ARTIST NAME',
+                        'id': 'RECORDING ARTIST ID',
+                        'sort-name': 'RECORDING ARTIST SORT NAME',
                     },
-                    'name': 'TRACK ARTIST CREDIT',
+                    'name': 'RECORDING ARTIST CREDIT',
                 }
             ]
         return track
@@ -279,9 +293,18 @@ class MBAlbumInfoTest(_common.TestCase):
         d = mb.album_info(release)
         self.assertEqual(d.language, None)
 
-    def test_parse_track_artist(self):
+    def test_parse_recording_artist(self):
         tracks = [self._make_track('a', 'b', 1, True)]
         release = self._make_release(None, tracks=tracks)
+        track = mb.album_info(release).tracks[0]
+        self.assertEqual(track.artist, 'RECORDING ARTIST NAME')
+        self.assertEqual(track.artist_id, 'RECORDING ARTIST ID')
+        self.assertEqual(track.artist_sort, 'RECORDING ARTIST SORT NAME')
+        self.assertEqual(track.artist_credit, 'RECORDING ARTIST CREDIT')
+
+    def test_track_artist_overrides_recording_artist(self):
+        tracks = [self._make_track('a', 'b', 1, True)]
+        release = self._make_release(None, tracks=tracks, track_artist=True)
         track = mb.album_info(release).tracks[0]
         self.assertEqual(track.artist, 'TRACK ARTIST NAME')
         self.assertEqual(track.artist_id, 'TRACK ARTIST ID')
