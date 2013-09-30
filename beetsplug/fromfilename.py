@@ -16,6 +16,7 @@
 filename.
 """
 from beets import plugins
+from beets.util import displayable_path
 import os
 import re
 
@@ -23,25 +24,25 @@ import re
 # Filename field extraction patterns.
 PATTERNS = [
     # "01 - Track 01" and "01": do nothing
-    r'^(\d+)\s*-\s*track\s*\d$',
-    r'^\d+$',
+    ur'^(\d+)\s*-\s*track\s*\d$',
+    ur'^\d+$',
 
     # Useful patterns.
-    r'^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
-    r'^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
-    r'^(?P<track>\d+)\.\s*(?P<artist>.+)-(?P<title>.+)$',
-    r'^(?P<track>\d+)\s*-\s*(?P<artist>.+)-(?P<title>.+)$',
-    r'^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)$',
-    r'^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)$',
-    r'^(?P<track>\d+)\.\s*(?P<title>.+)$',
-    r'^(?P<track>\d+)\s*-\s*(?P<title>.+)$',
-    r'^(?P<track>\d+)\s(?P<title>.+)$',
+    ur'^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
+    ur'^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
+    ur'^(?P<track>\d+)\.\s*(?P<artist>.+)-(?P<title>.+)$',
+    ur'^(?P<track>\d+)\s*-\s*(?P<artist>.+)-(?P<title>.+)$',
+    ur'^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)$',
+    ur'^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)$',
+    ur'^(?P<track>\d+)\.\s*(?P<title>.+)$',
+    ur'^(?P<track>\d+)\s*-\s*(?P<title>.+)$',
+    ur'^(?P<track>\d+)\s(?P<title>.+)$',
 ]
 
 # Titles considered "empty" and in need of replacement.
 BAD_TITLE_PATTERNS = [
-    r'^$',
-    r'\d+?\s?-?\s*track\s*\d+',
+    ur'^$',
+    ur'\d+?\s?-?\s*track\s*\d+',
 ]
 
 
@@ -149,7 +150,8 @@ def filename_task(task, session):
         # Get the base filenames (no path or extension).
         names = {}
         for item in items:
-            name, _ = os.path.splitext(os.path.basename(item.path))
+            path = displayable_path(item.path)
+            name, _ = os.path.splitext(os.path.basename(path))
             names[item] = name
 
         # Look for useful information in the filenames.
