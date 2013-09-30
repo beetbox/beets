@@ -839,13 +839,13 @@ def manipulate_files(session):
 
         # Move/copy/write files.
         items = task.imported_items()
-        task.old_paths = [item.path for item in items]  # For deletion.
+        # Save the original paths of all items for deletion and pruning
+        # in the next step (finalization).
+        task.old_paths = [item.path for item in items]
         for item in items:
             if config['import']['move']:
                 # Just move the file.
-                old_path = item.path
                 item.move(False)
-                task.prune(old_path)
             elif config['import']['copy']:
                 # If it's a reimport, move in-library files and copy
                 # out-of-library files. Otherwise, copy and keep track
@@ -903,7 +903,7 @@ def finalize(session):
                 plugins.send('item_imported',
                              lib=session.lib, item=item)
 
-        # Finally, delete old files.
+        # When copying and deleting originals, delete old files.
         if config['import']['copy'] and config['import']['delete']:
             new_paths = [os.path.realpath(item.path) for item in items]
             for old_path in task.old_paths:
@@ -911,6 +911,12 @@ def finalize(session):
                 if old_path not in new_paths:
                     util.remove(syspath(old_path), False)
                     task.prune(old_path)
+
+        # When moving, prune empty directories containing the original
+        # files.
+        elif config['import']['move']:
+            for old_path in task.old_paths:
+                task.prune(old_path)
 
         # Update progress.
         if _resume():

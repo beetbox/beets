@@ -39,6 +39,11 @@ And some fixes:
   Klähn.
 * :doc:`/plugins/lastgenre`: Fix a regression that could cause new genres
   found during import not to be persisted.
+* Fixed a crash when imported album art was also marked as "clutter" where the
+  art would be deleted before it could be moved into place. This led to a
+  "image.jpg not found during copy" error. Now clutter is removed (and
+  directories pruned) much later in the process, after the
+  ``import_task_files`` hook.
 
 .. _Opus: http://www.opus-codec.org/
 .. _@Verrus: https://github.com/Verrus
