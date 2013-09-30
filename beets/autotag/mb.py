@@ -210,6 +210,17 @@ def album_info(release):
                 # Track title may be distinct from underlying recording
                 # title.
                 ti.title = track['title']
+            if track.get('artist-credit'):
+                # Track artist may be distinct from underlying recording
+                # title.
+
+                # Get the artist names.
+                ti.artist, ti.artist_sort, ti.artist_credit = \
+                    _flatten_artist_credit(track['artist-credit'])
+
+                # Get the ID and sort name of the first artist.
+                artist = track['artist-credit'][0]['artist']
+                ti.artist_id = artist['id']
             if track.get('length'):
                 # Track duration is preferred over the recording
                 # duration.
