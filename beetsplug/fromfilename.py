@@ -28,15 +28,19 @@ PATTERNS = [
     ur'^\d+$',
 
     # Useful patterns.
+    ur'^(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
     ur'^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
     ur'^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)-(?P<tag>.*)$',
+    ur'^(?P<artist>.+)-(?P<title>.+)$',
     ur'^(?P<track>\d+)\.\s*(?P<artist>.+)-(?P<title>.+)$',
     ur'^(?P<track>\d+)\s*-\s*(?P<artist>.+)-(?P<title>.+)$',
     ur'^(?P<track>\d+)\s*-(?P<artist>.+)-(?P<title>.+)$',
     ur'^(?P<track>\d+)\s(?P<artist>.+)-(?P<title>.+)$',
+    ur'^(?P<title>.+)$',
     ur'^(?P<track>\d+)\.\s*(?P<title>.+)$',
     ur'^(?P<track>\d+)\s*-\s*(?P<title>.+)$',
     ur'^(?P<track>\d+)\s(?P<title>.+)$',
+    ur'^(?P<title>.+) by (?P<artist>.+)$',
 ]
 
 # Titles considered "empty" and in need of replacement.
@@ -123,7 +127,7 @@ def apply_matches(d):
     for item in d:
         if bad_title(item.title):
             item.title = unicode(d[item][title_field])
-        if item.track == 0:
+        if 'track' in d[item] and item.track == 0:
             item.track = int(d[item]['track'])
 
 
