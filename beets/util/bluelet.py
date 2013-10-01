@@ -26,7 +26,7 @@ else:
     exec("""
 def _reraise(typ, exc, tb):
     raise typ, exc, tb
-    """)
+""")
 
 
 # Basic events used for thread scheduling.
