@@ -28,6 +28,7 @@ import logging
 import pylast
 import os
 import yaml
+import pdb
 
 from beets import plugins
 from beets import ui
@@ -79,17 +80,26 @@ def _is_allowed(genre):
     return False
 
 def _find_allowed(genres):
-    """Return a string composed of comma delimited genres in the sequence
-    `genres` that is present in the genre whitelist or an empty string
-    if no genre is suitable.
+    """If multiple_genres is set to True, return a string composed of
+    comma delimited genres in the sequence `genres` that is present
+    in the genre whitelist or an empty string if no genre is suitable
+    or if multiple_genres is set to its default value of False, return 
+    the original argument.
     """
     allowed_genres = []
+
+    pdb.set_trace()
 
     for genre in list(genres):
         if _is_allowed(genre):
             allowed_genres.append(genre.title())
+            if not options['multiple_genres']:
+                return genre.title()
 
-    return ','.join(allowed_genres)
+    if options['multiple_genres']:
+        return ','.join(allowed_genres)
+
+    return
    
 def _strings_to_genre(tags):
     """Given a list of strings, return a genre. Returns the first string
@@ -194,6 +204,7 @@ def fetch_track_genre(obj):
 
 options = {
     'whitelist': None,
+    'multiple_genres': False,
     'branches': None,
     'c14n': False,
 }
@@ -203,6 +214,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         self.config.add({
             'whitelist': os.path.join(os.path.dirname(__file__), 'genres.txt'),
+            'multiple_genres': False,
             'fallback': None,
             'canonical': None,
             'source': 'album',
@@ -236,6 +248,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             flatten_tree(genres_tree, [], branches)
             options['branches'] = branches
             options['c14n'] = True
+
+        options['multiple_genres'] = self.config['multiple_genres'].get()
 
     @property
     def sources(self):
