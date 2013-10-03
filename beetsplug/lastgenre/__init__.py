@@ -28,7 +28,6 @@ import logging
 import pylast
 import os
 import yaml
-import pdb
 
 from beets import plugins
 from beets import ui
@@ -84,11 +83,9 @@ def _find_allowed(genres):
     comma delimited genres in the sequence `genres` that is present
     in the genre whitelist or an empty string if no genre is suitable
     or if multiple_genres is set to its default value of False, return 
-    the original argument.
+    the first genre found.
     """
     allowed_genres = []
-
-    pdb.set_trace()
 
     for genre in list(genres):
         if _is_allowed(genre):
