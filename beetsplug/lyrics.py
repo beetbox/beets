@@ -138,7 +138,7 @@ def _encode(s):
 
 # LyricsWiki.
 
-LYRICSWIKI_URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
+LYRICSWIKI_URL_PATTERN = u'http://lyrics.wikia.com/%s:%s'
 def _lw_encode(s):
     s = re.sub(r'\s+', '_', s)
     s = s.replace("<", "Less_Than")
@@ -304,7 +304,8 @@ def is_lyrics_boilerplate(text, artist):
 def is_lyrics(text, artist=''):
     """Determine whether the text seems to be valid lyrics.
     """
-    if is_lyrics_javascript(text):
+
+    if not text or is_lyrics_javascript(text):
        return False
     return not is_lyrics_boilerplate(text, artist)
 

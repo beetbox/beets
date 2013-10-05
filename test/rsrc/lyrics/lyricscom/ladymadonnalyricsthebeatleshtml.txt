@@ -1,0 +1,508 @@
+
+<!doctype html> 
+          <html xmlns:lyricscom="http://www.lyrics.com/ns#"><head>
+          <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+          <meta name="verify-v1" content="k1br6sikEUd0k3G96/qOGGoQOfCbjtZUn+oT10GDsHc=" />
+          <meta name="google-site-verification" content="k2Lz_Wol4_l8SsCzaUj22oqAlCeKiY2L0tc0_-S0kUI" />
+          <meta property="og:site_name" content="Lyrics.com" />
+          <meta property="og:title" content="The Beatles - Lady Madonna Lyrics" />
+          <meta property="og:type" content="song" />
+          <meta property="og:image" content="http://image01.lyrics.com/artists/pic200/drP900/P970/p97040d4dv8.jpg" />
+          <meta property="og:url" content="http://www.lyrics.com/lady-madonna-lyrics-the-beatles.html" />
+                        <meta property="og:description" content="Lady Madonna, children at your feet
+Wonder how you manage to make ends meet
+Who find the money when you pay the rent
+Did you think that money was heaven sent
+
+Friday night arrives without a suitc.." />
+                            <meta property="lyrics:T_ID" content="T   232880" />
+                        <meta property="fb:app_id" content="121433871232565" />
+          <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico">
+                  <meta name="keywords" content="Lady Madonna lyrics, The Beatles lyrics, Lady Madonna video, The Beatles video, lyrics, music, lyric, songtext, words to songs, lyrics search, The Beatles Lady Madonna lyrics" />
+          <meta name="description" content="The Beatles Lady Madonna lyrics: Lady Madonna, children at your feet
+ Wonder how you manage to make ends meet
+ Who find the money when you pay the rent
+ Did you think that money was heaven sent
+ 
+ Friday night arrives without a suitc" />
+          <meta name="robots" content="all" />
+          <meta name="server" content="127.0.0.1" />
+          <title>The Beatles - Lady Madonna Lyrics</title>
+          
+          
+                    
+                    <script type="text/javascript" src="/js/mini/header.js?combined=prototype,overlay,common,lyrics,users,scriptaculous"></script>
+          <script type="text/javascript" src="/js/jquery.min.js"></script>
+          <script type="text/javascript">var $j = jQuery.noConflict();</script>
+          
+         
+                  
+          <link href="/css/mini/main.v2.1005.css?20131003-3" rel="stylesheet" type="text/css" />
+          
+          <!--[if IE 7]>
+              <link href="/stylesheets/ie7.css" type="text/css" rel="stylesheet" />
+          <![endif]-->
+          <!--[if lt IE 7.]>
+          <script defer type="text/javascript" src="/js/pngfix.js"></script>
+          <![endif]-->
+          <!--[if IE 6]>
+              <link href="/stylesheets/ie6.css" type="text/css" rel="stylesheet" />
+              <script src="/js/ie6.js" type="text/javascript"></script>
+              <script src="/js/pngfix.js" type="text/javascript"></script>
+          <![endif]-->
+          <!-- artists lyric --><!-- SHOULD SHOW LYRICS (T   232880) --><!-- CANNOT FIND RELATED LYRICS -->           <!-- LYRICS FIND -->
+              
+              <!-- ### Put all this in the head of your page ### -->
+              
+              <style type="text/css" media="screen">
+                  .PRINTONLY {display:none;visibility:hidden;}
+              </style>
+              <style type="text/css" media="print"> 
+                  .SCREENONLY {display:none;visibility:hidden;}
+              </style>
+              
+              <script language="JavaScript1.2"> 
+              var selectdisabled = true;
+              var omitformtags= new Array();
+              omitformtags[0] = "input";
+              omitformtags[1] = "select";
+              omitformtags[2] = "textarea"; 
+              omitformtags[3] = "radio";
+              omitformtags[4] = "checkbox"; 
+              
+              function disableselect(e) { 
+                  var formObj = false;
+                  for (var i = 0; i < omitformtags.length; i++){
+                      if (e.target.tagName.toLowerCase() == omitformtags[i]){
+                          formObj = true;
+                      }
+                  }
+                  if (!formObj){
+                      return false;
+                  }
+              } 
+              function reEnable(){ 
+                  return true;
+              } 
+              
+                              if (typeof document.onselectstart != "undefined"){
+                      document.onselectstart = new Function ("return false");
+                  }else{
+                      document.onmousedown=disableselect;
+                      document.onmouseup=reEnable;
+                  }
+                          
+              </script>
+              <script language="javascript">
+              /* for Internet Explorer */ 
+              /*@cc_on @*/
+              /*@if (@_win32)
+                 document.write("<script defer src=/js/ie_onload.js><"+"/script>");  
+              /*@end @*/
+              </script>
+          
+          
+          <!-- ### END ### -->
+          
+          <!-- END OF LYRICS FIND -->
+                  
+         
+          <!-- END OF PRESENCE BAR CSS -->
+                    
+          
+          <script src="http://adexcite.com/ads/video/controller.php?eid=15200"></script>
+
+          </head>
+          
+                  <body onLoad="; " id="bodytag" class="bodyContent  userbg" oncontextmenu="return false;"  onkeydown="if(event.ctrlKey){return false;}" >                                
+          <div id="overlay" class="hide">
+              <div class="close"><a href="javascript:void(0);" onClick="ol_close();">close</a></div>
+              <div id="overlay_content"></div>
+          </div>
+          
+            
+          <div id="mainwrappercontent">
+                            <div id="topnav">
+                  <div class="topnavleft">
+                      
+                      <div class="logo_div"><a href="/" class="none"><img src="/images/new/logo_sm.png" class="logo" alt="Lyrics.com" border="0" /></a></div>
+                      <div class="search_bar_div">
+                      <form action='/search.php' method='post' id='search_form' onsubmit='return submit_search_form();'>                        <input id="googlecseinput" autocomplete="off" type="text" name="keyword" maxlength="60" value="" class="gray fields" onfocus="this.className='fields';if(this.value=='') this.value='';" /><input type="hidden" name="what" id="what" value="all" /><input type="submit" name="search_btn" id="search_btn" value="Search" />                    
+<script type="text/javascript" src="//www.google.com/jsapi"></script>
+<script type="text/javascript"> 
+google.load('search', '1', {language : 'en', style : google.loader.themes.V2_DEFAULT});google.setOnLoadCallback(function() { 
+google.search.CustomSearchControl.attachAutoCompletionWithOptions( 
+'002429808855133964552:odv2ki7puam', 
+document.getElementById('googlecseinput'), 
+'search_form'
+)}); 
+</script> 
+<!-- End of autocomplete -->   
+                    </form>                      </div>
+                      
+                      <!-- SEARCH -->
+                      <div class="search_box_div">
+                      
+                      
+                      <form action='/search.php' method='get' onsubmit='return searchAjax();'>                      
+                      
+                        <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td>
+                                                                
+                                <a href='/' >Home</a>
+<a href='/artists/start/num'>Browse</a>
+
+<a href='/submit'>Submit</a>
+<a href='/login'>Login</a>                                
+                            </tr>
+                            
+                        </table>        
+                                                                  
+                      
+                      </form>
+                      </div> 
+                      
+                      <br style="clear:both;" />
+                  </div>
+                
+                
+                
+              </div>
+              
+              <div id="top_ads_space_empty">&nbsp;</div>              
+              <div id="wrappercontent">
+              <div id="wrapper_bg">
+              <div id="wrapper">
+                  
+                  <div class="inner">
+                      <div id="content">
+                                    <!--<div id="content">--><script type="text/javascript" src="/js/jquery.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.js"></script>
+<script type="text/javascript" src="/js/mini/slimScroll.js"></script>
+<script type="text/javascript" src="/js/mini/track_comments.js"></script>
+
+<script type="text/javascript">
+
+</script>
+<link href="/css/mini/profile-layout.css" rel="stylesheet" type="text/css" />
+<link href="/css/mini/lyrics.css?20131003-2" rel="stylesheet" type="text/css" />
+
+<div id="outer_profile">
+    <div id="pic_ads">
+        <a href="thebeatles"><img src='http://image01.lyrics.com/artists/pic200/drP900/P970/p97040d4dv8.jpg' width='160' border='1' alt='thebeatles' /></a>
+        <br />
+        <div id="google_ads_160x600">
+            <script type="text/javascript"><!--
+
+            google_ad_client = "ca-pub-3044889097204573";
+            
+            /* 160x600, created 9/9/08 */
+            
+            google_ad_slot = "3524097094";
+            
+            google_ad_width = 160;
+            
+            google_ad_height = 600;
+            
+            //-->
+            
+            </script>
+            
+            <script type="text/javascript"
+            
+            src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+            
+            </script>
+        </div>
+    </div>
+    <div id="profile">
+    <div id="leftcontent">
+            <script type="text/javascript">
+        function toggleYouTube()
+        {
+            var youtube = '<iframe src="http://www.pages.com/youtube.php?T_ID=T   232880&width=420&height=236" width="420" height="236" frameborder="0"></iframe>';
+            $('adbox').innerHTML = youtube;
+        }
+        </script>
+            <div id="adbox">
+    <!--The Beatles - Lady Madonna-->            
+            <div id="fake_youtube" class="image">
+                  <div id="fake_image"><a href="#" onclick="return toggleYouTube();"><img src="http://img.youtube.com/vi/gNyHymEhZmg/0.jpg" width="420" height="236" /></a></div>
+                  <div id="fake_play_btn"><a href="#" onclick="return toggleYouTube();"><img src="/images/play_overlay_white.png" /></a></div>
+            </div>
+            
+                </div><br />
+            <table width="420" cellpadding="0" cellspacing="0" class="playlist-btn">
+            <tr>
+                <td width="396">
+                    <a href='http://www.lyrics.com/login_redirect.php?u=%2Flady-madonna-lyrics-the-beatles.html' class='silver_btn_left' onclick="alert('Please login first to add this song into your playlist!');" title='Add to playlist'>Add to Playlist</a>                </td>
+                <td width="24">
+                                                        <a class="silver_btn_right" href="javascript:void(0);" onclick="flagVideo('T   232880');">&nbsp;</a>
+                                                </td>
+        </table>
+            <br />
+    <div class="leftbox">
+        <div class="title">
+            <div class="left">Suggestions</div>
+            <div class="right">&nbsp;</div>
+            <br style="clear:both" />
+        </div>
+        <div class="content">
+            
+      <div class="row" id="album_list">
+             
+                          </div>
+            <script type="text/javascript">
+            getTopSongsMore('/home/similarsongs_left_start/T   232880/0');
+            </script>
+            
+        </div>
+    </div>
+    
+        <div class='pw-widget pw-size-medium'>
+    
+        <a class='pw-button-googleplus'></a>
+    
+        <a class='pw-button-facebook'></a>
+    
+        <a class='pw-button-twitter'></a>
+    
+        <a class='pw-button-email'></a>
+    
+        <a class='pw-button-post'></a>
+    
+    </div>
+    
+    <script src='http://i.po.st/static/script/post-widget.js#publisherKey=ahap795vm5td5n4ua63f' type='text/javascript'></script>
+    
+    </div>
+    
+    <div id="rightcontent">
+        <div class="profile_name_and_status">
+            <h1 id="profile_name">Lady Madonna<br /><span class="small">by <a href="/thebeatles">The Beatles</a></span></h1>
+            <div class="fblike_btn">
+                <iframe src="http://www.facebook.com/plugins/like.php?app_id=257638770934394&amp;href=http%3A%2F%2Fwww.lyrics.com%2F%2Flady-madonna-lyrics-the-beatles.html&amp;send=false&amp;layout=button_count&amp;width=90&amp;show_faces=true&amp;action=like&amp;colorscheme=light&amp;font&amp;height=21" scrolling="no" frameborder="0" allowTransparency="true"></iframe>
+            </div>
+        </div>
+        <div class="tabs_wrapper">
+          
+         
+         <hr size="1" /><br />
+        <div id="tab_content">              
+            
+            
+            
+                            <div id="lyric_tab_content" class="tab_content">       
+                
+
+                        <div class="artist_content"> 
+                        
+                        
+                        
+                        
+                        
+                              
+                      <div class="ringtone_area"><strong><img src="/images/phone__left.gif" border='0' />&nbsp;
+                                                      <a href="http://www.ringtonematcher.com/go/?sid=PALYros&&artist=The+Beatles&song=Lady+Madonna" rel="nofollow" target="_blank">
+                                                      Send "Lady Madonna" Ringtone to your Cell
+                                                      </a>&nbsp;<img src="/images/phone__right.gif" border='0' /></strong></div>                              <!-- LYRIC REVISION FORM -->
+                              <div id="revision_form" class="hide">
+                                  
+                              </div>
+                                  
+                              
+                              <!-- CURRENT LYRIC --> 
+                              <div id="lyrics_outer">
+                              
+                                  <div id="lyric_space">
+                                      Lady Madonna, children at your feet<br />
+Wonder how you manage to make ends meet<br />
+Who find the money when you pay the rent<br />
+Did you think that money was heaven sent<br />
+<br />
+Friday night arrives without a suitcase<br />
+Sunday morning creeping like a nun<br />
+Monday's child has learned to tie his bootlegs<br />
+See how they run<br />
+<br />
+Lady Madonna, baby at your breast<br />
+Wonders how you manage to feed the rest<br />
+Pa pa pa pa,<br />
+See how they run<br />
+<br />
+Lady Madonna lying on the bed<br />
+Listen to the music playing in your head<br />
+<br />
+Tuesday afternoon is never ending<br />
+Wednesday morning papers didn't come<br />
+Thursday night you stocking needed mending<br />
+See how they run<br />
+<br />
+Lady Madonna, children at your feet<br />
+Wonder how you manage to make ends meet<br />---<br />Lyrics powered by <a href="http://www.lyricfind.com" target="_blank" rel="nofollow" style="color:#000; text-decoration:none; cursor:text">LyricFind</a><br />
+                                written by LENNON, JOHN WINSTON / MCCARTNEY, PAUL JAMES<br />
+                                Lyrics © Sony/ATV Music Publishing LLC<!-- RESPONSE CODE: 101 ** 232880 --><!-- T_ID: T   232880 -->                                  </div>
+                                  
+                              </div>
+                              <!-- LYRIC REVISION -->
+                          
+                                                            
+                              <div class="ringtone_area"><strong><img src="/images/phone__left.gif" border='0' />&nbsp;
+                                                      <a href="http://www.ringtonematcher.com/go/?sid=PALYros&artist=The+Beatles&song=Lady+Madonna" rel="nofollow" target="_blank">
+                                                      Send "Lady Madonna" Ringtone to your Cell
+                                                      </a>&nbsp;<img src="/images/phone__right.gif" border='0' /></strong></div>                              
+                              
+                      </div>
+                      
+                </div>
+                
+                            
+        
+        
+        </div>
+    </div>
+            <div id="fb_comments">
+            <div id="fb-root"></div>
+            <script>(function(d, s, id) {
+              var js, fjs = d.getElementsByTagName(s)[0];
+              if (d.getElementById(id)) return;
+              js = d.createElement(s); js.id = id;
+              js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=121433871232565";
+              fjs.parentNode.insertBefore(js, fjs);
+            }(document, 'script', 'facebook-jssdk'));</script>
+            <div class="fb-comments" data-href="http://www.lyrics.com/lady-madonna-lyrics-the-beatles.html" data-num-posts="5" data-width="465"></div>
+        </div>
+        <script type="text/javascript">
+        Event.observe(window, 'load', function() {
+        $$('#fb_comments iframe').each(function(elm)
+                                                {
+                                                    elm.setAttribute('src', $(elm).readAttribute('src') + '&order_by=reverse_time');
+                                                });
+        
+                                               });
+        </script>
+        </div>
+                <br style="clear:both;" />
+            </div>
+</div><!-- #outer_profile -->
+<script type="text/javascript">
+var lyricform = false;
+function showRevisionForm()
+{
+        if(lyricform)
+        {
+                $('lyrics_outer').className = 'hide';
+                $('revision_form').className = 'show';
+                $('revised_lyric').focus();
+                $('bodytag').setAttribute('onkeydown','return true;');
+                $('bodytag').setAttribute('oncontextmenu','if(event.ctrlKey){return true;}');
+                if (typeof document.onselectstart != "undefined"){
+                        document.onselectstart = reEnable;
+                }else{
+                        document.onmousedown=reEnable;
+                        document.onmouseup=reEnable;
+                }
+        }
+        else
+        {
+                $('revision_form').innerHTML = "<img src='/images/ajax-loader.gif' /> Loading Form ... ";
+                var url = "/artists/getLyricForm";
+                var params = "tid=T   232880";
+                new Ajax.Request(url, { method : "post", parameters: params, onSuccess: showLyricFormByAjax });
+        }
+        recommended_autoplay_status = false;
+}
+function add_lyric_comment()
+{
+    var params = { 'T_ID' : 'T   232880', 'comment' : $('lyric_comment').value };
+    var url = '/ajax/lyrics/add_comment';
+    if(trim($('lyric_comment').value) == "") { alert("Please enter your comment."); return false; }
+    else
+    {
+        $('lyric_comment').disabled = true;
+        $('lyric_comment_submit_btn').innerHTML = "Submitting...";
+        $('lyric_comment_submit_btn').disabled = true;
+    }
+    new Ajax.Request(url, { parameters: params, method: 'post', onComplete: function(resp)
+                                                                                     {
+                                                                                                                                                                                  window.location = '/user/profile/';
+                                                                                     }});
+    return false;
+}
+Event.observe(window,'load',function() {
+                                                                                });
+
+</script>
+          <br class="clear" />
+          </div><!-- #content -->
+          </div><!-- #inner -->
+          
+          </div><!-- #wrapper --> 
+                  
+          
+      </div><!-- #wrapper_bg -->
+      </div><!-- #wrappercontent-->
+      
+      
+      
+          <div class="bottom_wrapper">   
+              <div class="bottom_container">
+                  <!-- ValueClick Media 468x60 and 728x90 Banner CODE for Lyrics.com -->
+                  <script src="http://cdn.fastclick.net/js/adcodes/pubcode.min.js"></script><script type="text/javascript">document.write('<scr' + 'ipt type="text/javascript">(function () {try{VCM.media.render({sid:25384,media_id:1,media_type:5,version:"1.1"});} catch(e){document.write(\'<scr\' + \'ipt type="text/javascript" src="http://media.fastclick.net/w/get.media?sid=25384&m=1&tp=5&d=j&t=n&exc=1"></scr\' + \'ipt>\');}}());</scr' + 'ipt>');</script><noscript><a href="http://media.fastclick.net/w/click.here?sid=25384&m=1&c=1" target="_blank"><img src="http://media.fastclick.net/w/get.media?sid=25384&m=1&tp=5&d=s&c=1&vcm_acv=1.1" width=728 height=90 border=1></a></noscript>
+                  <!-- ValueClick Media 468x60 and 728x90 Banner CODE for Lyrics.com -->
+
+              </div>
+              
+              <table cellspacing="0" cellpadding="0" width="920" class="footer" align="center" style="margin-top:15px;"> 
+                  <tr>
+                      <td width="450" align="left"> 
+                          <a href='/about/contact'>Contact Us</a> | <a href='/about/terms_of_use'>Terms of Use</a> | <a href='/about/privacy'>Privacy Policy</a> | <a href="/user/api/docs/">Developers</a>
+                      </td>
+                      <td style="text-align:right;">
+                          &copy; 2008 Lyrics.com | All rights reserved. | 0.2153()<!--  -->                      </td>
+                  </tr>
+              </table>
+          </div>
+      
+      
+      
+      </div><!-- #mainwrappercontent -->
+      <!-- Google Analytics and other scripts here -->
+      <script type="text/javascript">
+      var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+      document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+      </script>
+      <script type="text/javascript">
+      var pageTracker = _gat._getTracker("UA-5592928-3");
+      pageTracker._trackPageview();
+      </script>
+      
+          <!-- start Vibrant Media IntelliTXT script section -->
+<script type="text/javascript" src="http://lyrics.us.intellitxt.com/intellitxt/front.asp?ipid=22892"></script>
+<!-- end Vibrant Media IntelliTXT script section -->
+      
+          <!-- Begin comScore Tag -->
+      <script type="text/javascript">
+          document.write(unescape("%3Cscript src='" + (document.location.protocol == "https:" ? "https://sb" : "http://b") + ".scorecardresearch.com/beacon.js'%3E%3C/script%3E"));
+      </script>
+      <script type="text/javascript">
+          COMSCORE.beacon({
+              c1:2,
+              c2:"6035055",
+              c3:"",
+              c4:location.href,
+              c5:"",
+              c6:"",
+              c15:""
+          });
+      </script>
+      <noscript>
+          <img src="http://b.scorecardresearch.com/p?c1=2&c2=6035055&c3=&c4=&c5=&c6=&c15=&cj=1" />
+      </noscript>
+      <!-- End comScore Tag -->
+      
+      </body>
+      </html>
+          
+    

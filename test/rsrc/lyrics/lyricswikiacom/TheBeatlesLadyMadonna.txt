@@ -1,0 +1,1407 @@
+
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=1200">
+<meta name="generator" content="MediaWiki 1.19.7" />
+<meta name="keywords" content="Lady Madonna lyrics,The Beatles Lady Madonna lyrics,Lady Madonna by The Beatles lyrics,lyrics,LyricWiki,LyricWiki,lyricwiki,The Beatles:Lady Madonna,The Beatles,The Beatles:Hey Jude (1969),The Beatles:1967-1970 (1973),The Beatles:Past Masters Volume Two (1988),The Beatles:Anthology 2 (1996),The Beatles:1 (2000),The Beatles:Love (2006),Elvis Presley,Gary Puckett &amp; The Union Gap,Paul McCartney" />
+<meta name="description" content="The Beatles This song is performed by The Beatles and appears on the compilation album Hey Jude..." />
+<meta name="google-site-verification" content="veD_bMCKdlqQnd5BY501RG5-r5FwRJPVR3Gn014YrUw" />
+<link rel="canonical" href="http://lyrics.wikia.com/The_Beatles:Lady_Madonna" />
+<link rel="alternate" type="application/x-wiki" title="Edit" href="/The_Beatles:Lady_Madonna?action=edit" />
+<link rel="edit" title="Edit" href="/The_Beatles:Lady_Madonna?action=edit" />
+<link rel="apple-touch-icon" href="http://images.wikia.com/lyricwiki/images/b/bc/Wiki.png" />
+<link rel="shortcut icon" href="http://images3.wikia.nocookie.net/__cb62317/lyricwiki/images/6/64/Favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/opensearch_desc.php" title="LyricWiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="http://lyrics.wikia.com/api.php?action=rsd" />
+<link rel="copyright" href="/LyricWiki:Copyrights" />
+<link rel="alternate" type="application/atom+xml" title="LyricWiki Atom feed" href="/Special:RecentChanges?feed=atom" />
+<title>The Beatles:Lady Madonna Lyrics - Lyric Wiki - song lyrics, music lyrics</title>
+
+<!-- SASS-generated CSS file -->
+<link rel="stylesheet" href="http://slot1.images4.wikia.nocookie.net/__am/62315/sass/background-align%3Dcenter%26background-fixed%3Dfalse%26background-image%3Dhttp%253A%252F%252Fimages3.wikia.nocookie.net%252F__cb7%252Flyricwiki%252Fimages%252F5%252F50%252FWiki-background%26background-image-height%3D60%26background-image-width%3D1920%26background-tiled%3Dtrue%26color-body%3D%2523fff%26color-buttons%3D%2523006cb0%26color-header%3D%25233a5766%26color-links%3D%2523006cb0%26color-page%3D%2523ffffff%26page-opacity%3D100%26widthType%3D3/skins/oasis/css/oasis.scss">
+
+<!-- CSS injected by extensions -->
+<link rel="stylesheet" href="http://lyrics.wikia.com/__load/-/cb%3D62315%26debug%3Dfalse%26lang%3Den%26only%3Dstyles%26skin%3Doasis/ext.wikihiero" /><link rel="stylesheet" href="http://lyrics.wikia.com/__load/-/cb%3D62315%26debug%3Dfalse%26lang%3Den%26only%3Dstyles%26skin%3Doasis/site" /><style>            /* Add a pretty logo to Facebook links */
+            .mw-fblink {
+                background: url(http://static.ak.fbcdn.net/images/icons/favicon.gif) top left no-repeat !important;
+                padding-left: 17px !important;
+            }</style><style>a:lang(ar),a:lang(ckb),a:lang(fa),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}a.new,#quickbar a.new{color:#ba0000}
+
+/* cache key: lyricwiki:resourceloader:filter:minify-css:7:c88e2bcd56513749bec09a7e29cb3ffa */</style><style type='text/css'>/*<![CDATA[*/
+.lyricbox
+{
+    padding: 1em;
+    border: 1px solid silver;
+    color: black;
+    background-color: #ffffcc;
+}
+/*]]>*/</style><style type='text/css'>/*<![CDATA[*/
+.lyricbox
+{
+    padding: 1em 1em 0;
+    border: 1px solid silver;
+    color: black;
+    background-color: #ffffcc;
+}
+.lyricsbreak{
+    clear:both;
+}
+/*]]>*/</style>
+
+
+<script>
+window.onerror=function(m,u,l){
+var q='//jserrorslog.wikia.com/',i=new Image();
+if(Math.random()<0.01){
+    try{var d=[m,u,l];
+        try{d.push(document.cookie.match(/server.([A-Z]*).cache/)[1])}catch(e){}
+        i.src=q+'l?'+JSON.stringify(d)
+    }catch(e){i.src=q+'e?'+e}
+}return!1}
+</script>
+
+<script>
+var Wikia={},
+wgJqueryUrl=["http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"],
+wgMessages={"categoryselect-button-save":"Save","categoryselect-category-add":"Add category...","categoryselect-category-edit":"Edit category","categoryselect-category-remove":"Remove category","categoryselect-error-category-name-length":"The maximum length for a category name has been reached.","categoryselect-error-duplicate-category-name":"Category \"$1\" already exists.","categoryselect-error-empty-category-name":"Please provide a category name.","categoryselect-modal-category-name":"Provide the name of the category:","categoryselect-modal-category-sortkey":"Optionally, you may alphabetize this page on the \"$1\" category page under the name:","categoryselect-tooltip-add":"Press the Enter or Return key when done.","chat-join-the-chat":"Join the Chat","chat-start-a-chat":"Start a Chat","chat-user-menu-message-wall":"Message Wall","chat-user-menu-talk-page":"Talk Page","chat-user-menu-contribs":"Contributions","chat-live2":"Live! Chat","chat-edit-count":"$1 edits","chat-member-since":"Member since $1"},
+wgJSMessagesCB="62315.0.63301",
+JSSnippetsStack=[],
+adslots2=[],
+wgLoadAdsInHead=false,
+wgAdsInHeadGroup=0,
+wgAdsShowableOnPage=true,
+wgShowAds=true,
+wgAdDriverUseFullGpt=true,
+wgAdDriverUseNewGptZones=true,
+wgAdVideoTargeting=false,
+wgAdDriverStartLiftiumOnLoad=false,
+adDriverLastDARTCallNoAds=[],
+wgDartCustomKeyValues="age=13-17;age=18-34;eth=hisp;hhi=0-30",
+cityShort="music",
+adDriver2ForcedStatus=[],
+wgWikiDirectedAtChildren=false,
+wikiaPageType="article",
+wikiaPageIsHub=false,
+cscoreCat="Entertainment",
+wgEnableKruxTargeting=true,
+wgKruxCategoryId="HixxfWsd",
+wgAfterContentAndJS=[],
+wgWikiFactoryTagIds=[29,100024,100052,100065,100066,100068,100084,100449],
+wgWikiFactoryTagNames=["music","test","adss","tandem","tandem_2","hadonedotenabled","adss_medium","sensitive"],
+wgCdnRootUrl="http://slot1.images.wikia.nocookie.net",
+wgDBname="lyricwiki",
+wgCityId="43339",
+wgMedusaSlot="slot1",
+wgContentLanguage="en",
+wgUserName=null,
+wgArticleId=20865,
+wgCategories=["Song","Gold Songs","Covered","YouTube/Song","Song Of The Day","Number-One Hits","Number-One Hits by Song","Number-One Hits in the United Kingdom","Number-One Hits in Austria","Number-One Hits in Switzerland","Wikipedia articles/Song","Songs L","Language/English","ITunes/Song","Songs with GoEar audio","Allmusic/Song","MusicBrainz/Song"],
+wgPageName="The_Beatles:Lady_Madonna",
+skin="oasis",
+_gaq=[],
+wgIsGASpecialWiki=true,
+wgStyleVersion="62315";
+</script><script>window.mw||(mw={fk:1,loader:{state:function(s){preMwLdrStA=window.preMwLdrStA||[];preMwLdrStA.push(s)}}});</script>
+<script>var wgNow = new Date();</script>
+<!-- Wikia Beacon Tracking -->
+<noscript><img src="http://a.wikia-beacon.com/__track/view?c=43339&amp;lc=en&amp;lid=75&amp;x=lyricwiki&amp;y=c1&amp;u=0&amp;ip=82.136.121.124&amp;a=20865&amp;s=oasis&amp;n=0&amp;nojs=1" width="1" height="1" border="0" alt="" /></noscript>
+<script>
+(function() {
+    var result = RegExp("wikia_beacon_id=([A-Za-z0-9_-]{10})").exec(document.cookie);
+    if(result) {
+        window.beacon_id = result[1];
+    } else {
+        // something went terribly wrong
+    }
+
+    var utma = RegExp("__utma=([0-9\.]+)").exec(document.cookie);
+    var utmb = RegExp("__utmb=([0-9\.]+)").exec(document.cookie);
+
+    var trackUrl = "http://a.wikia-beacon.com/__track/view?c=43339&amp;lc=en&amp;lid=75&amp;x=lyricwiki&amp;y=c1&amp;u=0&amp;ip=82.136.121.124&amp;a=20865&amp;s=oasis&amp;n=0" + ((typeof document.referrer != "undefined") ? "&amp;r=" + escape(document.referrer) : "") + "&amp;cb=" + (new Date).valueOf() + (window.beacon_id ? "&amp;beacon=" + window.beacon_id : "") + (utma && utma[1] ? "&amp;utma=" + utma[1] : "") + (utmb && utmb[1] ? "&amp;utmb=" + utmb[1] : "");
+    document.write('<'+'script type="text/javascript" src="' + trackUrl + '"><'+'/script>');
+})();
+</script><script src="http://lyrics.wikia.com/__load/-/cb%3D62315%26debug%3Dfalse%26lang%3Den%26only%3Dscripts%26skin%3Doasis/wikia.ext.abtesting"></script>
+<script src="http://slot1.images2.wikia.nocookie.net/__load/-/cb%3D62315%26debug%3Dfalse%26lang%3Den%26only%3Dscripts%26skin%3Doasis/amd|wikia.tracker.stub|wikia.cookies,geo,window"></script>
+<script>/*<![CDATA[*/window.mw.fk&&delete mw;/*]]>*/</script>
+<script type="text/javascript" src="http://slot1.images.wikia.nocookie.net/__am/62315/groups/-/abtesting,oasis_blocking,analytics_gas_js"></script>
+<!-- Make IE recognize HTML5 tags. -->
+<!--[if IE]>
+    <script>/*@cc_on'abbr article aside audio canvas details figcaption figure footer header hgroup mark menu meter nav output progress section summary time video'.replace(/\w+/g,function(n){document.createElement(n)})@*/</script>
+<![endif]-->
+
+
+
+    <meta property="fb:app_id" content="112328095453510" prefix="fb: http://www.facebook.com/2008/fbml" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="LyricWiki" />
+    <meta property="og:title" content="The Beatles:Lady Madonna" />
+    <meta property="og:image" content="http://images1.wikia.nocookie.net/__cb20130124115959/lyricwiki/images/0/04/Beatles.jpg" />
+    <meta property="og:description" content="The Beatles This song is performed by The Beatles and appears on the compilation album Hey Jude..." />
+    <meta property="og:url" content="http://lyrics.wikia.com/The_Beatles:Lady_Madonna" />
+<meta name="apple-itunes-app" content="app-id=623705389">
+</head>
+<body class="mediawiki ltr ns-0 ns-subject page-The_Beatles_Lady_Madonna  TOC_hide wikia-grid wikinav2 skin-oasis oasis-oasis">
+
+
+<!-- Begin comScore Tag -->
+<script type="text/javascript">
+var _comscore = _comscore || [];
+_comscore.push({ c1: "2", c2: "6177433",
+    options: {
+        url_append: "comscorekw=wikiacsid_entertainment"
+    }
+});
+
+(function() {
+    var s = document.createElement("script"), el = document.getElementsByTagName("script")[0]; s.async = true;
+    s.src = (document.location.protocol == "https:" ? "https://sb" : "http://b") + ".scorecardresearch.com/beacon.js";
+    el.parentNode.insertBefore(s, el);
+})();
+</script>
+<noscript>
+<img src="http://b.scorecardresearch.com/p?c1=2&amp;c2=6177433&amp;c3=&amp;c4=&amp;c5=&amp;c6=&amp;c7=http%3A%2F%2Flyrics.wikia.com%2FThe_Beatles%3ALady_Madonna%3Fcomscorekw%3Dwikiacsid_entertainment&amp;c15=&amp;cv=2.0&amp;cj=1" />
+</noscript>
+<!-- End comScore Tag -->
+<!-- Start for QuantServe, page_view -->
+<script type="text/javascript">
+  var _qevents = _qevents || [];
+
+  (function() {
+   var elem = document.createElement('script');
+
+   elem.src = (document.location.protocol == "https:" ? "https://secure" : "http://edge") + ".quantserve.com/quant.js";
+   elem.async = true;
+   elem.type = "text/javascript";
+   var scpt = document.getElementsByTagName('script')[0];
+   scpt.parentNode.insertBefore(elem, scpt);  
+  })();
+</script>
+<script type="text/javascript">
+var quantcastLabels = "";
+if (window.cityShort) {
+    quantcastLabels += cityShort;
+    if (window.wgDartCustomKeyValues) {
+        var keyValues = wgDartCustomKeyValues.split(';');
+        for (var i=0; i<keyValues.length; i++) {
+            var keyValue = keyValues[i].split('=');
+            if (keyValue.length >= 2) {
+                quantcastLabels += ',' + cityShort + '.' + keyValue[1];
+            }
+        }
+    }
+}
+_qevents.push( { qacct:"p-8bG6eLqkH6Avk", labels:quantcastLabels } );
+</script>
+<noscript>
+<div style="display: none;"><img src="//pixel.quantserve.com/pixel/p-8bG6eLqkH6Avk.gif" height="1" width="1" alt="Quantcast"/></div>
+</noscript>
+<!-- Unsupported language for AnalyticsProviderIVW -->
+<!-- Start for AmazonDirectTargetedBuy, page_view -->
+        <script>
+            require(['wikia.geo'], function (geo) {
+                if (geo.getCountryCode() === 'US') {
+                    var aax_src='3006';
+                    var aax_url = encodeURIComponent(document.location);
+                    try { aax_url = encodeURIComponent("" + window.top.location); } catch(e) {}
+                    var s = document.createElement('script');
+                    s.type = 'text/javascript';
+                    s.async = true;
+                    s.src = '//aax-us-east.amazon-adsystem.com/e/dtb/bid?src=' + aax_src + '&u=' + aax_url + "&cb=" + Math.round(Math.random()*10000000);
+                    var insertLoc = document.getElementsByTagName('script')[0];
+                    insertLoc.parentNode.insertBefore(s, insertLoc);
+                }
+            });
+        </script><h1>Wikia</h1>
+<div class="skiplinkcontainer">
+<a class="skiplink" rel="nofollow" href="#WikiaArticle">Skip to Content</a>
+<a class="skiplink wikinav" rel="nofollow" href="#WikiHeader">Skip to Wiki Navigation</a>
+<a class="skiplink sitenav" rel="nofollow" href="#GlobalNavigation">Skip to Site Navigation</a>
+</div>
+
+<div id="ad-skin" class="wikia-ad noprint"></div>
+
+<header id="WikiaHeader" class="WikiaHeader">
+    <div class="wikia-header-mask">
+        <div class="page-width-container">
+                        <nav>
+                                <h1>Wikia Navigation</h1>
+                                <ul>
+                    <li class="WikiaLogo">
+                        <a href="http://www.wikia.com/Wikia" rel="nofollow"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite logo" height="23" width="91" alt="Wikia"></a>
+                    </li>
+                    <li class="start-a-wiki">
+                        <a href="http://www.wikia.com/Special:CreateNewWiki" class="wikia-button">Start a wiki</a>
+                    </li>
+                    <li>
+                        <ul id="GlobalNavigation" class="GlobalNavigation" data-hash="f0955adce07a030d6e6fb7cffd74b856">
+                                                                                                                                            <li class="topNav Video_Games video-games-vertical-color" data-index="1">
+                                            <a href="http://www.wikia.com/Video_Games">Video Games<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron" height="0" width="0"></a>
+                                            <ul class="subnav"></ul>
+                                        </li>
+                                                                                                                <li class="topNav Entertainment entertainment-vertical-color" data-index="26">
+                                            <a href="http://www.wikia.com/Entertainment">Entertainment<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron" height="0" width="0"></a>
+                                            <ul class="subnav"></ul>
+                                        </li>
+                                                                                                                <li class="topNav Lifestyle lifestyle-vertical-color" data-index="51">
+                                            <a href="http://www.wikia.com/Lifestyle">Lifestyle<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron" height="0" width="0"></a>
+                                            <ul class="subnav"></ul>
+                                        </li>
+                                                                                    </ul>
+                    </li>
+                                    </ul>
+            </nav>
+            <ul id="AccountNavigation" class="AccountNavigation">
+
+    
+    
+    <li>
+        <a data-id="login" href="/Special:UserLogin?returnto=The_Beatles:Lady_Madonna" rel="nofollow" class="ajaxLogin" accesskey="o">Log in<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron" width="0" height="0" /></a>       <div id="UserLoginDropdown" class="UserLoginDropdown subnav">
+
+<form action="/Special:UserLogin" method="post" class="WikiaForm">
+    <fieldset>
+        
+                    <div class="input-group error general-errors">
+                <div class="error-msg"></div>
+            </div>
+        
+        
+                                    
+                                    <input type="hidden" name="loginToken" value="">
+                                            
+                                    <input type="hidden" name="returnto" value="The_Beatles:Lady_Madonna">
+                                            
+                                    <input type="hidden" name="returntoquery" value="">
+                                            
+                                                            <div class="input-group required">
+                    
+                                                    <label>Username</label>
+                        
+                        
+                                                                                    <input type="text" name="username" tabindex="1">
+                            
+                        
+                        
+                                            </div>
+                    
+                                            
+                                                            <div class="input-group password-input required">
+                    
+                                                    <label>Password</label>
+                        
+                        
+                                                        <input type="password" class="password-input" name="password" tabindex="2">
+                            
+                        
+                        
+                                            </div>
+                    
+                                            
+                                                            <div class="input-group">
+                    
+                        
+                        
+                                                        <a href="#" class="forgot-password" tabindex="0">Forgot your password?</a>                          
+                        
+                        
+                                            </div>
+                    
+                                            
+                                                            <div class="input-group keep-logged-in">
+                    
+                        
+                                                    <label>
+                        
+                                                        <input type="checkbox" class="keep-logged-in" name="keeploggedin" value="1" tabindex="3">
+                                
+                        
+                                                    Stay logged in</label>
+                        
+                                            </div>
+                    
+                                            
+                                                            <div class="input-group login-button">
+                    
+                        
+                        
+                                                        <input type="submit" class="login-button" value="Log in" tabindex="4">
+                            
+                        
+                        
+                                            </div>
+                    
+                                        </fieldset>
+
+    </form>
+    <div class="sso-login">
+        <div class="sso-login-divider">
+            <span>Or</span>
+        </div>
+
+                    <a href="#" class="wikia-button wikia-button-facebook sso-login-facebook"  data-id="facebook" rel="tooltip" title="Click the button to log in with Facebook" tabindex="5" ><img alt="" class="sprite facebook" height="14" src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" width="15" /> Connect</a>
+    </div></div>
+    </li>
+    <li>
+        <a data-id="register" href="/Special:UserSignup?returnto=The_Beatles:Lady_Madonna" rel="nofollow" class="ajaxRegister">Sign up</a>  </li>
+
+    
+</ul>
+                    </div>
+    </div>
+</header>
+<div class="WikiaTopAds" id="WikiaTopAds">
+<div class="WikiaTopAdsInner">
+
+
+<!-- BEGIN SLOTNAME: TOP_LEADERBOARD -->
+<div id="TOP_LEADERBOARD" class="wikia-ad noprint default-height">
+    <script>
+        window.adslots2.push(["TOP_LEADERBOARD",null,"AdEngine2"]);
+    </script>
+</div>
+<!-- END SLOTNAME: TOP_LEADERBOARD -->
+
+
+<!-- BEGIN SLOTNAME: TOP_BUTTON_WIDE -->
+<div id="TOP_BUTTON_WIDE" class="wikia-ad noprint default-height">
+    <script>
+        window.adslots2.push(["TOP_BUTTON_WIDE",null,"AdEngine2"]);
+    </script>
+</div>
+<!-- END SLOTNAME: TOP_BUTTON_WIDE -->
+
+
+</div>
+
+
+<!-- BEGIN SLOTNAME: INVISIBLE_SKIN -->
+<div id="INVISIBLE_SKIN" class="wikia-ad noprint default-height">
+    <script>
+        window.adslots2.push(["INVISIBLE_SKIN",null,"AdEngine2"]);
+    </script>
+</div>
+<!-- END SLOTNAME: INVISIBLE_SKIN -->
+
+
+</div>
+
+
+<section id="WikiaPage" class="WikiaPage V2 WikiaGrid">
+    <div id="WikiaPageBackground" class="WikiaPageBackground"></div>
+    <div class="WikiaPageContentWrapper">
+        <header id="WikiHeader" class="WikiHeader">
+    <h1 class="wordmark medium graphic ">
+    <a accesskey="z" href="/Lyrics_Wiki">
+                    <img src="http://images2.wikia.nocookie.net/__cb7/lyricwiki/images/8/89/Wiki-wordmark.png" alt="LyricWiki"  width="250" height="65" >
+            </a>
+</h1>
+        <nav class="WikiNav">
+                <h1>LyricWiki Navigation</h1>
+                <ul class="nav">
+                                                                                <li class="nav-item marked">
+                        <a href="#">On the Wiki</a>
+
+                                                    <ul class="subnav-2 accent firstChild">
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Special:WikiActivity" data-canonical="wikiactivity">Wiki Activity</a>
+
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Special:Random" data-canonical="random">Random page</a>
+
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Special:Videos" data-canonical="videos">Videos</a>
+
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Special:NewFiles" data-canonical="newfiles">Photos</a>
+
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Special:Chat" data-canonical="chat">Chat</a>
+
+                                                                            </li>
+                                                                                            </ul>
+                                            </li>
+                                                                                                                <li class="nav-item">
+                        <a href="/Help:Contents">Help Out</a>
+
+                                                    <ul class="subnav-2 accent">
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Help:FAQ">LyricWiki FAQ</a>
+
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Help:Contents">Help Index</a>
+
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Help:Contents/Editing">Help with Editing Pages<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron"></a>
+
+                                                                                    <ul class="subnav-3 subnav">
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Help:Contents/Editing">General Help</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/LyricWiki:Help_Desk">Ask on Help Desk</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/LyricWiki:Job_Exchange">File an Edit Request</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/LyricWiki:Page_Names">Our Page Naming Policy</a>
+                                                    </li>
+                                                                                            </ul>
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/LyricWiki:Community_Portal">The Community<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron"></a>
+
+                                                                                    <ul class="subnav-3 subnav">
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/LyricWiki:Administrators">Find Admins</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/LyricWiki_talk:Community_Portal">Post Feedback</a>
+                                                    </li>
+                                                                                            </ul>
+                                                                            </li>
+                                                                                            </ul>
+                                            </li>
+                                                                                <li class="nav-item">
+                        <a href="/Special:Random">Stroll Around</a>
+
+                                                    <ul class="subnav-2 accent">
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Special:Top/most_visited">Popular Pages</a>
+
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Special:Random">Randomize<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron"></a>
+
+                                                                                    <ul class="subnav-3 subnav">
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Special:RandomInCategory/Artist">Random Artist</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Special:RandomInCategory/Album">Random Album</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Special:RandomInCategory/Song">Random Song</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Special:RandomInCategory/Translation">Random Translation</a>
+                                                    </li>
+                                                                                            </ul>
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/LyricWiki:Song_of_the_Day">LyricWiki Awards<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron"></a>
+
+                                                                                    <ul class="subnav-3 subnav">
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/LyricWiki:Song_of_the_Day">Song of the Day</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/LyricWiki:Album_of_the_Week">Album of the Week</a>
+                                                    </li>
+                                                                                            </ul>
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/LyricWiki:Top_100">Top 100 iTunes Songs</a>
+
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Category:Lists">Other Lists</a>
+
+                                                                            </li>
+                                                                                            </ul>
+                                            </li>
+                                                                                <li class="nav-item">
+                        <a href="/Special:Search">Search Lyrics</a>
+
+                                                    <ul class="subnav-2 accent">
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Category:Artists">Artists<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron"></a>
+
+                                                                                    <ul class="subnav-3 subnav">
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Hometown">Artists by Hometown</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Genre">Artists by Genre</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Label">Artists by Label</a>
+                                                    </li>
+                                                                                            </ul>
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Category:Albums">Albums<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron"></a>
+
+                                                                                    <ul class="subnav-3 subnav">
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Genre">Albums by Genre</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Compilation_Series">Compilation Series</a>
+                                                    </li>
+                                                                                            </ul>
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Category:Songs">Songs<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron"></a>
+
+                                                                                    <ul class="subnav-3 subnav">
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Language">Songs by Language</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Song_Translations">Translations</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Instrumental">Instrumentals</a>
+                                                    </li>
+                                                                                            </ul>
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Category:Genre">Genres<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron"></a>
+
+                                                                                    <ul class="subnav-3 subnav">
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Genre/Pop">Pop</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Genre/Rock">Rock</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Genre/Electronic">Electronic</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Genre/Hip_Hop">Hip Hop</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Genre/Metal">Metal</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Genre/Country">Country</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Genre/Folk">Folk</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Genre">Other...</a>
+                                                    </li>
+                                                                                            </ul>
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Category:Label">Labels</a>
+
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Special:Search">Search Contents<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron"></a>
+
+                                                                                    <ul class="subnav-3 subnav">
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:All_categories">Browse Categories</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Special:CategoryIntersection">Category Intersection Search</a>
+                                                    </li>
+                                                                                            </ul>
+                                                                            </li>
+                                                                                            </ul>
+                                            </li>
+                                                                                <li class="nav-item">
+                        <a href="/Special:SpecialPages">Advanced</a>
+
+                                                    <ul class="subnav-2 accent">
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Lyrics_Wiki">About LyricWiki<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron"></a>
+
+                                                                                    <ul class="subnav-3 subnav">
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Special:Statistics">Statistics</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/LyricWiki:Affiliates">Our Affiliates</a>
+                                                    </li>
+                                                                                            </ul>
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Category:Requests_For_Edits">Requests for Edits<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron"></a>
+
+                                                                                    <ul class="subnav-3 subnav">
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Requests_For_Edits/Artists">Artists</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Requests_For_Edits/Albums">Albums</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Category:Requests_For_Edits/Songs">Songs</a>
+                                                    </li>
+                                                                                            </ul>
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Special:Upload">Upload Art</a>
+
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="http://community.wikia.com/wiki/c:api:LyricWiki_lyrics">LyricWiki Mobile App</a>
+
+                                                                            </li>
+                                                                                                        <li class="subnav-2-item">
+                                        <a class="subnav-2a" href="/Special:SpecialPages">Special Pages<img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron"></a>
+
+                                                                                    <ul class="subnav-3 subnav">
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Special:DoubleRedirects">Double Redirects</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Special:UncategorizedFiles">Uncategorized Photos</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/LyricWiki:API">LyricWiki API</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/LyricWiki:SOAP">SOAP</a>
+                                                    </li>
+                                                                                                                                                        <li class="subnav-3-item">
+                                                        <a class="subnav-3a" href="/Special:Wikify">Wikify Tracklists</a>
+                                                    </li>
+                                                                                            </ul>
+                                                                            </li>
+                                                                                            </ul>
+                                            </li>
+                                        </ul>
+
+<div class="navbackground">
+    <div></div>
+    <img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron">
+</div>    </nav>
+    <div class="buttons">
+        <nav class="wikia-menu-button contribute secondary combined" >
+    <img alt="" class="sprite contribute" height="16" src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" width="22" /> Contribute
+    <span class="drop">
+        <img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron">
+    </span>
+    <ul class="WikiaMenuElement">
+        <li>
+            <a href="/The_Beatles:Lady_Madonna?action=edit"  data-id="edit"  >Edit this Page</a>
+        </li>
+        <li>
+            <a href="/Special:WikiaVideoAdd"  data-id="wikiavideoadd"  >Add a Video</a>
+        </li>
+        <li>
+            <a href="/Special:Upload"  data-id="upload"  >Add a Photo</a>
+        </li>
+        <li>
+            <a href="/Special:CreatePage"  data-id="createpage"   class="createpage">Add a Page</a>
+        </li>
+        <li>
+            <a href="/Special:WikiActivity"  accesskey="g" data-id="wikiactivity"  >Wiki Activity</a>
+        </li>
+    </ul>
+</nav>
+                    <a href="#" class="wikia-button share-button secondary"  data-id="shareButton"> Share<span class="share-dot"></span><span class="share-pixel"></span></a>
+    </div>
+
+    <div class="hiddenLinks">
+        <a href="/Special:Watchlist" title="Special:Watchlist" accesskey="l">Watchlist</a>      <a href="/Special:Random" title="Special:Random" accesskey="x">Random page</a>      <a href="/Special:RecentChanges" title="Special:RecentChanges" accesskey="r">Recent changes</a>    </div>
+</header>
+
+
+        
+        
+        
+        
+        <article id="WikiaMainContent" class="WikiaMainContent grid-4">
+            <div id="WikiaMainContentContainer" class="WikiaMainContentContainer">
+                <header id="WikiaPageHeader" class="WikiaPageHeader">
+    <h1>The Beatles:Lady Madonna</h1>
+
+    <nav class="wikia-menu-button" >
+    <a accesskey="e"  href="/The_Beatles:Lady_Madonna?action=edit" data-id="edit" id="ca-edit">
+        <img alt="" class="sprite edit-pencil" height="16" src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" width="22" /> Edit  </a>
+
+    <span class="drop">
+        <img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="chevron">
+    </span>
+    <ul class="WikiaMenuElement">
+        <li>
+            <a href="/The_Beatles:Lady_Madonna?action=history"  accesskey="h" data-id="history"   id="ca-history">History</a>
+        </li>
+    </ul>
+</nav>
+            <a accesskey="t" href="/Talk:The_Beatles:Lady_Madonna" class="wikia-button comments secondary talk" rel="nofollow" data-id="comment"> Talk<span class="commentsbubble">6</span></a>
+        <div class="tally">
+            <em>2,796,350</em><span>pages on<br /> this wiki</span>        </div>
+        </header>
+
+
+                
+                <div id="WikiaArticle" class="WikiaArticle">
+                    
+                    <div class="home-top-right-ads">
+                                        </div>
+
+                    
+                    <div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><span style="display:none"><a href="/The_Beatles" title="The Beatles">The Beatles</a></span><div id="ranking-star-icon" style="float:right; margin-left:2em; margin-bottom:0.5em"><a href="/Talk:The_Beatles:Lady_Madonna" title="Gold"><img alt="StarIconGold" src="http://images1.wikia.nocookie.net/__cb20081201112630/lyricwiki/images/thumb/7/79/StarIconGold.png/15px-StarIconGold.png" width="15" height="14" data-image-name="StarIconGold.png" data-image-key="StarIconGold.png" /></a></div>
+This song is performed by <b><a href="/The_Beatles" title="The Beatles">The Beatles</a></b>&#32;and appears on the compilation album <i><a href="/The_Beatles:Hey_Jude_(1969)" title="The Beatles:Hey Jude (1969)">Hey Jude (1969)</a></i>.<br />View the Gracenote version of these lyrics <a href="/Gracenote:The_Beatles:Lady_Madonna" title="Gracenote:The Beatles:Lady Madonna">here</a>.<span id="gracenoteid" style="display:none"><p>Extension:DynamicPageList (DPL), version 1.9.0&#160;: Warning: No results.</p></span><div style="clear: both"></div>
+<table class="collapsible collapsed" style="clear:both; width:100%; margin-bottom:0.5em">
+<tr>
+<th style="background-color:#DDD">This song also appears…
+</th></tr>
+<tr>
+<td>
+<ul><li>on the compilation album <i><a href="/The_Beatles:1967-1970_(1973)" title="The Beatles:1967-1970 (1973)">1967-1970 (1973)</a></i>
+</li><li>on the compilation album <i><a href="/The_Beatles:Past_Masters_Volume_Two_(1988)" title="The Beatles:Past Masters Volume Two (1988)">Past Masters Volume Two (1988)</a></i>
+</li><li>on the compilation album <i><a href="/The_Beatles:Anthology_2_(1996)" title="The Beatles:Anthology 2 (1996)">Anthology 2 (1996)</a></i>
+</li><li>on the compilation album <i><a href="/The_Beatles:1_(2000)" title="The Beatles:1 (2000)">1 (2000)</a></i>
+</li><li>on the soundtrack album <i><a href="/The_Beatles:Love_(2006)" title="The Beatles:Love (2006)">Love (2006)</a></i>
+</li></ul>
+</td></tr></table>
+<table class="collapsible collapsed" style="clear:both; width:100%; margin-bottom:0.5em">
+<tr>
+<th style="background-color:#DDD">This song has been covered by…
+</th></tr>
+<tr>
+<td>
+<ul><li><b><a href="/Elvis_Presley" title="Elvis Presley">Elvis Presley</a></b> under the title "<a href="/Elvis_Presley:Lady_Madonna" title="Elvis Presley:Lady Madonna">Lady Madonna</a>" 
+</li><li><b><a href="/Gary_Puckett_%26_The_Union_Gap" title="Gary Puckett &amp; The Union Gap">Gary Puckett &amp; The Union Gap</a></b> under the title "<a href="/Gary_Puckett_%26_The_Union_Gap:Lady_Madonna" title="Gary Puckett &amp; The Union Gap:Lady Madonna">Lady Madonna</a>"
+</li><li><b><a href="/Paul_McCartney" title="Paul McCartney">Paul McCartney</a></b> under the title "<a href="/Paul_McCartney:Lady_Madonna" title="Paul McCartney:Lady Madonna">Lady Madonna</a>"
+</li></ul>
+</td></tr></table>
+<div class="noprint" style="clear:both; float:right;margin:0 0 2px 0.5em; line-height: 0;"><object type="application/x-shockwave-flash" data="http://www.youtube.com/v/VfthrizXKOM&amp;enablejsapi=1&amp;version=2&amp;playerapiid=VfthrizXKOM" width="252" height="209" id="YT_VfthrizXKOM"><param name="movie" value="http://www.youtube.com/v/VfthrizXKOM&amp;enablejsapi=1&amp;version=2&amp;playerapiid=VfthrizXKOM"/><param name="wmode" value="transparent"/><param name="allowScriptAccess" value="always"/></object></div>
+<div class="noprint" style="clear:both; border:1px solid #BBA34A; font-size:90%; background:#EBDAAC; margin:0 0 2px 0.5em; width:250px; text-align:left; float:right"><div class="floatleft"><img alt="LyricWiki-SongOfTheDay" src="http://images2.wikia.nocookie.net/__cb20070412033518/lyricwiki/images/thumb/5/53/LyricWiki-SongOfTheDay.png/40px-LyricWiki-SongOfTheDay.png" width="40" height="40" data-image-name="LyricWiki-SongOfTheDay.png" data-image-key="LyricWiki-SongOfTheDay.png" /></div><div style="padding:4px; text-align:center"><i><b>Lady Madonna</b></i><br />was the <b><a href="/LyricWiki:Song_of_the_Day" title="LyricWiki:Song of the Day">Song of the Day</a></b> on<div>July 20, 2013</div></div></div>
+<table cellspacing="0" style="width:252px; clear:both; float:right; background:#EBDAAC; border:1px solid #BBA34A; margin:0 0 2px 0.5em"><tr><td style="background:black"><a href="http://images2.wikia.nocookie.net/__cb20071224015811/lyricwiki/images/1/1f/Number-One_Hit.png" class="image"><img alt="Number-One Hit" src="http://images3.wikia.nocookie.net/__cb20071224015811/lyricwiki/images/thumb/1/1f/Number-One_Hit.png/56px-Number-One_Hit.png" width="56" height="48" data-image-name="Number-One Hit.png" data-image-key="Number-One_Hit.png" /></a></td><td style="width:100%; text-align:center; font-size:90%">This song was a<br /><b><a href="/LyricWiki:Number-One_Hit" title="LyricWiki:Number-One Hit">Number-One Hit</a></b>!</td></tr></table>
+<div class="noprint" style="clear:both; border:solid #BBA34A 1px; margin:0 0 2px 0.5em; padding:2px; font-size:90%; background:#EBDAAC; width:246px; text-align:center; float:right"><div style="float:left; padding:2px"><img alt="Wikipedia sphere" src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" width="35" height="32" data-image-name="Wikipedia sphere.png" data-image-key="Wikipedia_sphere.png" data-src="http://images1.wikia.nocookie.net/__cb20101130031544/lyricwiki/images/thumb/5/54/Wikipedia_sphere.png/35px-Wikipedia_sphere.png" class="lzy lzyPlcHld" onload="if(typeof ImgLzy==&quot;object&quot;){ImgLzy.load(this)}" /><noscript><img alt="Wikipedia sphere" src="http://images1.wikia.nocookie.net/__cb20101130031544/lyricwiki/images/thumb/5/54/Wikipedia_sphere.png/35px-Wikipedia_sphere.png" width="35" height="32" data-image-name="Wikipedia sphere.png" data-image-key="Wikipedia_sphere.png" /></noscript></div><div>Wikipedia has an article on<div><i><b><a href="http://en.wikipedia.org/wiki/Lady_Madonna" class="extiw" title="wikipedia:Lady Madonna">Lady Madonna</a></b></i></div></div></div>
+<noscript><div class='gracenote-header'>You must enable javascript to view this page.  This is a requirement of our licensing agreement with music Gracenote.</div><style type='text/css'>.lyricbox{display:none !important;}</style></noscript>
+<div class='lyricbox'><div class='rtMatcher'><a href='http://www.ringtonematcher.com/co/ringtonematcher/02/noc.asp?sid=WILWros&amp;artist=The%2BBeatles&amp;song=Lady%2BMadonna' rel='nofollow' target='_blank'><img src='http://slot1.images.wikia.nocookie.net/__cb62292/common/extensions/3rdparty/LyricWiki/phone_left.gif' alt='phone' width='16' height='17'/> Send "Lady Madonna" Ringtone to your Cell <img src='http://slot1.images.wikia.nocookie.net/__cb62292/common/extensions/3rdparty/LyricWiki/phone_right.gif' alt='phone' width='16' height='17'/></a></div>&#76;&#97;&#100;&#121;&#32;&#77;&#97;&#100;&#111;&#110;&#110;&#97;<br />&#67;&#104;&#105;&#108;&#100;&#114;&#101;&#110;&#32;&#97;&#116;&#32;&#121;&#111;&#117;&#114;&#32;&#102;&#101;&#101;&#116;<br />&#87;&#111;&#110;&#100;&#101;&#114;&#32;&#104;&#111;&#119;&#32;&#121;&#111;&#117;&#32;&#109;&#97;&#110;&#97;&#103;&#101;&#32;&#116;&#111;&#32;&#109;&#97;&#107;&#101;&#32;&#101;&#110;&#100;&#115;&#32;&#109;&#101;&#101;&#116;<br /><br />&#87;&#104;&#111;&#32;&#102;&#105;&#110;&#100;&#115;&#32;&#116;&#104;&#101;&#32;&#109;&#111;&#110;&#101;&#121;<br />&#87;&#104;&#101;&#110;&#32;&#121;&#111;&#117;&#32;&#112;&#97;&#121;&#32;&#116;&#104;&#101;&#32;&#114;&#101;&#110;&#116;&#63;<br />&#68;&#105;&#100;&#32;&#121;&#111;&#117;&#32;&#116;&#104;&#105;&#110;&#107;&#32;&#116;&#104;&#97;&#116;&#32;&#109;&#111;&#110;&#101;&#121;&#32;&#119;&#97;&#115;&#32;&#104;&#101;&#97;&#118;&#101;&#110;&#45;&#115;&#101;&#110;&#116;&#63;<br /><br />&#70;&#114;&#105;&#100;&#97;&#121;&#32;&#110;&#105;&#103;&#104;&#116;&#32;&#97;&#114;&#114;&#105;&#118;&#101;&#115;&#32;&#119;&#105;&#116;&#104;&#111;&#117;&#116;&#32;&#97;&#32;&#115;&#117;&#105;&#116;&#99;&#97;&#115;&#101;<br />&#83;&#117;&#110;&#100;&#97;&#121;&#32;&#109;&#111;&#114;&#110;&#105;&#110;&#103;&#32;&#99;&#114;&#101;&#101;&#112;&#105;&#110;&#103;&#32;&#108;&#105;&#107;&#101;&#32;&#97;&#32;&#110;&#117;&#110;<br />&#77;&#111;&#110;&#100;&#97;&#121;&#39;&#115;&#32;&#99;&#104;&#105;&#108;&#100;&#32;&#104;&#97;&#115;&#32;&#108;&#101;&#97;&#114;&#110;&#101;&#100;&#32;&#116;&#111;&#32;&#116;&#105;&#101;&#32;&#104;&#105;&#115;&#32;&#98;&#111;&#111;&#116;&#108;&#97;&#99;&#101;<br />&#83;&#101;&#101;&#32;&#104;&#111;&#119;&#32;&#116;&#104;&#101;&#121;&#32;&#114;&#117;&#110;<br /><br />&#76;&#97;&#100;&#121;&#32;&#77;&#97;&#100;&#111;&#110;&#110;&#97;<br />&#66;&#97;&#98;&#121;&#32;&#97;&#116;&#32;&#121;&#111;&#117;&#114;&#32;&#98;&#114;&#101;&#97;&#115;&#116;<br />&#87;&#111;&#110;&#100;&#101;&#114;&#115;&#32;&#104;&#111;&#119;&#32;&#121;&#111;&#117;&#32;&#109;&#97;&#110;&#97;&#103;&#101;&#32;&#116;&#111;&#32;&#102;&#101;&#101;&#100;&#32;&#116;&#104;&#101;&#32;&#114;&#101;&#115;&#116;<br /><br />&#40;&#66;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#97;&#97;&#32;&#98;&#97;&#45;&#98;&#97;&#32;&#98;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#97;&#97;<br />&#66;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#97;&#97;&#32;&#98;&#97;&#45;&#98;&#97;&#32;&#98;&#97;&#97;&#97;&#32;&#98;&#97;&#45;&#98;&#97;&#97;&#32;&#98;&#97;&#45;&#98;&#97;&#97;<br />&#87;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#97;&#97;&#32;&#98;&#97;&#45;&#98;&#97;&#32;&#98;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#97;&#97;&#41;<br />&#83;&#101;&#101;&#32;&#104;&#111;&#119;&#32;&#116;&#104;&#101;&#121;&#32;&#114;&#117;&#110;<br /><br />&#76;&#97;&#100;&#121;&#32;&#77;&#97;&#100;&#111;&#110;&#110;&#97;<br />&#76;&#121;&#105;&#110;&#103;&#32;&#111;&#110;&#32;&#116;&#104;&#101;&#32;&#98;&#101;&#100;<br />&#76;&#105;&#115;&#116;&#101;&#110;&#32;&#116;&#111;&#32;&#116;&#104;&#101;&#32;&#109;&#117;&#115;&#105;&#99;&#32;&#112;&#108;&#97;&#121;&#105;&#110;&#103;&#32;&#105;&#110;&#32;&#121;&#111;&#117;&#114;&#32;&#104;&#101;&#97;&#100;<br /><br />&#84;&#117;&#101;&#115;&#100;&#97;&#121;&#32;&#97;&#102;&#116;&#101;&#114;&#110;&#111;&#111;&#110;&#32;&#105;&#115;&#32;&#110;&#101;&#118;&#101;&#114;&#32;&#101;&#110;&#100;&#105;&#110;&#103;&#32;&#40;&#98;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#97;&#97;&#41;<br />&#40;&#66;&#97;&#45;&#98;&#97;&#32;&#98;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#97;&#97;&#41;<br />&#87;&#101;&#100;&#110;&#101;&#115;&#100;&#97;&#121;&#32;&#109;&#111;&#114;&#110;&#105;&#110;&#103;&#32;&#112;&#97;&#112;&#101;&#114;&#115;&#32;&#100;&#105;&#100;&#110;&#39;&#116;&#32;&#99;&#111;&#109;&#101;&#32;&#40;&#98;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#97;&#97;&#41;<br />&#40;&#66;&#97;&#45;&#98;&#97;&#32;&#98;&#97;&#97;&#97;&#32;&#98;&#97;&#45;&#98;&#97;&#97;&#32;&#98;&#97;&#45;&#98;&#97;&#97;&#41;<br />&#84;&#104;&#117;&#114;&#115;&#100;&#97;&#121;&#32;&#110;&#105;&#103;&#104;&#116;&#32;&#121;&#111;&#117;&#114;&#32;&#115;&#116;&#111;&#99;&#107;&#105;&#110;&#103;&#115;&#32;&#110;&#101;&#101;&#100;&#101;&#100;&#32;&#109;&#101;&#110;&#100;&#105;&#110;&#103;&#32;&#40;&#98;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#97;&#97;&#41;<br />&#40;&#66;&#97;&#45;&#98;&#97;&#32;&#98;&#97;&#45;&#98;&#97;&#45;&#98;&#97;&#97;&#97;&#41;<br />&#83;&#101;&#101;&#32;&#104;&#111;&#119;&#32;&#116;&#104;&#101;&#121;&#32;&#114;&#117;&#110;<br /><br />&#76;&#97;&#100;&#121;&#32;&#77;&#97;&#100;&#111;&#110;&#110;&#97;<br />&#67;&#104;&#105;&#108;&#100;&#114;&#101;&#110;&#32;&#97;&#116;&#32;&#121;&#111;&#117;&#114;&#32;&#102;&#101;&#101;&#116;<br />&#87;&#111;&#110;&#100;&#101;&#114;&#32;&#104;&#111;&#119;&#32;&#121;&#111;&#117;&#32;&#109;&#97;&#110;&#97;&#103;&#101;&#32;&#116;&#111;&#32;&#109;&#97;&#107;&#101;&#32;&#101;&#110;&#100;&#115;&#32;&#109;&#101;&#101;&#116;&#10;<!-- 
+<p>NewPP limit report
+Preprocessor node count: 795/1000000
+Post‐expand include size: 7904/2097152 bytes
+Template argument size: 1471/2097152 bytes
+Expensive parser function count: 3/100
+ExtLoops count: 7/100
+</p>
+-->&#10;<div class='rtMatcher'><a href='http://www.ringtonematcher.com/co/ringtonematcher/02/noc.asp?sid=WILWros&amp;artist=The%2BBeatles&amp;song=Lady%2BMadonna' rel='nofollow' target='_blank'><img src='http://slot1.images.wikia.nocookie.net/__cb62292/common/extensions/3rdparty/LyricWiki/phone_left.gif' alt='phone' width='16' height='17'/> Send "Lady Madonna" Ringtone to your Cell <img src='http://slot1.images.wikia.nocookie.net/__cb62292/common/extensions/3rdparty/LyricWiki/phone_right.gif' alt='phone' width='16' height='17'/></a></div><div class='lyricsbreak'></div>
+</div>
+<h2><span class="mw-headline" id="Credits">Credits</span><span class="editsection"><a href="/The_Beatles:Lady_Madonna?action=edit&amp;section=1" title="Edit Credits section"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite edit-pencil" />Edit</a></span></h2>
+<p>Written by <a href="/Paul_McCartney" title="Paul McCartney">Paul McCartney</a>.
+</p>
+<h2><span class="mw-headline" id="Musicians">Musicians</span><span class="editsection"><a href="/The_Beatles:Lady_Madonna?action=edit&amp;section=2" title="Edit Musicians section"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite edit-pencil" />Edit</a></span></h2>
+<ul><li>Paul McCartney – vocals, piano, bass, handclaps
+</li><li><a href="/John_Lennon" title="John Lennon">John Lennon</a> – backing vocals, lead guitar, handclaps
+</li><li><a href="/George_Harrison" title="George Harrison">George Harrison</a> – backing vocals, lead guitar, handclaps
+</li><li><a href="/Ringo_Starr" title="Ringo Starr">Ringo Starr</a> – drums, handclaps
+</li><li>Ronnie Scott – tenor saxophone
+</li><li>Bill Povey – tenor saxophone
+</li><li>Harry Klein – baritone saxophone
+</li><li>Bill Jackman – baritone saxophone
+</li></ul>
+<div id="songfooter"><div class="songfooter-fake-h2">External links</div><div class="plainlinks extlink"><img alt="ITunes icon" src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" width="16" height="16" data-image-name="ITunes icon.png" data-image-key="ITunes_icon.png" data-src="http://images2.wikia.nocookie.net/__cb20130311215220/lyricwiki/images/0/06/ITunes_icon.png" class="lzy lzyPlcHld" onload="if(typeof ImgLzy==&quot;object&quot;){ImgLzy.load(this)}" /><noscript><img alt="ITunes icon" src="http://images2.wikia.nocookie.net/__cb20130311215220/lyricwiki/images/0/06/ITunes_icon.png" width="16" height="16" data-image-name="ITunes icon.png" data-image-key="ITunes_icon.png" /></noscript> iTunes: buy <a class="external text" href="http://click.linksynergy.com/fs-bin/stat?id=gRMzf83mih4&amp;offerid=78941&amp;type=3&amp;subid=0&amp;tmpid=1826&amp;RD_PARM1=http%253A%252F%252Fitunes.apple.com%252Fus%252Falbum%252Fid400835735%253Fi%253D400835961%2526partnerId%253D30"><b>Lady Madonna</b></a></div>
+<div class="plainlinks extlink"><img alt="Kingnee - Amazon" src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" width="16" height="16" data-image-name="Kingnee - Amazon.png" data-image-key="Kingnee_-_Amazon.png" data-src="http://images3.wikia.nocookie.net/__cb20080702082140/lyricwiki/images/a/a1/Kingnee_-_Amazon.png" class="lzy lzyPlcHld" onload="if(typeof ImgLzy==&quot;object&quot;){ImgLzy.load(this)}" /><noscript><img alt="Kingnee - Amazon" src="http://images3.wikia.nocookie.net/__cb20080702082140/lyricwiki/images/a/a1/Kingnee_-_Amazon.png" width="16" height="16" data-image-name="Kingnee - Amazon.png" data-image-key="Kingnee_-_Amazon.png" /></noscript> Amazon: search for… <a class="external text" href="http://www.amazon.com/exec/obidos/redirect?link_code=ur2&amp;tag=wikia-20&amp;camp=1789&amp;creative=9325&amp;path=external-search%3Fsearch-type=ss%26index=music%26keyword=The+Beatles">The Beatles</a>&#32;• <a class="external text" href="http://www.amazon.com/exec/obidos/redirect?link_code=ur2&amp;tag=wikia-20&amp;camp=1789&amp;creative=9325&amp;path=external-search%3Fsearch-type=ss%26index=music%26keyword=The+Beatles+1967-1970+%28Blue+album%29">1967-1970 (Blue album)</a> •&#32;<a class="external text" href="http://www.amazon.com/exec/obidos/redirect?link_code=ur2&amp;tag=wikia-20&amp;camp=1789&amp;creative=9325&amp;path=external-search%3Fsearch-type=ss%26index=music%26keyword=The+Beatles+Lady+Madonna">Lady Madonna</a></div>
+<div class="plainlinks extlink"><img alt="Kingnee - Hype Machine" src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" width="16" height="16" data-image-name="Kingnee - Hype Machine.png" data-image-key="Kingnee_-_Hype_Machine.png" data-src="http://images2.wikia.nocookie.net/__cb20080702230050/lyricwiki/images/6/63/Kingnee_-_Hype_Machine.png" class="lzy lzyPlcHld" onload="if(typeof ImgLzy==&quot;object&quot;){ImgLzy.load(this)}" /><noscript><img alt="Kingnee - Hype Machine" src="http://images2.wikia.nocookie.net/__cb20080702230050/lyricwiki/images/6/63/Kingnee_-_Hype_Machine.png" width="16" height="16" data-image-name="Kingnee - Hype Machine.png" data-image-key="Kingnee_-_Hype_Machine.png" /></noscript> Hype Machine: search for… <a class="external text" href="http://hypem.com/search/The+Beatles">The Beatles</a> • <a class="external text" href="http://hypem.com/search/The+Beatles+Lady+Madonna">Lady Madonna</a></div>
+<div class="plainlinks extlink"><img alt="Last.fm icon" src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" width="16" height="16" data-image-name="Last.fm icon.png" data-image-key="Last.fm_icon.png" data-src="http://images1.wikia.nocookie.net/__cb20100519162232/lyricwiki/images/1/1a/Last.fm_icon.png" class="lzy lzyPlcHld" onload="if(typeof ImgLzy==&quot;object&quot;){ImgLzy.load(this)}" /><noscript><img alt="Last.fm icon" src="http://images1.wikia.nocookie.net/__cb20100519162232/lyricwiki/images/1/1a/Last.fm_icon.png" width="16" height="16" data-image-name="Last.fm icon.png" data-image-key="Last.fm_icon.png" /></noscript> Last.fm: search for… <a class="external text" href="http://www.last.fm/music/The+Beatles">The Beatles</a> • <a class="external text" href="http://www.last.fm/music/The+Beatles/1967-1970+%28Blue+album%29">1967-1970 (Blue album)</a> • <a class="external text" href="http://www.last.fm/music/The+Beatles/_/Lady+Madonna">Lady Madonna</a></div>
+<div class="plainlinks extlink"><img alt="Kingnee - Pandora" src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" width="16" height="16" data-image-name="Kingnee - Pandora.PNG" data-image-key="Kingnee_-_Pandora.PNG" data-src="http://images2.wikia.nocookie.net/__cb20081007034928/lyricwiki/images/9/94/Kingnee_-_Pandora.PNG" class="lzy lzyPlcHld" onload="if(typeof ImgLzy==&quot;object&quot;){ImgLzy.load(this)}" /><noscript><img alt="Kingnee - Pandora" src="http://images2.wikia.nocookie.net/__cb20081007034928/lyricwiki/images/9/94/Kingnee_-_Pandora.PNG" width="16" height="16" data-image-name="Kingnee - Pandora.PNG" data-image-key="Kingnee_-_Pandora.PNG" /></noscript> Pandora: search for… <a class="external text" href="http://www.pandora.com/backstage?type=artist&amp;q=The+Beatles">The Beatles</a> • <a class="external text" href="http://www.pandora.com/backstage?type=song&amp;q=Lady+Madonna">Lady Madonna</a></div><div class="plainlinks extlink"><img alt="Kingnee - Go Ear" src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" width="16" height="16" data-image-name="Kingnee - Go Ear.png" data-image-key="Kingnee_-_Go_Ear.png" data-src="http://images1.wikia.nocookie.net/__cb20110111081057/lyricwiki/images/5/50/Kingnee_-_Go_Ear.png" class="lzy lzyPlcHld" onload="if(typeof ImgLzy==&quot;object&quot;){ImgLzy.load(this)}" /><noscript><img alt="Kingnee - Go Ear" src="http://images1.wikia.nocookie.net/__cb20110111081057/lyricwiki/images/5/50/Kingnee_-_Go_Ear.png" width="16" height="16" data-image-name="Kingnee - Go Ear.png" data-image-key="Kingnee_-_Go_Ear.png" /></noscript> GoEar: <a class="external text" href="http://goear.com/listen.php?v=d2d2315"><b>Lady Madonna</b></a></div><div class="plainlinks extlink"><img alt="Kingnee - Youtube" src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" width="16" height="16" data-image-name="Kingnee - Youtube.png" data-image-key="Kingnee_-_Youtube.png" data-src="http://images1.wikia.nocookie.net/__cb20080704171930/lyricwiki/images/a/a4/Kingnee_-_Youtube.png" class="lzy lzyPlcHld" onload="if(typeof ImgLzy==&quot;object&quot;){ImgLzy.load(this)}" /><noscript><img alt="Kingnee - Youtube" src="http://images1.wikia.nocookie.net/__cb20080704171930/lyricwiki/images/a/a4/Kingnee_-_Youtube.png" width="16" height="16" data-image-name="Kingnee - Youtube.png" data-image-key="Kingnee_-_Youtube.png" /></noscript> YouTube: <a class="external text" href="http://youtube.com/watch?v=VfthrizXKOM"><b>Lady Madonna</b></a></div><div class="plainlinks extlink"><img alt="AllMusic i" src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" width="16" height="16" data-image-name="AllMusic i.png" data-image-key="AllMusic_i.png" data-src="http://images4.wikia.nocookie.net/__cb20080704091708/lyricwiki/images/c/cb/AllMusic_i.png" class="lzy lzyPlcHld" onload="if(typeof ImgLzy==&quot;object&quot;){ImgLzy.load(this)}" /><noscript><img alt="AllMusic i" src="http://images4.wikia.nocookie.net/__cb20080704091708/lyricwiki/images/c/cb/AllMusic_i.png" width="16" height="16" data-image-name="AllMusic i.png" data-image-key="AllMusic_i.png" /></noscript> allmusic: <a class="external text" href="http://www.allmusic.com/song/mt0003309173"><b>Lady Madonna</b></a></div><div class="plainlinks extlink"><img alt="Kingnee - Musicbrainz" src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" width="16" height="16" data-image-name="Kingnee - Musicbrainz.png" data-image-key="Kingnee_-_Musicbrainz.png" data-src="http://images1.wikia.nocookie.net/__cb20080702081328/lyricwiki/images/9/91/Kingnee_-_Musicbrainz.png" class="lzy lzyPlcHld" onload="if(typeof ImgLzy==&quot;object&quot;){ImgLzy.load(this)}" /><noscript><img alt="Kingnee - Musicbrainz" src="http://images1.wikia.nocookie.net/__cb20080702081328/lyricwiki/images/9/91/Kingnee_-_Musicbrainz.png" width="16" height="16" data-image-name="Kingnee - Musicbrainz.png" data-image-key="Kingnee_-_Musicbrainz.png" /></noscript> MusicBrainz: <a class="external text" href="http://musicbrainz.org/recording/cba2d0d2-3d02-4a7a-9361-9732da36159a"><b>Lady Madonna</b></a></div></div>
+
+<!-- 
+NewPP limit report
+Preprocessor node count: 1183/1000000
+Post‐expand include size: 15405/2097152 bytes
+Template argument size: 2688/2097152 bytes
+Expensive parser function count: 3/100
+ExtLoops count: 7/100
+-->
+
+<!-- Saved in parser cache with key lyricwiki:pcache:idhash:20865-0!*!0!!*!2!* and timestamp 20130925105509 -->
+<noscript><link rel="stylesheet" href="http://slot1.images.wikia.nocookie.net/__cb62315/common/extensions/wikia/ImageLazyLoad/css/ImageLazyLoadNoScript.css" /></noscript><noscript><link rel="stylesheet" href="http://slot1.images.wikia.nocookie.net/__cb62315/common/extensions/wikia/TOCimprovements/TOCNoScript.css" /></noscript></div><div class="printfooter">
+Retrieved from "<a href="http://lyrics.wikia.com/The_Beatles:Lady_Madonna?oldid=15736723">http://lyrics.wikia.com/The_Beatles:Lady_Madonna?oldid=15736723</a>"</div>
+
+                </div>
+
+                                                            <nav class="WikiaArticleCategories CategorySelect articlePage userCanEdit" id="WikiaArticleCategories">
+    <div class="container">
+        <div class="special-categories"><a href="/Special:Categories" title="Special:Categories" class="categoriesLink" rel="nofollow">Categories</a>:</div>
+        <ul class="categories">
+                <li class="category hidden" data-name="Song" data-namespace="" data-outertag="" data-sortkey="" data-type="hidden">
+    <span class="name"><a href="/Category:Song" title="Category:Song">Song</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category normal" data-name="Gold Songs" data-namespace="" data-outertag="" data-sortkey="" data-type="normal">
+    <span class="name"><a href="/Category:Gold_Songs" title="Category:Gold Songs">Gold Songs</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category normal" data-name="Covered" data-namespace="" data-outertag="" data-sortkey="" data-type="normal">
+    <span class="name"><a href="/Category:Covered" title="Category:Covered">Covered</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category hidden" data-name="YouTube/Song" data-namespace="" data-outertag="" data-sortkey="" data-type="hidden">
+    <span class="name"><a href="/Category:YouTube/Song" title="Category:YouTube/Song">YouTube/Song</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category normal" data-name="Song Of The Day" data-namespace="" data-outertag="" data-sortkey="" data-type="normal">
+    <span class="name"><a href="/Category:Song_Of_The_Day" title="Category:Song Of The Day">Song Of The Day</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category hidden" data-name="Number-One Hits" data-namespace="" data-outertag="" data-sortkey="" data-type="hidden">
+    <span class="name"><a href="/Category:Number-One_Hits" title="Category:Number-One Hits">Number-One Hits</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category hidden" data-name="Number-One Hits by Song" data-namespace="" data-outertag="" data-sortkey="" data-type="hidden">
+    <span class="name"><a href="/Category:Number-One_Hits_by_Song" title="Category:Number-One Hits by Song">Number-One Hits by Song</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category normal" data-name="Number-One Hits in the United Kingdom" data-namespace="" data-outertag="" data-sortkey="" data-type="normal">
+    <span class="name"><a href="/Category:Number-One_Hits_in_the_United_Kingdom" title="Category:Number-One Hits in the United Kingdom">Number-One Hits in the United Kingdom</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category normal" data-name="Number-One Hits in Austria" data-namespace="" data-outertag="" data-sortkey="" data-type="normal">
+    <span class="name"><a href="/Category:Number-One_Hits_in_Austria" title="Category:Number-One Hits in Austria">Number-One Hits in Austria</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category normal" data-name="Number-One Hits in Switzerland" data-namespace="" data-outertag="" data-sortkey="" data-type="normal">
+    <span class="name"><a href="/Category:Number-One_Hits_in_Switzerland" title="Category:Number-One Hits in Switzerland">Number-One Hits in Switzerland</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category hidden" data-name="Wikipedia articles/Song" data-namespace="" data-outertag="" data-sortkey="" data-type="hidden">
+    <span class="name"><a href="/Category:Wikipedia_articles/Song" title="Category:Wikipedia articles/Song">Wikipedia articles/Song</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category normal" data-name="Songs L" data-namespace="" data-outertag="" data-sortkey="" data-type="normal">
+    <span class="name"><a href="/Category:Songs_L" title="Category:Songs L">Songs L</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category normal" data-name="Language/English" data-namespace="" data-outertag="" data-sortkey="" data-type="normal">
+    <span class="name"><a href="/Category:Language/English" title="Category:Language/English">Language/English</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category hidden" data-name="ITunes/Song" data-namespace="" data-outertag="" data-sortkey="" data-type="hidden">
+    <span class="name"><a href="/Category:ITunes/Song" title="Category:ITunes/Song">ITunes/Song</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category hidden" data-name="Songs with GoEar audio" data-namespace="" data-outertag="" data-sortkey="" data-type="hidden">
+    <span class="name"><a href="/Category:Songs_with_GoEar_audio" title="Category:Songs with GoEar audio">Songs with GoEar audio</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category hidden" data-name="Allmusic/Song" data-namespace="" data-outertag="" data-sortkey="" data-type="hidden">
+    <span class="name"><a href="/Category:Allmusic/Song" title="Category:Allmusic/Song">Allmusic/Song</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>   <li class="category hidden" data-name="MusicBrainz/Song" data-namespace="" data-outertag="" data-sortkey="" data-type="hidden">
+    <span class="name"><a href="/Category:MusicBrainz/Song" title="Category:MusicBrainz/Song">MusicBrainz/Song</a></span>
+    <ul class="toolbar">
+        <li class="tool editCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small edit" title=""></li>
+        <li class="tool removeCategory"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite-small delete" title=""></li>
+    </ul>
+</li>                           <li class="last">
+                    <button class="wikia-button secondary add" id="CategorySelectAdd" type="button">Add category</button>
+                    <input autocomplete="off" class="input" id="CategorySelectInput" name="CategorySelectInput" placeholder="Add category..." type="text">              </li>
+                    </ul>
+    </div>
+            <div class="toolbar">
+            <button class="wikia-button secondary cancel" id="CategorySelectCancel" type="button">Cancel</button>
+            <button class="wikia-button save" id="CategorySelectSave" type="button" disabled="disabled">Save</button>
+        </div>
+    </nav>                                  
+                
+                
+                <div id="WikiaArticleBottomAd" class="noprint">
+                    
+<!-- BEGIN SLOTNAME: PREFOOTER_LEFT_BOXAD -->
+<div id="PREFOOTER_LEFT_BOXAD" class="wikia-ad noprint default-height">
+    <script>
+        window.adslots2.push(["PREFOOTER_LEFT_BOXAD",null,"AdEngine2"]);
+    </script>
+</div>
+<!-- END SLOTNAME: PREFOOTER_LEFT_BOXAD -->
+
+                    
+<!-- BEGIN SLOTNAME: PREFOOTER_RIGHT_BOXAD -->
+<div id="PREFOOTER_RIGHT_BOXAD" class="wikia-ad noprint default-height">
+    <script>
+        window.adslots2.push(["PREFOOTER_RIGHT_BOXAD",null,"AdEngine2"]);
+    </script>
+</div>
+<!-- END SLOTNAME: PREFOOTER_RIGHT_BOXAD -->
+
+                </div>
+            </div>
+        </article><!-- WikiaMainContent -->
+
+                    <div id="WikiaRail" class="WikiaRail grid-2">
+
+    
+<form id="WikiaSearch" class="WikiaSearch" action="http://lyrics.wikia.com/Special:Search" method="get">
+    <input type="text" name="search" placeholder="Search this wiki" autocomplete="off" accesskey="f" value="">
+    <input type="hidden" name="fulltext" value="Search">
+            <input type="hidden" name="ns0" value="1">
+        <input type="hidden" name="ns14" value="1">
+        <input type="submit">
+    <button class="wikia-button"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite search" height="17" width="21">button>
+</form>
+
+<!-- BEGIN SLOTNAME: TOP_RIGHT_BOXAD -->
+<div id="TOP_RIGHT_BOXAD" class="wikia-ad noprint default-height">
+    <script>
+        window.adslots2.push(["TOP_RIGHT_BOXAD",null,"AdEngine2"]);
+    </script>
+</div>
+    <div class="SelfServeUrl">Advertisement | <a href="http://mediakit.wikia.com/wiki/Media_Kit_Wiki">Your ad here</a></div>
+<!-- END SLOTNAME: TOP_RIGHT_BOXAD -->
+
+<section class="LatestPhotosModule module" id="LatestPhotosModule">
+    <h1 class="tight">Photos</h1>
+    <a href="/Special:Upload" title="Add a photo to this wiki" class="wikia-button upphotos" rel="tooltip"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" height="0" width="0" class="sprite photo" /> Add a Photo</a>   <div class="tally counter">
+        <em>114,493</em><span class="">photos on this wiki</span>   </div>
+
+            <a href="#" class="previous"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="latest-images-left" height="0" width="0"></a>
+        <a href="#" class="next"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="latest-images-right" height="0" width="0"></a>
+    <div class="carousel-container">
+        <div>
+            <ul class="carousel">
+    
+        <li class="thumbs"><a class="image" href="/File:Glenn_Francisco.jpg">
+                        <img class="thumbimage" data-image-name="Glenn+Francisco.jpg" data-image-key="Glenn_Francisco.jpg" height="82" width="82" src="http://images4.wikia.nocookie.net/__cb62317/lyricwiki/images/thumb/c/c9/Glenn_Francisco.jpg/82px-61%2C422%2C0%2C360-Glenn_Francisco.jpg" />
+        </a>
+
+        <span class="thumbcaption">
+            by <a href="/User:Jknielsen2" title="User:Jknielsen2">Jknielsen2</a><br/>
+            <time class="timeago" datetime="2013-10-03T15:34:24Z">2013-10-03T15:34:24Z</time><br/>
+
+                    </span>
+        </li>
+    
+        <li class="thumbs"><a class="image" href="/File:Z9pzCqyuxLQ.jpg">
+                        <img class="thumbimage" data-image-name="Z9pzCqyuxLQ.jpg" data-image-key="Z9pzCqyuxLQ.jpg" height="82" width="82" src="http://images1.wikia.nocookie.net/__cb62317/lyricwiki/images/thumb/0/01/Z9pzCqyuxLQ.jpg/82px-0%2C401%2C0%2C400-Z9pzCqyuxLQ.jpg" />
+        </a>
+
+        <span class="thumbcaption">
+            by <a href="/User:Jknielsen2" title="User:Jknielsen2">Jknielsen2</a><br/>
+            <time class="timeago" datetime="2013-10-03T15:01:04Z">2013-10-03T15:01:04Z</time><br/>
+
+                        Posted in           <a href="/Niarn" title="Niarn" class="wikia-gallery-item-posted">Niarn</a>              </span>
+        </li>
+    
+        <li class="thumbs"><a class="image" href="/File:Silencer_(UK)_-_From_the_Thugs.jpg">
+                        <img class="thumbimage" data-image-name="Silencer+%28UK%29+-+From+the+Thugs.jpg" data-image-key="Silencer_%28UK%29_-_From_the_Thugs.jpg" height="82" width="82" src="http://images4.wikia.nocookie.net/__cb62317/lyricwiki/images/thumb/a/ad/Silencer_%28UK%29_-_From_the_Thugs.jpg/82px-0%2C501%2C0%2C500-Silencer_%28UK%29_-_From_the_Thugs.jpg" />
+        </a>
+
+        <span class="thumbcaption">
+            by <a href="/User:Senvaikis" title="User:Senvaikis">Senvaikis</a><br/>
+            <time class="timeago" datetime="2013-10-03T14:54:25Z">2013-10-03T14:54:25Z</time><br/>
+
+                        Posted in           <a href="/Silencer_(UK)" title="Silencer (UK)" class="wikia-gallery-item-posted">Silencer (UK)</a>              </span>
+        </li>
+    
+        <li class="thumbs"><a class="image" href="/File:Silencer_(UK)_-_Oldie_Dedications.jpg">
+                        <img class="thumbimage" data-image-name="Silencer+%28UK%29+-+Oldie+Dedications.jpg" data-image-key="Silencer_%28UK%29_-_Oldie_Dedications.jpg" height="82" width="82" src='data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D' data-src="http://images2.wikia.nocookie.net/__cb62317/lyricwiki/images/thumb/b/b7/Silencer_%28UK%29_-_Oldie_Dedications.jpg/82px-0%2C501%2C0%2C500-Silencer_%28UK%29_-_Oldie_Dedications.jpg" />
+        </a>
+
+        <span class="thumbcaption">
+            by <a href="/User:Lwt" title="User:Lwt">Lwt</a><br/>
+            <time class="timeago" datetime="2013-10-03T13:48:03Z">2013-10-03T13:48:03Z</time><br/>
+
+                        Posted in           <a href="/Silencer_(UK)" title="Silencer (UK)" class="wikia-gallery-item-posted">Silencer (UK)</a>              </span>
+        </li>
+    
+        <li class="thumbs"><a class="image" href="/File:Innosense(GRE).jpg">
+                        <img class="thumbimage" data-image-name="Innosense%28GRE%29.jpg" data-image-key="Innosense%28GRE%29.jpg" height="82" width="82" src='data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D' data-src="http://images2.wikia.nocookie.net/__cb62317/lyricwiki/images/thumb/8/84/Innosense%28GRE%29.jpg/82px-56%2C247%2C0%2C190-Innosense%28GRE%29.jpg" />
+        </a>
+
+        <span class="thumbcaption">
+            by <a href="/User:Valaruko" title="User:Valaruko">Valaruko</a><br/>
+            <time class="timeago" datetime="2013-10-03T13:28:34Z">2013-10-03T13:28:34Z</time><br/>
+
+                        Posted in           <a href="/Innosense_(GRE)" title="Innosense (GRE)" class="wikia-gallery-item-posted">Innosense (GRE)</a>                </span>
+        </li>
+    
+        <li class="thumbs"><a class="image" href="/File:Silencer_-_Death_-_Pierce_Me.jpg">
+                        <img class="thumbimage" data-image-name="Silencer+-+Death+-+Pierce+Me.jpg" data-image-key="Silencer_-_Death_-_Pierce_Me.jpg" height="82" width="82" src='data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D' data-src="http://images1.wikia.nocookie.net/__cb62317/lyricwiki/images/thumb/9/93/Silencer_-_Death_-_Pierce_Me.jpg/82px-0%2C501%2C0%2C500-Silencer_-_Death_-_Pierce_Me.jpg" />
+        </a>
+
+        <span class="thumbcaption">
+            by <a href="/User:Lwt" title="User:Lwt">Lwt</a><br/>
+            <time class="timeago" datetime="2013-10-03T13:27:33Z">2013-10-03T13:27:33Z</time><br/>
+
+                        Posted in           <a href="/Silencer" title="Silencer" class="wikia-gallery-item-posted">Silencer</a>             </span>
+        </li>
+    
+        <li class="thumbs"><a class="image" href="/File:Innosense_(GRE)_-_Outcast.jpg">
+                        <img class="thumbimage" data-image-name="Innosense+%28GRE%29+-+Outcast.jpg" data-image-key="Innosense_%28GRE%29_-_Outcast.jpg" height="82" width="82" src='data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D' data-src="http://images2.wikia.nocookie.net/__cb62317/lyricwiki/images/thumb/d/d2/Innosense_%28GRE%29_-_Outcast.jpg/82px-0%2C181%2C0%2C180-Innosense_%28GRE%29_-_Outcast.jpg" />
+        </a>
+
+        <span class="thumbcaption">
+            by <a href="/User:Valaruko" title="User:Valaruko">Valaruko</a><br/>
+            <time class="timeago" datetime="2013-10-03T13:25:51Z">2013-10-03T13:25:51Z</time><br/>
+
+                        Posted in           <a href="/Innosense_(GRE)" title="Innosense (GRE)" class="wikia-gallery-item-posted">Innosense (GRE)</a>                </span>
+        </li>
+    
+        <li class="thumbs"><a class="image" href="/File:Innosense_(GRE)_-_Life.jpg">
+                        <img class="thumbimage" data-image-name="Innosense+%28GRE%29+-+Life.jpg" data-image-key="Innosense_%28GRE%29_-_Life.jpg" height="82" width="82" src='data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D' data-src="http://images4.wikia.nocookie.net/__cb62317/lyricwiki/images/thumb/e/e3/Innosense_%28GRE%29_-_Life.jpg/82px-0%2C321%2C0%2C320-Innosense_%28GRE%29_-_Life.jpg" />
+        </a>
+
+        <span class="thumbcaption">
+            by <a href="/User:Valaruko" title="User:Valaruko">Valaruko</a><br/>
+            <time class="timeago" datetime="2013-10-03T13:25:03Z">2013-10-03T13:25:03Z</time><br/>
+
+                        Posted in           <a href="/Innosense_(GRE)" title="Innosense (GRE)" class="wikia-gallery-item-posted">Innosense (GRE)</a>                </span>
+        </li>
+    
+        <li class="thumbs"><a class="image" href="/File:Classix_Nouveaux_-_Classics.jpg">
+                        <img class="thumbimage" data-image-name="Classix+Nouveaux+-+Classics.jpg" data-image-key="Classix_Nouveaux_-_Classics.jpg" height="82" width="82" src='data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D' data-src="http://images4.wikia.nocookie.net/__cb62317/lyricwiki/images/thumb/6/66/Classix_Nouveaux_-_Classics.jpg/82px-0%2C501%2C0%2C500-Classix_Nouveaux_-_Classics.jpg" />
+        </a>
+
+        <span class="thumbcaption">
+            by <a href="/User:Lwt" title="User:Lwt">Lwt</a><br/>
+            <time class="timeago" datetime="2013-10-03T13:19:19Z">2013-10-03T13:19:19Z</time><br/>
+
+                        Posted in           <a href="/Classix_Nouveaux" title="Classix Nouveaux" class="wikia-gallery-item-posted">Classix Nouveaux</a>,&nbsp;<a href="/File:Classix_Nouveaux_-_Classics.jpg#filelinks" class="wikia-gallery-item-more">more...</a>             </span>
+        </li>
+    
+        <li class="thumbs"><a class="image" href="/File:Sotke_mut.jpg">
+                        <img class="thumbimage" data-image-name="Sotke+mut.jpg" data-image-key="Sotke_mut.jpg" height="82" width="82" src='data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D' data-src="http://images1.wikia.nocookie.net/__cb62317/lyricwiki/images/thumb/0/05/Sotke_mut.jpg/82px-4%2C500%2C0%2C495-Sotke_mut.jpg" />
+        </a>
+
+        <span class="thumbcaption">
+            by <a href="/User:Berryfabraypierce" title="User:Berryfabraypierce">Berryfabraypierce</a><br/>
+            <time class="timeago" datetime="2013-10-03T13:01:53Z">2013-10-03T13:01:53Z</time><br/>
+
+                        Posted in           <a href="/Sanni" title="Sanni" class="wikia-gallery-item-posted">Sanni</a>              </span>
+        </li>
+    
+        <li class="thumbs"><a class="image" href="/File:Di-Rect_-_Inside_My_Head.jpg">
+                        <img class="thumbimage" data-image-name="Di-Rect+-+Inside+My+Head.jpg" data-image-key="Di-Rect_-_Inside_My_Head.jpg" height="82" width="82" src='data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D' data-src="http://images1.wikia.nocookie.net/__cb62317/lyricwiki/images/thumb/2/21/Di-Rect_-_Inside_My_Head.jpg/82px-0%2C501%2C0%2C500-Di-Rect_-_Inside_My_Head.jpg" />
+        </a>
+
+        <span class="thumbcaption">
+            by <a href="/User:Lwt" title="User:Lwt">Lwt</a><br/>
+            <time class="timeago" datetime="2013-10-03T12:44:43Z">2013-10-03T12:44:43Z</time><br/>
+
+                        Posted in           <a href="/Di-Rect" title="Di-Rect" class="wikia-gallery-item-posted">Di-Rect</a>,&nbsp;<a href="/File:Di-Rect_-_Inside_My_Head.jpg#filelinks" class="wikia-gallery-item-more">more...</a>               </span>
+        </li>
+                <li class="see-all">
+            <a href="/Special:NewFiles" title="Special:NewFiles">See all photos</a>     </li>
+                </ul>
+        </div>
+    </div>
+    <a href="/Special:NewFiles" title="Special:NewFiles" class="more">See all photos ></a>
+
+</section>
+
+<!-- BEGIN SLOTNAME: MIDDLE_RIGHT_BOXAD -->
+<div id="MIDDLE_RIGHT_BOXAD" class="wikia-ad noprint default-height">
+    <script>
+        window.adslots2.push(["MIDDLE_RIGHT_BOXAD",null,"AdEngine2"]);
+    </script>
+</div>
+<!-- END SLOTNAME: MIDDLE_RIGHT_BOXAD -->
+
+<section class="WikiaActivityModule module" id="WikiaRecentActivity">
+    <h1 class="activity-heading">Recent Wiki Activity</h1>
+    <ul>
+        <li>
+            <img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite edit" height="20" width="20">
+            <em><a href="/The_Maranatha!_Singers:Psalm_5_(Give_Ear_To_My_Words)">The Maranatha! Singers:Psalm 5 (Give Ear To My Words)</a></em>
+            <div class="edited-by">edited by <a href="/User:Arwen4CJ">Arwen4CJ</a> 43 seconds ago</div>
+        </li>
+        <li>
+            <img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite new" height="20" width="20">
+            <em><a href="/Silencer:Talk_To_You">Silencer:Talk To You</a></em>
+            <div class="edited-by">created by <a href="/User:Senvaikis">Senvaikis</a> 1 minute ago</div>
+        </li>
+        <li>
+            <img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite edit" height="20" width="20">
+            <em><a href="/Broadway_Musicals">Broadway Musicals</a></em>
+            <div class="edited-by">edited by <a href="/User:Lichtweber">Lichtweber</a> 1 minute ago</div>
+        </li>
+        <li>
+            <img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite edit" height="20" width="20">
+            <em><a href="/Silencer_(UK)">Silencer (UK)</a></em>
+            <div class="edited-by">edited by <a href="/User:Senvaikis">Senvaikis</a> 4 minutes ago</div>
+        </li>
+    </ul>
+
+            <a href="/Special:WikiActivity" title="Special:WikiActivity" class="more">See more ></a>    </section>
+<section class="ChatModule module ChatModuleUninitialized">
+    <div class="chat-contents">
+        <h1 class="chat-headline">
+            <span class="chat-live" data-msg-id="chat-live2"> </span>
+            <span class="chat-total"> </span>
+        </h1>
+        <p class="chat-name"> </p>
+        <div class="chat-join">
+            <button onclick="ChatEntryPoint.onClickChatButton('/Special:Chat')"> </button>
+        </div>
+        <div class="chat-whos-here">
+            <span class="arrow-left"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" /></span>
+            <span class="arrow-right"><img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" /></span>
+            <div class="carousel-container">
+                <div>
+                    <ul class="carousel">
+                        <li class="chatter">
+                            <img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" data-user-attr="data-src" data-user-prop="avatarUrl" class="avatar" width="32" height="32" />
+                            <div class="UserStatsMenu">
+                                <div class="info">
+                                    <img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" data-user-attr="data-src" data-user-prop="avatarUrl" class="avatar" width="24" height="24" />
+                                    <ul>
+                                        <li class="username" data-user-prop="username"> </li>
+                                        <li class="edits" data-msg-id="chat-edit-count" data-user-attr="data-msg-param" data-user-prop="editCount"> </li>
+                                        <li class="since" data-msg-id="chat-member-since" data-user-attr="data-msg-param" data-user-prop="since"> </li>
+                                    </ul>
+                                </div>
+                                <div class="actions">
+                                    <ul class="regular-actions">
+                                        <li class="profilepage talk-page">
+                                            <a data-user-attr="href" data-user-prop="profileUrl">
+                                                <span class="icon">&nbsp;</span>
+                                                <span class="label" data-msg-id="chat-user-menu-talk-page"></span>
+                                            </a>
+                                        </li>
+                                        <li class="contribs">
+                                            <a data-user-attr="href" data-user-prop="contribsUrl">
+                                                <span class="icon">&nbsp;</span>
+                                                <span class="label" data-msg-id="chat-user-menu-contribs"> </span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                    <img src="" class="avatar currentUser" width="32" height="32" />
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- BEGIN SLOTNAME: LEFT_SKYSCRAPER_2 -->
+<div id="LEFT_SKYSCRAPER_2" class="wikia-ad noprint default-height">
+    <script>
+        window.adslots2.push(["LEFT_SKYSCRAPER_2",null,"AdEngine2"]);
+    </script>
+</div>
+<!-- END SLOTNAME: LEFT_SKYSCRAPER_2 -->
+
+    <div id="WikiaAdInContentPlaceHolder"></div>
+
+</div>
+        
+        <footer id="WikiaFooter" class="WikiaFooter notoolbar">
+    
+<!-- BEGIN SLOTNAME: LEFT_SKYSCRAPER_3 -->
+<div id="LEFT_SKYSCRAPER_3" class="wikia-ad noprint default-height">
+    <script>
+        window.adslots2.push(["LEFT_SKYSCRAPER_3",null,"AdEngine2"]);
+    </script>
+</div>
+<!-- END SLOTNAME: LEFT_SKYSCRAPER_3 -->
+
+    
+    <section>
+    <div class="header-container">
+        <h1>Around Wikia's network</h1>
+        <a id="WikiaRandomWiki" href="http://community.wikia.com/wiki/Special:RandomWiki/43339" class="wikia-button">Random Wiki</a>
+    </div>
+    <script type='text/javascript'>
+        wgAfterContentAndJS.push(function() {
+            window.OpenXSPC = {};
+            window.OpenXSPC[ 'fillElem_SPOTLIGHT_FOOTER' ] = function() {
+                var output = window.OA_output || [];
+                ( 14 in output ) && $( '#SPOTLIGHT_FOOTER_1' ).html( output[ 14 ] );
+                ( 15 in output ) && $( '#SPOTLIGHT_FOOTER_2' ).html( output[ 15 ] );
+                ( 16 in output ) && $( '#SPOTLIGHT_FOOTER_3' ).html( output[ 16 ] );
+            };
+        });
+    </script>
+    <ul id="SPOTLIGHT_FOOTER" class="LazyLoadAd SPOTLIGHT_FOOTER">
+        <li class="WikiaSpotlight item-1" id="SPOTLIGHT_FOOTER_1"></li>
+        <li class="WikiaSpotlight item-2" id="SPOTLIGHT_FOOTER_2"></li>
+        <li class="WikiaSpotlight item-3" id="SPOTLIGHT_FOOTER_3"></li>
+    </ul>
+</section>
+</footer>
+                <footer class="CorporateFooter">
+    <nav>
+        <h1>Wikia Inc Navigation</h1>
+        <div class="WikiaHubBranding HubBrandingBlackBackground">
+            <div class="wordmark">
+                <img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="sprite logo3">
+            </div>
+                            <div class="hub"><a class="hub3" href="http://www.wikia.com/Entertainment">[ Entertainment ]</a></div>
+                    </div>
+        <ul>
+            <li>
+                            <a href="http://www.wikia.com/About"><span>About</span></a>
+                        </li>
+                <li>
+                            <a href="http://www.community.wikia.com"><span>Community Central</span></a>
+                        </li>
+                <li>
+                            <a href="http://www.wikia.com/Careers">Careers</a>
+                        </li>
+                <li>
+                            <a href="http://www.wikia.com/Advertising">Advertise</a>
+                        </li>
+                <li>
+                            <a href="http://api.wikia.com/"><span>API</span></a>
+                        </li>
+                <li>
+                            <a href="/Special:Contact">Contact Wikia</a>
+                        </li>
+                <li>
+                            <a href="http://www.wikia.com/Terms_of_Use">Terms of Use<span style="color: #ff0000"> (Updated)</span></a>
+                        </li>
+                <li>
+                            <a href="http://www.wikia.com/Privacy_Policy">Privacy Policy</a>
+                        </li>
+                <li>
+            Content is available under <a href="/LyricWiki:Copyrights" title="LyricWiki:Copyrights">Copyright</a>.          </li>
+            </ul>
+    </nav>
+</footer>
+    </div>
+</section><!--WikiaPage-->
+
+            <div id="WikiaBarWrapper" class="WikiaBarWrapper hidden">
+                <div class="wikia-bar wikia-bar-anon">
+            <a href="#" class="arrow" data-tooltip="Collapse" data-tooltipshow="Show"></a>
+            <div class="ad">
+        <div id="WIKIA_BAR_BOXAD_1" class="noprint" style="width: 300px; position: relative;"></div>
+</div>
+<div
+    class="message"
+    data-messagetooltip="Click here for more information!"
+    data-wikiabarcontent="[{&quot;text&quot;:&quot;Create a Samurai Animanga Story with other authors!&quot;,&quot;href&quot;:&quot;http:\/\/animanga.wikia.com\/wiki\/Collaborative_Writing_Project:_The_Fading_Light:_A_Tale_of_Zan&quot;},{&quot;text&quot;:&quot;Create a Samurai Animanga Story with other authors!&quot;,&quot;href&quot;:&quot;http:\/\/animanga.wikia.com\/wiki\/Collaborative_Writing_Project:_The_Fading_Light:_A_Tale_of_Zan&quot;},{&quot;text&quot;:&quot;Create a Samurai Animanga Story with other authors!&quot;,&quot;href&quot;:&quot;http:\/\/animanga.wikia.com\/wiki\/Collaborative_Writing_Project:_The_Fading_Light:_A_Tale_of_Zan&quot;},{&quot;text&quot;:&quot;Create a Samurai Animanga Story with other authors!&quot;,&quot;href&quot;:&quot;http:\/\/animanga.wikia.com\/wiki\/Collaborative_Writing_Project:_The_Fading_Light:_A_Tale_of_Zan&quot;},{&quot;text&quot;:&quot;Create a Samurai Animanga Story with other authors!&quot;,&quot;href&quot;:&quot;http:\/\/animanga.wikia.com\/wiki\/Collaborative_Writing_Project:_The_Fading_Light:_A_Tale_of_Zan&quot;}]"
+></div>
+    <a class="wikiabar-button" href="http://www.wikia.com/Entertainment" data-index="0">
+        <img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="icon cup" />
+        <span>Entertainment</span>
+    </a>
+    <a class="wikiabar-button" href="http://www.wikia.com/Video_Games" data-index="1">
+        <img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="icon cup" />
+        <span>Video Games</span>
+    </a>
+    <a class="wikiabar-button" href="http://www.wikia.com/Lifestyle" data-index="2">
+        <img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D" class="icon cup" />
+        <span>Lifestyle</span>
+    </a>
+        </div>
+            </div>
+    <div class="WikiaBarCollapseWrapper">
+        <a href="#" class="wikia-bar-collapse" data-tooltip="Collapse"></a>
+    </div>
+
+
+<!-- BEGIN SLOTNAME: GPT_FLUSH -->
+<div id="GPT_FLUSH" class="wikia-ad noprint default-height">
+    <script>
+        window.adslots2.push(["GPT_FLUSH",null,"AdEngine2"]);
+    </script>
+</div>
+<!-- END SLOTNAME: GPT_FLUSH -->
+
+
+<!-- BEGIN SLOTNAME: INVISIBLE_1 -->
+<div id="INVISIBLE_1" class="wikia-ad noprint default-height">
+    <script>
+        window.adslots2.push(["INVISIBLE_1",null,"AdEngine2"]);
+    </script>
+</div>
+<!-- END SLOTNAME: INVISIBLE_1 -->
+
+
+<!-- BEGIN SLOTNAME: INVISIBLE_2 -->
+<div id="INVISIBLE_2" class="wikia-ad noprint default-height">
+    <script>
+        window.adslots2.push(["INVISIBLE_2",null,"AdEngine2"]);
+    </script>
+</div>
+<!-- END SLOTNAME: INVISIBLE_2 -->
+
+
+    <!--[if lt IE 8]>
+        <script src="http://slot1.images.wikia.nocookie.net/__cb62315/common/resources/wikia/libraries/json2/json2.js"></script>
+    <![endif]-->
+
+    <!--[if lt IE 9]>
+        <script src="http://slot1.images.wikia.nocookie.net/__cb62315/common/resources/wikia/libraries/html5/html5.min.js"></script>
+    <![endif]-->
+
+    <!-- Combined JS files and head scripts -->
+    
+<!-- Liftium options -->
+<script>LiftiumOptions = {"pubid":999,"baseUrl":"\/__varnish_liftium\/","kv_wgDBname":"lyricwiki","kv_article_id":20865,"kv_wpage":"The_Beatles:Lady_Madonna","kv_Hub":"Music","kv_skin":"oasis","kv_user_lang":"en","kv_cont_lang":"en","kv_isMainPage":false,"kv_page_type":"article","geoUrl":"http:\/\/geoiplookup.wikia.com\/","kv_dart":"age=13-17;age=18-34;eth=hisp;hhi=0-30","kv_domain":"lyrics.wikia.com","hasMoreCalls":true,"isCalledAfterOnload":true,"maxLoadDelay":6000};
+</script>
+<script src="http://lyrics.wikia.com/__load/-/cb%3D62315%26debug%3Dfalse%26lang%3Den%26only%3Dscripts%26skin%3Doasis/startup"></script>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"The_Beatles:Lady_Madonna","wgTitle":"The Beatles:Lady Madonna","wgCurRevisionId":15736723,"wgArticleId":20865,"wgIsArticle":true,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Song","Gold Songs","Covered","YouTube/Song","Song Of The Day","Number-One Hits","Number-One Hits by Song","Number-One Hits in the United Kingdom","Number-One Hits in Austria","Number-One Hits in Switzerland","Wikipedia articles/Song","Songs L","Language/English","ITunes/Song","Songs with GoEar audio","Allmusic/Song","MusicBrainz/Song"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgRelevantPageName":"The_Beatles:Lady_Madonna","wgRestrictionEdit":[],"wgRestrictionMove":[],"wgSearchNamespaces":[0,220],"wgTimeAgoi18n":{"year":"a year ago","years":"%d years ago","month":"a month ago","months":"%d months ago","day":"a day ago","days":"%d days ago","hour":"an hour ago","hours":"%d hours ago","minute":"a minute ago","minutes":"%d minutes ago","seconds":"a minute ago","year-from-now":"\x26lt;timeago-year-from-now\x26gt;","years-from-now":"\x26lt;timeago-year-from-now\x26gt;","month-from-now":"a month from now","months-from-now":"%d months from now","day-from-now":"a day from now","days-from-now":"%d days from now","hour-from-now":"an hour from now","hours-from-now":"%d hours from now","minute-from-now":"a minute from now","minutes-from-now":"%d minutes from now","second-from-now":"a minute from now","seconds-from-now":"a minute from now"},"sassParams":{"background-align":"center","background-fixed":"false","background-image":"http://images3.wikia.nocookie.net/__cb7/lyricwiki/images/5/50/Wiki-background","background-image-height":"60","background-image-width":"1920","background-tiled":"true","color-body":"#fff","color-buttons":"#006cb0","color-header":"#3a5766","color-links":"#006cb0","color-page":"#ffffff","page-opacity":"100","widthType":3},"wgAssetsManagerQuery":"/__am/%4$d/%1$s/%3$s/%2$s","wgCdnRootUrl":"http://slot1.images.wikia.nocookie.net","wgEnableAdsInContent":1,"wgEnableAdMeldAPIClientPixels":true,"wgEnableOpenXSPC":true,"wgAdDriverCookieLifetime":1,"wgHighValueCountries":{"AU":3,"BR":3,"BE":3,"DE":3,"CA":3,"FI":3,"FR":3,"GB":3,"NL":3,"NO":3,"SE":3,"DK":3,"ES":3,"UK":3,"US":3,"IT":3,"SA":3,"RU":3,"CZ":3,"GR":3,"HU":3,"PT":3,"PL":3,"TR":3,"UA":6},"wgAdDriverUseExpiryStorage":true,"wgCatId":16,"wgParentCatId":0,"wgBlankImgUrl":"data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAQAICTAEAOw%3D%3D","wgPrivateTracker":true,"wgMainpage":"Lyrics Wiki","wgIsContentNamespace":true,"themename":"oasis","wgExtensionsPath":"http://slot1.images.wikia.nocookie.net/__cb62315/common/extensions","wgResourceBasePath":"http://slot1.images.wikia.nocookie.net/__cb62315/common","wgSitename":"LyricWiki","wgMWrevId":false,"wgRevisionId":15736723,"wgCookieDomain":".wikia.com","wgCookiePath":"/","wgEnableWikiaPhotoGalleryExt":true,"wgOasisGrid":true,"wgEnableUserLoginExt":true,"wgEnableLightboxExt":true,"wgShowAdModalInterstitialTimes":3,"wgEnableWikiaFollowedPages":true,"wgFollowedPagesPagerLimit":15,"wgFollowedPagesPagerLimitAjax":600,"wgWikiaChatUsers":"","wgWikiaChatWindowFeatures":"width=600,height=600,menubar=no,status=no,location=no,toolbar=no,scrollbars=no,resizable=yes","wgEnableWikiaBarExt":true,"wgEnableWikiaBarAds":true,"wgWikiaBarMainLanguages":["en","de","es","fr"],"wgOasisResponsive":false,"WikiaEnableNewCreatepage":true,"ContentNamespacesText":["","Gracenote","LyricFind"],"wgCategoryTreePageCategoryOptions":"{\"mode\":0,\"hideprefix\":20,\"showcount\":true,\"namespaces\":false}","fbAppId":"112328095453510","fbScript":"http://connect.facebook.net/en_US/all.js","fbUseMarkup":true,"fbLogo":true,"fbLogoutURL":"/Special:UserLogout?returnto=The_Beatles:Lady_Madonna","fbReturnToTitle":"The_Beatles:Lady_Madonna","fbScriptLangCode":"en_US","wgCategorySelect":{"defaultNamespace":"Category","defaultNamespaces":"Category","defaultSeparator":":","defaultSortKey":"The Beatles:Lady Madonna"}});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($){mw.user.options.set({"ccmeonemails":0,"cols":80,"date":"default","diffonly":0,"disablemail":0,"disablesuggest":0,"editfont":"default","editondblclick":0,"editsection":1,"editsectiononrightclick":0,"enotifminoredits":1,"enotifrevealaddr":0,"enotifusertalkpages":1,"enotifwatchlistpages":1,"extendwatchlist":0,"externaldiff":0,"externaleditor":0,"fancysig":0,"forceeditsummary":0,"gender":"unknown","hideminor":0,"hidepatrolled":0,"highlightbroken":1,"imagesize":1,"justify":0,"math":0,"minordefault":0,"newpageshidepatrolled":0,"nocache":0,"noconvertlink":0,"norollbackdiff":0,"numberheadings":0,"previewonfirst":0,"previewontop":1,"quickbar":5,"rcdays":7,"rclimit":50,"rememberpassword":0,"rows":25,"searchlimit":20,"showhiddencats":0,"showjumplinks":1,"shownumberswatching":1,"showtoc":1,"showtoolbar":1,"skin":"oasis","stubthreshold":0,"thumbsize":2,"underline":2,"uselivepreview":0,"usenewrc":1,"watchcreations":1,"watchdefault":1,"watchdeletion":1,
+"watchlistdays":3,"watchlisthideanons":0,"watchlisthidebots":0,"watchlisthideliu":0,"watchlisthideminor":0,"watchlisthideown":0,"watchlisthidepatrolled":0,"watchmoves":0,"wllimit":250,"htmlemails":1,"watchlistdigest":1,"enablerichtext":1,"variant":"en","language":"en","searchNs0":true,"searchNs1":false,"searchNs2":false,"searchNs3":false,"searchNs4":false,"searchNs5":false,"searchNs6":false,"searchNs7":false,"searchNs8":false,"searchNs9":false,"searchNs10":false,"searchNs11":false,"searchNs12":false,"searchNs13":false,"searchNs14":false,"searchNs15":false,"searchNs110":false,"searchNs111":false,"searchNs112":false,"searchNs113":false,"searchNs220":true,"searchNs221":false,"searchNs222":false,"searchNs500":false,"searchNs501":false,"searchNs502":false,"searchNs503":false,"searchNs700":false,"searchNs701":false,"searchNs1200":false,"searchNs1201":false,"searchNs1202":false,"userlandingpage":1});;},{},{});mw.loader.implement("user.tokens",function($){mw.user.tokens.set({"editToken":"+\\",
+"watchToken":false});;},{},{});
+
+/* cache key: lyricwiki:resourceloader:filter:minify-js:7:c427c618cc297da8d80d6da04f495ab5 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","amd.shared","mediawiki.user","mediawiki.page.ready","mediawiki.legacy.mwsuggest"]);
+}</script>  <meta property="fb:app_id" content="112328095453510" prefix="fb: http://www.facebook.com/2008/fbml" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="LyricWiki" />
+    <meta property="og:title" content="The Beatles:Lady Madonna" />
+    <meta property="og:image" content="http://images1.wikia.nocookie.net/__cb20130124115959/lyricwiki/images/0/04/Beatles.jpg" />
+    <meta property="og:description" content="The Beatles This song is performed by The Beatles and appears on the compilation album Hey Jude..." />
+    <meta property="og:url" content="http://lyrics.wikia.com/The_Beatles:Lady_Madonna" />
+<script type="text/javascript">
+    var wsl_assets = {"oasis_shared_js":["http:\/\/slot1.images.wikia.nocookie.net\/__am\/62315\/groups\/-\/oasis_shared_core_js,adengine2_js,oasis_shared_js,oasis_anon_js"],"oasis_nojquery_shared_js":["http:\/\/slot1.images4.wikia.nocookie.net\/__am\/62315\/group\/-\/oasis_nojquery_shared_js_anon"],"references":["\/wikia.php?controller=JSMessages&method=getMessages&format=html&packages=ConfirmModal%2CImagePlaceholder%2COasis-generic%2CVideoEmbedTool&uselang=en&cb=62315.0.63301","http:\/\/slot1.images3.wikia.nocookie.net\/__am\/62315\/one\/minify%3D1\/skins\/oasis\/js\/GlobalHeader.js"]};
+    var toload = wsl_assets.oasis_shared_js.concat(wsl_assets.references);
+
+    (function(){ wsl.loadScript(toload); })();
+</script>
+<script type="text/javascript">/*<![CDATA[*/ Wikia.LazyQueue.makeQueue(wgAfterContentAndJS, function(fn) {fn();}); wgAfterContentAndJS.start(); /*]]>*/</script>
+
+
+<script src="http://lyrics.wikia.com/__load/-/cb%3D62315%26debug%3Dfalse%26lang%3Den%26only%3Dscripts%26skin%3Doasis/site"></script>
+<script>if (JSSnippetsStack.length) $.getScript('http://slot1.images3.wikia.nocookie.net/__am/62315/one/minify%3D1/extensions/wikia/JSSnippets/js/JSSnippets.js');</script><!-- Facebook integration -->
+<div id="fb-root"></div>
+</body>
+
+<!-- Served by ap-s20 in 0.258 secs. -->
+
+</html>

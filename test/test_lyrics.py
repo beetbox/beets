@@ -3,6 +3,7 @@
 
 """Tests for the 'lyrics' plugin"""
 
+import os
 import _common
 from _common import unittest
 import _lyricstext
@@ -10,6 +11,8 @@ from beetsplug import lyrics
 from beets import config
 from beets.util import confit
 from bs4 import BeautifulSoup
+from nose.tools import nottest
+from nose.plugins.attrib import attr
 
 try:
     googlekey = config['lyrics']['google_API_key'].get(unicode)
@@ -18,6 +21,25 @@ except confit.NotFoundError :
 
 # default query for tests
 definfo = dict(artist=u'The Beatles',title=u'Lady Madonna')
+
+
+class MockFetchUrl(object):
+    def __init__(self, pathval='fetched_path'):
+        self.pathval = pathval
+        self.fetched = None
+    def __call__(self, url, filename=None):
+        self.fetched = url
+        url = url.replace('http://','').replace('www.','')
+        fn = "".join(x for x in url if (x.isalnum() or x == '/'))
+        fn = fn.split('/')
+        fn = os.path.join('rsrc', 'lyrics', fn[0], fn[-1])+'.txt'
+        try:
+            with open(fn, 'r') as f:
+                content = f.read()
+        except IOError as e:
+            print ('%s %s fail' % (url,fn))
+            content = ''
+        return content
 
 
 def is_lyrics_content_ok(title, text):
@@ -32,6 +54,7 @@ def is_lyrics_content_ok(title, text):
         return (ratio > .5 and ratio < 2)
     return False
 
+
 class LyricsPluginTest(unittest.TestCase):
     def setUp(self):
         """Set up configuration"""
@@ -40,11 +63,26 @@ class LyricsPluginTest(unittest.TestCase):
     def test_default_ok(self):
         """Test each lyrics engine with the default query"""
 
-        self.assertNotEqual(lyrics.fetch_lyricswiki(definfo['artist'], definfo['title']), None)
-        self.assertNotEqual(lyrics.fetch_lyricscom(definfo['artist'], definfo['title']), None)
-        if googlekey:
-            self.assertNotEqual(lyrics.fetch_google(definfo['artist'], definfo['title']), None)
+        lyrics.fetch_url = MockFetchUrl()
 
+        for f in (lyrics.fetch_lyricswiki, lyrics.fetch_lyricscom):
+            res = f(definfo['artist'], definfo['title'])
+            self.assertTrue(lyrics.is_lyrics(res))
+            self.assertTrue(is_lyrics_content_ok(definfo['title'], res))
+
+    def test_remove_featuring_artist(self):
+        self.assertEqual(lyrics.remove_featuring_artist('Bob featuring Marcia'), 'Bob')
+        self.assertEqual(lyrics.remove_featuring_artist('Bob feat Marcia'), 'Bob')
+        self.assertEqual(lyrics.remove_featuring_artist('Bob and Marcia'), 'Bob')
+        self.assertEqual(lyrics.remove_featuring_artist('Bob feat. Marcia'), 'Bob')
+        self.assertEqual(lyrics.remove_featuring_artist('Bob & Marcia'), 'Bob')
+        self.assertEqual(lyrics.remove_featuring_artist('Bob feats Marcia'), 'Bob feats Marcia')
+
+    def test_missing_lyrics(self):
+        for msg in _lyricstext.missing_texts:
+            self.assertFalse(lyrics.is_lyrics(msg), msg)
+
+@attr('slow')   
 class LyricsScrapingPluginTest(unittest.TestCase):
 
     # Every source entered in default beets google custom search engine
@@ -52,6 +90,19 @@ class LyricsScrapingPluginTest(unittest.TestCase):
     # Use default query when possible, or override artist and title field
     # if website don't have lyrics for default query.
     sourcesOk = [  \
+        dict(definfo, url=u'http://www.smartlyrics.com', 
+            path=u'/Song18148-The-Beatles-Lady-Madonna-lyrics.aspx'),
+        dict(definfo, url=u'http://www.elyricsworld.com', 
+            path=u'/lady_madonna_lyrics_beatles.html'),
+     #   dict(artist=u'Beres Hammond',title=u'I could beat myself',
+     #       url=u'http://www.reggaelyrics.info', 
+     #       path=u'/beres-hammond/i-could-beat-myself/'),
+  #      dict(artist=u'Beres Hammond',title=u'I could beat myself',
+  #          url=u'http://www.jah-lyrics.com',
+  #          path='/index.php?songid=5632'),
+        dict(definfo, artist=u'Lilly Wood & the prick',title=u"Hey it's ok",
+            url=u'http://www.lyricsmania.com',
+            path=u'/hey_its_ok_lyrics_lilly_wood_and_the_prick.html'),
         dict(definfo, artist=u'Lilly Wood & the prick',title=u"Hey it's ok",
             url=u'http://www.paroles.net/',
             path=u'lilly-wood-the-prick/paroles-hey-it-s-ok'),
@@ -62,25 +113,13 @@ class LyricsScrapingPluginTest(unittest.TestCase):
             path=u'/761696.The%20Beatles%20-%20Lady%20Madonna.html'),  
         dict(definfo, url=u'http://www.lyrics007.com', 
             path=u'/The%20Beatles%20Lyrics/Lady%20Madonna%20Lyrics.html'),   
-        dict(definfo, url=u'http://lyrics.wikia.com', 
-            path=u'/The_Beatles:Lady_Madonna'),  
+   #     dict(definfo, url=u'http://lyrics.wikia.com', 
+   #         path=u'/The_Beatles:Lady_Madonna'),  
         dict(definfo, url=u'http://www.absolutelyrics.com', 
             path=u'/lyrics/view/the_beatles/lady_madonna'),
         dict(definfo, url=u'http://www.azlyrics.com/', 
             path=u'/lyrics/beatles/ladymadonna.html'),
-        dict(definfo, url=u'http://www.smartlyrics.com', 
-            path=u'/Song18148-The-Beatles-Lady-Madonna-lyrics.aspx'),
-        dict(definfo, url=u'http://www.elyricsworld.com', 
-            path=u'/lady_madonna_lyrics_beatles.html'),
-        dict(artist=u'Beres Hammond',title=u'I could beat myself',
-            url=u'http://www.reggaelyrics.info', 
-            path=u'/beres-hammond/i-could-beat-myself/'),
-        dict(artist=u'Beres Hammond',title=u'I could beat myself',
-            url=u'http://www.jah-lyrics.com',
-            path='/index.php?songid=5632'),
-        dict(definfo, artist=u'Lilly Wood & the prick',title=u"Hey it's ok",
-            url=u'http://www.lyricsmania.com',
-            path=u'/hey_its_ok_lyrics_lilly_wood_and_the_prick.html'),
+
               ]  
 
     # Websites that can't be scraped yet and whose results must be 
@@ -105,7 +144,7 @@ class LyricsScrapingPluginTest(unittest.TestCase):
             url=u'http://www.lacoccinelle.net', 
             path=u'/paroles-officielles/550512.html'),
         ]
-
+    
     def test_sources_ok(self):
         for s in self.sourcesOk:
             url = s['url']+s['path']
@@ -113,39 +152,27 @@ class LyricsScrapingPluginTest(unittest.TestCase):
             self.assertTrue(lyrics.is_lyrics(res), url)
             self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
 
+
     def test_sources_fail(self):
         for s in self.sourcesFail:
             url = s['url']+s['path']
             res = lyrics.scrape_lyrics_from_url(url)
+            print 'res is %s' % res
             # very unlikely these sources pass if the scraping algo is not
             # tweaked on purpose for these cases
             self.assertFalse(lyrics.is_lyrics(res), res)
-
-    def test_missing_lyrics(self):
-        for msg in _lyricstext.missing_texts:
-            self.assertFalse(lyrics.is_lyrics(msg), msg)
 
     def test_sources_incomplete(self):
         for s in self.sourcesIncomplete:
             url = s['url']+s['path']
             res = lyrics.scrape_lyrics_from_url(url)
-            print(res)
 
-            print(s['url'])
             self.assertTrue(lyrics.is_lyrics(res))
             # these sources may pass if the html source evolve or after 
             # a random improvement in the scraping algo: we want to
             # be noticed if it's the case.
             if is_lyrics_content_ok(s['title'], res):
                 print('Source %s actually return valid lyrics!' % s['url'])
-
-    def test_remove_featuring_artist(self):
-        self.assertEqual(lyrics.remove_featuring_artist('Bob featuring Marcia'), 'Bob')
-        self.assertEqual(lyrics.remove_featuring_artist('Bob feat Marcia'), 'Bob')
-        self.assertEqual(lyrics.remove_featuring_artist('Bob and Marcia'), 'Bob')
-        self.assertEqual(lyrics.remove_featuring_artist('Bob feat. Marcia'), 'Bob')
-        self.assertEqual(lyrics.remove_featuring_artist('Bob & Marcia'), 'Bob')
-        self.assertEqual(lyrics.remove_featuring_artist('Bob feats Marcia'), 'Bob feats Marcia')
 
     def test_is_page_candidate(self):
         for s in self.sourcesOk:
@@ -155,7 +182,8 @@ class LyricsScrapingPluginTest(unittest.TestCase):
             if not soup.title:
                 continue
             self.assertEqual(lyrics.is_page_candidate(url, soup.title.string, s['title'], s['artist']), True)
-        
+                
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

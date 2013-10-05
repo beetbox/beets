@@ -3,7 +3,8 @@
 
 """Lyrics samples for test_lyrics unit tests"""
 
-texts = dict()
+texts = dict() # reference lyrics against which are compared fetched lyrics 
+mockcontents = dict() # content of fetched urls
 
 texts['Lady Madonna'] = \
 """Lady Madonna, children at your feet 
@@ -159,3 +160,4 @@ missing_texts = [
 """Lyricsmania staff is working hard for you to add $TITLE lyrics as soon as they'll be released by $ARTIST, check back soon!
 In case you have the lyrics to $TITLE and want to send them to us, fill out the following form."""
     ]
+
