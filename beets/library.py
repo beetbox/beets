@@ -475,9 +475,11 @@ class Item(LibModel):
 
     def get_album(self):
         """Get the Album object that this item belongs to, if any, or
-        None if the item is a singleton.
+        None if the item is a singleton or is not associated with a
+        library.
         """
-        self._check_db()
+        if not self._lib:
+            return None
         return self._lib.get_album(self)
 
 
