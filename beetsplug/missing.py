@@ -153,6 +153,8 @@ class MissingPlugin(BeetsPlugin):
 
                 else:
                     for item in _missing(album):
+                        item._lib = lib
+                        item.id = '-1'
                         print_obj(item, lib, fmt=fmt)
 
         self._command.func = _miss

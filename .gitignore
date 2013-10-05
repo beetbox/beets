@@ -20,6 +20,7 @@
 *~
 *.project
 *.pydevproject
+*.ropeproject
 
 # Project Specific patterns
 
