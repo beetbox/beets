@@ -163,7 +163,8 @@ def convert_item(dest_dir, keep_new, path_formats):
 
         else:
             if keep_new:
-                item.path = os.path.splitext(item.path)[0] + get_file_extension()
+                _, ext = get_format()
+                item.path = os.path.splitext(item.path)[0] + ext
                 encode(dest, item.path)
             else:
                 encode(item.path, dest)
@@ -229,7 +230,8 @@ def convert_func(lib, opts, args):
         items = (i for a in lib.albums(ui.decargs(args)) for i in a.items())
     else:
         items = iter(lib.items(ui.decargs(args)))
-    convert = [convert_item(dest, keep_new, path_formats) for i in range(threads)]
+    convert = [convert_item(dest, keep_new, path_formats)
+               for i in range(threads)]
     pipe = util.pipeline.Pipeline([items, convert])
     pipe.run_parallel()
 
@@ -243,7 +245,8 @@ class ConvertPlugin(BeetsPlugin):
             u'format': u'mp3',
             u'formats': {
                 u'aac': {
-                    u'command': u'ffmpeg -i $source -y -acodec libfaac -aq 100 $dest',
+                    u'command': u'ffmpeg -i $source -y -acodec libfaac '
+                                u'-aq 100 $dest',
                     u'extension': u'm4a',
                 },
                 u'alac': {
@@ -259,15 +262,18 @@ class ConvertPlugin(BeetsPlugin):
                     u'extension': u'mp3',
                 },
                 u'opus': {
-                    u'command': u'ffmpeg -i $source -y -acodec libopus -vn -ab 96k $dest',
+                    u'command': u'ffmpeg -i $source -y -acodec libopus -vn '
+                                u'-ab 96k $dest',
                     u'extension': u'opus',
                 },
                 u'ogg': {
-                    u'command': u'ffmpeg -i $source -y -acodec libvorbis -vn -aq 2 $dest',
+                    u'command': u'ffmpeg -i $source -y -acodec libvorbis -vn '
+                                u'-aq 2 $dest',
                     u'extension': u'ogg',
                 },
                 u'windows media': {
-                    u'command': u'ffmpeg -i $source -y -acodec wmav2 -vn $dest',
+                    u'command': u'ffmpeg -i $source -y -acodec wmav2 '
+                                u'-vn $dest',
                     u'extension': u'wma',
                 },
             },
