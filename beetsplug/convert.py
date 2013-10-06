@@ -31,6 +31,12 @@ DEVNULL = open(os.devnull, 'wb')
 _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.
 
+# Some convenient alternate names for formats.
+ALIASES = {
+    u'wma': u'windows media',
+    u'vorbis': u'ogg',
+}
+
 
 def _destination(dest_dir, item, keep_new, path_formats):
     """Return the path under `dest_dir` where the file should be placed
@@ -50,7 +56,8 @@ def _destination(dest_dir, item, keep_new, path_formats):
 def get_format():
     """Get the currently configured format command and extension.
     """
-    format = config['convert']['format'].get(unicode)
+    format = config['convert']['format'].get(unicode).lower()
+    format = ALIASES.get(format, format)
     format_info = config['convert']['formats'][format].get(dict)
     try:
         return (format_info['command'].split(),
@@ -89,7 +96,9 @@ def encode(source, dest):
         return
 
     if not quiet:
-      log.info(u'Finished encoding {0}'.format(util.displayable_path(source)))
+        log.info(u'Finished encoding {0}'.format(
+            util.displayable_path(source))
+        )
 
 
 def should_transcode(item):
@@ -97,8 +106,9 @@ def should_transcode(item):
     conversion (i.e., its bitrate is high or it has the wrong format).
     """
     maxbr = config['convert']['max_bitrate'].get(int)
-
-    return item.format not in ['AAC', 'MP3', 'Opus', 'OGG', 'Windows Media'] or item.bitrate >= 1000 * maxbr
+    format_name = config['convert']['format'].get(unicode)
+    return format_name.lower() == item.format.lower() or \
+            item.bitrate >= 1000 * maxbr
 
 
 def convert_item(dest_dir, keep_new, path_formats):
@@ -235,11 +245,11 @@ class ConvertPlugin(BeetsPlugin):
                     u'command': u'ffmpeg -i $source -y -acodec libopus -vn -ab 96k $dest',
                     u'extension': u'opus',
                 },
-                u'vorbis': {
+                u'ogg': {
                     u'command': u'ffmpeg -i $source -y -acodec libvorbis -vn -aq 2 $dest',
                     u'extension': u'ogg',
                 },
-                u'wma': {
+                u'windows media': {
                     u'command': u'ffmpeg -i $source -y -acodec wmav2 -vn $dest',
                     u'extension': u'wma',
                 },

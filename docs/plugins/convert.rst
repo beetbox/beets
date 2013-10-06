@@ -1,12 +1,14 @@
 Convert Plugin
 ==============
 
-The ``convert`` plugin lets you convert parts of your collection to a directory
-of your choice. It converts all input formats supported by `FFmpeg`_ to MP3.
-It will skip files that are already present in the target directory. Converted
-files follow the same path formats as your library.
+The ``convert`` plugin lets you convert parts of your collection to a
+directory of your choice, transcoding audio and embedding album art along the
+way. It can transcode to and from any format using a configurable command
+line. It will skip files that are already present in the target directory.
+Converted files follow the same path formats as your library.
 
 .. _FFmpeg: http://ffmpeg.org
+
 
 Installation
 ------------
@@ -19,6 +21,7 @@ by the plugin. Otherwise, configure the plugin to locate the executable::
 
     convert:
         ffmpeg: /usr/bin/ffmpeg
+
 
 Usage
 -----
@@ -52,11 +55,12 @@ The plugin offers several configuration options, all of which live under the
   transcoded and those with a lower bitrate will simply be copied. Note that
   this does not guarantee that all converted files will have a lower
   bitrate---that depends on the encoder and its configuration.
-* ``format`` specify which format preset you would like to use. Default: mp3.
-* ``formats`` lets you specify additional formats to convert to. Presets for
-  AAC, ALAC, FLAC, MP3, Opus, Vorbis and Windows Meda are provided, however
-  support may vary depending on your ffmpeg library. Each format is defined as
-  a command and a file extension.
+* ``format`` is the name of the audio file format to transcode to. Files that
+  are already in the format (and are below the maximum bitrate) will not be
+  transcoded. Available formats include MP3, AAC, ALAC, FLAC, Opus, Vorbis,
+  and Windows Media; the default is MP3.
+* ``formats`` lets you specify additional formats to convert to. Each format
+  is defined as a command and a file extension.
 * ``auto`` gives you the option to import transcoded versions of your files
   automatically during the ``import`` command. With this option enabled, the
   importer will transcode all non-MP3 files over the maximum bitrate before
