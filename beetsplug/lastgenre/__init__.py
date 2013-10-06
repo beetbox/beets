@@ -79,14 +79,25 @@ def _is_allowed(genre):
     return False
 
 def _find_allowed(genres):
-    """Return the first string in the sequence `genres` that is present
-    in the genre whitelist or None if no genre is suitable.
+    """If multiple_genres is set to True, return a string composed of
+    comma delimited genres in the sequence `genres` that is present
+    in the genre whitelist or an empty string if no genre is suitable
+    or if multiple_genres is set to its default value of False, return 
+    the first genre found.
     """
+    allowed_genres = []
+
     for genre in list(genres):
         if _is_allowed(genre):
-            return genre.title()  # Title case.
-    return None
+            allowed_genres.append(genre.title())
+            if not options['multiple_genres']:
+                return genre.title()
 
+    if options['multiple_genres']:
+        return ','.join(allowed_genres)
+
+    return
+   
 def _strings_to_genre(tags):
     """Given a list of strings, return a genre. Returns the first string
     that is present in the genre whitelist (or the canonicalization
@@ -107,7 +118,7 @@ def _strings_to_genre(tags):
 
 def fetch_genre(lastfm_obj):
     """Return the genre for a pylast entity or None if no suitable genre
-    can be found.
+    can be found. Ex. 'Electronic, House, Dance'
     """
     return _strings_to_genre(_tags_for(lastfm_obj))
 
@@ -190,6 +201,7 @@ def fetch_track_genre(obj):
 
 options = {
     'whitelist': None,
+    'multiple_genres': False,
     'branches': None,
     'c14n': False,
 }
@@ -199,6 +211,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         self.config.add({
             'whitelist': os.path.join(os.path.dirname(__file__), 'genres.txt'),
+            'multiple_genres': False,
             'fallback': None,
             'canonical': None,
             'source': 'album',
@@ -232,6 +245,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             flatten_tree(genres_tree, [], branches)
             options['branches'] = branches
             options['c14n'] = True
+
+        options['multiple_genres'] = self.config['multiple_genres'].get()
 
     @property
     def sources(self):
