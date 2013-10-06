@@ -43,27 +43,27 @@ def _destination(dest_dir, item, keep_new, path_formats):
         return dest
     else:
         # Otherwise, replace the extension.
-        return os.path.splitext(dest)[0] + get_file_extension()
+        _, ext = get_format()
+        return os.path.splitext(dest)[0] + ext
 
 
-def get_command():
-    """Get the currently configured format command.
+def get_format():
+    """Get the currently configured format command and extension.
     """
     format = config['convert']['format'].get(unicode)
-
-    return config['convert']['formats'][format]['command'].get(unicode).split(u' ')
-
-
-def get_file_extension():
-    """Get the currently configured format file extension.
-    """
-    format = config['convert']['format'].get(unicode)
-
-    return u'.' + config['convert']['formats'][format]['extension'].get(unicode)
+    format_info = config['convert']['formats'][format].get(dict)
+    try:
+        return (format_info['command'].split(),
+                u'.' + format_info['extension'])
+    except KeyError:
+        raise ui.UserError(
+            u'convert: format {0} needs "command" and "extension" fields'
+            .format(format)
+        )
 
 
 def encode(source, dest):
-    command = get_command()
+    command, _ = get_format()
     quiet = config['convert']['quiet'].get()
     opts = []
 
@@ -90,34 +90,6 @@ def encode(source, dest):
 
     if not quiet:
       log.info(u'Finished encoding {0}'.format(util.displayable_path(source)))
-
-
-def validate_config():
-    """Validate the format configuration, make sure all of the required values are set for the current format.
-    """
-    format = config['convert']['format'].get(unicode)
-    formats = config['convert']['formats']
-
-    try:
-        formats[format].get()
-    except:
-        raise ui.UserError(
-            'Format {0} does not appear to exist, please check your convert plugin configuration.'.format(format)
-        )
-
-    try:
-        formats[format]['command'].get(unicode)
-    except:
-        raise ui.UserError(
-            'Format {0} does not define a command, please check your convert plugin configuration.'.format(format)
-        )
-
-    try:
-        formats[format]['extension'].get(unicode)
-    except:
-        raise ui.UserError(
-            'Format {0} does not define a file extension, please check your convert plugin configuration.'.format(format)
-        )
 
 
 def should_transcode(item):
@@ -193,7 +165,8 @@ def convert_on_import(lib, item):
     library.
     """
     if should_transcode(item):
-        fd, dest = tempfile.mkstemp(get_file_extension())
+        _, ext = get_format()
+        fd, dest = tempfile.mkstemp(ext)
         os.close(fd)
         _temp_files.append(dest)  # Delete the transcode later.
         encode(item.path, dest)
@@ -277,7 +250,6 @@ class ConvertPlugin(BeetsPlugin):
             u'embed': True,
             u'paths': {},
         })
-        validate_config()
         self.import_stages = [self.auto_convert]
 
     def commands(self):
