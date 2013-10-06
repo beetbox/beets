@@ -79,25 +79,19 @@ def _is_allowed(genre):
     return False
 
 def _find_allowed(genres):
-    """If multiple_genres is set to True, return a string composed of
-    comma delimited genres in the sequence `genres` that is present
-    in the genre whitelist or an empty string if no genre is suitable
-    or if multiple_genres is set to its default value of False, return 
-    the first genre found.
+    """Given a list of candidate genres (strings), return an allowed
+    genre string. If `multiple_genres` is on, then this may be a
+    comma-separated list; otherwise, it is one of the elements of
+    `genres`.
     """
-    allowed_genres = []
+    allowed_genres = [g.title() for g in genres if _is_allowed(g)]
+    if not allowed_genres:
+        return
+    if config['lastgenre']['multiple_genres']:
+        return u', '.join(allowed_genres)
+    else:
+        return allowed_genres[0]
 
-    for genre in list(genres):
-        if _is_allowed(genre):
-            allowed_genres.append(genre.title())
-            if not options['multiple_genres']:
-                return genre.title()
-
-    if options['multiple_genres']:
-        return ','.join(allowed_genres)
-
-    return
-   
 def _strings_to_genre(tags):
     """Given a list of strings, return a genre. Returns the first string
     that is present in the genre whitelist (or the canonicalization
@@ -148,7 +142,7 @@ def find_parents(candidate, branches):
     for branch in branches:
         try:
             idx = branch.index(candidate.lower())
-            return list(reversed(branch[:idx+1]))
+            return list(reversed(branch[:idx + 1]))
         except ValueError:
             continue
     return [candidate]
@@ -201,7 +195,6 @@ def fetch_track_genre(obj):
 
 options = {
     'whitelist': None,
-    'multiple_genres': False,
     'branches': None,
     'c14n': False,
 }
@@ -245,8 +238,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             flatten_tree(genres_tree, [], branches)
             options['branches'] = branches
             options['c14n'] = True
-
-        options['multiple_genres'] = self.config['multiple_genres'].get()
 
     @property
     def sources(self):
