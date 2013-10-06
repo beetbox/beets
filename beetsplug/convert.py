@@ -20,6 +20,7 @@ import threading
 from subprocess import Popen
 import tempfile
 from string import Template
+import pipes
 
 from beets.plugins import BeetsPlugin
 from beets import ui, util
@@ -80,10 +81,13 @@ def encode(source, dest):
     for arg in command:
         arg = arg.encode('utf-8')
         opts.append(Template(arg).substitute({
-            'source':   source,
-            'dest':     dest
+            'source': source,
+            'dest':   dest,
         }))
 
+    log.debug(u'convert: executing: {0}'.format(
+        u' '.join(pipes.quote(o.decode('utf8', 'ignore')) for o in opts)
+    ))
     encode = Popen(opts, close_fds=True, stderr=DEVNULL)
     encode.wait()
 
