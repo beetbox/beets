@@ -139,7 +139,8 @@ def disambig_string(info):
         if info.media:
             if info.mediums > 1:
                 disambig.append(u'{0}x{1}'.format(
-                info.mediums, info.media))
+                    info.mediums, info.media
+                ))
             else:
                 disambig.append(info.media)
         if info.year:
@@ -235,7 +236,7 @@ def show_change(cur_artist, cur_album, match):
         print_("To:")
         show_album(artist_r, album_r)
     else:
-        print_(u"Tagging:\n    %s - %s" % (match.info.artist, match.info.album))
+        print_(u"Tagging:\n    {0.artist} - {0.album}".format(match.info))
 
     # Data URL.
     if match.info.data_url:
@@ -610,8 +611,7 @@ def manual_search(singleton):
 def manual_id(singleton):
     """Input an ID, either for an album ("release") or a track ("recording").
     """
-    prompt = 'Enter %s ID:' % \
-             ('recording' if singleton else 'release')
+    prompt = u'Enter {0} ID:'.format('recording' if singleton else 'release')
     return input_(prompt).strip()
 
 class TerminalImportSession(importer.ImportSession):
