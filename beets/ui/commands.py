@@ -920,7 +920,7 @@ def update_items(lib, query, album, move, pretend):
                     old_data['albumartist'] == old_data['artist'] == \
                         item.artist:
                 item.albumartist = old_data['albumartist']
-                item._dirty.remove('albumartist')
+                item._dirty.discard('albumartist')
 
             # Get and save metadata changes.
             changes = {}

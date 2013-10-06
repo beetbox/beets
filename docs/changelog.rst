@@ -47,6 +47,10 @@ And some fixes:
   "image.jpg not found during copy" error. Now clutter is removed (and
   directories pruned) much later in the process, after the
   ``import_task_files`` hook.
+* :doc:`/plugins/missing`: Fix an error when printing missing track names.
+  Thanks to Pedro Silva.
+* Fix an occasional KeyError in the :ref:`update-cmd` command introduced in
+  1.3.0.
 
 .. _Opus: http://www.opus-codec.org/
 .. _@Verrus: https://github.com/Verrus
