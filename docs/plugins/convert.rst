@@ -55,12 +55,6 @@ The plugin offers several configuration options, all of which live under the
   transcoded and those with a lower bitrate will simply be copied. Note that
   this does not guarantee that all converted files will have a lower
   bitrate---that depends on the encoder and its configuration.
-* ``format`` is the name of the audio file format to transcode to. Files that
-  are already in the format (and are below the maximum bitrate) will not be
-  transcoded. Available formats include MP3, AAC, ALAC, FLAC, Opus, Vorbis,
-  and Windows Media; the default is MP3.
-* ``formats`` lets you specify additional formats to convert to. Each format
-  is defined as a command and a file extension.
 * ``auto`` gives you the option to import transcoded versions of your files
   automatically during the ``import`` command. With this option enabled, the
   importer will transcode all non-MP3 files over the maximum bitrate before
@@ -75,6 +69,24 @@ The plugin offers several configuration options, all of which live under the
   encoding. By default, the plugin will detect the number of processors
   available and use them all.
 
+These config options control the transcoding process:
+
+* ``format`` is the name of the audio file format to transcode to. Files that
+  are already in the format (and are below the maximum bitrate) will not be
+  transcoded. The plugin includes default commands for the formats MP3, AAC,
+  ALAC, FLAC, Opus, Vorbis, and Windows Media; the default is MP3. If you want
+  to use a different format (or customize the transcoding options), use the
+  options below.
+* ``extension`` is the filename extension to be used for newly transcoded
+  files. This is implied by the ``format`` option, but you can set it yourself
+  if you're using a different format.
+* ``command`` is the command line to use to transcode audio. A default
+  command, usually using an FFmpeg invocation, is implied by the ``format``
+  option. The tokens ``$source`` and ``$dest`` in the command are replaced
+  with the paths to the existing and new file. (Use ``$$`` to emit a literal
+  dollars sign.) For example, the command ``ffmpeg -i $source -y -aq 4 $dest``
+  transcodes to MP3 using FFmpeg at the V4 quality level.
+
 Here's an example configuration::
 
     convert:
@@ -86,19 +98,17 @@ Here's an example configuration::
         paths:
             default: $albumartist/$title
 
-Here's how formats are configured::
+If you have several formats you want to switch between, you can list them
+under the ``formats`` key and refer to them using the ``format`` option. Each
+key under ``formats`` should contain values for ``command`` and ``extension``
+as described above::
 
     convert:
-        format: mp3_high
+        format: speex
         formats:
-            mp3_high:
-                command: ffmpeg -i $source -y -aq 4 $dest
-                extension: mp3
-
-The ``$source`` and ``$dest`` tokens are automatically replaced with the paths
-to each file. Because ``$`` is used to delineate a field reference, you can
-use ``$$`` to emit a dollars sign.
-
-In this example ``-aq <num>`` is equivalent to the LAME option ``-V num``. If
-you want to specify a bitrate, use ``-ab <bitrate>``. Refer to the `FFmpeg`_
-documentation for more details.
+            speex:
+                command: ffmpeg -i $source -y -acodec speex $dest
+                extension: spx
+            wav:
+                command: ffmpeg -i $source -y -acodec pcm_s16le $dest
+                extension: wav

@@ -60,6 +60,19 @@ def get_format():
     format = config['convert']['format'].get(unicode).lower()
     format = ALIASES.get(format, format)
     format_info = config['convert']['formats'][format].get(dict)
+
+    # Convenience and backwards-compatibility shortcuts.
+    keys = config['convert'].keys()
+    if 'command' in keys:
+        format_info['command'] = config['convert']['command'].get(unicode)
+    elif 'opts' in keys:
+        # Undocumented option for backwards compatibility with < 1.3.1.
+        format_info['command'] = u'ffmpeg -i $source -y {0} $dest'.format(
+            config['convert']['opts'].get(unicode)
+        )
+    if 'extension' in keys:
+        format_info['extension'] = config['convert']['extension'].get(unicode)
+
     try:
         return (format_info['command'].split(),
                 u'.' + format_info['extension'])
