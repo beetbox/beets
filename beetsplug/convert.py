@@ -74,8 +74,8 @@ def get_format():
         format_info['extension'] = config['convert']['extension'].get(unicode)
 
     try:
-        return (format_info['command'].split(),
-                u'.' + format_info['extension'])
+        return [a.encode('utf8') for a in format_info['command'].split()], \
+                (u'.' + format_info['extension']).encode('utf8')
     except KeyError:
         raise ui.UserError(
             u'convert: format {0} needs "command" and "extension" fields'
@@ -84,15 +84,14 @@ def get_format():
 
 
 def encode(source, dest):
-    command, _ = get_format()
     quiet = config['convert']['quiet'].get()
-    opts = []
 
     if not quiet:
         log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
 
+    command, _ = get_format()
+    opts = []
     for arg in command:
-        arg = arg.encode('utf-8')
         opts.append(Template(arg).safe_substitute({
             'source': source,
             'dest':   dest,
