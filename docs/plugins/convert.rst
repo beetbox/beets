@@ -83,9 +83,9 @@ These config options control the transcoding process:
 * ``command`` is the command line to use to transcode audio. A default
   command, usually using an FFmpeg invocation, is implied by the ``format``
   option. The tokens ``$source`` and ``$dest`` in the command are replaced
-  with the paths to the existing and new file. (Use ``$$`` to emit a literal
-  dollars sign.) For example, the command ``ffmpeg -i $source -y -aq 4 $dest``
-  transcodes to MP3 using FFmpeg at the V4 quality level.
+  with the paths to the existing and new file. For example, the command
+  ``ffmpeg -i $source -y -aq 4 $dest`` transcodes to MP3 using FFmpeg at the
+  V4 quality level.
 
 Here's an example configuration::
 

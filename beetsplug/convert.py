@@ -93,7 +93,7 @@ def encode(source, dest):
 
     for arg in command:
         arg = arg.encode('utf-8')
-        opts.append(Template(arg).substitute({
+        opts.append(Template(arg).safe_substitute({
             'source': source,
             'dest':   dest,
         }))
