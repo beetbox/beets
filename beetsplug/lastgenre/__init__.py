@@ -80,14 +80,14 @@ def _is_allowed(genre):
 
 def _find_allowed(genres):
     """Given a list of candidate genres (strings), return an allowed
-    genre string. If `multiple_genres` is on, then this may be a
+    genre string. If `multiple` is on, then this may be a
     comma-separated list; otherwise, it is one of the elements of
     `genres`.
     """
     allowed_genres = [g.title() for g in genres if _is_allowed(g)]
     if not allowed_genres:
         return
-    if config['lastgenre']['multiple_genres']:
+    if config['lastgenre']['multiple']:
         return u', '.join(allowed_genres)
     else:
         return allowed_genres[0]
@@ -204,7 +204,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         self.config.add({
             'whitelist': os.path.join(os.path.dirname(__file__), 'genres.txt'),
-            'multiple_genres': False,
+            'multiple': False,
             'fallback': None,
             'canonical': None,
             'source': 'album',

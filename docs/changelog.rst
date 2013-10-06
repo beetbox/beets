@@ -17,6 +17,8 @@ New stuff:
 * The MusicBrainz data source now uses track artists over recording
   artists. This leads to better metadata when tagging classical music. Thanks
   to Henrique Ferreiro.
+* :doc:`/plugins/lastgenre`: You can now get multiple genres per album or
+  track using the ``multiple`` config option. Thanks to rashley60 on GitHub.
 
 And some fixes:
 

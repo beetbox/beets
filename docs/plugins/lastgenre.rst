@@ -82,6 +82,19 @@ The default is "album". When set to "track", the plugin will fetch *both*
 album-level and track-level genres for your music when importing albums.
 
 
+Multiple Genres
+---------------
+
+By default, the plugin chooses the most popular tag on Last.fm as a genre. If
+you prefer to use a list of *all available* genre tags, turn on the
+``multiple`` config option::
+
+    lastgenre:
+        multiple: true
+
+Comma-separated lists of genres will then be used instead of single genres.
+
+
 Running Manually
 ----------------
 
