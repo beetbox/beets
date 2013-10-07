@@ -21,6 +21,7 @@ import _common
 from _common import unittest
 import beets.mediafile
 
+
 class EdgeTest(unittest.TestCase):
     def test_emptylist(self):
         # Some files have an ID3 frame that has a list with no elements.
@@ -67,6 +68,7 @@ class EdgeTest(unittest.TestCase):
         f = beets.mediafile.MediaFile(os.path.join(_common.RSRC, 'oldape.ape'))
         self.assertEqual(f.bitrate, 0)
 
+
 _sc = beets.mediafile._safe_cast
 class InvalidValueToleranceTest(unittest.TestCase):
     def test_packed_integer_with_extra_chars(self):
@@ -109,6 +111,7 @@ class InvalidValueToleranceTest(unittest.TestCase):
         us = _sc(unicode, 'caf\xc3\xa9')
         self.assertTrue(isinstance(us, unicode))
         self.assertTrue(us.startswith(u'caf'))
+
 
 class SafetyTest(unittest.TestCase):
     def _exccheck(self, fn, exc, data=''):
@@ -156,6 +159,7 @@ class SafetyTest(unittest.TestCase):
         finally:
             os.unlink(fn)
 
+
 class SideEffectsTest(unittest.TestCase):
     def setUp(self):
         self.empty = os.path.join(_common.RSRC, 'empty.mp3')
@@ -165,6 +169,7 @@ class SideEffectsTest(unittest.TestCase):
         beets.mediafile.MediaFile(self.empty)
         new_mtime = os.stat(self.empty).st_mtime
         self.assertEqual(old_mtime, new_mtime)
+
 
 class EncodingTest(unittest.TestCase):
     def setUp(self):
@@ -183,10 +188,13 @@ class EncodingTest(unittest.TestCase):
         new_mf = beets.mediafile.MediaFile(self.path)
         self.assertEqual(new_mf.label, u'foo\xe8bar')
 
+
 class ZeroLengthMediaFile(beets.mediafile.MediaFile):
     @property
     def length(self):
         return 0.0
+
+
 class MissingAudioDataTest(unittest.TestCase):
     def setUp(self):
         super(MissingAudioDataTest, self).setUp()
@@ -196,6 +204,7 @@ class MissingAudioDataTest(unittest.TestCase):
     def test_bitrate_with_zero_length(self):
         del self.mf.mgfile.info.bitrate # Not available directly.
         self.assertEqual(self.mf.bitrate, 0)
+
 
 class TypeTest(unittest.TestCase):
     def setUp(self):
@@ -223,6 +232,7 @@ class TypeTest(unittest.TestCase):
         self.mf.track = None
         self.assertEqual(self.mf.track, 0)
 
+
 class SoundCheckTest(unittest.TestCase):
     def test_round_trip(self):
         data = beets.mediafile._sc_encode(1.0, 1.0)
@@ -242,8 +252,51 @@ class SoundCheckTest(unittest.TestCase):
         self.assertEqual(gain, 0.0)
         self.assertEqual(peak, 0.0)
 
+
+class ID3v23Test(unittest.TestCase):
+    def _make_test(self, ext='mp3'):
+        src = os.path.join(_common.RSRC, 'full.{0}'.format(ext))
+        self.path = os.path.join(_common.RSRC, 'test.{0}'.format(ext))
+        shutil.copy(src, self.path)
+        return beets.mediafile.MediaFile(self.path)
+
+    def _delete_test(self):
+        os.remove(self.path)
+
+    def test_v24_year_tag(self):
+        mf = self._make_test()
+        try:
+            mf.year = 2013
+            mf.save(id3v23=False)
+            frame = mf.mgfile['TDRC']
+            self.assertTrue('2013' in str(frame))
+            self.assertTrue('TYER' not in mf.mgfile)
+        finally:
+            self._delete_test()
+
+    def test_v23_year_tag(self):
+        mf = self._make_test()
+        try:
+            mf.year = 2013
+            mf.save(id3v23=True)
+            frame = mf.mgfile['TYER']
+            self.assertTrue('2013' in str(frame))
+            self.assertTrue('TDRC' not in mf.mgfile)
+        finally:
+            self._delete_test()
+
+    def test_v23_on_non_mp3_is_noop(self):
+        mf = self._make_test('m4a')
+        try:
+            mf.year = 2013
+            mf.save(id3v23=True)
+        finally:
+            self._delete_test()
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

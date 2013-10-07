@@ -930,7 +930,18 @@ class MediaFile(object):
         if self.mgfile.tags is None:
             self.mgfile.add_tags()
 
-    def save(self):
+    def save(self, id3v23=False):
+        """Write the object's tags back to the file.
+
+        By default, MP3 files are saved with ID3v2.4 tags. You can use
+        the older ID3v2.3 standard by specifying the `id3v23` option.
+        """
+        if id3v23 and self.type == 'mp3':
+            id3 = self.mgfile
+            if hasattr(id3, 'tags'):
+                # In case this is an MP3 object, not an ID3 object.
+                id3 = id3.tags
+            id3.update_to_v23()
         self.mgfile.save()
 
     def delete(self):
