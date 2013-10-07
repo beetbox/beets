@@ -19,6 +19,9 @@ New stuff:
   to Henrique Ferreiro.
 * :doc:`/plugins/lastgenre`: You can now get multiple genres per album or
   track using the ``multiple`` config option. Thanks to rashley60 on GitHub.
+* A new :ref:`id3v23` config option makes beets write MP3 files' tags using
+  the older ID3v2.3 metadata standard. Use this if you want your tags to be
+  visible to Windows and some older players.
 
 And some fixes:
 

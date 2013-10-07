@@ -210,6 +210,16 @@ Set the maximum number of characters in a filename, after which names will be
 truncated. By default, beets tries to ask the filesystem for the correct
 maximum.
 
+.. _id3v23:
+
+id3v23
+~~~~~~
+
+By default, beets writes MP3 tags using the ID3v2.4 standard, the latest
+version of ID3. Enable this option to instead use the older ID3v2.3 standard,
+which is preferred by certain older software such as Windows Media Player.
+
+
 Importer Options
 ----------------
 

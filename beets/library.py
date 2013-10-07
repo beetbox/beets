@@ -531,7 +531,7 @@ class Item(LibModel):
             setattr(f, key, getattr(self, key))
 
         try:
-            f.save()
+            f.save(id3v23=beets.config['id3v23'].get(bool))
         except (OSError, IOError) as exc:
             raise util.FilesystemError(exc, 'write', (self.path,),
                                        traceback.format_exc())

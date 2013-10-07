@@ -265,14 +265,14 @@ a flag. There is no simple way to remedy this.)
 …not change my ID3 tags?
 ------------------------
 
-Beets writes `ID3v2.4 <http://www.id3.org/id3v2.4.0-structure>`__ tags.
+Beets writes `ID3v2.4 <http://www.id3.org/id3v2.4.0-structure>`__ tags by
+default.
 Some software, including Windows (i.e., Windows Explorer and Windows
 Media Player) and `id3lib/id3v2 <http://id3v2.sourceforge.net/>`__,
 don't support v2.4 tags. When using 2.4-unaware software, it might look
 like the tags are unmodified or missing completely.
 
-This is due to `a limitation in the Mutagen
-library <http://code.google.com/p/mutagen/wiki/FAQ>`__.
+To enable ID3v2.3 tags, enable the :ref:`id3v23` config option.
 
 
 .. _invalid:

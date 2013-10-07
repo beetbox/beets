@@ -42,6 +42,7 @@ per_disc_numbering: no
 verbose: no
 terminal_encoding: utf8
 original_date: no
+id3v23: no
 
 ui:
     terminal_width: 80
