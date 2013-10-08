@@ -56,6 +56,8 @@ And some fixes:
   Thanks to Pedro Silva.
 * Fix an occasional KeyError in the :ref:`update-cmd` command introduced in
   1.3.0.
+* :doc:`/plugins/scrub`: Avoid preserving certain non-standard ID3 tags such
+  as NCON.
 
 .. _Opus: http://www.opus-codec.org/
 .. _@Verrus: https://github.com/Verrus
