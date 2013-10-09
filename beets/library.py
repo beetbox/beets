@@ -1565,7 +1565,8 @@ class Transaction(object):
 
 
 class Library(object):
-    """A music library using an SQLite database as a metadata store."""
+    """A database of music containing songs and albums.
+    """
     def __init__(self, path='library.blb',
                        directory='~/Music',
                        path_formats=((PF_KEY_DEFAULT,
@@ -1703,8 +1704,8 @@ class Library(object):
             yield self._tx_stacks[thread_id]
 
     def transaction(self):
-        """Get a transaction object for interacting with the database.
-        This should *always* be used as a context manager.
+        """Get a :class:`Transaction` object for interacting directly
+        with the underlying SQLite database.
         """
         return Transaction(self)
 
@@ -1712,10 +1713,8 @@ class Library(object):
     # Adding objects to the database.
 
     def add(self, item):
-        """Add the item as a new object to the library database. The id
-        field will be updated; the new id is returned. If copy, then
-        each item is copied to the destination location before it is
-        added.
+        """Add the :class:`Item` object to the library database. The
+        item's id field will be updated; the new id is returned.
         """
         item.added = time.time()
         if not item._lib:
@@ -1756,7 +1755,7 @@ class Library(object):
     def add_album(self, items):
         """Create a new album in the database with metadata derived
         from its items. The items are added to the database if they
-        don't yet have an ID. Returns an Album object.
+        don't yet have an ID. Returns an :class:`Album` object.
         """
         # Set the metadata from the first item.
         album_values = dict((key, items[0][key]) for key in ALBUM_KEYS_ITEM)
@@ -1809,7 +1808,8 @@ class Library(object):
         return Results(model_cls, rows, self, None if where else query)
 
     def albums(self, query=None):
-        """Get a sorted list of Album objects matching the given query.
+        """Get a sorted list of :class:`Album` objects matching the
+        given query.
         """
         order = '{0}, album'.format(
             _orelse("albumartist_sort", "albumartist")
@@ -1817,7 +1817,8 @@ class Library(object):
         return self._fetch(Album, query, order)
 
     def items(self, query=None):
-        """Get a sorted list of Item objects matching the given query.
+        """Get a sorted list of :class:`Item` objects matching the given
+        query.
         """
         order = '{0}, album'.format(
             _orelse("artist_sort", "artist")
@@ -1834,14 +1835,15 @@ class Library(object):
         return self._fetch(model_cls, MatchQuery('id', id)).get()
 
     def get_item(self, id):
-        """Fetch an Item by its ID. Returns None if no match is found.
+        """Fetch an :class:`Item` by its ID. Returns `None` if no match is
+        found.
         """
         return self._get(Item, id)
 
     def get_album(self, item_or_id):
-        """Given an album ID or an item associated with an album,
-        return an Album object for the album. If no such album exists,
-        returns None.
+        """Given an album ID or an item associated with an album, return
+        an :class:`Album` object for the album. If no such album exists,
+        returns `None`.
         """
         if isinstance(item_or_id, int):
             album_id = item_or_id
