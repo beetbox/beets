@@ -4,7 +4,7 @@ Changelog
 1.3.1 (October 12, 2013)
 ------------------------
 
-This release boasts a host new little features, many of them contributed by
+This release boasts a host of new little features, many of them contributed by
 beets' amazing and prolific community. It adds support for `Opus`_ files,
 transcoding to any format, and two new plugins: one that guesses metadata for
 "blank" files based on their filenames and one that moves featured artists
