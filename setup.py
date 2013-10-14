@@ -80,6 +80,20 @@ setup(name='beets',
       + (['colorama'] if (sys.platform == 'win32') else [])
       + (['ordereddict'] if sys.version_info < (2, 7, 0) else []),
 
+      # plugin requires
+      extras_require = {
+          'beatport': ['requests'],
+          'bpd': ['bluelet'],
+          'chroma': ['pyacoustid'],
+          'discogs': ['discogs-client'],
+          'echonest_tempo': ['pyechonest'],
+          'lastgenre': ['pylast'],
+          'web': ['flask']
+      },
+      # non python plugin requires
+      # replaygain: mp3gain || aacgain
+      # convert: ffmpeg
+
       classifiers=[
           'Topic :: Multimedia :: Sound/Audio',
           'Topic :: Multimedia :: Sound/Audio :: Players :: MP3',
