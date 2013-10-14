@@ -28,7 +28,7 @@ log = logging.getLogger('beets')
 def _missing_count(album):
     """Return number of missing items in `album`.
     """
-    return album.tracktotal - len([i for i in album.items()])
+    return (album.tracktotal or 0) - len(album.items())
 
 
 def _missing(album):

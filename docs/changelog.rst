@@ -4,6 +4,10 @@ Changelog
 1.3.2 (in development)
 ----------------------
 
+Little fixes:
+
+* :doc:`/plugins/missing`: Avoid a possible error when an album's
+  ``tracktotal`` field is missing.
 
 1.3.1 (October 12, 2013)
 ------------------------
