@@ -19,15 +19,21 @@ Here's an example of beets' brainy tag corrector doing its thing::
 Because beets is designed as a library, it can do almost anything you can
 imagine for your music collection. Via `plugins`_, beets becomes a panacea:
 
-- Embed and extract album art from files' metadata.
-- Listen to your library with a music player that speaks the `MPD`_ protocol
-  and works with a staggering variety of interfaces.
-- Fetch lyrics for all your songs from databases on the Web.
-- Manage your `MusicBrainz music collection`_.
-- Analyze music files' metadata from the command line.
+- Fetch or calculate all the metadata you could possibly need: `album art`_,
+  `lyrics`_, `genres`_, `tempos`_, `ReplayGain`_ levels, or `acoustic
+  fingerprints`_.
+- Get metadata from `MusicBrainz`_, `Discogs`_, or `Beatport`_. Or guess
+  metadata using songs' filenames or their acoustic fingerprints.
+- `Transcode audio`_ to any format you like.
+- Check your library for `duplicate tracks and albums`_ or for `albums that
+  are missing tracks`_.
 - Clean up crufty tags left behind by other, less-awesome tools.
+- Embed and extract album art from files' metadata.
 - Browse your music library graphically through a Web browser and play it in any
   browser that supports `HTML5 Audio`_.
+- Analyze music files' metadata from the command line.
+- Listen to your library with a music player that speaks the `MPD`_ protocol
+  and works with a staggering variety of interfaces.
 
 If beets doesn't do what you want yet, `writing your own plugin`_ is
 shockingly simple if you know a little Python.
@@ -39,6 +45,22 @@ shockingly simple if you know a little Python.
     http://beets.readthedocs.org/page/dev/plugins.html
 .. _HTML5 Audio:
     http://www.w3.org/TR/html-markup/audio.html
+.. _albums that are missing tracks:
+    http://beets.readthedocs.org/page/plugins/missing.html
+.. _duplicate tracks and albums:
+    http://beets.readthedocs.org/page/plugins/duplicates.html
+.. _Transcode audio:
+    http://beets.readthedocs.org/page/plugins/convert.html
+.. _Beatport: http://www.beatport.com/
+.. _Discogs: http://www.discogs.com/
+.. _acoustic fingerprints:
+    http://beets.readthedocs.org/page/plugins/chroma.html
+.. _ReplayGain: http://beets.readthedocs.org/page/plugins/replaygain.html
+.. _tempos: http://beets.readthedocs.org/page/plugins/echonest_tempo.html
+.. _genres: http://beets.readthedocs.org/page/plugins/lastgenre.html
+.. _album art: http://beets.readthedocs.org/page/plugins/fetchart.html
+.. _lyrics: http://beets.readthedocs.org/page/plugins/lyrics.html
+.. _MusicBrainz: http://musicbrainz.org/
 
 Read More
 ---------
