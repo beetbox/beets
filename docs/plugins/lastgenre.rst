@@ -94,6 +94,15 @@ you prefer to use a list of *all available* genre tags, turn on the
 
 Comma-separated lists of genres will then be used instead of single genres.
 
+If you want to filter out less popular tags, you can set the ``min_weight``
+config option::
+
+    lastgenre:
+        min_weight: 50
+
+Only tags with a weight greater then ``min_weight`` will be used.  The weight
+ranges from 0 (unpopular) to 100 (most popular).
+
 
 Running Manually
 ----------------

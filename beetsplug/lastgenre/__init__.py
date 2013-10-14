@@ -61,11 +61,20 @@ def _tags_for(obj):
         return []
 
     tags = []
+    discarded_tags = []
+    min_weight = config['lastgenre']['min_weight'].get(int)
     for el in res:
         if isinstance(el, pylast.TopItem):
+            if min_weight > -1:
+                if len(tags) > 0 and min_weight > int(el.weight):
+                    discarded_tags.append(el.item.get_name())
+                    continue
             el = el.item
         tags.append(el.get_name())
     log.debug(u'last.fm tags: %s' % unicode(tags))
+    if min_weight > -1:
+        log.debug(u'last.fm tags (weight < {0}): {1}'.format(
+            min_weight, unicode(discarded_tags)))
     return tags
 
 def _is_allowed(genre):
@@ -205,6 +214,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self.config.add({
             'whitelist': os.path.join(os.path.dirname(__file__), 'genres.txt'),
             'multiple': False,
+            'min_weight': -1,
             'fallback': None,
             'canonical': None,
             'source': 'album',
