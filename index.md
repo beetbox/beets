@@ -15,26 +15,36 @@ imagine for your music collection. Via [plugins][], beets becomes a panacea:
 
 [plugins]: http://beets.readthedocs.org/page/plugins/
 
-* Find, download, and embed album art from multiple sources.
-* Fetch lyrics for all your songs from databases on the Web.
-* Guess genres based on Last.fm tags.
-* Clean up crufty tags left behind by other, less-awesome tools.
-* Automatically build "smart playlists" based on queries over your library
-  database.
-* Transcode music for your mobile device.
-* Manage your [MusicBrainz music collection][coll].
-* Analyze music files' metadata from the command line.
+* Fetch or calculate all the metadata you could possibly need: [album art][],
+  [lyrics][], [genres][], [tempos][], [ReplayGain][] levels, or [acoustic
+  fingerprints][chroma].
+* Get metadata from [MusicBrainz][], [Discogs][], or [Beatport][]. Or guess
+  metadata using songs' filenames or their acoustic fingerprints.
+* [Transcode audio][convert] to any format you like.
+* Check your library for [duplicate tracks and albums][duplicates] or for
+  [albums that are missing tracks][missing].
 * Browse your music library graphically through a Web browser and play it in
-  any browser that supports [HTML5 audio][].
+  any browser that supports [HTML5 Audio][].
 * ...and [lots more][plugins].
 
-[HTML5 audio]: http://www.w3.org/TR/html-markup/audio.html
-[coll]: http://wiki.musicbrainz.org/Collections
+[plugins]: http://beets.readthedocs.org/page/plugins/
+[album art]: http://beets.readthedocs.org/page/plugins/fetchart.html
+[lyrics]: http://beets.readthedocs.org/page/plugins/lyrics.html
+[genres]: http://beets.readthedocs.org/page/plugins/lastgenre.html
+[tempos]: http://beets.readthedocs.org/page/plugins/echonest_tempo.html
+[ReplayGain]: http://beets.readthedocs.org/page/plugins/replaygain.html
+[chroma]: http://beets.readthedocs.org/page/plugins/chroma.html
+[Discogs]: http://www.discogs.com/
+[Beatport]: http://www.beatport.com/
+[convert]: http://beets.readthedocs.org/page/plugins/convert.html
+[duplicates]: http://beets.readthedocs.org/page/plugins/duplicates.html
+[missing]: http://beets.readthedocs.org/page/plugins/missing.html
+[HTML5 Audio]: http://www.w3.org/TR/html-markup/audio.html
 
 If beets doesn't do what you want yet, [writing your own plugin][writing] is
 shockingly simple if you know a little Python.
 
-[writing]: http://beets.readthedocs.org/page/plugins/writing.html
+[writing]: http://beets.readthedocs.org/page/dev/plugins.html
     
 <p class="teaser">Install beets by typing
 <code><a href="http://pip.openplans.org/">pip</a> install beets</code>.
