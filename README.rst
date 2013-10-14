@@ -36,7 +36,7 @@ shockingly simple if you know a little Python.
 .. _MPD: http://mpd.wikia.com/
 .. _MusicBrainz music collection: http://musicbrainz.org/doc/Collections/
 .. _writing your own plugin:
-    http://beets.readthedocs.org/page/plugins/#writing-plugins
+    http://beets.readthedocs.org/page/dev/plugins.html
 .. _HTML5 Audio:
     http://www.w3.org/TR/html-markup/audio.html
 
@@ -56,7 +56,8 @@ You can install beets by typing ``pip install beets``. Then check out the
 Authors
 -------
 
-Beets is by `Adrian Sampson`_.
+Beets is by `Adrian Sampson`_ with a supporting cast of thousands. For help,
+please contact the `mailing list`_.
 
-.. _Adrian Sampson: mailto:adrian@radbox.org
-
+.. _mailing list: http://beets.radbox.org/
+.. _Adrian Sampson: http://homes.cs.washington.edu/~asampson/
