@@ -78,7 +78,7 @@ def ft_in_title(item):
     # artist field does not exactly match the album artist field. In
     # that case, we attempt to move the featured artist to the title.
     _, featured = split_on_feat(artist)
-    if featured and albumartist != artist:
+    if featured and albumartist != artist and albumartist:
         ui.print_(displayable_path(item.path))
         feat_part = None
 
