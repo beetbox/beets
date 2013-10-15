@@ -61,20 +61,31 @@ def _tags_for(obj):
         return []
 
     tags = []
-    discarded_tags = []
-    min_weight = config['lastgenre']['min_weight'].get(int)
+    multiple = config['lastgenre']['multiple'].get(bool)
+    if multiple:
+        min_weight = config['lastgenre']['min_weight'].get(int)
+        max_genres = config['lastgenre']['max_genres'].get(int)
+    else:
+        min_weight = -1
+        max_genres = 1
+
     for el in res:
+        # pylast 0.5.x does not use Album.getTopTags, so we don't have a
+        # weight for album tags.  However:  Album.getInfo (they use that)
+        # returns only ~5 tags, so we use maximum weight for them
         if isinstance(el, pylast.TopItem):
-            if min_weight > -1:
-                if len(tags) > 0 and min_weight > int(el.weight):
-                    discarded_tags.append(el.item.get_name())
-                    continue
-            el = el.item
-        tags.append(el.get_name())
-    log.debug(u'last.fm tags: %s' % unicode(tags))
-    if min_weight > -1:
-        log.debug(u'last.fm tags (weight < {0}): {1}'.format(
-            min_weight, unicode(discarded_tags)))
+            weight = int(el.weight)
+            tag = el.item.get_name().lower()
+        else:
+            weight = 100
+            tag = el.get_name().lower()
+        if _is_allowed(tag):
+          if min_weight > -1 and min_weight > weight and len(tags) > 0:
+            return tags
+          log.debug(u'lastfm.tag (min. {}): {} [{}]'.format(min_weight, tag, weight))
+          tags.append(tag)
+          if len(tags) == max_genres:
+            return tags
     return tags
 
 def _is_allowed(genre):
@@ -83,23 +94,9 @@ def _is_allowed(genre):
     """
     if genre is None:
         return False
-    if genre.lower() in options['whitelist']:
+    if not options['whitelist'] or genre in options['whitelist']:
         return True
     return False
-
-def _find_allowed(genres):
-    """Given a list of candidate genres (strings), return an allowed
-    genre string. If `multiple` is on, then this may be a
-    comma-separated list; otherwise, it is one of the elements of
-    `genres`.
-    """
-    allowed_genres = [g.title() for g in genres if _is_allowed(g)]
-    if not allowed_genres:
-        return
-    if config['lastgenre']['multiple']:
-        return u', '.join(allowed_genres)
-    else:
-        return allowed_genres[0]
 
 def _strings_to_genre(tags):
     """Given a list of strings, return a genre. Returns the first string
@@ -108,16 +105,16 @@ def _strings_to_genre(tags):
     """
     if not tags:
         return None
-    elif not options['whitelist']:
-        return tags[0].title()
 
     if options.get('c14n'):
         # Use the canonicalization tree.
-        for tag in tags:
-            return _find_allowed(find_parents(tag, options['branches']))
+        tags = find_parents(tags[0], options['branches'])
+
+    tags = [t.title() for t in tags]
+    if config['lastgenre']['multiple']:
+      return u', '.join(tags[:config['lastgenre']['max_genres'].get(int)])
     else:
-        # Just use the flat whitelist.
-        return _find_allowed(tags)
+      return tags[0]
 
 def fetch_genre(lastfm_obj):
     """Return the genre for a pylast entity or None if no suitable genre
@@ -214,7 +211,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self.config.add({
             'whitelist': os.path.join(os.path.dirname(__file__), 'genres.txt'),
             'multiple': False,
-            'min_weight': -1,
+            'min_weight': 10,
+            'max_genres': 3,
             'fallback': None,
             'canonical': None,
             'source': 'album',
