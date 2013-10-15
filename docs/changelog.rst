@@ -8,6 +8,7 @@ Little fixes:
 
 * :doc:`/plugins/missing`: Avoid a possible error when an album's
   ``tracktotal`` field is missing.
+* :doc:`/plugins/ftintitle`: Fix an error when the sort artist is missing.
 
 1.3.1 (October 12, 2013)
 ------------------------
