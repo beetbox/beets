@@ -16,7 +16,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Gets additional information for imported music from the EchoNest API. Requires
-the pyechonest library (https://github.com/echonest/pyechonest).
+version >= 8.0.1 of the pyechonest library (https://github.com/echonest/pyechonest).
 """
 import time
 import logging
@@ -25,6 +25,7 @@ from beets import ui
 from beets import config
 import pyechonest.config
 import pyechonest.song
+import pyechonest.track
 import socket
 
 # Global logger.
@@ -95,6 +96,7 @@ def fetch_item_attributes(lib, loglevel, item, write, force):
     """
     # Check if we need to update
     guess_mood = config['echoplus']['guess_mood'].get(bool)
+    allow_upload = config['echoplus']['upload'].get(bool)
     if force:
         require_update = True
     else:
@@ -112,7 +114,8 @@ def fetch_item_attributes(lib, loglevel, item, write, force):
         log.log(loglevel, u'no update required for: {} - {}'.format(
             item.artist, item.title))
         return
-    audio_summary = get_audio_summary(item.artist, item.title, item.length)
+    audio_summary = get_audio_summary(item.artist, item.title, item.length,
+        allow_upload, item.path)
     global_style = config['echoplus']['style'].get()
     global_custom_style = config['echoplus']['custom_style'].get()
     if audio_summary:
@@ -131,14 +134,14 @@ def fetch_item_attributes(lib, loglevel, item, write, force):
             if config['echoplus'][attr].get(str) == '':
                 continue
             if item.get(attr, None) is not None and not force:
-                log.log(loglevel, u'{} already present, use the force Luke: {} - {} = {}'.format(
+                log.log(loglevel, u'{} already present: {} - {} = {}'.format(
                     attr, item.artist, item.title, item.get(attr)))
             else:
                 if not attr in audio_summary or audio_summary[attr] is None:
                     log.log(loglevel, u'{} not found: {} - {}'.format(
                         attr, item.artist, item.title))
                 else:
-                    log.log(loglevel, u'fetched {}: {} - {} = {}'.format(
+                    log.debug(u'fetched {}: {} - {} = {}'.format(
                         attr, item.artist, item.title, audio_summary[attr]))
                     value = float(audio_summary[attr])
                     if attr in ATTRIBUTES_WITH_STYLE:
@@ -149,8 +152,8 @@ def fetch_item_attributes(lib, loglevel, item, write, force):
                         if custom_style is None:
                             custom_style = global_custom_style
                         value = _apply_style(style, custom_style, value)
-                        log.log(loglevel, u'mapped {}: {} - {} = {}'.format(
-                            attr, item.artist, item.title, audio_summary[attr]))
+                        log.debug(u'mapped {}: {} - {} = {}'.format(
+                            attr, item.artist, item.title, value))
                     item[attr] = value
                     changed = True
         if changed:
@@ -159,7 +162,7 @@ def fetch_item_attributes(lib, loglevel, item, write, force):
             item.store()
 
 
-def get_audio_summary(artist, title, duration):
+def get_audio_summary(artist, title, duration, upload, path):
     """Get the attribute for a song."""
     # We must have sufficient metadata for the lookup. Otherwise the API
     # will just complain.
@@ -204,14 +207,36 @@ def get_audio_summary(artist, title, duration):
     for result in results:
         distance = abs(duration - result.audio_summary['duration'])
         log.debug(
-            u'echoplus: candidate {} - {} [dist({:2.2f}-{:2.2f})={:2.2f}] = {}'.format(
+            u'echoplus: candidate {} - {} [dist({:2.2f}-{:2.2f})={:2.2f}]'.format(
                 result.artist_name, result.title,
-                result.audio_summary['duration'], duration, distance,
-                result.audio_summary))
+                result.audio_summary['duration'], duration, distance))
         if distance < min_distance:
             min_distance = distance
-            pick = result.audio_summary
-    return pick
+            pick = result
+    log.debug(
+        u'echoplus: picked {} - {} [dist({:2.2f}-{:2.2f})={:2.2f}] = {}'.format(
+            pick.artist_name, pick.title,
+            pick.audio_summary['duration'], duration, min_distance,
+            pick.audio_summary))
+    if min_distance > 1.0 and upload:
+        log.debug(u'uploading file to EchoNest')
+        t = pyechonest.track.track_from_filename(path)
+        if t:
+            log.debug(u'{} - {} [{:2.2f}]'.format(t.artist, t.title,
+                t.duration))
+            # FIXME:  maybe make pyechonest "nicer"?
+            result = {}
+            result['energy'] = t.energy
+            result['liveness'] = t.liveness
+            result['speechiness'] = t.speechiness
+            result['acousticness'] = t.acousticness
+            result['danceability'] = t.danceability
+            result['valence'] = t.valence
+            result['tempo'] = t.tempo
+            return result
+        else:
+            log.debug(u'upload did not return a result')
+    return pick.audio_summary
 
 
 class EchoPlusPlugin(BeetsPlugin):
@@ -226,6 +251,7 @@ class EchoPlusPlugin(BeetsPlugin):
             'force': False,
             'printinfo': True,
             'guess_mood': False,
+            'upload': False,
         })
         for attr in ATTRIBUTES:
           if attr == 'tempo':
@@ -270,7 +296,7 @@ class EchoPlusPlugin(BeetsPlugin):
                     s = u', '.join(d)
                     if s == u'':
                       s = u'no information received'
-                    ui.print_(u'{} - {}: {}'.format(item.artist, item.title, s))
+                    ui.print_(u'{}: {}'.format(item.path, s))
         cmd.func = func
         return [cmd]
 
