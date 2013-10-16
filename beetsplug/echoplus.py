@@ -60,19 +60,74 @@ def apply_style(style, custom, value):
         return mapping[i]
     return mapping[i]
 
+def guess_mood(valence, energy):
+    # for an explanation see:
+    # http://developer.echonest.com/forums/thread/1297
+    # i picked a Valence-Arousal space from here:
+    # http://mat.ucsb.edu/~ivana/200a/background.htm
+
+    # energy from 0.0 to 1.0.  valence < 0.5
+    low_valence = [
+        'fatigued', 'lethargic', 'depressed', 'sad',
+        'upset', 'stressed', 'nervous', 'tense' ]
+    # energy from 0.0 to 1.0.  valence > 0.5
+    high_valence = [
+        'calm', 'relaxed', 'serene', 'contented',
+        'happy', 'elated', 'excited', 'alert' ]
+    if valence < 0.5:
+        mapping = low_valence
+    else:
+        mapping = high_valence
+    inc = 1.0 / len(mapping)
+    cut = 0.0
+    for i in range(len(mapping)):
+        cut += inc
+        if energy < cut:
+            return mapping[i]
+    return mapping[i]
+
+
 def fetch_item_attributes(lib, loglevel, item, write):
     """Fetch and store tempo for a single item. If ``write``, then the
     tempo will also be written to the file itself in the bpm field. The
     ``loglevel`` parameter controls the visibility of the function's
     status log messages.
     """
-    # Skip if the item already has the tempo field.
+    # Check if we need to update
+    force = config['echoplus']['force'].get(bool)
+    guess_mood = config['echoplus']['guess_mood'].get(bool)
+    if force:
+        require_update = True
+    else:
+        require_update = False
+        for attr in ATTRIBUTES:
+            if config['echoplus'][attr].get(str) == '':
+                continue
+            if item.get(attr, None) is None:
+                require_update = True
+                break
+        if not require_update and guess_mood:
+            if item.get('mood', None) is None:
+                require_update = True
+    if not require_update:
+        log.debug(loglevel, u'no update required for: {} - {}'.format(
+            item.artist, item.title))
+        return
     audio_summary = get_audio_summary(item.artist, item.title)
-    changed = False
     global_style = config['echoplus']['style'].get()
     global_custom_style = config['echoplus']['custom_style'].get()
-    force = config['echoplus']['force'].get(bool)
     if audio_summary:
+        changed = False
+        if guess_mood:
+            attr = 'mood'
+            if item.get(attr, None) is not None and not force:
+                log.debug(loglevel, u'{} already present, use the force Luke: {} - {} = {}'.format(
+                    attr, item.artist, item.title, item.get(attr)))
+            else:
+                if 'valence' in audio_summary and 'energy' in audio_summary:
+                    item[attr] = guess_mode(audio_summary['valence'],
+                        audio_summary['energy'])
+                    changed = True
         for attr in ATTRIBUTES:
             if config['echoplus'][attr].get(str) == '':
                 continue
@@ -99,10 +154,10 @@ def fetch_item_attributes(lib, loglevel, item, write):
                             attr, item.artist, item.title, audio_summary[attr]))
                     item[attr] = value
                     changed = True
-    if changed:
-        if write:
-            item.write()
-        item.store()
+        if changed:
+            if write:
+                item.write()
+            item.store()
 
 
 def get_audio_summary(artist, title):
@@ -154,15 +209,14 @@ class EchoPlusPlugin(BeetsPlugin):
     def __init__(self):
         super(EchoPlusPlugin, self).__init__()
         self.import_stages = [self.imported]
-        # for an explanation of 'valence' see:
-        # http://developer.echonest.com/forums/thread/1297
         self.config.add({
             'apikey': u'NY2KTZHQ0QDSHBAP6',
             'auto': True,
             'style': 'hr5',
             'custom_style': None,
-            'force': True,
+            'force': False,
             'printinfo': True,
+            'guess_mood': False,
         })
         for attr in ATTRIBUTES:
           if attr == 'tempo':
@@ -196,7 +250,10 @@ class EchoPlusPlugin(BeetsPlugin):
                 fetch_item_attributes(lib, logging.INFO, item, write)
                 if opts.printinfo:
                     d = []
-                    for attr in ATTRIBUTES:
+                    attrs = [ a for a in ATTRIBUTES ]
+                    if config['echoplus']['guess_mood'].get(bool):
+                        attrs.append('mood')
+                    for attr in attrs:
                         if item.get(attr, None) is not None:
                             d.append(u'{}={}'.format(attr, item.get(attr)))
                     s = u', '.join(d)
