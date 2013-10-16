@@ -58,9 +58,7 @@ def apply_style(style, custom, value):
       cut += inc
       if value < cut:
         return mapping[i]
-    log.error(loglevel, u'Failed to apply style: {} [{}]'.format(style,
-        u', '.join(mapping)))
-    return value
+    return mapping[i]
 
 def fetch_item_attributes(lib, loglevel, item, write):
     """Fetch and store tempo for a single item. If ``write``, then the
