@@ -45,7 +45,7 @@ def fetch_item_tempo(lib, loglevel, item, write):
         return
 
     # Fetch tempo.
-    tempo = get_tempo(item.artist, item.title)
+    tempo = get_tempo(item.artist, item.title, item.length)
     if not tempo:
         log.log(loglevel, u'tempo not found: %s - %s' %
                           (item.artist, item.title))
@@ -59,7 +59,7 @@ def fetch_item_tempo(lib, loglevel, item, write):
     item.store()
 
 
-def get_tempo(artist, title):
+def get_tempo(artist, title, duration):
     """Get the tempo for a song."""
     # We must have sufficient metadata for the lookup. Otherwise the API
     # will just complain.
@@ -99,9 +99,19 @@ def get_tempo(artist, title):
     # So we look through the results for songs that have the right
     # artist and title. The API also doesn't have MusicBrainz track IDs;
     # otherwise we could use those for a more robust match.
+    min_distance = duration
+    pick = None
     for result in results:
         if result.artist_name.lower() == artist and result.title.lower() == title:
-            return result.audio_summary['tempo']
+            distance = abs(duration - result.audio_summary['duration'])
+            log.debug(u'echonest_tempo: candidate {} - {} [abs({:2.2f}-{:2.2f})={:2.2f}] = {}'.format(
+                result.artist_name, result.title,
+                result.audio_summary['duration'], duration, distance,
+                result.audio_summary['tempo']))
+            if distance < min_distance:
+                min_distance = distance
+                pick = result.audio_summary['tempo']
+    return pick
 
 
 class EchoNestTempoPlugin(BeetsPlugin):
