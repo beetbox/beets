@@ -63,8 +63,8 @@ def get_tempo(artist, title):
     """Get the tempo for a song."""
     # We must have sufficient metadata for the lookup. Otherwise the API
     # will just complain.
-    artist = artist.replace(u'\n', u' ').strip()
-    title = title.replace(u'\n', u' ').strip()
+    artist = artist.replace(u'\n', u' ').strip().lower()
+    title = title.replace(u'\n', u' ').strip().lower()
     if not artist or not title:
         return None
 
@@ -74,7 +74,7 @@ def get_tempo(artist, title):
             # EchoNest supports foreign ids from MusicBrainz, but currently
             # only for artists, not individual tracks/recordings.
             results = pyechonest.song.search(
-                artist=artist, title=title, results=1,
+                artist=artist, title=title, results=100,
                 buckets=['audio_summary']
             )
         except pyechonest.util.EchoNestAPIError as e:
@@ -100,8 +100,8 @@ def get_tempo(artist, title):
     # artist and title. The API also doesn't have MusicBrainz track IDs;
     # otherwise we could use those for a more robust match.
     for result in results:
-        if result.artist_name == artist and result.title == title:
-            return results[0].audio_summary['tempo']
+        if result.artist_name.lower() == artist and result.title.lower() == title:
+            return result.audio_summary['tempo']
 
 
 class EchoNestTempoPlugin(BeetsPlugin):
