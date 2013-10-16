@@ -55,7 +55,7 @@ def _tags_for(obj):
     not found or another error occurs.
     """
     try:
-        if isinstance(el, pylast.Album):
+        if isinstance(obj, pylast.Album):
             res = super(pylast.Album, obj).get_top_tags()
         else:
             res = obj.get_top_tags()
