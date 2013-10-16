@@ -267,6 +267,6 @@ class EchoPlusPlugin(BeetsPlugin):
     def imported(self, config, task):
         if self.config['auto']:
             for item in task.imported_items():
-                fetch_item_tempo(config.lib, logging.DEBUG, item, False)
+                fetch_item_attributes(config.lib, logging.DEBUG, item, False)
 
 # eof
