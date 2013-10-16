@@ -97,6 +97,9 @@ def fetch_item_attributes(lib, loglevel, item, write, force):
     # Check if we need to update
     guess_mood = config['echoplus']['guess_mood'].get(bool)
     allow_upload = config['echoplus']['upload'].get(bool)
+    if allow_upload and \
+          item.format.lower() not in ['wav', 'mp3', 'au', 'ogg', 'mp4', 'm4a']:
+        allow_upload = False
     if force:
         require_update = True
     else:
@@ -208,14 +211,16 @@ def get_audio_summary(artist, title, duration, upload, path):
     min_distance = duration
     pick = None
     for result in results:
-        distance = abs(duration - result.audio_summary['duration'])
-        log.debug(
-            u'echoplus: candidate {} - {} [dist({:2.2f}-{:2.2f})={:2.2f}]'.format(
-                result.artist_name, result.title,
-                result.audio_summary['duration'], duration, distance))
-        if distance < min_distance:
-            min_distance = distance
-            pick = result
+        if result.artist_name.lower() == artist \
+              and result.title.lower() == title:
+            distance = abs(duration - result.audio_summary['duration'])
+            log.debug(
+                u'echoplus: candidate {} - {} [dist({:2.2f}-{:2.2f})={:2.2f}]'.format(
+                    result.artist_name, result.title,
+                    result.audio_summary['duration'], duration, distance))
+            if distance < min_distance:
+                min_distance = distance
+                pick = result
     if pick:
         log.debug(
             u'echoplus: picked {} - {} [dist({:2.2f}-{:2.2f})={:2.2f}] = {}'.format(
