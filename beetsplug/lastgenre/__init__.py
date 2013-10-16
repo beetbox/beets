@@ -55,7 +55,10 @@ def _tags_for(obj):
     not found or another error occurs.
     """
     try:
-        res = super(pylast.Album, obj).get_top_tags()
+        if isinstance(obj, pylast.Album):
+            res = super(pylast.Album, obj).get_top_tags()
+        else:
+            res = obj.get_top_tags()
     except PYLAST_EXCEPTIONS as exc:
         log.debug(u'last.fm error: %s' % unicode(exc))
         return []
