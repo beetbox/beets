@@ -114,11 +114,14 @@ def fetch_item_attributes(lib, loglevel, item, write, force):
         log.log(loglevel, u'no update required for: {} - {}'.format(
             item.artist, item.title))
         return
+    else:
+        log.debug(u'echoplus for: {} - {}'.format(
+            item.artist, item.title))
     audio_summary = get_audio_summary(item.artist, item.title, item.length,
         allow_upload, item.path)
-    global_style = config['echoplus']['style'].get()
-    global_custom_style = config['echoplus']['custom_style'].get()
     if audio_summary:
+        global_style = config['echoplus']['style'].get()
+        global_custom_style = config['echoplus']['custom_style'].get()
         changed = False
         if guess_mood:
             attr = 'mood'
@@ -213,12 +216,13 @@ def get_audio_summary(artist, title, duration, upload, path):
         if distance < min_distance:
             min_distance = distance
             pick = result
-    log.debug(
-        u'echoplus: picked {} - {} [dist({:2.2f}-{:2.2f})={:2.2f}] = {}'.format(
-            pick.artist_name, pick.title,
-            pick.audio_summary['duration'], duration, min_distance,
-            pick.audio_summary))
-    if min_distance > 1.0 and upload:
+    if pick:
+        log.debug(
+            u'echoplus: picked {} - {} [dist({:2.2f}-{:2.2f})={:2.2f}] = {}'.format(
+                pick.artist_name, pick.title,
+                pick.audio_summary['duration'], duration, min_distance,
+                pick.audio_summary))
+    if (not pick or min_distance > 1.0) and upload:
         log.debug(u'uploading file to EchoNest')
         t = pyechonest.track.track_from_filename(path)
         if t:
@@ -236,6 +240,8 @@ def get_audio_summary(artist, title, duration, upload, path):
             return result
         else:
             log.debug(u'upload did not return a result')
+    elif not pick:
+        return None
     return pick.audio_summary
 
 
@@ -300,11 +306,17 @@ class EchoPlusPlugin(BeetsPlugin):
         cmd.func = func
         return [cmd]
 
-    # Auto-fetch tempo on import.
-    def imported(self, config, task):
+    # Auto-fetch info on import.
+    def imported(self, session, task):
         if self.config['auto']:
-            for item in task.imported_items():
-                fetch_item_attributes(config.lib, logging.DEBUG, item, False,
+            if task.is_album:
+                album = session.lib.get_album(task.album_id)
+                for item in album.items():
+                    fetch_item_attributes(session.lib, logging.DEBUG, item, False,
+                        self.config['force'])
+            else:
+                item = task.item
+                fetch_item_attributes(session.lib, logging.DEBUG, item, False,
                     self.config['force'])
 
 # eof
