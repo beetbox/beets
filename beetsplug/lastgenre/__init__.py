@@ -49,13 +49,18 @@ PYLAST_EXCEPTIONS = (
 
 # Core genre identification routine.
 
-def _tags_for(obj):
+def _tags_for(obj, maximum=0):
     """Given a pylast entity (album or track), returns a list of
     tag names for that entity. Returns an empty list if the entity is
-    not found or another error occurs.
+    not found or another error occurs. If 'maximum' is set in the config
+    file, get_top_tags is limited to returning that number of tags.
     """
+
     try:
-        res = obj.get_top_tags()
+        if maximum != 0:
+            res = obj.get_top_tags(maximum)
+        else:
+            res = obj.get_top_tags()
     except PYLAST_EXCEPTIONS as exc:
         log.debug(u'last.fm error: %s' % unicode(exc))
         return []
@@ -114,7 +119,11 @@ def fetch_genre(lastfm_obj):
     """Return the genre for a pylast entity or None if no suitable genre
     can be found. Ex. 'Electronic, House, Dance'
     """
-    return _strings_to_genre(_tags_for(lastfm_obj))
+    if config['lastgenre']['maximum']:
+        maximum = config['lastgenre']['maximum'].get(int)
+        return _strings_to_genre(_tags_for(lastfm_obj, maximum))
+    else:
+        return _strings_to_genre(_tags_for(lastfm_obj))
 
 
 # Canonicalization tree processing.
@@ -205,6 +214,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self.config.add({
             'whitelist': os.path.join(os.path.dirname(__file__), 'genres.txt'),
             'multiple': False,
+            'maximum': 0,
             'fallback': None,
             'canonical': None,
             'source': 'album',
