@@ -37,7 +37,7 @@ ATTRIBUTES = ['energy', 'liveness', 'speechiness', 'acousticness',
 ATTRIBUTES_WITH_STYLE = ['energy', 'liveness', 'speechiness', 'acousticness',
     'danceability', 'valence' ]
 
-def apply_style(style, custom, value):
+def _apply_style(style, custom, value):
     if style == 'raw':
         return value
     mapping = None
@@ -60,7 +60,7 @@ def apply_style(style, custom, value):
         return mapping[i]
     return mapping[i]
 
-def guess_mood(valence, energy):
+def _guess_mood(valence, energy):
     # for an explanation see:
     # http://developer.echonest.com/forums/thread/1297
     # i picked a Valence-Arousal space from here:
@@ -125,7 +125,7 @@ def fetch_item_attributes(lib, loglevel, item, write):
                     attr, item.artist, item.title, item.get(attr)))
             else:
                 if 'valence' in audio_summary and 'energy' in audio_summary:
-                    item[attr] = guess_mode(audio_summary['valence'],
+                    item[attr] = _guess_mood(audio_summary['valence'],
                         audio_summary['energy'])
                     changed = True
         for attr in ATTRIBUTES:
@@ -149,7 +149,7 @@ def fetch_item_attributes(lib, loglevel, item, write):
                             style = global_style
                         if custom_style is None:
                             custom_style = global_custom_style
-                        value = apply_style(style, custom_style, value)
+                        value = _apply_style(style, custom_style, value)
                         log.debug(loglevel, u'mapped {}: {} - {} = {}'.format(
                             attr, item.artist, item.title, audio_summary[attr]))
                     item[attr] = value
@@ -164,8 +164,8 @@ def get_audio_summary(artist, title):
     """Get the attribute for a song."""
     # We must have sufficient metadata for the lookup. Otherwise the API
     # will just complain.
-    artist = artist.replace(u'\n', u' ').strip()
-    title = title.replace(u'\n', u' ').strip()
+    artist = artist.replace(u'\n', u' ').strip().lower()
+    title = title.replace(u'\n', u' ').strip().lower()
     if not artist or not title:
         return None
 
@@ -201,8 +201,9 @@ def get_audio_summary(artist, title):
     # artist and title. The API also doesn't have MusicBrainz track IDs;
     # otherwise we could use those for a more robust match.
     for result in results:
-        if result.artist_name == artist and result.title == title:
-            return results[0].audio_summary
+        log.debug(u'result: {} - {}'.format(result.artist_name, result.title))
+        if result.artist_name.lower() == artist and result.title.lower() == title:
+            return result.audio_summary
 
 
 class EchoPlusPlugin(BeetsPlugin):
