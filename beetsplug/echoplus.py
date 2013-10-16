@@ -175,7 +175,7 @@ def get_audio_summary(artist, title):
             # EchoNest supports foreign ids from MusicBrainz, but currently
             # only for artists, not individual tracks/recordings.
             results = pyechonest.song.search(
-                artist=artist, title=title, results=1,
+                artist=artist, title=title, results=100,
                 buckets=['audio_summary']
             )
         except pyechonest.util.EchoNestAPIError as e:
@@ -249,17 +249,17 @@ class EchoPlusPlugin(BeetsPlugin):
             for item in lib.items(ui.decargs(args)):
                 fetch_item_attributes(lib, logging.INFO, item, write)
                 if opts.printinfo:
-                    d = []
                     attrs = [ a for a in ATTRIBUTES ]
                     if config['echoplus']['guess_mood'].get(bool):
                         attrs.append('mood')
+                    d = []
                     for attr in attrs:
                         if item.get(attr, None) is not None:
                             d.append(u'{}={}'.format(attr, item.get(attr)))
                     s = u', '.join(d)
                     if s == u'':
                       s = u'no information received'
-                    ui.print_(u'{}-{}: {}'.format(item.artist, item.title, s))
+                    ui.print_(u'{} - {}: {}'.format(item.artist, item.title, s))
         cmd.func = func
         return [cmd]
 
