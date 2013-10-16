@@ -50,7 +50,7 @@ def _apply_style(style, custom, value):
     elif style == 'hr3': # human readable
         mapping = ['low', 'neutral', 'high']
     if mapping is None:
-        log.error(loglevel, u'Unsupported style setting: {}'.format(style))
+        log.error(u'Unsupported style setting: {}'.format(style))
         return value
     inc = 1.0 / len(mapping)
     cut = 0.0
@@ -87,14 +87,13 @@ def _guess_mood(valence, energy):
     return mapping[i]
 
 
-def fetch_item_attributes(lib, loglevel, item, write):
+def fetch_item_attributes(lib, loglevel, item, write, force):
     """Fetch and store tempo for a single item. If ``write``, then the
     tempo will also be written to the file itself in the bpm field. The
     ``loglevel`` parameter controls the visibility of the function's
     status log messages.
     """
     # Check if we need to update
-    force = config['echoplus']['force'].get(bool)
     guess_mood = config['echoplus']['guess_mood'].get(bool)
     if force:
         require_update = True
@@ -110,10 +109,10 @@ def fetch_item_attributes(lib, loglevel, item, write):
             if item.get('mood', None) is None:
                 require_update = True
     if not require_update:
-        log.debug(loglevel, u'no update required for: {} - {}'.format(
+        log.log(loglevel, u'no update required for: {} - {}'.format(
             item.artist, item.title))
         return
-    audio_summary = get_audio_summary(item.artist, item.title)
+    audio_summary = get_audio_summary(item.artist, item.title, item.length)
     global_style = config['echoplus']['style'].get()
     global_custom_style = config['echoplus']['custom_style'].get()
     if audio_summary:
@@ -121,7 +120,7 @@ def fetch_item_attributes(lib, loglevel, item, write):
         if guess_mood:
             attr = 'mood'
             if item.get(attr, None) is not None and not force:
-                log.debug(loglevel, u'{} already present, use the force Luke: {} - {} = {}'.format(
+                log.log(loglevel, u'{} already present, use the force Luke: {} - {} = {}'.format(
                     attr, item.artist, item.title, item.get(attr)))
             else:
                 if 'valence' in audio_summary and 'energy' in audio_summary:
@@ -132,14 +131,14 @@ def fetch_item_attributes(lib, loglevel, item, write):
             if config['echoplus'][attr].get(str) == '':
                 continue
             if item.get(attr, None) is not None and not force:
-                log.debug(loglevel, u'{} already present, use the force Luke: {} - {} = {}'.format(
+                log.log(loglevel, u'{} already present, use the force Luke: {} - {} = {}'.format(
                     attr, item.artist, item.title, item.get(attr)))
             else:
                 if not attr in audio_summary or audio_summary[attr] is None:
-                    log.debug(loglevel, u'{} not found: {} - {}'.format(
+                    log.log(loglevel, u'{} not found: {} - {}'.format(
                         attr, item.artist, item.title))
                 else:
-                    log.debug(loglevel, u'fetched {}: {} - {} = {}'.format(
+                    log.log(loglevel, u'fetched {}: {} - {} = {}'.format(
                         attr, item.artist, item.title, audio_summary[attr]))
                     value = float(audio_summary[attr])
                     if attr in ATTRIBUTES_WITH_STYLE:
@@ -150,7 +149,7 @@ def fetch_item_attributes(lib, loglevel, item, write):
                         if custom_style is None:
                             custom_style = global_custom_style
                         value = _apply_style(style, custom_style, value)
-                        log.debug(loglevel, u'mapped {}: {} - {} = {}'.format(
+                        log.log(loglevel, u'mapped {}: {} - {} = {}'.format(
                             attr, item.artist, item.title, audio_summary[attr]))
                     item[attr] = value
                     changed = True
@@ -160,7 +159,7 @@ def fetch_item_attributes(lib, loglevel, item, write):
             item.store()
 
 
-def get_audio_summary(artist, title):
+def get_audio_summary(artist, title, duration):
     """Get the attribute for a song."""
     # We must have sufficient metadata for the lookup. Otherwise the API
     # will just complain.
@@ -183,27 +182,36 @@ def get_audio_summary(artist, title):
                 # Wait and try again.
                 time.sleep(RETRY_INTERVAL)
             else:
-                log.warn(u'echonest: {0}'.format(e.args[0][0]))
+                log.warn(u'echoplus: {0}'.format(e.args[0][0]))
                 return None
         except (pyechonest.util.EchoNestIOError, socket.error) as e:
-            log.debug(u'echonest: IO error: {0}'.format(e))
+            log.debug(u'echoplus: IO error: {0}'.format(e))
             time.sleep(RETRY_INTERVAL)
         else:
             break
     else:
         # If we exited the loop without breaking, then we used up all
         # our allotted retries.
-        log.debug(u'echonest: exceeded retries')
+        log.debug(u'echoplus: exceeded retries')
         return None
 
     # The Echo Nest API can return songs that are not perfect matches.
     # So we look through the results for songs that have the right
     # artist and title. The API also doesn't have MusicBrainz track IDs;
     # otherwise we could use those for a more robust match.
+    min_distance = duration
+    pick = None
     for result in results:
-        log.debug(u'result: {} - {}'.format(result.artist_name, result.title))
-        if result.artist_name.lower() == artist and result.title.lower() == title:
-            return result.audio_summary
+        distance = abs(duration - result.audio_summary['duration'])
+        log.debug(
+            u'echoplus: candidate {} - {} [dist({:2.2f}-{:2.2f})={:2.2f}] = {}'.format(
+                result.artist_name, result.title,
+                result.audio_summary['duration'], duration, distance,
+                result.audio_summary))
+        if distance < min_distance:
+            min_distance = distance
+            pick = result.audio_summary
+    return pick
 
 
 class EchoPlusPlugin(BeetsPlugin):
@@ -241,14 +249,16 @@ class EchoPlusPlugin(BeetsPlugin):
             help='print fetched information to console')
         cmd.parser.add_option('-f', '--force', dest='force',
             action='store_true', default=False,
-            help='re-download information from the echonest')
+            help='re-download information from the EchoNest')
         def func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
             write = config['import']['write'].get(bool)
+            self.config.set_args(opts)
 
             for item in lib.items(ui.decargs(args)):
-                fetch_item_attributes(lib, logging.INFO, item, write)
+                fetch_item_attributes(lib, logging.INFO, item, write,
+                    self.config['force'])
                 if opts.printinfo:
                     attrs = [ a for a in ATTRIBUTES ]
                     if config['echoplus']['guess_mood'].get(bool):
@@ -268,6 +278,7 @@ class EchoPlusPlugin(BeetsPlugin):
     def imported(self, config, task):
         if self.config['auto']:
             for item in task.imported_items():
-                fetch_item_attributes(config.lib, logging.DEBUG, item, False)
+                fetch_item_attributes(config.lib, logging.DEBUG, item, False,
+                    self.config['force'])
 
 # eof
