@@ -135,20 +135,22 @@ def fetch_item_attributes(lib, loglevel, item, write, force):
                 if 'valence' in audio_summary and 'energy' in audio_summary:
                     item[attr] = _guess_mood(audio_summary['valence'],
                         audio_summary['energy'])
+                    log.debug(u'mapped {}: {} - {} = {:2.2f} x {:2.2f} > {}'.format(
+                        attr, item.artist, item.title,
+                        audio_summary['valence'], audio_summary['energy'],
+                        item[attr]))
                     changed = True
         for attr in ATTRIBUTES:
             if config['echoplus'][attr].get(str) == '':
                 continue
             if item.get(attr, None) is not None and not force:
-                log.log(loglevel, u'{} already present: {} - {} = {}'.format(
+                log.log(loglevel, u'{} already present: {} - {} = {:2.2f}'.format(
                     attr, item.artist, item.title, item.get(attr)))
             else:
                 if not attr in audio_summary or audio_summary[attr] is None:
                     log.log(loglevel, u'{} not found: {} - {}'.format(
                         attr, item.artist, item.title))
                 else:
-                    log.debug(u'fetched {}: {} - {} = {}'.format(
-                        attr, item.artist, item.title, audio_summary[attr]))
                     value = float(audio_summary[attr])
                     if attr in ATTRIBUTES_WITH_STYLE:
                         style = config['echoplus']['{}_style'.format(attr)].get()
@@ -157,9 +159,13 @@ def fetch_item_attributes(lib, loglevel, item, write, force):
                             style = global_style
                         if custom_style is None:
                             custom_style = global_custom_style
-                        value = _apply_style(style, custom_style, value)
-                        log.debug(u'mapped {}: {} - {} = {}'.format(
-                            attr, item.artist, item.title, value))
+                        mapped_value = _apply_style(style, custom_style, value)
+                        log.debug(u'mapped {}: {} - {} = {:2.2f} > {}'.format(
+                            attr, item.artist, item.title, value, mapped_value))
+                        value = mapped_value
+                    else:
+                        log.debug(u'fetched {}: {} - {} = {:2.2f}'.format(
+                            attr, item.artist, item.title, audio_summary[attr]))
                     item[attr] = value
                     changed = True
         if changed:
@@ -229,22 +235,40 @@ def get_audio_summary(artist, title, duration, upload, path):
                 pick.audio_summary))
     if (not pick or min_distance > 1.0) and upload:
         log.debug(u'uploading file to EchoNest')
-        t = pyechonest.track.track_from_filename(path)
-        if t:
-            log.debug(u'{} - {} [{:2.2f}]'.format(t.artist, t.title,
-                t.duration))
-            # FIXME:  maybe make pyechonest "nicer"?
-            result = {}
-            result['energy'] = t.energy
-            result['liveness'] = t.liveness
-            result['speechiness'] = t.speechiness
-            result['acousticness'] = t.acousticness
-            result['danceability'] = t.danceability
-            result['valence'] = t.valence
-            result['tempo'] = t.tempo
-            return result
+        # FIXME: same loop as above...  make this better
+        for i in range(RETRIES):
+            try:
+                t = pyechonest.track.track_from_filename(path)
+                if t:
+                    log.debug(u'{} - {} [{:2.2f}]'.format(t.artist, t.title,
+                        t.duration))
+                    # FIXME:  maybe make pyechonest "nicer"?
+                    result = {}
+                    result['energy'] = t.energy
+                    result['liveness'] = t.liveness
+                    result['speechiness'] = t.speechiness
+                    result['acousticness'] = t.acousticness
+                    result['danceability'] = t.danceability
+                    result['valence'] = t.valence
+                    result['tempo'] = t.tempo
+                    return result
+            except pyechonest.util.EchoNestAPIError as e:
+                if e.code == 3:
+                    # Wait and try again.
+                    time.sleep(RETRY_INTERVAL)
+                else:
+                    log.warn(u'echoplus: {0}'.format(e.args[0][0]))
+                    return None
+            except (pyechonest.util.EchoNestIOError, socket.error) as e:
+                log.debug(u'echoplus: IO error: {0}'.format(e))
+                time.sleep(RETRY_INTERVAL)
+            else:
+                break
         else:
-            log.debug(u'upload did not return a result')
+            # If we exited the loop without breaking, then we used up all
+            # our allotted retries.
+            log.debug(u'echoplus: exceeded retries')
+            return None
     elif not pick:
         return None
     return pick.audio_summary
