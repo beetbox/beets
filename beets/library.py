@@ -1940,7 +1940,7 @@ class DefaultTemplateFunctions(object):
         """Format a time value using `strftime`.
         """
         cur_fmt = beets.config['time_format'].get(unicode)
-        return time.strftime(format, time.strptime(s, cur_fmt))
+        return time.strftime(format or cur_fmt,time.gmtime(float(s)))
 
     def tmpl_aunique(self, keys=None, disam=None):
         """Generate a string that is guaranteed to be unique among all
