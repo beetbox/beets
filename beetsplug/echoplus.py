@@ -99,12 +99,12 @@ def _guess_mood(valence, energy):
       return mood
     return u'{} {}'.format(strength, mood)
 
-def fetch_item_attributes(lib, item, write, force, re_apply):
+def fetch_item_attributes(lib, item, write, force, reapply):
     """Fetches audio_summary from the EchoNest and writes it to item.
     """
 
-    log.debug(u'echoplus: {} - {} [{}] force:{} re_apply:{}'.format(
-        item.artist, item.title, item.length, force, re_apply))
+    log.debug(u'echoplus: {} - {} [{}] force:{} reapply:{}'.format(
+        item.artist, item.title, item.length, force, reapply))
     # permanently store the raw values?
     store_raw = config['echoplus']['store_raw'].get(bool)
 
@@ -119,9 +119,9 @@ def fetch_item_attributes(lib, item, write, force, re_apply):
             log.warn(u'echoplus: "energy" is required to guess the mood')
             config['echoplus']['mood'].set('') # disable mood
 
-    # force implies re_apply
+    # force implies reapply
     if force:
-        re_apply = True
+        reapply = True
 
     allow_upload = config['echoplus']['upload'].get(bool)
     # the EchoNest only supports these file formats
@@ -144,7 +144,7 @@ def fetch_item_attributes(lib, item, write, force, re_apply):
 
              # check if the raw values are present.  'mood' has no direct raw
              # representation and 'tempo' is stored raw anyway
-            if (store_raw or re_apply) and not attr in ['mood', 'tempo']:
+            if (store_raw or reapply) and not attr in ['mood', 'tempo']:
                 target = '{}_raw'.format(target)
 
             if item.get(target, None) is None:
@@ -153,7 +153,7 @@ def fetch_item_attributes(lib, item, write, force, re_apply):
 
     if need_update:
         log.debug(u'echoplus: fetching data')
-        re_apply = True
+        reapply = True
 
         # (re-)fetch audio_summary and store it to the raw values.  if we do
         # not want to keep the raw values, we clean them up later
@@ -186,8 +186,8 @@ def fetch_item_attributes(lib, item, write, force, re_apply):
                         value = float(audio_summary[attr])
                         item[target] = float(audio_summary[attr])
                         changed = True
-    if re_apply:
-        log.debug(u'echoplus: reapplying data')
+    if reapply:
+        log.debug(u'echoplus: (re-)applying data')
         global_mapping = _mapping(config['echoplus']['mapping'].get())
         for attr in ATTRIBUTES:
             # do we want this attribute?
@@ -315,6 +315,12 @@ class EchoPlusPlugin(BeetsPlugin):
             'apikey': u'NY2KTZHQ0QDSHBAP6',
             'auto': True,
             'mapping': 'very low,low,neutral,high,very high',
+            'energy_mapping': None,
+            'liveness_mapping': 'studio,strange,stage',
+            'speechiness_mapping': 'sing,rap,talk',
+            'acousticness_mapping': 'electric,natural',
+            'danceability_mapping': 'couch,party',
+            'valence_mapping': None,
             'store_raw': True,
             'guess_mood': False,
             'upload': False,
@@ -325,9 +331,7 @@ class EchoPlusPlugin(BeetsPlugin):
             self.config.add({attr:target})
           else:
             target = attr
-            self.config.add({attr:target,
-                '{}_mapping'.format(attr): None,
-            })
+            self.config.add({attr:target})
 
         pyechonest.config.ECHO_NEST_API_KEY = \
                 self.config['apikey'].get(unicode)
@@ -338,9 +342,9 @@ class EchoPlusPlugin(BeetsPlugin):
         cmd.parser.add_option('-f', '--force', dest='force',
             action='store_true', default=False,
             help='re-download information from the EchoNest')
-        cmd.parser.add_option('-r', '--re_apply', dest='re_apply',
+        cmd.parser.add_option('-r', '--reapply', dest='reapply',
             action='store_true', default=False,
-            help='re_apply mappings')
+            help='reapply mappings')
         def func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
@@ -350,10 +354,10 @@ class EchoPlusPlugin(BeetsPlugin):
             for item in lib.items(ui.decargs(args)):
                 log.debug(u'{} {}'.format(
                     self.config['force'],
-                    self.config['re_apply']))
+                    self.config['reapply']))
                 fetch_item_attributes(lib, item, write,
                     self.config['force'],
-                    self.config['re_apply'])
+                    self.config['reapply'])
         cmd.func = func
         return [cmd]
 
