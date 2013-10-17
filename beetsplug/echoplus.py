@@ -27,6 +27,7 @@ import pyechonest.config
 import pyechonest.song
 import pyechonest.track
 import socket
+import math
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -38,28 +39,19 @@ ATTRIBUTES = ['energy', 'liveness', 'speechiness', 'acousticness',
 ATTRIBUTES_WITH_STYLE = ['energy', 'liveness', 'speechiness', 'acousticness',
     'danceability', 'valence' ]
 
-def _apply_style(style, custom, value):
-    if style == 'raw':
-        return value
-    mapping = None
-    if style == 'custom':
-        mapping = [ m.strip() for m in custom.split(',') ]
-    elif style == '1to5':
-        mapping = [1, 2, 3, 4, 5]
-    elif style == 'hr5': # human readable
-        mapping = ['very low', 'low', 'neutral', 'high', 'very high']
-    elif style == 'hr3': # human readable
-        mapping = ['low', 'neutral', 'high']
-    if mapping is None:
-        log.error(u'Unsupported style setting: {}'.format(style))
-        return value
-    inc = 1.0 / len(mapping)
+MAX_LEN = math.sqrt(2.0 * 0.5 * 0.5)
+
+def _picker(value, rang, mapping):
+    inc = rang / len(mapping)
     cut = 0.0
-    for i in range(len(mapping)):
+    for m in mapping:
       cut += inc
       if value < cut:
-        return mapping[i]
-    return mapping[i]
+        return m
+    return m
+
+def _mapping(mapstr):
+    return [ m.strip() for m in mapstr.split(',') ]
 
 def _guess_mood(valence, energy):
     # for an explanation see:
@@ -67,53 +59,64 @@ def _guess_mood(valence, energy):
     # i picked a Valence-Arousal space from here:
     # http://mat.ucsb.edu/~ivana/200a/background.htm
 
-    # energy from 0.0 to 1.0.  valence < 0.5
-    low_valence = [
-        'fatigued', 'lethargic', 'depressed', 'sad',
-        'upset', 'stressed', 'nervous', 'tense' ]
-    # energy from 0.0 to 1.0.  valence > 0.5
+    # move center to 0/0
+    valence -= 0.5
+    energy -= 0.5
+    length = math.sqrt(valence * valence + energy * energy)
+
+    strength = ['slightly', None, 'very' ]
     high_valence = [
         'calm', 'relaxed', 'serene', 'contented',
         'happy', 'elated', 'excited', 'alert' ]
-    if valence < 0.5:
-        mapping = low_valence
+    low_valence = [
+        'fatigued', 'lethargic', 'depressed', 'sad',
+        'upset', 'stressed', 'nervous', 'tense' ]
+    # energy from -0.5 to 0.5,  valence > 0.0
+    if length == 0.0:
+        # FIXME: what now?
+        return u'neutral'
+    angle = math.asin(energy / length) + PI_2
+    if valence < 0.0:
+        moods = low_valence
     else:
-        mapping = high_valence
-    inc = 1.0 / len(mapping)
-    cut = 0.0
-    for i in range(len(mapping)):
-        cut += inc
-        if energy < cut:
-            return mapping[i]
-    return mapping[i]
+        moods = high_valence
+    mood = _picker(angle, math.pi, moods)
+    strength = _picker(length, MAX_LEN, strength)
+    if strength is None:
+      return mood
+    return u'{} {}'.format(strength, mood)
 
-
-def fetch_item_attributes(lib, loglevel, item, write, force):
-    """Fetch and store tempo for a single item. If ``write``, then the
-    tempo will also be written to the file itself in the bpm field. The
-    ``loglevel`` parameter controls the visibility of the function's
-    status log messages.
-    """
+def fetch_item_attributes(lib, item, write, force, reapply):
     # Check if we need to update
     guess_mood = config['echoplus']['guess_mood'].get(bool)
     allow_upload = config['echoplus']['upload'].get(bool)
+    store_raw = config['echoplus']['store_raw'].get(bool)
+    # force implies reapply
+    if force:
+        reapply = True
+    # EchoNest only supports these file formats
     if allow_upload and \
           item.format.lower() not in ['wav', 'mp3', 'au', 'ogg', 'mp4', 'm4a']:
         allow_upload = False
+
+    do_update
     if force:
-        require_update = True
+        do_update = True
     else:
-        require_update = False
+        do_update = False
         for attr in ATTRIBUTES:
+            # do we want this attribute?
             if config['echoplus'][attr].get(str) == '':
                 continue
+            if store_raw: # only check if the raw values are present
+                attr = '{}_raw'.format(attr)
             if item.get(attr, None) is None:
-                require_update = True
+                do_update = True
                 break
-        if not require_update and guess_mood:
+        if not do_update and guess_mood:
             if item.get('mood', None) is None:
-                require_update = True
-    if not require_update:
+                do_update = True
+    if do_update:
         log.log(loglevel, u'no update required for: {} - {}'.format(
             item.artist, item.title))
         return
@@ -281,9 +284,8 @@ class EchoPlusPlugin(BeetsPlugin):
         self.config.add({
             'apikey': u'NY2KTZHQ0QDSHBAP6',
             'auto': True,
-            'style': 'hr5',
-            'custom_style': None,
-            'force': False,
+            'mapping': 'very low,low,neutral,high,very high',
+            'store_raw': True,
             'printinfo': True,
             'guess_mood': False,
             'upload': False,
@@ -295,8 +297,7 @@ class EchoPlusPlugin(BeetsPlugin):
           else:
             target = attr
             self.config.add({attr:target,
-                '{}_style'.format(attr):None,
-                '{}_custom_style'.format(attr):None,
+                '{}_mapping'.format(attr):None,
             })
 
         pyechonest.config.ECHO_NEST_API_KEY = \
@@ -311,6 +312,9 @@ class EchoPlusPlugin(BeetsPlugin):
         cmd.parser.add_option('-f', '--force', dest='force',
             action='store_true', default=False,
             help='re-download information from the EchoNest')
+        cmd.parser.add_option('-r', '--reapply', dest='reapply',
+            action='store_true', default=False,
+            help='reapply mappings')
         def func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
@@ -319,7 +323,7 @@ class EchoPlusPlugin(BeetsPlugin):
 
             for item in lib.items(ui.decargs(args)):
                 fetch_item_attributes(lib, logging.INFO, item, write,
-                    self.config['force'])
+                    self.config['force'], self.config['reapply'])
                 if opts.printinfo:
                     attrs = [ a for a in ATTRIBUTES ]
                     if config['echoplus']['guess_mood'].get(bool):
@@ -341,11 +345,10 @@ class EchoPlusPlugin(BeetsPlugin):
             if task.is_album:
                 album = session.lib.get_album(task.album_id)
                 for item in album.items():
-                    fetch_item_attributes(session.lib, logging.DEBUG, item, False,
-                        self.config['force'])
+                    fetch_item_attributes(session.lib, item, False, True,
+                        True)
             else:
                 item = task.item
-                fetch_item_attributes(session.lib, logging.DEBUG, item, False,
-                    self.config['force'])
+                fetch_item_attributes(session.lib, item, False, True, True)
 
 # eof
