@@ -317,7 +317,7 @@ class EchoPlusPlugin(BeetsPlugin):
             'mapping': 'very low,low,neutral,high,very high',
             'energy_mapping': None,
             'liveness_mapping': 'studio,probably studio,probably live,live',
-            'speechiness_mapping': 'sing,unsure,talk',
+            'speechiness_mapping': 'singing,unsure,talking',
             'acousticness_mapping': 'artificial,probably artifical,probably natural,natural',
             'danceability_mapping': 'bed,couch,unsure,party,disco',
             'valence_mapping': None,
