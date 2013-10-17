@@ -83,12 +83,12 @@ def _tags_for(obj):
             weight = 100
             tag = el.get_name().lower()
         if _is_allowed(tag):
-          if min_weight > -1 and min_weight > weight and len(tags) > 0:
-            return tags
-          log.debug(u'lastfm.tag (min. {}): {} [{}]'.format(min_weight, tag, weight))
-          tags.append(tag)
-          if len(tags) == max_genres:
-            return tags
+            if min_weight > -1 and min_weight > weight and len(tags) > 0:
+                return tags
+            log.debug(u'lastfm.tag (min. {}): {} [{}]'.format(min_weight, tag, weight))
+            tags.append(tag)
+            if len(tags) == max_genres:
+                return tags
     return tags
 
 def _is_allowed(genre):
@@ -115,9 +115,9 @@ def _strings_to_genre(tags):
 
     tags = [t.title() for t in tags]
     if config['lastgenre']['multiple']:
-      return u', '.join(tags[:config['lastgenre']['max_genres'].get(int)])
+        return u', '.join(tags[:config['lastgenre']['max_genres'].get(int)])
     else:
-      return tags[0]
+        return tags[0]
 
 def fetch_genre(lastfm_obj):
     """Return the genre for a pylast entity or None if no suitable genre
