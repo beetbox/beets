@@ -202,7 +202,7 @@ Why does beets…
 There are a number of possibilities:
 
 -  First, make sure the album is in `the MusicBrainz
-   database <http://musicbrainz.org/>`__ the MusicBrainz database. You
+   database <http://musicbrainz.org/>`__. You
    can search on their site to make sure it's cataloged there. (If not,
    anyone can edit MusicBrainz---so consider adding the data yourself.)
 -  If the album in question is a multi-disc release, see the relevant
