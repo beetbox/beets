@@ -326,7 +326,8 @@ class EchoPlusPlugin(BeetsPlugin):
         })
         for attr in ATTRIBUTES:
           if attr == 'tempo':
-            target = '' # disabled to not conflict with echonest_tempo
+            target = '' # disabled to not conflict with echonest_tempo,
+            # to enable, set it to 'bpm'
             self.config.add({attr:target})
           else:
             target = attr
