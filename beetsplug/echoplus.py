@@ -316,13 +316,12 @@ class EchoPlusPlugin(BeetsPlugin):
             'auto': True,
             'mapping': 'very low,low,neutral,high,very high',
             'energy_mapping': None,
-            'liveness_mapping': 'studio,strange,stage',
-            'speechiness_mapping': 'sing,rap,talk',
-            'acousticness_mapping': 'electric,natural',
-            'danceability_mapping': 'couch,party',
+            'liveness_mapping': 'studio,probably studio,probably live,live',
+            'speechiness_mapping': 'sing,unsure,talk',
+            'acousticness_mapping': 'artificial,probably artifical,probably natural,natural',
+            'danceability_mapping': 'bed,couch,unsure,party,disco',
             'valence_mapping': None,
             'store_raw': True,
-            'guess_mood': False,
             'upload': False,
         })
         for attr in ATTRIBUTES:
