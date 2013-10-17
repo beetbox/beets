@@ -95,17 +95,17 @@ of the ``count`` config option::
 Comma-separated lists of up to *count* genres will then be used instead of
 single genres.
 
-`Last.fm`_ provides a popularity factor aka *weight* for each *tag* ranging
-from 100 for the most popular *tag* down to 0 for the least popular *tags*.
-The plugin uses this *weight* to discard unpopular *tags*.  The default is to
-ignore *tags*, with a *weight* less then *10*. You can change this, by setting
+`Last.fm`_ provides a popularity factor, a.k.a. *weight*, for each tag ranging
+from 100 for the most popular tag down to 0 for the least popular.
+The plugin uses this weight to discard unpopular tags.  The default is to
+ignore tags with a weight less then 10. You can change this by setting
 the ``min_weight`` config option::
 
     lastgenre:
         min_weight: 15
 
-However, if no tag with a *weight* greater then ``min_weight`` is found, the
-plugin uses the next best popular *tag*.
+However, if no tag with a weight greater then ``min_weight`` is found, the
+plugin uses the next-most-popular tag.
 
 
 Running Manually

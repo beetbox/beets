@@ -4,6 +4,14 @@ Changelog
 1.3.2 (in development)
 ----------------------
 
+New features:
+
+* :doc:`/plugins/lastgenre`: The new ``multiple`` option has been replaced
+  with the ``count`` option, which lets you limit the number of genres added
+  to your music. (No more thousand-character genre fields!) Also, the
+  ``min_weight`` field filters out nonsense tags to make your genres more
+  relevant. Thanks to Peter Schnebel and rashley60.
+
 Little fixes:
 
 * :doc:`/plugins/missing`: Avoid a possible error when an album's
