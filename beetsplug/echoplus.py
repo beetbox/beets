@@ -301,6 +301,8 @@ def get_audio_summary(artist, title, duration, upload, path):
             result['valence'] = t.valence
             result['tempo'] = t.tempo
             return result
+        else:
+            return None
     elif not pick:
         return None
     return pick.audio_summary
