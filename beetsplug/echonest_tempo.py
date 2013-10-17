@@ -102,12 +102,17 @@ def get_tempo(artist, title, duration):
     min_distance = duration
     pick = None
     for result in results:
-        if result.artist_name.lower() == artist and result.title.lower() == title:
+        if result.artist_name.lower() == artist and \
+           result.title.lower() == title:
             distance = abs(duration - result.audio_summary['duration'])
-            log.debug(u'echonest_tempo: candidate {} - {} [abs({:2.2f}-{:2.2f})={:2.2f}] = {}'.format(
-                result.artist_name, result.title,
-                result.audio_summary['duration'], duration, distance,
-                result.audio_summary['tempo']))
+            log.debug(
+                u'echonest_tempo: candidate {0:2.2f} '
+                u'(distance: {1:2.2f}) = {2}'.format(
+                    result.audio_summary['duration'],
+                    distance,
+                    result.audio_summary['tempo'],
+                )
+            )
             if distance < min_distance:
                 min_distance = distance
                 pick = result.audio_summary['tempo']
