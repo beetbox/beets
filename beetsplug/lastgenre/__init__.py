@@ -55,17 +55,30 @@ def _tags_for(obj):
     not found or another error occurs.
     """
     try:
-        res = obj.get_top_tags()
+        if isinstance(obj, pylast.Album):
+            res = super(pylast.Album, obj).get_top_tags()
+        else:
+            res = obj.get_top_tags()
     except PYLAST_EXCEPTIONS as exc:
         log.debug(u'last.fm error: %s' % unicode(exc))
         return []
 
     tags = []
+    min_weight = config['lastgenre']['min_weight'].get(int)
+    count = config['lastgenre']['count'].get(int)
+
+    dbg = []
     for el in res:
-        if isinstance(el, pylast.TopItem):
-            el = el.item
-        tags.append(el.get_name())
-    log.debug(u'last.fm tags: %s' % unicode(tags))
+        weight = int(el.weight)
+        tag = el.item.get_name().lower()
+        if _is_allowed(tag):
+            if min_weight > -1 and min_weight > weight and len(tags) > 0:
+                return tags
+            tags.append(tag)
+            dbg.append(u'{} [{}]'.format(tag, weight))
+            if len(tags) == count:
+                break
+    log.debug(u'lastfm.tag (min. {}): {}'.format(min_weight, u', '.join(dbg)))
     return tags
 
 def _is_allowed(genre):
@@ -74,23 +87,9 @@ def _is_allowed(genre):
     """
     if genre is None:
         return False
-    if genre.lower() in options['whitelist']:
+    if not options['whitelist'] or genre in options['whitelist']:
         return True
     return False
-
-def _find_allowed(genres):
-    """Given a list of candidate genres (strings), return an allowed
-    genre string. If `multiple` is on, then this may be a
-    comma-separated list; otherwise, it is one of the elements of
-    `genres`.
-    """
-    allowed_genres = [g.title() for g in genres if _is_allowed(g)]
-    if not allowed_genres:
-        return
-    if config['lastgenre']['multiple']:
-        return u', '.join(allowed_genres)
-    else:
-        return allowed_genres[0]
 
 def _strings_to_genre(tags):
     """Given a list of strings, return a genre. Returns the first string
@@ -99,16 +98,13 @@ def _strings_to_genre(tags):
     """
     if not tags:
         return None
-    elif not options['whitelist']:
-        return tags[0].title()
 
     if options.get('c14n'):
         # Use the canonicalization tree.
-        for tag in tags:
-            return _find_allowed(find_parents(tag, options['branches']))
-    else:
-        # Just use the flat whitelist.
-        return _find_allowed(tags)
+        tags = find_parents(tags[0], options['branches'])
+
+    tags = [t.title() for t in tags]
+    return u', '.join(tags[:config['lastgenre']['count'].get(int)])
 
 def fetch_genre(lastfm_obj):
     """Return the genre for a pylast entity or None if no suitable genre
@@ -204,7 +200,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         self.config.add({
             'whitelist': os.path.join(os.path.dirname(__file__), 'genres.txt'),
-            'multiple': False,
+            'min_weight': 10,
+            'count': 1,
             'fallback': None,
             'canonical': None,
             'source': 'album',
