@@ -1,12 +1,19 @@
 Beatport Plugin
 ===============
 
+.. warning::
+
+  As of October 2013, Beatport has `closed their API`_. We've contacted them
+  to attempt to gain access as a "partner." Until this happens, though, this
+  plugin won't work.
+
 The ``beatport`` plugin adds support for querying the `Beatport`_ catalogue
 during the autotagging process. This can potentially be helpful for users
 whose collection includes a lot of diverse electronic music releases, for which
 both MusicBrainz and (to a lesser degree) Discogs show no matches.
 
 .. _Beatport: http://beatport.com
+.. _closed their API: http://api.beatport.com
 
 Installation
 ------------
