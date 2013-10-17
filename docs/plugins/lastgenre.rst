@@ -92,7 +92,8 @@ of the ``count`` config option::
     lastgenre:
         count: 3
 
-Comma-separated lists of up to 3 genres will then be used instead of single genres.
+Comma-separated lists of up to *count* genres will then be used instead of
+single genres.
 
 `Last.fm`_ provides a popularity factor aka *weight* for each *tag* ranging
 from 100 for the most popular *tag* down to 0 for the least popular *tags*.
