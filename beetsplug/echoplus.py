@@ -35,46 +35,59 @@ log = logging.getLogger('beets')
 RETRY_INTERVAL = 10  # Seconds.
 RETRIES = 10
 ATTRIBUTES = ['energy', 'liveness', 'speechiness', 'acousticness',
-    'danceability', 'valence', 'tempo' ]
-ATTRIBUTES_WITH_STYLE = ['energy', 'liveness', 'speechiness', 'acousticness',
-    'danceability', 'valence' ]
+    'danceability', 'valence', 'tempo', 'mood' ]
+MAPPED_ATTRIBUTES = ['energy', 'liveness', 'speechiness', 'acousticness',
+    'danceability', 'valence', 'mood' ]
 
+PI_2 = math.pi / 2.0
 MAX_LEN = math.sqrt(2.0 * 0.5 * 0.5)
 
 def _picker(value, rang, mapping):
     inc = rang / len(mapping)
-    cut = 0.0
+    i = 0.0
     for m in mapping:
-      cut += inc
-      if value < cut:
+      i += inc
+      if value < i:
         return m
-    return m
+    return m # in case of floating point precision problems
 
 def _mapping(mapstr):
-    return [ m.strip() for m in mapstr.split(',') ]
+    """Split mapstr at comma and returned the stripped values as array."""
+    return [ m.strip() for m in mapstr.split(u',') ]
 
 def _guess_mood(valence, energy):
-    # for an explanation see:
-    # http://developer.echonest.com/forums/thread/1297
-    # i picked a Valence-Arousal space from here:
-    # http://mat.ucsb.edu/~ivana/200a/background.htm
+    """Based on the valence [0.0 .. 1.0]and energy [0.0 .. 1.0] of a song, we
+    try to guess the mood.
 
-    # move center to 0/0
+    For an explanation see:
+        http://developer.echonest.com/forums/thread/1297
+
+    We use the Valence-Arousal space from here:
+        http://mat.ucsb.edu/~ivana/200a/background.htm
+    """
+
+    # move center to 0.0/0.0
     valence -= 0.5
     energy -= 0.5
+
+    # we use the length of the valence / energy vector to determine the
+    # strength of the emotion
     length = math.sqrt(valence * valence + energy * energy)
 
-    strength = ['slightly', None, 'very' ]
-    high_valence = [
-        'calm', 'relaxed', 'serene', 'contented',
-        'happy', 'elated', 'excited', 'alert' ]
+    # FIXME: do we want the next 3 as config options?
+    strength = [u'slightly', u'', u'very' ]
+    # energy from -0.5 to 0.5,  valence < 0.0
     low_valence = [
-        'fatigued', 'lethargic', 'depressed', 'sad',
-        'upset', 'stressed', 'nervous', 'tense' ]
-    # energy from -0.5 to 0.5,  valence > 0.0
+            u'fatigued', u'lethargic', u'depressed', u'sad',
+            u'upset', u'stressed', u'nervous', u'tense' ]
+    # energy from -0.5 to 0.5,  valence >= 0.0
+    high_valence = [
+            u'calm', u'relaxed', u'serene', u'contented',
+            u'happy', u'elated', u'excited', u'alert' ]
     if length == 0.0:
-        # FIXME: what now?
+        # FIXME: what now?  return a fallback?  config?
         return u'neutral'
+
     angle = math.asin(energy / length) + PI_2
     if valence < 0.0:
         moods = low_valence
@@ -82,119 +95,140 @@ def _guess_mood(valence, energy):
         moods = high_valence
     mood = _picker(angle, math.pi, moods)
     strength = _picker(length, MAX_LEN, strength)
-    if strength is None:
+    if strength == u'':
       return mood
     return u'{} {}'.format(strength, mood)
 
-def fetch_item_attributes(lib, item, write, force, reapply):
-    # Check if we need to update
-    guess_mood = config['echoplus']['guess_mood'].get(bool)
-    allow_upload = config['echoplus']['upload'].get(bool)
+def fetch_item_attributes(lib, item, write, force, re_apply):
+    """Fetches audio_summary from the EchoNest and writes it to item.
+    """
+
+    log.debug(u'echoplus: {} - {} [{}] force:{} re_apply:{}'.format(
+        item.artist, item.title, item.length, force, re_apply))
+    # permanently store the raw values?
     store_raw = config['echoplus']['store_raw'].get(bool)
-    # force implies reapply
+
+    # if we want to set mood, we need to make sure, that valence and energy
+    # are imported
+    if config['echoplus']['mood'].get(str):
+        if config['echoplus']['valence'].get(str) == '':
+            log.warn(u'echoplus: "valence" is required to guess the mood')
+            config['echoplus']['mood'].set('') # disable mood
+
+        if config['echoplus']['energy'].get(str) == '':
+            log.warn(u'echoplus: "energy" is required to guess the mood')
+            config['echoplus']['mood'].set('') # disable mood
+
+    # force implies re_apply
     if force:
-        reapply = True
-    # EchoNest only supports these file formats
+        re_apply = True
+
+    allow_upload = config['echoplus']['upload'].get(bool)
+    # the EchoNest only supports these file formats
     if allow_upload and \
           item.format.lower() not in ['wav', 'mp3', 'au', 'ogg', 'mp4', 'm4a']:
+        log.warn(u'echoplus: format {} not supported'.format(item.format))
         allow_upload = False
 
-    do_update
+    # Check if we need to update
+    need_update = False
     if force:
-        do_update = True
+        need_update = True
     else:
-        do_update = False
+        need_update = False
         for attr in ATTRIBUTES:
             # do we want this attribute?
-            if config['echoplus'][attr].get(str) == '':
+            target = config['echoplus'][attr].get(str)
+            if target == '':
                 continue
-            if store_raw: # only check if the raw values are present
-                attr = '{}_raw'.format(attr)
-            if item.get(attr, None) is None:
-                do_update = True
+
+             # check if the raw values are present.  'mood' has no direct raw
+             # representation and 'tempo' is stored raw anyway
+            if (store_raw or re_apply) and not attr in ['mood', 'tempo']:
+                target = '{}_raw'.format(target)
+
+            if item.get(target, None) is None:
+                need_update = True
                 break
-        if not do_update and guess_mood:
-            if item.get('mood', None) is None:
-                do_update = True
-    if do_update:
-        log.log(loglevel, u'no update required for: {} - {}'.format(
-            item.artist, item.title))
-        return
-    else:
-        log.debug(u'echoplus for: {} - {}'.format(
-            item.artist, item.title))
-    audio_summary = get_audio_summary(item.artist, item.title, item.length,
-        allow_upload, item.path)
-    if audio_summary:
-        global_style = config['echoplus']['style'].get()
-        global_custom_style = config['echoplus']['custom_style'].get()
+
+    if need_update:
+        log.debug(u'echoplus: fetching data')
+        re_apply = True
+
+        # (re-)fetch audio_summary and store it to the raw values.  if we do
+        # not want to keep the raw values, we clean them up later
+
+        audio_summary = get_audio_summary(item.artist, item.title,
+                item.length, allow_upload, item.path)
         changed = False
-        if guess_mood:
-            attr = 'mood'
-            if item.get(attr, None) is not None and not force:
-                log.log(loglevel, u'{} already present, use the force Luke: {} - {} = {}'.format(
-                    attr, item.artist, item.title, item.get(attr)))
-            else:
-                if 'valence' in audio_summary and 'energy' in audio_summary:
-                    item[attr] = _guess_mood(audio_summary['valence'],
-                        audio_summary['energy'])
-                    log.debug(u'mapped {}: {} - {} = {:2.2f} x {:2.2f} > {}'.format(
-                        attr, item.artist, item.title,
-                        audio_summary['valence'], audio_summary['energy'],
-                        item[attr]))
-                    changed = True
-        for attr in ATTRIBUTES:
-            if config['echoplus'][attr].get(str) == '':
-                continue
-            if item.get(attr, None) is not None and not force:
-                log.log(loglevel, u'{} already present: {} - {} = {:2.2f}'.format(
-                    attr, item.artist, item.title, item.get(attr)))
-            else:
-                if not attr in audio_summary or audio_summary[attr] is None:
-                    log.log(loglevel, u'{} not found: {} - {}'.format(
-                        attr, item.artist, item.title))
+        if not audio_summary:
+            return None
+        else:
+            for attr in ATTRIBUTES:
+                if attr == 'mood': # no raw representation
+                    continue
+
+                # do we want this attribute?
+                target = config['echoplus'][attr].get(str)
+                if target == '':
+                    continue
+                if attr != 'tempo':
+                    target = '{}_raw'.format(target)
+
+                if item.get(target, None) is not None and not force:
+                    log.info(u'{} already present: {} - {} = {:2.2f}'.format(
+                            attr, item.artist, item.title, item.get(target)))
                 else:
-                    value = float(audio_summary[attr])
-                    if attr in ATTRIBUTES_WITH_STYLE:
-                        style = config['echoplus']['{}_style'.format(attr)].get()
-                        custom_style = config['echoplus']['{}_custom_style'.format(attr)].get()
-                        if style is None:
-                            style = global_style
-                        if custom_style is None:
-                            custom_style = global_custom_style
-                        mapped_value = _apply_style(style, custom_style, value)
-                        log.debug(u'mapped {}: {} - {} = {:2.2f} > {}'.format(
-                            attr, item.artist, item.title, value, mapped_value))
-                        value = mapped_value
+                    if not attr in audio_summary or audio_summary[attr] is None:
+                        log.info(u'{} not found: {} - {}'.format( attr,
+                                item.artist, item.title))
                     else:
-                        log.debug(u'fetched {}: {} - {} = {:2.2f}'.format(
-                            attr, item.artist, item.title, audio_summary[attr]))
-                    item[attr] = value
-                    changed = True
+                        value = float(audio_summary[attr])
+                        item[target] = float(audio_summary[attr])
+                        changed = True
+    if re_apply:
+        log.debug(u'echoplus: reapplying data')
+        global_mapping = _mapping(config['echoplus']['mapping'].get())
+        for attr in ATTRIBUTES:
+            # do we want this attribute?
+            target = config['echoplus'][attr].get(str)
+            if target == '':
+                continue
+            if attr == 'mood':
+                # we validated above, that valence and energy are
+                # included, so this should not fail
+                valence = \
+                    float(item.get('{}_raw'.format(config['echoplus']['valence'].get(str))))
+                energy = \
+                    float(item.get('{}_raw'.format(config['echoplus']['energy'].get(str))))
+                item[target] = _guess_mood(valence, energy)
+                log.debug(u'echoplus: mapped {}: {:2.2f}x{:2.2f} = {}'.format(
+                        attr, valence, energy, item[target]))
+                changed = True
+            elif attr in MAPPED_ATTRIBUTES:
+                mapping = global_mapping
+                map_str = config['echoplus']['{}_mapping'.format(attr)].get()
+                if map_str is not None:
+                    mapping = _mapping(map_str)
+                value = float(item.get('{}_raw'.format(target)))
+                mapped_value = _picker(value, 1.0, mapping)
+                log.debug(u'echoplus: mapped {}: {:2.2f} > {}'.format(
+                    attr, value, mapped_value))
+                item[attr] = mapped_value
+                changed = True
+
         if changed:
             if write:
                 item.write()
             item.store()
 
-
-def get_audio_summary(artist, title, duration, upload, path):
-    """Get the attribute for a song."""
-    # We must have sufficient metadata for the lookup. Otherwise the API
-    # will just complain.
-    artist = artist.replace(u'\n', u' ').strip().lower()
-    title = title.replace(u'\n', u' ').strip().lower()
-    if not artist or not title:
-        return None
-
+def _echonest_fun(function, **kwargs):
     for i in range(RETRIES):
         try:
             # Unfortunately, all we can do is search by artist and title.
             # EchoNest supports foreign ids from MusicBrainz, but currently
             # only for artists, not individual tracks/recordings.
-            results = pyechonest.song.search(
-                artist=artist, title=title, results=100,
-                buckets=['audio_summary']
-            )
+            results = function(**kwargs)
         except pyechonest.util.EchoNestAPIError as e:
             if e.code == 3:
                 # Wait and try again.
@@ -212,66 +246,62 @@ def get_audio_summary(artist, title, duration, upload, path):
         # our allotted retries.
         log.debug(u'echoplus: exceeded retries')
         return None
+    return results
 
-    # The Echo Nest API can return songs that are not perfect matches.
-    # So we look through the results for songs that have the right
-    # artist and title. The API also doesn't have MusicBrainz track IDs;
-    # otherwise we could use those for a more robust match.
-    min_distance = duration
+def get_audio_summary(artist, title, duration, upload, path):
+    """Get the attribute for a song."""
+    # We must have sufficient metadata for the lookup. Otherwise the API
+    # will just complain.
+    artist = artist.replace(u'\n', u' ').strip().lower()
+    title = title.replace(u'\n', u' ').strip().lower()
+    if not artist or not title:
+        return None
+
+    results = _echonest_fun(pyechonest.song.search,
+                artist=artist, title=title, results=100,
+                buckets=['audio_summary'])
     pick = None
-    for result in results:
-        if result.artist_name.lower() == artist \
-              and result.title.lower() == title:
-            distance = abs(duration - result.audio_summary['duration'])
+    min_distance = duration
+    if results:
+        # The Echo Nest API can return songs that are not perfect matches.
+        # So we look through the results for songs that have the right
+        # artist and title. The API also doesn't have MusicBrainz track IDs;
+        # otherwise we could use those for a more robust match.
+        for result in results:
+            if result.artist_name.lower() == artist \
+                  and result.title.lower() == title:
+                distance = abs(duration - result.audio_summary['duration'])
+                log.debug(
+                    u'echoplus: candidate {} - {} [dist({:2.2f})={:2.2f}]'.format(
+                        result.artist_name, result.title,
+                        result.audio_summary['duration'], distance))
+                if distance < min_distance:
+                    min_distance = distance
+                    pick = result
+        if pick:
             log.debug(
-                u'echoplus: candidate {} - {} [dist({:2.2f}-{:2.2f})={:2.2f}]'.format(
-                    result.artist_name, result.title,
-                    result.audio_summary['duration'], duration, distance))
-            if distance < min_distance:
-                min_distance = distance
-                pick = result
-    if pick:
-        log.debug(
-            u'echoplus: picked {} - {} [dist({:2.2f}-{:2.2f})={:2.2f}] = {}'.format(
-                pick.artist_name, pick.title,
-                pick.audio_summary['duration'], duration, min_distance,
-                pick.audio_summary))
+                u'echoplus: picked {} - {} [dist({:2.2f}-{:2.2f})={:2.2f}]'.format(
+                    pick.artist_name, pick.title,
+                    pick.audio_summary['duration'], duration, min_distance))
+
     if (not pick or min_distance > 1.0) and upload:
-        log.debug(u'uploading file to EchoNest')
+        log.debug(u'echoplus: uploading file "{}" to EchoNest'.format(path))
         # FIXME: same loop as above...  make this better
         for i in range(RETRIES):
-            try:
-                t = pyechonest.track.track_from_filename(path)
-                if t:
-                    log.debug(u'{} - {} [{:2.2f}]'.format(t.artist, t.title,
-                        t.duration))
-                    # FIXME:  maybe make pyechonest "nicer"?
-                    result = {}
-                    result['energy'] = t.energy
-                    result['liveness'] = t.liveness
-                    result['speechiness'] = t.speechiness
-                    result['acousticness'] = t.acousticness
-                    result['danceability'] = t.danceability
-                    result['valence'] = t.valence
-                    result['tempo'] = t.tempo
-                    return result
-            except pyechonest.util.EchoNestAPIError as e:
-                if e.code == 3:
-                    # Wait and try again.
-                    time.sleep(RETRY_INTERVAL)
-                else:
-                    log.warn(u'echoplus: {0}'.format(e.args[0][0]))
-                    return None
-            except (pyechonest.util.EchoNestIOError, socket.error) as e:
-                log.debug(u'echoplus: IO error: {0}'.format(e))
-                time.sleep(RETRY_INTERVAL)
-            else:
-                break
-        else:
-            # If we exited the loop without breaking, then we used up all
-            # our allotted retries.
-            log.debug(u'echoplus: exceeded retries')
-            return None
+            t = _echonest_fun(pyechonest.track.track_from_filename, filename=path)
+            if t:
+                log.debug(u'echoplus: track {} - {} [{:2.2f}]'.format(t.artist, t.title,
+                    t.duration))
+                # FIXME:  maybe make pyechonest "nicer"?
+                result = {}
+                result['energy'] = t.energy
+                result['liveness'] = t.liveness
+                result['speechiness'] = t.speechiness
+                result['acousticness'] = t.acousticness
+                result['danceability'] = t.danceability
+                result['valence'] = t.valence
+                result['tempo'] = t.tempo
+                return result
     elif not pick:
         return None
     return pick.audio_summary
@@ -286,7 +316,6 @@ class EchoPlusPlugin(BeetsPlugin):
             'auto': True,
             'mapping': 'very low,low,neutral,high,very high',
             'store_raw': True,
-            'printinfo': True,
             'guess_mood': False,
             'upload': False,
         })
@@ -297,7 +326,7 @@ class EchoPlusPlugin(BeetsPlugin):
           else:
             target = attr
             self.config.add({attr:target,
-                '{}_mapping'.format(attr):None,
+                '{}_mapping'.format(attr): None,
             })
 
         pyechonest.config.ECHO_NEST_API_KEY = \
@@ -306,15 +335,12 @@ class EchoPlusPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand('echoplus',
             help='fetch additional song information from the echonest')
-        cmd.parser.add_option('-p', '--print', dest='printinfo',
-            action='store_true', default=False,
-            help='print fetched information to console')
         cmd.parser.add_option('-f', '--force', dest='force',
             action='store_true', default=False,
             help='re-download information from the EchoNest')
-        cmd.parser.add_option('-r', '--reapply', dest='reapply',
+        cmd.parser.add_option('-r', '--re_apply', dest='re_apply',
             action='store_true', default=False,
-            help='reapply mappings')
+            help='re_apply mappings')
         def func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
@@ -322,20 +348,12 @@ class EchoPlusPlugin(BeetsPlugin):
             self.config.set_args(opts)
 
             for item in lib.items(ui.decargs(args)):
-                fetch_item_attributes(lib, logging.INFO, item, write,
-                    self.config['force'], self.config['reapply'])
-                if opts.printinfo:
-                    attrs = [ a for a in ATTRIBUTES ]
-                    if config['echoplus']['guess_mood'].get(bool):
-                        attrs.append('mood')
-                    d = []
-                    for attr in attrs:
-                        if item.get(attr, None) is not None:
-                            d.append(u'{}={}'.format(attr, item.get(attr)))
-                    s = u', '.join(d)
-                    if s == u'':
-                      s = u'no information received'
-                    ui.print_(u'{}: {}'.format(item.path, s))
+                log.debug(u'{} {}'.format(
+                    self.config['force'],
+                    self.config['re_apply']))
+                fetch_item_attributes(lib, item, write,
+                    self.config['force'],
+                    self.config['re_apply'])
         cmd.func = func
         return [cmd]
 
