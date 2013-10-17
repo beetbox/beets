@@ -55,6 +55,9 @@ def _tags_for(obj):
     not found or another error occurs.
     """
     try:
+        # Work around an inconsistency in pylast where
+        # Album.get_top_tags() does not return TopItem instances.
+        # https://code.google.com/p/pylast/issues/detail?id=85
         if isinstance(obj, pylast.Album):
             res = super(pylast.Album, obj).get_top_tags()
         else:
@@ -78,7 +81,9 @@ def _tags_for(obj):
             dbg.append(u'{} [{}]'.format(tag, weight))
             if len(tags) == count:
                 break
-    log.debug(u'lastfm.tag (min. {}): {}'.format(min_weight, u', '.join(dbg)))
+    log.debug(u'lastfm.tag (min. {0}): {1}'.format(
+        min_weight, u', '.join(dbg)
+    ))
     return tags
 
 def _is_allowed(genre):
