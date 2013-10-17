@@ -127,7 +127,7 @@ def fetch_item_attributes(lib, item, write, force, re_apply):
     # the EchoNest only supports these file formats
     if allow_upload and \
           item.format.lower() not in ['wav', 'mp3', 'au', 'ogg', 'mp4', 'm4a']:
-        log.warn(u'echoplus: format {} not supported'.format(item.format))
+        log.warn(u'echoplus: format {} not supported for upload'.format(item.format))
         allow_upload = False
 
     # Check if we need to update
