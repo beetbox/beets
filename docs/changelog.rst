@@ -9,6 +9,8 @@ Little fixes:
 * :doc:`/plugins/missing`: Avoid a possible error when an album's
   ``tracktotal`` field is missing.
 * :doc:`/plugins/ftintitle`: Fix an error when the sort artist is missing.
+* :doc:`/plugins/echonest_tempo`: The plugin should now match songs more
+  reliably (i.e., fewer "no tempo found" messages). Thanks to Peter Schnebel.
 
 1.3.1 (October 12, 2013)
 ------------------------
