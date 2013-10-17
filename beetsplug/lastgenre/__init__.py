@@ -64,31 +64,21 @@ def _tags_for(obj):
         return []
 
     tags = []
-    multiple = config['lastgenre']['multiple'].get(bool)
-    if multiple:
-        min_weight = config['lastgenre']['min_weight'].get(int)
-        max_genres = config['lastgenre']['max_genres'].get(int)
-    else:
-        min_weight = -1
-        max_genres = 1
+    min_weight = config['lastgenre']['min_weight'].get(int)
+    count = config['lastgenre']['count'].get(int)
 
+    dbg = []
     for el in res:
-        # pylast 0.5.x does not use Album.getTopTags, so we don't have a
-        # weight for album tags.  However:  Album.getInfo (they use that)
-        # returns only ~5 tags, so we use maximum weight for them
-        if isinstance(el, pylast.TopItem):
-            weight = int(el.weight)
-            tag = el.item.get_name().lower()
-        else:
-            weight = 100
-            tag = el.get_name().lower()
+        weight = int(el.weight)
+        tag = el.item.get_name().lower()
         if _is_allowed(tag):
             if min_weight > -1 and min_weight > weight and len(tags) > 0:
                 return tags
-            log.debug(u'lastfm.tag (min. {}): {} [{}]'.format(min_weight, tag, weight))
             tags.append(tag)
-            if len(tags) == max_genres:
-                return tags
+            dbg.append(u'{} [{}]'.format(tag, weight))
+            if len(tags) == count:
+                break
+    log.debug(u'lastfm.tag (min. {}): {}'.format(min_weight, u', '.join(dbg)))
     return tags
 
 def _is_allowed(genre):
@@ -114,10 +104,7 @@ def _strings_to_genre(tags):
         tags = find_parents(tags[0], options['branches'])
 
     tags = [t.title() for t in tags]
-    if config['lastgenre']['multiple']:
-        return u', '.join(tags[:config['lastgenre']['max_genres'].get(int)])
-    else:
-        return tags[0]
+    return u', '.join(tags[:config['lastgenre']['count'].get(int)])
 
 def fetch_genre(lastfm_obj):
     """Return the genre for a pylast entity or None if no suitable genre
@@ -213,9 +200,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         self.config.add({
             'whitelist': os.path.join(os.path.dirname(__file__), 'genres.txt'),
-            'multiple': False,
             'min_weight': 10,
-            'max_genres': 3,
+            'count': 1,
             'fallback': None,
             'canonical': None,
             'source': 'album',

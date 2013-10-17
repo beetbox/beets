@@ -86,13 +86,13 @@ Multiple Genres
 ---------------
 
 By default, the plugin chooses the most popular tag on Last.fm as a genre. If
-you prefer to use a *list* of popular genre tags, turn on the ``multiple``
-config option::
+you prefer to use a *list* of popular genre tags, you can increase the number
+of the ``count`` config option::
 
     lastgenre:
-        multiple: true
+        count: 3
 
-Comma-separated lists of genres will then be used instead of single genres.
+Comma-separated lists of up to 3 genres will then be used instead of single genres.
 
 `Last.fm`_ provides a popularity factor aka *weight* for each *tag* ranging
 from 100 for the most popular *tag* down to 0 for the least popular *tags*.
@@ -105,12 +105,6 @@ the ``min_weight`` config option::
 
 However, if no tag with a *weight* greater then ``min_weight`` is found, the
 plugin uses the next best popular *tag*.
-
-By default, the pulgin uses a maxmimum of 3 genres.  You can change this by
-setting the ``max_genres`` config option::
-
-    lastgenre:
-        max_genres: 5
 
 
 Running Manually
