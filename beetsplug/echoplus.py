@@ -52,7 +52,7 @@ def _picker(value, rang, mapping):
     return m # in case of floating point precision problems
 
 def _mapping(mapstr):
-    """Split mapstr at comma and returned the stripped values as array."""
+    """Split mapstr at comma and return the stripped values as array."""
     return [ m.strip() for m in mapstr.split(u',') ]
 
 def _guess_mood(valence, energy):
@@ -105,7 +105,7 @@ def fetch_item_attributes(lib, item, write, force, reapply):
 
     log.debug(u'echoplus: {} - {} [{}] force:{} reapply:{}'.format(
         item.artist, item.title, item.length, force, reapply))
-    # permanently store the raw values?
+    # permanently store the raw values?  not supported yet
     store_raw = config['echoplus']['store_raw'].get(bool)
 
     # if we want to set mood, we need to make sure, that valence and energy
@@ -156,7 +156,8 @@ def fetch_item_attributes(lib, item, write, force, reapply):
         reapply = True
 
         # (re-)fetch audio_summary and store it to the raw values.  if we do
-        # not want to keep the raw values, we clean them up later
+        # not want to keep the raw values, we clean them up later (not
+        # implemented yet)
 
         audio_summary = get_audio_summary(item.artist, item.title,
                 item.length, allow_upload, item.path)
@@ -286,22 +287,20 @@ def get_audio_summary(artist, title, duration, upload, path):
 
     if (not pick or min_distance > 1.0) and upload:
         log.debug(u'echoplus: uploading file "{}" to EchoNest'.format(path))
-        # FIXME: same loop as above...  make this better
-        for i in range(RETRIES):
-            t = _echonest_fun(pyechonest.track.track_from_filename, filename=path)
-            if t:
-                log.debug(u'echoplus: track {} - {} [{:2.2f}]'.format(t.artist, t.title,
-                    t.duration))
-                # FIXME:  maybe make pyechonest "nicer"?
-                result = {}
-                result['energy'] = t.energy
-                result['liveness'] = t.liveness
-                result['speechiness'] = t.speechiness
-                result['acousticness'] = t.acousticness
-                result['danceability'] = t.danceability
-                result['valence'] = t.valence
-                result['tempo'] = t.tempo
-                return result
+        t = _echonest_fun(pyechonest.track.track_from_filename, filename=path)
+        if t:
+            log.debug(u'echoplus: track {} - {} [{:2.2f}]'.format(t.artist, t.title,
+                t.duration))
+            # FIXME:  maybe make pyechonest "nicer"?
+            result = {}
+            result['energy'] = t.energy
+            result['liveness'] = t.liveness
+            result['speechiness'] = t.speechiness
+            result['acousticness'] = t.acousticness
+            result['danceability'] = t.danceability
+            result['valence'] = t.valence
+            result['tempo'] = t.tempo
+            return result
     elif not pick:
         return None
     return pick.audio_summary
