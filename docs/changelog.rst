@@ -14,6 +14,11 @@ New features:
 
 Little fixes:
 
+* When writing ID3 tags for ReplayGain normalization, tags are written with
+  both upper-case and lower-case TXXX frame descriptions. Previous versions of
+  beets used only the upper-case style, which seems to be more standard, but
+  some players (namely, Quod Libet and foobar2000) seem to only use lower-case
+  names.
 * :doc:`/plugins/missing`: Avoid a possible error when an album's
   ``tracktotal`` field is missing.
 * :doc:`/plugins/ftintitle`: Fix an error when the sort artist is missing.
