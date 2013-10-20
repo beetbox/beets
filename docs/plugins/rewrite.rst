@@ -16,7 +16,7 @@ example above::
     rewrite:
         artist The Jimi Hendrix Experience: Jimi Hendrix
 
-This will make ``$artist`` in your path formats expand to "Jimi Henrix" where it
+This will make ``$artist`` in your path formats expand to "Jimi Hendrix" where it
 would otherwise be "The Jimi Hendrix Experience".
 
 The pattern is a case-insensitive regular expression. This means you can use

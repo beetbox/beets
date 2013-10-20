@@ -374,7 +374,7 @@ plugin will be used if we issue a command like ``beet ls @something`` or
             return pattern == val
 
     class ExactMatchPlugin(BeetsPlugin):
-        def queries():
+        def queries(self):
             return {
                 '@': ExactMatchQuery
             }
