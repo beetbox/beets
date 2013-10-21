@@ -55,6 +55,7 @@ class DuplicatesPlugin(BeetsPlugin):
         self.config.add({'count': False})
         self.config.add({'album': False})
         self.config.add({'full': False})
+        self.config.add({'keys': ['mb_trackid']})
 
         self._command = Subcommand('duplicates',
                                    help=__doc__,
@@ -81,12 +82,10 @@ class DuplicatesPlugin(BeetsPlugin):
                                         tracks or albums')
 
         self._command.parser.add_option('-k', '--keys', dest='keys',
-                                        type=str, default='mb_trackid',
                                         help='report duplicates based on keys')
 
     def commands(self):
         def _dup(lib, opts, args):
-            opts.keys = opts.keys.split(',')
             self.config.set_args(opts)
             fmt = self.config['format'].get()
             count = self.config['count'].get()
