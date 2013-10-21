@@ -31,6 +31,9 @@ config file::
         count: no
         album: no
         full: no
+	keys:
+	- mb_trackid
+	- album
 
 or on the command-line::
 
@@ -42,6 +45,8 @@ or on the command-line::
                           of tracks
     -F, --full            show all versions of duplicate
                           tracks or albums
+    -k KEYS, --keys=KEYS  report duplicates based on keys
+
 
 format
 ~~~~~~
@@ -72,6 +77,17 @@ full
 The ``full`` option (default: false) lists every track or album that
 has duplicates, not just the duplicates themselves.
 
+keys
+~~~~
+
+The ``keys`` option (default: ``mb_trackid``) defines in which track
+or album fields duplicates are to be searched. By default, the plugin
+only uses the musicbrainz track or album ID for this purpose. Using the
+``keys`` option (as a YAML list in the configuration file, or a
+comma-delimited string in the command-line), you can extend this behavior
+to consider other attributes.
+
+
 Examples
 --------
 
@@ -97,9 +113,15 @@ The same as the above but include the original album, and show the path::
   beet duplicates -acf '$path'
 
 
+Get rid of false positives arising from the same track existing in different albums::
+
+  beet duplicates -k mb_trackid,album
+
 TODO
 ----
 
 - Allow deleting duplicates.
+- Provide option to invert key selection
+- Provide additional strategies for duplicate finding (fingerprint, hash, etc.)  
 
 .. _spark: https://github.com/holman/spark

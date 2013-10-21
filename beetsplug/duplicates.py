@@ -23,24 +23,24 @@ PLUGIN = 'duplicates'
 log = logging.getLogger('beets')
 
 
-def _group_by_id(objs):
-    """Return a dictionary whose keys are MBIDs and whose values are
-    lists of objects (Albums or Items) with that ID.
+def _group_by(objs, keys):
+    """Return a dictionary whose keys are arbitrary concatenations of attributes
+    and whose values are lists of objects (Albums or Items) with those keys.
     """
     import collections
     counts = collections.defaultdict(list)
     for obj in objs:
-        mbid = getattr(obj, 'mb_trackid', obj.mb_albumid)
-        counts[mbid].append(obj)
+        key = '\001'.join(getattr(obj, k, obj.mb_albumid) for k in keys)
+        counts[key].append(obj)
     return counts
 
 
-def _duplicates(objs, full):
+def _duplicates(objs, keys=['mb_trackid'], full=0):
     """Generate triples of MBIDs, duplicate counts, and constituent
     objects.
     """
     offset = 0 if full else 1
-    for mbid, objs in _group_by_id(objs).iteritems():
+    for mbid, objs in _group_by(objs, keys).iteritems():
         if len(objs) > 1:
             yield (mbid, len(objs) - offset, objs[offset:])
 
@@ -80,13 +80,19 @@ class DuplicatesPlugin(BeetsPlugin):
                                         help='show all versions of duplicate\
                                         tracks or albums')
 
+        self._command.parser.add_option('-k', '--keys', dest='keys',
+                                        type=str, default='mb_trackid',
+                                        help='report duplicates based on keys')
+
     def commands(self):
         def _dup(lib, opts, args):
+            opts.keys = opts.keys.split(',')
             self.config.set_args(opts)
             fmt = self.config['format'].get()
             count = self.config['count'].get()
             album = self.config['album'].get()
             full = self.config['full'].get()
+            keys = self.config['keys'].get()
 
             if album:
                 items = lib.albums(decargs(args))
@@ -101,7 +107,9 @@ class DuplicatesPlugin(BeetsPlugin):
                     fmt = '$albumartist - $album - $title'
                 fmt += ': {0}'
 
-            for obj_id, obj_count, objs in _duplicates(items, full):
+            for obj_id, obj_count, objs in _duplicates(items,
+                                                       keys=keys,
+                                                       full=full):
                 if obj_id:  # Skip empty IDs.
                     for o in objs:
                         print_obj(o, lib, fmt=fmt.format(obj_count))

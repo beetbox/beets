@@ -6,6 +6,9 @@ Changelog
 
 New features:
 
+* :doc:`/plugins/duplicates`: The new ``keys`` option allows you to specify
+  arbitrary fields over which to consider potential duplicates.
+
 * :doc:`/plugins/lastgenre`: The new ``multiple`` option has been replaced
   with the ``count`` option, which lets you limit the number of genres added
   to your music. (No more thousand-character genre fields!) Also, the
