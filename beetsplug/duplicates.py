@@ -86,6 +86,7 @@ class DuplicatesPlugin(BeetsPlugin):
 
     def commands(self):
         def _dup(lib, opts, args):
+            opts.keys = opts.keys.split(',')
             self.config.set_args(opts)
             fmt = self.config['format'].get()
             count = self.config['count'].get()
