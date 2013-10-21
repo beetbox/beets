@@ -221,15 +221,25 @@ def apply_metadata(album_info, mapping):
         item.comp = album_info.va
 
         # Miscellaneous metadata.
-        item.albumtype = album_info.albumtype
-        if album_info.label:
+        if album_info.albumtype is not None:
+            item.albumtype = album_info.albumtype
+        if album_info.label is not None:
             item.label = album_info.label
-        item.asin = album_info.asin
-        item.catalognum = album_info.catalognum
-        item.script = album_info.script
-        item.language = album_info.language
-        item.country = album_info.country
-        item.albumstatus = album_info.albumstatus
-        item.media = album_info.media
-        item.albumdisambig = album_info.albumdisambig
-        item.disctitle = track_info.disctitle
+        if album_info.asin is not None:
+            item.asin = album_info.asin
+        if album_info.catalognum is not None:
+            item.catalognum = album_info.catalognum
+        if album_info.script is not None:
+            item.script = album_info.script
+        if album_info.language is not None:
+            item.language = album_info.language
+        if album_info.country is not None:
+            item.country = album_info.country
+        if album_info.albumstatus is not None:
+            item.albumstatus = album_info.albumstatus
+        if album_info.media is not None:
+            item.media = album_info.media
+        if album_info.albumdisambig is not None:
+            item.albumdisambig = album_info.albumdisambig
+        if track_info.disctitle is not None:
+            item.disctitle = track_info.disctitle
