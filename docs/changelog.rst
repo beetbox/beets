@@ -11,7 +11,9 @@ New features:
   ``callback=beets.ui.varargs_callback`` and a variable number of arguments.
 
 * :doc:`/plugins/duplicates`: The new ``keys`` option allows you to specify
-  arbitrary fields over which to consider potential duplicates.
+  arbitrary fields over which to consider potential duplicates. The new
+  ``checksum`` option allows the use of any arbitrary program to checksum
+  items as an alternative duplicate identification strategy.
 
 * :doc:`/plugins/lastgenre`: The new ``multiple`` option has been replaced
   with the ``count`` option, which lets you limit the number of genres added

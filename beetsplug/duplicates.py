@@ -14,13 +14,41 @@
 
 """List duplicate tracks or albums.
 """
+import shlex
 import logging
 
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_obj, vararg_callback, Subcommand
+from beets.util import command_output, displayable_path
 
 PLUGIN = 'duplicates'
 log = logging.getLogger('beets')
+
+
+def _checksum(item, prog):
+    """Run external `prog` on file path associated with `item`, cache
+    output as flexattr on a key that is the name of the program, and
+    return the key, checksum tuple.
+    """
+    args = shlex.split(prog.format(file=item.path))
+    key = args[0]
+    checksum = getattr(item, key, False)
+    if not checksum:
+        log.debug('%s: key %s on item %s not cached: computing checksum',
+                  PLUGIN, key, displayable_path(item.path))
+        try:
+            checksum = command_output(args)
+            setattr(item, key, checksum)
+            item.store()
+            log.info('%s: computed checksum for %s using %s',
+                     PLUGIN, item.title, key)
+        except Exception as e:
+            log.debug('%s: failed to checksum %s: %s',
+                      PLUGIN, displayable_path(item.path), e)
+    else:
+        log.debug('%s: key %s on item %s cached: not computing checksum',
+                  PLUGIN, key, displayable_path(item.path))
+    return key, checksum
 
 
 def _group_by(objs, keys):
@@ -30,7 +58,7 @@ def _group_by(objs, keys):
     import collections
     counts = collections.defaultdict(list)
     for obj in objs:
-        key = '\001'.join(getattr(obj, k, obj.mb_albumid) for k in keys)
+        key = '\001'.join(getattr(obj, k, '') for k in keys)
         counts[key].append(obj)
     return counts
 
@@ -55,7 +83,9 @@ class DuplicatesPlugin(BeetsPlugin):
         self.config.add({'count': False})
         self.config.add({'album': False})
         self.config.add({'full': False})
+        self.config.add({'path': False})
         self.config.add({'keys': ['mb_trackid', 'mb_albumid']})
+        self.config.add({'checksum': 'ffmpeg -i {file} -f crc -'})
 
         self._command = Subcommand('duplicates',
                                    help=__doc__,
@@ -91,6 +121,11 @@ class DuplicatesPlugin(BeetsPlugin):
                                         callback=vararg_callback,
                                         help='report duplicates based on keys')
 
+        self._command.parser.add_option('-C', '--checksum', dest='checksum',
+                                        action='store',
+                                        help='report duplicates based on\
+                                        arbitrary command')
+
     def commands(self):
         def _dup(lib, opts, args):
             self.config.set_args(opts)
@@ -99,8 +134,10 @@ class DuplicatesPlugin(BeetsPlugin):
             album = self.config['album'].get()
             full = self.config['full'].get()
             keys = self.config['keys'].get()
+            checksum = self.config['checksum'].get()
 
             if album:
+                keys = ['mb_albumid']
                 items = lib.albums(decargs(args))
             else:
                 items = lib.items(decargs(args))
@@ -115,6 +152,11 @@ class DuplicatesPlugin(BeetsPlugin):
                 else:
                     fmt = '$albumartist - $album - $title'
                 fmt += ': {0}'
+
+            if checksum:
+                for i in items:
+                    k, _ = _checksum(i, checksum)
+                keys = ['k']
 
             for obj_id, obj_count, objs in _duplicates(items,
                                                        keys=keys,

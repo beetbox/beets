@@ -34,6 +34,7 @@ config file::
 	keys:
   	  - mb_trackid
 	  - album
+	checksum: 'ffmpeg -i {file} -f crc -'
 
 or on the command-line::
 
@@ -45,7 +46,12 @@ or on the command-line::
                           of tracks
     -F, --full            show all versions of duplicate
                           tracks or albums
-    -k KEYS, --keys=KEYS  report duplicates based on keys
+    -p, --path            print paths for matched items
+                          or albums
+    -k, --keys            report duplicates based on keys
+    -C CHECKSUM, --checksum=CHECKSUM
+                          report duplicates based on
+                          arbitrary command
 
 
 format
@@ -56,6 +62,11 @@ specify a specific format with which to print every track or
 album. This uses the same template syntax as beets’ :doc:`path formats
 </reference/pathformat>`.  The usage is inspired by, and therefore
 similar to, the :ref:`list <list-cmd>` command.
+
+path
+~~~~
+
+Convenience wrapper for ``-f \$path``.
 
 count
 ~~~~~
@@ -80,13 +91,21 @@ has duplicates, not just the duplicates themselves.
 keys
 ~~~~
 
-The ``keys`` option (default: ``mb_trackid``) defines in which track
+The ``keys`` option (default: ``[mb_trackid, mb_albumid]``) defines in which track
 or album fields duplicates are to be searched. By default, the plugin
 uses the musicbrainz track and album IDs for this purpose. Using the
 ``keys`` option (as a YAML list in the configuration file, or as
 space-delimited strings in the command-line), you can extend this behavior
 to consider other attributes.
 
+checksum
+~~~~~~~~
+
+The ``checksum`` option (default: ``ffmpeg -i {file} -f crc -``) enables the use of
+any arbitrary command to compute a checksum of items. It overrides the ``keys``
+option the first time it is run; however, because it caches the resulting checksums
+as ``flexattrs`` in the database, you can use
+``--keys=name_of_the_checksumming_program any_other_keys`` the second time around.
 
 Examples
 --------
@@ -112,16 +131,20 @@ The same as the above but include the original album, and show the path::
 
   beet duplicates -acf '$path'
 
-
 Get tracks with the same title, artist, and album::
 
   beet duplicates -k title albumartist album
+
+Compute Adler CRC32 or MD5 checksums, storing them as flexattrs, and report back
+duplicates based on those values::
+
+  beet dup -C 'ffmpeg -i {file} -f crc -'
+  beet dup -C 'md5sum {file}'
 
 TODO
 ----
 
 - Allow deleting duplicates.
 - Provide option to invert key selection
-- Provide additional strategies for duplicate finding (fingerprint, hash, etc.)  
 
 .. _spark: https://github.com/holman/spark
