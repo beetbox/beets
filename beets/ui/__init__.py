@@ -695,11 +695,19 @@ class SubcommandsOptionParser(optparse.OptionParser):
         return options, subcommand, suboptions, subargs
 
 
-# callback for an option with variable arguments
-# parser.add_option("-c", "--callback", dest="vararg_attr",
-#                   action="callback", callback=vararg_callback)
-
 def vararg_callback(option, opt_str, value, parser):
+    """Callback for an option with variable arguments.
+    Manually collect arguments right of a callback-action
+    option (ie. with action="callback"), and add the resulting
+    list to the destination var.
+
+    Usage:
+    parser.add_option("-c", "--callback", dest="vararg_attr",
+                      action="callback", callback=vararg_callback)
+
+    Details:
+    http://docs.python.org/2/library/optparse.html#callback-example-6-variable-arguments
+    """
     assert value is None
     value = []
 
