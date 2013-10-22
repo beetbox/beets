@@ -44,6 +44,8 @@ containing your plugin).
 
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
 
+.. _add_subcommands:
+
 Add Commands to the CLI
 ^^^^^^^^^^^^^^^^^^^^^^^
 

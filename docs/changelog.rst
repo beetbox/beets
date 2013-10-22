@@ -6,6 +6,10 @@ Changelog
 
 New features:
 
+* :ref:`add_subcommands`: Added ``optparse`` callback utility function, allowing
+  plugin developers to add options with ``action=callback`` and
+  ``callback=beets.ui.varargs_callback`` and a variable number of arguments.
+
 * :doc:`/plugins/duplicates`: The new ``keys`` option allows you to specify
   arbitrary fields over which to consider potential duplicates.
 
