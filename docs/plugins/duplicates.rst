@@ -32,8 +32,8 @@ config file::
         album: no
         full: no
 	keys:
-	- mb_trackid
-	- album
+  	  - mb_trackid
+	  - album
 
 or on the command-line::
 
@@ -82,9 +82,9 @@ keys
 
 The ``keys`` option (default: ``mb_trackid``) defines in which track
 or album fields duplicates are to be searched. By default, the plugin
-only uses the musicbrainz track or album ID for this purpose. Using the
-``keys`` option (as a YAML list in the configuration file, or a
-comma-delimited string in the command-line), you can extend this behavior
+uses the musicbrainz track and album IDs for this purpose. Using the
+``keys`` option (as a YAML list in the configuration file, or as
+space-delimited strings in the command-line), you can extend this behavior
 to consider other attributes.
 
 
@@ -113,9 +113,9 @@ The same as the above but include the original album, and show the path::
   beet duplicates -acf '$path'
 
 
-Get rid of false positives arising from the same track existing in different albums::
+Get tracks with the same title, artist, and album::
 
-  beet duplicates -k mb_trackid,album
+  beet duplicates -k title albumartist album
 
 TODO
 ----

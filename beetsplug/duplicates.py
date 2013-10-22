@@ -17,7 +17,7 @@
 import logging
 
 from beets.plugins import BeetsPlugin
-from beets.ui import decargs, print_obj, Subcommand
+from beets.ui import decargs, print_obj, vararg_callback, Subcommand
 
 PLUGIN = 'duplicates'
 log = logging.getLogger('beets')
@@ -35,7 +35,7 @@ def _group_by(objs, keys):
     return counts
 
 
-def _duplicates(objs, keys=['mb_trackid'], full=0):
+def _duplicates(objs, keys, full):
     """Generate triples of MBIDs, duplicate counts, and constituent
     objects.
     """
@@ -55,7 +55,7 @@ class DuplicatesPlugin(BeetsPlugin):
         self.config.add({'count': False})
         self.config.add({'album': False})
         self.config.add({'full': False})
-        self.config.add({'keys': ['mb_trackid']})
+        self.config.add({'keys': ['mb_trackid', 'mb_albumid']})
 
         self._command = Subcommand('duplicates',
                                    help=__doc__,
