@@ -81,12 +81,18 @@ class DuplicatesPlugin(BeetsPlugin):
                                         help='show all versions of duplicate\
                                         tracks or albums')
 
+        self._command.parser.add_option('-p', '--path', dest='path',
+                                        action='store_true',
+                                        help='print paths for matched items\
+                                        or albums')
+
         self._command.parser.add_option('-k', '--keys', dest='keys',
+                                        action='callback',
+                                        callback=vararg_callback,
                                         help='report duplicates based on keys')
 
     def commands(self):
         def _dup(lib, opts, args):
-            opts.keys = opts.keys.split(',')
             self.config.set_args(opts)
             fmt = self.config['format'].get()
             count = self.config['count'].get()
@@ -98,6 +104,9 @@ class DuplicatesPlugin(BeetsPlugin):
                 items = lib.albums(decargs(args))
             else:
                 items = lib.items(decargs(args))
+
+            if opts.path:
+                fmt = '$path'
 
             # Default format string for count mode.
             if count and not fmt:
