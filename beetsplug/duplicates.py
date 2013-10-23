@@ -18,11 +18,34 @@ import shlex
 import logging
 
 from beets.plugins import BeetsPlugin
-from beets.ui import decargs, print_obj, vararg_callback, Subcommand
+from beets.ui import decargs, print_obj, vararg_callback, Subcommand, UserError
 from beets.util import command_output, displayable_path
 
 PLUGIN = 'duplicates'
 log = logging.getLogger('beets')
+
+
+def _process_item(item, lib,
+                  copy=False, move=False, delete=False, tag=False, format=None):
+    """Process Item `item` in `lib`.
+    """
+    if copy:
+        item.move_file(dest=copy, copy=True)
+        item.store()
+    if move:
+        item.move_file(dest=move, copy=False)
+        item.store()
+    if delete:
+        item.remove(delete=True)
+        item.store()
+    if tag:
+        try:
+            k, v = tag.split('=')
+        except:
+            raise UserError('%s: can\'t parse k=v tag: %s' % (PLUGIN, tag))
+        setattr(k, v)
+        item.store()
+    print_obj(item, lib, fmt=format)
 
 
 def _checksum(item, prog):
@@ -86,6 +109,11 @@ class DuplicatesPlugin(BeetsPlugin):
         self.config.add({'path': False})
         self.config.add({'keys': ['mb_trackid', 'mb_albumid']})
         self.config.add({'checksum': None})
+        self.config.add({'copy': False})
+        self.config.add({'move': False})
+        self.config.add({'delete': False})
+        self.config.add({'delete_file': False})
+        self.config.add({'tag': False})
 
         self._command = Subcommand('duplicates',
                                    help=__doc__,
@@ -93,48 +121,74 @@ class DuplicatesPlugin(BeetsPlugin):
 
         self._command.parser.add_option('-f', '--format', dest='format',
                                         action='store', type='string',
-                                        help='print with custom FORMAT',
-                                        metavar='FORMAT')
-
-        self._command.parser.add_option('-c', '--count', dest='count',
-                                        action='store_true',
-                                        help='count duplicate tracks or\
-                                        albums')
+                                        help='print with custom format',
+                                        metavar='FMT')
 
         self._command.parser.add_option('-a', '--album', dest='album',
                                         action='store_true',
-                                        help='show duplicate albums instead\
-                                        of tracks')
+                                        help='show duplicate albums instead of' +
+                                        ' tracks')
+
+        self._command.parser.add_option('-c', '--count', dest='count',
+                                        action='store_true',
+                                        help='count duplicate tracks or albums')
+
+        self._command.parser.add_option('-C', '--checksum', dest='checksum',
+                                        action='store', metavar='PROG',
+                                        help='report duplicates based on' +
+                                        ' arbitrary command')
+
+        self._command.parser.add_option('-d', '--delete', dest='delete',
+                                        action='store_true',
+                                        help='delete items from library')
+
+        self._command.parser.add_option('-D', '--delete-file', dest='delete_file',
+                                        action='store_true',
+                                        help='delete items from library and disk')
 
         self._command.parser.add_option('-F', '--full', dest='full',
                                         action='store_true',
-                                        help='show all versions of duplicate\
-                                        tracks or albums')
-
-        self._command.parser.add_option('-p', '--path', dest='path',
-                                        action='store_true',
-                                        help='print paths for matched items\
-                                        or albums')
+                                        help='show all versions of duplicate' +
+                                        ' tracks or albums')
 
         self._command.parser.add_option('-k', '--keys', dest='keys',
-                                        action='callback',
+                                        action='callback', metavar='KEY1 KEY2',
                                         callback=vararg_callback,
                                         help='report duplicates based on keys')
 
-        self._command.parser.add_option('-C', '--checksum', dest='checksum',
+        self._command.parser.add_option('-m', '--move', dest='move',
+                                        action='store', metavar='DEST',
+                                        help='move items to dest')
+
+        self._command.parser.add_option('-o', '--copy', dest='copy',
+                                        action='store', metavar='DEST',
+                                        help='copy items to dest')
+
+        self._command.parser.add_option('-p', '--path', dest='path',
+                                        action='store_true',
+                                        help='print paths for matched items or' +
+                                        ' albums')
+
+        self._command.parser.add_option('-t', '--tag', dest='tag',
                                         action='store',
-                                        help='report duplicates based on\
-                                        arbitrary command')
+                                        help='tag matched items with \'k=v\'' +
+                                        ' attribute')
 
     def commands(self):
         def _dup(lib, opts, args):
             self.config.set_args(opts)
             fmt = self.config['format'].get()
+            path = self.config['path'].get()
             count = self.config['count'].get()
             album = self.config['album'].get()
             full = self.config['full'].get()
             keys = self.config['keys'].get()
             checksum = self.config['checksum'].get()
+            copy = self.config['copy'].get()
+            move = self.config['move'].get()
+            delete = self.config['delete'].get()
+            delete_file = self.config['delete_file'].get()
+            tag = self.config['tag'].get()
 
             if album:
                 keys = ['mb_albumid']
@@ -142,7 +196,7 @@ class DuplicatesPlugin(BeetsPlugin):
             else:
                 items = lib.items(decargs(args))
 
-            if opts.path:
+            if path:
                 fmt = '$path'
 
             # Default format string for count mode.
@@ -163,7 +217,12 @@ class DuplicatesPlugin(BeetsPlugin):
                                                        full=full):
                 if obj_id:  # Skip empty IDs.
                     for o in objs:
-                        print_obj(o, lib, fmt=fmt.format(obj_count))
+                        _process_item(o, lib,
+                                      copy=copy,
+                                      move=move,
+                                      delete=delete if delete else delete_file,
+                                      tag=tag,
+                                      format=fmt.format(obj_count))
 
         self._command.func = _dup
         return [self._command]

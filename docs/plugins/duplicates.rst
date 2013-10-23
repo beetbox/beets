@@ -27,31 +27,36 @@ duplicates themselves. These options can either be specified in the
 config file::
 
     duplicates:
-        format: $albumartist - $album - $title
-        count: no
+	checksum: no
+	copy: no
+	keys: mb_trackid album
         album: no
+        count: no
+        delete: no
+        delete_file: no
+        format: "$albumartist - $album - $title"
         full: no
-	keys:
-  	  - mb_trackid
-	  - album
-	checksum: 'ffmpeg -i {file} -f crc -'
-
+        move: no
+        path: no
+        tag: no
+	
+	
 or on the command-line::
 
-    -f FORMAT, --format=FORMAT
-                          print with custom FORMAT
-    -c, --count           count duplicate tracks or
-                          albums
-    -a, --album           show duplicate albums instead
-                          of tracks
-    -F, --full            show all versions of duplicate
-                          tracks or albums
-    -p, --path            print paths for matched items
-                          or albums
-    -k, --keys            report duplicates based on keys
-    -C CHECKSUM, --checksum=CHECKSUM
-                          report duplicates based on
-                          arbitrary command
+  -h, --help            show this help message and exit
+  -f FMT, --format=FMT  print with custom format
+  -a, --album           show duplicate albums instead of tracks
+  -c, --count           count duplicate tracks or albums
+  -C PROG, --checksum=PROG
+                        report duplicates based on arbitrary command
+  -d, --delete          delete items from library
+  -D, --delete-file     delete items from library and disk
+  -F, --full            show all versions of duplicate tracks or albums
+  -k, --keys            report duplicates based on keys
+  -m DEST, --move=DEST  move items to dest
+  -o DEST, --copy=DEST  copy items to dest
+  -p, --path            print paths for matched items or albums
+  -t TAG, --tag=TAG     tag matched items with 'k=v' attribute
 
 
 format
@@ -107,6 +112,35 @@ option the first time it is run; however, because it caches the resulting checks
 as ``flexattrs`` in the database, you can use
 ``--keys=name_of_the_checksumming_program any_other_keys`` the second time around.
 
+copy
+~~~~
+
+The ``copy`` option (default: ``no``) takes a destination base directory into which
+it will copy matched items.
+
+move
+~~~~
+
+The ``move`` option (default: ``no``) takes a destination base directory into which
+it will move matched items.
+
+delete
+~~~~~~
+
+The ``delete`` option (default: ``no``) removes matched items from the library.
+
+delete_files
+~~~~~~~~~~~~
+
+The ``delete_files`` option (default: ``no``) removes matched items from the library
+*and* the disk.
+
+tag
+~~~
+
+The ``tag`` option (default: ``no``) takes a ``key=value`` string, and adds a new
+``key`` attribute with ``value`` value as a flexattr to the database.
+
 Examples
 --------
 
@@ -141,10 +175,25 @@ duplicates based on those values::
   beet dup -C 'ffmpeg -i {file} -f crc -'
   beet dup -C 'md5sum {file}'
 
+Copy highly danceable items to ``party`` directory::
+
+  beet dup --copy /tmp/party
+
+Move likely duplicates to ``trash`` directory::
+
+  beet dup --move ${HOME}/.Trash
+
+Delete items from library, and optionally the disk (carefull), if they're Nickelback::
+
+  beet duplicates --delete{-file} --keys albumartist albumartist:nickelback
+
+Tag duplicate items with some flag::
+  
+  beet duplicates --tag dup=1
+
 TODO
 ----
 
-- Allow deleting duplicates.
-- Provide option to invert key selection
+- better duplicate disambiaguation strategies (eg, based on bitrate, etc)
 
 .. _spark: https://github.com/holman/spark
