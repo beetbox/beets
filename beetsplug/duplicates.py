@@ -85,7 +85,7 @@ class DuplicatesPlugin(BeetsPlugin):
         self.config.add({'full': False})
         self.config.add({'path': False})
         self.config.add({'keys': ['mb_trackid', 'mb_albumid']})
-        self.config.add({'checksum': 'ffmpeg -i {file} -f crc -'})
+        self.config.add({'checksum': None})
 
         self._command = Subcommand('duplicates',
                                    help=__doc__,
