@@ -40,8 +40,8 @@ def _checksum(item, prog):
             checksum = command_output(args)
             setattr(item, key, checksum)
             item.store()
-            log.info('%s: computed checksum for %s using %s',
-                     PLUGIN, item.title, key)
+            log.debug('%s: computed checksum for %s using %s',
+                      PLUGIN, item.title, key)
         except Exception as e:
             log.debug('%s: failed to checksum %s: %s',
                       PLUGIN, displayable_path(item.path), e)
