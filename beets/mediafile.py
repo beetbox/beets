@@ -449,7 +449,10 @@ class MediaField(object):
                 except KeyError:
                     return None
 
-                entry = getattr(frame, style.id3_frame_field)
+                if style.is_genre:
+                    entry = u', '.join(getattr(frame, style.id3_frame_field))
+                else:
+                    entry = getattr(frame, style.id3_frame_field)
 
         else:  # Not MP3.
             try:
@@ -458,7 +461,7 @@ class MediaField(object):
                 return None
 
         # Possibly index the list.
-        if style.list_elem:
+        if style.list_elem and not style.is_genre:
             if entry:  # List must have at least one value.
                 # Handle Mutagen bugs when reading values (#356).
                 try:
@@ -532,7 +535,7 @@ class MediaField(object):
                     frame.genres = val.split(u', ')
                 else:
                     frame = mutagen.id3.Frames[style.key](encoding=3,
-                    **{style.id3_frame_field: val})
+                        **{style.id3_frame_field: val})
                 obj.mgfile.tags.setall(style.key, [frame])
 
         else:  # Not MP3.
