@@ -460,8 +460,11 @@ class MediaField(object):
             except KeyError:
                 return None
 
+        if obj.type == 'mp3' and style.is_genre:
+            return entry
+        
         # Possibly index the list.
-        if style.list_elem and not style.is_genre:
+        if style.list_elem:
             if entry:  # List must have at least one value.
                 # Handle Mutagen bugs when reading values (#356).
                 try:
