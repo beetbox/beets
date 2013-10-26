@@ -300,12 +300,9 @@ class ConvertPlugin(BeetsPlugin):
         return [cmd]
 
     def auto_convert(self, config, task):
-        if self.config['auto'].get():
-            if not task.is_album:
-                convert_on_import(config.lib, task.item)
-            else:
-                for item in task.items:
-                    convert_on_import(config.lib, item)
+        if self.config['auto']:
+            for item in task.imported_items():
+                convert_on_import(config.lib, item)
 
 
 @ConvertPlugin.listen('import_task_files')

@@ -35,6 +35,8 @@ Little fixes:
 * :doc:`/plugins/ftintitle`: Fix an error when the sort artist is missing.
 * :doc:`/plugins/echonest_tempo`: The plugin should now match songs more
   reliably (i.e., fewer "no tempo found" messages). Thanks to Peter Schnebel.
+* :doc:`/plugins/convert`: Fix an "Item has no library" error when using the
+  ``auto`` config option.
 
 1.3.1 (October 12, 2013)
 ------------------------
