@@ -274,10 +274,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                     buckets=['id:musicbrainz', 'audio_summary'])
             if not songs:
                 raise Exception(u'could not get songs from track ID')
-            # It seems like _pick_song fails even if we have a good match.  So
-            # just return the first song.
-            # return self._pick_song(songs, item)
-            return songs[0]
+            return self._pick_song(songs, item)
         except Exception as exc:
             log.debug(u'echonest: profile failed: {0}'.format(str(exc)))
             return None
