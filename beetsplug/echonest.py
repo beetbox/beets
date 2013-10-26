@@ -194,7 +194,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             except Exception:
                 return from_track
             songs = self._echofun(pyechonest.song.profile,
-                    ids=ids, track_ids=[track.id], limit=100,
+                    ids=ids, track_ids=[track.id],
                     buckets=['audio_summary'])
             if songs is None:
                 raise Exception(u'failed to retrieve info from upload')
