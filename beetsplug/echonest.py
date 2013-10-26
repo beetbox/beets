@@ -2,6 +2,7 @@
 import time
 import logging
 import socket
+import math
 
 from beets import util, config, plugins, ui, library
 import pyechonest
@@ -372,6 +373,42 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                     if not song is None:
                         self._songs[item.path] = song
                     self.apply_metadata(item)
+
+        cmd.func = func
+        return [cmd]
+
+def diff(item1, item2, attributes):
+    result = 0.0
+    for attr in attributes:
+        try:
+            result += abs(
+                    float(item1.get(attr, None)) -
+                    float(item2.get(attr, None))
+                    )
+        except TypeError:
+            result += 1.0
+    return result
+
+def similar(lib, src_item, threshold=0.15):
+    attributes = []
+    for attr in ['energy', 'danceability', 'valence', 'speechiness',
+                 'acousticness', 'liveness']:
+        if ATTRIBUTES[attr] is not None:
+            attributes.append(ATTRIBUTES[attr])
+    for item in lib.items():
+        if not item.path == src_item.path:
+            d = diff(item, src_item, attributes)
+            if d < threshold:
+                print(u'{1:2.2f}: {0}'.format(item.path, d))
+
+class EchonestSimilarPlugin(plugins.BeetsPlugin):
+    def commands(self):
+        cmd = ui.Subcommand('echosim', help='show related files')
+
+        def func(lib, opts, args):
+            self.config.set_args(opts)
+            for item in lib.items(ui.decargs(args)):
+                similar(lib, item)
 
         cmd.func = func
         return [cmd]
