@@ -22,6 +22,7 @@ by typing ``beet version``.
    chroma
    lyrics
    echonest_tempo
+   echonest
    bpd
    mpdupdate
    fetchart
@@ -68,6 +69,8 @@ Metadata
 
 * :doc:`lyrics`: Automatically fetch song lyrics.
 * :doc:`echonest_tempo`: Automatically fetch song tempos (bpm).
+* :doc:`echonest`: Automatically fetch metadata from EchoNest (energy,
+  danceability, ...).
 * :doc:`lastgenre`: Fetch genres based on Last.fm tags.
 * :doc:`mbsync`: Fetch updated metadata from MusicBrainz
 * :doc:`fetchart`: Fetch album cover art from various sources.
