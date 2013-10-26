@@ -196,7 +196,9 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                     buckets=['audio_summary'])
             if songs is None:
                 raise Exception(u'failed to retrieve info from upload')
-            return self._pick_song(songs, item)
+            # No need to _pick_song, match is match
+            # return self._pick_song(songs, item)
+            return songs[0]
         except Exception as exc:
             log.error(u'echonest: analysis failed: {0}'.format(str(exc)))
             return None
