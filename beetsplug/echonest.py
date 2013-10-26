@@ -277,7 +277,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
     def fetch_song(self, item):
         """Try all methods, to get a matching song object from the EchoNest.
         """
-        methods = [self.profile, self.search, self.identify]
+        methods = [self.profile, self.search]
         if config['echonest']['codegen'].get() is not None:
             methods.append(self.identify)
         if config['echonest']['upload'].get(bool):
