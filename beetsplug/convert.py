@@ -87,7 +87,7 @@ def encode(source, dest):
     quiet = config['convert']['quiet'].get()
 
     if not quiet:
-        log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
+        log.debug(u'Started encoding {0}'.format(util.displayable_path(source)))
 
     command, _ = get_format()
     opts = []
@@ -112,7 +112,7 @@ def encode(source, dest):
         return
 
     if not quiet:
-        log.info(u'Finished encoding {0}'.format(
+        log.debug(u'Finished encoding {0}'.format(
             util.displayable_path(source))
         )
 
@@ -133,7 +133,7 @@ def convert_item(dest_dir, keep_new, path_formats):
         dest = _destination(dest_dir, item, keep_new, path_formats)
 
         if os.path.exists(util.syspath(dest)):
-            log.info(u'Skipping {0} (target file exists)'.format(
+            log.debug(u'Skipping {0} (target file exists)'.format(
                 util.displayable_path(item.path)
             ))
             continue
@@ -148,13 +148,13 @@ def convert_item(dest_dir, keep_new, path_formats):
         # current (pristine) file to the destination. We'll then copy it
         # back to its old path or transcode it to a new path.
         if keep_new:
-            log.info(u'Moving to {0}'.
+            log.debug(u'Moving to {0}'.
                      format(util.displayable_path(dest)))
             util.move(item.path, dest)
 
         if not should_transcode(item):
             # No transcoding necessary.
-            log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
+            log.debug(u'Copying {0}'.format(util.displayable_path(item.path)))
             if keep_new:
                 util.copy(dest, item.path)
             else:
