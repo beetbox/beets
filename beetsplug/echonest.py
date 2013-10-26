@@ -312,6 +312,8 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         if item.path in self._songs:
             # song can be a dict
             if isinstance(self._songs[item.path], pyechonest.song.Song):
+                log.debug(u'echonest: metadata: echonest_id = {0}'
+                        .format(self._songs[item.path].id))
                 item.echonest_id = self._songs[item.path].id
                 values = self._songs[item.path].audio_summary
             else:
