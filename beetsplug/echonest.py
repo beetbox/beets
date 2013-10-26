@@ -102,9 +102,9 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         """Get the fingerprint for this item from the EchoNest.  If we already
         have a fingerprint, return it and don't calculate it again.
         """
-        if item.get('echonest_fingerprint', None) is not None:
+        if item.get('echonest_fingerprint', None) is None:
             try:
-                code = self._echofun(pyechonest.util.codegen, filename=item.path)
+                code = self._echofun(pyechonest.util.codegen, filename=item.path.decode('utf-8'))
                 item['echonest_fingerprint'] = code[0]['code']
                 item.write()
             except Exception as exc:
