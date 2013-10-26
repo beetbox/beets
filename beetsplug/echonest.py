@@ -237,7 +237,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                     if dist < min_dist:
                         min_dist = dist
                         pick = song
-            if min_dist > 1.0:
+            if min_dist > 2.5:
                 return None
         return pick
 
