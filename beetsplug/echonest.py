@@ -1,3 +1,4 @@
+# This file is part of beets.
 import time
 import logging
 import socket
@@ -294,7 +295,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                     if isinstance(song, pyechonest.song.Song):
                         log.debug(u'echonest: got song through {0}: {1} - {2} [{3}]'
                                   .format(method.im_func.func_name,
-                                  item.artist, item.title,
+                                  song.artist_name, song.title,
                                   song.audio_summary['duration']))
                     else: # it's our dict filled from a track object
                         log.debug(u'echonest: got song through {0}: {1} - {2} [{3}]'
