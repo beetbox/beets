@@ -179,28 +179,29 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             # and songs (keep audio_summary in an extra attribute)
             # differently.
             # Maybe a patch for pyechonest could help?
+            from_track = {}
+            from_track['energy'] = track.energy
+            from_track['liveness'] = track.liveness
+            from_track['speechiness'] = track.speechiness
+            from_track['acousticness'] = track.acousticness
+            from_track['danceability'] = track.danceability
+            from_track['valence'] = track.valence
+            from_track['tempo'] = track.tempo
+            from_track['duration'] = track.duration
             ids = []
             try:
                 ids = [track.song_id]
             except Exception:
-                result = {}
-                result['energy'] = track.energy
-                result['liveness'] = track.liveness
-                result['speechiness'] = track.speechiness
-                result['acousticness'] = track.acousticness
-                result['danceability'] = track.danceability
-                result['valence'] = track.valence
-                result['tempo'] = track.tempo
-                result['duration'] = track.duration
-                return result
+                return from_track
             songs = self._echofun(pyechonest.song.profile,
-                    ids=ids, track_ids=[track.id],
+                    ids=ids, track_ids=[track.id], limit=100,
                     buckets=['audio_summary'])
             if songs is None:
                 raise Exception(u'failed to retrieve info from upload')
-            # No need to _pick_song, match is match
-            # return self._pick_song(songs, item)
-            return songs[0]
+            pick = self._pick_song(songs, item)
+            if pick is None:
+                return from_track
+            return pick
         except Exception as exc:
             log.error(u'echonest: analysis failed: {0}'.format(str(exc)))
             return None
