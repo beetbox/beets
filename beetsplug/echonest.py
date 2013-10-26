@@ -49,8 +49,8 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                 'auto'          : True,
                 'apikey'        : u'NY2KTZHQ0QDSHBAP6',
                 'codegen'       : None,
-                'upload'        : True
-                'convert'       : True
+                'upload'        : True,
+                'convert'       : True,
             })
         for k, v in ATTRIBUTES.iteritems():
             self.config.add({k:v})
