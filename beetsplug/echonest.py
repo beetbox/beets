@@ -191,6 +191,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                 result['danceability'] = track.danceability
                 result['valence'] = track.valence
                 result['tempo'] = track.tempo
+                result['duration'] = track.duration
                 return result
             songs = self._echofun(pyechonest.song.profile,
                     ids=ids, track_ids=[track.id],
