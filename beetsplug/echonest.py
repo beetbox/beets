@@ -27,12 +27,12 @@ DEVNULL = open(os.devnull, 'wb')
 # Note:  We use echonest_id (song_id) and echonest_fingerprint to speed up
 # lookups.  They are not listed as attributes here.
 ATTRIBUTES = {
-        'energy'        : 'echonest_energy',
-        'liveness'      : 'echonest_liveness',
-        'speechiness'   : 'echonest_speechiness',
-        'acousticness'  : 'echonest_acousticness',
-        'danceability'  : 'echonest_danceability',
-        'valence'       : 'echonest_valence',
+        'energy'        : 'energy',
+        'liveness'      : 'liveness',
+        'speechiness'   : 'speechiness',
+        'acousticness'  : 'acousticness',
+        'danceability'  : 'danceability',
+        'valence'       : 'valence',
         'tempo'         : 'bpm',
     }
 
