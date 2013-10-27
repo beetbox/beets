@@ -101,6 +101,7 @@ class LearnPlugin(beets.plugins.BeetsPlugin):
 
         self.config.add({'attributes': []})
         self.config.add({'clusters': 2})
+        self.config.add({'classify': []})
         self.config.add({'format': ''})
         self.config.add({'kind': 'numeric'})
         self.config.add({'plot': False})
@@ -120,6 +121,12 @@ class LearnPlugin(beets.plugins.BeetsPlugin):
                                         action='store', metavar='K',
                                         type=int,
                                         help='how many clusters to find')
+
+        self._command.parser.add_option('-C', '--classify',
+                                        action='callback', dest='classify',
+                                        metavar='LIST',
+                                        callback=beets.ui.vararg_callback,
+                                        help='list of labels to classify')
 
         self._command.parser.add_option('-f', '--format',
                                         action='store', type=str,
@@ -162,10 +169,12 @@ class LearnPlugin(beets.plugins.BeetsPlugin):
             features = self.config['attributes'].get(list)
             fmt = self.config['format'].get(str)
             k = self.config['clusters'].get(int)
+            targets = self.config['classify'].get(list)
             plot = self.config['plot'].get(bool)
             savefig = self.config['savefig'].get(str)
             test = self.config['test'].get(list)
             train = self.config['train'].get(list)
+
             if not fmt:
                 fmt = '$albumartist - $album - $title'
             fmt += ' - {0}'
