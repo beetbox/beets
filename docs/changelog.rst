@@ -38,6 +38,14 @@ Little fixes:
 * :doc:`/plugins/convert`: Fix an "Item has no library" error when using the
   ``auto`` config option.
 
+New stuff:
+
+* :doc:`/plugins/echonest`: A drop in replacement of
+  :doc:`/plugins/echonest_tempo` that also fetches `Acoustic Attributes`_ from
+  `The Echo Nest`_.
+
+.. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
+
 1.3.1 (October 12, 2013)
 ------------------------
 
