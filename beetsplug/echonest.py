@@ -149,7 +149,8 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             util.remove(dest)
             util.prune_dirs(os.path.dirname(dest))
             return None
-        log.info(u'Finished encoding {0}'.format(util.displayable_path(source)))
+        log.info(u'echonest: finished encoding {0}'
+                .format(util.displayable_path(source)))
         return dest
 
     def analyze(self, item):
