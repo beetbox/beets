@@ -2,15 +2,16 @@ Echonest Plugin
 ===============
 
 The ``echonest`` plugin will automatically fetch and store the following audio
-descriptors from the `EchoNest API`_.  All except ``tempo`` will be stored in
-flexattrs and *not* in the audio file itself:
+descriptors from the `EchoNest API`_.  All except for ``tempo`` will be stored in
+flexattrs and *not* in the audio file itself.  ``tempo`` will be stored in
+``bpm``:
 
-- danceability > echonest_danceability
-- energy > echonest_energy
-- liveness > echonest_liveness
-- loudness > echonest_loudness
-- speechiness > echonest_speechiness
-- tempo > bpm
+- danceability
+- energy
+- liveness
+- loudness
+- speechiness
+- tempo
 
 .. _EchoNest API: http://developer.echonest.com/
 
