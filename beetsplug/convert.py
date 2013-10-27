@@ -123,7 +123,7 @@ def should_transcode(item):
     """
     maxbr = config['convert']['max_bitrate'].get(int)
     format_name = config['convert']['format'].get(unicode)
-    return format_name.lower() == item.format.lower() or \
+    return format_name.lower() != item.format.lower() or \
             item.bitrate >= 1000 * maxbr
 
 
