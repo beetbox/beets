@@ -69,8 +69,8 @@ Metadata
 
 * :doc:`lyrics`: Automatically fetch song lyrics.
 * :doc:`echonest_tempo`: Automatically fetch song tempos (bpm).
-* :doc:`echonest`: Automatically fetch metadata from EchoNest (energy,
-  danceability, ...).
+* :doc:`echonest`: Automatically fetch `Acoustic Attributes`_ from
+  `the Echo Nest`_ (energy, danceability, ...).
 * :doc:`lastgenre`: Fetch genres based on Last.fm tags.
 * :doc:`mbsync`: Fetch updated metadata from MusicBrainz
 * :doc:`fetchart`: Fetch album cover art from various sources.
@@ -80,6 +80,9 @@ Metadata
 * :doc:`zero`: Nullify fields by pattern or unconditionally.
 * :doc:`ftintitle`: Move "featured" artists from the artist field to the title
   field.
+
+.. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
+.. _the Echo Nest: http://www.echonest.com
 
 Path Formats
 ------------

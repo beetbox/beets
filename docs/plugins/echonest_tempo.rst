@@ -1,8 +1,8 @@
 EchoNest Tempo Plugin
 =====================
 
-*Note*:  A new plugin :doc:`echonest` is available, that in addition to
-``tempo`` also fetches `Acoustic Attributes`_ from the EchoNest.
+*Note*:  A new :doc:`echonest` is available, that in addition to ``tempo``
+also fetches `Acoustic Attributes`_ from the EchoNest.
 
 The ``echonest_tempo`` plugin fetches and stores a track's tempo (the "bpm"
 field) from the `EchoNest API`_
