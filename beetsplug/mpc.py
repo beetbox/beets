@@ -35,9 +35,6 @@ from beets import plugins
 
 log = logging.getLogger('beets')
 
-# for future use
-LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
-
 # if we lose the connection, how many times do we want to RETRY and how much
 # time should we wait between retries
 RETRIES = 10
