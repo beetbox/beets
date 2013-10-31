@@ -71,6 +71,8 @@ class Client(object):
         self.client = MPDClient()
 
     def mpd_connect(self):
+        """Connect to the MPD.
+        """
         try:
             self.client.connect(host=self.host, port=self.port)
         except SocketError, e:
@@ -84,6 +86,8 @@ class Client(object):
                 return
 
     def mpd_disconnect(self):
+        """Disconnect from the MPD.
+        """
         self.client.close()
         self.client.disconnect()
 
@@ -111,11 +115,9 @@ class Client(object):
         return result
 
     def mpd_status(self):
-        status = self.mpd_func('status')
-        if status is None:
-            return None
-        # log.debug(u'mpc(status): {0}'.format(status))
-        return status
+        """Return the current status of the MPD.
+        """
+        return self.mpd_func('status')
 
     def beets_get_item(self, path):
         """Return the beets item related to path.
@@ -127,11 +129,17 @@ class Client(object):
         return items[0]
 
     def user_attr(self, attribute):
+        """Return the attribute postfixed with the user or None if user is not
+        set.
+        """
         if self.user != u'':
             return u'{1}[{0}]'.format(self.user, attribute)
         return None
 
     def rating(self, play_count, skip_count, rating, skipped):
+        """Calculate a new rating based on play count, skip count, old rating
+        and the fact if it was skipped or not.
+        """
         if skipped:
             rolling = (rating - rating / 2.0)
         else:
