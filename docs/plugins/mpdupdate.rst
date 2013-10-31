@@ -8,10 +8,10 @@ update `MPD`_'s index whenever you change your beets library.
 
 To use it, enable it in your ``config.yaml`` by putting ``mpdupdate`` on your
 ``plugins`` line. Then, you'll probably want to configure the specifics of your
-MPD server. You can do that using an ``mpdupdate:`` section in your
-``config.yaml``, which looks like this::
+MPD server. You can do that using an ``mpd:`` section in your ``config.yaml``,
+which looks like this::
 
-    mpdupdate:
+    mpd:
         host: localhost
         port: 6600
         password: seekrit
