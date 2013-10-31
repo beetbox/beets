@@ -111,10 +111,10 @@ class Client:
     def beets_item(self, path):
         """Return the beets item related to path.
         """
-        beetsitems = self.lib.items([path])
-        if len(beetsitems) == 0:
+        items = self.lib.items([path])
+        if len(items) == 0:
             return None
-        return beetsitems[0]
+        return items[0]
 
     def _for_user(self, attribute):
         if self.user != u'':
@@ -137,18 +137,18 @@ class Client:
             if not item is None:
                 attribute = 'rating'
                 item[attribute] = self._rate(
-                        item.get('play_count', 0),
-                        item.get('skip_count', 0),
-                        item.get(attribute, 0.5),
+                        (int)(item.get('play_count', 0)),
+                        (int)(item.get('skip_count', 0)),
+                        (float)(item.get(attribute, 0.5)),
                         skipped)
                 log.debug(u'mpc(updated beets): {0} = {1} [{2}]'.format(
                         attribute, item[attribute], item.path))
                 user_attribute = self._for_user('rating')
                 if not user_attribute is None:
                     item[user_attribute] = self._rate(
-                            item.get(self._for_user('play_count'), 0),
-                            item.get(self._for_user('skip_count'), 0),
-                            item.get(user_attribute, 0.5),
+                            (int)(item.get(self._for_user('play_count'), 0)),
+                            (int)(item.get(self._for_user('skip_count'), 0)),
+                            (float)(item.get(user_attribute, 0.5)),
                             skipped)
                     log.debug(u'mpc(updated beets): {0} = {1} [{2}]'.format(
                             user_attribute, item[user_attribute], item.path))
@@ -276,22 +276,23 @@ class Client:
                                         .format(now_playing))
                                 skipped = True
                             if skipped:
-                                self._beets_set(beets_item,
+                                self._beets_set(now_playing['beets_item'],
                                         'skip_count', increment=1)
                             else:
-                                self._beets_set(beets_item,
+                                self._beets_set(now_playing['beets_item'],
                                         'play_count', increment=1)
-                                self._beets_set(beets_item,
+                                self._beets_set(now_playing['beets_item'],
                                         'last_played', value=int(time.time()))
-                            self._beets_rate(beets_item, skipped)
+                            self._beets_rate(now_playing['beets_item'], skipped)
                         now_playing = {
-                                'started'   : time.time(),
-                                'remaining' : remaining,
-                                'path'      : song,
+                                'started'       : time.time(),
+                                'remaining'     : remaining,
+                                'path'          : song,
+                                'beets_item'    : beets_item,
                         }
                         log.info(u'mpc(now_playing): {0}'
                                 .format(now_playing))
-                        self._beets_set(beets_item,
+                        self._beets_set(now_playing['beets_item'],
                                 'last_started', value=int(time.time()))
                 else:
                     log.info(u'mpc(status): {0}'.format(status))
