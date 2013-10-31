@@ -70,20 +70,21 @@ class Client:
 
         self.client = MPDClient()
 
-    def connect(self):
+    def mpd_connect(self):
         try:
             self.client.connect(host=self.host, port=self.port)
         except SocketError, e:
             log.error(e)
-            exit(1)
+            return
         if not self.password == u'':
             try:
                 self.client.password(self.password)
             except CommandError, e:
                 log.error(e)
-                exit(1)
+                return
+        log.debug(u'mpc(commands): {0}'.format(self.client.commands()))
 
-    def disconnect(self):
+    def mpd_disconnect(self):
         self.client.close()
         self.client.disconnect()
 
@@ -95,18 +96,29 @@ class Client:
             return True
         return False
 
-    def playlist(self):
+    def mpd_playlist(self):
         """Return the currently active playlist.  Prefixes paths with the
         music_directory, to get the absolute path.
         """
-        result = []
+        result = {}
         for entry in self._mpdfun('playlistinfo'):
+            log.debug(u'mpc(playlist|entry): {0}'.format(entry))
             if not self.is_url(entry['file']):
-                result.append(os.path.join(
-                    self.music_directory, entry['file']))
+                result[entry['id']] = os.path.join(
+                    self.music_directory, entry['file'])
             else:
-                result.append(entry['file'])
+                result[entry['id']] = entry['file']
+        log.debug(u'mpc(playlist): {0}'.format(result))
         return result
+
+    def mpd_status(self):
+        status = self._mpdfun('status')
+        if status is None:
+            return None
+        log.debug(u'mpc(status): {0}'.format(status))
+        self.consume = status.get('consume', u'0') == u'1'
+        self.random = status.get('random', u'0') == u'1'
+        return status
 
     def beets_item(self, path):
         """Return the beets item related to path.
@@ -204,8 +216,11 @@ class Client:
                     except error:
                         # happens during shutdown and during MPDs library refresh
                         time.sleep(RETRY_INTERVAL)
-                        self.connect()
+                        self.mpd_connect()
                         continue
+                    except KeyboardInterrupt:
+                        self.running = False
+                        return None
                     return self.client.fetch_idle()
                 elif func == 'playlistinfo':
                     return self.client.playlistinfo()
@@ -215,8 +230,8 @@ class Client:
                 # happens during shutdown and during MPDs library refresh
                 log.error(u'mpc: {0}'.format(err))
                 time.sleep(RETRY_INTERVAL)
-                self.disconnect()
-                self.connect()
+                self.mpd_disconnect()
+                self.mpd_connect()
                 continue
         else:
             # if we excited without breaking, we couldn't reconnect in time :(
@@ -224,23 +239,33 @@ class Client:
         return None
 
     def run(self):
-        self.connect()
+        self.mpd_connect()
         self.running = True # exit condition for our main loop
         startup = True # we need to do some special stuff on startup
         now_playing = None # the currently playing song
         current_playlist = None # the currently active playlist
+        consume = False
+        random = False
         while self.running:
             if startup:
                 # don't wait for an event, read in status and playlist
-                changed = ['player', 'playlist']
+                events = ['player', 'playlist']
                 startup = False
             else:
                 # wait for an event from the MPD server
-                changed = self._mpdfun('send_idle')
+                events = self._mpdfun('send_idle')
+                if events is None:
+                    continue # probably KeyboardInterrupt
+                log.info(u'mpc(events): {0}'.format(events))
 
-            if 'player' in changed:
-                # the status has changed
-                status = self._mpdfun('status')
+            if 'options' in events:
+                status = self.mpd_status()
+
+            if 'player' in events:
+                status = self.mpd_status()
+                if status is None:
+                    continue # probably KeyboardInterrupt
+                log.debug(u'mpc(status): {0}'.format(status))
                 if status['state'] == 'stop':
                     log.info(u'mpc(stop)')
                     now_playing = None
@@ -248,8 +273,10 @@ class Client:
                     log.info(u'mpc(pause)')
                     now_playing = None
                 elif status['state'] == 'play':
-                    current_playlist = self.playlist()
-                    song = current_playlist[int(status['song'])]
+                    current_playlist = self.mpd_playlist()
+                    if len(current_playlist) == 0:
+                        continue # something is wrong ...
+                    song = current_playlist[status['songid']]
                     beets_item = self.beets_item(song)
                     if self.is_url(song):
                         # we ignore streams
@@ -271,11 +298,11 @@ class Client:
                                     now_playing['started']))
                             if diff < 10.0:
                                 log.info('mpc(played): {0}'
-                                        .format(now_playing))
+                                        .format(now_playing['path']))
                                 skipped = False
                             else:
                                 log.info('mpc(skipped): {0}'
-                                        .format(now_playing))
+                                        .format(now_playing['path']))
                                 skipped = True
                             if skipped:
                                 self._beets_set(now_playing['beets_item'],
@@ -299,13 +326,16 @@ class Client:
                 else:
                     log.info(u'mpc(status): {0}'.format(status))
 
-            if 'playlist' in changed:
-                new_playlist = self.playlist()
-                for new_file in new_playlist:
-                    if not new_file in current_playlist:
+            if 'playlist' in events:
+                status = self.mpd_status()
+                new_playlist = self.mpd_playlist()
+                if new_playlist is None:
+                    continue
+                for new_file in new_playlist.items():
+                    if not new_file in current_playlist.items():
                         log.info(u'mpc(playlist+): {0}'.format(new_file))
-                for old_file in current_playlist:
-                    if not old_file in new_playlist:
+                for old_file in current_playlist.items():
+                    if not old_file in new_playlist.items():
                         log.info(u'mpc(playlist-): {0}'.format(old_file))
                 current_playlist = new_playlist
 
@@ -313,13 +343,14 @@ class MPCPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(MPCPlugin, self).__init__()
         self.config.add({
-            'host': u'127.0.0.1',
-            'port': 6600,
-            'password': u'',
-            'music_directory': u'',
-            'user': u'',
-            'rating': True,
-            'rating_mix': 0.75,
+            'host'              : u'127.0.0.1',
+            'port'              : 6600,
+            'password'          : u'',
+            'music_directory'   : u'',
+            'user'              : u'',
+            'rating'            : True,
+            'rating_mix'        : 0.75,
+            'min_queue'         : 2,
         })
 
     def commands(self):
