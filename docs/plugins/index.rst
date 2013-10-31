@@ -24,8 +24,8 @@ by typing ``beet version``.
    echonest_tempo
    echonest
    bpd
-   mpc
    mpdupdate
+   mpdstats
    fetchart
    embedart
    web
@@ -81,8 +81,8 @@ Metadata
 * :doc:`zero`: Nullify fields by pattern or unconditionally.
 * :doc:`ftintitle`: Move "featured" artists from the artist field to the title
   field.
-* :doc:`mpc`: Connect to `MPD`_ and update the beets library with playing
-  statistics (last_played, play_count, skip_count).
+* :doc:`mpdstats`: Connect to `MPD`_ and update the beets library with play
+  statistics (last_played, play_count, skip_count, rating).
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
 .. _the Echo Nest: http://www.echonest.com
