@@ -18,7 +18,7 @@ import logging
 # for fetching similar artists, tracks ...
 import pylast
 # for connecting to mpd
-from mpd import MPDClient, CommandError, PendingCommandError
+from mpd import MPDClient, CommandError, PendingCommandError, ConnectionError
 # for catching socket errors
 from socket import error as SocketError
 # for sockets
@@ -211,9 +211,11 @@ class Client:
                     return self.client.playlistinfo()
                 elif func == 'status':
                     return self.client.status()
-            except error:
+            except (error, ConnectionError) as err:
                 # happens during shutdown and during MPDs library refresh
+                log.error(u'mpc: {0}'.format(err))
                 time.sleep(RETRY_INTERVAL)
+                self.disconnect()
                 self.connect()
                 continue
         else:
@@ -298,7 +300,7 @@ class Client:
                     log.info(u'mpc(status): {0}'.format(status))
 
             if 'playlist' in changed:
-                playlist = self.playlist()
+                new_playlist = self.playlist()
                 continue
                 for item in playlist:
                     beetsitem = self.beets_item(item)
