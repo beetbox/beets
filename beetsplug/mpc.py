@@ -65,7 +65,7 @@ class Client(object):
         self.port = self.config['port'].get()
         self.password = self.config['password'].get()
         self.user = self.config['user'].get()
-        self.rating = self.config['rating'].get(bool)
+        self.do_rating = self.config['rating'].get(bool)
         self.rating_mix = self.config['rating_mix'].get(float)
 
         self.client = MPDClient()
@@ -151,7 +151,7 @@ class Client(object):
     def beetsrating(self, item, skipped):
         """ Update the rating of the beets item.
         """
-        if self.rating and not item is None:
+        if self.do_rating and not item is None:
             attribute = 'rating'
             item[attribute] = self.rating(
                     (int)(item.get('play_count', 0)),
