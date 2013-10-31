@@ -331,12 +331,14 @@ class Client:
                 new_playlist = self.mpd_playlist()
                 if new_playlist is None:
                     continue
-                for new_file in new_playlist.items():
-                    if not new_file in current_playlist.items():
-                        log.info(u'mpc(playlist+): {0}'.format(new_file))
-                for old_file in current_playlist.items():
-                    if not old_file in new_playlist.items():
-                        log.info(u'mpc(playlist-): {0}'.format(old_file))
+                for new_id in new_playlist.keys():
+                    if not new_id in current_playlist.keys():
+                        log.info(u'mpc(playlist+): {0}'
+                                .format(new_playlist[new_id]))
+                for old_id in current_playlist.keys():
+                    if not old_id in new_playlist.keys():
+                        log.info(u'mpc(playlist-): {0}'
+                                .format(current_playlist[old_id]))
                 current_playlist = new_playlist
 
 class MPCPlugin(plugins.BeetsPlugin):
