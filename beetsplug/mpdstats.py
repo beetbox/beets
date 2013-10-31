@@ -15,8 +15,6 @@
 # requires python-mpd to run. install with:  pip install python-mpd
 
 import logging
-# for fetching similar artists, tracks ...
-import pylast
 # for connecting to mpd
 from mpd import MPDClient, CommandError, PendingCommandError, ConnectionError
 # for catching socket errors
