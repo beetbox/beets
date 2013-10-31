@@ -46,15 +46,6 @@ RETRY_INTERVAL = 5
 # hookup to the MPDClient internals to get unicode
 # see http://www.tarmack.eu/code/mpdunicode.py for the general idea
 class MPDClient(MPDClient):
-    def connect(self, **kwargs):
-        super(MPDClient, self).connect(**kwargs)
-        # add prio and prioid if supported (MPD >= 0.17?)
-        commands = self.commands()
-        if 'prio' in commands:
-            self._commands['prio'] = self._fetch_nothing
-        if 'prioid' in commands:
-            self._commands['prioid'] = self._fetch_nothing
-
     def _write_command(self, command, args=[]):
         args = [unicode(arg).encode('utf-8') for arg in args]
         super(MPDClient, self)._write_command(command, args)
@@ -65,7 +56,7 @@ class MPDClient(MPDClient):
             return line.decode('utf-8')
         return None
 
-class Client:
+class Client(object):
     def __init__(self, library, config):
         self.lib = library
         self.config = config
@@ -91,7 +82,6 @@ class Client:
             except CommandError, e:
                 log.error(e)
                 return
-        log.debug(u'mpc(commands): {0}'.format(self.client.commands()))
 
     def mpd_disconnect(self):
         self.client.close()
@@ -110,8 +100,8 @@ class Client:
         music_directory, to get the absolute path.
         """
         result = {}
-        for entry in self._mpdfun('playlistinfo'):
-            log.debug(u'mpc(playlist|entry): {0}'.format(entry))
+        for entry in self.mpd_func('playlistinfo'):
+            # log.debug(u'mpc(playlist|entry): {0}'.format(entry))
             if not self.is_url(entry['file']):
                 result[entry['id']] = os.path.join(
                     self.music_directory, entry['file'])
@@ -121,28 +111,27 @@ class Client:
         return result
 
     def mpd_status(self):
-        status = self._mpdfun('status')
+        status = self.mpd_func('status')
         if status is None:
             return None
-        log.debug(u'mpc(status): {0}'.format(status))
-        self.consume = status.get('consume', u'0') == u'1'
-        self.random = status.get('random', u'0') == u'1'
+        # log.debug(u'mpc(status): {0}'.format(status))
         return status
 
-    def beets_item(self, path):
+    def beets_get_item(self, path):
         """Return the beets item related to path.
         """
         items = self.lib.items([path])
         if len(items) == 0:
+            log.info(u'mpc(beets): item not found {0}'.format(path))
             return None
         return items[0]
 
-    def _for_user(self, attribute):
+    def user_attr(self, attribute):
         if self.user != u'':
             return u'{1}[{0}]'.format(self.user, attribute)
         return None
 
-    def _rate(self, play_count, skip_count, rating, skipped):
+    def rating(self, play_count, skip_count, rating, skipped):
         if skipped:
             rolling = (rating - rating / 2.0)
         else:
@@ -151,38 +140,35 @@ class Client:
         return self.rating_mix * stable \
                 + (1.0 - self.rating_mix) * rolling
 
-    def _beets_rate(self, item, skipped):
+    def beetsrating(self, item, skipped):
         """ Update the rating of the beets item.
         """
-        if self.rating:
-            if not item is None:
-                attribute = 'rating'
-                item[attribute] = self._rate(
-                        (int)(item.get('play_count', 0)),
-                        (int)(item.get('skip_count', 0)),
-                        (float)(item.get(attribute, 0.5)),
+        if self.rating and not item is None:
+            attribute = 'rating'
+            item[attribute] = self.rating(
+                    (int)(item.get('play_count', 0)),
+                    (int)(item.get('skip_count', 0)),
+                    (float)(item.get(attribute, 0.5)),
+                    skipped)
+            log.debug(u'mpc(updated beets): {0} = {1} [{2}]'.format(
+                    attribute, item[attribute], item.path))
+            user_attribute = self.user_attr('rating')
+            if not user_attribute is None:
+                item[user_attribute] = self.rating(
+                        (int)(item.get(self.user_attr('play_count'), 0)),
+                        (int)(item.get(self.user_attr('skip_count'), 0)),
+                        (float)(item.get(user_attribute, 0.5)),
                         skipped)
                 log.debug(u'mpc(updated beets): {0} = {1} [{2}]'.format(
-                        attribute, item[attribute], item.path))
-                user_attribute = self._for_user('rating')
-                if not user_attribute is None:
-                    item[user_attribute] = self._rate(
-                            (int)(item.get(self._for_user('play_count'), 0)),
-                            (int)(item.get(self._for_user('skip_count'), 0)),
-                            (float)(item.get(user_attribute, 0.5)),
-                            skipped)
-                    log.debug(u'mpc(updated beets): {0} = {1} [{2}]'.format(
-                            user_attribute, item[user_attribute], item.path))
-                item.write()
-                if item._lib:
-                    item.store()
+                        user_attribute, item[user_attribute], item.path))
+            item.write()
+            if item._lib:
+                item.store()
 
-
-    def _beets_set(self, item, attribute, value=None, increment=None):
+    def beets_update(self, item, attribute, value=None, increment=None):
         """ Update the beets item.  Set attribute to value or increment the
-        value of attribute.  If a user has been given during initialization,
-        both the attribute and the attribute with the user prefixed, get
-        updated.
+        value of attribute.  If we have a user both the attribute and the
+        attribute with the user suffix, get updated.
         """
         if not item is None:
             changed = False
@@ -211,7 +197,7 @@ class Client:
                 if item._lib:
                     item.store()
 
-    def _mpdfun(self, func, **kwargs):
+    def mpd_func(self, func, **kwargs):
         """Wrapper for requests to the MPD server.  Tries to re-connect if the
         connection was lost ...
         """
@@ -253,28 +239,22 @@ class Client:
         startup = True # we need to do some special stuff on startup
         now_playing = None # the currently playing song
         current_playlist = None # the currently active playlist
-        consume = False
-        random = False
         while self.running:
             if startup:
                 # don't wait for an event, read in status and playlist
-                events = ['player', 'playlist']
+                events = ['player']
                 startup = False
             else:
                 # wait for an event from the MPD server
-                events = self._mpdfun('send_idle')
+                events = self.mpd_func('send_idle')
                 if events is None:
                     continue # probably KeyboardInterrupt
-                log.info(u'mpc(events): {0}'.format(events))
-
-            if 'options' in events:
-                status = self.mpd_status()
+                log.debug(u'mpc(events): {0}'.format(events))
 
             if 'player' in events:
                 status = self.mpd_status()
                 if status is None:
                     continue # probably KeyboardInterrupt
-                log.debug(u'mpc(status): {0}'.format(status))
                 if status['state'] == 'stop':
                     log.info(u'mpc(stop)')
                     now_playing = None
@@ -286,11 +266,11 @@ class Client:
                     if len(current_playlist) == 0:
                         continue # something is wrong ...
                     song = current_playlist[status['songid']]
-                    beets_item = self.beets_item(song)
                     if self.is_url(song):
                         # we ignore streams
                         log.info(u'mpc(play|stream): {0}'.format(song))
                     else:
+                        beets_item = self.beets_get_item(song)
                         log.info(u'mpc(play): {0}'.format(song))
                         # status['time'] = position:duration (in seconds)
                         t = status['time'].split(':')
@@ -314,14 +294,13 @@ class Client:
                                         .format(now_playing['path']))
                                 skipped = True
                             if skipped:
-                                self._beets_set(now_playing['beets_item'],
+                                self.beets_update(now_playing['beets_item'],
                                         'skip_count', increment=1)
                             else:
-                                self._beets_set(now_playing['beets_item'],
+                                self.beets_update(now_playing['beets_item'],
                                         'play_count', increment=1)
-                                self._beets_set(now_playing['beets_item'],
-                                        'last_played', value=int(time.time()))
-                            self._beets_rate(now_playing['beets_item'], skipped)
+                            self.beetsrating(now_playing['beets_item'],
+                                    skipped)
                         now_playing = {
                                 'started'       : time.time(),
                                 'remaining'     : remaining,
@@ -330,25 +309,10 @@ class Client:
                         }
                         log.info(u'mpc(now_playing): {0}'
                                 .format(now_playing['path']))
-                        self._beets_set(now_playing['beets_item'],
-                                'last_started', value=int(time.time()))
+                        self.beets_update(now_playing['beets_item'],
+                                'last_played', value=int(time.time()))
                 else:
                     log.info(u'mpc(status): {0}'.format(status))
-
-            if 'playlist' in events:
-                status = self.mpd_status()
-                new_playlist = self.mpd_playlist()
-                if new_playlist is None:
-                    continue
-                for new_id in new_playlist.keys():
-                    if not new_id in current_playlist.keys():
-                        log.info(u'mpc(playlist+): {0}'
-                                .format(new_playlist[new_id]))
-                for old_id in current_playlist.keys():
-                    if not old_id in new_playlist.keys():
-                        log.info(u'mpc(playlist-): {0}'
-                                .format(current_playlist[old_id]))
-                current_playlist = new_playlist
 
 class MPCPlugin(plugins.BeetsPlugin):
     def __init__(self):
@@ -361,7 +325,6 @@ class MPCPlugin(plugins.BeetsPlugin):
             'user'              : u'',
             'rating'            : True,
             'rating_mix'        : 0.75,
-            'min_queue'         : 2,
         })
 
     def commands(self):
