@@ -102,13 +102,13 @@ class Client(object):
         """
         result = {}
         for entry in self.mpd_func('playlistinfo'):
-            # log.debug(u'mpc(playlist|entry): {0}'.format(entry))
+            # log.debug(u'mpdstats(playlist|entry): {0}'.format(entry))
             if not self.is_url(entry['file']):
                 result[entry['id']] = os.path.join(
                     self.music_directory, entry['file'])
             else:
                 result[entry['id']] = entry['file']
-        # log.debug(u'mpc(playlist): {0}'.format(result))
+        # log.debug(u'mpdstats(playlist): {0}'.format(result))
         return result
 
     def mpd_status(self):
@@ -121,7 +121,7 @@ class Client(object):
         """
         items = self.lib.items([path])
         if len(items) == 0:
-            log.info(u'mpc(beets): item not found {0}'.format(path))
+            log.info(u'mpdstats(beets): item not found {0}'.format(path))
             return None
         return items[0]
 
@@ -155,7 +155,7 @@ class Client(object):
                     (int)(item.get('skip_count', 0)),
                     (float)(item.get(attribute, 0.5)),
                     skipped)
-            log.debug(u'mpc(updated beets): {0} = {1} [{2}]'.format(
+            log.debug(u'mpdstats(updated beets): {0} = {1} [{2}]'.format(
                     attribute, item[attribute], item.path))
             user_attribute = self.user_attr('rating')
             if not user_attribute is None:
@@ -164,7 +164,7 @@ class Client(object):
                         (int)(item.get(self.user_attr('skip_count'), 0)),
                         (float)(item.get(user_attribute, 0.5)),
                         skipped)
-                log.debug(u'mpc(updated beets): {0} = {1} [{2}]'.format(
+                log.debug(u'mpdstats(updated beets): {0} = {1} [{2}]'.format(
                         user_attribute, item[user_attribute], item.path))
             item.write()
             if item._lib:
@@ -193,10 +193,10 @@ class Client(object):
                     item[user_attribute] = \
                             (float)(item.get(user_attribute, 0)) + increment
             if changed:
-                log.debug(u'mpc(updated beets): {0} = {1} [{2}]'.format(
+                log.debug(u'mpdstats(updated beets): {0} = {1} [{2}]'.format(
                         attribute, item[attribute], item.path))
                 if not user_attribute is None:
-                    log.debug(u'mpc(updated beets): {0} = {1} [{2}]'.format(
+                    log.debug(u'mpdstats(updated beets): {0} = {1} [{2}]'.format(
                             user_attribute, item[user_attribute], item.path))
                 item.write()
                 if item._lib:
@@ -228,7 +228,7 @@ class Client(object):
                     return self.client.status()
             except (error, ConnectionError) as err:
                 # happens during shutdown and during MPDs library refresh
-                log.error(u'mpc: {0}'.format(err))
+                log.error(u'mpdstats: {0}'.format(err))
                 time.sleep(RETRY_INTERVAL)
                 self.mpd_disconnect()
                 self.mpd_connect()
@@ -254,17 +254,17 @@ class Client(object):
                 events = self.mpd_func('send_idle')
                 if events is None:
                     continue # probably KeyboardInterrupt
-                log.debug(u'mpc(events): {0}'.format(events))
+                log.debug(u'mpdstats(events): {0}'.format(events))
 
             if 'player' in events:
                 status = self.mpd_status()
                 if status is None:
                     continue # probably KeyboardInterrupt
                 if status['state'] == 'stop':
-                    log.info(u'mpc(stop)')
+                    log.info(u'mpdstats(stop)')
                     now_playing = None
                 elif status['state'] == 'pause':
-                    log.info(u'mpc(pause)')
+                    log.info(u'mpdstats(pause)')
                     now_playing = None
                 elif status['state'] == 'play':
                     current_playlist = self.mpd_playlist()
@@ -273,7 +273,7 @@ class Client(object):
                     song = current_playlist[status['songid']]
                     if self.is_url(song):
                         # we ignore streams
-                        log.info(u'mpc(play|stream): {0}'.format(song))
+                        log.info(u'mpdstats(play|stream): {0}'.format(song))
                     else:
                         beets_item = self.beets_get_item(song)
                         t = status['time'].split(':')
@@ -289,11 +289,11 @@ class Client(object):
                                     (time.time() -
                                     now_playing['started']))
                             if diff < 10.0:
-                                log.info('mpc(played): {0}'
+                                log.info('mpdstats(played): {0}'
                                         .format(now_playing['path']))
                                 skipped = False
                             else:
-                                log.info('mpc(skipped): {0}'
+                                log.info('mpdstats(skipped): {0}'
                                         .format(now_playing['path']))
                                 skipped = True
                             if skipped:
@@ -310,16 +310,16 @@ class Client(object):
                                 'path'          : song,
                                 'beets_item'    : beets_item,
                         }
-                        log.info(u'mpc(playing): {0}'
+                        log.info(u'mpdstats(playing): {0}'
                                 .format(now_playing['path']))
                         self.beets_update(now_playing['beets_item'],
                                 'last_played', value=int(time.time()))
                 else:
-                    log.info(u'mpc(status): {0}'.format(status))
+                    log.info(u'mpdstats(status): {0}'.format(status))
 
-class MPCPlugin(plugins.BeetsPlugin):
+class MPDStatsPlugin(plugins.BeetsPlugin):
     def __init__(self):
-        super(MPCPlugin, self).__init__()
+        super(MPDStatsPlugin, self).__init__()
         self.config.add({
             'host'              : u'127.0.0.1',
             'port'              : 6600,
@@ -331,7 +331,7 @@ class MPCPlugin(plugins.BeetsPlugin):
         })
 
     def commands(self):
-        cmd = ui.Subcommand('mpc',
+        cmd = ui.Subcommand('mpdstats',
                 help='run a MPD client to gather play statistics')
         cmd.parser.add_option('--host', dest='host',
                 type='string',
@@ -348,12 +348,6 @@ class MPCPlugin(plugins.BeetsPlugin):
 
         def func(lib, opts, args):
             self.config.set_args(opts)
-            # ATM we need to set the music_directory where the files are
-            # located, as the MPD server just tells us the relative paths to
-            # the files.  This is good and bad.  'bad' because we have to set
-            # an extra option.  'good' because if the MPD server is running on
-            # a different host and has mounted the music directory somewhere
-            # else, we don't care ...
             Client(lib, self.config).run()
 
         cmd.func = func
