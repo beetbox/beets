@@ -52,16 +52,29 @@ class MPDClient(MPDClient):
         return None
 
 class Client(object):
-    def __init__(self, library, config):
+    def __init__(self, library):
         self.lib = library
-        self.config = config
-        self.music_directory = self.config['music_directory'].get()
-        self.host = self.config['host'].get()
-        self.port = self.config['port'].get()
-        self.password = self.config['password'].get()
-        self.user = self.config['user'].get()
-        self.do_rating = self.config['rating'].get(bool)
-        self.rating_mix = self.config['rating_mix'].get(float)
+        # defaults
+        self.mpd_config = {
+                'host'          :       u'localhost',
+                'port'          :       6600,
+                'password'      :       u''
+        }
+        # from global 'mpd' section
+        if 'mpd' in config.keys():
+            for opt in ('host', 'port', 'password'):
+                if opt in config['mpd'].keys():
+                    self.mpd_config[opt] = config['mpd'][opt].get()
+
+        # plugin specific / optargs
+        for opt in ('host', 'port', 'password'):
+            if config['mpdstats'][opt].get() is not None:
+                self.mpd_config[opt] = config['mpdstats'][opt].get()
+
+        self.music_directory = config['mpdstats']['music_directory'].get()
+        self.user = config['mpdstats']['user'].get()
+        self.do_rating = config['mpdstats']['rating'].get(bool)
+        self.rating_mix = config['mpdstats']['rating_mix'].get(float)
 
         self.client = MPDClient()
 
@@ -69,13 +82,17 @@ class Client(object):
         """Connect to the MPD.
         """
         try:
-            self.client.connect(host=self.host, port=self.port)
+            log.info(u'mpdstats(connecting): MPD@{0}:{1}'
+                    .format(self.mpd_config['host'],
+                    self.mpd_config['port']))
+            self.client.connect(host=self.mpd_config['host'],
+                port=self.mpd_config['port'])
         except SocketError, e:
             log.error(e)
             return
-        if not self.password == u'':
+        if not self.mpd_config['password'] == u'':
             try:
-                self.client.password(self.password)
+                self.client.password(self.mpd_config['password'])
             except CommandError, e:
                 log.error(e)
                 return
@@ -319,10 +336,10 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(MPDStatsPlugin, self).__init__()
         self.config.add({
-            'host'              : u'127.0.0.1',
-            'port'              : 6600,
-            'password'          : u'',
-            'music_directory'   : u'',
+            'host'              : None,
+            'port'              : None,
+            'password'          : None,
+            'music_directory'   : config['directory'].get(unicode),
             'user'              : u'',
             'rating'            : True,
             'rating_mix'        : 0.75,
@@ -346,7 +363,7 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
 
         def func(lib, opts, args):
             self.config.set_args(opts)
-            Client(lib, self.config).run()
+            Client(lib).run()
 
         cmd.func = func
         return [cmd]
