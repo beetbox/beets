@@ -12,14 +12,18 @@ habits from `MPD`_.  It collects the following information about tracks::
 .. _MPD: http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
 
 To use it, enable it in your ``config.yaml`` by putting ``mpc`` on your
-``plugins`` line. Then, you'll probably want to configure the specifics of your
-MPD server. You can do that using an ``mpc:`` section in your
+``plugins`` line. Then, you'll probably want to configure the specifics of
+your MPD server. You can do that using an ``mpc:`` section in your
 ``config.yaml``, which looks like this::
 
     mpc:
         host: localhost
         port: 6600
         password: seekrit
+        music_directory: /PATH/TO/YOUR/FILES
+
+*music_directory* needs to the same path where MPDs *music_directory* is.  See
+your local ``mpd.conf``.
 
 Now use the ``mpc`` command to fire it up::
 
