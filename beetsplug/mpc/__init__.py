@@ -46,6 +46,15 @@ RETRY_INTERVAL = 5
 # hookup to the MPDClient internals to get unicode
 # see http://www.tarmack.eu/code/mpdunicode.py for the general idea
 class MPDClient(MPDClient):
+    def connect(self, **kwargs):
+        super(MPDClient, self).connect(**kwargs)
+        # add prio and prioid if supported (MPD >= 0.17?)
+        commands = self.commands()
+        if 'prio' in commands:
+            self._commands['prio'] = self._fetch_nothing
+        if 'prioid' in commands:
+            self._commands['prioid'] = self._fetch_nothing
+
     def _write_command(self, command, args=[]):
         args = [unicode(arg).encode('utf-8') for arg in args]
         super(MPDClient, self)._write_command(command, args)
@@ -108,7 +117,7 @@ class Client:
                     self.music_directory, entry['file'])
             else:
                 result[entry['id']] = entry['file']
-        log.debug(u'mpc(playlist): {0}'.format(result))
+        # log.debug(u'mpc(playlist): {0}'.format(result))
         return result
 
     def mpd_status(self):
