@@ -271,8 +271,6 @@ class Client(object):
                         log.info(u'mpc(play|stream): {0}'.format(song))
                     else:
                         beets_item = self.beets_get_item(song)
-                        log.info(u'mpc(play): {0}'.format(song))
-                        # status['time'] = position:duration (in seconds)
                         t = status['time'].split(':')
                         remaining = (int(t[1]) -int(t[0]))
 
@@ -307,7 +305,7 @@ class Client(object):
                                 'path'          : song,
                                 'beets_item'    : beets_item,
                         }
-                        log.info(u'mpc(now_playing): {0}'
+                        log.info(u'mpc(playing): {0}'
                                 .format(now_playing['path']))
                         self.beets_update(now_playing['beets_item'],
                                 'last_played', value=int(time.time()))
