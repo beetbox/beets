@@ -176,10 +176,10 @@ class Client:
                     item[user_attribute] = value
             if not increment is None:
                 changed = True
-                item[attribute] = item.get(attribute, 0) + increment
+                item[attribute] = (float)(item.get(attribute, 0)) + increment
                 if not user_attribute is None:
-                    item[user_attribute] = item.get(user_attribute, 0) \
-                            + increment
+                    item[user_attribute] = \
+                            (float)(item.get(user_attribute, 0)) + increment
             if changed:
                 log.debug(u'mpc(updated beets): {0} = {1} [{2}]'.format(
                         attribute, item[attribute], item.path))
@@ -293,7 +293,7 @@ class Client:
                                 'beets_item'    : beets_item,
                         }
                         log.info(u'mpc(now_playing): {0}'
-                                .format(now_playing))
+                                .format(now_playing['path']))
                         self._beets_set(now_playing['beets_item'],
                                 'last_started', value=int(time.time()))
                 else:
@@ -301,14 +301,13 @@ class Client:
 
             if 'playlist' in changed:
                 new_playlist = self.playlist()
-                continue
-                for item in playlist:
-                    beetsitem = self.beets_item(item)
-                    if not beetsitem is None:
-                        log.info(u'mpc(playlist|beets): {0}'.format(beetsitem.path))
-                    else:
-                        log.info(u'mpc(playlist): {0}'.format(item))
-
+                for new_file in new_playlist:
+                    if not new_file in current_playlist:
+                        log.info(u'mpc(playlist+): {0}'.format(new_file))
+                for old_file in current_playlist:
+                    if not old_file in new_playlist:
+                        log.info(u'mpc(playlist-): {0}'.format(old_file))
+                current_playlist = new_playlist
 
 class MPCPlugin(plugins.BeetsPlugin):
     def __init__(self):
