@@ -94,7 +94,7 @@ fast.  Taking the example from above, your old favorite with 50 plays will get
 a negative rating (<0.5) the first time you skip it.  Also not good.
 
 To take the best of both worlds, we mix the ratings together with the
-```rating_mix``` factor.  A ```rating_mix``` of 0.0 means all
+``rating_mix`` factor.  A ``rating_mix`` of 0.0 means all
 *rolling* and 1.0 means all *stable*.  We found 0.75 to be a good compromise,
 but fell free to play with that.
 
