@@ -101,7 +101,7 @@ but fell free to play with that.
 Warning
 -------
 
-This has only been tested with MPD versions >= 0.16.  It may have difficulties
+This has only been tested with MPD versions >= 0.16.  It may not work
 on older versions.  If that is the case, please report an `Issue`_.
 
 .. _Issue:  https://github.com/sampsyo/beets/issues
