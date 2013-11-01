@@ -64,8 +64,9 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             pyechonest.config.CODEGEN_BINARY_OVERRIDE = \
                 config['echonest']['codegen'].get(unicode)
 
-        self.register_listener('import_task_start', self.fetch_song_task)
-        self.register_listener('import_task_apply', self.apply_metadata_task)
+        if config['echonest']['auto'].get(bool):
+            self.register_listener('import_task_start', self.fetch_song_task)
+            self.register_listener('import_task_apply', self.apply_metadata_task)
 
     def _echofun(self, func, **kwargs):
         """Wrapper for requests to the EchoNest API.  Will retry up to RETRIES
