@@ -72,7 +72,6 @@ class Client(object):
                 self.mpd_config[opt] = config['mpdstats'][opt].get()
 
         self.music_directory = config['mpdstats']['music_directory'].get()
-        self.user = config['mpdstats']['user'].get()
         self.do_rating = config['mpdstats']['rating'].get(bool)
         self.rating_mix = config['mpdstats']['rating_mix'].get(float)
 
@@ -140,14 +139,6 @@ class Client(object):
             return None
         return items[0]
 
-    def user_attr(self, attribute):
-        """Return the attribute postfixed with the user or None if user is not
-        set.
-        """
-        if self.user != u'':
-            return u'{1}[{0}]'.format(self.user, attribute)
-        return None
-
     def rating(self, play_count, skip_count, rating, skipped):
         """Calculate a new rating based on play count, skip count, old rating
         and the fact if it was skipped or not.
@@ -172,47 +163,25 @@ class Client(object):
                     skipped)
             log.debug(u'mpdstats(updated beets): {0} = {1} [{2}]'.format(
                     attribute, item[attribute], item.path))
-            user_attribute = self.user_attr('rating')
-            if not user_attribute is None:
-                item[user_attribute] = self.rating(
-                        (int)(item.get(self.user_attr('play_count'), 0)),
-                        (int)(item.get(self.user_attr('skip_count'), 0)),
-                        (float)(item.get(user_attribute, 0.5)),
-                        skipped)
-                log.debug(u'mpdstats(updated beets): {0} = {1} [{2}]'.format(
-                        user_attribute, item[user_attribute], item.path))
             item.write()
             if item._lib:
                 item.store()
 
     def beets_update(self, item, attribute, value=None, increment=None):
         """ Update the beets item.  Set attribute to value or increment the
-        value of attribute.  If we have a user both the attribute and the
-        attribute with the user suffix, get updated.
+        value of attribute.
         """
         if not item is None:
             changed = False
-            if self.user != u'':
-                user_attribute = u'{1}[{0}]'.format(self.user, attribute)
-            else:
-                user_attribute = None
             if not value is None:
                 changed = True
                 item[attribute] = value
-                if not user_attribute is None:
-                    item[user_attribute] = value
             if not increment is None:
                 changed = True
                 item[attribute] = (float)(item.get(attribute, 0)) + increment
-                if not user_attribute is None:
-                    item[user_attribute] = \
-                            (float)(item.get(user_attribute, 0)) + increment
             if changed:
                 log.debug(u'mpdstats(updated beets): {0} = {1} [{2}]'.format(
                         attribute, item[attribute], item.path))
-                if not user_attribute is None:
-                    log.debug(u'mpdstats(updated beets): {0} = {1} [{2}]'.format(
-                            user_attribute, item[user_attribute], item.path))
                 item.write()
                 if item._lib:
                     item.store()
@@ -340,7 +309,6 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
             'port'              : None,
             'password'          : None,
             'music_directory'   : config['directory'].get(unicode),
-            'user'              : u'',
             'rating'            : True,
             'rating_mix'        : 0.75,
         })
@@ -357,9 +325,6 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
         cmd.parser.add_option('--password', dest='password',
                 type='string',
                 help='set the password of the MPD server to connect to')
-        cmd.parser.add_option('--user', dest='user',
-                type='string',
-                help='set the user for whom we want to gather statistics')
 
         def func(lib, opts, args):
             self.config.set_args(opts)
