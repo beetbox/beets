@@ -15,7 +15,7 @@
 """Updates an MPD index whenever the library is changed.
 
 Put something like the following in your config.yaml to configure:
-    mpdupdate:
+    mpd:
         host: localhost
         port: 6600
         password: seekrit
@@ -98,9 +98,9 @@ class MPDUpdatePlugin(BeetsPlugin):
     def __init__(self):
         super(MPDUpdatePlugin, self).__init__()
         self.config.add({
-            'host': u'localhost',
-            'port': 6600,
-            'password': u'',
+            'host': None,
+            'port': None,
+            'password': None,
         })
 
 
@@ -113,8 +113,22 @@ def handle_change(lib=None):
 @MPDUpdatePlugin.listen('cli_exit')
 def update(lib=None):
     if database_changed:
+        mpd_config = {
+                'host'          :       u'localhost',
+                'port'          :       6600,
+                'password'      :       u''
+        }
+        # try to get global mpd config
+        if 'mpd' in config.keys():
+            for opt in ('host', 'port', 'password'):
+                if opt in config['mpd'].keys():
+                    mpd_config[opt] = config['mpd'][opt].get()
+        # overwrite with plugin specific
+        for opt in ('host', 'port', 'password'):
+            if config['mpdupdate'][opt].get() is not None:
+                mpd_config[opt] = config['mpdupdate'][opt].get()
         update_mpd(
-            config['mpdupdate']['host'].get(unicode),
-            config['mpdupdate']['port'].get(int),
-            config['mpdupdate']['password'].get(unicode),
+            mpd_config['host'],
+            mpd_config['port'],
+            mpd_config['password']
         )
