@@ -273,11 +273,11 @@ class Client(object):
                                     (time.time() -
                                     now_playing['started']))
                             if diff < 10.0:
-                                log.info('mpdstats(played): {0}'
+                                log.info(u'mpdstats(played): {0}'
                                         .format(now_playing['path']))
                                 skipped = False
                             else:
-                                log.info('mpdstats(skipped): {0}'
+                                log.info(u'mpdstats(skipped): {0}'
                                         .format(now_playing['path']))
                                 skipped = True
                             if skipped:
