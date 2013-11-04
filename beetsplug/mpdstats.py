@@ -316,7 +316,6 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
         self.field_types['play_count'] = int
         self.field_types['skip_count'] = int
         self.field_types['last_played'] = int # or datetime or ...?
-        self.field_types['liveness'] = float # or datetime or ...?
 
     def commands(self):
         cmd = ui.Subcommand('mpdstats',
