@@ -253,12 +253,12 @@ def field_types():
             if name in out:
                 if ftype != out[name][0]:
                     log.error(u'Conflicting field type mapping detected. '
-                            '{0} declared by {1} as {2} and {3} as {4}'
+                            '"{0}" declared by "{1}" as "{2}" and "{3}" as "{4}"'
                             .format(name, out[name][1], out[name][0],
                             plugin.name, ftype))
                 else:
                     log.error(u'Duplicate field type mapping detected. '
-                            '{0} declared by {1} and {2} as {3}'
+                            '"{0}" declared by "{1}" and "{2}" as "{3}"'
                             .format(name, out[name][1], plugin.name, ftype))
             # keep the plugin.name to play the blame game
             out[name] = [ftype, plugin.name]
