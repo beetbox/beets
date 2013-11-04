@@ -56,6 +56,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             })
         for k, v in ATTRIBUTES.iteritems():
             self.config.add({k:v})
+            self.field_types[k] = float
 
         pyechonest.config.ECHO_NEST_API_KEY = \
             config['echonest']['apikey'].get(unicode)
