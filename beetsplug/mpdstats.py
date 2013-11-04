@@ -308,7 +308,7 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
             'host'              : None,
             'port'              : None,
             'password'          : None,
-            'music_directory'   : os.expanduser(config['directory'].get(unicode)),
+            'music_directory'   : os.path.expanduser(config['directory'].get(unicode)),
             'rating'            : True,
             'rating_mix'        : 0.75,
         })
