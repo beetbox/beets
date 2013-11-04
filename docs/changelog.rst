@@ -42,11 +42,14 @@ Little fixes:
 
 New stuff:
 
-* :doc:`/plugins/echonest`: A drop in replacement of
+* :doc:`/plugins/echonest`: A drop in replacement for
   :doc:`/plugins/echonest_tempo` that also fetches `Acoustic Attributes`_ from
   `The Echo Nest`_.
+* :doc:`/plugins/mpdstat`: New plugin to collect statistics about your
+  listening habit from `MPD`_.
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
+.. _MPD: http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
 
 1.3.1 (October 12, 2013)
 ------------------------
