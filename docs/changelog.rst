@@ -37,6 +37,8 @@ Little fixes:
   reliably (i.e., fewer "no tempo found" messages). Thanks to Peter Schnebel.
 * :doc:`/plugins/convert`: Fix an "Item has no library" error when using the
   ``auto`` config option.
+* Fix an issue that caused the :ref:`id3v23` option to work only occasionally.
+
 
 New stuff:
 

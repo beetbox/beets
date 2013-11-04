@@ -942,7 +942,9 @@ class MediaFile(object):
                 # In case this is an MP3 object, not an ID3 object.
                 id3 = id3.tags
             id3.update_to_v23()
-        self.mgfile.save()
+            self.mgfile.save(v2_version=3)
+        else:
+            self.mgfile.save()
 
     def delete(self):
         """Remove the current metadata tag from the file.
