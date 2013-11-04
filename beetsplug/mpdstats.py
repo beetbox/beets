@@ -171,12 +171,12 @@ class Client(object):
         """ Update the beets item.  Set attribute to value or increment the
         value of attribute.
         """
-        if not item is None:
+        if item is not None:
             changed = False
-            if not value is None:
+            if value is not None:
                 changed = True
                 item[attribute] = value
-            if not increment is None:
+            if increment is not None:
                 changed = True
                 item[attribute] = (float)(item.get(attribute, 0)) + increment
             if changed:
@@ -308,7 +308,7 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
             'host'              : None,
             'port'              : None,
             'password'          : None,
-            'music_directory'   : config['directory'].get(unicode),
+            'music_directory'   : os.expanduser(config['directory'].get(unicode)),
             'rating'            : True,
             'rating_mix'        : 0.75,
         })
