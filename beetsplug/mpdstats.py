@@ -109,7 +109,7 @@ def tmpl_float(field, default):
 # a field function returning the average value over all album items
 def tmpl_album_float(field, default, func):
     def fieldfunc(album):
-        item_func = tmpl_int(field, default)
+        item_func = tmpl_float(field, default)
         values = []
         for item in album.items():
             values.append(item_func(item))
