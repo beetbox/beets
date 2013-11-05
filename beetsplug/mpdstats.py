@@ -39,12 +39,41 @@ RETRIES = 10
 RETRY_INTERVAL = 5
 
 # a field function checking if a item has been played
-def played(item):
+def tmpl_played(item):
     try:
-        return item['last_played'] > 0
+        return float(item['last_played']) > 0.0
     except KeyError:
         return False
 
+# a field function adding play_count and skip_count
+def tmpl_start_count(item):
+    try:
+        play_count = float(item['play_count'])
+    except KeyError:
+        play_count = 0
+    try:
+        skip_count = float(item['skip_count'])
+    except KeyError:
+        skip_count = 0
+    return int(play_count + skip_count)
+
+def tmpl_int(field, default):
+    def fieldfunc(item):
+        try:
+            value = float(item[field])
+        except KeyError, ValueError:
+            return default
+        return int(value)
+    return fieldfunc
+
+def tmpl_float(field, default):
+    def fieldfunc(item):
+        try:
+            value = float(item[field])
+        except KeyError, ValueError:
+            return default
+        return value
+    return fieldfunc
 
 # hookup to the MPDClient internals to get unicode
 # see http://www.tarmack.eu/code/mpdunicode.py for the general idea
@@ -321,11 +350,17 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
             'rating_mix'        : 0.75,
         })
         self.field_types['rating'] = float
+        self.template_fields['rating'] = tmpl_float('rating', 0.5)
         self.field_types['play_count'] = int
+        self.template_fields['play_count'] = tmpl_int('play_count', 0)
         self.field_types['skip_count'] = int
+        self.template_fields['skip_count'] = tmpl_int('skip_count', 0)
         self.field_types['last_played'] = int # or datetime or ...?
+        self.template_fields['last_played'] = tmpl_int('last_played', 0)
         self.field_types['played'] = bool
-        self.template_fields['played'] = played
+        self.template_fields['played'] = tmpl_played
+        self.field_types['start_count'] = int
+        self.template_fields['start_count'] = tmpl_start_count
 
     def commands(self):
         cmd = ui.Subcommand('mpdstats',
