@@ -353,14 +353,19 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
         })
         self.field_types['rating'] = float
         self.template_fields['rating'] = tmpl_float('rating', 0.5)
+
         self.field_types['play_count'] = int
         self.template_fields['play_count'] = tmpl_int('play_count', 0)
+
         self.field_types['skip_count'] = int
         self.template_fields['skip_count'] = tmpl_int('skip_count', 0)
+
         self.field_types['last_played'] = int # or datetime or ...?
         self.template_fields['last_played'] = tmpl_int('last_played', 0)
+
         self.field_types['played'] = bool
         self.template_fields['played'] = tmpl_played
+
         self.field_types['start_count'] = int
         self.template_fields['start_count'] = tmpl_start_count
 

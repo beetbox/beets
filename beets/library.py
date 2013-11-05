@@ -1084,7 +1084,10 @@ class BooleanQuery(FieldQuery):
         try:
             value = item[self.field]
         except KeyError:
-            values = plugins.template_values(item)
+            if isinstance(item, Album):
+                values = plugins.album_template_values(item)
+            else:
+                values = plugins.template_values(item)
             if self.field in values:
                 value = values[self.field]
             else:
@@ -1129,7 +1132,10 @@ class NumericQuery(FieldQuery):
         try:
             value = item[self.field]
         except KeyError:
-            values = plugins.template_values(item)
+            if isinstance(item, Album):
+                values = plugins.album_template_values(item)
+            else:
+                values = plugins.template_values(item)
             if self.field in values:
                 value = values[self.field]
             else:
