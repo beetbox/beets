@@ -57,6 +57,7 @@ def tmpl_start_count(item):
         skip_count = 0
     return int(play_count + skip_count)
 
+# a field function returning a default int value if field is not set
 def tmpl_int(field, default):
     def fieldfunc(item):
         try:
@@ -66,6 +67,7 @@ def tmpl_int(field, default):
         return int(value)
     return fieldfunc
 
+# a field function returning a default float value if field is not set
 def tmpl_float(field, default):
     def fieldfunc(item):
         try:
