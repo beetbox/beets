@@ -38,6 +38,14 @@ log = logging.getLogger('beets')
 RETRIES = 10
 RETRY_INTERVAL = 5
 
+# a field function checking if a item has been played
+def played(item):
+    try:
+        return item['last_played'] > 0
+    except KeyError:
+        return False
+
+
 # hookup to the MPDClient internals to get unicode
 # see http://www.tarmack.eu/code/mpdunicode.py for the general idea
 class MPDClient(MPDClient):
@@ -316,6 +324,8 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
         self.field_types['play_count'] = int
         self.field_types['skip_count'] = int
         self.field_types['last_played'] = int # or datetime or ...?
+        self.field_types['played'] = bool
+        self.template_fields['played'] = played
 
     def commands(self):
         cmd = ui.Subcommand('mpdstats',

@@ -1070,15 +1070,28 @@ class RegexpQuery(FieldQuery):
         return res is not None
 
 
-class BooleanQuery(MatchQuery):
+class BooleanQuery(FieldQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
     string reflecting a boolean.
     """
-    def __init__(self, field, pattern):
+    def __init__(self, field, pattern, fast=True):
         super(BooleanQuery, self).__init__(field, pattern)
         if isinstance(pattern, basestring):
             self.pattern = util.str2bool(pattern)
         self.pattern = int(self.pattern)
+
+    def match(self, item):
+        try:
+            value = item[self.field]
+        except KeyError:
+            values = plugins.template_values(item)
+            if self.field in values:
+                value = values[self.field]
+            else:
+                return False
+        if isinstance(value, basestring):
+            value = util.str2bool(value)
+        return self.pattern == int(value)
 
 
 class NumericQuery(FieldQuery):
@@ -1116,7 +1129,11 @@ class NumericQuery(FieldQuery):
         try:
             value = item[self.field]
         except KeyError:
-            return False
+            values = plugins.template_values(item)
+            if self.field in values:
+                value = values[self.field]
+            else:
+                return False
         if isinstance(value, basestring):
             value = self._convert(value)
 
