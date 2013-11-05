@@ -1121,8 +1121,9 @@ class NumericQuery(FieldQuery):
             self.rangemax = self._convert(parts[1])
 
     def match(self, item):
-        value = getattr(item, self.field, None)
-        if value is None: # unset flexattr
+        try:
+            value = item[self.field]
+        except KeyError:
             return False
         if isinstance(value, basestring):
             value = self._convert(value)
