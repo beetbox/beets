@@ -38,12 +38,26 @@ log = logging.getLogger('beets')
 RETRIES = 10
 RETRY_INTERVAL = 5
 
+def avg(values):
+    """Calculate the average over all values in the array.
+    """
+    if len(values) == 0:
+        return None
+    return sum(values) / len(values)
+
+
 # a field function checking if a item has been played
 def tmpl_played(item):
     try:
         return float(item['last_played']) > 0.0
     except KeyError:
         return False
+
+def tmpl_album_played(album):
+    for item in album.items():
+        if tmpl_played(item):
+            return True
+    return False
 
 # a field function adding play_count and skip_count
 def tmpl_start_count(item):
@@ -57,6 +71,12 @@ def tmpl_start_count(item):
         skip_count = 0
     return int(play_count + skip_count)
 
+def tmpl_album_start_count(album):
+    start_count = 0
+    for item in album.items():
+        start_count += tmpl_start_count(item)
+    return start_count
+
 # a field function returning a default int value if field is not set
 def tmpl_int(field, default):
     def fieldfunc(item):
@@ -67,6 +87,15 @@ def tmpl_int(field, default):
         return int(value)
     return fieldfunc
 
+def tmpl_album_int(field, default, func):
+    def fieldfunc(album):
+        item_func = tmpl_int(field, default)
+        values = []
+        for item in album.items():
+            values.append(item_func(item))
+        return func(values)
+    return fieldfunc
+
 # a field function returning a default float value if field is not set
 def tmpl_float(field, default):
     def fieldfunc(item):
@@ -75,6 +104,16 @@ def tmpl_float(field, default):
         except KeyError, ValueError:
             return default
         return value
+    return fieldfunc
+
+# a field function returning the average value over all album items
+def tmpl_album_float(field, default, func):
+    def fieldfunc(album):
+        item_func = tmpl_int(field, default)
+        values = []
+        for item in album.items():
+            values.append(item_func(item))
+        return func(values) or default
     return fieldfunc
 
 # hookup to the MPDClient internals to get unicode
@@ -353,21 +392,31 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
         })
         self.field_types['rating'] = float
         self.template_fields['rating'] = tmpl_float('rating', 0.5)
+        self.album_template_fields['rating'] = \
+                tmpl_album_float('rating', 0.5, avg)
 
         self.field_types['play_count'] = int
         self.template_fields['play_count'] = tmpl_int('play_count', 0)
+        self.album_template_fields['play_count'] = \
+                tmpl_album_int('play_count', 0, sum)
 
         self.field_types['skip_count'] = int
         self.template_fields['skip_count'] = tmpl_int('skip_count', 0)
+        self.album_template_fields['skip_count'] = \
+                tmpl_album_int('skip_count', 0, sum)
 
         self.field_types['last_played'] = int # or datetime or ...?
         self.template_fields['last_played'] = tmpl_int('last_played', 0)
+        self.album_template_fields['last_played'] = \
+                tmpl_album_int('last_played', 0, max)
 
         self.field_types['played'] = bool
         self.template_fields['played'] = tmpl_played
+        self.album_template_fields['played'] = tmpl_album_played
 
         self.field_types['start_count'] = int
         self.template_fields['start_count'] = tmpl_start_count
+        self.album_template_fields['start_count'] = tmpl_album_start_count
 
     def commands(self):
         cmd = ui.Subcommand('mpdstats',
