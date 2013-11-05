@@ -1328,12 +1328,13 @@ def get_field_type(field):
     return unicode
 
 def get_field_query(field):
-    """Returns the query class defined for the field.  If none is defined,
-    falls back to SubstringQuery.
+    """Returns the query class defined for the field.  If field is None or not
+    defined, it returns the default SubstringQuery.
     """
-    field_type = get_field_type(field)
-    if field_type in FIELD_QUERIES:
-        return FIELD_QUERIES[field_type]
+    if field is not None:
+        field_type = get_field_type(field)
+        if field_type in FIELD_QUERIES:
+            return FIELD_QUERIES[field_type]
     return SubstringQuery
 
 def parse_query_part(part):
@@ -1369,9 +1370,7 @@ def parse_query_part(part):
         for pre, query_class in prefixes.items():
             if term.startswith(pre):
                 return key, term[len(pre):], query_class
-        if key:
-            return key, term, get_field_query(key)
-        return key, term, SubstringQuery  # The default query type.
+        return key, term, get_field_query(key)
 
 
 def construct_query_part(query_part, default_fields, all_keys):
