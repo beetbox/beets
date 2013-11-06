@@ -78,7 +78,7 @@ class ScrubPlugin(BeetsPlugin):
                     log.debug(u'writing new tags after scrub')
                     item.write()
                     if art:
-                        print('restoring art')
+                        log.info('restoring art')
                         mf = mediafile.MediaFile(item.path)
                         mf.art = art
                         mf.save(config['id3v23'].get(bool))
@@ -127,7 +127,7 @@ def _scrub(path):
             # remove them. In this case, we just remove all the tags.
             for tag in f.keys():
                 del f[tag]
-            f.save(config['id3v23'].get(bool))
+            f.save()
         except IOError as exc:
             log.error(u'could not scrub {0}: {1}'.format(
                 util.displayable_path(path),

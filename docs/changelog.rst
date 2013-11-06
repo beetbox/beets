@@ -38,6 +38,8 @@ Little fixes:
 * :doc:`/plugins/convert`: Fix an "Item has no library" error when using the
   ``auto`` config option.
 * Fix an issue that caused the :ref:`id3v23` option to work only occasionally.
+* Also fix using :ref:`id3v23` in conjunction with the ``scrub`` and
+  ``embedart`` plugins. Thanks to Chris Cogburn.
 
 
 New stuff:
