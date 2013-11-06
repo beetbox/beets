@@ -57,7 +57,7 @@ def _embed(path, items, maxwidth=0):
             ))
             continue
         f.art = data
-        f.save()
+        f.save(config['id3v23'].get(bool))
 
 class EmbedCoverArtPlugin(BeetsPlugin):
     """Allows albumart to be embedded into the actual files.
@@ -187,7 +187,7 @@ def clear(lib, query):
             ))
             continue
         mf.art = None
-        mf.save()
+        mf.save(config['id3v23'].get(bool))
 
 # Automatically embed art into imported albums.
 @EmbedCoverArtPlugin.listen('album_imported')
