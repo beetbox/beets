@@ -40,6 +40,8 @@ Little fixes:
 * Fix an issue that caused the :ref:`id3v23` option to work only occasionally.
 * Also fix using :ref:`id3v23` in conjunction with the ``scrub`` and
   ``embedart`` plugins. Thanks to Chris Cogburn.
+* :doc:`/plugins/ihate`: Fix an error when importing singletons. Thanks to
+  Mathijs de Bruin.
 
 
 New stuff:
@@ -47,7 +49,7 @@ New stuff:
 * :doc:`/plugins/echonest`: A drop in replacement for
   :doc:`/plugins/echonest_tempo` that also fetches `Acoustic Attributes`_ from
   `The Echo Nest`_.
-* :doc:`/plugins/mpdstat`: New plugin to collect statistics about your
+* :doc:`/plugins/mpdstats`: New plugin to collect statistics about your
   listening habit from `MPD`_.
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
