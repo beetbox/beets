@@ -189,7 +189,7 @@ class DuplicatesPlugin(BeetsPlugin):
             delete = self.config['delete'].get()
             delete_file = self.config['delete_file'].get()
             tag = self.config['tag'].get()
-            print keys
+
             if album:
                 keys = ['mb_albumid']
                 items = lib.albums(decargs(args))
