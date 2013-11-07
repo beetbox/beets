@@ -81,7 +81,7 @@ def _group_by(objs, keys):
     import collections
     counts = collections.defaultdict(list)
     for obj in objs:
-        key = '\001'.join(getattr(obj, k, '') for k in keys)
+        key = '\001'.join(repr(getattr(obj, k, '')) for k in keys)
         counts[key].append(obj)
     return counts
 
@@ -189,7 +189,7 @@ class DuplicatesPlugin(BeetsPlugin):
             delete = self.config['delete'].get()
             delete_file = self.config['delete_file'].get()
             tag = self.config['tag'].get()
-
+            print keys
             if album:
                 keys = ['mb_albumid']
                 items = lib.albums(decargs(args))
