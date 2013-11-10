@@ -416,20 +416,20 @@ class LyricsPlugin(BeetsPlugin):
             for item in task.imported_items():
                 self.fetch_item_lyrics(session.lib, logging.DEBUG, item, False, False)
 
-    def fetch_item_lyrics(self, lib, loglevel, item, write, force_refetch):
+    def fetch_item_lyrics(self, lib, loglevel, item, write, forceRefetch):
         """Fetch and store lyrics for a single item. If ``write``, then the
         lyrics will also be written to the file itself. The ``loglevel``
         parameter controls the visibility of the function's status log
         messages.
         """
         fallback = self.config['fallback'].get()
-
+        forceRefetch = False
         # Skip if the item already has lyrics.
-		if item.lyrics and not forceRefetch :
-			log.log(loglevel, u'lyrics already present: %s - %s' %
-							  (item.artist, item.title))
-			return
-
+        if not forceRefetch:
+            if item.lyrics:
+                log.log(loglevel, u'lyrics already present: %s - %s' %
+                        (item.artist, item.title))
+                return
 
         # Fetch lyrics.
         lyrics = self.get_lyrics(item.artist, item.title)
