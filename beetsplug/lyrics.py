@@ -396,12 +396,15 @@ class LyricsPlugin(BeetsPlugin):
         cmd.parser.add_option('-p', '--print', dest='printlyr',
                               action='store_true', default=False,
                               help='print lyrics to console')
+        cmd.parser.add_option('-f', '--force', dest='force_refetch',
+                              action='store_true', default=False,
+                              help='forces the plugin to redownload lyrics')
         def func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
             write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
-                self.fetch_item_lyrics(lib, logging.INFO, item, write)
+                self.fetch_item_lyrics(lib, logging.INFO, item, write, opts.force_refetch)
                 if opts.printlyr and item.lyrics:
                     ui.print_(item.lyrics)
         cmd.func = func
@@ -413,7 +416,7 @@ class LyricsPlugin(BeetsPlugin):
             for item in task.imported_items():
                 self.fetch_item_lyrics(session.lib, logging.DEBUG, item, False)
 
-    def fetch_item_lyrics(self, lib, loglevel, item, write):
+    def fetch_item_lyrics(self, lib, loglevel, item, write, force_refetch):
         """Fetch and store lyrics for a single item. If ``write``, then the
         lyrics will also be written to the file itself. The ``loglevel``
         parameter controls the visibility of the function's status log
@@ -422,7 +425,7 @@ class LyricsPlugin(BeetsPlugin):
         fallback = self.config['fallback'].get()
 
         # Skip if the item already has lyrics.
-        if item.lyrics:
+        if item.lyrics & force_refetch:
             log.log(loglevel, u'lyrics already present: %s - %s' %
                               (item.artist, item.title))
             return
