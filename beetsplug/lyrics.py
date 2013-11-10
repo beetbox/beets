@@ -423,12 +423,12 @@ class LyricsPlugin(BeetsPlugin):
         messages.
         """
         fallback = self.config['fallback'].get()
-        forceRefetch = False
+        
         # Skip if the item already has lyrics.
         if not forceRefetch:
             if item.lyrics:
                 log.log(loglevel, u'lyrics already present: %s - %s' %
-                        (item.artist, item.title))
+                                  (item.artist, item.title))
                 return
 
         # Fetch lyrics.
