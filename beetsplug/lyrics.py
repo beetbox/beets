@@ -414,7 +414,7 @@ class LyricsPlugin(BeetsPlugin):
     def imported(self, session, task):
         if self.config['auto']:
             for item in task.imported_items():
-                self.fetch_item_lyrics(session.lib, logging.DEBUG, item, False)
+                self.fetch_item_lyrics(session.lib, logging.DEBUG, item, False, False)
 
     def fetch_item_lyrics(self, lib, loglevel, item, write, force_refetch):
         """Fetch and store lyrics for a single item. If ``write``, then the
@@ -425,10 +425,11 @@ class LyricsPlugin(BeetsPlugin):
         fallback = self.config['fallback'].get()
 
         # Skip if the item already has lyrics.
-        if item.lyrics & force_refetch:
-            log.log(loglevel, u'lyrics already present: %s - %s' %
-                              (item.artist, item.title))
-            return
+		if item.lyrics and not forceRefetch :
+			log.log(loglevel, u'lyrics already present: %s - %s' %
+							  (item.artist, item.title))
+			return
+
 
         # Fetch lyrics.
         lyrics = self.get_lyrics(item.artist, item.title)
