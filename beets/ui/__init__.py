@@ -695,6 +695,7 @@ class SubcommandsOptionParser(optparse.OptionParser):
         return options, subcommand, suboptions, subargs
 
 
+optparse.Option.ALWAYS_TYPED_ACTIONS += ('callback',)
 def vararg_callback(option, opt_str, value, parser):
     """Callback for an option with variable arguments.
     Manually collect arguments right of a callback-action
