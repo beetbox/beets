@@ -709,8 +709,7 @@ def vararg_callback(option, opt_str, value, parser):
     Details:
     http://docs.python.org/2/library/optparse.html#callback-example-6-variable-arguments
     """
-    assert value is None
-    value = []
+    value = [value]
 
     def floatable(str):
         try:
