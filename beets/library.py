@@ -171,6 +171,11 @@ SQLITE_KEY_TYPE = 'INTEGER PRIMARY KEY'
 ALBUM_DEFAULT_FIELDS = ('album', 'albumartist', 'genre')
 ITEM_DEFAULT_FIELDS = ALBUM_DEFAULT_FIELDS + ('artist', 'title', 'comments')
 
+# Extract the field type from the ITEM_FIELDS
+FIELD_TYPES = dict((r[0], r[1]) for r in ITEM_FIELDS)
+# Define some basic field to query class mapping.  Will be filled at the
+# bottom of this file.
+FIELD_QUERIES = {}
 
 # Special path format key.
 PF_KEY_DEFAULT = 'default'
@@ -1065,15 +1070,31 @@ class RegexpQuery(FieldQuery):
         return res is not None
 
 
-class BooleanQuery(MatchQuery):
+class BooleanQuery(FieldQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
     string reflecting a boolean.
     """
-    def __init__(self, field, pattern):
+    def __init__(self, field, pattern, fast=True):
         super(BooleanQuery, self).__init__(field, pattern)
         if isinstance(pattern, basestring):
             self.pattern = util.str2bool(pattern)
         self.pattern = int(self.pattern)
+
+    def match(self, item):
+        try:
+            value = item[self.field]
+        except KeyError:
+            if isinstance(item, Album):
+                values = plugins.album_template_values(item)
+            else:
+                values = plugins.template_values(item)
+            if self.field in values:
+                value = values[self.field]
+            else:
+                return False
+        if isinstance(value, basestring):
+            value = util.str2bool(value)
+        return self.pattern == int(value)
 
 
 class NumericQuery(FieldQuery):
@@ -1081,14 +1102,6 @@ class NumericQuery(FieldQuery):
     (``..``) lets users specify one- or two-sided ranges. For example,
     ``year:2001..`` finds music released since the turn of the century.
     """
-    kinds = dict((r[0], r[1]) for r in ITEM_FIELDS)
-
-    @classmethod
-    def applies_to(cls, field):
-        """Determine whether a field has numeric type. NumericQuery
-        should only be used with such fields.
-        """
-        return cls.kinds.get(field) in (int, float)
 
     def _convert(self, s):
         """Convert a string to the appropriate numeric type. If the
@@ -1101,7 +1114,7 @@ class NumericQuery(FieldQuery):
 
     def __init__(self, field, pattern, fast=True):
         super(NumericQuery, self).__init__(field, pattern, fast)
-        self.numtype = self.kinds[field]
+        self.numtype = get_field_type(field)
 
         parts = pattern.split('..', 1)
         if len(parts) == 1:
@@ -1116,7 +1129,17 @@ class NumericQuery(FieldQuery):
             self.rangemax = self._convert(parts[1])
 
     def match(self, item):
-        value = getattr(item, self.field)
+        try:
+            value = item[self.field]
+        except KeyError:
+            if isinstance(item, Album):
+                values = plugins.album_template_values(item)
+            else:
+                values = plugins.template_values(item)
+            if self.field in values:
+                value = values[self.field]
+            else:
+                return False
         if isinstance(value, basestring):
             value = self._convert(value)
 
@@ -1316,6 +1339,27 @@ PARSE_QUERY_PART_REGEX = re.compile(
     re.I  # Case-insensitive.
 )
 
+def get_field_type(field):
+    """Returns the type (float, int, bool, unicode ...) of the field if known.
+    Falls back to unicode.
+    """
+    field_types = {}
+    field_types.update(FIELD_TYPES)
+    field_types.update(plugins.field_types())
+    if field in field_types:
+        return field_types[field]
+    return unicode
+
+def get_field_query(field):
+    """Returns the query class defined for the field.  If field is None or not
+    defined, it returns the default SubstringQuery.
+    """
+    if field is not None:
+        field_type = get_field_type(field)
+        if field_type in FIELD_QUERIES:
+            return FIELD_QUERIES[field_type]
+    return SubstringQuery
+
 def parse_query_part(part):
     """Takes a query in the form of a key/value pair separated by a
     colon. The value part is matched against a list of prefixes that
@@ -1341,6 +1385,7 @@ def parse_query_part(part):
     prefixes = {':': RegexpQuery}
     prefixes.update(plugins.queries())
 
+
     if match:
         key = match.group(1)
         term = match.group(2).replace('\:', ':')
@@ -1348,9 +1393,7 @@ def parse_query_part(part):
         for pre, query_class in prefixes.items():
             if term.startswith(pre):
                 return key, term[len(pre):], query_class
-        if key and NumericQuery.applies_to(key):
-            return key, term, NumericQuery
-        return key, term, SubstringQuery  # The default query type.
+        return key, term, get_field_query(key)
 
 
 def construct_query_part(query_part, default_fields, all_keys):
@@ -2009,6 +2052,13 @@ class DefaultTemplateFunctions(object):
         res = u' [{0}]'.format(disam_value)
         self.lib._memotable[memokey] = res
         return res
+
+# Define some basic field to query class mapping
+FIELD_QUERIES.update( {
+        float:  NumericQuery,
+        int:    NumericQuery,
+        bool:   BooleanQuery,
+    } )
 
 
 # Get the name of tmpl_* functions in the above class.

@@ -50,13 +50,15 @@ class BeetsPlugin(object):
             self.template_fields = {}
         if not self.album_template_fields:
             self.album_template_fields = {}
+        if not self.field_types:
+            self.field_types = {}
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
         commands that should be added to beets' CLI.
         """
         return ()
-    
+
     def queries(self):
         """Should return a dict mapping prefixes to PluginQuery
         subclasses.
@@ -149,6 +151,7 @@ class BeetsPlugin(object):
     template_funcs = None
     template_fields = None
     album_template_fields = None
+    field_types = None
 
     @classmethod
     def template_func(cls, name):
@@ -239,6 +242,29 @@ def queries():
     for plugin in find_plugins():
         out.update(plugin.queries())
     return out
+
+def field_types():
+    """Returns a dict mapping flexattrs to primitive types (e.g. int, float)
+    for all loaded plugins.
+    """
+    out = {}
+    for plugin in find_plugins():
+        for name, ftype in plugin.field_types.iteritems():
+            if name in out:
+                if ftype != out[name][0]:
+                    log.error(u'Conflicting field type mapping detected. '
+                            '"{0}" declared by "{1}" as "{2}" '
+                            'and by "{3}" as "{4}"'
+                            .format(name, out[name][1], out[name][0],
+                            plugin.name, ftype))
+                # else:
+                #     log.info(u'Duplicate field type mapping detected. '
+                #              '"{0}" declared by "{1}" and "{2}" as "{3}"'
+                #              .format(name, out[name][1],
+                #               plugin.name, ftype))
+            # keep the plugin.name to play the blame game
+            out[name] = [ftype, plugin.name]
+    return { k:v[0] for k, v in out.iteritems() }
 
 def track_distance(item, info):
     """Gets the track distance calculated by all loaded plugins.
