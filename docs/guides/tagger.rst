@@ -69,9 +69,9 @@ all of these limitations.
 
 * Currently, MP3, AAC, FLAC, ALAC, Ogg Vorbis, Monkey's Audio, WavPack,
   Musepack, Windows Media, and Opus files are supported. (Do you use some
-  other format? `Let me know!`_)
+  other format? Please `file a feature request`_!)
 
-.. _Let me know!: mailto:adrian@radbox.org
+.. _file a feature request: https://github.com/sampsyo/beets/issues/new
 
 Now that that's out of the way, let's tag some music.
 
