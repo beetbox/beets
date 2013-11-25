@@ -1231,50 +1231,53 @@ def move_func(lib, opts, args):
 move_cmd.func = move_func
 default_commands.append(move_cmd)
 
-# write: write tags into every item matching a query.
+
+# write: Write tags into files.
 
 def write_items(lib, query, pretend):
-    """Write tag information from the database to the respective
-    files in the filesystem."""
+    """Write tag information from the database to the respective files
+    in the filesystem.
+    """
     items, albums = _do_query(lib, query, False, False)
 
     for item in items:
         # Item deleted?
         if not os.path.exists(syspath(item.path)):
+            log.info(u'missing file: {0}'.format(
+                util.displayable_path(item.path)
+            ))
             continue
 
-        # Read new data.
-        new_data = dict(item)
+        # Get an Item object reflecting the "clean" (on-disk) state.
         try:
-            item.read()
+            clean_item = library.Item.from_path(item.path)
         except Exception as exc:
             log.error(u'error reading {0}: {1}'.format(
-                displayable_path(item.path), exc))
+                displayable_path(item.path), exc
+            ))
             continue
 
-        # Get and save metadata changes.
-        changes = {}
+        # Get the keys that have changed between the version.
+        changed = set()
         for key in library.ITEM_KEYS_META:
-            if key in item._dirty:
-                changes[key] = getattr(item, key), new_data[key]
-                setattr(item, key, new_data[key]);
+            if item[key] != clean_item[key]:
+                changed.add(key)
 
-        if changes:
-            # Something changed.
+        # Did anything change?
+        if changed:
             ui.print_obj(item, lib)
-            for key, (oldval, newval) in changes.iteritems():
-                _showdiff(key, oldval, newval)
+            for key in changed:
+                _showdiff(key, clean_item[key], item[key])
 
-            # If we're just pretending, then don't move or save.
-            if pretend:
-                continue
-
-            try:
-                item.write()
-            except Exception as exc:
-                log.error(u'could not write {0}: {1}'.format(
-                    util.displayable_path(item.path), exc))
-                continue
+            # Actually write the tags.
+            if not pretend:
+                try:
+                    item.write()
+                except Exception as exc:
+                    log.error(u'could not write {0}: {1}'.format(
+                        util.displayable_path(item.path), exc
+                    ))
+                    continue
 
 write_cmd = ui.Subcommand('write', help='write tag information to files')
 write_cmd.parser.add_option('-p', '--pretend', action='store_true',
