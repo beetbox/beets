@@ -33,6 +33,9 @@ New features:
 * The new :doc:`/plugins/mpdstats` collects statistics about your
   listening habits from `MPD`_. Thanks to Peter Schnebel.
 
+* :doc:`/plugins/lyrics`: A new ``--force`` option optionally re-downloads
+  lyrics even when files already have them. Thanks to Bitdemon on GitHub.
+
 * For plugin developers: Added an ``optparse`` callback utility function for
   performing actions based on arguments. Thanks to Pedro Silva.
 

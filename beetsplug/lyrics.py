@@ -398,13 +398,14 @@ class LyricsPlugin(BeetsPlugin):
                               help='print lyrics to console')
         cmd.parser.add_option('-f', '--force', dest='force_refetch',
                               action='store_true', default=False,
-                              help='forces the plugin to redownload lyrics')
+                              help='always re-download lyrics')
         def func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
             write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
-                self.fetch_item_lyrics(lib, logging.INFO, item, write, opts.force_refetch)
+                self.fetch_item_lyrics(lib, logging.INFO, item, write,
+                                       opts.force_refetch)
                 if opts.printlyr and item.lyrics:
                     ui.print_(item.lyrics)
         cmd.func = func
@@ -425,11 +426,10 @@ class LyricsPlugin(BeetsPlugin):
         fallback = self.config['fallback'].get()
 
         # Skip if the item already has lyrics.
-        if not force:
-            if item.lyrics:
-                log.log(loglevel, u'lyrics already present: %s - %s' %
-                                  (item.artist, item.title))
-                return
+        if not force and item.lyrics:
+            log.log(loglevel, u'lyrics already present: %s - %s' %
+                              (item.artist, item.title))
+            return
 
         # Fetch lyrics.
         lyrics = self.get_lyrics(item.artist, item.title)

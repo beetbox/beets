@@ -36,8 +36,8 @@ embedded into files' metadata.
 The ``-p`` option to the ``lyrics`` command makes it print lyrics out to the
 console so you can view the fetched (or previously-stored) lyrics.
 
-The ``-f`` option to the ``lyrics`` command forces it to fetch previously
-downloaded lyrics.
+The ``-f`` option forces the command to fetch lyrics, even for tracks that
+already have lyrics.
 
 
 Configuring
