@@ -104,3 +104,28 @@ The plugin has many more dials you can fiddle with to get your conversions how
 you like them. Check out :doc:`its documentation </plugins/convert>`.
 
 .. _ffmpeg: http://www.ffmpeg.org
+
+
+Store any data you like
+-----------------------
+
+The beets database keeps track of a long list of :ref:`built-in fields
+<itemfields>`, but you're not limited to just that list. Say, for example,
+that you like to like to categorize your music by the setting where it should
+be played. You can invent a new ``context`` attribute store this. Set the
+field using the :ref:`modify-cmd` command::
+
+    beet modify context=party artist:'beastie boys'
+
+And then :doc:`query </reference/query>` your music just as you would with any
+other field::
+
+    beet ls context:mope
+
+You can even use these fields in your filenames (see
+:ref:`path-format-config`).
+
+Read more than you ever wanted to know about the *flexible attributes*
+feature `on the beets blog`_.
+
+.. _on the beets blog: http://beets.radbox.org/blog/flexattr.html
