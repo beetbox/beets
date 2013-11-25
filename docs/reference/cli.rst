@@ -243,6 +243,28 @@ overridden by data from other tracks on the same album. This means that
 running the ``update`` command multiple times may show the same changes being
 applied.
 
+
+.. _write-cmd:
+
+write
+`````
+::
+
+    beet write [-ap] [QUERY]
+
+Write metadata from the database into files' tags.
+
+When you make changes to the metadata stored in beets' library database
+(during import or with the :ref:`modify-cmd` command, for example), you often
+have the option of storing changes only in the database, leaving your files
+untouched. The ``write`` command lets you later change your mind and write the
+contents of the database into the files.
+
+The ``-p`` option previews metadata changes without actually applying them.
+
+You can think of this command as the opposite of :ref:`update-cmd`.
+
+
 .. _stats-cmd:
 
 stats

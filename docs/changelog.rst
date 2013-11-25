@@ -20,6 +20,10 @@ New features:
     ``copy``, ``move``, ``delete``, ``delete_file``, and ``tag`` options
     perform those actions.
 
+* The new built-in :ref:`write-cmd` command lets you update the metadata tags
+  for files, bringing them back into sync with your database. Thanks to Heinz
+  Wiesinger.
+
 * :doc:`/plugins/lastgenre`: The new ``multiple`` option has been replaced
   with the ``count`` option, which lets you limit the number of genres added
   to your music. (No more thousand-character genre fields!) Also, the
