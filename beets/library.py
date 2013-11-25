@@ -528,7 +528,7 @@ class Item(LibModel):
                                        traceback.format_exc())
 
         for key in ITEM_KEYS_WRITABLE:
-            setattr(f, key, getattr(self, key))
+            setattr(f, key, self[key])
 
         try:
             f.save(id3v23=beets.config['id3v23'].get(bool))
