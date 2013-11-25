@@ -50,6 +50,9 @@ Little fixes:
   reliably (i.e., fewer "no tempo found" messages). Thanks to Peter Schnebel.
 * :doc:`/plugins/convert`: Fix an "Item has no library" error when using the
   ``auto`` config option.
+* :doc:`/plugins/convert`: Fix an issue where files of the wrong format would
+  have their transcoding skipped (and files with the right format would be
+  needlessly transcoded). Thanks to Jakob Schnitzer.
 * Fix an issue that caused the :ref:`id3v23` option to work only occasionally.
 * Also fix using :ref:`id3v23` in conjunction with the ``scrub`` and
   ``embedart`` plugins. Thanks to Chris Cogburn.
