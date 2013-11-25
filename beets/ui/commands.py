@@ -1230,3 +1230,56 @@ def move_func(lib, opts, args):
     move_items(lib, dest, decargs(args), opts.copy, opts.album)
 move_cmd.func = move_func
 default_commands.append(move_cmd)
+
+# write: write tags into every item matching a query.
+
+def write_items(lib, query, pretend):
+    """Write tag information from the database to the respective
+    files in the filesystem."""
+    items, albums = _do_query(lib, query, False, False)
+
+    for item in items:
+        # Item deleted?
+        if not os.path.exists(syspath(item.path)):
+            continue
+
+        # Read new data.
+        new_data = dict(item)
+        try:
+            item.read()
+        except Exception as exc:
+            log.error(u'error reading {0}: {1}'.format(
+                displayable_path(item.path), exc))
+            continue
+
+        # Get and save metadata changes.
+        changes = {}
+        for key in library.ITEM_KEYS_META:
+            if key in item._dirty:
+                changes[key] = getattr(item, key), new_data[key]
+                setattr(item, key, new_data[key]);
+
+        if changes:
+            # Something changed.
+            ui.print_obj(item, lib)
+            for key, (oldval, newval) in changes.iteritems():
+                _showdiff(key, oldval, newval)
+
+            # If we're just pretending, then don't move or save.
+            if pretend:
+                continue
+
+            try:
+                item.write()
+            except Exception as exc:
+                log.error(u'could not write {0}: {1}'.format(
+                    util.displayable_path(item.path), exc))
+                continue
+
+write_cmd = ui.Subcommand('write', help='write tag information to files')
+write_cmd.parser.add_option('-p', '--pretend', action='store_true',
+    help="show all changes but do nothing")
+def write_func(lib, opts, args):
+    write_items(lib, decargs(args), opts.pretend)
+write_cmd.func = write_func
+default_commands.append(write_cmd)
