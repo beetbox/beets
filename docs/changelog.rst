@@ -6,22 +6,31 @@ Changelog
 
 New features:
 
-* :ref:`add_subcommands`: Added ``optparse`` callback utility function, allowing
-  plugin developers to add options with ``action=callback`` and
-  ``callback=beets.ui.varargs_callback`` and a variable number of arguments.
+* The new :doc:`/plugins/echonest` plugin supersedes the older tempo-specific
+  plugin and fetches a wide range of `acoustic attributes`_ from `The Echo
+  Nest`_, including the tempo. Thanks to Pedro Silva and Peter Schnebel.
 
-* :doc:`/plugins/duplicates`: The new ``keys`` option allows you to specify
-  arbitrary fields over which to consider potential duplicates. The new
-  ``checksum`` option allows the use of any arbitrary program to checksum
-  items as an alternative duplicate identification strategy. The new ``copy``,
-  ``move``, ``delete``, ``delete_file``, and ``tag`` options perform those
-  actions on matched duplicates.
+* The :doc:`/plugins/duplicates` got a number of new features, thanks once
+  again to Pedro Silva:
+
+  * The ``keys`` option lets you specify the fields used detect duplicates.
+  * You can now use checksumming (via an external command) to find
+    duplicates instead of metadata via the ``checksum`` option.
+  * The plugin can perform actions on the duplicates it find. The new
+    ``copy``, ``move``, ``delete``, ``delete_file``, and ``tag`` options
+    perform those actions.
 
 * :doc:`/plugins/lastgenre`: The new ``multiple`` option has been replaced
   with the ``count`` option, which lets you limit the number of genres added
   to your music. (No more thousand-character genre fields!) Also, the
   ``min_weight`` field filters out nonsense tags to make your genres more
   relevant. Thanks to Peter Schnebel and rashley60.
+
+* The new :doc:`/plugins/mpdstats` collects statistics about your
+  listening habits from `MPD`_. Thanks to Peter Schnebel.
+
+* For plugin developers: Added an ``optparse`` callback utility function for
+  performing actions based on arguments. Thanks to Pedro Silva.
 
 Little fixes:
 
@@ -43,14 +52,6 @@ Little fixes:
 * :doc:`/plugins/ihate`: Fix an error when importing singletons. Thanks to
   Mathijs de Bruin.
 
-
-New stuff:
-
-* :doc:`/plugins/echonest`: A drop in replacement for
-  :doc:`/plugins/echonest_tempo` that also fetches `Acoustic Attributes`_ from
-  `The Echo Nest`_.
-* :doc:`/plugins/mpdstats`: New plugin to collect statistics about your
-  listening habit from `MPD`_.
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
 .. _MPD: http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
