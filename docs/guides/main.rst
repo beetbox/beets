@@ -19,8 +19,10 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
 
 * On **Debian or Ubuntu**, depending on the version, beets is available as an
   official package (`Debian details`_, `Ubuntu details`_), so try typing:
-  ``apt-get install beets``. To build from source, you can get everything you
-  need by running: ``apt-get install python-dev python-setuptools python-pip``
+  ``apt-get install beets``. But the version in the repositories might lag
+  behind, so make sure you read the right version of these docs. If you want
+  the latest version, you can get everything you need by running:
+  ``apt-get install python-dev python-setuptools python-pip``
 
 * On **Arch Linux**, `beets is in [community]`_, so just run ``pacman -S
   beets``. (There's also a bleeding-edge `dev package`_ in the AUR, which will
