@@ -15,32 +15,26 @@
 # requires python-mpd to run. install with:  pip install python-mpd
 
 import logging
-# for connecting to mpd
-from mpd import MPDClient, CommandError, PendingCommandError, ConnectionError
-# for catching socket errors
-from socket import error as SocketError
-# for sockets
-from select import select, error
-# for time stuff (sleep and unix timestamp)
+import mpd
+import socket
+import select
 import time
-import os.path
+import os
 
 from beets import ui
-from beets.util import normpath, plurality
 from beets import config
-from beets import library
 from beets import plugins
 
 log = logging.getLogger('beets')
 
-# if we lose the connection, how many times do we want to RETRY and how much
-# time should we wait between retries
+# If we lose the connection, how many times do we want to retry and how
+# much time should we wait between retries?
 RETRIES = 10
 RETRY_INTERVAL = 5
 
-# hookup to the MPDClient internals to get unicode
+# Use the MPDClient internals to get unicode.
 # see http://www.tarmack.eu/code/mpdunicode.py for the general idea
-class MPDClient(MPDClient):
+class MPDClient(mpd.MPDClient):
     def _write_command(self, command, args=[]):
         args = [unicode(arg).encode('utf-8') for arg in args]
         super(MPDClient, self)._write_command(command, args)
@@ -86,13 +80,13 @@ class Client(object):
                     self.mpd_config['port']))
             self.client.connect(host=self.mpd_config['host'],
                 port=self.mpd_config['port'])
-        except SocketError, e:
+        except socket.error as e:
             log.error(e)
             return
         if not self.mpd_config['password'] == u'':
             try:
                 self.client.password(self.mpd_config['password'])
-            except CommandError, e:
+            except mpd.CommandError as e:
                 log.error(e)
                 return
 
@@ -106,9 +100,7 @@ class Client(object):
         """Try to determine if the path is an URL.
         """
         # FIXME:  cover more URL types ...
-        if path[:7] == "http://":
-            return True
-        return False
+        return path[:7] == "http://"
 
     def mpd_playlist(self):
         """Return the currently active playlist.  Prefixes paths with the
@@ -196,8 +188,8 @@ class Client(object):
                     # special case, wait for an event
                     self.client.send_idle()
                     try:
-                        select([self.client], [], [])
-                    except error:
+                        select.select([self.client], [], [])
+                    except select.error:
                         # happens during shutdown and during MPDs library refresh
                         time.sleep(RETRY_INTERVAL)
                         self.mpd_connect()
@@ -210,7 +202,7 @@ class Client(object):
                     return self.client.playlistinfo()
                 elif func == 'status':
                     return self.client.status()
-            except (error, ConnectionError) as err:
+            except (select.error, mpd.ConnectionError) as err:
                 # happens during shutdown and during MPDs library refresh
                 log.error(u'mpdstats: {0}'.format(err))
                 time.sleep(RETRY_INTERVAL)
