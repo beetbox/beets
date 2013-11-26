@@ -50,22 +50,6 @@ class MPDClient(mpd.MPDClient):
 class Client(object):
     def __init__(self, library):
         self.lib = library
-        # defaults
-        self.mpd_config = {
-                'host':     u'localhost',
-                'port':     6600,
-                'password': u'',
-        }
-        # from global 'mpd' section
-        if 'mpd' in config.keys():
-            for opt in ('host', 'port', 'password'):
-                if opt in config['mpd'].keys():
-                    self.mpd_config[opt] = config['mpd'][opt].get()
-
-        # plugin specific / optargs
-        for opt in ('host', 'port', 'password'):
-            if config['mpdstats'][opt].get() is not None:
-                self.mpd_config[opt] = config['mpdstats'][opt].get()
 
         self.music_directory = config['mpdstats']['music_directory'].get()
         self.do_rating = config['mpdstats']['rating'].get(bool)
@@ -76,21 +60,22 @@ class Client(object):
     def mpd_connect(self):
         """Connect to the MPD.
         """
+        host = config['mpd']['host'].get(unicode)
+        port = config['mpd']['port'].get(int)
+        log.info(u'mpdstats: connecting to {0}:{1}'.format(host, port))
         try:
-            log.info(u'mpdstats: connecting: MPD@{0}:{1}'
-                    .format(self.mpd_config['host'],
-                    self.mpd_config['port']))
-            self.client.connect(host=self.mpd_config['host'],
-                port=self.mpd_config['port'])
+            self.client.connect(host, port)
         except socket.error as e:
-            log.error(e)
-            return
-        if not self.mpd_config['password'] == u'':
+            raise ui.UserError('could not connect to MPD: {0}'.format(e))
+
+        password = config['mpd']['password'].get(unicode)
+        if password:
             try:
-                self.client.password(self.mpd_config['password'])
+                self.client.password(password)
             except mpd.CommandError as e:
-                log.error(e)
-                return
+                raise ui.UserError(
+                    'could not authenticate to MPD: {0}'.format(e)
+                )
 
     def mpd_disconnect(self):
         """Disconnect from the MPD.
@@ -299,12 +284,14 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(MPDStatsPlugin, self).__init__()
         self.config.add({
-            'host':            None,
-            'port':            None,
-            'password':        None,
             'music_directory': config['directory'].as_filename(),
             'rating':          True,
             'rating_mix':      0.75,
+        })
+        config['mpd'].add({
+            'host':            u'localhost',
+            'port':            6600,
+            'password':        u'',
         })
 
     def commands(self):
@@ -322,6 +309,15 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
 
         def func(lib, opts, args):
             self.config.set_args(opts)
+
+            # Overrides for MPD settings.
+            if opts.host:
+                config['mpd']['host'] = opts.host.decode('utf8')
+            if opts.port:
+                config['mpd']['host'] = int(opts.port)
+            if opts.password:
+                config['mpd']['password'] = opts.password.decode('utf8')
+
             Client(lib).run()
 
         cmd.func = func

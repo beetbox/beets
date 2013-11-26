@@ -97,11 +97,17 @@ def update_mpd(host='localhost', port=6600, password=None):
 class MPDUpdatePlugin(BeetsPlugin):
     def __init__(self):
         super(MPDUpdatePlugin, self).__init__()
-        self.config.add({
-            'host': None,
-            'port': None,
-            'password': None,
+        config['mpd'].add({
+            'host':     u'localhost',
+            'port':     6600,
+            'password': u'',
         })
+
+        # For backwards compatibility, use any values from the
+        # plugin-specific "mpdupdate" section.
+        for key in config['mpd'].keys():
+            if self.config[key].exists():
+                config['mpd'][key] = self.config[key].get()
 
 
 @MPDUpdatePlugin.listen('database_change')
@@ -112,23 +118,9 @@ def handle_change(lib=None):
 
 @MPDUpdatePlugin.listen('cli_exit')
 def update(lib=None):
-    if database_changed:
-        mpd_config = {
-                'host'          :       u'localhost',
-                'port'          :       6600,
-                'password'      :       u''
-        }
-        # try to get global mpd config
-        if 'mpd' in config.keys():
-            for opt in ('host', 'port', 'password'):
-                if opt in config['mpd'].keys():
-                    mpd_config[opt] = config['mpd'][opt].get()
-        # overwrite with plugin specific
-        for opt in ('host', 'port', 'password'):
-            if config['mpdupdate'][opt].get() is not None:
-                mpd_config[opt] = config['mpdupdate'][opt].get()
+    if database_changed or True:
         update_mpd(
-            mpd_config['host'],
-            mpd_config['port'],
-            mpd_config['password']
+            config['mpd']['host'].get(unicode),
+            config['mpd']['port'].get(int),
+            config['mpd']['password'].get(unicode),
         )

@@ -155,7 +155,7 @@ class ConfigView(object):
         raise NotImplementedError
 
     def first(self):
-        """Returns a (value, source) pair for the first object found for
+        """Return a (value, source) pair for the first object found for
         this view. This amounts to the first element returned by
         `resolve`. If no values are available, a NotFoundError is
         raised.
@@ -165,6 +165,15 @@ class ConfigView(object):
             return iter_first(pairs)
         except ValueError:
             raise NotFoundError("{0} not found".format(self.name))
+
+    def exists(self):
+        """Determine whether the view has a setting in any source.
+        """
+        try:
+            self.first()
+        except NotFoundError:
+            return False
+        return True
 
     def add(self, value):
         """Set the *default* value for this configuration view. The
