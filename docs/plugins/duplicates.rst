@@ -33,7 +33,6 @@ config file::
         album: no
         count: no
         delete: no
-        delete_file: no
         format: "$albumartist - $album - $title"
         full: no
         move: no
@@ -49,8 +48,7 @@ or on the command-line::
   -c, --count           count duplicate tracks or albums
   -C PROG, --checksum=PROG
                         report duplicates based on arbitrary command
-  -d, --delete          delete items from library
-  -D, --delete-file     delete items from library and disk
+  -d, --delete          delete items from library and disk
   -F, --full            show all versions of duplicate tracks or albums
   -k, --keys            report duplicates based on keys
   -m DEST, --move=DEST  move items to dest
@@ -127,13 +125,8 @@ it will move matched items.
 delete
 ~~~~~~
 
-The ``delete`` option (default: ``no``) removes matched items from the library.
-
-delete_files
-~~~~~~~~~~~~
-
-The ``delete_files`` option (default: ``no``) removes matched items from the library
-*and* the disk.
+The ``delete`` option (default: ``no``) removes matched items from the library
+and from the disk.
 
 tag
 ~~~
@@ -183,9 +176,9 @@ Move likely duplicates to ``trash`` directory::
 
   beet dup --move ${HOME}/.Trash
 
-Delete items from library, and optionally the disk (carefull), if they're Nickelback::
+Delete items (careful!), if they're Nickelback::
 
-  beet duplicates --delete{-file} --keys albumartist albumartist:nickelback
+  beet duplicates --delete --keys albumartist albumartist:nickelback
 
 Tag duplicate items with some flag::
   
