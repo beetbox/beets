@@ -25,8 +25,8 @@ PLUGIN = 'duplicates'
 log = logging.getLogger('beets')
 
 
-def _process_item(item, lib,
-                  copy=False, move=False, delete=False, tag=False, format=None):
+def _process_item(item, lib, copy=False, move=False, delete=False,
+                  tag=False, format=None):
     """Process Item `item` in `lib`.
     """
     if copy:
@@ -37,7 +37,6 @@ def _process_item(item, lib,
         item.store()
     if delete:
         item.remove(delete=True)
-        item.store()
     if tag:
         try:
             k, v = tag.split('=')
@@ -102,18 +101,20 @@ class DuplicatesPlugin(BeetsPlugin):
     def __init__(self):
         super(DuplicatesPlugin, self).__init__()
 
-        self.config.add({'format': ''})
-        self.config.add({'count': False})
-        self.config.add({'album': False})
-        self.config.add({'full': False})
-        self.config.add({'path': False})
-        self.config.add({'keys': ['mb_trackid', 'mb_albumid']})
-        self.config.add({'checksum': None})
-        self.config.add({'copy': False})
-        self.config.add({'move': False})
-        self.config.add({'delete': False})
-        self.config.add({'delete_file': False})
-        self.config.add({'tag': False})
+        self.config.add({
+            'format': '',
+            'count': False,
+            'album': False,
+            'full': False,
+            'path': False,
+            'keys': ['mb_trackid', 'mb_albumid'],
+            'checksum': None,
+            'copy': False,
+            'move': False,
+            'delete': False,
+            'delete_file': False,
+            'tag': False,
+        })
 
         self._command = Subcommand('duplicates',
                                    help=__doc__,
@@ -126,29 +127,31 @@ class DuplicatesPlugin(BeetsPlugin):
 
         self._command.parser.add_option('-a', '--album', dest='album',
                                         action='store_true',
-                                        help='show duplicate albums instead of' +
+                                        help='show duplicate albums instead of'
                                         ' tracks')
 
         self._command.parser.add_option('-c', '--count', dest='count',
                                         action='store_true',
-                                        help='count duplicate tracks or albums')
+                                        help='show duplicate counts')
 
         self._command.parser.add_option('-C', '--checksum', dest='checksum',
                                         action='store', metavar='PROG',
-                                        help='report duplicates based on' +
+                                        help='report duplicates based on'
                                         ' arbitrary command')
 
         self._command.parser.add_option('-d', '--delete', dest='delete',
                                         action='store_true',
-                                        help='delete items from library')
+                                        help='remove items from library')
 
-        self._command.parser.add_option('-D', '--delete-file', dest='delete_file',
+        self._command.parser.add_option('-D', '--delete-file',
+                                        dest='delete_file',
                                         action='store_true',
-                                        help='delete items from library and disk')
+                                        help='delete items from library and '
+                                        'disk')
 
         self._command.parser.add_option('-F', '--full', dest='full',
                                         action='store_true',
-                                        help='show all versions of duplicate' +
+                                        help='show all versions of duplicate'
                                         ' tracks or albums')
 
         self._command.parser.add_option('-k', '--keys', dest='keys',
@@ -166,22 +169,20 @@ class DuplicatesPlugin(BeetsPlugin):
 
         self._command.parser.add_option('-p', '--path', dest='path',
                                         action='store_true',
-                                        help='print paths for matched items or' +
+                                        help='print paths for matched items or'
                                         ' albums')
 
         self._command.parser.add_option('-t', '--tag', dest='tag',
                                         action='store',
-                                        help='tag matched items with \'k=v\'' +
+                                        help='tag matched items with \'k=v\''
                                         ' attribute')
 
     def commands(self):
         def _dup(lib, opts, args):
             self.config.set_args(opts)
             fmt = self.config['format'].get()
-            path = self.config['path'].get()
-            count = self.config['count'].get()
-            album = self.config['album'].get()
-            full = self.config['full'].get()
+            album = self.config['album'].get(bool)
+            full = self.config['full'].get(bool)
             keys = self.config['keys'].get()
             checksum = self.config['checksum'].get()
             copy = self.config['copy'].get()
@@ -196,11 +197,11 @@ class DuplicatesPlugin(BeetsPlugin):
             else:
                 items = lib.items(decargs(args))
 
-            if path:
+            if self.config['path']:
                 fmt = '$path'
 
             # Default format string for count mode.
-            if count and not fmt:
+            if self.config['count'] and not fmt:
                 if album:
                     fmt = '$albumartist - $album'
                 else:
