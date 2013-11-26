@@ -63,10 +63,12 @@ Little fixes:
   Mathijs de Bruin.
 * The :ref:`clutter` option can now be a whitespace-separated list in addition
   to a YAML list.
-
+* Values for the :ref:`replace` option can now be empty (i.e., null is
+  equivalent to the empty string).
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
 .. _MPD: http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
+
 
 1.3.1 (October 12, 2013)
 ------------------------

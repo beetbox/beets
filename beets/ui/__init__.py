@@ -463,13 +463,15 @@ def get_replacements():
     """
     replacements = []
     for pattern, repl in config['replace'].get(dict).items():
+        repl = repl or ''
         try:
             replacements.append((re.compile(pattern), repl))
         except re.error:
             raise UserError(
                 u'malformed regular expression in replace: {0}'.format(
                     pattern
-            ))
+                )
+            )
     return replacements
 
 def get_plugin_paths():
