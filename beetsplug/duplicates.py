@@ -112,7 +112,6 @@ class DuplicatesPlugin(BeetsPlugin):
             'copy': False,
             'move': False,
             'delete': False,
-            'delete_file': False,
             'tag': False,
         })
 
@@ -140,11 +139,6 @@ class DuplicatesPlugin(BeetsPlugin):
                                         ' arbitrary command')
 
         self._command.parser.add_option('-d', '--delete', dest='delete',
-                                        action='store_true',
-                                        help='remove items from library')
-
-        self._command.parser.add_option('-D', '--delete-file',
-                                        dest='delete_file',
                                         action='store_true',
                                         help='delete items from library and '
                                         'disk')
@@ -187,8 +181,7 @@ class DuplicatesPlugin(BeetsPlugin):
             checksum = self.config['checksum'].get()
             copy = self.config['copy'].get()
             move = self.config['move'].get()
-            delete = self.config['delete'].get()
-            delete_file = self.config['delete_file'].get()
+            delete = self.config['delete'].get(bool)
             tag = self.config['tag'].get()
 
             if album:
@@ -221,7 +214,7 @@ class DuplicatesPlugin(BeetsPlugin):
                         _process_item(o, lib,
                                       copy=copy,
                                       move=move,
-                                      delete=delete if delete else delete_file,
+                                      delete=delete,
                                       tag=tag,
                                       format=fmt.format(obj_count))
 
