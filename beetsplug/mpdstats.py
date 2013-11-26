@@ -24,6 +24,8 @@ import os
 from beets import ui
 from beets import config
 from beets import plugins
+from beets import library
+from beets.util import displayable_path
 
 log = logging.getLogger('beets')
 
@@ -48,8 +50,8 @@ class MPDClient(mpd.MPDClient):
 
 
 class Client(object):
-    def __init__(self, library):
-        self.lib = library
+    def __init__(self, lib):
+        self.lib = lib
 
         self.music_directory = config['mpdstats']['music_directory'].get()
         self.do_rating = config['mpdstats']['rating'].get(bool)
@@ -110,11 +112,14 @@ class Client(object):
     def beets_get_item(self, path):
         """Return the beets item related to path.
         """
-        items = self.lib.items([path])
-        if len(items) == 0:
-            log.info(u'mpdstats: item not found {0}'.format(path))
-            return None
-        return items[0]
+        query = library.MatchQuery('path', path)
+        item = self.lib.items(query).get()
+        if item:
+            return item
+        else:
+            log.info(u'mpdstats: item not found: {0}'.format(
+                displayable_path(path)
+            ))
 
     def rating(self, play_count, skip_count, rating, skipped):
         """Calculate a new rating based on play count, skip count, old rating
@@ -131,7 +136,7 @@ class Client(object):
     def beetsrating(self, item, skipped):
         """ Update the rating of the beets item.
         """
-        if self.do_rating and not item is None:
+        if self.do_rating and item:
             attribute = 'rating'
             item[attribute] = self.rating(
                     (int)(item.get('play_count', 0)),
@@ -139,7 +144,10 @@ class Client(object):
                     (float)(item.get(attribute, 0.5)),
                     skipped)
             log.debug(u'mpdstats: updated: {0} = {1} [{2}]'.format(
-                    attribute, item[attribute], item.path))
+                attribute,
+                item[attribute],
+                displayable_path(item.path),
+            ))
             item.write()
             if item._lib:
                 item.store()
@@ -158,7 +166,10 @@ class Client(object):
                 item[attribute] = (float)(item.get(attribute, 0)) + increment
             if changed:
                 log.debug(u'mpdstats: updated: {0} = {1} [{2}]'.format(
-                        attribute, item[attribute], item.path))
+                    attribute,
+                    item[attribute],
+                    displayable_path(item.path),
+                ))
                 item.write()
                 if item._lib:
                     item.store()
@@ -196,9 +207,8 @@ class Client(object):
                 self.mpd_connect()
                 continue
         else:
-            # if we excited without breaking, we couldn't reconnect in time :(
-            raise Exception(u'failed to re-connect to MPD server')
-        return None
+            # if we exited without breaking, we couldn't reconnect in time :(
+            raise ui.UserError(u'failed to re-connect to MPD server')
 
     def run(self):
         self.mpd_connect()
@@ -241,7 +251,7 @@ class Client(object):
                         t = status['time'].split(':')
                         remaining = int(t[1]) - int(t[0])
 
-                        if now_playing is not None and \
+                        if now_playing and \
                            now_playing['path'] != song:
                             # song change
                             # get the difference of when the song was supposed
@@ -251,12 +261,14 @@ class Client(object):
                                     (time.time() -
                                     now_playing['started']))
                             if diff < 10.0:
-                                log.info(u'mpdstats: played: {0}'
-                                        .format(now_playing['path']))
+                                log.info(u'mpdstats: played: {0}'.format(
+                                    displayable_path(now_playing['path'])
+                                ))
                                 skipped = False
                             else:
-                                log.info(u'mpdstats: skipped: {0}'
-                                        .format(now_playing['path']))
+                                log.info(u'mpdstats: skipped: {0}'.format(
+                                    displayable_path(now_playing['path'])
+                                ))
                                 skipped = True
                             if skipped:
                                 self.beets_update(now_playing['beets_item'],
@@ -267,13 +279,14 @@ class Client(object):
                             self.beetsrating(now_playing['beets_item'],
                                     skipped)
                         now_playing = {
-                                'started':    time.time(),
-                                'remaining':  remaining,
-                                'path':       song,
-                                'beets_item': beets_item,
+                            'started':    time.time(),
+                            'remaining':  remaining,
+                            'path':       song,
+                            'beets_item': beets_item,
                         }
-                        log.info(u'mpdstats: playing: {0}'
-                                .format(now_playing['path']))
+                        log.info(u'mpdstats: playing: {0}'.format(
+                            displayable_path(now_playing['path'])
+                        ))
                         self.beets_update(now_playing['beets_item'],
                                 'last_played', value=int(time.time()))
                 else:
