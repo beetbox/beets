@@ -34,21 +34,20 @@ your MPD server. You can do that using an ``mpd:`` section in your
         port: 6600
         password: seekrit
 
-If your MPD library is at another location then the beets library e.g. because
-one is mounted on a NFS share, you can specify the ```music_directory``` in
-the config like this::
+If your MPD library is at another location then the beets library (e.g.,
+because one is mounted on a NFS share), you can specify the
+``music_directory`` in the config like this::
 
     mpdstats:
         music_directory: /PATH/TO/YOUR/FILES
 
-If you don't want the plugin to automatically update the rating, you can
-disable it with::
+If you don't want the plugin to update the rating, you can disable it with::
 
     mpdstats:
         rating: False
 
 If you want to change the way the rating is calculated, you can set the
-```rating_mix``` option like this::
+``rating_mix`` option like this::
 
     mpdstats:
         rating_mix: 1.0
@@ -63,7 +62,8 @@ Now use the ``mpdstats`` command to fire it up::
 
     $ beet mpdstats
 
-A Word On Ratings
+
+A Word on Ratings
 -----------------
 
 Ratings are calculated based on the *play_count*, *skip_count* and the last
@@ -98,10 +98,11 @@ To take the best of both worlds, we mix the ratings together with the
 *rolling* and 1.0 means all *stable*.  We found 0.75 to be a good compromise,
 but fell free to play with that.
 
+
 Warning
 -------
 
 This has only been tested with MPD versions >= 0.16.  It may not work
-on older versions.  If that is the case, please report an `Issue`_.
+on older versions.  If that is the case, please report an `issue`_.
 
-.. _Issue:  https://github.com/sampsyo/beets/issues
+.. _issue: https://github.com/sampsyo/beets/issues
