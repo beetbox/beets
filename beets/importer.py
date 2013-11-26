@@ -519,7 +519,7 @@ class ImportTask(object):
         if self.toppath and not os.path.exists(filename):
             util.prune_dirs(os.path.dirname(filename),
                             self.toppath,
-                            clutter=config['clutter'].get(list))
+                            clutter=config['clutter'].as_str_seq())
 
 
 # Full-album pipeline stages.

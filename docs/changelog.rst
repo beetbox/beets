@@ -61,6 +61,8 @@ Little fixes:
   ``embedart`` plugins. Thanks to Chris Cogburn.
 * :doc:`/plugins/ihate`: Fix an error when importing singletons. Thanks to
   Mathijs de Bruin.
+* The :ref:`clutter` option can now be a whitespace-separated list in addition
+  to a YAML list.
 
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
