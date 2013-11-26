@@ -17,6 +17,11 @@ The plugin requires `pylast`_, which you can install using `pip`_ by typing::
 
 After you have pylast installed, enable the plugin by putting ``lastgenre`` on
 your ``plugins`` line in :doc:`config file </reference/config>`.
+::
+
+    plugins:
+        lastgenre:
+            <myoption>: <myvalue>
 
 The plugin chooses genres based on a *whitelist*, meaning that only certain
 tags can be considered genres. This way, tags like "my favorite music" or "seen
