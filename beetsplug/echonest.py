@@ -317,45 +317,47 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                 log.debug(u'echonest: profile failed: {0}'.format(str(exc)))
         return None
 
-    def apply_metadata(self, item):
+    def apply_metadata(self, item, write=False):
         """Copy the metadata from the EchoNest to the item.
         """
-        if item.path in self._songs:
-            # song can be a dict
-            if isinstance(self._songs[item.path], pyechonest.song.Song):
-                log.debug(u'echonest: metadata: echonest_id = {0}'
-                        .format(self._songs[item.path].id))
-                item.echonest_id = self._songs[item.path].id
-                values = self._songs[item.path].audio_summary
-            else:
-                values = self._songs[item.path]
-            for k, v in values.iteritems():
-                if ATTRIBUTES.has_key(k) and ATTRIBUTES[k] is not None:
-                    log.debug(u'echonest: metadata: {0} = {1}'
-                            .format(ATTRIBUTES[k], v))
-                    item[ATTRIBUTES[k]] = v
-            if config['import']['write'].get(bool):
-                log.info(u'echonest: writing metadata: {0}'
-                         .format(util.displayable_path(item.path)))
-                item.write()
-                if item._lib:
-                    item.store()
+        if item.path not in self._songs:
+            log.warn(u'echonest: no metadata available to apply')
+            return
+
+        # Get either a Song object or a value dictionary.
+        if isinstance(self._songs[item.path], pyechonest.song.Song):
+            log.debug(u'echonest: metadata: echonest_id = {0}'
+                    .format(self._songs[item.path].id))
+            item.echonest_id = self._songs[item.path].id
+            values = self._songs[item.path].audio_summary
         else:
-            log.warn(u'echonest: no metadata available')
+            values = self._songs[item.path]
+
+        # Update each field.
+        for k, v in values.iteritems():
+            if k in ATTRIBUTES:
+                field = ATTRIBUTES[k]
+                log.debug(u'echonest: metadata: {0} = {1}'.format(field, v))
+                item[field] = v
+
+        # Write and save.
+        if write:
+            item.write()
+        item.store()
 
     def requires_update(self, item):
-        """Check if this item requires an update from the EchoNest aka data is
-        missing.
+        """Check if this item requires an update from the EchoNest (its
+        data is missing).
         """
-        for k, v in ATTRIBUTES.iteritems():
-            if v is None:
-                continue
-            if item.get(v, None) is None:
+        for field in ATTRIBUTES.values():
+            if not item.get(field):
                 return True
         log.info(u'echonest: no update required')
         return False
 
     def fetch_song_task(self, task, session):
+        """Import hook: fetch and store metadata.
+        """
         items = task.items if task.is_album else [task.item]
         for item in items:
             song = self.fetch_song(item)
@@ -363,6 +365,8 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                 self._songs[item.path] = song
 
     def apply_metadata_task(self, task, session):
+        """Import hook: apply previously-fetched metadata to the items.
+        """
         for item in task.imported_items():
             self.apply_metadata(item)
 
@@ -375,6 +379,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
 
         def func(lib, opts, args):
             self.config.set_args(opts)
+            write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
                 log.info(u'echonest: {0} - {1} [{2}]'.format(item.artist,
                         item.title, item.length))
@@ -382,7 +387,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                     song = self.fetch_song(item)
                     if not song is None:
                         self._songs[item.path] = song
-                    self.apply_metadata(item)
+                    self.apply_metadata(item, write)
 
         cmd.func = func
         return [cmd]
