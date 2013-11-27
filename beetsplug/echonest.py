@@ -284,35 +284,39 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         except Exception as exc:
             log.debug(u'echonest: profile failed: {0}'.format(str(exc)))
 
+
+    # Shared logic for all methods.
+
     def fetch_song(self, item):
-        """Try all methods, to get a matching song object from the EchoNest.
+        """Try all methods to get a matching song object from the
+        EchoNest. If no method succeeds, return None.
         """
+        # There are four different ways to get a song. Each method is a
+        # callable that takes the Item as an argument.
         methods = [self.profile, self.search]
         if config['echonest']['codegen']:
             methods.append(self.identify)
         if config['echonest']['upload']:
             methods.append(self.analyze)
+
+        # Try each method in turn.
         for method in methods:
-            try:
-                song = method(item)
-                if not song is None:
-                    if isinstance(song, pyechonest.song.Song):
-                        log.debug(u'echonest: got song through {0}: {1} - {2} [{3}]'
-                                  .format(method.im_func.func_name,
-                                  song.artist_name, song.title,
-                                  song.audio_summary['duration']))
-                    else: # it's our dict filled from a track object
-                        log.debug(u'echonest: got song through {0}: {1} - {2} [{3}]'
-                                  .format(method.im_func.func_name,
-                                  item.artist, item.title,
-                                  song['duration']))
-                    return song
-            except Exception as exc:
-                log.debug(u'echonest: profile failed: {0}'.format(str(exc)))
-        return None
+            song = method(item)
+            if song:
+                if isinstance(song, pyechonest.song.Song):
+                    log.debug(u'echonest: got song through {0}: {1} - {2} [{3}]'
+                                .format(method.__name__,
+                                song.artist_name, song.title,
+                                song.audio_summary['duration']))
+                else: # it's our dict filled from a track object
+                    log.debug(u'echonest: got song through {0}: {1} - {2} [{3}]'
+                                .format(method.__name__,
+                                item.artist, item.title,
+                                song['duration']))
+                return song
 
     def apply_metadata(self, item, song, write=False):
-        """Copy the metadata from the EchoNest to the item.
+        """Copy the metadata from the EchoNest song to the item.
         """
         # Get either a Song object or a value dictionary.
         if isinstance(song, pyechonest.song.Song):
