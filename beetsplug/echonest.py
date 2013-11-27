@@ -57,10 +57,6 @@ def _splitstrip(string, delim=u','):
     return [s.strip() for s in string.split(delim)]
 
 class EchonestMetadataPlugin(plugins.BeetsPlugin):
-    _songs = {}
-    _attributes = []
-    _no_mapping = []
-
     def __init__(self):
         super(EchonestMetadataPlugin, self).__init__()
         self.config.add({
@@ -80,9 +76,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                 config['echonest']['codegen'].get(unicode)
 
         if self.config['auto']:
-            self.register_listener('import_task_start', self.fetch_song_task)
-            self.register_listener('import_task_apply',
-                                   self.apply_metadata_task)
+            self.import_stages = [self.imported]
 
     def _echofun(self, func, **kwargs):
         """Wrapper for requests to the EchoNest API.  Will retry up to
@@ -317,21 +311,16 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                 log.debug(u'echonest: profile failed: {0}'.format(str(exc)))
         return None
 
-    def apply_metadata(self, item, write=False):
+    def apply_metadata(self, item, song, write=False):
         """Copy the metadata from the EchoNest to the item.
         """
-        if item.path not in self._songs:
-            log.warn(u'echonest: no metadata available to apply')
-            return
-
         # Get either a Song object or a value dictionary.
-        if isinstance(self._songs[item.path], pyechonest.song.Song):
-            log.debug(u'echonest: metadata: echonest_id = {0}'
-                    .format(self._songs[item.path].id))
-            item.echonest_id = self._songs[item.path].id
-            values = self._songs[item.path].audio_summary
+        if isinstance(song, pyechonest.song.Song):
+            log.debug(u'echonest: metadata: echonest_id = {0}'.format(song.id))
+            item.echonest_id = song.id
+            values = song.audio_summary
         else:
-            values = self._songs[item.path]
+            values = song
 
         # Update each field.
         for k, v in values.iteritems():
@@ -345,6 +334,20 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             item.write()
         item.store()
 
+
+    # Automatic (on-import) metadata fetching.
+
+    def imported(self, session, task):
+        """Import pipeline stage.
+        """
+        for item in task.imported_items():
+            song = self.fetch_song(item)
+            if song:
+                self.apply_metadata(item, song)
+
+
+    # Explicit command invocation.
+
     def requires_update(self, item):
         """Check if this item requires an update from the EchoNest (its
         data is missing).
@@ -354,21 +357,6 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                 return True
         log.info(u'echonest: no update required')
         return False
-
-    def fetch_song_task(self, task, session):
-        """Import hook: fetch and store metadata.
-        """
-        items = task.items if task.is_album else [task.item]
-        for item in items:
-            song = self.fetch_song(item)
-            if not song is None:
-                self._songs[item.path] = song
-
-    def apply_metadata_task(self, task, session):
-        """Import hook: apply previously-fetched metadata to the items.
-        """
-        for item in task.imported_items():
-            self.apply_metadata(item)
 
     def commands(self):
         cmd = ui.Subcommand('echonest',
@@ -385,12 +373,12 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                         item.title, item.length))
                 if self.config['force'] or self.requires_update(item):
                     song = self.fetch_song(item)
-                    if not song is None:
-                        self._songs[item.path] = song
-                    self.apply_metadata(item, write)
+                    if song:
+                        self.apply_metadata(item, song, write)
 
         cmd.func = func
         return [cmd]
+
 
 def diff(item1, item2, attributes):
     result = 0.0
@@ -404,12 +392,14 @@ def diff(item1, item2, attributes):
             result += 1.0
     return result
 
+
 def similar(lib, src_item, threshold=0.15):
     for item in lib.items():
         if item.path != src_item.path:
             d = diff(item, src_item, ATTRIBUTES.values())
             if d < threshold:
                 print(u'{1:2.2f}: {0}'.format(item.path, d))
+
 
 class EchonestSimilarPlugin(plugins.BeetsPlugin):
     def commands(self):
