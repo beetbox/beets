@@ -20,7 +20,7 @@ import socket
 import os
 import tempfile
 from string import Template
-from subprocess import Popen
+import subprocess
 
 from beets import util, config, plugins, ui
 import pyechonest
@@ -214,36 +214,31 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         fd, dest = tempfile.mkstemp(u'.ogg')
         os.close(fd)
         source = item.path
+
+        log.info(u'echonest: encoding {0} to {1}'.format(
+            util.displayable_path(source),
+            util.displayable_path(dest),
+        ))
+
+        # Build up the FFmpeg command line.
         # FIXME: use avconv?
-        command = u'ffmpeg -i $source -y -acodec libvorbis -vn -aq 2 $dest'.split(u' ')
-        log.info(u'echonest: encoding {0} to {1}'
-                .format(util.displayable_path(source),
-                util.displayable_path(dest)))
+        command = u'ffmpeg -i $source -y -acodec libvorbis -vn -aq 2 $dest'
         opts = []
-        for arg in command:
+        for arg in command.split():
             arg = arg.encode('utf-8')
-            opts.append(Template(arg).substitute({
-                'source':   source,
-                'dest':     dest
-            }))
+            opts.append(Template(arg).substitute(source=source, dest=dest))
 
+        # Run the command.
         try:
-            encode = Popen(opts, close_fds=True, stderr=DEVNULL)
-            encode.wait()
-        except Exception as exc:
-            log.error(u'echonest: encode failed: {0}'.format(str(exc)))
+            subprocess.check_call(opts, close_fds=True, stderr=DEVNULL)
+        except (OSError, subprocess.CalledProcessError) as exc:
+            log.debug(u'echonest: encode failed: {0}'.format(exc))
             util.remove(dest)
-            util.prune_dirs(os.path.dirname(dest))
-            return None
+            return
 
-        if encode.returncode != 0:
-            log.info(u'echonest: encoding {0} failed ({1}). Cleaning up...'
-                     .format(util.displayable_path(source), encode.returncode))
-            util.remove(dest)
-            util.prune_dirs(os.path.dirname(dest))
-            return None
-        log.info(u'echonest: finished encoding {0}'
-                .format(util.displayable_path(source)))
+        log.info(u'echonest: finished encoding {0}'.format(
+            util.displayable_path(source))
+        )
         return dest
 
     def analyze(self, item):
