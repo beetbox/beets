@@ -233,19 +233,25 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         the artist and title match and the duration difference is <= 1.0
         seconds, it's considered a match.
         """
+        if not songs:
+            log.debug(u'echonest: no songs found')
+            return
+
         pick = None
-        if songs:
-            min_dist = item.length
-            for song in songs:
-                if song.artist_name.lower() == item.artist.lower() \
-                        and song.title.lower() == item.title.lower():
-                    dist = abs(item.length - song.audio_summary['duration'])
-                    if dist < min_dist:
-                        min_dist = dist
-                        pick = song
-            if min_dist > 2.5:
-                return None
+        min_dist = item.length
+        for song in songs:
+            if song.artist_name.lower() == item.artist.lower() \
+                    and song.title.lower() == item.title.lower():
+                dist = abs(item.length - song.audio_summary['duration'])
+                if dist < min_dist:
+                    min_dist = dist
+                    pick = song
+        if min_dist > 2.5:
+            return None
         return pick
+
+
+    # Search (metadata-based) lookup.
 
     def search(self, item):
         """Search the item at the EchoNest by artist and title.
@@ -261,28 +267,33 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         except Exception as exc:
             log.error(u'echonest: search failed: {0}'.format(str(exc)))
 
+
+    # "Profile" (ID-based) lookup.
+
     def profile(self, item):
         """Do a lookup on the EchoNest by MusicBrainz ID.
         """
-        try:
-            if item.get('echonest_id', None) is None:
-                if not item.mb_trackid:
-                    raise Exception(u'musicbrainz ID not available')
-                mbid = 'musicbrainz:track:{0}'.format(item.mb_trackid)
-                track = self._echofun(pyechonest.track.track_from_id,
-                                      identifier=mbid)
-                if not track:
-                    raise Exception(u'could not get track from ID')
-                ids = track.song_id
-            else:
-                ids = item.get('echonest_id')
-            songs = self._echofun(pyechonest.song.profile, ids=ids,
-                    buckets=['id:musicbrainz', 'audio_summary'])
-            if not songs:
-                raise Exception(u'could not get songs from track ID')
-            return self._pick_song(songs, item)
-        except Exception as exc:
-            log.debug(u'echonest: profile failed: {0}'.format(str(exc)))
+        # Use an existing Echo Nest ID.
+        if 'echonest_id' in item:
+            enid = item.echonest_id
+
+        # Look up the Echo Nest ID based on the MBID.
+        else:
+            if not item.mb_trackid:
+                log.debug(u'echonest: no ID available')
+                return
+            mbid = 'musicbrainz:track:{0}'.format(item.mb_trackid)
+            track = self._echofun(pyechonest.track.track_from_id,
+                                    identifier=mbid)
+            if not track:
+                log.debug(u'echonest: lookup by MBID failed')
+                return
+            enid = track.song_id
+
+        # Use the Echo Nest ID to look up the song.
+        songs = self._echofun(pyechonest.song.profile, ids=enid,
+                buckets=['id:musicbrainz', 'audio_summary'])
+        return self._pick_song(songs, item)
 
 
     # Shared logic for all methods.
