@@ -250,49 +250,57 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         """Upload the item to the EchoNest for analysis. May require to
         convert the item to a supported media format.
         """
-        try:
-            source = item.path
-            if item.format.lower() not in ALLOWED_FORMATS:
-                if config['echonest']['convert']:
-                    source = self.convert(item)
-                    if source is None:
-                        raise Exception(u'failed to convert file'
-                                .format(item.format))
-                else:
-                    raise Exception(u'format {} not supported for upload'
-                            .format(item.format))
-            log.info(u'echonest: uploading file, be patient')
-            track = self._echofun(pyechonest.track.track_from_filename,
-                                  filename=source)
-            if not track:
-                raise Exception(u'failed to upload file')
+        # Get the file to upload (either by using the file directly or by
+        # transcoding it first).
+        source = item.path
+        if item.format not in ALLOWED_FORMATS:
+            if config['echonest']['convert']:
+                source = self.convert(item)
+                if not source:
+                    log.debug(u'echonest: failed to convert file')
+                    return
+            else:
+                return
 
-            # Sometimes we have a track but no song. I guess this happens for
-            # new / unverified songs. We need to "extract" the audio_summary
-            # from the track object manually.  I don't know why the
-            # pyechonest API handles tracks (merge audio_summary to __dict__)
-            # and songs (keep audio_summary in an extra attribute)
-            # differently.
-            # Maybe a patch for pyechonest could help?
-            from_track = {}
-            for key in ATTRIBUTES:
-                from_track[key] = getattr(track, key)
-            ids = []
+        # Upload the audio file.
+        log.info(u'echonest: uploading file, please be patient')
+        track = self._echofun(pyechonest.track.track_from_filename,
+                              filename=source)
+        if not track:
+            log.debug(u'echonest: failed to upload file')
+            return
+
+        # Sometimes we have a track but no song. I guess this happens for
+        # new / unverified songs. We need to "extract" the audio_summary
+        # from the track object manually.  I don't know why the
+        # pyechonest API handles tracks (merge audio_summary to __dict__)
+        # and songs (keep audio_summary in an extra attribute)
+        # differently.
+        # Maybe a patch for pyechonest could help?
+
+        # First get the (limited) metadata from the track in case
+        # there's no associated song.
+        from_track = {}
+        for key in ATTRIBUTES:
             try:
-                ids = [track.song_id]
-            except Exception:
-                return from_track
-            songs = self._echofun(pyechonest.song.profile,
-                                  ids=ids, track_ids=[track.id],
-                                  buckets=['audio_summary'])
-            if not songs:
-                raise Exception(u'failed to retrieve info from upload')
+                from_track[key] = getattr(track, key)
+            except AttributeError:
+                pass
+        from_track['duration'] = track.duration
+
+        # Try to look up a song for the full metadata.
+        try:
+            song_id = track.song_id
+        except AttributeError:
+            return from_track
+        songs = self._echofun(pyechonest.song.profile,
+                              ids=[song_id], track_ids=[track.id],
+                              buckets=['audio_summary'])
+        if songs:
             pick = self._pick_song(songs, item)
-            if not pick:
-                return from_track
-            return pick
-        except Exception as exc:
-            log.error(u'echonest: analysis failed: {0}'.format(str(exc)))
+            if pick:
+                return pick
+        return from_track  # Fall back to track metadata.
 
 
     # Shared top-level logic.
