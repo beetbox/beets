@@ -110,6 +110,71 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             return None
         return result
 
+    def _pick_song(self, songs, item):
+        """Helper method to pick the best matching song from a list of songs
+        returned by the EchoNest.  Compares artist, title and duration.  If
+        the artist and title match and the duration difference is <= 1.0
+        seconds, it's considered a match.
+        """
+        if not songs:
+            log.debug(u'echonest: no songs found')
+            return
+
+        pick = None
+        min_dist = item.length
+        for song in songs:
+            if song.artist_name.lower() == item.artist.lower() \
+                    and song.title.lower() == item.title.lower():
+                dist = abs(item.length - song.audio_summary['duration'])
+                if dist < min_dist:
+                    min_dist = dist
+                    pick = song
+        if min_dist > 2.5:
+            return None
+        return pick
+
+
+    # "Profile" (ID-based) lookup.
+
+    def profile(self, item):
+        """Do a lookup on the EchoNest by MusicBrainz ID.
+        """
+        # Use an existing Echo Nest ID.
+        if 'echonest_id' in item:
+            enid = item.echonest_id
+
+        # Look up the Echo Nest ID based on the MBID.
+        else:
+            if not item.mb_trackid:
+                log.debug(u'echonest: no ID available')
+                return
+            mbid = 'musicbrainz:track:{0}'.format(item.mb_trackid)
+            track = self._echofun(pyechonest.track.track_from_id,
+                                  identifier=mbid)
+            if not track:
+                log.debug(u'echonest: lookup by MBID failed')
+                return
+            enid = track.song_id
+
+        # Use the Echo Nest ID to look up the song.
+        songs = self._echofun(pyechonest.song.profile, ids=enid,
+                buckets=['id:musicbrainz', 'audio_summary'])
+        return self._pick_song(songs, item)
+
+
+    # "Search" (metadata-based) lookup.
+
+    def search(self, item):
+        """Search the item at the EchoNest by artist and title.
+        """
+        songs = self._echofun(pyechonest.song.search, title=item.title,
+                              results=100, artist=item.artist,
+                              buckets=['id:musicbrainz', 'tracks'])
+        return self._pick_song(songs, item)
+
+
+    # "Identify" (fingerprinting) lookup.
+
     def fingerprint(self, item, key='echonest_fingerprint'):
         """Get the fingerprint for this item from the EchoNest.  If we
         already have a fingerprint, return it and don't calculate it
@@ -120,10 +185,27 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         try:
             code = self._echofun(pyechonest.util.codegen,
                                  filename=item.path.decode('utf-8'))
-            item['echonest_fingerprint'] = code[0]['code']
+            item[key] = code[0]['code']
             item.write()
         except Exception as exc:
             log.error(u'echonest: fingerprinting failed: {0}'.format(exc))
+
+    def identify(self, item):
+        """Try to identify the song at the EchoNest.
+        """
+        try:
+            code = self.fingerprint(item)
+            if not code:
+                raise Exception(u'can not identify without a fingerprint')
+            songs = self._echofun(pyechonest.song.identify, code=code)
+            if not songs:
+                raise Exception(u'no songs found')
+            return max(songs, key=lambda s: s.score)
+        except Exception as exc:
+            log.error(u'echonest: identification failed: {0}'.format(str(exc)))
+
+
+    # "Analyze" (upload the audio itself) method.
 
     def convert(self, item):
         """Converts an item in an unsupported media format to ogg.  Config
@@ -213,90 +295,8 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         except Exception as exc:
             log.error(u'echonest: analysis failed: {0}'.format(str(exc)))
 
-    def identify(self, item):
-        """Try to identify the song at the EchoNest.
-        """
-        try:
-            code = self.fingerprint(item)
-            if not code:
-                raise Exception(u'can not identify without a fingerprint')
-            songs = self._echofun(pyechonest.song.identify, code=code)
-            if not songs:
-                raise Exception(u'no songs found')
-            return max(songs, key=lambda s: s.score)
-        except Exception as exc:
-            log.error(u'echonest: identification failed: {0}'.format(str(exc)))
 
-    def _pick_song(self, songs, item):
-        """Helper method to pick the best matching song from a list of songs
-        returned by the EchoNest.  Compares artist, title and duration.  If
-        the artist and title match and the duration difference is <= 1.0
-        seconds, it's considered a match.
-        """
-        if not songs:
-            log.debug(u'echonest: no songs found')
-            return
-
-        pick = None
-        min_dist = item.length
-        for song in songs:
-            if song.artist_name.lower() == item.artist.lower() \
-                    and song.title.lower() == item.title.lower():
-                dist = abs(item.length - song.audio_summary['duration'])
-                if dist < min_dist:
-                    min_dist = dist
-                    pick = song
-        if min_dist > 2.5:
-            return None
-        return pick
-
-
-    # Search (metadata-based) lookup.
-
-    def search(self, item):
-        """Search the item at the EchoNest by artist and title.
-        """
-        try:
-            songs = self._echofun(pyechonest.song.search, title=item.title,
-                                  results=100, artist=item.artist,
-                                  buckets=['id:musicbrainz', 'tracks'])
-            pick = self._pick_song(songs, item)
-            if pick is None:
-                raise Exception(u'no (matching) songs found')
-            return pick
-        except Exception as exc:
-            log.error(u'echonest: search failed: {0}'.format(str(exc)))
-
-
-    # "Profile" (ID-based) lookup.
-
-    def profile(self, item):
-        """Do a lookup on the EchoNest by MusicBrainz ID.
-        """
-        # Use an existing Echo Nest ID.
-        if 'echonest_id' in item:
-            enid = item.echonest_id
-
-        # Look up the Echo Nest ID based on the MBID.
-        else:
-            if not item.mb_trackid:
-                log.debug(u'echonest: no ID available')
-                return
-            mbid = 'musicbrainz:track:{0}'.format(item.mb_trackid)
-            track = self._echofun(pyechonest.track.track_from_id,
-                                    identifier=mbid)
-            if not track:
-                log.debug(u'echonest: lookup by MBID failed')
-                return
-            enid = track.song_id
-
-        # Use the Echo Nest ID to look up the song.
-        songs = self._echofun(pyechonest.song.profile, ids=enid,
-                buckets=['id:musicbrainz', 'audio_summary'])
-        return self._pick_song(songs, item)
-
-
-    # Shared logic for all methods.
+    # Shared top-level logic.
 
     def fetch_song(self, item):
         """Try all methods to get a matching song object from the
