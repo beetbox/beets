@@ -38,8 +38,6 @@ DEVNULL = open(os.devnull, 'wb')
 ALLOWED_FORMATS = ('MP3', 'OGG', 'AAC')
 
 # The attributes we can import and where to store them in beets fields.
-# Note: We also use echonest_id (song_id) and echonest_fingerprint to speed up
-# lookups. They are not listed as attributes here.
 ATTRIBUTES = {
     'energy':       'energy',
     'liveness':     'liveness',
@@ -49,6 +47,10 @@ ATTRIBUTES = {
     'valence':      'valence',
     'tempo':        'bpm',
 }
+# We also use echonest_id (song_id) and echonest_fingerprint to speed up
+# lookups.
+ID_KEY = 'echonest_id'
+FINGERPRINT_KEY = 'echonest_fingerprint'
 
 def _splitstrip(string, delim=u','):
     """Split string (at commas by default) and strip whitespace from the
@@ -175,34 +177,31 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
 
     # "Identify" (fingerprinting) lookup.
 
-    def fingerprint(self, item, key='echonest_fingerprint'):
+    def fingerprint(self, item):
         """Get the fingerprint for this item from the EchoNest.  If we
         already have a fingerprint, return it and don't calculate it
         again.
         """
-        if key in item:
-            return item[key]
-        try:
-            code = self._echofun(pyechonest.util.codegen,
-                                 filename=item.path.decode('utf-8'))
-            item[key] = code[0]['code']
-            item.write()
-        except Exception as exc:
-            log.error(u'echonest: fingerprinting failed: {0}'.format(exc))
+        if FINGERPRINT_KEY in item:
+            return item[FINGERPRINT_KEY]
+
+        code = self._echofun(pyechonest.util.codegen,
+                             filename=item.path.decode('utf-8'))
+        item[FINGERPRINT_KEY] = code[0]['code']
 
     def identify(self, item):
         """Try to identify the song at the EchoNest.
         """
-        try:
-            code = self.fingerprint(item)
-            if not code:
-                raise Exception(u'can not identify without a fingerprint')
-            songs = self._echofun(pyechonest.song.identify, code=code)
-            if not songs:
-                raise Exception(u'no songs found')
-            return max(songs, key=lambda s: s.score)
-        except Exception as exc:
-            log.error(u'echonest: identification failed: {0}'.format(str(exc)))
+        code = self.fingerprint(item)
+        if not code:
+            return
+
+        songs = self._echofun(pyechonest.song.identify, code=code)
+        if not songs:
+            log.debug(u'echonest: no songs found for fingerprint')
+            return
+
+        return max(songs, key=lambda s: s.score)
 
 
     # "Analyze" (upload the audio itself) method.
