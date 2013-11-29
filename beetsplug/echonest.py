@@ -135,6 +135,16 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             return None
         return pick
 
+    def _flatten_song(self, song):
+        """Given an Echo Nest song object, return a flat dict containing
+        attributes we care about. If song is None, return None.
+        """
+        if not song:
+            return
+        values = dict(song.audio_summary)
+        values['id'] = song.id
+        return values
+
 
     # "Profile" (ID-based) lookup.
 
@@ -142,8 +152,8 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         """Do a lookup on the EchoNest by MusicBrainz ID.
         """
         # Use an existing Echo Nest ID.
-        if 'echonest_id' in item:
-            enid = item.echonest_id
+        if ID_KEY in item:
+            enid = item[ID_KEY]
 
         # Look up the Echo Nest ID based on the MBID.
         else:
@@ -161,7 +171,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         # Use the Echo Nest ID to look up the song.
         songs = self._echofun(pyechonest.song.profile, ids=enid,
                 buckets=['id:musicbrainz', 'audio_summary'])
-        return self._pick_song(songs, item)
+        return self._flatten_song(self._pick_song(songs, item))
 
 
     # "Search" (metadata-based) lookup.
@@ -172,7 +182,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         songs = self._echofun(pyechonest.song.search, title=item.title,
                               results=100, artist=item.artist,
                               buckets=['id:musicbrainz', 'tracks'])
-        return self._pick_song(songs, item)
+        return self._flatten_song(self._pick_song(songs, item))
 
 
     # "Identify" (fingerprinting) lookup.
@@ -211,7 +221,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             log.debug(u'echonest: no songs found for fingerprint')
             return
 
-        return max(songs, key=lambda s: s.score)
+        return self._flatten_song(max(songs, key=lambda s: s.score))
 
 
     # "Analyze" (upload the audio itself) method.
@@ -304,7 +314,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         if songs:
             pick = self._pick_song(songs, item)
             if pick:
-                return pick
+                return self._flatten_song(pick)
         return from_track  # Fall back to track metadata.
 
 
@@ -326,35 +336,30 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         for method in methods:
             song = method(item)
             if song:
-                if isinstance(song, pyechonest.song.Song):
-                    log.debug(u'echonest: got song through {0}: {1} - {2} [{3}]'
-                                .format(method.__name__,
-                                song.artist_name, song.title,
-                                song.audio_summary['duration']))
-                else: # it's our dict filled from a track object
-                    log.debug(u'echonest: got song through {0}: {1} - {2} [{3}]'
-                                .format(method.__name__,
-                                item.artist, item.title,
-                                song['duration']))
+                log.debug(
+                    u'echonest: got song through {0}: {1} - {2} [{3}]'.format(
+                        method.__name__,
+                        item.artist,
+                        item.title,
+                        song['duration'],
+                    )
+                )
                 return song
 
-    def apply_metadata(self, item, song, write=False):
-        """Copy the metadata from the EchoNest song to the item.
+    def apply_metadata(self, item, values, write=False):
+        """Copy the metadata from the dictionary of song information to
+        the item.
         """
-        # Get either a Song object or a value dictionary.
-        if isinstance(song, pyechonest.song.Song):
-            log.debug(u'echonest: metadata: echonest_id = {0}'.format(song.id))
-            item.echonest_id = song.id
-            values = song.audio_summary
-        else:
-            values = song
-
         # Update each field.
         for k, v in values.iteritems():
             if k in ATTRIBUTES:
                 field = ATTRIBUTES[k]
                 log.debug(u'echonest: metadata: {0} = {1}'.format(field, v))
                 item[field] = v
+        if 'id' in values:
+            enid = values['id']
+            log.debug(u'echonest: metadata: {0} = {1}'.format(ID_KEY, enid))
+            item[ID_KEY] = enid
 
         # Write and save.
         if write:
