@@ -185,9 +185,19 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         if FINGERPRINT_KEY in item:
             return item[FINGERPRINT_KEY]
 
-        code = self._echofun(pyechonest.util.codegen,
-                             filename=item.path.decode('utf-8'))
-        item[FINGERPRINT_KEY] = code[0]['code']
+        try:
+            res = self._echofun(pyechonest.util.codegen,
+                                filename=item.path.decode('utf-8'))
+        except Exception as e:
+            # Frustratingly, the pyechonest library raises a plain Exception
+            # when the command is not found.
+            log.debug(u'echonest: codegen failed: {0}'.format(e))
+            return
+
+        code = res[0]['code']
+        log.debug(u'echonest: calculated fingerprint')
+        item[FINGERPRINT_KEY] = code
+        return code
 
     def identify(self, item):
         """Try to identify the song at the EchoNest.

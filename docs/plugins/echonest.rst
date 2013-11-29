@@ -73,10 +73,11 @@ want that, disable the ``convert`` config option like so::
     echonest:
         convert: no
 
-If the ``ENMFP`` binary is not in your path, you'll need to add a key called
-``codegen`` under the ``echonest`` section like so::
+To enable fingerprinting, you'll need to tell the plugin where to find the
+Echoprint codegen binary. Use the ``codegen`` key under the ``echonest``
+section like so::
 
     echonest:
-        codegen: PATH/TO/YOUR/CODEGEN/BINARY
+        codegen: /usr/bin/echoprint-codegen
 
 .. _apply for your own: http://developer.echonest.com/account/register
