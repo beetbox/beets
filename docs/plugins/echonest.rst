@@ -1,28 +1,29 @@
 Echonest Plugin
 ===============
 
-The ``echonest`` plugin will automatically fetch and store the following audio
-descriptors from the `EchoNest API`_.  All except for ``tempo`` will be stored in
-flexattrs and *not* in the audio file itself.  ``tempo`` will be stored in
-``bpm``:
+The ``echonest`` plugin fetches `acoustic attributes`_ from `the Echo Nest`_.
+It automatically fills in the following attributes:
 
 - danceability
 - energy
 - liveness
 - loudness
 - speechiness
-- tempo
+- bpm
 
-See `Acoustic Attributes`_ for a detailed description.
+All attributes except ``bpm`` are stored in flexible attributes (i.e., not
+in files' metadata).
+See the Echo Nest's page on `acoustic attributes`_ for a detailed description.
+(Their name for ``bpm`` is ``tempo``.)
 
-.. _EchoNest API: http://developer.echonest.com/
+.. _the Echo Nest: http://the.echonest.com/
+.. _acoustic attributes: http://developer.echonest.com/acoustic-attributes.html
 
-.. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
 
 Installing Dependencies
 -----------------------
 
-This plugin requires the pyechonest library in order to talk to the EchoNest 
+This plugin requires the pyechonest library in order to talk to the Echo Nest
 API.  At least version 8.0.1 is required.
 
 There are packages for most major linux distributions, you can download the
@@ -31,16 +32,20 @@ like so::
 
     $ pip install pyechonest
 
-To transcode music, this plugin requires the `ffmpeg`_ command-line tool.
+To transcode music for server-side analysis (optional, of course), install
+the `ffmpeg`_ command-line tool.
 
-To get fingerprinting working, you'll need to install the `ENMFP`_ codegen
-command-line tool.  The ``ENMFP`` codegen binary distribution has executables
-for all major OSs and architectures.  Please note that fingerprinting is not
-required if ``upload`` and ``convert`` is enabled, which is the default.
+To get fingerprinting working, you'll need to install the command-line
+codegen tool for `ENMFP`_ or `Echoprint`_, the two fingerprinting
+algorithms supported by the Echo Nest. Please note that fingerprinting is not
+required if ``upload`` and ``convert`` is enabled, which is the default (but
+it can be faster than uploading).
 
 .. _pip: http://pip.openplans.org/
 .. _FFmpeg: http://ffmpeg.org
 .. _ENMFP: http://static.echonest.com/ENMFP_codegen.zip
+.. _Echoprint: http://echoprint.me
+
 
 Configuring
 -----------
@@ -74,8 +79,8 @@ want that, disable the ``convert`` config option like so::
         convert: no
 
 To enable fingerprinting, you'll need to tell the plugin where to find the
-Echoprint codegen binary. Use the ``codegen`` key under the ``echonest``
-section like so::
+Echoprint or ENMFP codegen binary. Use the ``codegen`` key under the
+``echonest`` section like so::
 
     echonest:
         codegen: /usr/bin/echoprint-codegen
