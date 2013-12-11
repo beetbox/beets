@@ -1,5 +1,7 @@
+# coding=utf-8
 # This file is part of beets.
 # Copyright 2013, Peter Schnebel.
+# Copyright 2013, Johann Klähn.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -35,6 +37,12 @@ RETRIES = 10
 RETRY_INTERVAL = 5
 
 
+def is_url(path):
+    """Try to determine if the path is an URL.
+    """
+    return path.split('://', 1)[0] in ['http', 'https']
+
+
 # Use the MPDClient internals to get unicode.
 # see http://www.tarmack.eu/code/mpdunicode.py for the general idea
 class MPDClient(mpd.MPDClient):
@@ -49,17 +57,14 @@ class MPDClient(mpd.MPDClient):
         return None
 
 
-class Client(object):
-    def __init__(self, lib):
-        self.lib = lib
-
-        self.music_directory = config['mpdstats']['music_directory'].get()
-        self.do_rating = config['mpdstats']['rating'].get(bool)
-        self.rating_mix = config['mpdstats']['rating_mix'].get(float)
+class MPDClientWrapper(object):
+    def __init__(self):
+        self.music_directory = (
+            config['mpdstats']['music_directory'].get(unicode))
 
         self.client = MPDClient()
 
-    def mpd_connect(self):
+    def connect(self):
         """Connect to the MPD.
         """
         host = config['mpd']['host'].get(unicode)
@@ -83,37 +88,84 @@ class Client(object):
                     'could not authenticate to MPD: {0}'.format(e)
                 )
 
-    def mpd_disconnect(self):
+    def disconnect(self):
         """Disconnect from the MPD.
         """
         self.client.close()
         self.client.disconnect()
 
-    def is_url(self, path):
-        """Try to determine if the path is an URL.
+    def get(self, command, retries=RETRIES):
+        """Wrapper for requests to the MPD server. Tries to re-connect if the
+        connection was lost (f.ex. during MPD's library refresh).
         """
-        # FIXME:  cover more URL types ...
-        return path[:7] == "http://"
+        try:
+            return getattr(self.client, command)()
+        except (select.error, mpd.ConnectionError) as err:
+            log.error(u'mpdstats: {0}'.format(err))
 
-    def mpd_playlist(self):
+        if retries <= 0:
+            # if we exited without breaking, we couldn't reconnect in time :(
+            raise ui.UserError(u'communication with MPD server failed')
+
+        time.sleep(RETRY_INTERVAL)
+
+        try:
+            self.disconnect()
+        except mpd.ConnectionError:
+            pass
+
+        self.connect()
+        return self.get(command, retries=retries - 1)
+
+    def playlist(self):
         """Return the currently active playlist.  Prefixes paths with the
         music_directory, to get the absolute path.
         """
         result = {}
-        for entry in self.mpd_func('playlistinfo'):
-            if not self.is_url(entry['file']):
+        for entry in self.get('playlistinfo'):
+            if not is_url(entry['file']):
                 result[entry['id']] = os.path.join(
                     self.music_directory, entry['file'])
             else:
                 result[entry['id']] = entry['file']
         return result
 
-    def mpd_status(self):
+    def status(self):
         """Return the current status of the MPD.
         """
-        return self.mpd_func('status')
+        return self.get('status')
 
-    def beets_get_item(self, path):
+    def events(self):
+        """Return list of events. This may block a long time while waiting for
+        an answer from MPD.
+        """
+        return self.get('idle')
+
+
+class MPDStats(object):
+    def __init__(self, lib):
+        self.lib = lib
+
+        self.do_rating = config['mpdstats']['rating'].get(bool)
+        self.rating_mix = config['mpdstats']['rating_mix'].get(float)
+        self.time_threshold = 10.0  # TODO: maybe add config option?
+
+        self.now_playing = None
+        self.mpd = MPDClientWrapper()
+
+    def rating(self, play_count, skip_count, rating, skipped):
+        """Calculate a new rating for a song based on play count, skip count,
+        old rating and the fact if it was skipped or not.
+        """
+        if skipped:
+            rolling = (rating - rating / 2.0)
+        else:
+            rolling = (rating + (1.0 - rating) / 2.0)
+        stable = (play_count + 1.0) / (play_count + skip_count + 2.0)
+        return (self.rating_mix * stable
+                + (1.0 - self.rating_mix) * rolling)
+
+    def get_item(self, path):
         """Return the beets item related to path.
         """
         query = library.MatchQuery('path', path)
@@ -125,172 +177,127 @@ class Client(object):
                 displayable_path(path)
             ))
 
-    def rating(self, play_count, skip_count, rating, skipped):
-        """Calculate a new rating based on play count, skip count, old rating
-        and the fact if it was skipped or not.
+    @staticmethod
+    def update_item(item, attribute, value=None, increment=None):
+        """Update the beets item. Set attribute to value or increment the value
+        of attribute. If the increment argument is used the value is cast to the
+        corresponding type.
         """
-        if skipped:
-            rolling = (rating - rating / 2.0)
-        else:
-            rolling = (rating + (1.0 - rating) / 2.0)
-        stable = (play_count + 1.0) / (play_count + skip_count + 2.0)
-        return self.rating_mix * stable \
-                + (1.0 - self.rating_mix) * rolling
+        if item is None:
+            return
 
-    def beetsrating(self, item, skipped):
-        """ Update the rating of the beets item.
-        """
-        if self.do_rating and item:
-            attribute = 'rating'
-            item[attribute] = self.rating(
-                    (int)(item.get('play_count', 0)),
-                    (int)(item.get('skip_count', 0)),
-                    (float)(item.get(attribute, 0.5)),
-                    skipped)
+        if increment is not None:
+            value = type(increment)(item.get(attribute, 0)) + increment
+
+        if value is not None:
+            item[attribute] = value
+            item.store()
+
             log.debug(u'mpdstats: updated: {0} = {1} [{2}]'.format(
                 attribute,
                 item[attribute],
                 displayable_path(item.path),
             ))
-            item.store()
 
-    def beets_update(self, item, attribute, value=None, increment=None):
-        """ Update the beets item.  Set attribute to value or increment the
-        value of attribute.
+    def update_rating(self, item, skipped):
+        """Update the rating for a beets item.
         """
-        if item is not None:
-            changed = False
-            if value is not None:
-                changed = True
-                item[attribute] = value
-            if increment is not None:
-                changed = True
-                item[attribute] = (float)(item.get(attribute, 0)) + increment
-            if changed:
-                log.debug(u'mpdstats: updated: {0} = {1} [{2}]'.format(
-                    attribute,
-                    item[attribute],
-                    displayable_path(item.path),
-                ))
-                item.store()
+        rating = self.rating(
+            int(item.get('play_count', 0)),
+            int(item.get('skip_count', 0)),
+            float(item.get('rating', 0.5)),
+            skipped)
 
-    def mpd_func(self, func, **kwargs):
-        """Wrapper for requests to the MPD server.  Tries to re-connect if the
-        connection was lost ...
+        self.update_item(item, 'rating', rating)
+
+    def handle_song_change(self, song):
+        """Determine if a song was skipped or not and update its attributes.
+        To this end the difference between the song's supposed end time
+        and the current time is calculated. If it's greater than a threshold,
+        the song is considered skipped.
         """
-        for i in range(RETRIES):
-            try:
-                if func == 'send_idle':
-                    # special case, wait for an event
-                    self.client.send_idle()
-                    try:
-                        select.select([self.client], [], [])
-                    except select.error:
-                        # Happens during shutdown and during MPDs
-                        # library refresh.
-                        time.sleep(RETRY_INTERVAL)
-                        self.mpd_connect()
-                        continue
-                    except KeyboardInterrupt:
-                        self.running = False
-                        return None
-                    return self.client.fetch_idle()
-                elif func == 'playlistinfo':
-                    return self.client.playlistinfo()
-                elif func == 'status':
-                    return self.client.status()
-            except (select.error, mpd.ConnectionError) as err:
-                # happens during shutdown and during MPDs library refresh
-                log.error(u'mpdstats: {0}'.format(err))
-                time.sleep(RETRY_INTERVAL)
-                self.mpd_disconnect()
-                self.mpd_connect()
-                continue
+        diff = abs(song['remaining'] - (time.time() - song['started']))
+
+        skipped = diff >= self.time_threshold
+
+        if skipped:
+            self.handle_skipped(song)
         else:
-            # if we exited without breaking, we couldn't reconnect in time :(
-            raise ui.UserError(u'failed to re-connect to MPD server')
+            self.handle_played(song)
+
+        if self.do_rating:
+            self.update_rating(song['beets_item'], skipped)
+
+    def handle_played(self, song):
+        """Updates the play count of a song.
+        """
+        self.update_item(song['beets_item'], 'play_count', increment=1)
+        log.info(u'mpdstats: played {0}'.format(
+            displayable_path(song['path'])
+        ))
+
+    def handle_skipped(self, song):
+        """Updates the skip count of a song.
+        """
+        self.update_item(song['beets_item'], 'skip_count', increment=1)
+        log.info(u'mpdstats: skipped {0}'.format(
+            displayable_path(song['path'])
+        ))
+
+    def on_stop(self, status):
+        log.info(u'mpdstats: stop')
+        self.now_playing = None
+
+    def on_pause(self, status):
+        log.info(u'mpdstats: pause')
+        self.now_playing = None
+
+    def on_play(self, status):
+        playlist = self.mpd.playlist()
+        path = playlist.get(status['songid'])
+
+        if not path:
+            return
+
+        if is_url(path):
+            log.info(u'mpdstats: playing stream {0}'.format(
+                displayable_path(path)
+            ))
+            return
+
+        duration, played = map(int, status['time'].split(':', 1))
+        remaining = duration - played
+
+        if self.now_playing and self.now_playing['path'] != path:
+            self.handle_song_change(self.now_playing)
+
+        log.info(u'mpdstats: playing {0}'.format(
+            displayable_path(path)
+        ))
+
+        self.now_playing = {
+            'started':    time.time(),
+            'remaining':  remaining,
+            'path':       path,
+            'beets_item': self.get_item(path),
+        }
 
     def run(self):
-        self.mpd_connect()
-        self.running = True # exit condition for our main loop
-        startup = True # we need to do some special stuff on startup
-        now_playing = None # the currently playing song
-        current_playlist = None # the currently active playlist
-        while self.running:
-            if startup:
-                # don't wait for an event, read in status and playlist
-                events = ['player']
-                startup = False
-            else:
-                # wait for an event from the MPD server
-                events = self.mpd_func('send_idle')
-                if events is None:
-                    continue # probably KeyboardInterrupt
-                log.debug(u'mpdstats: events: {0}'.format(events))
+        self.mpd.connect()
+        events = ['player']
 
+        while True:
             if 'player' in events:
-                status = self.mpd_status()
-                if status is None:
-                    continue # probably KeyboardInterrupt
-                if status['state'] == 'stop':
-                    log.info(u'mpdstats: stop')
-                    now_playing = None
-                elif status['state'] == 'pause':
-                    log.info(u'mpdstats: pause')
-                    now_playing = None
-                elif status['state'] == 'play':
-                    current_playlist = self.mpd_playlist()
-                    if len(current_playlist) == 0:
-                        continue # something is wrong ...
-                    song = current_playlist[status['songid']]
-                    if self.is_url(song):
-                        # we ignore streams
-                        log.info(u'mpdstats: play/stream: {0}'.format(song))
-                    else:
-                        beets_item = self.beets_get_item(song)
-                        t = status['time'].split(':')
-                        remaining = int(t[1]) - int(t[0])
+                status = self.mpd.status()
 
-                        if now_playing and \
-                           now_playing['path'] != song:
-                            # song change
-                            # get the difference of when the song was supposed
-                            # to end to now.  if it's smaller then 10 seconds,
-                            # we consider if fully played.
-                            diff = abs(now_playing['remaining'] -
-                                    (time.time() -
-                                    now_playing['started']))
-                            if diff < 10.0:
-                                log.info(u'mpdstats: played: {0}'.format(
-                                    displayable_path(now_playing['path'])
-                                ))
-                                skipped = False
-                            else:
-                                log.info(u'mpdstats: skipped: {0}'.format(
-                                    displayable_path(now_playing['path'])
-                                ))
-                                skipped = True
-                            if skipped:
-                                self.beets_update(now_playing['beets_item'],
-                                        'skip_count', increment=1)
-                            else:
-                                self.beets_update(now_playing['beets_item'],
-                                        'play_count', increment=1)
-                            self.beetsrating(now_playing['beets_item'],
-                                    skipped)
-                        now_playing = {
-                            'started':    time.time(),
-                            'remaining':  remaining,
-                            'path':       song,
-                            'beets_item': beets_item,
-                        }
-                        log.info(u'mpdstats: playing: {0}'.format(
-                            displayable_path(now_playing['path'])
-                        ))
-                        self.beets_update(now_playing['beets_item'],
-                                'last_played', value=int(time.time()))
+                handler = getattr(self, 'on_' + status['state'], None)
+
+                if handler:
+                    handler(status)
                 else:
-                    log.info(u'mpdstats: status: {0}'.format(status))
+                    log.debug(u'mpdstats: unhandled status "{0}"'.format(status))
+
+            events = self.mpd.events()
 
 
 class MPDStatsPlugin(plugins.BeetsPlugin):
@@ -308,17 +315,18 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
         })
 
     def commands(self):
-        cmd = ui.Subcommand('mpdstats',
-                help='run a MPD client to gather play statistics')
-        cmd.parser.add_option('--host', dest='host',
-                type='string',
-                help='set the hostname of the server to connect to')
-        cmd.parser.add_option('--port', dest='port',
-                type='int',
-                help='set the port of the MPD server to connect to')
-        cmd.parser.add_option('--password', dest='password',
-                type='string',
-                help='set the password of the MPD server to connect to')
+        cmd = ui.Subcommand(
+            'mpdstats',
+            help='run a MPD client to gather play statistics')
+        cmd.parser.add_option(
+            '--host', dest='host', type='string',
+            help='set the hostname of the server to connect to')
+        cmd.parser.add_option(
+            '--port', dest='port', type='int',
+            help='set the port of the MPD server to connect to')
+        cmd.parser.add_option(
+            '--password', dest='password', type='string',
+            help='set the password of the MPD server to connect to')
 
         def func(lib, opts, args):
             self.config.set_args(opts)
@@ -331,7 +339,10 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
             if opts.password:
                 config['mpd']['password'] = opts.password.decode('utf8')
 
-            Client(lib).run()
+            try:
+                MPDStats(lib).run()
+            except KeyboardInterrupt:
+                pass
 
         cmd.func = func
         return [cmd]
