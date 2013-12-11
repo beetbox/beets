@@ -64,6 +64,10 @@ class Client(object):
         """
         host = config['mpd']['host'].get(unicode)
         port = config['mpd']['port'].get(int)
+
+        if host[0] in ['/', '~']:
+            host = os.path.expanduser(host)
+
         log.info(u'mpdstats: connecting to {0}:{1}'.format(host, port))
         try:
             self.client.connect(host, port)
