@@ -1026,7 +1026,10 @@ class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
     def col_clause(self):
         pattern = self.pattern
-        if self.field == 'path' and isinstance(pattern, str):
+        if self.field == 'path':
+          if isinstance(pattern, unicode):
+              pattern = bytestring_path(pattern)
+          if isinstance(pattern, str):
             pattern = buffer(pattern)
         return self.field + " = ?", [pattern]
 
