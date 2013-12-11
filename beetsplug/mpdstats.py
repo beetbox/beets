@@ -152,9 +152,7 @@ class Client(object):
                 item[attribute],
                 displayable_path(item.path),
             ))
-            item.write()
-            if item._lib:
-                item.store()
+            item.store()
 
     def beets_update(self, item, attribute, value=None, increment=None):
         """ Update the beets item.  Set attribute to value or increment the
@@ -174,9 +172,7 @@ class Client(object):
                     item[attribute],
                     displayable_path(item.path),
                 ))
-                item.write()
-                if item._lib:
-                    item.store()
+                item.store()
 
     def mpd_func(self, func, **kwargs):
         """Wrapper for requests to the MPD server.  Tries to re-connect if the
