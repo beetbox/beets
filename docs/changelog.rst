@@ -31,7 +31,7 @@ New features:
   relevant. Thanks to Peter Schnebel and rashley60.
 
 * The new :doc:`/plugins/mpdstats` collects statistics about your
-  listening habits from `MPD`_. Thanks to Peter Schnebel.
+  listening habits from `MPD`_. Thanks to Peter Schnebel and Johann Klähn.
 
 * :doc:`/plugins/lyrics`: A new ``--force`` option optionally re-downloads
   lyrics even when files already have them. Thanks to Bitdemon on GitHub.
