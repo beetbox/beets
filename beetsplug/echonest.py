@@ -95,7 +95,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                 elif e.code == 5:
                     # specified identifier does not exist
                     # no use in trying again.
-                    log.debug(u'echonest: {}'.format(e))
+                    log.debug(u'echonest: {0}'.format(e))
                     return None
                 else:
                     log.error(u'echonest: {0}'.format(e.args[0][0]))
