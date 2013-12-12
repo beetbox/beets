@@ -1027,10 +1027,7 @@ class MatchQuery(FieldQuery):
     def col_clause(self):
         pattern = self.pattern
         if self.field == 'path':
-          if isinstance(pattern, unicode):
-              pattern = bytestring_path(pattern)
-          if isinstance(pattern, str):
-            pattern = buffer(pattern)
+            pattern = buffer(bytestring_path(pattern))
         return self.field + " = ?", [pattern]
 
     # We override the "raw" version here as a special case because we
