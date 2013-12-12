@@ -187,6 +187,7 @@ class MPDStats(object):
             return
 
         if increment is not None:
+            item.load()
             value = type(increment)(item.get(attribute, 0)) + increment
 
         if value is not None:
@@ -202,6 +203,7 @@ class MPDStats(object):
     def update_rating(self, item, skipped):
         """Update the rating for a beets item.
         """
+        item.load()
         rating = self.rating(
             int(item.get('play_count', 0)),
             int(item.get('skip_count', 0)),
