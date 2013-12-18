@@ -181,7 +181,8 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         """
         songs = self._echofun(pyechonest.song.search, title=item.title,
                               results=100, artist=item.artist,
-                              buckets=['id:musicbrainz', 'tracks'])
+                              buckets=['id:musicbrainz', 'tracks',
+                                       'audio_summary'])
         return self._flatten_song(self._pick_song(songs, item))
 
 
