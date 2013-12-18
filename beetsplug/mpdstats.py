@@ -264,7 +264,7 @@ class MPDStats(object):
             ))
             return
 
-        duration, played = map(int, status['time'].split(':', 1))
+        played, duration = map(int, status['time'].split(':', 1))
         remaining = duration - played
 
         if self.now_playing and self.now_playing['path'] != path:
