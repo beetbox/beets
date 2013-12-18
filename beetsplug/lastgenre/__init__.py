@@ -108,8 +108,8 @@ def _strings_to_genre(tags):
         out = []
         for tag in tags:
             for parent in find_parents(tag, options['branches']):
-                if _is_allowed(tag):
-                    out.append(tag)
+                if _is_allowed(parent):
+                    out.append(parent)
                     break
         tags = out
 
