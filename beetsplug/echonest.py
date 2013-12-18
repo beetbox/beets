@@ -204,7 +204,11 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             log.debug(u'echonest: codegen failed: {0}'.format(e))
             return
 
+        if not res or 'code' not in res[0]:
+            log.debug(u'echonest: no fingerprint returned')
+            return
         code = res[0]['code']
+
         log.debug(u'echonest: calculated fingerprint')
         item[FINGERPRINT_KEY] = code
         return code
