@@ -296,6 +296,9 @@ def scrape_lyrics_from_url(url):
     """
     from bs4 import BeautifulSoup, Tag, Comment
     html = fetch_url(url)
+    if not html:
+        return None
+
     soup = BeautifulSoup(html)
 
     for tag in soup.findAll('br'):
