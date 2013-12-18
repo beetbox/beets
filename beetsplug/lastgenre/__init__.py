@@ -97,16 +97,21 @@ def _is_allowed(genre):
     return False
 
 def _strings_to_genre(tags):
-    """Given a list of strings, return a genre. Returns the first string
-    that is present in the genre whitelist (or the canonicalization
-    tree) or None if no tag is suitable.
+    """Given a list of strings, return a genre by joining them into a
+    single string and (optionally) canonicalizing each.
     """
     if not tags:
         return None
 
     if options.get('c14n'):
         # Use the canonicalization tree.
-        tags = find_parents(tags[0], options['branches'])
+        out = []
+        for tag in tags:
+            for parent in find_parents(tag, options['branches']):
+                if _is_allowed(tag):
+                    out.append(tag)
+                    break
+        tags = out
 
     tags = [t.title() for t in tags]
     return u', '.join(tags[:config['lastgenre']['count'].get(int)])
