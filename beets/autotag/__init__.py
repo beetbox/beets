@@ -184,14 +184,20 @@ def apply_metadata(album_info, mapping):
 
             for suffix in 'year', 'month', 'day':
                 key = prefix + suffix
-                value = getattr(album_info, key)
-                if value:
-                    setattr(item, key, value)
-                    if config['original_date']:
-                        # If we're using original release date for both
-                        # fields, set item.year = info.original_year,
-                        # etc.
-                        setattr(item, suffix, value)
+                value = getattr(album_info, key) or 0
+
+                # If we don't even have a year, apply nothing.
+                if suffix == 'year' and not value:
+                    break
+
+                # Otherwise, set the fetched value (or 0 for the month
+                # and day if not available).
+                item[key] = value
+
+                # If we're using original release date for both fields,
+                # also set item.year = info.original_year, etc.
+                if config['original_date']:
+                    item[suffix] = value
 
         # Title.
         item.title = track_info.title

@@ -821,6 +821,41 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.assertEqual(self.items[1].albumartist_sort, 'albumArtistSort')
         self.assertEqual(self.items[1].artist_sort, 'albumArtistSort')
 
+    def test_full_date_applied(self):
+        my_info = copy.deepcopy(self.info)
+        my_info.year = 2013
+        my_info.month = 12
+        my_info.day = 18
+        self._apply(info=my_info)
+
+        self.assertEqual(self.items[0].year, 2013)
+        self.assertEqual(self.items[0].month, 12)
+        self.assertEqual(self.items[0].day, 18)
+
+    def test_date_only_zeros_month_and_day(self):
+        self.items = []
+        self.items.append(Item(year=1, month=2, day=3))
+        self.items.append(Item(year=4, month=5, day=6))
+
+        my_info = copy.deepcopy(self.info)
+        my_info.year = 2013
+        self._apply(info=my_info)
+
+        self.assertEqual(self.items[0].year, 2013)
+        self.assertEqual(self.items[0].month, 0)
+        self.assertEqual(self.items[0].day, 0)
+
+    def test_missing_date_applies_nothing(self):
+        self.items = []
+        self.items.append(Item(year=1, month=2, day=3))
+        self.items.append(Item(year=4, month=5, day=6))
+
+        self._apply()
+
+        self.assertEqual(self.items[0].year, 1)
+        self.assertEqual(self.items[0].month, 2)
+        self.assertEqual(self.items[0].day, 3)
+
 class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
     def setUp(self):
         super(ApplyCompilationTest, self).setUp()
