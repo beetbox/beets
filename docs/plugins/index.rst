@@ -58,7 +58,6 @@ Autotagger Extensions
 * :doc:`chroma`: Use acoustic fingerprinting to identify audio files with
   missing or incorrect metadata.
 * :doc:`discogs`: Search for releases in the `Discogs`_ database.
-* :doc:`beatport`: Search for tracks and releases in the `Beatport`_ database.
 * :doc:`fromfilename`: Guess metadata for untagged tracks from their
   filenames.
 
@@ -69,9 +68,8 @@ Metadata
 --------
 
 * :doc:`lyrics`: Automatically fetch song lyrics.
-* :doc:`echonest_tempo`: Automatically fetch song tempos (bpm).
-* :doc:`echonest`: Automatically fetch `Acoustic Attributes`_ from
-  `the Echo Nest`_ (energy, danceability, ...).
+* :doc:`echonest`: Automatically fetch `acoustic attributes`_ from
+  `the Echo Nest`_ (tempo, energy, danceability, ...).
 * :doc:`lastgenre`: Fetch genres based on Last.fm tags.
 * :doc:`mbsync`: Fetch updated metadata from MusicBrainz
 * :doc:`fetchart`: Fetch album cover art from various sources.

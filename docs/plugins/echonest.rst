@@ -1,5 +1,5 @@
-Echonest Plugin
-===============
+Echo Nest Plugin
+================
 
 The ``echonest`` plugin fetches `acoustic attributes`_ from `the Echo Nest`_.
 It automatically fills in the following attributes:
