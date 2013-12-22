@@ -70,6 +70,8 @@ As usual, there are also innumerable little fixes and improvements:
   out" the month and day fields after applying the year.
 * For plugin developers: added an ``optparse`` callback utility function for
   performing actions based on arguments. Thanks to Pedro Silva.
+* :doc:`/plugins/scrub`: Fix scrubbing of MPEG-4 files. Thanks to Yevgeny
+  Bezman.
 
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
