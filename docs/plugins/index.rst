@@ -7,10 +7,15 @@ beets by itself doesn't do what you want it to, you may just need to enable a
 plugin---or, if you want to do something new, :doc:`writing a plugin
 </dev/plugins>` is easy if you know a little Python.
 
-To use one of the plugins included with beets (see below for a list), just use
-the `plugins` option in your `config.yaml` file, like so::
+.. _using-plugins:
 
-    plugins: mygreatplugin someotherplugin
+Using Plugins
+-------------
+
+To use one of the plugins included with beets (see the rest of this page for a
+list), just use the `plugins` option in your `config.yaml` file, like so::
+
+    plugins: inline discogs web
 
 The value for `plugins` can be a space-separated list of plugin names or a
 YAML list like ``[foo, bar]``. You can see which plugins are currently enabled
