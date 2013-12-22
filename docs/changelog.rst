@@ -69,6 +69,8 @@ Little fixes:
   multiple genres.
 * When a match has a year but not a month or day, the autotagger now "zeros
   out" the month and day fields after applying the year.
+* :doc:`/plugins/scrub`: Fix scrubbing of MPEG-4 files. Thanks to Yevgeny
+  Bezman.
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
 .. _MPD: http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
