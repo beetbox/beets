@@ -4,14 +4,20 @@ Changelog
 1.3.2 (in development)
 ----------------------
 
-New features:
+The "core" of beets gained a new built-in command: :ref:`beet write
+<write-cmd>` updates the metadata tags for files, bringing them back
+into sync with your database. Thanks to Heinz Wiesinger.
 
-* The new :doc:`/plugins/echonest` plugin supersedes the older tempo-specific
-  plugin and fetches a wide range of `acoustic attributes`_ from `The Echo
-  Nest`_, including the tempo. Thanks to Pedro Silva and Peter Schnebel.
+This version also adds and overhauls a number of plugins:
 
-* The :doc:`/plugins/duplicates` got a number of new features, thanks once
-  again to Pedro Silva:
+* The new :doc:`/plugins/echonest` plugin can fetch a wide range of `acoustic
+  attributes`_ from `The Echo Nest`_, including the "speechiness" and
+  "liveness" of each track. The new plugin supersedes an older version
+  (``echonest_tempo``) that only fetched the BPM field. Thanks to Pedro Silva
+  and Peter Schnebel.
+
+* The :doc:`/plugins/duplicates` got a number of new features, thanks to Pedro
+  Silva:
 
   * The ``keys`` option lets you specify the fields used detect duplicates.
   * You can now use checksumming (via an external command) to find
@@ -20,9 +26,8 @@ New features:
     ``copy``, ``move``, ``delete``, ``delete_file``, and ``tag`` options
     perform those actions.
 
-* The new built-in :ref:`write-cmd` command lets you update the metadata tags
-  for files, bringing them back into sync with your database. Thanks to Heinz
-  Wiesinger.
+* The new :doc:`/plugins/mpdstats` collects statistics about your
+  listening habits from `MPD`_. Thanks to Peter Schnebel and Johann Klähn.
 
 * :doc:`/plugins/lastgenre`: The new ``multiple`` option has been replaced
   with the ``count`` option, which lets you limit the number of genres added
@@ -30,16 +35,10 @@ New features:
   ``min_weight`` field filters out nonsense tags to make your genres more
   relevant. Thanks to Peter Schnebel and rashley60.
 
-* The new :doc:`/plugins/mpdstats` collects statistics about your
-  listening habits from `MPD`_. Thanks to Peter Schnebel and Johann Klähn.
-
 * :doc:`/plugins/lyrics`: A new ``--force`` option optionally re-downloads
-  lyrics even when files already have them. Thanks to Bitdemon on GitHub.
+  lyrics even when files already have them. Thanks to Bitdemon.
 
-* For plugin developers: Added an ``optparse`` callback utility function for
-  performing actions based on arguments. Thanks to Pedro Silva.
-
-Little fixes:
+As usual, there are also innumerable little fixes and improvements:
 
 * When writing ID3 tags for ReplayGain normalization, tags are written with
   both upper-case and lower-case TXXX frame descriptions. Previous versions of
@@ -69,6 +68,9 @@ Little fixes:
   multiple genres.
 * When a match has a year but not a month or day, the autotagger now "zeros
   out" the month and day fields after applying the year.
+* For plugin developers: added an ``optparse`` callback utility function for
+  performing actions based on arguments. Thanks to Pedro Silva.
+
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
 .. _MPD: http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
