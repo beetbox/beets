@@ -12,12 +12,13 @@ Then you can get a more detailed look at beets' features in the
 :doc:`/reference/cli/` and :doc:`/reference/config` references. You might also
 be interested in exploring the :doc:`plugins </plugins/index>`.
 
-If you still need help, your can drop by the ``#beets`` IRC channel on Freenode,
-`email the author`_, or `file a bug`_ in the issue tracker. Please let me know
-where you think this documentation can be improved.
+If you still need help, your can drop by the ``#beets`` IRC channel on
+Freenode, send email to `the mailing list`_, or `file a bug`_ in the issue
+tracker. Please let us know where you think this documentation can be
+improved.
 
 .. _beets: http://beets.radbox.org/
-.. _email the author: mailto:adrian@radbox.org
+.. _the mailing list: http://groups.google.com/group/beets-users
 .. _file a bug: https://github.com/sampsyo/beets/issues
 
 Contents

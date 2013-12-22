@@ -89,9 +89,9 @@ If Python is in a nonstandard location on your system, you may have to edit the
 command path manually.
 
 Because I don't use Windows myself, I may have missed something. If you have
-trouble or you have more detail to contribute here, please `let me know`_.
+trouble or you have more detail to contribute here, please direct it to
+`the mailing list`_.
 
-.. _let me know: mailto:adrian@radbox.org
 .. _install Python: http://python.org/download/
 .. _Setuptools: http://pypi.python.org/pypi/setuptools
 .. _beets.reg: https://github.com/sampsyo/beets/blob/master/extra/beets.reg
@@ -248,7 +248,8 @@ You can always get help using the ``beet help`` command. The plain ``beet help``
 command lists all the available commands; then, for example, ``beet help
 import`` gives more specific help about the ``import`` command.
 
-Please let me know what you think of beets via `email`_ or `Twitter`_.
+Please let me know what you think of beets via `the mailing list`_ or
+`Twitter`_.
 
-.. _email: mailto:adrian@radbox.org
+.. _the mailing list: http://groups.google.com/group/beets-users
 .. _twitter: http://twitter.com/b33ts
