@@ -30,6 +30,7 @@ _MUTAGEN_FORMATS = {
     'flac': 'FLAC',
     'id3': 'ID3FileType',
     'mp3': 'MP3',
+    'mp4': 'MP4',
     'oggflac': 'OggFLAC',
     'oggspeex': 'OggSpeex',
     'oggtheora': 'OggTheora',
