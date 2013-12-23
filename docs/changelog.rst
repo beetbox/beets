@@ -1,14 +1,18 @@
 Changelog
 =========
 
-1.3.2 (in development)
-----------------------
+1.3.2 (December 22, 2013)
+-------------------------
+
+This update brings new plugins for fetching acoustic metrics and listening
+statistics, many more options for the duplicate detection plugin, and flexible
+options for fetching multiple genres.
 
 The "core" of beets gained a new built-in command: :ref:`beet write
 <write-cmd>` updates the metadata tags for files, bringing them back
 into sync with your database. Thanks to Heinz Wiesinger.
 
-This version also adds and overhauls a number of plugins:
+We added some plugins and overhauled some existing ones:
 
 * The new :doc:`/plugins/echonest` plugin can fetch a wide range of `acoustic
   attributes`_ from `The Echo Nest`_, including the "speechiness" and
