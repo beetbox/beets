@@ -1,6 +1,21 @@
 Changelog
 =========
 
+1.3.3 (in development)
+----------------------
+
+Version 1.3.3 brings a set of internal changes to how fields work. The
+consequences for all users are:
+
+* Plugin-provided fields can now be used in queries. For example, if you use
+  the :doc:`/plugins/inline` to define a field called ``era``, you can now
+  filter your library based on that field by typing something like
+  ``beet list era:goldenage``.
+
+For developers, the short version of the story is that Item and Album objects
+provide *uniform access* across fixed, flexible, and computed attributes.
+
+
 1.3.2 (December 22, 2013)
 -------------------------
 

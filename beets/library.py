@@ -360,9 +360,9 @@ class Model(object):
             self._dirty.add(key)
 
     def keys(self, computed=False):
-        """Get the fixed, flexible, and plugin-provided field names for
-        this object. The `computed` parameter controls whether computed
-        (plugin-provided) fields are included in the key list.
+        """Get a list of available field names for this object. The
+        `computed` parameter controls whether computed (plugin-provided)
+        fields are included in the key list.
         """
         base_keys = list(self._fields) + self._values_flex.keys()
         if computed:
@@ -381,6 +381,7 @@ class Model(object):
 
     def items(self):
         """Iterate over (key, value) pairs that this object contains.
+        Computed fields are not included.
         """
         for key in self.keys():
             yield key, self[key]
@@ -397,7 +398,7 @@ class Model(object):
     def __contains__(self, key):
         """Determine whether `key` is an attribute on this object.
         """
-        return key in self.keys()
+        return key in self.keys(True)
 
 
     # Convenient attribute access.
