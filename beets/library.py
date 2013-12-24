@@ -301,6 +301,12 @@ class FlexModel(object):
         """
         return list(self._fields) + self._values_flex.keys()
 
+    def items(self):
+        """Iterate over (key, value) pairs that this object contains.
+        """
+        for key in self.keys():
+            yield key, self[key]
+
     def get(self, key, default=None):
         """Get the value for a given key or `default` if it does not
         exist.
@@ -311,10 +317,9 @@ class FlexModel(object):
             return default
 
     def __contains__(self, key):
-        """Determine whether `key` is a fixed or flex attribute on this
-        object.
+        """Determine whether `key` is an attribute on this object.
         """
-        return key in self._fields or key in self._values_flex
+        return key in self.keys()
 
 
     # Convenient attribute access.
@@ -335,7 +340,39 @@ class FlexModel(object):
             self[key] = value
 
 
-class LibModel(FlexModel):
+class PluggableModel(FlexModel):
+    """A base model class that adds plugin-provided fields to FlexModel.
+    """
+    @classmethod
+    def _getters(cls):
+        """Return a mapping from field names to getter functions.
+        """
+        # We could cache this if it becomes a performance problem to
+        # gather the getter mapping every time.
+        raise NotImplementedError()
+
+    def __getitem__(self, key):
+        """Get the value for a field, which may be a fixed attribute, a
+        flexible attribute, or a plugin-provided attribute.
+        """
+        getters = self._getters()
+        if key in getters:
+            return getters[key](self)
+        return super(PluggableModel, self).__getitem__(key)
+
+    def keys(self, computed=False):
+        """Get the fixed, flexible, and plugin-provided field names for
+        this object. The `computed` parameter controls whether computed
+        (plugin-provided) fields are included in the key list.
+        """
+        base_keys = super(PluggableModel, self).keys()
+        if computed:
+            return base_keys + self._getters().keys()
+        else:
+            return base_keys
+
+
+class LibModel(PluggableModel):
     """A model base class that includes a reference to a Library object.
     It knows how to load and store itself from the database.
     """
@@ -439,6 +476,10 @@ class Item(LibModel):
     _table = 'items'
     _flex_table = 'item_attributes'
     _search_fields = ITEM_DEFAULT_FIELDS
+
+    @classmethod
+    def _getters(cls):
+        return plugins.item_field_getters()
 
     @classmethod
     def from_path(cls, path):
@@ -776,6 +817,10 @@ class Album(LibModel):
     _table = 'albums'
     _flex_table = 'album_attributes'
     _search_fields = ALBUM_DEFAULT_FIELDS
+
+    @classmethod
+    def _getters(cls):
+        return plugins.album_field_getters()
 
     def __setitem__(self, key, value):
         """Set the value of an album attribute."""

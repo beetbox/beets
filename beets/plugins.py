@@ -56,7 +56,7 @@ class BeetsPlugin(object):
         commands that should be added to beets' CLI.
         """
         return ()
-    
+
     def queries(self):
         """Should return a dict mapping prefixes to PluginQuery
         subclasses.
@@ -344,6 +344,28 @@ def import_stages():
         if hasattr(plugin, 'import_stages'):
             stages += plugin.import_stages
     return stages
+
+
+# New-style (lazy) plugin-provided fields.
+
+def item_field_getters():
+    """Get a dictionary mapping field names to unary functions that
+    compute the field's value.
+    """
+    funcs = {}
+    for plugin in find_plugins():
+        if plugin.template_fields:
+            funcs.update(plugin.template_fields)
+    return funcs
+
+def album_field_getters():
+    """As above, for album fields.
+    """
+    funcs = {}
+    for plugin in find_plugins():
+        if plugin.album_template_fields:
+            funcs.update(plugin.album_template_fields)
+    return funcs
 
 
 # Event dispatch.
