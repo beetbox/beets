@@ -235,25 +235,78 @@ def format_for_path(value, key=None, pathmod=None):
 
 
 
-# Items (songs), albums, and their common bases.
+# Common base class for database elements.
 
 
-class FlexModel(object):
-    """An abstract object that consists of a set of "fast" (fixed)
-    fields and an arbitrary number of flexible fields.
+class Model(object):
+    """An abstract object representing an object in the database. Model
+    objects act like dictionaries (i.e., the allow subscript access like
+    ``obj['field']``). The same field set is available via attribute
+    access as a shortcut (i.e., ``obj.field``). Three kinds of attributes are
+    available:
+
+    * **Fixed attributes** come from a predetermined list of field
+      names. These fields correspond to SQLite table columns and are
+      thus fast to read, write, and query.
+    * **Flexible attributes** are free-form and do not need to be listed
+      ahead of time.
+    * **Computed attributes** are read-only fields computed by a getter
+      function provided by a plugin.
+
+    Access to all three field types is uniform: ``obj.field`` works the
+    same regardless of whether ``field`` is fixed, flexible, or
+    computed.
+
+    Model objects can optionally be associated with a `Library` object,
+    in which case they can be loaded and stored from the database. Dirty
+    flags are used to track which fields need to be stored.
+    """
+
+    # Abstract components (to be provided by subclasses).
+
+    _table = None
+    """The main SQLite table name.
+    """
+
+    _flex_table = None
+    """The flex field SQLite table name.
     """
 
     _fields = ()
     """The available "fixed" fields on this type.
     """
 
-    def __init__(self, **values):
-        """Create a new object with the given field values (which may be
-        fixed or flex fields).
+    _bytes_keys = ('path', 'artpath')
+    """Keys whose values should be stored as raw bytes blobs rather than
+    strings.
+    """
+
+    _search_fields = ()
+    """The fields that should be queried by default by unqualified query
+    terms.
+    """
+
+    @classmethod
+    def _getters(cls):
+        """Return a mapping from field names to getter functions.
         """
+        # We could cache this if it becomes a performance problem to
+        # gather the getter mapping every time.
+        raise NotImplementedError()
+
+
+    # Basic operation.
+
+    def __init__(self, lib=None, **values):
+        """Create a new object with an optional Library association and
+        initial field values.
+        """
+        self._lib = lib
         self._dirty = set()
         self._values_fixed = {}
         self._values_flex = {}
+
+        # Initial contents.
         self.update(values)
         self.clear_dirty()
 
@@ -264,18 +317,34 @@ class FlexModel(object):
         )
 
     def clear_dirty(self):
+        """Mark all fields as *clean* (i.e., not needing to be stored to
+        the database).
+        """
         self._dirty = set()
 
+    def _check_db(self):
+        """Ensure that this object is associated with a database row: it
+        has a reference to a library (`_lib`) and an id. A ValueError
+        exception is raised otherwise.
+        """
+        if not self._lib:
+            raise ValueError('{0} has no library'.format(type(self).__name__))
+        if not self.id:
+            raise ValueError('{0} has no id'.format(type(self).__name__))
 
-    # Act like a dictionary.
+
+    # Essential field accessors.
 
     def __getitem__(self, key):
-        """Get the value for a field. Fixed fields always return a value
-        (which may be None); flex fields may raise a KeyError.
+        """Get the value for a field. Raise a KeyError if the field is
+        not available.
         """
-        if key in self._fields:
+        getters = self._getters()
+        if key in getters:  # Computed.
+            return getters[key](self)
+        elif key in self._fields:  # Fixed.
             return self._values_fixed.get(key)
-        elif key in self._values_flex:
+        elif key in self._values_flex:  # Flexible.
             return self._values_flex[key]
         else:
             raise KeyError(key)
@@ -290,16 +359,25 @@ class FlexModel(object):
         if old_value != value:
             self._dirty.add(key)
 
+    def keys(self, computed=False):
+        """Get the fixed, flexible, and plugin-provided field names for
+        this object. The `computed` parameter controls whether computed
+        (plugin-provided) fields are included in the key list.
+        """
+        base_keys = list(self._fields) + self._values_flex.keys()
+        if computed:
+            return base_keys + self._getters().keys()
+        else:
+            return base_keys
+
+
+    # Act like a dictionary.
+
     def update(self, values):
         """Assign all values in the given dict.
         """
         for key, value in values.items():
             self[key] = value
-
-    def keys(self):
-        """Get all the keys (both fixed and flex) on this object.
-        """
-        return list(self._fields) + self._values_flex.keys()
 
     def items(self):
         """Iterate over (key, value) pairs that this object contains.
@@ -335,79 +413,12 @@ class FlexModel(object):
 
     def __setattr__(self, key, value):
         if key.startswith('_'):
-            super(FlexModel, self).__setattr__(key, value)
+            super(Model, self).__setattr__(key, value)
         else:
             self[key] = value
 
 
-class PluggableModel(FlexModel):
-    """A base model class that adds plugin-provided fields to FlexModel.
-    """
-    @classmethod
-    def _getters(cls):
-        """Return a mapping from field names to getter functions.
-        """
-        # We could cache this if it becomes a performance problem to
-        # gather the getter mapping every time.
-        raise NotImplementedError()
-
-    def __getitem__(self, key):
-        """Get the value for a field, which may be a fixed attribute, a
-        flexible attribute, or a plugin-provided attribute.
-        """
-        getters = self._getters()
-        if key in getters:
-            return getters[key](self)
-        return super(PluggableModel, self).__getitem__(key)
-
-    def keys(self, computed=False):
-        """Get the fixed, flexible, and plugin-provided field names for
-        this object. The `computed` parameter controls whether computed
-        (plugin-provided) fields are included in the key list.
-        """
-        base_keys = super(PluggableModel, self).keys()
-        if computed:
-            return base_keys + self._getters().keys()
-        else:
-            return base_keys
-
-
-class LibModel(PluggableModel):
-    """A model base class that includes a reference to a Library object.
-    It knows how to load and store itself from the database.
-    """
-
-    _table = None
-    """The main SQLite table name.
-    """
-
-    _flex_table = None
-    """The flex field SQLite table name.
-    """
-
-    _bytes_keys = ('path', 'artpath')
-    """Keys whose values should be stored as raw bytes blobs rather than
-    strings.
-    """
-
-    _search_fields = ()
-    """The fields that should be queried by default by unqualified query
-    terms.
-    """
-
-    def __init__(self, lib=None, **values):
-        self._lib = lib
-        super(LibModel, self).__init__(**values)
-
-    def _check_db(self):
-        """Ensure that this object is associated with a database row: it
-        has a reference to a library (`_lib`) and an id. A ValueError
-        exception is raised otherwise.
-        """
-        if not self._lib:
-            raise ValueError('{0} has no library'.format(type(self).__name__))
-        if not self.id:
-            raise ValueError('{0} has no id'.format(type(self).__name__))
+    # Database interaction (CRUD methods).
 
     def store(self):
         """Save the object's metadata into the library database.
@@ -471,7 +482,11 @@ class LibModel(PluggableModel):
             )
 
 
-class Item(LibModel):
+
+# Item and Album concrete classes.
+
+
+class Item(Model):
     _fields = ITEM_KEYS
     _table = 'items'
     _flex_table = 'item_attributes'
@@ -808,7 +823,7 @@ class Item(LibModel):
             return normpath(os.path.join(basedir, subpath))
 
 
-class Album(LibModel):
+class Album(Model):
     """Provides access to information about albums stored in a
     library. Reflects the library's "albums" table, including album
     art.
@@ -1449,7 +1464,7 @@ def construct_query_part(query_part, default_fields, all_keys):
 def get_query(val, model_cls):
     """Takes a value which may be None, a query string, a query string
     list, or a Query object, and returns a suitable Query object.
-    `model_cls` is the subclass of LibModel indicating which entity this
+    `model_cls` is the subclass of Model indicating which entity this
     is a query for (i.e., Album or Item) and is used to determine which
     fields are searched.
     """

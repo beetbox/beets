@@ -51,19 +51,18 @@ Model Classes
 -------------
 
 The two model entities in beets libraries, :class:`Item` and :class:`Album`,
-share base classes that provide generic data storage. The :class:`LibModel`
-class inherits from :class:`FlexModel`, and both :class:`Item` and
-:class:`Album` inherit from it.
+share a base class, :class:`Model`, that provides common functionality and
+ORM-like abstraction.
 
 The fields model classes can be accessed using attributes (dots, as in
 ``item.artist``) or items (brackets, as in ``item['artist']``). The
-:class:`FlexModel` base class provides some methods that resemble `dict`
+:class:`Model` base class provides some methods that resemble `dict`
 objects.
 
-.. autoclass:: FlexModel
-    :members:
+Model base
+''''''''''
 
-.. autoclass:: LibModel
+.. autoclass:: Model
     :members:
 
 Item
