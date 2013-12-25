@@ -1022,6 +1022,28 @@ class ImportTimeTest(_common.TestCase):
         self.assertGreater(self.singleton.added, 0)
 
 
+class TemplateTest(_common.LibTestCase):
+    def album_fields_override_item_values(self):
+        self.album = self.lib.add_album([self.i])
+        self.album.albumartist = 'album-level'
+        self.album.store()
+        self.i.albumartist = 'track-level'
+        self.i.store()
+        self.assertEqual(self.i.evaluate_template('$albumartist'),
+                         'album-level')
+
+    def test_year_formatted_in_template(self):
+        self.i.year = 123
+        self.i.store()
+        self.assertEqual(self.i.evaluate_template('$year'), '0123')
+
+    def test_album_flexattr_appears_in_item_template(self):
+        self.album = self.lib.add_album([self.i])
+        self.album.foo = 'baz'
+        self.album.store()
+        self.assertEqual(self.i.evaluate_template('$foo'), 'baz')
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

@@ -770,11 +770,12 @@ class Item(Model):
         """
         mapping = super(Item, self)._formatted_mapping(for_path)
 
-        # Override album-level fields.
+        # Merge in album-level fields.
         album = self.get_album()
         if album:
-            for key in ALBUM_KEYS_ITEM:
-                mapping[key] = album._get_formatted(key, for_path)
+            for key in album.keys(True):
+                if key in ALBUM_KEYS_ITEM or key not in ITEM_KEYS:
+                    mapping[key] = album._get_formatted(key, for_path)
 
         # Use the album artist if the track artist is not set and
         # vice-versa.

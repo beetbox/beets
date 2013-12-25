@@ -11,6 +11,8 @@ consequences for all users are:
   the :doc:`/plugins/inline` to define a field called ``era``, you can now
   filter your library based on that field by typing something like
   ``beet list era:goldenage``.
+* Album-level flexible attributes and plugin-provided attributes can now be
+  used in path formats (and other item-level templates).
 
 For developers, the short version of the story is that Item and Album objects
 provide *uniform access* across fixed, flexible, and computed attributes.
