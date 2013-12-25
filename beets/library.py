@@ -30,8 +30,7 @@ from unidecode import unidecode
 from beets.mediafile import MediaFile
 from beets import plugins
 from beets import util
-from beets.util import bytestring_path, syspath, normpath, samefile,\
-    displayable_path
+from beets.util import bytestring_path, syspath, normpath, samefile
 from beets.util.functemplate import Template
 import beets
 from datetime import datetime
@@ -515,6 +514,56 @@ class Model(object):
             self.store()
 
 
+    # Formatting and templating.
+
+    def _get_formatted(self, key, for_path=False):
+        """Get a field value formatted as a string (`unicode` object)
+        for display to the user. If `for_path` is true, then the value
+        will be sanitized for inclusion in a pathname (i.e., path
+        separators will be removed from the value).
+        """
+        value = self.get(key)
+
+        # FIXME this will get replaced with more sophisticated
+        # (type-based) formatting logic.
+        value = format_for_path(value, key)
+
+        if for_path:
+            sep_repl = beets.config['path_sep_replace'].get(unicode)
+            for sep in (os.path.sep, os.path.altsep):
+                if sep:
+                    value = value.replace(sep, sep_repl)
+
+        return value
+
+    def _formatted_mapping(self, for_path=False):
+        """Get a mapping containing all values on this object formatted
+        as human-readable strings.
+        """
+        # In the future, this could be made "lazy" to avoid computing
+        # fields unnecessarily.
+        out = {}
+        for key in self.keys(True):
+            out[key] = self._get_formatted(key, for_path)
+        return out
+
+    def evaluate_template(self, template, for_path=False):
+        """Evaluate a template (a string or a `Template` object) using
+        the object's fields. If `for_path` is true, then no new path
+        separators will be added to the template.
+        """
+        # Build value mapping.
+        mapping = self._formatted_mapping(for_path)
+
+        # Get template functions.
+        funcs = DefaultTemplateFunctions(self, self._lib).functions()
+        funcs.update(plugins.template_funcs())
+
+        # Perform substitution.
+        if isinstance(template, basestring):
+            template = Template(template)
+        return template.substitute(mapping, funcs)
+
 
 # Item and Album concrete classes.
 
@@ -722,37 +771,17 @@ class Item(Model):
 
     # Templating.
 
-    def evaluate_template(self, template, sanitize=False,
-                          pathmod=None):
-        """Evaluates a Template object using the item's fields. If
-        `sanitize`, then each value will be sanitized for inclusion in a
-        file path.
+    def _formatted_mapping(self, for_path=False):
+        """Get a mapping containing string-formatted values from either
+        this item or the associated album, if any.
         """
-        pathmod = pathmod or os.path
+        mapping = super(Item, self)._formatted_mapping(for_path)
 
-        # Get the item's Album if it has one.
+        # Override album-level fields.
         album = self.get_album()
-
-        # Build the mapping for substitution in the template,
-        # beginning with the values from the database.
-        mapping = {}
-        for key in ITEM_KEYS:
-            # Get the values from either the item or its album.
-            if key in ALBUM_KEYS_ITEM and album is not None:
-                # From album.
-                value = getattr(album, key)
-            else:
-                # From Item.
-                value = getattr(self, key)
-            if sanitize:
-                value = format_for_path(value, key, pathmod)
-            mapping[key] = value
-
-        # Include the path if we're not sanitizing to construct a path.
-        if sanitize:
-            del mapping['path']
-        else:
-            mapping['path'] = displayable_path(self.path)
+        if album:
+            for key in ALBUM_KEYS_ITEM:
+                mapping[key] = album._get_formatted(key)
 
         # Use the album artist if the track artist is not set and
         # vice-versa.
@@ -761,29 +790,7 @@ class Item(Model):
         if not mapping['albumartist']:
             mapping['albumartist'] = mapping['artist']
 
-        # Flexible attributes.
-        for key, value in self._values_flex.items():
-            if sanitize:
-                value = format_for_path(value, None, pathmod)
-            mapping[key] = value
-
-        # Get values from plugins.
-        for key, value in plugins.template_values(self).items():
-            if sanitize:
-                value = format_for_path(value, key, pathmod)
-            mapping[key] = value
-        if album:
-            for key, value in plugins.album_template_values(album).items():
-                if sanitize:
-                    value = format_for_path(value, key, pathmod)
-                mapping[key] = value
-
-        # Get template functions.
-        funcs = DefaultTemplateFunctions(self, self._lib, pathmod).functions()
-        funcs.update(plugins.template_funcs())
-
-        # Perform substitution.
-        return template.substitute(mapping, funcs)
+        return mapping
 
     def destination(self, pathmod=None, fragment=False,
                     basedir=None, platform=None, path_formats=None):
@@ -1009,28 +1016,6 @@ class Album(Model):
         else:
             util.move(path, artdest)
         self.artpath = artdest
-
-    def evaluate_template(self, template):
-        """Evaluates a Template object using the album's fields.
-        """
-        # Get template field values.
-        mapping = {}
-        for key, value in dict(self).items():
-            mapping[key] = format_for_path(value, key)
-
-        mapping['artpath'] = displayable_path(mapping['artpath'])
-        mapping['path'] = displayable_path(self.item_dir())
-
-        # Get values from plugins.
-        for key, value in plugins.album_template_values(self).iteritems():
-            mapping[key] = value
-
-        # Get template functions.
-        funcs = DefaultTemplateFunctions().functions()
-        funcs.update(plugins.template_funcs())
-
-        # Perform substitution.
-        return template.substitute(mapping, funcs)
 
     def store(self):
         """Update the database with the album information. The album's
