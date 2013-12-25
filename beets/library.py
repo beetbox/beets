@@ -193,13 +193,11 @@ def _orelse(exp1, exp2):
 
 
 # Path element formatting for templating.
-def format_for_path(value, key=None, pathmod=None):
+def format_for_path(value, key=None):
     """Sanitize the value for inclusion in a path: replace separators
     with _, etc. Doesn't guarantee that the whole path will be valid;
     you should still call `util.sanitize_path` on the complete path.
     """
-    pathmod = pathmod or os.path
-
     if isinstance(value, str):
         value = value.decode('utf8', 'ignore')
     elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
@@ -776,7 +774,7 @@ class Item(Model):
         album = self.get_album()
         if album:
             for key in ALBUM_KEYS_ITEM:
-                mapping[key] = album._get_formatted(key)
+                mapping[key] = album._get_formatted(key, for_path)
 
         # Use the album artist if the track artist is not set and
         # vice-versa.
@@ -825,7 +823,7 @@ class Item(Model):
             subpath_tmpl = Template(path_format)
 
         # Evaluate the selected template.
-        subpath = self.evaluate_template(subpath_tmpl, True, pathmod)
+        subpath = self.evaluate_template(subpath_tmpl, True)
 
         # Prepare path for output: normalize Unicode characters.
         if platform == 'darwin':
@@ -979,7 +977,7 @@ class Album(Model):
         item_dir = item_dir or self.item_dir()
 
         filename_tmpl = Template(beets.config['art_filename'].get(unicode))
-        subpath = format_for_path(self.evaluate_template(filename_tmpl))
+        subpath = self.evaluate_template(filename_tmpl, True)
         subpath = util.sanitize_path(subpath,
                                      replacements=self._lib.replacements)
         subpath = bytestring_path(subpath)
@@ -1908,14 +1906,13 @@ class DefaultTemplateFunctions(object):
     """
     _prefix = 'tmpl_'
 
-    def __init__(self, item=None, lib=None, pathmod=None):
+    def __init__(self, item=None, lib=None):
         """Paramaterize the functions. If `item` or `lib` is None, then
         some functions (namely, ``aunique``) will always evaluate to the
         empty string.
         """
         self.item = item
         self.lib = lib
-        self.pathmod = pathmod or os.path
 
     def functions(self):
         """Returns a dictionary containing the functions defined in this
@@ -2039,8 +2036,7 @@ class DefaultTemplateFunctions(object):
             return res
 
         # Flatten disambiguation value into a string.
-        disam_value = format_for_path(getattr(album, disambiguator),
-                                      disambiguator, self.pathmod)
+        disam_value = album._get_formatted(disambiguator, True)
         res = u' [{0}]'.format(disam_value)
         self.lib._memotable[memokey] = res
         return res

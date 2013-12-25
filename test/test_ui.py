@@ -104,7 +104,7 @@ class ListTest(_common.TestCase):
         self.assertTrue(u'1' in out)
         self.assertTrue(u'the album' in out)
         self.assertTrue(u'the artist' in out)
-        self.assertEqual(u'the artist - the album - 1', out.strip())
+        self.assertEqual(u'the artist - the album - 0001', out.strip())
 
     def test_list_album_format(self):
         self._run_list(album=True, fmt='$genre')

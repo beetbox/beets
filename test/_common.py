@@ -19,6 +19,7 @@ import os
 import logging
 import tempfile
 import shutil
+from contextlib import contextmanager
 
 # Use unittest2 on Python < 2.7.
 try:
@@ -243,3 +244,22 @@ class Bag(object):
 
     def __getattr__(self, key):
         return self.fields.get(key)
+
+
+# Platform mocking.
+
+@contextmanager
+def platform_windows():
+    import ntpath
+    old_path = os.path
+    os.path = ntpath
+    yield
+    os.path = old_path
+
+@contextmanager
+def platform_posix():
+    import posixpath
+    old_path = os.path
+    os.path = posixpath
+    yield
+    os.path = old_path

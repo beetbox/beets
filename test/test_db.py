@@ -16,8 +16,6 @@
 """
 import os
 import sqlite3
-import ntpath
-import posixpath
 import shutil
 import re
 import unicodedata
@@ -221,22 +219,26 @@ class DestinationTest(_common.TestCase):
 
     def test_distination_windows_removes_both_separators(self):
         self.i.title = 'one \\ two / three.mp3'
-        p = self.i.destination(pathmod=ntpath)
+        with _common.platform_windows():
+            p = self.i.destination()
         self.assertFalse('one \\ two' in p)
         self.assertFalse('one / two' in p)
         self.assertFalse('two \\ three' in p)
         self.assertFalse('two / three' in p)
 
     def test_sanitize_unix_replaces_leading_dot(self):
-        p = util.sanitize_path(u'one/.two/three', posixpath)
+        with _common.platform_posix():
+            p = util.sanitize_path(u'one/.two/three')
         self.assertFalse('.' in p)
 
     def test_sanitize_windows_replaces_trailing_dot(self):
-        p = util.sanitize_path(u'one/two./three', ntpath)
+        with _common.platform_windows():
+            p = util.sanitize_path(u'one/two./three')
         self.assertFalse('.' in p)
 
     def test_sanitize_windows_replaces_illegal_chars(self):
-        p = util.sanitize_path(u':*?"<>|', ntpath)
+        with _common.platform_windows():
+            p = util.sanitize_path(u':*?"<>|')
         self.assertFalse(':' in p)
         self.assertFalse('*' in p)
         self.assertFalse('?' in p)
@@ -322,33 +324,39 @@ class DestinationTest(_common.TestCase):
         self.assertEqual(self.i.destination(), np('one/three'))
 
     def test_sanitize_windows_replaces_trailing_space(self):
-        p = util.sanitize_path(u'one/two /three', ntpath)
+        with _common.platform_windows():
+            p = util.sanitize_path(u'one/two /three')
         self.assertFalse(' ' in p)
 
-    def test_component_sanitize_replaces_separators(self):
-        name = posixpath.join('a', 'b')
-        newname = beets.library.format_for_path(name, None, posixpath)
-        self.assertNotEqual(name, newname)
+    def test_component_sanitize_does_not_replace_separators(self):
+        with _common.platform_posix():
+            name = os.path.join('a', 'b')
+            newname = beets.library.format_for_path(name, None)
+        self.assertEqual(name, newname)
 
     def test_component_sanitize_pads_with_zero(self):
-        name = beets.library.format_for_path(1, 'track', posixpath)
+        with _common.platform_posix():
+            name = beets.library.format_for_path(1, 'track')
         self.assertTrue(name.startswith('0'))
 
     def test_component_sanitize_uses_kbps_bitrate(self):
-        val = beets.library.format_for_path(12345, 'bitrate', posixpath)
+        with _common.platform_posix():
+            val = beets.library.format_for_path(12345, 'bitrate')
         self.assertEqual(val, u'12kbps')
 
     def test_component_sanitize_uses_khz_samplerate(self):
-        val = beets.library.format_for_path(12345, 'samplerate', posixpath)
+        with _common.platform_posix():
+            val = beets.library.format_for_path(12345, 'samplerate')
         self.assertEqual(val, u'12kHz')
 
     def test_component_sanitize_datetime(self):
-        val = beets.library.format_for_path(1368302461.210265, 'added',
-                                            posixpath)
+        with _common.platform_posix():
+            val = beets.library.format_for_path(1368302461.210265, 'added')
         self.assertTrue(val.startswith('2013'))
 
     def test_component_sanitize_none(self):
-        val = beets.library.format_for_path(None, 'foo', posixpath)
+        with _common.platform_posix():
+            val = beets.library.format_for_path(None, 'foo')
         self.assertEqual(val, u'')
 
     def test_artist_falls_back_to_albumartist(self):
@@ -380,19 +388,22 @@ class DestinationTest(_common.TestCase):
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'something')
 
     def test_sanitize_path_works_on_empty_string(self):
-        p = util.sanitize_path(u'', posixpath)
+        with _common.platform_posix():
+            p = util.sanitize_path(u'')
         self.assertEqual(p, u'')
 
     def test_sanitize_with_custom_replace_overrides_built_in_sub(self):
-        p = util.sanitize_path(u'a/.?/b', posixpath, [
-            (re.compile(ur'foo'), u'bar'),
-        ])
+        with _common.platform_posix():
+            p = util.sanitize_path(u'a/.?/b', None, [
+                (re.compile(ur'foo'), u'bar'),
+            ])
         self.assertEqual(p, u'a/.?/b')
 
     def test_sanitize_with_custom_replace_adds_replacements(self):
-        p = util.sanitize_path(u'foo/bar', posixpath, [
-            (re.compile(ur'foo'), u'bar'),
-        ])
+        with _common.platform_posix():
+            p = util.sanitize_path(u'foo/bar', None, [
+                (re.compile(ur'foo'), u'bar'),
+            ])
         self.assertEqual(p, u'bar/bar')
 
     def test_unicode_normalized_nfd_on_mac(self):
@@ -434,7 +445,9 @@ class PathFormattingMixin(object):
     def _assert_dest(self, dest, i=None):
         if i is None:
             i = self.i
-        self.assertEqual(i.destination(pathmod=posixpath), dest)
+        with _common.platform_posix():
+            actual = i.destination()
+        self.assertEqual(actual, dest)
 
 
 class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
@@ -552,21 +565,24 @@ class DisambiguationTest(_common.TestCase, PathFormattingMixin):
 
 class PathConversionTest(_common.TestCase):
     def test_syspath_windows_format(self):
-        path = ntpath.join('a', 'b', 'c')
-        outpath = util.syspath(path, pathmod=ntpath)
+        with _common.platform_windows():
+            path = os.path.join('a', 'b', 'c')
+            outpath = util.syspath(path)
         self.assertTrue(isinstance(outpath, unicode))
         self.assertTrue(outpath.startswith(u'\\\\?\\'))
 
     def test_syspath_posix_unchanged(self):
-        path = posixpath.join('a', 'b', 'c')
-        outpath = util.syspath(path, pathmod=posixpath)
+        with _common.platform_posix():
+            path = os.path.join('a', 'b', 'c')
+            outpath = util.syspath(path)
         self.assertEqual(path, outpath)
 
     def _windows_bytestring_path(self, path):
         old_gfse = sys.getfilesystemencoding
         sys.getfilesystemencoding = lambda: 'mbcs'
         try:
-            return util.bytestring_path(path, ntpath)
+            with _common.platform_windows():
+                return util.bytestring_path(path)
         finally:
             sys.getfilesystemencoding = old_gfse
 
@@ -582,26 +598,32 @@ class PathConversionTest(_common.TestCase):
 
 
 class PluginDestinationTest(_common.TestCase):
-    # Mock the plugins.template_values(item) function.
-    def _template_values(self, item):
-        return self._tv_map
     def setUp(self):
         super(PluginDestinationTest, self).setUp()
+
+        # Mock beets.plugins.item_field_getters.
         self._tv_map = {}
-        self.old_template_values = plugins.template_values
-        plugins.template_values = self._template_values
+        def field_getters():
+            getters = {}
+            for key, value in self._tv_map.items():
+                getters[key] = lambda _: value
+            return getters
+        self.old_field_getters = plugins.item_field_getters
+        plugins.item_field_getters = field_getters
 
         self.lib = beets.library.Library(':memory:')
         self.lib.directory = '/base'
         self.lib.path_formats = [('default', u'$artist $foo')]
         self.i = item(self.lib)
+
     def tearDown(self):
         super(PluginDestinationTest, self).tearDown()
-        plugins.template_values = self.old_template_values
+        plugins.item_field_getters = self.old_field_getters
 
     def _assert_dest(self, dest):
-        self.assertEqual(self.i.destination(pathmod=posixpath),
-                         '/base/' + dest)
+        with _common.platform_posix():
+            the_dest = self.i.destination()
+        self.assertEqual(the_dest, '/base/' + dest)
 
     def test_undefined_value_not_substituted(self):
         self._assert_dest('the artist $foo')
@@ -934,15 +956,18 @@ class PathStringTest(_common.TestCase):
 
 class PathTruncationTest(_common.TestCase):
     def test_truncate_bytestring(self):
-        p = util.truncate_path('abcde/fgh', posixpath, 4)
+        with _common.platform_posix():
+            p = util.truncate_path('abcde/fgh', None, 4)
         self.assertEqual(p, 'abcd/fgh')
 
     def test_truncate_unicode(self):
-        p = util.truncate_path(u'abcde/fgh', posixpath, 4)
+        with _common.platform_posix():
+            p = util.truncate_path(u'abcde/fgh', None, 4)
         self.assertEqual(p, u'abcd/fgh')
 
     def test_truncate_preserves_extension(self):
-        p = util.truncate_path(u'abcde/fgh.ext', posixpath, 5)
+        with _common.platform_posix():
+            p = util.truncate_path(u'abcde/fgh.ext', None, 5)
         self.assertEqual(p, u'abcde/f.ext')
 
 
