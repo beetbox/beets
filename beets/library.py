@@ -322,14 +322,14 @@ class Model(object):
         """
         self._dirty = set()
 
-    def _check_db(self):
+    def _check_db(self, need_id=True):
         """Ensure that this object is associated with a database row: it
         has a reference to a library (`_lib`) and an id. A ValueError
         exception is raised otherwise.
         """
         if not self._lib:
             raise ValueError('{0} has no library'.format(type(self).__name__))
-        if not self.id:
+        if need_id and not self.id:
             raise ValueError('{0} has no id'.format(type(self).__name__))
 
 
@@ -451,12 +451,13 @@ class Model(object):
 
             # Flexible attributes.
             for key, value in self._values_flex.items():
-                tx.mutate(
-                    'INSERT INTO {0} '
-                    '(entity_id, key, value) '
-                    'VALUES (?, ?, ?);'.format(self._flex_table),
-                    (self.id, key, value),
-                )
+                if key in self._dirty:
+                    tx.mutate(
+                        'INSERT INTO {0} '
+                        '(entity_id, key, value) '
+                        'VALUES (?, ?, ?);'.format(self._flex_table),
+                        (self.id, key, value),
+                    )
 
         self.clear_dirty()
 
@@ -481,6 +482,27 @@ class Model(object):
                 'DELETE FROM {0} WHERE entity_id=?'.format(self._flex_table),
                 (self.id,)
             )
+
+    def add(self, lib=None):
+        """Add the object to the library database. This object must be
+        associated with a library; you can provide one via the `lib`
+        parameter or use the currently associated library.
+        """
+        if lib:
+            self._lib = lib
+        self._check_db(False)
+
+        with self._lib.transaction() as tx:
+            new_id = tx.mutate(
+                'INSERT INTO {0} DEFAULT VALUES'.format(self._table)
+            )
+            self.id = new_id
+
+            # Mark every non-null field as dirty and store.
+            for key, value in self.items():
+                if value is not None:
+                    self._dirty.add(key)
+            self.store()
 
 
 
