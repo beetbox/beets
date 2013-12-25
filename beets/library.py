@@ -383,7 +383,7 @@ class Model(object):
         """Iterate over (key, value) pairs that this object contains.
         Computed fields are not included.
         """
-        for key in self.keys():
+        for key in self:
             yield key, self[key]
 
     def get(self, key, default=None):
@@ -399,6 +399,12 @@ class Model(object):
         """Determine whether `key` is an attribute on this object.
         """
         return key in self.keys(True)
+
+    def __iter__(self):
+        """Iterate over the available field names (excluding computed
+        fields).
+        """
+        return iter(self.keys())
 
 
     # Convenient attribute access.
@@ -487,6 +493,9 @@ class Model(object):
         """Add the object to the library database. This object must be
         associated with a library; you can provide one via the `lib`
         parameter or use the currently associated library.
+
+        The object's `id` and `added` fields are set along with any
+        current field values.
         """
         if lib:
             self._lib = lib
@@ -497,10 +506,11 @@ class Model(object):
                 'INSERT INTO {0} DEFAULT VALUES'.format(self._table)
             )
             self.id = new_id
+            self.added = time.time()
 
             # Mark every non-null field as dirty and store.
-            for key, value in self.items():
-                if value is not None:
+            for key in self:
+                if self[key] is not None:
                     self._dirty.add(key)
             self.store()
 
@@ -1795,76 +1805,34 @@ class Library(object):
 
     # Adding objects to the database.
 
-    def add(self, item):
-        """Add the :class:`Item` object to the library database. The
-        item's id field will be updated; the new id is returned.
+    def add(self, obj):
+        """Add the :class:`Item` or :class:`Album` object to the library
+        database. Return the object's new id.
         """
-        item.added = time.time()
-        if not item._lib:
-            item._lib = self
-
-        # Build essential parts of query.
-        columns = ','.join([key for key in ITEM_KEYS if key != 'id'])
-        values = ','.join(['?'] * (len(ITEM_KEYS) - 1))
-        subvars = []
-        for key in ITEM_KEYS:
-            if key != 'id':
-                value = getattr(item, key)
-                if key == 'path' and isinstance(value, str):
-                    value = buffer(value)
-                subvars.append(value)
-
-        # Issue query.
-        with self.transaction() as tx:
-            # Main table insertion.
-            new_id = tx.mutate(
-                'INSERT INTO items (' + columns + ') VALUES (' + values + ')',
-                subvars
-            )
-
-            # Flexible attributes.
-            flexins = 'INSERT INTO item_attributes ' \
-                      ' (entity_id, key, value)' \
-                      ' VALUES (?, ?, ?)'
-            for key, value in item._values_flex.items():
-                if value is not None:
-                    tx.mutate(flexins, (new_id, key, value))
-
-        item.clear_dirty()
-        item.id = new_id
+        obj.add(self)
         self._memotable = {}
-        return new_id
+        return obj.id
 
     def add_album(self, items):
-        """Create a new album in the database with metadata derived
-        from its items. The items are added to the database if they
-        don't yet have an ID. Returns an :class:`Album` object.
+        """Create a new album consisting of a list of items. The items
+        are added to the database if they don't yet have an ID. Return a
+        new :class:`Album` object.
         """
-        # Set the metadata from the first item.
-        album_values = dict((key, items[0][key]) for key in ALBUM_KEYS_ITEM)
+        # Create the album structure using metadata from the first item.
+        values = dict((key, items[0][key]) for key in ALBUM_KEYS_ITEM)
+        album = Album(self, **values)
 
-        # When adding an album and its items for the first time, the
-        # items do not yet have a timestamp.
-        album_values['added'] = time.time()
-
-        with self.transaction() as tx:
-            sql = 'INSERT INTO albums (%s) VALUES (%s)' % \
-                (', '.join(ALBUM_KEYS_ITEM),
-                ', '.join(['?'] * len(ALBUM_KEYS_ITEM)))
-            subvals = [album_values[key] for key in ALBUM_KEYS_ITEM]
-            album_id = tx.mutate(sql, subvals)
-
-            # Add the items to the library.
+        # Add the album structure and set the items' album_id fields.
+        # Store or add the items.
+        with self.transaction():
+            album.add(self)
             for item in items:
-                item.album_id = album_id
+                item.album_id = album.id
                 if item.id is None:
-                    self.add(item)
+                    item.add(self)
                 else:
                     item.store()
 
-        # Construct the new Album object.
-        album_values['id'] = album_id
-        album = Album(self, **album_values)
         return album
 
 
