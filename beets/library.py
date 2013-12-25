@@ -785,8 +785,8 @@ class Item(Model):
 
         return mapping
 
-    def destination(self, pathmod=None, fragment=False,
-                    basedir=None, platform=None, path_formats=None):
+    def destination(self, fragment=False, basedir=None, platform=None,
+                    path_formats=None):
         """Returns the path in the library directory designated for the
         item (i.e., where the file ought to be). fragment makes this
         method return just the path fragment underneath the root library
@@ -795,7 +795,6 @@ class Item(Model):
         directory for the destination.
         """
         self._check_db()
-        pathmod = pathmod or os.path
         platform = platform or sys.platform
         basedir = basedir or self._lib.directory
         path_formats = path_formats or self._lib.path_formats
@@ -831,13 +830,13 @@ class Item(Model):
         else:
             subpath = unicodedata.normalize('NFC', subpath)
         # Truncate components and remove forbidden characters.
-        subpath = util.sanitize_path(subpath, pathmod, self._lib.replacements)
+        subpath = util.sanitize_path(subpath, self._lib.replacements)
         # Encode for the filesystem.
         if not fragment:
             subpath = bytestring_path(subpath)
 
         # Preserve extension.
-        _, extension = pathmod.splitext(self.path)
+        _, extension = os.path.splitext(self.path)
         if fragment:
             # Outputting Unicode.
             extension = extension.decode('utf8', 'ignore')
@@ -848,7 +847,7 @@ class Item(Model):
         if not maxlen:
             # When zero, try to determine from filesystem.
             maxlen = util.max_filename_length(self._lib.directory)
-        subpath = util.truncate_path(subpath, pathmod, maxlen)
+        subpath = util.truncate_path(subpath, maxlen)
 
         if fragment:
             return subpath

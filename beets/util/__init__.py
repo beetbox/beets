@@ -116,7 +116,7 @@ def normpath(path):
     path = os.path.normpath(os.path.abspath(os.path.expanduser(path)))
     return bytestring_path(path)
 
-def ancestry(path, pathmod=None):
+def ancestry(path):
     """Return a list consisting of path's parent directory, its
     grandparent, and so on. For instance:
 
@@ -125,11 +125,10 @@ def ancestry(path, pathmod=None):
 
     The argument should *not* be the result of a call to `syspath`.
     """
-    pathmod = pathmod or os.path
     out = []
     last_path = None
     while path:
-        path = pathmod.dirname(path)
+        path = os.path.dirname(path)
 
         if path == last_path:
             break
@@ -256,7 +255,7 @@ def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
         else:
             break
 
-def components(path, pathmod=None):
+def components(path):
     """Return a list of the path components in path. For instance:
 
        >>> components('/a/b/c')
@@ -264,17 +263,16 @@ def components(path, pathmod=None):
 
     The argument should *not* be the result of a call to `syspath`.
     """
-    pathmod = pathmod or os.path
     comps = []
-    ances = ancestry(path, pathmod)
+    ances = ancestry(path)
     for anc in ances:
-        comp = pathmod.basename(anc)
+        comp = os.path.basename(anc)
         if comp:
             comps.append(comp)
         else:  # root
             comps.append(anc)
 
-    last = pathmod.basename(path)
+    last = os.path.basename(path)
     if last:
         comps.append(last)
 
@@ -294,13 +292,10 @@ def _fsencoding():
         encoding = 'utf8'
     return encoding
 
-def bytestring_path(path, pathmod=None):
+def bytestring_path(path):
     """Given a path, which is either a str or a unicode, returns a str
     path (ensuring that we never deal with Unicode pathnames).
     """
-    pathmod = pathmod or os.path
-    windows = pathmod.__name__ == 'ntpath'
-
     # Pass through bytestrings.
     if isinstance(path, str):
         return path
@@ -308,7 +303,7 @@ def bytestring_path(path, pathmod=None):
     # On Windows, remove the magic prefix added by `syspath`. This makes
     # ``bytestring_path(syspath(X)) == X``, i.e., we can safely
     # round-trip through `syspath`.
-    if windows and path.startswith(WINDOWS_MAGIC_PREFIX):
+    if os.path.__name__ == 'ntpath' and path.startswith(WINDOWS_MAGIC_PREFIX):
         path = path[len(WINDOWS_MAGIC_PREFIX):]
 
     # Try to encode with default encodings, but fall back to UTF8.
@@ -335,18 +330,15 @@ def displayable_path(path, separator=u'; '):
     except (UnicodeError, LookupError):
         return path.decode('utf8', 'ignore')
 
-def syspath(path, prefix=True, pathmod=None):
+def syspath(path, prefix=True):
     """Convert a path for use by the operating system. In particular,
     paths on Windows must receive a magic prefix and must be converted
     to Unicode before they are sent to the OS. To disable the magic
     prefix on Windows, set `prefix` to False---but only do this if you
     *really* know what you're doing.
     """
-    pathmod = pathmod or os.path
-    windows = pathmod.__name__ == 'ntpath'
-
     # Don't do anything if we're not on windows
-    if not windows:
+    if os.path.__name__ != 'ntpath':
         return path
 
     if not isinstance(path, unicode):
@@ -383,7 +375,7 @@ def remove(path, soft=True):
     except (OSError, IOError) as exc:
         raise FilesystemError(exc, 'delete', (path,), traceback.format_exc())
 
-def copy(path, dest, replace=False, pathmod=os.path):
+def copy(path, dest, replace=False):
     """Copy a plain file. Permissions are not copied. If `dest` already
     exists, raises a FilesystemError unless `replace` is True. Has no
     effect if `path` is the same as `dest`. Paths are translated to
@@ -393,7 +385,7 @@ def copy(path, dest, replace=False, pathmod=os.path):
         return
     path = syspath(path)
     dest = syspath(dest)
-    if not replace and pathmod.exists(dest):
+    if not replace and os.path.exists(dest):
         raise FilesystemError('file exists', 'copy', (path, dest))
     try:
         shutil.copyfile(path, dest)
@@ -401,7 +393,7 @@ def copy(path, dest, replace=False, pathmod=os.path):
         raise FilesystemError(exc, 'copy', (path, dest),
                               traceback.format_exc())
 
-def move(path, dest, replace=False, pathmod=os.path):
+def move(path, dest, replace=False):
     """Rename a file. `dest` may not be a directory. If `dest` already
     exists, raises an OSError unless `replace` is True. Has no effect if
     `path` is the same as `dest`. If the paths are on different
@@ -413,7 +405,7 @@ def move(path, dest, replace=False, pathmod=os.path):
         return
     path = syspath(path)
     dest = syspath(dest)
-    if pathmod.exists(dest) and not replace:
+    if os.path.exists(dest) and not replace:
         raise FilesystemError('file exists', 'rename', (path, dest),
                               traceback.format_exc())
 
@@ -462,7 +454,7 @@ CHAR_REPLACE = [
     (re.compile(ur'\.$'), u'_'),  # Trailing dots.
     (re.compile(ur'\s+$'), u''),  # Trailing whitespace.
 ]
-def sanitize_path(path, pathmod=None, replacements=None):
+def sanitize_path(path, replacements=None):
     """Takes a path (as a Unicode string) and makes sure that it is
     legal. Returns a new path. Only works with fragments; won't work
     reliably on Windows when a path begins with a drive letter. Path
@@ -471,34 +463,32 @@ def sanitize_path(path, pathmod=None, replacements=None):
     of the default set of replacements; it must be a list of (compiled
     regex, replacement string) pairs.
     """
-    pathmod = pathmod or os.path
     replacements = replacements or CHAR_REPLACE
 
-    comps = components(path, pathmod)
+    comps = components(path)
     if not comps:
         return ''
     for i, comp in enumerate(comps):
         for regex, repl in replacements:
             comp = regex.sub(repl, comp)
         comps[i] = comp
-    return pathmod.join(*comps)
+    return os.path.join(*comps)
 
-def truncate_path(path, pathmod=None, length=MAX_FILENAME_LENGTH):
+def truncate_path(path, length=MAX_FILENAME_LENGTH):
     """Given a bytestring path or a Unicode path fragment, truncate the
     components to a legal length. In the last component, the extension
     is preserved.
     """
-    pathmod = pathmod or os.path
-    comps = components(path, pathmod)
+    comps = components(path)
 
     out = [c[:length] for c in comps]
-    base, ext = pathmod.splitext(comps[-1])
+    base, ext = os.path.splitext(comps[-1])
     if ext:
         # Last component has an extension.
         base = base[:length - len(ext)]
         out[-1] = base + ext
 
-    return pathmod.join(*out)
+    return os.path.join(*out)
 
 def str2bool(value):
     """Returns a boolean reflecting a human-entered string."""

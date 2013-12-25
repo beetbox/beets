@@ -331,7 +331,7 @@ class DestinationTest(_common.TestCase):
     def test_component_sanitize_does_not_replace_separators(self):
         with _common.platform_posix():
             name = os.path.join('a', 'b')
-            newname = beets.library.format_for_path(name, None)
+            newname = beets.library.format_for_path(name)
         self.assertEqual(name, newname)
 
     def test_component_sanitize_pads_with_zero(self):
@@ -394,14 +394,14 @@ class DestinationTest(_common.TestCase):
 
     def test_sanitize_with_custom_replace_overrides_built_in_sub(self):
         with _common.platform_posix():
-            p = util.sanitize_path(u'a/.?/b', None, [
+            p = util.sanitize_path(u'a/.?/b', [
                 (re.compile(ur'foo'), u'bar'),
             ])
         self.assertEqual(p, u'a/.?/b')
 
     def test_sanitize_with_custom_replace_adds_replacements(self):
         with _common.platform_posix():
-            p = util.sanitize_path(u'foo/bar', None, [
+            p = util.sanitize_path(u'foo/bar', [
                 (re.compile(ur'foo'), u'bar'),
             ])
         self.assertEqual(p, u'bar/bar')
@@ -957,17 +957,17 @@ class PathStringTest(_common.TestCase):
 class PathTruncationTest(_common.TestCase):
     def test_truncate_bytestring(self):
         with _common.platform_posix():
-            p = util.truncate_path('abcde/fgh', None, 4)
+            p = util.truncate_path('abcde/fgh', 4)
         self.assertEqual(p, 'abcd/fgh')
 
     def test_truncate_unicode(self):
         with _common.platform_posix():
-            p = util.truncate_path(u'abcde/fgh', None, 4)
+            p = util.truncate_path(u'abcde/fgh', 4)
         self.assertEqual(p, u'abcd/fgh')
 
     def test_truncate_preserves_extension(self):
         with _common.platform_posix():
-            p = util.truncate_path(u'abcde/fgh.ext', None, 5)
+            p = util.truncate_path(u'abcde/fgh.ext', 5)
         self.assertEqual(p, u'abcde/f.ext')
 
 
