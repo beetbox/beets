@@ -309,27 +309,6 @@ def template_funcs():
             funcs.update(plugin.template_funcs)
     return funcs
 
-def template_values(item):
-    """Get all the template values computed for a given Item by
-    registered field computations.
-    """
-    values = {}
-    for plugin in find_plugins():
-        if plugin.template_fields:
-            for name, func in plugin.template_fields.iteritems():
-                values[name] = unicode(func(item))
-    return values
-
-def album_template_values(album):
-    """Get the plugin-defined template values for an Album.
-    """
-    values = {}
-    for plugin in find_plugins():
-        if plugin.album_template_fields:
-            for name, func in plugin.album_template_fields.iteritems():
-                values[name] = unicode(func(album))
-    return values
-
 def _add_media_fields(fields):
     """Adds a {name: descriptor} dictionary of fields to the MediaFile
     class. Called during the plugin initialization.
