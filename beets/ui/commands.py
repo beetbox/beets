@@ -1151,7 +1151,7 @@ def modify_items(lib, mods, query, write, move, album, confirm):
                 obj[field] = value
 
             if move:
-                cur_path = obj.item_dir() if album else obj.path
+                cur_path = obj.path
                 if lib.directory in ancestry(cur_path): # In library?
                     log.debug('moving object %s' % cur_path)
                     obj.move()
@@ -1206,8 +1206,7 @@ def move_items(lib, dest, query, copy, album):
     entity = 'album' if album else 'item'
     logging.info('%s %i %ss.' % (action, len(objs), entity))
     for obj in objs:
-        old_path = obj.item_dir() if album else obj.path
-        logging.debug('moving: %s' % old_path)
+        logging.debug('moving: %s' % obj.path)
 
         obj.move(copy, basedir=dest)
         obj.store()
