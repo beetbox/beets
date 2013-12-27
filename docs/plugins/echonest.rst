@@ -86,3 +86,10 @@ Echoprint or ENMFP codegen binary. Use the ``codegen`` key under the
         codegen: /usr/bin/echoprint-codegen
 
 .. _apply for your own: http://developer.echonest.com/account/register
+
+Running Manually
+----------------
+
+In addition to running automatically on import, the plugin can also be run manually
+from the command line. Use the command ``beet echonest [QUERY]`` to fetch
+acoustic attributes for albums matching a certain query.
