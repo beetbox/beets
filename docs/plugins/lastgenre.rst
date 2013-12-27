@@ -111,7 +111,7 @@ plugin uses the next-most-popular tag.
 Running Manually
 ----------------
 
-In addition to running automatically on import, the plugin can also run manually
+In addition to running automatically on import, the plugin can also be run manually
 from the command line. Use the command ``beet lastgenre [QUERY]`` to fetch
 genres for albums matching a certain query.
 
