@@ -19,7 +19,6 @@ from __future__ import print_function
 from beets.plugins import BeetsPlugin
 from beets import config, ui, library
 from beets.util import normpath, syspath
-from beets.util.functemplate import Template
 import os
 
 # Global variable so that smartplaylist can detect database changes and run
@@ -42,8 +41,7 @@ def update_playlists(lib):
         # As we allow tags in the m3u names, we'll need to iterate through
         # the items and generate the correct m3u file names.
         for item in items:
-            m3u_name = item.evaluate_template(Template(basename),
-                sanitize=True)
+            m3u_name = item.evaluate_template(basename, True)
             if not (m3u_name in m3us):
                 m3us[m3u_name] = []
             if relative_to:
