@@ -198,8 +198,9 @@ def format_for_path(value, key=None):
     with _, etc. Doesn't guarantee that the whole path will be valid;
     you should still call `util.sanitize_path` on the complete path.
     """
-    if isinstance(value, str):
-        value = value.decode('utf8', 'ignore')
+    if isinstance(value, basestring):
+        if isinstance(value, str):
+            value = value.decode('utf8', 'ignore')
     elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
         # Pad indices with zeros.
         value = u'%02i' % (value or 0)
