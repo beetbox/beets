@@ -53,7 +53,7 @@ def fetch_item_tempo(lib, loglevel, item, write):
 
     log.log(loglevel, u'fetched tempo: %s - %s' %
                       (item.artist, item.title))
-    item.bpm = tempo
+    item.bpm = int(tempo)
     if write:
         item.write()
     item.store()
