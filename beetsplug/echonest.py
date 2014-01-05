@@ -360,7 +360,10 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             if k in ATTRIBUTES:
                 field = ATTRIBUTES[k]
                 log.debug(u'echonest: metadata: {0} = {1}'.format(field, v))
-                item[field] = v
+                if field == 'bpm':
+                    item[field] = int(v)
+                else:
+                    item[field] = v
         if 'id' in values:
             enid = values['id']
             log.debug(u'echonest: metadata: {0} = {1}'.format(ID_KEY, enid))
