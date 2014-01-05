@@ -17,6 +17,11 @@ consequences for all users are:
 For developers, the short version of the story is that Item and Album objects
 provide *uniform access* across fixed, flexible, and computed attributes.
 
+Other little fixes:
+
+* :doc:`/plugins/echonest`: Tempo (BPM) is now always stored as an integer.
+  Thanks to Heinz Wiesinger.
+
 
 1.3.2 (December 22, 2013)
 -------------------------
