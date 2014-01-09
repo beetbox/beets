@@ -118,7 +118,7 @@ def handle_change(lib=None):
 
 @MPDUpdatePlugin.listen('cli_exit')
 def update(lib=None):
-    if database_changed or True:
+    if database_changed:
         update_mpd(
             config['mpd']['host'].get(unicode),
             config['mpd']['port'].get(int),
