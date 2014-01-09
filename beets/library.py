@@ -712,6 +712,9 @@ class Item(Model):
             album = self.get_album()
             if album and not album.items():
                 album.remove(delete, False)
+        
+        # Send a 'item_removed' signal to plugins
+        plugins.send('item_removed', item=self)
 
         # Delete the associated file.
         if delete:
