@@ -21,6 +21,8 @@ Other little fixes:
 
 * :doc:`/plugins/echonest`: Tempo (BPM) is now always stored as an integer.
   Thanks to Heinz Wiesinger.
+* Fix Python 2.6 compatibility in some logging statements in
+  :doc:`/plugins/chroma` and :doc:`/plugins/lastgenre`.
 
 
 1.3.2 (December 22, 2013)

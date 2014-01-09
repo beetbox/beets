@@ -78,7 +78,7 @@ def _tags_for(obj):
             if min_weight > -1 and min_weight > weight and len(tags) > 0:
                 return tags
             tags.append(tag)
-            dbg.append(u'{} [{}]'.format(tag, weight))
+            dbg.append(u'{0} [{1}]'.format(tag, weight))
             if len(tags) == count:
                 break
     log.debug(u'lastfm.tag (min. {0}): {1}'.format(
