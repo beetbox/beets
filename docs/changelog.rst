@@ -23,6 +23,8 @@ Other little fixes:
   Thanks to Heinz Wiesinger.
 * Fix Python 2.6 compatibility in some logging statements in
   :doc:`/plugins/chroma` and :doc:`/plugins/lastgenre`.
+* Prevent some crashes when things go really wrong when writing file metadata
+  at the end of the import process.
 
 
 1.3.2 (December 22, 2013)

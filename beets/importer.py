@@ -30,7 +30,7 @@ from beets import config
 from beets.util import pipeline
 from beets.util import syspath, normpath, displayable_path
 from beets.util.enumeration import enum
-from beets.mediafile import UnreadableFileError
+from beets import mediafile
 
 action = enum(
     'SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'APPLY', 'MANUAL_ID',
@@ -560,7 +560,7 @@ def read_tasks(session):
                 not os.path.isdir(syspath(toppath)):
             try:
                 item = library.Item.from_path(toppath)
-            except UnreadableFileError:
+            except mediafile.UnreadableFileError:
                 log.warn(u'unreadable file: {0}'.format(
                     util.displayable_path(toppath)
                 ))
@@ -867,7 +867,15 @@ def manipulate_files(session):
                     item.move(True)
 
             if config['import']['write'] and task.should_write_tags():
-                item.write()
+                try:
+                    item.write()
+                except mediafile.UnreadableFileError as exc:
+                    log.error(u'error while writing ({0}): {0}'.format(
+                        exc,
+                        util.displayable_path(item.path)
+                    ))
+                except util.FilesystemError as exc:
+                    exc.log(log)
 
         # Save new paths.
         with session.lib.transaction():
