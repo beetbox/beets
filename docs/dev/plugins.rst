@@ -131,6 +131,10 @@ currently available are:
 * *item_moved*: called with an ``Item`` object whenever its file is moved.
   Parameters: ``item``, ``source`` path, ``destination`` path
 
+* *item_removed*: called with an ``Item`` object every time an item (singleton
+  or album's part) is removed from the library (even when its file is not
+  deleted from disk).
+
 * *write*: called with an ``Item`` object just before a file's metadata is
   written to disk (i.e., just before the file on disk is opened).
 
