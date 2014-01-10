@@ -25,6 +25,7 @@ Other little fixes:
   :doc:`/plugins/chroma` and :doc:`/plugins/lastgenre`.
 * Prevent some crashes when things go really wrong when writing file metadata
   at the end of the import process.
+* Add a new plugin event: ``item_removed``. Thanks to Romuald Conty.
 
 
 1.3.2 (December 22, 2013)
