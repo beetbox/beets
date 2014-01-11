@@ -533,7 +533,6 @@ Here's an example file::
 
     library: /var/music.blb
     directory: /var/mp3
-    path_format: $genre/$artist/$album/$track $title
     import:
         copy: yes
         write: yes
