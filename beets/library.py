@@ -206,15 +206,15 @@ class LibModel(dbcore.Model):
 
     def store(self):
         super(LibModel, self).store()
-        plugins.send('database_change', lib=self.lib)
+        plugins.send('database_change', lib=self._lib)
 
     def remove(self):
         super(LibModel, self).remove()
-        plugins.send('database_change', lib=self.lib)
+        plugins.send('database_change', lib=self._lib)
 
     def add(self, lib=None):
         super(LibModel, self).add(lib)
-        plugins.send('database_change', lib=self.lib)
+        plugins.send('database_change', lib=self._lib)
 
 
 class Item(LibModel):
@@ -1218,6 +1218,13 @@ class Library(dbcore.Database):
 
     # Querying.
 
+    def _fetch(self, model_cls, query, order_by=None):
+        """Parse a query and fetch.
+        """
+        return super(Library, self)._fetch(
+            model_cls, get_query(query, model_cls), order_by
+        )
+
     def albums(self, query=None):
         """Get a sorted list of :class:`Album` objects matching the
         given query.
@@ -1225,7 +1232,7 @@ class Library(dbcore.Database):
         order = '{0}, album'.format(
             _orelse("albumartist_sort", "albumartist")
         )
-        return self._fetch(Album, get_query(query), order)
+        return self._fetch(Album, query, order)
 
     def items(self, query=None):
         """Get a sorted list of :class:`Item` objects matching the given
@@ -1234,7 +1241,7 @@ class Library(dbcore.Database):
         order = '{0}, album'.format(
             _orelse("artist_sort", "artist")
         )
-        return self._fetch(Item, get_query(query), order)
+        return self._fetch(Item, query, order)
 
 
     # Convenience accessors.
