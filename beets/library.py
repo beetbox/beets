@@ -546,7 +546,7 @@ class Album(LibModel):
         """Returns an iterable over the items associated with this
         album.
         """
-        return self._lib.items(MatchQuery('album_id', self.id))
+        return self._lib.items(dbcore.MatchQuery('album_id', self.id))
 
     def remove(self, delete=False, with_items=True):
         """Removes this album and all its associated items from the
@@ -696,82 +696,7 @@ class Album(LibModel):
 # Query abstraction hierarchy.
 
 
-class Query(object):
-    """An abstract class representing a query into the item database.
-    """
-    def clause(self):
-        """Generate an SQLite expression implementing the query.
-        Return a clause string, a sequence of substitution values for
-        the clause, and a Query object representing the "remainder"
-        Returns (clause, subvals) where clause is a valid sqlite
-        WHERE clause implementing the query and subvals is a list of
-        items to be substituted for ?s in the clause.
-        """
-        return None, ()
-
-    def match(self, item):
-        """Check whether this query matches a given Item. Can be used to
-        perform queries on arbitrary sets of Items.
-        """
-        raise NotImplementedError
-
-
-class FieldQuery(Query):
-    """An abstract query that searches in a specific field for a
-    pattern. Subclasses must provide a `value_match` class method, which
-    determines whether a certain pattern string matches a certain value
-    string. Subclasses may also provide `col_clause` to implement the
-    same matching functionality in SQLite.
-    """
-    def __init__(self, field, pattern, fast=True):
-        self.field = field
-        self.pattern = pattern
-        self.fast = fast
-
-    def col_clause(self):
-        return None, ()
-
-    def clause(self):
-        if self.fast:
-            return self.col_clause()
-        else:
-            # Matching a flexattr. This is a slow query.
-            return None, ()
-
-    @classmethod
-    def value_match(cls, pattern, value):
-        """Determine whether the value matches the pattern. Both
-        arguments are strings.
-        """
-        raise NotImplementedError()
-
-    @classmethod
-    def _raw_value_match(cls, pattern, value):
-        """Determine whether the value matches the pattern. The value
-        may have any type.
-        """
-        return cls.value_match(pattern, util.as_string(value))
-
-    def match(self, item):
-        return self._raw_value_match(self.pattern, item.get(self.field))
-
-
-class MatchQuery(FieldQuery):
-    """A query that looks for exact matches in an item field."""
-    def col_clause(self):
-        pattern = self.pattern
-        if self.field == 'path':
-            pattern = buffer(bytestring_path(pattern))
-        return self.field + " = ?", [pattern]
-
-    # We override the "raw" version here as a special case because we
-    # want to compare objects before conversion.
-    @classmethod
-    def _raw_value_match(cls, pattern, value):
-        return pattern == value
-
-
-class SubstringQuery(FieldQuery):
+class SubstringQuery(dbcore.FieldQuery):
     """A query that matches a substring in a specific item field."""
     def col_clause(self):
         search = '%' + (self.pattern.replace('\\','\\\\').replace('%','\\%')
@@ -785,7 +710,7 @@ class SubstringQuery(FieldQuery):
         return pattern.lower() in value.lower()
 
 
-class RegexpQuery(FieldQuery):
+class RegexpQuery(dbcore.FieldQuery):
     """A query that matches a regular expression in a specific item
     field.
     """
@@ -799,7 +724,7 @@ class RegexpQuery(FieldQuery):
         return res is not None
 
 
-class BooleanQuery(MatchQuery):
+class BooleanQuery(dbcore.MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
     string reflecting a boolean.
     """
@@ -810,7 +735,7 @@ class BooleanQuery(MatchQuery):
         self.pattern = int(self.pattern)
 
 
-class NumericQuery(FieldQuery):
+class NumericQuery(dbcore.FieldQuery):
     """Matches numeric fields. A syntax using Ruby-style range ellipses
     (``..``) lets users specify one- or two-sided ranges. For example,
     ``year:2001..`` finds music released since the turn of the century.
@@ -878,7 +803,7 @@ class NumericQuery(FieldQuery):
                 return '1'
 
 
-class SingletonQuery(Query):
+class SingletonQuery(dbcore.Query):
     """Matches either singleton or non-singleton items."""
     def __init__(self, sense):
         self.sense = sense
@@ -893,7 +818,7 @@ class SingletonQuery(Query):
         return (not item.album_id) == self.sense
 
 
-class CollectionQuery(Query):
+class CollectionQuery(dbcore.Query):
     """An abstract query class that aggregates other queries. Can be
     indexed like a list to access the sub-queries.
     """
@@ -998,7 +923,7 @@ class AndQuery(MutableCollectionQuery):
         return all([q.match(item) for q in self.subqueries])
 
 
-class TrueQuery(Query):
+class TrueQuery(dbcore.Query):
     """A query that always matches."""
     def clause(self):
         return '1', ()
@@ -1007,7 +932,7 @@ class TrueQuery(Query):
         return True
 
 
-class FalseQuery(Query):
+class FalseQuery(dbcore.Query):
     """A query that never matches."""
     def clause(self):
         return '0', ()
@@ -1016,7 +941,7 @@ class FalseQuery(Query):
         return False
 
 
-class PathQuery(Query):
+class PathQuery(dbcore.Query):
     """A query that matches all items under a given path."""
     def __init__(self, path):
         # Match the path as a single file.
@@ -1102,7 +1027,7 @@ def construct_query_part(query_part, default_fields, all_keys):
         if os.sep in pattern and 'path' in all_keys:
             # This looks like a path.
             return PathQuery(pattern)
-        elif issubclass(query_class, FieldQuery):
+        elif issubclass(query_class, dbcore.FieldQuery):
             # The query type matches a specific field, but none was
             # specified. So we use a version of the query that matches
             # any field.
@@ -1152,7 +1077,7 @@ def get_query(val, model_cls):
     elif isinstance(val, list) or isinstance(val, tuple):
         return AndQuery.from_strings(val, model_cls._search_fields,
                                      model_cls._fields)
-    elif isinstance(val, Query):
+    elif isinstance(val, dbcore.Query):
         return val
     else:
         raise ValueError('query must be None or have type Query or str')
@@ -1300,7 +1225,7 @@ class Library(dbcore.Database):
         order = '{0}, album'.format(
             _orelse("albumartist_sort", "albumartist")
         )
-        return self._fetch(Album, query, order)
+        return self._fetch(Album, get_query(query), order)
 
     def items(self, query=None):
         """Get a sorted list of :class:`Item` objects matching the given
@@ -1309,7 +1234,7 @@ class Library(dbcore.Database):
         order = '{0}, album'.format(
             _orelse("artist_sort", "artist")
         )
-        return self._fetch(Item, query, order)
+        return self._fetch(Item, get_query(query), order)
 
 
     # Convenience accessors.
@@ -1456,7 +1381,7 @@ class DefaultTemplateFunctions(object):
         subqueries = []
         for key in keys:
             value = getattr(album, key)
-            subqueries.append(MatchQuery(key, value))
+            subqueries.append(dbcore.MatchQuery(key, value))
         albums = self.lib.albums(AndQuery(subqueries))
 
         # If there's only one album to matching these details, then do

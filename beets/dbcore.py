@@ -6,6 +6,7 @@ import sqlite3
 import contextlib
 
 import beets
+from beets import util
 from beets.util.functemplate import Template
 
 
@@ -380,7 +381,86 @@ class Model(object):
 
 
 
-# Database controllers and supporting interfaces.
+# Basic query classes.
+
+
+class Query(object):
+    """An abstract class representing a query into the item database.
+    """
+    def clause(self):
+        """Generate an SQLite expression implementing the query.
+        Return a clause string, a sequence of substitution values for
+        the clause, and a Query object representing the "remainder"
+        Returns (clause, subvals) where clause is a valid sqlite
+        WHERE clause implementing the query and subvals is a list of
+        items to be substituted for ?s in the clause.
+        """
+        return None, ()
+
+    def match(self, item):
+        """Check whether this query matches a given Item. Can be used to
+        perform queries on arbitrary sets of Items.
+        """
+        raise NotImplementedError
+
+
+class FieldQuery(Query):
+    """An abstract query that searches in a specific field for a
+    pattern. Subclasses must provide a `value_match` class method, which
+    determines whether a certain pattern string matches a certain value
+    string. Subclasses may also provide `col_clause` to implement the
+    same matching functionality in SQLite.
+    """
+    def __init__(self, field, pattern, fast=True):
+        self.field = field
+        self.pattern = pattern
+        self.fast = fast
+
+    def col_clause(self):
+        return None, ()
+
+    def clause(self):
+        if self.fast:
+            return self.col_clause()
+        else:
+            # Matching a flexattr. This is a slow query.
+            return None, ()
+
+    @classmethod
+    def value_match(cls, pattern, value):
+        """Determine whether the value matches the pattern. Both
+        arguments are strings.
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def _raw_value_match(cls, pattern, value):
+        """Determine whether the value matches the pattern. The value
+        may have any type.
+        """
+        return cls.value_match(pattern, util.as_string(value))
+
+    def match(self, item):
+        return self._raw_value_match(self.pattern, item.get(self.field))
+
+
+class MatchQuery(FieldQuery):
+    """A query that looks for exact matches in an item field."""
+    def col_clause(self):
+        pattern = self.pattern
+        if self.field == 'path':
+            pattern = buffer(util.bytestring_path(pattern))
+        return self.field + " = ?", [pattern]
+
+    # We override the "raw" version here as a special case because we
+    # want to compare objects before conversion.
+    @classmethod
+    def _raw_value_match(cls, pattern, value):
+        return pattern == value
+
+
+
+# Database controller and supporting interfaces.
 
 
 class Results(object):
@@ -591,7 +671,6 @@ class Database(object):
         Query object, or None (to fetch everything). If provided,
         `order_by` is a SQLite ORDER BY clause for sorting.
         """
-        query = get_query(query, model_cls)
         where, subvals = query.clause()
 
         sql = "SELECT * FROM {0} WHERE {1}".format(
@@ -610,4 +689,3 @@ class Database(object):
         exist.
         """
         return self._fetch(model_cls, MatchQuery('id', id)).get()
-
