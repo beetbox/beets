@@ -511,7 +511,6 @@ class Transaction(object):
         the row ID of the last affected row.
         """
         cursor = self.lib._connection().execute(statement, subvals)
-        plugins.send('database_change', lib=self.lib)
         return cursor.lastrowid
 
     def script(self, statements):

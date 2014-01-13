@@ -204,6 +204,18 @@ class LibModel(dbcore.Model):
         funcs.update(plugins.template_funcs())
         return funcs
 
+    def store(self):
+        super(LibModel, self).store()
+        plugins.send('database_change', lib=self.lib)
+
+    def remove(self):
+        super(LibModel, self).remove()
+        plugins.send('database_change', lib=self.lib)
+
+    def add(self, lib=None):
+        super(LibModel, self).add(lib)
+        plugins.send('database_change', lib=self.lib)
+
 
 class Item(LibModel):
     _fields = ITEM_KEYS
