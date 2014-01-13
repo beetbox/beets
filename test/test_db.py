@@ -331,32 +331,32 @@ class DestinationTest(_common.TestCase):
     def test_component_sanitize_does_not_replace_separators(self):
         with _common.platform_posix():
             name = os.path.join('a', 'b')
-            newname = beets.library.format_for_path(name)
+            newname = beets.dbcore.format_for_path(name)
         self.assertEqual(name, newname)
 
     def test_component_sanitize_pads_with_zero(self):
         with _common.platform_posix():
-            name = beets.library.format_for_path(1, 'track')
+            name = beets.dbcore.format_for_path(1, 'track')
         self.assertTrue(name.startswith('0'))
 
     def test_component_sanitize_uses_kbps_bitrate(self):
         with _common.platform_posix():
-            val = beets.library.format_for_path(12345, 'bitrate')
+            val = beets.dbcore.format_for_path(12345, 'bitrate')
         self.assertEqual(val, u'12kbps')
 
     def test_component_sanitize_uses_khz_samplerate(self):
         with _common.platform_posix():
-            val = beets.library.format_for_path(12345, 'samplerate')
+            val = beets.dbcore.format_for_path(12345, 'samplerate')
         self.assertEqual(val, u'12kHz')
 
     def test_component_sanitize_datetime(self):
         with _common.platform_posix():
-            val = beets.library.format_for_path(1368302461.210265, 'added')
+            val = beets.dbcore.format_for_path(1368302461.210265, 'added')
         self.assertTrue(val.startswith('2013'))
 
     def test_component_sanitize_none(self):
         with _common.platform_posix():
-            val = beets.library.format_for_path(None, 'foo')
+            val = beets.dbcore.format_for_path(None, 'foo')
         self.assertEqual(val, u'')
 
     def test_artist_falls_back_to_albumartist(self):
