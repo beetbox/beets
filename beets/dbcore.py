@@ -1,6 +1,6 @@
 import time
 import os
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import threading
 import sqlite3
 import contextlib
@@ -45,6 +45,13 @@ def format_for_path(value, key=None):
     return value
 
 
+
+# Abstract base for model classes and their field types.
+
+
+Type = namedtuple('Type', 'py_type sql_type')
+
+
 class Model(object):
     """An abstract object representing an object in the database. Model
     objects act like dictionaries (i.e., the allow subscript access like
@@ -79,8 +86,9 @@ class Model(object):
     """The flex field SQLite table name.
     """
 
-    _fields = ()
-    """The available "fixed" fields on this type.
+    _fields = {}
+    """A mapping indicating available "fixed" fields on this type. The
+    keys are field names and the values are Type objects.
     """
 
     _bytes_keys = ()
@@ -589,6 +597,10 @@ class Database(object):
     """A container for Model objects that wraps an SQLite database as
     the backend.
     """
+    _models = ()
+    """The Model subclasses representing tables in this database.
+    """
+
     def __init__(self, path):
         self.path = path
 
@@ -608,6 +620,11 @@ class Database(object):
         # timeout. Using this lock ensures only one SQLite transaction
         # is active at a time.
         self._db_lock = threading.Lock()
+
+        # Set up database schema.
+        for model_cls in self._models:
+            self._make_table(model_cls._table, model_cls._fields)
+            self._make_attribute_table(model_cls._flex_table)
 
 
     # Primitive access control: connections and transactions.
@@ -648,6 +665,60 @@ class Database(object):
         with the underlying SQLite database.
         """
         return Transaction(self)
+
+
+    # Schema setup and migration.
+
+    def _make_table(self, table, fields):
+        """Set up the schema of the library file. `fields` is a mapping
+        from field names to `Type`s. Columns are added if necessary.
+        """
+        # Get current schema.
+        with self.transaction() as tx:
+            rows = tx.query('PRAGMA table_info(%s)' % table)
+        current_fields = set([row[1] for row in rows])
+
+        field_names = set([f[0] for f in fields])
+        if current_fields.issuperset(field_names):
+            # Table exists and has all the required columns.
+            return
+
+        if not current_fields:
+            # No table exists.
+            columns = []
+            for name, typ in fields.items():
+                columns.append('{0} {1}'.format(name, typ.sql_type))
+            setup_sql = 'CREATE TABLE {0} ({1});\n'.format(table,
+                                                           ', '.join(columns))
+
+        else:
+            # Table exists but is missing fields.
+            setup_sql = ''
+            for name, typ in fields.items():
+                if name in current_fields:
+                    continue
+                setup_sql += 'ALTER TABLE {0} ADD COLUMN {1} {2};\n'.format(
+                    table, name, typ.sql_type
+                )
+
+        with self.transaction() as tx:
+            tx.script(setup_sql)
+
+    def _make_attribute_table(self, flex_table):
+        """Create a table and associated index for flexible attributes
+        for the given entity (if they don't exist).
+        """
+        with self.transaction() as tx:
+            tx.script("""
+                CREATE TABLE IF NOT EXISTS {0} (
+                    id INTEGER PRIMARY KEY,
+                    entity_id INTEGER,
+                    key TEXT,
+                    value TEXT,
+                    UNIQUE(entity_id, key) ON CONFLICT REPLACE);
+                CREATE INDEX IF NOT EXISTS {0}_by_entity
+                    ON {0} (entity_id);
+                """.format(flex_table))
 
 
     # Querying.

@@ -29,8 +29,20 @@ from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile
 from beets.util.functemplate import Template
 from beets import dbcore
+from beets.dbcore import Type
 import beets
 from datetime import datetime
+
+
+# Common types used in field definitions.
+TYPES = {
+    int:      Type(int, 'INTEGER'),
+    float:    Type(float, 'REAL'),
+    datetime: Type(datetime, 'REAL'),
+    bytes:    Type(bytes, 'BLOB'),
+    unicode:  Type(unicode, 'TEXT'),
+    bool:     Type(bool, 'INTEGER'),
+}
 
 
 # Fields in the "items" database table; all the metadata available for
@@ -42,67 +54,67 @@ from datetime import datetime
 # - Is the field writable?
 # - Does the field reflect an attribute of a MediaFile?
 ITEM_FIELDS = [
-    ('id',          int,   False, False),
-    ('path',        bytes, False, False),
-    ('album_id',    int,   False, False),
+    ('id',       Type(int, 'INTEGER PRIMARY KEY'), False, False),
+    ('path',     TYPES[bytes],                     False, False),
+    ('album_id', TYPES[int],                       False, False),
 
-    ('title',                unicode, True, True),
-    ('artist',               unicode, True, True),
-    ('artist_sort',          unicode, True, True),
-    ('artist_credit',        unicode, True, True),
-    ('album',                unicode, True, True),
-    ('albumartist',          unicode, True, True),
-    ('albumartist_sort',     unicode, True, True),
-    ('albumartist_credit',   unicode, True, True),
-    ('genre',                unicode, True, True),
-    ('composer',             unicode, True, True),
-    ('grouping',             unicode, True, True),
-    ('year',                 int,     True, True),
-    ('month',                int,     True, True),
-    ('day',                  int,     True, True),
-    ('track',                int,     True, True),
-    ('tracktotal',           int,     True, True),
-    ('disc',                 int,     True, True),
-    ('disctotal',            int,     True, True),
-    ('lyrics',               unicode, True, True),
-    ('comments',             unicode, True, True),
-    ('bpm',                  int,     True, True),
-    ('comp',                 bool,    True, True),
-    ('mb_trackid',           unicode, True, True),
-    ('mb_albumid',           unicode, True, True),
-    ('mb_artistid',          unicode, True, True),
-    ('mb_albumartistid',     unicode, True, True),
-    ('albumtype',            unicode, True, True),
-    ('label',                unicode, True, True),
-    ('acoustid_fingerprint', unicode, True, True),
-    ('acoustid_id',          unicode, True, True),
-    ('mb_releasegroupid',    unicode, True, True),
-    ('asin',                 unicode, True, True),
-    ('catalognum',           unicode, True, True),
-    ('script',               unicode, True, True),
-    ('language',             unicode, True, True),
-    ('country',              unicode, True, True),
-    ('albumstatus',          unicode, True, True),
-    ('media',                unicode, True, True),
-    ('albumdisambig',        unicode, True, True),
-    ('disctitle',            unicode, True, True),
-    ('encoder',              unicode, True, True),
-    ('rg_track_gain',        float,   True, True),
-    ('rg_track_peak',        float,   True, True),
-    ('rg_album_gain',        float,   True, True),
-    ('rg_album_peak',        float,   True, True),
-    ('original_year',        int,     True, True),
-    ('original_month',       int,     True, True),
-    ('original_day',         int,     True, True),
+    ('title',                TYPES[unicode], True, True),
+    ('artist',               TYPES[unicode], True, True),
+    ('artist_sort',          TYPES[unicode], True, True),
+    ('artist_credit',        TYPES[unicode], True, True),
+    ('album',                TYPES[unicode], True, True),
+    ('albumartist',          TYPES[unicode], True, True),
+    ('albumartist_sort',     TYPES[unicode], True, True),
+    ('albumartist_credit',   TYPES[unicode], True, True),
+    ('genre',                TYPES[unicode], True, True),
+    ('composer',             TYPES[unicode], True, True),
+    ('grouping',             TYPES[unicode], True, True),
+    ('year',                 TYPES[int],     True, True),
+    ('month',                TYPES[int],     True, True),
+    ('day',                  TYPES[int],     True, True),
+    ('track',                TYPES[int],     True, True),
+    ('tracktotal',           TYPES[int],     True, True),
+    ('disc',                 TYPES[int],     True, True),
+    ('disctotal',            TYPES[int],     True, True),
+    ('lyrics',               TYPES[unicode], True, True),
+    ('comments',             TYPES[unicode], True, True),
+    ('bpm',                  TYPES[int],     True, True),
+    ('comp',                 TYPES[bool],    True, True),
+    ('mb_trackid',           TYPES[unicode], True, True),
+    ('mb_albumid',           TYPES[unicode], True, True),
+    ('mb_artistid',          TYPES[unicode], True, True),
+    ('mb_albumartistid',     TYPES[unicode], True, True),
+    ('albumtype',            TYPES[unicode], True, True),
+    ('label',                TYPES[unicode], True, True),
+    ('acoustid_fingerprint', TYPES[unicode], True, True),
+    ('acoustid_id',          TYPES[unicode], True, True),
+    ('mb_releasegroupid',    TYPES[unicode], True, True),
+    ('asin',                 TYPES[unicode], True, True),
+    ('catalognum',           TYPES[unicode], True, True),
+    ('script',               TYPES[unicode], True, True),
+    ('language',             TYPES[unicode], True, True),
+    ('country',              TYPES[unicode], True, True),
+    ('albumstatus',          TYPES[unicode], True, True),
+    ('media',                TYPES[unicode], True, True),
+    ('albumdisambig',        TYPES[unicode], True, True),
+    ('disctitle',            TYPES[unicode], True, True),
+    ('encoder',              TYPES[unicode], True, True),
+    ('rg_track_gain',        TYPES[float],   True, True),
+    ('rg_track_peak',        TYPES[float],   True, True),
+    ('rg_album_gain',        TYPES[float],   True, True),
+    ('rg_album_peak',        TYPES[float],   True, True),
+    ('original_year',        TYPES[int],     True, True),
+    ('original_month',       TYPES[int],     True, True),
+    ('original_day',         TYPES[int],     True, True),
 
-    ('length',      float,    False, True),
-    ('bitrate',     int,      False, True),
-    ('format',      unicode,  False, True),
-    ('samplerate',  int,      False, True),
-    ('bitdepth',    int,      False, True),
-    ('channels',    int,      False, True),
-    ('mtime',       int,      False, False),
-    ('added',       datetime, False, False),
+    ('length',      TYPES[float],    False, True),
+    ('bitrate',     TYPES[int],      False, True),
+    ('format',      TYPES[unicode],  False, True),
+    ('samplerate',  TYPES[int],      False, True),
+    ('bitdepth',    TYPES[int],      False, True),
+    ('channels',    TYPES[int],      False, True),
+    ('mtime',       TYPES[int],      False, False),
+    ('added',       TYPES[datetime], False, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
@@ -113,39 +125,39 @@ ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 # The third entry in each tuple indicates whether the field reflects an
 # identically-named field in the items table.
 ALBUM_FIELDS = [
-    ('id',      int,      False),
-    ('artpath', bytes,    False),
-    ('added',   datetime, True),
+    ('id',      Type(int, 'INTEGER PRIMARY KEY'), False),
+    ('artpath', TYPES[bytes],                     False),
+    ('added',   TYPES[datetime],                  True),
 
-    ('albumartist',        unicode, True),
-    ('albumartist_sort',   unicode, True),
-    ('albumartist_credit', unicode, True),
-    ('album',              unicode, True),
-    ('genre',              unicode, True),
-    ('year',               int,     True),
-    ('month',              int,     True),
-    ('day',                int,     True),
-    ('tracktotal',         int,     True),
-    ('disctotal',          int,     True),
-    ('comp',               bool,    True),
-    ('mb_albumid',         unicode, True),
-    ('mb_albumartistid',   unicode, True),
-    ('albumtype',          unicode, True),
-    ('label',              unicode, True),
-    ('mb_releasegroupid',  unicode, True),
-    ('asin',               unicode, True),
-    ('catalognum',         unicode, True),
-    ('script',             unicode, True),
-    ('language',           unicode, True),
-    ('country',            unicode, True),
-    ('albumstatus',        unicode, True),
-    ('media',              unicode, True),
-    ('albumdisambig',      unicode, True),
-    ('rg_album_gain',      float,   True),
-    ('rg_album_peak',      float,   True),
-    ('original_year',      int,     True),
-    ('original_month',     int,     True),
-    ('original_day',       int,     True),
+    ('albumartist',        TYPES[unicode], True),
+    ('albumartist_sort',   TYPES[unicode], True),
+    ('albumartist_credit', TYPES[unicode], True),
+    ('album',              TYPES[unicode], True),
+    ('genre',              TYPES[unicode], True),
+    ('year',               TYPES[int],     True),
+    ('month',              TYPES[int],     True),
+    ('day',                TYPES[int],     True),
+    ('tracktotal',         TYPES[int],     True),
+    ('disctotal',          TYPES[int],     True),
+    ('comp',               TYPES[bool],    True),
+    ('mb_albumid',         TYPES[unicode], True),
+    ('mb_albumartistid',   TYPES[unicode], True),
+    ('albumtype',          TYPES[unicode], True),
+    ('label',              TYPES[unicode], True),
+    ('mb_releasegroupid',  TYPES[unicode], True),
+    ('asin',               TYPES[unicode], True),
+    ('catalognum',         TYPES[unicode], True),
+    ('script',             TYPES[unicode], True),
+    ('language',           TYPES[unicode], True),
+    ('country',            TYPES[unicode], True),
+    ('albumstatus',        TYPES[unicode], True),
+    ('media',              TYPES[unicode], True),
+    ('albumdisambig',      TYPES[unicode], True),
+    ('rg_album_gain',      TYPES[float],   True),
+    ('rg_album_peak',      TYPES[float],   True),
+    ('original_year',      TYPES[int],     True),
+    ('original_month',     TYPES[int],     True),
+    ('original_day',       TYPES[int],     True),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
@@ -218,7 +230,7 @@ class LibModel(dbcore.Model):
 
 
 class Item(LibModel):
-    _fields = ITEM_KEYS
+    _fields = dict((name, typ) for (name, typ, _, _) in ITEM_FIELDS)
     _table = 'items'
     _flex_table = 'item_attributes'
     _search_fields = ITEM_DEFAULT_FIELDS
@@ -520,7 +532,7 @@ class Album(LibModel):
     library. Reflects the library's "albums" table, including album
     art.
     """
-    _fields = ALBUM_KEYS
+    _fields = dict((name, typ) for (name, typ, _) in ALBUM_FIELDS)
     _table = 'albums'
     _flex_table = 'album_attributes'
     _search_fields = ALBUM_DEFAULT_FIELDS
@@ -780,14 +792,18 @@ class NumericQuery(dbcore.FieldQuery):
     (``..``) lets users specify one- or two-sided ranges. For example,
     ``year:2001..`` finds music released since the turn of the century.
     """
-    kinds = dict((r[0], r[1]) for r in ITEM_FIELDS)
+    types = dict((r[0], r[1]) for r in ITEM_FIELDS)
 
     @classmethod
     def applies_to(cls, field):
         """Determine whether a field has numeric type. NumericQuery
         should only be used with such fields.
         """
-        return cls.kinds.get(field) in (int, float)
+        if field not in cls.types:
+            # This can happen when using album fields.
+            # FIXME should no longer be necessary with the new type system.
+            return False
+        return cls.types.get(field).py_type in (int, float)
 
     def _convert(self, s):
         """Convert a string to the appropriate numeric type. If the
@@ -800,7 +816,7 @@ class NumericQuery(dbcore.FieldQuery):
 
     def __init__(self, field, pattern, fast=True):
         super(NumericQuery, self).__init__(field, pattern, fast)
-        self.numtype = self.kinds[field]
+        self.numtype = self.types[field].py_type
 
         parts = pattern.split('..', 1)
         if len(parts) == 1:
@@ -1116,7 +1132,7 @@ def get_query(val, model_cls):
         return TrueQuery()
     elif isinstance(val, list) or isinstance(val, tuple):
         return AndQuery.from_strings(val, model_cls._search_fields,
-                                     model_cls._fields)
+                                     model_cls._fields.keys())
     elif isinstance(val, dbcore.Query):
         return val
     else:
@@ -1130,97 +1146,22 @@ def get_query(val, model_cls):
 class Library(dbcore.Database):
     """A database of music containing songs and albums.
     """
+    _models = (Item, Album)
+
     def __init__(self, path='library.blb',
                        directory='~/Music',
                        path_formats=((PF_KEY_DEFAULT,
                                       '$artist/$album/$track $title'),),
-                       replacements=None,
-                       item_fields=ITEM_FIELDS,
-                       album_fields=ALBUM_FIELDS):
-        if path == ':memory:':
-            self.path = path
-        else:
+                       replacements=None):
+        if path != ':memory:':
             self.path = bytestring_path(normpath(path))
-        super(Library, self).__init__(self.path)
+        super(Library, self).__init__(path)
 
         self.directory = bytestring_path(normpath(directory))
         self.path_formats = path_formats
         self.replacements = replacements
 
         self._memotable = {}  # Used for template substitution performance.
-
-        # Set up database schema.
-        self._make_table(Item._table, item_fields)
-        self._make_table(Album._table, album_fields)
-        self._make_attribute_table(Item._flex_table)
-        self._make_attribute_table(Album._flex_table)
-
-    def _make_table(self, table, fields):
-        """Set up the schema of the library file. fields is a list of
-        all the fields that should be present in the indicated table.
-        Columns are added if necessary.
-        """
-        # Get current schema.
-        with self.transaction() as tx:
-            rows = tx.query('PRAGMA table_info(%s)' % table)
-        current_fields = set([row[1] for row in rows])
-
-        field_names = set([f[0] for f in fields])
-        if current_fields.issuperset(field_names):
-            # Table exists and has all the required columns.
-            return
-
-        if not current_fields:
-            # No table exists.
-            columns = []
-            for field in fields:
-                name, typ = field[:2]
-                if name == 'id':
-                    sql_type = SQLITE_KEY_TYPE
-                else:
-                    sql_type = SQLITE_TYPES[typ]
-                columns.append('{0} {1}'.format(name, sql_type))
-            setup_sql = 'CREATE TABLE {0} ({1});\n'.format(table,
-                                                           ', '.join(columns))
-
-        else:
-            # Table exists but is missing fields.
-            setup_sql = ''
-            for fname in field_names - current_fields:
-                for field in fields:
-                    if field[0] == fname:
-                        break
-                else:
-                    assert False
-                setup_sql += 'ALTER TABLE {0} ADD COLUMN {1} {2};\n'.format(
-                    table, field[0], SQLITE_TYPES[field[1]]
-                )
-
-        # Special case. If we're moving from a version without
-        # albumartist, copy all the "artist" values to "albumartist"
-        # values on the album data structure.
-        if table == 'albums' and 'artist' in current_fields and \
-                    'albumartist' not in current_fields:
-            setup_sql += "UPDATE ALBUMS SET albumartist=artist;\n"
-
-        with self.transaction() as tx:
-            tx.script(setup_sql)
-
-    def _make_attribute_table(self, flex_table):
-        """Create a table and associated index for flexible attributes
-        for the given entity (if they don't exist).
-        """
-        with self.transaction() as tx:
-            tx.script("""
-                CREATE TABLE IF NOT EXISTS {0} (
-                    id INTEGER PRIMARY KEY,
-                    entity_id INTEGER,
-                    key TEXT,
-                    value TEXT,
-                    UNIQUE(entity_id, key) ON CONFLICT REPLACE);
-                CREATE INDEX IF NOT EXISTS {0}_by_entity
-                    ON {0} (entity_id);
-                """.format(flex_table))
 
 
     # Adding objects to the database.
