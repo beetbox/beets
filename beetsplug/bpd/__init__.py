@@ -1017,7 +1017,7 @@ class Server(BaseServer):
 
     def cmd_find(self, conn, *kv):
         """Perform an exact match for items."""
-        query = self._metadata_query(beets.library.MatchQuery,
+        query = self._metadata_query(beets.dbcore.MatchQuery,
                                      None,
                                      kv)
         for item in self.lib.items(query):
@@ -1028,7 +1028,7 @@ class Server(BaseServer):
         filtered by matching match_tag to match_term.
         """
         show_tag_canon, show_key = self._tagtype_lookup(show_tag)
-        query = self._metadata_query(beets.library.MatchQuery, None, kv)
+        query = self._metadata_query(beets.dbcore.MatchQuery, None, kv)
 
         clause, subvals = query.clause()
         statement = 'SELECT DISTINCT ' + show_key + \
@@ -1047,7 +1047,7 @@ class Server(BaseServer):
         _, key = self._tagtype_lookup(tag)
         songs = 0
         playtime = 0.0
-        for item in self.lib.items(beets.library.MatchQuery(key, value)):
+        for item in self.lib.items(beets.dbcore.MatchQuery(key, value)):
             songs += 1
             playtime += item.length
         yield u'songs: ' + unicode(songs)

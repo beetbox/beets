@@ -6,7 +6,6 @@ import sqlite3
 import contextlib
 
 import beets
-from beets import util
 from beets.util.functemplate import Template
 
 
@@ -433,29 +432,17 @@ class FieldQuery(Query):
         """
         raise NotImplementedError()
 
-    @classmethod
-    def _raw_value_match(cls, pattern, value):
-        """Determine whether the value matches the pattern. The value
-        may have any type.
-        """
-        return cls.value_match(pattern, util.as_string(value))
-
     def match(self, item):
-        return self._raw_value_match(self.pattern, item.get(self.field))
+        return self.value_match(self.pattern, item.get(self.field))
 
 
 class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
     def col_clause(self):
-        pattern = self.pattern
-        if self.field == 'path':
-            pattern = buffer(util.bytestring_path(pattern))
-        return self.field + " = ?", [pattern]
+        return self.field + " = ?", [self.pattern]
 
-    # We override the "raw" version here as a special case because we
-    # want to compare objects before conversion.
     @classmethod
-    def _raw_value_match(cls, pattern, value):
+    def value_match(cls, pattern, value):
         return pattern == value
 
 

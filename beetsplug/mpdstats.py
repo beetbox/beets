@@ -165,7 +165,7 @@ class MPDStats(object):
     def get_item(self, path):
         """Return the beets item related to path.
         """
-        query = library.MatchQuery('path', path)
+        query = library.BytesQuery('path', path)
         item = self.lib.items(query).get()
         if item:
             return item

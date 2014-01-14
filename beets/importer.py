@@ -24,6 +24,7 @@ from collections import defaultdict
 
 from beets import autotag
 from beets import library
+from beets import dbcore
 from beets import plugins
 from beets import util
 from beets import config
@@ -65,7 +66,7 @@ def _duplicate_check(lib, task):
 
     found_albums = []
     cur_paths = set(i.path for i in task.items if i)
-    for album_cand in lib.albums(library.MatchQuery('albumartist', artist)):
+    for album_cand in lib.albums(dbcore.MatchQuery('albumartist', artist)):
         if album_cand.album == album:
             # Check whether the album is identical in contents, in which
             # case it is not a duplicate (will be replaced).
@@ -84,8 +85,8 @@ def _item_duplicate_check(lib, task):
 
     found_items = []
     query = library.AndQuery((
-        library.MatchQuery('artist', artist),
-        library.MatchQuery('title', title),
+        dbcore.MatchQuery('artist', artist),
+        dbcore.MatchQuery('title', title),
     ))
     for other_item in lib.items(query):
         # Existing items not considered duplicates.
@@ -751,7 +752,7 @@ def apply_choices(session):
         task.replaced_items = defaultdict(list)
         for item in items:
             dup_items = session.lib.items(
-                library.MatchQuery('path', item.path)
+                library.BytesQuery('path', item.path)
             )
             for dup_item in dup_items:
                 task.replaced_items[item].append(dup_item)

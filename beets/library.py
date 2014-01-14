@@ -696,7 +696,26 @@ class Album(LibModel):
 # Query abstraction hierarchy.
 
 
-class SubstringQuery(dbcore.FieldQuery):
+class StringFieldQuery(dbcore.FieldQuery):
+    """A FieldQuery that converts values to strings before matching
+    them.
+    """
+    @classmethod
+    def value_match(cls, pattern, value):
+        """Determine whether the value matches the pattern. The value
+        may have any type.
+        """
+        return cls.string_match(pattern, util.as_string(value))
+
+    @classmethod
+    def string_match(cls, pattern, value):
+        """Determine whether the value matches the pattern. Both
+        arguments are strings. Subclasses implement this method.
+        """
+        raise NotImplementedError()
+
+
+class SubstringQuery(StringFieldQuery):
     """A query that matches a substring in a specific item field."""
     def col_clause(self):
         search = '%' + (self.pattern.replace('\\','\\\\').replace('%','\\%')
@@ -706,16 +725,16 @@ class SubstringQuery(dbcore.FieldQuery):
         return clause, subvals
 
     @classmethod
-    def value_match(cls, pattern, value):
+    def string_match(cls, pattern, value):
         return pattern.lower() in value.lower()
 
 
-class RegexpQuery(dbcore.FieldQuery):
+class RegexpQuery(StringFieldQuery):
     """A query that matches a regular expression in a specific item
     field.
     """
     @classmethod
-    def value_match(cls, pattern, value):
+    def string_match(cls, pattern, value):
         try:
             res = re.search(pattern, value)
         except re.error:
@@ -733,6 +752,27 @@ class BooleanQuery(dbcore.MatchQuery):
         if isinstance(pattern, basestring):
             self.pattern = util.str2bool(pattern)
         self.pattern = int(self.pattern)
+
+
+class BytesQuery(dbcore.MatchQuery):
+    """Match a raw bytes field (i.e., a path). This is a necessary hack
+    to distinguish between the common case, matching Unicode strings,
+    and the special case in which we match bytes.
+    """
+    def __init__(self, field, pattern):
+        super(BytesQuery, self).__init__(field, pattern)
+
+        # Use a buffer representation of the pattern for SQLite
+        # matching. This instructs SQLite to treat the blob as binary
+        # rather than encoded Unicode.
+        if isinstance(self.pattern, bytes):
+            self.buf_pattern = buffer(self.pattern)
+        elif isinstance(self.battern, buffer):
+            self.buf_pattern = self.pattern
+            self.pattern = bytes(self.pattern)
+
+    def col_clause(self):
+        return self.field + " = ?", [self.buf_pattern]
 
 
 class NumericQuery(dbcore.FieldQuery):
