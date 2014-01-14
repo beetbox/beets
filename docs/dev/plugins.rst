@@ -124,6 +124,9 @@ currently available are:
   command finishes adding an album to the library. Parameters: ``lib``,
   ``album``
 
+* *item_copied*: called with an ``Item`` object whenever its file is copied.
+  Parameters: ``item``, ``source`` path, ``destination`` path
+
 * *item_imported*: called with an ``Item`` object every time the importer adds a
   singleton to the library (not called for full-album imports). Parameters:
   ``lib``, ``item``

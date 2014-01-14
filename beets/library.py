@@ -350,6 +350,8 @@ class Item(LibModel):
             dest = util.unique_path(dest)
         if copy:
             util.copy(self.path, dest)
+            plugins.send("item_copied", item=self, source=self.path,
+                         destination=dest)
         else:
             util.move(self.path, dest)
             plugins.send("item_moved", item=self, source=self.path,
