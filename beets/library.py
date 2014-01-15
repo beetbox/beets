@@ -1221,7 +1221,7 @@ class Library(dbcore.Database):
         """Get a sorted list of :class:`Item` objects matching the given
         query.
         """
-        order = '{0}, album'.format(
+        order = '{0}, album, disc, track'.format(
             _orelse("artist_sort", "artist")
         )
         return self._fetch(Item, query, order)
