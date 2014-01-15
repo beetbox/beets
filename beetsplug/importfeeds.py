@@ -124,7 +124,8 @@ def library_opened(lib):
 
 @ImportFeedsPlugin.listen('album_imported')
 def album_imported(lib, album):
-    _record_items(lib, album.album, album.items())
+    items = sorted(album.items(), key=lambda x: x.track)
+    _record_items(lib, album.album, items)
 
 @ImportFeedsPlugin.listen('item_imported')
 def item_imported(lib, item):
