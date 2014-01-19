@@ -15,7 +15,6 @@
 """Tests for non-query database functions of Item.
 """
 import os
-import sqlite3
 import shutil
 import re
 import unicodedata
