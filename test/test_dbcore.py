@@ -28,6 +28,7 @@ class TestModel1(dbcore.Model):
     _table = 'test'
     _flex_table = 'testflex'
     _fields = {
+        'id': dbcore.Type(int, 'INTEGER PRIMARY KEY'),
         'field_one': dbcore.Type(int, 'INTEGER'),
     }
 
@@ -44,6 +45,7 @@ class TestDatabase1(dbcore.Database):
 
 class TestModel2(TestModel1):
     _fields = {
+        'id': dbcore.Type(int, 'INTEGER PRIMARY KEY'),
         'field_one': dbcore.Type(int, 'INTEGER'),
         'field_two': dbcore.Type(int, 'INTEGER'),
     }
@@ -54,6 +56,7 @@ class TestDatabase2(dbcore.Database):
 
 class TestModel3(TestModel1):
     _fields = {
+        'id': dbcore.Type(int, 'INTEGER PRIMARY KEY'),
         'field_one': dbcore.Type(int, 'INTEGER'),
         'field_two': dbcore.Type(int, 'INTEGER'),
         'field_three': dbcore.Type(int, 'INTEGER'),
@@ -65,6 +68,7 @@ class TestDatabase3(dbcore.Database):
 
 class TestModel4(TestModel1):
     _fields = {
+        'id': dbcore.Type(int, 'INTEGER PRIMARY KEY'),
         'field_one': dbcore.Type(int, 'INTEGER'),
         'field_two': dbcore.Type(int, 'INTEGER'),
         'field_three': dbcore.Type(int, 'INTEGER'),
@@ -79,6 +83,7 @@ class AnotherTestModel(TestModel1):
     _table = 'another'
     _flex_table = 'anotherflex'
     _fields = {
+        'id': dbcore.Type(int, 'INTEGER PRIMARY KEY'),
         'foo': dbcore.Type(int, 'INTEGER'),
     }
 
@@ -87,8 +92,6 @@ class TestDatabaseTwoModels(dbcore.Database):
     pass
 
 
-
-TEMP_LIB = os.path.join(_common.RSRC, 'test_copy.blb')
 class MigrationTest(_common.TestCase):
     """Tests the ability to change the database schema between
     versions.
@@ -97,7 +100,7 @@ class MigrationTest(_common.TestCase):
         super(MigrationTest, self).setUp()
 
         # Set up a database with the two-field schema.
-        self.libfile = os.path.join(_common.RSRC, 'temp.db')
+        self.libfile = os.path.join(self.temp_dir, 'temp.db')
         old_lib = TestDatabase2(self.libfile)
 
         # Add an item to the old library.
@@ -107,37 +110,33 @@ class MigrationTest(_common.TestCase):
         old_lib._connection().commit()
         del old_lib
 
-    def tearDown(self):
-        super(MigrationTest, self).tearDown()
-        os.unlink(self.libfile)
-
     def test_open_with_same_fields_leaves_untouched(self):
         new_lib = TestDatabase2(self.libfile)
         c = new_lib._connection().cursor()
         c.execute("select * from test")
         row = c.fetchone()
-        self.assertEqual(len(row.keys()), 2)
+        self.assertEqual(len(row.keys()), len(TestModel2._fields))
 
     def test_open_with_new_field_adds_column(self):
         new_lib = TestDatabase3(self.libfile)
         c = new_lib._connection().cursor()
         c.execute("select * from test")
         row = c.fetchone()
-        self.assertEqual(len(row.keys()), 3)
+        self.assertEqual(len(row.keys()), len(TestModel3._fields))
 
     def test_open_with_fewer_fields_leaves_untouched(self):
         new_lib = TestDatabase1(self.libfile)
         c = new_lib._connection().cursor()
         c.execute("select * from test")
         row = c.fetchone()
-        self.assertEqual(len(row.keys()), 2)
+        self.assertEqual(len(row.keys()), len(TestModel2._fields))
 
     def test_open_with_multiple_new_fields(self):
         new_lib = TestDatabase4(self.libfile)
         c = new_lib._connection().cursor()
         c.execute("select * from test")
         row = c.fetchone()
-        self.assertEqual(len(row.keys()), 4)
+        self.assertEqual(len(row.keys()), len(TestModel4._fields))
 
     def test_extra_model_adds_table(self):
         new_lib = TestDatabaseTwoModels(self.libfile)
@@ -145,3 +144,39 @@ class MigrationTest(_common.TestCase):
             new_lib._connection().execute("select * from another")
         except sqlite3.OperationalError:
             self.fail("select failed")
+
+
+class ModelTest(_common.TestCase):
+    def setUp(self):
+        super(ModelTest, self).setUp()
+        dbfile = os.path.join(self.temp_dir, 'temp.db')
+        self.db = TestDatabase1(dbfile)
+
+    def test_add_model(self):
+        model = TestModel1()
+        model.add(self.db)
+        rows = self.db._connection().execute('select * from test').fetchall()
+        self.assertEqual(len(rows), 1)
+
+    def test_store_fixed_field(self):
+        model = TestModel1()
+        model.add(self.db)
+        model.field_one = 123
+        model.store()
+        row = self.db._connection().execute('select * from test').fetchone()
+        self.assertEqual(row['field_one'], 123)
+
+    def test_retrieve_by_id(self):
+        model = TestModel1()
+        model.add(self.db)
+        other_model = self.db._get(TestModel1, model.id)
+        self.assertEqual(model.id, other_model.id)
+
+    def test_store_and_retrieve_flexattr(self):
+        model = TestModel1()
+        model.add(self.db)
+        model.foo = 'bar'
+        model.store()
+
+        other_model = self.db._get(TestModel1, model.id)
+        self.assertEqual(other_model.foo, 'bar')
