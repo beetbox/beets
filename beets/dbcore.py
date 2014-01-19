@@ -119,11 +119,11 @@ class Model(object):
 
     # Basic operation.
 
-    def __init__(self, lib=None, **values):
-        """Create a new object with an optional Library association and
+    def __init__(self, db=None, **values):
+        """Create a new object with an optional Database association and
         initial field values.
         """
-        self._lib = lib
+        self._db = db
         self._dirty = set()
         self._values_fixed = {}
         self._values_flex = {}
@@ -146,11 +146,11 @@ class Model(object):
 
     def _check_db(self, need_id=True):
         """Ensure that this object is associated with a database row: it
-        has a reference to a library (`_lib`) and an id. A ValueError
+        has a reference to a database (`_db`) and an id. A ValueError
         exception is raised otherwise.
         """
-        if not self._lib:
-            raise ValueError('{0} has no library'.format(type(self).__name__))
+        if not self._db:
+            raise ValueError('{0} has no database'.format(type(self).__name__))
         if need_id and not self.id:
             raise ValueError('{0} has no id'.format(type(self).__name__))
 
@@ -268,7 +268,7 @@ class Model(object):
                 subvars.append(value)
         assignments = assignments[:-1]  # Knock off last ,
 
-        with self._lib.transaction() as tx:
+        with self._db.transaction() as tx:
             # Main table update.
             if assignments:
                 query = 'UPDATE {0} SET {1} WHERE id=?'.format(
@@ -293,7 +293,7 @@ class Model(object):
         """Refresh the object's metadata from the library database.
         """
         self._check_db()
-        stored_obj = self._lib._get(type(self), self.id)
+        stored_obj = self._db._get(type(self), self.id)
         self.update(dict(stored_obj))
         self.clear_dirty()
 
@@ -301,7 +301,7 @@ class Model(object):
         """Remove the object's associated rows from the database.
         """
         self._check_db()
-        with self._lib.transaction() as tx:
+        with self._db.transaction() as tx:
             tx.mutate(
                 'DELETE FROM {0} WHERE id=?'.format(self._table),
                 (self.id,)
@@ -311,19 +311,19 @@ class Model(object):
                 (self.id,)
             )
 
-    def add(self, lib=None):
+    def add(self, db=None):
         """Add the object to the library database. This object must be
-        associated with a library; you can provide one via the `lib`
-        parameter or use the currently associated library.
+        associated with a database; you can provide one via the `db`
+        parameter or use the currently associated database.
 
         The object's `id` and `added` fields are set along with any
         current field values.
         """
-        if lib:
-            self._lib = lib
+        if db:
+            self._db = db
         self._check_db(False)
 
-        with self._lib.transaction() as tx:
+        with self._db.transaction() as tx:
             new_id = tx.mutate(
                 'INSERT INTO {0} DEFAULT VALUES'.format(self._table)
             )
@@ -462,17 +462,17 @@ class Results(object):
     """An item query result set. Iterating over the collection lazily
     constructs LibModel objects that reflect database rows.
     """
-    def __init__(self, model_class, rows, lib, query=None):
+    def __init__(self, model_class, rows, db, query=None):
         """Create a result set that will construct objects of type
         `model_class`, which should be a subclass of `LibModel`, out of
         the query result mapping in `rows`. The new objects are
-        associated with the library `lib`. If `query` is provided, it is
+        associated with the database `db`. If `query` is provided, it is
         used as a predicate to filter the results for a "slow query" that
         cannot be evaluated by the database directly.
         """
         self.model_class = model_class
         self.rows = rows
-        self.lib = lib
+        self.db = db
         self.query = query
 
     def __iter__(self):
@@ -481,7 +481,7 @@ class Results(object):
         """
         for row in self.rows:
             # Get the flexible attributes for the object.
-            with self.lib.transaction() as tx:
+            with self.db.transaction() as tx:
                 flex_rows = tx.query(
                     'SELECT * FROM {0} WHERE entity_id=?'.format(
                         self.model_class._flex_table
@@ -495,7 +495,7 @@ class Results(object):
 
             # Construct the Python object and yield it if it passes the
             # predicate.
-            obj = self.model_class(self.lib, **values)
+            obj = self.model_class(self.db, **values)
             if not self.query or self.query.match(obj):
                 yield obj
 
@@ -545,20 +545,20 @@ class Transaction(object):
     """A context manager for safe, concurrent access to the database.
     All SQL commands should be executed through a transaction.
     """
-    def __init__(self, lib):
-        self.lib = lib
+    def __init__(self, db):
+        self.db = db
 
     def __enter__(self):
         """Begin a transaction. This transaction may be created while
         another is active in a different thread.
         """
-        with self.lib._tx_stack() as stack:
+        with self.db._tx_stack() as stack:
             first = not stack
             stack.append(self)
         if first:
             # Beginning a "root" transaction, which corresponds to an
             # SQLite transaction.
-            self.lib._db_lock.acquire()
+            self.db._db_lock.acquire()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -566,31 +566,31 @@ class Transaction(object):
         entered but not yet exited transaction. If it is the last active
         transaction, the database updates are committed.
         """
-        with self.lib._tx_stack() as stack:
+        with self.db._tx_stack() as stack:
             assert stack.pop() is self
             empty = not stack
         if empty:
             # Ending a "root" transaction. End the SQLite transaction.
-            self.lib._connection().commit()
-            self.lib._db_lock.release()
+            self.db._connection().commit()
+            self.db._db_lock.release()
 
     def query(self, statement, subvals=()):
         """Execute an SQL statement with substitution values and return
         a list of rows from the database.
         """
-        cursor = self.lib._connection().execute(statement, subvals)
+        cursor = self.db._connection().execute(statement, subvals)
         return cursor.fetchall()
 
     def mutate(self, statement, subvals=()):
         """Execute an SQL statement with substitution values and return
         the row ID of the last affected row.
         """
-        cursor = self.lib._connection().execute(statement, subvals)
+        cursor = self.db._connection().execute(statement, subvals)
         return cursor.lastrowid
 
     def script(self, statements):
         """Execute a string containing multiple SQL statements."""
-        self.lib._connection().executescript(statements)
+        self.db._connection().executescript(statements)
 
 
 class Database(object):
@@ -670,7 +670,7 @@ class Database(object):
     # Schema setup and migration.
 
     def _make_table(self, table, fields):
-        """Set up the schema of the library file. `fields` is a mapping
+        """Set up the schema of the database. `fields` is a mapping
         from field names to `Type`s. Columns are added if necessary.
         """
         # Get current schema.
@@ -743,7 +743,7 @@ class Database(object):
         return Results(model_cls, rows, self, None if where else query)
 
     def _get(self, model_cls, id):
-        """Get a LibModel object by its id or None if the id does not
+        """Get a Model object by its id or None if the id does not
         exist.
         """
         return self._fetch(model_cls, MatchQuery('id', id)).get()

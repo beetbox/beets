@@ -212,21 +212,21 @@ class LibModel(dbcore.Model):
     # FIXME should be able to replace this with field types.
 
     def _template_funcs(self):
-        funcs = DefaultTemplateFunctions(self, self._lib).functions()
+        funcs = DefaultTemplateFunctions(self, self._db).functions()
         funcs.update(plugins.template_funcs())
         return funcs
 
     def store(self):
         super(LibModel, self).store()
-        plugins.send('database_change', lib=self._lib)
+        plugins.send('database_change', lib=self._db)
 
     def remove(self):
         super(LibModel, self).remove()
-        plugins.send('database_change', lib=self._lib)
+        plugins.send('database_change', lib=self._db)
 
     def add(self, lib=None):
         super(LibModel, self).add(lib)
-        plugins.send('database_change', lib=self._lib)
+        plugins.send('database_change', lib=self._db)
 
 
 class Item(LibModel):
@@ -277,9 +277,9 @@ class Item(LibModel):
         None if the item is a singleton or is not associated with a
         library.
         """
-        if not self._lib:
+        if not self._db:
             return None
-        return self._lib.get_album(self)
+        return self._db.get_album(self)
 
 
     # Interaction with file metadata.
@@ -388,9 +388,9 @@ class Item(LibModel):
         # Delete the associated file.
         if delete:
             util.remove(self.path)
-            util.prune_dirs(os.path.dirname(self.path), self._lib.directory)
+            util.prune_dirs(os.path.dirname(self.path), self._db.directory)
 
-        self._lib._memotable = {}
+        self._db._memotable = {}
 
     def move(self, copy=False, basedir=None, with_album=True):
         """Move the item to its designated location within the library
@@ -432,7 +432,7 @@ class Item(LibModel):
 
         # Prune vacated directory.
         if not copy:
-            util.prune_dirs(os.path.dirname(old_path), self._lib.directory)
+            util.prune_dirs(os.path.dirname(old_path), self._db.directory)
 
 
     # Templating.
@@ -470,8 +470,8 @@ class Item(LibModel):
         """
         self._check_db()
         platform = platform or sys.platform
-        basedir = basedir or self._lib.directory
-        path_formats = path_formats or self._lib.path_formats
+        basedir = basedir or self._db.directory
+        path_formats = path_formats or self._db.path_formats
 
         # Use a path format based on a query, falling back on the
         # default.
@@ -504,7 +504,7 @@ class Item(LibModel):
         else:
             subpath = unicodedata.normalize('NFC', subpath)
         # Truncate components and remove forbidden characters.
-        subpath = util.sanitize_path(subpath, self._lib.replacements)
+        subpath = util.sanitize_path(subpath, self._db.replacements)
         # Encode for the filesystem.
         if not fragment:
             subpath = bytestring_path(subpath)
@@ -520,7 +520,7 @@ class Item(LibModel):
         maxlen = beets.config['max_filename_length'].get(int)
         if not maxlen:
             # When zero, try to determine from filesystem.
-            maxlen = util.max_filename_length(self._lib.directory)
+            maxlen = util.max_filename_length(self._db.directory)
         subpath = util.truncate_path(subpath, maxlen)
 
         if fragment:
@@ -560,7 +560,7 @@ class Album(LibModel):
         """Returns an iterable over the items associated with this
         album.
         """
-        return self._lib.items(dbcore.MatchQuery('album_id', self.id))
+        return self._db.items(dbcore.MatchQuery('album_id', self.id))
 
     def remove(self, delete=False, with_items=True):
         """Removes this album and all its associated items from the
@@ -605,7 +605,7 @@ class Album(LibModel):
         # Prune old path when moving.
         if not copy:
             util.prune_dirs(os.path.dirname(old_art),
-                            self._lib.directory)
+                            self._db.directory)
 
     def move(self, copy=False, basedir=None):
         """Moves (or copies) all items to their destination. Any album
@@ -613,7 +613,7 @@ class Album(LibModel):
         directory for the destination. The album is stored to the
         database, persisting any modifications to its metadata.
         """
-        basedir = basedir or self._lib.directory
+        basedir = basedir or self._db.directory
 
         # Ensure new metadata is available to items for destination
         # computation.
@@ -652,7 +652,7 @@ class Album(LibModel):
         filename_tmpl = Template(beets.config['art_filename'].get(unicode))
         subpath = self.evaluate_template(filename_tmpl, True)
         subpath = util.sanitize_path(subpath,
-                                     replacements=self._lib.replacements)
+                                     replacements=self._db.replacements)
         subpath = bytestring_path(subpath)
 
         _, ext = os.path.splitext(image)
@@ -697,7 +697,7 @@ class Album(LibModel):
             if key in self._dirty:
                 track_updates[key] = self[key]
 
-        with self._lib.transaction():
+        with self._db.transaction():
             super(Album, self).store()
             if track_updates:
                 for item in self.items():

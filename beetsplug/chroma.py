@@ -271,7 +271,7 @@ def fingerprint_item(item, write=False):
                     util.displayable_path(item.path)
                 ))
                 item.write()
-            if item._lib:
+            if item._db:
                 item.store()
             return item.acoustid_fingerprint
         except acoustid.FingerprintGenerationError as exc:
