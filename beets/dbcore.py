@@ -678,7 +678,7 @@ class Database(object):
             rows = tx.query('PRAGMA table_info(%s)' % table)
         current_fields = set([row[1] for row in rows])
 
-        field_names = set([f[0] for f in fields])
+        field_names = set(fields.keys())
         if current_fields.issuperset(field_names):
             # Table exists and has all the required columns.
             return
@@ -692,7 +692,7 @@ class Database(object):
                                                            ', '.join(columns))
 
         else:
-            # Table exists but is missing fields.
+            # Table exists does not match the field set.
             setup_sql = ''
             for name, typ in fields.items():
                 if name in current_fields:
