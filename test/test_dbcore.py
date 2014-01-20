@@ -18,6 +18,7 @@ import os
 import sqlite3
 
 import _common
+from _common import unittest
 from beets import dbcore
 
 
@@ -180,3 +181,9 @@ class ModelTest(_common.TestCase):
 
         other_model = self.db._get(TestModel1, model.id)
         self.assertEqual(other_model.foo, 'bar')
+
+def suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
+
+if __name__ == '__main__':
+    unittest.main(defaultTest='suite')
