@@ -666,6 +666,12 @@ class PathFormatTest(_common.TestCase):
         self.assertEqual(tmpl.original, 'bar')
         self.assertEqual(pf[1:], default_formats)
 
+class PluginTest(_common.TestCase):
+    def test_plugin_command_from_pluginpath(self):
+        config['pluginpath'] = [_common.RSRC]
+        config['plugins'] = ['test']
+        ui._raw_main(['test'])
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
