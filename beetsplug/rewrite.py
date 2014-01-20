@@ -32,7 +32,7 @@ def rewriter(field, rules):
     (pattern, replacement) pairs.
     """
     def fieldfunc(item):
-        value = getattr(item, field)
+        value = item._values_fixed[field]
         for pattern, replacement in rules:
             if pattern.match(value.lower()):
                 # Rewrite activated.
@@ -54,7 +54,7 @@ class RewritePlugin(BeetsPlugin):
                 fieldname, pattern = key.split(None, 1)
             except ValueError:
                 raise ui.UserError("invalid rewrite specification")
-            if fieldname not in library.ITEM_KEYS:
+            if fieldname not in library.Item._fields:
                 raise ui.UserError("invalid field name (%s) in rewriter" %
                                    fieldname)
             log.debug(u'adding template field %s' % key)
