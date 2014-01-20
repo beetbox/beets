@@ -12,7 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""An abstract database library that forms the basis for beets' Library.
+"""The central Model and Database constructs for DBCore.
 """
 import time
 import os
