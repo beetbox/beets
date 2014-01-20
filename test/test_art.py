@@ -39,7 +39,7 @@ class MockUrlRetrieve(object):
         self.fetched = url
         return filename or self.pathval, self.headers
 
-class FetchImageTest(unittest.TestCase):
+class FetchImageTest(_common.TestCase):
     def test_invalid_type_returns_none(self):
         fetchart.urllib.urlretrieve = MockUrlRetrieve('')
         artpath = fetchart._fetch_image('http://example.com')
@@ -168,12 +168,14 @@ class CombinedTest(_common.TestCase):
         self.assertFalse(self.urlopen_called)
         self.assertFalse(mock_retrieve.fetched)
 
-class AAOTest(unittest.TestCase):
+class AAOTest(_common.TestCase):
     def setUp(self):
+        super(AAOTest, self).setUp()
         self.old_urlopen = fetchart.urllib.urlopen
         fetchart.urllib.urlopen = self._urlopen
         self.page_text = ''
     def tearDown(self):
+        super(AAOTest, self).tearDown()
         fetchart.urllib.urlopen = self.old_urlopen
 
     def _urlopen(self, url):

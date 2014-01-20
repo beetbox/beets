@@ -34,10 +34,6 @@ from beets import importer
 from beets.ui import commands
 import beets
 
-# Suppress logging output.
-log = logging.getLogger('beets')
-log.setLevel(logging.CRITICAL)
-
 # Test resources/sandbox path.
 RSRC = os.path.join(os.path.dirname(__file__), 'rsrc')
 
@@ -112,6 +108,10 @@ class TestCase(unittest.TestCase):
 
         # Initialize, but don't install, a DummyIO.
         self.io = DummyIO()
+
+        # Suppress logging output.
+        log = logging.getLogger('beets')
+        log.setLevel(logging.CRITICAL)
 
     def tearDown(self):
         if os.path.isdir(self.temp_dir):
