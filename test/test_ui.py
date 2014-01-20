@@ -668,7 +668,7 @@ class PathFormatTest(_common.TestCase):
 
 class PluginTest(_common.TestCase):
     def test_plugin_command_from_pluginpath(self):
-        config['pluginpath'] = [_common.RSRC]
+        config['pluginpath'] = [os.path.join(_common.RSRC, 'beetsplug')]
         config['plugins'] = ['test']
         ui._raw_main(['test'])
 
