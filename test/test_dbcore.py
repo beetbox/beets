@@ -25,12 +25,15 @@ from beets import dbcore
 # Fixture: concrete database and model classes. For migration tests, we
 # have multiple models with different numbers of fields.
 
+ID_TYPE = dbcore.Type(int, 'INTEGER PRIMARY KEY', dbcore.query.NumericQuery)
+INT_TYPE = dbcore.Type(int, 'INTEGER', dbcore.query.NumericQuery)
+
 class TestModel1(dbcore.Model):
     _table = 'test'
     _flex_table = 'testflex'
     _fields = {
-        'id': dbcore.Type(int, 'INTEGER PRIMARY KEY'),
-        'field_one': dbcore.Type(int, 'INTEGER'),
+        'id': ID_TYPE,
+        'field_one': INT_TYPE,
     }
 
     @classmethod
@@ -46,9 +49,9 @@ class TestDatabase1(dbcore.Database):
 
 class TestModel2(TestModel1):
     _fields = {
-        'id': dbcore.Type(int, 'INTEGER PRIMARY KEY'),
-        'field_one': dbcore.Type(int, 'INTEGER'),
-        'field_two': dbcore.Type(int, 'INTEGER'),
+        'id': ID_TYPE,
+        'field_one': INT_TYPE,
+        'field_two': INT_TYPE,
     }
 
 class TestDatabase2(dbcore.Database):
@@ -57,10 +60,10 @@ class TestDatabase2(dbcore.Database):
 
 class TestModel3(TestModel1):
     _fields = {
-        'id': dbcore.Type(int, 'INTEGER PRIMARY KEY'),
-        'field_one': dbcore.Type(int, 'INTEGER'),
-        'field_two': dbcore.Type(int, 'INTEGER'),
-        'field_three': dbcore.Type(int, 'INTEGER'),
+        'id': ID_TYPE,
+        'field_one': INT_TYPE,
+        'field_two': INT_TYPE,
+        'field_three': INT_TYPE,
     }
 
 class TestDatabase3(dbcore.Database):
@@ -69,11 +72,11 @@ class TestDatabase3(dbcore.Database):
 
 class TestModel4(TestModel1):
     _fields = {
-        'id': dbcore.Type(int, 'INTEGER PRIMARY KEY'),
-        'field_one': dbcore.Type(int, 'INTEGER'),
-        'field_two': dbcore.Type(int, 'INTEGER'),
-        'field_three': dbcore.Type(int, 'INTEGER'),
-        'field_four': dbcore.Type(int, 'INTEGER'),
+        'id': ID_TYPE,
+        'field_one': INT_TYPE,
+        'field_two': INT_TYPE,
+        'field_three': INT_TYPE,
+        'field_four': INT_TYPE,
     }
 
 class TestDatabase4(dbcore.Database):
@@ -84,8 +87,8 @@ class AnotherTestModel(TestModel1):
     _table = 'another'
     _flex_table = 'anotherflex'
     _fields = {
-        'id': dbcore.Type(int, 'INTEGER PRIMARY KEY'),
-        'foo': dbcore.Type(int, 'INTEGER'),
+        'id': ID_TYPE,
+        'foo': INT_TYPE,
     }
 
 class TestDatabaseTwoModels(dbcore.Database):

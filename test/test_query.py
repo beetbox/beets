@@ -22,51 +22,55 @@ from beets import dbcore
 pqp = beets.library.parse_query_part
 
 
+TEST_TYPES = {
+    'year': dbcore.query.NumericQuery
+}
+
 class QueryParseTest(_common.TestCase):
     def test_one_basic_term(self):
         q = 'test'
         r = (None, 'test', dbcore.query.SubstringQuery)
-        self.assertEqual(pqp(q), r)
+        self.assertEqual(pqp(q, TEST_TYPES), r)
 
     def test_one_keyed_term(self):
         q = 'test:val'
         r = ('test', 'val', dbcore.query.SubstringQuery)
-        self.assertEqual(pqp(q), r)
+        self.assertEqual(pqp(q, TEST_TYPES), r)
 
     def test_colon_at_end(self):
         q = 'test:'
         r = (None, 'test:', dbcore.query.SubstringQuery)
-        self.assertEqual(pqp(q), r)
+        self.assertEqual(pqp(q, TEST_TYPES), r)
 
     def test_one_basic_regexp(self):
         q = r':regexp'
         r = (None, 'regexp', dbcore.query.RegexpQuery)
-        self.assertEqual(pqp(q), r)
+        self.assertEqual(pqp(q, TEST_TYPES), r)
 
     def test_keyed_regexp(self):
         q = r'test::regexp'
         r = ('test', 'regexp', dbcore.query.RegexpQuery)
-        self.assertEqual(pqp(q), r)
+        self.assertEqual(pqp(q, TEST_TYPES), r)
 
     def test_escaped_colon(self):
         q = r'test\:val'
         r = (None, 'test:val', dbcore.query.SubstringQuery)
-        self.assertEqual(pqp(q), r)
+        self.assertEqual(pqp(q, TEST_TYPES), r)
 
     def test_escaped_colon_in_regexp(self):
         q = r':test\:regexp'
         r = (None, 'test:regexp', dbcore.query.RegexpQuery)
-        self.assertEqual(pqp(q), r)
+        self.assertEqual(pqp(q, TEST_TYPES), r)
 
     def test_single_year(self):
         q = 'year:1999'
         r = ('year', '1999', dbcore.query.NumericQuery)
-        self.assertEqual(pqp(q), r)
+        self.assertEqual(pqp(q, TEST_TYPES), r)
 
     def test_multiple_years(self):
         q = 'year:1999..2010'
         r = ('year', '1999..2010', dbcore.query.NumericQuery)
-        self.assertEqual(pqp(q), r)
+        self.assertEqual(pqp(q, TEST_TYPES), r)
 
 
 class AnyFieldQueryTest(_common.LibTestCase):

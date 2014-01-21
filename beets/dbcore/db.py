@@ -66,7 +66,7 @@ def format_for_path(value, key=None):
 # Abstract base for model classes and their field types.
 
 
-Type = namedtuple('Type', 'py_type sql_type')
+Type = namedtuple('Type', 'py_type sql_type query')
 
 
 class Model(object):

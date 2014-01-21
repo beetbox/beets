@@ -165,32 +165,18 @@ class NumericQuery(FieldQuery):
     (``..``) lets users specify one- or two-sided ranges. For example,
     ``year:2001..`` finds music released since the turn of the century.
     """
-    # FIXME
-    # types = dict((r[0], r[1]) for r in ITEM_FIELDS)
-
-    @classmethod
-    def applies_to(cls, field):
-        """Determine whether a field has numeric type. NumericQuery
-        should only be used with such fields.
-        """
-        if field not in cls.types:
-            # This can happen when using album fields.
-            # FIXME should no longer be necessary with the new type system.
-            return False
-        return cls.types.get(field).py_type in (int, float)
-
     def _convert(self, s):
         """Convert a string to the appropriate numeric type. If the
         string cannot be converted, return None.
         """
         try:
-            return self.numtype(s)
+            # FIXME should work w/ either integer or float
+            return float(s)
         except ValueError:
             return None
 
     def __init__(self, field, pattern, fast=True):
         super(NumericQuery, self).__init__(field, pattern, fast)
-        self.numtype = self.types[field].py_type
 
         parts = pattern.split('..', 1)
         if len(parts) == 1:

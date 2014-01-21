@@ -36,12 +36,12 @@ from datetime import datetime
 
 # Common types used in field definitions.
 TYPES = {
-    int:      Type(int, 'INTEGER'),
-    float:    Type(float, 'REAL'),
-    datetime: Type(datetime, 'REAL'),
-    bytes:    Type(bytes, 'BLOB'),
-    unicode:  Type(unicode, 'TEXT'),
-    bool:     Type(bool, 'INTEGER'),
+    int:      Type(int,      'INTEGER', dbcore.query.NumericQuery),
+    float:    Type(float,    'REAL',    dbcore.query.NumericQuery),
+    datetime: Type(datetime, 'REAL',    dbcore.query.NumericQuery),
+    bytes:    Type(bytes,    'BLOB',    dbcore.query.MatchQuery),
+    unicode:  Type(unicode,  'TEXT',    dbcore.query.SubstringQuery),
+    bool:     Type(bool,     'INTEGER', dbcore.query.BooleanQuery),
 }
 
 
@@ -54,9 +54,10 @@ TYPES = {
 # - Is the field writable?
 # - Does the field reflect an attribute of a MediaFile?
 ITEM_FIELDS = [
-    ('id',       Type(int, 'INTEGER PRIMARY KEY'), False, False),
-    ('path',     TYPES[bytes],                     False, False),
-    ('album_id', TYPES[int],                       False, False),
+    ('id', Type(int, 'INTEGER PRIMARY KEY', dbcore.query.NumericQuery),
+     False, False),
+    ('path',     TYPES[bytes], False, False),
+    ('album_id', TYPES[int],   False, False),
 
     ('title',                TYPES[unicode], True, True),
     ('artist',               TYPES[unicode], True, True),
@@ -125,7 +126,8 @@ ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 # The third entry in each tuple indicates whether the field reflects an
 # identically-named field in the items table.
 ALBUM_FIELDS = [
-    ('id',      Type(int, 'INTEGER PRIMARY KEY'), False),
+    ('id',      Type(int, 'INTEGER PRIMARY KEY', dbcore.query.NumericQuery),
+     False),
     ('artpath', TYPES[bytes],                     False),
     ('added',   TYPES[datetime],                  True),
 
@@ -759,19 +761,23 @@ PARSE_QUERY_PART_REGEX = re.compile(
     re.I  # Case-insensitive.
 )
 
-def parse_query_part(part):
-    """Takes a query in the form of a key/value pair separated by a
-    colon. The value part is matched against a list of prefixes that
-    can be extended by plugins to add custom query types. For
-    example, the colon prefix denotes a regular expression query.
+def parse_query_part(part, query_classes={},
+                     default_class=dbcore.query.SubstringQuery):
+    """Take a query in the form of a key/value pair separated by a
+    colon and return a tuple of `(key, value, cls)`. `key` may be None,
+    indicating that any field may be matched. `cls` is a subclass of
+    `FieldQuery`. The optional `query_classes` parameter maps field names
+    to default query types; `default_class` is the fallback.
 
-    The function returns a tuple of `(key, value, cls)`. `key` may
-    be None, indicating that any field may be matched. `cls` is a
-    subclass of `FieldQuery`.
+    To determine the query class, two factors are used: prefixes and
+    field types. For example, the colon prefix denotes a regular
+    expression query and a type map might provide a special kind of
+    query for numeric values. If neither a prefix nor a specific query
+    class is available, `default_class` is used.
 
     For instance,
-    parse_query('stapler') == (None, 'stapler', None)
-    parse_query('color:red') == ('color', 'red', None)
+    parse_query('stapler') == (None, 'stapler', SubstringQuery)
+    parse_query('color:red') == ('color', 'red', SubstringQuery)
     parse_query(':^Quiet') == (None, '^Quiet', RegexpQuery)
     parse_query('color::b..e') == ('color', 'b..e', RegexpQuery)
 
@@ -781,6 +787,7 @@ def parse_query_part(part):
     part = part.strip()
     match = PARSE_QUERY_PART_REGEX.match(part)
 
+    # FIXME parameterize
     prefixes = {':': dbcore.query.RegexpQuery}
     prefixes.update(plugins.queries())
 
@@ -791,16 +798,17 @@ def parse_query_part(part):
         for pre, query_class in prefixes.items():
             if term.startswith(pre):
                 return key, term[len(pre):], query_class
-        if key and dbcore.query.NumericQuery.applies_to(key):
-            return key, term, dbcore.query.NumericQuery
-        return key, term, dbcore.query.SubstringQuery  # Default query type.
+        query_class = query_classes.get(key, default_class)
+        return key, term, query_class
 
 
-def construct_query_part(query_part, default_fields, all_keys):
-    """Create a query from a single query component. Return a Query
-    instance or None if the value cannot be parsed.
+def construct_query_part(query_part, model_cls):
+    """Create a query from a single query component, `query_part`, for
+    querying instances of `model_cls`. Return a `Query` instance or
+    `None` if the value cannot be parsed.
     """
-    parsed = parse_query_part(query_part)
+    query_classes = dict((k, t.query) for (k, t) in model_cls._fields.items())
+    parsed = parse_query_part(query_part, query_classes)
     if not parsed:
         return
 
@@ -808,14 +816,15 @@ def construct_query_part(query_part, default_fields, all_keys):
 
     # No key specified.
     if key is None:
-        if os.sep in pattern and 'path' in all_keys:
+        if os.sep in pattern and 'path' in model_cls._fields:
             # This looks like a path.
             return PathQuery(pattern)
         elif issubclass(query_class, dbcore.FieldQuery):
             # The query type matches a specific field, but none was
             # specified. So we use a version of the query that matches
             # any field.
-            return dbcore.query.AnyFieldQuery(pattern, default_fields,
+            return dbcore.query.AnyFieldQuery(pattern,
+                                              model_cls._search_fields,
                                               query_class)
         else:
             # Other query type.
@@ -828,7 +837,7 @@ def construct_query_part(query_part, default_fields, all_keys):
         return dbcore.query.BooleanQuery(key, pattern)
 
     # Path field.
-    elif key == 'path' and 'path' in all_keys:
+    elif key == 'path' and 'path' in model_cls._fields:
         if query_class is dbcore.query.SubstringQuery:
             # By default, use special path matching logic.
             return PathQuery(pattern)
@@ -842,18 +851,17 @@ def construct_query_part(query_part, default_fields, all_keys):
 
     # Other field.
     else:
-        return query_class(key.lower(), pattern, key in all_keys)
+        return query_class(key.lower(), pattern, key in model_cls._fields)
 
 
-def query_from_strings(query_cls, query_parts, default_fields, all_keys):
-    """Creates a collection query of type `query-cls` from a list of
-    strings in the format used by parse_query_part. If default_fields
-    are specified, they are the fields to be searched by unqualified
-    search terms. Otherwise, all fields are searched for those terms.
+def query_from_strings(query_cls, model_cls, query_parts):
+    """Creates a collection query of type `query_cls` from a list of
+    strings in the format used by parse_query_part. `model_cls`
+    determines how queries are constructed from strings.
     """
     subqueries = []
     for part in query_parts:
-        subq = construct_query_part(part, default_fields, all_keys)
+        subq = construct_query_part(part, model_cls)
         if subq:
             subqueries.append(subq)
     if not subqueries:  # No terms in query.
@@ -881,9 +889,7 @@ def get_query(val, model_cls):
     if val is None:
         return dbcore.query.TrueQuery()
     elif isinstance(val, list) or isinstance(val, tuple):
-        return query_from_strings(dbcore.AndQuery,
-                                  val, model_cls._search_fields,
-                                  model_cls._fields.keys())
+        return query_from_strings(dbcore.AndQuery, model_cls, val)
     elif isinstance(val, dbcore.Query):
         return val
     else:
