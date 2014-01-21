@@ -85,16 +85,11 @@ def single_item(item_id):
     return flask.jsonify(_rep(item))
 
 @app.route('/item/')
+@app.route('/item/query/')
 def all_items():
-    if flask.request.args.has_key('embedded'):
-        return app.response_class(
-                json_generator(g.lib.items(), root='items'),
-                mimetype='application/json')
-    else:
-        with g.lib.transaction() as tx:
-            rows = tx.query("SELECT id FROM items")
-        all_ids = [row[0] for row in rows]
-        return flask.jsonify(item_ids=all_ids)
+    return app.response_class(
+            json_generator(g.lib.items(), root='items'),
+            mimetype='application/json')
 
 @app.route('/item/<int:item_id>/file')
 def item_file(item_id):
@@ -119,16 +114,11 @@ def single_album(album_id):
     return flask.jsonify(_rep(album))
 
 @app.route('/album/')
+@app.route('/album/query/')
 def all_albums():
-    if flask.request.args.has_key('embedded'):
-        return app.response_class(
-                json_generator(g.lib.albums(), root='albums'),
-                mimetype='application/json')
-    else:
-        with g.lib.transaction() as tx:
-            rows = tx.query("SELECT id FROM albums")
-        all_ids = [row[0] for row in rows]
-        return flask.jsonify(album_ids=all_ids)
+    return app.response_class(
+            json_generator(g.lib.albums(), root='albums'),
+            mimetype='application/json')
 
 
 @app.route('/album/query/<path:query>')
