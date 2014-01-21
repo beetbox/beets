@@ -749,6 +749,9 @@ def _raw_main(args):
     import beetsplug
     beetsplug.__path__ = get_plugin_paths() + beetsplug.__path__
 
+    # For backwards compatibility
+    sys.path += get_plugin_paths()
+
     # Load requested plugins.
     plugins.load_plugins(config['plugins'].as_str_seq())
     plugins.send("pluginload")
