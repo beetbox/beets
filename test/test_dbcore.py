@@ -25,8 +25,8 @@ from beets import dbcore
 # Fixture: concrete database and model classes. For migration tests, we
 # have multiple models with different numbers of fields.
 
-ID_TYPE = dbcore.Type(int, 'INTEGER PRIMARY KEY', dbcore.query.NumericQuery)
-INT_TYPE = dbcore.Type(int, 'INTEGER', dbcore.query.NumericQuery)
+ID_TYPE = dbcore.Type('INTEGER PRIMARY KEY', dbcore.query.NumericQuery)
+INT_TYPE = dbcore.Type('INTEGER', dbcore.query.NumericQuery)
 
 class TestModel1(dbcore.Model):
     _table = 'test'

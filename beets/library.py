@@ -79,13 +79,13 @@ class SingletonQuery(dbcore.Query):
 
 # Common types used in field definitions.
 TYPES = {
-    int:      Type(int,      'INTEGER', dbcore.query.NumericQuery),
-    float:    Type(float,    'REAL',    dbcore.query.NumericQuery),
-    datetime: Type(datetime, 'REAL',    dbcore.query.NumericQuery),
-    unicode:  Type(unicode,  'TEXT',    dbcore.query.SubstringQuery),
-    bool:     Type(bool,     'INTEGER', dbcore.query.BooleanQuery),
+    int:      Type('INTEGER', dbcore.query.NumericQuery),
+    float:    Type('REAL',    dbcore.query.NumericQuery),
+    datetime: Type('REAL',    dbcore.query.NumericQuery),
+    unicode:  Type('TEXT',    dbcore.query.SubstringQuery),
+    bool:     Type('INTEGER', dbcore.query.BooleanQuery),
 }
-PATH_TYPE = Type(bytes, 'BLOB', PathQuery)
+PATH_TYPE = Type('BLOB', PathQuery)
 
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
@@ -96,7 +96,7 @@ PATH_TYPE = Type(bytes, 'BLOB', PathQuery)
 # - Is the field writable?
 # - Does the field reflect an attribute of a MediaFile?
 ITEM_FIELDS = [
-    ('id', Type(int, 'INTEGER PRIMARY KEY', dbcore.query.NumericQuery),
+    ('id', Type('INTEGER PRIMARY KEY', dbcore.query.NumericQuery),
      False, False),
     ('path',     PATH_TYPE,  False, False),
     ('album_id', TYPES[int], False, False),
@@ -167,8 +167,7 @@ ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 # The third entry in each tuple indicates whether the field reflects an
 # identically-named field in the items table.
 ALBUM_FIELDS = [
-    ('id',      Type(int, 'INTEGER PRIMARY KEY', dbcore.query.NumericQuery),
-     False),
+    ('id', Type('INTEGER PRIMARY KEY', dbcore.query.NumericQuery), False),
     ('artpath', PATH_TYPE,       False),
     ('added',   TYPES[datetime], True),
 

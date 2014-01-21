@@ -66,7 +66,7 @@ def format_for_path(value, key=None):
 # Abstract base for model classes and their field types.
 
 
-Type = namedtuple('Type', 'py_type sql_type query')
+Type = namedtuple('Type', 'sql query')
 
 
 class Model(object):
@@ -637,7 +637,7 @@ class Database(object):
             # No table exists.
             columns = []
             for name, typ in fields.items():
-                columns.append('{0} {1}'.format(name, typ.sql_type))
+                columns.append('{0} {1}'.format(name, typ.sql))
             setup_sql = 'CREATE TABLE {0} ({1});\n'.format(table,
                                                            ', '.join(columns))
 
@@ -648,7 +648,7 @@ class Database(object):
                 if name in current_fields:
                     continue
                 setup_sql += 'ALTER TABLE {0} ADD COLUMN {1} {2};\n'.format(
-                    table, name, typ.sql_type
+                    table, name, typ.sql
                 )
 
         with self.transaction() as tx:
