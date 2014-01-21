@@ -55,11 +55,11 @@ includes the BPD plugin for playing music.
 pluginpath
 ~~~~~~~~~~
 
-Directories to search for plugins.  These paths are just added to ``sys.path``
-before the plugins are loaded. (The plugins still have to be contained in a
-``beetsplug`` namespace package.) This can either be a single string or a list
-of strings---so, if you have multiple paths, format them as a YAML list like
-so::
+Directories to search for plugins.  Each Python file or directory in a plugin
+path represents a plugin and should define a subclass of :class:`BeetsPlugin`.
+A plugin can then be loaded by adding the filename to the `plugins` configuration.
+The plugin path can either be a single string or a list of strings---so, if you
+have multiple paths, format them as a YAML list like so::
 
     pluginpath:
         - /path/one
