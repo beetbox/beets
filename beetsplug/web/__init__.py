@@ -68,10 +68,14 @@ def single_item(item_id):
 
 @app.route('/item/')
 def all_items():
-    with g.lib.transaction() as tx:
-        rows = tx.query("SELECT id FROM items")
-    all_ids = [row[0] for row in rows]
-    return flask.jsonify(item_ids=all_ids)
+    if flask.request.args.has_key('embedded'):
+        items = [_rep(item) for item in g.lib.items()]
+        return flask.jsonify(items=items)
+    else:
+        with g.lib.transaction() as tx:
+            rows = tx.query("SELECT id FROM items")
+        all_ids = [row[0] for row in rows]
+        return flask.jsonify(item_ids=all_ids)
 
 @app.route('/item/<int:item_id>/file')
 def item_file(item_id):
@@ -97,10 +101,15 @@ def single_album(album_id):
 
 @app.route('/album/')
 def all_albums():
-    with g.lib.transaction() as tx:
-        rows = tx.query("SELECT id FROM albums")
-    all_ids = [row[0] for row in rows]
-    return flask.jsonify(album_ids=all_ids)
+    if flask.request.args.has_key('embedded'):
+        albums = g.lib.albums()
+        return flask.jsonify(results=[_rep(album) for album in albums])
+    else:
+        with g.lib.transaction() as tx:
+            rows = tx.query("SELECT id FROM albums")
+        all_ids = [row[0] for row in rows]
+        return flask.jsonify(album_ids=all_ids)
+
 
 @app.route('/album/query/<path:query>')
 def album_query(query):
