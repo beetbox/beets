@@ -27,6 +27,12 @@ Other little fixes:
   at the end of the import process.
 * New plugin events: ``item_removed`` (thanks to Romuald Conty) and
   ``item_copied`` (thanks to Stig Inge Lea Bjørnsen).
+* The ``pluginpath`` config option can now point to the directory containing
+  plugin code. (Previously, it awkwardly needed to point at a directory
+  containing a ``beetsplug`` directory, which would then contain your code.
+  This is preserved as an option for backwards compatibility.) This change
+  should also work around a long-standing issue when using ``pluginpath`` when
+  beets is installed using pip. Many thanks to geigerzaehler.
 
 
 1.3.2 (December 22, 2013)
