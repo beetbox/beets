@@ -362,9 +362,9 @@ You can add new kinds of queries to beets' :doc:`query syntax
 supports regular expression queries, which are indicated by a colon
 prefix---plugins can do the same.
 
-To do so, define a subclass of the ``Query`` type from the ``beets.library``
-module. Then, in the ``queries`` method of your plugin class, return a
-dictionary mapping prefix strings to query classes.
+To do so, define a subclass of the ``Query`` type from the
+``beets.dbcore.query`` module. Then, in the ``queries`` method of your plugin
+class, return a dictionary mapping prefix strings to query classes.
 
 One simple kind of query you can extend is the ``FieldQuery``, which
 implements string comparisons on fields. To use it, create a subclass
@@ -375,7 +375,7 @@ plugin will be used if we issue a command like ``beet ls @something`` or
 ``beet ls artist:@something``::
 
     from beets.plugins import BeetsPlugin
-    from beets.library import FieldQuery
+    from beets.dbcore import FieldQuery
 
     class ExactMatchQuery(FieldQuery):
         @classmethod

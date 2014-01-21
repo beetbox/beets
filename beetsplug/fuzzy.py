@@ -16,7 +16,7 @@
 """
 
 from beets.plugins import BeetsPlugin
-from beets.library import StringFieldQuery
+from beets.dbcore.query import StringFieldQuery
 import beets
 import difflib
 

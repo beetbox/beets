@@ -478,7 +478,7 @@ class Item(LibModel):
         for query, path_format in path_formats:
             if query == PF_KEY_DEFAULT:
                 continue
-            query = AndQuery.from_string(query)
+            query = get_query(query, type(self))
             if query.match(self):
                 # The query matches the item! Use the corresponding path
                 # format.
@@ -707,158 +707,25 @@ class Album(LibModel):
 
 
 
-# Query abstraction hierarchy.
+# Library-specific query types.
 
 
-class StringFieldQuery(dbcore.FieldQuery):
-    """A FieldQuery that converts values to strings before matching
-    them.
-    """
-    @classmethod
-    def value_match(cls, pattern, value):
-        """Determine whether the value matches the pattern. The value
-        may have any type.
-        """
-        return cls.string_match(pattern, util.as_string(value))
-
-    @classmethod
-    def string_match(cls, pattern, value):
-        """Determine whether the value matches the pattern. Both
-        arguments are strings. Subclasses implement this method.
-        """
-        raise NotImplementedError()
-
-
-class SubstringQuery(StringFieldQuery):
-    """A query that matches a substring in a specific item field."""
-    def col_clause(self):
-        search = '%' + (self.pattern.replace('\\','\\\\').replace('%','\\%')
-                            .replace('_','\\_')) + '%'
-        clause = self.field + " like ? escape '\\'"
-        subvals = [search]
-        return clause, subvals
-
-    @classmethod
-    def string_match(cls, pattern, value):
-        return pattern.lower() in value.lower()
-
-
-class RegexpQuery(StringFieldQuery):
-    """A query that matches a regular expression in a specific item
-    field.
-    """
-    @classmethod
-    def string_match(cls, pattern, value):
-        try:
-            res = re.search(pattern, value)
-        except re.error:
-            # Invalid regular expression.
-            return False
-        return res is not None
-
-
-class BooleanQuery(dbcore.MatchQuery):
-    """Matches a boolean field. Pattern should either be a boolean or a
-    string reflecting a boolean.
-    """
-    def __init__(self, field, pattern):
-        super(BooleanQuery, self).__init__(field, pattern)
-        if isinstance(pattern, basestring):
-            self.pattern = util.str2bool(pattern)
-        self.pattern = int(self.pattern)
-
-
-class BytesQuery(dbcore.MatchQuery):
-    """Match a raw bytes field (i.e., a path). This is a necessary hack
-    to distinguish between the common case, matching Unicode strings,
-    and the special case in which we match bytes.
-    """
-    def __init__(self, field, pattern):
-        super(BytesQuery, self).__init__(field, pattern)
-
-        # Use a buffer representation of the pattern for SQLite
-        # matching. This instructs SQLite to treat the blob as binary
-        # rather than encoded Unicode.
-        if isinstance(self.pattern, bytes):
-            self.buf_pattern = buffer(self.pattern)
-        elif isinstance(self.battern, buffer):
-            self.buf_pattern = self.pattern
-            self.pattern = bytes(self.pattern)
-
-    def col_clause(self):
-        return self.field + " = ?", [self.buf_pattern]
-
-
-class NumericQuery(dbcore.FieldQuery):
-    """Matches numeric fields. A syntax using Ruby-style range ellipses
-    (``..``) lets users specify one- or two-sided ranges. For example,
-    ``year:2001..`` finds music released since the turn of the century.
-    """
-    types = dict((r[0], r[1]) for r in ITEM_FIELDS)
-
-    @classmethod
-    def applies_to(cls, field):
-        """Determine whether a field has numeric type. NumericQuery
-        should only be used with such fields.
-        """
-        if field not in cls.types:
-            # This can happen when using album fields.
-            # FIXME should no longer be necessary with the new type system.
-            return False
-        return cls.types.get(field).py_type in (int, float)
-
-    def _convert(self, s):
-        """Convert a string to the appropriate numeric type. If the
-        string cannot be converted, return None.
-        """
-        try:
-            return self.numtype(s)
-        except ValueError:
-            return None
-
-    def __init__(self, field, pattern, fast=True):
-        super(NumericQuery, self).__init__(field, pattern, fast)
-        self.numtype = self.types[field].py_type
-
-        parts = pattern.split('..', 1)
-        if len(parts) == 1:
-            # No range.
-            self.point = self._convert(parts[0])
-            self.rangemin = None
-            self.rangemax = None
-        else:
-            # One- or two-sided range.
-            self.point = None
-            self.rangemin = self._convert(parts[0])
-            self.rangemax = self._convert(parts[1])
+class PathQuery(dbcore.Query):
+    """A query that matches all items under a given path."""
+    def __init__(self, path):
+        # Match the path as a single file.
+        self.file_path = util.bytestring_path(util.normpath(path))
+        # As a directory (prefix).
+        self.dir_path = util.bytestring_path(os.path.join(self.file_path, ''))
 
     def match(self, item):
-        value = getattr(item, self.field)
-        if isinstance(value, basestring):
-            value = self._convert(value)
+        return (item.path == self.file_path) or \
+               item.path.startswith(self.dir_path)
 
-        if self.point is not None:
-            return value == self.point
-        else:
-            if self.rangemin is not None and value < self.rangemin:
-                return False
-            if self.rangemax is not None and value > self.rangemax:
-                return False
-            return True
-
-    def col_clause(self):
-        if self.point is not None:
-            return self.field + '=?', (self.point,)
-        else:
-            if self.rangemin is not None and self.rangemax is not None:
-                return (u'{0} >= ? AND {0} <= ?'.format(self.field),
-                        (self.rangemin, self.rangemax))
-            elif self.rangemin is not None:
-                return u'{0} >= ?'.format(self.field), (self.rangemin,)
-            elif self.rangemax is not None:
-                return u'{0} <= ?'.format(self.field), (self.rangemax,)
-            else:
-                return '1'
+    def clause(self):
+        dir_pat = buffer(self.dir_path + '%')
+        file_blob = buffer(self.file_path)
+        return '(path = ?) || (path LIKE ?)', (file_blob, dir_pat)
 
 
 class SingletonQuery(dbcore.Query):
@@ -874,147 +741,6 @@ class SingletonQuery(dbcore.Query):
 
     def match(self, item):
         return (not item.album_id) == self.sense
-
-
-class CollectionQuery(dbcore.Query):
-    """An abstract query class that aggregates other queries. Can be
-    indexed like a list to access the sub-queries.
-    """
-    def __init__(self, subqueries=()):
-        self.subqueries = subqueries
-
-    # is there a better way to do this?
-    def __len__(self): return len(self.subqueries)
-    def __getitem__(self, key): return self.subqueries[key]
-    def __iter__(self): return iter(self.subqueries)
-    def __contains__(self, item): return item in self.subqueries
-
-    def clause_with_joiner(self, joiner):
-        """Returns a clause created by joining together the clauses of
-        all subqueries with the string joiner (padded by spaces).
-        """
-        clause_parts = []
-        subvals = []
-        for subq in self.subqueries:
-            subq_clause, subq_subvals = subq.clause()
-            if not subq_clause:
-                # Fall back to slow query.
-                return None, ()
-            clause_parts.append('(' + subq_clause + ')')
-            subvals += subq_subvals
-        clause = (' ' + joiner + ' ').join(clause_parts)
-        return clause, subvals
-
-    @classmethod
-    def from_strings(cls, query_parts, default_fields, all_keys):
-        """Creates a query from a list of strings in the format used by
-        parse_query_part. If default_fields are specified, they are the
-        fields to be searched by unqualified search terms. Otherwise,
-        all fields are searched for those terms.
-        """
-        subqueries = []
-        for part in query_parts:
-            subq = construct_query_part(part, default_fields, all_keys)
-            if subq:
-                subqueries.append(subq)
-        if not subqueries:  # No terms in query.
-            subqueries = [TrueQuery()]
-        return cls(subqueries)
-
-    @classmethod
-    def from_string(cls, query, default_fields=ITEM_DEFAULT_FIELDS,
-                    all_keys=ITEM_KEYS):
-        """Creates a query based on a single string. The string is split
-        into query parts using shell-style syntax.
-        """
-        # A bug in Python < 2.7.3 prevents correct shlex splitting of
-        # Unicode strings.
-        # http://bugs.python.org/issue6988
-        if isinstance(query, unicode):
-            query = query.encode('utf8')
-        parts = [s.decode('utf8') for s in shlex.split(query)]
-        return cls.from_strings(parts, default_fields, all_keys)
-
-
-class AnyFieldQuery(CollectionQuery):
-    """A query that matches if a given FieldQuery subclass matches in
-    any field. The individual field query class is provided to the
-    constructor.
-    """
-    def __init__(self, pattern, fields, cls):
-        self.pattern = pattern
-        self.fields = fields
-        self.query_class = cls
-
-        subqueries = []
-        for field in self.fields:
-            subqueries.append(cls(field, pattern, True))
-        super(AnyFieldQuery, self).__init__(subqueries)
-
-    def clause(self):
-        return self.clause_with_joiner('or')
-
-    def match(self, item):
-        for subq in self.subqueries:
-            if subq.match(item):
-                return True
-        return False
-
-
-class MutableCollectionQuery(CollectionQuery):
-    """A collection query whose subqueries may be modified after the
-    query is initialized.
-    """
-    def __setitem__(self, key, value):
-        self.subqueries[key] = value
-
-    def __delitem__(self, key):
-        del self.subqueries[key]
-
-
-class AndQuery(MutableCollectionQuery):
-    """A conjunction of a list of other queries."""
-    def clause(self):
-        return self.clause_with_joiner('and')
-
-    def match(self, item):
-        return all([q.match(item) for q in self.subqueries])
-
-
-class TrueQuery(dbcore.Query):
-    """A query that always matches."""
-    def clause(self):
-        return '1', ()
-
-    def match(self, item):
-        return True
-
-
-class FalseQuery(dbcore.Query):
-    """A query that never matches."""
-    def clause(self):
-        return '0', ()
-
-    def match(self, item):
-        return False
-
-
-class PathQuery(dbcore.Query):
-    """A query that matches all items under a given path."""
-    def __init__(self, path):
-        # Match the path as a single file.
-        self.file_path = bytestring_path(normpath(path))
-        # As a directory (prefix).
-        self.dir_path = bytestring_path(os.path.join(self.file_path, ''))
-
-    def match(self, item):
-        return (item.path == self.file_path) or \
-               item.path.startswith(self.dir_path)
-
-    def clause(self):
-        dir_pat = buffer(self.dir_path + '%')
-        file_blob = buffer(self.file_path)
-        return '(path = ?) || (path LIKE ?)', (file_blob, dir_pat)
 
 
 
@@ -1055,7 +781,7 @@ def parse_query_part(part):
     part = part.strip()
     match = PARSE_QUERY_PART_REGEX.match(part)
 
-    prefixes = {':': RegexpQuery}
+    prefixes = {':': dbcore.query.RegexpQuery}
     prefixes.update(plugins.queries())
 
     if match:
@@ -1065,9 +791,9 @@ def parse_query_part(part):
         for pre, query_class in prefixes.items():
             if term.startswith(pre):
                 return key, term[len(pre):], query_class
-        if key and NumericQuery.applies_to(key):
-            return key, term, NumericQuery
-        return key, term, SubstringQuery  # The default query type.
+        if key and dbcore.query.NumericQuery.applies_to(key):
+            return key, term, dbcore.query.NumericQuery
+        return key, term, dbcore.query.SubstringQuery  # Default query type.
 
 
 def construct_query_part(query_part, default_fields, all_keys):
@@ -1089,7 +815,8 @@ def construct_query_part(query_part, default_fields, all_keys):
             # The query type matches a specific field, but none was
             # specified. So we use a version of the query that matches
             # any field.
-            return AnyFieldQuery(pattern, default_fields, query_class)
+            return dbcore.query.AnyFieldQuery(pattern, default_fields,
+                                              query_class)
         else:
             # Other query type.
             return query_class(pattern)
@@ -1098,11 +825,11 @@ def construct_query_part(query_part, default_fields, all_keys):
 
     # A boolean field.
     if key.lower() == 'comp':
-        return BooleanQuery(key, pattern)
+        return dbcore.query.BooleanQuery(key, pattern)
 
     # Path field.
     elif key == 'path' and 'path' in all_keys:
-        if query_class is SubstringQuery:
+        if query_class is dbcore.query.SubstringQuery:
             # By default, use special path matching logic.
             return PathQuery(pattern)
         else:
@@ -1118,6 +845,22 @@ def construct_query_part(query_part, default_fields, all_keys):
         return query_class(key.lower(), pattern, key in all_keys)
 
 
+def query_from_strings(query_cls, query_parts, default_fields, all_keys):
+    """Creates a collection query of type `query-cls` from a list of
+    strings in the format used by parse_query_part. If default_fields
+    are specified, they are the fields to be searched by unqualified
+    search terms. Otherwise, all fields are searched for those terms.
+    """
+    subqueries = []
+    for part in query_parts:
+        subq = construct_query_part(part, default_fields, all_keys)
+        if subq:
+            subqueries.append(subq)
+    if not subqueries:  # No terms in query.
+        subqueries = [dbcore.query.TrueQuery()]
+    return query_cls(subqueries)
+
+
 def get_query(val, model_cls):
     """Takes a value which may be None, a query string, a query string
     list, or a Query object, and returns a suitable Query object.
@@ -1128,13 +871,19 @@ def get_query(val, model_cls):
     # Convert a single string into a list of space-separated
     # criteria.
     if isinstance(val, basestring):
-        val = val.split()
+        # A bug in Python < 2.7.3 prevents correct shlex splitting of
+        # Unicode strings.
+        # http://bugs.python.org/issue6988
+        if isinstance(val, unicode):
+            val = val.encode('utf8')
+        val = [s.decode('utf8') for s in shlex.split(val)]
 
     if val is None:
-        return TrueQuery()
+        return dbcore.query.TrueQuery()
     elif isinstance(val, list) or isinstance(val, tuple):
-        return AndQuery.from_strings(val, model_cls._search_fields,
-                                     model_cls._fields.keys())
+        return query_from_strings(dbcore.AndQuery,
+                                  val, model_cls._search_fields,
+                                  model_cls._fields.keys())
     elif isinstance(val, dbcore.Query):
         return val
     else:
@@ -1372,7 +1121,7 @@ class DefaultTemplateFunctions(object):
         for key in keys:
             value = getattr(album, key)
             subqueries.append(dbcore.MatchQuery(key, value))
-        albums = self.lib.albums(AndQuery(subqueries))
+        albums = self.lib.albums(dbcore.AndQuery(subqueries))
 
         # If there's only one album to matching these details, then do
         # nothing.

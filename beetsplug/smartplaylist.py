@@ -35,7 +35,7 @@ def update_playlists(lib):
         relative_to = normpath(relative_to)
 
     for playlist in playlists:
-        items = lib.items(library.AndQuery.from_string(playlist['query']))
+        items = lib.items(library.get_query(playlist['query'], library.Item))
         m3us = {}
         basename = playlist['name'].encode('utf8')
         # As we allow tags in the m3u names, we'll need to iterate through

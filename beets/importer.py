@@ -84,7 +84,7 @@ def _item_duplicate_check(lib, task):
     artist, title = task.chosen_ident()
 
     found_items = []
-    query = library.AndQuery((
+    query = dbcore.AndQuery((
         dbcore.MatchQuery('artist', artist),
         dbcore.MatchQuery('title', title),
     ))
@@ -752,7 +752,7 @@ def apply_choices(session):
         task.replaced_items = defaultdict(list)
         for item in items:
             dup_items = session.lib.items(
-                library.BytesQuery('path', item.path)
+                dbcore.query.BytesQuery('path', item.path)
             )
             for dup_item in dup_items:
                 task.replaced_items[item].append(dup_item)

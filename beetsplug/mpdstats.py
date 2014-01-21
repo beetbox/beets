@@ -23,7 +23,7 @@ import os
 from beets import ui
 from beets import config
 from beets import plugins
-from beets import library
+from beets import dbcore
 from beets.util import displayable_path
 
 log = logging.getLogger('beets')
@@ -165,7 +165,7 @@ class MPDStats(object):
     def get_item(self, path):
         """Return the beets item related to path.
         """
-        query = library.BytesQuery('path', path)
+        query = dbcore.query.BytesQuery('path', path)
         item = self.lib.items(query).get()
         if item:
             return item

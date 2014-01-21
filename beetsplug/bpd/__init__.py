@@ -31,6 +31,7 @@ import beets.ui
 from beets import vfs
 from beets.util import bluelet
 from beets.library import ITEM_KEYS_WRITABLE
+from beets import dbcore
 
 PROTOCOL_VERSION = '0.13.0'
 BUFSIZE = 1024
@@ -1003,21 +1004,21 @@ class Server(BaseServer):
                 else:
                     _, key = self._tagtype_lookup(tag)
                     queries.append(query_type(key, value))
-            return beets.library.AndQuery(queries)
+            return dbcore.query.AndQuery(queries)
         else: # No key-value pairs.
-            return beets.library.TrueQuery()
+            return dbcore.query.TrueQuery()
 
     def cmd_search(self, conn, *kv):
         """Perform a substring match for items."""
-        query = self._metadata_query(beets.library.SubstringQuery,
-                                     beets.library.AnyFieldQuery,
+        query = self._metadata_query(dbcore.query.SubstringQuery,
+                                     dbcore.query.AnyFieldQuery,
                                      kv)
         for item in self.lib.items(query):
             yield self._item_info(item)
 
     def cmd_find(self, conn, *kv):
         """Perform an exact match for items."""
-        query = self._metadata_query(beets.dbcore.MatchQuery,
+        query = self._metadata_query(dbcore.query.MatchQuery,
                                      None,
                                      kv)
         for item in self.lib.items(query):
@@ -1028,7 +1029,7 @@ class Server(BaseServer):
         filtered by matching match_tag to match_term.
         """
         show_tag_canon, show_key = self._tagtype_lookup(show_tag)
-        query = self._metadata_query(beets.dbcore.MatchQuery, None, kv)
+        query = self._metadata_query(dbcore.query.MatchQuery, None, kv)
 
         clause, subvals = query.clause()
         statement = 'SELECT DISTINCT ' + show_key + \
@@ -1047,7 +1048,7 @@ class Server(BaseServer):
         _, key = self._tagtype_lookup(tag)
         songs = 0
         playtime = 0.0
-        for item in self.lib.items(beets.dbcore.MatchQuery(key, value)):
+        for item in self.lib.items(dbcore.query.MatchQuery(key, value)):
             songs += 1
             playtime += item.length
         yield u'songs: ' + unicode(songs)

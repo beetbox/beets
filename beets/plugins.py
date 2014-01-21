@@ -58,8 +58,7 @@ class BeetsPlugin(object):
         return ()
 
     def queries(self):
-        """Should return a dict mapping prefixes to PluginQuery
-        subclasses.
+        """Should return a dict mapping prefixes to Query subclasses.
         """
         return {}
 
@@ -232,8 +231,8 @@ def commands():
     return out
 
 def queries():
-    """Returns a dict mapping prefix strings to beet.library.PluginQuery
-    subclasses all loaded plugins.
+    """Returns a dict mapping prefix strings to Query subclasses all loaded
+    plugins.
     """
     out = {}
     for plugin in find_plugins():

@@ -17,6 +17,7 @@
 import _common
 from _common import unittest
 import beets.library
+from beets import dbcore
 
 pqp = beets.library.parse_query_part
 
@@ -24,64 +25,64 @@ pqp = beets.library.parse_query_part
 class QueryParseTest(_common.TestCase):
     def test_one_basic_term(self):
         q = 'test'
-        r = (None, 'test', beets.library.SubstringQuery)
+        r = (None, 'test', dbcore.query.SubstringQuery)
         self.assertEqual(pqp(q), r)
 
     def test_one_keyed_term(self):
         q = 'test:val'
-        r = ('test', 'val', beets.library.SubstringQuery)
+        r = ('test', 'val', dbcore.query.SubstringQuery)
         self.assertEqual(pqp(q), r)
 
     def test_colon_at_end(self):
         q = 'test:'
-        r = (None, 'test:', beets.library.SubstringQuery)
+        r = (None, 'test:', dbcore.query.SubstringQuery)
         self.assertEqual(pqp(q), r)
 
     def test_one_basic_regexp(self):
         q = r':regexp'
-        r = (None, 'regexp', beets.library.RegexpQuery)
+        r = (None, 'regexp', dbcore.query.RegexpQuery)
         self.assertEqual(pqp(q), r)
 
     def test_keyed_regexp(self):
         q = r'test::regexp'
-        r = ('test', 'regexp', beets.library.RegexpQuery)
+        r = ('test', 'regexp', dbcore.query.RegexpQuery)
         self.assertEqual(pqp(q), r)
 
     def test_escaped_colon(self):
         q = r'test\:val'
-        r = (None, 'test:val', beets.library.SubstringQuery)
+        r = (None, 'test:val', dbcore.query.SubstringQuery)
         self.assertEqual(pqp(q), r)
 
     def test_escaped_colon_in_regexp(self):
         q = r':test\:regexp'
-        r = (None, 'test:regexp', beets.library.RegexpQuery)
+        r = (None, 'test:regexp', dbcore.query.RegexpQuery)
         self.assertEqual(pqp(q), r)
 
     def test_single_year(self):
         q = 'year:1999'
-        r = ('year', '1999', beets.library.NumericQuery)
+        r = ('year', '1999', dbcore.query.NumericQuery)
         self.assertEqual(pqp(q), r)
 
     def test_multiple_years(self):
         q = 'year:1999..2010'
-        r = ('year', '1999..2010', beets.library.NumericQuery)
+        r = ('year', '1999..2010', dbcore.query.NumericQuery)
         self.assertEqual(pqp(q), r)
 
 
 class AnyFieldQueryTest(_common.LibTestCase):
     def test_no_restriction(self):
-        q = beets.library.AnyFieldQuery('title', beets.library.ITEM_KEYS,
-                                        beets.library.SubstringQuery)
+        q = dbcore.query.AnyFieldQuery('title', beets.library.ITEM_KEYS,
+                                       dbcore.query.SubstringQuery)
         self.assertEqual(self.lib.items(q).get().title, 'the title')
 
     def test_restriction_completeness(self):
-        q = beets.library.AnyFieldQuery('title', ['title'],
-                                        beets.library.SubstringQuery)
+        q = dbcore.query.AnyFieldQuery('title', ['title'],
+                                       dbcore.query.SubstringQuery)
         self.assertEqual(self.lib.items(q).get().title, 'the title')
 
     def test_restriction_soundness(self):
-        q = beets.library.AnyFieldQuery('title', ['artist'],
-                                        beets.library.SubstringQuery)
+        q = dbcore.query.AnyFieldQuery('title', ['artist'],
+                                       dbcore.query.SubstringQuery)
         self.assertEqual(self.lib.items(q).get(), None)
 
 
@@ -300,12 +301,12 @@ class GetTest(DummyDataTestCase):
         self.assert_matched(results, [u'caf\xe9'])
 
     def test_numeric_search_positive(self):
-        q = beets.library.NumericQuery('year', '2001')
+        q = dbcore.query.NumericQuery('year', '2001')
         results = self.lib.items(q)
         self.assertTrue(results)
 
     def test_numeric_search_negative(self):
-        q = beets.library.NumericQuery('year', '1999')
+        q = dbcore.query.NumericQuery('year', '1999')
         results = self.lib.items(q)
         self.assertFalse(results)
 
@@ -316,43 +317,43 @@ class MatchTest(_common.TestCase):
         self.item = _common.item()
 
     def test_regex_match_positive(self):
-        q = beets.library.RegexpQuery('album', '^the album$')
+        q = dbcore.query.RegexpQuery('album', '^the album$')
         self.assertTrue(q.match(self.item))
 
     def test_regex_match_negative(self):
-        q = beets.library.RegexpQuery('album', '^album$')
+        q = dbcore.query.RegexpQuery('album', '^album$')
         self.assertFalse(q.match(self.item))
 
     def test_regex_match_non_string_value(self):
-        q = beets.library.RegexpQuery('disc', '^6$')
+        q = dbcore.query.RegexpQuery('disc', '^6$')
         self.assertTrue(q.match(self.item))
 
     def test_substring_match_positive(self):
-        q = beets.library.SubstringQuery('album', 'album')
+        q = dbcore.query.SubstringQuery('album', 'album')
         self.assertTrue(q.match(self.item))
 
     def test_substring_match_negative(self):
-        q = beets.library.SubstringQuery('album', 'ablum')
+        q = dbcore.query.SubstringQuery('album', 'ablum')
         self.assertFalse(q.match(self.item))
 
     def test_substring_match_non_string_value(self):
-        q = beets.library.SubstringQuery('disc', '6')
+        q = dbcore.query.SubstringQuery('disc', '6')
         self.assertTrue(q.match(self.item))
 
     def test_year_match_positive(self):
-        q = beets.library.NumericQuery('year', '1')
+        q = dbcore.query.NumericQuery('year', '1')
         self.assertTrue(q.match(self.item))
 
     def test_year_match_negative(self):
-        q = beets.library.NumericQuery('year', '10')
+        q = dbcore.query.NumericQuery('year', '10')
         self.assertFalse(q.match(self.item))
 
     def test_bitrate_range_positive(self):
-        q = beets.library.NumericQuery('bitrate', '100000..200000')
+        q = dbcore.query.NumericQuery('bitrate', '100000..200000')
         self.assertTrue(q.match(self.item))
 
     def test_bitrate_range_negative(self):
-        q = beets.library.NumericQuery('bitrate', '200000..300000')
+        q = dbcore.query.NumericQuery('bitrate', '200000..300000')
         self.assertFalse(q.match(self.item))
 
 
@@ -430,16 +431,6 @@ class DefaultSearchFieldsTest(DummyDataTestCase):
     def test_items_does_not_match_year(self):
         items = self.lib.items('2001')
         self.assert_matched(items, [])
-
-
-class StringParseTest(_common.TestCase):
-    def test_single_field_query(self):
-        q = beets.library.AndQuery.from_string(u'albumtype:soundtrack')
-        self.assertEqual(len(q.subqueries), 1)
-        subq = q.subqueries[0]
-        self.assertTrue(isinstance(subq, beets.library.SubstringQuery))
-        self.assertEqual(subq.field, 'albumtype')
-        self.assertEqual(subq.pattern, 'soundtrack')
 
 
 def suite():
