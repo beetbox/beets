@@ -34,16 +34,58 @@ import beets
 from datetime import datetime
 
 
+
+# Library-specific query types.
+
+
+class PathQuery(dbcore.FieldQuery):
+    """A query that matches all items under a given path."""
+    def __init__(self, field, pattern, fast=True):
+        super(PathQuery, self).__init__(field, pattern, fast)
+
+        # Match the path as a single file.
+        self.file_path = util.bytestring_path(util.normpath(pattern))
+        # As a directory (prefix).
+        self.dir_path = util.bytestring_path(os.path.join(self.file_path, ''))
+
+    def match(self, item):
+        return (item.path == self.file_path) or \
+               item.path.startswith(self.dir_path)
+
+    def clause(self):
+        dir_pat = buffer(self.dir_path + '%')
+        file_blob = buffer(self.file_path)
+        return '({0} = ?) || ({0} LIKE ?)'.format(self.field), \
+               (file_blob, dir_pat)
+
+
+class SingletonQuery(dbcore.Query):
+    """Matches either singleton or non-singleton items."""
+    def __init__(self, sense):
+        self.sense = sense
+
+    def clause(self):
+        if self.sense:
+            return "album_id ISNULL", ()
+        else:
+            return "NOT album_id ISNULL", ()
+
+    def match(self, item):
+        return (not item.album_id) == self.sense
+
+
+
+# Model field lists.
+
 # Common types used in field definitions.
 TYPES = {
     int:      Type(int,      'INTEGER', dbcore.query.NumericQuery),
     float:    Type(float,    'REAL',    dbcore.query.NumericQuery),
     datetime: Type(datetime, 'REAL',    dbcore.query.NumericQuery),
-    bytes:    Type(bytes,    'BLOB',    dbcore.query.MatchQuery),
     unicode:  Type(unicode,  'TEXT',    dbcore.query.SubstringQuery),
     bool:     Type(bool,     'INTEGER', dbcore.query.BooleanQuery),
 }
-
+PATH_TYPE = Type(bytes, 'BLOB', PathQuery)
 
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
@@ -56,8 +98,8 @@ TYPES = {
 ITEM_FIELDS = [
     ('id', Type(int, 'INTEGER PRIMARY KEY', dbcore.query.NumericQuery),
      False, False),
-    ('path',     TYPES[bytes], False, False),
-    ('album_id', TYPES[int],   False, False),
+    ('path',     PATH_TYPE,  False, False),
+    ('album_id', TYPES[int], False, False),
 
     ('title',                TYPES[unicode], True, True),
     ('artist',               TYPES[unicode], True, True),
@@ -121,15 +163,14 @@ ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
 ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 
-
 # Database fields for the "albums" table.
 # The third entry in each tuple indicates whether the field reflects an
 # identically-named field in the items table.
 ALBUM_FIELDS = [
     ('id',      Type(int, 'INTEGER PRIMARY KEY', dbcore.query.NumericQuery),
      False),
-    ('artpath', TYPES[bytes],                     False),
-    ('added',   TYPES[datetime],                  True),
+    ('artpath', PATH_TYPE,       False),
+    ('added',   TYPES[datetime], True),
 
     ('albumartist',        TYPES[unicode], True),
     ('albumartist_sort',   TYPES[unicode], True),
@@ -163,18 +204,6 @@ ALBUM_FIELDS = [
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
-
-
-# SQLite type names.
-SQLITE_TYPES = {
-    int:      'INT',
-    float:    'REAL',
-    datetime: 'FLOAT',
-    bytes:    'BLOB',
-    unicode:  'TEXT',
-    bool:     'INT',
-}
-SQLITE_KEY_TYPE = 'INTEGER PRIMARY KEY'
 
 
 # Default search fields for each model.
@@ -709,43 +738,6 @@ class Album(LibModel):
 
 
 
-# Library-specific query types.
-
-
-class PathQuery(dbcore.Query):
-    """A query that matches all items under a given path."""
-    def __init__(self, path):
-        # Match the path as a single file.
-        self.file_path = util.bytestring_path(util.normpath(path))
-        # As a directory (prefix).
-        self.dir_path = util.bytestring_path(os.path.join(self.file_path, ''))
-
-    def match(self, item):
-        return (item.path == self.file_path) or \
-               item.path.startswith(self.dir_path)
-
-    def clause(self):
-        dir_pat = buffer(self.dir_path + '%')
-        file_blob = buffer(self.file_path)
-        return '(path = ?) || (path LIKE ?)', (file_blob, dir_pat)
-
-
-class SingletonQuery(dbcore.Query):
-    """Matches either singleton or non-singleton items."""
-    def __init__(self, sense):
-        self.sense = sense
-
-    def clause(self):
-        if self.sense:
-            return "album_id ISNULL", ()
-        else:
-            return "NOT album_id ISNULL", ()
-
-    def match(self, item):
-        return (not item.album_id) == self.sense
-
-
-
 # Query construction and parsing helpers.
 
 
@@ -818,7 +810,7 @@ def construct_query_part(query_part, model_cls):
     if key is None:
         if os.sep in pattern and 'path' in model_cls._fields:
             # This looks like a path.
-            return PathQuery(pattern)
+            return PathQuery('path', pattern)
         elif issubclass(query_class, dbcore.FieldQuery):
             # The query type matches a specific field, but none was
             # specified. So we use a version of the query that matches
@@ -835,15 +827,6 @@ def construct_query_part(query_part, model_cls):
     # A boolean field.
     if key.lower() == 'comp':
         return dbcore.query.BooleanQuery(key, pattern)
-
-    # Path field.
-    elif key == 'path' and 'path' in model_cls._fields:
-        if query_class is dbcore.query.SubstringQuery:
-            # By default, use special path matching logic.
-            return PathQuery(pattern)
-        else:
-            # Specific query type requested.
-            return query_class('path', pattern)
 
     # Singleton query (not a real field).
     elif key == 'singleton':

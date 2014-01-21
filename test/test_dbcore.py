@@ -12,7 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Tests for non-query database functions of Item.
+"""Tests for the DBCore database abstraction.
 """
 import os
 import sqlite3
