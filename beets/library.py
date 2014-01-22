@@ -81,12 +81,12 @@ class SingletonQuery(dbcore.Query):
 ID_TYPE = Type('INTEGER PRIMARY KEY', dbcore.query.NumericQuery, unicode)
 INT_TYPE = Type('INTEGER', dbcore.query.NumericQuery, unicode)
 FLOAT_TYPE = Type('REAL', dbcore.query.NumericQuery,
-                  lambda n: u'{0:.1f}'.format(n))
+                  lambda n: u'{0:.1f}'.format(n or 0.0))
 DATE_TYPE = Type(
     'REAL',
     dbcore.query.NumericQuery,
     lambda d: time.strftime(beets.config['time_format'].get(unicode),
-                            time.localtime(d))
+                            time.localtime(d or 0))
 )
 STRING_TYPE = Type('TEXT', dbcore.query.SubstringQuery, unicode)
 BOOL_TYPE = Type('INTEGER', dbcore.query.BooleanQuery, unicode)
@@ -94,11 +94,11 @@ PATH_TYPE = Type('BLOB', PathQuery, util.displayable_path)
 
 def _padded_int(digits):
     return Type('INTEGER', dbcore.query.NumericQuery,
-                lambda n: u'{0:0{1}d}'.format(n, digits))
+                lambda n: u'{0:0{1}d}'.format(n or 0, digits))
 
 def _scaled_int(suffix=u'', unit=1000):
     return Type('INTEGER', dbcore.query.NumericQuery,
-                lambda n: u'{0}{1}'.format(n // unit, suffix))
+                lambda n: u'{0}{1}'.format((n or 0) // unit, suffix))
 
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
