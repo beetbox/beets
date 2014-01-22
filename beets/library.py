@@ -78,18 +78,22 @@ class SingletonQuery(dbcore.Query):
 # Model field lists.
 
 # Common types used in field definitions.
-ID_TYPE = Type('INTEGER PRIMARY KEY', dbcore.query.NumericQuery, unicode)
-INT_TYPE = Type('INTEGER', dbcore.query.NumericQuery, unicode)
+def _str_or_empty(s):
+    if not s:
+        return u''
+    return unicode(s)
+ID_TYPE = Type('INTEGER PRIMARY KEY', dbcore.query.NumericQuery, _str_or_empty)
+INT_TYPE = Type('INTEGER', dbcore.query.NumericQuery, _str_or_empty)
 FLOAT_TYPE = Type('REAL', dbcore.query.NumericQuery,
                   lambda n: u'{0:.1f}'.format(n or 0.0))
 DATE_TYPE = Type(
     'REAL',
     dbcore.query.NumericQuery,
-    lambda d: time.strftime(beets.config['time_format'].get(unicode),
-                            time.localtime(d or 0))
+    lambda n: time.strftime(beets.config['time_format'].get(unicode),
+                            time.localtime(n or 0))
 )
-STRING_TYPE = Type('TEXT', dbcore.query.SubstringQuery, unicode)
-BOOL_TYPE = Type('INTEGER', dbcore.query.BooleanQuery, unicode)
+STRING_TYPE = Type('TEXT', dbcore.query.SubstringQuery, _str_or_empty)
+BOOL_TYPE = Type('INTEGER', dbcore.query.BooleanQuery, _str_or_empty)
 PATH_TYPE = Type('BLOB', PathQuery, util.displayable_path)
 
 def _padded_int(digits):

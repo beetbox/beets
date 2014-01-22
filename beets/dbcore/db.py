@@ -332,7 +332,10 @@ class Model(object):
         if key in self._fields:
             value = self._fields[key].format(value)
         elif not isinstance(value, unicode):
-            value = unicode(value)
+            if value:
+                value = unicode(value)
+            else:
+                value = u''
 
         if for_path:
             sep_repl = beets.config['path_sep_replace'].get(unicode)
