@@ -141,8 +141,9 @@ class BooleanQuery(MatchQuery):
 
 class BytesQuery(MatchQuery):
     """Match a raw bytes field (i.e., a path). This is a necessary hack
-    to distinguish between the common case, matching Unicode strings,
-    and the special case in which we match bytes.
+    to work around the `sqlite3` module's desire to treat `str` and
+    `unicode` equivalently in Python 2. Always use this query instead of
+    `MatchQuery` when matching on BLOB values.
     """
     def __init__(self, field, pattern):
         super(BytesQuery, self).__init__(field, pattern)
