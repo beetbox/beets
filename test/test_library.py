@@ -86,7 +86,9 @@ class AddTest(_common.TestCase):
         self.assertEqual(new_grouping, self.i.grouping)
 
     def test_library_add_path_inserts_row(self):
-        i = beets.library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
+        i = beets.library.Item.from_path(
+            os.path.join(_common.RSRC, 'full.mp3')
+        )
         self.lib.add(i)
         new_grouping = self.lib._connection().execute(
             'select grouping from items '
@@ -166,8 +168,8 @@ class DestinationTest(_common.TestCase):
 
     def test_destination_pads_some_indices(self):
         self.lib.directory = 'base'
-        self.lib.path_formats = [('default', '$track $tracktotal ' \
-            '$disc $disctotal $bpm')]
+        self.lib.path_formats = [('default',
+                                  '$track $tracktotal $disc $disctotal $bpm')]
         self.i.track = 1
         self.i.tracktotal = 2
         self.i.disc = 3
@@ -205,13 +207,13 @@ class DestinationTest(_common.TestCase):
         self.assertTrue(os.path.join('one', 'two') in dest)
 
     def test_destination_long_names_truncated(self):
-        self.i.title = 'X'*300
-        self.i.artist = 'Y'*300
+        self.i.title = 'X' * 300
+        self.i.artist = 'Y' * 300
         for c in self.i.destination().split(os.path.sep):
             self.assertTrue(len(c) <= 255)
 
     def test_destination_long_names_keep_extension(self):
-        self.i.title = 'X'*300
+        self.i.title = 'X' * 300
         self.i.path = 'something.extn'
         dest = self.i.destination()
         self.assertEqual(dest[-5:], '.extn')
