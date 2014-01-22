@@ -166,14 +166,17 @@ class NumericQuery(FieldQuery):
     ``year:2001..`` finds music released since the turn of the century.
     """
     def _convert(self, s):
-        """Convert a string to the appropriate numeric type. If the
+        """Convert a string to a numeric type (float or int). If the
         string cannot be converted, return None.
         """
+        # This is really just a bit of fun premature optimization.
         try:
-            # FIXME should work w/ either integer or float
-            return float(s)
+            return int(s)
         except ValueError:
-            return None
+            try:
+                return float(s)
+            except ValueError:
+                return None
 
     def __init__(self, field, pattern, fast=True):
         super(NumericQuery, self).__init__(field, pattern, fast)

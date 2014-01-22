@@ -239,7 +239,6 @@ class LibModel(dbcore.Model):
     """Shared concrete functionality for Items and Albums.
     """
     _bytes_keys = ('path', 'artpath')
-    # FIXME should be able to replace this with field types.
 
     def _template_funcs(self):
         funcs = DefaultTemplateFunctions(self, self._db).functions()
@@ -771,12 +770,12 @@ def parse_query_part(part, query_classes={}, prefixes={},
     class is available, `default_class` is used.
 
     For instance,
-    parse_query('stapler') == (None, 'stapler', SubstringQuery)
-    parse_query('color:red') == ('color', 'red', SubstringQuery)
-    parse_query(':^Quiet') == (None, '^Quiet', RegexpQuery)
-    parse_query('color::b..e') == ('color', 'b..e', RegexpQuery)
+    'stapler' -> (None, 'stapler', SubstringQuery)
+    'color:red' -> ('color', 'red', SubstringQuery)
+    ':^Quiet' -> (None, '^Quiet', RegexpQuery)
+    'color::b..e' -> ('color', 'b..e', RegexpQuery)
 
-    Prefixes may be 'escaped' with a backslash to disable the keying
+    Prefixes may be "escaped" with a backslash to disable the keying
     behavior.
     """
     part = part.strip()
