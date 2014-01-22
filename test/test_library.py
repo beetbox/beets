@@ -329,35 +329,41 @@ class DestinationTest(_common.TestCase):
             p = util.sanitize_path(u'one/two /three')
         self.assertFalse(' ' in p)
 
-    def test_component_sanitize_does_not_replace_separators(self):
+    def test_get_formatted_does_not_replace_separators(self):
         with _common.platform_posix():
             name = os.path.join('a', 'b')
-            newname = beets.dbcore.db.format_for_path(name)
+            self.i.title = name
+            newname = self.i._get_formatted('title')
         self.assertEqual(name, newname)
 
-    def test_component_sanitize_pads_with_zero(self):
+    def test_get_formatted_pads_with_zero(self):
         with _common.platform_posix():
-            name = beets.dbcore.db.format_for_path(1, 'track')
+            self.i.track = 1
+            name = self.i._get_formatted('track')
         self.assertTrue(name.startswith('0'))
 
-    def test_component_sanitize_uses_kbps_bitrate(self):
+    def test_get_formatted_uses_kbps_bitrate(self):
         with _common.platform_posix():
-            val = beets.dbcore.db.format_for_path(12345, 'bitrate')
+            self.i.bitrate = 12345
+            val = self.i._get_formatted('bitrate')
         self.assertEqual(val, u'12kbps')
 
-    def test_component_sanitize_uses_khz_samplerate(self):
+    def test_get_formatted_uses_khz_samplerate(self):
         with _common.platform_posix():
-            val = beets.dbcore.db.format_for_path(12345, 'samplerate')
+            self.i.samplerate = 12345
+            val = self.i._get_formatted('samplerate')
         self.assertEqual(val, u'12kHz')
 
-    def test_component_sanitize_datetime(self):
+    def test_get_formatted_datetime(self):
         with _common.platform_posix():
-            val = beets.dbcore.db.format_for_path(1368302461.210265, 'added')
+            self.i.added = 1368302461.210265
+            val = self.i._get_formatted('added')
         self.assertTrue(val.startswith('2013'))
 
-    def test_component_sanitize_none(self):
+    def test_get_formatted_none(self):
         with _common.platform_posix():
-            val = beets.dbcore.db.format_for_path(None, 'foo')
+            self.i.some_other_field = None
+            val = self.i._get_formatted('some_other_field')
         self.assertEqual(val, u'')
 
     def test_artist_falls_back_to_albumartist(self):
