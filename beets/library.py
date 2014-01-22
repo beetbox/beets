@@ -752,13 +752,17 @@ PARSE_QUERY_PART_REGEX = re.compile(
     re.I  # Case-insensitive.
 )
 
-def parse_query_part(part, query_classes={},
+def parse_query_part(part, query_classes={}, prefixes={},
                      default_class=dbcore.query.SubstringQuery):
     """Take a query in the form of a key/value pair separated by a
     colon and return a tuple of `(key, value, cls)`. `key` may be None,
     indicating that any field may be matched. `cls` is a subclass of
-    `FieldQuery`. The optional `query_classes` parameter maps field names
-    to default query types; `default_class` is the fallback.
+    `FieldQuery`.
+
+    The optional `query_classes` parameter maps field names to default
+    query types; `default_class` is the fallback. `prefixes` is a map
+    from query prefix markers and query types. Prefix-indicated queries
+    take precedence over type-based queries.
 
     To determine the query class, two factors are used: prefixes and
     field types. For example, the colon prefix denotes a regular
@@ -778,19 +782,18 @@ def parse_query_part(part, query_classes={},
     part = part.strip()
     match = PARSE_QUERY_PART_REGEX.match(part)
 
-    # FIXME parameterize
-    prefixes = {':': dbcore.query.RegexpQuery}
-    prefixes.update(plugins.queries())
+    assert match  # Regex should always match.
+    key = match.group(1)
+    term = match.group(2).replace('\:', ':')
 
-    if match:
-        key = match.group(1)
-        term = match.group(2).replace('\:', ':')
-        # Match the search term against the list of prefixes.
-        for pre, query_class in prefixes.items():
-            if term.startswith(pre):
-                return key, term[len(pre):], query_class
-        query_class = query_classes.get(key, default_class)
-        return key, term, query_class
+    # Match the search term against the list of prefixes.
+    for pre, query_class in prefixes.items():
+        if term.startswith(pre):
+            return key, term[len(pre):], query_class
+
+    # No matching prefix: use type-based or fallback/default query.
+    query_class = query_classes.get(key, default_class)
+    return key, term, query_class
 
 
 def construct_query_part(query_part, model_cls):
@@ -799,7 +802,9 @@ def construct_query_part(query_part, model_cls):
     `None` if the value cannot be parsed.
     """
     query_classes = dict((k, t.query) for (k, t) in model_cls._fields.items())
-    parsed = parse_query_part(query_part, query_classes)
+    prefixes = {':': dbcore.query.RegexpQuery}
+    prefixes.update(plugins.queries())
+    parsed = parse_query_part(query_part, query_classes, prefixes)
     if not parsed:
         return
 
