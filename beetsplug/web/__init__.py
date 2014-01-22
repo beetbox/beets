@@ -20,6 +20,7 @@ import beets.library
 import flask
 from flask import g
 import os
+import json
 
 
 # Utilities.
@@ -49,6 +50,23 @@ def _rep(obj, expand=False):
             out['items'] = [_rep(item) for item in obj.items()]
         return out
 
+def json_generator(items, root):
+    """Generator that dumps list of beets Items or Albums as JSON
+
+    :param root:  root key for JSON
+    :param items: list of :class:`Item` or :class:`Album` to dump
+    :returns:     generator that yields strings
+    """
+    yield '{"%s":[' % root
+    first = True
+    for item in items:
+        if first:
+            first = False
+        else:
+            yield ','
+        yield json.dumps(_rep(item))
+    yield ']}'
+
 
 # Flask setup.
 
@@ -67,11 +85,11 @@ def single_item(item_id):
     return flask.jsonify(_rep(item))
 
 @app.route('/item/')
+@app.route('/item/query/')
 def all_items():
-    with g.lib.transaction() as tx:
-        rows = tx.query("SELECT id FROM items")
-    all_ids = [row[0] for row in rows]
-    return flask.jsonify(item_ids=all_ids)
+    return app.response_class(
+            json_generator(g.lib.items(), root='items'),
+            mimetype='application/json')
 
 @app.route('/item/<int:item_id>/file')
 def item_file(item_id):
@@ -96,11 +114,12 @@ def single_album(album_id):
     return flask.jsonify(_rep(album))
 
 @app.route('/album/')
+@app.route('/album/query/')
 def all_albums():
-    with g.lib.transaction() as tx:
-        rows = tx.query("SELECT id FROM albums")
-    all_ids = [row[0] for row in rows]
-    return flask.jsonify(album_ids=all_ids)
+    return app.response_class(
+            json_generator(g.lib.albums(), root='albums'),
+            mimetype='application/json')
+
 
 @app.route('/album/query/<path:query>')
 def album_query(query):
