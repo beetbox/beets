@@ -132,8 +132,8 @@ class BooleanQuery(MatchQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
     string reflecting a boolean.
     """
-    def __init__(self, field, pattern):
-        super(BooleanQuery, self).__init__(field, pattern)
+    def __init__(self, field, pattern, fast=True):
+        super(BooleanQuery, self).__init__(field, pattern, fast)
         if isinstance(pattern, basestring):
             self.pattern = util.str2bool(pattern)
         self.pattern = int(self.pattern)

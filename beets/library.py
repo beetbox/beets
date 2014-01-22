@@ -828,12 +828,8 @@ def construct_query_part(query_part, model_cls):
 
     key = key.lower()
 
-    # A boolean field.
-    if key.lower() == 'comp':
-        return dbcore.query.BooleanQuery(key, pattern)
-
     # Singleton query (not a real field).
-    elif key == 'singleton':
+    if key == 'singleton':
         return SingletonQuery(util.str2bool(pattern))
 
     # Other field.
