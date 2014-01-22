@@ -26,47 +26,11 @@ from beets.util.functemplate import Template
 from .query import MatchQuery
 
 
-# Path element formatting for templating.
-# FIXME remove this once we have type-based formatting.
-def format_for_path(value, key=None):
-    """Sanitize the value for inclusion in a path: replace separators
-    with _, etc. Doesn't guarantee that the whole path will be valid;
-    you should still call `util.sanitize_path` on the complete path.
-    """
-    if isinstance(value, basestring):
-        if isinstance(value, str):
-            value = value.decode('utf8', 'ignore')
-    elif key in ('track', 'tracktotal', 'disc', 'disctotal'):
-        # Pad indices with zeros.
-        value = u'%02i' % (value or 0)
-    elif key == 'year':
-        value = u'%04i' % (value or 0)
-    elif key in ('month', 'day'):
-        value = u'%02i' % (value or 0)
-    elif key == 'bitrate':
-        # Bitrate gets formatted as kbps.
-        value = u'%ikbps' % ((value or 0) // 1000)
-    elif key == 'samplerate':
-        # Sample rate formatted as kHz.
-        value = u'%ikHz' % ((value or 0) // 1000)
-    elif key in ('added', 'mtime'):
-        # Times are formatted to be human-readable.
-        value = time.strftime(beets.config['time_format'].get(unicode),
-                              time.localtime(value))
-        value = unicode(value)
-    elif value is None:
-        value = u''
-    else:
-        value = unicode(value)
-
-    return value
-
-
 
 # Abstract base for model classes and their field types.
 
 
-Type = namedtuple('Type', 'sql query')
+Type = namedtuple('Type', 'sql query format')
 
 
 class Model(object):
@@ -364,9 +328,11 @@ class Model(object):
         """
         value = self.get(key)
 
-        # FIXME this will get replaced with more sophisticated
-        # (type-based) formatting logic.
-        value = format_for_path(value, key)
+        # Format the value as a string according to its type, if any.
+        if key in self._fields:
+            value = self._fields[key].format(value)
+        elif not isinstance(value, unicode):
+            value = unicode(value)
 
         if for_path:
             sep_repl = beets.config['path_sep_replace'].get(unicode)
