@@ -331,8 +331,12 @@ class Model(object):
         # Format the value as a string according to its type, if any.
         if key in self._fields:
             value = self._fields[key].format(value)
-            # Formatting must result in a unicode string.
-            assert isinstance(value, unicode)
+            # Formatting must result in a string. To deal with
+            # Python2isms, implicitly convert ASCII strings.
+            assert isinstance(value, basestring), \
+                    u'field formatter must produce strings'
+            if isinstance(value, bytes):
+                value = value.decode('utf8', 'ignore')
 
         elif not isinstance(value, unicode):
             # Fallback formatter. Convert to unicode at all cost.
