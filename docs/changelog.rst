@@ -33,6 +33,9 @@ Other little fixes:
   This is preserved as an option for backwards compatibility.) This change
   should also work around a long-standing issue when using ``pluginpath`` when
   beets is installed using pip. Many thanks to geigerzaehler.
+* :doc:`/plugins/web`: The ``/item/`` and ``/album/`` API endpoints now
+  produce full details about albums and items, not just lists of IDs. Thanks
+  to geigerzaehler.
 
 
 1.3.2 (December 22, 2013)
