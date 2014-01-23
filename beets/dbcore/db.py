@@ -331,11 +331,18 @@ class Model(object):
         # Format the value as a string according to its type, if any.
         if key in self._fields:
             value = self._fields[key].format(value)
+            # Formatting must result in a unicode string.
+            assert isinstance(value, unicode)
+
         elif not isinstance(value, unicode):
-            if value:
-                value = unicode(value)
-            else:
+            # Fallback formatter. Convert to unicode at all cost.
+            if value is None:
                 value = u''
+            elif isinstance(value, basestring):
+                if isinstance(value, bytes):
+                    value = value.decode('utf8', 'ignore')
+            else:
+                value = unicode(value)
 
         if for_path:
             sep_repl = beets.config['path_sep_replace'].get(unicode)

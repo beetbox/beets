@@ -187,6 +187,33 @@ class ModelTest(_common.TestCase):
         other_model = self.db._get(TestModel1, model.id)
         self.assertEqual(other_model.foo, 'bar')
 
+
+class FormatTest(_common.TestCase):
+    def test_format_fixed_field(self):
+        model = TestModel1()
+        model.field_one = u'caf\xe9'
+        value = model._get_formatted('field_one')
+        self.assertEqual(value, u'caf\xe9')
+
+    def test_format_flex_field(self):
+        model = TestModel1()
+        model.other_field = u'caf\xe9'
+        value = model._get_formatted('other_field')
+        self.assertEqual(value, u'caf\xe9')
+
+    def test_format_flex_field_bytes(self):
+        model = TestModel1()
+        model.other_field = u'caf\xe9'.encode('utf8')
+        value = model._get_formatted('other_field')
+        self.assertTrue(isinstance(value, unicode))
+        self.assertEqual(value, u'caf\xe9')
+
+    def test_format_unset_field(self):
+        model = TestModel1()
+        value = model._get_formatted('other_field')
+        self.assertEqual(value, u'')
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
