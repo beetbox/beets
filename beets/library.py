@@ -29,9 +29,8 @@ from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile
 from beets.util.functemplate import Template
 from beets import dbcore
-from beets.dbcore import Type
+from beets.dbcore import types
 import beets
-from datetime import datetime
 
 
 
@@ -78,31 +77,13 @@ class SingletonQuery(dbcore.Query):
 # Model field lists.
 
 # Common types used in field definitions.
-def _str_or_empty(s):
-    if not s:
-        return u''
-    return unicode(s)
-ID_TYPE = Type('INTEGER PRIMARY KEY', dbcore.query.NumericQuery, _str_or_empty)
-INT_TYPE = Type('INTEGER', dbcore.query.NumericQuery, _str_or_empty)
-FLOAT_TYPE = Type('REAL', dbcore.query.NumericQuery,
-                  lambda n: u'{0:.1f}'.format(n or 0.0))
-DATE_TYPE = Type(
+DATE_TYPE = types.Type(
     'REAL',
     dbcore.query.NumericQuery,
     lambda n: time.strftime(beets.config['time_format'].get(unicode),
                             time.localtime(n or 0))
 )
-STRING_TYPE = Type('TEXT', dbcore.query.SubstringQuery, _str_or_empty)
-BOOL_TYPE = Type('INTEGER', dbcore.query.BooleanQuery, _str_or_empty)
-PATH_TYPE = Type('BLOB', PathQuery, util.displayable_path)
-
-def _padded_int(digits):
-    return Type('INTEGER', dbcore.query.NumericQuery,
-                lambda n: u'{0:0{1}d}'.format(n or 0, digits))
-
-def _scaled_int(suffix=u'', unit=1000):
-    return Type('INTEGER', dbcore.query.NumericQuery,
-                lambda n: u'{0}{1}'.format((n or 0) // unit, suffix))
+PATH_TYPE = types.Type('BLOB', PathQuery, util.displayable_path)
 
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
@@ -113,67 +94,67 @@ def _scaled_int(suffix=u'', unit=1000):
 # - Is the field writable?
 # - Does the field reflect an attribute of a MediaFile?
 ITEM_FIELDS = [
-    ('id',       ID_TYPE,   False, False),
-    ('path',     PATH_TYPE, False, False),
-    ('album_id', INT_TYPE,  False, False),
+    ('id',       types.ID_TYPE,  False, False),
+    ('path',     PATH_TYPE,      False, False),
+    ('album_id', types.INT_TYPE, False, False),
 
-    ('title',                STRING_TYPE,    True, True),
-    ('artist',               STRING_TYPE,    True, True),
-    ('artist_sort',          STRING_TYPE,    True, True),
-    ('artist_credit',        STRING_TYPE,    True, True),
-    ('album',                STRING_TYPE,    True, True),
-    ('albumartist',          STRING_TYPE,    True, True),
-    ('albumartist_sort',     STRING_TYPE,    True, True),
-    ('albumartist_credit',   STRING_TYPE,    True, True),
-    ('genre',                STRING_TYPE,    True, True),
-    ('composer',             STRING_TYPE,    True, True),
-    ('grouping',             STRING_TYPE,    True, True),
-    ('year',                 _padded_int(4), True, True),
-    ('month',                _padded_int(2), True, True),
-    ('day',                  _padded_int(2), True, True),
-    ('track',                _padded_int(2), True, True),
-    ('tracktotal',           _padded_int(2), True, True),
-    ('disc',                 _padded_int(2), True, True),
-    ('disctotal',            _padded_int(2), True, True),
-    ('lyrics',               STRING_TYPE,    True, True),
-    ('comments',             STRING_TYPE,    True, True),
-    ('bpm',                  INT_TYPE,       True, True),
-    ('comp',                 BOOL_TYPE,      True, True),
-    ('mb_trackid',           STRING_TYPE,    True, True),
-    ('mb_albumid',           STRING_TYPE,    True, True),
-    ('mb_artistid',          STRING_TYPE,    True, True),
-    ('mb_albumartistid',     STRING_TYPE,    True, True),
-    ('albumtype',            STRING_TYPE,    True, True),
-    ('label',                STRING_TYPE,    True, True),
-    ('acoustid_fingerprint', STRING_TYPE,    True, True),
-    ('acoustid_id',          STRING_TYPE,    True, True),
-    ('mb_releasegroupid',    STRING_TYPE,    True, True),
-    ('asin',                 STRING_TYPE,    True, True),
-    ('catalognum',           STRING_TYPE,    True, True),
-    ('script',               STRING_TYPE,    True, True),
-    ('language',             STRING_TYPE,    True, True),
-    ('country',              STRING_TYPE,    True, True),
-    ('albumstatus',          STRING_TYPE,    True, True),
-    ('media',                STRING_TYPE,    True, True),
-    ('albumdisambig',        STRING_TYPE,    True, True),
-    ('disctitle',            STRING_TYPE,    True, True),
-    ('encoder',              STRING_TYPE,    True, True),
-    ('rg_track_gain',        FLOAT_TYPE,     True, True),
-    ('rg_track_peak',        FLOAT_TYPE,     True, True),
-    ('rg_album_gain',        FLOAT_TYPE,     True, True),
-    ('rg_album_peak',        FLOAT_TYPE,     True, True),
-    ('original_year',        _padded_int(4), True, True),
-    ('original_month',       _padded_int(2), True, True),
-    ('original_day',         _padded_int(2), True, True),
+    ('title',                types.STRING_TYPE,  True, True),
+    ('artist',               types.STRING_TYPE,  True, True),
+    ('artist_sort',          types.STRING_TYPE,  True, True),
+    ('artist_credit',        types.STRING_TYPE,  True, True),
+    ('album',                types.STRING_TYPE,  True, True),
+    ('albumartist',          types.STRING_TYPE,  True, True),
+    ('albumartist_sort',     types.STRING_TYPE,  True, True),
+    ('albumartist_credit',   types.STRING_TYPE,  True, True),
+    ('genre',                types.STRING_TYPE,  True, True),
+    ('composer',             types.STRING_TYPE,  True, True),
+    ('grouping',             types.STRING_TYPE,  True, True),
+    ('year',                 types.PaddedInt(4), True, True),
+    ('month',                types.PaddedInt(2), True, True),
+    ('day',                  types.PaddedInt(2), True, True),
+    ('track',                types.PaddedInt(2), True, True),
+    ('tracktotal',           types.PaddedInt(2), True, True),
+    ('disc',                 types.PaddedInt(2), True, True),
+    ('disctotal',            types.PaddedInt(2), True, True),
+    ('lyrics',               types.STRING_TYPE,  True, True),
+    ('comments',             types.STRING_TYPE,  True, True),
+    ('bpm',                  types.INT_TYPE,     True, True),
+    ('comp',                 types.BOOL_TYPE,    True, True),
+    ('mb_trackid',           types.STRING_TYPE,  True, True),
+    ('mb_albumid',           types.STRING_TYPE,  True, True),
+    ('mb_artistid',          types.STRING_TYPE,  True, True),
+    ('mb_albumartistid',     types.STRING_TYPE,  True, True),
+    ('albumtype',            types.STRING_TYPE,  True, True),
+    ('label',                types.STRING_TYPE,  True, True),
+    ('acoustid_fingerprint', types.STRING_TYPE,  True, True),
+    ('acoustid_id',          types.STRING_TYPE,  True, True),
+    ('mb_releasegroupid',    types.STRING_TYPE,  True, True),
+    ('asin',                 types.STRING_TYPE,  True, True),
+    ('catalognum',           types.STRING_TYPE,  True, True),
+    ('script',               types.STRING_TYPE,  True, True),
+    ('language',             types.STRING_TYPE,  True, True),
+    ('country',              types.STRING_TYPE,  True, True),
+    ('albumstatus',          types.STRING_TYPE,  True, True),
+    ('media',                types.STRING_TYPE,  True, True),
+    ('albumdisambig',        types.STRING_TYPE,  True, True),
+    ('disctitle',            types.STRING_TYPE,  True, True),
+    ('encoder',              types.STRING_TYPE,  True, True),
+    ('rg_track_gain',        types.FLOAT_TYPE,   True, True),
+    ('rg_track_peak',        types.FLOAT_TYPE,   True, True),
+    ('rg_album_gain',        types.FLOAT_TYPE,   True, True),
+    ('rg_album_peak',        types.FLOAT_TYPE,   True, True),
+    ('original_year',        types.PaddedInt(4), True, True),
+    ('original_month',       types.PaddedInt(2), True, True),
+    ('original_day',         types.PaddedInt(2), True, True),
 
-    ('length',      FLOAT_TYPE,           False, True),
-    ('bitrate',     _scaled_int(u'kbps'), False, True),
-    ('format',      STRING_TYPE,          False, True),
-    ('samplerate',  _scaled_int(u'kHz'),  False, True),
-    ('bitdepth',    INT_TYPE,             False, True),
-    ('channels',    INT_TYPE,             False, True),
-    ('mtime',       DATE_TYPE,            False, False),
-    ('added',       DATE_TYPE,            False, False),
+    ('length',      types.FLOAT_TYPE,               False, True),
+    ('bitrate',     types.ScaledInt(1000, u'kbps'), False, True),
+    ('format',      types.STRING_TYPE,              False, True),
+    ('samplerate',  types.ScaledInt(1000, u'kHz'),  False, True),
+    ('bitdepth',    types.INT_TYPE,                 False, True),
+    ('channels',    types.INT_TYPE,                 False, True),
+    ('mtime',       DATE_TYPE,                      False, False),
+    ('added',       DATE_TYPE,                      False, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
@@ -183,39 +164,39 @@ ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 # The third entry in each tuple indicates whether the field reflects an
 # identically-named field in the items table.
 ALBUM_FIELDS = [
-    ('id',      ID_TYPE,   False),
-    ('artpath', PATH_TYPE, False),
-    ('added',   DATE_TYPE, True),
+    ('id',      types.ID_TYPE, False),
+    ('artpath', PATH_TYPE,     False),
+    ('added',   DATE_TYPE,     True),
 
-    ('albumartist',        STRING_TYPE,    True),
-    ('albumartist_sort',   STRING_TYPE,    True),
-    ('albumartist_credit', STRING_TYPE,    True),
-    ('album',              STRING_TYPE,    True),
-    ('genre',              STRING_TYPE,    True),
-    ('year',               _padded_int(4), True),
-    ('month',              _padded_int(2), True),
-    ('day',                _padded_int(2), True),
-    ('tracktotal',         _padded_int(2), True),
-    ('disctotal',          _padded_int(2), True),
-    ('comp',               BOOL_TYPE,      True),
-    ('mb_albumid',         STRING_TYPE,    True),
-    ('mb_albumartistid',   STRING_TYPE,    True),
-    ('albumtype',          STRING_TYPE,    True),
-    ('label',              STRING_TYPE,    True),
-    ('mb_releasegroupid',  STRING_TYPE,    True),
-    ('asin',               STRING_TYPE,    True),
-    ('catalognum',         STRING_TYPE,    True),
-    ('script',             STRING_TYPE,    True),
-    ('language',           STRING_TYPE,    True),
-    ('country',            STRING_TYPE,    True),
-    ('albumstatus',        STRING_TYPE,    True),
-    ('media',              STRING_TYPE,    True),
-    ('albumdisambig',      STRING_TYPE,    True),
-    ('rg_album_gain',      FLOAT_TYPE,     True),
-    ('rg_album_peak',      FLOAT_TYPE,     True),
-    ('original_year',      _padded_int(4), True),
-    ('original_month',     _padded_int(2), True),
-    ('original_day',       _padded_int(2), True),
+    ('albumartist',        types.STRING_TYPE,  True),
+    ('albumartist_sort',   types.STRING_TYPE,  True),
+    ('albumartist_credit', types.STRING_TYPE,  True),
+    ('album',              types.STRING_TYPE,  True),
+    ('genre',              types.STRING_TYPE,  True),
+    ('year',               types.PaddedInt(4), True),
+    ('month',              types.PaddedInt(2), True),
+    ('day',                types.PaddedInt(2), True),
+    ('tracktotal',         types.PaddedInt(2), True),
+    ('disctotal',          types.PaddedInt(2), True),
+    ('comp',               types.BOOL_TYPE,    True),
+    ('mb_albumid',         types.STRING_TYPE,  True),
+    ('mb_albumartistid',   types.STRING_TYPE,  True),
+    ('albumtype',          types.STRING_TYPE,  True),
+    ('label',              types.STRING_TYPE,  True),
+    ('mb_releasegroupid',  types.STRING_TYPE,  True),
+    ('asin',               types.STRING_TYPE,  True),
+    ('catalognum',         types.STRING_TYPE,  True),
+    ('script',             types.STRING_TYPE,  True),
+    ('language',           types.STRING_TYPE,  True),
+    ('country',            types.STRING_TYPE,  True),
+    ('albumstatus',        types.STRING_TYPE,  True),
+    ('media',              types.STRING_TYPE,  True),
+    ('albumdisambig',      types.STRING_TYPE,  True),
+    ('rg_album_gain',      types.FLOAT_TYPE,   True),
+    ('rg_album_peak',      types.FLOAT_TYPE,   True),
+    ('original_year',      types.PaddedInt(4), True),
+    ('original_month',     types.PaddedInt(2), True),
+    ('original_day',       types.PaddedInt(2), True),
 ]
 ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
 ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]

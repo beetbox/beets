@@ -16,7 +16,7 @@
 """
 import time
 import os
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 import threading
 import sqlite3
 import contextlib
@@ -27,10 +27,7 @@ from .query import MatchQuery
 
 
 
-# Abstract base for model classes and their field types.
-
-
-Type = namedtuple('Type', 'sql query format')
+# Abstract base for model classes.
 
 
 class Model(object):
