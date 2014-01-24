@@ -49,7 +49,7 @@ INT_TYPE = Type('INTEGER', query.NumericQuery,
 FLOAT_TYPE = Type('REAL', query.NumericQuery,
                   lambda n: u'{0:.1f}'.format(n or 0.0))
 STRING_TYPE = Type('TEXT', query.SubstringQuery,
-                   lambda s: s or u'')
+                   lambda s: unicode(s) if s else u'')
 BOOL_TYPE = Type('INTEGER', query.BooleanQuery,
                  lambda b: unicode(bool(b)))
 
