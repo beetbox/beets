@@ -31,12 +31,15 @@ class ImportHelper(object):
     def _setup_library(self):
         self.libdb = os.path.join(self.temp_dir, 'testlib.blb')
         self.libdir = os.path.join(self.temp_dir, 'testlibdir')
+        os.mkdir(self.libdir)
 
         self.lib = library.Library(self.libdb)
         self.lib.directory = self.libdir
-        self.lib.path_formats = [(
-            'default', os.path.join('$artist', '$album', '$title')
-        )]
+        self.lib.path_formats = [
+            ('default', os.path.join('$artist', '$album', '$title')),
+            ('singleton:true', 'singletons'),
+            ('comp:true', 'compilations'),
+        ]
 
     def _create_import_dir(self):
         """Creates a directory with media files to import.
@@ -70,6 +73,13 @@ class ImportHelper(object):
             medium.save()
             self.media_files.append(medium_path)
 
+    def _run_import(self):
+        # Run the UI "beet import" command!
+        importer.ImportSession(self.lib,
+                                logfile=None,
+                                paths=[self.import_path],
+                                query=None).run()
+
 
 class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
     def setUp(self):
@@ -78,61 +88,61 @@ class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
         super(ImportNonAutotaggedTest, self)._setup_library()
         super(ImportNonAutotaggedTest, self)._create_import_dir()
 
+        config['import']['delete'] = False
+        config['import']['threaded'] = False
+        config['import']['singletons'] = False
+        config['import']['move'] = False
+        config['import']['autotag'] = False
+
         self.io.install()
 
-    def _run_import(self, delete=False, threaded=False,
-                    singletons=False, move=False):
-        # Run the UI "beet import" command!
-        config['import']['delete'] = delete
-        config['import']['threaded'] = threaded
-        config['import']['singletons'] = singletons
-        config['import']['move'] = move
-        config['import']['autotag'] = False
-        session = importer.ImportSession(self.lib,
-                                            logfile=None,
-                                            paths=[self.import_path],
-                                            query=None)
-        session.run()
 
     def test_album_created_with_track_artist(self):
-        self._run_import()
+        super(ImportNonAutotaggedTest, self)._run_import()
         albums = self.lib.albums()
         self.assertEqual(len(albums), 1)
         self.assertEqual(albums[0].albumartist, 'The Album Artist')
 
 
     def test_import_copy_arrives_but_leaves_originals(self):
-        self._run_import()
+        super(ImportNonAutotaggedTest, self)._run_import()
         self.assert_files_in_lib_dir()
         self.assert_import_files_exist()
 
     def test_threaded_import_copy_arrives(self):
-        self._run_import(threaded=True)
+        config['import']['threaded'] = True
+        super(ImportNonAutotaggedTest, self)._run_import()
         self.assert_files_in_lib_dir()
         self.assert_import_files_exist()
 
     def test_import_move(self):
-        self._run_import(move=True)
+        config['import']['move'] = True
+        super(ImportNonAutotaggedTest, self)._run_import()
         self.assert_files_in_lib_dir()
         self.assert_import_files_not_exist()
 
     def test_threaded_import_move(self):
-        self._run_import(threaded=True, move=True)
+        config['import']['move'] = True
+        config['import']['threaded'] = True
+        super(ImportNonAutotaggedTest, self)._run_import()
         self.assert_files_in_lib_dir()
         self.assert_import_files_not_exist()
 
     def test_import_no_delete(self):
-        self._run_import(delete=False)
+        config['import']['delete'] = False
+        super(ImportNonAutotaggedTest, self)._run_import()
         self.assert_files_in_lib_dir()
         self.assert_import_files_exist()
 
     def test_import_with_delete(self):
-        self._run_import(delete=True)
+        config['import']['delete'] = True
+        super(ImportNonAutotaggedTest, self)._run_import()
         self.assert_files_in_lib_dir()
         self.assert_import_files_not_exist()
 
     def test_import_singleton(self):
-        self._run_import(singletons=True)
+        config['import']['singleton'] = True
+        super(ImportNonAutotaggedTest, self)._run_import()
         self.assert_import_files_exist()
 
 
