@@ -100,15 +100,11 @@ class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
         config['import']['move'] = False
         config['import']['autotag'] = False
 
-        self.io.install()
-
-
     def test_album_created_with_track_artist(self):
         self._run_import()
         albums = self.lib.albums()
         self.assertEqual(len(albums), 1)
         self.assertEqual(albums[0].albumartist, 'The Album Artist')
-
 
     def test_import_copy_arrives_but_leaves_originals(self):
         self._run_import()
@@ -127,6 +123,19 @@ class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
         self.assert_files_in_lib_dir()
         self.assert_import_files_not_exist()
 
+    def test_import_with_move_prunes_directory_empty(self):
+        config['import']['move'] = True
+        self.assertExists(os.path.join(self.import_path, 'the_album'))
+        self._run_import()
+        self.assertNotExists(os.path.join(self.import_path, 'the_album'))
+
+    def test_import_with_move_prunes_with_extra_clutter(self):
+        f = open(os.path.join(self.import_path, 'the_album', 'alog.log'), 'w')
+        f.close()
+        config['clutter'] = ['*.log']
+        config['import']['move'] = True
+        self._run_import()
+        self.assertNotExists(os.path.join(self.import_path, 'the_album'))
 
     def test_threaded_import_move(self):
         config['import']['move'] = True
@@ -146,6 +155,12 @@ class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
         self._run_import()
         self.assert_files_in_lib_dir()
         self.assert_import_files_not_exist()
+
+    def test_import_with_delete_prunes_directory_empty(self):
+        config['import']['delete'] = True
+        self.assertExists(os.path.join(self.import_path, 'the_album'))
+        self._run_import()
+        self.assertNotExists(os.path.join(self.import_path, 'the_album'))
 
     def test_import_singleton(self):
         config['import']['singleton'] = True
@@ -253,12 +268,6 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
         _call_stages(self.session, [self.i], self.info)
         self.assertNotExists(self.srcpath)
 
-    def test_finalize_with_delete_prunes_directory_empty(self):
-        config['import']['delete'] = True
-        _call_stages(self.session, [self.i], self.info,
-                     toppath=self.srcdir)
-        self.assertNotExists(os.path.dirname(self.srcpath))
-
     def test_apply_asis_uses_album_path(self):
         _call_stages(self.session, [self.i], importer.action.ASIS)
         self.assert_file_in_lib( 'The Artist', 'The Album', 'Song.mp3')
@@ -344,19 +353,6 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
         self.assert_file_in_lib(
                 'Applied Artist', 'Applied Album', 'Applied Title.mp3')
         self.assertNotExists(self.srcpath)
-
-    def test_apply_with_move_prunes_empty_directory(self):
-        config['import']['move'] = True
-        _call_stages(self.session, [self.i], self.info, toppath=self.srcdir)
-        self.assertNotExists(os.path.dirname(self.srcpath))
-
-    def test_apply_with_move_prunes_with_extra_clutter(self):
-        f = open(os.path.join(self.srcdir, 'testalbum', 'alog.log'), 'w')
-        f.close()
-        config['clutter'] = ['*.log']
-        config['import']['move'] = True
-        _call_stages(self.session, [self.i], self.info, toppath=self.srcdir)
-        self.assertNotExists(os.path.dirname(self.srcpath))
 
     def test_manipulate_files_with_null_move(self):
         """It should be possible to "move" a file even when the file is
