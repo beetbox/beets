@@ -258,16 +258,6 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
             albumtype = 'soundtrack',
         )
 
-    def test_finalize_no_delete(self):
-        config['import']['delete'] = False
-        _call_stages(self.session, [self.i], self.info)
-        self.assertExists(self.srcpath)
-
-    def test_finalize_with_delete(self):
-        config['import']['delete'] = True
-        _call_stages(self.session, [self.i], self.info)
-        self.assertNotExists(self.srcpath)
-
     def test_apply_asis_uses_album_path(self):
         _call_stages(self.session, [self.i], importer.action.ASIS)
         self.assert_file_in_lib( 'The Artist', 'The Album', 'Song.mp3')
