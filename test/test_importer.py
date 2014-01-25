@@ -163,7 +163,7 @@ class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
         self.assertNotExists(os.path.join(self.import_path, 'the_album'))
 
     def test_import_singleton(self):
-        config['import']['singleton'] = True
+        config['import']['singletons'] = True
         self._run_import()
         self.assert_import_files_exist()
 
