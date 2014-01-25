@@ -80,6 +80,12 @@ class ImportHelper(object):
                                 paths=[self.import_path],
                                 query=None).run()
 
+    def assert_file_in_lib(self, *segments):
+        """Join the ``segments`` and assert that this path exists in the library
+        directory
+        """
+        self.assertExists(os.path.join(self.libdir, *segments))
+
 
 class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
     def setUp(self):
@@ -249,13 +255,11 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
 
     def test_apply_asis_uses_album_path(self):
         _call_stages(self.session, [self.i], importer.action.ASIS)
-        self.assertExists(os.path.join(self.libdir, 'The Artist',
-            'The Album', 'Song.mp3'))
+        self.assert_file_in_lib( 'The Artist', 'The Album', 'Song.mp3')
 
     def test_apply_match_uses_album_path(self):
         _call_stages(self.session, [self.i], self.info)
-        self.assertExists(os.path.join(self.libdir, 'some artist',
-            'some album', 'one.mp3'))
+        self.assert_file_in_lib('some artist', 'some album', 'one.mp3')
 
     def test_apply_tracks_uses_singleton_path(self):
         apply_coro = importer.apply_choices(self.session)
@@ -268,7 +272,7 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
         apply_coro.send(task)
         manip_coro.send(task)
 
-        self.assertExists(os.path.join(self.libdir, 'singletons', 'one.mp3'))
+        self.assert_file_in_lib('singletons', 'one.mp3')
 
     def test_apply_sentinel(self):
         coro = importer.apply_choices(self.session)
@@ -300,8 +304,7 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
         # Old file should be gone.
         self.assertNotExists(internal_srcpath)
         # New file should be present.
-        self.assertExists(os.path.join(self.libdir, 'some artist',
-            'some album', 'one.mp3'))
+        self.assert_file_in_lib('some artist', 'some album', 'one.mp3')
         # Also, the old file should not be in old_paths because it does
         # not exist.
         self.assertEqual(task.old_paths, [])
@@ -321,8 +324,7 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
         # Old file should still exist.
         self.assertExists(self.srcpath)
         # New file should also be present.
-        self.assertExists(os.path.join(self.libdir, 'some artist',
-            'some album', 'one.mp3'))
+        self.assert_file_in_lib('some artist', 'some album', 'one.mp3')
         # The old (copy-source) file should be marked for possible
         # deletion.
         self.assertEqual(task.old_paths, [self.srcpath])
@@ -330,7 +332,7 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
     def test_apply_with_move(self):
         config['import']['move'] = True
         _call_stages(self.session, [self.i], self.info)
-        self.assertExists(list(self.lib.items())[0].path)
+        self.assert_file_in_lib('some artist', 'some album', 'one.mp3')
         self.assertNotExists(self.srcpath)
 
     def test_apply_with_move_prunes_empty_directory(self):
@@ -354,7 +356,7 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
         config['import']['move'] = True
         _call_stages(self.session, [self.i], self.info, toppath=self.srcdir,
                      stages=[importer.manipulate_files])
-        self.assertExists(self.i.path)
+        self.assert_file_in_lib('singletons', 'Song.mp3')
 
 class AsIsApplyTest(_common.TestCase):
     def setUp(self):
