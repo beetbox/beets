@@ -104,51 +104,52 @@ class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
 
 
     def test_album_created_with_track_artist(self):
-        super(ImportNonAutotaggedTest, self)._run_import()
+        self._run_import()
         albums = self.lib.albums()
         self.assertEqual(len(albums), 1)
         self.assertEqual(albums[0].albumartist, 'The Album Artist')
 
 
     def test_import_copy_arrives_but_leaves_originals(self):
-        super(ImportNonAutotaggedTest, self)._run_import()
+        self._run_import()
         self.assert_files_in_lib_dir()
         self.assert_import_files_exist()
 
     def test_threaded_import_copy_arrives(self):
         config['import']['threaded'] = True
-        super(ImportNonAutotaggedTest, self)._run_import()
+        self._run_import()
         self.assert_files_in_lib_dir()
         self.assert_import_files_exist()
 
     def test_import_move(self):
         config['import']['move'] = True
-        super(ImportNonAutotaggedTest, self)._run_import()
+        self._run_import()
         self.assert_files_in_lib_dir()
         self.assert_import_files_not_exist()
+
 
     def test_threaded_import_move(self):
         config['import']['move'] = True
         config['import']['threaded'] = True
-        super(ImportNonAutotaggedTest, self)._run_import()
+        self._run_import()
         self.assert_files_in_lib_dir()
         self.assert_import_files_not_exist()
 
     def test_import_no_delete(self):
         config['import']['delete'] = False
-        super(ImportNonAutotaggedTest, self)._run_import()
+        self._run_import()
         self.assert_files_in_lib_dir()
         self.assert_import_files_exist()
 
     def test_import_with_delete(self):
         config['import']['delete'] = True
-        super(ImportNonAutotaggedTest, self)._run_import()
+        self._run_import()
         self.assert_files_in_lib_dir()
         self.assert_import_files_not_exist()
 
     def test_import_singleton(self):
         config['import']['singleton'] = True
-        super(ImportNonAutotaggedTest, self)._run_import()
+        self._run_import()
         self.assert_import_files_exist()
 
 
