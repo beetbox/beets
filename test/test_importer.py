@@ -27,21 +27,16 @@ from beets.autotag import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch
 from beets import config
 
 TEST_TITLES = ('The Opener', 'The Second Track', 'The Last Track')
-class ImportNonAutotaggedTest(_common.TestCase):
-    def setUp(self):
-        super(ImportNonAutotaggedTest, self).setUp()
-
-        self.io.install()
-
+class ImportHelper(object):
+    def _setup_library(self):
         self.libdb = os.path.join(self.temp_dir, 'testlib.blb')
-        self.lib = library.Library(self.libdb)
         self.libdir = os.path.join(self.temp_dir, 'testlibdir')
+
+        self.lib = library.Library(self.libdb)
         self.lib.directory = self.libdir
         self.lib.path_formats = [(
             'default', os.path.join('$artist', '$album', '$title')
         )]
-
-        self._create_import_dir()
 
     def _create_import_dir(self):
         """Creates a directory with media files to import.
@@ -74,6 +69,16 @@ class ImportNonAutotaggedTest(_common.TestCase):
             for attr in metadata: setattr(medium, attr, metadata[attr])
             medium.save()
             self.media_files.append(medium_path)
+
+
+class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
+    def setUp(self):
+        super(ImportNonAutotaggedTest, self).setUp()
+
+        super(ImportNonAutotaggedTest, self)._setup_library()
+        super(ImportNonAutotaggedTest, self)._create_import_dir()
+
+        self.io.install()
 
     def _run_import(self, delete=False, threaded=False,
                     singletons=False, move=False):
