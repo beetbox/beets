@@ -27,9 +27,9 @@ from beets.autotag import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch
 from beets import config
 
 TEST_TITLES = ('The Opener', 'The Second Track', 'The Last Track')
-class NonAutotaggedImportTest(_common.TestCase):
+class ImportNonAutotaggedTest(_common.TestCase):
     def setUp(self):
-        super(NonAutotaggedImportTest, self).setUp()
+        super(ImportNonAutotaggedTest, self).setUp()
 
         self.io.install()
 
@@ -41,41 +41,42 @@ class NonAutotaggedImportTest(_common.TestCase):
             'default', os.path.join('$artist', '$album', '$title')
         )]
 
-        self.srcdir = os.path.join(self.temp_dir, 'testsrcdir')
+        self._create_import_dir()
 
-    def _create_test_file(self, filepath, metadata):
-        """Creates an mp3 file at the given path within self.srcdir.
-        filepath is given as an array of folder names, ending with the
-        file name. Sets the file's metadata from the provided dict.
-        Returns the full, real path to the file.
+    def _create_import_dir(self):
+        """Creates a directory with media files to import.
+        Sets ``self.import_path`` to the path of the directory. Also sets
+        ``self.media_files`` to a list of all the paths for created media files.
+
+        The directory has following layout
+          the_album/
+            track_1.mp3
+            track_2.mp3
+            track_3.mp3
         """
-        realpath = os.path.join(self.srcdir, *filepath)
-        if not os.path.exists(os.path.dirname(realpath)):
-            os.makedirs(os.path.dirname(realpath))
-        shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), realpath)
+        self.import_path = os.path.join(self.temp_dir, 'testsrcdir')
+        album_path = os.path.join(self.import_path, 'the_album')
+        os.makedirs(album_path)
 
-        f = mediafile.MediaFile(realpath)
-        for attr in metadata:
-            setattr(f, attr, metadata[attr])
-        f.save()
+        resource_path = os.path.join(_common.RSRC, 'full.mp3')
 
-        return realpath
+        metadata = {'artist': 'The Artist', 'album': 'The Album'}
+        self.media_files = []
+        for i in [1,2,3]:
+            # Copy files
+            medium_path = os.path.join(album_path, 'track_%d.mp3' % i)
+            shutil.copy(resource_path, medium_path)
+            medium = mediafile.MediaFile(medium_path)
 
-    def _run_import(self, titles=TEST_TITLES, delete=False, threaded=False,
+            # Set metadata
+            metadata['track'] = i
+            metadata['title'] = TEST_TITLES[i-1]
+            for attr in metadata: setattr(medium, attr, metadata[attr])
+            medium.save()
+            self.media_files.append(medium_path)
+
+    def _run_import(self, delete=False, threaded=False,
                     singletons=False, move=False):
-        # Make a bunch of tracks to import.
-        paths = []
-        for i, title in enumerate(titles):
-            paths.append(self._create_test_file(
-                ['the_album', 'track_%s.mp3' % (i+1)],
-                {
-                    'track': (i+1),
-                    'artist': 'The Artist',
-                    'album': 'The Album',
-                    'albumartist': 'The Album Artist',
-                    'title': title,
-                }))
-
         # Run the UI "beet import" command!
         config['import']['delete'] = delete
         config['import']['threaded'] = threaded
@@ -84,11 +85,9 @@ class NonAutotaggedImportTest(_common.TestCase):
         config['import']['autotag'] = False
         session = importer.ImportSession(self.lib,
                                             logfile=None,
-                                            paths=[os.path.dirname(paths[0])],
+                                            paths=[self.import_path],
                                             query=None)
         session.run()
-
-        return paths
 
     def test_album_created_with_track_artist(self):
         self._run_import()
@@ -96,7 +95,51 @@ class NonAutotaggedImportTest(_common.TestCase):
         self.assertEqual(len(albums), 1)
         self.assertEqual(albums[0].albumartist, 'The Album Artist')
 
-    def _copy_arrives(self):
+
+    def test_import_copy_arrives_but_leaves_originals(self):
+        self._run_import()
+        self.assert_files_in_lib_dir()
+        self.assert_import_files_exist()
+
+    def test_threaded_import_copy_arrives(self):
+        self._run_import(threaded=True)
+        self.assert_files_in_lib_dir()
+        self.assert_import_files_exist()
+
+    def test_import_move(self):
+        self._run_import(move=True)
+        self.assert_files_in_lib_dir()
+        self.assert_import_files_not_exist()
+
+    def test_threaded_import_move(self):
+        self._run_import(threaded=True, move=True)
+        self.assert_files_in_lib_dir()
+        self.assert_import_files_not_exist()
+
+    def test_import_no_delete(self):
+        self._run_import(delete=False)
+        self.assert_files_in_lib_dir()
+        self.assert_import_files_exist()
+
+    def test_import_with_delete(self):
+        self._run_import(delete=True)
+        self.assert_files_in_lib_dir()
+        self.assert_import_files_not_exist()
+
+    def test_import_singleton(self):
+        self._run_import(singletons=True)
+        self.assert_import_files_exist()
+
+
+    def assert_import_files_exist(self):
+        for mediafile in self.media_files:
+            self.assertTrue(os.path.exists(mediafile))
+
+    def assert_import_files_not_exist(self):
+        for mediafile in self.media_files:
+            self.assertFalse(os.path.exists(mediafile))
+
+    def assert_files_in_lib_dir(self):
         artist_folder = os.path.join(self.libdir, 'The Artist')
         album_folder = os.path.join(artist_folder, 'The Album')
         self.assertEqual(len(os.listdir(artist_folder)), 1)
@@ -105,45 +148,6 @@ class NonAutotaggedImportTest(_common.TestCase):
         filenames = set(os.listdir(album_folder))
         destinations = set('%s.mp3' % title for title in TEST_TITLES)
         self.assertEqual(filenames, destinations)
-
-    def test_import_copy_arrives_but_leaves_originals(self):
-        paths = self._run_import()
-        self._copy_arrives()
-
-        for path in paths:
-            self.assertTrue(os.path.exists(path))
-
-    def test_threaded_import_copy_arrives(self):
-        paths = self._run_import(threaded=True)
-        self._copy_arrives()
-        for path in paths:
-            self.assertTrue(os.path.exists(path))
-
-    def test_import_move(self):
-        paths = self._run_import(move=True)
-        self._copy_arrives()
-
-        for path in paths:
-            self.assertFalse(os.path.exists(path))
-
-    def test_threaded_import_move(self):
-        paths = self._run_import(threaded=True, move=True)
-        self._copy_arrives()
-
-        for path in paths:
-            self.assertFalse(os.path.exists(path))
-
-    def test_import_no_delete(self):
-        paths = self._run_import(['sometrack'], delete=False)
-        self.assertTrue(os.path.exists(paths[0]))
-
-    def test_import_with_delete(self):
-        paths = self._run_import(['sometrack'], delete=True)
-        self.assertFalse(os.path.exists(paths[0]))
-
-    def test_import_singleton(self):
-        paths = self._run_import(['sometrack'], singletons=True)
-        self.assertTrue(os.path.exists(paths[0]))
 
 # Utilities for invoking the apply_choices, manipulate_files, and finalize
 # coroutines.
