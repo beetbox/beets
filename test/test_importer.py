@@ -37,8 +37,8 @@ class ImportHelper(object):
         self.lib.directory = self.libdir
         self.lib.path_formats = [
             ('default', os.path.join('$artist', '$album', '$title')),
-            ('singleton:true', 'singletons'),
-            ('comp:true', 'compilations'),
+            ('singleton:true', os.path.join('singletons', '$title')),
+            ('comp:true', os.path.join('compilations','$album', '$title')),
         ]
 
     def _create_import_dir(self):
@@ -85,8 +85,8 @@ class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
     def setUp(self):
         super(ImportNonAutotaggedTest, self).setUp()
 
-        super(ImportNonAutotaggedTest, self)._setup_library()
-        super(ImportNonAutotaggedTest, self)._create_import_dir()
+        self._setup_library()
+        self._create_import_dir()
 
         config['import']['delete'] = False
         config['import']['threaded'] = False
@@ -191,19 +191,11 @@ def _call_stages(session, items, choice_or_info,
 
     return task
 
-class ImportApplyTest(_common.TestCase):
+class ImportApplyTest(_common.TestCase, ImportHelper):
     def setUp(self):
         super(ImportApplyTest, self).setUp()
 
-        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
-        os.mkdir(self.libdir)
-        self.libpath = os.path.join(self.temp_dir, 'testlib.blb')
-        self.lib = library.Library(self.libpath, self.libdir)
-        self.lib.path_formats = [
-            ('default', 'one'),
-            ('singleton:true', 'three'),
-            ('comp:true', 'two'),
-        ]
+        self._setup_library()
         self.session = _common.import_session(self.lib)
 
         self.srcdir = os.path.join(self.temp_dir, 'testsrcdir')
@@ -211,6 +203,18 @@ class ImportApplyTest(_common.TestCase):
         os.mkdir(os.path.join(self.srcdir, 'testalbum'))
         self.srcpath = os.path.join(self.srcdir, 'testalbum', 'srcfile.mp3')
         shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.srcpath)
+
+        # Set metadata
+        medium = mediafile.MediaFile(self.srcpath)
+        metadata = {
+                     'artist': 'The Artist',
+                     'album': 'The Album',
+                     'title': 'Song',
+                     'track': 1,
+                   }
+        for attr in metadata: setattr(medium, attr, metadata[attr])
+        medium.save()
+
         self.i = library.Item.from_path(self.srcpath)
         self.i.comp = False
         self.lib.add(self.i)
@@ -245,11 +249,13 @@ class ImportApplyTest(_common.TestCase):
 
     def test_apply_asis_uses_album_path(self):
         _call_stages(self.session, [self.i], importer.action.ASIS)
-        self.assertExists(os.path.join(self.libdir, 'one.mp3'))
+        self.assertExists(os.path.join(self.libdir, 'The Artist',
+            'The Album', 'Song.mp3'))
 
     def test_apply_match_uses_album_path(self):
         _call_stages(self.session, [self.i], self.info)
-        self.assertExists(os.path.join(self.libdir, 'one.mp3'))
+        self.assertExists(os.path.join(self.libdir, 'some artist',
+            'some album', 'one.mp3'))
 
     def test_apply_tracks_uses_singleton_path(self):
         apply_coro = importer.apply_choices(self.session)
@@ -262,9 +268,7 @@ class ImportApplyTest(_common.TestCase):
         apply_coro.send(task)
         manip_coro.send(task)
 
-        self.assertExists(
-            os.path.join(self.libdir, 'three.mp3')
-        )
+        self.assertExists(os.path.join(self.libdir, 'singletons', 'one.mp3'))
 
     def test_apply_sentinel(self):
         coro = importer.apply_choices(self.session)
@@ -296,7 +300,8 @@ class ImportApplyTest(_common.TestCase):
         # Old file should be gone.
         self.assertNotExists(internal_srcpath)
         # New file should be present.
-        self.assertExists(os.path.join(self.libdir, 'one.mp3'))
+        self.assertExists(os.path.join(self.libdir, 'some artist',
+            'some album', 'one.mp3'))
         # Also, the old file should not be in old_paths because it does
         # not exist.
         self.assertEqual(task.old_paths, [])
@@ -316,7 +321,8 @@ class ImportApplyTest(_common.TestCase):
         # Old file should still exist.
         self.assertExists(self.srcpath)
         # New file should also be present.
-        self.assertExists(os.path.join(self.libdir, 'one.mp3'))
+        self.assertExists(os.path.join(self.libdir, 'some artist',
+            'some album', 'one.mp3'))
         # The old (copy-source) file should be marked for possible
         # deletion.
         self.assertEqual(task.old_paths, [self.srcpath])
