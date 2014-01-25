@@ -36,6 +36,9 @@ Other little fixes:
 * :doc:`/plugins/web`: The ``/item/`` and ``/album/`` API endpoints now
   produce full details about albums and items, not just lists of IDs. Thanks
   to geigerzaehler.
+* Fix a potential crash when using image resizing with the
+  :doc:`/plugins/fetchart` or :doc:`/plugins/embedart` without ImageMagick
+  installed.
 
 
 1.3.2 (December 22, 2013)

@@ -192,7 +192,7 @@ class ArtResizer(object):
             out = subprocess.check_output(['convert', '--version']).lower()
             if 'imagemagick' in out:
                 return IMAGEMAGICK
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, OSError):
             pass # system32/convert.exe may be interfering
 
         # Fall back to Web proxy method.
