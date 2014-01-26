@@ -40,7 +40,7 @@ class QueryParseTest(_common.TestCase):
 
     def test_colon_at_end(self):
         q = 'test:'
-        r = (None, 'test:', dbcore.query.SubstringQuery)
+        r = ('test', '', dbcore.query.SubstringQuery)
         self.assertEqual(self.pqp(q), r)
 
     def test_one_basic_regexp(self):
@@ -71,6 +71,11 @@ class QueryParseTest(_common.TestCase):
     def test_multiple_years(self):
         q = 'year:1999..2010'
         r = ('year', '1999..2010', dbcore.query.NumericQuery)
+        self.assertEqual(self.pqp(q), r)
+
+    def test_empty_query_part(self):
+        q = ''
+        r = (None, '', dbcore.query.SubstringQuery)
         self.assertEqual(self.pqp(q), r)
 
 

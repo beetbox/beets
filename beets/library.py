@@ -743,7 +743,7 @@ PARSE_QUERY_PART_REGEX = re.compile(
         r'(?<!\\):'  # Unescaped :
     r')?'
 
-    r'(.+)',         # The term itself.
+    r'(.*)',         # The term itself.
 
     re.I  # Case-insensitive.
 )
@@ -794,17 +794,18 @@ def parse_query_part(part, query_classes={}, prefixes={},
 
 def construct_query_part(query_part, model_cls):
     """Create a query from a single query component, `query_part`, for
-    querying instances of `model_cls`. Return a `Query` instance or
-    `None` if the value cannot be parsed.
+    querying instances of `model_cls`. Return a `Query` instance.
     """
+    # Shortcut for empty query parts.
+    if not query_part:
+        return dbcore.query.TrueQuery()
+
+    # Set up and parse the string.
     query_classes = dict((k, t.query) for (k, t) in model_cls._fields.items())
     prefixes = {':': dbcore.query.RegexpQuery}
     prefixes.update(plugins.queries())
-    parsed = parse_query_part(query_part, query_classes, prefixes)
-    if not parsed:
-        return
-
-    key, pattern, query_class = parsed
+    key, pattern, query_class = \
+            parse_query_part(query_part, query_classes, prefixes)
 
     # No key specified.
     if key is None:
@@ -840,9 +841,7 @@ def query_from_strings(query_cls, model_cls, query_parts):
     """
     subqueries = []
     for part in query_parts:
-        subq = construct_query_part(part, model_cls)
-        if subq:
-            subqueries.append(subq)
+        subqueries.append(construct_query_part(part, model_cls))
     if not subqueries:  # No terms in query.
         subqueries = [dbcore.query.TrueQuery()]
     return query_cls(subqueries)
