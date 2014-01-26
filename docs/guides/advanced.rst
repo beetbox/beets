@@ -129,3 +129,26 @@ Read more than you ever wanted to know about the *flexible attributes*
 feature `on the beets blog`_.
 
 .. _on the beets blog: http://beets.radbox.org/blog/flexattr.html
+
+
+Choose a path style manually for some music
+-------------------------------------------
+
+Sometimes, you need to categorize some songs differently in your file system.
+For example, you might want to group together all the music you don't really
+like but keep around to play for friends and family. This is, of course,
+impossible to determine automatically using metadata from MusicBrainz.
+
+Instead, use a flexible attribute (see above) to store a flag on the music you
+want to categorize, like so::
+
+    beet modify bad=1 christmas
+
+Then, you can query on this field in your path formats to sort this music
+differently. Put something like this in your configuration file::
+
+    paths:
+        bad:1: Bad/$artist/$title
+
+Used together, flexible attributes and path format conditions let you sort
+your music by any criteria you can imagine.
