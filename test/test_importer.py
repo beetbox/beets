@@ -73,12 +73,12 @@ class ImportHelper(object):
             medium.save()
             self.media_files.append(medium_path)
 
-    def _run_import(self):
+    def _setup_import_session(self):
         # Run the UI "beet import" command!
-        importer.ImportSession(self.lib,
+        self.importer = importer.ImportSession(self.lib,
                                 logfile=None,
                                 paths=[self.import_path],
-                                query=None).run()
+                                query=None)
 
     def assert_file_in_lib(self, *segments):
         """Join the ``segments`` and assert that this path exists in the library
@@ -93,6 +93,7 @@ class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
 
         self._setup_library()
         self._create_import_dir()
+        self._setup_import_session()
 
         config['import']['delete'] = False
         config['import']['threaded'] = False
@@ -101,32 +102,32 @@ class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
         config['import']['autotag'] = False
 
     def test_album_created_with_track_artist(self):
-        self._run_import()
+        self.importer.run()
         albums = self.lib.albums()
         self.assertEqual(len(albums), 1)
         self.assertEqual(albums[0].albumartist, 'The Album Artist')
 
     def test_import_copy_arrives_but_leaves_originals(self):
-        self._run_import()
+        self.importer.run()
         self.assert_files_in_lib_dir()
         self.assert_import_files_exist()
 
     def test_threaded_import_copy_arrives(self):
         config['import']['threaded'] = True
-        self._run_import()
+        self.importer.run()
         self.assert_files_in_lib_dir()
         self.assert_import_files_exist()
 
     def test_import_move(self):
         config['import']['move'] = True
-        self._run_import()
+        self.importer.run()
         self.assert_files_in_lib_dir()
         self.assert_import_files_not_exist()
 
     def test_import_with_move_prunes_directory_empty(self):
         config['import']['move'] = True
         self.assertExists(os.path.join(self.import_path, 'the_album'))
-        self._run_import()
+        self.importer.run()
         self.assertNotExists(os.path.join(self.import_path, 'the_album'))
 
     def test_import_with_move_prunes_with_extra_clutter(self):
@@ -134,37 +135,37 @@ class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
         f.close()
         config['clutter'] = ['*.log']
         config['import']['move'] = True
-        self._run_import()
+        self.importer.run()
         self.assertNotExists(os.path.join(self.import_path, 'the_album'))
 
     def test_threaded_import_move(self):
         config['import']['move'] = True
         config['import']['threaded'] = True
-        self._run_import()
+        self.importer.run()
         self.assert_files_in_lib_dir()
         self.assert_import_files_not_exist()
 
     def test_import_no_delete(self):
         config['import']['delete'] = False
-        self._run_import()
+        self.importer.run()
         self.assert_files_in_lib_dir()
         self.assert_import_files_exist()
 
     def test_import_with_delete(self):
         config['import']['delete'] = True
-        self._run_import()
+        self.importer.run()
         self.assert_files_in_lib_dir()
         self.assert_import_files_not_exist()
 
     def test_import_with_delete_prunes_directory_empty(self):
         config['import']['delete'] = True
         self.assertExists(os.path.join(self.import_path, 'the_album'))
-        self._run_import()
+        self.importer.run()
         self.assertNotExists(os.path.join(self.import_path, 'the_album'))
 
     def test_import_singleton(self):
         config['import']['singletons'] = True
-        self._run_import()
+        self.importer.run()
         self.assert_import_files_exist()
 
 
