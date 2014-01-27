@@ -86,7 +86,11 @@ class DateType(types.Type):
                              time.localtime(value or 0))
 
     def parse(self, string):
-        raise NotImplementedError()  # FIXME
+        # FIXME Real date parsing.
+        try:
+            return float(string)
+        except ValueError:
+            return 0.0
 
 
 class PathType(types.Type):
