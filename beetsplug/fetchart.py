@@ -212,7 +212,8 @@ def batch_fetch_art(lib, albums, force, maxwidth=None):
         if album.artpath and not force:
             message = 'has album art'
         else:
-            path = art_for_album(album, None, maxwidth)
+            lookuppath = None if force else [album.path]
+            path = art_for_album(album, lookuppath, maxwidth)
 
             if path:
                 album.set_art(path, False)
