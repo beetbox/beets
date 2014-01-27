@@ -27,13 +27,14 @@ class Type(object):
     information about how to store the value in the database, query,
     format, and parse a given field.
     """
-    def __init__(self, sql, query):
-        """Create a type. `sql` is the SQLite column type for the value.
-        `query` is the `Query` subclass to be used when querying the
-        field.
-        """
-        self.sql = sql
-        self.query = query
+
+    sql = None
+    """The SQLite column type for the value.
+    """
+
+    query = None
+    """The `Query` subclass to be used when querying the field.
+    """
 
     def format(self, value):
         """Given a value of this type, produce a Unicode string
@@ -55,8 +56,8 @@ class Type(object):
 class Integer(Type):
     """A basic integer type.
     """
-    def __init__(self, sql='INTEGER', query=query.NumericQuery):
-        super(Integer, self).__init__(sql, query)
+    sql = u'INTEGER'
+    query = query.NumericQuery
 
     def format(self, value):
         return unicode(value or 0)
@@ -73,7 +74,6 @@ class PaddedInt(Integer):
     padded with zeroes.
     """
     def __init__(self, digits):
-        super(PaddedInt, self).__init__()
         self.digits = digits
 
     def format(self, value):
@@ -85,7 +85,6 @@ class ScaledInt(Integer):
     constant and adds a suffix. Good for units with large magnitudes.
     """
     def __init__(self, unit, suffix=u''):
-        super(ScaledInt, self).__init__()
         self.unit = unit
         self.suffix = suffix
 
@@ -96,15 +95,14 @@ class ScaledInt(Integer):
 class Id(Integer):
     """An integer used as the row key for a SQLite table.
     """
-    def __init__(self):
-        super(Id, self).__init__('INTEGER PRIMARY KEY')
+    sql = u'INTEGER PRIMARY KEY'
 
 
 class Float(Type):
     """A basic floating-point type.
     """
-    def __init__(self, sql='REAL', query=query.NumericQuery):
-        super(Float, self).__init__(sql, query)
+    sql = u'REAL'
+    query = query.NumericQuery
 
     def format(self, value):
         return u'{0:.1f}'.format(value or 0.0)
@@ -119,8 +117,8 @@ class Float(Type):
 class String(Type):
     """A Unicode string type.
     """
-    def __init__(self, sql='TEXT', query=query.SubstringQuery):
-        super(String, self).__init__(sql, query)
+    sql = u'TEXT'
+    query = query.SubstringQuery
 
     def format(self, value):
         return unicode(value) if value else u''
@@ -132,8 +130,8 @@ class String(Type):
 class Boolean(Type):
     """A boolean type.
     """
-    def __init__(self, sql='INTEGER', query=query.BooleanQuery):
-        return super(Boolean, self).__init__(sql, query)
+    sql = u'INTEGER'
+    query = query.BooleanQuery
 
     def format(self, value):
         return unicode(bool(value))

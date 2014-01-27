@@ -78,8 +78,8 @@ class SingletonQuery(dbcore.Query):
 
 
 class DateType(types.Type):
-    def __init__(self):
-        super(DateType, self).__init__('REAL', dbcore.query.NumericQuery)
+    sql = u'REAL'
+    query = dbcore.query.NumericQuery
 
     def format(self, value):
         return time.strftime(beets.config['time_format'].get(unicode),
@@ -90,8 +90,8 @@ class DateType(types.Type):
 
 
 class PathType(types.Type):
-    def __init__(self):
-        super(PathType, self).__init__('BLOB', PathQuery)
+    sql = u'BLOB'
+    query = PathQuery
 
     def format(self, value):
         return util.displayable_path(value)
