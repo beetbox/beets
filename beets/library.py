@@ -74,16 +74,35 @@ class SingletonQuery(dbcore.Query):
 
 
 
+# Library-specific field types.
+
+
+class DateType(types.Type):
+    def __init__(self):
+        super(DateType, self).__init__('REAL', dbcore.query.NumericQuery)
+
+    def format(self, value):
+        return time.strftime(beets.config['time_format'].get(unicode),
+                             time.localtime(value or 0))
+
+    def parse(self, string):
+        raise NotImplementedError()  # FIXME
+
+
+class PathType(types.Type):
+    def __init__(self):
+        super(PathType, self).__init__('BLOB', PathQuery)
+
+    def format(self, value):
+        return util.displayable_path(value)
+
+    def parse(self, string):
+        return normpath(bytestring_path(string))
+
+
+
 # Model field lists.
 
-# Common types used in field definitions.
-DATE_TYPE = types.Type(
-    'REAL',
-    dbcore.query.NumericQuery,
-    lambda n: time.strftime(beets.config['time_format'].get(unicode),
-                            time.localtime(n or 0))
-)
-PATH_TYPE = types.Type('BLOB', PathQuery, util.displayable_path)
 
 # Fields in the "items" database table; all the metadata available for
 # items in the library. These are used directly in SQL; they are
@@ -94,21 +113,21 @@ PATH_TYPE = types.Type('BLOB', PathQuery, util.displayable_path)
 # - Is the field writable?
 # - Does the field reflect an attribute of a MediaFile?
 ITEM_FIELDS = [
-    ('id',       types.ID_TYPE,  False, False),
-    ('path',     PATH_TYPE,      False, False),
-    ('album_id', types.INT_TYPE, False, False),
+    ('id',       types.Id(),      False, False),
+    ('path',     PathType(),      False, False),
+    ('album_id', types.Integer(), False, False),
 
-    ('title',                types.STRING_TYPE,  True, True),
-    ('artist',               types.STRING_TYPE,  True, True),
-    ('artist_sort',          types.STRING_TYPE,  True, True),
-    ('artist_credit',        types.STRING_TYPE,  True, True),
-    ('album',                types.STRING_TYPE,  True, True),
-    ('albumartist',          types.STRING_TYPE,  True, True),
-    ('albumartist_sort',     types.STRING_TYPE,  True, True),
-    ('albumartist_credit',   types.STRING_TYPE,  True, True),
-    ('genre',                types.STRING_TYPE,  True, True),
-    ('composer',             types.STRING_TYPE,  True, True),
-    ('grouping',             types.STRING_TYPE,  True, True),
+    ('title',                types.String(),     True, True),
+    ('artist',               types.String(),     True, True),
+    ('artist_sort',          types.String(),     True, True),
+    ('artist_credit',        types.String(),     True, True),
+    ('album',                types.String(),     True, True),
+    ('albumartist',          types.String(),     True, True),
+    ('albumartist_sort',     types.String(),     True, True),
+    ('albumartist_credit',   types.String(),     True, True),
+    ('genre',                types.String(),     True, True),
+    ('composer',             types.String(),     True, True),
+    ('grouping',             types.String(),     True, True),
     ('year',                 types.PaddedInt(4), True, True),
     ('month',                types.PaddedInt(2), True, True),
     ('day',                  types.PaddedInt(2), True, True),
@@ -116,45 +135,45 @@ ITEM_FIELDS = [
     ('tracktotal',           types.PaddedInt(2), True, True),
     ('disc',                 types.PaddedInt(2), True, True),
     ('disctotal',            types.PaddedInt(2), True, True),
-    ('lyrics',               types.STRING_TYPE,  True, True),
-    ('comments',             types.STRING_TYPE,  True, True),
-    ('bpm',                  types.INT_TYPE,     True, True),
-    ('comp',                 types.BOOL_TYPE,    True, True),
-    ('mb_trackid',           types.STRING_TYPE,  True, True),
-    ('mb_albumid',           types.STRING_TYPE,  True, True),
-    ('mb_artistid',          types.STRING_TYPE,  True, True),
-    ('mb_albumartistid',     types.STRING_TYPE,  True, True),
-    ('albumtype',            types.STRING_TYPE,  True, True),
-    ('label',                types.STRING_TYPE,  True, True),
-    ('acoustid_fingerprint', types.STRING_TYPE,  True, True),
-    ('acoustid_id',          types.STRING_TYPE,  True, True),
-    ('mb_releasegroupid',    types.STRING_TYPE,  True, True),
-    ('asin',                 types.STRING_TYPE,  True, True),
-    ('catalognum',           types.STRING_TYPE,  True, True),
-    ('script',               types.STRING_TYPE,  True, True),
-    ('language',             types.STRING_TYPE,  True, True),
-    ('country',              types.STRING_TYPE,  True, True),
-    ('albumstatus',          types.STRING_TYPE,  True, True),
-    ('media',                types.STRING_TYPE,  True, True),
-    ('albumdisambig',        types.STRING_TYPE,  True, True),
-    ('disctitle',            types.STRING_TYPE,  True, True),
-    ('encoder',              types.STRING_TYPE,  True, True),
-    ('rg_track_gain',        types.FLOAT_TYPE,   True, True),
-    ('rg_track_peak',        types.FLOAT_TYPE,   True, True),
-    ('rg_album_gain',        types.FLOAT_TYPE,   True, True),
-    ('rg_album_peak',        types.FLOAT_TYPE,   True, True),
+    ('lyrics',               types.String(),     True, True),
+    ('comments',             types.String(),     True, True),
+    ('bpm',                  types.Integer(),    True, True),
+    ('comp',                 types.Boolean(),    True, True),
+    ('mb_trackid',           types.String(),     True, True),
+    ('mb_albumid',           types.String(),     True, True),
+    ('mb_artistid',          types.String(),     True, True),
+    ('mb_albumartistid',     types.String(),     True, True),
+    ('albumtype',            types.String(),     True, True),
+    ('label',                types.String(),     True, True),
+    ('acoustid_fingerprint', types.String(),     True, True),
+    ('acoustid_id',          types.String(),     True, True),
+    ('mb_releasegroupid',    types.String(),     True, True),
+    ('asin',                 types.String(),     True, True),
+    ('catalognum',           types.String(),     True, True),
+    ('script',               types.String(),     True, True),
+    ('language',             types.String(),     True, True),
+    ('country',              types.String(),     True, True),
+    ('albumstatus',          types.String(),     True, True),
+    ('media',                types.String(),     True, True),
+    ('albumdisambig',        types.String(),     True, True),
+    ('disctitle',            types.String(),     True, True),
+    ('encoder',              types.String(),     True, True),
+    ('rg_track_gain',        types.Float(),      True, True),
+    ('rg_track_peak',        types.Float(),      True, True),
+    ('rg_album_gain',        types.Float(),      True, True),
+    ('rg_album_peak',        types.Float(),      True, True),
     ('original_year',        types.PaddedInt(4), True, True),
     ('original_month',       types.PaddedInt(2), True, True),
     ('original_day',         types.PaddedInt(2), True, True),
 
-    ('length',      types.FLOAT_TYPE,               False, True),
+    ('length',      types.Float(),                  False, True),
     ('bitrate',     types.ScaledInt(1000, u'kbps'), False, True),
-    ('format',      types.STRING_TYPE,              False, True),
+    ('format',      types.String(),                 False, True),
     ('samplerate',  types.ScaledInt(1000, u'kHz'),  False, True),
-    ('bitdepth',    types.INT_TYPE,                 False, True),
-    ('channels',    types.INT_TYPE,                 False, True),
-    ('mtime',       DATE_TYPE,                      False, False),
-    ('added',       DATE_TYPE,                      False, False),
+    ('bitdepth',    types.Integer(),                False, True),
+    ('channels',    types.Integer(),                False, True),
+    ('mtime',       DateType(),                     False, False),
+    ('added',       DateType(),                     False, False),
 ]
 ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
 ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
@@ -164,36 +183,36 @@ ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 # The third entry in each tuple indicates whether the field reflects an
 # identically-named field in the items table.
 ALBUM_FIELDS = [
-    ('id',      types.ID_TYPE, False),
-    ('artpath', PATH_TYPE,     False),
-    ('added',   DATE_TYPE,     True),
+    ('id',      types.Id(), False),
+    ('artpath', PathType(), False),
+    ('added',   DateType(), True),
 
-    ('albumartist',        types.STRING_TYPE,  True),
-    ('albumartist_sort',   types.STRING_TYPE,  True),
-    ('albumartist_credit', types.STRING_TYPE,  True),
-    ('album',              types.STRING_TYPE,  True),
-    ('genre',              types.STRING_TYPE,  True),
+    ('albumartist',        types.String(),     True),
+    ('albumartist_sort',   types.String(),     True),
+    ('albumartist_credit', types.String(),     True),
+    ('album',              types.String(),     True),
+    ('genre',              types.String(),     True),
     ('year',               types.PaddedInt(4), True),
     ('month',              types.PaddedInt(2), True),
     ('day',                types.PaddedInt(2), True),
     ('tracktotal',         types.PaddedInt(2), True),
     ('disctotal',          types.PaddedInt(2), True),
-    ('comp',               types.BOOL_TYPE,    True),
-    ('mb_albumid',         types.STRING_TYPE,  True),
-    ('mb_albumartistid',   types.STRING_TYPE,  True),
-    ('albumtype',          types.STRING_TYPE,  True),
-    ('label',              types.STRING_TYPE,  True),
-    ('mb_releasegroupid',  types.STRING_TYPE,  True),
-    ('asin',               types.STRING_TYPE,  True),
-    ('catalognum',         types.STRING_TYPE,  True),
-    ('script',             types.STRING_TYPE,  True),
-    ('language',           types.STRING_TYPE,  True),
-    ('country',            types.STRING_TYPE,  True),
-    ('albumstatus',        types.STRING_TYPE,  True),
-    ('media',              types.STRING_TYPE,  True),
-    ('albumdisambig',      types.STRING_TYPE,  True),
-    ('rg_album_gain',      types.FLOAT_TYPE,   True),
-    ('rg_album_peak',      types.FLOAT_TYPE,   True),
+    ('comp',               types.Boolean(),    True),
+    ('mb_albumid',         types.String(),     True),
+    ('mb_albumartistid',   types.String(),     True),
+    ('albumtype',          types.String(),     True),
+    ('label',              types.String(),     True),
+    ('mb_releasegroupid',  types.String(),     True),
+    ('asin',               types.String(),     True),
+    ('catalognum',         types.String(),     True),
+    ('script',             types.String(),     True),
+    ('language',           types.String(),     True),
+    ('country',            types.String(),     True),
+    ('albumstatus',        types.String(),     True),
+    ('media',              types.String(),     True),
+    ('albumdisambig',      types.String(),     True),
+    ('rg_album_gain',      types.Float(),      True),
+    ('rg_album_peak',      types.Float(),      True),
     ('original_year',      types.PaddedInt(4), True),
     ('original_month',     types.PaddedInt(2), True),
     ('original_day',       types.PaddedInt(2), True),
