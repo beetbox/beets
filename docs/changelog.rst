@@ -39,6 +39,11 @@ Other little fixes:
 * Fix a potential crash when using image resizing with the
   :doc:`/plugins/fetchart` or :doc:`/plugins/embedart` without ImageMagick
   installed.
+* :doc:`/plugins/fetchart`: The ``beet fetchart`` command can now associate
+  local images with albums (unless ``--force`` is provided). Thanks to
+  brilnius.
+* :doc:`/plugins/fetchart`: Command output is now colorized. Thanks again to
+  brilnius.
 
 
 1.3.2 (December 22, 2013)

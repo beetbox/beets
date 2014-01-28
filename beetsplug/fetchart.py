@@ -212,19 +212,19 @@ def batch_fetch_art(lib, albums, force, maxwidth=None):
         if album.artpath and not force:
             message = 'has album art'
         else:
-            lookuppath = None if force else [album.path]
-            path = art_for_album(album, lookuppath, maxwidth)
+            # In ordinary invocations, look for images on the
+            # filesystem. When forcing, however, always go to the Web
+            # sources.
+            local_paths = None if force else [album.path]
 
+            path = art_for_album(album, local_paths, maxwidth)
             if path:
                 album.set_art(path, False)
                 album.store()
-                message = 'found album art'
-                if config['color']:
-                    message = ui.colorize('red', message)
+                message = ui.colorize('green', 'found album art')
             else:
-                message = 'no art found'
-                if config['color']:
-                    message = ui.colorize('turquoise', message)
+                message = ui.colorize('red', 'no art found')
+
         log.info(u'{0} - {1}: {2}'.format(album.albumartist, album.album,
                                           message))
 

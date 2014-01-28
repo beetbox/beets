@@ -32,8 +32,8 @@ been imported::
 
 By default, the command will only look for album art when the album doesn't
 already have it; the ``-f`` or ``--force`` switch makes it search for art
-regardless. If you specify a query, only matching albums will be processed;
-otherwise, the command processes every album in your library.
+in Web databases regardless. If you specify a query, only matching albums will
+be processed; otherwise, the command processes every album in your library.
 
 .. _image-resizing:
 
