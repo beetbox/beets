@@ -558,31 +558,6 @@ class ImportApplyTest(_common.TestCase):
         task = _call_stages(self.session, [self.i], self.info)
         self.assertEqual(task.old_paths, [self.srcpath])
 
-    def test_reimport_inside_file_moves_and_does_not_add_to_old_paths(self):
-        """Reimporting a file *inside* the library directory should
-        *move* the file.
-        """
-        # Add the item to the library while inside the library directory.
-        internal_srcpath = os.path.join(self.libdir, 'source.mp3')
-        shutil.move(self.srcpath, internal_srcpath)
-        temp_item = library.Item.from_path(internal_srcpath)
-        self.lib.add(temp_item)
-        self.lib._connection().commit()
-
-        self.i = library.Item.from_path(internal_srcpath)
-        self.i.comp = False
-
-        # Then, re-import the same file.
-        task = _call_stages(self.session, [self.i], self.info)
-
-        # Old file should be gone.
-        self.assertNotExists(internal_srcpath)
-        # New file should be present.
-        self.assertExists(os.path.join(self.libdir, 'one.mp3'))
-        # Also, the old file should not be in old_paths because it does
-        # not exist.
-        self.assertEqual(task.old_paths, [])
-
     def test_reimport_outside_file_copies(self):
         """Reimporting a file *outside* the library directory should
         *copy* the file (when copying is enabled).
