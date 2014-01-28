@@ -74,23 +74,23 @@ def _do_query(lib, query, album, also_items=True):
     return items, albums
 
 FLOAT_EPSILON = 0.01
-def _different(val1, val2):
-    """Says if the two values are considered different."""
+def _showdiff(field, oldval, newval):
+    """Print out a human-readable field difference line if `oldval` and
+    `newval` differ. Return a boolean indicating whether anything was printed
+    (i.e., if any change needs to be made).
+    """
     # Considering floats incomparable for perfect equality, introduce
     # an epsilon tolerance.
-    if (val1 == val2) or \
-            ( isinstance(val1, float) and isinstance(val2, float) and \
-            abs(val1 - val2) < FLOAT_EPSILON ):
+    if isinstance(oldval, float) and isinstance(newval, float) and \
+            abs(oldval - newval) < FLOAT_EPSILON:
         return False
 
-    return True
-
-
-def _showdiff(field, oldval, newval):
-    """Prints out a human-readable field difference line."""
-    if _different(newval, oldval):
+    if newval != oldval:
         oldval, newval = ui.colordiff(oldval, newval)
         print_(u'  %s: %s -> %s' % (field, oldval, newval))
+        return True
+
+    return False
 
 
 # fields: Shows a list of available fields for queries and format strings.
@@ -1134,24 +1134,17 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     items, albums = _do_query(lib, query, album, False)
     objs = albums if album else items
 
-    unchanged = []
-
-    # Preview change.
+    # Preview change and collect modified objects.
     print_('Modifying %i %ss.' % (len(objs), 'album' if album else 'item'))
+    changed = set()
     for obj in objs:
         # Identify the changed object.
         ui.print_obj(obj, lib)
 
-        changed = False
-
         # Show each change.
         for field, value in fsets.iteritems():
-            _showdiff(field, obj.get(field), value)
-            if _different(obj.get(field), value):
-                changed = True
-
-        if not changed:
-            unchanged.append(obj)
+            if _showdiff(field, obj.get(field), value):
+                changed.add(obj)
 
     # Confirm.
     if confirm:
@@ -1161,7 +1154,7 @@ def modify_items(lib, mods, query, write, move, album, confirm):
 
     # Apply changes to database.
     with lib.transaction():
-        for obj in objs:
+        for obj in changed:
             for field, value in fsets.iteritems():
                 obj[field] = value
 
@@ -1176,17 +1169,11 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     # Apply tags if requested.
     if write:
         if album:
-            for a in albums:
-                if a in unchanged:
-                    continue
-                for item in a.items():
-                    item.write()
-
+            changed_items = itertools.chain(*(a.items() for a in changed))
         else:
-            for item in items:
-                if item in unchanged:
-                    continue
-                item.write()
+            changed_items = changed
+        for item in changed_items:
+            item.write()
 
 modify_cmd = ui.Subcommand('modify',
     help='change metadata fields', aliases=('mod',))
