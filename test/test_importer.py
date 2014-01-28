@@ -23,6 +23,7 @@ from _common import unittest
 from beets import library
 from beets import importer
 from beets import mediafile
+from beets import autotag
 from beets.autotag import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch
 from beets import config
 
@@ -41,7 +42,7 @@ class ImportHelper(object):
             ('comp:true', os.path.join('compilations','$album', '$title')),
         ]
 
-    def _create_import_dir(self):
+    def _create_import_dir(self, count=3):
         """Creates a directory with media files to import.
         Sets ``self.import_path`` to the path of the directory. Also sets
         ``self.media_files`` to a list of all the paths for created media files.
@@ -58,23 +59,27 @@ class ImportHelper(object):
 
         resource_path = os.path.join(_common.RSRC, 'full.mp3')
 
-        metadata = {'artist': 'The Artist', 'album': 'The Album'}
+        metadata = {
+                     'artist': 'The Artist',
+                     'album':  'The Album',
+                     'mb_trackid': None,
+                     'mb_albumid': None,
+                   }
         self.media_files = []
-        for i in [1,2,3]:
+        for i in range(count):
             # Copy files
-            medium_path = os.path.join(album_path, 'track_%d.mp3' % i)
+            medium_path = os.path.join(album_path, 'track_%d.mp3' % (i+1))
             shutil.copy(resource_path, medium_path)
             medium = mediafile.MediaFile(medium_path)
 
             # Set metadata
-            metadata['track'] = i
-            metadata['title'] = TEST_TITLES[i-1]
+            metadata['track'] = i+1
+            metadata['title'] = TEST_TITLES[i]
             for attr in metadata: setattr(medium, attr, metadata[attr])
             medium.save()
             self.media_files.append(medium_path)
 
     def _setup_import_session(self):
-        # Run the UI "beet import" command!
         self.importer = importer.ImportSession(self.lib,
                                 logfile=None,
                                 paths=[self.import_path],
@@ -85,6 +90,9 @@ class ImportHelper(object):
         directory
         """
         self.assertExists(os.path.join(self.libdir, *segments))
+
+    def assert_lib_dir_empty(self):
+        self.assertEqual(len(os.listdir(self.libdir)), 0)
 
 
 class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
@@ -186,6 +194,143 @@ class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
         filenames = set(os.listdir(album_folder))
         destinations = set('%s.mp3' % title for title in TEST_TITLES)
         self.assertEqual(filenames, destinations)
+
+class ImportTest(_common.TestCase, ImportHelper):
+    def setUp(self):
+        super(ImportTest, self).setUp()
+        self._setup_library()
+        self._create_import_dir(1)
+        self._setup_import_session()
+
+        config['import']['delete'] = False
+        config['import']['threaded'] = False
+        config['import']['singletons'] = False
+        config['import']['move'] = False
+        config['import']['autotag'] = True
+
+        trackInfo = TrackInfo(
+            title     = u'Applied Title',
+            track_id  = u'trackid',
+            artist    = u'Applied Artist',
+            artist_id = u'artistid',
+            length    = 1
+        )
+        albumInfo = AlbumInfo(
+            artist    = u'Applied Artist',
+            album     = u'Applied Album',
+            tracks    = [trackInfo],
+            va        = False,
+            album_id  = u'albumid',
+            artist_id = u'artistid',
+            albumtype = u'soundtrack',
+        )
+
+        self._stub_mb_match_album(albumInfo)
+        self._stub_mb_match_track(trackInfo)
+
+    def _stub_mb_match_album(self, albumInfo):
+        def match_album(*_): yield albumInfo
+        autotag.mb.match_album = match_album
+
+    def _stub_mb_match_track(sefl, trackInfo):
+        def match_track(*_): yield trackInfo
+        autotag.mb.match_track = match_track
+
+
+    def test_apply_asis_adds_album(self):
+        def choose_asis(task): return importer.action.ASIS
+        self.importer.choose_match = choose_asis
+
+        self.assertEqual(self.lib.albums().get(), None)
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().album, 'The Album')
+
+    def test_apply_asis_adds_tracks(self):
+        def choose_asis(task): return importer.action.ASIS
+        self.importer.choose_match = choose_asis
+
+        self.assertEqual(self.lib.items().get(), None)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().title, TEST_TITLES[0])
+
+    def test_apply_asis_adds_album_path(self):
+        def choose_asis(task): return importer.action.ASIS
+        self.importer.choose_match = choose_asis
+
+        self.assert_lib_dir_empty()
+        self.importer.run()
+        self.assert_file_in_lib( 'The Artist', 'The Album', TEST_TITLES[0] + '.mp3')
+
+    def test_apply_candidate_adds_album(self):
+        def choose_asis(task): return task.candidates[0]
+        self.importer.choose_match = choose_asis
+
+        self.assertEqual(self.lib.albums().get(), None)
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().album, 'Applied Album')
+
+    def test_apply_candidate_adds_tracks(self):
+        def choose_asis(task): return task.candidates[0]
+        self.importer.choose_match = choose_asis
+
+        self.assertEqual(self.lib.items().get(), None)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().title, 'Applied Title')
+
+    def test_apply_candidate_adds_album_path(self):
+        def choose_asis(task): return task.candidates[0]
+        self.importer.choose_match = choose_asis
+
+        self.assert_lib_dir_empty()
+        self.importer.run()
+        self.assert_file_in_lib(
+                'Applied Artist', 'Applied Album', 'Applied Title.mp3')
+
+    def test_apply_with_move_deletes_import(self):
+        config['import']['move'] = True
+        def choose_asis(task): return task.candidates[0]
+        self.importer.choose_match = choose_asis
+
+        import_file = os.path.join(self.import_path, 'the_album', 'track_1.mp3')
+        self.assertExists(import_file)
+        self.importer.run()
+        self.assertNotExists(import_file)
+
+    def test_apply_with_delete_deletes_import(self):
+        config['import']['delete'] = True
+        def choose_asis(task): return task.candidates[0]
+        self.importer.choose_match = choose_asis
+
+        import_file = os.path.join(self.import_path, 'the_album', 'track_1.mp3')
+        self.assertExists(import_file)
+        self.importer.run()
+        self.assertNotExists(import_file)
+
+    def test_apply_tracks_adds_singleton(self):
+        def choose_as_tracks(task): return importer.action.TRACKS
+        self.importer.choose_match = choose_as_tracks
+        def choose_first_item(task):
+            return task.candidates[0]
+        self.importer.choose_item = choose_first_item
+
+        self.assertEqual(self.lib.items().get(), None)
+        self.assertEqual(self.lib.albums().get(), None)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().title, 'Applied Title')
+        self.assertEqual(self.lib.albums().get(), None)
+
+    def test_apply_tracks_adds_singleton_path(self):
+        def choose_as_tracks(task): return importer.action.TRACKS
+        self.importer.choose_match = choose_as_tracks
+        def choose_first_item(task):
+            return task.candidates[0]
+        self.importer.choose_item = choose_first_item
+
+        self.assert_lib_dir_empty()
+        self.importer.run()
+        self.assert_file_in_lib('singletons', 'Applied Title.mp3')
+
+
 
 # Utilities for invoking the apply_choices, manipulate_files, and finalize
 # coroutines.
