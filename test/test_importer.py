@@ -130,6 +130,9 @@ class ImportHelper(object):
     def _choose_asis(self, task):
         return importer.action.ASIS
 
+    def _choose_as_track(self, task):
+        return importer.action.TRACKS
+
     def _choose_candidate(self, task):
         return task.candidates[0]
 
@@ -308,11 +311,8 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.assertNotExists(import_file)
 
     def test_apply_tracks_adds_singleton(self):
-        def choose_as_tracks(task): return importer.action.TRACKS
-        self.importer.choose_match = choose_as_tracks
-        def choose_first_item(task):
-            return task.candidates[0]
-        self.importer.choose_item = choose_first_item
+        self.importer.choose_match = self._choose_as_track
+        self.importer.choose_item = self._choose_candidate
 
         self.assertEqual(self.lib.items().get(), None)
         self.assertEqual(self.lib.albums().get(), None)
@@ -321,11 +321,8 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.assertEqual(self.lib.albums().get(), None)
 
     def test_apply_tracks_adds_singleton_path(self):
-        def choose_as_tracks(task): return importer.action.TRACKS
-        self.importer.choose_match = choose_as_tracks
-        def choose_first_item(task):
-            return task.candidates[0]
-        self.importer.choose_item = choose_first_item
+        self.importer.choose_match = self._choose_as_track
+        self.importer.choose_item = self._choose_candidate
 
         self.assert_lib_dir_empty()
         self.importer.run()
