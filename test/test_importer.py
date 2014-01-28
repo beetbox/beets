@@ -153,13 +153,20 @@ class TestImportSession(importer.ImportSession):
 
     def choose_match(self, task):
         if self.choice:
-            return self.choice
+            if hasattr(self.choice, 'pop'):
+                return self.choice.pop(0)
+            else:
+                return self.choice
         else:
             return task.candidates[0]
 
     def choose_item(self, task):
         if self.item_choice:
             return self.item_choice
+            if hasattr(self.item_choice, 'pop'):
+                return self.item_choice.pop(0)
+            else:
+                return self.choice
         else:
             return task.candidates[0]
 
@@ -510,6 +517,59 @@ class ImportExistingTest(_common.TestCase, ImportHelper):
         config['import']['move'] = True
         self.importer.run()
         self.assertNotExists(self.import_media[0].path)
+
+class ImportFlatAlbumTest(_common.TestCase, ImportHelper):
+    def setUp(self):
+        super(ImportFlatAlbumTest, self).setUp()
+        self._setup_library()
+        self._create_import_dir(3)
+
+        autotag.mb.match_album = self._match_album
+        autotag.mb.match_track = self._match_track
+
+        self._setup_import_session(copy=True)
+
+        self.importer.choice = [
+                importer.action.ALBUMS,
+                importer.action.ASIS,
+                importer.action.ASIS]
+
+    def test_add_album_for_different_artist_and_different_album(self):
+        self.import_media[0].artist = "Artist B"
+        self.import_media[0].album  = "Album B"
+        self.import_media[0].save()
+
+        self.importer.run()
+        albums = set([album.album for album in self.lib.albums()])
+        self.assertEqual(albums, set(['Album B', 'Tag Album']))
+
+    def test_add_album_for_different_artist_and_same_albumartist(self):
+        self.import_media[0].artist = "Artist B"
+        self.import_media[0].albumartist = "Album Artist"
+        self.import_media[0].save()
+        self.import_media[1].artist = "Artist C"
+        self.import_media[1].albumartist = "Album Artist"
+        self.import_media[1].save()
+
+        self.importer.run()
+        artists = set([album.albumartist for album in self.lib.albums()])
+        self.assertEqual(artists, set(['Album Artist', 'Tag Artist']))
+
+    def test_add_album_for_same_artist_and_different_album(self):
+        self.import_media[0].album  = "Album B"
+        self.import_media[0].save()
+
+        self.importer.run()
+        albums = set([album.album for album in self.lib.albums()])
+        self.assertEqual(albums, set(['Album B', 'Tag Album']))
+
+    def test_add_album_for_same_album_and_different_artist(self):
+        self.import_media[0].artist  = "Artist B"
+        self.import_media[0].save()
+
+        self.importer.run()
+        artists = set([album.albumartist for album in self.lib.albums()])
+        self.assertEqual(artists, set(['Artist B', 'Tag Artist']))
 
 class InferAlbumDataTest(_common.TestCase):
     def setUp(self):

@@ -20,6 +20,7 @@ from __future__ import print_function
 import os
 import logging
 import pickle
+import itertools
 from collections import defaultdict
 
 from beets import autotag
@@ -35,7 +36,7 @@ from beets import mediafile
 
 action = enum(
     'SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'APPLY', 'MANUAL_ID',
-    name='action'
+    'ALBUMS', name='action'
 )
 
 QUEUE_SIZE = 128
@@ -423,7 +424,7 @@ class ImportTask(object):
         # Not part of the task structure:
         assert choice not in (action.MANUAL, action.MANUAL_ID)
         assert choice != action.APPLY  # Only used internally.
-        if choice in (action.SKIP, action.ASIS, action.TRACKS):
+        if choice in (action.SKIP, action.ASIS, action.TRACKS, action.ALBUMS):
             self.choice_flag = choice
             self.match = None
         else:
@@ -688,6 +689,30 @@ def user_query(session):
             ipl.run_sequential()
             task = pipeline.multiple(item_tasks)
             continue
+
+        # As albums: group items by albums and create task for each album
+        if choice is action.ALBUMS:
+            album_tasks = []
+            def group(item):
+                return (item.albumartist or item.artist, item.album)
+            def emitter():
+                for _, items in itertools.groupby(task.items, group):
+                    yield ImportTask(items=list(items))
+                yield ImportTask.progress_sentinel(task.toppath, task.paths)
+            def collector():
+                while True:
+                    album_task = yield
+                    album_tasks.append(album_task)
+            ipl = pipeline.Pipeline([
+                emitter(),
+                initial_lookup(session),
+                user_query(session),
+                collector()
+            ])
+            ipl.run_sequential()
+            task = pipeline.multiple(album_tasks)
+            continue
+
 
         # Check for duplicates if we have a match (or ASIS).
         if task.choice_flag in (action.ASIS, action.APPLY):

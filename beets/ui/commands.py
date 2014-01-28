@@ -472,7 +472,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                    .format(itemcount))
             print_('For help, see: '
                    'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
-            opts = ('Use as-is', 'as Tracks', 'Skip', 'Enter search',
+            opts = ('Use as-is', 'as Tracks', 'as albuMs', 'Skip', 'Enter search',
                     'enter Id', 'aBort')
         sel = ui.input_options(opts)
         if sel == 'u':
@@ -488,6 +488,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             raise importer.ImportAbort()
         elif sel == 'i':
             return importer.action.MANUAL_ID
+        elif sel == 'm':
+            return importer.action.ALBUMS
         else:
             assert False
 
@@ -538,8 +540,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 opts = ('Skip', 'Use as-is', 'Enter search', 'enter Id',
                         'aBort')
             else:
-                opts = ('Skip', 'Use as-is', 'as Tracks', 'Enter search',
-                        'enter Id', 'aBort')
+                opts = ('Skip', 'Use as-is', 'as Tracks', 'as albuMs',
+                        'Enter search', 'enter Id', 'aBort')
             sel = ui.input_options(opts, numrange=(1, len(candidates)))
             if sel == 's':
                 return importer.action.SKIP
@@ -554,6 +556,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 raise importer.ImportAbort()
             elif sel == 'i':
                 return importer.action.MANUAL_ID
+            elif sel == 'm':
+                return importer.action.ALBUMS
             else:  # Numerical selection.
                 match = candidates[sel - 1]
                 if sel != 1:
@@ -577,8 +581,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
                     'Enter search', 'enter Id', 'aBort')
         else:
-            opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
-                    'as Tracks', 'Enter search', 'enter Id', 'aBort')
+            opts = ('Apply', 'more Candidates', 'Skip', 'Use as-is',
+                    'as Tracks', 'as albuMs', 'Enter search', 'enter Id', 'aBort')
         default = config['import']['default_action'].as_choice({
             'apply': 'a',
             'skip': 's',
@@ -591,7 +595,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         if sel == 'a':
             return match
         elif sel == 'm':
-            pass
+            return importer.action.ALBUMS
         elif sel == 's':
             return importer.action.SKIP
         elif sel == 'u':
@@ -651,7 +655,7 @@ class TerminalImportSession(importer.ImportSession):
 
             # Choose which tags to use.
             if choice in (importer.action.SKIP, importer.action.ASIS,
-                        importer.action.TRACKS):
+                        importer.action.TRACKS, importer.action.ALBUMS):
                 # Pass selection to main control flow.
                 return choice
             elif choice is importer.action.MANUAL:
