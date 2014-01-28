@@ -107,11 +107,12 @@ def _infer_album_fields(task):
 
     if task.choice_flag == action.ASIS:
         # Taking metadata "as-is". Guess whether this album is VA.
-        plur_artist, freq = util.plurality([i.artist for i in task.items])
+        plur_albumartist, freq = util.plurality(
+                [i.albumartist or i.artist for i in task.items])
         if freq == len(task.items) or (freq > 1 and
                 float(freq) / len(task.items) >= SINGLE_ARTIST_THRESH):
             # Single-artist album.
-            changes['albumartist'] = plur_artist
+            changes['albumartist'] = plur_albumartist
             changes['comp'] = False
         else:
             # VA.
