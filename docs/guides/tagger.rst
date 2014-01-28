@@ -152,7 +152,9 @@ When beets needs your input about a match, it says something like this::
     * Scenic World (Second Version) -> Scenic World
     [A]pply, More candidates, Skip, Use as-is, as Tracks, Enter search, or aBort?
 
-When beets asks you this question, it wants you to enter one of the capital letters: A, M, S, U, T, E, or B. That is, you can choose one of the following:
+When beets asks you this question, it wants you to enter one of the capital
+letters: A, M, S, U, T, L, E, or B. That is, you can choose one of the
+following:
 
 * *A*: Apply the suggested changes shown and move on.
 
@@ -168,6 +170,11 @@ When beets asks you this question, it wants you to enter one of the capital lett
   if the tracks don't form a real release---you just have one or more loner
   tracks that aren't a full album. This will temporarily flip the tagger into
   *singleton* mode, which attempts to match each track individually.
+
+* *L*: Group tracks in this directory by *album artist* and *album* and import
+  groups as albums. If the album artist for a track is not set then the artist
+  is used to group that track. For each group importing proceeds as for
+  directories. This is helpful if a directory contains multiple albums.
 
 * *E*: Enter an artist and album to use as a search in the database. Use this
   option if beets hasn't found any good options because the album is mistagged
