@@ -74,15 +74,21 @@ def _do_query(lib, query, album, also_items=True):
     return items, albums
 
 FLOAT_EPSILON = 0.01
-def _showdiff(field, oldval, newval):
-    """Prints out a human-readable field difference line."""
+def _different(val1, val2):
+    """Says if the two values are considered different."""
     # Considering floats incomparable for perfect equality, introduce
     # an epsilon tolerance.
-    if isinstance(oldval, float) and isinstance(newval, float) and \
-            abs(oldval - newval) < FLOAT_EPSILON:
-        return
+    if (val1 == val2) or \
+            ( isinstance(val1, float) and isinstance(val2, float) and \
+            abs(val1 - val2) < FLOAT_EPSILON ):
+        return False
 
-    if newval != oldval:
+    return True
+
+
+def _showdiff(field, oldval, newval):
+    """Prints out a human-readable field difference line."""
+    if _different(newval, oldval):
         oldval, newval = ui.colordiff(oldval, newval)
         print_(u'  %s: %s -> %s' % (field, oldval, newval))
 
@@ -1128,15 +1134,24 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     items, albums = _do_query(lib, query, album, False)
     objs = albums if album else items
 
+    unchanged = []
+
     # Preview change.
     print_('Modifying %i %ss.' % (len(objs), 'album' if album else 'item'))
     for obj in objs:
         # Identify the changed object.
         ui.print_obj(obj, lib)
 
+        changed = False
+
         # Show each change.
         for field, value in fsets.iteritems():
             _showdiff(field, obj.get(field), value)
+            if _different(obj.get(field), value):
+                changed = True
+
+        if not changed:
+            unchanged.append(obj)
 
     # Confirm.
     if confirm:
@@ -1161,9 +1176,17 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     # Apply tags if requested.
     if write:
         if album:
-            items = itertools.chain(*(a.items() for a in albums))
-        for item in items:
-            item.write()
+            for a in albums:
+                if a in unchanged:
+                    continue
+                for item in a.items():
+                    item.write()
+
+        else:
+            for item in items:
+                if item in unchanged:
+                    continue
+                item.write()
 
 modify_cmd = ui.Subcommand('modify',
     help='change metadata fields', aliases=('mod',))
