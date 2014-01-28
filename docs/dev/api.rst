@@ -44,7 +44,7 @@ to interact directly with the underlying SQLite database, you must use a
         items = lib.items(query)
         lib.add_album(list(items))
 
-.. currentmodule:: beets.dbcore
+.. currentmodule:: beets.dbcore.db
 
 .. autoclass:: Transaction
     :members:
