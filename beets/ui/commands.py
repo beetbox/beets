@@ -75,6 +75,9 @@ def _do_query(lib, query, album, also_items=True):
 
 FLOAT_EPSILON = 0.01
 def _different(val1, val2):
+    """Says if the two values are considered different."""
+    # Considering floats incomparable for perfect equality, introduce
+    # an epsilon tolerance.
     if (val1 == val2) or \
             ( isinstance(val1, float) and isinstance(val2, float) and \
             abs(val1 - val2) < FLOAT_EPSILON ):
@@ -85,13 +88,7 @@ def _different(val1, val2):
 
 def _showdiff(field, oldval, newval):
     """Prints out a human-readable field difference line."""
-    # Considering floats incomparable for perfect equality, introduce
-    # an epsilon tolerance.
-    if isinstance(oldval, float) and isinstance(newval, float) and \
-            abs(oldval - newval) < FLOAT_EPSILON:
-        return
-
-    if newval != oldval:
+    if _different(newval, oldval):
         oldval, newval = ui.colordiff(oldval, newval)
         print_(u'  %s: %s -> %s' % (field, oldval, newval))
 
