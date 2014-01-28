@@ -94,6 +94,7 @@ class ImportHelper(object):
         config['import']['singletons'] = singletons
         config['import']['move'] = move
         config['import']['autotag'] = autotag
+        config['import']['resume'] = False
 
         self.importer = TestImportSession(self.lib,
                                 logfile=None,
@@ -485,6 +486,32 @@ class ImportExistingTest(_common.TestCase, ImportHelper):
         self.assert_file_not_in_lib('Applied Artist', 'Applied Album', 'New Title.mp3')
         self.assert_file_in_lib(old_path)
 
+    def test_outside_file_is_copied(self):
+        config['import']['copy'] = False
+        self.setup_importer.run()
+        self.assertEqual(self.lib.items().get().path, self.import_media[0].path)
+
+        config['import']['copy'] = True
+        self._setup_import_session()
+        self.importer.run()
+        new_path = os.path.join(
+                'Applied Artist', 'Applied Album', 'Applied Title 1.mp3')
+
+        self.assert_file_in_lib(new_path)
+        self.assertEqual(self.lib.items().get().path,
+                os.path.join(self.libdir,new_path))
+
+    def test_outside_file_is_moved(self):
+        config['import']['copy'] = False
+        self.setup_importer.run()
+        self.assertEqual(self.lib.items().get().path, self.import_media[0].path)
+
+        self._setup_import_session()
+        config['import']['move'] = True
+        self.importer.run()
+        self.assertNotExists(self.import_media[0].path)
+
+
 # Utilities for invoking the apply_choices, manipulate_files, and finalize
 # coroutines.
 def _call_stages(session, items, choice_or_info,
@@ -557,36 +584,6 @@ class ImportApplyTest(_common.TestCase):
     def test_apply_populates_old_paths(self):
         task = _call_stages(self.session, [self.i], self.info)
         self.assertEqual(task.old_paths, [self.srcpath])
-
-    def test_reimport_outside_file_copies(self):
-        """Reimporting a file *outside* the library directory should
-        *copy* the file (when copying is enabled).
-        """
-        # First, add the item to the library.
-        temp_item = library.Item.from_path(self.srcpath)
-        self.lib.add(temp_item)
-        self.lib._connection().commit()
-
-        # Then, re-import the same file.
-        task = _call_stages(self.session, [self.i], self.info)
-
-        # Old file should still exist.
-        self.assertExists(self.srcpath)
-        # New file should also be present.
-        self.assertExists(os.path.join(self.libdir, 'one.mp3'))
-        # The old (copy-source) file should be marked for possible
-        # deletion.
-        self.assertEqual(task.old_paths, [self.srcpath])
-
-    def test_manipulate_files_with_null_move(self):
-        """It should be possible to "move" a file even when the file is
-        already at the destination.
-        """
-        self.i.move()  # Already at destination.
-        config['import']['move'] = True
-        _call_stages(self.session, [self.i], self.info, toppath=self.srcdir,
-                     stages=[importer.manipulate_files])
-        self.assertExists(self.i.path)
 
 class InferAlbumDataTest(_common.TestCase):
     def setUp(self):
