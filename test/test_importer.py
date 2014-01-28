@@ -445,28 +445,6 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
             albumtype = 'soundtrack',
         )
 
-    def test_apply_asis_uses_album_path(self):
-        _call_stages(self.session, [self.i], importer.action.ASIS)
-        self.assert_file_in_lib( 'The Artist', 'The Album', 'Song.mp3')
-
-    def test_apply_match_uses_album_path(self):
-        _call_stages(self.session, [self.i], self.info)
-        self.assert_file_in_lib(
-                'Applied Artist', 'Applied Album', 'Applied Title.mp3')
-
-    def test_apply_tracks_uses_singleton_path(self):
-        apply_coro = importer.apply_choices(self.session)
-        apply_coro.next()
-        manip_coro = importer.manipulate_files(self.session)
-        manip_coro.next()
-
-        task = importer.ImportTask.item_task(self.i)
-        task.set_choice(TrackMatch(0, self.info.tracks[0]))
-        apply_coro.send(task)
-        manip_coro.send(task)
-
-        self.assert_file_in_lib('singletons', 'Applied Title.mp3')
-
     def test_apply_sentinel(self):
         coro = importer.apply_choices(self.session)
         coro.next()
@@ -524,13 +502,6 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
         # deletion.
         self.assertEqual(task.old_paths, [self.srcpath])
 
-    def test_apply_with_move(self):
-        config['import']['move'] = True
-        _call_stages(self.session, [self.i], self.info)
-        self.assert_file_in_lib(
-                'Applied Artist', 'Applied Album', 'Applied Title.mp3')
-        self.assertNotExists(self.srcpath)
-
     def test_manipulate_files_with_null_move(self):
         """It should be possible to "move" a file even when the file is
         already at the destination.
@@ -540,50 +511,6 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
         _call_stages(self.session, [self.i], self.info, toppath=self.srcdir,
                      stages=[importer.manipulate_files])
         self.assert_file_in_lib('singletons', 'Song.mp3')
-
-class AsIsApplyTest(_common.TestCase):
-    def setUp(self):
-        super(AsIsApplyTest, self).setUp()
-
-        self.dbpath = os.path.join(self.temp_dir, 'templib.blb')
-        self.lib = library.Library(self.dbpath)
-        self.session = _common.import_session(self.lib)
-
-        # Make an "album" that has a homogenous artist. (Modified by
-        # individual tests.)
-        i1 = _common.item()
-        i2 = _common.item()
-        i3 = _common.item()
-        i1.title = 'first item'
-        i2.title = 'second item'
-        i3.title = 'third item'
-        i1.comp = i2.comp = i3.comp = False
-        i1.albumartist = i2.albumartist = i3.albumartist = ''
-        self.items = [i1, i2, i3]
-
-    def _apply_result(self):
-        """Run the "apply" coroutines and get the resulting Album."""
-        _call_stages(self.session, self.items, importer.action.ASIS,
-                     stages=[importer.apply_choices])
-        return self.lib.albums()[0]
-
-    def test_asis_homogenous_va_not_set(self):
-        alb = self._apply_result()
-        self.assertFalse(alb.comp)
-        self.assertEqual(alb.albumartist, self.items[2].artist)
-
-    def test_asis_heterogenous_va_set(self):
-        self.items[0].artist = 'another artist'
-        self.items[1].artist = 'some other artist'
-        alb = self._apply_result()
-        self.assertTrue(alb.comp)
-        self.assertEqual(alb.albumartist, 'Various Artists')
-
-    def test_asis_majority_artist_va_not_set(self):
-        self.items[0].artist = 'another artist'
-        alb = self._apply_result()
-        self.assertFalse(alb.comp)
-        self.assertEqual(alb.albumartist, self.items[2].artist)
 
 class ApplyExistingItemsTest(_common.TestCase):
     def setUp(self):
