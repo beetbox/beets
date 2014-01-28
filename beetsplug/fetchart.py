@@ -221,13 +221,9 @@ def batch_fetch_art(lib, albums, force, maxwidth=None):
             if path:
                 album.set_art(path, False)
                 album.store()
-                message = 'found album art'
-                if config['color']:
-                    message = ui.colorize('red', message)
+                message = ui.colorize('green', 'found album art')
             else:
-                message = 'no art found'
-                if config['color']:
-                    message = ui.colorize('turquoise', message)
+                message = ui.colorize('red', 'no art found')
 
         log.info(u'{0} - {1}: {2}'.format(album.albumartist, album.album,
                                           message))
