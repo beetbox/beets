@@ -12,13 +12,13 @@ install:
     - travis_retry pip install .
     - travis_retry pip install pylast flask
     # unittest backport on Python < 2.7
-    - "[[ $TRAVIS_PYTHON_VERSION == '2.6' ]] && pip install unittest2"
+    - "[[ $TRAVIS_PYTHON_VERSION == '2.6' ]] && pip install unittest2 || true"
 
 script: nosetests --with-coverage --cover-package=beets
 
 # coveralls.io reporting, using https://github.com/coagulant/coveralls-python
 # Only report coverage for one version.
 before_script:
-    - "[[ $TRAVIS_PYTHON_VERSION == '2.7' ]] && pip install coveralls"
+    - "[[ $TRAVIS_PYTHON_VERSION == '2.7' ]] && pip install coveralls || true"
 after_success:
-    - "[[ $TRAVIS_PYTHON_VERSION == '2.7' ]] && coveralls"
+    - "[[ $TRAVIS_PYTHON_VERSION == '2.7' ]] && coveralls || true"
