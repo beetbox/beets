@@ -46,6 +46,9 @@ Other little fixes:
   brilnius.
 * The :ref:`modify-cmd` command avoids writing files and committing to the
   database when nothing has changed. Thanks once more to brilnius.
+* The importer now uses the album artist field when guessing existing
+  metadata for albums (rather than just the track artist field). Thanks to
+  geigerzaehler.
 
 
 1.3.2 (December 22, 2013)
