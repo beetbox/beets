@@ -369,7 +369,7 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
             mediafile.albumartist = None
             mediafile.save()
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().albumartist, 'Other Artists')
+        self.assertEqual(self.lib.albums().get().albumartist, 'Other Artist')
 
 
 
