@@ -331,6 +331,46 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.importer.run()
         self.assert_file_in_lib('singletons', 'Applied Title 1.mp3')
 
+class ImportCompilationTest(_common.TestCase, ImportHelper):
+    def setUp(self):
+        super(ImportCompilationTest, self).setUp()
+        self._setup_library()
+        self._create_import_dir(3)
+        self._setup_import_session()
+
+        autotag.mb.match_album = self._match_album
+        autotag.mb.match_track = self._match_track
+
+    def test_asis_homogenous_sets_albumartist(self):
+        self.importer.choose_match = self._choose_asis
+        for mediafile in self.import_media:
+            mediafile.albumartist = None
+            mediafile.save()
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().albumartist, 'Tag Artist')
+
+    def test_asis_heterogenous_sets_various_albumartist(self):
+        self.importer.choose_match = self._choose_asis
+
+        self.import_media[0].artist = 'Other Artist'
+        self.import_media[1].artist = 'Another Artist'
+        for mediafile in self.import_media:
+            mediafile.albumartist = None
+            mediafile.save()
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().albumartist, 'Various Artists')
+
+    def test_asis_sets_majority_albumartist(self):
+        self.importer.choose_match = self._choose_asis
+
+        self.import_media[0].artist = 'Other Artist'
+        self.import_media[1].artist = 'Other Artist'
+        for mediafile in self.import_media:
+            mediafile.albumartist = None
+            mediafile.save()
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().albumartist, 'Other Artists')
+
 
 
 # Utilities for invoking the apply_choices, manipulate_files, and finalize
