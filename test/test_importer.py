@@ -44,24 +44,27 @@ class ImportHelper(object):
 
     def _create_import_dir(self, count=3):
         """Creates a directory with media files to import.
-        Sets ``self.import_path`` to the path of the directory. Also sets
-        ``self.media_files`` to a list of all the paths for created media files.
+        Sets ``self.import_dir`` to the path of the directory. Also sets
+        ``self.import_media`` to a list :class:`MediaFile` for all the files in
+        the directory.
 
         The directory has following layout
           the_album/
             track_1.mp3
             track_2.mp3
             track_3.mp3
+
+        :param count:  Number of files to create
         """
-        self.import_path = os.path.join(self.temp_dir, 'testsrcdir')
-        album_path = os.path.join(self.import_path, 'the_album')
+        self.import_dir = os.path.join(self.temp_dir, 'testsrcdir')
+        album_path = os.path.join(self.import_dir, 'the_album')
         os.makedirs(album_path)
 
         resource_path = os.path.join(_common.RSRC, 'full.mp3')
 
         metadata = {
-                     'artist': 'The Artist',
-                     'album':  'The Album',
+                     'artist': 'Tag Artist',
+                     'album':  'Tag Album',
                      'mb_trackid': None,
                      'mb_albumid': None,
                    }
@@ -74,15 +77,16 @@ class ImportHelper(object):
 
             # Set metadata
             metadata['track'] = i+1
-            metadata['title'] = TEST_TITLES[i]
+            metadata['title'] = 'Tag Title %d' % (i+1)
             for attr in metadata: setattr(medium, attr, metadata[attr])
             medium.save()
-            self.media_files.append(medium_path)
+            self.media_files.append(medium)
+        self.import_media = self.media_files
 
     def _setup_import_session(self):
         self.importer = importer.ImportSession(self.lib,
                                 logfile=None,
-                                paths=[self.import_path],
+                                paths=[self.import_dir],
                                 query=None)
 
     def assert_file_in_lib(self, *segments):
@@ -100,7 +104,7 @@ class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
         super(ImportNonAutotaggedTest, self).setUp()
 
         self._setup_library()
-        self._create_import_dir()
+        self._create_import_dir(2)
         self._setup_import_session()
 
         config['import']['delete'] = False
@@ -114,86 +118,84 @@ class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
         albums = self.lib.albums()
         self.assertEqual(len(albums), 1)
         self.assertEqual(albums[0].albumartist, 'The Album Artist')
+        self.assertEqual(albums[0].albumartist, 'Tag Artist')
 
-    def test_import_copy_arrives_but_leaves_originals(self):
+    def test_import_copy_arrives(self):
         self.importer.run()
-        self.assert_files_in_lib_dir()
-        self.assert_import_files_exist()
+        for mediafile in self.import_media:
+            self.assert_file_in_lib(
+                    'Tag Artist', 'Tag Album', '%s.mp3' % mediafile.title)
 
     def test_threaded_import_copy_arrives(self):
         config['import']['threaded'] = True
-        self.importer.run()
-        self.assert_files_in_lib_dir()
-        self.assert_import_files_exist()
 
-    def test_import_move(self):
-        config['import']['move'] = True
         self.importer.run()
-        self.assert_files_in_lib_dir()
-        self.assert_import_files_not_exist()
+        for mediafile in self.import_media:
+            self.assert_file_in_lib(
+                    'Tag Artist', 'Tag Album', '%s.mp3' % mediafile.title)
+
+    def test_import_with_move_deletes_import_files(self):
+        config['import']['move'] = True
+
+        for mediafile in self.import_media:
+            self.assertExists(mediafile.path)
+        self.importer.run()
+        for mediafile in self.import_media:
+            self.assertNotExists(mediafile.path)
 
     def test_import_with_move_prunes_directory_empty(self):
         config['import']['move'] = True
-        self.assertExists(os.path.join(self.import_path, 'the_album'))
+
+        self.assertExists(os.path.join(self.import_dir, 'the_album'))
         self.importer.run()
-        self.assertNotExists(os.path.join(self.import_path, 'the_album'))
+        self.assertNotExists(os.path.join(self.import_dir, 'the_album'))
 
     def test_import_with_move_prunes_with_extra_clutter(self):
-        f = open(os.path.join(self.import_path, 'the_album', 'alog.log'), 'w')
+        f = open(os.path.join(self.import_dir, 'the_album', 'alog.log'), 'w')
         f.close()
         config['clutter'] = ['*.log']
         config['import']['move'] = True
-        self.importer.run()
-        self.assertNotExists(os.path.join(self.import_path, 'the_album'))
 
-    def test_threaded_import_move(self):
+        self.assertExists(os.path.join(self.import_dir, 'the_album'))
+        self.importer.run()
+        self.assertNotExists(os.path.join(self.import_dir, 'the_album'))
+
+    def test_threaded_import_move_arrives(self):
         config['import']['move'] = True
         config['import']['threaded'] = True
-        self.importer.run()
-        self.assert_files_in_lib_dir()
-        self.assert_import_files_not_exist()
 
-    def test_import_no_delete(self):
+        self.importer.run()
+        for mediafile in self.import_media:
+            self.assert_file_in_lib(
+                    'Tag Artist', 'Tag Album', '%s.mp3' % mediafile.title)
+
+    def test_threaded_import_move_deletes_import(self):
+        config['import']['move'] = True
+        config['import']['threaded'] = True
+
+        self.importer.run()
+        for mediafile in self.import_media:
+            self.assertNotExists(mediafile.path)
+
+    def test_import_without_delete_retains_files(self):
         config['import']['delete'] = False
         self.importer.run()
-        self.assert_files_in_lib_dir()
-        self.assert_import_files_exist()
+        for mediafile in self.import_media:
+            self.assertExists(mediafile.path)
 
-    def test_import_with_delete(self):
+    def test_import_with_delete_removes_files(self):
         config['import']['delete'] = True
+
         self.importer.run()
-        self.assert_files_in_lib_dir()
-        self.assert_import_files_not_exist()
+        for mediafile in self.import_media:
+            self.assertNotExists(mediafile.path)
 
     def test_import_with_delete_prunes_directory_empty(self):
         config['import']['delete'] = True
-        self.assertExists(os.path.join(self.import_path, 'the_album'))
+        self.assertExists(os.path.join(self.import_dir, 'the_album'))
         self.importer.run()
-        self.assertNotExists(os.path.join(self.import_path, 'the_album'))
+        self.assertNotExists(os.path.join(self.import_dir, 'the_album'))
 
-    def test_import_singleton(self):
-        config['import']['singletons'] = True
-        self.importer.run()
-        self.assert_import_files_exist()
-
-
-    def assert_import_files_exist(self):
-        for mediafile in self.media_files:
-            self.assertTrue(os.path.exists(mediafile))
-
-    def assert_import_files_not_exist(self):
-        for mediafile in self.media_files:
-            self.assertFalse(os.path.exists(mediafile))
-
-    def assert_files_in_lib_dir(self):
-        artist_folder = os.path.join(self.libdir, 'The Artist')
-        album_folder = os.path.join(artist_folder, 'The Album')
-        self.assertEqual(len(os.listdir(artist_folder)), 1)
-        self.assertEqual(len(os.listdir(album_folder)), 3)
-
-        filenames = set(os.listdir(album_folder))
-        destinations = set('%s.mp3' % title for title in TEST_TITLES)
-        self.assertEqual(filenames, destinations)
 
 class ImportTest(_common.TestCase, ImportHelper):
     def setUp(self):
@@ -243,7 +245,7 @@ class ImportTest(_common.TestCase, ImportHelper):
 
         self.assertEqual(self.lib.albums().get(), None)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().album, 'The Album')
+        self.assertEqual(self.lib.albums().get().album, 'Tag Album')
 
     def test_apply_asis_adds_tracks(self):
         def choose_asis(task): return importer.action.ASIS
@@ -251,7 +253,7 @@ class ImportTest(_common.TestCase, ImportHelper):
 
         self.assertEqual(self.lib.items().get(), None)
         self.importer.run()
-        self.assertEqual(self.lib.items().get().title, TEST_TITLES[0])
+        self.assertEqual(self.lib.items().get().title, 'Tag Title 1')
 
     def test_apply_asis_adds_album_path(self):
         def choose_asis(task): return importer.action.ASIS
@@ -259,7 +261,8 @@ class ImportTest(_common.TestCase, ImportHelper):
 
         self.assert_lib_dir_empty()
         self.importer.run()
-        self.assert_file_in_lib( 'The Artist', 'The Album', TEST_TITLES[0] + '.mp3')
+        self.assert_file_in_lib(
+                'Tag Artist', 'Tag Album', 'Tag Title 1.mp3')
 
     def test_apply_candidate_adds_album(self):
         def choose_asis(task): return task.candidates[0]
@@ -291,7 +294,7 @@ class ImportTest(_common.TestCase, ImportHelper):
         def choose_asis(task): return task.candidates[0]
         self.importer.choose_match = choose_asis
 
-        import_file = os.path.join(self.import_path, 'the_album', 'track_1.mp3')
+        import_file = os.path.join(self.import_dir, 'the_album', 'track_1.mp3')
         self.assertExists(import_file)
         self.importer.run()
         self.assertNotExists(import_file)
@@ -301,7 +304,7 @@ class ImportTest(_common.TestCase, ImportHelper):
         def choose_asis(task): return task.candidates[0]
         self.importer.choose_match = choose_asis
 
-        import_file = os.path.join(self.import_path, 'the_album', 'track_1.mp3')
+        import_file = os.path.join(self.import_dir, 'the_album', 'track_1.mp3')
         self.assertExists(import_file)
         self.importer.run()
         self.assertNotExists(import_file)
