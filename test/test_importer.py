@@ -143,9 +143,9 @@ class ImportHelper(object):
         self.assertEqual(len(os.listdir(self.libdir)), 0)
 
 
-class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
+class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
     def setUp(self):
-        super(ImportNonAutotaggedTest, self).setUp()
+        super(NonAutotaggedImportTest, self).setUp()
 
         self._setup_library()
         self._create_import_dir(2)
@@ -400,11 +400,19 @@ def _call_stages(session, items, choice_or_info,
 
     return task
 
-class ImportApplyTest(_common.TestCase, ImportHelper):
+class ImportApplyTest(_common.TestCase):
     def setUp(self):
         super(ImportApplyTest, self).setUp()
 
-        self._setup_library()
+        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
+        os.mkdir(self.libdir)
+        self.libpath = os.path.join(self.temp_dir, 'testlib.blb')
+        self.lib = library.Library(self.libpath, self.libdir)
+        self.lib.path_formats = [
+            ('default', 'one'),
+            ('singleton:true', 'three'),
+            ('comp:true', 'two'),
+        ]
         self.session = _common.import_session(self.lib)
 
         self.srcdir = os.path.join(self.temp_dir, 'testsrcdir')
@@ -412,32 +420,15 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
         os.mkdir(os.path.join(self.srcdir, 'testalbum'))
         self.srcpath = os.path.join(self.srcdir, 'testalbum', 'srcfile.mp3')
         shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.srcpath)
-
-        # Set metadata
-        medium = mediafile.MediaFile(self.srcpath)
-        metadata = {
-                     'artist': 'The Artist',
-                     'album': 'The Album',
-                     'title': 'Song',
-                     'track': 1,
-                   }
-        for attr in metadata: setattr(medium, attr, metadata[attr])
-        medium.save()
-
         self.i = library.Item.from_path(self.srcpath)
         self.i.comp = False
         self.lib.add(self.i)
 
-        trackinfo = TrackInfo(
-            title = 'Applied Title',
-            track_id = 'trackid',
-            artist = 'Applied Artist',
-            artist_id = 'artistid',
-            length = 1
-        )
+        trackinfo = TrackInfo('one',  'trackid', 'some artist',
+                              'artistid', 1)
         self.info = AlbumInfo(
-            artist = 'Applied Artist',
-            album = 'Applied Album',
+            artist = 'some artist',
+            album = 'some album',
             tracks = [trackinfo],
             va = False,
             album_id = 'albumid',
@@ -475,8 +466,7 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
         # Old file should be gone.
         self.assertNotExists(internal_srcpath)
         # New file should be present.
-        self.assert_file_in_lib(
-                'Applied Artist', 'Applied Album', 'Applied Title.mp3')
+        self.assertExists(os.path.join(self.libdir, 'one.mp3'))
         # Also, the old file should not be in old_paths because it does
         # not exist.
         self.assertEqual(task.old_paths, [])
@@ -496,8 +486,7 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
         # Old file should still exist.
         self.assertExists(self.srcpath)
         # New file should also be present.
-        self.assert_file_in_lib(
-                'Applied Artist', 'Applied Album', 'Applied Title.mp3')
+        self.assertExists(os.path.join(self.libdir, 'one.mp3'))
         # The old (copy-source) file should be marked for possible
         # deletion.
         self.assertEqual(task.old_paths, [self.srcpath])
@@ -510,7 +499,7 @@ class ImportApplyTest(_common.TestCase, ImportHelper):
         config['import']['move'] = True
         _call_stages(self.session, [self.i], self.info, toppath=self.srcdir,
                      stages=[importer.manipulate_files])
-        self.assert_file_in_lib('singletons', 'Song.mp3')
+        self.assertExists(self.i.path)
 
 class ApplyExistingItemsTest(_common.TestCase):
     def setUp(self):
