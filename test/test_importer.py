@@ -72,6 +72,7 @@ class NonAutotaggedImportTest(_common.TestCase):
                     'track': (i+1),
                     'artist': 'The Artist',
                     'album': 'The Album',
+                    'albumartist': 'The Album Artist',
                     'title': title,
                 }))
 
@@ -93,7 +94,7 @@ class NonAutotaggedImportTest(_common.TestCase):
         self._run_import()
         albums = self.lib.albums()
         self.assertEqual(len(albums), 1)
-        self.assertEqual(albums[0].albumartist, 'The Artist')
+        self.assertEqual(albums[0].albumartist, 'The Album Artist')
 
     def _copy_arrives(self):
         artist_folder = os.path.join(self.libdir, 'The Artist')
@@ -605,6 +606,21 @@ class InferAlbumDataTest(_common.TestCase):
 
         self.assertFalse(self.items[0].comp)
         self.assertEqual(self.items[0].albumartist, self.items[2].artist)
+
+    def test_asis_track_albumartist_override(self):
+        self.items[0].artist = 'another artist'
+        self.items[1].artist = 'some other artist'
+        for item in self.items:
+            item.albumartist = 'some album artist'
+            item.mb_albumartistid = 'some album artist id'
+        self.task.set_choice(importer.action.ASIS)
+
+        self._infer()
+
+        self.assertEqual(self.items[0].albumartist,
+                         'some album artist')
+        self.assertEqual(self.items[0].mb_albumartistid,
+                         'some album artist id')
 
     def test_apply_gets_artist_and_id(self):
         self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
