@@ -85,8 +85,10 @@ class ImportHelper(object):
             self.media_files.append(medium)
         self.import_media = self.media_files
 
-    def _setup_import_session(self, delete=False, threaded=False,
+    def _setup_import_session(self, import_dir=None,
+            delete=False, threaded=False, copy=True,
             singletons=False, move=False, autotag=True):
+        config['import']['copy'] = copy
         config['import']['delete'] = delete
         config['import']['threaded'] = threaded
         config['import']['singletons'] = singletons
@@ -95,7 +97,7 @@ class ImportHelper(object):
 
         self.importer = importer.ImportSession(self.lib,
                                 logfile=None,
-                                paths=[self.import_dir],
+                                paths=[import_dir or self.import_dir],
                                 query=None)
 
     def _match_album(self, albumartist, album, tracks):
@@ -141,6 +143,12 @@ class ImportHelper(object):
         directory
         """
         self.assertExists(os.path.join(self.libdir, *segments))
+
+    def assert_file_not_in_lib(self, *segments):
+        """Join the ``segments`` and assert that this path exists in the library
+        directory
+        """
+        self.assertNotExists(os.path.join(self.libdir, *segments))
 
     def assert_lib_dir_empty(self):
         self.assertEqual(len(os.listdir(self.libdir)), 0)
@@ -369,6 +377,86 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
         self.assertEqual(self.lib.albums().get().albumartist, 'Other Artist')
 
 
+class ImportExistingTest(_common.TestCase, ImportHelper):
+    def setUp(self):
+        super(ImportExistingTest, self).setUp()
+        self._setup_library()
+        self._create_import_dir(1)
+
+        autotag.mb.match_album = self._match_album
+        autotag.mb.match_track = self._match_track
+
+        config['import']['delete'] = True
+        self._setup_import_session(copy=True)
+        self.importer.choose_match = self._choose_candidate
+        self.setup_importer = self.importer
+
+        self._setup_import_session(import_dir=self.libdir)
+        self.importer.choose_match = self._choose_candidate
+
+    def test_does_not_duplicate_item(self):
+        self.setup_importer.run()
+        self.assertEqual(len((self.lib.items())), 1)
+        self.importer.run()
+        self.assertEqual(len((self.lib.items())), 1)
+
+    def test_does_not_duplicate_album(self):
+        self.setup_importer.run()
+        self.assertEqual(len((self.lib.albums())), 1)
+        self.importer.run()
+        self.assertEqual(len((self.lib.albums())), 1)
+
+    def test_does_not_duplicate_singleton_track(self):
+        self.setup_importer.choose_match = \
+              self.importer.choose_match = self._choose_as_track
+        self.setup_importer.choose_item = \
+              self.importer.choose_item = self._choose_candidate
+
+        self.setup_importer.run()
+        self.assertEqual(len((self.lib.items())), 1)
+        self.importer.run()
+        self.assertEqual(len((self.lib.items())), 1)
+
+    def test_asis_updates_metadata(self):
+        self.setup_importer.run()
+        medium = mediafile.MediaFile(self.lib.items().get().path)
+        medium.title = 'New Title'
+        medium.save()
+
+        self.importer.choose_match = self._choose_asis
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().title, 'New Title')
+
+    def test_asis_updated_moves_file(self):
+        self.setup_importer.run()
+        medium = mediafile.MediaFile(self.lib.items().get().path)
+        medium.title = 'New Title'
+        medium.save()
+
+        old_path = os.path.join(
+                'Applied Artist', 'Applied Album', 'Applied Title 1.mp3')
+        self.assert_file_in_lib(old_path)
+
+        self.importer.choose_match = self._choose_asis
+        self.importer.run()
+        self.assert_file_in_lib('Applied Artist', 'Applied Album', 'New Title.mp3')
+        self.assert_file_not_in_lib(old_path)
+
+    def test_asis_updated_without_copy_does_not_move_file(self):
+        self.setup_importer.run()
+        medium = mediafile.MediaFile(self.lib.items().get().path)
+        medium.title = 'New Title'
+        medium.save()
+
+        old_path = os.path.join(
+                'Applied Artist', 'Applied Album', 'Applied Title 1.mp3')
+        self.assert_file_in_lib(old_path)
+
+        config['import']['copy'] = False
+        self.importer.choose_match = self._choose_asis
+        self.importer.run()
+        self.assert_file_not_in_lib('Applied Artist', 'Applied Album', 'New Title.mp3')
+        self.assert_file_in_lib(old_path)
 
 # Utilities for invoking the apply_choices, manipulate_files, and finalize
 # coroutines.
@@ -497,180 +585,6 @@ class ImportApplyTest(_common.TestCase):
         _call_stages(self.session, [self.i], self.info, toppath=self.srcdir,
                      stages=[importer.manipulate_files])
         self.assertExists(self.i.path)
-
-class ApplyExistingItemsTest(_common.TestCase):
-    def setUp(self):
-        super(ApplyExistingItemsTest, self).setUp()
-
-        self.libdir = os.path.join(self.temp_dir, 'testlibdir')
-        os.mkdir(self.libdir)
-
-        self.dbpath = os.path.join(self.temp_dir, 'templib.blb')
-        self.lib = library.Library(self.dbpath, self.libdir)
-        self.lib.path_formats = [
-            ('default', '$artist/$title'),
-        ]
-        self.session = _common.import_session(self.lib)
-
-        config['import']['write'] = False
-        config['import']['copy'] = False
-
-        self.srcpath = os.path.join(self.libdir, 'srcfile.mp3')
-        shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.srcpath)
-        self.i = library.Item.from_path(self.srcpath)
-        self.i.comp = False
-
-    def _apply_asis(self, items, album=True):
-        """Run the "apply" coroutine."""
-        _call_stages(self.session, items, importer.action.ASIS, album=album,
-                     stages=[importer.apply_choices,
-                             importer.manipulate_files])
-
-    def test_apply_existing_album_does_not_duplicate_item(self):
-        # First, import an item to add it to the library.
-        self._apply_asis([self.i])
-
-        # Get the item's path and import it again.
-        item = self.lib.items().get()
-        new_item = library.Item.from_path(item.path)
-        self._apply_asis([new_item])
-
-        # Should not be duplicated.
-        self.assertEqual(len(list(self.lib.items())), 1)
-
-    def test_apply_existing_album_does_not_duplicate_album(self):
-        # As above.
-        self._apply_asis([self.i])
-        item = self.lib.items().get()
-        new_item = library.Item.from_path(item.path)
-        self._apply_asis([new_item])
-
-        # Should not be duplicated.
-        self.assertEqual(len(list(self.lib.albums())), 1)
-
-    def test_apply_existing_singleton_does_not_duplicate_album(self):
-        self._apply_asis([self.i])
-        item = self.lib.items().get()
-        new_item = library.Item.from_path(item.path)
-        self._apply_asis([new_item], False)
-
-        # Should not be duplicated.
-        self.assertEqual(len(list(self.lib.items())), 1)
-
-    def test_apply_existing_item_new_metadata_does_not_duplicate(self):
-        # We want to copy the item to a new location.
-        config['import']['copy'] = True
-
-        # Import with existing metadata.
-        self._apply_asis([self.i])
-
-        # Import again with new metadata.
-        item = self.lib.items().get()
-        new_item = library.Item.from_path(item.path)
-        new_item.title = 'differentTitle'
-        self._apply_asis([new_item])
-
-        # Should not be duplicated.
-        self.assertEqual(len(list(self.lib.items())), 1)
-        self.assertEqual(len(list(self.lib.albums())), 1)
-
-    def test_apply_existing_item_new_metadata_moves_files(self):
-        # As above, import with old metadata and then reimport with new.
-        config['import']['copy'] = True
-
-        self._apply_asis([self.i])
-        item = self.lib.items().get()
-        new_item = library.Item.from_path(item.path)
-        new_item.title = 'differentTitle'
-        self._apply_asis([new_item])
-
-        item = self.lib.items().get()
-        self.assertTrue('differentTitle' in item.path)
-        self.assertExists(item.path)
-
-    def test_apply_existing_item_new_metadata_copy_disabled(self):
-        # Import *without* copying to ensure that the path does *not* change.
-        config['import']['copy'] = False
-
-        self._apply_asis([self.i])
-        item = self.lib.items().get()
-        new_item = library.Item.from_path(item.path)
-        new_item.title = 'differentTitle'
-        self._apply_asis([new_item])
-
-        item = self.lib.items().get()
-        self.assertFalse('differentTitle' in item.path)
-        self.assertExists(item.path)
-
-    def test_apply_existing_item_new_metadata_removes_old_files(self):
-        config['import']['copy'] = True
-
-        self._apply_asis([self.i])
-        item = self.lib.items().get()
-        oldpath = item.path
-        new_item = library.Item.from_path(item.path)
-        new_item.title = 'differentTitle'
-        self._apply_asis([new_item])
-
-        item = self.lib.items().get()
-        self.assertNotExists(oldpath)
-
-    def test_apply_existing_item_new_metadata_delete_enabled(self):
-        # The "delete" flag should be ignored -- only the "copy" flag
-        # controls whether files move.
-        config['import']['copy'] = True
-        config['import']['delete'] = True  # !
-
-        self._apply_asis([self.i])
-        item = self.lib.items().get()
-        oldpath = item.path
-        new_item = library.Item.from_path(item.path)
-        new_item.title = 'differentTitle'
-        self._apply_asis([new_item])
-
-        item = self.lib.items().get()
-        self.assertNotExists(oldpath)
-        self.assertTrue('differentTitle' in item.path)
-        self.assertExists(item.path)
-
-    def test_apply_existing_item_preserves_file(self):
-        # With copying enabled, import the item twice with same metadata.
-        config['import']['copy'] = True
-
-        self._apply_asis([self.i])
-        item = self.lib.items().get()
-        oldpath = item.path
-        new_item = library.Item.from_path(item.path)
-        self._apply_asis([new_item])
-
-        self.assertEqual(len(list(self.lib.items())), 1)
-        item = self.lib.items().get()
-        self.assertEqual(oldpath, item.path)
-        self.assertExists(oldpath)
-
-    def test_apply_existing_item_preserves_file_delete_enabled(self):
-        config['import']['copy'] = True
-        config['import']['delete'] = True  # !
-
-        self._apply_asis([self.i])
-        item = self.lib.items().get()
-        new_item = library.Item.from_path(item.path)
-        self._apply_asis([new_item])
-
-        self.assertEqual(len(list(self.lib.items())), 1)
-        item = self.lib.items().get()
-        self.assertExists(item.path)
-
-    def test_same_album_does_not_duplicate(self):
-        # With the -L flag, exactly the same item (with the same ID)
-        # is re-imported. This test simulates that situation.
-        self._apply_asis([self.i])
-        item = self.lib.items().get()
-        self._apply_asis([item])
-
-        # Should not be duplicated.
-        self.assertEqual(len(list(self.lib.items())), 1)
-        self.assertEqual(len(list(self.lib.albums())), 1)
 
 class InferAlbumDataTest(_common.TestCase):
     def setUp(self):
