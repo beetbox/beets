@@ -348,33 +348,67 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
 
     def test_asis_homogenous_sets_albumartist(self):
         self.importer.choose_match = self._choose_asis
-        for mediafile in self.import_media:
-            mediafile.albumartist = None
-            mediafile.save()
+
         self.importer.run()
         self.assertEqual(self.lib.albums().get().albumartist, 'Tag Artist')
+        for item in self.lib.items():
+            self.assertEqual(item.albumartist, 'Tag Artist')
 
     def test_asis_heterogenous_sets_various_albumartist(self):
         self.importer.choose_match = self._choose_asis
 
         self.import_media[0].artist = 'Other Artist'
+        self.import_media[0].save()
         self.import_media[1].artist = 'Another Artist'
-        for mediafile in self.import_media:
-            mediafile.albumartist = None
-            mediafile.save()
+        self.import_media[1].save()
+
         self.importer.run()
         self.assertEqual(self.lib.albums().get().albumartist, 'Various Artists')
+        for item in self.lib.items():
+            self.assertEqual(item.albumartist, 'Various Artists')
+
+    def test_asis_heterogenous_sets_sompilation(self):
+        self.importer.choose_match = self._choose_asis
+
+        self.import_media[0].artist = 'Other Artist'
+        self.import_media[0].save()
+        self.import_media[1].artist = 'Another Artist'
+        self.import_media[1].save()
+
+        self.importer.run()
+        for item in self.lib.items():
+            self.assertTrue(item.comp)
 
     def test_asis_sets_majority_albumartist(self):
         self.importer.choose_match = self._choose_asis
 
         self.import_media[0].artist = 'Other Artist'
+        self.import_media[0].save()
         self.import_media[1].artist = 'Other Artist'
-        for mediafile in self.import_media:
-            mediafile.albumartist = None
-            mediafile.save()
+        self.import_media[1].save()
+
         self.importer.run()
         self.assertEqual(self.lib.albums().get().albumartist, 'Other Artist')
+        for item in self.lib.items():
+            self.assertEqual(item.albumartist, 'Other Artist')
+
+    def test_asis_albumartist_tag_sets_albumartist(self):
+        self.importer.choose_match = self._choose_asis
+
+        self.import_media[0].artist = 'Other Artist'
+        self.import_media[1].artist = 'Another Artist'
+        for mediafile in self.import_media:
+            mediafile.albumartist = 'Album Artist'
+            mediafile.mb_albumartistid = 'Album Artist ID'
+            mediafile.save()
+
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().albumartist, 'Album Artist')
+        self.assertEqual(self.lib.albums().get().mb_albumartistid,
+                'Album Artist ID')
+        for item in self.lib.items():
+            self.assertEqual(item.albumartist, 'Album Artist')
+            self.assertEqual(item.mb_albumartistid, 'Album Artist ID')
 
 
 class ImportExistingTest(_common.TestCase, ImportHelper):
