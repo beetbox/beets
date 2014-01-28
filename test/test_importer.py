@@ -65,8 +65,10 @@ class ImportHelper(object):
         metadata = {
                      'artist': 'Tag Artist',
                      'album':  'Tag Album',
+                     'albumartist':  None,
                      'mb_trackid': None,
                      'mb_albumid': None,
+                     'comp': None
                    }
         self.media_files = []
         for i in range(count):
@@ -83,11 +85,53 @@ class ImportHelper(object):
             self.media_files.append(medium)
         self.import_media = self.media_files
 
-    def _setup_import_session(self):
+    def _setup_import_session(self, delete=False, threaded=False,
+            singletons=False, move=False, autotag=True):
+        config['import']['delete'] = delete
+        config['import']['threaded'] = threaded
+        config['import']['singletons'] = singletons
+        config['import']['move'] = move
+        config['import']['autotag'] = autotag
+
         self.importer = importer.ImportSession(self.lib,
                                 logfile=None,
                                 paths=[self.import_dir],
                                 query=None)
+
+    def _match_album(self, albumartist, album, tracks):
+        """Stub for ``mb.match_album``.
+        Yields AlbumInfo with ``tracks`` from ``_match_track``
+        """
+        albumartist = albumartist or 'Various'
+        trackInfos = []
+        for i in range(tracks):
+            trackInfos.append(
+                self._match_track(albumartist, u'Tag Title %d' % (i+1)).next())
+
+        yield AlbumInfo(
+            artist    = albumartist.replace('Tag', 'Applied'),
+            album     = album.replace('Tag', 'Applied'),
+            tracks    = trackInfos,
+            va        = False,
+            album_id  = u'albumid',
+            artist_id = u'artistid',
+            albumtype = u'soundtrack')
+
+    def _match_track(self, artist, title):
+        """Stub for ``mb.match_track``. Yields TrackInfo.
+        """
+        yield TrackInfo(
+            title     = title.replace('Tag', 'Applied'),
+            track_id  = u'trackid',
+            artist    = artist.replace('Tag', 'Applied'),
+            artist_id = u'artistid',
+            length    = 1)
+
+    def _choose_asis(self, task):
+        return importer.action.ASIS
+
+    def _choose_candidate(self, task):
+        return task.candidates[0]
 
     def assert_file_in_lib(self, *segments):
         """Join the ``segments`` and assert that this path exists in the library
@@ -105,13 +149,7 @@ class ImportNonAutotaggedTest(_common.TestCase, ImportHelper):
 
         self._setup_library()
         self._create_import_dir(2)
-        self._setup_import_session()
-
-        config['import']['delete'] = False
-        config['import']['threaded'] = False
-        config['import']['singletons'] = False
-        config['import']['move'] = False
-        config['import']['autotag'] = False
+        self._setup_import_session(autotag=False)
 
     def test_album_created_with_track_artist(self):
         self.importer.run()
@@ -204,45 +242,8 @@ class ImportTest(_common.TestCase, ImportHelper):
         self._create_import_dir(1)
         self._setup_import_session()
 
-        config['import']['delete'] = False
-        config['import']['threaded'] = False
-        config['import']['singletons'] = False
-        config['import']['move'] = False
-        config['import']['autotag'] = True
-
-        trackInfo = TrackInfo(
-            title     = u'Applied Title',
-            track_id  = u'trackid',
-            artist    = u'Applied Artist',
-            artist_id = u'artistid',
-            length    = 1
-        )
-        albumInfo = AlbumInfo(
-            artist    = u'Applied Artist',
-            album     = u'Applied Album',
-            tracks    = [trackInfo],
-            va        = False,
-            album_id  = u'albumid',
-            artist_id = u'artistid',
-            albumtype = u'soundtrack',
-        )
-        self._stub_mb_match_album(albumInfo)
-        self._stub_mb_match_track(trackInfo)
-
-    def _stub_mb_match_album(self, albumInfo):
-        def match_album(*_): yield albumInfo
-        autotag.mb.match_album = match_album
-
-    def _stub_mb_match_track(sefl, trackInfo):
-        def match_track(*_): yield trackInfo
-        autotag.mb.match_track = match_track
-
-    def _choose_asis(self, task):
-        return importer.action.ASIS
-
-    def _choose_candidate(self, task):
-        return task.candidates[0]
-
+        autotag.mb.match_album = self._match_album
+        autotag.mb.match_track = self._match_track
 
     def test_apply_asis_adds_album(self):
         self.importer.choose_match = self._choose_asis
@@ -278,7 +279,7 @@ class ImportTest(_common.TestCase, ImportHelper):
 
         self.assertEqual(self.lib.items().get(), None)
         self.importer.run()
-        self.assertEqual(self.lib.items().get().title, 'Applied Title')
+        self.assertEqual(self.lib.items().get().title, 'Applied Title 1')
 
     def test_apply_candidate_adds_album_path(self):
         self.importer.choose_match = self._choose_candidate
@@ -286,7 +287,7 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.assert_lib_dir_empty()
         self.importer.run()
         self.assert_file_in_lib(
-                'Applied Artist', 'Applied Album', 'Applied Title.mp3')
+                'Applied Artist', 'Applied Album', 'Applied Title 1.mp3')
 
     def test_apply_with_move_deletes_import(self):
         config['import']['move'] = True
@@ -316,7 +317,7 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.assertEqual(self.lib.items().get(), None)
         self.assertEqual(self.lib.albums().get(), None)
         self.importer.run()
-        self.assertEqual(self.lib.items().get().title, 'Applied Title')
+        self.assertEqual(self.lib.items().get().title, 'Applied Title 1')
         self.assertEqual(self.lib.albums().get(), None)
 
     def test_apply_tracks_adds_singleton_path(self):
@@ -328,7 +329,7 @@ class ImportTest(_common.TestCase, ImportHelper):
 
         self.assert_lib_dir_empty()
         self.importer.run()
-        self.assert_file_in_lib('singletons', 'Applied Title.mp3')
+        self.assert_file_in_lib('singletons', 'Applied Title 1.mp3')
 
 
 
