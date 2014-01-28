@@ -1180,16 +1180,14 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     if write:
         if album:
             for a in albums:
-                if config['dont_write_if_unchanged'].get(bool) and \
-                        a in unchanged:
+                if a in unchanged:
                     continue
                 for item in a.items():
                     item.write()
 
         else:
             for item in items:
-                if config['dont_write_if_unchanged'].get(bool) and \
-                        item in unchanged:
+                if item in unchanged:
                     continue
                 item.write()
 
