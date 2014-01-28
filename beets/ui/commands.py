@@ -472,7 +472,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                    .format(itemcount))
             print_('For help, see: '
                    'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
-            opts = ('Use as-is', 'as Tracks', 'as albuMs', 'Skip', 'Enter search',
+            opts = ('Use as-is', 'as Tracks', 'as aLbums', 'Skip', 'Enter search',
                     'enter Id', 'aBort')
         sel = ui.input_options(opts)
         if sel == 'u':
@@ -488,7 +488,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             raise importer.ImportAbort()
         elif sel == 'i':
             return importer.action.MANUAL_ID
-        elif sel == 'm':
+        elif sel == 'l':
             return importer.action.ALBUMS
         else:
             assert False
@@ -540,13 +540,15 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 opts = ('Skip', 'Use as-is', 'Enter search', 'enter Id',
                         'aBort')
             else:
-                opts = ('Skip', 'Use as-is', 'as Tracks', 'as albuMs',
+                opts = ('Skip', 'Use as-is', 'as Tracks', 'as aLbums',
                         'Enter search', 'enter Id', 'aBort')
             sel = ui.input_options(opts, numrange=(1, len(candidates)))
             if sel == 's':
                 return importer.action.SKIP
             elif sel == 'u':
                 return importer.action.ASIS
+            elif sel == 'm':
+                pass
             elif sel == 'e':
                 return importer.action.MANUAL
             elif sel == 't':
@@ -556,7 +558,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 raise importer.ImportAbort()
             elif sel == 'i':
                 return importer.action.MANUAL_ID
-            elif sel == 'm':
+            elif sel == 'L':
                 return importer.action.ALBUMS
             else:  # Numerical selection.
                 match = candidates[sel - 1]
@@ -582,7 +584,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                     'Enter search', 'enter Id', 'aBort')
         else:
             opts = ('Apply', 'more Candidates', 'Skip', 'Use as-is',
-                    'as Tracks', 'as albuMs', 'Enter search', 'enter Id', 'aBort')
+                    'as Tracks', 'as aLbums', 'Enter search', 'enter Id', 'aBort')
         default = config['import']['default_action'].as_choice({
             'apply': 'a',
             'skip': 's',
@@ -594,7 +596,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
         sel = ui.input_options(opts, require=require, default=default)
         if sel == 'a':
             return match
-        elif sel == 'm':
+        elif sel == 'l':
             return importer.action.ALBUMS
         elif sel == 's':
             return importer.action.SKIP
