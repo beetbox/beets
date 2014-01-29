@@ -690,6 +690,7 @@ class Configuration(RootView):
     def add_file(self, filename):
         """Parses the file as YAML and adds it to the configuration sources
         """
+        filename = os.path.abspath(filename)
         self.add(ConfigSource(load_yaml(filename), filename))
 
 class LazyConfig(Configuration):
