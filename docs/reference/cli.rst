@@ -301,6 +301,7 @@ import ...``.
 * ``-d DIRECTORY``: specify the library root directory.
 * ``-v``: verbose mode; prints out a deluge of debugging information. Please use
   this flag when reporting bugs.
+* ``-c /path/to/file``: read the configuration from this file.
 
 
 .. only:: man

@@ -767,9 +767,15 @@ def _raw_main(args):
                       help="destination music directory")
     parser.add_option('-v', '--verbose', dest='verbose', action='store_true',
                       help='print debugging information')
+    parser.add_option('-c', '--config', dest='config',
+                      help='path to configuration file')
 
     # Parse the command-line!
     options, subcommand, suboptions, subargs = parser.parse_args(args)
+    if hasattr(options, 'config') and options.config != None:
+        config_path = options.config
+        del options.config
+        config.add_file(config_path)
     config.set_args(options)
 
     # Open library file.

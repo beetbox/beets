@@ -472,6 +472,7 @@ class ConfigTest(_common.TestCase):
         super(ConfigTest, self).setUp()
         self.io.install()
         self.test_cmd = ui.Subcommand('test', help='test')
+        self.test_cmd.func = lambda *_: None
         commands.default_commands.append(self.test_cmd)
     def tearDown(self):
         super(ConfigTest, self).tearDown()
@@ -515,6 +516,16 @@ class ConfigTest(_common.TestCase):
             self._run_main([], """
                 library: /xxx/yyy/not/a/real/path
             """, func)
+
+    def test_cli_config_option(self):
+        """Read config from file passed on the command line with
+        ``--config file``
+        """
+        config_path = os.path.join(self.temp_dir, 'config.yml')
+        with open(config_path, 'w') as file:
+            file.write('anoption: value')
+        ui.main(['--config', config_path, 'test'])
+        self.assertEqual(config['anoption'].get(), 'value')
 
     def test_replacements_parsed(self):
         def func(lib, opts, args):

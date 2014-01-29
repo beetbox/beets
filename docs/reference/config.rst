@@ -13,6 +13,9 @@ every aspect of its operation. To configure beets, you'll edit a file called
 * If you prefer a different location, set the ``BEETSDIR`` environment variable
   to a path; beets will then look for a ``config.yaml`` in that directory.
 
+Additionally, you can specify a different configuration file to load by adding
+the ``--config /path/to/file`` option to the beets command line.
+
 The config file uses `YAML`_ syntax. You can use the full power of YAML, but
 most configuration options are simple key/value pairs. This means your config
 file will look like this::
