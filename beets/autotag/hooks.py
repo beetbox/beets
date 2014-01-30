@@ -206,6 +206,9 @@ def string_dist(str1, str2):
     an edit distance, normalized by the string length, with a number of
     tweaks that reflect intuition about text.
     """
+    if str1 == None and str2 == None: return 0.0
+    if str1 == None or str2 == None:  return 1.0
+
     str1 = str1.lower()
     str2 = str2.lower()
 
@@ -250,9 +253,8 @@ def string_dist(str1, str2):
             str2 = case_str2
             base_dist = case_dist
             penalty += weight * case_delta
-    dist = base_dist + penalty
 
-    return dist
+    return base_dist + penalty
 
 class Distance(object):
     """Keeps track of multiple distance penalties. Provides a single

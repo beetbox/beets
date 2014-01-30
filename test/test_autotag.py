@@ -181,6 +181,17 @@ class DistanceTest(_common.TestCase):
         sdist = string_dist(u'abc', u'bcd')
         dist.add_string('string', u'abc', u'bcd')
         self.assertEqual(dist._penalties['string'], [sdist])
+        self.assertNotEqual(dist._penalties['string'], [0])
+
+    def test_add_string_none(self):
+        dist = Distance()
+        dist.add_string('string', None, 'string')
+        self.assertEqual(dist._penalties['string'], [1])
+
+    def test_add_string_both_none(self):
+        dist = Distance()
+        dist.add_string('string', None, None)
+        self.assertEqual(dist._penalties['string'], [0])
 
     def test_distance(self):
         config['match']['distance_weights']['album'] = 2.0
