@@ -72,17 +72,6 @@ class EdgeTest(unittest.TestCase):
 
 _sc = beets.mediafile._safe_cast
 class InvalidValueToleranceTest(unittest.TestCase):
-    def test_packed_integer_with_extra_chars(self):
-        pack = beets.mediafile.Packed("06a", beets.mediafile.packing.SLASHED)
-        self.assertEqual(pack[0], 6)
-
-    def test_packed_integer_invalid(self):
-        pack = beets.mediafile.Packed("blah", beets.mediafile.packing.SLASHED)
-        self.assertEqual(pack[0], 0)
-
-    def test_packed_index_out_of_range(self):
-        pack = beets.mediafile.Packed("06", beets.mediafile.packing.SLASHED)
-        self.assertEqual(pack[1], 0)
 
     def test_safe_cast_string_to_int(self):
         self.assertEqual(_sc(int, 'something'), 0)

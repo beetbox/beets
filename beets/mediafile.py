@@ -299,6 +299,7 @@ class StorageStyle(object):
         self.id3_lang = id3_lang
         self.suffix = suffix
         self.float_places = float_places
+        self.out_type = self.pack_type
 
         # Convert suffix to correct string type.
         if self.suffix and self.as_type in (str, unicode):
@@ -323,41 +324,35 @@ class StorageStyle(object):
 
     def get(self, mediafile):
         data = self.fetch(mediafile)
-        self.out_type = self.pack_type
         if self.packing:
-            data = self.unpack(data, self.pack_pos, self.packing)
+            try:
+                data = self.unpack(data)[self.pack_pos]
+            except KeyError:
+                data = None
+
         if self.suffix and isinstance(data, (str, unicode)):
             if data.endswith(self.suffix):
                 data = data[:-len(self.suffix)]
         return data
 
-    def unpack(self, items, index, packstyle):
-        if not isinstance(index, int):
-            raise TypeError('index must be an integer')
+    def unpack(self, data):
+        if data is None:
+            return []
 
-        if items is None:
-            return None
-
-        if packstyle == packing.DATE:
+        if self.packing == packing.DATE:
             # Remove time information from dates. Usually delimited by
             # a "T" or a space.
-            items = re.sub(r'[Tt ].*$', '', unicode(items))
+            data = re.sub(r'[Tt ].*$', '', unicode(data))
+            items = unicode(data).split('-')
+        elif self.packing == packing.SLASHED:
+            items = unicode(data).split('/')
+        elif self.packing == packing.TUPLE:
+            items = data # tuple: items is already indexable
+        elif self.packing == packing.SC:
+            items = _sc_decode(data)
 
-        # transform from a string packing into a list we can index into
-        if packstyle == packing.SLASHED:
-            seq = unicode(items).split('/')
-        elif packstyle == packing.DATE:
-            seq = unicode(items).split('-')
-        elif packstyle == packing.TUPLE:
-            seq = items # tuple: items is already indexable
-        elif packstyle == packing.SC:
-            seq = _sc_decode(items)
+        return items
 
-        try:
-            out = seq[index]
-        except:
-            out = None
-        return out
 
     def store(self, mediafile, val):
         """Store val for this descriptor's field in the tag dictionary
@@ -374,14 +369,53 @@ class StorageStyle(object):
 
     def set(self, mediafile, value):
         if self.packing:
-            p = Packed(self.fetch(mediafile), self.packing,
-                       out_type=self.pack_type)
-            p[self.pack_pos] = value
-            value = p.items
+            data = self.fetch(mediafile)
+            value = self.pack(data, value)
         else:
             value = self.serialize(value)
 
         self.store(mediafile, value)
+
+    def pack(self, data, value):
+        if self.out_type is int:
+            none_val = 0
+        elif self.out_type is float:
+            none_val = 0.0
+        else:
+            none_val = None
+        if value is None:
+            value = none_val
+
+        items = list(self.unpack(data))
+        length = self.pack_pos + 1
+        if self.packing == packing.DATE:
+            length = 3
+
+        for i in range(len(items), length):
+            items.append(none_val)
+        items[self.pack_pos] = value
+
+        if self.packing == packing.DATE:
+            # Truncate the items wherever we reach an invalid (none)
+            # entry. This prevents dates like 2008-00-05.
+            for i, item in enumerate(items):
+                if item == none_val or item is None:
+                    del(items[i:]) # truncate
+                    break
+
+        if self.packing == packing.SLASHED:
+            data = '/'.join(map(unicode, items))
+        elif self.packing == packing.DATE:
+            field_lengths = [4, 2, 2] # YYYY-MM-DD
+            elems = []
+            for i, item in enumerate(items):
+                elems.append('{0:0{1}}'.format(int(item), field_lengths[i]))
+            data = '-'.join(elems)
+        elif self.packing == packing.SC:
+            data = _sc_encode(*items)
+
+        return data
+
 
     def serialize(self, out):
         """Convert value to a type that is suitable for storing in a tag
@@ -415,6 +449,7 @@ class StorageStyle(object):
 
         return out
 
+
 class MP4StorageStyle(StorageStyle):
     def serialize(self, value):
         value = super(MP4StorageStyle, self).serialize(value)
@@ -427,7 +462,6 @@ class MP4StorageStyle(StorageStyle):
         if self.key.startswith('----:') and isinstance(data, str):
             data = data.decode('utf8')
         return data
-
 
 
 class MP3StorageStyle(StorageStyle):
@@ -524,106 +558,7 @@ class MP3StorageStyle(StorageStyle):
             mediafile.mgfile.tags.setall(self.key, [frame])
 
 
-# Dealing with packings.
-class Packed(object):
-    """Makes a packed list of values subscriptable. To access the packed
-    output after making changes, use packed_thing.items.
-    """
-    def __init__(self, items, packstyle, out_type=int):
-        """Create a Packed object for subscripting the packed values in
-        items. The items are packed using packstyle, which is a value
-        from the packing enum. Values are converted to out_type before
-        they are returned.
-        """
-        self.items = items
-        self.packstyle = packstyle
-        self.out_type = out_type
-
-        if out_type is int:
-            self.none_val = 0
-        elif out_type is float:
-            self.none_val = 0.0
-        else:
-            self.none_val = None
-
-    def __getitem__(self, index):
-        if not isinstance(index, int):
-            raise TypeError('index must be an integer')
-
-        if self.items is None:
-            return self.none_val
-
-        items = self.items
-        if self.packstyle == packing.DATE:
-            # Remove time information from dates. Usually delimited by
-            # a "T" or a space.
-            items = re.sub(r'[Tt ].*$', '', unicode(items))
-
-        # transform from a string packing into a list we can index into
-        if self.packstyle == packing.SLASHED:
-            seq = unicode(items).split('/')
-        elif self.packstyle == packing.DATE:
-            seq = unicode(items).split('-')
-        elif self.packstyle == packing.TUPLE:
-            seq = items # tuple: items is already indexable
-        elif self.packstyle == packing.SC:
-            seq = _sc_decode(items)
-
-        try:
-            out = seq[index]
-        except:
-            out = None
-
-        if out is None or out == self.none_val or out == '':
-            return _safe_cast(self.out_type, self.none_val)
-        else:
-            return _safe_cast(self.out_type, out)
-
-    def __setitem__(self, index, value):
-        # Interpret null values.
-        if value is None:
-            value = self.none_val
-
-        if self.packstyle in (packing.SLASHED, packing.TUPLE, packing.SC):
-            # SLASHED, TUPLE and SC are always two-item packings
-            length = 2
-        else:
-            # DATE can have up to three fields
-            length = 3
-
-        # make a list of the items we'll pack
-        new_items = []
-        for i in range(length):
-            if i == index:
-                next_item = value
-            else:
-                next_item = self[i]
-            new_items.append(next_item)
-
-        if self.packstyle == packing.DATE:
-            # Truncate the items wherever we reach an invalid (none)
-            # entry. This prevents dates like 2008-00-05.
-            for i, item in enumerate(new_items):
-                if item == self.none_val or item is None:
-                    del(new_items[i:]) # truncate
-                    break
-
-        if self.packstyle == packing.SLASHED:
-            self.items = '/'.join(map(unicode, new_items))
-        elif self.packstyle == packing.DATE:
-            field_lengths = [4, 2, 2] # YYYY-MM-DD
-            elems = []
-            for i, item in enumerate(new_items):
-                elems.append('{0:0{1}}'.format(int(item), field_lengths[i]))
-            self.items = '-'.join(elems)
-        elif self.packstyle == packing.TUPLE:
-            self.items = new_items
-        elif self.packstyle == packing.SC:
-            self.items = _sc_encode(*new_items)
-
-
 # The field itself.
-
 class MediaField(object):
     """A descriptor providing access to a particular (abstract) metadata
     field. out_type is the type that users of MediaFile should see and
