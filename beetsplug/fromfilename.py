@@ -73,7 +73,10 @@ def all_matches(names, pattern):
     matches = {}
     for item, name in names.items():
         m = re.match(pattern, name, re.IGNORECASE)
-        if m:
+        if m and m.groupdict():
+            # Only yield a match when the regex applies *and* has
+            # capture groups. Otherwise, no information can be extracted
+            # from the filename.
             matches[item] = m.groupdict()
         else:
             return None

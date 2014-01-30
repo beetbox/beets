@@ -49,6 +49,8 @@ Other little fixes:
 * The importer now uses the album artist field when guessing existing
   metadata for albums (rather than just the track artist field). Thanks to
   geigerzaehler.
+* :doc:`/plugins/fromfilename`: Fix a crash when a filename contained only a
+  track number (e.g., ``02.mp3``).
 
 
 1.3.2 (December 22, 2013)
