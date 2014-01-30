@@ -329,9 +329,6 @@ class StorageStyle(object):
         if self.suffix and isinstance(data, (str, unicode)):
             if data.endswith(self.suffix):
                 data = data[:-len(self.suffix)]
-        if mediafile.type in MP4_TYPES and self.key.startswith('----:') and \
-                isinstance(data, str):
-            data = data.decode('utf8')
         return data
 
     def unpack(self, items, index, packstyle):
@@ -424,6 +421,13 @@ class MP4StorageStyle(StorageStyle):
         if self.key.startswith('----:') and isinstance(value, unicode):
             value = value.encode('utf8')
         return value
+
+    def get(self, mediafile):
+        data = super(MP4StorageStyle, self).get(mediafile)
+        if self.key.startswith('----:') and isinstance(data, str):
+            data = data.decode('utf8')
+        return data
+
 
 
 class MP3StorageStyle(StorageStyle):
