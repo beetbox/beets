@@ -16,6 +16,7 @@
 """
 import os
 import shutil
+from datetime import date
 
 import _common
 from _common import unittest
@@ -309,15 +310,8 @@ class ReadWriteTest(unittest.TestCase):
             self.assertEqual(mediafile.artist, 'the artist')
             self.assertEqual(mediafile.year, 2001)
             self.assertEqual(mediafile.track, 2)
-
-    def test_read_write_original_year(self):
-        for ext in self.extensions:
-            mediafile = full_mediafile_fixture()
-            mediafile.original_year = 1999
-            mediafile.save()
-
-            mediafile = beets.mediafile.MediaFile(mediafile.path)
-            self.assertEqual(mediafile.original_year, 1999)
+            self.assertEqual(mediafile.comp, True)
+            self.assertEqual(mediafile.lyrics, 'the lyrics')
 
     def test_write_common(self):
         for ext in self.extensions:
@@ -326,7 +320,8 @@ class ReadWriteTest(unittest.TestCase):
             mediafile.album = 'another album'
             mediafile.artist = 'another artist'
             mediafile.year = 2002
-            mediafile.track =  3
+            mediafile.track = 3
+            mediafile.comp = False
             mediafile.save()
 
             mediafile = beets.mediafile.MediaFile(mediafile.path)
@@ -335,6 +330,21 @@ class ReadWriteTest(unittest.TestCase):
             self.assertEqual(mediafile.artist, 'another artist')
             self.assertEqual(mediafile.year, 2002)
             self.assertEqual(mediafile.track, 3)
+            self.assertEqual(mediafile.comp, False)
+
+    def test_write_original_date(self):
+        for ext in self.extensions:
+            mediafile = full_mediafile_fixture()
+            mediafile.original_year = 1999
+            mediafile.original_month = 12
+            mediafile.original_day = 30
+            mediafile.save()
+
+            mediafile = beets.mediafile.MediaFile(mediafile.path)
+            self.assertEqual(mediafile.original_year, 1999)
+            self.assertEqual(mediafile.original_month, 12)
+            self.assertEqual(mediafile.original_day, 30)
+            self.assertEqual(mediafile.original_date, date(1999,12,30))
 
 
 def full_mediafile_fixture(ext='mp3'):

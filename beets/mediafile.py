@@ -305,42 +305,18 @@ class StorageStyle(object):
             self.suffix = self.as_type(self.suffix)
 
     def fetch(self, mediafile):
-        if mediafile.type == 'mp3':
-            if self.id3_desc is not None: # also match on 'desc' field
-                frames = mediafile.mgfile.tags.getall(self.key)
-                entry = None
-                for frame in frames:
-                    if frame.desc.lower() == self.id3_desc.lower():
-                        entry = getattr(frame, self.id3_frame_field)
-                        break
-                if entry is None: # no desc match
-                    return None
-            else:
-                # Get the metadata frame mediafileect.
-                try:
-                    frame = mediafile.mgfile[self.key]
-                except KeyError:
-                    return None
-
-                entry = getattr(frame, self.id3_frame_field)
-
-        else:  # Not MP3.
-            try:
-                entry = mediafile.mgfile[self.key]
-            except KeyError:
-                return None
+        try:
+            entry = mediafile.mgfile[self.key]
+        except KeyError:
+            return None
 
         # Possibly index the list.
-        if self.list_elem:
-            if entry:  # List must have at least one value.
-                # Handle Mutagen bugs when reading values (#356).
-                try:
-                    return entry[0]
-                except:
-                    log.error('Mutagen exception when reading field: %s' %
-                              traceback.format_exc)
-                    return None
-            else:
+        if entry and self.list_elem:
+            try:
+                return entry[0]
+            except:
+                log.error('Mutagen exception when reading field: %s' %
+                          traceback.format_exc)
                 return None
         else:
             return entry
@@ -369,56 +345,7 @@ class StorageStyle(object):
         else:
             out = val
 
-        if mediafile.type == 'mp3':
-            # Try to match on "desc" field.
-            if self.id3_desc is not None:
-                frames = mediafile.mgfile.tags.getall(self.key)
-
-                # try modifying in place
-                found = False
-                for frame in frames:
-                    if frame.desc.lower() == self.id3_desc.lower():
-                        setattr(frame, self.id3_frame_field, out)
-                        found = True
-                        break
-
-                # need to make a new frame?
-                if not found:
-                    assert isinstance(self.id3_frame_field, str)  # Keyword.
-                    args = {
-                        'encoding': 3,
-                        'desc': self.id3_desc,
-                        self.id3_frame_field: val,
-                    }
-                    if self.id3_lang:
-                        args['lang'] = self.id3_lang
-                    mediafile.mgfile.tags.add(mutagen.id3.Frames[self.key](**args))
-
-            # Try to match on "owner" field.
-            elif self.key.startswith('UFID:'):
-                owner = self.key.split(':', 1)[1]
-                frames = mediafile.mgfile.tags.getall(self.key)
-
-                for frame in frames:
-                    # Replace existing frame data.
-                    if frame.owner == owner:
-                        setattr(frame, self.id3_frame_field, val)
-                else:
-                    # New frame.
-                    assert isinstance(self.id3_frame_field, str)  # Keyword.
-                    frame = mutagen.id3.UFID(owner=owner,
-                        **{self.id3_frame_field: val})
-                    mediafile.mgfile.tags.setall('UFID', [frame])
-
-            # Just replace based on key.
-            else:
-                assert isinstance(self.id3_frame_field, str)  # Keyword.
-                frame = mutagen.id3.Frames[self.key](encoding=3,
-                    **{self.id3_frame_field: val})
-                mediafile.mgfile.tags.setall(self.key, [frame])
-
-        else:  # Not MP3.
-            mediafile.mgfile[self.key] = out
+        mediafile.mgfile[self.key] = out
 
     def set(self, mediafile, val):
         if self.packing:
@@ -481,8 +408,101 @@ class StorageStyle(object):
         self.store(mediafile, out)
 
 
-# Dealing with packings.
+class MP3StorageStyle(StorageStyle):
+    def fetch(self, mediafile):
+        if self.id3_desc is not None: # also match on 'desc' field
+            frames = mediafile.mgfile.tags.getall(self.key)
+            entry = None
+            for frame in frames:
+                if frame.desc.lower() == self.id3_desc.lower():
+                    entry = getattr(frame, self.id3_frame_field)
+                    break
+            if entry is None: # no desc match
+                return None
+        else:
+            # Get the metadata frame mediafileect.
+            try:
+                frame = mediafile.mgfile[self.key]
+            except KeyError:
+                return None
 
+            entry = getattr(frame, self.id3_frame_field)
+
+        # Possibly index the list.
+        if self.list_elem:
+            if entry:  # List must have at least one value.
+                # Handle Mutagen bugs when reading values (#356).
+                try:
+                    return entry[0]
+                except:
+                    log.error('Mutagen exception when reading field: %s' %
+                              traceback.format_exc)
+                    return None
+            else:
+                return None
+        else:
+            return entry
+
+    def store(self, mediafile, val):
+        """Store val for this descriptor's field in the tag dictionary
+        according to the provided StorageStyle. Store it as a
+        single-item list if necessary.
+        """
+        # Wrap as a list if necessary.
+        if self.list_elem:
+            out = [val]
+        else:
+            out = val
+
+        # Try to match on "desc" field.
+        if self.id3_desc is not None:
+            frames = mediafile.mgfile.tags.getall(self.key)
+
+            # try modifying in place
+            found = False
+            for frame in frames:
+                if frame.desc.lower() == self.id3_desc.lower():
+                    setattr(frame, self.id3_frame_field, out)
+                    found = True
+                    break
+
+            # need to make a new frame?
+            if not found:
+                assert isinstance(self.id3_frame_field, str)  # Keyword.
+                args = {
+                    'encoding': 3,
+                    'desc': self.id3_desc,
+                    self.id3_frame_field: val,
+                }
+                if self.id3_lang:
+                    args['lang'] = self.id3_lang
+                mediafile.mgfile.tags.add(mutagen.id3.Frames[self.key](**args))
+
+        # Try to match on "owner" field.
+        elif self.key.startswith('UFID:'):
+            owner = self.key.split(':', 1)[1]
+            frames = mediafile.mgfile.tags.getall(self.key)
+
+            for frame in frames:
+                # Replace existing frame data.
+                if frame.owner == owner:
+                    setattr(frame, self.id3_frame_field, val)
+            else:
+                # New frame.
+                assert isinstance(self.id3_frame_field, str)  # Keyword.
+                frame = mutagen.id3.UFID(owner=owner,
+                    **{self.id3_frame_field: val})
+                mediafile.mgfile.tags.setall('UFID', [frame])
+
+        # Just replace based on key.
+        else:
+            assert isinstance(self.id3_frame_field, str)  # Keyword.
+            frame = mutagen.id3.Frames[self.key](encoding=3,
+                **{self.id3_frame_field: val})
+            mediafile.mgfile.tags.setall(self.key, [frame])
+
+
+# Dealing with packings.
 class Packed(object):
     """Makes a packed list of values subscriptable. To access the packed
     output after making changes, use packed_thing.items.
@@ -944,50 +964,50 @@ class MediaFile(object):
     # Field definitions.
 
     title = MediaField(
-        mp3=StorageStyle('TIT2'),
+        mp3=MP3StorageStyle('TIT2'),
         mp4=StorageStyle("\xa9nam"),
         etc=StorageStyle('TITLE'),
         asf=StorageStyle('Title'),
     )
     artist = MediaField(
-        mp3=StorageStyle('TPE1'),
+        mp3=MP3StorageStyle('TPE1'),
         mp4=StorageStyle("\xa9ART"),
         etc=StorageStyle('ARTIST'),
         asf=StorageStyle('Author'),
     )
     album = MediaField(
-        mp3=StorageStyle('TALB'),
+        mp3=MP3StorageStyle('TALB'),
         mp4=StorageStyle("\xa9alb"),
         etc=StorageStyle('ALBUM'),
         asf=StorageStyle('WM/AlbumTitle'),
     )
     genre = MediaField(
-        mp3=StorageStyle('TCON'),
+        mp3=MP3StorageStyle('TCON'),
         mp4=StorageStyle("\xa9gen"),
         etc=StorageStyle('GENRE'),
         asf=StorageStyle('WM/Genre'),
     )
     composer = MediaField(
-        mp3=StorageStyle('TCOM'),
+        mp3=MP3StorageStyle('TCOM'),
         mp4=StorageStyle("\xa9wrt"),
         etc=StorageStyle('COMPOSER'),
         asf=StorageStyle('WM/Composer'),
     )
     grouping = MediaField(
-        mp3=StorageStyle('TIT1'),
+        mp3=MP3StorageStyle('TIT1'),
         mp4=StorageStyle("\xa9grp"),
         etc=StorageStyle('GROUPING'),
         asf=StorageStyle('WM/ContentGroupDescription'),
     )
     track = MediaField(out_type=int,
-        mp3=StorageStyle('TRCK', packing=packing.SLASHED, pack_pos=0),
+        mp3=MP3StorageStyle('TRCK', packing=packing.SLASHED, pack_pos=0),
         mp4=StorageStyle('trkn', packing=packing.TUPLE, pack_pos=0),
         etc=[StorageStyle('TRACK'),
              StorageStyle('TRACKNUMBER')],
         asf=StorageStyle('WM/TrackNumber'),
     )
     tracktotal = MediaField(out_type=int,
-        mp3=StorageStyle('TRCK', packing=packing.SLASHED, pack_pos=1),
+        mp3=MP3StorageStyle('TRCK', packing=packing.SLASHED, pack_pos=1),
         mp4=StorageStyle('trkn', packing=packing.TUPLE, pack_pos=1),
         etc=[StorageStyle('TRACKTOTAL'),
              StorageStyle('TRACKC'),
@@ -995,14 +1015,14 @@ class MediaFile(object):
         asf=StorageStyle('TotalTracks'),
     )
     disc = MediaField(out_type=int,
-        mp3=StorageStyle('TPOS', packing=packing.SLASHED, pack_pos=0),
+        mp3=MP3StorageStyle('TPOS', packing=packing.SLASHED, pack_pos=0),
         mp4=StorageStyle('disk', packing=packing.TUPLE, pack_pos=0),
         etc=[StorageStyle('DISC'),
              StorageStyle('DISCNUMBER')],
         asf=StorageStyle('WM/PartOfSet'),
     )
     disctotal = MediaField(out_type=int,
-        mp3=StorageStyle('TPOS', packing=packing.SLASHED, pack_pos=1),
+        mp3=MP3StorageStyle('TPOS', packing=packing.SLASHED, pack_pos=1),
         mp4=StorageStyle('disk', packing=packing.TUPLE, pack_pos=1),
         etc=[StorageStyle('DISCTOTAL'),
              StorageStyle('DISCC'),
@@ -1010,13 +1030,13 @@ class MediaFile(object):
         asf=StorageStyle('TotalDiscs'),
     )
     lyrics = MediaField(
-        mp3=StorageStyle('USLT', list_elem=False, id3_desc=u''),
+        mp3=MP3StorageStyle('USLT', list_elem=False, id3_desc=u''),
         mp4=StorageStyle("\xa9lyr"),
         etc=StorageStyle('LYRICS'),
         asf=StorageStyle('WM/Lyrics'),
     )
     comments = MediaField(
-        mp3=StorageStyle('COMM', id3_desc=u''),
+        mp3=MP3StorageStyle('COMM', id3_desc=u''),
         mp4=StorageStyle("\xa9cmt"),
         etc=[StorageStyle('DESCRIPTION'),
              StorageStyle('COMMENT')],
@@ -1024,33 +1044,33 @@ class MediaFile(object):
     )
     bpm = MediaField(
         out_type=int,
-        mp3=StorageStyle('TBPM'),
+        mp3=MP3StorageStyle('TBPM'),
         mp4=StorageStyle('tmpo', as_type=int),
         etc=StorageStyle('BPM'),
         asf=StorageStyle('WM/BeatsPerMinute'),
     )
     comp = MediaField(
         out_type=bool,
-        mp3=StorageStyle('TCMP'),
+        mp3=MP3StorageStyle('TCMP'),
         mp4=StorageStyle('cpil', list_elem=False, as_type=bool),
         etc=StorageStyle('COMPILATION'),
         asf=StorageStyle('WM/IsCompilation', as_type=bool),
     )
     albumartist = MediaField(
-        mp3=StorageStyle('TPE2'),
+        mp3=MP3StorageStyle('TPE2'),
         mp4=StorageStyle('aART'),
         etc=[StorageStyle('ALBUM ARTIST'),
              StorageStyle('ALBUMARTIST')],
         asf=StorageStyle('WM/AlbumArtist'),
     )
     albumtype = MediaField(
-        mp3=StorageStyle('TXXX', id3_desc=u'MusicBrainz Album Type'),
+        mp3=MP3StorageStyle('TXXX', id3_desc=u'MusicBrainz Album Type'),
         mp4=StorageStyle('----:com.apple.iTunes:MusicBrainz Album Type'),
         etc=StorageStyle('MUSICBRAINZ_ALBUMTYPE'),
         asf=StorageStyle('MusicBrainz/Album Type'),
     )
     label = MediaField(
-        mp3=StorageStyle('TPUB'),
+        mp3=MP3StorageStyle('TPUB'),
         mp4=[StorageStyle('----:com.apple.iTunes:Label'),
              StorageStyle('----:com.apple.iTunes:publisher')],
         etc=[StorageStyle('LABEL'),
@@ -1058,76 +1078,76 @@ class MediaFile(object):
         asf=StorageStyle('WM/Publisher'),
     )
     artist_sort = MediaField(
-        mp3=StorageStyle('TSOP'),
+        mp3=MP3StorageStyle('TSOP'),
         mp4=StorageStyle("soar"),
         etc=StorageStyle('ARTISTSORT'),
         asf=StorageStyle('WM/ArtistSortOrder'),
     )
     albumartist_sort = MediaField(
-        mp3=StorageStyle('TXXX', id3_desc=u'ALBUMARTISTSORT'),
+        mp3=MP3StorageStyle('TXXX', id3_desc=u'ALBUMARTISTSORT'),
         mp4=StorageStyle("soaa"),
         etc=StorageStyle('ALBUMARTISTSORT'),
         asf=StorageStyle('WM/AlbumArtistSortOrder'),
     )
     asin = MediaField(
-        mp3=StorageStyle('TXXX', id3_desc=u'ASIN'),
+        mp3=MP3StorageStyle('TXXX', id3_desc=u'ASIN'),
         mp4=StorageStyle("----:com.apple.iTunes:ASIN"),
         etc=StorageStyle('ASIN'),
         asf=StorageStyle('MusicBrainz/ASIN'),
     )
     catalognum = MediaField(
-        mp3=StorageStyle('TXXX', id3_desc=u'CATALOGNUMBER'),
+        mp3=MP3StorageStyle('TXXX', id3_desc=u'CATALOGNUMBER'),
         mp4=StorageStyle("----:com.apple.iTunes:CATALOGNUMBER"),
         etc=StorageStyle('CATALOGNUMBER'),
         asf=StorageStyle('WM/CatalogNo'),
     )
     disctitle = MediaField(
-        mp3=StorageStyle('TSST'),
+        mp3=MP3StorageStyle('TSST'),
         mp4=StorageStyle("----:com.apple.iTunes:DISCSUBTITLE"),
         etc=StorageStyle('DISCSUBTITLE'),
         asf=StorageStyle('WM/SetSubTitle'),
     )
     encoder = MediaField(
-        mp3=StorageStyle('TENC'),
+        mp3=MP3StorageStyle('TENC'),
         mp4=StorageStyle("\xa9too"),
         etc=[StorageStyle('ENCODEDBY'),
              StorageStyle('ENCODER')],
         asf=StorageStyle('WM/EncodedBy'),
     )
     script = MediaField(
-        mp3=StorageStyle('TXXX', id3_desc=u'Script'),
+        mp3=MP3StorageStyle('TXXX', id3_desc=u'Script'),
         mp4=StorageStyle("----:com.apple.iTunes:SCRIPT"),
         etc=StorageStyle('SCRIPT'),
         asf=StorageStyle('WM/Script'),
     )
     language = MediaField(
-        mp3=StorageStyle('TLAN'),
+        mp3=MP3StorageStyle('TLAN'),
         mp4=StorageStyle("----:com.apple.iTunes:LANGUAGE"),
         etc=StorageStyle('LANGUAGE'),
         asf=StorageStyle('WM/Language'),
     )
     country = MediaField(
-        mp3=StorageStyle('TXXX', id3_desc='MusicBrainz Album Release Country'),
+        mp3=MP3StorageStyle('TXXX', id3_desc='MusicBrainz Album Release Country'),
         mp4=StorageStyle("----:com.apple.iTunes:MusicBrainz Album "
                          "Release Country"),
         etc=StorageStyle('RELEASECOUNTRY'),
         asf=StorageStyle('MusicBrainz/Album Release Country'),
     )
     albumstatus = MediaField(
-        mp3=StorageStyle('TXXX', id3_desc=u'MusicBrainz Album Status'),
+        mp3=MP3StorageStyle('TXXX', id3_desc=u'MusicBrainz Album Status'),
         mp4=StorageStyle("----:com.apple.iTunes:MusicBrainz Album Status"),
         etc=StorageStyle('MUSICBRAINZ_ALBUMSTATUS'),
         asf=StorageStyle('MusicBrainz/Album Status'),
     )
     media = MediaField(
-        mp3=StorageStyle('TMED'),
+        mp3=MP3StorageStyle('TMED'),
         mp4=StorageStyle("----:com.apple.iTunes:MEDIA"),
         etc=StorageStyle('MEDIA'),
         asf=StorageStyle('WM/Media'),
     )
     albumdisambig = MediaField(
         # This tag mapping was invented for beets (not used by Picard, etc).
-        mp3=StorageStyle('TXXX', id3_desc=u'MusicBrainz Album Comment'),
+        mp3=MP3StorageStyle('TXXX', id3_desc=u'MusicBrainz Album Comment'),
         mp4=StorageStyle("----:com.apple.iTunes:MusicBrainz Album Comment"),
         etc=StorageStyle('MUSICBRAINZ_ALBUMCOMMENT'),
         asf=StorageStyle('MusicBrainz/Album Comment'),
@@ -1136,7 +1156,7 @@ class MediaFile(object):
     # Release date.
     year = MediaField(
         out_type=int,
-        mp3=StorageStyle('TDRC', packing=packing.DATE, pack_pos=0),
+        mp3=MP3StorageStyle('TDRC', packing=packing.DATE, pack_pos=0),
         mp4=StorageStyle("\xa9day", packing=packing.DATE, pack_pos=0),
         etc=[StorageStyle('DATE', packing=packing.DATE, pack_pos=0),
              StorageStyle('YEAR')],
@@ -1144,14 +1164,14 @@ class MediaFile(object):
     )
     month = MediaField(
         out_type=int,
-        mp3=StorageStyle('TDRC', packing=packing.DATE, pack_pos=1),
+        mp3=MP3StorageStyle('TDRC', packing=packing.DATE, pack_pos=1),
         mp4=StorageStyle("\xa9day", packing=packing.DATE, pack_pos=1),
         etc=StorageStyle('DATE', packing=packing.DATE, pack_pos=1),
         asf=StorageStyle('WM/Year', packing=packing.DATE, pack_pos=1),
     )
     day = MediaField(
         out_type=int,
-        mp3=StorageStyle('TDRC', packing=packing.DATE, pack_pos=2),
+        mp3=MP3StorageStyle('TDRC', packing=packing.DATE, pack_pos=2),
         mp4=StorageStyle("\xa9day", packing=packing.DATE, pack_pos=2),
         etc=StorageStyle('DATE', packing=packing.DATE, pack_pos=2),
         asf=StorageStyle('WM/Year', packing=packing.DATE, pack_pos=2),
@@ -1160,7 +1180,7 @@ class MediaFile(object):
 
     # *Original* release date.
     original_year = MediaField(out_type=int,
-        mp3=StorageStyle('TDOR', packing=packing.DATE, pack_pos=0),
+        mp3=MP3StorageStyle('TDOR', packing=packing.DATE, pack_pos=0),
         mp4=StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR',
                          packing=packing.DATE, pack_pos=0),
         etc=StorageStyle('ORIGINALDATE', packing=packing.DATE, pack_pos=0),
@@ -1168,7 +1188,7 @@ class MediaFile(object):
                          pack_pos=0),
     )
     original_month = MediaField(out_type=int,
-        mp3=StorageStyle('TDOR', packing=packing.DATE, pack_pos=1),
+        mp3=MP3StorageStyle('TDOR', packing=packing.DATE, pack_pos=1),
         mp4=StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR',
                          packing=packing.DATE, pack_pos=1),
         etc=StorageStyle('ORIGINALDATE', packing=packing.DATE, pack_pos=1),
@@ -1176,7 +1196,7 @@ class MediaFile(object):
                          pack_pos=1),
     )
     original_day = MediaField(out_type=int,
-        mp3=StorageStyle('TDOR', packing=packing.DATE, pack_pos=2),
+        mp3=MP3StorageStyle('TDOR', packing=packing.DATE, pack_pos=2),
         mp4=StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR',
                          packing=packing.DATE, pack_pos=2),
         etc=StorageStyle('ORIGINALDATE', packing=packing.DATE, pack_pos=2),
@@ -1188,13 +1208,13 @@ class MediaFile(object):
 
     # Nonstandard metadata.
     artist_credit = MediaField(
-        mp3=StorageStyle('TXXX', id3_desc=u'Artist Credit'),
+        mp3=MP3StorageStyle('TXXX', id3_desc=u'Artist Credit'),
         mp4=StorageStyle("----:com.apple.iTunes:Artist Credit"),
         etc=StorageStyle('ARTIST_CREDIT'),
         asf=StorageStyle('beets/Artist Credit'),
     )
     albumartist_credit = MediaField(
-        mp3=StorageStyle('TXXX', id3_desc=u'Album Artist Credit'),
+        mp3=MP3StorageStyle('TXXX', id3_desc=u'Album Artist Credit'),
         mp4=StorageStyle("----:com.apple.iTunes:Album Artist Credit"),
         etc=StorageStyle('ALBUMARTIST_CREDIT'),
         asf=StorageStyle('beets/Album Artist Credit'),
@@ -1205,7 +1225,7 @@ class MediaFile(object):
 
     # MusicBrainz IDs.
     mb_trackid = MediaField(
-        mp3=StorageStyle('UFID:http://musicbrainz.org',
+        mp3=MP3StorageStyle('UFID:http://musicbrainz.org',
                           list_elem=False,
                           id3_frame_field='data'),
         mp4=StorageStyle('----:com.apple.iTunes:MusicBrainz Track Id',
@@ -1214,21 +1234,21 @@ class MediaFile(object):
         asf=StorageStyle('MusicBrainz/Track Id'),
     )
     mb_albumid = MediaField(
-        mp3=StorageStyle('TXXX', id3_desc=u'MusicBrainz Album Id'),
+        mp3=MP3StorageStyle('TXXX', id3_desc=u'MusicBrainz Album Id'),
         mp4=StorageStyle('----:com.apple.iTunes:MusicBrainz Album Id',
                          as_type=str),
         etc=StorageStyle('MUSICBRAINZ_ALBUMID'),
         asf=StorageStyle('MusicBrainz/Album Id'),
     )
     mb_artistid = MediaField(
-        mp3=StorageStyle('TXXX', id3_desc=u'MusicBrainz Artist Id'),
+        mp3=MP3StorageStyle('TXXX', id3_desc=u'MusicBrainz Artist Id'),
         mp4=StorageStyle('----:com.apple.iTunes:MusicBrainz Artist Id',
                          as_type=str),
         etc=StorageStyle('MUSICBRAINZ_ARTISTID'),
         asf=StorageStyle('MusicBrainz/Artist Id'),
     )
     mb_albumartistid = MediaField(
-        mp3=StorageStyle('TXXX',
+        mp3=MP3StorageStyle('TXXX',
                           id3_desc=u'MusicBrainz Album Artist Id'),
         mp4=StorageStyle('----:com.apple.iTunes:MusicBrainz Album Artist Id',
                          as_type=str),
@@ -1236,7 +1256,7 @@ class MediaFile(object):
         asf=StorageStyle('MusicBrainz/Album Artist Id'),
     )
     mb_releasegroupid = MediaField(
-        mp3=StorageStyle('TXXX',
+        mp3=MP3StorageStyle('TXXX',
                           id3_desc=u'MusicBrainz Release Group Id'),
         mp4=StorageStyle('----:com.apple.iTunes:MusicBrainz Release Group Id',
                          as_type=str),
@@ -1246,7 +1266,7 @@ class MediaFile(object):
 
     # Acoustid fields.
     acoustid_fingerprint = MediaField(
-        mp3=StorageStyle('TXXX',
+        mp3=MP3StorageStyle('TXXX',
                           id3_desc=u'Acoustid Fingerprint'),
         mp4=StorageStyle('----:com.apple.iTunes:Acoustid Fingerprint',
                          as_type=str),
@@ -1254,7 +1274,7 @@ class MediaFile(object):
         asf=StorageStyle('Acoustid/Fingerprint'),
     )
     acoustid_id = MediaField(
-        mp3=StorageStyle('TXXX',
+        mp3=MP3StorageStyle('TXXX',
                          id3_desc=u'Acoustid Id'),
         mp4=StorageStyle('----:com.apple.iTunes:Acoustid Id',
                          as_type=str),
@@ -1265,11 +1285,11 @@ class MediaFile(object):
     # ReplayGain fields.
     rg_track_gain = MediaField(out_type=float,
         mp3=[
-            StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_TRACK_GAIN',
+            MP3StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_TRACK_GAIN',
                          float_places=2, suffix=u' dB'),
-            StorageStyle('TXXX', id3_desc=u'replaygain_track_gain',
+            MP3StorageStyle('TXXX', id3_desc=u'replaygain_track_gain',
                          float_places=2, suffix=u' dB'),
-            StorageStyle('COMM', id3_desc=u'iTunNORM', id3_lang='eng',
+            MP3StorageStyle('COMM', id3_desc=u'iTunNORM', id3_lang='eng',
                          packing=packing.SC, pack_pos=0, pack_type=float),
         ],
         mp4=[
@@ -1285,9 +1305,9 @@ class MediaFile(object):
     )
     rg_album_gain = MediaField(out_type=float,
         mp3=[
-            StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_ALBUM_GAIN',
+            MP3StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_ALBUM_GAIN',
                          float_places=2, suffix=u' dB'),
-            StorageStyle('TXXX', id3_desc=u'replaygain_album_gain',
+            MP3StorageStyle('TXXX', id3_desc=u'replaygain_album_gain',
                          float_places=2, suffix=u' dB'),
         ],
         mp4=StorageStyle('----:com.apple.iTunes:replaygain_album_gain',
@@ -1299,17 +1319,17 @@ class MediaFile(object):
     )
     rg_track_peak = MediaField(out_type=float,
         mp3=[
-            StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_TRACK_PEAK',
+            MP3StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_TRACK_PEAK',
                          float_places=6),
-            StorageStyle('TXXX', id3_desc=u'replaygain_track_peak',
+            MP3StorageStyle('TXXX', id3_desc=u'replaygain_track_peak',
                          float_places=6),
-            StorageStyle('COMM', id3_desc=u'iTunNORM', id3_lang='eng',
+            MP3StorageStyle('COMM', id3_desc=u'iTunNORM', id3_lang='eng',
                          packing=packing.SC, pack_pos=1, pack_type=float),
         ],
         mp4=[
-            StorageStyle('----:com.apple.iTunes:replaygain_track_peak',
+            MP3StorageStyle('----:com.apple.iTunes:replaygain_track_peak',
                          as_type=str, float_places=6),
-            StorageStyle('----:com.apple.iTunes:iTunNORM',
+            MP3StorageStyle('----:com.apple.iTunes:iTunNORM',
                          packing=packing.SC, pack_pos=1, pack_type=float),
         ],
         etc=StorageStyle(u'REPLAYGAIN_TRACK_PEAK',
@@ -1319,9 +1339,9 @@ class MediaFile(object):
     )
     rg_album_peak = MediaField(out_type=float,
         mp3=[
-            StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_ALBUM_PEAK',
+            MP3StorageStyle('TXXX', id3_desc=u'REPLAYGAIN_ALBUM_PEAK',
                          float_places=6),
-            StorageStyle('TXXX', id3_desc=u'replaygain_album_peak',
+            MP3StorageStyle('TXXX', id3_desc=u'replaygain_album_peak',
                          float_places=6),
         ],
         mp4=StorageStyle('----:com.apple.iTunes:replaygain_album_peak',
