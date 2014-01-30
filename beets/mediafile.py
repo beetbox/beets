@@ -322,16 +322,44 @@ class StorageStyle(object):
             return entry
 
     def get(self, mediafile):
-        out = self.fetch(mediafile)
+        data = self.fetch(mediafile)
+        self.out_type = self.pack_type
         if self.packing:
-            p = Packed(out, self.packing, out_type=self.pack_type)
-            out = p[self.pack_pos]
-        if self.suffix and isinstance(out, (str, unicode)):
-            if out.endswith(self.suffix):
-                out = out[:-len(self.suffix)]
+            data = self.unpack(data, self.pack_pos, self.packing)
+        if self.suffix and isinstance(data, (str, unicode)):
+            if data.endswith(self.suffix):
+                data = data[:-len(self.suffix)]
         if mediafile.type in MP4_TYPES and self.key.startswith('----:') and \
-                isinstance(out, str):
-            out = out.decode('utf8')
+                isinstance(data, str):
+            data = data.decode('utf8')
+        return data
+
+    def unpack(self, items, index, packstyle):
+        if not isinstance(index, int):
+            raise TypeError('index must be an integer')
+
+        if items is None:
+            return None
+
+        if packstyle == packing.DATE:
+            # Remove time information from dates. Usually delimited by
+            # a "T" or a space.
+            items = re.sub(r'[Tt ].*$', '', unicode(items))
+
+        # transform from a string packing into a list we can index into
+        if packstyle == packing.SLASHED:
+            seq = unicode(items).split('/')
+        elif packstyle == packing.DATE:
+            seq = unicode(items).split('-')
+        elif packstyle == packing.TUPLE:
+            seq = items # tuple: items is already indexable
+        elif packstyle == packing.SC:
+            seq = _sc_decode(items)
+
+        try:
+            out = seq[index]
+        except:
+            out = None
         return out
 
     def store(self, mediafile, val):
