@@ -294,6 +294,57 @@ class ID3v23Test(unittest.TestCase):
             self._delete_test()
 
 
+class ReadWriteTest(unittest.TestCase):
+    """Test writing and reading tags
+    """
+
+    extensions = ['mp3', 'm4a', 'alac.m4a', 'mpc',
+            'flac', 'ape', 'ogg', 'wma', 'wv']
+
+    def test_read_common(self):
+        for ext in self.extensions:
+            mediafile = full_mediafile_fixture()
+            self.assertEqual(mediafile.title, 'full')
+            self.assertEqual(mediafile.album, 'the album')
+            self.assertEqual(mediafile.artist, 'the artist')
+            self.assertEqual(mediafile.year, 2001)
+            self.assertEqual(mediafile.track, 2)
+
+    def test_read_write_original_year(self):
+        for ext in self.extensions:
+            mediafile = full_mediafile_fixture()
+            mediafile.original_year = 1999
+            mediafile.save()
+
+            mediafile = beets.mediafile.MediaFile(mediafile.path)
+            self.assertEqual(mediafile.original_year, 1999)
+
+    def test_write_common(self):
+        for ext in self.extensions:
+            mediafile = full_mediafile_fixture()
+            mediafile.title = 'empty'
+            mediafile.album = 'another album'
+            mediafile.artist = 'another artist'
+            mediafile.year = 2002
+            mediafile.track =  3
+            mediafile.save()
+
+            mediafile = beets.mediafile.MediaFile(mediafile.path)
+            self.assertEqual(mediafile.title, 'empty')
+            self.assertEqual(mediafile.album, 'another album')
+            self.assertEqual(mediafile.artist, 'another artist')
+            self.assertEqual(mediafile.year, 2002)
+            self.assertEqual(mediafile.track, 3)
+
+
+def full_mediafile_fixture(ext='mp3'):
+    """Returns a Mediafile with a lot of tags already set.
+    """
+    src = os.path.join(_common.RSRC, 'full.{0}'.format(ext))
+    path = os.path.join(_common.RSRC, 'test.{0}'.format(ext))
+    shutil.copy(src, path)
+    return beets.mediafile.MediaFile(path)
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
