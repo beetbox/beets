@@ -544,48 +544,39 @@ class MediaField(object):
         # a single style for convenience.
         if isinstance(styles, StorageStyle):
             return [styles]
-        else:
+        if hasattr(styles, '__iter__'):
             return styles
+        return []
 
     def __get__(self, obj, owner):
         """Retrieve the value of this metadata field.
         """
-        # Fetch the data using the various StorageStyles.
-        styles = self._styles(obj)
-        if styles is None:
-            out = None
-        else:
-            for style in styles:
-                # Use the first style that returns a reasonable value.
-                out = self._fetchdata(obj, style)
-                if out:
-                    break
+        for style in self._styles(obj):
+            # Use the first style that returns a reasonable value.
+            out = self._fetchdata(obj, style)
+            if out:
+                break
 
-            if style.packing:
-                p = Packed(out, style.packing, out_type=style.pack_type)
-                out = p[style.pack_pos]
+        if style.packing:
+            p = Packed(out, style.packing, out_type=style.pack_type)
+            out = p[style.pack_pos]
 
-            # Remove suffix.
-            if style.suffix and isinstance(out, (str, unicode)):
-                if out.endswith(style.suffix):
-                    out = out[:-len(style.suffix)]
+        # Remove suffix.
+        if style.suffix and isinstance(out, (str, unicode)):
+            if out.endswith(style.suffix):
+                out = out[:-len(style.suffix)]
 
-            # MPEG-4 freeform frames are (should be?) encoded as UTF-8.
-            if obj.type in MP4_TYPES and style.key.startswith('----:') and \
-                    isinstance(out, str):
-                out = out.decode('utf8')
+        # MPEG-4 freeform frames are (should be?) encoded as UTF-8.
+        if obj.type in MP4_TYPES and style.key.startswith('----:') and \
+                isinstance(out, str):
+            out = out.decode('utf8')
 
         return _safe_cast(self.out_type, out)
 
     def __set__(self, obj, val):
         """Set the value of this metadata field.
         """
-        # Store using every StorageStyle available.
-        styles = self._styles(obj)
-        if styles is None:
-            return
-
-        for style in styles:
+        for style in self._styles(obj):
 
             if style.packing:
                 p = Packed(self._fetchdata(obj, style), style.packing,
