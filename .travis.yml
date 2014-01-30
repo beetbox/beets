@@ -14,7 +14,7 @@ install:
     # unittest backport on Python < 2.7
     - "[[ $TRAVIS_PYTHON_VERSION == '2.6' ]] && pip install unittest2 || true"
 
-script: coverage run --source=beets setup.py test
+script: nosetests --with-coverage --cover-package=beets
 
 # coveralls.io reporting, using https://github.com/coagulant/coveralls-python
 # Only report coverage for one version.
