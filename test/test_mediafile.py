@@ -293,7 +293,7 @@ class ReadWriteTest(unittest.TestCase):
 
     def test_read_common(self):
         for ext in self.extensions:
-            mediafile = full_mediafile_fixture()
+            mediafile = full_mediafile_fixture(ext)
             self.assertEqual(mediafile.title, 'full')
             self.assertEqual(mediafile.album, 'the album')
             self.assertEqual(mediafile.artist, 'the artist')
@@ -303,11 +303,10 @@ class ReadWriteTest(unittest.TestCase):
             self.assertEqual(mediafile.comp, True)
             self.assertEqual(mediafile.lyrics, 'the lyrics')
             self.assertEqual(mediafile.rg_track_gain, 0.0)
-            self.assertEqual(mediafile.rg_track_peak, 0.000244)
 
     def test_write_common(self):
         for ext in self.extensions:
-            mediafile = full_mediafile_fixture()
+            mediafile = full_mediafile_fixture(ext)
             mediafile.title = 'empty'
             mediafile.album = 'another album'
             mediafile.artist = 'another artist'
@@ -332,7 +331,7 @@ class ReadWriteTest(unittest.TestCase):
 
     def test_write_original_date(self):
         for ext in self.extensions:
-            mediafile = full_mediafile_fixture()
+            mediafile = full_mediafile_fixture(ext)
             mediafile.original_year = 1999
             mediafile.original_month = 12
             mediafile.original_day = 30
@@ -346,19 +345,19 @@ class ReadWriteTest(unittest.TestCase):
 
     def test_read_write_float_none(self):
         for ext in self.extensions:
-            mediafile = full_mediafile_fixture()
+            mediafile = full_mediafile_fixture(ext)
             mediafile.rg_track_gain = None
             mediafile.rg_track_peak = None
-            # mediafile.original_year = None
-            # mediafile.original_month = None
-            # # mediafile.original_day = None
+            mediafile.original_year = None
+            mediafile.original_month = None
+            mediafile.original_day = None
             mediafile.save()
 
             self.assertEqual(mediafile.rg_track_gain, 0)
             self.assertEqual(mediafile.rg_track_peak, 0)
-            # self.assertEqual(mediafile.original_year, 0)
-            # self.assertEqual(mediafile.original_month, 0)
-            # self.assertEqual(mediafile.original_day, 0)
+            self.assertEqual(mediafile.original_year, 0)
+            self.assertEqual(mediafile.original_month, 0)
+            self.assertEqual(mediafile.original_day, 0)
 
 
 def full_mediafile_fixture(ext='mp3'):

@@ -299,7 +299,6 @@ class StorageStyle(object):
         self.id3_lang = id3_lang
         self.suffix = suffix
         self.float_places = float_places
-        self.out_type = self.pack_type
 
         # Convert suffix to correct string type.
         if self.suffix and self.as_type in (str, unicode):
@@ -327,7 +326,7 @@ class StorageStyle(object):
         if self.packing:
             try:
                 data = self.unpack(data)[self.pack_pos]
-            except KeyError:
+            except IndexError:
                 data = None
 
         if self.suffix and isinstance(data, (str, unicode)):
@@ -377,22 +376,31 @@ class StorageStyle(object):
         self.store(mediafile, value)
 
     def pack(self, data, value):
-        if self.out_type is int:
+        if self.pack_type is int:
             none_val = 0
-        elif self.out_type is float:
+        elif self.pack_type is float:
             none_val = 0.0
         else:
             none_val = None
         if value is None:
             value = none_val
 
-        items = list(self.unpack(data))
+        olditems = list(self.unpack(data))
         length = self.pack_pos + 1
         if self.packing == packing.DATE:
             length = 3
 
+        items = []
+        for i in range(len(olditems)):
+            item = olditems[i]
+            if item:
+                items.append(item)
+            else:
+                items.append(none_val)
+
         for i in range(len(items), length):
             items.append(none_val)
+
         items[self.pack_pos] = value
 
         if self.packing == packing.DATE:
@@ -413,6 +421,8 @@ class StorageStyle(object):
             data = '-'.join(elems)
         elif self.packing == packing.SC:
             data = _sc_encode(*items)
+        else:
+            data = tuple(items)
 
         return data
 
@@ -453,6 +463,12 @@ class StorageStyle(object):
 class MP4StorageStyle(StorageStyle):
     def serialize(self, value):
         value = super(MP4StorageStyle, self).serialize(value)
+        if self.key.startswith('----:') and isinstance(value, unicode):
+            value = value.encode('utf8')
+        return value
+
+    def pack(self, data, value):
+        value = super(MP4StorageStyle, self).pack(data, value)
         if self.key.startswith('----:') and isinstance(value, unicode):
             value = value.encode('utf8')
         return value
