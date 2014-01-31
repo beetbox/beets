@@ -127,12 +127,11 @@ class ReadWriteTestBase(object):
 
     def test_read_full(self):
         mediafile = self._mediafile_fixture('full')
-        tags = self.full_initial_tags
-        self.assertEqual(self._get_tags(mediafile, tags.keys()), tags)
+        self.assertTags(mediafile, self.full_initial_tags)
 
     def test_read_empty(self):
         mediafile = self._mediafile_fixture('empty')
-        self.assertEqual(self._get_tags(mediafile), self.empty_tags)
+        self.assertTags(mediafile, self.empty_tags)
 
     def test_write_empty(self):
         mediafile = self._mediafile_fixture('empty')
@@ -143,7 +142,7 @@ class ReadWriteTestBase(object):
         mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
-        self.assertEqual(self._get_tags(mediafile, tags.keys()), tags)
+        self.assertTags(mediafile, tags)
 
     def test_overwrite_full(self):
         mediafile = self._mediafile_fixture('full')
@@ -159,7 +158,7 @@ class ReadWriteTestBase(object):
         mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
-        self.assertEqual(self._get_tags(mediafile, tags.keys()), tags)
+        self.assertTags(mediafile, tags)
 
     def test_write_date_components(self):
         mediafile = self._mediafile_fixture('full')
@@ -213,6 +212,19 @@ class ReadWriteTestBase(object):
         self.assertEqual(mediafile.original_month, 0)
         self.assertEqual(mediafile.original_day, 0)
 
+    def assertTags(self, mediafile, tags):
+        errors = []
+        for key, value in tags.items():
+            try:
+                self.assertEqual(getattr(mediafile, key), value)
+            except AssertionError as e:
+                errors.append(e)
+            except AttributeError as e:
+                errors.append(e)
+        if any(errors):
+            errors = ['Tags did not match'] + errors
+            self.fail('\n  '.join(map(str, errors)))
+
     def _mediafile_fixture(self, name):
         name = name + '.' + self.extension
         src = os.path.join(_common.RSRC, name)
@@ -250,12 +262,6 @@ class ReadWriteTestBase(object):
         tags['original_day'] = original_date.day
         return tags
     
-    def _get_tags(self, mediafile, keys=None):
-        tags = {}
-        if keys is None:
-            keys = self.empty_tags.keys()
-        return dict([(key, getattr(mediafile, key)) for key in keys])
-
 
 class WithoutTotalTestMixin(object):
     tags_without_total = {
