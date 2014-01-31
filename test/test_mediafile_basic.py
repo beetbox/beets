@@ -213,6 +213,37 @@ class ReadWriteTestBase(object):
         self.assertEqual(mediafile.original_month, 0)
         self.assertEqual(mediafile.original_day, 0)
 
+    def test_write_packed(self):
+        mediafile = self._mediafile_fixture('empty')
+
+        mediafile.tracktotal = 2
+        mediafile.track = 1
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(mediafile.track, 1)
+        self.assertEqual(mediafile.tracktotal, 2)
+
+    def test_write_counters_without_total(self):
+        mediafile = self._mediafile_fixture('full')
+        self.assertEqual(mediafile.track, 2)
+        self.assertEqual(mediafile.tracktotal, 3)
+        self.assertEqual(mediafile.disc, 4)
+        self.assertEqual(mediafile.disctotal, 5)
+
+        mediafile.track = 10
+        mediafile.tracktotal = None
+        mediafile.disc = 10
+        mediafile.disctotal = None
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(mediafile.track, 10)
+        self.assertEqual(mediafile.tracktotal, 0)
+        self.assertEqual(mediafile.disc, 10)
+        self.assertEqual(mediafile.disctotal, 0)
+
+
     def assertTags(self, mediafile, tags):
         __unittest = True
         errors = []
@@ -266,7 +297,7 @@ class ReadWriteTestBase(object):
         return tags
     
 
-class WithoutTotalTestMixin(object):
+class PartialTestMixin(object):
     tags_without_total = {
         'track':      2,
         'tracktotal': 0,
@@ -281,27 +312,8 @@ class WithoutTotalTestMixin(object):
         self.assertEqual(mediafile.disc, 4)
         self.assertEqual(mediafile.disctotal, 0)
 
-    def test_write_track_without_total(self):
-        mediafile = self._mediafile_fixture('full')
-        self.assertEqual(mediafile.track, 2)
-        self.assertEqual(mediafile.tracktotal, 3)
-        self.assertEqual(mediafile.disc, 4)
-        self.assertEqual(mediafile.disctotal, 5)
 
-        mediafile.track = 10
-        mediafile.tracktotal = None
-        mediafile.disc = 10
-        mediafile.disctotal = None
-        mediafile.save()
-
-        mediafile = MediaFile(mediafile.path)
-        self.assertEqual(mediafile.track, 10)
-        self.assertEqual(mediafile.tracktotal, 0)
-        self.assertEqual(mediafile.disc, 10)
-        self.assertEqual(mediafile.disctotal, 0)
-
-
-class MP3Test(ReadWriteTestBase, WithoutTotalTestMixin, unittest.TestCase):
+class MP3Test(ReadWriteTestBase, PartialTestMixin, unittest.TestCase):
     extension = 'mp3'
     audio_properties = {
         'length': 1.0,
@@ -311,7 +323,7 @@ class MP3Test(ReadWriteTestBase, WithoutTotalTestMixin, unittest.TestCase):
         'bitdepth': 0,
         'channels': 1,
     }
-class MP4Test(ReadWriteTestBase, WithoutTotalTestMixin, unittest.TestCase):
+class MP4Test(ReadWriteTestBase, PartialTestMixin, unittest.TestCase):
     extension = 'm4a'
     audio_properties = {
         'length': 1.0,
@@ -361,7 +373,7 @@ class OggTest(ReadWriteTestBase, unittest.TestCase):
         'bitdepth': 0,
         'channels': 1,
     }
-class FlacTest(ReadWriteTestBase, WithoutTotalTestMixin, unittest.TestCase):
+class FlacTest(ReadWriteTestBase, PartialTestMixin, unittest.TestCase):
     extension = 'flac'
     audio_properties = {
         'length': 1.0,

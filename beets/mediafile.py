@@ -398,7 +398,7 @@ class StorageStyle(object):
 
         items[self.pack_pos] = value
 
-        if not self.packing in [packing.SC, packing.TUPLE]:
+        if self.packing == packing.DATE:
             # Truncate the items wherever we reach an invalid (none)
             # entry. This prevents dates like 2008-00-05.
             for i, item in enumerate(items):
@@ -420,7 +420,6 @@ class StorageStyle(object):
             data = tuple(items)
 
         return data
-
 
     def serialize(self, out):
         """Convert value to a type that is suitable for storing in a tag
