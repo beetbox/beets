@@ -15,6 +15,7 @@
 """Automatically-generated blanket testing for the MediaFile metadata
 layer.
 """
+import sys
 import os
 import shutil
 import tempfile
@@ -213,17 +214,19 @@ class ReadWriteTestBase(object):
         self.assertEqual(mediafile.original_day, 0)
 
     def assertTags(self, mediafile, tags):
+        __unittest = True
         errors = []
         for key, value in tags.items():
             try:
-                self.assertEqual(getattr(mediafile, key), value)
-            except AssertionError as e:
-                errors.append(e)
-            except AttributeError as e:
-                errors.append(e)
+                value2 = getattr(mediafile, key)
+            except AttributeError:
+                errors.append('Tag %s does not exist' % key)
+            if value2 != value:
+                errors.append('Tag %s: %s != %s' %
+                        (key, value2, value))
         if any(errors):
             errors = ['Tags did not match'] + errors
-            self.fail('\n  '.join(map(str, errors)))
+            self.fail('\n  '.join(errors))
 
     def _mediafile_fixture(self, name):
         name = name + '.' + self.extension
