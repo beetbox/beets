@@ -389,6 +389,8 @@ class StorageStyle(object):
         length = self.pack_pos + 1
         if self.packing == packing.DATE:
             length = 3
+        if self.packing == packing.SC:
+            length = 2
 
         items = []
         for i in range(len(olditems)):

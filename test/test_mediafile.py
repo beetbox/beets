@@ -304,9 +304,12 @@ class ReadWriteTest(unittest.TestCase):
             self.assertEqual(mediafile.lyrics, 'the lyrics')
             self.assertEqual(mediafile.rg_track_gain, 0.0)
 
-    def test_write_common(self):
+    def test_empty_write_common(self):
+        """Set tags on files which do not have tags yet
+        """
         for ext in self.extensions:
-            mediafile = full_mediafile_fixture(ext)
+            mediafile = empty_mediafile_fixture(ext)
+
             mediafile.title = 'empty'
             mediafile.album = 'another album'
             mediafile.artist = 'another artist'
@@ -314,6 +317,7 @@ class ReadWriteTest(unittest.TestCase):
             mediafile.track = 3
             mediafile.tracktotal = 4
             mediafile.comp = False
+            mediafile.catalognum = 'CD1'
             mediafile.rg_track_gain = 1.0
             mediafile.rg_track_peak = -1.0
             mediafile.save()
@@ -326,18 +330,55 @@ class ReadWriteTest(unittest.TestCase):
             self.assertEqual(mediafile.track, 3)
             self.assertEqual(mediafile.tracktotal, 4)
             self.assertEqual(mediafile.comp, False)
+            self.assertEqual(mediafile.catalognum, 'CD1')
+            self.assertEqual(mediafile.rg_track_gain, 1.0)
+            self.assertEqual(mediafile.rg_track_peak, -1.0)
+    def test_overwrite_common(self):
+        for ext in self.extensions:
+            mediafile = full_mediafile_fixture(ext)
+
+            # Make sure the tags are already set when writing a second time
+            for i in range(2):
+                mediafile.title = 'empty'
+                mediafile.album = 'another album'
+                mediafile.artist = 'another artist'
+                mediafile.year = 2002
+                mediafile.track = 3
+                mediafile.tracktotal = 4
+                mediafile.comp = False
+                mediafile.catalognum = 'CD1'
+                mediafile.rg_track_gain = 1.0
+                mediafile.rg_track_peak = -1.0
+                mediafile.save()
+                mediafile = beets.mediafile.MediaFile(mediafile.path)
+
+            self.assertEqual(mediafile.title, 'empty')
+            self.assertEqual(mediafile.album, 'another album')
+            self.assertEqual(mediafile.artist, 'another artist')
+            self.assertEqual(mediafile.year, 2002)
+            self.assertEqual(mediafile.track, 3)
+            self.assertEqual(mediafile.tracktotal, 4)
+            self.assertEqual(mediafile.comp, False)
+            self.assertEqual(mediafile.catalognum, 'CD1')
             self.assertEqual(mediafile.rg_track_gain, 1.0)
             self.assertEqual(mediafile.rg_track_peak, -1.0)
 
-    def test_write_original_date(self):
+    def test_read_write_full_dates(self):
         for ext in self.extensions:
             mediafile = full_mediafile_fixture(ext)
+            mediafile.year = 2001
+            mediafile.month = 1
+            mediafile.day = 2
             mediafile.original_year = 1999
             mediafile.original_month = 12
             mediafile.original_day = 30
             mediafile.save()
 
             mediafile = beets.mediafile.MediaFile(mediafile.path)
+            self.assertEqual(mediafile.year, 2001)
+            self.assertEqual(mediafile.month, 1)
+            self.assertEqual(mediafile.day, 2)
+            self.assertEqual(mediafile.date, date(2001,1,2))
             self.assertEqual(mediafile.original_year, 1999)
             self.assertEqual(mediafile.original_month, 12)
             self.assertEqual(mediafile.original_day, 30)
@@ -383,6 +424,14 @@ def full_mediafile_fixture(ext):
     """
     src = os.path.join(_common.RSRC, 'full.{0}'.format(ext))
     path = os.path.join(_common.RSRC, 'test.{0}'.format(ext))
+    shutil.copy(src, path)
+    return beets.mediafile.MediaFile(path)
+
+def empty_mediafile_fixture(ext):
+    """Returns a Mediafile with no tags set.
+    """
+    src = os.path.join(_common.RSRC, 'empty.{0}'.format(ext))
+    path = os.path.join(_common.RSRC, 'test_empty.{0}'.format(ext))
     shutil.copy(src, path)
     return beets.mediafile.MediaFile(path)
 
