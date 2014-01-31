@@ -257,6 +257,7 @@ packing = enum('SLASHED',   # pair delimited by /
                'DATE',      # YYYY-MM-DD
                'SC',        # Sound Check gain/peak encoding
                name='packing')
+packing_type = packing
 
 class StorageStyle(object):
     """Parameterizes the storage behavior of a single field for a
@@ -300,6 +301,11 @@ class StorageStyle(object):
         self.suffix = suffix
         self.float_places = float_places
 
+        if self.packing == packing_type.DATE:
+            self.packing_length = 3
+        else:
+            self.packing_length = 2
+
         # Convert suffix to correct string type.
         if self.suffix and self.as_type in (str, unicode):
             self.suffix = self.as_type(self.suffix)
@@ -336,7 +342,7 @@ class StorageStyle(object):
 
     def unpack(self, data):
         if data is None:
-            return []
+            return [None]*self.packing_length
 
         if self.packing == packing.DATE:
             # Remove time information from dates. Usually delimited by
@@ -350,7 +356,7 @@ class StorageStyle(object):
         elif self.packing == packing.SC:
             items = _sc_decode(data)
 
-        return items
+        return list(items) + [None]*(self.packing_length - len(items))
 
 
     def store(self, mediafile, val):
@@ -385,27 +391,14 @@ class StorageStyle(object):
         if value is None:
             value = none_val
 
-        olditems = list(self.unpack(data))
-        length = self.pack_pos + 1
-        if self.packing == packing.DATE:
-            length = 3
-        if self.packing == packing.SC:
-            length = 2
-
-        items = []
-        for i in range(len(olditems)):
-            item = olditems[i]
-            if item:
-                items.append(item)
-            else:
-                items.append(none_val)
-
-        for i in range(len(items), length):
-            items.append(none_val)
+        items = list(self.unpack(data))
+        for i in range(len(items)):
+            if not items[i]:
+                items[i] = none_val
 
         items[self.pack_pos] = value
 
-        if self.packing == packing.DATE:
+        if not self.packing in [packing.SC, packing.TUPLE]:
             # Truncate the items wherever we reach an invalid (none)
             # entry. This prevents dates like 2008-00-05.
             for i, item in enumerate(items):
@@ -542,24 +535,26 @@ class MP3UFIDStorageStyle(MP3StorageStyle):
 
 class MP3DescStorageStyle(MP3StorageStyle):
 
-    def __init__(self, desc, key='TXXX', **kwargs):
+    def __init__(self, desc=u'', key='TXXX', **kwargs):
         self.description = desc
         super(MP3DescStorageStyle, self).__init__(key=key, **kwargs)
 
     def store(self, mediafile, value):
         frames = mediafile.mgfile.tags.getall(self.key)
+        if self.key != 'USLT':
+            value = [value]
 
         # try modifying in place
         found = False
         for frame in frames:
             if frame.desc.lower() == self.description.lower():
-                frame.text = [value]
+                frame.text = value
                 found = True
 
         # need to make a new frame?
         if not found:
             frame = mutagen.id3.Frames[self.key](
-                    desc=self.description, text=[value], encoding=3)
+                    desc=str(self.description), text=value, encoding=3)
             if self.id3_lang:
                 frame.lang = self.id3_lang
             mediafile.mgfile.tags.add(frame)
@@ -1005,13 +1000,13 @@ class MediaFile(object):
         asf=StorageStyle('TotalDiscs'),
     )
     lyrics = MediaField(
-        mp3=MP3DescStorageStyle(u'', key='USLT'),
+        mp3=MP3DescStorageStyle(key='USLT'),
         mp4=MP4StorageStyle("\xa9lyr"),
         etc=StorageStyle('LYRICS'),
         asf=StorageStyle('WM/Lyrics'),
     )
     comments = MediaField(
-        mp3=MP3StorageStyle('COMM', id3_desc=u''),
+        mp3=MP3DescStorageStyle(key='COMM'),
         mp4=MP4StorageStyle("\xa9cmt"),
         etc=[StorageStyle('DESCRIPTION'),
              StorageStyle('COMMENT')],
@@ -1260,7 +1255,7 @@ class MediaFile(object):
                          float_places=2, suffix=u' dB'),
             MP3DescStorageStyle(u'replaygain_track_gain',
                          float_places=2, suffix=u' dB'),
-            MP3StorageStyle('COMM', id3_desc=u'iTunNORM', id3_lang='eng',
+            MP3DescStorageStyle(key='COMM', desc=u'iTunNORM', id3_lang='eng',
                          packing=packing.SC, pack_pos=0, pack_type=float),
         ],
         mp4=[
@@ -1294,7 +1289,7 @@ class MediaFile(object):
                          float_places=6),
             MP3DescStorageStyle(u'replaygain_track_peak',
                          float_places=6),
-            MP3StorageStyle('COMM', id3_desc=u'iTunNORM', id3_lang='eng',
+            MP3DescStorageStyle(key='COMM', desc=u'iTunNORM', id3_lang='eng',
                          packing=packing.SC, pack_pos=1, pack_type=float),
         ],
         mp4=[
