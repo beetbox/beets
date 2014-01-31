@@ -16,11 +16,13 @@
 """
 import os
 import shutil
+import tempfile
 from datetime import date
 
 import _common
 from _common import unittest
 import beets.mediafile
+from beets.mediafile import MediaFile
 
 
 class EdgeTest(unittest.TestCase):
@@ -288,12 +290,19 @@ class ReadWriteTest(unittest.TestCase):
     """Test writing and reading tags
     """
 
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        if os.path.isdir(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
+
     extensions = ['mp3', 'm4a', 'alac.m4a', 'mpc',
             'flac', 'ape', 'ogg', 'wma', 'wv']
 
     def test_read_common(self):
         for ext in self.extensions:
-            mediafile = full_mediafile_fixture(ext)
+            mediafile = self._mediafile_fixture('full.%s' % ext)
             self.assertEqual(mediafile.title, 'full')
             self.assertEqual(mediafile.album, 'the album')
             self.assertEqual(mediafile.artist, 'the artist')
@@ -308,7 +317,7 @@ class ReadWriteTest(unittest.TestCase):
         """Set tags on files which do not have tags yet
         """
         for ext in self.extensions:
-            mediafile = empty_mediafile_fixture(ext)
+            mediafile = self._mediafile_fixture('empty.%s' % ext)
 
             mediafile.title = 'empty'
             mediafile.album = 'another album'
@@ -322,7 +331,7 @@ class ReadWriteTest(unittest.TestCase):
             mediafile.rg_track_peak = -1.0
             mediafile.save()
 
-            mediafile = beets.mediafile.MediaFile(mediafile.path)
+            mediafile = MediaFile(mediafile.path)
             self.assertEqual(mediafile.title, 'empty')
             self.assertEqual(mediafile.album, 'another album')
             self.assertEqual(mediafile.artist, 'another artist')
@@ -335,7 +344,7 @@ class ReadWriteTest(unittest.TestCase):
             self.assertEqual(mediafile.rg_track_peak, -1.0)
     def test_overwrite_common(self):
         for ext in self.extensions:
-            mediafile = full_mediafile_fixture(ext)
+            mediafile = self._mediafile_fixture('full.%s' % ext)
 
             # Make sure the tags are already set when writing a second time
             for i in range(2):
@@ -350,7 +359,7 @@ class ReadWriteTest(unittest.TestCase):
                 mediafile.rg_track_gain = 1.0
                 mediafile.rg_track_peak = -1.0
                 mediafile.save()
-                mediafile = beets.mediafile.MediaFile(mediafile.path)
+                mediafile = MediaFile(mediafile.path)
 
             self.assertEqual(mediafile.title, 'empty')
             self.assertEqual(mediafile.album, 'another album')
@@ -365,7 +374,7 @@ class ReadWriteTest(unittest.TestCase):
 
     def test_read_write_full_dates(self):
         for ext in self.extensions:
-            mediafile = full_mediafile_fixture(ext)
+            mediafile = self._mediafile_fixture('full.%s' % ext)
             mediafile.year = 2001
             mediafile.month = 1
             mediafile.day = 2
@@ -374,7 +383,7 @@ class ReadWriteTest(unittest.TestCase):
             mediafile.original_day = 30
             mediafile.save()
 
-            mediafile = beets.mediafile.MediaFile(mediafile.path)
+            mediafile = MediaFile(mediafile.path)
             self.assertEqual(mediafile.year, 2001)
             self.assertEqual(mediafile.month, 1)
             self.assertEqual(mediafile.day, 2)
@@ -386,7 +395,7 @@ class ReadWriteTest(unittest.TestCase):
 
     def test_read_write_float_none(self):
         for ext in self.extensions:
-            mediafile = full_mediafile_fixture(ext)
+            mediafile = self._mediafile_fixture('full.%s' % ext)
             mediafile.rg_track_gain = None
             mediafile.rg_track_peak = None
             mediafile.original_year = None
@@ -394,7 +403,7 @@ class ReadWriteTest(unittest.TestCase):
             mediafile.original_day = None
             mediafile.save()
 
-            mediafile = beets.mediafile.MediaFile(mediafile.path)
+            mediafile = MediaFile(mediafile.path)
             self.assertEqual(mediafile.rg_track_gain, 0)
             self.assertEqual(mediafile.rg_track_peak, 0)
             self.assertEqual(mediafile.original_year, 0)
@@ -403,7 +412,7 @@ class ReadWriteTest(unittest.TestCase):
 
     def test_read_write_mb_ids(self):
         for ext in self.extensions:
-            mediafile = full_mediafile_fixture(ext)
+            mediafile = self._mediafile_fixture('full.%s' % ext)
             mediafile.mb_trackid = 'the-id'
             mediafile.mb_albumid = 'the-id'
             mediafile.mb_artistid = 'the-id'
@@ -411,7 +420,7 @@ class ReadWriteTest(unittest.TestCase):
             mediafile.mb_releasegroupid = 'the-id'
             mediafile.save()
 
-            mediafile = beets.mediafile.MediaFile(mediafile.path)
+            mediafile = MediaFile(mediafile.path)
             self.assertEqual(mediafile.mb_trackid, 'the-id')
             self.assertEqual(mediafile.mb_albumid, 'the-id')
             self.assertEqual(mediafile.mb_artistid, 'the-id')
@@ -419,21 +428,15 @@ class ReadWriteTest(unittest.TestCase):
             self.assertEqual(mediafile.mb_releasegroupid, 'the-id')
 
 
-def full_mediafile_fixture(ext):
-    """Returns a Mediafile with a lot of tags already set.
-    """
-    src = os.path.join(_common.RSRC, 'full.{0}'.format(ext))
-    path = os.path.join(_common.RSRC, 'test.{0}'.format(ext))
-    shutil.copy(src, path)
-    return beets.mediafile.MediaFile(path)
+    def _mediafile_fixture(self, name):
+        """Makes a copy of the media file in the test/rsrc directory and returns
+        a MediaFile instance for this file.
+        """
+        src = os.path.join(_common.RSRC, name)
+        target = os.path.join(self.temp_dir, name)
+        shutil.copy(src, target)
+        return MediaFile(target)
 
-def empty_mediafile_fixture(ext):
-    """Returns a Mediafile with no tags set.
-    """
-    src = os.path.join(_common.RSRC, 'empty.{0}'.format(ext))
-    path = os.path.join(_common.RSRC, 'test_empty.{0}'.format(ext))
-    shutil.copy(src, path)
-    return beets.mediafile.MediaFile(path)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
