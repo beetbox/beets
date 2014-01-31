@@ -550,22 +550,6 @@ class MP3StorageStyle(StorageStyle):
                     args['lang'] = self.id3_lang
                 mediafile.mgfile.tags.add(mutagen.id3.Frames[self.key](**args))
 
-        # Try to match on "owner" field.
-        elif self.key.startswith('UFID:'):
-            owner = self.key.split(':', 1)[1]
-            frames = mediafile.mgfile.tags.getall(self.key)
-
-            for frame in frames:
-                # Replace existing frame data.
-                if frame.owner == owner:
-                    setattr(frame, self.id3_frame_field, val)
-            else:
-                # New frame.
-                assert isinstance(self.id3_frame_field, str)  # Keyword.
-                frame = mutagen.id3.UFID(owner=owner,
-                    **{self.id3_frame_field: val})
-                mediafile.mgfile.tags.setall('UFID', [frame])
-
         # Just replace based on key.
         else:
             assert isinstance(self.id3_frame_field, str)  # Keyword.
@@ -573,6 +557,24 @@ class MP3StorageStyle(StorageStyle):
                 **{self.id3_frame_field: val})
             mediafile.mgfile.tags.setall(self.key, [frame])
 
+class MP3UFIDStorageStyle(MP3StorageStyle):
+
+    def __init__(self, owner, **kwargs):
+        self.owner = owner
+        super(MP3UFIDStorageStyle, self).__init__('UFID:' + owner, **kwargs)
+
+    def store(self, mediafile, value):
+        frames = mediafile.mgfile.tags.getall(self.key)
+
+        for frame in frames:
+            # Replace existing frame data.
+            if frame.owner == self.owner:
+                setattr(frame, self.id3_frame_field, value)
+        else:
+            # New frame.
+            assert isinstance(self.id3_frame_field, str)  # Keyword.
+            frame = mutagen.id3.UFID(owner=self.owner, data=value)
+            mediafile.mgfile.tags.setall(self.key, [frame])
 
 # The field itself.
 class MediaField(object):
@@ -1198,7 +1200,7 @@ class MediaFile(object):
 
     # MusicBrainz IDs.
     mb_trackid = MediaField(
-        mp3=MP3StorageStyle('UFID:http://musicbrainz.org',
+        mp3=MP3UFIDStorageStyle(owner='http://musicbrainz.org',
                           list_elem=False,
                           id3_frame_field='data'),
         mp4=MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Track Id',

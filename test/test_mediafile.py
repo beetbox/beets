@@ -353,14 +353,32 @@ class ReadWriteTest(unittest.TestCase):
             mediafile.original_day = None
             mediafile.save()
 
+            mediafile = beets.mediafile.MediaFile(mediafile.path)
             self.assertEqual(mediafile.rg_track_gain, 0)
             self.assertEqual(mediafile.rg_track_peak, 0)
             self.assertEqual(mediafile.original_year, 0)
             self.assertEqual(mediafile.original_month, 0)
             self.assertEqual(mediafile.original_day, 0)
 
+    def test_read_write_mb_ids(self):
+        for ext in self.extensions:
+            mediafile = full_mediafile_fixture(ext)
+            mediafile.mb_trackid = 'the-id'
+            mediafile.mb_albumid = 'the-id'
+            mediafile.mb_artistid = 'the-id'
+            mediafile.mb_albumartistid = 'the-id'
+            mediafile.mb_releasegroupid = 'the-id'
+            mediafile.save()
 
-def full_mediafile_fixture(ext='mp3'):
+            mediafile = beets.mediafile.MediaFile(mediafile.path)
+            self.assertEqual(mediafile.mb_trackid, 'the-id')
+            self.assertEqual(mediafile.mb_albumid, 'the-id')
+            self.assertEqual(mediafile.mb_artistid, 'the-id')
+            self.assertEqual(mediafile.mb_albumartistid, 'the-id')
+            self.assertEqual(mediafile.mb_releasegroupid, 'the-id')
+
+
+def full_mediafile_fixture(ext):
     """Returns a Mediafile with a lot of tags already set.
     """
     src = os.path.join(_common.RSRC, 'full.{0}'.format(ext))
