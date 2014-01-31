@@ -342,6 +342,7 @@ class ReadWriteTest(unittest.TestCase):
             self.assertEqual(mediafile.catalognum, 'CD1')
             self.assertEqual(mediafile.rg_track_gain, 1.0)
             self.assertEqual(mediafile.rg_track_peak, -1.0)
+
     def test_overwrite_common(self):
         for ext in self.extensions:
             mediafile = self._mediafile_fixture('full.%s' % ext)
@@ -358,6 +359,8 @@ class ReadWriteTest(unittest.TestCase):
                 mediafile.catalognum = 'CD1'
                 mediafile.rg_track_gain = 1.0
                 mediafile.rg_track_peak = -1.0
+                mediafile.rg_album_gain = 2.0
+                mediafile.rg_album_peak = -2.0
                 mediafile.save()
                 mediafile = MediaFile(mediafile.path)
 
@@ -371,6 +374,8 @@ class ReadWriteTest(unittest.TestCase):
             self.assertEqual(mediafile.catalognum, 'CD1')
             self.assertEqual(mediafile.rg_track_gain, 1.0)
             self.assertEqual(mediafile.rg_track_peak, -1.0)
+            self.assertEqual(mediafile.rg_album_gain, 2.0)
+            self.assertEqual(mediafile.rg_album_peak, -2.0)
 
     def test_read_write_full_dates(self):
         for ext in self.extensions:
