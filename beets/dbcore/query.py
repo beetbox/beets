@@ -153,7 +153,7 @@ class BytesQuery(MatchQuery):
         # rather than encoded Unicode.
         if isinstance(self.pattern, bytes):
             self.buf_pattern = buffer(self.pattern)
-        elif isinstance(self.battern, buffer):
+        elif isinstance(self.pattern, buffer):
             self.buf_pattern = self.pattern
             self.pattern = bytes(self.pattern)
 
