@@ -263,8 +263,6 @@ class StorageStyle(object):
     """Parameterizes the storage behavior of a single field for a
     certain tag format.
      - key: The Mutagen key used to access the field's data.
-     - list_elem: Store item as a single object or as first element
-       of a list.
      - as_type: Which type the value is stored as (unicode, int,
        bool, or str).
      - packing: If this value is packed in a multiple-value storage
@@ -281,11 +279,10 @@ class StorageStyle(object):
     For MP3 only:
       - id3_lang: set the language field of the frame object.
     """
-    def __init__(self, key, list_elem=True, as_type=unicode,
+    def __init__(self, key, as_type=unicode,
                  packing=None, pack_pos=0,
                  id3_lang=None, suffix=None, float_places=2):
         self.key = key
-        self.list_elem = list_elem
         self.as_type = as_type
         self.packing = packing
         self.pack_pos = pack_pos
@@ -311,16 +308,12 @@ class StorageStyle(object):
         except KeyError:
             return None
 
-        # Possibly index the list.
-        if entry and self.list_elem:
-            try:
-                return entry[0]
-            except:
-                log.error('Mutagen exception when reading field: %s' %
-                          traceback.format_exc)
-                return None
-        else:
-            return entry
+        try:
+            return entry[0]
+        except:
+            log.error('Mutagen exception when reading field: %s' %
+                      traceback.format_exc)
+            return None
 
     def get(self, mediafile):
         data = self.fetch(mediafile)
@@ -355,9 +348,7 @@ class StorageStyle(object):
 
 
     def store(self, mediafile, value):
-        if self.list_elem:
-            value = [value]
-        mediafile.mgfile[self.key] = value
+        mediafile.mgfile[self.key] = [value]
 
     def set(self, mediafile, value):
         if value is None:
@@ -437,6 +428,29 @@ class StorageStyle(object):
 
 
 class MP4StorageStyle(StorageStyle):
+
+    def fetch(self, mediafile):
+        try:
+            entry = mediafile.mgfile[self.key]
+        except KeyError:
+            return None
+
+        # Possibly index the list.
+        if self.as_type == bool:
+            return entry
+
+        try:
+            return entry[0]
+        except:
+            log.error('Mutagen exception when reading field: %s' %
+                      traceback.format_exc)
+            return None
+
+    def store(self, mediafile, value):
+        if self.as_type != bool:
+            value = [value]
+        mediafile.mgfile[self.key] = value
+
     def serialize(self, value):
         value = super(MP4StorageStyle, self).serialize(value)
         if self.key.startswith('----:') and isinstance(value, unicode):
@@ -980,7 +994,7 @@ class MediaFile(object):
     comp = MediaField(
         out_type=bool,
         mp3=MP3StorageStyle('TCMP'),
-        mp4=MP4StorageStyle('cpil', list_elem=False, as_type=bool),
+        mp4=MP4StorageStyle('cpil', as_type=bool),
         etc=StorageStyle('COMPILATION'),
         asf=StorageStyle('WM/IsCompilation', as_type=bool),
     )
