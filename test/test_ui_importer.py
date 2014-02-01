@@ -61,6 +61,10 @@ class TestTerminalImportSession(TerminalImportSession):
             self.io.addinput('T')
         elif choice == importer.action.SKIP:
             self.io.addinput('S')
+        elif isinstance(choice, int):
+            self.io.addinput('M')
+            self.io.addinput(str(choice))
+            self._add_choice_input()
         else:
             raise Exception('Unknown choice %s' % choice)
 
@@ -100,6 +104,8 @@ class ImportCompilationTest(TerminalImportSessionSetup,
         test_importer.ImportCompilationTest): pass
 class ImportExistingTest(TerminalImportSessionSetup,
         test_importer.ImportExistingTest): pass
+class ChooseCandidateTest(TerminalImportSessionSetup,
+        test_importer.ChooseCandidateTest): pass
 class GroupAlbumsImportTest(TerminalImportSessionSetup,
         test_importer.GroupAlbumsImportTest): pass
 class GlobalGroupAlbumsImportTest(TerminalImportSessionSetup,

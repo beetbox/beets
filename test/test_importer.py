@@ -27,7 +27,6 @@ from beets import autotag
 from beets.autotag import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch
 from beets import config
 
-TEST_TITLES = ('The Opener', 'The Second Track', 'The Last Track')
 class ImportHelper(object):
     """Provides tools to setup a library, a directory containing files that are
     to be imported and an import session. The class also provides stubs for the
@@ -177,6 +176,8 @@ class TestImportSession(importer.ImportSession):
 
         if choice == importer.action.APPLY:
             return task.candidates[0]
+        elif isinstance(choice, int):
+            return task.candidates[choice-1]
         else:
             return choice
 
@@ -810,6 +811,61 @@ class InferAlbumDataTest(_common.TestCase):
         self._infer()
         self.assertFalse(self.items[1].comp)
         self.assertEqual(self.items[1].albumartist, self.items[2].artist)
+
+class ChooseCandidateTest(_common.TestCase, ImportHelper):
+    def setUp(self):
+        super(ChooseCandidateTest, self).setUp()
+        self._setup_library()
+        self._create_import_dir(1)
+        self._setup_import_session()
+
+        autotag.mb.match_album = self._match_album
+        autotag.mb.match_track = self._match_track
+
+    def _match_album(self, albumartist, album, tracks):
+        """Stub for ``mb.match_album``.
+        """
+        for i in range(1,4):
+            yield self._generate_album_match(albumartist, album, tracks, i)
+
+    def _generate_track_match(self, artist, album, number):
+        return TrackInfo(
+            title     = u'Title %d' % number,
+            track_id  = u'trackid %d' % number,
+            artist    = artist,
+            length    = 1)
+
+    def _generate_album_match(self, artist, album, tracks, distance):
+        if distance:
+            id = ' ' + 'M' * distance + 'atch'
+        else:
+            id = ''
+        artist = artist + id
+        album  = album  + id
+
+        trackInfos = []
+        for i in range(tracks):
+            trackInfos.append(self._generate_track_match(artist, album, i+1))
+
+        return AlbumInfo(
+            artist    = artist,
+            album     = album,
+            tracks    = trackInfos,
+            va        = False,
+            album_id  = u'albumid' + id,
+            artist_id = u'artistid' + id,
+            albumtype = u'soundtrack')
+
+    def test_choose_first_candidate(self):
+        self.importer.add_choice(1)
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().album, 'Tag Album Match')
+
+    def test_choose_second_candidate(self):
+        self.importer.add_choice(2)
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().album, 'Tag Album MMatch')
+
 
 class DuplicateCheckTest(_common.TestCase):
     def setUp(self):

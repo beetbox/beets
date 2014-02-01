@@ -180,7 +180,7 @@ class InputException(Exception):
     def __str__(self):
         msg = "Attempt to read with no input provided."
         if self.output is not None:
-            msg += " Output: %s" % repr(self.output)
+            msg += " Output: %s" % self.output
         return msg
 class DummyOut(object):
     encoding = 'utf8'
