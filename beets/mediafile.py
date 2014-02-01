@@ -366,6 +366,16 @@ class StorageStyle(object):
         mediafile.mgfile[self.key] = out
 
     def set(self, mediafile, value):
+        if value is None:
+            if self.out_type == int:
+                value = 0
+            elif self.out_type == float:
+                value = 0.0
+            elif self.out_type == bool:
+                value = False
+            elif self.out_type == unicode:
+                value = u''
+
         if self.packing:
             data = self.fetch(mediafile)
             value = self.pack(data, value)
@@ -414,37 +424,27 @@ class StorageStyle(object):
 
         return data
 
-    def serialize(self, out):
+    def serialize(self, value):
         """Convert value to a type that is suitable for storing in a tag
         """
-        if out is None:
-            if self.out_type == int:
-                out = 0
-            elif self.out_type == float:
-                out = 0.0
-            elif self.out_type == bool:
-                out = False
-            elif self.out_type == unicode:
-                out = u''
-
-        if self.out_type == float and self.as_type in (str, unicode):
-            out = u'{0:.{1}f}'.format(out, self.float_places)
-            out = self.as_type(out)
+        if isinstance(value, float) and self.as_type in (str, unicode):
+            value = u'{0:.{1}f}'.format(value, self.float_places)
+            value = self.as_type(value)
         elif self.as_type == unicode:
-            if self.out_type == bool:
+            if isinstance(value, bool):
                 # Store bools as 1/0 instead of True/False.
-                out = unicode(int(bool(out)))
-            elif isinstance(out, str):
-                out = out.decode('utf8', 'ignore')
+                value = unicode(int(bool(value)))
+            elif isinstance(value, str):
+                value = value.decode('utf8', 'ignore')
             else:
-                out = unicode(out)
+                value = unicode(value)
         elif self.as_type in (bool, str, int):
-            out = self.as_type(out)
+            value = self.as_type(value)
 
         if self.as_type in (str, unicode) and self.suffix:
-            out += self.suffix
+            value += self.suffix
 
-        return out
+        return value
 
 
 class MP4StorageStyle(StorageStyle):
@@ -459,12 +459,6 @@ class MP4StorageStyle(StorageStyle):
         if self.key.startswith('----:') and isinstance(value, unicode):
             value = value.encode('utf8')
         return value
-
-    def get(self, mediafile):
-        data = super(MP4StorageStyle, self).get(mediafile)
-        if self.key.startswith('----:') and isinstance(data, str):
-            data = data.decode('utf8')
-        return data
 
 class MP3StorageStyle(StorageStyle):
 
