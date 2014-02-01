@@ -294,6 +294,9 @@ class StorageStyle(object):
         self.suffix = suffix
         self.float_places = float_places
 
+        if self.packing == packing_type.TUPLE:
+            self.as_type = 3
+
         if self.packing == packing_type.DATE:
             self.packing_length = 3
         else:
@@ -352,18 +355,10 @@ class StorageStyle(object):
         return list(items) + [None]*(self.packing_length - len(items))
 
 
-    def store(self, mediafile, val):
-        """Store val for this descriptor's field in the tag dictionary
-        according to the provided StorageStyle. Store it as a
-        single-item list if necessary.
-        """
-        # Wrap as a list if necessary.
+    def store(self, mediafile, value):
         if self.list_elem:
-            out = [val]
-        else:
-            out = val
-
-        mediafile.mgfile[self.key] = out
+            value = [value]
+        mediafile.mgfile[self.key] = value
 
     def set(self, mediafile, value):
         if value is None:
@@ -372,8 +367,8 @@ class StorageStyle(object):
         if self.packing:
             data = self.fetch(mediafile)
             value = self.pack(data, value)
-        else:
-            value = self.serialize(value)
+
+        value = self.serialize(value)
         self.store(mediafile, value)
 
     def pack(self, data, value):
