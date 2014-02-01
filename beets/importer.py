@@ -693,16 +693,12 @@ def user_query(session):
 
         # As albums: group items by albums and create task for each album
         if choice is action.ALBUMS:
-            def group(item):
-                return (item.albumartist or item.artist, item.album)
-
             def emitter(task):
-                for _, items in itertools.groupby(task.items, group):
-                    yield ImportTask(items=list(items))
-                yield ImportTask.progress_sentinel(task.toppath, task.paths)
+                yield task
 
             ipl = pipeline.Pipeline([
                 emitter(task),
+                group_albums(session),
                 initial_lookup(session),
                 user_query(session)
             ])
