@@ -17,6 +17,12 @@ consequences for all users are:
 For developers, the short version of the story is that Item and Album objects
 provide *uniform access* across fixed, flexible, and computed attributes.
 
+Unrelated new stuff:
+
+* The importer has a new interactive option ("as aLbums") that lets you split
+  apart albums that are mixed together in a single directory. Thanks to
+  geigerzaehler.
+
 Other little fixes:
 
 * :doc:`/plugins/echonest`: Tempo (BPM) is now always stored as an integer.

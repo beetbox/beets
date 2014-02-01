@@ -46,10 +46,14 @@ all of these limitations.
   This means that your flat directory of six thousand uncategorized MP3s won't
   currently be autotaggable. (This will change eventually.)
 
-  There is one exception to this rule: directories that look like separate parts
-  of a *multi-disc album* are tagged together as a single release. If two
-  adjacent albums have a common prefix, followed by "disc," "disk," or "CD"
-  and then a number, they are tagged together.
+  There are a couple of exceptions to this rule. First, directories that look
+  like separate parts of a *multi-disc album* are tagged together as a single
+  release. If two adjacent albums have a common prefix, followed by "disc,"
+  "disk," or "CD" and then a number, they are tagged together.
+
+  Second, the *L* ("as aLbums") option described below can help you split a
+  directory containing multiple albums into its components. Use this for
+  disorganized jumbles of tracks.
 
 * The music may have bad tags, but it's not completely untagged. This is
   because beets by default infers tags based on existing metadata. But this is
