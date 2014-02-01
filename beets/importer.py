@@ -365,6 +365,7 @@ class ImportTask(object):
         self.sentinel = False
         self.remove_duplicates = False
         self.is_album = True
+        self.choice_flag = None
 
     @classmethod
     def done_sentinel(cls, toppath):
@@ -646,7 +647,7 @@ def initial_lookup(session):
     task = None
     while True:
         task = yield task
-        if task.sentinel:
+        if task.should_skip():
             continue
 
         plugins.send('import_task_start', session=session, task=task)
@@ -666,7 +667,7 @@ def user_query(session):
     task = None
     while True:
         task = yield task
-        if task.sentinel:
+        if task.should_skip():
             continue
 
         # Ask the user for a choice.
@@ -724,7 +725,7 @@ def show_progress(session):
     task = None
     while True:
         task = yield task
-        if task.sentinel:
+        if task.should_skip():
             continue
 
         log.info(displayable_path(task.paths))
@@ -960,7 +961,7 @@ def item_lookup(session):
     task = None
     while True:
         task = yield task
-        if task.sentinel:
+        if task.should_skip():
             continue
 
         plugins.send('import_task_start', session=session, task=task)
@@ -975,7 +976,7 @@ def item_query(session):
     recent = set()
     while True:
         task = yield task
-        if task.sentinel:
+        if task.should_skip():
             continue
 
         choice = session.choose_item(task)
@@ -999,7 +1000,7 @@ def item_progress(session):
     log.info('Importing items:')
     while True:
         task = yield task
-        if task.sentinel:
+        if task.should_skip():
             continue
 
         log.info(displayable_path(task.item.path))
@@ -1017,7 +1018,7 @@ def group_albums(session):
     task = None
     while True:
         task = yield task
-        if task.sentinel:
+        if task.should_skip():
             continue
         tasks = []
         for _, items in itertools.groupby(task.items, group):
