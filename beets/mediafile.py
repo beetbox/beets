@@ -282,14 +282,14 @@ class StorageStyle(object):
       - id3_lang: set the language field of the frame object.
     """
     def __init__(self, key, list_elem=True, as_type=unicode,
-                 packing=None, pack_pos=0, pack_type=int,
+                 packing=None, pack_pos=0,
                  id3_lang=None, suffix=None, float_places=2):
         self.key = key
         self.list_elem = list_elem
         self.as_type = as_type
         self.packing = packing
         self.pack_pos = pack_pos
-        self.pack_type = pack_type
+        self.pack_type = int
         self.id3_lang = id3_lang
         self.suffix = suffix
         self.float_places = float_places
@@ -367,37 +367,20 @@ class StorageStyle(object):
 
     def set(self, mediafile, value):
         if value is None:
-            if self.out_type == int:
-                value = 0
-            elif self.out_type == float:
-                value = 0.0
-            elif self.out_type == bool:
-                value = False
-            elif self.out_type == unicode:
-                value = u''
+            value = self._none_value()
 
         if self.packing:
             data = self.fetch(mediafile)
             value = self.pack(data, value)
         else:
             value = self.serialize(value)
-
         self.store(mediafile, value)
 
     def pack(self, data, value):
-        if self.pack_type is int:
-            none_val = 0
-        elif self.pack_type is float:
-            none_val = 0.0
-        else:
-            none_val = None
-        if value is None:
-            value = none_val
-
         items = list(self.unpack(data))
         for i in range(len(items)):
             if not items[i]:
-                items[i] = none_val
+                items[i] = self._none_value()
 
         items[self.pack_pos] = value
 
@@ -405,7 +388,7 @@ class StorageStyle(object):
             # Truncate the items wherever we reach an invalid (none)
             # entry. This prevents dates like 2008-00-05.
             for i, item in enumerate(items):
-                if item == none_val or item is None:
+                if item == self._none_value() or item is None:
                     del(items[i:]) # truncate
                     break
 
@@ -445,6 +428,18 @@ class StorageStyle(object):
             value += self.suffix
 
         return value
+
+    def _none_value(self):
+        if self.out_type == int:
+            return 0
+        elif self.out_type == float:
+            return 0.0
+        elif self.out_type == bool:
+            return False
+        elif self.out_type == unicode:
+            return u''
+        elif self.out_type == str:
+            return ''
 
 
 class MP4StorageStyle(StorageStyle):
@@ -1223,13 +1218,13 @@ class MediaFile(object):
             MP3DescStorageStyle(u'replaygain_track_gain',
                          float_places=2, suffix=u' dB'),
             MP3DescStorageStyle(key='COMM', desc=u'iTunNORM', id3_lang='eng',
-                         packing=packing.SC, pack_pos=0, pack_type=float),
+                         packing=packing.SC, pack_pos=0),
         ],
         mp4=[
             MP4StorageStyle('----:com.apple.iTunes:replaygain_track_gain',
                          as_type=str, float_places=2, suffix=b' dB'),
             MP4StorageStyle('----:com.apple.iTunes:iTunNORM',
-                         packing=packing.SC, pack_pos=0, pack_type=float),
+                         packing=packing.SC, pack_pos=0),
         ],
         etc=StorageStyle(u'REPLAYGAIN_TRACK_GAIN',
                          float_places=2, suffix=u' dB'),
@@ -1257,13 +1252,13 @@ class MediaFile(object):
             MP3DescStorageStyle(u'replaygain_track_peak',
                          float_places=6),
             MP3DescStorageStyle(key='COMM', desc=u'iTunNORM', id3_lang='eng',
-                         packing=packing.SC, pack_pos=1, pack_type=float),
+                         packing=packing.SC, pack_pos=1),
         ],
         mp4=[
             MP4StorageStyle('----:com.apple.iTunes:replaygain_track_peak',
                          as_type=str, float_places=6),
             MP4StorageStyle('----:com.apple.iTunes:iTunNORM',
-                         packing=packing.SC, pack_pos=1, pack_type=float),
+                         packing=packing.SC, pack_pos=1),
         ],
         etc=StorageStyle(u'REPLAYGAIN_TRACK_PEAK',
                          float_places=6),
