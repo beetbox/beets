@@ -461,7 +461,8 @@ class ImportExistingTest(_common.TestCase, ImportHelper):
         self.assertEqual(len((self.lib.albums())), 1)
 
     def test_does_not_duplicate_singleton_track(self):
-        self.importer.add_choice(importer.action.TRACKS)
+        self.setup_importer.add_choice(importer.action.TRACKS)
+        self.setup_importer.add_choice(importer.action.APPLY)
         self.setup_importer.run()
         self.assertEqual(len((self.lib.items())), 1)
 
