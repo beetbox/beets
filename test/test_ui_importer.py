@@ -59,6 +59,8 @@ class TestTerminalImportSession(TerminalImportSession):
             self.io.addinput('G')
         elif choice == importer.action.TRACKS:
             self.io.addinput('T')
+        elif choice == importer.action.SKIP:
+            self.io.addinput('S')
         else:
             raise Exception('Unknown choice %s' % choice)
 
@@ -90,6 +92,10 @@ class NonAutotaggedImportTest(TerminalImportSessionSetup,
         test_importer.NonAutotaggedImportTest): pass
 class ImportTest(TerminalImportSessionSetup,
         test_importer.ImportTest): pass
+class ImportSingletonTest(TerminalImportSessionSetup,
+        test_importer.ImportSingletonTest): pass
+class ImportTracksTest(TerminalImportSessionSetup,
+        test_importer.ImportTracksTest): pass
 class ImportCompilationTest(TerminalImportSessionSetup,
         test_importer.ImportCompilationTest): pass
 class ImportExistingTest(TerminalImportSessionSetup,

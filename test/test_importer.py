@@ -29,6 +29,11 @@ from beets import config
 
 TEST_TITLES = ('The Opener', 'The Second Track', 'The Last Track')
 class ImportHelper(object):
+    """Provides tools to setup a library, a directory containing files that are
+    to be imported and an import session. The class also provides stubs for the
+    autotagging library and several assertions for the library.
+    """
+
     def _setup_library(self):
         self.libdb = os.path.join(self.temp_dir, 'testlib.blb')
         self.libdir = os.path.join(self.temp_dir, 'testlibdir')
@@ -57,6 +62,9 @@ class ImportHelper(object):
         :param count:  Number of files to create
         """
         self.import_dir = os.path.join(self.temp_dir, 'testsrcdir')
+        if os.path.isdir(self.import_dir):
+            shutil.rmtree(self.import_dir)
+
         album_path = os.path.join(self.import_dir, 'the_album')
         os.makedirs(album_path)
 
@@ -266,7 +274,77 @@ class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
         self.assertNotExists(os.path.join(self.import_dir, 'the_album'))
 
 
+class ImportSingletonTest(_common.TestCase, ImportHelper):
+    """Test ``APPLY`` and ``ASIS`` choices for an import session with singletons
+    config set to True.
+    """
+
+    def setUp(self):
+        super(ImportSingletonTest, self).setUp()
+        self._setup_library()
+        self._create_import_dir(1)
+        self._setup_import_session()
+        config['import']['singletons'] = True
+
+        autotag.mb.match_album = self._match_album
+        autotag.mb.match_track = self._match_track
+
+    def test_apply_asis_adds_track(self):
+        self.assertEqual(self.lib.items().get(), None)
+
+        self.importer.add_choice(importer.action.ASIS)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().title, 'Tag Title 1')
+
+    def test_apply_asis_does_not_add_album(self):
+        self.assertEqual(self.lib.albums().get(), None)
+
+        self.importer.add_choice(importer.action.ASIS)
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get(), None)
+
+    def test_apply_asis_adds_singleton_path(self):
+        self.assert_lib_dir_empty()
+
+        self.importer.add_choice(importer.action.ASIS)
+        self.importer.run()
+        self.assert_file_in_lib('singletons', 'Tag Title 1.mp3')
+
+    def test_apply_candidate_adds_track(self):
+        self.assertEqual(self.lib.items().get(), None)
+
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get().title, 'Applied Title 1')
+
+    def test_apply_candidate_does_not_add_album(self):
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get(), None)
+
+    def test_apply_candidate_adds_singleton_path(self):
+        self.assert_lib_dir_empty()
+
+        self.importer.add_choice(importer.action.APPLY)
+        self.importer.run()
+        self.assert_file_in_lib('singletons', 'Applied Title 1.mp3')
+
+    def test_skip_does_not_add_first_track(self):
+        self.importer.add_choice(importer.action.SKIP)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get(), None)
+
+    def test_skip_adds_other_tracks(self):
+        self._create_import_dir(2)
+        self.importer.add_choice(importer.action.SKIP)
+        self.importer.add_choice(importer.action.ASIS)
+        self.importer.run()
+        self.assertEqual(len(self.lib.items()), 1)
+
 class ImportTest(_common.TestCase, ImportHelper):
+    """Test APPLY, ASIS and SKIP choices.
+    """
+
     def setUp(self):
         super(ImportTest, self).setUp()
         self._setup_library()
@@ -339,7 +417,26 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.importer.run()
         self.assertNotExists(import_file)
 
-    def test_apply_tracks_adds_singleton(self):
+    def test_skip_does_not_add_track(self):
+        self.importer.add_choice(importer.action.SKIP)
+        self.importer.run()
+        self.assertEqual(self.lib.items().get(), None)
+
+
+class ImportTracksTest(_common.TestCase, ImportHelper):
+    """Test TRACKS and APPLY choice.
+    """
+
+    def setUp(self):
+        super(ImportTracksTest, self).setUp()
+        self._setup_library()
+        self._create_import_dir(1)
+        self._setup_import_session()
+
+        autotag.mb.match_album = self._match_album
+        autotag.mb.match_track = self._match_track
+
+    def test_apply_tracks_adds_singleton_track(self):
         self.assertEqual(self.lib.items().get(), None)
         self.assertEqual(self.lib.albums().get(), None)
 
@@ -360,6 +457,9 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.assert_file_in_lib('singletons', 'Applied Title 1.mp3')
 
 class ImportCompilationTest(_common.TestCase, ImportHelper):
+    """Test import of a folder containing tracks with different artists.
+    """
+
     def setUp(self):
         super(ImportCompilationTest, self).setUp()
         self._setup_library()
@@ -430,6 +530,8 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
 
 
 class ImportExistingTest(_common.TestCase, ImportHelper):
+    """Test importing files that are already in the library directory.
+    """
     def setUp(self):
         super(ImportExistingTest, self).setUp()
         self._setup_library()
