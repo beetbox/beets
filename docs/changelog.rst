@@ -19,9 +19,10 @@ provide *uniform access* across fixed, flexible, and computed attributes.
 
 Unrelated new stuff:
 
-* The importer has a new interactive option ("as aLbums") that lets you split
-  apart albums that are mixed together in a single directory. Thanks to
-  geigerzaehler.
+* The importer has a new interactive option (*G* for "Group albums"),
+  command-line flag (``--group-albums``), and config option
+  (:ref:`group_albums`) that lets you split apart albums that are mixed
+  together in a single directory. Thanks to geigerzaehler.
 
 Other little fixes:
 

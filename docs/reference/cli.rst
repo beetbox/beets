@@ -99,6 +99,10 @@ right now; this is something we need to work on. Read the
   instead of as one album per directory. This can help with your more stubborn
   multi-disc albums.
 
+* Similarly, if you have one directory that contains multiple albums, use the
+  ``--group-albums`` option to split the files based on their metadata before
+  matching them as separate albums.
+
 .. only:: html
 
     Reimporting

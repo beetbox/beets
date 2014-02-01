@@ -352,6 +352,22 @@ finds. When enabled, this mode prints out the title of every track, regardless
 of whether it matches the original metadata. (The default behavior only shows
 changes.) Default: ``no``.
 
+.. _group_albums:
+
+group_albums
+~~~~~~~~~~~~
+
+By default, the beets importer groups tracks into albums based on the
+directories they reside in. This option instead uses files' metadata to
+partition albums. Enable this option if you have directories that contain
+tracks from many albums mixed together.
+
+The ``--group-albums`` or ``-g`` option to the :ref:`import-cmd` command is
+equivalent, and the *G* interactive option invokes the same workflow.
+
+Default: ``no``.
+
+
 .. _musicbrainz-config:
 
 MusicBrainz Options

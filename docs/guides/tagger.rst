@@ -43,17 +43,18 @@ all of these limitations.
   assumes that each album is in a single directory. These directories can be
   arbitrarily deep (like ``music/2010/hiphop/seattle/freshespresso/glamour``),
   but any directory with music files in it is interpreted as a separate album.
-  This means that your flat directory of six thousand uncategorized MP3s won't
-  currently be autotaggable. (This will change eventually.)
 
-  There are a couple of exceptions to this rule. First, directories that look
-  like separate parts of a *multi-disc album* are tagged together as a single
-  release. If two adjacent albums have a common prefix, followed by "disc,"
-  "disk," or "CD" and then a number, they are tagged together.
+  There are, however, a couple of exceptions to this rule:
 
-  Second, the *G* ("Group albums") option described below can help you split a
-  directory containing multiple albums into its components. Use this for
-  disorganized jumbles of tracks.
+  First, directories that look like separate parts of a *multi-disc album* are
+  tagged together as a single release. If two adjacent albums have a common
+  prefix, followed by "disc," "disk," or "CD" and then a number, they are
+  tagged together.
+
+  Second, if you have jumbled directories containing more than one album, you
+  can ask beets to split them apart for you based on their metadata. Use
+  either the ``--group-albums`` command-line flag or the *G* interactive
+  option described below.
 
 * The music may have bad tags, but it's not completely untagged. This is
   because beets by default infers tags based on existing metadata. But this is
@@ -118,9 +119,9 @@ command-line options you should know:
   can use ``beet import -AC`` to quickly add a bunch of files to your library
   without doing anything to them.
 
-* ``beet import -g``: Assume there are multiple albums contained in each
+* ``beet import -g``: assume there are multiple albums contained in each
   directory. The tracks contained a directory are grouped by album artist and
-  album name and you will be asked to import each of these groups seperately.
+  album name and you will be asked to import each of these groups separately.
   See the "Group albums" choice below.
 
 Similarity
