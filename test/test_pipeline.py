@@ -71,6 +71,15 @@ class SimplePipelineTest(unittest.TestCase):
         self.pl.run_parallel()
         self.assertEqual(self.l, [0,2,4,6,8])
 
+    def test_pull(self):
+        pl = pipeline.Pipeline((_produce(), _work()))
+        self.assertEqual(list(pl.pull()), [0,2,4,6,8])
+
+    def test_pull_chain(self):
+        pl = pipeline.Pipeline((_produce(), _work()))
+        pl2 = pipeline.Pipeline((pl.pull(), _work()))
+        self.assertEqual(list(pl2.pull()), [0,4,8,12,16])
+
 class ParallelStageTest(unittest.TestCase):
     def setUp(self):
         self.l = []
@@ -87,6 +96,10 @@ class ParallelStageTest(unittest.TestCase):
         # Order possibly not preserved; use set equality.
         self.assertEqual(set(self.l), set([0,2,4,6,8]))
 
+    def test_pull(self):
+        pl = pipeline.Pipeline((_produce(), (_work(),_work())))
+        self.assertEqual(list(pl.pull()), [0,2,4,6,8])
+
 class ExceptionTest(unittest.TestCase):
     def setUp(self):
         self.l = []
@@ -97,6 +110,12 @@ class ExceptionTest(unittest.TestCase):
 
     def test_run_parallel(self):
         self.assertRaises(TestException, self.pl.run_parallel)
+
+    def test_pull(self):
+        pl = pipeline.Pipeline((_produce(), _exc_work()))
+        pull = pl.pull()
+        for i in range(3): pull.next()
+        self.assertRaises(TestException, pull.next)
 
 class ParallelExceptionTest(unittest.TestCase):
     def setUp(self):
@@ -144,6 +163,10 @@ class BubbleTest(unittest.TestCase):
         self.pl.run_parallel()
         self.assertEqual(self.l, [0,2,4,8])
 
+    def test_pull(self):
+        pl = pipeline.Pipeline((_produce(), _bub_work()))
+        self.assertEqual(list(pl.pull()), [0,2,4,8])
+
 class MultiMessageTest(unittest.TestCase):
     def setUp(self):
         self.l = []
@@ -158,6 +181,11 @@ class MultiMessageTest(unittest.TestCase):
     def test_run_parallel(self):
         self.pl.run_parallel()
         self.assertEqual(self.l, [0,0,1,-1,2,-2,3,-3,4,-4])
+
+    def test_pull(self):
+        pl = pipeline.Pipeline((_produce(), _multi_work()))
+        self.assertEqual(list(pl.pull()), [0,0,1,-1,2,-2,3,-3,4,-4])
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

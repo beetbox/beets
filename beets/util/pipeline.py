@@ -315,21 +315,7 @@ class Pipeline(object):
         stages are run one after the other. Only the first coroutine
         in each stage is used.
         """
-        coros = [stage[0] for stage in self.stages]
-
-        # "Prime" the coroutines.
-        for coro in coros[1:]:
-            coro.next()
-
-        # Begin the pipeline.
-        for out in coros[0]:
-            msgs = _allmsgs(out)
-            for coro in coros[1:]:
-                next_msgs = []
-                for msg in msgs:
-                    out = coro.send(msg)
-                    next_msgs.extend(_allmsgs(out))
-                msgs = next_msgs
+        list(self.pull())
 
     def run_parallel(self, queue_size=DEFAULT_QUEUE_SIZE):
         """Run the pipeline in parallel using one thread per stage. The
@@ -385,6 +371,30 @@ class Pipeline(object):
             if exc_info:
                 # Make the exception appear as it was raised originally.
                 raise exc_info[0], exc_info[1], exc_info[2]
+
+    def pull(self):
+        """Yield elements from the end of the pipeline. Runs the stages
+        sequentially until the last yields some messages. Each of the messages
+        is then yielded by ``pulled.next()``. Only the first coroutine in each
+        stage is used.
+        """
+        coros = [stage[0] for stage in self.stages]
+
+        # "Prime" the coroutines.
+        for coro in coros[1:]:
+            coro.next()
+
+        # Begin the pipeline.
+        for out in coros[0]:
+            msgs = _allmsgs(out)
+            for coro in coros[1:]:
+                next_msgs = []
+                for msg in msgs:
+                    out = coro.send(msg)
+                    next_msgs.extend(_allmsgs(out))
+                msgs = next_msgs
+            for msg in msgs:
+                yield msg
 
 # Smoke test.
 if __name__ == '__main__':
