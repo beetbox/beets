@@ -118,6 +118,11 @@ command-line options you should know:
   can use ``beet import -AC`` to quickly add a bunch of files to your library
   without doing anything to them.
 
+* ``beet import -g``: Assume there are multiple albums contained in each
+  directory. The tracks contained a directory are grouped by album artist and
+  album name and you will be asked to import each of these groups seperately.
+  See the "Group albums" choice below.
+
 Similarity
 ----------
 

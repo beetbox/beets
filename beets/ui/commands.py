@@ -838,6 +838,8 @@ import_cmd.parser.add_option('-I', '--noincremental', dest='incremental',
     action='store_false', help='do not skip already-imported directories')
 import_cmd.parser.add_option('--flat', dest='flat',
     action='store_true', help='import an entire tree as a single album')
+import_cmd.parser.add_option('-g', '--group-albums', dest='group_albums',
+    action='store_true', help='group tracks in a folder into seperate albums')
 def import_func(lib, opts, args):
     config['import'].set_args(opts)
 
