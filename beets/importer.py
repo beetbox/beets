@@ -713,7 +713,6 @@ def user_query(session):
             task = pipeline.multiple(album_tasks)
             continue
 
-
         # Check for duplicates if we have a match (or ASIS).
         if task.choice_flag in (action.ASIS, action.APPLY):
             ident = task.chosen_ident()

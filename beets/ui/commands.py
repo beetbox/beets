@@ -558,7 +558,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 raise importer.ImportAbort()
             elif sel == 'i':
                 return importer.action.MANUAL_ID
-            elif sel == 'L':
+            elif sel == 'l':
                 return importer.action.ALBUMS
             else:  # Numerical selection.
                 match = candidates[sel - 1]
@@ -583,8 +583,9 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
                     'Enter search', 'enter Id', 'aBort')
         else:
-            opts = ('Apply', 'more Candidates', 'Skip', 'Use as-is',
-                    'as Tracks', 'as aLbums', 'Enter search', 'enter Id', 'aBort')
+            opts = ('Apply', 'More candidates', 'Skip', 'Use as-is',
+                    'as Tracks', 'as aLbums', 'Enter search', 'enter Id',
+                    'aBort')
         default = config['import']['default_action'].as_choice({
             'apply': 'a',
             'skip': 's',
