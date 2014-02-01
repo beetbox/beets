@@ -375,8 +375,9 @@ class Pipeline(object):
     def pull(self):
         """Yield elements from the end of the pipeline. Runs the stages
         sequentially until the last yields some messages. Each of the messages
-        is then yielded by ``pulled.next()``. Only the first coroutine in each
-        stage is used.
+        is then yielded by ``pulled.next()``. If the pipeline has a consumer,
+        that is the last stage does not yield any messages, then pull will not
+        yield any messages. Only the first coroutine in each stage is used
         """
         coros = [stage[0] for stage in self.stages]
 
