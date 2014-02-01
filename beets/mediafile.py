@@ -279,15 +279,10 @@ class StorageStyle(object):
        point.
 
     For MP3 only:
-      - id3_desc: match against this 'desc' field as well
-        as the key.
-      - id3_frame_field: store the data in this field of the frame
-        object.
       - id3_lang: set the language field of the frame object.
     """
     def __init__(self, key, list_elem=True, as_type=unicode,
                  packing=None, pack_pos=0, pack_type=int,
-                 id3_desc=None, id3_frame_field='text',
                  id3_lang=None, suffix=None, float_places=2):
         self.key = key
         self.list_elem = list_elem
@@ -295,8 +290,6 @@ class StorageStyle(object):
         self.packing = packing
         self.pack_pos = pack_pos
         self.pack_type = pack_type
-        self.id3_desc = id3_desc
-        self.id3_frame_field = id3_frame_field
         self.id3_lang = id3_lang
         self.suffix = suffix
         self.float_places = float_places
@@ -473,46 +466,22 @@ class MP4StorageStyle(StorageStyle):
             data = data.decode('utf8')
         return data
 
-
 class MP3StorageStyle(StorageStyle):
+
     def fetch(self, mediafile):
-        # Get the metadata frame mediafileect.
         try:
             frame = mediafile.mgfile[self.key]
         except KeyError:
             return None
+        try:
+            return frame.text[0]
+        except:
+            log.error('Mutagen exception when reading field: %s' %
+                      traceback.format_exc)
+            return None
 
-        entry = getattr(frame, self.id3_frame_field)
-
-        # Possibly index the list.
-        if self.list_elem:
-            if entry:  # List must have at least one value.
-                # Handle Mutagen bugs when reading values (#356).
-                try:
-                    return entry[0]
-                except:
-                    log.error('Mutagen exception when reading field: %s' %
-                              traceback.format_exc)
-                    return None
-            else:
-                return None
-        else:
-            return entry
-
-    def store(self, mediafile, val):
-        """Store val for this descriptor's field in the tag dictionary
-        according to the provided StorageStyle. Store it as a
-        single-item list if necessary.
-        """
-        # Wrap as a list if necessary.
-        if self.list_elem:
-            out = [val]
-        else:
-            out = val
-
-        assert isinstance(self.id3_frame_field, str)  # Keyword.
-        frame = mutagen.id3.Frames[self.key](encoding=3,
-            **{self.id3_frame_field: val})
+    def store(self, mediafile, value):
+        frame = mutagen.id3.Frames[self.key](encoding=3, text=[value])
         mediafile.mgfile.tags.setall(self.key, [frame])
 
 class MP3UFIDStorageStyle(MP3StorageStyle):
@@ -520,6 +489,13 @@ class MP3UFIDStorageStyle(MP3StorageStyle):
     def __init__(self, owner, **kwargs):
         self.owner = owner
         super(MP3UFIDStorageStyle, self).__init__('UFID:' + owner, **kwargs)
+
+    def fetch(self, mediafile):
+        try:
+            frame = mediafile.mgfile[self.key]
+        except KeyError:
+            return None
+        return frame.data
 
     def store(self, mediafile, value):
         frames = mediafile.mgfile.tags.getall(self.key)
@@ -1194,9 +1170,7 @@ class MediaFile(object):
 
     # MusicBrainz IDs.
     mb_trackid = MediaField(
-        mp3=MP3UFIDStorageStyle(owner='http://musicbrainz.org',
-                          list_elem=False,
-                          id3_frame_field='data'),
+        mp3=MP3UFIDStorageStyle(owner='http://musicbrainz.org'),
         mp4=MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Track Id',
                          as_type=str),
         etc=StorageStyle('MUSICBRAINZ_TRACKID'),
