@@ -299,7 +299,7 @@ class StorageStyle(object):
             self.packing_length = 2
 
         # Convert suffix to correct string type.
-        if self.suffix and self.as_type in (str, unicode):
+        if self.suffix and self.as_type == unicode:
             self.suffix = self.as_type(self.suffix)
 
     def fetch(self, mediafile):
@@ -323,7 +323,7 @@ class StorageStyle(object):
             except IndexError:
                 data = None
 
-        if self.suffix and isinstance(data, (str, unicode)):
+        if self.suffix and isinstance(data, unicode):
             if data.endswith(self.suffix):
                 data = data[:-len(self.suffix)]
         return data
@@ -395,10 +395,10 @@ class StorageStyle(object):
     def serialize(self, value):
         """Convert value to a type that is suitable for storing in a tag
         """
-        if isinstance(value, float) and self.as_type in (str, unicode):
+        if isinstance(value, float) and self.as_type is unicode:
             value = u'{0:.{1}f}'.format(value, self.float_places)
             value = self.as_type(value)
-        elif self.as_type == unicode:
+        elif self.as_type is unicode:
             if isinstance(value, bool):
                 # Store bools as 1/0 instead of True/False.
                 value = unicode(int(bool(value)))
@@ -409,7 +409,7 @@ class StorageStyle(object):
         elif self.as_type in (bool, str, int):
             value = self.as_type(value)
 
-        if self.as_type in (str, unicode) and self.suffix:
+        if self.suffix:
             value += self.suffix
 
         return value
@@ -423,8 +423,6 @@ class StorageStyle(object):
             return False
         elif self.out_type == unicode:
             return u''
-        elif self.out_type == str:
-            return ''
 
 
 class MP4StorageStyle(StorageStyle):
@@ -1168,36 +1166,31 @@ class MediaFile(object):
     # MusicBrainz IDs.
     mb_trackid = MediaField(
         mp3=MP3UFIDStorageStyle(owner='http://musicbrainz.org'),
-        mp4=MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Track Id',
-                         as_type=str),
+        mp4=MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Track Id'),
         etc=StorageStyle('MUSICBRAINZ_TRACKID'),
         asf=StorageStyle('MusicBrainz/Track Id'),
     )
     mb_albumid = MediaField(
         mp3=MP3DescStorageStyle(u'MusicBrainz Album Id'),
-        mp4=MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Id',
-                         as_type=str),
+        mp4=MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Id'),
         etc=StorageStyle('MUSICBRAINZ_ALBUMID'),
         asf=StorageStyle('MusicBrainz/Album Id'),
     )
     mb_artistid = MediaField(
         mp3=MP3DescStorageStyle(u'MusicBrainz Artist Id'),
-        mp4=MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Artist Id',
-                         as_type=str),
+        mp4=MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Artist Id'),
         etc=StorageStyle('MUSICBRAINZ_ARTISTID'),
         asf=StorageStyle('MusicBrainz/Artist Id'),
     )
     mb_albumartistid = MediaField(
         mp3=MP3DescStorageStyle(u'MusicBrainz Album Artist Id'),
-        mp4=MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Artist Id',
-                         as_type=str),
+        mp4=MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Album Artist Id'),
         etc=StorageStyle('MUSICBRAINZ_ALBUMARTISTID'),
         asf=StorageStyle('MusicBrainz/Album Artist Id'),
     )
     mb_releasegroupid = MediaField(
         mp3=MP3DescStorageStyle(u'MusicBrainz Release Group Id'),
-        mp4=MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Release Group Id',
-                         as_type=str),
+        mp4=MP4StorageStyle('----:com.apple.iTunes:MusicBrainz Release Group Id'),
         etc=StorageStyle('MUSICBRAINZ_RELEASEGROUPID'),
         asf=StorageStyle('MusicBrainz/Release Group Id'),
     )
@@ -1205,15 +1198,13 @@ class MediaFile(object):
     # Acoustid fields.
     acoustid_fingerprint = MediaField(
         mp3=MP3DescStorageStyle(u'Acoustid Fingerprint'),
-        mp4=MP4StorageStyle('----:com.apple.iTunes:Acoustid Fingerprint',
-                         as_type=str),
+        mp4=MP4StorageStyle('----:com.apple.iTunes:Acoustid Fingerprint'),
         etc=StorageStyle('ACOUSTID_FINGERPRINT'),
         asf=StorageStyle('Acoustid/Fingerprint'),
     )
     acoustid_id = MediaField(
         mp3=MP3DescStorageStyle(u'Acoustid Id'),
-        mp4=MP4StorageStyle('----:com.apple.iTunes:Acoustid Id',
-                         as_type=str),
+        mp4=MP4StorageStyle('----:com.apple.iTunes:Acoustid Id'),
         etc=StorageStyle('ACOUSTID_ID'),
         asf=StorageStyle('Acoustid/Id'),
     )
@@ -1230,7 +1221,7 @@ class MediaFile(object):
         ],
         mp4=[
             MP4StorageStyle('----:com.apple.iTunes:replaygain_track_gain',
-                         as_type=str, float_places=2, suffix=b' dB'),
+                         float_places=2, suffix=b' dB'),
             MP4StorageStyle('----:com.apple.iTunes:iTunNORM',
                          packing=packing.SC, pack_pos=0),
         ],
@@ -1247,7 +1238,7 @@ class MediaFile(object):
                          float_places=2, suffix=u' dB'),
         ],
         mp4=MP4StorageStyle('----:com.apple.iTunes:replaygain_album_gain',
-                         as_type=str, float_places=2, suffix=b' dB'),
+                         float_places=2, suffix=b' dB'),
         etc=StorageStyle(u'REPLAYGAIN_ALBUM_GAIN',
                          float_places=2, suffix=u' dB'),
         asf=StorageStyle(u'replaygain_album_gain',
@@ -1264,7 +1255,7 @@ class MediaFile(object):
         ],
         mp4=[
             MP4StorageStyle('----:com.apple.iTunes:replaygain_track_peak',
-                         as_type=str, float_places=6),
+                         float_places=6),
             MP4StorageStyle('----:com.apple.iTunes:iTunNORM',
                          packing=packing.SC, pack_pos=1),
         ],
@@ -1281,7 +1272,7 @@ class MediaFile(object):
                          float_places=6),
         ],
         mp4=MP4StorageStyle('----:com.apple.iTunes:replaygain_album_peak',
-                         as_type=str, float_places=6),
+                         float_places=6),
         etc=StorageStyle(u'REPLAYGAIN_ALBUM_PEAK',
                          float_places=6),
         asf=StorageStyle(u'replaygain_album_peak',
