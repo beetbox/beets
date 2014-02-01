@@ -325,6 +325,9 @@ class ImportSession(object):
                 stages += [item_progress(self)]
         else:
             # Whole-album importer.
+            if config['import']['group_albums']:
+                # Split directory tasks into one task for each album
+                stages += [group_albums(self)]
             if config['import']['autotag']:
                 # Only look up and query the user when autotagging.
                 stages += [initial_lookup(self), user_query(self)]
@@ -1006,3 +1009,23 @@ def item_progress(session):
         log.info(displayable_path(task.item.path))
         task.set_null_candidates()
         task.set_choice(action.ASIS)
+
+
+def group_albums(session):
+    """Group the items of a task by albumartist and album name and create a new
+    task for each album. Yield the tasks as a multi message.
+    """
+    def group(item):
+        return (item.albumartist or item.artist, item.album)
+
+    task = None
+    while True:
+        task = yield task
+        if task.sentinel:
+            continue
+        tasks = []
+        for _, items in itertools.groupby(task.items, group):
+            tasks.append(ImportTask(items=list(items)))
+        tasks.append(ImportTask.progress_sentinel(task.toppath, task.paths))
+
+        task = pipeline.multiple(tasks)

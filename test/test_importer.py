@@ -518,9 +518,9 @@ class ImportExistingTest(_common.TestCase, ImportHelper):
         self.importer.run()
         self.assertNotExists(self.import_media[0].path)
 
-class ImportFlatAlbumTest(_common.TestCase, ImportHelper):
+class GroupAlbumsImportTest(_common.TestCase, ImportHelper):
     def setUp(self):
-        super(ImportFlatAlbumTest, self).setUp()
+        super(GroupAlbumsImportTest, self).setUp()
         self._setup_library()
         self._create_import_dir(3)
 
@@ -570,6 +570,14 @@ class ImportFlatAlbumTest(_common.TestCase, ImportHelper):
         self.importer.run()
         artists = set([album.albumartist for album in self.lib.albums()])
         self.assertEqual(artists, set(['Artist B', 'Tag Artist']))
+
+class GlobalGroupAlbumsImportTest(GroupAlbumsImportTest):
+
+    def setUp(self):
+        super(GlobalGroupAlbumsImportTest, self).setUp()
+        self.importer.choice = importer.action.ASIS
+        config['import']['group_albums'] = True
+
 
 class InferAlbumDataTest(_common.TestCase):
     def setUp(self):
