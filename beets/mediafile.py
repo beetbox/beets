@@ -289,7 +289,6 @@ class StorageStyle(object):
         self.as_type = as_type
         self.packing = packing
         self.pack_pos = pack_pos
-        self.pack_type = int
         self.id3_lang = id3_lang
         self.suffix = suffix
         self.float_places = float_places
