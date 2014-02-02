@@ -30,10 +30,10 @@ def _process_item(item, lib, copy=False, move=False, delete=False,
     """Process Item `item` in `lib`.
     """
     if copy:
-        item.move_file(dest=copy, copy=True)
+        item.move(basedir=copy, copy=True)
         item.store()
     if move:
-        item.move_file(dest=move, copy=False)
+        item.move(basedir=move, copy=False)
         item.store()
     if delete:
         item.remove(delete=True)
