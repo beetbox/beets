@@ -151,6 +151,16 @@ Here are a few of the plugins written by the beets community:
 
 * `A cmus plugin`_ integrates with the `cmus`_ console music player.
 
+* `beets-artistcountry`_ fetches the artist's country of origin from
+  MusicBrainz.
+
+* `gbeets`_ integrates beets with Google Music.
+
+* `dsedivec`_ has two plugins: ``edit`` and ``moveall``.
+
+.. _dsedivec: https://github.com/dsedivec/beets-plugins
+.. _gbeets: https://github.com/mister-walter/gbeets
+.. _beets-artistcountry: https://github.com/agrausem/beets-artistcountry
 .. _beetFs: http://code.google.com/p/beetfs/
 .. _Beet-MusicBrainz-Collection:
     https://github.com/jeffayle/Beet-MusicBrainz-Collection/
