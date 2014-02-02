@@ -4,7 +4,6 @@ omit =
     */python?.?/*
     */site-packages/nose/*
     */test/*
-    */beetsplug/*
 exclude_lines =
     assert False
     raise NotImplementedError
