@@ -11,10 +11,11 @@ every aspect of its operation. To configure beets, you'll edit a file called
 * On OS X, you can also use ``~/Library/Application Support/beets/config.yaml``
   if you prefer that over the Unix-like ``~/.config``.
 * If you prefer a different location, set the ``BEETSDIR`` environment variable
-  to a path; beets will then look for a ``config.yaml`` in that directory.
-
-Additionally, you can specify a different configuration file to load by adding
-the ``--config /path/to/file`` option to the beets command line.
+  to a path; beets will then look for a ``config.yaml`` in that directory. Or
+  specify a different configuration file to load using the ``--config
+  /path/to/file`` option on the command line. (There's one caveat with the
+  last option: since the configuration is loaded after the command line is
+  parsed, it cannot currently be used to load new plugins.)
 
 The config file uses `YAML`_ syntax. You can use the full power of YAML, but
 most configuration options are simple key/value pairs. This means your config

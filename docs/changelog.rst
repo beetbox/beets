@@ -23,6 +23,8 @@ Unrelated new stuff:
   command-line flag (``--group-albums``), and config option
   (:ref:`group_albums`) that lets you split apart albums that are mixed
   together in a single directory. Thanks to geigerzaehler.
+* A new ``--config`` command-line option lets you specify an additional
+  configuration file. Thanks again to geigerzaehler.
 
 Other little fixes:
 
