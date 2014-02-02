@@ -144,7 +144,7 @@ not exist a *404* status code is returned.
 Albums
 ++++++
 
-For albums, the following endpoints are provide:
+For albums, the following endpoints are provided:
 
 * ``GET /album/``
 
@@ -155,7 +155,7 @@ For albums, the following endpoints are provide:
 * ``GET /album/query/querystring``
 
 The interface and response format is similar to the item API, except replacing
-the encapsulation key ``"items"`` with ``"albums"`` when requesting ``/albums/``
+the encapsulation key ``"items"`` with ``"albums"`` when requesting ``/album/``
 or ``/album/5,7``. In addtion we can request the cover art of an album with
 ``GET /album/5/art``.
 
