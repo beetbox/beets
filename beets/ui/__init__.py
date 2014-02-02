@@ -189,7 +189,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
 
         # Insert the highlighted letter back into the word.
         capitalized.append(
-            option[:index] + show_letter + option[index+1:]
+            option[:index] + show_letter + option[index + 1:]
         )
         display_letters.append(found_letter.upper())
 
@@ -315,9 +315,9 @@ def human_seconds(interval):
         (52, 'year'),
         (10, 'decade'),
     ]
-    for i in range(len(units)-1):
+    for i in range(len(units) - 1):
         increment, suffix = units[i]
-        next_increment, _ = units[i+1]
+        next_increment, _ = units[i + 1]
         interval /= float(increment)
         if interval < next_increment:
             break
@@ -524,7 +524,7 @@ def term_width():
         return fallback
 
     try:
-        buf = fcntl.ioctl(0, termios.TIOCGWINSZ, ' '*4)
+        buf = fcntl.ioctl(0, termios.TIOCGWINSZ, ' ' * 4)
     except IOError:
         return fallback
     try:
@@ -709,7 +709,8 @@ def vararg_callback(option, opt_str, value, parser):
                       action="callback", callback=vararg_callback)
 
     Details:
-    http://docs.python.org/2/library/optparse.html#callback-example-6-variable-arguments
+    http://docs.python.org/2/library/optparse.html#callback-example-6-variable
+    -arguments
     """
     value = [value]
 
@@ -772,7 +773,7 @@ def _raw_main(args):
 
     # Parse the command-line!
     options, subcommand, suboptions, subargs = parser.parse_args(args)
-    if hasattr(options, 'config') and options.config != None:
+    if getattr(options, 'config', None) is not None:
         config_path = options.config
         del options.config
         config.add_file(config_path)
@@ -800,11 +801,13 @@ def _raw_main(args):
         log.setLevel(logging.INFO)
     log.debug(u'data directory: {0}\n'
               u'library database: {1}\n'
-              u'library directory: {2}'.format(
-        util.displayable_path(config.config_dir()),
-        util.displayable_path(lib.path),
-        util.displayable_path(lib.directory),
-    ))
+              u'library directory: {2}'
+        .format(
+            util.displayable_path(config.config_dir()),
+            util.displayable_path(lib.path),
+            util.displayable_path(lib.directory),
+        )
+    )
 
     # Configure the MusicBrainz API.
     mb.configure()
