@@ -59,6 +59,8 @@ Other little fixes:
 * :doc:`/plugins/fromfilename`: Fix a crash when a filename contained only a
   track number (e.g., ``02.mp3``).
 * :doc:`/plugins/convert`: Transcoding should now work on Windows.
+* :doc:`/plugins/duplicates`: The ``move`` and ``copy`` destination arguments
+  are now treated as directories. Thanks to Pedro Silva.
 
 
 1.3.2 (December 22, 2013)
