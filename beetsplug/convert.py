@@ -21,6 +21,7 @@ from subprocess import Popen
 import tempfile
 from string import Template
 import pipes
+import platform
 
 from beets.plugins import BeetsPlugin
 from beets import ui, util
@@ -28,7 +29,6 @@ from beetsplug.embedart import _embed
 from beets import config
 
 log = logging.getLogger('beets')
-DEVNULL = open(os.devnull, 'wb')
 _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.
 
@@ -37,6 +37,19 @@ ALIASES = {
     u'wma': u'windows media',
     u'vorbis': u'ogg',
 }
+
+
+def _silent_popen(args):
+    """Invoke a command (like subprocess.Popen) while silencing its
+    error output. Return the Popen object.
+    """
+    # On Windows, close_fds doesn't work (i.e., raises an exception)
+    # when stderr is redirected.
+    return Popen(
+        args,
+        close_fds=platform.system() != 'Windows',
+        stderr=open(os.devnull, 'wb'),
+    )
 
 
 def _destination(dest_dir, item, keep_new, path_formats):
@@ -100,7 +113,7 @@ def encode(source, dest):
     log.debug(u'convert: executing: {0}'.format(
         u' '.join(pipes.quote(o.decode('utf8', 'ignore')) for o in opts)
     ))
-    encode = Popen(opts, close_fds=True, stderr=DEVNULL)
+    encode = _silent_popen(opts)
     encode.wait()
 
     if encode.returncode != 0:
