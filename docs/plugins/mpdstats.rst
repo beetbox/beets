@@ -21,6 +21,8 @@ Install the library from `pip`_, like so::
 
     $ pip install python-mpd
 
+.. _pip: http://www.pip-installer.org/
+
 Configuring
 -----------
 
