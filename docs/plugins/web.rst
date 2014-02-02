@@ -70,3 +70,102 @@ for unsupported formats/browsers. There are a number of options for this:
 .. _audio.js: http://kolber.github.com/audiojs/
 .. _html5media: http://html5media.info/
 .. _MediaElement.js: http://mediaelementjs.com/
+
+JSON API
+--------
+
+
+``GET /item/``
+++++++++++++++
+
+Responds with a list of all tracks in the beets library. ::
+
+    {
+      "items": [
+        {
+          "id": 6,
+          "title": "A Song",
+          ...
+        }, {
+          "id": 12,
+          "title": "Another Song",
+          ...
+        }
+        ...
+      ]
+    }
+
+
+``GET /item/6``
++++++++++++++++
+
+Looks for an item with id *6* in the beets library and responds with its JSON
+representation. ::
+
+    {
+      "id": 6,
+      "title": "A Song",
+      ...
+    }
+
+If there is no item with that id responds with a *404* status
+code.
+
+
+``GET /item/6,12,13``
++++++++++++++++++++++
+
+Response with a list of tracks with the ids *6*, *12* and *13*.  The format of
+the response is the same as for `GET /item/`_. It is *not guaranteed* that the
+reponse includes all the items requested. If a track is not found it is silently
+dropped from the response.
+
+
+``GET /item/query/querystring``
++++++++++++++++++++++++++++++++
+
+Returns a list of tracks matching the query. The *querystring* must be a valid query as described in :doc:`/reference/query`. ::
+
+    {
+      "results": [
+        { "id" : 6,  "title": "A Song" },
+        { "id" : 12, "title": "Another Song" }
+      ]
+    }
+
+
+``GET /item/6/file``
++++++++++++++++++++
+
+Sends the  media file for the track. If the item or its corresponding file do
+not exist a *404* status code is returned.
+
+
+Albums
+++++++
+
+For albums, the following endpoints are provide:
+
+* ``GET /album/``
+
+* ``GET /album/5``
+
+* ``GET /album/5,7``
+
+* ``GET /album/query/querystring``
+
+The interface and response format is similar to the item API, except replacing
+the encapsulation key ``"items"`` with ``"albums"`` when requesting ``/albums/``
+or ``/album/5,7``. In addtion we can request the cover art of an album with
+``GET /album/5/art``.
+
+
+``GET /stats``
+++++++++++++++
+
+Responds with the number of tracks and albums in the database. ::
+
+    {
+      "items": 5,
+      "albums": 3
+    }
