@@ -135,7 +135,7 @@ Returns a list of tracks matching the query. The *querystring* must be a valid q
 
 
 ``GET /item/6/file``
-+++++++++++++++++++
+++++++++++++++++++++
 
 Sends the  media file for the track. If the item or its corresponding file do
 not exist a *404* status code is returned.
