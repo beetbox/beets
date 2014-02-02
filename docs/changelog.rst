@@ -48,6 +48,8 @@ Other little fixes:
 * Fix a potential crash when using image resizing with the
   :doc:`/plugins/fetchart` or :doc:`/plugins/embedart` without ImageMagick
   installed.
+* Also, when invoking ``convert`` for image resizing fails, we now log an
+  error instead of crashing.
 * :doc:`/plugins/fetchart`: The ``beet fetchart`` command can now associate
   local images with albums (unless ``--force`` is provided). Thanks to
   brilnius.

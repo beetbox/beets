@@ -32,24 +32,6 @@ PROXY_URL = 'http://images.weserv.nl/'
 log = logging.getLogger('beets')
 
 
-class ArtResizerError(Exception):
-    """Raised when an error occurs during image resizing.
-    """
-
-
-def call(args):
-    """Execute the command indicated by `args` (a list of strings) and
-    return the command's output. The stderr stream is ignored. If the
-    command exits abnormally, a ArtResizerError is raised.
-    """
-    try:
-        return util.command_output(args)
-    except subprocess.CalledProcessError as e:
-        raise ArtResizerError(
-            "{0} exited with status {1}".format(args[0], e.returncode)
-        )
-
-
 def resize_url(url, maxwidth):
     """Return a proxied image URL that resizes the original image to
     maxwidth (preserving aspect ratio).
@@ -105,10 +87,16 @@ def im_resize(maxwidth, path_in, path_out=None):
     # than the corresponding width and/or height dimension(s). The >
     # "only shrink" flag is prefixed by ^ escape char for Windows
     # compatibility.
-    call([
-        'convert', util.syspath(path_in),
-        '-resize', '{0}x^>'.format(maxwidth), path_out
-    ])
+    try:
+        util.command_output([
+            'convert', util.syspath(path_in),
+            '-resize', '{0}x^>'.format(maxwidth), path_out
+        ])
+    except subprocess.CalledProcessError:
+        log.warn(u'artresizer: IM convert failed for {0}'.format(
+            util.displayable_path(path_in)
+        ))
+        return path_in
     return path_out
 
 
@@ -189,11 +177,12 @@ class ArtResizer(object):
 
         # Try invoking ImageMagick's "convert".
         try:
-            out = subprocess.check_output(['convert', '--version']).lower()
-            if 'imagemagick' in out:
+            out = util.command_output(['convert', '--version'])
+            if 'imagemagick' in out.lower():
+                # system32/convert.exe may be interfering
                 return IMAGEMAGICK
         except (subprocess.CalledProcessError, OSError):
-            pass # system32/convert.exe may be interfering
+            pass
 
         # Fall back to Web proxy method.
         return WEBPROXY
