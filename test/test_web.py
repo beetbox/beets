@@ -62,6 +62,14 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json['items']), 2)
 
+    def test_get_simple_item_query(self):
+        response = self.client.get('/item/query/another')
+        response.json = json.loads(response.data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json['results']), 1)
+        self.assertEqual(response.json['results'][0]['title'], 'another title')
+
     def test_get_all_albums(self):
         response = self.client.get('/album/')
         response.json = json.loads(response.data)

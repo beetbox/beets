@@ -107,7 +107,9 @@ def resource_query(name):
         def responder(query):
             parts = query.split('/')
             entities = query_func(parts)
-            return flask.jsonify(results=[_rep(entities) for item in items])
+            return app.response_class(
+                    json_generator(entities, root='results'),
+                    mimetype='application/json')
         responder.__name__ = 'query_%s' % name
         return responder
     return make_responder
