@@ -58,6 +58,7 @@ Other little fixes:
   geigerzaehler.
 * :doc:`/plugins/fromfilename`: Fix a crash when a filename contained only a
   track number (e.g., ``02.mp3``).
+* :doc:`/plugins/convert`: Transcoding should now work on Windows.
 
 
 1.3.2 (December 22, 2013)
