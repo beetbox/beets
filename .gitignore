@@ -5,6 +5,7 @@
 .sconsign*
 .svn
 .tox
+.coverage
 
 # file patterns
 
