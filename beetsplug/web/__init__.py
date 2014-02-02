@@ -67,6 +67,64 @@ def json_generator(items, root):
         yield json.dumps(_rep(item))
     yield ']}'
 
+def _extract_ids(string_ids):
+    """Parses ``string_ids`` as a comme separated list of integers and returns
+    that list of integers.
+    """
+    ids = []
+    for id in string_ids.split(','):
+        try:
+            ids.append(int(id))
+        except ValueError:
+            pass
+    return ids
+
+def resource(name):
+    """Decorates a function to handle RESTful HTTP requests for a resource.
+    """
+    def make_responder(retriever):
+        def responder(entity_ids):
+            entity_ids = _extract_ids(entity_ids)
+            entities = [retriever(id) for id in entity_ids]
+            entities = [entity for entity in entities if entity]
+
+            if len(entities) == 1:
+                return flask.jsonify(_rep(entities[0]))
+            elif entities:
+                return app.response_class(
+                        json_generator(entities, root=name),
+                        mimetype='application/json')
+            else:
+                return flask.abort(404)
+        responder.__name__ = 'get_%s' % name
+        return responder
+    return make_responder
+
+def resource_query(name):
+    """Decorates a function to handle RESTful HTTP queries for resources.
+    """
+    def make_responder(query_func):
+        def responder(query):
+            parts = query.split('/')
+            entities = query_func(parts)
+            return flask.jsonify(results=[_rep(entities) for item in items])
+        responder.__name__ = 'query_%s' % name
+        return responder
+    return make_responder
+
+def resource_list(name):
+    """Decorates a function to handle RESTful HTTP request for a list of
+    resources.
+    """
+    def make_responder(list_all):
+        def responder():
+            return app.response_class(
+                    json_generator(g.lib.items(), root=name),
+                    mimetype='application/json')
+        responder.__name__ = 'all_%s' % name
+        return responder
+    return make_responder
+
 
 # Flask setup.
 
@@ -79,17 +137,17 @@ def before_request():
 
 # Items.
 
-@app.route('/item/<int:item_id>')
-def single_item(item_id):
-    item = g.lib.get_item(item_id)
-    return flask.jsonify(_rep(item))
+@app.route('/item/<entity_ids>')
+@resource('items')
+def get_item(id):
+    return g.lib.get_item(id)
+
 
 @app.route('/item/')
 @app.route('/item/query/')
+@resource_list('items')
 def all_items():
-    return app.response_class(
-            json_generator(g.lib.items(), root='items'),
-            mimetype='application/json')
+    return g.lib.items()
 
 @app.route('/item/<int:item_id>/file')
 def item_file(item_id):
@@ -100,32 +158,28 @@ def item_file(item_id):
     return response
 
 @app.route('/item/query/<path:query>')
-def item_query(query):
-    parts = query.split('/')
-    items = g.lib.items(parts)
-    return flask.jsonify(results=[_rep(item) for item in items])
+@resource_query('items')
+def item_query(queries):
+    return g.lib.items(queries)
 
 
 # Albums.
 
-@app.route('/album/<int:album_id>')
-def single_album(album_id):
-    album = g.lib.get_album(album_id)
-    return flask.jsonify(_rep(album))
+@app.route('/album/<entity_ids>')
+@resource('albums')
+def get_album(id):
+    return g.lib.get_album(id)
 
 @app.route('/album/')
 @app.route('/album/query/')
+@resource_list('albums')
 def all_albums():
-    return app.response_class(
-            json_generator(g.lib.albums(), root='albums'),
-            mimetype='application/json')
-
+    return g.lib.albums()
 
 @app.route('/album/query/<path:query>')
-def album_query(query):
-    parts = query.split('/')
-    albums = g.lib.albums(parts)
-    return flask.jsonify(results=[_rep(album) for album in albums])
+@resource_query('albums')
+def album_query(queries):
+    return g.lib.album(queries)
 
 @app.route('/album/<int:album_id>/art')
 def album_art(album_id):
