@@ -158,6 +158,8 @@ Here are a few of the plugins written by the beets community:
 
 * `dsedivec`_ has two plugins: ``edit`` and ``moveall``.
 
+* `beet-amazon`_ adds Amazon.com as a tagger data source.
+
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
 .. _gbeets: https://github.com/mister-walter/gbeets
 .. _beets-artistcountry: https://github.com/agrausem/beets-artistcountry
@@ -167,3 +169,4 @@ Here are a few of the plugins written by the beets community:
 .. _A cmus plugin:
     https://github.com/coolkehon/beets/blob/master/beetsplug/cmus.py
 .. _cmus: http://cmus.sourceforge.net/
+.. _beet-amazon: https://github.com/jmwatte/beet-amazon
