@@ -776,7 +776,7 @@ def _raw_main(args):
     if getattr(options, 'config', None) is not None:
         config_path = options.config
         del options.config
-        config.add_file(config_path)
+        config.set_file(config_path)
     config.set_args(options)
 
     # Open library file.

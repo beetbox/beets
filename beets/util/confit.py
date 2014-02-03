@@ -687,11 +687,12 @@ class Configuration(RootView):
             os.makedirs(appdir)
         return appdir
 
-    def add_file(self, filename):
-        """Parses the file as YAML and adds it to the configuration sources
+    def set_file(self, filename):
+        """Parses the file as YAML and inserts it into the configuration
+        sources with highest priority.
         """
         filename = os.path.abspath(filename)
-        self.add(ConfigSource(load_yaml(filename), filename))
+        self.set(ConfigSource(load_yaml(filename), filename))
 
 class LazyConfig(Configuration):
     """A Configuration at reads files on demand when it is first

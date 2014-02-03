@@ -470,13 +470,26 @@ class InputTest(_common.TestCase):
 class ConfigTest(_common.TestCase):
     def setUp(self):
         super(ConfigTest, self).setUp()
-        self.io.install()
         self.test_cmd = ui.Subcommand('test', help='test')
         self.test_cmd.func = lambda *_: None
         commands.default_commands.append(self.test_cmd)
+
+        config_dir = os.path.join(self.temp_dir, '.config', 'beets')
+        os.makedirs(config_dir)
+        self.user_config_path = os.path.join(config_dir, 'config.yaml')
+
+        # Config should read files again on demand
+        config.sources = []
+        config._materialized = False
+        config._lazy_suffix = []
+        config._lazy_prefix = []
+
     def tearDown(self):
         super(ConfigTest, self).tearDown()
         commands.default_commands.pop()
+        if 'BEETSDIR' in os.environ:
+            del os.environ['BEETSDIR']
+
     def _run_main(self, args, config_yaml, func):
         self.test_cmd.func = func
         config_yaml = textwrap.dedent(config_yaml).strip()
@@ -505,10 +518,6 @@ class ConfigTest(_common.TestCase):
                 x: y
         """, func)
 
-    def test_nonexistant_config_file(self):
-        os.environ['BEETSCONFIG'] = '/xxxxx'
-        ui.main(['version'])
-
     def test_nonexistant_db(self):
         def func(lib, opts, args):
             pass
@@ -517,14 +526,11 @@ class ConfigTest(_common.TestCase):
                 library: /xxx/yyy/not/a/real/path
             """, func)
 
-    def test_cli_config_option(self):
-        """Read config from file passed on the command line with
-        ``--config file``
-        """
-        config_path = os.path.join(self.temp_dir, 'config.yml')
-        with open(config_path, 'w') as file:
+    def test_user_config_file(self):
+        with open(self.user_config_path, 'w') as file:
             file.write('anoption: value')
-        ui.main(['--config', config_path, 'test'])
+
+        ui._raw_main(['test'])
         self.assertEqual(config['anoption'].get(), 'value')
 
     def test_replacements_parsed(self):
@@ -548,6 +554,42 @@ class ConfigTest(_common.TestCase):
                 '[xy]': z
                 foo: bar
         """, func)
+
+    def test_cli_config_option(self):
+        config_path = os.path.join(self.temp_dir, 'config.yaml')
+        with open(config_path, 'w') as file:
+            file.write('anoption: value')
+        ui._raw_main(['--config', config_path, 'test'])
+        self.assertEqual(config['anoption'].get(), 'value')
+
+    def test_beetsdir_config_file_overwrites_defaults(self):
+        with open(self.user_config_path, 'w') as file:
+            file.write('anoption: value')
+
+        env_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        os.environ['BEETSDIR'] = self.temp_dir
+        with open(env_config_path, 'w') as file:
+            file.write('anoption: overwrite')
+
+        ui.main(['test'])
+        self.assertEqual(config['anoption'].get(), 'overwrite')
+
+    def test_cli_config_file_overwrites_user_defaults(self):
+        with open(self.user_config_path, 'w') as file:
+            file.write('anoption: value')
+
+        env_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        os.environ['BEETSDIR'] = self.temp_dir
+        with open(env_config_path, 'w') as file:
+            file.write('anoption: overwrite')
+
+        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        with open(cli_config_path, 'w') as file:
+            file.write('anoption: cli overwrite')
+
+        ui._raw_main(['--config', cli_config_path, 'test'])
+        self.assertEqual(config['anoption'].get(), 'cli overwrite')
+
 
 class ShowdiffTest(_common.TestCase):
     def setUp(self):
