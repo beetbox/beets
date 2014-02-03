@@ -1155,11 +1155,16 @@ def modify_items(lib, mods, query, write, move, album, confirm):
             if _showdiff(field, obj.get(field), value):
                 changed.add(obj)
 
-    # Confirm.
-    if confirm:
-        extra = ' and write tags' if write else ''
-        if not ui.input_yn('Really modify%s (Y/n)?' % extra):
-            return
+    # Still something to do?
+    if not changed:
+        print_('No modification to perform.')
+        return
+    else:
+        # Confirm.
+        if confirm:
+            extra = ' and write tags' if write else ''
+            if not ui.input_yn('Really modify%s (Y/n)?' % extra):
+                return
 
     # Apply changes to database.
     with lib.transaction():
