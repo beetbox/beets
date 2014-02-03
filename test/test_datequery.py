@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-from beetsplug.datequery import _parse_periods, DateInterval
+from beets.dbcore.query import _parse_periods, DateInterval
 
 def _date(string):
     return datetime.strptime(string, '%Y-%m-%dT%H:%M:%S')
