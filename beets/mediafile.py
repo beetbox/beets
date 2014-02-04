@@ -259,6 +259,7 @@ packing = enum('SLASHED',   # pair delimited by /
                name='packing')
 packing_type = packing
 
+
 class StorageStyle(object):
     """Parameterizes the storage behavior of a single field for a
     certain tag format.
@@ -297,6 +298,7 @@ class StorageStyle(object):
             self.suffix = self.as_type(self.suffix)
 
     def fetch(self, mediafile):
+        """Retrieve the first raw value of this tag from the mediafile."""
         try:
             entry = mediafile.mgfile[self.key]
         except KeyError:
@@ -310,6 +312,7 @@ class StorageStyle(object):
             return None
 
     def get(self, mediafile):
+        """Retrieve the unpacked value of this field from the mediafile."""
         data = self.fetch(mediafile)
         if self.packing:
             try:
@@ -323,6 +326,7 @@ class StorageStyle(object):
         return data
 
     def unpack(self, data):
+        """Splits raw data from a tag into a list of values."""
         if data is None:
             return [None]*self.packing_length
 
@@ -340,11 +344,12 @@ class StorageStyle(object):
 
         return list(items) + [None]*(self.packing_length - len(items))
 
-
     def store(self, mediafile, value):
+        """Stores a serialized value in the mediafile."""
         mediafile.mgfile[self.key] = [value]
 
     def set(self, mediafile, value):
+        """Packs, serializes and stores the value in the mediafile."""
         if value is None:
             value = self._none_value()
 
@@ -356,6 +361,11 @@ class StorageStyle(object):
         self.store(mediafile, value)
 
     def pack(self, data, value):
+        """Pack value into data.
+
+        It unpacks ``data`` into a list, updates the value at ``self.pack_pos``
+        and returns the updated list.
+        """
         items = list(self.unpack(data))
         for i in range(len(items)):
             if not items[i]:
@@ -387,8 +397,7 @@ class StorageStyle(object):
         return data
 
     def serialize(self, value):
-        """Convert value to a type that is suitable for storing in a tag
-        """
+        """Convert value to a type that is suitable for storing in a tag."""
         if isinstance(value, float) and self.as_type is unicode:
             value = u'{0:.{1}f}'.format(value, self.float_places)
             value = self.as_type(value)
@@ -409,6 +418,7 @@ class StorageStyle(object):
         return value
 
     def _none_value(self):
+        """The value that ``None`` atains when serializing and packing."""
         if self.out_type == int:
             return 0
         elif self.out_type == float:
@@ -539,7 +549,6 @@ class MP3DescStorageStyle(MP3StorageStyle):
                     return frame.text[0]
                 except IndexError:
                     return None
-
 
 
 # The field itself.
