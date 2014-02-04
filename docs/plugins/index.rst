@@ -122,7 +122,6 @@ Miscellaneous
 * :doc:`info`: Print music files' tags to the console.
 * :doc:`missing`: List missing tracks.
 * :doc:`duplicates`: List duplicate tracks or albums.
-* :doc:`datequery`: Query date fields against date intervals or instants.
 
 .. _MPD: http://mpd.wikia.com/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients
