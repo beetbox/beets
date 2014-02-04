@@ -275,18 +275,15 @@ class StorageStyle(object):
      - float_places: When the value is a floating-point number and
        encoded as a string, the number of digits to store after the
        point.
-
-    For MP3 only:
-      - id3_lang: set the language field of the frame object.
     """
+
     def __init__(self, key, as_type=unicode,
                  packing=None, pack_pos=0,
-                 id3_lang=None, suffix=None, float_places=2):
+                 suffix=None, float_places=2):
         self.key = key
         self.as_type = as_type
         self.packing = packing
         self.pack_pos = pack_pos
-        self.id3_lang = id3_lang
         self.suffix = suffix
         self.float_places = float_places
 
@@ -459,7 +456,12 @@ class MP4StorageStyle(StorageStyle):
             value = value.encode('utf8')
         return value
 
+
 class MP3StorageStyle(StorageStyle):
+
+    def __init__(self, key, id3_lang=None, **kwargs):
+        self.id3_lang = id3_lang
+        super(MP3StorageStyle, self).__init__(key, **kwargs)
 
     def fetch(self, mediafile):
         try:
@@ -476,6 +478,7 @@ class MP3StorageStyle(StorageStyle):
     def store(self, mediafile, value):
         frame = mutagen.id3.Frames[self.key](encoding=3, text=[value])
         mediafile.mgfile.tags.setall(self.key, [frame])
+
 
 class MP3UFIDStorageStyle(MP3StorageStyle):
 
