@@ -16,13 +16,10 @@
 """
 import os
 import shutil
-import tempfile
-from datetime import date
 
 import _common
 from _common import unittest
 import beets.mediafile
-from beets.mediafile import MediaFile
 
 
 class EdgeTest(unittest.TestCase):
