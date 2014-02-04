@@ -300,15 +300,8 @@ class StorageStyle(object):
     def fetch(self, mediafile):
         """Retrieve the first raw value of this tag from the mediafile."""
         try:
-            entry = mediafile.mgfile[self.key]
+            return mediafile.mgfile[self.key][0]
         except KeyError:
-            return None
-
-        try:
-            return entry[0]
-        except:
-            log.error('Mutagen exception when reading field: %s' %
-                      traceback.format_exc)
             return None
 
     def get(self, mediafile):
@@ -445,13 +438,8 @@ class MP4StorageStyle(StorageStyle):
         # Possibly index the list.
         if self.as_type == bool:
             return entry
-
-        try:
+        else:
             return entry[0]
-        except:
-            log.error('Mutagen exception when reading field: %s' %
-                      traceback.format_exc)
-            return None
 
     def store(self, mediafile, value):
         if self.as_type != bool:
@@ -480,14 +468,8 @@ class MP3StorageStyle(StorageStyle):
 
     def fetch(self, mediafile):
         try:
-            frame =  mediafile.mgfile[self.key]
+            return mediafile.mgfile[self.key].text[0]
         except KeyError:
-            return None
-        try:
-            return frame.text[0]
-        except:
-            log.error('Mutagen exception when reading field: %s' %
-                      traceback.format_exc)
             return None
 
     def store(self, mediafile, value):
@@ -543,10 +525,9 @@ class MP3UFIDStorageStyle(MP3StorageStyle):
 
     def fetch(self, mediafile):
         try:
-            frame = mediafile.mgfile[self.key]
+            return mediafile.mgfile[self.key].data
         except KeyError:
             return None
-        return frame.data
 
     def store(self, mediafile, value):
         frames = mediafile.mgfile.tags.getall(self.key)
