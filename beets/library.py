@@ -79,7 +79,7 @@ class SingletonQuery(dbcore.Query):
 
 class DateType(types.Type):
     sql = u'REAL'
-    query = dbcore.query.NumericQuery
+    query = dbcore.query.DateQuery
 
     def format(self, value):
         return time.strftime(beets.config['time_format'].get(unicode),
