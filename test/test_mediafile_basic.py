@@ -15,7 +15,6 @@
 """Automatically-generated blanket testing for the MediaFile metadata
 layer.
 """
-import sys
 import os
 import shutil
 import tempfile
@@ -295,7 +294,7 @@ class ReadWriteTestBase(object):
         tags['original_month'] = original_date.month
         tags['original_day'] = original_date.day
         return tags
-    
+
 
 class PartialTestMixin(object):
     tags_without_total = {
