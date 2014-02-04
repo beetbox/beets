@@ -320,9 +320,7 @@ class StorageStyle(object):
             except IndexError:
                 data = None
 
-        if self.suffix and isinstance(data, unicode):
-            if data.endswith(self.suffix):
-                data = data[:-len(self.suffix)]
+        data = self._strip_possible_suffix(data)
         return data
 
     def unpack(self, data):
@@ -428,6 +426,13 @@ class StorageStyle(object):
         elif self.out_type == unicode:
             return u''
 
+    def _strip_possible_suffix(self, data):
+        if self.suffix and isinstance(data, unicode) \
+                       and data.endswith(self.suffix):
+            return data[:-len(self.suffix)]
+        else:
+            return data
+
 
 class MP4StorageStyle(StorageStyle):
 
@@ -504,15 +509,7 @@ class MP3ListStorageStyle(MP3StorageStyle):
 
     def get_list(self, mediafile):
         data = self.fetch(mediafile)
-        if self.packing:
-            try:
-                data = self.unpack(data)[self.pack_pos]
-            except IndexError:
-                data = None
-
-        if self.suffix and isinstance(data, unicode):
-            if data.endswith(self.suffix):
-                data = data[:-len(self.suffix)]
+        data = map(self._strip_possible_suffix, data)
         return data
 
     def get(self, mediafile):
