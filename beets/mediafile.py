@@ -475,7 +475,7 @@ class MP3StorageStyle(StorageStyle):
 
     def fetch(self, mediafile):
         try:
-            frame = mediafile.mgfile[self.key]
+            frame =  mediafile.mgfile[self.key]
         except KeyError:
             return None
         try:
@@ -488,6 +488,54 @@ class MP3StorageStyle(StorageStyle):
     def store(self, mediafile, value):
         frame = mutagen.id3.Frames[self.key](encoding=3, text=[value])
         mediafile.mgfile.tags.setall(self.key, [frame])
+
+class MP3ListStorageStyle(MP3StorageStyle):
+
+    def __init__(self, *args, **kwargs):
+        super(MP3ListStorageStyle, self).__init__(*args, **kwargs)
+        if self.packing:
+            raise NotImplementedError('packing is not implemented for lists')
+
+    def fetch(self, mediafile):
+        try:
+            return mediafile.mgfile[self.key].text
+        except KeyError:
+            return []
+
+    def get_list(self, mediafile):
+        data = self.fetch(mediafile)
+        if self.packing:
+            try:
+                data = self.unpack(data)[self.pack_pos]
+            except IndexError:
+                data = None
+
+        if self.suffix and isinstance(data, unicode):
+            if data.endswith(self.suffix):
+                data = data[:-len(self.suffix)]
+        return data
+
+    def get(self, mediafile):
+        try:
+            return self.get_list(mediafile)[0]
+        except IndexError:
+            return None
+
+    def store(self, mediafile, values):
+        frame = mutagen.id3.Frames[self.key](encoding=3, text=values)
+        mediafile.mgfile.tags.setall(self.key, [frame])
+
+    def set(self, mediafile, value):
+        self.set_list(mediafile, [value])
+
+    def set_list(self, mediafile, values):
+        data = []
+        for value in values:
+            if value is None:
+                value = self._none_value()
+            data.append(self.serialize(value))
+
+        self.store(mediafile, data)
 
 
 class MP3UFIDStorageStyle(MP3StorageStyle):
@@ -571,6 +619,13 @@ class MediaField(object):
                             'arguments mp3, mp4, asf, and etc')
         self.styles = kwargs
 
+
+    def listField(self):
+        options = self.styles.copy()
+        options['out_type'] = self.out_type
+        return MediaFieldList(**options)
+
+
     def _styles(self, obj):
         if obj.type in ('mp3', 'asf'):
             styles = self.styles[obj.type]
@@ -598,6 +653,20 @@ class MediaField(object):
     def __set__(self, obj, val):
         for style in self._styles(obj):
             style.set(obj, val)
+
+class MediaFieldList(MediaField):
+
+    def __get__(self, mediafile, _):
+        values = []
+        for style in self._styles(mediafile):
+            values.extend(style.get_list(mediafile))
+        return [_safe_cast(self.out_type, value) for value in values]
+
+    def __set__(self, mediafile, values):
+        for style in self._styles(mediafile):
+            style.set_list(mediafile, values)
+
+
 
 class CompositeDateField(object):
     """A MediaFile field for conveniently accessing the year, month, and
@@ -932,11 +1001,13 @@ class MediaFile(object):
         asf=StorageStyle('WM/AlbumTitle'),
     )
     genre = MediaField(
-        mp3=MP3StorageStyle('TCON'),
+        mp3=MP3ListStorageStyle('TCON'),
         mp4=MP4StorageStyle("\xa9gen"),
         etc=StorageStyle('GENRE'),
         asf=StorageStyle('WM/Genre'),
     )
+    genres = genre.listField()
+
     composer = MediaField(
         mp3=MP3StorageStyle('TCOM'),
         mp4=MP4StorageStyle("\xa9wrt"),

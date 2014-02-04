@@ -323,6 +323,37 @@ class MP3Test(ReadWriteTestBase, PartialTestMixin, unittest.TestCase):
         'bitdepth': 0,
         'channels': 1,
     }
+
+    def test_read_genre_list(self):
+        mediafile = self._mediafile_fixture('full')
+        self.assertEqual(mediafile.genres, ['the genre'])
+
+    def test_write_genre_list(self):
+        mediafile = self._mediafile_fixture('empty')
+        mediafile.genres = ['one', 'two']
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(mediafile.genres, ['one', 'two'])
+
+    def test_write_genre_list_get_first(self):
+        mediafile = self._mediafile_fixture('empty')
+        mediafile.genres = ['one', 'two']
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(mediafile.genre, 'one')
+
+    def test_append_genre_list(self):
+        mediafile = self._mediafile_fixture('full')
+        self.assertEqual(mediafile.genre, 'the genre')
+        mediafile.genres += ['another']
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(mediafile.genres, ['the genre', 'another'])
+
+
 class MP4Test(ReadWriteTestBase, PartialTestMixin, unittest.TestCase):
     extension = 'm4a'
     audio_properties = {
