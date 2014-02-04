@@ -290,9 +290,6 @@ class StorageStyle(object):
         self.suffix = suffix
         self.float_places = float_places
 
-        if self.packing == packing_type.TUPLE:
-            self.as_type = 3
-
         if self.packing == packing_type.DATE:
             self.packing_length = 3
         else:
@@ -450,7 +447,8 @@ class MP4StorageStyle(StorageStyle):
         mediafile.mgfile[self.key] = value
 
     def serialize(self, value):
-        value = super(MP4StorageStyle, self).serialize(value)
+        if self.packing != packing.TUPLE:
+            value = super(MP4StorageStyle, self).serialize(value)
         if self.key.startswith('----:') and isinstance(value, unicode):
             value = value.encode('utf8')
         return value
