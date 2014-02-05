@@ -65,6 +65,8 @@ Other little fixes:
 * :doc:`/plugins/convert`: Transcoding should now work on Windows.
 * :doc:`/plugins/duplicates`: The ``move`` and ``copy`` destination arguments
   are now treated as directories. Thanks to Pedro Silva.
+* The :ref:`modify-cmd` command now skips confirmation and prints a message if
+  no changes are necessary. Thanks to brilnius.
 
 
 1.3.2 (December 22, 2013)
