@@ -70,6 +70,8 @@ Other little fixes:
   are now treated as directories. Thanks to Pedro Silva.
 * The :ref:`modify-cmd` command now skips confirmation and prints a message if
   no changes are necessary. Thanks to brilnius.
+* The replacement characters for path separators can be set in the
+  "replace" configuration.
 
 
 1.3.2 (December 22, 2013)

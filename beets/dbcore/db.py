@@ -346,6 +346,10 @@ class Model(object):
                 value = unicode(value)
 
         if for_path:
+            replacements = self._db.replacements or []
+            for regex, repl in replacements:
+                value = regex.sub(repl, value)
+
             sep_repl = beets.config['path_sep_replace'].get(unicode)
             for sep in (os.path.sep, os.path.altsep):
                 if sep:
