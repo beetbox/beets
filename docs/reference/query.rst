@@ -128,18 +128,23 @@ and this command finds MP3 files with bitrates of 128k or lower::
 
     $ beet list format:MP3 bitrate:..128000
 
+
+.. _datequery:
+
 Date and Date Range Queries
 ---------------------------
 
-Date fields such as added and mtime can be queried against a date or a one- or
-two-sided date interval.
+Date-valued fields, such as *added* and *mtime*, have a special query syntax
+that lets you specify years, months, and days as well as ranges between dates.
 
-A date is be specified as ``year-month-day`` where only year is mandatory.
+Dates are written separated by hyphens, like ``year-month-day``, but the month
+and day are optional. If you leave out the day, for example, you will get
+matches for the whole month.
 
-Date intervals should have at least a start or an end. The endpoints are
-separated by two dots (``..``).
+Date *intervals*, like the numeric intervals described above, are separated by
+two dots (``..``). You can specify a start, an end, or both.
 
-An example query for finding all albums added in the year 2008::
+Here is an example that finds all the songs added in 2008::
 
     $ beet ls -a 'added:2008'
 
@@ -151,18 +156,15 @@ Find all items added before the year 2010::
 
     $ beet ls 'added:..2009'
 
-Find all items added in the interval
-[2008-12-01T00:00:00, 2009-10-12T00:00:00)::
+Find all items added on 2008-12-01 but before 2009-10-12::
 
     $ beet ls 'added:2008-12..2009-10-11'
 
-Find all items with a stored file modification time in the interval
-[2008-12-01T00:00:00, 2008-12-03T00:00:00)::
+Find all items with a file modification time between 2008-12-01 and
+2008-12-03::
 
     $ beet ls 'mtime:2008-12-01..2008-12-02'
 
-Note that the interval ``..`` is also valid, but it simply means the interval
-of all possible dates.
 
 Path Queries
 ------------

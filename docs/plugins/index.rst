@@ -56,7 +56,6 @@ by typing ``beet version``.
    beatport
    fromfilename
    ftintitle
-   datequery
 
 Autotagger Extensions
 ---------------------

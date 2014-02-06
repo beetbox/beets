@@ -13,6 +13,9 @@ consequences for all users are:
   ``beet list era:goldenage``.
 * Album-level flexible attributes and plugin-provided attributes can now be
   used in path formats (and other item-level templates).
+* :ref:`Date-based queries <datequery>` are now possible. Try getting every
+  track you added in February 2014 with ``beet ls added:2014-02`` or in the
+  whole decade with ``added:2010..``. Thanks to Stig Inge Lea Bjørnsen.
 
 For developers, the short version of the story is that Item and Album objects
 provide *uniform access* across fixed, flexible, and computed attributes.
