@@ -257,15 +257,7 @@ class Model(object):
 
             # Flexible attributes.
             for key, value in self._values_flex.items():
-                # Remove any empty field
-                if value == '':
-                    tx.mutate(
-                        'DELETE FROM {0} WHERE '
-                        'entity_id=? AND key=?;'.format(self._flex_table),
-                        (self.id, key),
-                    )
-                elif key in self._dirty:
-                    # Insert/update only created/modified fields
+                if key in self._dirty:
                     tx.mutate(
                         'INSERT INTO {0} '
                         '(entity_id, key, value) '
