@@ -18,10 +18,14 @@ import re
 import logging
 from beets.plugins import BeetsPlugin
 from beets.importer import action
+from beets.dbcore.query import AndQuery
+from beets.library import query_from_strings
+from beets.library import Item
+from beets.library import Album
 
 
 __author__ = 'baobab@heresiarch.info'
-__version__ = '1.0'
+__version__ = '2.0'
 
 
 class IHatePlugin(BeetsPlugin):
@@ -29,88 +33,46 @@ class IHatePlugin(BeetsPlugin):
     _instance = None
     _log = logging.getLogger('beets')
 
-    warn_genre = []
-    warn_artist = []
-    warn_album = []
-    warn_whitelist = []
-    skip_genre = []
-    skip_artist = []
-    skip_album = []
-    skip_whitelist = []
-
     def __init__(self):
         super(IHatePlugin, self).__init__()
         self.register_listener('import_task_choice',
                                self.import_task_choice_event)
         self.config.add({
-            'warn_genre': [],
-            'warn_artist': [],
-            'warn_album': [],
-            'warn_whitelist': [],
-            'skip_genre': [],
-            'skip_artist': [],
-            'skip_album': [],
-            'skip_whitelist': [],
+            'warn': {},
+            'skip': {},
         })
 
-
     @classmethod
-    def match_patterns(cls, s, patterns):
-        """Check if string is matching any of the patterns in the list."""
-        for p in patterns:
-            if re.findall(p, s, flags=re.IGNORECASE):
-                return True
-        return False
-
-    @classmethod
-    def do_i_hate_this(cls, task, genre_patterns, artist_patterns,
-                       album_patterns, whitelist_patterns):
+    def do_i_hate_this(cls, task, action_patterns):
         """Process group of patterns (warn or skip) and returns True if
         task is hated and not whitelisted.
         """
-        hate = False
-        try:
-            genre = task.items[0].genre
-        except:
-            genre = u''
-        if genre and genre_patterns:
-            if cls.match_patterns(genre, genre_patterns):
-                hate = True
-        if not hate and getattr(task, 'cur_album', None) and album_patterns:
-            if cls.match_patterns(task.cur_album, album_patterns):
-                hate = True
-        if not hate and getattr(task, 'cur_artist', None) and artist_patterns:
-            if cls.match_patterns(task.cur_artist, artist_patterns):
-                hate = True
-        if hate and whitelist_patterns:
-            if cls.match_patterns(task.cur_artist, whitelist_patterns):
-                hate = False
-        return hate
+        if action_patterns:
+            for queryString in action_patterns:
+                blockQuery = None
+                if task.is_album:
+                    blockQuery = query_from_strings(AndQuery,Album,queryString)
+                else:
+                    blockQuery = query_from_strings(AndQuery,Item,queryString)
+                if any(blockQuery.match(item) for item in task.items):
+                    return True
+        return False
+
 
     def job_to_do(self):
         """Return True if at least one pattern is defined."""
-        return any(self.config[l].as_str_seq() for l in
-                   ('warn_genre', 'warn_artist', 'warn_album',
-                    'skip_genre', 'skip_artist', 'skip_album'))
+        return any(self.config[l].as_str_seq() for l in ('warn', 'skip'))
 
     def import_task_choice_event(self, session, task):
         if task.choice_flag == action.APPLY:
             if self.job_to_do():
                 self._log.debug('[ihate] processing your hate')
-                if self.do_i_hate_this(task,
-                            self.config['skip_genre'].as_str_seq(),
-                            self.config['skip_artist'].as_str_seq(),
-                            self.config['skip_album'].as_str_seq(),
-                            self.config['skip_whitelist'].as_str_seq()):
+                if self.do_i_hate_this(task, self.config['skip']):
                     task.choice_flag = action.SKIP
                     self._log.info(u'[ihate] skipped: {0} - {1}'
                                    .format(task.cur_artist, task.cur_album))
                     return
-                if self.do_i_hate_this(task,
-                            self.config['warn_genre'].as_str_seq(),
-                            self.config['warn_artist'].as_str_seq(),
-                            self.config['warn_album'].as_str_seq(),
-                            self.config['warn_whitelist'].as_str_seq()):
+                if self.do_i_hate_this(task, self.config['warn']):
                     self._log.info(u'[ihate] you maybe hate this: {0} - {1}'
                                    .format(task.cur_artist, task.cur_album))
             else:
