@@ -182,6 +182,43 @@ class ModelTest(_common.TestCase):
         other_model = self.db._get(TestModel1, model.id)
         self.assertEqual(other_model.foo, 'bar')
 
+    def test_delete_flexattr(self):
+        model = TestModel1()
+        model['foo'] = 'bar'
+        self.assertTrue('foo' in model)
+        del model['foo']
+        self.assertFalse('foo' in model)
+
+    def test_delete_flexattr_via_dot(self):
+        model = TestModel1()
+        model['foo'] = 'bar'
+        self.assertTrue('foo' in model)
+        del model.foo
+        self.assertFalse('foo' in model)
+
+    def test_delete_flexattr_persists(self):
+        model = TestModel1()
+        model.add(self.db)
+        model.foo = 'bar'
+        model.store()
+
+        model = self.db._get(TestModel1, model.id)
+        del model['foo']
+        model.store()
+
+        model = self.db._get(TestModel1, model.id)
+        self.assertFalse('foo' in model)
+
+    def test_delete_non_existent_attribute(self):
+        model = TestModel1()
+        with self.assertRaises(KeyError):
+            del model['foo']
+
+    def test_delete_fixed_attribute(self):
+        model = TestModel1()
+        with self.assertRaises(KeyError):
+            del model['field_one']
+
 
 class FormatTest(_common.TestCase):
     def test_format_fixed_field(self):
