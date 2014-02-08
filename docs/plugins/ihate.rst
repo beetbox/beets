@@ -13,15 +13,15 @@ file::
     ihate:
         # Print a warning message for these.
         warn:
-			- artist:rnb
-			- genre: soul
-			# Only warn about tribute albums in rock genre.
-			- genre:rock album:tribute
+            - artist:rnb
+            - genre: soul
+            # Only warn about tribute albums in rock genre.
+            - genre:rock album:tribute
         # Never import any of this.
         skip:
-			- genre::russian\srock
-			- genre:polka
-			- artist:manowar
-			- album:christmas
+            - genre::russian\srock
+            - genre:polka
+            - artist:manowar
+            - album:christmas
 
 The plugin trusts your decision in "as-is" imports.
