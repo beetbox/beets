@@ -1,7 +1,7 @@
 Path Formats
 ============
 
-The ``[paths]`` section of the config file (see :doc:`config`) lets
+The ``paths:`` section of the config file (see :doc:`config`) lets
 you specify the directory and file naming scheme for your music library.
 Templates substitute symbols like ``$title`` (any field value prefixed by ``$``)
 with the appropriate value from the track's metadata. Beets adds the filename

@@ -53,8 +53,8 @@ library. Defaults to a folder called ``Music`` in your home directory.
 plugins
 ~~~~~~~
 
-A space-separated list of plugin module names to load. For instance, beets
-includes the BPD plugin for playing music.
+A space-separated list of plugin module names to load. See
+:ref:`using-plugins`.
 
 pluginpath
 ~~~~~~~~~~
@@ -572,14 +572,6 @@ Here's an example file::
         singleton: Singletons/$artist - $title
         comp: $genre/$album/$track $title
         albumtype:soundtrack: Soundtracks/$album/$track $title
-
-    bpd:
-        host: 127.0.0.1
-        port: 6600
-        password: seekrit
-
-(That ``[bpd]`` section configures the optional :doc:`BPD </plugins/bpd>`
-plugin.)
 
 .. only:: man
 
