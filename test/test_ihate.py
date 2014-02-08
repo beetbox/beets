@@ -1,87 +1,49 @@
 """Tests for the 'ihate' plugin"""
 
 from _common import unittest
-from beets.importer import ImportTask
+from beets import importer
 from beets.library import Item
 from beetsplug.ihate import IHatePlugin
 
 
 class IHatePluginTest(unittest.TestCase):
 
-    def test_hate_album(self):
-        """ iHate tests for album """
+    def test_hate(self):
 
-        genre_p = []
-        artist_p = []
-        album_p = []
-        white_p = []
-        task = ImportTask()
-        task.cur_artist = u'Test Artist'
-        task.cur_album = u'Test Album'
-        task.items = [Item(genre='Test Genre')]
-        self.assertFalse(IHatePlugin.do_i_hate_this(task, genre_p, artist_p,
-                                                    album_p, white_p))
-        genre_p = 'some_genre test\sgenre'.split()
-        self.assertTrue(IHatePlugin.do_i_hate_this(task, genre_p, artist_p,
-                                                   album_p, white_p))
-        genre_p = []
-        artist_p = 'bad_artist test\sartist'
-        self.assertTrue(IHatePlugin.do_i_hate_this(task, genre_p, artist_p,
-                                                   album_p, white_p))
-        artist_p = []
-        album_p = 'tribute christmas test'.split()
-        self.assertTrue(IHatePlugin.do_i_hate_this(task, genre_p, artist_p,
-                                                   album_p, white_p))
-        album_p = []
-        white_p = 'goodband test\sartist another_band'.split()
-        genre_p = 'some_genre test\sgenre'.split()
-        self.assertFalse(IHatePlugin.do_i_hate_this(task, genre_p, artist_p,
-                                                   album_p, white_p))
-        genre_p = []
-        artist_p = 'bad_artist test\sartist'
-        self.assertFalse(IHatePlugin.do_i_hate_this(task, genre_p, artist_p,
-                                                   album_p, white_p))
-        artist_p = []
-        album_p = 'tribute christmas test'.split()
-        self.assertFalse(IHatePlugin.do_i_hate_this(task, genre_p, artist_p,
-                                                   album_p, white_p))
+        match_pattern = {}
+        test_item = Item(
+            genre='TestGenre',
+            album=u'TestAlbum',
+            artist=u'TestArtist')
+        task = importer.ImportTask()
+        task.items = [test_item]
+        task.item = test_item
+        task.is_album = False
 
-    def test_hate_singleton(self):
-        """ iHate tests for singleton """
+        # Empty query should let it pass.
+        self.assertFalse(IHatePlugin.do_i_hate_this(task, match_pattern))
 
-        genre_p = []
-        artist_p = []
-        album_p = []
-        white_p = []
-        task = ImportTask()
-        task.cur_artist = u'Test Artist'
-        task.items = [Item(genre='Test Genre')]
-        self.assertFalse(IHatePlugin.do_i_hate_this(task, genre_p, artist_p,
-                                                    album_p, white_p))
-        genre_p = 'some_genre test\sgenre'.split()
-        self.assertTrue(IHatePlugin.do_i_hate_this(task, genre_p, artist_p,
-                                                   album_p, white_p))
-        genre_p = []
-        artist_p = 'bad_artist test\sartist'
-        self.assertTrue(IHatePlugin.do_i_hate_this(task, genre_p, artist_p,
-                                                   album_p, white_p))
-        artist_p = []
-        album_p = 'tribute christmas test'.split()
-        self.assertFalse(IHatePlugin.do_i_hate_this(task, genre_p, artist_p,
-                                                   album_p, white_p))
-        album_p = []
-        white_p = 'goodband test\sartist another_band'.split()
-        genre_p = 'some_genre test\sgenre'.split()
-        self.assertFalse(IHatePlugin.do_i_hate_this(task, genre_p, artist_p,
-                                                   album_p, white_p))
-        genre_p = []
-        artist_p = 'bad_artist test\sartist'
-        self.assertFalse(IHatePlugin.do_i_hate_this(task, genre_p, artist_p,
-                                                   album_p, white_p))
-        artist_p = []
-        album_p = 'tribute christmas test'.split()
-        self.assertFalse(IHatePlugin.do_i_hate_this(task, genre_p, artist_p,
-                                                   album_p, white_p))
+        # 1 query match.
+        match_pattern = ["artist:bad_artist","artist:TestArtist"]
+        self.assertTrue(IHatePlugin.do_i_hate_this(task, match_pattern))
+
+        # 2 query matches, either should trigger.
+        match_pattern = ["album:test","artist:testartist"]
+        self.assertTrue(IHatePlugin.do_i_hate_this(task, match_pattern))
+
+        # Query is blocked by AND clause.
+        match_pattern = ["album:notthis genre:testgenre"]
+        self.assertFalse(IHatePlugin.do_i_hate_this(task, match_pattern))
+
+        # Both queries are blocked by AND clause with unmatched condition.
+        match_pattern = ["album:notthis genre:testgenre",
+                         "artist:testartist album:notthis"]
+        self.assertFalse(IHatePlugin.do_i_hate_this(task, match_pattern))
+
+        # Only one query should fire.
+        match_pattern = ["album:testalbum genre:testgenre",
+                         "artist:testartist album:notthis"]
+        self.assertTrue(IHatePlugin.do_i_hate_this(task, match_pattern))
 
 
 def suite():

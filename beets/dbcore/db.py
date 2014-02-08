@@ -159,6 +159,19 @@ class Model(object):
         if old_value != value:
             self._dirty.add(key)
 
+    def __delitem__(self, key):
+        """Remove a flexible attribute from the model.
+        """
+        if key in self._values_flex:  # Flexible.
+            del self._values_flex[key]
+            self._dirty.add(key)  # Mark for dropping on store.
+        elif key in self._getters():  # Computed.
+            raise KeyError('computed field {0} cannot be deleted'.format(key))
+        elif key in self._fields:  # Fixed.
+            raise KeyError('fixed field {0} cannot be deleted'.format(key))
+        else:
+            raise KeyError('no such field {0}'.format(key))
+
     def keys(self, computed=False):
         """Get a list of available field names for this object. The
         `computed` parameter controls whether computed (plugin-provided)
@@ -224,6 +237,12 @@ class Model(object):
         else:
             self[key] = value
 
+    def __delattr__(self, key):
+        if key.startswith('_'):
+            super(Model, self).__delattr__(key)
+        else:
+            del self[key]
+
 
     # Database interaction (CRUD methods).
 
@@ -237,6 +256,7 @@ class Model(object):
         subvars = []
         for key in self._fields:
             if key != 'id' and key in self._dirty:
+                self._dirty.remove(key)
                 assignments += key + '=?,'
                 value = self[key]
                 # Wrap path strings in buffers so they get stored
@@ -255,15 +275,24 @@ class Model(object):
                 subvars.append(self.id)
                 tx.mutate(query, subvars)
 
-            # Flexible attributes.
+            # Modified/added flexible attributes.
             for key, value in self._values_flex.items():
                 if key in self._dirty:
+                    self._dirty.remove(key)
                     tx.mutate(
                         'INSERT INTO {0} '
                         '(entity_id, key, value) '
                         'VALUES (?, ?, ?);'.format(self._flex_table),
                         (self.id, key, value),
                     )
+
+            # Deleted flexible attributes.
+            for key in self._dirty:
+                tx.mutate(
+                    'DELETE FROM {0} '
+                    'WHERE entity_id=? AND key=?'.format(self._flex_table),
+                    (self.id, key)
+                )
 
         self.clear_dirty()
 
