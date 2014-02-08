@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Blemjhoo Tezoulbr <baobab@heresiarch.info>.
+# Copyright 2014, Blemjhoo Tezoulbr <baobab@heresiarch.info>.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -14,12 +14,10 @@
 
 """Warns you about things you hate (or even blocks import)."""
 
-import re
 import logging
 from beets.plugins import BeetsPlugin
 from beets.importer import action
-from beets.dbcore.query import AndQuery
-from beets.library import query_from_strings
+from beets.library import get_query
 from beets.library import Item
 from beets.library import Album
 
@@ -29,8 +27,6 @@ __version__ = '2.0'
 
 
 class IHatePlugin(BeetsPlugin):
-
-    _instance = None
     _log = logging.getLogger('beets')
 
     def __init__(self):
@@ -38,8 +34,8 @@ class IHatePlugin(BeetsPlugin):
         self.register_listener('import_task_choice',
                                self.import_task_choice_event)
         self.config.add({
-            'warn': {},
-            'skip': {},
+            'warn': [],
+            'skip': [],
         })
 
     @classmethod
@@ -48,31 +44,29 @@ class IHatePlugin(BeetsPlugin):
         task is hated and not whitelisted.
         """
         if action_patterns:
-            for queryString in action_patterns:
-                blockQuery = None
+            for query_string in action_patterns:
+                query = None
                 if task.is_album:
-                    blockQuery = query_from_strings(AndQuery,Album,queryString)
+                    query = get_query(query_string, Album)
                 else:
-                    blockQuery = query_from_strings(AndQuery,Item,queryString)
-                if any(blockQuery.match(item) for item in task.items):
+                    query = get_query(query_string, Item)
+                if any(query.match(item) for item in task.items):
                     return True
         return False
 
-
-    def job_to_do(self):
-        """Return True if at least one pattern is defined."""
-        return any(self.config[l].as_str_seq() for l in ('warn', 'skip'))
-
     def import_task_choice_event(self, session, task):
+        skip_queries = self.config['skip'].as_str_seq()
+        warn_queries = self.config['warn'].as_str_seq()
+
         if task.choice_flag == action.APPLY:
-            if self.job_to_do():
+            if skip_queries or warn_queries:
                 self._log.debug('[ihate] processing your hate')
-                if self.do_i_hate_this(task, self.config['skip']):
+                if self.do_i_hate_this(task, skip_queries):
                     task.choice_flag = action.SKIP
                     self._log.info(u'[ihate] skipped: {0} - {1}'
                                    .format(task.cur_artist, task.cur_album))
                     return
-                if self.do_i_hate_this(task, self.config['warn']):
+                if self.do_i_hate_this(task, warn_queries):
                     self._log.info(u'[ihate] you maybe hate this: {0} - {1}'
                                    .format(task.cur_artist, task.cur_album))
             else:

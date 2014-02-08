@@ -2,26 +2,26 @@ IHate Plugin
 ============
 
 The ``ihate`` plugin allows you to automatically skip things you hate during
-import or warn you about them. It supports any query, params will be checked
-with OR chained logic, so as long as long as one element is satisfied the album
-will be skipped.
-There are two groups: warn and skip. The skip group is checked first.
+import or warn you about them. You specify queries (see
+:doc:`/reference/query`) and the plugin skips (or warns about) albums or items
+that match any query.
 
-To use the plugin, enable it by including ``ihate`` in the ``plugins`` line of
-your beets config. Then, add an ``ihate:`` section to your configuration file::
+To use the plugin, first enable it in your configuration (see
+:ref:`using-plugins`). Then, add an ``ihate:`` section to your configuration
+file::
 
     ihate:
-        # you will be warned about these suspicious genres/artists:
+        # Print a warning message for these.
         warn:
 			- artist:rnb
 			- genre: soul
-			#only warn about tribute albums in rock genre
+			# Only warn about tribute albums in rock genre.
 			- genre:rock album:tribute
-        # never import any of this:
+        # Never import any of this.
         skip:
-			- genre:russian\srock
+			- genre::russian\srock
 			- genre:polka
 			- artist:manowar
 			- album:christmas
 
-Note: The plugin will trust your decision in 'as-is' mode.
+The plugin trusts your decision in "as-is" imports.
