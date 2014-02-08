@@ -1,7 +1,7 @@
 """Tests for the 'ihate' plugin"""
 
 from _common import unittest
-from beets.importer import ImportTask
+from beets import importer
 from beets.library import Item
 from beetsplug.ihate import IHatePlugin
 
@@ -11,12 +11,13 @@ class IHatePluginTest(unittest.TestCase):
     def test_hate(self):
 
         match_pattern = {}
-        testItem = Item(
+        test_item = Item(
             genre='TestGenre',
             album=u'TestAlbum',
             artist=u'TestArtist')
-        task = ImportTask()
-        task.items = [testItem]
+        task = importer.ImportTask()
+        task.items = [test_item]
+        task.item = test_item
         task.is_album = False
 
         # Empty query should let it pass.
