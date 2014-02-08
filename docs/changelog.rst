@@ -28,10 +28,11 @@ Unrelated new stuff:
   together in a single directory. Thanks to geigerzaehler.
 * A new ``--config`` command-line option lets you specify an additional
   configuration file. Thanks again to geigerzaehler.
-* The :doc:`/plugins/ihate` was overhauled. Its configuration is now much
-  simpler---it uses beets queries instead of an ad-hoc per-field
-  configuration. This is *backwards-incompatible*---if you use this plugin,
-  you will need to update your configuration. Thanks to BrainDamage.
+* :doc:`/plugins/ihate`: The plugin's configuration interface was overhauled.
+  Its configuration is now much simpler---it uses beets queries instead of an
+  ad-hoc per-field configuration. This is *backwards-incompatible*---if you
+  use this plugin, you will need to update your configuration. Thanks to
+  BrainDamage.
 
 Other little fixes:
 

@@ -26,6 +26,16 @@ __author__ = 'baobab@heresiarch.info'
 __version__ = '2.0'
 
 
+def summary(task):
+    """Given an ImportTask, produce a short string identifying the
+    object.
+    """
+    if task.is_album:
+        return u'{0} - {1}'.format(task.cur_artist, task.cur_album)
+    else:
+        return u'{0} - {1}'.format(task.item.artist, task.item.title)
+
+
 class IHatePlugin(BeetsPlugin):
     _log = logging.getLogger('beets')
 
@@ -50,7 +60,7 @@ class IHatePlugin(BeetsPlugin):
                     query = get_query(query_string, Album)
                 else:
                     query = get_query(query_string, Item)
-                if any(query.match(item) for item in task.items):
+                if any(query.match(item) for item in task.imported_items()):
                     return True
         return False
 
@@ -63,12 +73,12 @@ class IHatePlugin(BeetsPlugin):
                 self._log.debug('[ihate] processing your hate')
                 if self.do_i_hate_this(task, skip_queries):
                     task.choice_flag = action.SKIP
-                    self._log.info(u'[ihate] skipped: {0} - {1}'
-                                   .format(task.cur_artist, task.cur_album))
+                    self._log.info(u'[ihate] skipped: {0}'
+                                   .format(summary(task)))
                     return
                 if self.do_i_hate_this(task, warn_queries):
-                    self._log.info(u'[ihate] you maybe hate this: {0} - {1}'
-                                   .format(task.cur_artist, task.cur_album))
+                    self._log.info(u'[ihate] you maybe hate this: {0}'
+                                   .format(summary(task)))
             else:
                 self._log.debug('[ihate] nothing to do')
         else:
