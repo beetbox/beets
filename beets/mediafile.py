@@ -609,6 +609,33 @@ class MP3DescStorageStyle(MP3StorageStyle):
                     return None
 
 
+class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
+
+    def __init__(self):
+        super(MP3ImageStorageStyle, self).__init__(key='APIC')
+
+    def fetch(self, mediafile):
+        try:
+            frames = mediafile.mgfile.tags.getall(self.key)
+            return [frame.data for frame in frames]
+        except IndexError:
+            return None
+
+    def store(self, mediafile, images):
+        image = images[0]
+        frame = mutagen.id3.APIC(
+            encoding=3,
+            type=3,  # FrontCover
+            mime=ImageField._mime(image),
+            desc=u'',
+            data=image
+        )
+        mediafile.mgfile.tags.setall(self.key, [frame])
+
+    def serialize(self, value):
+        return bytearray(value)
+
+
 # The field itself.
 class MediaField(object):
     """A descriptor providing access to a particular (abstract) metadata
@@ -722,12 +749,22 @@ class CompositeDateField(object):
         self.month_field.__set__(obj, val.month)
         self.day_field.__set__(obj, val.day)
 
-class ImageField(object):
+class ImageField(MediaField):
     """A descriptor providing access to a file's embedded album art.
     Holds a bytestring reflecting the image data. The image should
     either be a JPEG or a PNG for cross-format compatibility. It's
     probably a bad idea to use anything but these two formats.
     """
+
+    def __init__(self):
+        super(ImageField, self).__init__(
+            out_type=bytearray,
+            mp3=MP3ImageStorageStyle(),
+            mp4=[],
+            asf=[],
+            etc=[],
+        )
+
     @classmethod
     def _mime(cls, data):
         """Return the MIME type (either image/png or image/jpeg) of the
@@ -753,16 +790,8 @@ class ImageField(object):
 
     def __get__(self, obj, owner):
         if obj.type == 'mp3':
-            # Look for APIC frames.
-            for frame in obj.mgfile.tags.values():
-                if frame.FrameID == 'APIC':
-                    picframe = frame
-                    break
-            else:
-                # No APIC frame.
-                return None
-
-            return picframe.data
+            for style in self._styles(obj):
+                return style.get(obj)
 
         elif obj.type in MP4_TYPES:
             if 'covr' in obj.mgfile:
@@ -824,20 +853,8 @@ class ImageField(object):
                 raise ValueError('value must be a byte string or None')
 
         if obj.type == 'mp3':
-            # Clear all APIC frames.
-            obj.mgfile.tags.delall('APIC')
-            if val is None:
-                # If we're clearing the image, we're done.
-                return
-
-            picframe = mutagen.id3.APIC(
-                encoding=3,
-                mime=self._mime(val),
-                type=3,  # Front cover.
-                desc=u'',
-                data=val,
-            )
-            obj.mgfile['APIC'] = picframe
+            for style in self._styles(obj):
+                style.set(obj, val)
 
         elif obj.type in MP4_TYPES:
             if val is None:

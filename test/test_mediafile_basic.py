@@ -34,14 +34,14 @@ class ArtTestMixin(object):
     @property
     def png_data(self):
         if not self._png_data:
-            with open(os.path.join(_common.RSRC, 'image-2x3.png')) as f:
+            with open(os.path.join(_common.RSRC, 'image-2x3.png'), 'rb') as f:
                 self._png_data = f.read()
         return self._png_data
 
     @property
     def jpg_data(self):
         if not self._png_data:
-            with open(os.path.join(_common.RSRC, 'image-2x3.jpg')) as f:
+            with open(os.path.join(_common.RSRC, 'image-2x3.jpg'), 'rb') as f:
                 self._png_data = f.read()
         return self._png_data
 
