@@ -539,12 +539,10 @@ class MP4ImageStorageStyle(MP4ListStorageStyle):
         kind = imghdr.what(None, h=data)
         if kind == 'png':
             kind = mutagen.mp4.MP4Cover.FORMAT_PNG
-        if kind == 'jpg':
+        elif kind == 'jpeg':
             kind = mutagen.mp4.MP4Cover.FORMAT_JPEG
         else:
-            kind = mutagen.mp4.MP4Cover.FORMAT_JPEG
-            # TODO use this later
-            # raise ValueError('MP4 only supports PNG and JPEG images')
+            raise ValueError('MP4 only supports PNG and JPEG images')
 
         return mutagen.mp4.MP4Cover(data, kind)
 
