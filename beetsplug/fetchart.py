@@ -193,8 +193,9 @@ def art_for_album(album, paths, maxwidth=None, local_only=False):
         for url in _source_urls(album):
             if maxwidth:
                 url = ArtResizer.shared.proxy_url(maxwidth, url)
-            out = _fetch_image(url)
-            if out:
+            candidate = _fetch_image(url)
+            if candidate:
+                out = candidate
                 break
 
     if maxwidth and out:
