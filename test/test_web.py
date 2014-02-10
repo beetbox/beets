@@ -20,8 +20,8 @@ class WebPluginTest(_common.LibTestCase):
             track.remove()
         self.lib.add(Item(title='title', path='', id=1))
         self.lib.add(Item(title='another title', path='', id=2))
-        self.lib.add(Album(album='album', id=1))
-        self.lib.add(Album(album='another album', id=2))
+        self.lib.add(Album(album='album', id=3))
+        self.lib.add(Album(album='another album', id=4))
 
         web.app.config['TESTING'] = True
         web.app.config['lib'] = self.lib
@@ -75,7 +75,8 @@ class WebPluginTest(_common.LibTestCase):
         response.json = json.loads(response.data)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json['albums']), 2)
+        response_albums = [album['album'] for album in response.json['albums']]
+        self.assertItemsEqual(response_albums, ['album', 'another album'])
 
     def test_get_single_album_by_id(self):
         response = self.client.get('/album/2')
@@ -85,7 +86,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.json['id'], 2)
         self.assertEqual(response.json['album'], 'another album')
 
-    def test_get_multiple_items_by_id(self):
+    def test_get_multiple_albums_by_id(self):
         response = self.client.get('/album/1,2')
         response.json = json.loads(response.data)
 

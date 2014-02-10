@@ -109,7 +109,7 @@ def resource_list(name):
     def make_responder(list_all):
         def responder():
             return app.response_class(
-                    json_generator(g.lib.items(), root=name),
+                    json_generator(list_all(), root=name),
                     mimetype='application/json')
         responder.__name__ = 'all_%s' % name
         return responder
