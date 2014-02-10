@@ -19,7 +19,7 @@ from beets import util
 import beets.library
 import flask
 from flask import g
-from werkzeug.routing import BaseConverter
+from werkzeug.routing import BaseConverter, PathConverter
 import os
 import json
 
@@ -92,11 +92,9 @@ def resource_query(name):
     """Decorates a function to handle RESTful HTTP queries for resources.
     """
     def make_responder(query_func):
-        def responder(query):
-            parts = query.split('/')
-            entities = query_func(parts)
+        def responder(queries):
             return app.response_class(
-                    json_generator(entities, root='results'),
+                    json_generator(query_func(queries), root='results'),
                     mimetype='application/json')
         responder.__name__ = 'query_%s' % name
         return responder
@@ -133,11 +131,22 @@ class IdListConverter(BaseConverter):
         return ','.join(value)
 
 
+class QueryConverter(PathConverter):
+    """Converts slash separated lists of queries in the url to string list.
+    """
+
+    def to_python(self, value):
+        return value.split('/')
+
+    def to_url(self, value):
+        return ','.join(value)
+
 
 # Flask setup.
 
 app = flask.Flask(__name__)
 app.url_map.converters['idlist'] = IdListConverter
+app.url_map.converters['query'] = QueryConverter
 
 @app.before_request
 def before_request():
@@ -166,7 +175,7 @@ def item_file(item_id):
     response.headers['Content-Length'] = os.path.getsize(item.path)
     return response
 
-@app.route('/item/query/<path:query>')
+@app.route('/item/query/<query:queries>')
 @resource_query('items')
 def item_query(queries):
     return g.lib.items(queries)
@@ -185,7 +194,7 @@ def get_album(id):
 def all_albums():
     return g.lib.albums()
 
-@app.route('/album/query/<path:query>')
+@app.route('/album/query/<query:queries>')
 @resource_query('albums')
 def album_query(queries):
     return g.lib.album(queries)
