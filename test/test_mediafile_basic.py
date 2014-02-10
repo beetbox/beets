@@ -25,7 +25,44 @@ from _common import unittest
 from beets.mediafile import MediaFile
 
 
-class ReadWriteTestBase(object):
+class ArtTestMixin(object):
+    """Test reads and writes of the ``art`` property.
+    """
+
+    _png_data = None
+
+    @property
+    def png_data(self):
+        if not self._png_data:
+            with open(os.path.join(_common.RSRC, 'image-2x3.png')) as f:
+                self._png_data = f.read()
+        return self._png_data
+
+    @property
+    def jpg_data(self):
+        if not self._png_data:
+            with open(os.path.join(_common.RSRC, 'image-2x3.jpg')) as f:
+                self._png_data = f.read()
+        return self._png_data
+
+    def test_set_png_art(self):
+        mediafile = self._mediafile_fixture('empty')
+        mediafile.art = self.png_data
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(mediafile.art, self.png_data)
+
+    def test_set_jpg_art(self):
+        mediafile = self._mediafile_fixture('empty')
+        mediafile.art = self.jpg_data
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(mediafile.art, self.png_data)
+
+
+class ReadWriteTestBase(ArtTestMixin):
     """Test writing and reading tags. Subclasses must set ``extension`` and
     ``audio_properties``.
     """
@@ -313,6 +350,8 @@ class PartialTestMixin(object):
 
 
 class GenreListTestMixin(object):
+    """Tests access to the ``genres`` property as a list.
+    """
 
     def test_read_genre_list(self):
         mediafile = self._mediafile_fixture('full')
