@@ -389,6 +389,9 @@ class StorageStyle(object):
 
     def serialize(self, value):
         """Convert value to a type that is suitable for storing in a tag."""
+        if value is None:
+            value = self._none_value()
+
         if isinstance(value, float) and self.as_type is unicode:
             value = u'{0:.{1}f}'.format(value, self.float_places)
             value = self.as_type(value)
@@ -458,13 +461,7 @@ class ListStorageStyle(StorageStyle):
         self.set_list(mediafile, [value])
 
     def set_list(self, mediafile, values):
-        data = []
-        for value in values:
-            if value is None:
-                value = self._none_value()
-            data.append(self.serialize(value))
-
-        self.store(mediafile, data)
+        self.store(mediafile, [self.serialize(value) for value in values])
 
     def store(self, mediafile, values):
         mediafile.mgfile[self.key] = values
@@ -503,6 +500,7 @@ class MP4StorageStyle(StorageStyle):
 class MP4ListStorageStyle(ListStorageStyle, MP4StorageStyle):
     pass
 
+
 class MP4BoolStorageStyle(MP4StorageStyle):
 
     def get(self, mediafile):
@@ -536,6 +534,7 @@ class MP3StorageStyle(StorageStyle):
     def store(self, mediafile, value):
         frame = mutagen.id3.Frames[self.key](encoding=3, text=[value])
         mediafile.mgfile.tags.setall(self.key, [frame])
+
 
 class MP3ListStorageStyle(ListStorageStyle, MP3StorageStyle):
 
