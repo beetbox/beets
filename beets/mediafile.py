@@ -523,7 +523,7 @@ class MP4ImageStorageStyle(MP4ListStorageStyle):
 
     def __init__(self, **kwargs):
         super(MP4ImageStorageStyle, self).__init__(key='covr', **kwargs)
-        self.as_type = bytearray
+        self.as_type = str
 
     def store(self, mediafile, images):
         covers = [self._mp4_cover(image) for image in images]
@@ -641,7 +641,7 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
 
     def __init__(self):
         super(MP3ImageStorageStyle, self).__init__(key='APIC')
-        self.as_type = bytearray
+        self.as_type = str
 
     def fetch(self, mediafile):
         try:
@@ -666,7 +666,7 @@ class VorbisImageStorageStyle(ListStorageStyle):
 
     def __init__(self):
         super(VorbisImageStorageStyle, self).__init__(key='')
-        self.as_type = bytearray
+        self.as_type = str
 
     def fetch(self, mediafile):
         if 'metadata_block_picture' not in mediafile.mgfile:
