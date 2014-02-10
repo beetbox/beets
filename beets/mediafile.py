@@ -403,7 +403,7 @@ class StorageStyle(object):
                 value = value.decode('utf8', 'ignore')
             else:
                 value = unicode(value)
-        elif self.as_type in (bool, str, int):
+        else:
             value = self.as_type(value)
 
         if self.suffix:
@@ -523,6 +523,7 @@ class MP4ImageStorageStyle(MP4ListStorageStyle):
 
     def __init__(self, **kwargs):
         super(MP4ImageStorageStyle, self).__init__(key='covr', **kwargs)
+        self.as_type = bytearray
 
     def store(self, mediafile, images):
         covers = [self._mp4_cover(image) for image in images]
@@ -546,9 +547,6 @@ class MP4ImageStorageStyle(MP4ListStorageStyle):
             # raise ValueError('MP4 only supports PNG and JPEG images')
 
         return mutagen.mp4.MP4Cover(data, kind)
-
-    def serialize(self, value):
-        return bytearray(value)
 
 
 class MP3StorageStyle(StorageStyle):
@@ -645,6 +643,7 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
 
     def __init__(self):
         super(MP3ImageStorageStyle, self).__init__(key='APIC')
+        self.as_type = bytearray
 
     def fetch(self, mediafile):
         try:
@@ -663,9 +662,6 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
             data=image
         )
         mediafile.mgfile.tags.setall(self.key, [frame])
-
-    def serialize(self, value):
-        return bytearray(value)
 
 
 # The field itself.
