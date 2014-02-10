@@ -648,13 +648,6 @@ class MediaField(object):
                             'arguments mp3, mp4, asf, and etc')
         self.styles = kwargs
 
-
-    def listField(self):
-        options = self.styles.copy()
-        options['out_type'] = self.out_type
-        return MediaFieldList(**options)
-
-
     def _styles(self, obj):
         if obj.type in ('mp3', 'asf'):
             styles = self.styles[obj.type]
@@ -683,7 +676,13 @@ class MediaField(object):
         for style in self._styles(obj):
             style.set(obj, val)
 
-class MediaFieldList(MediaField):
+
+class ListMediaField(MediaField):
+    """Property decorator that retrieves a list from a tag.
+
+    Uses ``get_list`` and set_list`` methods of its ``StorageStyle``
+    strategies to do the actual work.
+    """
 
     def __get__(self, mediafile, _):
         values = []
@@ -694,6 +693,15 @@ class MediaFieldList(MediaField):
     def __set__(self, mediafile, values):
         for style in self._styles(mediafile):
             style.set_list(mediafile, values)
+
+    def single_field(self):
+        """Returns a ``MediaField`` decorator that gets and sets the
+        first item.
+        """
+        options = self.styles.copy()
+        options['out_type'] = self.out_type
+        return MediaField(**options)
+
 
 
 
@@ -1029,13 +1037,13 @@ class MediaFile(object):
         etc=StorageStyle('ALBUM'),
         asf=StorageStyle('WM/AlbumTitle'),
     )
-    genre = MediaField(
+    genres = ListMediaField(
         mp3=MP3ListStorageStyle('TCON'),
         mp4=MP4ListStorageStyle("\xa9gen"),
         etc=StorageStyle('GENRE'),
         asf=StorageStyle('WM/Genre'),
     )
-    genres = genre.listField()
+    genre = genres.single_field()
 
     composer = MediaField(
         mp3=MP3StorageStyle('TCOM'),
