@@ -668,6 +668,16 @@ class SubcommandsOptionParser(optparse.OptionParser):
         """
         options, args = optparse.OptionParser.parse_args(self, a, v)
 
+        if getattr(options, 'config', None) is not None:
+            config_path = options.config
+            del options.config
+            config.set_file(config_path)
+        config.set_args(options)
+        load_plugins()
+
+        for cmd in plugins.commands():
+            self.add_subcommand(cmd)
+
         if not args:
             # No command given.
             self.print_help()
@@ -735,17 +745,7 @@ def vararg_callback(option, opt_str, value, parser):
 
 # The root parser and its main function.
 
-def _raw_main(args):
-    """A helper function for `main` without top-level exception
-    handling.
-    """
-    # Temporary: Migrate from 1.0-style configuration.
-    from beets.ui import migrate
-    migrate.automigrate()
-
-    # Get the default subcommands.
-    from beets.ui.commands import default_commands
-
+def load_plugins():
     # Add plugin paths.
     import beetsplug
     beetsplug.__path__ = get_plugin_paths() + beetsplug.__path__
@@ -757,9 +757,19 @@ def _raw_main(args):
     plugins.load_plugins(config['plugins'].as_str_seq())
     plugins.send("pluginload")
 
+def _raw_main(args):
+    """A helper function for `main` without top-level exception
+    handling.
+    """
+    # Temporary: Migrate from 1.0-style configuration.
+    from beets.ui import migrate
+    migrate.automigrate()
+
+    # Get the default subcommands.
+    from beets.ui.commands import default_commands
+
     # Construct the root parser.
     commands = list(default_commands)
-    commands += plugins.commands()
     commands.append(migrate.migrate_cmd)  # Temporary.
     parser = SubcommandsOptionParser(subcommands=commands)
     parser.add_option('-l', '--library', dest='library',
@@ -773,11 +783,6 @@ def _raw_main(args):
 
     # Parse the command-line!
     options, subcommand, suboptions, subargs = parser.parse_args(args)
-    if getattr(options, 'config', None) is not None:
-        config_path = options.config
-        del options.config
-        config.set_file(config_path)
-    config.set_args(options)
 
     # Open library file.
     dbpath = config['library'].as_filename()

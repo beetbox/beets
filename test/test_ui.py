@@ -31,6 +31,7 @@ from beets import importer
 from beets.mediafile import MediaFile
 from beets import config
 from beets.util import confit
+from beets import plugins
 
 class ListTest(_common.TestCase):
     def setUp(self):
@@ -596,6 +597,17 @@ class ConfigTest(_common.TestCase):
 
         ui._raw_main(['--config', cli_config_path, 'test'])
         self.assertEqual(config['anoption'].get(), 'cli overwrite')
+
+    def test_cli_config_file_loads_plugin_commands(self):
+        plugin_path = os.path.join(_common.RSRC, 'beetsplug')
+
+        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        with open(cli_config_path, 'w') as file:
+            file.write('pluginpath: %s\n' % plugin_path)
+            file.write('plugins: test')
+
+        ui._raw_main(['--config', cli_config_path, 'plugin'])
+        self.assertTrue(plugins.find_plugins()[0].is_test_plugin)
 
 
 class ShowdiffTest(_common.TestCase):
