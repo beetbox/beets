@@ -431,20 +431,12 @@ class MP4StorageStyle(StorageStyle):
 
     def fetch(self, mediafile):
         try:
-            entry = mediafile.mgfile[self.key]
+            return mediafile.mgfile[self.key][0]
         except KeyError:
             return None
 
-        # Possibly index the list.
-        if self.as_type == bool:
-            return entry
-        else:
-            return entry[0]
-
     def store(self, mediafile, value):
-        if self.as_type != bool:
-            value = [value]
-        mediafile.mgfile[self.key] = value
+        mediafile.mgfile[self.key] = [value]
 
     def serialize(self, value):
         if self.packing != packing.TUPLE:
@@ -458,6 +450,17 @@ class MP4StorageStyle(StorageStyle):
         if self.key.startswith('----:') and isinstance(value, unicode):
             value = value.encode('utf8')
         return value
+
+class MP4BoolStorageStyle(MP4StorageStyle):
+
+    def fetch(self, mediafile):
+        try:
+            return mediafile.mgfile[self.key]
+        except KeyError:
+            return None
+
+    def store(self, mediafile, value):
+        mediafile.mgfile[self.key] = value
 
 
 class MP3StorageStyle(StorageStyle):
@@ -1051,7 +1054,7 @@ class MediaFile(object):
     comp = MediaField(
         out_type=bool,
         mp3=MP3StorageStyle('TCMP'),
-        mp4=MP4StorageStyle('cpil', as_type=bool),
+        mp4=MP4BoolStorageStyle('cpil'),
         etc=StorageStyle('COMPILATION'),
         asf=StorageStyle('WM/IsCompilation', as_type=bool),
     )
