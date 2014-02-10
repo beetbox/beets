@@ -453,14 +453,20 @@ class MP4StorageStyle(StorageStyle):
 
 class MP4BoolStorageStyle(MP4StorageStyle):
 
-    def fetch(self, mediafile):
+    def get(self, mediafile):
         try:
             return mediafile.mgfile[self.key]
         except KeyError:
             return None
 
-    def store(self, mediafile, value):
+    def get_list(self, mediafile):
+        raise NotImplementedError('MP4 bool storage does not support lists')
+
+    def set(self, mediafile, value):
         mediafile.mgfile[self.key] = value
+
+    def set_list(self, mediafile, values):
+        raise NotImplementedError('MP4 bool storage does not support lists')
 
 
 class MP3StorageStyle(StorageStyle):
