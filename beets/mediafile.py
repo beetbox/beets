@@ -451,6 +451,48 @@ class MP4StorageStyle(StorageStyle):
             value = value.encode('utf8')
         return value
 
+
+class MP4ListStorageStyle(StorageStyle):
+
+    def fetch(self, mediafile):
+        try:
+            return mediafile.mgfile[self.key]
+        except KeyError:
+            return []
+
+    def get_list(self, mediafile):
+        data = self.fetch(mediafile)
+        data = map(self._strip_possible_suffix, data)
+        return data
+
+    def get(self, mediafile):
+        try:
+            return self.get_list(mediafile)[0]
+        except IndexError:
+            return None
+
+    def store(self, mediafile, values):
+        mediafile.mgfile[self.key] = values
+
+    def set(self, mediafile, value):
+        self.set_list(mediafile, [value])
+
+    def set_list(self, mediafile, values):
+        data = []
+        for value in values:
+            if value is None:
+                value = self._none_value()
+            data.append(self.serialize(value))
+
+        self.store(mediafile, data)
+
+    def pack(self, data, value):
+        raise NotImplementedError('packing is not implemented for lists')
+
+    def unpack(self, data):
+        raise NotImplementedError('packing is not implemented for lists')
+
+
 class MP4BoolStorageStyle(MP4StorageStyle):
 
     def get(self, mediafile):
@@ -989,7 +1031,7 @@ class MediaFile(object):
     )
     genre = MediaField(
         mp3=MP3ListStorageStyle('TCON'),
-        mp4=MP4StorageStyle("\xa9gen"),
+        mp4=MP4ListStorageStyle("\xa9gen"),
         etc=StorageStyle('GENRE'),
         asf=StorageStyle('WM/Genre'),
     )

@@ -312,16 +312,7 @@ class PartialTestMixin(object):
         self.assertEqual(mediafile.disctotal, 0)
 
 
-class MP3Test(ReadWriteTestBase, PartialTestMixin, unittest.TestCase):
-    extension = 'mp3'
-    audio_properties = {
-        'length': 1.0,
-        'bitrate': 80000,
-        'format': 'MP3',
-        'samplerate': 44100,
-        'bitdepth': 0,
-        'channels': 1,
-    }
+class GenreListTestMixin(object):
 
     def test_read_genre_list(self):
         mediafile = self._mediafile_fixture('full')
@@ -353,7 +344,21 @@ class MP3Test(ReadWriteTestBase, PartialTestMixin, unittest.TestCase):
         self.assertEqual(mediafile.genres, ['the genre', 'another'])
 
 
-class MP4Test(ReadWriteTestBase, PartialTestMixin, unittest.TestCase):
+class MP3Test(ReadWriteTestBase, PartialTestMixin,
+              GenreListTestMixin, unittest.TestCase):
+    extension = 'mp3'
+    audio_properties = {
+        'length': 1.0,
+        'bitrate': 80000,
+        'format': 'MP3',
+        'samplerate': 44100,
+        'bitdepth': 0,
+        'channels': 1,
+    }
+
+
+class MP4Test(ReadWriteTestBase, PartialTestMixin,
+              GenreListTestMixin, unittest.TestCase):
     extension = 'm4a'
     audio_properties = {
         'length': 1.0,
@@ -363,7 +368,7 @@ class MP4Test(ReadWriteTestBase, PartialTestMixin, unittest.TestCase):
         'bitdepth': 16,
         'channels': 2,
     }
-class AlacTest(ReadWriteTestBase, unittest.TestCase):
+class AlacTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
     extension = 'alac.m4a'
     audio_properties = {
         'length': 1.0,
@@ -403,7 +408,8 @@ class OggTest(ReadWriteTestBase, unittest.TestCase):
         'bitdepth': 0,
         'channels': 1,
     }
-class FlacTest(ReadWriteTestBase, PartialTestMixin, unittest.TestCase):
+class FlacTest(ReadWriteTestBase, PartialTestMixin,
+               unittest.TestCase):
     extension = 'flac'
     audio_properties = {
         'length': 1.0,
