@@ -427,6 +427,54 @@ class StorageStyle(object):
             return data
 
 
+class ListStorageStyle(StorageStyle):
+    """Abstract class that provides access to lists.
+
+    Subclasses may overwrite ``fetch`` and ``store``.  ``fetch`` must
+    return a (possibly empty) list and ``store`` receives a serialized
+    list of values as the second argument.
+
+    This class does not support packing. A call to the packing methods
+    raises an error.
+    """
+
+    def get(self, mediafile):
+        try:
+            return self.get_list(mediafile)[0]
+        except IndexError:
+            return None
+
+    def get_list(self, mediafile):
+        data = self.fetch(mediafile)
+        return [self._strip_possible_suffix(item) for item in data]
+
+    def fetch(self, mediafile):
+        try:
+            return mediafile.mgfile[self.key]
+        except KeyError:
+            return []
+
+    def set(self, mediafile, value):
+        self.set_list(mediafile, [value])
+
+    def set_list(self, mediafile, values):
+        data = []
+        for value in values:
+            if value is None:
+                value = self._none_value()
+            data.append(self.serialize(value))
+
+        self.store(mediafile, data)
+
+    def store(self, mediafile, values):
+        mediafile.mgfile[self.key] = values
+
+    def pack(self, data, value):
+        raise NotImplementedError('packing is not implemented for lists')
+
+    def unpack(self, data):
+        raise NotImplementedError('packing is not implemented for lists')
+
 class MP4StorageStyle(StorageStyle):
 
     def fetch(self, mediafile):
@@ -452,46 +500,8 @@ class MP4StorageStyle(StorageStyle):
         return value
 
 
-class MP4ListStorageStyle(StorageStyle):
-
-    def fetch(self, mediafile):
-        try:
-            return mediafile.mgfile[self.key]
-        except KeyError:
-            return []
-
-    def get_list(self, mediafile):
-        data = self.fetch(mediafile)
-        data = map(self._strip_possible_suffix, data)
-        return data
-
-    def get(self, mediafile):
-        try:
-            return self.get_list(mediafile)[0]
-        except IndexError:
-            return None
-
-    def store(self, mediafile, values):
-        mediafile.mgfile[self.key] = values
-
-    def set(self, mediafile, value):
-        self.set_list(mediafile, [value])
-
-    def set_list(self, mediafile, values):
-        data = []
-        for value in values:
-            if value is None:
-                value = self._none_value()
-            data.append(self.serialize(value))
-
-        self.store(mediafile, data)
-
-    def pack(self, data, value):
-        raise NotImplementedError('packing is not implemented for lists')
-
-    def unpack(self, data):
-        raise NotImplementedError('packing is not implemented for lists')
-
+class MP4ListStorageStyle(ListStorageStyle, MP4StorageStyle):
+    pass
 
 class MP4BoolStorageStyle(MP4StorageStyle):
 
@@ -527,12 +537,7 @@ class MP3StorageStyle(StorageStyle):
         frame = mutagen.id3.Frames[self.key](encoding=3, text=[value])
         mediafile.mgfile.tags.setall(self.key, [frame])
 
-class MP3ListStorageStyle(MP3StorageStyle):
-
-    def __init__(self, *args, **kwargs):
-        super(MP3ListStorageStyle, self).__init__(*args, **kwargs)
-        if self.packing:
-            raise NotImplementedError('packing is not implemented for lists')
+class MP3ListStorageStyle(ListStorageStyle, MP3StorageStyle):
 
     def fetch(self, mediafile):
         try:
@@ -540,32 +545,9 @@ class MP3ListStorageStyle(MP3StorageStyle):
         except KeyError:
             return []
 
-    def get_list(self, mediafile):
-        data = self.fetch(mediafile)
-        data = map(self._strip_possible_suffix, data)
-        return data
-
-    def get(self, mediafile):
-        try:
-            return self.get_list(mediafile)[0]
-        except IndexError:
-            return None
-
     def store(self, mediafile, values):
         frame = mutagen.id3.Frames[self.key](encoding=3, text=values)
         mediafile.mgfile.tags.setall(self.key, [frame])
-
-    def set(self, mediafile, value):
-        self.set_list(mediafile, [value])
-
-    def set_list(self, mediafile, values):
-        data = []
-        for value in values:
-            if value is None:
-                value = self._none_value()
-            data.append(self.serialize(value))
-
-        self.store(mediafile, data)
 
 
 class MP3UFIDStorageStyle(MP3StorageStyle):
@@ -701,8 +683,6 @@ class ListMediaField(MediaField):
         options = self.styles.copy()
         options['out_type'] = self.out_type
         return MediaField(**options)
-
-
 
 
 class CompositeDateField(object):
