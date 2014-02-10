@@ -659,7 +659,7 @@ class MediaField(object):
 
 
 class ListMediaField(MediaField):
-    """Property decorator that retrieves a list from a tag.
+    """Property descriptor that retrieves a list from a tag.
 
     Uses ``get_list`` and set_list`` methods of its ``StorageStyle``
     strategies to do the actual work.
@@ -676,7 +676,7 @@ class ListMediaField(MediaField):
             style.set_list(mediafile, values)
 
     def single_field(self):
-        """Returns a ``MediaField`` decorator that gets and sets the
+        """Returns a ``MediaField`` descriptor that gets and sets the
         first item.
         """
         options = self.styles.copy()
@@ -1019,7 +1019,7 @@ class MediaFile(object):
     genres = ListMediaField(
         mp3=MP3ListStorageStyle('TCON'),
         mp4=MP4ListStorageStyle("\xa9gen"),
-        etc=StorageStyle('GENRE'),
+        etc=ListStorageStyle('GENRE'),
         asf=StorageStyle('WM/Genre'),
     )
     genre = genres.single_field()

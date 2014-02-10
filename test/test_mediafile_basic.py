@@ -355,8 +355,6 @@ class MP3Test(ReadWriteTestBase, PartialTestMixin,
         'bitdepth': 0,
         'channels': 1,
     }
-
-
 class MP4Test(ReadWriteTestBase, PartialTestMixin,
               GenreListTestMixin, unittest.TestCase):
     extension = 'm4a'
@@ -378,7 +376,7 @@ class AlacTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
         'bitdepth': 0,
         'channels': 0,
     }
-class MusepackTest(ReadWriteTestBase, unittest.TestCase):
+class MusepackTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
     extension = 'mpc'
     audio_properties = {
         'length': 1.0,
@@ -398,7 +396,7 @@ class WMATest(ReadWriteTestBase, unittest.TestCase):
         'bitdepth': 0,
         'channels': 1,
     }
-class OggTest(ReadWriteTestBase, unittest.TestCase):
+class OggTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
     extension = 'ogg'
     audio_properties = {
         'length': 1.0,
@@ -409,7 +407,7 @@ class OggTest(ReadWriteTestBase, unittest.TestCase):
         'channels': 1,
     }
 class FlacTest(ReadWriteTestBase, PartialTestMixin,
-               unittest.TestCase):
+               GenreListTestMixin, unittest.TestCase):
     extension = 'flac'
     audio_properties = {
         'length': 1.0,
@@ -419,7 +417,7 @@ class FlacTest(ReadWriteTestBase, PartialTestMixin,
         'bitdepth': 16,
         'channels': 1,
     }
-class ApeTest(ReadWriteTestBase, unittest.TestCase):
+class ApeTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
     extension = 'ape'
     audio_properties = {
         'length': 1.0,
@@ -429,7 +427,7 @@ class ApeTest(ReadWriteTestBase, unittest.TestCase):
         'bitdepth': 16,
         'channels': 1,
     }
-class WavpackTest(ReadWriteTestBase, unittest.TestCase):
+class WavpackTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
     extension = 'wv'
     audio_properties = {
         'length': 1.0,
@@ -439,7 +437,7 @@ class WavpackTest(ReadWriteTestBase, unittest.TestCase):
         'bitdepth': 0,
         'channels': 1,
     }
-class OpusTest(ReadWriteTestBase, unittest.TestCase):
+class OpusTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
     extension = 'opus'
     audio_properties = {
         'length': 1.0,
