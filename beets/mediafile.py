@@ -519,6 +519,38 @@ class MP4BoolStorageStyle(MP4StorageStyle):
         raise NotImplementedError('MP4 bool storage does not support lists')
 
 
+class MP4ImageStorageStyle(MP4ListStorageStyle):
+
+    def __init__(self, **kwargs):
+        super(MP4ImageStorageStyle, self).__init__(key='covr', **kwargs)
+
+    def store(self, mediafile, images):
+        covers = [self._mp4_cover(image) for image in images]
+        mediafile.mgfile['covr'] = covers
+
+    @classmethod
+    def _mp4_cover(cls, data):
+        """Make ``MP4Cover`` tag from image data.
+
+        Returns instance of ``mutagen.mp4.MP4Cover`` with correct cover
+        format.
+        """
+        kind = imghdr.what(None, h=data)
+        if kind == 'png':
+            kind = mutagen.mp4.MP4Cover.FORMAT_PNG
+        if kind == 'jpg':
+            kind = mutagen.mp4.MP4Cover.FORMAT_JPEG
+        else:
+            kind = mutagen.mp4.MP4Cover.FORMAT_JPEG
+            # TODO use this later
+            # raise ValueError('MP4 only supports PNG and JPEG images')
+
+        return mutagen.mp4.MP4Cover(data, kind)
+
+    def serialize(self, value):
+        return bytearray(value)
+
+
 class MP3StorageStyle(StorageStyle):
 
     def __init__(self, key, id3_lang=None, **kwargs):
@@ -760,7 +792,7 @@ class ImageField(MediaField):
         super(ImageField, self).__init__(
             out_type=bytearray,
             mp3=MP3ImageStorageStyle(),
-            mp4=[],
+            mp4=MP4ImageStorageStyle(),
             asf=[],
             etc=[],
         )
@@ -777,32 +809,10 @@ class ImageField(MediaField):
             # Currently just fall back to JPEG.
             return 'image/jpeg'
 
-    @classmethod
-    def _mp4kind(cls, data):
-        """Return the MPEG-4 image type code of the data. If the image
-        is not a PNG or JPEG, JPEG is assumed.
-        """
-        kind = imghdr.what(None, h=data)
-        if kind == 'png':
-            return mutagen.mp4.MP4Cover.FORMAT_PNG
-        else:
-            return mutagen.mp4.MP4Cover.FORMAT_JPEG
-
     def __get__(self, obj, owner):
-        if obj.type == 'mp3':
+        if obj.type == 'mp3' or obj.type in MP4_TYPES:
             for style in self._styles(obj):
                 return style.get(obj)
-
-        elif obj.type in MP4_TYPES:
-            if 'covr' in obj.mgfile:
-                covers = obj.mgfile['covr']
-                if covers:
-                    cover = covers[0]
-                    # cover is an MP4Cover, which is a subclass of str.
-                    return cover
-
-            # No cover found.
-            return None
 
         elif obj.type == 'flac':
             pictures = obj.mgfile.pictures
@@ -852,17 +862,9 @@ class ImageField(MediaField):
             if not isinstance(val, str):
                 raise ValueError('value must be a byte string or None')
 
-        if obj.type == 'mp3':
+        if obj.type == 'mp3' or obj.type in MP4_TYPES:
             for style in self._styles(obj):
                 style.set(obj, val)
-
-        elif obj.type in MP4_TYPES:
-            if val is None:
-                if 'covr' in obj.mgfile:
-                    del obj.mgfile['covr']
-            else:
-                cover = mutagen.mp4.MP4Cover(val, self._mp4kind(val))
-                obj.mgfile['covr'] = [cover]
 
         elif obj.type == 'flac':
             obj.mgfile.clear_pictures()

@@ -310,13 +310,15 @@ class ReadWriteTestBase(ArtTestMixin):
             base = self.empty_tags
 
         for key, value in base.items():
-            if isinstance(value, unicode) or key == 'art':
+            if key == 'art':
+                tags[key] = self.jpg_data
+            elif isinstance(value, unicode):
                 tags[key] = 'value %s' % key
-            if isinstance(value, int):
+            elif isinstance(value, int):
                 tags[key] = 1
-            if isinstance(value, float):
+            elif isinstance(value, float):
                 tags[key] = 1.0
-            if isinstance(value, bool):
+            elif isinstance(value, bool):
                 tags[key] = True
 
         date = datetime.date(2001, 4, 3)
