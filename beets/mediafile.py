@@ -662,6 +662,48 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         mediafile.mgfile.tags.setall(self.key, [frame])
 
 
+class VorbisImageStorageStyle(ListStorageStyle):
+
+    def __init__(self):
+        super(VorbisImageStorageStyle, self).__init__(key='')
+        self.as_type = bytearray
+
+    def fetch(self, mediafile):
+        if 'metadata_block_picture' not in mediafile.mgfile:
+            # Try legacy COVERART tags.
+            if 'coverart' in mediafile.mgfile and mediafile.mgfile['coverart']:
+                return base64.b64decode(mediafile.mgfile['coverart'][0])
+            return []
+
+        pics = []
+        for data in mediafile.mgfile["metadata_block_picture"]:
+            try:
+                pics.append(mutagen.flac.Picture(base64.b64decode(data)).data)
+            except TypeError, AttributeError:
+                pass
+        return pics
+
+    def store(self, mediafile, image_data):
+        # Strip all art, including legacy COVERART.
+        if 'metadata_block_picture' in mediafile.mgfile:
+            if 'metadata_block_picture' in mediafile.mgfile:
+                del mediafile.mgfile['metadata_block_picture']
+            if 'coverart' in mediafile.mgfile:
+                del mediafile.mgfile['coverart']
+            if 'coverartmime' in mediafile.mgfile:
+                del mediafile.mgfile['coverartmime']
+
+        image_data = image_data[0]
+        # Add new art if provided.
+        if image_data is not None:
+            pic = mutagen.flac.Picture()
+            pic.data = image_data
+            pic.mime = ImageField._mime(image_data)
+            mediafile.mgfile['metadata_block_picture'] = [
+                base64.b64encode(pic.write())
+            ]
+
+
 # The field itself.
 class MediaField(object):
     """A descriptor providing access to a particular (abstract) metadata
@@ -788,7 +830,7 @@ class ImageField(MediaField):
             mp3=MP3ImageStorageStyle(),
             mp4=MP4ImageStorageStyle(),
             asf=[],
-            etc=[],
+            etc=VorbisImageStorageStyle(),
         )
 
     @classmethod
@@ -830,26 +872,7 @@ class ImageField(MediaField):
             # Here we're assuming everything but MP3, MPEG-4, FLAC, and
             # ASF/WMA use the Xiph/Vorbis Comments standard. This may
             # not be valid. http://wiki.xiph.org/VorbisComment#Cover_art
-
-            if 'metadata_block_picture' not in obj.mgfile:
-                # Try legacy COVERART tags.
-                if 'coverart' in obj.mgfile and obj.mgfile['coverart']:
-                    return base64.b64decode(obj.mgfile['coverart'][0])
-                return None
-
-            for data in obj.mgfile["metadata_block_picture"]:
-                try:
-                    pic = mutagen.flac.Picture(base64.b64decode(data))
-                    break
-                except TypeError:
-                    pass
-            else:
-                return None
-
-            if not pic.data:
-                return None
-
-            return pic.data
+            return self.styles['etc'].get(obj)
 
     def __set__(self, obj, val):
         if val is not None:
@@ -880,24 +903,7 @@ class ImageField(MediaField):
 
         else:
             # Again, assuming Vorbis Comments standard.
-
-            # Strip all art, including legacy COVERART.
-            if 'metadata_block_picture' in obj.mgfile:
-                if 'metadata_block_picture' in obj.mgfile:
-                    del obj.mgfile['metadata_block_picture']
-                if 'coverart' in obj.mgfile:
-                    del obj.mgfile['coverart']
-                if 'coverartmime' in obj.mgfile:
-                    del obj.mgfile['coverartmime']
-
-            # Add new art if provided.
-            if val is not None:
-                pic = mutagen.flac.Picture()
-                pic.data = val
-                pic.mime = self._mime(val)
-                obj.mgfile['metadata_block_picture'] = [
-                    base64.b64encode(pic.write())
-                ]
+            self.styles['etc'].set(obj, val)
 
 
 # The file (a collection of fields).
