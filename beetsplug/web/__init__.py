@@ -19,6 +19,7 @@ from beets import util
 import beets.library
 import flask
 from flask import g
+from werkzeug.routing import BaseConverter
 import os
 import json
 
@@ -67,25 +68,12 @@ def json_generator(items, root):
         yield json.dumps(_rep(item))
     yield ']}'
 
-def _extract_ids(string_ids):
-    """Parses ``string_ids`` as a comme separated list of integers and returns
-    that list of integers.
-    """
-    ids = []
-    for id in string_ids.split(','):
-        try:
-            ids.append(int(id))
-        except ValueError:
-            pass
-    return ids
-
 def resource(name):
     """Decorates a function to handle RESTful HTTP requests for a resource.
     """
     def make_responder(retriever):
-        def responder(entity_ids):
-            entity_ids = _extract_ids(entity_ids)
-            entities = [retriever(id) for id in entity_ids]
+        def responder(ids):
+            entities = [retriever(id) for id in ids]
             entities = [entity for entity in entities if entity]
 
             if len(entities) == 1:
@@ -128,9 +116,28 @@ def resource_list(name):
     return make_responder
 
 
+class IdListConverter(BaseConverter):
+    """Converts comma separated lists of ids in urls to integer lists.
+    """
+
+    def to_python(self, value):
+        ids = []
+        for id in value.split(','):
+            try:
+                ids.append(int(id))
+            except ValueError:
+                pass
+        return ids
+
+    def to_url(self, value):
+        return ','.join(value)
+
+
+
 # Flask setup.
 
 app = flask.Flask(__name__)
+app.url_map.converters['idlist'] = IdListConverter
 
 @app.before_request
 def before_request():
@@ -139,7 +146,7 @@ def before_request():
 
 # Items.
 
-@app.route('/item/<entity_ids>')
+@app.route('/item/<idlist:ids>')
 @resource('items')
 def get_item(id):
     return g.lib.get_item(id)
@@ -167,7 +174,7 @@ def item_query(queries):
 
 # Albums.
 
-@app.route('/album/<entity_ids>')
+@app.route('/album/<idlist:ids>')
 @resource('albums')
 def get_album(id):
     return g.lib.get_album(id)
