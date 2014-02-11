@@ -83,6 +83,8 @@ Other little fixes:
   the output of the ``beet version`` command.
 * :doc:`/plugins/lastgenre`: Fix an occasional crash when no tag weight was
   returned by Last.fm.
+* :doc:`/plugins/mpdstats`: Restore the ``last_played`` field. Thanks to
+  Johann Klähn.
 
 
 1.3.2 (December 22, 2013)
