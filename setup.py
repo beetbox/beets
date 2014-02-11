@@ -64,7 +64,6 @@ setup(name='beets',
           'beetsplug.web',
           'beetsplug.lastgenre',
       ],
-      namespace_packages=['beetsplug'],
       entry_points={
           'console_scripts': [
               'beet = beets.ui:main',
