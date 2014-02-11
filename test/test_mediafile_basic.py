@@ -19,6 +19,7 @@ import os
 import shutil
 import tempfile
 import datetime
+import time
 
 import _common
 from _common import unittest
@@ -62,8 +63,44 @@ class ArtTestMixin(object):
         self.assertEqual(mediafile.art, self.jpg_data)
 
 
+class LazySaveTestMixin(object):
+    """Mediafile should only write changes when tags have changed
+    """
 
-class ReadWriteTestBase(ArtTestMixin):
+    def test_unmodified(self):
+        mediafile = self._mediafile_fixture('full')
+        mtime = self._set_past_mtime(mediafile.path)
+        self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+        mediafile.save()
+        self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+    def test_same_tag_value(self):
+        mediafile = self._mediafile_fixture('full')
+        mtime = self._set_past_mtime(mediafile.path)
+        self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+        mediafile.title = mediafile.title
+        mediafile.save()
+        self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+    def test_tag_value_change(self):
+        mediafile = self._mediafile_fixture('full')
+        mtime = self._set_past_mtime(mediafile.path)
+        self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+        mediafile.title = mediafile.title
+        mediafile.album = 'another'
+        mediafile.save()
+        self.assertNotEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+    def _set_past_mtime(self, path):
+        mtime = round(time.time()-10000)
+        os.utime(path, (mtime, mtime))
+        return mtime
+
+
+class ReadWriteTestBase(ArtTestMixin, LazySaveTestMixin):
     """Test writing and reading tags. Subclasses must set ``extension`` and
     ``audio_properties``.
     """

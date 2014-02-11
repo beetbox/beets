@@ -724,6 +724,8 @@ class MediaField(object):
                             'arguments mp3, mp4, asf, and etc')
         self.styles = kwargs
 
+    is_mediafield = True
+
     def _styles(self, obj):
         if obj.type in ('mp3', 'asf'):
             styles = self.styles[obj.type]
@@ -779,7 +781,7 @@ class ListMediaField(MediaField):
         return MediaField(**options)
 
 
-class CompositeDateField(object):
+class CompositeDateField(MediaField):
     """A MediaFile field for conveniently accessing the year, month, and
     day fields as a datetime.date object. Allows both getting and
     setting of the component fields.
@@ -987,6 +989,8 @@ class MediaFile(object):
         if self.mgfile.tags is None:
             self.mgfile.add_tags()
 
+        self._fields_changed = False
+
     def save(self, id3v23=False):
         """Write the object's tags back to the file.
 
@@ -1000,7 +1004,7 @@ class MediaFile(object):
                 id3 = id3.tags
             id3.update_to_v23()
             self.mgfile.save(v2_version=3)
-        else:
+        elif self._fields_changed:
             self.mgfile.save()
 
     def delete(self):
@@ -1013,6 +1017,19 @@ class MediaFile(object):
             # ASF), just delete each tag individually.
             for tag in self.mgfile.keys():
                 del self.mgfile[tag]
+
+    def __setattr__(self, name, value):
+        if name == '_fields_changed':
+            super(MediaFile, self).__setattr__(name, value)
+        elif hasattr(self, name):
+            old_value = getattr(self, name)
+            super(MediaFile, self).__setattr__(name, value)
+            new_value = getattr(self, name)
+            changed = self._fields_changed or new_value != old_value
+            super(MediaFile, self).__setattr__('_fields_changed', changed)
+        else:
+            super(MediaFile, self).__setattr__(name, value)
+            super(MediaFile, self).__setattr__('_fields_changed', True)
 
 
     # Field definitions.
