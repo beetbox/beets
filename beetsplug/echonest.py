@@ -449,6 +449,5 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                 similar(lib, item)
 
         sim_cmd.func = sim_func
-        return [sim_cmd]
 
         return [fetch_cmd, sim_cmd]
