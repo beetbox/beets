@@ -17,7 +17,8 @@ test_importer module. But here the test importer inherits from
 ``TerminalImportSession``. So we test this class, too.
 """
 
-from . import test_importer
+from _common import unittest
+from test import test_importer
 from beets.ui.commands import TerminalImportSession
 from beets import importer
 from beets import config
