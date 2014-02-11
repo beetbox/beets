@@ -287,7 +287,8 @@ class StorageStyle(object):
     def __init__(self, key, list_elem=True, as_type=unicode,
                  packing=None, pack_pos=0, pack_type=int,
                  id3_desc=None, id3_frame_field='text',
-                 id3_lang=None, suffix=None, float_places=2):
+                 id3_lang=None, suffix=None, float_places=2,
+                 is_genre=False):
         self.key = key
         self.list_elem = list_elem
         self.as_type = as_type
@@ -299,6 +300,7 @@ class StorageStyle(object):
         self.id3_lang = id3_lang
         self.suffix = suffix
         self.float_places = float_places
+        self.is_genre = is_genre
 
         # Convert suffix to correct string type.
         if self.suffix and self.as_type in (str, unicode):
@@ -447,7 +449,10 @@ class MediaField(object):
                 except KeyError:
                     return None
 
-                entry = getattr(frame, style.id3_frame_field)
+                if style.is_genre:
+                    entry = u', '.join(getattr(frame, style.id3_frame_field))
+                else:
+                    entry = getattr(frame, style.id3_frame_field)
 
         else:  # Not MP3.
             try:
@@ -455,6 +460,9 @@ class MediaField(object):
             except KeyError:
                 return None
 
+        if obj.type == 'mp3' and style.is_genre:
+            return entry
+        
         # Possibly index the list.
         if style.list_elem:
             if entry:  # List must have at least one value.
@@ -525,12 +533,19 @@ class MediaField(object):
             # Just replace based on key.
             else:
                 assert isinstance(style.id3_frame_field, str)  # Keyword.
-                frame = mutagen.id3.Frames[style.key](encoding=3,
-                    **{style.id3_frame_field: val})
+                if style.is_genre:
+                    frame = mutagen.id3.Frames[style.key](encoding=3)
+                    frame.genres = val.split(u', ')
+                else:
+                    frame = mutagen.id3.Frames[style.key](encoding=3,
+                        **{style.id3_frame_field: val})
                 obj.mgfile.tags.setall(style.key, [frame])
 
         else:  # Not MP3.
-            obj.mgfile[style.key] = out
+            if style.is_genre:
+                obj.mgfile[style.key] = val.split(u', ')
+            else:
+                obj.mgfile[style.key] = out
 
     def _styles(self, obj):
         if obj.type in ('mp3', 'asf'):
@@ -979,9 +994,9 @@ class MediaFile(object):
         asf=StorageStyle('WM/AlbumTitle'),
     )
     genre = MediaField(
-        mp3=StorageStyle('TCON'),
+        mp3=StorageStyle('TCON', is_genre=True),
         mp4=StorageStyle("\xa9gen"),
-        etc=StorageStyle('GENRE'),
+        etc=StorageStyle('GENRE', is_genre=True),
         asf=StorageStyle('WM/Genre'),
     )
     composer = MediaField(
