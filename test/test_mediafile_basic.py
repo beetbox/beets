@@ -29,21 +29,21 @@ class ArtTestMixin(object):
     """Test reads and writes of the ``art`` property.
     """
 
-    _png_data = None
-
     @property
     def png_data(self):
         if not self._png_data:
             with open(os.path.join(_common.RSRC, 'image-2x3.png'), 'rb') as f:
                 self._png_data = f.read()
         return self._png_data
+    _png_data = None
 
     @property
     def jpg_data(self):
-        if not self._png_data:
+        if not self._jpg_data:
             with open(os.path.join(_common.RSRC, 'image-2x3.jpg'), 'rb') as f:
-                self._png_data = f.read()
-        return self._png_data
+                self._jpg_data = f.read()
+        return self._jpg_data
+    _jpg_data = None
 
     def test_set_png_art(self):
         mediafile = self._mediafile_fixture('empty')
@@ -59,7 +59,8 @@ class ArtTestMixin(object):
         mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
-        self.assertEqual(mediafile.art, self.png_data)
+        self.assertEqual(mediafile.art, self.jpg_data)
+
 
 
 class ReadWriteTestBase(ArtTestMixin):
