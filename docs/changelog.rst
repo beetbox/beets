@@ -79,6 +79,8 @@ Other little fixes:
   "replace" configuration.
 * :doc:`/plugins/fetchart`: When using the ``remote_priority`` config option,
   local image files are no longer completely ignored.
+* :doc:`/plugins/echonest`: Fix an issue causing the plugin to appear twice in
+  the output of the ``beet version`` command.
 
 
 1.3.2 (December 22, 2013)
