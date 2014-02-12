@@ -724,8 +724,6 @@ class MediaField(object):
                             'arguments mp3, mp4, asf, and etc')
         self.styles = kwargs
 
-    is_mediafield = True
-
     def _styles(self, obj):
         if obj.type in ('mp3', 'asf'):
             styles = self.styles[obj.type]
