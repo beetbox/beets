@@ -987,7 +987,7 @@ class MediaFile(object):
         if self.mgfile.tags is None:
             self.mgfile.add_tags()
 
-        self._fields_changed = False
+        self._dirty = False
 
     def save(self, id3v23=False):
         """Write the object's tags back to the file.
@@ -1002,7 +1002,7 @@ class MediaFile(object):
                 id3 = id3.tags
             id3.update_to_v23()
             self.mgfile.save(v2_version=3)
-        elif self._fields_changed:
+        elif self._dirty:
             self.mgfile.save()
 
     def delete(self):
@@ -1017,17 +1017,17 @@ class MediaFile(object):
                 del self.mgfile[tag]
 
     def __setattr__(self, name, value):
-        if name == '_fields_changed':
+        if name == '_dirty':
             super(MediaFile, self).__setattr__(name, value)
         elif hasattr(self, name):
             old_value = getattr(self, name)
             super(MediaFile, self).__setattr__(name, value)
             new_value = getattr(self, name)
-            changed = self._fields_changed or new_value != old_value
-            super(MediaFile, self).__setattr__('_fields_changed', changed)
+            changed = self._dirty or new_value != old_value
+            super(MediaFile, self).__setattr__('_dirty', changed)
         else:
             super(MediaFile, self).__setattr__(name, value)
-            super(MediaFile, self).__setattr__('_fields_changed', True)
+            super(MediaFile, self).__setattr__('_dirty', True)
 
 
     # Field definitions.
