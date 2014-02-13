@@ -667,17 +667,14 @@ class SubcommandsOptionParser(optparse.OptionParser):
         - subargs: the positional arguments passed to the subcommand
         """
         options, args = optparse.OptionParser.parse_args(self, a, v)
+        subcommand, suboptions, subargs = self._parse_sub(args)
+        return options, subcommand, suboptions, subargs
 
-        if getattr(options, 'config', None) is not None:
-            config_path = options.config
-            del options.config
-            config.set_file(config_path)
-        config.set_args(options)
-        load_plugins()
-
-        for cmd in plugins.commands():
-            self.add_subcommand(cmd)
-
+    def _parse_sub(self, args):
+        """Given the `args` left unused by a typical OptionParser
+        `parse_args`, return the invoked subcommand, the subcommand
+        options, and the subcommand arguments.
+        """
         if not args:
             # No command given.
             self.print_help()
@@ -704,7 +701,7 @@ class SubcommandsOptionParser(optparse.OptionParser):
                 self.print_help()
                 self.exit()
 
-        return options, subcommand, suboptions, subargs
+        return subcommand, suboptions, subargs
 
 
 optparse.Option.ALWAYS_TYPED_ACTIONS += ('callback',)
@@ -743,23 +740,30 @@ def vararg_callback(option, opt_str, value, parser):
     del parser.rargs[:len(value)]
     setattr(parser.values, option.dest, value)
 
-# The root parser and its main function.
 
-def load_plugins():
+
+# The main entry point and bootstrapping.
+
+
+def _load_plugins():
+    """Load the plugins specified in the configuration.
+    """
     # Add plugin paths.
     import beetsplug
     beetsplug.__path__ = get_plugin_paths() + beetsplug.__path__
 
-    # For backwards compatibility
+    # For backwards compatibility.
     sys.path += get_plugin_paths()
 
     # Load requested plugins.
     plugins.load_plugins(config['plugins'].as_str_seq())
     plugins.send("pluginload")
 
-def _raw_main(args):
-    """A helper function for `main` without top-level exception
-    handling.
+
+def _configure():
+    """Parse the command line, load configuration files (including
+    loading any indicated plugins), and return the invoked subcomand,
+    the subcommand options, and the subcommand arguments.
     """
     # Temporary: Migrate from 1.0-style configuration.
     from beets.ui import migrate
@@ -782,7 +786,31 @@ def _raw_main(args):
                       help='path to configuration file')
 
     # Parse the command-line!
-    options, subcommand, suboptions, subargs = parser.parse_args(args)
+    options, args = optparse.OptionParser.parse_args(parser)
+
+    # Add any additional config files specified with --config. This
+    # special handling lets specified plugins get loaded before we
+    # finish parsing the command line.
+    if getattr(options, 'config', None) is not None:
+        config_path = options.config
+        del options.config
+        config.set_file(config_path)
+    config.set_args(options)
+
+    # Now add the plugin commands to the parser.
+    _load_plugins()
+    for cmd in plugins.commands():
+        parser.add_subcommand(cmd)
+
+    # Parse the remainder of the command line with loaded plugins.
+    return parser._parse_sub(args)
+
+
+def _raw_main(args):
+    """A helper function for `main` without top-level exception
+    handling.
+    """
+    subcommand, suboptions, subargs = _configure()
 
     # Open library file.
     dbpath = config['library'].as_filename()
@@ -820,6 +848,7 @@ def _raw_main(args):
     # Invoke the subcommand.
     subcommand.func(lib, suboptions, subargs)
     plugins.send('cli_exit', lib=lib)
+
 
 def main(args=None):
     """Run the main command-line interface for beets. Includes top-level

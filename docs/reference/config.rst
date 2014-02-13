@@ -10,10 +10,12 @@ every aspect of its operation. To configure beets, you'll edit a file called
   directory like ``C:\Users\You\AppData\Roaming``.
 * On OS X, you can also use ``~/Library/Application Support/beets/config.yaml``
   if you prefer that over the Unix-like ``~/.config``.
-* If you prefer a different location, set the ``BEETSDIR`` environment variable
-  to a path; beets will then look for a ``config.yaml`` in that directory. Or
-  specify a different configuration file to load using the ``--config
-  /path/to/file`` option on the command line.
+* If you prefer a different location, set the ``BEETSDIR`` environment
+  variable to a path; beets will then look for a ``config.yaml`` in that
+  directory.
+* Or specify an *additional* configuration file to load using the ``--config
+  /path/to/file`` option on the command line. The options will be combined
+  with any options already specified your default config file.
 
 The config file uses `YAML`_ syntax. You can use the full power of YAML, but
 most configuration options are simple key/value pairs. This means your config
