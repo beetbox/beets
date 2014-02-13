@@ -27,7 +27,10 @@ Unrelated new stuff:
   (:ref:`group_albums`) that lets you split apart albums that are mixed
   together in a single directory. Thanks to geigerzaehler.
 * A new ``--config`` command-line option lets you specify an additional
-  configuration file. Thanks again to geigerzaehler.
+  configuration file. This option *combines* config settings with your default
+  config file. (As part of this change, the ``BEETSDIR`` environment variable
+  no longer combines---it *replaces* your default config file.) Thanks again
+  to geigerzaehler.
 * :doc:`/plugins/ihate`: The plugin's configuration interface was overhauled.
   Its configuration is now much simpler---it uses beets queries instead of an
   ad-hoc per-field configuration. This is *backwards-incompatible*---if you
