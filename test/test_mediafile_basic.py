@@ -326,9 +326,10 @@ class ReadWriteTestBase(ArtTestMixin, LazySaveTestMixin):
                 value2 = getattr(mediafile, key)
             except AttributeError:
                 errors.append('Tag %s does not exist' % key)
-            if value2 != value:
-                errors.append('Tag %s: %s != %s' %
-                        (key, value2, value))
+            else:
+                if value2 != value:
+                    errors.append('Tag %s: %s != %s' %
+                            (key, value2, value))
         if any(errors):
             errors = ['Tags did not match'] + errors
             self.fail('\n  '.join(errors))
