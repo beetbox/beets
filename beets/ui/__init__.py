@@ -760,7 +760,7 @@ def _load_plugins():
     plugins.send("pluginload")
 
 
-def _configure():
+def _configure(args):
     """Parse the command line, load configuration files (including
     loading any indicated plugins), and return the invoked subcomand,
     the subcommand options, and the subcommand arguments.
@@ -786,7 +786,7 @@ def _configure():
                       help='path to configuration file')
 
     # Parse the command-line!
-    options, args = optparse.OptionParser.parse_args(parser)
+    options, args = optparse.OptionParser.parse_args(parser, args)
 
     # Add any additional config files specified with --config. This
     # special handling lets specified plugins get loaded before we
@@ -810,7 +810,7 @@ def _raw_main(args):
     """A helper function for `main` without top-level exception
     handling.
     """
-    subcommand, suboptions, subargs = _configure()
+    subcommand, suboptions, subargs = _configure(args)
 
     # Open library file.
     dbpath = config['library'].as_filename()

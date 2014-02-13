@@ -16,9 +16,7 @@
 """
 import os
 import shutil
-import textwrap
 import re
-import yaml
 
 import _common
 from _common import unittest
@@ -30,7 +28,6 @@ from beets.autotag.match import distance
 from beets import importer
 from beets.mediafile import MediaFile
 from beets import config
-from beets.util import confit
 from beets import plugins
 
 class ListTest(_common.TestCase):
