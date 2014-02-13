@@ -75,8 +75,6 @@ Other little fixes:
   are now treated as directories. Thanks to Pedro Silva.
 * The :ref:`modify-cmd` command now skips confirmation and prints a message if
   no changes are necessary. Thanks to brilnius.
-* The replacement characters for path separators can be set in the
-  "replace" configuration.
 * :doc:`/plugins/fetchart`: When using the ``remote_priority`` config option,
   local image files are no longer completely ignored.
 * :doc:`/plugins/echonest`: Fix an issue causing the plugin to appear twice in
