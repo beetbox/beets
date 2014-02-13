@@ -748,6 +748,31 @@ class VorbisImageStorageStyle(ListStorageStyle):
             ]
 
 
+class FlacImageStorageStyle(ListStorageStyle):
+
+    formats = ['flac']
+
+    def __init__(self):
+        super(FlacImageStorageStyle, self).__init__(key='')
+        self.as_type = str
+
+    def fetch(self, mediafile):
+        pictures = mediafile.mgfile.pictures
+        if pictures:
+            return [picture.data or None for picture in pictures]
+        else:
+            return []
+
+    def store(self, mediafile, images):
+        mediafile.mgfile.clear_pictures()
+
+        for image in images:
+            pic = mutagen.flac.Picture()
+            pic.data = image
+            pic.mime = ImageField._mime(image)
+            mediafile.mgfile.add_picture(pic)
+
+
 # The field itself.
 class MediaField(object):
     """A descriptor providing access to a particular (abstract) metadata
@@ -772,7 +797,6 @@ class MediaField(object):
         """
         for style in self.styles:
             if mediafile.type in style.formats:
-                print(style)
                 yield style
 
     def __get__(self, obj, owner):
@@ -851,6 +875,7 @@ class CompositeDateField(MediaField):
         self.month_field.__set__(obj, val.month)
         self.day_field.__set__(obj, val.day)
 
+
 class ImageField(MediaField):
     """A descriptor providing access to a file's embedded album art.
     Holds a bytestring reflecting the image data. The image should
@@ -864,6 +889,7 @@ class ImageField(MediaField):
             MP4ImageStorageStyle(),
             ASFImageStorageStyle(),
             VorbisImageStorageStyle(),
+            FlacImageStorageStyle(),
             out_type=str,
         )
 
@@ -880,32 +906,15 @@ class ImageField(MediaField):
             return 'image/jpeg'
 
     def __get__(self, obj, owner):
-        if obj.type == 'flac':
-            pictures = obj.mgfile.pictures
-            if pictures:
-                return pictures[0].data or None
-            else:
-                return None
-        else:
-            for style in self._styles(obj):
-                return style.get(obj)
+        for style in self._styles(obj):
+            return style.get(obj)
 
     def __set__(self, obj, val):
         if val is not None:
             if not isinstance(val, str):
                 raise ValueError('value must be a byte string or None')
-        if obj.type == 'flac':
-            obj.mgfile.clear_pictures()
-
-            if val is not None:
-                pic = mutagen.flac.Picture()
-                pic.data = val
-                pic.mime = self._mime(val)
-                obj.mgfile.add_picture(pic)
-        else:
-            # Again, assuming Vorbis Comments standard.
-            for style in self._styles(obj):
-                style.set(obj, val)
+        for style in self._styles(obj):
+            style.set(obj, val)
 
 
 # The file (a collection of fields).
