@@ -662,6 +662,34 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         mediafile.mgfile.tags.setall(self.key, [frame])
 
 
+class ASFImageStorageStyle(ListStorageStyle):
+
+    def __init__(self):
+        super(ASFImageStorageStyle, self).__init__(key='WM/Picture')
+        self.as_type = str
+
+    def fetch(self, mediafile):
+        if 'WM/Picture' not in mediafile.mgfile:
+            return []
+
+        pictures = []
+        for picture in mediafile.mgfile['WM/Picture']:
+            try:
+                pictures.append(_unpack_asf_image(picture.value)[1])
+            except:
+                pass
+        return pictures
+
+    def store(self, mediafile, images):
+        if 'WM/Picture' in mediafile.mgfile:
+            del mediafile.mgfile['WM/Picture']
+
+        for image in images:
+            pic = mutagen.asf.ASFByteArrayAttribute()
+            pic.value = _pack_asf_image(ImageField._mime(image), image)
+            mediafile.mgfile['WM/Picture'] = [pic]
+
+
 class VorbisImageStorageStyle(ListStorageStyle):
 
     def __init__(self):
@@ -829,7 +857,7 @@ class ImageField(MediaField):
             out_type=bytearray,
             mp3=MP3ImageStorageStyle(),
             mp4=MP4ImageStorageStyle(),
-            asf=[],
+            asf=ASFImageStorageStyle(),
             etc=VorbisImageStorageStyle(),
         )
 
@@ -846,44 +874,21 @@ class ImageField(MediaField):
             return 'image/jpeg'
 
     def __get__(self, obj, owner):
-        if obj.type == 'mp3' or obj.type in MP4_TYPES:
-            for style in self._styles(obj):
-                return style.get(obj)
-
-        elif obj.type == 'flac':
+        if obj.type == 'flac':
             pictures = obj.mgfile.pictures
             if pictures:
                 return pictures[0].data or None
             else:
                 return None
-
-        elif obj.type == 'asf':
-            if 'WM/Picture' in obj.mgfile:
-                pictures = obj.mgfile['WM/Picture']
-                if pictures:
-                    data = pictures[0].value
-                    try:
-                        return _unpack_asf_image(data)[1]
-                    except:
-                        return None
-            return None
-
         else:
-            # Here we're assuming everything but MP3, MPEG-4, FLAC, and
-            # ASF/WMA use the Xiph/Vorbis Comments standard. This may
-            # not be valid. http://wiki.xiph.org/VorbisComment#Cover_art
-            return self.styles['etc'].get(obj)
+            for style in self._styles(obj):
+                return style.get(obj)
 
     def __set__(self, obj, val):
         if val is not None:
             if not isinstance(val, str):
                 raise ValueError('value must be a byte string or None')
-
-        if obj.type == 'mp3' or obj.type in MP4_TYPES:
-            for style in self._styles(obj):
-                style.set(obj, val)
-
-        elif obj.type == 'flac':
+        if obj.type == 'flac':
             obj.mgfile.clear_pictures()
 
             if val is not None:
@@ -891,19 +896,10 @@ class ImageField(MediaField):
                 pic.data = val
                 pic.mime = self._mime(val)
                 obj.mgfile.add_picture(pic)
-
-        elif obj.type == 'asf':
-            if 'WM/Picture' in obj.mgfile:
-                del obj.mgfile['WM/Picture']
-
-            if val is not None:
-                pic = mutagen.asf.ASFByteArrayAttribute()
-                pic.value = _pack_asf_image(self._mime(val), val)
-                obj.mgfile['WM/Picture'] = [pic]
-
         else:
             # Again, assuming Vorbis Comments standard.
-            self.styles['etc'].set(obj, val)
+            for style in self._styles(obj):
+                style.set(obj, val)
 
 
 # The file (a collection of fields).
