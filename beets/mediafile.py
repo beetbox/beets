@@ -785,20 +785,20 @@ class MediaField(object):
            returned when getting this property
         """
         self.out_type = kwargs.get('out_type', unicode)
-        self.styles = styles
+        self._styles = styles
         for style in styles:
             style.out_type = self.out_type
 
-    def _styles(self, mediafile):
+    def styles(self, mediafile):
         """Yields the list of storage styles of this field that can
         handle the mediafile's format.
         """
-        for style in self.styles:
+        for style in self._styles:
             if mediafile.type in style.formats:
                 yield style
 
     def __get__(self, obj, owner):
-        for style in self._styles(obj):
+        for style in self.styles(obj):
             out = style.get(obj)
             if out:
                 break
@@ -806,7 +806,7 @@ class MediaField(object):
 
 
     def __set__(self, obj, val):
-        for style in self._styles(obj):
+        for style in self.styles(obj):
             style.set(obj, val)
 
 
@@ -819,12 +819,12 @@ class ListMediaField(MediaField):
 
     def __get__(self, mediafile, _):
         values = []
-        for style in self._styles(mediafile):
+        for style in self.styles(mediafile):
             values.extend(style.get_list(mediafile))
         return [_safe_cast(self.out_type, value) for value in values]
 
     def __set__(self, mediafile, values):
-        for style in self._styles(mediafile):
+        for style in self.styles(mediafile):
             style.set_list(mediafile, values)
 
     def single_field(self):
@@ -832,7 +832,7 @@ class ListMediaField(MediaField):
         first item.
         """
         options = {'out_type': self.out_type}
-        return MediaField(*self.styles, **options)
+        return MediaField(*self._styles, **options)
 
 
 class CompositeDateField(MediaField):
@@ -904,14 +904,14 @@ class ImageField(MediaField):
             return 'image/jpeg'
 
     def __get__(self, obj, owner):
-        for style in self._styles(obj):
+        for style in self.styles(obj):
             return style.get(obj)
 
     def __set__(self, obj, val):
         if val is not None:
             if not isinstance(val, str):
                 raise ValueError('value must be a byte string or None')
-        for style in self._styles(obj):
+        for style in self.styles(obj):
             style.set(obj, val)
 
 
