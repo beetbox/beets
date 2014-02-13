@@ -63,6 +63,7 @@ class ArtTestMixin(object):
         self.assertEqual(mediafile.art, self.jpg_data)
 
 
+# TODO include this in ReadWriteTestBase if implemented
 class LazySaveTestMixin(object):
     """Mediafile should only write changes when tags have changed
     """
@@ -100,7 +101,7 @@ class LazySaveTestMixin(object):
         return mtime
 
 
-class ReadWriteTestBase(ArtTestMixin, LazySaveTestMixin):
+class ReadWriteTestBase(ArtTestMixin):
     """Test writing and reading tags. Subclasses must set ``extension`` and
     ``audio_properties``.
     """
