@@ -81,8 +81,6 @@ TYPES = {
     'asf':  'Windows Media',
 }
 
-MP4_TYPES = ('aac', 'alac')
-
 
 # Utility.
 
