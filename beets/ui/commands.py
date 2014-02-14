@@ -1128,7 +1128,8 @@ def modify_items(lib, mods, query, write, move, album, confirm):
 
         # Show each change.
         for field, value in fsets.iteritems():
-            if _showdiff(field, obj.get(field), value):
+            if _showdiff(field, obj._get_formatted(field),
+                         obj._format(field, value)):
                 changed.add(obj)
 
     # Still something to do?

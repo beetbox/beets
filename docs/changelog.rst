@@ -16,6 +16,10 @@ consequences for all users are:
 * :ref:`Date-based queries <datequery>` are now possible. Try getting every
   track you added in February 2014 with ``beet ls added:2014-02`` or in the
   whole decade with ``added:2010..``. Thanks to Stig Inge Lea Bjørnsen.
+* The :ref:`modify-cmd` command is now better at parsing and formatting
+  fields. You can assign to boolean fields like ``comp``, for example, using
+  either the words "true" or "false" or the numerals 1 and 0. Any
+  boolean-esque value is normalized to a real boolean.
 
 For developers, the short version of the story is that Item and Album objects
 provide *uniform access* across fixed, flexible, and computed attributes.
