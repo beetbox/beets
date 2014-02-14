@@ -86,11 +86,17 @@ class DateType(types.Type):
                              time.localtime(value or 0))
 
     def parse(self, string):
-        # FIXME Real date parsing.
         try:
-            return float(string)
+            # Try a formatted date string.
+            return time.mktime(
+                time.strptime(string, beets.config['time_format'].get(unicode))
+            )
         except ValueError:
-            return 0.0
+            # Fall back to a plain timestamp number.
+            try:
+                return float(string)
+            except ValueError:
+                return 0.0
 
 
 class PathType(types.Type):

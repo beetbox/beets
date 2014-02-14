@@ -1113,10 +1113,7 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     fsets = {}
     for mod in mods:
         key, value = mod.split('=', 1)
-        typ = model_cls._fields.get(key)
-        if typ:
-            value = typ.parse(value)
-        fsets[key] = value
+        fsets[key] = model_cls._parse(key, value)
 
     # Get the items to modify.
     items, albums = _do_query(lib, query, album, False)

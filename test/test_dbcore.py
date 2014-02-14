@@ -246,6 +246,16 @@ class FormatTest(_common.TestCase):
         self.assertEqual(value, u'')
 
 
+class ParseTest(_common.TestCase):
+    def test_parse_fixed_field(self):
+        value = TestModel1._parse('field_one', u'2')
+        self.assertEqual(value, 2)
+
+    def test_parse_untyped_field(self):
+        value = TestModel1._parse('field_nine', u'2')
+        self.assertEqual(value, u'2')
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

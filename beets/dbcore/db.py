@@ -346,17 +346,13 @@ class Model(object):
 
     # Formatting and templating.
 
-    def _get_formatted(self, key, for_path=False):
-        """Get a field value formatted as a string (`unicode` object)
-        for display to the user. If `for_path` is true, then the value
-        will be sanitized for inclusion in a pathname (i.e., path
-        separators will be removed from the value).
+    @classmethod
+    def _format(cls, key, value, for_path=False):
+        """Format a value as the given field for this model.
         """
-        value = self.get(key)
-
         # Format the value as a string according to its type, if any.
-        if key in self._fields:
-            value = self._fields[key].format(value)
+        if key in cls._fields:
+            value = cls._fields[key].format(value)
             # Formatting must result in a string. To deal with
             # Python2isms, implicitly convert ASCII strings.
             assert isinstance(value, basestring), \
@@ -381,6 +377,14 @@ class Model(object):
                     value = value.replace(sep, sep_repl)
 
         return value
+
+    def _get_formatted(self, key, for_path=False):
+        """Get a field value formatted as a string (`unicode` object)
+        for display to the user. If `for_path` is true, then the value
+        will be sanitized for inclusion in a pathname (i.e., path
+        separators will be removed from the value).
+        """
+        return self._format(key, self.get(key), for_path)
 
     def _formatted_mapping(self, for_path=False):
         """Get a mapping containing all values on this object formatted
@@ -408,6 +412,23 @@ class Model(object):
         if isinstance(template, basestring):
             template = Template(template)
         return template.substitute(mapping, funcs)
+
+
+    # Parsing.
+
+    @classmethod
+    def _parse(cls, key, string):
+        """Parse a string as a value for the given key.
+        """
+        if not isinstance(string, basestring):
+            raise TypeError("_parse() argument must be a string")
+
+        typ = cls._fields.get(key)
+        if typ:
+            return typ.parse(string)
+        else:
+            # Fall back to unparsed string.
+            return string
 
 
 
