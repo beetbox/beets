@@ -257,18 +257,14 @@ class Bag(object):
 def platform_windows():
     import ntpath
     old_path = os.path
-    try:
-        os.path = ntpath
-        yield
-    finally:
-        os.path = old_path
+    os.path = ntpath
+    yield
+    os.path = old_path
 
 @contextmanager
 def platform_posix():
     import posixpath
     old_path = os.path
-    try:
-        os.path = posixpath
-        yield
-    finally:
-        os.path = old_path
+    os.path = posixpath
+    yield
+    os.path = old_path

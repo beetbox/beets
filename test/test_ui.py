@@ -16,9 +16,7 @@
 """
 import os
 import shutil
-import textwrap
 import re
-import yaml
 
 import _common
 from _common import unittest
@@ -30,7 +28,7 @@ from beets.autotag.match import distance
 from beets import importer
 from beets.mediafile import MediaFile
 from beets import config
-from beets.util import confit
+from beets import plugins
 
 class ListTest(_common.TestCase):
     def setUp(self):
@@ -470,19 +468,14 @@ class InputTest(_common.TestCase):
 class ConfigTest(_common.TestCase):
     def setUp(self):
         super(ConfigTest, self).setUp()
-        self.test_cmd = ui.Subcommand('test', help='test')
-        self.test_cmd.func = lambda *_: None
+        self.test_cmd = self._make_test_cmd()
         commands.default_commands.append(self.test_cmd)
 
         config_dir = os.path.join(self.temp_dir, '.config', 'beets')
         os.makedirs(config_dir)
         self.user_config_path = os.path.join(config_dir, 'config.yaml')
 
-        # Config should read files again on demand
-        config.sources = []
-        config._materialized = False
-        config._lazy_suffix = []
-        config._lazy_prefix = []
+        self._reset_config()
 
     def tearDown(self):
         super(ConfigTest, self).tearDown()
@@ -490,75 +483,87 @@ class ConfigTest(_common.TestCase):
         if 'BEETSDIR' in os.environ:
             del os.environ['BEETSDIR']
 
-    def _run_main(self, args, config_yaml, func):
-        self.test_cmd.func = func
-        config_yaml = textwrap.dedent(config_yaml).strip()
-        if config_yaml:
-            config_data = yaml.load(config_yaml, Loader=confit.Loader)
-            config.set(config_data)
-        ui._raw_main(args + ['test'])
+    def _make_test_cmd(self):
+        test_cmd = ui.Subcommand('test', help='test')
+        def run(lib, options, args):
+            test_cmd.lib = lib
+            test_cmd.options = options
+            test_cmd.args = args
+        test_cmd.func = run
+        return test_cmd
+
+    def _reset_config(self):
+        # Config should read files again on demand
+        config.sources = []
+        config._materialized = False
+        config._lazy_suffix = []
+        config._lazy_prefix = []
+
+    def write_config_file(self):
+        return open(self.user_config_path, 'w')
+
 
     def test_paths_section_respected(self):
-        def func(lib, opts, args):
-            key, template = lib.path_formats[0]
-            self.assertEqual(key, 'x')
-            self.assertEqual(template.original, 'y')
-        self._run_main([], """
-            paths:
-                x: y
-        """, func)
+        with self.write_config_file() as config:
+            config.write('paths: {x: y}')
+
+        ui._raw_main(['test'])
+        key, template = self.test_cmd.lib.path_formats[0]
+        self.assertEqual(key, 'x')
+        self.assertEqual(template.original, 'y')
 
     def test_default_paths_preserved(self):
         default_formats = ui.get_path_formats()
-        def func(lib, opts, args):
-            self.assertEqual(lib.path_formats[1:],
-                             default_formats)
-        self._run_main([], """
-            paths:
-                x: y
-        """, func)
+
+        self._reset_config()
+        with self.write_config_file() as config:
+            config.write('paths: {x: y}')
+
+        ui._raw_main(['test'])
+        key, template = self.test_cmd.lib.path_formats[0]
+        self.assertEqual(key, 'x')
+        self.assertEqual(template.original, 'y')
+        self.assertEqual(self.test_cmd.lib.path_formats[1:],
+                         default_formats)
 
     def test_nonexistant_db(self):
-        def func(lib, opts, args):
-            pass
+        with self.write_config_file() as config:
+            config.write('library: /xxx/yyy/not/a/real/path')
+
         with self.assertRaises(ui.UserError):
-            self._run_main([], """
-                library: /xxx/yyy/not/a/real/path
-            """, func)
+            ui._raw_main(['test'])
 
     def test_user_config_file(self):
-        with open(self.user_config_path, 'w') as file:
+        with self.write_config_file() as file:
             file.write('anoption: value')
 
         ui._raw_main(['test'])
         self.assertEqual(config['anoption'].get(), 'value')
 
     def test_replacements_parsed(self):
-        def func(lib, opts, args):
-            replacements = lib.replacements
-            self.assertEqual(replacements, [(re.compile(ur'[xy]'), u'z')])
-        self._run_main([], """
-            replace:
-                '[xy]': z
-        """, func)
+        with self.write_config_file() as config:
+            config.write("replace: {'[xy]': z}")
+
+        ui._raw_main(['test'])
+        replacements = self.test_cmd.lib.replacements
+        self.assertEqual(replacements, [(re.compile(ur'[xy]'), u'z')])
 
     def test_multiple_replacements_parsed(self):
-        def func(lib, opts, args):
-            replacements = lib.replacements
-            self.assertEqual(replacements, [
-                (re.compile(ur'[xy]'), u'z'),
-                (re.compile(ur'foo'), u'bar'),
-            ])
-        self._run_main([], """
-            replace:
-                '[xy]': z
-                foo: bar
-        """, func)
+        with self.write_config_file() as config:
+            config.write("replace: {'[xy]': z, foo: bar}")
+
+        ui._raw_main(['test'])
+        replacements = self.test_cmd.lib.replacements
+        self.assertEqual(replacements, [
+            (re.compile(ur'[xy]'), u'z'),
+            (re.compile(ur'foo'), u'bar'),
+        ])
 
     def test_cli_config_option(self):
         config_path = os.path.join(self.temp_dir, 'config.yaml')
         with open(config_path, 'w') as file:
             file.write('anoption: value')
+
         ui._raw_main(['--config', config_path, 'test'])
         self.assertEqual(config['anoption'].get(), 'value')
 
@@ -589,6 +594,17 @@ class ConfigTest(_common.TestCase):
 
         ui._raw_main(['--config', cli_config_path, 'test'])
         self.assertEqual(config['anoption'].get(), 'cli overwrite')
+
+    def test_cli_config_file_loads_plugin_commands(self):
+        plugin_path = os.path.join(_common.RSRC, 'beetsplug')
+
+        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        with open(cli_config_path, 'w') as file:
+            file.write('pluginpath: %s\n' % plugin_path)
+            file.write('plugins: test')
+
+        ui._raw_main(['--config', cli_config_path, 'plugin'])
+        self.assertTrue(plugins.find_plugins()[0].is_test_plugin)
 
 
 class ShowdiffTest(_common.TestCase):

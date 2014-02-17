@@ -160,6 +160,9 @@ Here are a few of the plugins written by the beets community:
 
 * `beet-amazon`_ adds Amazon.com as a tagger data source.
 
+* `copyartifacts`_ helps bring non-music files along during import.
+
+.. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
 .. _gbeets: https://github.com/mister-walter/gbeets
 .. _beets-artistcountry: https://github.com/agrausem/beets-artistcountry

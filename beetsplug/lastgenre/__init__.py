@@ -72,7 +72,7 @@ def _tags_for(obj):
 
     dbg = []
     for el in res:
-        weight = int(el.weight)
+        weight = int(el.weight or 0)
         tag = el.item.get_name().lower()
         if _is_allowed(tag):
             if min_weight > -1 and min_weight > weight and len(tags) > 0:

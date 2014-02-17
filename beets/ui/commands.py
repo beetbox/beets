@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2014, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -1106,38 +1106,14 @@ default_commands.append(version_cmd)
 
 # modify: Declaratively change metadata.
 
-def _convert_type(key, value, album=False):
-    """Convert a string to the appropriate type for the given field.
-    `album` indicates whether to use album or item field definitions.
-    """
-    fields = library.ALBUM_FIELDS if album else library.ITEM_FIELDS
-    if key not in fields:
-        return value
-    typ = [f[1] for f in fields if f[0] == key][0]
-
-    if typ is bool:
-        return util.str2bool(value)
-    elif typ is datetime:
-        fmt = config['time_format'].get(unicode)
-        try:
-            return time.mktime(time.strptime(value, fmt))
-        except ValueError:
-            raise ui.UserError(u'{0} must have format {1}'.format(key, fmt))
-    elif typ is bytes:  # A path.
-        return util.bytestring_path(value)
-    else:
-        try:
-            return typ(value)
-        except ValueError:
-            raise ui.UserError(u'{0} must be a {1}'.format(key, typ))
-
 def modify_items(lib, mods, query, write, move, album, confirm):
     """Modifies matching items according to key=value assignments."""
     # Parse key=value specifications into a dictionary.
+    model_cls = library.Album if album else library.Item
     fsets = {}
     for mod in mods:
         key, value = mod.split('=', 1)
-        fsets[key] = _convert_type(key, value, album)
+        fsets[key] = model_cls._parse(key, value)
 
     # Get the items to modify.
     items, albums = _do_query(lib, query, album, False)
@@ -1152,7 +1128,8 @@ def modify_items(lib, mods, query, write, move, album, confirm):
 
         # Show each change.
         for field, value in fsets.iteritems():
-            if _showdiff(field, obj.get(field), value):
+            if _showdiff(field, obj._get_formatted(field),
+                         obj._format(field, value)):
                 changed.add(obj)
 
     # Still something to do?

@@ -52,11 +52,34 @@ ATTRIBUTES = {
 ID_KEY = 'echonest_id'
 FINGERPRINT_KEY = 'echonest_fingerprint'
 
+
 def _splitstrip(string, delim=u','):
     """Split string (at commas by default) and strip whitespace from the
     pieces.
     """
     return [s.strip() for s in string.split(delim)]
+
+
+def diff(item1, item2, attributes):
+    result = 0.0
+    for attr in attributes:
+        try:
+            result += abs(
+                float(item1.get(attr, None)) -
+                float(item2.get(attr, None))
+            )
+        except TypeError:
+            result += 1.0
+    return result
+
+
+def similar(lib, src_item, threshold=0.15):
+    for item in lib.items():
+        if item.path != src_item.path:
+            d = diff(item, src_item, ATTRIBUTES.values())
+            if d < threshold:
+                print(u'{1:2.2f}: {0}'.format(item.path, d))
+
 
 class EchonestMetadataPlugin(plugins.BeetsPlugin):
     def __init__(self):
@@ -399,13 +422,13 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         return False
 
     def commands(self):
-        cmd = ui.Subcommand('echonest',
+        fetch_cmd = ui.Subcommand('echonest',
             help='Fetch metadata from the EchoNest')
-        cmd.parser.add_option('-f', '--force', dest='force',
+        fetch_cmd.parser.add_option('-f', '--force', dest='force',
             action='store_true', default=False,
             help='(re-)download information from the EchoNest')
 
-        def func(lib, opts, args):
+        def fetch_func(lib, opts, args):
             self.config.set_args(opts)
             write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
@@ -416,39 +439,15 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                     if song:
                         self.apply_metadata(item, song, write)
 
-        cmd.func = func
-        return [cmd]
+        fetch_cmd.func = fetch_func
 
+        sim_cmd = ui.Subcommand('echosim', help='show related files')
 
-def diff(item1, item2, attributes):
-    result = 0.0
-    for attr in attributes:
-        try:
-            result += abs(
-                float(item1.get(attr, None)) -
-                float(item2.get(attr, None))
-            )
-        except TypeError:
-            result += 1.0
-    return result
-
-
-def similar(lib, src_item, threshold=0.15):
-    for item in lib.items():
-        if item.path != src_item.path:
-            d = diff(item, src_item, ATTRIBUTES.values())
-            if d < threshold:
-                print(u'{1:2.2f}: {0}'.format(item.path, d))
-
-
-class EchonestSimilarPlugin(plugins.BeetsPlugin):
-    def commands(self):
-        cmd = ui.Subcommand('echosim', help='show related files')
-
-        def func(lib, opts, args):
+        def sim_func(lib, opts, args):
             self.config.set_args(opts)
             for item in lib.items(ui.decargs(args)):
                 similar(lib, item)
 
-        cmd.func = func
-        return [cmd]
+        sim_cmd.func = sim_func
+
+        return [fetch_cmd, sim_cmd]

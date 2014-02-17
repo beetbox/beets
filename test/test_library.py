@@ -248,21 +248,6 @@ class DestinationTest(_common.TestCase):
         self.assertFalse('>' in p)
         self.assertFalse('|' in p)
 
-    def test_replace_unix_path_separator_from_config(self):
-        self.i.title = 'one \\ two / three.mp3'
-        self.lib.replacements = [(re.compile(r'[\\/]'), 'x')]
-        with _common.platform_windows():
-            p = self.i.destination()
-        self.assertTrue('one x two x three.mp3' in p)
-        self.lib.replacements = None
-
-    def test_replace_windows_path_separator_from_config(self):
-        self.i.title = 'one \\ two / three.mp3'
-        self.lib.replacements = [(re.compile(r'[\\/]'), 'x')]
-        with _common.platform_windows():
-            p = self.i.destination()
-        self.assertTrue('one x two x three.mp3' in p)
-
     def test_path_with_format(self):
         self.lib.path_formats = [('default', '$artist/$album ($format)')]
         p = self.i.destination()

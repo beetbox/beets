@@ -19,6 +19,7 @@ from beets import util
 import beets.library
 import flask
 from flask import g
+from werkzeug.routing import BaseConverter, PathConverter
 import os
 import json
 
@@ -67,25 +68,12 @@ def json_generator(items, root):
         yield json.dumps(_rep(item))
     yield ']}'
 
-def _extract_ids(string_ids):
-    """Parses ``string_ids`` as a comme separated list of integers and returns
-    that list of integers.
-    """
-    ids = []
-    for id in string_ids.split(','):
-        try:
-            ids.append(int(id))
-        except ValueError:
-            pass
-    return ids
-
 def resource(name):
     """Decorates a function to handle RESTful HTTP requests for a resource.
     """
     def make_responder(retriever):
-        def responder(entity_ids):
-            entity_ids = _extract_ids(entity_ids)
-            entities = [retriever(id) for id in entity_ids]
+        def responder(ids):
+            entities = [retriever(id) for id in ids]
             entities = [entity for entity in entities if entity]
 
             if len(entities) == 1:
@@ -104,11 +92,9 @@ def resource_query(name):
     """Decorates a function to handle RESTful HTTP queries for resources.
     """
     def make_responder(query_func):
-        def responder(query):
-            parts = query.split('/')
-            entities = query_func(parts)
+        def responder(queries):
             return app.response_class(
-                    json_generator(entities, root='results'),
+                    json_generator(query_func(queries), root='results'),
                     mimetype='application/json')
         responder.__name__ = 'query_%s' % name
         return responder
@@ -121,16 +107,46 @@ def resource_list(name):
     def make_responder(list_all):
         def responder():
             return app.response_class(
-                    json_generator(g.lib.items(), root=name),
+                    json_generator(list_all(), root=name),
                     mimetype='application/json')
         responder.__name__ = 'all_%s' % name
         return responder
     return make_responder
 
 
+class IdListConverter(BaseConverter):
+    """Converts comma separated lists of ids in urls to integer lists.
+    """
+
+    def to_python(self, value):
+        ids = []
+        for id in value.split(','):
+            try:
+                ids.append(int(id))
+            except ValueError:
+                pass
+        return ids
+
+    def to_url(self, value):
+        return ','.join(value)
+
+
+class QueryConverter(PathConverter):
+    """Converts slash separated lists of queries in the url to string list.
+    """
+
+    def to_python(self, value):
+        return value.split('/')
+
+    def to_url(self, value):
+        return ','.join(value)
+
+
 # Flask setup.
 
 app = flask.Flask(__name__)
+app.url_map.converters['idlist'] = IdListConverter
+app.url_map.converters['query'] = QueryConverter
 
 @app.before_request
 def before_request():
@@ -139,7 +155,7 @@ def before_request():
 
 # Items.
 
-@app.route('/item/<entity_ids>')
+@app.route('/item/<idlist:ids>')
 @resource('items')
 def get_item(id):
     return g.lib.get_item(id)
@@ -159,7 +175,7 @@ def item_file(item_id):
     response.headers['Content-Length'] = os.path.getsize(item.path)
     return response
 
-@app.route('/item/query/<path:query>')
+@app.route('/item/query/<query:queries>')
 @resource_query('items')
 def item_query(queries):
     return g.lib.items(queries)
@@ -167,7 +183,7 @@ def item_query(queries):
 
 # Albums.
 
-@app.route('/album/<entity_ids>')
+@app.route('/album/<idlist:ids>')
 @resource('albums')
 def get_album(id):
     return g.lib.get_album(id)
@@ -178,7 +194,7 @@ def get_album(id):
 def all_albums():
     return g.lib.albums()
 
-@app.route('/album/query/<path:query>')
+@app.route('/album/query/<query:queries>')
 @resource_query('albums')
 def album_query(queries):
     return g.lib.album(queries)

@@ -324,12 +324,19 @@ class FalseQuery(Query):
     def match(self, item):
         return False
 
+
+
+# Time/date queries.
+
+
 def _to_epoch_time(date):
     epoch = datetime.utcfromtimestamp(0)
     return int((date - epoch).total_seconds())
 
+
 def _parse_periods(pattern):
-    """Parse two Periods separated by '..'
+    """Parse a string containing two dates separated by two dots (..).
+    Return a pair of `Period` objects.
     """
     parts = pattern.split('..', 1)
     if len(parts) == 1:
@@ -340,18 +347,21 @@ def _parse_periods(pattern):
         end = Period.parse(parts[1])
         return (start, end)
 
+
 class Period(object):
     """A period of time given by a date, time and precision.
 
-    Example:
-    2014-01-01 10:50:30 with precision 'month' represent all instants of time
-    during January 2014.
+    Example: 2014-01-01 10:50:30 with precision 'month' represents all
+    instants of time during January 2014.
     """
 
     precisions = ('year', 'month', 'day')
     date_formats = ('%Y', '%Y-%m', '%Y-%m-%d')
 
     def __init__(self, date, precision):
+        """Create a period with the given date (a `datetime` object) and
+        precision (a string, one of "year", "month", or "day").
+        """
         if precision not in Period.precisions:
             raise ValueError('Invalid precision ' + str(precision))
         self.date = date
@@ -359,21 +369,23 @@ class Period(object):
 
     @classmethod
     def parse(cls, string):
-        """Parse a date into a period.
+        """Parse a date and return a `Period` object or `None` if the
+        string is empty.
         """
-        if not string: return None
+        if not string:
+            return None
         ordinal = string.count('-')
         if ordinal >= len(cls.date_formats):
-            raise ValueError('Date is not in one of the formats '
-                                + ', '.join(cls.date_formats))
+            raise ValueError('date is not in one of the formats '
+                             + ', '.join(cls.date_formats))
         date_format = cls.date_formats[ordinal]
         date = datetime.strptime(string, date_format)
         precision = cls.precisions[ordinal]
         return cls(date, precision)
 
     def open_right_endpoint(self):
-        """Based on the precision, convert the period to a precise datetime
-        for use as a right endpoint in a right-open interval.
+        """Based on the precision, convert the period to a precise
+        `datetime` for use as a right endpoint in a right-open interval.
         """
         precision = self.precision
         date = self.date
@@ -387,7 +399,8 @@ class Period(object):
         elif 'day' == precision:
             return date + timedelta(days=1)
         else:
-            raise ValueError('Unhandled precision ' + str(precision))
+            raise ValueError('unhandled precision ' + str(precision))
+
 
 class DateInterval(object):
     """A closed-open interval of dates.
@@ -398,7 +411,7 @@ class DateInterval(object):
 
     def __init__(self, start, end):
         if start is not None and end is not None and not start < end:
-            raise ValueError("Start date {} is not before end date {}"
+            raise ValueError("start date {0} is not before end date {1}"
                              .format(start, end))
         self.start = start
         self.end = end
@@ -419,19 +432,21 @@ class DateInterval(object):
         return True
 
     def __str__(self):
-        return'[{}, {})'.format(self.start, self.end)
+        return'[{0}, {1})'.format(self.start, self.end)
+
 
 class DateQuery(FieldQuery):
     """Matches date fields stored as seconds since Unix epoch time.
 
-    Dates can be specified as year-month-day where only year is mandatory.
+    Dates can be specified as ``year-month-day`` strings where only year
+    is mandatory.
 
-    The value of a date field can be matched against a date interval by using
-    an ellipses interval syntax similar to that of NumericQuery.
+    The value of a date field can be matched against a date interval by
+    using an ellipsis interval syntax similar to that of NumericQuery.
     """
     def __init__(self, field, pattern, fast=True):
         super(DateQuery, self).__init__(field, pattern, fast)
-        (start, end) = _parse_periods(pattern)
+        start, end = _parse_periods(pattern)
         self.interval = DateInterval.from_periods(start, end)
 
     def match(self, item):
@@ -439,23 +454,25 @@ class DateQuery(FieldQuery):
         date = datetime.utcfromtimestamp(timestamp)
         return self.interval.contains(date)
 
+    _clause_tmpl = "date({0}, 'unixepoch') {1} date(?, 'unixepoch')"
+
     def col_clause(self):
-        if self.interval.start is not None and self.interval.end is not None:
-            start_epoch_time = _to_epoch_time(self.interval.start)
-            end_epoch_time = _to_epoch_time(self.interval.end)
-            template = ("date({}, 'unixepoch') >= date(?, 'unixepoch')"
-                        " AND date({}, 'unixepoch') < date(?, 'unixepoch')")
-            clause = template.format(self.field, self.field)
-            return (clause, (start_epoch_time, end_epoch_time))
-        elif self.interval.start is not None:
-            epoch_time = _to_epoch_time(self.interval.start)
-            template = "date({}, 'unixepoch') >= date(?, 'unixepoch')"
-            clause = template.format(self.field)
-            return clause.format(self.field), (epoch_time,)
-        elif self.interval.end is not None:
-            epoch_time = _to_epoch_time(self.interval.end)
-            template = "date({}, 'unixepoch') < date(?, 'unixepoch')"
-            clause = template.format(self.field)
-            return clause.format(self.field), (epoch_time,)
+        clause_parts = []
+        subvals = []
+
+        if self.interval.start:
+            clause_parts.append(self._clause_tmpl.format(self.field, ">="))
+            subvals.append(_to_epoch_time(self.interval.start))
+
+        if self.interval.end:
+            clause_parts.append(self._clause_tmpl.format(self.field, "<"))
+            subvals.append(_to_epoch_time(self.interval.end))
+
+        if clause_parts:
+            # One- or two-sided interval.
+            clause = ' AND '.join(clause_parts)
         else:
-            return '1 = ?', (1,) # match any date
+            # Match any date.
+            clause = '1'
+
+        return clause, subvals

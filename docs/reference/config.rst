@@ -10,12 +10,12 @@ every aspect of its operation. To configure beets, you'll edit a file called
   directory like ``C:\Users\You\AppData\Roaming``.
 * On OS X, you can also use ``~/Library/Application Support/beets/config.yaml``
   if you prefer that over the Unix-like ``~/.config``.
-* If you prefer a different location, set the ``BEETSDIR`` environment variable
-  to a path; beets will then look for a ``config.yaml`` in that directory. Or
-  specify a different configuration file to load using the ``--config
-  /path/to/file`` option on the command line. (There's one caveat with the
-  last option: since the configuration is loaded after the command line is
-  parsed, it cannot currently be used to load new plugins.)
+* If you prefer a different location, set the ``BEETSDIR`` environment
+  variable to a path; beets will then look for a ``config.yaml`` in that
+  directory.
+* Or specify an *additional* configuration file to load using the ``--config
+  /path/to/file`` option on the command line. The options will be combined
+  with any options already specified your default config file.
 
 The config file uses `YAML`_ syntax. You can use the full power of YAML, but
 most configuration options are simple key/value pairs. This means your config
@@ -32,6 +32,14 @@ have questions about more sophisticated syntax, take a look at the `YAML`_
 documentation.
 
 .. _YAML: http://yaml.org/
+
+The rest of this page enumerates the dizzying litany of configuration options
+available in beets. You might also want to see an
+:ref:`example <config-example>`.
+
+.. contents::
+    :local:
+    :depth: 2
 
 Global Options
 --------------
@@ -545,6 +553,8 @@ Note that the special ``singleton`` and ``comp`` path format conditions are, in
 fact, just shorthand for the explicit queries ``singleton:true`` and
 ``comp:true``. In contrast, ``default`` is special and has no query equivalent:
 the ``default`` format is only used if no queries match.
+
+.. _config-example:
 
 Example
 -------

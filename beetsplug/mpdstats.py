@@ -281,6 +281,9 @@ class MPDStats(object):
             'beets_item': self.get_item(path),
         }
 
+        self.update_item(self.now_playing['beets_item'],
+                         'last_played', value=int(time.time()))
+
     def run(self):
         self.mpd.connect()
         events = ['player']

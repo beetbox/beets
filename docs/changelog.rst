@@ -16,6 +16,10 @@ consequences for all users are:
 * :ref:`Date-based queries <datequery>` are now possible. Try getting every
   track you added in February 2014 with ``beet ls added:2014-02`` or in the
   whole decade with ``added:2010..``. Thanks to Stig Inge Lea Bjørnsen.
+* The :ref:`modify-cmd` command is now better at parsing and formatting
+  fields. You can assign to boolean fields like ``comp``, for example, using
+  either the words "true" or "false" or the numerals 1 and 0. Any
+  boolean-esque value is normalized to a real boolean.
 
 For developers, the short version of the story is that Item and Album objects
 provide *uniform access* across fixed, flexible, and computed attributes.
@@ -27,7 +31,10 @@ Unrelated new stuff:
   (:ref:`group_albums`) that lets you split apart albums that are mixed
   together in a single directory. Thanks to geigerzaehler.
 * A new ``--config`` command-line option lets you specify an additional
-  configuration file. Thanks again to geigerzaehler.
+  configuration file. This option *combines* config settings with your default
+  config file. (As part of this change, the ``BEETSDIR`` environment variable
+  no longer combines---it *replaces* your default config file.) Thanks again
+  to geigerzaehler.
 * :doc:`/plugins/ihate`: The plugin's configuration interface was overhauled.
   Its configuration is now much simpler---it uses beets queries instead of an
   ad-hoc per-field configuration. This is *backwards-incompatible*---if you
@@ -75,10 +82,14 @@ Other little fixes:
   are now treated as directories. Thanks to Pedro Silva.
 * The :ref:`modify-cmd` command now skips confirmation and prints a message if
   no changes are necessary. Thanks to brilnius.
-* The replacement characters for path separators can be set in the
-  "replace" configuration.
 * :doc:`/plugins/fetchart`: When using the ``remote_priority`` config option,
   local image files are no longer completely ignored.
+* :doc:`/plugins/echonest`: Fix an issue causing the plugin to appear twice in
+  the output of the ``beet version`` command.
+* :doc:`/plugins/lastgenre`: Fix an occasional crash when no tag weight was
+  returned by Last.fm.
+* :doc:`/plugins/mpdstats`: Restore the ``last_played`` field. Thanks to
+  Johann Klähn.
 
 
 1.3.2 (December 22, 2013)

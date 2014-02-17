@@ -1,12 +1,31 @@
-import unittest
+# This file is part of beets.
+# Copyright 2014, Adrian Sampson.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+
+"""Test for dbcore's date-based queries.
+"""
+import _common
+from _common import unittest
 from datetime import datetime
-from beets.dbcore.query import _parse_periods, DateInterval
+import time
+from beets.dbcore.query import _parse_periods, DateInterval, DateQuery
+
 
 def _date(string):
     return datetime.strptime(string, '%Y-%m-%dT%H:%M:%S')
 
-class TestDateQuery(unittest.TestCase):
 
+class DateIntervalTest(unittest.TestCase):
     def test_year_precision_intervals(self):
         self.assertContains('2000..2001', '2000-01-01T00:00:00')
         self.assertContains('2000..2001', '2001-06-20T14:15:16')
@@ -53,8 +72,49 @@ class TestDateQuery(unittest.TestCase):
         interval = DateInterval.from_periods(start, end)
         self.assertFalse(interval.contains(date))
 
+
+def _parsetime(s):
+    return time.mktime(datetime.strptime(s, '%Y-%m-%d %H:%M').timetuple())
+
+
+class DateQueryTest(_common.LibTestCase):
+    def setUp(self):
+        super(DateQueryTest, self).setUp()
+        self.i.added = _parsetime('2013-03-30 22:21')
+        self.i.store()
+
+    def test_single_month_match_fast(self):
+        query = DateQuery('added', '2013-03')
+        matched = self.lib.items(query)
+        self.assertEqual(len(matched), 1)
+
+    def test_single_month_nonmatch_fast(self):
+        query = DateQuery('added', '2013-04')
+        matched = self.lib.items(query)
+        self.assertEqual(len(matched), 0)
+
+    def test_single_month_match_slow(self):
+        query = DateQuery('added', '2013-03')
+        self.assertTrue(query.match(self.i))
+
+    def test_single_month_nonmatch_slow(self):
+        query = DateQuery('added', '2013-04')
+        self.assertFalse(query.match(self.i))
+
+    def test_single_day_match_fast(self):
+        query = DateQuery('added', '2013-03-30')
+        matched = self.lib.items(query)
+        self.assertEqual(len(matched), 1)
+
+    def test_single_day_nonmatch_fast(self):
+        query = DateQuery('added', '2013-03-31')
+        matched = self.lib.items(query)
+        self.assertEqual(len(matched), 0)
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
