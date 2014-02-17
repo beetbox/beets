@@ -33,6 +33,14 @@ documentation.
 
 .. _YAML: http://yaml.org/
 
+The rest of this page enumerates the dizzying litany of configuration options
+available in beets. You might also want to see an
+:ref:`example <config-example>`.
+
+.. contents::
+    :local:
+    :depth: 2
+
 Global Options
 --------------
 
@@ -545,6 +553,8 @@ Note that the special ``singleton`` and ``comp`` path format conditions are, in
 fact, just shorthand for the explicit queries ``singleton:true`` and
 ``comp:true``. In contrast, ``default`` is special and has no query equivalent:
 the ``default`` format is only used if no queries match.
+
+.. _config-example:
 
 Example
 -------

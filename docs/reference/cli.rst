@@ -19,10 +19,20 @@ Command-Line Interface
 
     The rest of this document describes the available commands. If you ever need
     a quick list of what's available, just type ``beet help`` or ``beet help
-    COMMAND`` or help with a specific command.
+    COMMAND`` for help with a specific command.
 
 Commands
 --------
+
+.. only:: html
+
+    Here are the built-in commands available in beets:
+
+    .. contents::
+        :local:
+        :depth: 1
+
+    Also be sure to see the :ref:`global flags <global-flags>`.
 
 .. _import-cmd:
 
@@ -294,11 +304,13 @@ fields
 Show the item and album metadata fields available for use in :doc:`query` and
 :doc:`pathformat`. Includes any template fields provided by plugins.
 
+.. _global-flags:
+
 Global Flags
 ------------
 
 Beets has a few "global" flags that affect all commands. These must appear
-between the executable name (``beet``) and the command: for example, ``beet -v
+between the executable name (``beet``) and the command---for example, ``beet -v
 import ...``.
 
 * ``-l LIBPATH``: specify the library database file to use.
