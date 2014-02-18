@@ -225,7 +225,7 @@ class NumericQuery(FieldQuery):
             elif self.rangemax is not None:
                 return u'{0} <= ?'.format(self.field), (self.rangemax,)
             else:
-                return '1'
+                return '1', ()
 
 
 class CollectionQuery(Query):

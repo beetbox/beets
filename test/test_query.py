@@ -261,7 +261,8 @@ class GetTest(DummyDataTestCase):
 
     def test_bad_year(self):
         q = 'year:delete from items'
-        self.assertRaises(ValueError, self.lib.items, q)
+        results = self.lib.items(q)
+        self.assert_matched(results, [])
 
     def test_singleton_true(self):
         q = 'singleton:true'
@@ -319,6 +320,11 @@ class GetTest(DummyDataTestCase):
         q = dbcore.query.NumericQuery('year', '1999')
         results = self.lib.items(q)
         self.assertFalse(results)
+
+    def test_numeric_empty(self):
+        q = dbcore.query.NumericQuery('year', '')
+        results = self.lib.items(q)
+        self.assertTrue(results)
 
 
 class MatchTest(_common.TestCase):
