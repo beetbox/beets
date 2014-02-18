@@ -330,7 +330,7 @@ class FalseQuery(Query):
 
 
 def _to_epoch_time(date):
-    epoch = datetime.utcfromtimestamp(0)
+    epoch = datetime.fromtimestamp(0)
     return int((date - epoch).total_seconds())
 
 
