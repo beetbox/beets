@@ -461,7 +461,7 @@ class DateQuery(FieldQuery):
         date = datetime.utcfromtimestamp(timestamp)
         return self.interval.contains(date)
 
-    _clause_tmpl = "datetime({0}, 'unixepoch') {1} datetime(?, 'unixepoch')"
+    _clause_tmpl = "{0} {1} ?"
 
     def col_clause(self):
         clause_parts = []
