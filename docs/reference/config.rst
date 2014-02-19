@@ -3,19 +3,12 @@ Configuration
 
 Beets has an extensive configuration system that lets you customize nearly
 every aspect of its operation. To configure beets, you'll edit a file called
-``config.yaml``. The location of this file depends on your OS:
-
-* On Unix-like OSes (including OS X), you want ``~/.config/beets/config.yaml``.
-* On Windows, use ``%APPDATA%\beets\config.yaml``. This is usually in a
-  directory like ``C:\Users\You\AppData\Roaming``.
-* On OS X, you can also use ``~/Library/Application Support/beets/config.yaml``
-  if you prefer that over the Unix-like ``~/.config``.
-* If you prefer a different location, set the ``BEETSDIR`` environment
-  variable to a path; beets will then look for a ``config.yaml`` in that
-  directory.
-* Or specify an *additional* configuration file to load using the ``--config
-  /path/to/file`` option on the command line. The options will be combined
-  with any options already specified your default config file.
+``config.yaml``. The ``beets config -p`` shows you the location where
+beets expects its configuration file to be placed. You can start editing
+it right away by running ``beets config -e``.  This will open the
+configuration file in your default text editor. The section
+`Configuration Location`_ explains in depth the possible paths for
+configuration files and how to change them.
 
 The config file uses `YAML`_ syntax. You can use the full power of YAML, but
 most configuration options are simple key/value pairs. This means your config
@@ -553,6 +546,64 @@ Note that the special ``singleton`` and ``comp`` path format conditions are, in
 fact, just shorthand for the explicit queries ``singleton:true`` and
 ``comp:true``. In contrast, ``default`` is special and has no query equivalent:
 the ``default`` format is only used if no queries match.
+
+
+Configuration Location
+----------------------
+
+Beets has three layers of configuration; each overwriting the previous
+one.
+
+The first layer is the *default configuration*. It comes with your beets
+distribution and cannot be changed. The second configuration layer is
+the *user configuration*. Here you can customize the configuration to
+use when running ``beet`` on your command line.
+
+The path for the user configuration is given by
+``$BEETSDIR/config.yaml``. Here ``BEETSDIR``, is the directory beets
+uses to store its application specific data and resolve relative paths.
+By default, ``BEETSDIR`` is determined by your system's convention for
+storing application configuration, but may be set by the ``BEETSDIR``
+environment variable.  This allows you to manage mutliple beets
+libraries with separate configurations.  To be more precise, the
+following algorithm is used to determine ``BEETSDIR``.
+
+1. If the ``BEETSDIR`` environment variable is set, then use it and
+   stop.
+
+2. Otherwise, generate a platform-dependent list of directories to
+   search.
+
+  - On Windows: ``~\AppData\Roaming\beets`` and then
+    ``%APPDATA%\beets``, if the environment variable is set
+
+  - On non-Mac Unixes: ``~/.config/beets`` and then
+    ``$XDG_CONFIG_DIR/beets``, if the environment variable is set
+
+  - On OS X: ``~/.config/beets``, then
+    ``~/Library/Application Support/beets``, and finally
+    ``$XDG_CONFIG_DIR/beets``, if the environment variable is set
+
+3. Look in each directory in turn for a ``config.yaml``. Set
+   ``BEETSDIR`` to the *first* directory that contains this file. If no
+   directory is found containing ``config.yaml``, then use the *last*
+   directory in the list.
+
+
+Finally, the ``--config CONFIGFILE`` command line option serves as the
+third layer. ``CONFIGFILE`` is the path of a YAML file that contains
+additional configuration overwriting the user configuration. This is
+helpful, for example, if you have different strategies for importing
+files, each with its own set of importer configuration.
+
+In addition some command line options overwrite configuration values.
+For example the command ::
+
+  $ beets --library /path/to/lib import --timid /path/to/import
+
+uses the ``library`` and ``importer.timid`` values from the command line
+instead of the user configuration.
+
 
 .. _config-example:
 
