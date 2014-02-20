@@ -1,4 +1,3 @@
-from __future__ import print_function
 import os.path
 
 def completion_script(commands):
@@ -57,9 +56,3 @@ def completion_script(commands):
                 option_list = ' '.join(option_list)
                 yield "  %s[%s]='%s'\n" % (option_type, cmd, option_list)
     yield '}\n'
-
-
-if __name__ == "__main__":
-    from beets.ui.commands import default_commands
-    for line in generate_completion(default_commands):
-        print(line, end='')
