@@ -17,6 +17,7 @@
 import os
 import shutil
 import re
+import subprocess
 
 import _common
 from _common import unittest
@@ -740,6 +741,31 @@ class PluginTest(_common.TestCase):
         config['pluginpath'] = [os.path.join(_common.RSRC, 'beetsplug')]
         config['plugins'] = ['test']
         ui._raw_main(['test'])
+
+
+class CompletionTest(_common.TestCase):
+
+    def test_completion(self):
+        test_script = os.path.join(os.path.dirname(__file__),
+                'test_completion.sh')
+
+        # Tests run in bash
+        tester = subprocess.Popen('/bin/bash', stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE)
+
+        # Load complection script
+        self.io.install()
+        ui._raw_main(['completion'])
+        completion_script = self.io.getoutput()
+        self.io.restore()
+        tester.stdin.writelines(completion_script)
+
+        # Load testsuite
+        with open(test_script, 'r') as test_script:
+            tester.stdin.writelines(test_script)
+        (out, err) = tester.communicate()
+        self.assertEqual(tester.returncode, 0)
+        self.assertEqual(out, "completion tests passed\n")
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
