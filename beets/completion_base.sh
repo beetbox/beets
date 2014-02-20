@@ -27,8 +27,9 @@
 # completed if '-' has already been typed on the command line.
 #
 # Note that completion only works for builtin commands and *not* for
-# commands provided by plugins
+# commands provided by plugins.
 #
+# Currently, only Bash 4.1 and newer is supported.
 #
 # TODO
 # ----
@@ -48,6 +49,8 @@
 #
 # * Support long options with `=`, e.g. `--config=file`. Debian's bash
 #   completion package can handle this.
+# 
+# * Support for Bash 3.2
 #
 
 
