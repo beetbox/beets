@@ -471,9 +471,15 @@ class ConfigTest(_common.TestCase):
         self.test_cmd = self._make_test_cmd()
         commands.default_commands.append(self.test_cmd)
 
-        config_dir = os.path.join(self.temp_dir, '.config', 'beets')
-        os.makedirs(config_dir)
-        self.user_config_path = os.path.join(config_dir, 'config.yaml')
+        # Default user configuration
+        self.user_config_dir = os.path.join(self.temp_dir, '.config', 'beets')
+        os.makedirs(self.user_config_dir)
+        self.user_config_path = os.path.join(self.user_config_dir,
+                                             'config.yaml')
+
+        # Custom BEETSDIR
+        self.beetsdir = os.path.join(self.temp_dir, 'beetsdir')
+        os.makedirs(self.beetsdir)
 
         self._reset_config()
 
@@ -567,26 +573,9 @@ class ConfigTest(_common.TestCase):
         ui._raw_main(['--config', config_path, 'test'])
         self.assertEqual(config['anoption'].get(), 'value')
 
-    def test_beetsdir_config_file_overwrites_defaults(self):
-        with open(self.user_config_path, 'w') as file:
-            file.write('anoption: value')
-
-        env_config_path = os.path.join(self.temp_dir, 'config.yaml')
-        os.environ['BEETSDIR'] = self.temp_dir
-        with open(env_config_path, 'w') as file:
-            file.write('anoption: overwrite')
-
-        ui.main(['test'])
-        self.assertEqual(config['anoption'].get(), 'overwrite')
-
     def test_cli_config_file_overwrites_user_defaults(self):
         with open(self.user_config_path, 'w') as file:
             file.write('anoption: value')
-
-        env_config_path = os.path.join(self.temp_dir, 'config.yaml')
-        os.environ['BEETSDIR'] = self.temp_dir
-        with open(env_config_path, 'w') as file:
-            file.write('anoption: overwrite')
 
         cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
         with open(cli_config_path, 'w') as file:
@@ -594,6 +583,77 @@ class ConfigTest(_common.TestCase):
 
         ui._raw_main(['--config', cli_config_path, 'test'])
         self.assertEqual(config['anoption'].get(), 'cli overwrite')
+
+    def test_cli_config_file_overwrites_beetsdir_defaults(self):
+        os.environ['BEETSDIR'] = self.beetsdir
+        env_config_path = os.path.join(self.beetsdir, 'config.yaml')
+        with open(env_config_path, 'w') as file:
+            file.write('anoption: value')
+
+        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        with open(cli_config_path, 'w') as file:
+            file.write('anoption: cli overwrite')
+
+        ui._raw_main(['--config', cli_config_path, 'test'])
+        self.assertEqual(config['anoption'].get(), 'cli overwrite')
+
+    @unittest.skip('Difficult to implement with optparse')
+    def test_multiple_cli_config_files(self):
+        cli_config_path_1 = os.path.join(self.temp_dir, 'config.yaml')
+        cli_config_path_2 = os.path.join(self.temp_dir, 'config_2.yaml')
+
+        with open(cli_config_path_1, 'w') as file:
+            file.write('first: value')
+
+        with open(cli_config_path_2, 'w') as file:
+            file.write('second: value')
+
+        ui._raw_main(['--config', cli_config_path_1,
+                      '--config', cli_config_path_2, 'test'])
+        self.assertEqual(config['first'].get(), 'value')
+        self.assertEqual(config['second'].get(), 'value')
+
+    @unittest.skip('Difficult to implement with optparse')
+    def test_multiple_cli_config_overwrite(self):
+        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        cli_overwrite_config_path = os.path.join(self.temp_dir,
+                                                 'overwrite_config.yaml')
+
+        with open(cli_config_path, 'w') as file:
+            file.write('anoption: value')
+
+        with open(cli_overwrite_config_path, 'w') as file:
+            file.write('anoption: overwrite')
+
+        ui._raw_main(['--config', cli_config_path,
+                      '--config', cli_overwrite_config_path, 'test'])
+        self.assertEqual(config['anoption'].get(), 'cli overwrite')
+
+    def test_cli_config_paths_resolve_relative_to_user_dir(self):
+        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        with open(cli_config_path, 'w') as file:
+            file.write('library: beets.db\n')
+            file.write('statefile: state')
+
+        ui._raw_main(['--config', cli_config_path, 'test'])
+        self.assertEqual(config['library'].as_filename(),
+                         os.path.join(self.user_config_dir, 'beets.db'))
+        self.assertEqual(config['statefile'].as_filename(),
+                         os.path.join(self.user_config_dir, 'state'))
+
+    def test_cli_config_paths_resolve_relative_to_beetsdir(self):
+        os.environ['BEETSDIR'] = self.beetsdir
+
+        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        with open(cli_config_path, 'w') as file:
+            file.write('library: beets.db\n')
+            file.write('statefile: state')
+
+        ui._raw_main(['--config', cli_config_path, 'test'])
+        self.assertEqual(config['library'].as_filename(),
+                         os.path.join(self.beetsdir, 'beets.db'))
+        self.assertEqual(config['statefile'].as_filename(),
+                         os.path.join(self.beetsdir, 'state'))
 
     def test_cli_config_file_loads_plugin_commands(self):
         plugin_path = os.path.join(_common.RSRC, 'beetsplug')
@@ -605,6 +665,48 @@ class ConfigTest(_common.TestCase):
 
         ui._raw_main(['--config', cli_config_path, 'plugin'])
         self.assertTrue(plugins.find_plugins()[0].is_test_plugin)
+
+    def test_beetsdir_config(self):
+        os.environ['BEETSDIR'] = self.beetsdir
+
+        env_config_path = os.path.join(self.beetsdir, 'config.yaml')
+        with open(env_config_path, 'w') as file:
+            file.write('anoption: overwrite')
+
+        config.read()
+        self.assertEqual(config['anoption'].get(), 'overwrite')
+
+    def test_beetsdir_config_does_not_load_default_user_config(self):
+        os.environ['BEETSDIR'] = self.beetsdir
+
+        with open(self.user_config_path, 'w') as file:
+            file.write('anoption: value')
+
+        config.read()
+        self.assertFalse(config['anoption'].exists())
+
+    def test_default_config_paths_resolve_relative_to_beetsdir(self):
+        os.environ['BEETSDIR'] = self.beetsdir
+
+        config.read()
+        self.assertEqual(config['library'].as_filename(),
+                         os.path.join(self.beetsdir, 'library.db'))
+        self.assertEqual(config['statefile'].as_filename(),
+                         os.path.join(self.beetsdir, 'state.pickle'))
+
+    def test_beetsdir_config_paths_resolve_relative_to_beetsdir(self):
+        os.environ['BEETSDIR'] = self.beetsdir
+
+        env_config_path = os.path.join(self.beetsdir, 'config.yaml')
+        with open(env_config_path, 'w') as file:
+            file.write('library: beets.db\n')
+            file.write('statefile: state')
+
+        config.read()
+        self.assertEqual(config['library'].as_filename(),
+                         os.path.join(self.beetsdir, 'beets.db'))
+        self.assertEqual(config['statefile'].as_filename(),
+                         os.path.join(self.beetsdir, 'state'))
 
 
 class ShowdiffTest(_common.TestCase):
