@@ -330,8 +330,15 @@ class FalseQuery(Query):
 
 
 def _to_epoch_time(date):
-    epoch = datetime.utcfromtimestamp(0)
-    return int((date - epoch).total_seconds())
+    epoch = datetime.fromtimestamp(0)
+    delta = date - epoch
+    try:
+        return int((delta).total_seconds())
+    except AttributeError:
+        # datetime.timedelta.total_seconds() is not available on Python 2.6
+        return int((delta.microseconds
+                    + (delta.seconds + delta.days * 24 * 3600) * 10 ** 6)
+                   / 10.0 ** 6)
 
 
 def _parse_periods(pattern):
@@ -454,7 +461,7 @@ class DateQuery(FieldQuery):
         date = datetime.utcfromtimestamp(timestamp)
         return self.interval.contains(date)
 
-    _clause_tmpl = "date({0}, 'unixepoch') {1} date(?, 'unixepoch')"
+    _clause_tmpl = "{0} {1} ?"
 
     def col_clause(self):
         clause_parts = []
@@ -474,5 +481,4 @@ class DateQuery(FieldQuery):
         else:
             # Match any date.
             clause = '1'
-
         return clause, subvals
