@@ -30,6 +30,7 @@ from beets.mediafile import MediaFile
 from beets import config
 from beets import plugins
 
+
 class ListTest(_common.TestCase):
     def setUp(self):
         super(ListTest, self).setUp()
@@ -723,7 +724,7 @@ class ShowModelChangeTest(_common.TestCase):
         self.a.path = self.b.path
 
     def _show(self, **kwargs):
-        change = commands._show_model_changes(self.a, self.b, **kwargs)
+        change = ui.show_model_changes(self.a, self.b, **kwargs)
         out = self.io.getoutput()
         return change, out
 

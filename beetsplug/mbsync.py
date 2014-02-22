@@ -28,7 +28,7 @@ def _print_and_apply_changes(lib, item, old_data, move, pretend, write):
     """Apply changes to an Item and preview them in the console. Return
     a boolean indicating whether any changes were made.
     """
-    changed = ui.commands._show_model_changes(item)
+    changed = ui.show_model_changes(item)
     if not changed:
         return False
 

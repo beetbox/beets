@@ -75,69 +75,6 @@ def _do_query(lib, query, album, also_items=True):
     return items, albums
 
 
-FLOAT_EPSILON = 0.01
-def _field_diff(field, old, new):
-    """Given two Model objects, format their values for `field` and
-    highlight changes among them. Return a human-readable string. If the
-    value has not changed, return None instead.
-    """
-    oldval = old.get(field)
-    newval = new.get(field)
-
-    # If no change, abort.
-    if isinstance(oldval, float) and isinstance(newval, float) and \
-            abs(oldval - newval) < FLOAT_EPSILON:
-        return None
-    elif oldval == newval:
-        return None
-
-    # Get formatted values for output.
-    oldstr = old._get_formatted(field)
-    newstr = new._get_formatted(field)
-
-    # For strings, highlight changes. For others, colorize the whole
-    # thing.
-    if isinstance(oldval, basestring):
-        oldstr, newstr = ui.colordiff(oldval, newval)
-    else:
-        oldstr, newstr = ui.colorize('red', oldstr), ui.colorize('red', newstr)
-
-    return u'{0} -> {1}'.format(oldstr, newstr)
-
-
-def _show_model_changes(new, old=None, fields=None, always=False):
-    """Given a Model object, print a list of changes from its pristine
-    version stored in the database. Return a boolean indicating whether
-    any changes were found.
-
-    `old` may be the "original" object to avoid using the pristine
-    version from the database. `fields` may be a list of fields to
-    restrict the detection to. `always` indicates whether the object is
-    always identified, regardless of whether any changes are present.
-    """
-    old = old or new._db._get(type(new), new.id)
-
-    # Build up lines showing changes.
-    changes = []
-    for field in old:
-        # Subset of the fields. Never show mtime.
-        if field == 'mtime' or (fields and field not in fields):
-            continue
-
-        # Detect and show difference for this field.
-        line = _field_diff(field, old, new)
-        if line:
-            changes.append(u'  {0}: {1}'.format(field, line))
-
-    # Print changes.
-    if changes or always:
-        ui.print_obj(old, old._db)
-    if changes:
-        ui.print_(u'\n'.join(changes))
-
-    return bool(changes)
-
-
 
 # fields: Shows a list of available fields for queries and format strings.
 
@@ -984,7 +921,8 @@ def update_items(lib, query, album, move, pretend):
                     item._dirty.discard('albumartist')
 
             # Check for and display changes.
-            changed = _show_model_changes(item, fields=library.ITEM_KEYS_META)
+            changed = ui.show_model_changes(item,
+                                            fields=library.ITEM_KEYS_META)
 
             # Save changes.
             if not pretend:
@@ -1163,7 +1101,7 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     for obj in objs:
         for field, value in fsets.iteritems():
             obj[field] = value
-        if _show_model_changes(obj):
+        if ui.show_model_changes(obj):
             changed.add(obj)
 
     # Still something to do?
@@ -1289,8 +1227,8 @@ def write_items(lib, query, pretend):
             continue
 
         # Check for and display changes.
-        changed = _show_model_changes(item, clean_item, library.ITEM_KEYS_META,
-                                      always=True)
+        changed = ui.show_model_changes(item, clean_item,
+                                        library.ITEM_KEYS_META, always=True)
         if changed and not pretend:
             try:
                 item.write()
