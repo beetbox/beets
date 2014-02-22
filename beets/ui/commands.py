@@ -124,19 +124,28 @@ def _field_diff(field, old, new):
     return u'{0} -> {1}'.format(oldstr, newstr)
 
 
-def _show_model_changes(new, old=None):
+def _show_model_changes(new, old=None, fields=None):
     """Given a Model object, print a list of changes from its pristine
     version stored in the database. Return a boolean indicating whether
     any changes were found.
+
+    `old` may be the "original" object to avoid using the pristine
+    version from the database. `fields` may be a list of fields to
+    restrict the detection to.
     """
     old = old or new._db._get(type(new), new.id)
     ui.print_obj(old, old._db)
 
     changed = False
     for field in old:
+        # Subset of the fields.
+        if fields and field not in fields:
+            continue
+
+        # Detect and show difference for this field.
         line = _field_diff(field, old, new)
         if line:
-            print_(u'  ' + line)
+            print_(u'  {0}: {1}'.format(field, line))
             changed = True
 
     return changed
@@ -1301,27 +1310,16 @@ def write_items(lib, query, pretend):
             ))
             continue
 
-        # Get the keys that have changed between the version.
-        changed = set()
-        for key in library.ITEM_KEYS_META:
-            if item[key] != clean_item[key]:
-                changed.add(key)
-
-        # Did anything change?
-        if changed:
-            ui.print_obj(item, lib)
-            for key in changed:
-                _showdiff(key, clean_item[key], item[key])
-
-            # Actually write the tags.
-            if not pretend:
-                try:
-                    item.write()
-                except Exception as exc:
-                    log.error(u'could not write {0}: {1}'.format(
-                        util.displayable_path(item.path), exc
-                    ))
-                    continue
+        # Check for and display changes.
+        changed = _show_model_changes(item, clean_item, library.ITEM_KEYS_META)
+        if changed and not pretend:
+            try:
+                item.write()
+            except Exception as exc:
+                log.error(u'could not write {0}: {1}'.format(
+                    util.displayable_path(item.path), exc
+                ))
+                continue
 
 write_cmd = ui.Subcommand('write', help='write tag information to files')
 write_cmd.parser.add_option('-p', '--pretend', action='store_true',
