@@ -979,7 +979,6 @@ def update_items(lib, query, album, move, pretend):
                 continue
 
             # Read new data.
-            old_data = dict(item)
             try:
                 item.read()
             except Exception as exc:
@@ -990,39 +989,30 @@ def update_items(lib, query, album, move, pretend):
             # Special-case album artist when it matches track artist. (Hacky
             # but necessary for preserving album-level metadata for non-
             # autotagged imports.)
-            if not item.albumartist and \
-                    old_data['albumartist'] == old_data['artist'] == \
-                        item.artist:
-                item.albumartist = old_data['albumartist']
-                item._dirty.discard('albumartist')
+            if not item.albumartist:
+                old_item = lib.get_item(item.id)
+                if old_item.albumartist == old_item.artist == item.artist:
+                    item.albumartist = old_item.albumartist
+                    item._dirty.discard('albumartist')
 
-            # Get and save metadata changes.
-            changes = {}
-            for key in library.ITEM_KEYS_META:
-                if key in item._dirty:
-                    changes[key] = old_data[key], getattr(item, key)
-            if changes:
-                # Something changed.
-                ui.print_obj(item, lib)
-                for key, (oldval, newval) in changes.iteritems():
-                    _showdiff(key, oldval, newval)
+            # Check for and display changes.
+            changed = _show_model_changes(item, fields=library.ITEM_KEYS_META)
 
-                # If we're just pretending, then don't move or save.
-                if pretend:
-                    continue
+            # Save changes.
+            if not pretend:
+                if changed:
+                    # Move the item if it's in the library.
+                    if move and lib.directory in ancestry(item.path):
+                        item.move()
 
-                # Move the item if it's in the library.
-                if move and lib.directory in ancestry(item.path):
-                    item.move()
-
-                item.store()
-                affected_albums.add(item.album_id)
-            elif not pretend:
-                # The file's mtime was different, but there were no changes
-                # to the metadata. Store the new mtime, which is set in the
-                # call to read(), so we don't check this again in the
-                # future.
-                item.store()
+                    item.store()
+                    affected_albums.add(item.album_id)
+                else:
+                    # The file's mtime was different, but there were no
+                    # changes to the metadata. Store the new mtime,
+                    # which is set in the call to read(), so we don't
+                    # check this again in the future.
+                    item.store()
 
         # Skip album changes while pretending.
         if pretend:
