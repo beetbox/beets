@@ -335,7 +335,9 @@ class ConfigView(object):
         """Get a string as a normalized as an absolute, tilde-free path.
 
         Relative paths are relative to the configuration directory (see
-        the `config_dir` method).
+        the `config_dir` method) if they come from a file. Otherwise,
+        they are relative to the current working directory. This helps
+        attain the expected behavior when using command-line options.
         """
         path, source = self.first()
         if not isinstance(path, BASESTRING):
@@ -344,7 +346,7 @@ class ConfigView(object):
             ))
         path = os.path.expanduser(STRING(path))
 
-        if not os.path.isabs(path):
+        if not os.path.isabs(path) and source.filename:
             # From defaults: relative to the app's directory.
             path = os.path.join(self.root().config_dir(), path)
 

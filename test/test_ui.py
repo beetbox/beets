@@ -655,6 +655,11 @@ class ConfigTest(_common.TestCase):
         self.assertEqual(config['statefile'].as_filename(),
                          os.path.join(self.beetsdir, 'state'))
 
+    def test_command_line_option_relative_to_working_dir(self):
+        ui._raw_main(['--library', 'foo.db', 'test'])
+        self.assertEqual(config['library'].as_filename(),
+                         os.path.join(os.getcwd(), 'foo.db'))
+
     def test_cli_config_file_loads_plugin_commands(self):
         plugin_path = os.path.join(_common.RSRC, 'beetsplug')
 
