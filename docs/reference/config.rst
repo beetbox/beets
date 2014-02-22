@@ -556,58 +556,45 @@ the ``default`` format is only used if no queries match.
 Configuration Location
 ----------------------
 
-Beets has three layers of configuration; each overwriting the previous
-one.
+The beets configuration file is usually located in a standard location that
+depends on your OS, but there are a couple of ways you can tell beets where to
+look.
 
-The first layer is the *default configuration*. It comes with your beets
-distribution and cannot be changed. The second configuration layer is
-the *user configuration*. Here you can customize the configuration to
-use when running ``beet`` on your command line.
+Environment Variable
+~~~~~~~~~~~~~~~~~~~~
 
-The path for the user configuration is given by
-``$BEETSDIR/config.yaml``. Here ``BEETSDIR``, is the directory beets
-uses to store its application specific data and resolve relative paths.
-By default, ``BEETSDIR`` is determined by your system's convention for
-storing application configuration, but may be set by the ``BEETSDIR``
-environment variable.  This allows you to manage mutliple beets
-libraries with separate configurations.  To be more precise, the
-following algorithm is used to determine ``BEETSDIR``.
+First, you can set the ``BEETSDIR`` environment variable to a directory
+containing a ``config.yaml`` file. This replaces your configuration in the
+default location. This also affects where auxiliary files, like the library
+database, are stored by default (that's where relative paths are resolved to).
+This environment variable is useful if you need to manage multiple beets
+libraries with separate configurations.
 
-1. If the ``BEETSDIR`` environment variable is set, then use it and
-   stop.
+Command-Line Option
+~~~~~~~~~~~~~~~~~~~
 
-2. Otherwise, generate a platform-dependent list of directories to
-   search.
+Alternatively, you can use the ``--config`` command-line option to indicate a
+YAML file containing options that will then be merged with your existing
+options (from ``BEETSDIR`` or the default locations). This is useful if you
+want to keep your configuration mostly the same but modify a few options as a
+batch. For example, you might have different strategies for importing files,
+each with a different set of importer options.
 
-  - On Windows: ``~\AppData\Roaming\beets`` and then
-    ``%APPDATA%\beets``, if the environment variable is set
+Default Location
+~~~~~~~~~~~~~~~~
 
-  - On non-Mac Unixes: ``~/.config/beets`` and then
-    ``$XDG_CONFIG_DIR/beets``, if the environment variable is set
+In the absence of a ``BEETSDIR`` variable, beets searches a few places for
+your configuration, depending on the platform:
 
-  - On OS X: ``~/.config/beets``, then
-    ``~/Library/Application Support/beets``, and finally
-    ``$XDG_CONFIG_DIR/beets``, if the environment variable is set
+- On Unix platforms, including OS X:``~/.config/beets`` and then
+  ``$XDG_CONFIG_DIR/beets``, if the environment variable is set.
+- On OS X, we also search ``~/Library/Application Support/beets`` before the
+  Unixy locations.
+- On Windows: ``~\AppData\Roaming\beets``, and then ``%APPDATA%\beets``, if
+  the environment variable is set.
 
-3. Look in each directory in turn for a ``config.yaml``. Set
-   ``BEETSDIR`` to the *first* directory that contains this file. If no
-   directory is found containing ``config.yaml``, then use the *last*
-   directory in the list.
-
-
-Finally, the ``--config CONFIGFILE`` command line option serves as the
-third layer. ``CONFIGFILE`` is the path of a YAML file that contains
-additional configuration overwriting the user configuration. This is
-helpful, for example, if you have different strategies for importing
-files, each with its own set of importer configuration.
-
-In addition some command line options overwrite configuration values.
-For example the command ::
-
-  $ beets --library /path/to/lib import --timid /path/to/import
-
-uses the ``library`` and ``importer.timid`` values from the command line
-instead of the user configuration.
+Beets uses the first directory in your platform's list that contains
+``config.yaml``. If no config file exists, the last path in the list is used.
 
 
 .. _config-example:
