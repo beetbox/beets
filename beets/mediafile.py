@@ -767,6 +767,7 @@ class FlacImageStorageStyle(ListStorageStyle):
         for image in images:
             pic = mutagen.flac.Picture()
             pic.data = image
+            pic.type = 3  # front cover
             pic.mime = ImageField._mime(image)
             mediafile.mgfile.add_picture(pic)
 
