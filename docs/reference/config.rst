@@ -8,11 +8,12 @@ every aspect of its operation. To configure beets, you'll edit a file called
 * On Unix-like OSes, you want ``~/.config/beets/config.yaml``.
 * On Windows, use ``%APPDATA%\beets\config.yaml``. This is usually in a
   directory like ``C:\Users\You\AppData\Roaming``.
-* On OS X, it is ``~/Library/Application Support/beets/config.yaml``.
+* On OS X, you can use either the Unix location or ``~/Library/Application
+  Support/beets/config.yaml``.
 
-It is also possible to customize the location of the configuration file
-and even use multiple layers of configuration. Just have a look at
-`Configuration Location`_.
+It is also possible to customize the location of the configuration file and
+even use multiple layers of configuration. See `Configuration Location`_,
+below.
 
 The config file uses `YAML`_ syntax. You can use the full power of YAML, but
 most configuration options are simple key/value pairs. This means your config

@@ -502,14 +502,14 @@ def _package_path(name):
     return os.path.dirname(os.path.abspath(filepath))
 
 def config_dirs():
-    """Return a list of candidates for user configuration directories
-    on the system.
+    """Return a platform-specific list of candidates for user
+    configuration directories on the system.
     """
     paths = []
 
     if platform.system() == 'Darwin':
-        paths.append(UNIX_DIR_FALLBACK)
         paths.append(MAC_DIR)
+        paths.append(UNIX_DIR_FALLBACK)
         if UNIX_DIR_VAR in os.environ:
             paths.append(os.environ[UNIX_DIR_VAR])
 
