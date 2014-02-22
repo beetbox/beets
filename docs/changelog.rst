@@ -19,9 +19,8 @@ consequences for all users are:
 * The :ref:`modify-cmd` command is now better at parsing and formatting
   fields. You can assign to boolean fields like ``comp``, for example, using
   either the words "true" or "false" or the numerals 1 and 0. Any
-  boolean-esque value is normalized to a real boolean.
-* The :ref:`modify-cmd`, :ref:`update-cmd`, and :ref:`write-cmd` commands
-  should all show more readable, better-colorized output to indicate metadata
+  boolean-esque value is normalized to a real boolean. The :ref:`update-cmd`
+  and :ref:`write-cmd` commands also got smarter at formatting and colorizing
   changes.
 
 For developers, the short version of the story is that Item and Album objects
@@ -93,6 +92,8 @@ Other little fixes:
   returned by Last.fm.
 * :doc:`/plugins/mpdstats`: Restore the ``last_played`` field. Thanks to
   Johann Klähn.
+* The :ref:`modify-cmd` command's output now clearly shows when a file has
+  been deleted.
 
 
 1.3.2 (December 22, 2013)
