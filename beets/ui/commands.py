@@ -22,7 +22,6 @@ import os
 import time
 import itertools
 import codecs
-from datetime import datetime
 
 import beets
 from beets import ui
@@ -46,7 +45,9 @@ log = logging.getLogger('beets')
 default_commands = []
 
 
+
 # Utilities.
+
 
 def _do_query(lib, query, album, also_items=True):
     """For commands that operate on matched items, performs a query
@@ -73,6 +74,7 @@ def _do_query(lib, query, album, also_items=True):
 
     return items, albums
 
+
 FLOAT_EPSILON = 0.01
 def _showdiff(field, oldval, newval):
     """Print out a human-readable field difference line if `oldval` and
@@ -91,6 +93,54 @@ def _showdiff(field, oldval, newval):
         return True
 
     return False
+
+
+def _field_diff(field, old, new):
+    """Given two Model objects, format their values for `field` and
+    highlight changes among them. Return a human-readable string. If the
+    value has not changed, return None instead.
+    """
+    oldval = old.get(field)
+    newval = new.get(field)
+
+    # If no change, abort.
+    if isinstance(oldval, float) and isinstance(newval, float) and \
+            abs(oldval - newval) < FLOAT_EPSILON:
+        return None
+    elif oldval == newval:
+        return None
+
+    # Get formatted values for output.
+    oldstr = old._get_formatted(field)
+    newstr = new._get_formatted(field)
+
+    # For strings, highlight changes. For others, colorize the whole
+    # thing.
+    if isinstance(oldval, basestring):
+        oldstr, newstr = ui.colordiff(oldval, newval)
+    else:
+        oldstr, newstr = ui.colorize('red', oldstr), ui.colorize('red', newstr)
+
+    return u'{0} -> {1}'.format(oldstr, newstr)
+
+
+def _show_model_changes(new, old=None):
+    """Given a Model object, print a list of changes from its pristine
+    version stored in the database. Return a boolean indicating whether
+    any changes were found.
+    """
+    old = old or new._db._get(type(new), new.id)
+    ui.print_obj(old, old._db)
+
+    changed = False
+    for field in old:
+        line = _field_diff(field, old, new)
+        if line:
+            print_(u'  ' + line)
+            changed = True
+
+    return changed
+
 
 
 # fields: Shows a list of available fields for queries and format strings.
@@ -472,8 +522,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                    .format(itemcount))
             print_('For help, see: '
                    'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
-            opts = ('Use as-is', 'as Tracks', 'Group albums', 'Skip', 'Enter search',
-                    'enter Id', 'aBort')
+            opts = ('Use as-is', 'as Tracks', 'Group albums', 'Skip',
+                    'Enter search', 'enter Id', 'aBort')
         sel = ui.input_options(opts)
         if sel == 'u':
             return importer.action.ASIS
@@ -1119,18 +1169,15 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     items, albums = _do_query(lib, query, album, False)
     objs = albums if album else items
 
-    # Preview change and collect modified objects.
+    # Apply changes *temporarily*, preview them, and collect modified
+    # objects.
     print_('Modifying %i %ss.' % (len(objs), 'album' if album else 'item'))
     changed = set()
     for obj in objs:
-        # Identify the changed object.
-        ui.print_obj(obj, lib)
-
-        # Show each change.
         for field, value in fsets.iteritems():
-            if _showdiff(field, obj._get_formatted(field),
-                         obj._format(field, value)):
-                changed.add(obj)
+            obj[field] = value
+        if _show_model_changes(obj):
+            changed.add(obj)
 
     # Still something to do?
     if not changed:
@@ -1146,9 +1193,6 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     # Apply changes to database.
     with lib.transaction():
         for obj in changed:
-            for field, value in fsets.iteritems():
-                obj[field] = value
-
             if move:
                 cur_path = obj.path
                 if lib.directory in ancestry(cur_path): # In library?
