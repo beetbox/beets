@@ -317,7 +317,10 @@ import ...``.
 * ``-d DIRECTORY``: specify the library root directory.
 * ``-v``: verbose mode; prints out a deluge of debugging information. Please use
   this flag when reporting bugs.
-* ``-c FILE``: read a specified YAML configuration file.
+* ``-c FILE``: read a specified YAML :doc:`configuration file <config>`.
+
+Beets also uses the ``BEETSDIR`` environment variable to look for
+configuration and data.
 
 .. only:: man
 
