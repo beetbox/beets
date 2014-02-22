@@ -29,7 +29,7 @@
 # Note that completion only works for builtin commands and *not* for
 # commands provided by plugins.
 #
-# Currently, only Bash 4.1 and newer is supported.
+# Currently, only Bash 3.2 and newer is supported.
 #
 # TODO
 # ----
@@ -50,25 +50,22 @@
 # * Support long options with `=`, e.g. `--config=file`. Debian's bash
 #   completion package can handle this.
 # 
-# * Support for Bash 3.2
-#
 
 
-# Main entry point for completion
-_beet() {
-  local cur prev commands
-  local -A flags opts aliases
+# Determines the beets subcommand and dispatches the completion
+# accordingly.
+_beet_dispatch() {
+  local cur prev
 
   COMPREPLY=()
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD-1]}"
-  _beet_setup
 
   # Look for the beets subcommand
   local arg cmd=
   for (( i=1; i < COMP_CWORD; i++ )); do
       arg="${COMP_WORDS[i]}"
-      if _list_include_item "${opts[_global]}" $arg; then
+      if _list_include_item "${opts___global}" $arg; then
         ((i++))
       elif [[ "$arg" != -* ]]; then
         cmd="$arg"
@@ -77,8 +74,8 @@ _beet() {
   done
 
   # Replace command shortcuts
-  if [[ -n $cmd && -n ${aliases[$cmd]} ]]; then
-    cmd=${aliases[$cmd]}
+  if [[ -n $cmd ]] && _list_include_item "$aliases" "$cmd"; then
+    eval "cmd=\$alias__$cmd"
   fi
 
   case $cmd in
@@ -93,13 +90,15 @@ _beet() {
       ;;
   esac
 }
-complete -o filenames -F _beet beet
 
 
 # Adds option and file completion to COMPREPLY for the subcommand $1
 _beet_complete() {
   if [[ $cur == -* ]]; then
-    local completions="${flags[_common]} ${opts[$1]} ${flags[$1]}"
+    local opts flags completions
+    eval "opts=\$opts__$1"
+    eval "flags=\$flags__$1"
+    completions="${flags___common} ${opts} ${flags}"
     COMPREPLY+=( $(compgen -W "$completions"  -- $cur) )
   else
     COMPREPLY+=( $(compgen -f -- $cur) )
@@ -107,7 +106,7 @@ _beet_complete() {
 }
 
 
-# Add global options and commands to the completion
+# Add global options and subcommands to the completion
 _beet_complete_global() {
   case $prev in
     -h|--help)
@@ -128,10 +127,12 @@ _beet_complete_global() {
   esac
 
   if [[ $cur == -* ]]; then
-    local completions="${opts[_global]} ${flags[_global]}"
+    local completions="$opts___global $flags___global"
     COMPREPLY+=( $(compgen -W "$completions" -- $cur) )
-  elif [[ -n $cur && -n "${aliases[$cur]}" ]]; then
-    COMPREPLY+=( ${aliases[$cur]} )
+  elif [[ -n $cur ]] && _list_include_item "$aliases" "$cur"; then
+    local cmd
+    eval "cmd=\$alias__$cur"
+    COMPREPLY+=( $cmd )
   else
     COMPREPLY+=( $(compgen -W "$commands" -- $cur) )
   fi
@@ -139,8 +140,9 @@ _beet_complete_global() {
 
 # Returns true if the space separated list $1 includes $2
 _list_include_item() {
-  [[ $1 =~ (^|[[:space:]])"$2"($|[[:space:]]) ]]
+  [[ " $1 " == *[[:space:]]$2[[:space:]]* ]]
 }
 
-# This is where beets dynamically adds the _beet_setup function. This
+# This is where beets dynamically adds the _beet function. This
 # function sets the variables $flags, $opts, $commands, and $aliases.
+complete -o filenames -F _beet beet

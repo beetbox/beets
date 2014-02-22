@@ -750,7 +750,8 @@ class CompletionTest(_common.TestCase):
                 'test_completion.sh')
 
         # Tests run in bash
-        tester = subprocess.Popen('/bin/bash', stdin=subprocess.PIPE,
+        shell = os.environ.get('BEETS_TEST_SHELL', '/bin/bash')
+        tester = subprocess.Popen(shell, stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE)
 
         # Load complection script

@@ -8,7 +8,7 @@ initcli() {
 
 completes() {
   for word in "$@"; do
-    [[ ${COMPREPLY[@]} =~ "$word" ]] || return 1
+    [[ " ${COMPREPLY[@]} " == *[[:space:]]$word[[:space:]]* ]] || return 1
   done
 }
 
@@ -132,9 +132,6 @@ test_list_options() {
 
 test_help_command() {
   initcli help '' &&
-  completes $COMMANDS &&
-
-  initcli '?' '' &&
   completes $COMMANDS &&
   true
 }

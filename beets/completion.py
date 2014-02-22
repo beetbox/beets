@@ -33,7 +33,6 @@ def completion_script(commands):
     }
 
     # Help subcommand
-    aliases['?'] = 'help'
     command_names.append('help')
 
     # Add flags common to all commands
@@ -42,17 +41,19 @@ def completion_script(commands):
     }
 
     # Start generating the script
-    yield "_beet_setup() {\n"
-    yield "  commands='%s'\n" % ' '.join(command_names)
-    yield '\n'
+    yield "_beet() {\n"
+    yield "  local commands='%s'\n" % ' '.join(command_names)
+    yield "\n"
 
+    yield "  local aliases='%s'\n" % ' '.join(aliases.keys())
     for alias, cmd in aliases.items():
-        yield("  aliases['%s']='%s'\n" % (alias, cmd))
+        yield "  local alias__%s=%s\n" % (alias, cmd)
     yield '\n'
 
     for cmd, opts in options.items():
         for option_type, option_list in opts.items():
             if option_list:
                 option_list = ' '.join(option_list)
-                yield "  %s[%s]='%s'\n" % (option_type, cmd, option_list)
+                yield "  local %s__%s='%s'\n" % (option_type, cmd, option_list)
+    yield '  _beet_dispatch\n'
     yield '}\n'
