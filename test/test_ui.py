@@ -597,37 +597,37 @@ class ConfigTest(_common.TestCase):
         ui._raw_main(['--config', cli_config_path, 'test'])
         self.assertEqual(config['anoption'].get(), 'cli overwrite')
 
-    @unittest.skip('Difficult to implement with optparse')
-    def test_multiple_cli_config_files(self):
-        cli_config_path_1 = os.path.join(self.temp_dir, 'config.yaml')
-        cli_config_path_2 = os.path.join(self.temp_dir, 'config_2.yaml')
-
-        with open(cli_config_path_1, 'w') as file:
-            file.write('first: value')
-
-        with open(cli_config_path_2, 'w') as file:
-            file.write('second: value')
-
-        ui._raw_main(['--config', cli_config_path_1,
-                      '--config', cli_config_path_2, 'test'])
-        self.assertEqual(config['first'].get(), 'value')
-        self.assertEqual(config['second'].get(), 'value')
-
-    @unittest.skip('Difficult to implement with optparse')
-    def test_multiple_cli_config_overwrite(self):
-        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
-        cli_overwrite_config_path = os.path.join(self.temp_dir,
-                                                 'overwrite_config.yaml')
-
-        with open(cli_config_path, 'w') as file:
-            file.write('anoption: value')
-
-        with open(cli_overwrite_config_path, 'w') as file:
-            file.write('anoption: overwrite')
-
-        ui._raw_main(['--config', cli_config_path,
-                      '--config', cli_overwrite_config_path, 'test'])
-        self.assertEqual(config['anoption'].get(), 'cli overwrite')
+#    @unittest.skip('Difficult to implement with optparse')
+#    def test_multiple_cli_config_files(self):
+#        cli_config_path_1 = os.path.join(self.temp_dir, 'config.yaml')
+#        cli_config_path_2 = os.path.join(self.temp_dir, 'config_2.yaml')
+#
+#        with open(cli_config_path_1, 'w') as file:
+#            file.write('first: value')
+#
+#        with open(cli_config_path_2, 'w') as file:
+#            file.write('second: value')
+#
+#        ui._raw_main(['--config', cli_config_path_1,
+#                      '--config', cli_config_path_2, 'test'])
+#        self.assertEqual(config['first'].get(), 'value')
+#        self.assertEqual(config['second'].get(), 'value')
+#
+#    @unittest.skip('Difficult to implement with optparse')
+#    def test_multiple_cli_config_overwrite(self):
+#        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+#        cli_overwrite_config_path = os.path.join(self.temp_dir,
+#                                                 'overwrite_config.yaml')
+#
+#        with open(cli_config_path, 'w') as file:
+#            file.write('anoption: value')
+#
+#        with open(cli_overwrite_config_path, 'w') as file:
+#            file.write('anoption: overwrite')
+#
+#        ui._raw_main(['--config', cli_config_path,
+#                      '--config', cli_overwrite_config_path, 'test'])
+#        self.assertEqual(config['anoption'].get(), 'cli overwrite')
 
     def test_cli_config_paths_resolve_relative_to_user_dir(self):
         cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
