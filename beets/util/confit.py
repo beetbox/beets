@@ -506,6 +506,10 @@ def _package_path(name):
 def config_dirs():
     """Return a platform-specific list of candidates for user
     configuration directories on the system.
+
+    The candidates are in order of priority, from highest to lowest. The
+    last element is the "fallback" location to be used when no
+    higher-priority config file exists.
     """
     paths = []
 
@@ -670,16 +674,18 @@ class Configuration(RootView):
         """
         # If environment variable is set, use it.
         if self._env_var in os.environ:
-            path = os.environ[self._env_var]
-            return os.path.abspath(os.path.expanduser(path))
+            appdir = os.environ[self._env_var]
+            appdir = os.path.abspath(os.path.expanduser(appdir))
 
-        # Search platform-specific locations.
-        for confdir in config_dirs():
-            appdir = os.path.join(confdir, self.appname)
-            if os.path.isfile(os.path.join(appdir, CONFIG_FILENAME)):
-                return appdir
+        else:
+            # Search platform-specific locations. If no config file is
+            # found, fall back to the final directory in the list.
+            for confdir in config_dirs():
+                appdir = os.path.join(confdir, self.appname)
+                if os.path.isfile(os.path.join(appdir, CONFIG_FILENAME)):
+                    break
 
-        # Fall back to the last path if none have a config.yaml.
+        # Ensure that the directory exists.
         if not os.path.isdir(appdir):
             os.makedirs(appdir)
         return appdir
