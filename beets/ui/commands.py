@@ -76,25 +76,6 @@ def _do_query(lib, query, album, also_items=True):
 
 
 FLOAT_EPSILON = 0.01
-def _showdiff(field, oldval, newval):
-    """Print out a human-readable field difference line if `oldval` and
-    `newval` differ. Return a boolean indicating whether anything was printed
-    (i.e., if any change needs to be made).
-    """
-    # Considering floats incomparable for perfect equality, introduce
-    # an epsilon tolerance.
-    if isinstance(oldval, float) and isinstance(newval, float) and \
-            abs(oldval - newval) < FLOAT_EPSILON:
-        return False
-
-    if newval != oldval:
-        oldval, newval = ui.colordiff(oldval, newval)
-        print_(u'  %s: %s -> %s' % (field, oldval, newval))
-        return True
-
-    return False
-
-
 def _field_diff(field, old, new):
     """Given two Model objects, format their values for `field` and
     highlight changes among them. Return a human-readable string. If the

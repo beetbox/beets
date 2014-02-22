@@ -714,56 +714,57 @@ class ConfigTest(_common.TestCase):
                          os.path.join(self.beetsdir, 'state'))
 
 
-class ShowdiffTest(_common.TestCase):
+class ShowModelChangeTest(_common.TestCase):
     def setUp(self):
-        super(ShowdiffTest, self).setUp()
+        super(ShowModelChangeTest, self).setUp()
         self.io.install()
+        self.a = _common.item()
+        self.b = _common.item()
+        self.a.path = self.b.path
 
-    def test_showdiff_strings(self):
-        commands._showdiff('field', 'old', 'new')
+    def _show(self, **kwargs):
+        change = commands._show_model_changes(self.a, self.b, **kwargs)
         out = self.io.getoutput()
-        self.assertTrue('field' in out)
+        return change, out
 
-    def test_showdiff_identical(self):
-        commands._showdiff('field', 'old', 'old')
-        out = self.io.getoutput()
-        self.assertFalse('field' in out)
+    def test_identical(self):
+        change, out = self._show()
+        self.assertFalse(change)
+        self.assertEqual(out, '')
 
-    def test_showdiff_ints(self):
-        commands._showdiff('field', 2, 3)
-        out = self.io.getoutput()
-        self.assertTrue('field' in out)
+    def test_string_fixed_field_change(self):
+        self.b.title = 'x'
+        change, out = self._show()
+        self.assertTrue(change)
+        self.assertTrue('title' in out)
 
-    def test_showdiff_ints_no_color(self):
-        config['color'] = False
-        commands._showdiff('field', 2, 3)
-        out = self.io.getoutput()
-        self.assertTrue('field' in out)
+    def test_int_fixed_field_change(self):
+        self.b.track = 9
+        change, out = self._show()
+        self.assertTrue(change)
+        self.assertTrue('track' in out)
 
-    def test_showdiff_shows_both(self):
-        commands._showdiff('field', 'old', 'new')
-        out = self.io.getoutput()
-        self.assertTrue('old' in out)
-        self.assertTrue('new' in out)
+    def test_floats_close_to_identical(self):
+        self.a.length = 1.00001
+        self.b.length = 1.00005
+        change, out = self._show()
+        self.assertFalse(change)
+        self.assertEqual(out, '')
 
-    def test_showdiff_floats_close_to_identical(self):
-        commands._showdiff('field', 1.999, 2.001)
-        out = self.io.getoutput()
-        self.assertFalse('field' in out)
+    def test_floats_different(self):
+        self.a.length = 1.00001
+        self.b.length = 2.00001
+        change, out = self._show()
+        self.assertTrue(change)
+        self.assertTrue('length' in out)
 
-    def test_showdiff_floats_differenct(self):
-        commands._showdiff('field', 1.999, 4.001)
-        out = self.io.getoutput()
-        self.assertTrue('field' in out)
+    def test_both_values_shown(self):
+        self.a.title = 'foo'
+        self.b.title = 'bar'
+        change, out = self._show()
+        self.assertTrue('foo' in out)
+        self.assertTrue('bar' in out)
 
-    def test_showdiff_ints_colorizing_is_not_stringwise(self):
-        commands._showdiff('field', 222, 333)
-        complete_diff = self.io.getoutput().split()[1]
-
-        commands._showdiff('field', 222, 232)
-        partial_diff = self.io.getoutput().split()[1]
-
-        self.assertEqual(complete_diff, partial_diff)
 
 class ShowChangeTest(_common.TestCase):
     def setUp(self):
