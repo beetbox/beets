@@ -124,31 +124,37 @@ def _field_diff(field, old, new):
     return u'{0} -> {1}'.format(oldstr, newstr)
 
 
-def _show_model_changes(new, old=None, fields=None):
+def _show_model_changes(new, old=None, fields=None, always=False):
     """Given a Model object, print a list of changes from its pristine
     version stored in the database. Return a boolean indicating whether
     any changes were found.
 
     `old` may be the "original" object to avoid using the pristine
     version from the database. `fields` may be a list of fields to
-    restrict the detection to.
+    restrict the detection to. `always` indicates whether the object is
+    always identified, regardless of whether any changes are present.
     """
     old = old or new._db._get(type(new), new.id)
-    ui.print_obj(old, old._db)
 
-    changed = False
+    # Build up lines showing changes.
+    changes = []
     for field in old:
-        # Subset of the fields.
-        if fields and field not in fields:
+        # Subset of the fields. Never show mtime.
+        if field == 'mtime' or (fields and field not in fields):
             continue
 
         # Detect and show difference for this field.
         line = _field_diff(field, old, new)
         if line:
-            print_(u'  {0}: {1}'.format(field, line))
-            changed = True
+            changes.append(u'  {0}: {1}'.format(field, line))
 
-    return changed
+    # Print changes.
+    if changes or always:
+        ui.print_obj(old, old._db)
+    if changes:
+        ui.print_(u'\n'.join(changes))
+
+    return bool(changes)
 
 
 
@@ -1302,7 +1308,8 @@ def write_items(lib, query, pretend):
             continue
 
         # Check for and display changes.
-        changed = _show_model_changes(item, clean_item, library.ITEM_KEYS_META)
+        changed = _show_model_changes(item, clean_item, library.ITEM_KEYS_META,
+                                      always=True)
         if changed and not pretend:
             try:
                 item.write()
