@@ -330,15 +330,16 @@ class FalseQuery(Query):
 
 
 def _to_epoch_time(date):
+    """Convert a `datetime` object to an integer number of seconds since
+    the (local) Unix epoch.
+    """
     epoch = datetime.fromtimestamp(0)
     delta = date - epoch
     try:
-        return int((delta).total_seconds())
+        return int(delta.total_seconds())
     except AttributeError:
         # datetime.timedelta.total_seconds() is not available on Python 2.6
-        return int((delta.microseconds
-                    + (delta.seconds + delta.days * 24 * 3600) * 10 ** 6)
-                   / 10.0 ** 6)
+        return delta.seconds + delta.days * 24 * 3600
 
 
 def _parse_periods(pattern):
