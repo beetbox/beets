@@ -20,6 +20,9 @@ consequences for all users are:
   fields. You can assign to boolean fields like ``comp``, for example, using
   either the words "true" or "false" or the numerals 1 and 0. Any
   boolean-esque value is normalized to a real boolean.
+* The :ref:`modify-cmd`, :ref:`update-cmd`, and :ref:`write-cmd` commands
+  should all show more readable, better-colorized output to indicate metadata
+  changes.
 
 For developers, the short version of the story is that Item and Album objects
 provide *uniform access* across fixed, flexible, and computed attributes.
