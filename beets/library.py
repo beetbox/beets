@@ -491,18 +491,18 @@ class Item(LibModel):
 
     # Templating.
 
-    def _formatted_mapping(self, for_path=False):
+    def _formatted_mapping(self):
         """Get a mapping containing string-formatted values from either
         this item or the associated album, if any.
         """
-        mapping = super(Item, self)._formatted_mapping(for_path)
+        mapping = super(Item, self)._formatted_mapping()
 
         # Merge in album-level fields.
         album = self.get_album()
         if album:
             for key in album.keys(True):
                 if key in ALBUM_KEYS_ITEM or key not in ITEM_KEYS:
-                    mapping[key] = album._get_formatted(key, for_path)
+                    mapping[key] = album._get_formatted(key)
 
         # Use the album artist if the track artist is not set and
         # vice-versa.
@@ -700,19 +700,39 @@ class Album(LibModel):
         items, so the album must contain at least one item or
         item_dir must be provided.
         """
-        image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
         filename_tmpl = Template(beets.config['art_filename'].get(unicode))
-        subpath = self.evaluate_template(filename_tmpl, True)
-        subpath = util.sanitize_path(subpath,
-                                     replacements=self._db.replacements)
-        subpath = bytestring_path(subpath)
 
-        _, ext = os.path.splitext(image)
-        dest = os.path.join(item_dir, subpath + ext)
+        # FIXME dupliactes code from ``Item.destination``
+        path_components = self.evaluate_path_template(filename_tmpl)
 
-        return bytestring_path(dest)
+        # Append original extension as unicode
+        _, extension = os.path.splitext(image)
+        path_components[-1] += extension
+
+        # Apply user replacements
+        for regex, replacement in self._db.replacements or []:
+            path_components = [regex.sub(replacement, comp)
+                               for comp in path_components]
+
+        # Determine maximal filename length
+        maxlen = beets.config['max_filename_length'].get(int)
+        if not maxlen:
+            # When zero, try to determine from filesystem.
+            maxlen = util.max_filename_length(item_dir)
+
+        # Sanitize components
+        basename = path_components.pop()
+        path_components = [util.sanitize_path_component(component, maxlen)
+                           for component in path_components]
+        basename = util.sanitize_path_component(basename, maxlen,
+                preserve_extension=True)
+        path_components.append(basename)
+
+        subpath = os.path.join(*path_components)
+
+        return normpath(os.path.join(item_dir, subpath))
 
     def set_art(self, path, copy=True):
         """Sets the album's cover art to the image at the given path.
@@ -1161,7 +1181,7 @@ class DefaultTemplateFunctions(object):
             return res
 
         # Flatten disambiguation value into a string.
-        disam_value = album._get_formatted(disambiguator, True)
+        disam_value = album._get_formatted(disambiguator)
         res = u' [{0}]'.format(disam_value)
         self.lib._memotable[memokey] = res
         return res
