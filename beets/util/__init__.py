@@ -443,22 +443,6 @@ def unique_path(path):
         if not os.path.exists(new_path):
             return new_path
 
-# Note: The Windows "reserved characters" are, of course, allowed on
-# Unix. They are forbidden here because they cause problems on Samba
-# shares, which are sufficiently common as to cause frequent problems.
-# http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
-PATH_REPLACE = [
-    (re.compile(ur'[\\/]'), u'_'),  # / and \ -- forbidden everywhere.
-    (re.compile(ur'^\.'), u'_'),  # Leading dot (hidden files on Unix).
-    (re.compile(ur'[\x00-\x1f]'), u''),  # Control characters.
-    (re.compile(ur'[<>:"\?\*\|]'), u'_'),  # Windows "reserved characters".
-    (re.compile(ur'\.$'), u'_'),  # Trailing dots.
-    (re.compile(ur'\s+$'), u''),  # Trailing whitespace.
-]
-
-PATHSEP_REPLACEMENT = u'_'
-PATHSEP_REGEXP = re.compile(u'[\\/]')
-
 def build_sanitized_path(components,
         replacements=None,
         max_length=MAX_FILENAME_LENGTH):
@@ -483,6 +467,8 @@ def build_sanitized_path(components,
     components.append(basename)
     return os.path.join(*components)
 
+PATHSEP_REPLACEMENT = u'_'
+PATHSEP_REGEXP = re.compile(u'[\\/]')
 
 def sanitize_path_component(component,
         max_length=MAX_FILENAME_LENGTH,

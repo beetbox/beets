@@ -227,22 +227,21 @@ class DestinationTest(_common.TestCase):
         self.assertFalse('two \\ three' in p)
         self.assertFalse('two / three' in p)
 
-    @unittest.skip('sanitize_path was removed, interface about to change')
     def test_sanitize_unix_replaces_leading_dot(self):
         with _common.platform_posix():
-            p = util.sanitize_path(u'one/.two/three')
+            p = util.build_sanitized_path([u'one', u'.two', u'three'],
+                    self.lib.replacements)
         self.assertFalse('.' in p)
 
-    @unittest.skip('sanitize_path was removed, interface about to change')
     def test_sanitize_windows_replaces_trailing_dot(self):
         with _common.platform_windows():
-            p = util.sanitize_path(u'one/two./three')
+            p = util.build_sanitized_path([u'one', u'.two', u'three'],
+                    self.lib.replacements)
         self.assertFalse('.' in p)
 
-    @unittest.skip('sanitize_path was removed, interface about to change')
     def test_sanitize_windows_replaces_illegal_chars(self):
         with _common.platform_windows():
-            p = util.sanitize_path(u':*?"<>|')
+            p = util.build_sanitized_path([u':*?"<>|'], self.lib.replacements)
         self.assertFalse(':' in p)
         self.assertFalse('*' in p)
         self.assertFalse('?' in p)
@@ -342,10 +341,10 @@ class DestinationTest(_common.TestCase):
         ]
         self.assertEqual(self.i.destination(), np('one/three'))
 
-    @unittest.skip('sanitize_path was removed, interface about to change')
     def test_sanitize_windows_replaces_trailing_space(self):
         with _common.platform_windows():
-            p = util.sanitize_path(u'one/two /three')
+            p = util.build_sanitized_path([u'one', u'two', u'three'],
+                    self.lib.replacements)
         self.assertFalse(' ' in p)
 
     def test_get_formatted_does_not_replace_separators(self):
@@ -413,24 +412,21 @@ class DestinationTest(_common.TestCase):
         p = self.i.destination()
         self.assertEqual(p.rsplit(os.path.sep, 1)[1], 'something')
 
-    @unittest.skip('sanitize_path was removed, interface about to change')
     def test_sanitize_path_works_on_empty_string(self):
         with _common.platform_posix():
-            p = util.sanitize_path(u'')
+            p = util.build_sanitized_path([u''], self.lib.replacements)
         self.assertEqual(p, u'')
 
-    @unittest.skip('sanitize_path was removed, interface about to change')
     def test_sanitize_with_custom_replace_overrides_built_in_sub(self):
         with _common.platform_posix():
-            p = util.sanitize_path(u'a/.?/b', [
+            p = util.build_sanitized_path([u'a', u'.?', u'b'], [
                 (re.compile(ur'foo'), u'bar'),
             ])
         self.assertEqual(p, u'a/.?/b')
 
-    @unittest.skip('sanitize_path was removed, interface about to change')
     def test_sanitize_with_custom_replace_adds_replacements(self):
         with _common.platform_posix():
-            p = util.sanitize_path(u'foo/bar', [
+            p = util.build_sanitized_path([u'foo', u'bar'], [
                 (re.compile(ur'foo'), u'bar'),
             ])
         self.assertEqual(p, u'bar/bar')
@@ -853,16 +849,14 @@ class PathStringTest(_common.TestCase):
         alb = self.lib.get_album(self.i)
         self.assertEqual(path, alb.artpath)
 
-    @unittest.skip('sanitize_path was removed, interface about to change')
     def test_sanitize_path_with_special_chars(self):
-        path = u'b\xe1r?'
-        new_path = util.sanitize_path(path)
+        new_path = util.build_sanitized_path([u'b\xe1r?'],
+                self.lib.replacements)
         self.assert_(new_path.startswith(u'b\xe1r'))
 
-    @unittest.skip('sanitize_path was removed, interface about to change')
     def test_sanitize_path_returns_unicode(self):
-        path = u'b\xe1r?'
-        new_path = util.sanitize_path(path)
+        new_path = util.build_sanitized_path([u'b\xe1r?'],
+                self.lib.replacements)
         self.assert_(isinstance(new_path, unicode))
 
     def test_unicode_artpath_becomes_bytestring(self):

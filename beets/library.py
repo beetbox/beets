@@ -899,6 +899,18 @@ def get_query(val, model_cls):
 
 # The Library: interface to the database.
 
+# Note: The Windows "reserved characters" are, of course, allowed on
+# Unix. They are forbidden here because they cause problems on Samba
+# shares, which are sufficiently common as to cause frequent problems.
+# http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
+DEFAULT_PATH_REPLACEMENTS = [
+    (re.compile(ur'[\\/]'), u'_'),  # / and \ -- forbidden everywhere.
+    (re.compile(ur'^\.'), u'_'),  # Leading dot (hidden files on Unix).
+    (re.compile(ur'[\x00-\x1f]'), u''),  # Control characters.
+    (re.compile(ur'[<>:"\?\*\|]'), u'_'),  # Windows "reserved characters".
+    (re.compile(ur'\.$'), u'_'),  # Trailing dots.
+    (re.compile(ur'\s+$'), u''),  # Trailing whitespace.
+]
 
 class Library(dbcore.Database):
     """A database of music containing songs and albums.
@@ -909,15 +921,13 @@ class Library(dbcore.Database):
                        directory='~/Music',
                        path_formats=((PF_KEY_DEFAULT,
                                       '$artist/$album/$track $title'),),
-                       replacements=None):
+                       replacements=DEFAULT_PATH_REPLACEMENTS):
         if path != ':memory:':
             self.path = bytestring_path(normpath(path))
         super(Library, self).__init__(path)
 
         self.directory = bytestring_path(normpath(directory))
         self.path_formats = path_formats
-        if replacements is None:
-            replacements = beets.util.PATH_REPLACE
         self.replacements = replacements
 
         self._memotable = {}  # Used for template substitution performance.
