@@ -468,7 +468,10 @@ def build_sanitized_path(components,
     return os.path.join(*components)
 
 PATHSEP_REPLACEMENT = u'_'
-PATHSEP_REGEXP = re.compile(u'[\\/]')
+PATHSEP_REGEXP = re.compile(
+        (u'[%s%s]' % (os.path.sep, os.path.altsep or '')).
+            replace('\\','\\\\'))
+
 
 def sanitize_path_component(component,
         max_length=MAX_FILENAME_LENGTH,
