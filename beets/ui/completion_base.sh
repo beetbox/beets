@@ -34,6 +34,8 @@
 # TODO
 # ----
 #
+# * There are some issues with arguments that are quoted on the command line.
+#
 # * Complete arguments for the `--format` option by expanding field variables.
 #
 #     beet ls -f "$tit[TAB]
@@ -101,7 +103,7 @@ _beet_complete() {
     completions="${flags___common} ${opts} ${flags}"
     COMPREPLY+=( $(compgen -W "$completions"  -- $cur) )
   else
-    COMPREPLY+=( $(compgen -f -- $cur) )
+    _beet_complete_filedir
   fi
 }
 
@@ -116,12 +118,12 @@ _beet_complete_global() {
       ;;
     -l|--library|-c|--config)
       # Filename completion
-      COMPREPLY+=( $(compgen -f $cur))
+      _beet_complete_filedir
       return
       ;;
     -d|--directory)
       # Directory completion
-      COMPREPLY+=( $(compgen -d $cur))
+      _beet_complete_filedir -d
       return
       ;;
   esac
@@ -136,6 +138,63 @@ _beet_complete_global() {
   else
     COMPREPLY+=( $(compgen -W "$commands" -- $cur) )
   fi
+}
+
+# This function performs file and directory completion. It's better than
+# simply using 'compgen -f', because it honours spaces in filenames.
+# @param $1  If `-d', complete only on directories.  Otherwise filter/pick only
+#            completions with `.$1' and the uppercase version of it as file
+#            extension.
+#
+# This function is based on code from debian's bash-completion package.
+#     <http://bash-completion.alioth.debian.org>
+# Copyright the Bash Completion Maintainers
+#     <bash-completion-devel@lists.alioth.debian.org>
+#
+_beet_complete_filedir() {
+  local IFS=$'\n'
+  local tmp quoted_cur opt="$1"
+
+  _beet_quote_for_readline "$cur" quoted_cur
+
+  if [[ "$opt" != -d ]]; then
+    opt=-f
+  fi
+
+  while read -r tmp; do
+    COMPREPLY+=( "$tmp" )
+  done <<< "$(compgen "$opt" -- "$quoted_cur")"
+}
+
+# This function quotes the argument in a way so that readline dequoting
+# results in the original argument.  This is necessary for at least
+# `compgen' which requires its arguments quoted/escaped:
+#     $ ls "a'b/"
+#     c
+#     $ compgen -f "a'b/"       # Wrong, doesn't return output
+#     $ compgen -f "a\'b/"      # Good
+#     a\'b/c
+#
+# @param $1  Argument to quote
+# @param $2  Name of variable to return result to
+#
+# This function was copied from debian's bash-completion package.
+#     <http://bash-completion.alioth.debian.org>
+# Copyright the Bash Completion Maintainers
+#     <bash-completion-devel@lists.alioth.debian.org>
+#
+_beet_quote_for_readline()
+{
+    if [[ $1 == \'* ]]; then
+      # Leave out first character
+      printf -v $2 %s "${1:1}"
+    elif [[ -z $1 ]]; then
+      # Do not quote the empty string
+      printf -v $2 %s "$1"
+    else
+      printf -v $2 %q "$1"
+    fi
+    [[ ${!2} == \$* ]] && eval $2=${!2}
 }
 
 # Returns true if the space separated list $1 includes $2
