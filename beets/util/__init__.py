@@ -447,7 +447,7 @@ def unique_path(path):
 # Unix. They are forbidden here because they cause problems on Samba
 # shares, which are sufficiently common as to cause frequent problems.
 # http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
-CHAR_REPLACE = [
+PATH_REPLACE = [
     (re.compile(ur'[\\/]'), u'_'),  # / and \ -- forbidden everywhere.
     (re.compile(ur'^\.'), u'_'),  # Leading dot (hidden files on Unix).
     (re.compile(ur'[\x00-\x1f]'), u''),  # Control characters.
@@ -455,30 +455,9 @@ CHAR_REPLACE = [
     (re.compile(ur'\.$'), u'_'),  # Trailing dots.
     (re.compile(ur'\s+$'), u''),  # Trailing whitespace.
 ]
-PATH_REPLACE = CHAR_REPLACE
 
 PATHSEP_REPLACEMENT = u'_'
 PATHSEP_REGEXP = re.compile(u'[\\/]')
-
-def sanitize_path(path, replacements=None):
-    """Takes a path (as a Unicode string) and makes sure that it is
-    legal. Returns a new path. Only works with fragments; won't work
-    reliably on Windows when a path begins with a drive letter. Path
-    separators (including altsep!) should already be cleaned from the
-    path components. If replacements is specified, it is used *instead*
-    of the default set of replacements; it must be a list of (compiled
-    regex, replacement string) pairs.
-    """
-    replacements = replacements or CHAR_REPLACE
-
-    comps = components(path)
-    if not comps:
-        return ''
-    for i, comp in enumerate(comps):
-        for regex, repl in replacements:
-            comp = regex.sub(repl, comp)
-        comps[i] = comp
-    return os.path.join(*comps)
 
 def sanitize_path_component(component,
         max_length=MAX_FILENAME_LENGTH,
