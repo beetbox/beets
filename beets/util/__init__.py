@@ -496,22 +496,6 @@ def sanitize_path_component(component,
     else:
         return unicodedata.normalize('NFC', component)
 
-def truncate_path(path, length=MAX_FILENAME_LENGTH):
-    """Given a bytestring path or a Unicode path fragment, truncate the
-    components to a legal length. In the last component, the extension
-    is preserved.
-    """
-    comps = components(path)
-
-    out = [c[:length] for c in comps]
-    base, ext = os.path.splitext(comps[-1])
-    if ext:
-        # Last component has an extension.
-        base = base[:length - len(ext)]
-        out[-1] = base + ext
-
-    return os.path.join(*out)
-
 def str2bool(value):
     """Returns a boolean reflecting a human-entered string."""
     if value.lower() in ('yes', '1', 'true', 't', 'y'):

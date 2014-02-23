@@ -877,17 +877,17 @@ class PathStringTest(_common.TestCase):
 class PathTruncationTest(_common.TestCase):
     def test_truncate_bytestring(self):
         with _common.platform_posix():
-            p = util.truncate_path('abcde/fgh', 4)
+            p = util.build_sanitized_path([u'abcde', u'fgh'], max_length=4)
         self.assertEqual(p, 'abcd/fgh')
 
     def test_truncate_unicode(self):
         with _common.platform_posix():
-            p = util.truncate_path(u'abcde/fgh', 4)
+            p = util.build_sanitized_path([u'abcde', u'fgh'], max_length=4)
         self.assertEqual(p, u'abcd/fgh')
 
     def test_truncate_preserves_extension(self):
         with _common.platform_posix():
-            p = util.truncate_path(u'abcde/fgh.ext', 5)
+            p = util.build_sanitized_path([u'abcde', u'fgh.ext'], max_length=5)
         self.assertEqual(p, u'abcde/f.ext')
 
 
