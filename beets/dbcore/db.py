@@ -413,6 +413,17 @@ class Model(object):
             template = Template(template)
         return template.substitute(mapping, funcs)
 
+    def evaluate_path_template(self, template_string):
+        """Split template into path components and return an array
+        with each component evaluated as a template.
+
+        It uses the systems path separator to split the template.
+        """
+        if isinstance(template_string, Template):
+            template_string = template_string.original
+
+        components = beets.util.components(template_string)
+        return [self.evaluate_template(component) for component in components]
 
     # Parsing.
 

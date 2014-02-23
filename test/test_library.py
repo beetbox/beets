@@ -248,6 +248,21 @@ class DestinationTest(_common.TestCase):
         self.assertFalse('>' in p)
         self.assertFalse('|' in p)
 
+    def test_replace_unix_path_separator_from_config(self):
+        self.i.title = 'one \\ two / three.mp3'
+        self.lib.replacements = [(re.compile(r'[\\/]'), 'x')]
+        with _common.platform_windows():
+            p = self.i.destination()
+        self.assertTrue('one x two x three.mp3' in p)
+        self.lib.replacements = None
+
+    def test_replace_windows_path_separator_from_config(self):
+        self.i.title = 'one \\ two / three.mp3'
+        self.lib.replacements = [(re.compile(r'[\\/]'), 'x')]
+        with _common.platform_windows():
+            p = self.i.destination()
+        self.assertTrue('one x two x three.mp3' in p)
+
     def test_path_with_format(self):
         self.lib.path_formats = [('default', '$artist/$album ($format)')]
         p = self.i.destination()
@@ -416,13 +431,15 @@ class DestinationTest(_common.TestCase):
     def test_unicode_normalized_nfd_on_mac(self):
         instr = unicodedata.normalize('NFC', u'caf\xe9')
         self.lib.path_formats = [('default', instr)]
-        dest = self.i.destination(platform='darwin', fragment=True)
+        with _common.platform('darwin'):
+            dest = self.i.destination(fragment=True)
         self.assertEqual(dest, unicodedata.normalize('NFD', instr))
 
     def test_unicode_normalized_nfc_on_linux(self):
         instr = unicodedata.normalize('NFD', u'caf\xe9')
         self.lib.path_formats = [('default', instr)]
-        dest = self.i.destination(platform='linux2', fragment=True)
+        with _common.platform('linux2'):
+            dest = self.i.destination(fragment=True)
         self.assertEqual(dest, unicodedata.normalize('NFC', instr))
 
     def test_non_mbcs_characters_on_windows(self):
@@ -441,7 +458,8 @@ class DestinationTest(_common.TestCase):
     def test_unicode_extension_in_fragment(self):
         self.lib.path_formats = [('default', u'foo')]
         self.i.path = util.bytestring_path(u'bar.caf\xe9')
-        dest = self.i.destination(platform='linux2', fragment=True)
+        with _common.platform('linux2'):
+            dest = self.i.destination(fragment=True)
         self.assertEqual(dest, u'foo.caf\xe9')
 
 

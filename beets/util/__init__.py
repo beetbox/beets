@@ -23,6 +23,7 @@ import fnmatch
 from collections import defaultdict
 import traceback
 import subprocess
+import unicodedata
 
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = u'\\\\?\\'
@@ -454,6 +455,11 @@ CHAR_REPLACE = [
     (re.compile(ur'\.$'), u'_'),  # Trailing dots.
     (re.compile(ur'\s+$'), u''),  # Trailing whitespace.
 ]
+PATH_REPLACE = CHAR_REPLACE
+
+PATHSEP_REPLACEMENT = u'_'
+PATHSEP_REGEXP = re.compile(u'[\\/]')
+
 def sanitize_path(path, replacements=None):
     """Takes a path (as a Unicode string) and makes sure that it is
     legal. Returns a new path. Only works with fragments; won't work
@@ -473,6 +479,32 @@ def sanitize_path(path, replacements=None):
             comp = regex.sub(repl, comp)
         comps[i] = comp
     return os.path.join(*comps)
+
+def sanitize_path_component(component,
+        max_length=MAX_FILENAME_LENGTH,
+        preserve_extension=False):
+    """Return a modified version of component suitable for use in a path.
+
+    Replaces the path separators ``/`` and ``\`` with underscores and
+    truncates the component to ``max_length``. If ``preserve_extension``
+    is true only the part preceding the extension is truncated. Also
+    normalizes unicode to platform conventions.
+
+    The function does not replace any other characters that may be
+    reserved on some filesystems, e.g. ``:`` on NTFS.
+    """
+    ext = u''
+    if preserve_extension:
+        component, ext = os.path.splitext(component)
+        max_length -= len(ext)
+    component = component[:max_length] + ext
+
+    component = PATHSEP_REGEXP.sub(PATHSEP_REPLACEMENT, component)
+
+    if sys.platform == 'darwin':
+        return unicodedata.normalize('NFD', component)
+    else:
+        return unicodedata.normalize('NFC', component)
 
 def truncate_path(path, length=MAX_FILENAME_LENGTH):
     """Given a bytestring path or a Unicode path fragment, truncate the

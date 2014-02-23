@@ -19,7 +19,6 @@ import re
 import sys
 import logging
 import shlex
-import unicodedata
 import traceback
 import time
 from unidecode import unidecode
@@ -514,8 +513,7 @@ class Item(LibModel):
 
         return mapping
 
-    def destination(self, fragment=False, basedir=None, platform=None,
-                    path_formats=None):
+    def destination(self, fragment=False, basedir=None, path_formats=None):
         """Returns the path in the library directory designated for the
         item (i.e., where the file ought to be). fragment makes this
         method return just the path fragment underneath the root library
@@ -524,7 +522,6 @@ class Item(LibModel):
         directory for the destination.
         """
         self._check_db()
-        platform = platform or sys.platform
         basedir = basedir or self._db.directory
         path_formats = path_formats or self._db.path_formats
 
@@ -551,36 +548,38 @@ class Item(LibModel):
             subpath_tmpl = Template(path_format)
 
         # Evaluate the selected template.
-        subpath = self.evaluate_template(subpath_tmpl, True)
+        path_components = self.evaluate_path_template(subpath_tmpl)
 
-        # Prepare path for output: normalize Unicode characters.
-        if platform == 'darwin':
-            subpath = unicodedata.normalize('NFD', subpath)
-        else:
-            subpath = unicodedata.normalize('NFC', subpath)
-        # Truncate components and remove forbidden characters.
-        subpath = util.sanitize_path(subpath, self._db.replacements)
-        # Encode for the filesystem.
-        if not fragment:
-            subpath = bytestring_path(subpath)
-
-        # Preserve extension.
+        # Append original extension as unicode
         _, extension = os.path.splitext(self.path)
-        if fragment:
-            # Outputting Unicode.
-            extension = extension.decode('utf8', 'ignore')
-        subpath += extension.lower()
+        extension = extension.decode('utf8', 'ignore').lower()
+        path_components[-1] += extension
 
-        # Truncate too-long components.
+        # Apply user replacements
+        for regex, replacement in self._db.replacements or []:
+            path_components = [regex.sub(replacement, comp)
+                               for comp in path_components]
+
+        # Determine maximal filename length
         maxlen = beets.config['max_filename_length'].get(int)
         if not maxlen:
             # When zero, try to determine from filesystem.
-            maxlen = util.max_filename_length(self._db.directory)
-        subpath = util.truncate_path(subpath, maxlen)
+            maxlen = util.max_filename_length(basedir)
+
+        # Sanitize components
+        basename = path_components.pop()
+        path_components = [util.sanitize_path_component(component, maxlen)
+                           for component in path_components]
+        basename = util.sanitize_path_component(basename, maxlen,
+                preserve_extension=True)
+        path_components.append(basename)
+
+        subpath = os.path.join(*path_components)
 
         if fragment:
             return subpath
         else:
+            # Absolute, normalized and encoded
             return normpath(os.path.join(basedir, subpath))
 
 
@@ -923,6 +922,8 @@ class Library(dbcore.Database):
 
         self.directory = bytestring_path(normpath(directory))
         self.path_formats = path_formats
+        if replacements is None:
+            replacements = beets.util.PATH_REPLACE
         self.replacements = replacements
 
         self._memotable = {}  # Used for template substitution performance.
