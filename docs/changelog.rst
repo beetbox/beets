@@ -94,6 +94,8 @@ Other little fixes:
   Johann Klähn.
 * The :ref:`modify-cmd` command's output now clearly shows when a file has
   been deleted.
+* Album art in files with Vorbis Comments is now marked with the "front cover"
+  type. Thanks to Jason Lefley.
 
 
 1.3.2 (December 22, 2013)
