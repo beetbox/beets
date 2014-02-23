@@ -37,7 +37,7 @@ from beets.util import syspath, normpath, ancestry, displayable_path
 from beets.util.functemplate import Template
 from beets import library
 from beets import config
-from beets.completion import completion_script
+from beets.ui.completion import completion_script
 
 # Global logger.
 log = logging.getLogger('beets')

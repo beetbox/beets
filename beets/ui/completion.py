@@ -1,9 +1,7 @@
-import os.path
+from pkg_resources import resource_string
 
 def completion_script(commands):
-    base_script = os.path.join(os.path.dirname(__file__), 'completion_base.sh')
-    for line in  open(base_script, 'r'):
-        yield line
+    yield resource_string(__name__, 'completion_base.sh')
 
     options = {}
     aliases = {}
