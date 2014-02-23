@@ -544,7 +544,7 @@ class Item(LibModel):
                 assert False, "no default path format"
 
         # Evaluate the selected template.
-        path_components = self.evaluate_path_template(subpath_tmpl)
+        path_components = self.evaluate_path_template(path_format)
 
         # Append original extension as unicode
         _, extension = os.path.splitext(self.path)
