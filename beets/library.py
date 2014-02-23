@@ -551,26 +551,15 @@ class Item(LibModel):
         extension = extension.decode('utf8', 'ignore').lower()
         path_components[-1] += extension
 
-        # Apply user replacements
-        for regex, replacement in self._db.replacements or []:
-            path_components = [regex.sub(replacement, comp)
-                               for comp in path_components]
-
         # Determine maximal filename length
         maxlen = beets.config['max_filename_length'].get(int)
         if not maxlen:
             # When zero, try to determine from filesystem.
             maxlen = util.max_filename_length(basedir)
 
-        # Sanitize components
-        basename = path_components.pop()
-        path_components = [util.sanitize_path_component(component, maxlen)
-                           for component in path_components]
-        basename = util.sanitize_path_component(basename, maxlen,
-                preserve_extension=True)
-        path_components.append(basename)
-
-        subpath = os.path.join(*path_components)
+        subpath = util.build_sanitized_path(path_components,
+                replacements=self._db.replacements,
+                max_length=maxlen)
 
         if fragment:
             return subpath
@@ -707,26 +696,15 @@ class Album(LibModel):
         _, extension = os.path.splitext(image)
         path_components[-1] += extension
 
-        # Apply user replacements
-        for regex, replacement in self._db.replacements or []:
-            path_components = [regex.sub(replacement, comp)
-                               for comp in path_components]
-
         # Determine maximal filename length
         maxlen = beets.config['max_filename_length'].get(int)
         if not maxlen:
             # When zero, try to determine from filesystem.
             maxlen = util.max_filename_length(item_dir)
 
-        # Sanitize components
-        basename = path_components.pop()
-        path_components = [util.sanitize_path_component(component, maxlen)
-                           for component in path_components]
-        basename = util.sanitize_path_component(basename, maxlen,
-                preserve_extension=True)
-        path_components.append(basename)
-
-        subpath = os.path.join(*path_components)
+        subpath = util.build_sanitized_path(path_components,
+                replacements=self._db.replacements,
+                max_length=maxlen)
 
         return normpath(os.path.join(item_dir, subpath))
 

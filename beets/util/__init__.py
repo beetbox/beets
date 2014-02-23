@@ -459,6 +459,31 @@ PATH_REPLACE = [
 PATHSEP_REPLACEMENT = u'_'
 PATHSEP_REGEXP = re.compile(u'[\\/]')
 
+def build_sanitized_path(components,
+        replacements=None,
+        max_length=MAX_FILENAME_LENGTH):
+    """Sanitize each component by applying replacements, replacing path
+    separators, and truncating, then joins them.
+
+    ``replacements`` is a list of custom ``(regular_expression,
+    replacements)`` pairs that are applied to each component. Then
+    ``sanitize_path_component`` is called on each component with
+    ``preserve_extension`` only set for the last one.
+    """
+    for regex, replacement in replacements or []:
+        components = [regex.sub(replacement, component)
+                      for component in components]
+
+    basename = components.pop()
+    components = [sanitize_path_component(component, max_length)
+                  for component in components]
+    basename = sanitize_path_component(basename, max_length,
+            preserve_extension=True)
+
+    components.append(basename)
+    return os.path.join(*components)
+
+
 def sanitize_path_component(component,
         max_length=MAX_FILENAME_LENGTH,
         preserve_extension=False):
