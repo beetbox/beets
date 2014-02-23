@@ -815,6 +815,7 @@ class ImageField(object):
             if val is not None:
                 pic = mutagen.flac.Picture()
                 pic.data = val
+                pic.type = 3    # Front cover.
                 pic.mime = self._mime(val)
                 obj.mgfile.add_picture(pic)
 
