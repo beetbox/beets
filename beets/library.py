@@ -542,10 +542,6 @@ class Item(LibModel):
                     break
             else:
                 assert False, "no default path format"
-        if isinstance(path_format, Template):
-            subpath_tmpl = path_format
-        else:
-            subpath_tmpl = Template(path_format)
 
         # Evaluate the selected template.
         path_components = self.evaluate_path_template(subpath_tmpl)
