@@ -30,7 +30,6 @@ replace:
     '[<>:"\?\*\|]': _
     '\.$': _
     '\s+$': ''
-path_sep_replace: _
 art_filename: cover
 max_filename_length: 0
 
