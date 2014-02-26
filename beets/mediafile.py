@@ -491,6 +491,7 @@ class MediaField(object):
                 for frame in frames:
                     if frame.desc.lower() == style.id3_desc.lower():
                         setattr(frame, style.id3_frame_field, out)
+                        frame.encoding = 3   # utf8
                         found = True
                         break
 
