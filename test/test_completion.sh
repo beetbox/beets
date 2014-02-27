@@ -1,3 +1,6 @@
+# Function stub
+compopt() { return 0; }
+
 initcli() {
   COMP_WORDS=( "beet" "$@" )
   let COMP_CWORD=${#COMP_WORDS[@]}-1
@@ -131,6 +134,20 @@ test_list_options() {
     -h --help \
     -a --album \
     -p --path
+}
+
+test_list_query() {
+  initcli list 'x' &&
+  [[ -z "${COMPREPLY[@]}" ]] &&
+
+  initcli list 'art' &&
+  completes \
+      'artist:' \
+      'artpath:' &&
+
+  initcli list 'artits:x' &&
+  [[ -z "${COMPREPLY[@]}" ]] &&
+  true
 }
 
 test_help_command() {

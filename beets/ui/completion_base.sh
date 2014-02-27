@@ -57,13 +57,13 @@
 # Determines the beets subcommand and dispatches the completion
 # accordingly.
 _beet_dispatch() {
-  local cur prev
+  local cur prev cmd=
 
   COMPREPLY=()
-  _get_comp_words_by_ref cur prev
+  _get_comp_words_by_ref -n : cur prev
 
   # Look for the beets subcommand
-  local arg cmd=
+  local arg
   for (( i=1; i < COMP_CWORD; i++ )); do
       arg="${COMP_WORDS[i]}"
       if _list_include_item "${opts___global}" $arg; then
@@ -80,25 +80,28 @@ _beet_dispatch() {
   fi
 
   case $cmd in
-    "")
-      _beet_complete_global
-      ;;
     help)
       COMPREPLY+=( $(compgen -W "$commands" -- $cur) )
       ;;
+    list|remove|move|update|write|stats)
+      _beet_complete_query
+      ;;
+    "")
+      _beet_complete_global
+      ;;
     *)
-      _beet_complete $cmd
+      _beet_complete
       ;;
   esac
 }
 
 
-# Adds option and file completion to COMPREPLY for the subcommand $1
+# Adds option and file completion to COMPREPLY for the subcommand $cmd
 _beet_complete() {
   if [[ $cur == -* ]]; then
     local opts flags completions
-    eval "opts=\$opts__$1"
-    eval "flags=\$flags__$1"
+    eval "opts=\$opts__$cmd"
+    eval "flags=\$flags__$cmd"
     completions="${flags___common} ${opts} ${flags}"
     COMPREPLY+=( $(compgen -W "$completions"  -- $cur) )
   else
@@ -133,9 +136,25 @@ _beet_complete_global() {
   elif [[ -n $cur ]] && _list_include_item "$aliases" "$cur"; then
     local cmd
     eval "cmd=\$alias__$cur"
-    COMPREPLY+=( $cmd )
+    COMPREPLY+=( "$cmd" )
   else
     COMPREPLY+=( $(compgen -W "$commands" -- $cur) )
+  fi
+}
+
+_beet_complete_query() {
+  local opts
+  eval "opts=\$opts__$cmd"
+
+  if [[ $cur == -* ]] || _list_include_item "$opts" "$prev"; then
+    _beet_complete
+  elif [[ $cur != \'* && $cur != \"* &&
+          $cur != *:* ]]; then
+    # Do not complete quoted queries or those who already have a field
+    # set.
+    compopt -o nospace
+    COMPREPLY+=( $(compgen -S : -W "$fields" -- $cur) )
+    return 0
   fi
 }
 
