@@ -1,11 +1,13 @@
 Changelog
 =========
 
-1.3.3 (in development)
-----------------------
+1.3.3 (February 26, 2014)
+-------------------------
 
-Version 1.3.3 brings a set of internal changes to how fields work. The
-consequences for all users are:
+Version 1.3.3 brings a bunch changes to how item and album fields work
+internally. Along with laying the groundwork for some great things in the
+future, this brings a number of improvements to how you interact with beets.
+Here's what's new with fields in particular:
 
 * Plugin-provided fields can now be used in queries. For example, if you use
   the :doc:`/plugins/inline` to define a field called ``era``, you can now
@@ -24,7 +26,9 @@ consequences for all users are:
   changes.
 
 For developers, the short version of the story is that Item and Album objects
-provide *uniform access* across fixed, flexible, and computed attributes.
+provide *uniform access* across fixed, flexible, and computed attributes. You
+can write ``item.foo`` to access the ``foo`` field without worrying about
+where the data comes from.
 
 Unrelated new stuff:
 
