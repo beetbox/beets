@@ -197,7 +197,7 @@ def all_albums():
 @app.route('/album/query/<query:queries>')
 @resource_query('albums')
 def album_query(queries):
-    return g.lib.album(queries)
+    return g.lib.albums(queries)
 
 @app.route('/album/<int:album_id>/art')
 def album_art(album_id):
