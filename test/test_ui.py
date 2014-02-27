@@ -748,7 +748,8 @@ class CompletionTest(_common.TestCase):
     def test_completion(self):
         test_script = os.path.join(os.path.dirname(__file__),
                 'test_completion.sh')
-        bash_completion = '/etc/bash_completion'
+        bash_completion = os.path.abspath(os.environ.get(
+            'BASH_COMPLETION_SCRIPT', '/etc/bash_completion'))
 
         # Tests run in bash
         shell = os.environ.get('BEETS_TEST_SHELL', '/bin/bash --norc')
