@@ -13,7 +13,7 @@ project = u'beets'
 copyright = u'2012, Adrian Sampson'
 
 version = '1.3'
-release = '1.3.3'
+release = '1.3.4'
 
 pygments_style = 'sphinx'
 
