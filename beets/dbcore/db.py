@@ -347,7 +347,7 @@ class Model(object):
     # Formatting and templating.
 
     @classmethod
-    def _format(cls, key, value, for_path=False):
+    def _format(cls, key, value):
         """Format a value as the given field for this model.
         """
         # Format the value as a string according to its type, if any.
@@ -370,23 +370,15 @@ class Model(object):
             else:
                 value = unicode(value)
 
-        if for_path:
-            sep_repl = beets.config['path_sep_replace'].get(unicode)
-            for sep in (os.path.sep, os.path.altsep):
-                if sep:
-                    value = value.replace(sep, sep_repl)
-
         return value
 
-    def _get_formatted(self, key, for_path=False):
+    def _get_formatted(self, key):
         """Get a field value formatted as a string (`unicode` object)
-        for display to the user. If `for_path` is true, then the value
-        will be sanitized for inclusion in a pathname (i.e., path
-        separators will be removed from the value).
+        for display to the user.
         """
-        return self._format(key, self.get(key), for_path)
+        return self._format(key, self.get(key))
 
-    def _formatted_mapping(self, for_path=False):
+    def _formatted_mapping(self):
         """Get a mapping containing all values on this object formatted
         as human-readable strings.
         """
@@ -394,16 +386,15 @@ class Model(object):
         # fields unnecessarily.
         out = {}
         for key in self.keys(True):
-            out[key] = self._get_formatted(key, for_path)
+            out[key] = self._get_formatted(key)
         return out
 
-    def evaluate_template(self, template, for_path=False):
+    def evaluate_template(self, template):
         """Evaluate a template (a string or a `Template` object) using
-        the object's fields. If `for_path` is true, then no new path
-        separators will be added to the template.
+        the object's fields.
         """
         # Build value mapping.
-        mapping = self._formatted_mapping(for_path)
+        mapping = self._formatted_mapping()
 
         # Get template functions.
         funcs = self._template_funcs()
@@ -413,6 +404,17 @@ class Model(object):
             template = Template(template)
         return template.substitute(mapping, funcs)
 
+    def evaluate_path_template(self, template_string):
+        """Split template into path components and return an array
+        with each component evaluated as a template.
+
+        It uses the systems path separator to split the template.
+        """
+        if isinstance(template_string, Template):
+            template_string = template_string.original
+
+        components = beets.util.components(template_string)
+        return [self.evaluate_template(component) for component in components]
 
     # Parsing.
 

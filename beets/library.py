@@ -19,7 +19,6 @@ import re
 import sys
 import logging
 import shlex
-import unicodedata
 import traceback
 import time
 from unidecode import unidecode
@@ -492,18 +491,18 @@ class Item(LibModel):
 
     # Templating.
 
-    def _formatted_mapping(self, for_path=False):
+    def _formatted_mapping(self):
         """Get a mapping containing string-formatted values from either
         this item or the associated album, if any.
         """
-        mapping = super(Item, self)._formatted_mapping(for_path)
+        mapping = super(Item, self)._formatted_mapping()
 
         # Merge in album-level fields.
         album = self.get_album()
         if album:
             for key in album.keys(True):
                 if key in ALBUM_KEYS_ITEM or key not in ITEM_KEYS:
-                    mapping[key] = album._get_formatted(key, for_path)
+                    mapping[key] = album._get_formatted(key)
 
         # Use the album artist if the track artist is not set and
         # vice-versa.
@@ -514,8 +513,7 @@ class Item(LibModel):
 
         return mapping
 
-    def destination(self, fragment=False, basedir=None, platform=None,
-                    path_formats=None):
+    def destination(self, fragment=False, basedir=None, path_formats=None):
         """Returns the path in the library directory designated for the
         item (i.e., where the file ought to be). fragment makes this
         method return just the path fragment underneath the root library
@@ -524,7 +522,6 @@ class Item(LibModel):
         directory for the destination.
         """
         self._check_db()
-        platform = platform or sys.platform
         basedir = basedir or self._db.directory
         path_formats = path_formats or self._db.path_formats
 
@@ -545,42 +542,29 @@ class Item(LibModel):
                     break
             else:
                 assert False, "no default path format"
-        if isinstance(path_format, Template):
-            subpath_tmpl = path_format
-        else:
-            subpath_tmpl = Template(path_format)
 
         # Evaluate the selected template.
-        subpath = self.evaluate_template(subpath_tmpl, True)
+        path_components = self.evaluate_path_template(path_format)
 
-        # Prepare path for output: normalize Unicode characters.
-        if platform == 'darwin':
-            subpath = unicodedata.normalize('NFD', subpath)
-        else:
-            subpath = unicodedata.normalize('NFC', subpath)
-        # Truncate components and remove forbidden characters.
-        subpath = util.sanitize_path(subpath, self._db.replacements)
-        # Encode for the filesystem.
-        if not fragment:
-            subpath = bytestring_path(subpath)
-
-        # Preserve extension.
+        # Append original extension as unicode
         _, extension = os.path.splitext(self.path)
-        if fragment:
-            # Outputting Unicode.
-            extension = extension.decode('utf8', 'ignore')
-        subpath += extension.lower()
+        extension = extension.decode('utf8', 'ignore').lower()
+        path_components[-1] += extension
 
-        # Truncate too-long components.
+        # Determine maximal filename length
         maxlen = beets.config['max_filename_length'].get(int)
         if not maxlen:
             # When zero, try to determine from filesystem.
-            maxlen = util.max_filename_length(self._db.directory)
-        subpath = util.truncate_path(subpath, maxlen)
+            maxlen = util.max_filename_length(basedir)
+
+        subpath = util.build_sanitized_path(path_components,
+                replacements=self._db.replacements,
+                max_length=maxlen)
 
         if fragment:
             return subpath
         else:
+            # Absolute, normalized and encoded
             return normpath(os.path.join(basedir, subpath))
 
 
@@ -701,19 +685,28 @@ class Album(LibModel):
         items, so the album must contain at least one item or
         item_dir must be provided.
         """
-        image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
         filename_tmpl = Template(beets.config['art_filename'].get(unicode))
-        subpath = self.evaluate_template(filename_tmpl, True)
-        subpath = util.sanitize_path(subpath,
-                                     replacements=self._db.replacements)
-        subpath = bytestring_path(subpath)
 
-        _, ext = os.path.splitext(image)
-        dest = os.path.join(item_dir, subpath + ext)
+        # FIXME dupliactes code from ``Item.destination``
+        path_components = self.evaluate_path_template(filename_tmpl)
 
-        return bytestring_path(dest)
+        # Append original extension as unicode
+        _, extension = os.path.splitext(image)
+        path_components[-1] += extension
+
+        # Determine maximal filename length
+        maxlen = beets.config['max_filename_length'].get(int)
+        if not maxlen:
+            # When zero, try to determine from filesystem.
+            maxlen = util.max_filename_length(item_dir)
+
+        subpath = util.build_sanitized_path(path_components,
+                replacements=self._db.replacements,
+                max_length=maxlen)
+
+        return normpath(os.path.join(item_dir, subpath))
 
     def set_art(self, path, copy=True):
         """Sets the album's cover art to the image at the given path.
@@ -906,6 +899,18 @@ def get_query(val, model_cls):
 
 # The Library: interface to the database.
 
+# Note: The Windows "reserved characters" are, of course, allowed on
+# Unix. They are forbidden here because they cause problems on Samba
+# shares, which are sufficiently common as to cause frequent problems.
+# http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
+DEFAULT_PATH_REPLACEMENTS = [
+    (re.compile(ur'[\\/]'), u'_'),  # / and \ -- forbidden everywhere.
+    (re.compile(ur'^\.'), u'_'),  # Leading dot (hidden files on Unix).
+    (re.compile(ur'[\x00-\x1f]'), u''),  # Control characters.
+    (re.compile(ur'[<>:"\?\*\|]'), u'_'),  # Windows "reserved characters".
+    (re.compile(ur'\.$'), u'_'),  # Trailing dots.
+    (re.compile(ur'\s+$'), u''),  # Trailing whitespace.
+]
 
 class Library(dbcore.Database):
     """A database of music containing songs and albums.
@@ -916,7 +921,7 @@ class Library(dbcore.Database):
                        directory='~/Music',
                        path_formats=((PF_KEY_DEFAULT,
                                       '$artist/$album/$track $title'),),
-                       replacements=None):
+                       replacements=DEFAULT_PATH_REPLACEMENTS):
         if path != ':memory:':
             self.path = bytestring_path(normpath(path))
         super(Library, self).__init__(path)
@@ -1160,7 +1165,7 @@ class DefaultTemplateFunctions(object):
             return res
 
         # Flatten disambiguation value into a string.
-        disam_value = album._get_formatted(disambiguator, True)
+        disam_value = album._get_formatted(disambiguator)
         res = u' [{0}]'.format(disam_value)
         self.lib._memotable[memokey] = res
         return res

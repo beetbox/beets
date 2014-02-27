@@ -229,17 +229,19 @@ class DestinationTest(_common.TestCase):
 
     def test_sanitize_unix_replaces_leading_dot(self):
         with _common.platform_posix():
-            p = util.sanitize_path(u'one/.two/three')
+            p = util.build_sanitized_path([u'one', u'.two', u'three'],
+                    self.lib.replacements)
         self.assertFalse('.' in p)
 
     def test_sanitize_windows_replaces_trailing_dot(self):
         with _common.platform_windows():
-            p = util.sanitize_path(u'one/two./three')
+            p = util.build_sanitized_path([u'one', u'.two', u'three'],
+                    self.lib.replacements)
         self.assertFalse('.' in p)
 
     def test_sanitize_windows_replaces_illegal_chars(self):
         with _common.platform_windows():
-            p = util.sanitize_path(u':*?"<>|')
+            p = util.build_sanitized_path([u':*?"<>|'], self.lib.replacements)
         self.assertFalse(':' in p)
         self.assertFalse('*' in p)
         self.assertFalse('?' in p)
@@ -247,6 +249,21 @@ class DestinationTest(_common.TestCase):
         self.assertFalse('<' in p)
         self.assertFalse('>' in p)
         self.assertFalse('|' in p)
+
+    def test_replace_unix_path_separator_from_config(self):
+        self.i.title = 'one \\ two / three.mp3'
+        self.lib.replacements = [(re.compile(r'[\\/]'), 'x')]
+        with _common.platform_windows():
+            p = self.i.destination()
+        self.assertTrue('one x two x three.mp3' in p)
+        self.lib.replacements = None
+
+    def test_replace_windows_path_separator_from_config(self):
+        self.i.title = 'one \\ two / three.mp3'
+        self.lib.replacements = [(re.compile(r'[\\/]'), 'x')]
+        with _common.platform_windows():
+            p = self.i.destination()
+        self.assertTrue('one x two x three.mp3' in p)
 
     def test_path_with_format(self):
         self.lib.path_formats = [('default', '$artist/$album ($format)')]
@@ -326,7 +343,8 @@ class DestinationTest(_common.TestCase):
 
     def test_sanitize_windows_replaces_trailing_space(self):
         with _common.platform_windows():
-            p = util.sanitize_path(u'one/two /three')
+            p = util.build_sanitized_path([u'one', u'two', u'three'],
+                    self.lib.replacements)
         self.assertFalse(' ' in p)
 
     def test_get_formatted_does_not_replace_separators(self):
@@ -396,19 +414,19 @@ class DestinationTest(_common.TestCase):
 
     def test_sanitize_path_works_on_empty_string(self):
         with _common.platform_posix():
-            p = util.sanitize_path(u'')
+            p = util.build_sanitized_path([u''], self.lib.replacements)
         self.assertEqual(p, u'')
 
     def test_sanitize_with_custom_replace_overrides_built_in_sub(self):
         with _common.platform_posix():
-            p = util.sanitize_path(u'a/.?/b', [
+            p = util.build_sanitized_path([u'a', u'.?', u'b'], [
                 (re.compile(ur'foo'), u'bar'),
             ])
         self.assertEqual(p, u'a/.?/b')
 
     def test_sanitize_with_custom_replace_adds_replacements(self):
         with _common.platform_posix():
-            p = util.sanitize_path(u'foo/bar', [
+            p = util.build_sanitized_path([u'foo', u'bar'], [
                 (re.compile(ur'foo'), u'bar'),
             ])
         self.assertEqual(p, u'bar/bar')
@@ -416,13 +434,15 @@ class DestinationTest(_common.TestCase):
     def test_unicode_normalized_nfd_on_mac(self):
         instr = unicodedata.normalize('NFC', u'caf\xe9')
         self.lib.path_formats = [('default', instr)]
-        dest = self.i.destination(platform='darwin', fragment=True)
+        with _common.platform('darwin'):
+            dest = self.i.destination(fragment=True)
         self.assertEqual(dest, unicodedata.normalize('NFD', instr))
 
     def test_unicode_normalized_nfc_on_linux(self):
         instr = unicodedata.normalize('NFD', u'caf\xe9')
         self.lib.path_formats = [('default', instr)]
-        dest = self.i.destination(platform='linux2', fragment=True)
+        with _common.platform('linux2'):
+            dest = self.i.destination(fragment=True)
         self.assertEqual(dest, unicodedata.normalize('NFC', instr))
 
     def test_non_mbcs_characters_on_windows(self):
@@ -441,7 +461,8 @@ class DestinationTest(_common.TestCase):
     def test_unicode_extension_in_fragment(self):
         self.lib.path_formats = [('default', u'foo')]
         self.i.path = util.bytestring_path(u'bar.caf\xe9')
-        dest = self.i.destination(platform='linux2', fragment=True)
+        with _common.platform('linux2'):
+            dest = self.i.destination(fragment=True)
         self.assertEqual(dest, u'foo.caf\xe9')
 
 
@@ -829,13 +850,13 @@ class PathStringTest(_common.TestCase):
         self.assertEqual(path, alb.artpath)
 
     def test_sanitize_path_with_special_chars(self):
-        path = u'b\xe1r?'
-        new_path = util.sanitize_path(path)
+        new_path = util.build_sanitized_path([u'b\xe1r?'],
+                self.lib.replacements)
         self.assert_(new_path.startswith(u'b\xe1r'))
 
     def test_sanitize_path_returns_unicode(self):
-        path = u'b\xe1r?'
-        new_path = util.sanitize_path(path)
+        new_path = util.build_sanitized_path([u'b\xe1r?'],
+                self.lib.replacements)
         self.assert_(isinstance(new_path, unicode))
 
     def test_unicode_artpath_becomes_bytestring(self):
@@ -856,17 +877,17 @@ class PathStringTest(_common.TestCase):
 class PathTruncationTest(_common.TestCase):
     def test_truncate_bytestring(self):
         with _common.platform_posix():
-            p = util.truncate_path('abcde/fgh', 4)
+            p = util.build_sanitized_path([u'abcde', u'fgh'], max_length=4)
         self.assertEqual(p, 'abcd/fgh')
 
     def test_truncate_unicode(self):
         with _common.platform_posix():
-            p = util.truncate_path(u'abcde/fgh', 4)
+            p = util.build_sanitized_path([u'abcde', u'fgh'], max_length=4)
         self.assertEqual(p, u'abcd/fgh')
 
     def test_truncate_preserves_extension(self):
         with _common.platform_posix():
-            p = util.truncate_path(u'abcde/fgh.ext', 5)
+            p = util.build_sanitized_path([u'abcde', u'fgh.ext'], max_length=5)
         self.assertEqual(p, u'abcde/f.ext')
 
 

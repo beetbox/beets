@@ -23,6 +23,7 @@ import fnmatch
 from collections import defaultdict
 import traceback
 import subprocess
+import unicodedata
 
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = u'\\\\?\\'
@@ -442,53 +443,61 @@ def unique_path(path):
         if not os.path.exists(new_path):
             return new_path
 
-# Note: The Windows "reserved characters" are, of course, allowed on
-# Unix. They are forbidden here because they cause problems on Samba
-# shares, which are sufficiently common as to cause frequent problems.
-# http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
-CHAR_REPLACE = [
-    (re.compile(ur'[\\/]'), u'_'),  # / and \ -- forbidden everywhere.
-    (re.compile(ur'^\.'), u'_'),  # Leading dot (hidden files on Unix).
-    (re.compile(ur'[\x00-\x1f]'), u''),  # Control characters.
-    (re.compile(ur'[<>:"\?\*\|]'), u'_'),  # Windows "reserved characters".
-    (re.compile(ur'\.$'), u'_'),  # Trailing dots.
-    (re.compile(ur'\s+$'), u''),  # Trailing whitespace.
-]
-def sanitize_path(path, replacements=None):
-    """Takes a path (as a Unicode string) and makes sure that it is
-    legal. Returns a new path. Only works with fragments; won't work
-    reliably on Windows when a path begins with a drive letter. Path
-    separators (including altsep!) should already be cleaned from the
-    path components. If replacements is specified, it is used *instead*
-    of the default set of replacements; it must be a list of (compiled
-    regex, replacement string) pairs.
+def build_sanitized_path(components,
+        replacements=None,
+        max_length=MAX_FILENAME_LENGTH):
+    """Sanitize each component by applying replacements, replacing path
+    separators, and truncating, then joins them.
+
+    ``replacements`` is a list of custom ``(regular_expression,
+    replacements)`` pairs that are applied to each component. Then
+    ``sanitize_path_component`` is called on each component with
+    ``preserve_extension`` only set for the last one.
     """
-    replacements = replacements or CHAR_REPLACE
+    for regex, replacement in replacements or []:
+        components = [regex.sub(replacement, component)
+                      for component in components]
 
-    comps = components(path)
-    if not comps:
-        return ''
-    for i, comp in enumerate(comps):
-        for regex, repl in replacements:
-            comp = regex.sub(repl, comp)
-        comps[i] = comp
-    return os.path.join(*comps)
+    basename = components.pop()
+    components = [sanitize_path_component(component, max_length)
+                  for component in components]
+    basename = sanitize_path_component(basename, max_length,
+            preserve_extension=True)
 
-def truncate_path(path, length=MAX_FILENAME_LENGTH):
-    """Given a bytestring path or a Unicode path fragment, truncate the
-    components to a legal length. In the last component, the extension
-    is preserved.
+    components.append(basename)
+    return os.path.join(*components)
+
+PATHSEP_REPLACEMENT = u'_'
+PATHSEP_REGEXP = re.compile(
+        (u'[%s%s]' % (os.path.sep, os.path.altsep or '')).
+            replace('\\','\\\\'))
+
+
+def sanitize_path_component(component,
+        max_length=MAX_FILENAME_LENGTH,
+        preserve_extension=False):
+    """Return a modified version of component suitable for use in a path.
+
+    Replaces the path separators ``/`` and ``\`` with underscores and
+    truncates the component to ``max_length``. If ``preserve_extension``
+    is true only the part preceding the extension is truncated. Also
+    normalizes unicode to platform conventions.
+
+    The function does not replace any other characters that may be
+    reserved on some filesystems, e.g. ``:`` on NTFS.
     """
-    comps = components(path)
+    ext = u''
+    if preserve_extension:
+        component, ext = os.path.splitext(component)
+        max_length -= len(ext)
+    component = component[:max_length] + ext
 
-    out = [c[:length] for c in comps]
-    base, ext = os.path.splitext(comps[-1])
-    if ext:
-        # Last component has an extension.
-        base = base[:length - len(ext)]
-        out[-1] = base + ext
+    component = PATHSEP_REGEXP.sub(PATHSEP_REPLACEMENT, component)
 
-    return os.path.join(*out)
+    if sys.platform == 'darwin':
+        return unicodedata.normalize('NFD', component)
+    else:
+        return unicodedata.normalize('NFC', component)
 
 def str2bool(value):
     """Returns a boolean reflecting a human-entered string."""

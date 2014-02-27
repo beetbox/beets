@@ -566,6 +566,26 @@ class ConfigTest(_common.TestCase):
             (re.compile(ur'foo'), u'bar'),
         ])
 
+    def test_path_sep_replace_on_posix(self):
+        with self.write_config_file() as cf:
+            cf.write("path_sep_replace: X")
+
+        config.resolve()
+        with _common.platform_posix():
+            replacements = ui.get_replacements()
+
+        self.assertEqual(replacements[0], (re.compile(u'[/]'), u'X'))
+
+    def test_path_sep_replace_on_windows(self):
+        with self.write_config_file() as cf:
+            cf.write("path_sep_replace: X")
+
+        config.resolve()
+        with _common.platform_windows():
+            replacements = ui.get_replacements()
+
+        self.assertEqual(replacements[0], (re.compile(ur'[\\/]'), u'X'))
+
     def test_cli_config_option(self):
         config_path = os.path.join(self.temp_dir, 'config.yaml')
         with open(config_path, 'w') as file:

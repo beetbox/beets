@@ -29,6 +29,7 @@ import errno
 import re
 import struct
 import traceback
+import os
 
 from beets import library
 from beets import plugins
@@ -481,6 +482,12 @@ def get_replacements():
     """Confit validation function that reads regex/string pairs.
     """
     replacements = []
+    if config['path_sep_replace'].exists():
+        separator_re = u'[%s%s]' % (os.path.sep, os.path.altsep or '')
+        replacements.append((
+            re.compile(separator_re.replace('\\', '\\\\')),
+            config['path_sep_replace'].get(unicode)
+        ))
     for pattern, repl in config['replace'].get(dict).items():
         repl = repl or ''
         try:
