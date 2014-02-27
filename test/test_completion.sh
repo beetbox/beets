@@ -1,5 +1,7 @@
 #!/bin/bash
 
+. /etc/bash_completion
+
 initcli() {
   COMP_WORDS=( "beet" "$@" )
   let COMP_CWORD=${#COMP_WORDS[@]}-1
@@ -42,7 +44,7 @@ test_command_aliases() {
   completes list &&
 
   initcli l &&
-  !( completes ls; ) &&
+  ! completes ls &&
 
   initcli im &&
   completes import &&
