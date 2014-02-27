@@ -1,11 +1,13 @@
 Changelog
 =========
 
-1.3.3 (in development)
-----------------------
+1.3.4 (February 26, 2014)
+-------------------------
 
-Version 1.3.3 brings a set of internal changes to how fields work. The
-consequences for all users are:
+Version 1.3.3 brings a bunch changes to how item and album fields work
+internally. Along with laying the groundwork for some great things in the
+future, this brings a number of improvements to how you interact with beets.
+Here's what's new with fields in particular:
 
 * Plugin-provided fields can now be used in queries. For example, if you use
   the :doc:`/plugins/inline` to define a field called ``era``, you can now
@@ -19,10 +21,14 @@ consequences for all users are:
 * The :ref:`modify-cmd` command is now better at parsing and formatting
   fields. You can assign to boolean fields like ``comp``, for example, using
   either the words "true" or "false" or the numerals 1 and 0. Any
-  boolean-esque value is normalized to a real boolean.
+  boolean-esque value is normalized to a real boolean. The :ref:`update-cmd`
+  and :ref:`write-cmd` commands also got smarter at formatting and colorizing
+  changes.
 
 For developers, the short version of the story is that Item and Album objects
-provide *uniform access* across fixed, flexible, and computed attributes.
+provide *uniform access* across fixed, flexible, and computed attributes. You
+can write ``item.foo`` to access the ``foo`` field without worrying about
+where the data comes from.
 
 Unrelated new stuff:
 
@@ -90,6 +96,10 @@ Other little fixes:
   returned by Last.fm.
 * :doc:`/plugins/mpdstats`: Restore the ``last_played`` field. Thanks to
   Johann Klähn.
+* The :ref:`modify-cmd` command's output now clearly shows when a file has
+  been deleted.
+* Album art in files with Vorbis Comments is now marked with the "front cover"
+  type. Thanks to Jason Lefley.
 
 
 1.3.2 (December 22, 2013)

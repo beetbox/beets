@@ -432,8 +432,8 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             self.config.set_args(opts)
             write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
-                log.info(u'echonest: {0} - {1} [{2}]'.format(item.artist,
-                        item.title, item.length))
+                log.info(u'echonest: {0} - {1}'.format(item.artist,
+                        item.title))
                 if self.config['force'] or self.requires_update(item):
                     song = self.fetch_song(item)
                     if song:

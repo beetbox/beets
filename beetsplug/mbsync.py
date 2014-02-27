@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Jakob Schnitzer.
+# Copyright 2014, Jakob Schnitzer.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -28,17 +28,9 @@ def _print_and_apply_changes(lib, item, old_data, move, pretend, write):
     """Apply changes to an Item and preview them in the console. Return
     a boolean indicating whether any changes were made.
     """
-    changes = {}
-    for key in library.ITEM_KEYS_META:
-        if key in item._dirty:
-            changes[key] = old_data[key], getattr(item, key)
-    if not changes:
+    changed = ui.show_model_changes(item)
+    if not changed:
         return False
-
-    # Something changed.
-    ui.print_obj(item, lib)
-    for key, (oldval, newval) in changes.iteritems():
-        ui.commands._showdiff(key, oldval, newval)
 
     # If we're just pretending, then don't move or save.
     if not pretend:

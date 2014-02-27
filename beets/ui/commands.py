@@ -22,7 +22,6 @@ import os
 import time
 import itertools
 import codecs
-from datetime import datetime
 
 import beets
 from beets import ui
@@ -46,7 +45,9 @@ log = logging.getLogger('beets')
 default_commands = []
 
 
+
 # Utilities.
+
 
 def _do_query(lib, query, album, also_items=True):
     """For commands that operate on matched items, performs a query
@@ -73,24 +74,6 @@ def _do_query(lib, query, album, also_items=True):
 
     return items, albums
 
-FLOAT_EPSILON = 0.01
-def _showdiff(field, oldval, newval):
-    """Print out a human-readable field difference line if `oldval` and
-    `newval` differ. Return a boolean indicating whether anything was printed
-    (i.e., if any change needs to be made).
-    """
-    # Considering floats incomparable for perfect equality, introduce
-    # an epsilon tolerance.
-    if isinstance(oldval, float) and isinstance(newval, float) and \
-            abs(oldval - newval) < FLOAT_EPSILON:
-        return False
-
-    if newval != oldval:
-        oldval, newval = ui.colordiff(oldval, newval)
-        print_(u'  %s: %s -> %s' % (field, oldval, newval))
-        return True
-
-    return False
 
 
 # fields: Shows a list of available fields for queries and format strings.
@@ -472,8 +455,8 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                    .format(itemcount))
             print_('For help, see: '
                    'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
-            opts = ('Use as-is', 'as Tracks', 'Group albums', 'Skip', 'Enter search',
-                    'enter Id', 'aBort')
+            opts = ('Use as-is', 'as Tracks', 'Group albums', 'Skip',
+                    'Enter search', 'enter Id', 'aBort')
         sel = ui.input_options(opts)
         if sel == 'u':
             return importer.action.ASIS
@@ -908,6 +891,7 @@ def update_items(lib, query, album, move, pretend):
             # Item deleted?
             if not os.path.exists(syspath(item.path)):
                 ui.print_obj(item, lib)
+                ui.print_(ui.colorize('red', u'  deleted'))
                 if not pretend:
                     item.remove(True)
                 affected_albums.add(item.album_id)
@@ -920,7 +904,6 @@ def update_items(lib, query, album, move, pretend):
                 continue
 
             # Read new data.
-            old_data = dict(item)
             try:
                 item.read()
             except Exception as exc:
@@ -931,39 +914,31 @@ def update_items(lib, query, album, move, pretend):
             # Special-case album artist when it matches track artist. (Hacky
             # but necessary for preserving album-level metadata for non-
             # autotagged imports.)
-            if not item.albumartist and \
-                    old_data['albumartist'] == old_data['artist'] == \
-                        item.artist:
-                item.albumartist = old_data['albumartist']
-                item._dirty.discard('albumartist')
+            if not item.albumartist:
+                old_item = lib.get_item(item.id)
+                if old_item.albumartist == old_item.artist == item.artist:
+                    item.albumartist = old_item.albumartist
+                    item._dirty.discard('albumartist')
 
-            # Get and save metadata changes.
-            changes = {}
-            for key in library.ITEM_KEYS_META:
-                if key in item._dirty:
-                    changes[key] = old_data[key], getattr(item, key)
-            if changes:
-                # Something changed.
-                ui.print_obj(item, lib)
-                for key, (oldval, newval) in changes.iteritems():
-                    _showdiff(key, oldval, newval)
+            # Check for and display changes.
+            changed = ui.show_model_changes(item,
+                                            fields=library.ITEM_KEYS_META)
 
-                # If we're just pretending, then don't move or save.
-                if pretend:
-                    continue
+            # Save changes.
+            if not pretend:
+                if changed:
+                    # Move the item if it's in the library.
+                    if move and lib.directory in ancestry(item.path):
+                        item.move()
 
-                # Move the item if it's in the library.
-                if move and lib.directory in ancestry(item.path):
-                    item.move()
-
-                item.store()
-                affected_albums.add(item.album_id)
-            elif not pretend:
-                # The file's mtime was different, but there were no changes
-                # to the metadata. Store the new mtime, which is set in the
-                # call to read(), so we don't check this again in the
-                # future.
-                item.store()
+                    item.store()
+                    affected_albums.add(item.album_id)
+                else:
+                    # The file's mtime was different, but there were no
+                    # changes to the metadata. Store the new mtime,
+                    # which is set in the call to read(), so we don't
+                    # check this again in the future.
+                    item.store()
 
         # Skip album changes while pretending.
         if pretend:
@@ -1119,18 +1094,15 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     items, albums = _do_query(lib, query, album, False)
     objs = albums if album else items
 
-    # Preview change and collect modified objects.
+    # Apply changes *temporarily*, preview them, and collect modified
+    # objects.
     print_('Modifying %i %ss.' % (len(objs), 'album' if album else 'item'))
     changed = set()
     for obj in objs:
-        # Identify the changed object.
-        ui.print_obj(obj, lib)
-
-        # Show each change.
         for field, value in fsets.iteritems():
-            if _showdiff(field, obj._get_formatted(field),
-                         obj._format(field, value)):
-                changed.add(obj)
+            obj[field] = value
+        if ui.show_model_changes(obj):
+            changed.add(obj)
 
     # Still something to do?
     if not changed:
@@ -1146,9 +1118,6 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     # Apply changes to database.
     with lib.transaction():
         for obj in changed:
-            for field, value in fsets.iteritems():
-                obj[field] = value
-
             if move:
                 cur_path = obj.path
                 if lib.directory in ancestry(cur_path): # In library?
@@ -1257,27 +1226,17 @@ def write_items(lib, query, pretend):
             ))
             continue
 
-        # Get the keys that have changed between the version.
-        changed = set()
-        for key in library.ITEM_KEYS_META:
-            if item[key] != clean_item[key]:
-                changed.add(key)
-
-        # Did anything change?
-        if changed:
-            ui.print_obj(item, lib)
-            for key in changed:
-                _showdiff(key, clean_item[key], item[key])
-
-            # Actually write the tags.
-            if not pretend:
-                try:
-                    item.write()
-                except Exception as exc:
-                    log.error(u'could not write {0}: {1}'.format(
-                        util.displayable_path(item.path), exc
-                    ))
-                    continue
+        # Check for and display changes.
+        changed = ui.show_model_changes(item, clean_item,
+                                        library.ITEM_KEYS_META, always=True)
+        if changed and not pretend:
+            try:
+                item.write()
+            except Exception as exc:
+                log.error(u'could not write {0}: {1}'.format(
+                    util.displayable_path(item.path), exc
+                ))
+                continue
 
 write_cmd = ui.Subcommand('write', help='write tag information to files')
 write_cmd.parser.add_option('-p', '--pretend', action='store_true',

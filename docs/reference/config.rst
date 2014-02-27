@@ -5,17 +5,15 @@ Beets has an extensive configuration system that lets you customize nearly
 every aspect of its operation. To configure beets, you'll edit a file called
 ``config.yaml``. The location of this file depends on your OS:
 
-* On Unix-like OSes (including OS X), you want ``~/.config/beets/config.yaml``.
+* On Unix-like OSes, you want ``~/.config/beets/config.yaml``.
 * On Windows, use ``%APPDATA%\beets\config.yaml``. This is usually in a
   directory like ``C:\Users\You\AppData\Roaming``.
-* On OS X, you can also use ``~/Library/Application Support/beets/config.yaml``
-  if you prefer that over the Unix-like ``~/.config``.
-* If you prefer a different location, set the ``BEETSDIR`` environment
-  variable to a path; beets will then look for a ``config.yaml`` in that
-  directory.
-* Or specify an *additional* configuration file to load using the ``--config
-  /path/to/file`` option on the command line. The options will be combined
-  with any options already specified your default config file.
+* On OS X, you can use either the Unix location or ``~/Library/Application
+  Support/beets/config.yaml``.
+
+It is also possible to customize the location of the configuration file and
+even use multiple layers of configuration. See `Configuration Location`_,
+below.
 
 The config file uses `YAML`_ syntax. You can use the full power of YAML, but
 most configuration options are simple key/value pairs. This means your config
@@ -553,6 +551,51 @@ Note that the special ``singleton`` and ``comp`` path format conditions are, in
 fact, just shorthand for the explicit queries ``singleton:true`` and
 ``comp:true``. In contrast, ``default`` is special and has no query equivalent:
 the ``default`` format is only used if no queries match.
+
+
+Configuration Location
+----------------------
+
+The beets configuration file is usually located in a standard location that
+depends on your OS, but there are a couple of ways you can tell beets where to
+look.
+
+Environment Variable
+~~~~~~~~~~~~~~~~~~~~
+
+First, you can set the ``BEETSDIR`` environment variable to a directory
+containing a ``config.yaml`` file. This replaces your configuration in the
+default location. This also affects where auxiliary files, like the library
+database, are stored by default (that's where relative paths are resolved to).
+This environment variable is useful if you need to manage multiple beets
+libraries with separate configurations.
+
+Command-Line Option
+~~~~~~~~~~~~~~~~~~~
+
+Alternatively, you can use the ``--config`` command-line option to indicate a
+YAML file containing options that will then be merged with your existing
+options (from ``BEETSDIR`` or the default locations). This is useful if you
+want to keep your configuration mostly the same but modify a few options as a
+batch. For example, you might have different strategies for importing files,
+each with a different set of importer options.
+
+Default Location
+~~~~~~~~~~~~~~~~
+
+In the absence of a ``BEETSDIR`` variable, beets searches a few places for
+your configuration, depending on the platform:
+
+- On Unix platforms, including OS X:``~/.config/beets`` and then
+  ``$XDG_CONFIG_DIR/beets``, if the environment variable is set.
+- On OS X, we also search ``~/Library/Application Support/beets`` before the
+  Unixy locations.
+- On Windows: ``~\AppData\Roaming\beets``, and then ``%APPDATA%\beets``, if
+  the environment variable is set.
+
+Beets uses the first directory in your platform's list that contains
+``config.yaml``. If no config file exists, the last path in the list is used.
+
 
 .. _config-example:
 

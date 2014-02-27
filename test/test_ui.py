@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2014, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -29,6 +29,7 @@ from beets import importer
 from beets.mediafile import MediaFile
 from beets import config
 from beets import plugins
+
 
 class ListTest(_common.TestCase):
     def setUp(self):
@@ -471,9 +472,15 @@ class ConfigTest(_common.TestCase):
         self.test_cmd = self._make_test_cmd()
         commands.default_commands.append(self.test_cmd)
 
-        config_dir = os.path.join(self.temp_dir, '.config', 'beets')
-        os.makedirs(config_dir)
-        self.user_config_path = os.path.join(config_dir, 'config.yaml')
+        # Default user configuration
+        self.user_config_dir = os.path.join(self.temp_dir, '.config', 'beets')
+        os.makedirs(self.user_config_dir)
+        self.user_config_path = os.path.join(self.user_config_dir,
+                                             'config.yaml')
+
+        # Custom BEETSDIR
+        self.beetsdir = os.path.join(self.temp_dir, 'beetsdir')
+        os.makedirs(self.beetsdir)
 
         self._reset_config()
 
@@ -567,26 +574,9 @@ class ConfigTest(_common.TestCase):
         ui._raw_main(['--config', config_path, 'test'])
         self.assertEqual(config['anoption'].get(), 'value')
 
-    def test_beetsdir_config_file_overwrites_defaults(self):
-        with open(self.user_config_path, 'w') as file:
-            file.write('anoption: value')
-
-        env_config_path = os.path.join(self.temp_dir, 'config.yaml')
-        os.environ['BEETSDIR'] = self.temp_dir
-        with open(env_config_path, 'w') as file:
-            file.write('anoption: overwrite')
-
-        ui.main(['test'])
-        self.assertEqual(config['anoption'].get(), 'overwrite')
-
     def test_cli_config_file_overwrites_user_defaults(self):
         with open(self.user_config_path, 'w') as file:
             file.write('anoption: value')
-
-        env_config_path = os.path.join(self.temp_dir, 'config.yaml')
-        os.environ['BEETSDIR'] = self.temp_dir
-        with open(env_config_path, 'w') as file:
-            file.write('anoption: overwrite')
 
         cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
         with open(cli_config_path, 'w') as file:
@@ -594,6 +584,82 @@ class ConfigTest(_common.TestCase):
 
         ui._raw_main(['--config', cli_config_path, 'test'])
         self.assertEqual(config['anoption'].get(), 'cli overwrite')
+
+    def test_cli_config_file_overwrites_beetsdir_defaults(self):
+        os.environ['BEETSDIR'] = self.beetsdir
+        env_config_path = os.path.join(self.beetsdir, 'config.yaml')
+        with open(env_config_path, 'w') as file:
+            file.write('anoption: value')
+
+        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        with open(cli_config_path, 'w') as file:
+            file.write('anoption: cli overwrite')
+
+        ui._raw_main(['--config', cli_config_path, 'test'])
+        self.assertEqual(config['anoption'].get(), 'cli overwrite')
+
+#    @unittest.skip('Difficult to implement with optparse')
+#    def test_multiple_cli_config_files(self):
+#        cli_config_path_1 = os.path.join(self.temp_dir, 'config.yaml')
+#        cli_config_path_2 = os.path.join(self.temp_dir, 'config_2.yaml')
+#
+#        with open(cli_config_path_1, 'w') as file:
+#            file.write('first: value')
+#
+#        with open(cli_config_path_2, 'w') as file:
+#            file.write('second: value')
+#
+#        ui._raw_main(['--config', cli_config_path_1,
+#                      '--config', cli_config_path_2, 'test'])
+#        self.assertEqual(config['first'].get(), 'value')
+#        self.assertEqual(config['second'].get(), 'value')
+#
+#    @unittest.skip('Difficult to implement with optparse')
+#    def test_multiple_cli_config_overwrite(self):
+#        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+#        cli_overwrite_config_path = os.path.join(self.temp_dir,
+#                                                 'overwrite_config.yaml')
+#
+#        with open(cli_config_path, 'w') as file:
+#            file.write('anoption: value')
+#
+#        with open(cli_overwrite_config_path, 'w') as file:
+#            file.write('anoption: overwrite')
+#
+#        ui._raw_main(['--config', cli_config_path,
+#                      '--config', cli_overwrite_config_path, 'test'])
+#        self.assertEqual(config['anoption'].get(), 'cli overwrite')
+
+    def test_cli_config_paths_resolve_relative_to_user_dir(self):
+        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        with open(cli_config_path, 'w') as file:
+            file.write('library: beets.db\n')
+            file.write('statefile: state')
+
+        ui._raw_main(['--config', cli_config_path, 'test'])
+        self.assertEqual(config['library'].as_filename(),
+                         os.path.join(self.user_config_dir, 'beets.db'))
+        self.assertEqual(config['statefile'].as_filename(),
+                         os.path.join(self.user_config_dir, 'state'))
+
+    def test_cli_config_paths_resolve_relative_to_beetsdir(self):
+        os.environ['BEETSDIR'] = self.beetsdir
+
+        cli_config_path = os.path.join(self.temp_dir, 'config.yaml')
+        with open(cli_config_path, 'w') as file:
+            file.write('library: beets.db\n')
+            file.write('statefile: state')
+
+        ui._raw_main(['--config', cli_config_path, 'test'])
+        self.assertEqual(config['library'].as_filename(),
+                         os.path.join(self.beetsdir, 'beets.db'))
+        self.assertEqual(config['statefile'].as_filename(),
+                         os.path.join(self.beetsdir, 'state'))
+
+    def test_command_line_option_relative_to_working_dir(self):
+        ui._raw_main(['--library', 'foo.db', 'test'])
+        self.assertEqual(config['library'].as_filename(),
+                         os.path.join(os.getcwd(), 'foo.db'))
 
     def test_cli_config_file_loads_plugin_commands(self):
         plugin_path = os.path.join(_common.RSRC, 'beetsplug')
@@ -606,57 +672,100 @@ class ConfigTest(_common.TestCase):
         ui._raw_main(['--config', cli_config_path, 'plugin'])
         self.assertTrue(plugins.find_plugins()[0].is_test_plugin)
 
+    def test_beetsdir_config(self):
+        os.environ['BEETSDIR'] = self.beetsdir
 
-class ShowdiffTest(_common.TestCase):
+        env_config_path = os.path.join(self.beetsdir, 'config.yaml')
+        with open(env_config_path, 'w') as file:
+            file.write('anoption: overwrite')
+
+        config.read()
+        self.assertEqual(config['anoption'].get(), 'overwrite')
+
+    def test_beetsdir_config_does_not_load_default_user_config(self):
+        os.environ['BEETSDIR'] = self.beetsdir
+
+        with open(self.user_config_path, 'w') as file:
+            file.write('anoption: value')
+
+        config.read()
+        self.assertFalse(config['anoption'].exists())
+
+    def test_default_config_paths_resolve_relative_to_beetsdir(self):
+        os.environ['BEETSDIR'] = self.beetsdir
+
+        config.read()
+        self.assertEqual(config['library'].as_filename(),
+                         os.path.join(self.beetsdir, 'library.db'))
+        self.assertEqual(config['statefile'].as_filename(),
+                         os.path.join(self.beetsdir, 'state.pickle'))
+
+    def test_beetsdir_config_paths_resolve_relative_to_beetsdir(self):
+        os.environ['BEETSDIR'] = self.beetsdir
+
+        env_config_path = os.path.join(self.beetsdir, 'config.yaml')
+        with open(env_config_path, 'w') as file:
+            file.write('library: beets.db\n')
+            file.write('statefile: state')
+
+        config.read()
+        self.assertEqual(config['library'].as_filename(),
+                         os.path.join(self.beetsdir, 'beets.db'))
+        self.assertEqual(config['statefile'].as_filename(),
+                         os.path.join(self.beetsdir, 'state'))
+
+
+class ShowModelChangeTest(_common.TestCase):
     def setUp(self):
-        super(ShowdiffTest, self).setUp()
+        super(ShowModelChangeTest, self).setUp()
         self.io.install()
+        self.a = _common.item()
+        self.b = _common.item()
+        self.a.path = self.b.path
 
-    def test_showdiff_strings(self):
-        commands._showdiff('field', 'old', 'new')
+    def _show(self, **kwargs):
+        change = ui.show_model_changes(self.a, self.b, **kwargs)
         out = self.io.getoutput()
-        self.assertTrue('field' in out)
+        return change, out
 
-    def test_showdiff_identical(self):
-        commands._showdiff('field', 'old', 'old')
-        out = self.io.getoutput()
-        self.assertFalse('field' in out)
+    def test_identical(self):
+        change, out = self._show()
+        self.assertFalse(change)
+        self.assertEqual(out, '')
 
-    def test_showdiff_ints(self):
-        commands._showdiff('field', 2, 3)
-        out = self.io.getoutput()
-        self.assertTrue('field' in out)
+    def test_string_fixed_field_change(self):
+        self.b.title = 'x'
+        change, out = self._show()
+        self.assertTrue(change)
+        self.assertTrue('title' in out)
 
-    def test_showdiff_ints_no_color(self):
-        config['color'] = False
-        commands._showdiff('field', 2, 3)
-        out = self.io.getoutput()
-        self.assertTrue('field' in out)
+    def test_int_fixed_field_change(self):
+        self.b.track = 9
+        change, out = self._show()
+        self.assertTrue(change)
+        self.assertTrue('track' in out)
 
-    def test_showdiff_shows_both(self):
-        commands._showdiff('field', 'old', 'new')
-        out = self.io.getoutput()
-        self.assertTrue('old' in out)
-        self.assertTrue('new' in out)
+    def test_floats_close_to_identical(self):
+        self.a.length = 1.00001
+        self.b.length = 1.00005
+        change, out = self._show()
+        self.assertFalse(change)
+        self.assertEqual(out, '')
 
-    def test_showdiff_floats_close_to_identical(self):
-        commands._showdiff('field', 1.999, 2.001)
-        out = self.io.getoutput()
-        self.assertFalse('field' in out)
+    def test_floats_different(self):
+        self.a.length = 1.00001
+        self.b.length = 2.00001
+        change, out = self._show()
+        self.assertTrue(change)
+        self.assertTrue('length' in out)
 
-    def test_showdiff_floats_differenct(self):
-        commands._showdiff('field', 1.999, 4.001)
-        out = self.io.getoutput()
-        self.assertTrue('field' in out)
+    def test_both_values_shown(self):
+        self.a.title = 'foo'
+        self.b.title = 'bar'
+        change, out = self._show()
+        self.assertTrue('foo' in out)
+        self.assertTrue('bar' in out)
 
-    def test_showdiff_ints_colorizing_is_not_stringwise(self):
-        commands._showdiff('field', 222, 333)
-        complete_diff = self.io.getoutput().split()[1]
-
-        commands._showdiff('field', 222, 232)
-        partial_diff = self.io.getoutput().split()[1]
-
-        self.assertEqual(complete_diff, partial_diff)
 
 class ShowChangeTest(_common.TestCase):
     def setUp(self):

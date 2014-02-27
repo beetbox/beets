@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2014, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -50,7 +50,9 @@ if sys.platform == 'win32':
         colorama.init()
 
 
+
 # Constants.
+
 
 PF_KEY_QUERIES = {
     'comp': 'comp:true',
@@ -66,7 +68,9 @@ class UserError(Exception):
 log = logging.getLogger('beets')
 
 
+
 # Utilities.
+
 
 def _encoding():
     """Tries to guess the encoding used by the terminal."""
@@ -83,11 +87,13 @@ def _encoding():
         # failing entirely for no good reason, assume UTF-8.
         return 'utf8'
 
+
 def decargs(arglist):
     """Given a list of command-line argument bytestrings, attempts to
     decode them to Unicode strings.
     """
     return [s.decode(_encoding()) for s in arglist]
+
 
 def print_(*strings):
     """Like print, but rather than raising an error when a character
@@ -104,6 +110,7 @@ def print_(*strings):
     if isinstance(txt, unicode):
         txt = txt.encode(_encoding(), 'replace')
     print(txt)
+
 
 def input_(prompt=None):
     """Like `raw_input`, but decodes the result to a Unicode string.
@@ -125,6 +132,7 @@ def input_(prompt=None):
         raise UserError('stdin stream ended while input required')
 
     return resp.decode(sys.stdin.encoding or 'utf8', 'ignore')
+
 
 def input_options(options, require=False, prompt=None, fallback_prompt=None,
                   numrange=None, default=None, max_width=72):
@@ -284,6 +292,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         # Prompt for new input.
         resp = input_(fallback_prompt)
 
+
 def input_yn(prompt, require=False):
     """Prompts the user for a "yes" or "no" response. The default is
     "yes" unless `require` is `True`, in which case there is no default.
@@ -293,6 +302,7 @@ def input_yn(prompt, require=False):
     )
     return sel == 'y'
 
+
 def human_bytes(size):
     """Formats size, a number of bytes, in a human-readable way."""
     suffices = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB', 'HB']
@@ -301,6 +311,7 @@ def human_bytes(size):
             return "%3.1f %s" % (size, suffix)
         size /= 1024.0
     return "big"
+
 
 def human_seconds(interval):
     """Formats interval, a number of seconds, as a human-readable time
@@ -328,12 +339,14 @@ def human_seconds(interval):
 
     return "%3.1f %ss" % (interval, suffix)
 
+
 def human_seconds_short(interval):
     """Formats a number of seconds as a short human-readable M:SS
     string.
     """
     interval = int(interval)
     return u'%i:%02i' % (interval // 60, interval % 60)
+
 
 # ANSI terminal colorization code heavily inspired by pygments:
 # http://dev.pocoo.org/hg/pygments-main/file/b2deea5b5030/pygments/console.py
@@ -357,6 +370,7 @@ def _colorize(color, text):
         raise ValueError('no such color %s', color)
     return escape + text + RESET_COLOR
 
+
 def colorize(color, text):
     """Colorize text if colored output is enabled. (Like _colorize but
     conditional.)
@@ -365,6 +379,7 @@ def colorize(color, text):
         return _colorize(color, text)
     else:
         return text
+
 
 def _colordiff(a, b, highlight='red', minor_highlight='lightgray'):
     """Given two values, return the same pair of strings except with
@@ -415,6 +430,7 @@ def _colordiff(a, b, highlight='red', minor_highlight='lightgray'):
 
     return u''.join(a_out), u''.join(b_out)
 
+
 def colordiff(a, b, highlight='red'):
     """Colorize differences between two values if color is enabled.
     (Like _colordiff but conditional.)
@@ -423,6 +439,7 @@ def colordiff(a, b, highlight='red'):
         return _colordiff(a, b, highlight)
     else:
         return unicode(a), unicode(b)
+
 
 def color_diff_suffix(a, b, highlight='red'):
     """Colorize the differing suffix between two strings."""
@@ -447,6 +464,7 @@ def color_diff_suffix(a, b, highlight='red'):
     return a[:first_diff] + colorize(highlight, a[first_diff:]), \
            b[:first_diff] + colorize(highlight, b[first_diff:])
 
+
 def get_path_formats(subview=None):
     """Get the configuration's path formats as a list of query/template
     pairs.
@@ -457,6 +475,7 @@ def get_path_formats(subview=None):
         query = PF_KEY_QUERIES.get(query, query)  # Expand common queries.
         path_formats.append((query, Template(view.get(unicode))))
     return path_formats
+
 
 def get_replacements():
     """Confit validation function that reads regex/string pairs.
@@ -474,6 +493,7 @@ def get_replacements():
             )
     return replacements
 
+
 def get_plugin_paths():
     """Get the list of search paths for plugins from the config file.
     The value for "pluginpath" may be a single string or a list of
@@ -488,6 +508,7 @@ def get_plugin_paths():
         )
     return map(util.normpath, pluginpaths)
 
+
 def _pick_format(album, fmt=None):
     """Pick a format string for printing Album or Item objects,
     falling back to config options and defaults.
@@ -498,6 +519,7 @@ def _pick_format(album, fmt=None):
         return config['list_format_album'].get(unicode)
     else:
         return config['list_format_item'].get(unicode)
+
 
 def print_obj(obj, lib, fmt=None):
     """Print an Album or Item object. If `fmt` is specified, use that
@@ -510,6 +532,7 @@ def print_obj(obj, lib, fmt=None):
     else:
         template = Template(fmt)
     print_(obj.evaluate_template(template))
+
 
 def term_width():
     """Get the width (columns) of the terminal."""
@@ -534,7 +557,72 @@ def term_width():
     return width
 
 
+FLOAT_EPSILON = 0.01
+def _field_diff(field, old, new):
+    """Given two Model objects, format their values for `field` and
+    highlight changes among them. Return a human-readable string. If the
+    value has not changed, return None instead.
+    """
+    oldval = old.get(field)
+    newval = new.get(field)
+
+    # If no change, abort.
+    if isinstance(oldval, float) and isinstance(newval, float) and \
+            abs(oldval - newval) < FLOAT_EPSILON:
+        return None
+    elif oldval == newval:
+        return None
+
+    # Get formatted values for output.
+    oldstr = old._get_formatted(field)
+    newstr = new._get_formatted(field)
+
+    # For strings, highlight changes. For others, colorize the whole
+    # thing.
+    if isinstance(oldval, basestring):
+        oldstr, newstr = colordiff(oldval, newval)
+    else:
+        oldstr, newstr = colorize('red', oldstr), colorize('red', newstr)
+
+    return u'{0} -> {1}'.format(oldstr, newstr)
+
+
+def show_model_changes(new, old=None, fields=None, always=False):
+    """Given a Model object, print a list of changes from its pristine
+    version stored in the database. Return a boolean indicating whether
+    any changes were found.
+
+    `old` may be the "original" object to avoid using the pristine
+    version from the database. `fields` may be a list of fields to
+    restrict the detection to. `always` indicates whether the object is
+    always identified, regardless of whether any changes are present.
+    """
+    old = old or new._db._get(type(new), new.id)
+
+    # Build up lines showing changes.
+    changes = []
+    for field in old:
+        # Subset of the fields. Never show mtime.
+        if field == 'mtime' or (fields and field not in fields):
+            continue
+
+        # Detect and show difference for this field.
+        line = _field_diff(field, old, new)
+        if line:
+            changes.append(u'  {0}: {1}'.format(field, line))
+
+    # Print changes.
+    if changes or always:
+        print_obj(old, old._db)
+    if changes:
+        print_(u'\n'.join(changes))
+
+    return bool(changes)
+
+
+
 # Subcommand parsing infrastructure.
+
 
 # This is a fairly generic subcommand parser for optparse. It is
 # maintained externally here:

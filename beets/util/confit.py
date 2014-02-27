@@ -1,5 +1,5 @@
 # This file is part of Confit.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2014, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -332,12 +332,12 @@ class ConfigView(object):
         return value
 
     def as_filename(self):
-        """Get a string as a normalized filename, made absolute and with
-        tilde expanded. If the value comes from a default source, the
-        path is considered relative to the application's config
-        directory. If it comes from another file source, the filename is
-        expanded as if it were relative to that directory. Otherwise, it
-        is relative to the current working directory.
+        """Get a string as a normalized as an absolute, tilde-free path.
+
+        Relative paths are relative to the configuration directory (see
+        the `config_dir` method) if they come from a file. Otherwise,
+        they are relative to the current working directory. This helps
+        attain the expected behavior when using command-line options.
         """
         path, source = self.first()
         if not isinstance(path, BASESTRING):
@@ -346,13 +346,9 @@ class ConfigView(object):
             ))
         path = os.path.expanduser(STRING(path))
 
-        if source.default:
+        if not os.path.isabs(path) and source.filename:
             # From defaults: relative to the app's directory.
             path = os.path.join(self.root().config_dir(), path)
-
-        elif source.filename is not None:
-            # Relative to source filename's directory.
-            path = os.path.join(os.path.dirname(source.filename), path)
 
         return os.path.abspath(path)
 
@@ -508,20 +504,31 @@ def _package_path(name):
     return os.path.dirname(os.path.abspath(filepath))
 
 def config_dirs():
-    """Returns a list of user configuration directories to be searched.
+    """Return a platform-specific list of candidates for user
+    configuration directories on the system.
+
+    The candidates are in order of priority, from highest to lowest. The
+    last element is the "fallback" location to be used when no
+    higher-priority config file exists.
     """
+    paths = []
+
     if platform.system() == 'Darwin':
-        paths = [UNIX_DIR_FALLBACK, MAC_DIR]
+        paths.append(MAC_DIR)
+        paths.append(UNIX_DIR_FALLBACK)
+        if UNIX_DIR_VAR in os.environ:
+            paths.append(os.environ[UNIX_DIR_VAR])
+
     elif platform.system() == 'Windows':
+        paths.append(WINDOWS_DIR_FALLBACK)
         if WINDOWS_DIR_VAR in os.environ:
-            paths = [os.environ[WINDOWS_DIR_VAR]]
-        else:
-            paths = [WINDOWS_DIR_FALLBACK]
+            paths.append(os.environ[WINDOWS_DIR_VAR])
+
     else:
         # Assume Unix.
-        paths = [UNIX_DIR_FALLBACK]
+        paths.append(UNIX_DIR_FALLBACK)
         if UNIX_DIR_VAR in os.environ:
-            paths.insert(0, os.environ[UNIX_DIR_VAR])
+            paths.append(os.environ[UNIX_DIR_VAR])
 
     # Expand and deduplicate paths.
     out = []
@@ -622,38 +629,26 @@ class Configuration(RootView):
         if read:
             self.read()
 
-    def _search_dirs(self):
-        """Yield directories that will be searched for configuration
-        files for this application.
+    def _add_user_source(self):
+        """Add the configuration options from the YAML file in the
+        user's configuration directory (given by `config_dir`) if it
+        exists.
         """
-        # Application's environment variable.
-        if self._env_var in os.environ:
-            path = os.environ[self._env_var]
-            yield os.path.abspath(os.path.expanduser(path))
+        filename = os.path.join(self.config_dir(), CONFIG_FILENAME)
+        if os.path.isfile(filename):
+            self.add(ConfigSource(load_yaml(filename) or {}, filename))
 
-        # Standard configuration directories.
-        for confdir in config_dirs():
-            yield os.path.join(confdir, self.appname)
-
-    def _user_sources(self):
-        """Generate `ConfigSource` objects for each user configuration
-        file in the program's search directories.
-        """
-        for appdir in self._search_dirs():
-            filename = os.path.join(appdir, CONFIG_FILENAME)
-            if os.path.isfile(filename):
-                yield ConfigSource(load_yaml(filename) or {}, filename)
-
-    def _default_source(self):
-        """Return the default-value source for this program or `None` if
-        it does not exist.
+    def _add_default_source(self):
+        """Add the package's default configuration settings. This looks
+        for a YAML file located inside the package for the module
+        `modname` if it was given.
         """
         if self.modname:
             pkg_path = _package_path(self.modname)
             if pkg_path:
                 filename = os.path.join(pkg_path, DEFAULT_FILENAME)
                 if os.path.isfile(filename):
-                    return ConfigSource(load_yaml(filename), filename, True)
+                    self.add(ConfigSource(load_yaml(filename), filename, True))
 
     def read(self, user=True, defaults=True):
         """Find and read the files for this configuration and set them
@@ -662,27 +657,35 @@ class Configuration(RootView):
         set `user` or `defaults` to `False`.
         """
         if user:
-            for source in self._user_sources():
-                self.add(source)
+            self._add_user_source()
         if defaults:
-            source = self._default_source()
-            if source:
-                self.add(source)
+            self._add_default_source()
 
     def config_dir(self):
-        """Get the path to the directory containing the highest-priority
-        user configuration. If no user configuration is present, create a
-        suitable directory before returning it.
+        """Get the path to the user configuration directory. The
+        directory is guaranteed to exist as a postcondition (one may be
+        created if none exist).
+
+        If the application's ``...DIR`` environment variable is set, it
+        is used as the configuration directory. Otherwise,
+        platform-specific standard configuration locations are searched
+        for a ``config.yaml`` file. If no configuration file is found, a
+        fallback path is used.
         """
-        dirs = list(self._search_dirs())
+        # If environment variable is set, use it.
+        if self._env_var in os.environ:
+            appdir = os.environ[self._env_var]
+            appdir = os.path.abspath(os.path.expanduser(appdir))
 
-        # First, look for an existent configuration file.
-        for appdir in dirs:
-            if os.path.isfile(os.path.join(appdir, CONFIG_FILENAME)):
-                return appdir
+        else:
+            # Search platform-specific locations. If no config file is
+            # found, fall back to the final directory in the list.
+            for confdir in config_dirs():
+                appdir = os.path.join(confdir, self.appname)
+                if os.path.isfile(os.path.join(appdir, CONFIG_FILENAME)):
+                    break
 
-        # As a fallback, create the first-listed directory name.
-        appdir = dirs[0]
+        # Ensure that the directory exists.
         if not os.path.isdir(appdir):
             os.makedirs(appdir)
         return appdir
@@ -693,6 +696,7 @@ class Configuration(RootView):
         """
         filename = os.path.abspath(filename)
         self.set(ConfigSource(load_yaml(filename), filename))
+
 
 class LazyConfig(Configuration):
     """A Configuration at reads files on demand when it is first

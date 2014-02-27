@@ -491,6 +491,7 @@ class MediaField(object):
                 for frame in frames:
                     if frame.desc.lower() == style.id3_desc.lower():
                         setattr(frame, style.id3_frame_field, out)
+                        frame.encoding = 3   # utf8
                         found = True
                         break
 
@@ -815,6 +816,7 @@ class ImageField(object):
             if val is not None:
                 pic = mutagen.flac.Picture()
                 pic.data = val
+                pic.type = 3    # Front cover.
                 pic.mime = self._mime(val)
                 obj.mgfile.add_picture(pic)
 
