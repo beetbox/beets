@@ -36,6 +36,7 @@ from beets.util import syspath, normpath, ancestry, displayable_path
 from beets.util.functemplate import Template
 from beets import library
 from beets import config
+from beets.ui.completion import completion_script
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -1245,3 +1246,19 @@ def write_func(lib, opts, args):
     write_items(lib, decargs(args), opts.pretend)
 write_cmd.func = write_func
 default_commands.append(write_cmd)
+
+
+completion_cmd = ui.Subcommand('completion',
+        help='print shell script that provides command line completion')
+def print_completion(*args):
+    if not (os.path.isfile(u'/etc/bash_completion') or
+       os.path.isfile(u'/usr/share/bash-completion/bash_completion') or
+       os.path.isfile(u'/usr/share/local/bash-completion/bash_completion')):
+        log.warn(u'Warning: Unable to find the bash-completion package. '
+                 u'Command line completion might not work.')
+
+    for line in completion_script(default_commands):
+        print(line, end='')
+
+completion_cmd.func = print_completion
+default_commands.append(completion_cmd)
