@@ -748,11 +748,16 @@ class CompletionTest(_common.TestCase):
     def test_completion(self):
         test_script = os.path.join(os.path.dirname(__file__),
                 'test_completion.sh')
+        bash_completion = '/etc/bash_completion'
 
         # Tests run in bash
         shell = os.environ.get('BEETS_TEST_SHELL', '/bin/bash --norc')
         tester = subprocess.Popen(shell.split(' '), stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE)
+
+        # Load bash_completion
+        with open(bash_completion, 'r') as bash_completion:
+            tester.stdin.writelines(bash_completion)
 
         # Load complection script
         self.io.install()
@@ -765,8 +770,9 @@ class CompletionTest(_common.TestCase):
         with open(test_script, 'r') as test_script:
             tester.stdin.writelines(test_script)
         (out, err) = tester.communicate()
-        self.assertEqual(tester.returncode, 0)
-        self.assertEqual(out, "completion tests passed\n")
+        if tester.returncode != 0 or out != "completion tests passed\n":
+            print(out)
+            self.fail('test/test_completion.sh did not execute properly')
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

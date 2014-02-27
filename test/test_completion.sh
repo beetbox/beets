@@ -1,10 +1,8 @@
-#!/bin/bash
-
-. /etc/bash_completion
-
 initcli() {
   COMP_WORDS=( "beet" "$@" )
   let COMP_CWORD=${#COMP_WORDS[@]}-1
+  COMP_LINE="${COMP_WORDS[@]}"
+  let COMP_POINT=${#COMP_LINE}
   _beet
 }
 
@@ -64,17 +62,20 @@ test_global_opts() {
 
 
 test_global_file_opts() {
+  # FIXME somehow file completion only works when the completion
+  # function is called by the shell completion utilities. So we can't
+  # test it here
   initcli --library '' &&
-  completes $(compgen -f) &&
+  completes $(compgen -d) &&
 
   initcli -l '' &&
-  completes $(compgen -f) &&
+  completes $(compgen -d) &&
 
   initcli --config '' &&
-  completes $(compgen -f) &&
+  completes $(compgen -d) &&
 
   initcli -c '' &&
-  completes $(compgen -f) &&
+  completes $(compgen -d) &&
   true
 }
 
@@ -94,20 +95,20 @@ test_fields_command() {
   completes -h --help &&
 
   initcli fields '' &&
-  completes $(compgen -f) &&
+  completes $(compgen -d) &&
   true
 }
 
 
 test_import_files() {
   initcli import '' &&
-  completes $(compgen -f) &&
+  completes $(compgen -d) &&
 
   initcli import --copy -P '' &&
-  completes $(compgen -f) &&
+  completes $(compgen -d) &&
 
   initcli import --log '' &&
-  completes $(compgen -f) &&
+  completes $(compgen -d) &&
   true
 }
 
