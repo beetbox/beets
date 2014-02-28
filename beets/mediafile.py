@@ -257,8 +257,7 @@ def _sc_encode(gain, peak):
 # Flags for encoding field behavior.
 
 # Determine style of packing, if any.
-packing = enum('SLASHED',   # pair delimited by /
-               'DATE',      # YYYY-MM-DD
+packing = enum('DATE',      # YYYY-MM-DD
                'SC',        # Sound Check gain/peak encoding
                name='packing')
 
@@ -337,8 +336,6 @@ class StorageStyle(object):
             # a "T" or a space.
             data = re.sub(r'[Tt ].*$', '', unicode(data))
             items = unicode(data).split('-')
-        elif self.packing == packing.SLASHED:
-            items = unicode(data).split('/')
         elif self.packing == packing.SC:
             items = _sc_decode(data)
 
@@ -381,8 +378,6 @@ class StorageStyle(object):
                     del(items[i:]) # truncate
                     break
 
-        if self.packing == packing.SLASHED:
-            data = '/'.join(map(unicode, items))
         elif self.packing == packing.DATE:
             field_lengths = [4, 2, 2] # YYYY-MM-DD
             elems = []
@@ -519,11 +514,9 @@ class MP4TupleStorageStyle(MP4StorageStyle):
         self.pack_pos = pack_pos
 
     def _fetch_unpacked(self, mutagen_file):
-        data = super(MP4TupleStorageStyle, self).fetch(mutagen_file)
-        if data is None: data = []
-
+        items = super(MP4TupleStorageStyle, self).fetch(mutagen_file) or []
         packing_length = 2
-        return list(data) + [0] * (packing_length - len(data))
+        return list(items) + [0] * (packing_length - len(items))
 
     def get(self, mutagen_file):
         data = self._fetch_unpacked(mutagen_file)[self.pack_pos]
@@ -678,6 +671,34 @@ class MP3DescStorageStyle(MP3StorageStyle):
                     return frame.text[0]
                 except IndexError:
                     return None
+
+
+class MP3SlashPackStorageStyle(MP3StorageStyle):
+    """Store value as part of pair that is serialized as a slash
+    separated string.
+    """
+
+    def __init__(self, key, pack_pos=0, **kwargs):
+        super(MP3SlashPackStorageStyle, self).__init__(key, **kwargs)
+        self.pack_pos = pack_pos
+
+    def _fetch_unpacked(self, mutagen_file):
+        data = super(MP3SlashPackStorageStyle, self).fetch(mutagen_file) or ''
+        items = unicode(data).split('/')
+        packing_length = 2
+        return list(items) + [None] * (packing_length - len(items))
+
+    def get(self, mutagen_file):
+        return self._fetch_unpacked(mutagen_file)[self.pack_pos] or 0
+
+    def set(self, mutagen_file, value):
+        items = self._fetch_unpacked(mutagen_file)
+        items[self.pack_pos] = value
+        if items[0] is None:
+            items[0] = 0
+        if items[1] is None:
+            items.pop()  # Do not store last value
+        self.store(mutagen_file, '/'.join(map(unicode, items)))
 
 
 class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
@@ -1104,7 +1125,7 @@ class MediaFile(object):
         ASFStorageStyle('WM/ContentGroupDescription'),
     )
     track = MediaField(
-        MP3StorageStyle('TRCK', packing=packing.SLASHED, pack_pos=0),
+        MP3SlashPackStorageStyle('TRCK', pack_pos=0),
         MP4TupleStorageStyle('trkn', pack_pos=0),
         StorageStyle('TRACK'),
         StorageStyle('TRACKNUMBER'),
@@ -1112,7 +1133,7 @@ class MediaFile(object):
         out_type=int,
     )
     tracktotal = MediaField(
-        MP3StorageStyle('TRCK', packing=packing.SLASHED, pack_pos=1),
+        MP3SlashPackStorageStyle('TRCK', pack_pos=1),
         MP4TupleStorageStyle('trkn', pack_pos=1),
         StorageStyle('TRACKTOTAL'),
         StorageStyle('TRACKC'),
@@ -1121,7 +1142,7 @@ class MediaFile(object):
         out_type=int,
     )
     disc = MediaField(
-        MP3StorageStyle('TPOS', packing=packing.SLASHED, pack_pos=0),
+        MP3SlashPackStorageStyle('TPOS', pack_pos=0),
         MP4TupleStorageStyle('disk', pack_pos=0),
         StorageStyle('DISC'),
         StorageStyle('DISCNUMBER'),
@@ -1129,7 +1150,7 @@ class MediaFile(object):
         out_type=int,
     )
     disctotal = MediaField(
-        MP3StorageStyle('TPOS', packing=packing.SLASHED, pack_pos=1),
+        MP3SlashPackStorageStyle('TPOS', pack_pos=1),
         MP4TupleStorageStyle('disk', pack_pos=1),
         StorageStyle('DISCTOTAL'),
         StorageStyle('DISCC'),
