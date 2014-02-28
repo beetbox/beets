@@ -629,12 +629,19 @@ class Configuration(RootView):
         if read:
             self.read()
 
+    def user_config_path(self):
+        """Points to the location of the user configuration.
+
+        The file may not exist.
+        """
+        return os.path.join(self.config_dir(), CONFIG_FILENAME)
+
     def _add_user_source(self):
         """Add the configuration options from the YAML file in the
         user's configuration directory (given by `config_dir`) if it
         exists.
         """
-        filename = os.path.join(self.config_dir(), CONFIG_FILENAME)
+        filename = self.user_config_path()
         if os.path.isfile(filename):
             self.add(ConfigSource(load_yaml(filename) or {}, filename))
 
@@ -734,3 +741,9 @@ class LazyConfig(Configuration):
             # Buffer additions to beginning.
             self._lazy_prefix[:0] = self.sources
             del self.sources[:]
+
+    def clear(self):
+        """Remove all sources from this configuration."""
+        del self.sources[:]
+        self._lazy_suffix = []
+        self._lazy_prefix = []
