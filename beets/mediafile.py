@@ -303,16 +303,16 @@ class StorageStyle(object):
         if self.suffix and self.as_type == unicode:
             self.suffix = self.as_type(self.suffix)
 
-    def fetch(self, mediafile):
+    def fetch(self, mutagen_file):
         """Retrieve the first raw value of this tag from the mediafile."""
         try:
-            return mediafile.mgfile[self.key][0]
+            return mutagen_file[self.key][0]
         except KeyError:
             return None
 
-    def get(self, mediafile):
+    def get(self, mutagen_file):
         """Retrieve the unpacked value of this field from the mediafile."""
-        data = self.fetch(mediafile)
+        data = self.fetch(mutagen_file)
         if self.packing:
             try:
                 data = self.unpack(data)[self.pack_pos]
@@ -346,21 +346,21 @@ class StorageStyle(object):
 
         return list(items) + [None] * (packing_length - len(items))
 
-    def store(self, mediafile, value):
+    def store(self, mutagen_file, value):
         """Stores a serialized value in the mediafile."""
-        mediafile.mgfile[self.key] = [value]
+        mutagen_file[self.key] = [value]
 
-    def set(self, mediafile, value):
+    def set(self, mutagen_file, value):
         """Packs, serializes and stores the value in the mediafile."""
         if value is None:
             value = self._none_value()
 
         if self.packing:
-            data = self.fetch(mediafile)
+            data = self.fetch(mutagen_file)
             value = self.pack(data, value)
 
         value = self.serialize(value)
-        self.store(mediafile, value)
+        self.store(mutagen_file, value)
 
     def pack(self, data, value):
         """Pack value into data.
@@ -452,30 +452,30 @@ class ListStorageStyle(StorageStyle):
     raises an error.
     """
 
-    def get(self, mediafile):
+    def get(self, mutagen_file):
         try:
-            return self.get_list(mediafile)[0]
+            return self.get_list(mutagen_file)[0]
         except IndexError:
             return None
 
-    def get_list(self, mediafile):
-        data = self.fetch(mediafile)
+    def get_list(self, mutagen_file):
+        data = self.fetch(mutagen_file)
         return [self._strip_possible_suffix(item) for item in data]
 
-    def fetch(self, mediafile):
+    def fetch(self, mutagen_file):
         try:
-            return mediafile.mgfile[self.key]
+            return mutagen_file[self.key]
         except KeyError:
             return []
 
-    def set(self, mediafile, value):
-        self.set_list(mediafile, [value])
+    def set(self, mutagen_file, value):
+        self.set_list(mutagen_file, [value])
 
-    def set_list(self, mediafile, values):
-        self.store(mediafile, [self.serialize(value) for value in values])
+    def set_list(self, mutagen_file, values):
+        self.store(mutagen_file, [self.serialize(value) for value in values])
 
-    def store(self, mediafile, values):
-        mediafile.mgfile[self.key] = values
+    def store(self, mutagen_file, values):
+        mutagen_file[self.key] = values
 
     def pack(self, data, value):
         raise NotImplementedError('packing is not implemented for lists')
@@ -492,14 +492,14 @@ class MP4StorageStyle(StorageStyle):
 
     formats = ['aac', 'alac']
 
-    def fetch(self, mediafile):
+    def fetch(self, mutagen_file):
         try:
-            return mediafile.mgfile[self.key][0]
+            return mutagen_file[self.key][0]
         except KeyError:
             return None
 
-    def store(self, mediafile, value):
-        mediafile.mgfile[self.key] = [value]
+    def store(self, mutagen_file, value):
+        mutagen_file[self.key] = [value]
 
     def serialize(self, value):
         if self.packing != packing.TUPLE:
@@ -521,19 +521,19 @@ class MP4ListStorageStyle(ListStorageStyle, MP4StorageStyle):
 
 class MP4BoolStorageStyle(MP4StorageStyle):
 
-    def get(self, mediafile):
+    def get(self, mutagen_file):
         try:
-            return mediafile.mgfile[self.key]
+            return mutagen_file[self.key]
         except KeyError:
             return None
 
-    def get_list(self, mediafile):
+    def get_list(self, mutagen_file):
         raise NotImplementedError('MP4 bool storage does not support lists')
 
-    def set(self, mediafile, value):
-        mediafile.mgfile[self.key] = value
+    def set(self, mutagen_file, value):
+        mutagen_file[self.key] = value
 
-    def set_list(self, mediafile, values):
+    def set_list(self, mutagen_file, values):
         raise NotImplementedError('MP4 bool storage does not support lists')
 
 
@@ -543,9 +543,9 @@ class MP4ImageStorageStyle(MP4ListStorageStyle):
         super(MP4ImageStorageStyle, self).__init__(key='covr', **kwargs)
         self.as_type = str
 
-    def store(self, mediafile, images):
+    def store(self, mutagen_file, images):
         covers = [self._mp4_cover(image) for image in images]
-        mediafile.mgfile['covr'] = covers
+        mutagen_file['covr'] = covers
 
     @classmethod
     def _mp4_cover(cls, data):
@@ -573,28 +573,28 @@ class MP3StorageStyle(StorageStyle):
         self.id3_lang = id3_lang
         super(MP3StorageStyle, self).__init__(key, **kwargs)
 
-    def fetch(self, mediafile):
+    def fetch(self, mutagen_file):
         try:
-            return mediafile.mgfile[self.key].text[0]
+            return mutagen_file[self.key].text[0]
         except KeyError:
             return None
 
-    def store(self, mediafile, value):
+    def store(self, mutagen_file, value):
         frame = mutagen.id3.Frames[self.key](encoding=3, text=[value])
-        mediafile.mgfile.tags.setall(self.key, [frame])
+        mutagen_file.tags.setall(self.key, [frame])
 
 
 class MP3ListStorageStyle(ListStorageStyle, MP3StorageStyle):
 
-    def fetch(self, mediafile):
+    def fetch(self, mutagen_file):
         try:
-            return mediafile.mgfile[self.key].text
+            return mutagen_file[self.key].text
         except KeyError:
             return []
 
-    def store(self, mediafile, values):
+    def store(self, mutagen_file, values):
         frame = mutagen.id3.Frames[self.key](encoding=3, text=values)
-        mediafile.mgfile.tags.setall(self.key, [frame])
+        mutagen_file.tags.setall(self.key, [frame])
 
 
 class MP3UFIDStorageStyle(MP3StorageStyle):
@@ -603,14 +603,14 @@ class MP3UFIDStorageStyle(MP3StorageStyle):
         self.owner = owner
         super(MP3UFIDStorageStyle, self).__init__('UFID:' + owner, **kwargs)
 
-    def fetch(self, mediafile):
+    def fetch(self, mutagen_file):
         try:
-            return mediafile.mgfile[self.key].data
+            return mutagen_file[self.key].data
         except KeyError:
             return None
 
-    def store(self, mediafile, value):
-        frames = mediafile.mgfile.tags.getall(self.key)
+    def store(self, mutagen_file, value):
+        frames = mutagen_file.tags.getall(self.key)
         for frame in frames:
             # Replace existing frame data.
             if frame.owner == self.owner:
@@ -618,7 +618,7 @@ class MP3UFIDStorageStyle(MP3StorageStyle):
         else:
             # New frame.
             frame = mutagen.id3.UFID(owner=self.owner, data=value)
-            mediafile.mgfile.tags.setall(self.key, [frame])
+            mutagen_file.tags.setall(self.key, [frame])
 
 
 class MP3DescStorageStyle(MP3StorageStyle):
@@ -627,8 +627,8 @@ class MP3DescStorageStyle(MP3StorageStyle):
         self.description = desc
         super(MP3DescStorageStyle, self).__init__(key=key, **kwargs)
 
-    def store(self, mediafile, value):
-        frames = mediafile.mgfile.tags.getall(self.key)
+    def store(self, mutagen_file, value):
+        frames = mutagen_file.tags.getall(self.key)
         if self.key != 'USLT':
             value = [value]
 
@@ -645,10 +645,10 @@ class MP3DescStorageStyle(MP3StorageStyle):
                     desc=str(self.description), text=value, encoding=3)
             if self.id3_lang:
                 frame.lang = self.id3_lang
-            mediafile.mgfile.tags.add(frame)
+            mutagen_file.tags.add(frame)
 
-    def fetch(self, mediafile):
-        for frame in mediafile.mgfile.tags.getall(self.key):
+    def fetch(self, mutagen_file):
+        for frame in mutagen_file.tags.getall(self.key):
             if frame.desc.lower() == self.description.lower():
                 if self.key == 'USLT':
                     return frame.text
@@ -664,14 +664,14 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         super(MP3ImageStorageStyle, self).__init__(key='APIC')
         self.as_type = str
 
-    def fetch(self, mediafile):
+    def fetch(self, mutagen_file):
         try:
-            frames = mediafile.mgfile.tags.getall(self.key)
+            frames = mutagen_file.tags.getall(self.key)
             return [frame.data for frame in frames]
         except IndexError:
             return None
 
-    def store(self, mediafile, images):
+    def store(self, mutagen_file, images):
         image = images[0]
         frame = mutagen.id3.APIC(
             encoding=3,
@@ -680,7 +680,7 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
             desc=u'',
             data=image
         )
-        mediafile.mgfile.tags.setall(self.key, [frame])
+        mutagen_file.tags.setall(self.key, [frame])
 
 
 class ASFImageStorageStyle(ListStorageStyle):
@@ -691,26 +691,26 @@ class ASFImageStorageStyle(ListStorageStyle):
         super(ASFImageStorageStyle, self).__init__(key='WM/Picture')
         self.as_type = str
 
-    def fetch(self, mediafile):
-        if 'WM/Picture' not in mediafile.mgfile:
+    def fetch(self, mutagen_file):
+        if 'WM/Picture' not in mutagen_file:
             return []
 
         pictures = []
-        for picture in mediafile.mgfile['WM/Picture']:
+        for picture in mutagen_file['WM/Picture']:
             try:
                 pictures.append(_unpack_asf_image(picture.value)[1])
             except:
                 pass
         return pictures
 
-    def store(self, mediafile, images):
-        if 'WM/Picture' in mediafile.mgfile:
-            del mediafile.mgfile['WM/Picture']
+    def store(self, mutagen_file, images):
+        if 'WM/Picture' in mutagen_file:
+            del mutagen_file['WM/Picture']
 
         for image in images:
             pic = mutagen.asf.ASFByteArrayAttribute()
             pic.value = _pack_asf_image(ImageField._mime(image), image)
-            mediafile.mgfile['WM/Picture'] = [pic]
+            mutagen_file['WM/Picture'] = [pic]
 
 
 class VorbisImageStorageStyle(ListStorageStyle):
@@ -721,30 +721,30 @@ class VorbisImageStorageStyle(ListStorageStyle):
         super(VorbisImageStorageStyle, self).__init__(key='')
         self.as_type = str
 
-    def fetch(self, mediafile):
-        if 'metadata_block_picture' not in mediafile.mgfile:
+    def fetch(self, mutagen_file):
+        if 'metadata_block_picture' not in mutagen_file:
             # Try legacy COVERART tags.
-            if 'coverart' in mediafile.mgfile and mediafile.mgfile['coverart']:
-                return base64.b64decode(mediafile.mgfile['coverart'][0])
+            if 'coverart' in mutagen_file and mutagen_file['coverart']:
+                return base64.b64decode(mutagen_file['coverart'][0])
             return []
 
         pics = []
-        for data in mediafile.mgfile["metadata_block_picture"]:
+        for data in mutagen_file["metadata_block_picture"]:
             try:
                 pics.append(mutagen.flac.Picture(base64.b64decode(data)).data)
             except (TypeError, AttributeError):
                 pass
         return pics
 
-    def store(self, mediafile, image_data):
+    def store(self, mutagen_file, image_data):
         # Strip all art, including legacy COVERART.
-        if 'metadata_block_picture' in mediafile.mgfile:
-            if 'metadata_block_picture' in mediafile.mgfile:
-                del mediafile.mgfile['metadata_block_picture']
-            if 'coverart' in mediafile.mgfile:
-                del mediafile.mgfile['coverart']
-            if 'coverartmime' in mediafile.mgfile:
-                del mediafile.mgfile['coverartmime']
+        if 'metadata_block_picture' in mutagen_file:
+            if 'metadata_block_picture' in mutagen_file:
+                del mutagen_file['metadata_block_picture']
+            if 'coverart' in mutagen_file:
+                del mutagen_file['coverart']
+            if 'coverartmime' in mutagen_file:
+                del mutagen_file['coverartmime']
 
         image_data = image_data[0]
         # Add new art if provided.
@@ -752,7 +752,7 @@ class VorbisImageStorageStyle(ListStorageStyle):
             pic = mutagen.flac.Picture()
             pic.data = image_data
             pic.mime = ImageField._mime(image_data)
-            mediafile.mgfile['metadata_block_picture'] = [
+            mutagen_file['metadata_block_picture'] = [
                 base64.b64encode(pic.write())
             ]
 
@@ -765,22 +765,22 @@ class FlacImageStorageStyle(ListStorageStyle):
         super(FlacImageStorageStyle, self).__init__(key='')
         self.as_type = str
 
-    def fetch(self, mediafile):
-        pictures = mediafile.mgfile.pictures
+    def fetch(self, mutagen_file):
+        pictures = mutagen_file.pictures
         if pictures:
             return [picture.data or None for picture in pictures]
         else:
             return []
 
-    def store(self, mediafile, images):
-        mediafile.mgfile.clear_pictures()
+    def store(self, mutagen_file, images):
+        mutagen_file.clear_pictures()
 
         for image in images:
             pic = mutagen.flac.Picture()
             pic.data = image
             pic.type = 3  # front cover
             pic.mime = ImageField._mime(image)
-            mediafile.mgfile.add_picture(pic)
+            mutagen_file.add_picture(pic)
 
 
 
@@ -813,17 +813,17 @@ class MediaField(object):
             if mediafile.type in style.formats:
                 yield style
 
-    def __get__(self, obj, owner):
-        for style in self.styles(obj):
-            out = style.get(obj)
+    def __get__(self, mediafile, owner):
+        for style in self.styles(mediafile):
+            out = style.get(mediafile.mgfile)
             if out:
                 break
         return _safe_cast(self.out_type, out)
 
 
-    def __set__(self, obj, val):
-        for style in self.styles(obj):
-            style.set(obj, val)
+    def __set__(self, mediafile, value):
+        for style in self.styles(mediafile):
+            style.set(mediafile.mgfile, value)
 
 
 class ListMediaField(MediaField):
@@ -836,12 +836,12 @@ class ListMediaField(MediaField):
     def __get__(self, mediafile, _):
         values = []
         for style in self.styles(mediafile):
-            values.extend(style.get_list(mediafile))
+            values.extend(style.get_list(mediafile.mgfile))
         return [_safe_cast(self.out_type, value) for value in values]
 
     def __set__(self, mediafile, values):
         for style in self.styles(mediafile):
-            style.set_list(mediafile, values)
+            style.set_list(mediafile.mgfile, values)
 
     def single_field(self):
         """Returns a ``MediaField`` descriptor that gets and sets the
@@ -864,7 +864,7 @@ class CompositeDateField(MediaField):
         self.month_field = month_field
         self.day_field = day_field
 
-    def __get__(self, obj, owner):
+    def __get__(self, mediafile, owner):
         """Return a datetime.date object whose components indicating the
         smallest valid date whose components are at least as large as
         the three component fields (that is, if year == 1999, month == 0,
@@ -874,20 +874,20 @@ class CompositeDateField(MediaField):
         """
         try:
             return datetime.date(
-                max(self.year_field.__get__(obj, owner), datetime.MINYEAR),
-                max(self.month_field.__get__(obj, owner), 1),
-                max(self.day_field.__get__(obj, owner), 1)
+                max(self.year_field.__get__(mediafile, owner), datetime.MINYEAR),
+                max(self.month_field.__get__(mediafile, owner), 1),
+                max(self.day_field.__get__(mediafile, owner), 1)
             )
         except ValueError:  # Out of range values.
             return datetime.date.min
 
-    def __set__(self, obj, val):
+    def __set__(self, mediafile, date):
         """Set the year, month, and day fields to match the components of
         the provided datetime.date object.
         """
-        self.year_field.__set__(obj, val.year)
-        self.month_field.__set__(obj, val.month)
-        self.day_field.__set__(obj, val.day)
+        self.year_field.__set__(mediafile, date.year)
+        self.month_field.__set__(mediafile, date.month)
+        self.day_field.__set__(mediafile, date.day)
 
 
 class ImageField(MediaField):
@@ -919,16 +919,16 @@ class ImageField(MediaField):
             # Currently just fall back to JPEG.
             return 'image/jpeg'
 
-    def __get__(self, obj, owner):
-        for style in self.styles(obj):
-            return style.get(obj)
+    def __get__(self, mediafile, _):
+        for style in self.styles(mediafile):
+            return style.get(mediafile.mgfile)
 
-    def __set__(self, obj, val):
-        if val is not None:
-            if not isinstance(val, str):
+    def __set__(self, mediafile, data):
+        if data is not None:
+            if not isinstance(data, str):
                 raise ValueError('value must be a byte string or None')
-        for style in self.styles(obj):
-            style.set(obj, val)
+        for style in self.styles(mediafile):
+            style.set(mediafile.mgfile, data)
 
 
 
