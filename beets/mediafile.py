@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2014, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -50,8 +50,10 @@ from beets.util.enumeration import enum
 __all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
 
 
+
 # Logger.
 log = logging.getLogger('beets')
+
 
 
 # Exceptions.
@@ -63,6 +65,7 @@ class UnreadableFileError(Exception):
 # Raised for files that don't seem to have a type MediaFile supports.
 class FileTypeError(UnreadableFileError):
     pass
+
 
 
 # Constants.
@@ -82,13 +85,14 @@ TYPES = {
 }
 
 
+
 # Utility.
 
 def _safe_cast(out_type, val):
-    """Tries to covert val to out_type but will never raise an
-    exception. If the value can't be converted, then a sensible
-    default value is returned. out_type should be bool, int, or
-    unicode; otherwise, the value is just passed through.
+    """Try to covert val to out_type but never raise an exception. If
+    the value can't be converted, then a sensible default value is
+    returned. out_type should be bool, int, or unicode; otherwise, the
+    value is just passed through.
     """
     if out_type == int:
         if val is None:
@@ -149,6 +153,7 @@ def _safe_cast(out_type, val):
         return val
 
 
+
 # Image coding for ASF/WMA.
 
 def _unpack_asf_image(data):
@@ -184,6 +189,7 @@ def _pack_asf_image(mime, data, type=3, description=""):
     tag_data += description.encode("utf-16-le") + "\x00\x00"
     tag_data += data
     return tag_data
+
 
 
 # iTunes Sound Check encoding.
@@ -247,6 +253,7 @@ def _sc_encode(gain, peak):
     return (u' %08X' * 10) % values
 
 
+
 # Flags for encoding field behavior.
 
 # Determine style of packing, if any.
@@ -255,8 +262,11 @@ packing = enum('SLASHED',   # pair delimited by /
                'DATE',      # YYYY-MM-DD
                'SC',        # Sound Check gain/peak encoding
                name='packing')
-packing_type = packing
 
+
+
+# StorageStyle classes describe strategies for accessing values in
+# Mutagen file objects.
 
 class StorageStyle(object):
     """Parameterizes the storage behavior of a single field for a
@@ -289,11 +299,6 @@ class StorageStyle(object):
         if formats:
             self.formats = formats
 
-        if self.packing == packing_type.DATE:
-            self.packing_length = 3
-        else:
-            self.packing_length = 2
-
         # Convert suffix to correct string type.
         if self.suffix and self.as_type == unicode:
             self.suffix = self.as_type(self.suffix)
@@ -319,8 +324,13 @@ class StorageStyle(object):
 
     def unpack(self, data):
         """Splits raw data from a tag into a list of values."""
+        if self.packing == packing.DATE:
+            packing_length = 3
+        else:
+            packing_length = 2
+
         if data is None:
-            return [None]*self.packing_length
+            return [None] * packing_length
 
         if self.packing == packing.DATE:
             # Remove time information from dates. Usually delimited by
@@ -334,7 +344,7 @@ class StorageStyle(object):
         elif self.packing == packing.SC:
             items = _sc_decode(data)
 
-        return list(items) + [None]*(self.packing_length - len(items))
+        return list(items) + [None] * (packing_length - len(items))
 
     def store(self, mediafile, value):
         """Stores a serialized value in the mediafile."""
@@ -610,6 +620,7 @@ class MP3UFIDStorageStyle(MP3StorageStyle):
             frame = mutagen.id3.UFID(owner=self.owner, data=value)
             mediafile.mgfile.tags.setall(self.key, [frame])
 
+
 class MP3DescStorageStyle(MP3StorageStyle):
 
     def __init__(self, desc=u'', key='TXXX', **kwargs):
@@ -721,7 +732,7 @@ class VorbisImageStorageStyle(ListStorageStyle):
         for data in mediafile.mgfile["metadata_block_picture"]:
             try:
                 pics.append(mutagen.flac.Picture(base64.b64decode(data)).data)
-            except TypeError, AttributeError:
+            except (TypeError, AttributeError):
                 pass
         return pics
 
@@ -772,7 +783,11 @@ class FlacImageStorageStyle(ListStorageStyle):
             mediafile.mgfile.add_picture(pic)
 
 
-# The field itself.
+
+# MediaField is a descriptor that represents a single logical field. It
+# aggregates several StorageStyles describing how to access the data for
+# each file type.
+
 class MediaField(object):
     """A descriptor providing access to a particular (abstract) metadata
     field.
@@ -916,7 +931,8 @@ class ImageField(MediaField):
             style.set(obj, val)
 
 
-# The file (a collection of fields).
+
+# MediaFile is a collection of fields.
 
 class MediaFile(object):
     """Represents a multimedia file on disk and provides access to its

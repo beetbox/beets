@@ -1,7 +1,14 @@
 Changelog
 =========
 
-1.3.4 (February 26, 2014)
+1.3.4 (in development)
+----------------------
+
+* Internally, beets has laid the groundwork for supporting multi-valued
+  fields. Thanks to geigerzaehler.
+
+
+1.3.3 (February 26, 2014)
 -------------------------
 
 Version 1.3.3 brings a bunch changes to how item and album fields work
