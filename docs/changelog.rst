@@ -8,6 +8,8 @@ Changelog
   fields. Thanks to geigerzaehler.
 * Error messages involving paths no longer escape non-ASCII characters (for
   legibility).
+* Added a ``config`` command to show and edit your configuration. Hides
+  details about configuration location and gets you started more easily.
 
 
 1.3.3 (February 26, 2014)
