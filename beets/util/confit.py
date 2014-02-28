@@ -444,6 +444,7 @@ class RootView(ConfigView):
     def root(self):
         return self
 
+
 class Subview(ConfigView):
     """A subview accessed via a subscript of a parent view."""
     def __init__(self, parent, key):
@@ -826,32 +827,29 @@ class Configuration(RootView):
         :param full:      Dump settings that don't differ from the defaults
                           as well
         """
-        out_dict = OrderedDict()
-        default_conf = next(x for x in self.sources if x.default)
-        try:
-            default_keys = list(default_conf.keys())
-        except AttributeError:
-            default_keys = []
-        new_keys = [x for x in self.keys() if not x in default_keys]
-        out_keys = default_keys + new_keys
-        for key in out_keys:
-            # Skip entries unchanged from default config
-            if (not full and key in default_keys
-                    and self[key].get() == default_conf[key]):
-                continue
-            try:
-                out_dict[key] = self[key].flatten()
-            except ConfigTypeError:
-                out_dict[key] = self[key].get()
+        if full:
+            out_dict = self.flatten()
+        else:
+            # Exclude defaults when flattening.
+            sources = [s for s in self.sources if not s.default]
+            out_dict = RootView(sources).flatten()
 
         yaml_out = yaml.dump(out_dict, Dumper=Dumper,
                              default_flow_style=None, indent=4,
                              width=1000)
 
         # Restore comments to the YAML text.
-        with open(default_conf.filename, 'r') as fp:
-            default_data = fp.read()
-        return restore_yaml_comments(yaml_out, default_data)
+        default_source = None
+        for source in self.sources:
+            if source.default:
+                default_source = source
+                break
+        if default_source:
+            with open(default_source.filename, 'r') as fp:
+                default_data = fp.read()
+            yaml_out = restore_yaml_comments(yaml_out, default_data)
+
+        return yaml_out
 
 
 class LazyConfig(Configuration):
