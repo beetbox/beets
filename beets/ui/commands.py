@@ -1250,6 +1250,8 @@ write_cmd.func = write_func
 default_commands.append(write_cmd)
 
 
+# config: Show and edit user configuration.
+
 config_cmd = ui.Subcommand('config', help='show or edit the user configuration')
 config_cmd.parser.add_option('-p', '--paths', action='store_true',
         help='show files that configuration was loaded from')
@@ -1257,25 +1259,19 @@ config_cmd.parser.add_option('-e', '--edit', action='store_true',
         help='edit user configuration with $EDITOR')
 config_cmd.parser.add_option('-d', '--defaults', action='store_true',
         help='include the default configuration')
-def _config_get(view):
-    try:
-        keys = view.keys()
-    except ConfigTypeError:
-        return view.get()
-    else:
-        return dict((key, _config_get(view[key])) for key in view.keys())
 def config_func(lib, opts, args):
     # Make sure lazy configuration is loaded
     config.resolve()
 
-    if not opts.defaults:
-        # Remove default source
-        config.sources = [source for source in config.sources if not source.default]
-
+    # Print paths.
     if opts.paths:
         for source in config.sources:
+            if not opts.defaults and source.default:
+                continue
             if source.filename:
                 print(source.filename)
+
+    # Open in editor.
     elif opts.edit:
         path = config.user_config_path()
 
@@ -1297,9 +1293,10 @@ def config_func(lib, opts, args):
         except OSError:
             raise ui.UserError("Could not edit configuration. Please"
                                "set the EDITOR environment variable.")
+
+    # Dump configuration.
     else:
-        config_dict = _config_get(config)
-        print(yaml.safe_dump(config_dict, default_flow_style=False))
+        print(config.dump(full=opts.defaults))
 
 config_cmd.func = config_func
 default_commands.append(config_cmd)
