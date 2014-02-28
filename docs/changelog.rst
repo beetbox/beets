@@ -8,8 +8,10 @@ Changelog
   fields. Thanks to geigerzaehler.
 * Error messages involving paths no longer escape non-ASCII characters (for
   legibility).
-* Added a ``config`` command to show and edit your configuration. Hides
-  details about configuration location and gets you started more easily.
+* Added a :ref:`config-cmd` command to manage your configuration. It can show
+  you what you currently have in your config file, point you at where the file
+  should be, or launch your text editor to let you modify the file. Thanks to
+  geigerzaehler.
 
 
 1.3.3 (February 26, 2014)

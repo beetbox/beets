@@ -313,20 +313,18 @@ config
     beet config [-pd]
     beet config -e
 
-Show or edit the user configuration. Without any options this command
-prints a YAML representation of the current user configuration. If the
-``--path`` option is given it instead prints the aboslute path to the
-user configuration file. Note that this path may not exist. The
-``--default`` option can be set with or without the ``--path`` option.
-If it is set it also load the default configuration from the beets
-package. Showing the configuration or the paths also works if an
-additional ``--config`` option is given on the command line.
+Show or edit the user configuration. This command does one of three things:
 
-If the ``--edit`` option is given, beets will open the user configuration
-in an editor. If the ``EDITOR`` environment variable is set it uses that
-command to start the editor. Otherwise, beets tries the ``open`` command on
-OSX, the ``xdg-open`` command on Unixes and will try to execute the
-configuration file directly on Windows.
+* With no options, print a YAML representation of the current user
+  configuration. With the ``--default`` option, beets' default options are
+  also included in the dump.
+* The ``--path`` option instead shows the path to your configuration file.
+  This can be combined with the ``--default`` flag to show where beets keeps
+  its internal defaults.
+* With the ``--edit`` option, beets attempts to open your config file for
+  editing. It first tries the ``$EDITOR`` environment variable and then a
+  fallback option depending on your platform: ``open`` on OS X, ``xdg-open``
+  on Unix, and direct invocation on Windows.
 
 .. _global-flags:
 
