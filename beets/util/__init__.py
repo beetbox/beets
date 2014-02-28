@@ -94,16 +94,19 @@ class FilesystemError(HumanReadableException):
     def get_message(self):
         # Use a nicer English phrasing for some specific verbs.
         if self.verb in ('move', 'copy', 'rename'):
-            clause = 'while {0} {1} to {2}'.format(
-                self._gerund(), repr(self.paths[0]), repr(self.paths[1])
+            clause = u'while {0} {1} to {2}'.format(
+                self._gerund(),
+                displayable_path(self.paths[0]),
+                displayable_path(self.paths[1])
             )
         elif self.verb in ('delete', 'write', 'create', 'read'):
-            clause = 'while {0} {1}'.format(
-                self._gerund(), repr(self.paths[0])
+            clause = u'while {0} {1}'.format(
+                self._gerund(),
+                displayable_path(self.paths[0])
             )
         else:
-            clause = 'during {0} of paths {1}'.format(
-                self.verb, u', '.join(repr(p) for p in self.paths)
+            clause = u'during {0} of paths {1}'.format(
+                self.verb, u', '.join(displayable_path(p) for p in self.paths)
             )
 
         return u'{0} {1}'.format(self._reasonstr(), clause)

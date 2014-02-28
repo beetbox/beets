@@ -6,6 +6,8 @@ Changelog
 
 * Internally, beets has laid the groundwork for supporting multi-valued
   fields. Thanks to geigerzaehler.
+* Error messages involving paths no longer escape non-ASCII characters (for
+  legibility).
 
 
 1.3.3 (February 26, 2014)
