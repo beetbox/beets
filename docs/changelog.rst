@@ -1,7 +1,20 @@
 Changelog
 =========
 
-1.3.4 (February 26, 2014)
+1.3.4 (in development)
+----------------------
+
+* Internally, beets has laid the groundwork for supporting multi-valued
+  fields. Thanks to geigerzaehler.
+* Error messages involving paths no longer escape non-ASCII characters (for
+  legibility).
+* Added a :ref:`config-cmd` command to manage your configuration. It can show
+  you what you currently have in your config file, point you at where the file
+  should be, or launch your text editor to let you modify the file. Thanks to
+  geigerzaehler.
+
+
+1.3.3 (February 26, 2014)
 -------------------------
 
 Version 1.3.3 brings a bunch changes to how item and album fields work

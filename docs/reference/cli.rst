@@ -304,6 +304,28 @@ fields
 Show the item and album metadata fields available for use in :doc:`query` and
 :doc:`pathformat`. Includes any template fields provided by plugins.
 
+.. _config-cmd:
+
+config
+``````
+::
+
+    beet config [-pd]
+    beet config -e
+
+Show or edit the user configuration. This command does one of three things:
+
+* With no options, print a YAML representation of the current user
+  configuration. With the ``--default`` option, beets' default options are
+  also included in the dump.
+* The ``--path`` option instead shows the path to your configuration file.
+  This can be combined with the ``--default`` flag to show where beets keeps
+  its internal defaults.
+* With the ``--edit`` option, beets attempts to open your config file for
+  editing. It first tries the ``$EDITOR`` environment variable and then a
+  fallback option depending on your platform: ``open`` on OS X, ``xdg-open``
+  on Unix, and direct invocation on Windows.
+
 .. _global-flags:
 
 Global Flags

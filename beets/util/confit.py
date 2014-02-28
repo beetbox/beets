@@ -402,6 +402,20 @@ class ConfigView(object):
                     'a list'.format(self.name)
                 )
 
+    def flatten(self):
+        """Create a hierarchy of OrderedDicts containing the data from
+        this view, recursively reifying all views to get their
+        represented values.
+        """
+        od = OrderedDict()
+        for key, view in self.items():
+            try:
+                od[key] = view.flatten()
+            except ConfigTypeError:
+                od[key] = view.get()
+        return od
+
+
 class RootView(ConfigView):
     """The base of a view hierarchy. This view keeps track of the
     sources that may be accessed by subviews.
@@ -429,6 +443,7 @@ class RootView(ConfigView):
 
     def root(self):
         return self
+
 
 class Subview(ConfigView):
     """A subview accessed via a subscript of a parent view."""
@@ -539,7 +554,7 @@ def config_dirs():
     return out
 
 
-# YAML.
+# YAML loading.
 
 class Loader(yaml.SafeLoader):
     """A customized YAML loader. This loader deviates from the official
@@ -606,6 +621,101 @@ def load_yaml(filename):
         raise ConfigReadError(filename, exc)
 
 
+# YAML dumping.
+
+class Dumper(yaml.SafeDumper):
+    """A PyYAML Dumper that represents OrderedDicts as ordinary mappings
+    (in order, of course).
+    """
+    # From http://pyyaml.org/attachment/ticket/161/use_ordered_dict.py
+    def represent_mapping(self, tag, mapping, flow_style=None):
+        value = []
+        node = yaml.MappingNode(tag, value, flow_style=flow_style)
+        if self.alias_key is not None:
+            self.represented_objects[self.alias_key] = node
+        best_style = False
+        if hasattr(mapping, 'items'):
+            mapping = list(mapping.items())
+        for item_key, item_value in mapping:
+            node_key = self.represent_data(item_key)
+            node_value = self.represent_data(item_value)
+            if not (isinstance(node_key, yaml.ScalarNode)
+                    and not node_key.style):
+                best_style = False
+            if not (isinstance(node_value, yaml.ScalarNode)
+                    and not node_value.style):
+                best_style = False
+            value.append((node_key, node_value))
+        if flow_style is None:
+            if self.default_flow_style is not None:
+                node.flow_style = self.default_flow_style
+            else:
+                node.flow_style = best_style
+        return node
+
+    def represent_list(self, data):
+        """If a list has less than 4 items, represent it in inline style
+        (i.e. comma separated, within square brackets).
+        """
+        node = super(Dumper, self).represent_list(data)
+        length = len(data)
+        if self.default_flow_style is None and length < 4:
+            node.flow_style = True
+        elif self.default_flow_style is None:
+            node.flow_style = False
+        return node
+
+    def represent_bool(self, data):
+        """Represent bool as 'yes' or 'no' instead of 'true' or 'false'.
+        """
+        if data:
+            value = 'yes'
+        else:
+            value = 'no'
+        return self.represent_scalar('tag:yaml.org,2002:bool', value)
+
+    def represent_none(self, data):
+        """Represent a None value with nothing instead of 'none'.
+        """
+        return self.represent_scalar('tag:yaml.org,2002:null', '')
+
+Dumper.add_representer(OrderedDict, Dumper.represent_dict)
+Dumper.add_representer(bool, Dumper.represent_bool)
+Dumper.add_representer(type(None), Dumper.represent_none)
+Dumper.add_representer(list, Dumper.represent_list)
+
+def restore_yaml_comments(data, default_data):
+    """Scan default_data for comments (we include empty lines in our
+    definition of comments) and place them before the same keys in data.
+    Only works with comments that are on one or more own lines, i.e.
+    not next to a yaml mapping.
+    """
+    comment_map = dict()
+    default_lines = iter(default_data.splitlines())
+    for line in default_lines:
+        if not line:
+            comment = "\n"
+        elif line.startswith("#"):
+            comment = "{0}\n".format(line)
+        else:
+            continue
+        while True:
+            line = next(default_lines)
+            if line and not line.startswith("#"):
+                break
+            comment += "{0}\n".format(line)
+        key = line.split(':')[0].strip()
+        comment_map[key] = comment
+    out_lines = iter(data.splitlines())
+    out_data = ""
+    for line in out_lines:
+        key = line.split(':')[0].strip()
+        if key in comment_map:
+            out_data += comment_map[key]
+        out_data += "{0}\n".format(line)
+    return out_data
+
+
 # Main interface.
 
 class Configuration(RootView):
@@ -629,12 +739,19 @@ class Configuration(RootView):
         if read:
             self.read()
 
+    def user_config_path(self):
+        """Points to the location of the user configuration.
+
+        The file may not exist.
+        """
+        return os.path.join(self.config_dir(), CONFIG_FILENAME)
+
     def _add_user_source(self):
         """Add the configuration options from the YAML file in the
         user's configuration directory (given by `config_dir`) if it
         exists.
         """
-        filename = os.path.join(self.config_dir(), CONFIG_FILENAME)
+        filename = self.user_config_path()
         if os.path.isfile(filename):
             self.add(ConfigSource(load_yaml(filename) or {}, filename))
 
@@ -697,6 +814,43 @@ class Configuration(RootView):
         filename = os.path.abspath(filename)
         self.set(ConfigSource(load_yaml(filename), filename))
 
+    def dump(self, full=True):
+        """Dump the Configuration object to a YAML file.
+
+        The order of the keys is determined from the default
+        configuration file. All keys not in the default configuration
+        will be appended to the end of the file.
+
+        :param filename:  The file to dump the configuration to, or None
+                          if the YAML string should be returned instead
+        :type filename:   unicode
+        :param full:      Dump settings that don't differ from the defaults
+                          as well
+        """
+        if full:
+            out_dict = self.flatten()
+        else:
+            # Exclude defaults when flattening.
+            sources = [s for s in self.sources if not s.default]
+            out_dict = RootView(sources).flatten()
+
+        yaml_out = yaml.dump(out_dict, Dumper=Dumper,
+                             default_flow_style=None, indent=4,
+                             width=1000)
+
+        # Restore comments to the YAML text.
+        default_source = None
+        for source in self.sources:
+            if source.default:
+                default_source = source
+                break
+        if default_source:
+            with open(default_source.filename, 'r') as fp:
+                default_data = fp.read()
+            yaml_out = restore_yaml_comments(yaml_out, default_data)
+
+        return yaml_out
+
 
 class LazyConfig(Configuration):
     """A Configuration at reads files on demand when it is first
@@ -734,3 +888,9 @@ class LazyConfig(Configuration):
             # Buffer additions to beginning.
             self._lazy_prefix[:0] = self.sources
             del self.sources[:]
+
+    def clear(self):
+        """Remove all sources from this configuration."""
+        del self.sources[:]
+        self._lazy_suffix = []
+        self._lazy_prefix = []

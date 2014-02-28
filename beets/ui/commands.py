@@ -22,6 +22,8 @@ import os
 import time
 import itertools
 import codecs
+import yaml
+import platform
 
 import beets
 from beets import ui
@@ -34,6 +36,7 @@ from beets import importer
 from beets import util
 from beets.util import syspath, normpath, ancestry, displayable_path
 from beets.util.functemplate import Template
+from beets.util.confit import ConfigTypeError
 from beets import library
 from beets import config
 
@@ -1245,3 +1248,65 @@ def write_func(lib, opts, args):
     write_items(lib, decargs(args), opts.pretend)
 write_cmd.func = write_func
 default_commands.append(write_cmd)
+
+
+# config: Show and edit user configuration.
+
+config_cmd = ui.Subcommand('config', help='show or edit the user configuration')
+config_cmd.parser.add_option('-p', '--paths', action='store_true',
+        help='show files that configuration was loaded from')
+config_cmd.parser.add_option('-e', '--edit', action='store_true',
+        help='edit user configuration with $EDITOR')
+config_cmd.parser.add_option('-d', '--defaults', action='store_true',
+        help='include the default configuration')
+def config_func(lib, opts, args):
+    # Make sure lazy configuration is loaded
+    config.resolve()
+
+    # Print paths.
+    if opts.paths:
+        filenames = []
+        for source in config.sources:
+            if not opts.defaults and source.default:
+                continue
+            if source.filename:
+                filenames.append(source.filename)
+
+        # In case the user config file does not exist, prepend it to the
+        # list.
+        user_path = config.user_config_path()
+        if user_path not in filenames:
+            filenames.insert(0, user_path)
+
+        for filename in filenames:
+            print(filename)
+
+    # Open in editor.
+    elif opts.edit:
+        path = config.user_config_path()
+
+        if 'EDITOR' in os.environ:
+            editor = os.environ['EDITOR']
+            args = [editor, editor, path]
+        elif platform.system() == 'Darwin':
+            args = ['open', 'open', '-n', path]
+        elif platform.system() == 'Windows':
+            # On windows we can execute arbitrary files. The os will
+            # take care of starting an appropriate application
+            args = [path, path]
+        else:
+            # Assume Unix
+            args = ['xdg-open', 'xdg-open', path]
+
+        try:
+            os.execlp(*args)
+        except OSError:
+            raise ui.UserError("Could not edit configuration. Please"
+                               "set the EDITOR environment variable.")
+
+    # Dump configuration.
+    else:
+        print(config.dump(full=opts.defaults))
+
+config_cmd.func = config_func
+default_commands.append(config_cmd)

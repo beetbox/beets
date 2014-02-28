@@ -272,3 +272,13 @@ def platform_posix():
         yield
     finally:
         os.path = old_path
+
+@contextmanager
+def system_mock(name):
+    import platform
+    old_system = platform.system
+    platform.system = lambda: name
+    try:
+        yield
+    finally:
+        platform.system = old_system
