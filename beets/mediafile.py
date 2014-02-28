@@ -377,8 +377,6 @@ class StorageStyle(object):
                 if item == self._none_value() or item is None:
                     del(items[i:]) # truncate
                     break
-
-        elif self.packing == packing.DATE:
             field_lengths = [4, 2, 2] # YYYY-MM-DD
             elems = []
             for i, item in enumerate(items):
@@ -488,9 +486,6 @@ class MP4StorageStyle(StorageStyle):
             return mutagen_file[self.key][0]
         except KeyError:
             return None
-
-    def store(self, mutagen_file, value):
-        mutagen_file[self.key] = [value]
 
     def serialize(self, value):
         value = super(MP4StorageStyle, self).serialize(value)
