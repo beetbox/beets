@@ -1265,11 +1265,21 @@ def config_func(lib, opts, args):
 
     # Print paths.
     if opts.paths:
+        filenames = []
         for source in config.sources:
             if not opts.defaults and source.default:
                 continue
             if source.filename:
-                print(source.filename)
+                filenames.append(source.filename)
+
+        # In case the user config file does not exist, prepend it to the
+        # list.
+        user_path = config.user_config_path()
+        if user_path not in filenames:
+            filenames.insert(0, user_path)
+
+        for filename in filenames:
+            print(filename)
 
     # Open in editor.
     elif opts.edit:
