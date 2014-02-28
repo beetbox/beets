@@ -599,9 +599,9 @@ def show_model_changes(new, old=None, fields=None, always=False):
     """
     old = old or new._db._get(type(new), new.id)
 
-    # Build up lines showing changes.
+    # Build up lines showing changed or new fields.
     changes = []
-    for field in old:
+    for field in old.keys() + list(set(new.keys()) - set(old.keys())):
         # Subset of the fields. Never show mtime.
         if field == 'mtime' or (fields and field not in fields):
             continue
