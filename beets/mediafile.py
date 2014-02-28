@@ -258,7 +258,6 @@ def _sc_encode(gain, peak):
 
 # Determine style of packing, if any.
 packing = enum('SLASHED',   # pair delimited by /
-               'TUPLE',     # a python tuple of 2 items
                'DATE',      # YYYY-MM-DD
                'SC',        # Sound Check gain/peak encoding
                name='packing')
@@ -286,6 +285,7 @@ class StorageStyle(object):
        point.
     """
 
+    # TODO Use mutagen file types instead of MediaFile formats
     formats = ['flac', 'opus', 'ogg', 'ape', 'wv', 'mpc']
 
     def __init__(self, key, as_type=unicode, packing=None, pack_pos=0,
@@ -339,8 +339,6 @@ class StorageStyle(object):
             items = unicode(data).split('-')
         elif self.packing == packing.SLASHED:
             items = unicode(data).split('/')
-        elif self.packing == packing.TUPLE:
-            items = data # tuple: items is already indexable
         elif self.packing == packing.SC:
             items = _sc_decode(data)
 
@@ -393,8 +391,6 @@ class StorageStyle(object):
             data = '-'.join(elems)
         elif self.packing == packing.SC:
             data = _sc_encode(*items)
-        else:
-            data = tuple(items)
 
         return data
 
@@ -502,8 +498,7 @@ class MP4StorageStyle(StorageStyle):
         mutagen_file[self.key] = [value]
 
     def serialize(self, value):
-        if self.packing != packing.TUPLE:
-            value = super(MP4StorageStyle, self).serialize(value)
+        value = super(MP4StorageStyle, self).serialize(value)
         if self.key.startswith('----:') and isinstance(value, unicode):
             value = value.encode('utf8')
         return value
@@ -513,6 +508,33 @@ class MP4StorageStyle(StorageStyle):
         if self.key.startswith('----:') and isinstance(value, unicode):
             value = value.encode('utf8')
         return value
+
+
+class MP4TupleStorageStyle(MP4StorageStyle):
+    """Store values as part of a numeric pair.
+    """
+
+    def __init__(self, key, pack_pos=0, **kwargs):
+        super(MP4TupleStorageStyle, self).__init__(key, **kwargs)
+        self.pack_pos = pack_pos
+
+    def _fetch_unpacked(self, mutagen_file):
+        data = super(MP4TupleStorageStyle, self).fetch(mutagen_file)
+        if data is None: data = []
+
+        packing_length = 2
+        return list(data) + [0] * (packing_length - len(data))
+
+    def get(self, mutagen_file):
+        data = self._fetch_unpacked(mutagen_file)[self.pack_pos]
+        return self._strip_possible_suffix(data)
+
+    def set(self, mutagen_file, value):
+        if value is None:
+            value = 0
+        data = self._fetch_unpacked(mutagen_file)
+        data[self.pack_pos] = int(value)
+        self.store(mutagen_file, data)
 
 
 class MP4ListStorageStyle(ListStorageStyle, MP4StorageStyle):
@@ -1083,7 +1105,7 @@ class MediaFile(object):
     )
     track = MediaField(
         MP3StorageStyle('TRCK', packing=packing.SLASHED, pack_pos=0),
-        MP4StorageStyle('trkn', packing=packing.TUPLE, pack_pos=0),
+        MP4TupleStorageStyle('trkn', pack_pos=0),
         StorageStyle('TRACK'),
         StorageStyle('TRACKNUMBER'),
         ASFStorageStyle('WM/TrackNumber'),
@@ -1091,7 +1113,7 @@ class MediaFile(object):
     )
     tracktotal = MediaField(
         MP3StorageStyle('TRCK', packing=packing.SLASHED, pack_pos=1),
-        MP4StorageStyle('trkn', packing=packing.TUPLE, pack_pos=1),
+        MP4TupleStorageStyle('trkn', pack_pos=1),
         StorageStyle('TRACKTOTAL'),
         StorageStyle('TRACKC'),
         StorageStyle('TOTALTRACKS'),
@@ -1100,7 +1122,7 @@ class MediaFile(object):
     )
     disc = MediaField(
         MP3StorageStyle('TPOS', packing=packing.SLASHED, pack_pos=0),
-        MP4StorageStyle('disk', packing=packing.TUPLE, pack_pos=0),
+        MP4TupleStorageStyle('disk', pack_pos=0),
         StorageStyle('DISC'),
         StorageStyle('DISCNUMBER'),
         ASFStorageStyle('WM/PartOfSet'),
@@ -1108,7 +1130,7 @@ class MediaFile(object):
     )
     disctotal = MediaField(
         MP3StorageStyle('TPOS', packing=packing.SLASHED, pack_pos=1),
-        MP4StorageStyle('disk', packing=packing.TUPLE, pack_pos=1),
+        MP4TupleStorageStyle('disk', pack_pos=1),
         StorageStyle('DISCTOTAL'),
         StorageStyle('DISCC'),
         StorageStyle('TOTALDISCS'),
