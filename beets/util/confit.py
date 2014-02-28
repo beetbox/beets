@@ -813,7 +813,7 @@ class Configuration(RootView):
         filename = os.path.abspath(filename)
         self.set(ConfigSource(load_yaml(filename), filename))
 
-    def dump(self, filename=None, full=True):
+    def dump(self, full=True):
         """Dump the Configuration object to a YAML file.
 
         The order of the keys is determined from the default
@@ -851,14 +851,7 @@ class Configuration(RootView):
         # Restore comments to the YAML text.
         with open(default_conf.filename, 'r') as fp:
             default_data = fp.read()
-        yaml_out = restore_yaml_comments(yaml_out, default_data)
-
-        # Return the YAML or write it to a file.
-        if filename is None:
-            return yaml_out
-        else:
-            with open(filename, 'w') as fp:
-                fp.write(yaml_out)
+        return restore_yaml_comments(yaml_out, default_data)
 
 
 class LazyConfig(Configuration):
