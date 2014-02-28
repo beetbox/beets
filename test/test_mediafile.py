@@ -343,7 +343,7 @@ class ReadWriteTestBase(ArtTestMixin):
         return MediaFile(target)
 
     def _generate_tags(self, base=None):
-        """Make a dict of tags with correct values and consitent dates.
+        """Return dictionary of tags, mapping tag names to values.
         """
         tags = {}
         if base is None:
@@ -353,7 +353,7 @@ class ReadWriteTestBase(ArtTestMixin):
             if key == 'art':
                 tags[key] = self.jpg_data
             elif isinstance(value, unicode):
-                tags[key] = 'value %s' % key
+                tags[key] = 'value\u2010%s' % key
             elif isinstance(value, int):
                 tags[key] = 1
             elif isinstance(value, float):
