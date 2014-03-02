@@ -204,7 +204,7 @@ class DuplicatesPlugin(BeetsPlugin):
             if checksum:
                 for i in items:
                     k, _ = _checksum(i, checksum)
-                keys = ['k']
+                keys = [k]
 
             for obj_id, obj_count, objs in _duplicates(items,
                                                        keys=keys,
