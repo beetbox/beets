@@ -17,6 +17,7 @@
 import os
 import shutil
 import re
+import subprocess
 
 import _common
 from _common import unittest
@@ -849,6 +850,46 @@ class PluginTest(_common.TestCase):
         config['pluginpath'] = [os.path.join(_common.RSRC, 'beetsplug')]
         config['plugins'] = ['test']
         ui._raw_main(['test'])
+
+
+class CompletionTest(_common.TestCase):
+
+    def test_completion(self):
+        # Load plugin commands
+        config['pluginpath'] = [os.path.join(_common.RSRC, 'beetsplug')]
+        config['plugins'] = ['test']
+
+        test_script = os.path.join(os.path.dirname(__file__),
+                'test_completion.sh')
+        bash_completion = os.path.abspath(os.environ.get(
+            'BASH_COMPLETION_SCRIPT', '/etc/bash_completion'))
+
+        # Tests run in bash
+        shell = os.environ.get('BEETS_TEST_SHELL', '/bin/bash --norc')
+        tester = subprocess.Popen(shell.split(' '), stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE)
+
+        # Load bash_completion
+        with open(bash_completion, 'r') as bash_completion:
+            tester.stdin.writelines(bash_completion)
+
+        # Load complection script
+        self.io.install()
+        ui._raw_main(['completion'])
+        completion_script = self.io.getoutput()
+        self.io.restore()
+        tester.stdin.writelines(completion_script)
+        # from beets import plugins
+        # for cmd in plugins.commands():
+        #     print(cmd.name)
+
+        # Load testsuite
+        with open(test_script, 'r') as test_script:
+            tester.stdin.writelines(test_script)
+        (out, err) = tester.communicate()
+        if tester.returncode != 0 or out != "completion tests passed\n":
+            print(out)
+            self.fail('test/test_completion.sh did not execute properly')
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

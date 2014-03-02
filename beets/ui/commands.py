@@ -39,6 +39,7 @@ from beets.util.functemplate import Template
 from beets.util.confit import ConfigTypeError
 from beets import library
 from beets import config
+from beets.util.confit import _package_path
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -1310,3 +1311,93 @@ def config_func(lib, opts, args):
 
 config_cmd.func = config_func
 default_commands.append(config_cmd)
+
+
+# completion: print completion script
+
+completion_cmd = ui.Subcommand('completion',
+        help='print shell script that provides command line completion')
+def print_completion(*args):
+    for line in completion_script(default_commands + plugins.commands()):
+        print(line, end='')
+    if not (os.path.isfile(u'/etc/bash_completion') or
+       os.path.isfile(u'/usr/share/bash-completion/bash_completion') or
+       os.path.isfile(u'/usr/share/local/bash-completion/bash_completion')):
+        log.warn(u'Warning: Unable to find the bash-completion package. '
+                 u'Command line completion might not work.')
+
+def completion_script(commands):
+    """Yield the full completion shell script as strings.
+
+    ``commands`` is alist of ``ui.Subcommand`` instances to generate
+    completion data for.
+    """
+    base_script = os.path.join(_package_path('beets.ui'), 'completion_base.sh')
+    with open(base_script, 'r') as base_script:
+        yield base_script.read()
+
+    options = {}
+    aliases = {}
+    command_names = []
+
+    # Collect subcommands
+    for cmd in commands:
+        name = cmd.name
+        command_names.append(name)
+
+        for alias in cmd.aliases:
+            aliases[alias] = name
+
+        options[name] = {'flags': [], 'opts': []}
+        for opts in cmd.parser._get_all_options()[1:]:
+            if opts.action in ('store_true', 'store_false'):
+                option_type = 'flags'
+            else:
+                option_type = 'opts'
+
+            options[name][option_type].extend(opts._short_opts + opts._long_opts)
+
+    # Add global options
+    options['_global'] = {
+        'flags': ['-v', '--verbose'],
+        'opts': '-l --library -c --config -d --directory -h --help'.split(' ')
+    }
+
+    # Help subcommand
+    command_names.append('help')
+
+    # Add flags common to all commands
+    options['_common'] = {
+        'flags': ['-h', '--help']
+    }
+
+    # Start generating the script
+    yield "_beet() {\n"
+
+    # Command names
+    yield "  local commands='%s'\n" % ' '.join(command_names)
+    yield "\n"
+
+    # Command aliases
+    yield "  local aliases='%s'\n" % ' '.join(aliases.keys())
+    for alias, cmd in aliases.items():
+        yield "  local alias__%s=%s\n" % (alias, cmd)
+    yield '\n'
+
+    # Fields
+    yield "  fields='%s'\n" % ' '.join(
+            set(library.ITEM_KEYS + library.ALBUM_KEYS))
+
+    # Command options
+    for cmd, opts in options.items():
+        for option_type, option_list in opts.items():
+            if option_list:
+                option_list = ' '.join(option_list)
+                yield "  local %s__%s='%s'\n" % (option_type, cmd, option_list)
+
+    yield '  _beet_dispatch\n'
+    yield '}\n'
+
+
+completion_cmd.func = print_completion
+default_commands.append(completion_cmd)
