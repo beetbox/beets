@@ -52,7 +52,8 @@ def _checksum(item, prog):
     output as flexattr on a key that is the name of the program, and
     return the key, checksum tuple.
     """
-    args = shlex.split(prog.format(file=item.path))
+    args = [p.format(file=item.path) for p in shlex.split(prog)]
+    print args
     key = args[0]
     checksum = getattr(item, key, False)
     if not checksum:
