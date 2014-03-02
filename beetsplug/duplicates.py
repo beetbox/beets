@@ -53,7 +53,6 @@ def _checksum(item, prog):
     return the key, checksum tuple.
     """
     args = [p.format(file=item.path) for p in shlex.split(prog)]
-    print args
     key = args[0]
     checksum = getattr(item, key, False)
     if not checksum:
