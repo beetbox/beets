@@ -785,9 +785,10 @@ class ArtDestinationTest(_common.TestCase):
         self.assertEqual(os.path.dirname(art), os.path.dirname(track))
 
     def test_art_path_sanitized(self):
-        config['art_filename'] = u'artXimage'
-        art = self.ai.art_destination('something.jpg')
-        self.assert_('artYimage' in art)
+        self.ai.album = 'X'
+        config['art_filename'] = u'X-$album'
+        art = self.ai.art_destination('orig.jpg')
+        self.assert_('X-Y' in art)
 
 
 class PathStringTest(_common.TestCase):

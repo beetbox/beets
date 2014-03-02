@@ -445,7 +445,7 @@ def unique_path(path):
 
 def build_sanitized_path(components,
         replacements=None,
-        max_length=MAX_FILENAME_LENGTH):
+        max_length=None):
     """Sanitize each component by applying replacements, replacing path
     separators, and truncating, then joins them.
 
@@ -474,7 +474,7 @@ PATHSEP_REGEXP = re.compile(
 
 
 def sanitize_path_component(component,
-        max_length=MAX_FILENAME_LENGTH,
+        max_length=None,
         preserve_extension=False):
     """Return a modified version of component suitable for use in a path.
 
@@ -487,17 +487,41 @@ def sanitize_path_component(component,
     reserved on some filesystems, e.g. ``:`` on NTFS.
     """
     ext = u''
-    if preserve_extension:
-        component, ext = os.path.splitext(component)
-        max_length -= len(ext)
-    component = component[:max_length] + ext
-
+    component = truncate_path_component(component, max_length, preserve_extension)
     component = PATHSEP_REGEXP.sub(PATHSEP_REPLACEMENT, component)
+    return normalize_path(component)
 
+def truncate_path(path, max_length=None):
+    path_components = components(path)
+
+    basename = path_components.pop()
+    path_components = [truncate_path_component(component, max_length)
+                  for component in path_components]
+    basename = truncate_path_component(basename, max_length,
+            preserve_extension=True)
+
+    path_components.append(basename)
+    return os.path.join(*path_components)
+
+def truncate_path_component(component, max_length=None, preserve_extension=False):
+    if max_length is None:
+        max_length = MAX_FILENAME_LENGTH
+
+    # Truncate to max_length
+    if max_length > 0:
+        if preserve_extension:
+            component, ext = os.path.splitext(component)
+        else:
+            ext = u''
+        component = component[:max_length-len(ext)] + ext
+
+    return component
+
+def normalize_path(path):
     if sys.platform == 'darwin':
-        return unicodedata.normalize('NFD', component)
+        return unicodedata.normalize('NFD', path)
     else:
-        return unicodedata.normalize('NFC', component)
+        return unicodedata.normalize('NFC', path)
 
 def str2bool(value):
     """Returns a boolean reflecting a human-entered string."""

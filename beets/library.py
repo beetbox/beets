@@ -25,7 +25,8 @@ from unidecode import unidecode
 from beets.mediafile import MediaFile
 from beets import plugins
 from beets import util
-from beets.util import bytestring_path, syspath, normpath, samefile
+from beets.util import bytestring_path, syspath, normpath, samefile, \
+        build_sanitized_path
 from beets.util.functemplate import Template
 from beets import dbcore
 from beets.dbcore import types
@@ -543,23 +544,17 @@ class Item(LibModel):
             else:
                 assert False, "no default path format"
 
-        # Evaluate the selected template.
-        path_components = self.evaluate_path_template(path_format)
-
         # Append original extension as unicode
         _, extension = os.path.splitext(self.path)
         extension = extension.decode('utf8', 'ignore').lower()
-        path_components[-1] += extension
 
         # Determine maximal filename length
-        maxlen = beets.config['max_filename_length'].get(int)
-        if not maxlen:
-            # When zero, try to determine from filesystem.
-            maxlen = util.max_filename_length(basedir)
+        max_length = beets.config['max_filename_length'].get(int) or \
+                     util.max_filename_length(basedir)
 
-        subpath = util.build_sanitized_path(path_components,
-                replacements=self._db.replacements,
-                max_length=maxlen)
+        # Evaluate the template with patz sanitization
+        subpath = self.evaluate_path_template(path_format, extension,
+                self._db.replacements, max_length)
 
         if fragment:
             return subpath
@@ -694,17 +689,14 @@ class Album(LibModel):
 
         # Append original extension as unicode
         _, extension = os.path.splitext(image)
-        path_components[-1] += extension
+        extension = extension.decode('utf8', 'ignore').lower()
 
         # Determine maximal filename length
-        maxlen = beets.config['max_filename_length'].get(int)
-        if not maxlen:
-            # When zero, try to determine from filesystem.
-            maxlen = util.max_filename_length(item_dir)
+        max_length = beets.config['max_filename_length'].get(int) or \
+                     util.max_filename_length(item_dir)
 
-        subpath = util.build_sanitized_path(path_components,
-                replacements=self._db.replacements,
-                max_length=maxlen)
+        subpath = self.evaluate_path_template(filename_tmpl, extension,
+                self._db.replacements, max_length)
 
         return normpath(os.path.join(item_dir, subpath))
 
@@ -1167,7 +1159,14 @@ class DefaultTemplateFunctions(object):
         # Flatten disambiguation value into a string.
         disam_value = album._get_formatted(disambiguator)
         res = u' [{0}]'.format(disam_value)
+
+        # FIXME dirty hack to get sanitized values from this function
+        # The problem is that instead of asking the environment for
+        # sanitized values it queries the item directly
+        res = build_sanitized_path([res], self.lib.replacements, 0)
+
         self.lib._memotable[memokey] = res
+
         return res
 
 

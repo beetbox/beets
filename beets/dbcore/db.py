@@ -24,6 +24,7 @@ import contextlib
 import beets
 from beets.util.functemplate import Template
 from .query import MatchQuery
+from beets import util
 
 
 
@@ -404,17 +405,26 @@ class Model(object):
             template = Template(template)
         return template.substitute(mapping, funcs)
 
-    def evaluate_path_template(self, template_string):
-        """Split template into path components and return an array
-        with each component evaluated as a template.
-
-        It uses the systems path separator to split the template.
+    def evaluate_path_template(self, template, extension=u'',
+            replacements=None, max_length=None):
+        """Evaluates template with variable values sanitized for
+        usage in paths.
         """
-        if isinstance(template_string, Template):
-            template_string = template_string.original
+        mapping = {}
+        for name, value in self._formatted_mapping().items():
+            mapping[name] = util.build_sanitized_path([value], replacements,
+                    max_length)
 
-        components = beets.util.components(template_string)
-        return [self.evaluate_template(component) for component in components]
+        funcs = self._template_funcs()
+
+        if isinstance(template, basestring):
+            template = Template(template)
+
+        path = template.substitute(mapping, funcs) + extension
+        path = util.truncate_path(path, max_length)
+        return util.normalize_path(path)
+
+
 
     # Parsing.
 
