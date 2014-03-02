@@ -19,6 +19,8 @@ Fixes:
   legibility).
 * Fixed a regression that made it impossible to use the :ref:`modify-cmd`
   command to add new flexible fields. Thanks to brilnius.
+* :doc:`/plugins/echonest`: Avoid crashing when the audio analysis fails.
+  Thanks to Pedro Silva.
 
 
 1.3.3 (February 26, 2014)
