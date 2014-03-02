@@ -19,7 +19,7 @@ import logging
 
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_obj, vararg_callback, Subcommand, UserError
-from beets.util import command_output, displayable_path
+from beets.util import command_output, displayable_path, subprocess
 
 PLUGIN = 'duplicates'
 log = logging.getLogger('beets')
@@ -64,7 +64,7 @@ def _checksum(item, prog):
             item.store()
             log.debug('%s: computed checksum for %s using %s',
                       PLUGIN, item.title, key)
-        except Exception as e:
+        except subprocess.CalledProcessError as e:
             log.debug('%s: failed to checksum %s: %s',
                       PLUGIN, displayable_path(item.path), e)
     else:
