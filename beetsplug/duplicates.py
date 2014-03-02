@@ -74,8 +74,8 @@ def _checksum(item, prog):
 
 
 def _group_by(objs, keys):
-    """Return a dictionary whose keys are arbitrary concatenations of attributes
-    and whose values are lists of objects (Albums or Items) with those keys.
+    """Return a dictionary with keys arbitrary concatenations of attributes and
+    values lists of objects (Albums or Items) with those keys.
     """
     import collections
     counts = collections.defaultdict(list)
@@ -86,13 +86,12 @@ def _group_by(objs, keys):
 
 
 def _duplicates(objs, keys, full):
-    """Generate triples of MBIDs, duplicate counts, and constituent
-    objects.
+    """Generate triples of keys, duplicate counts, and constituent objects.
     """
     offset = 0 if full else 1
-    for mbid, objs in _group_by(objs, keys).iteritems():
+    for k, objs in _group_by(objs, keys).iteritems():
         if len(objs) > 1:
-            yield (mbid, len(objs) - offset, objs[offset:])
+            yield (k, len(objs) - offset, objs[offset:])
 
 
 class DuplicatesPlugin(BeetsPlugin):
