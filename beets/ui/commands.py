@@ -23,7 +23,6 @@ import time
 import itertools
 import codecs
 from datetime import datetime
-from pkg_resources import resource_string
 
 import beets
 from beets import ui
@@ -39,6 +38,7 @@ from beets.util.functemplate import Template
 from beets import library
 from beets import config
 from beets.ui.completion import completion_script
+from beets.util.confit import _package_path
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -1307,7 +1307,9 @@ def completion_script(commands):
     ``commands`` is alist of ``ui.Subcommand`` instances to generate
     completion data for.
     """
-    yield resource_string(__name__, 'completion_base.sh')
+    base_script = os.path.join(_package_path('beets.ui'), 'completion_base.sh')
+    with open(base_script, 'r') as base_script:
+        yield base_script.read()
 
     options = {}
     aliases = {}
