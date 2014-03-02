@@ -17,8 +17,8 @@
 # Completion for the `beet` command
 # =================================
 #
-# Load this script to complete beets subcommands, global options, and
-# subcommand options.
+# Load this script to complete beets subcommands, options, and
+# queries.
 #
 # If a beets command is found on the command line it completes filenames and
 # the subcommand's options. Otherwise it will complete global options and
@@ -40,11 +40,6 @@
 #
 #     beet ls -f "$tit[TAB]
 #     beet ls -f "$title
-#
-# * Complete queries.
-#
-#     beet ls art[TAB]
-#     beet ls artist:
 #
 # * Complete plugin commands by dynamically checking which commands are
 #   available.
