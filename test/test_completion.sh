@@ -156,6 +156,15 @@ test_help_command() {
   true
 }
 
+test_plugin_command() {
+  initcli te &&
+  completes test &&
+
+  initcli test - &&
+  completes -o --option &&
+  true
+}
+
 run_tests() {
   local tests=$(set | \
     grep --extended-regexp --only-matching '^test_[a-zA-Z_]* \(\) $' |\

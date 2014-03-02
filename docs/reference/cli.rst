@@ -316,10 +316,9 @@ completion
 
 Print a shell script that enables command line completion.
 
-The script completes the names of builtin subcommands and (after typing
-``-``) options of the given command. Currently, it does not support
-plugin commands. If you are using a command that accepts a query, the
-script will also complete field names. ::
+The script completes the names of subcommands and (after typing
+``-``) options of the given command. If you are using a command that
+accepts a query, the script will also complete field names. ::
 
     beet list ar[TAB]
     # artist:  artist_credit:  artist_sort:  artpath:
@@ -329,7 +328,11 @@ script will also complete field names. ::
 Don't worry about the slash in front of the colon: This is a escape
 sequence for the shell and won't be seen by beets.
 
-To enable completion in your current shell, run ``eval "$(beet
+Note that completion of plugin commands only works for those plugins
+that were enabled when running ``beet completion``. If you add a plugin
+later on you might want to re-generate the script.
+
+To enable completion in your current shell, type ``eval "$(beet
 completion)"``. If you want to use it permanently, load the script from
 your shell's rc-file.
 

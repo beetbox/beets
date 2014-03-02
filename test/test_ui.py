@@ -746,6 +746,10 @@ class PluginTest(_common.TestCase):
 class CompletionTest(_common.TestCase):
 
     def test_completion(self):
+        # Load plugin commands
+        config['pluginpath'] = [os.path.join(_common.RSRC, 'beetsplug')]
+        config['plugins'] = ['test']
+
         test_script = os.path.join(os.path.dirname(__file__),
                 'test_completion.sh')
         bash_completion = os.path.abspath(os.environ.get(
@@ -766,6 +770,9 @@ class CompletionTest(_common.TestCase):
         completion_script = self.io.getoutput()
         self.io.restore()
         tester.stdin.writelines(completion_script)
+        # from beets import plugins
+        # for cmd in plugins.commands():
+        #     print(cmd.name)
 
         # Load testsuite
         with open(test_script, 'r') as test_script:

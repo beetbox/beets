@@ -26,10 +26,12 @@
 # it also completes filenames or directories.  Options are only
 # completed if '-' has already been typed on the command line.
 #
-# Note that completion only works for builtin commands and *not* for
-# commands provided by plugins.
+# Note that completion of plugin commands only works for those plugins
+# that were enabled when running `beet completion`. It does not check
+# plugins dynamically
 #
-# Currently, only Bash 3.2 and newer is supported.
+# Currently, only Bash 3.2 and newer is supported and the
+# `bash-completion` package is requied.
 #
 # TODO
 # ----
@@ -40,9 +42,6 @@
 #
 #     beet ls -f "$tit[TAB]
 #     beet ls -f "$title
-#
-# * Complete plugin commands by dynamically checking which commands are
-#   available.
 #
 # * Support long options with `=`, e.g. `--config=file`. Debian's bash
 #   completion package can handle this.

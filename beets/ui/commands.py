@@ -1292,7 +1292,7 @@ default_commands.append(write_cmd)
 completion_cmd = ui.Subcommand('completion',
         help='print shell script that provides command line completion')
 def print_completion(*args):
-    for line in completion_script(default_commands):
+    for line in completion_script(default_commands + plugins.commands()):
         print(line, end='')
     if not (os.path.isfile(u'/etc/bash_completion') or
        os.path.isfile(u'/usr/share/bash-completion/bash_completion') or
