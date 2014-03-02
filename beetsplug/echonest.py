@@ -126,6 +126,10 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             except (pyechonest.util.EchoNestIOError, socket.error) as e:
                 log.warn(u'echonest: IO error: {0}'.format(e))
                 time.sleep(RETRY_INTERVAL)
+            except Exception as e:
+                # there was an error analyzing the track, status: error
+                log.debug(u'echonest: {0}'.format(e))
+                return None
             else:
                 break
         else:
@@ -228,7 +232,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             log.debug(u'echonest: codegen failed: {0}'.format(e))
             return
 
-        if not res or 'code' not in res[0]:
+        if not res or 'code' not in res[0] or not res[0]['code']:
             log.debug(u'echonest: no fingerprint returned')
             return
         code = res[0]['code']
