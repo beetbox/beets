@@ -21,6 +21,8 @@ Fixes:
   command to add new flexible fields. Thanks to brilnius.
 * :doc:`/plugins/echonest`: Avoid crashing when the audio analysis fails.
   Thanks to Pedro Silva.
+* :doc:`/plugins/duplicates`: Fix checksumming command execution for files
+  with quotation marks in their names. Thanks again to Pedro Silva.
 
 
 1.3.3 (February 26, 2014)
