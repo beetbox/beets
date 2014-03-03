@@ -832,7 +832,7 @@ def vararg_callback(option, opt_str, value, parser):
             break
         value.append(arg)
 
-    del parser.rargs[:len(value)]
+    del parser.rargs[:len(value)-1]
     setattr(parser.values, option.dest, value)
 
 
