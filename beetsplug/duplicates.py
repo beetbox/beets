@@ -19,7 +19,7 @@ import logging
 
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_obj, vararg_callback, Subcommand, UserError
-from beets.util import command_output, displayable_path
+from beets.util import command_output, displayable_path, subprocess
 
 PLUGIN = 'duplicates'
 log = logging.getLogger('beets')
@@ -52,7 +52,7 @@ def _checksum(item, prog):
     output as flexattr on a key that is the name of the program, and
     return the key, checksum tuple.
     """
-    args = shlex.split(prog.format(file=item.path))
+    args = [p.format(file=item.path) for p in shlex.split(prog)]
     key = args[0]
     checksum = getattr(item, key, False)
     if not checksum:
@@ -64,7 +64,7 @@ def _checksum(item, prog):
             item.store()
             log.debug('%s: computed checksum for %s using %s',
                       PLUGIN, item.title, key)
-        except Exception as e:
+        except subprocess.CalledProcessError as e:
             log.debug('%s: failed to checksum %s: %s',
                       PLUGIN, displayable_path(item.path), e)
     else:
@@ -74,8 +74,8 @@ def _checksum(item, prog):
 
 
 def _group_by(objs, keys):
-    """Return a dictionary whose keys are arbitrary concatenations of attributes
-    and whose values are lists of objects (Albums or Items) with those keys.
+    """Return a dictionary with keys arbitrary concatenations of attributes and
+    values lists of objects (Albums or Items) with those keys.
     """
     import collections
     counts = collections.defaultdict(list)
@@ -86,13 +86,12 @@ def _group_by(objs, keys):
 
 
 def _duplicates(objs, keys, full):
-    """Generate triples of MBIDs, duplicate counts, and constituent
-    objects.
+    """Generate triples of keys, duplicate counts, and constituent objects.
     """
     offset = 0 if full else 1
-    for mbid, objs in _group_by(objs, keys).iteritems():
+    for k, objs in _group_by(objs, keys).iteritems():
         if len(objs) > 1:
-            yield (mbid, len(objs) - offset, objs[offset:])
+            yield (k, len(objs) - offset, objs[offset:])
 
 
 class DuplicatesPlugin(BeetsPlugin):
@@ -204,7 +203,7 @@ class DuplicatesPlugin(BeetsPlugin):
             if checksum:
                 for i in items:
                     k, _ = _checksum(i, checksum)
-                keys = ['k']
+                keys = [k]
 
             for obj_id, obj_count, objs in _duplicates(items,
                                                        keys=keys,

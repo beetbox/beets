@@ -17,9 +17,12 @@ Command-Line Interface
 
         beet COMMAND [ARGS...]
 
-    The rest of this document describes the available commands. If you ever need
-    a quick list of what's available, just type ``beet help`` or ``beet help
-    COMMAND`` for help with a specific command.
+    Beets also offers command line completion via the `completion`_
+    command.  The rest of this document describes the available
+    commands. If you ever need a quick list of what's available, just
+    type ``beet help`` or ``beet help COMMAND`` for help with a specific
+    command.
+
 
 Commands
 --------
@@ -325,6 +328,41 @@ Show or edit the user configuration. This command does one of three things:
   editing. It first tries the ``$EDITOR`` environment variable and then a
   fallback option depending on your platform: ``open`` on OS X, ``xdg-open``
   on Unix, and direct invocation on Windows.
+
+
+completion
+``````````
+
+::
+
+    beet completion
+
+Print a shell script that enables command line completion.
+
+The script completes the names of subcommands and (after typing
+``-``) options of the given command. If you are using a command that
+accepts a query, the script will also complete field names. ::
+
+    beet list ar[TAB]
+    # artist:  artist_credit:  artist_sort:  artpath:
+    beet list artp[TAB]
+    beet list artpat\:
+
+Don't worry about the slash in front of the colon: This is a escape
+sequence for the shell and won't be seen by beets.
+
+Note that completion of plugin commands only works for those plugins
+that were enabled when running ``beet completion``. If you add a plugin
+later on you might want to re-generate the script.
+
+To enable completion in your current shell, type ``eval "$(beet
+completion)"``. If you want to use it permanently, load the script from
+your shell's rc-file.
+
+Completion is only tested to work on Bash 3.2 and newer. It also
+requires the ``bash-completion`` package which is available OSX (through
+*homebrew* or *ports*) and Linuxes.
+
 
 .. _global-flags:
 
