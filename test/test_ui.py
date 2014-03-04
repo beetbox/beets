@@ -30,6 +30,7 @@ from beets import importer
 from beets.mediafile import MediaFile
 from beets import config
 from beets import plugins
+from beets.util.confit import ConfigError
 
 
 class ListTest(_common.TestCase):
@@ -682,6 +683,12 @@ class ConfigTest(_common.TestCase):
 
         config.read()
         self.assertEqual(config['anoption'].get(), 'overwrite')
+
+    def test_beetsdir_points_to_file_error(self):
+        beetsdir = os.path.join(self.temp_dir, 'beetsfile')
+        open(beetsdir, 'a').close()
+        os.environ['BEETSDIR'] = beetsdir
+        self.assertRaises(ConfigError, ui._raw_main, 'test')
 
     def test_beetsdir_config_does_not_load_default_user_config(self):
         os.environ['BEETSDIR'] = self.beetsdir
