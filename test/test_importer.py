@@ -729,6 +729,15 @@ class GroupAlbumsImportTest(_common.TestCase, ImportHelper):
         artists = set([album.albumartist for album in self.lib.albums()])
         self.assertEqual(artists, set(['Artist B', 'Tag Artist']))
 
+    def test_incremental(self):
+        config['import']['incremental'] = True
+        self.import_media[0].album  = "Album B"
+        self.import_media[0].save()
+
+        self.importer.run()
+        albums = set([album.album for album in self.lib.albums()])
+        self.assertEqual(albums, set(['Album B', 'Tag Album']))
+
 class GlobalGroupAlbumsImportTest(GroupAlbumsImportTest):
 
     def setUp(self):
