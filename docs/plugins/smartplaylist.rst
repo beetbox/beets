@@ -44,6 +44,14 @@ For more advanced usage, you can use template syntax (see
 This will query all the songs in 2010 and 2011 and generate the two playlist
 files `ReleasedIn2010.m3u` and `ReleasedIn2011.m3u` using those songs.
 
+You can also gather the results of several queries by putting them in a list. By
+default duplicates are removed, but you can keep all of them with the
+``keep_duplicate: yes`` additional directive. For example::
+
+    - query: ['artist:beatles', 'genre:"beatles cover"']
+      name: 'BeatlesUniverse.m3u'
+      keep_duplicate: yes
+
 By default, all playlists are regenerated after every beets command that
 changes the library database. To force regeneration, you can invoke it manually
 from the command line::
