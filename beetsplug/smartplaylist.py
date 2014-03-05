@@ -35,7 +35,18 @@ def update_playlists(lib):
         relative_to = normpath(relative_to)
 
     for playlist in playlists:
-        items = lib.items(library.get_query(playlist['query'], library.Item))
+        # Default is to not keep_duplicate
+        keep_duplicate = playlist.has_key('keep_duplicate') and \
+            playlist['keep_duplicate']
+
+        # Query attribute could be a single query or a list of queries
+        queries = playlist['query']
+        if not isinstance(queries, (list, tuple)):
+            queries = [queries]
+        items = []
+        for query in queries:
+            items.extend(lib.items(library.get_query(query, library.Item)))
+
         m3us = {}
         basename = playlist['name'].encode('utf8')
         # As we allow tags in the m3u names, we'll need to iterate through
@@ -44,10 +55,12 @@ def update_playlists(lib):
             m3u_name = item.evaluate_template(basename, True)
             if not (m3u_name in m3us):
                 m3us[m3u_name] = []
+            item_path = item.path
             if relative_to:
-                m3us[m3u_name].append(os.path.relpath(item.path, relative_to))
-            else:
-                m3us[m3u_name].append(item.path)
+                item_path = os.path.relpath(item.path, relative_to)
+            # Check if we want to add the item.
+            if keep_duplicate or not item_path in m3us[m3u_name]:
+                m3us[m3u_name].append(item_path)
         # Now iterate through the m3us that we need to generate
         for m3u in m3us:
             m3u_path = normpath(os.path.join(playlist_dir, m3u))
