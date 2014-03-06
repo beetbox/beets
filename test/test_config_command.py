@@ -5,6 +5,7 @@ from beets import ui
 from beets import config
 
 import _common
+from _common import unittest
 
 
 class ConfigCommandTest(_common.TestCase):
@@ -113,3 +114,10 @@ class ConfigCommandTest(_common.TestCase):
     def execlp_restore(self):
         if hasattr(self, '_orig_execlp'):
             os.execlp = self._orig_execlp
+
+
+def suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
+
+if __name__ == '__main__':
+    unittest.main(defaultTest='suite')
