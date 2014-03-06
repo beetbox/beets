@@ -290,6 +290,8 @@ means that the user should be prompted when resuming is possible. The ``-p``
 and ``-P`` flags correspond to the "yes" and "no" settings and override this
 option.
 
+.. _incremental:
+
 incremental
 ~~~~~~~~~~~
 

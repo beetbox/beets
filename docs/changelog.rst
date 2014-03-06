@@ -25,6 +25,8 @@ Fixes:
   Thanks to Pedro Silva.
 * :doc:`/plugins/duplicates`: Fix checksumming command execution for files
   with quotation marks in their names. Thanks again to Pedro Silva.
+* Fix a crash when importing with both of the :ref:`group_albums` and
+  :ref:`incremental` options enabled. Thanks to geigerzaehler.
 
 
 1.3.3 (February 26, 2014)
