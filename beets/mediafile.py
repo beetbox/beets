@@ -94,9 +94,6 @@ def _safe_cast(out_type, val):
     returned. out_type should be bool, int, or unicode; otherwise, the
     value is just passed through.
     """
-    if isinstance(val, mutagen.asf.ASFBaseAttribute):
-        val = val.value
-
     if out_type == int:
         if val is None:
             return 0
@@ -453,6 +450,13 @@ class ListStorageStyle(StorageStyle):
 
 class ASFStorageStyle(StorageStyle):
     formats = ['asf']
+
+    def fetch(self, mutagen_file):
+        data = super(ASFStorageStyle,self).fetch(mutagen_file)
+        if isinstance(data, mutagen.asf.ASFBaseAttribute):
+            data = data.value
+        return data
+
 
 
 class MP4StorageStyle(StorageStyle):
