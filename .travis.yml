@@ -13,8 +13,8 @@ install:
     - travis_retry pip install pylast flask
     # unittest backport on Python < 2.7
     - "[[ $TRAVIS_PYTHON_VERSION == '2.6' ]] && pip install unittest2 || true"
-    - sudo apt-get update
-    - sudo apt-get install -qq bash-completion
+    - travis_retry sudo apt-get update
+    - travis_retry sudo apt-get install -qq bash-completion
 
 script: nosetests --with-coverage --cover-package=beets
 
