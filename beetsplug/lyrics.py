@@ -151,6 +151,7 @@ def _lw_encode(s):
 def fetch_lyricswiki(artist, title):
     """Fetch lyrics from LyricsWiki."""
     url = LYRICSWIKI_URL_PATTERN % (_lw_encode(artist), _lw_encode(title))
+    log.debug("Attempting to fetch %s from LyricsWiki" % url)
     html = fetch_url(url)
     if not html:
         return
@@ -434,18 +435,37 @@ class LyricsPlugin(BeetsPlugin):
                               (item.artist, item.title))
             return
 
+        # Remove "featuring" artists from artist.
+        artist = item.artist
+        pattern = u"(.*?)\s+feat(uring|[.])?\s+.*"
+        match = re.search(pattern, artist, re.IGNORECASE)
+        if match:
+            artist = match.group(1)
+
+        # Remove "featuring" artists from title (as placed there by the ftintitle plugin)
+        title = item.title
+        match = re.search(pattern, title, re.IGNORECASE)
+        if match:
+            title = match.group(1)
+
+        # Remove a parenthesized suffix - common examples are (live), (remix), (acoustic)
+        pattern = u"(.*?)\s+[(][^()]+[)]$"
+        match = re.search(pattern, title, re.IGNORECASE)
+        if match:
+            title = match.group(1)
+
         # Fetch lyrics.
-        lyrics = self.get_lyrics(item.artist, item.title)
+        lyrics = self.get_lyrics(artist, title)
         if not lyrics:
             log.log(loglevel, u'lyrics not found: %s - %s' %
-                              (item.artist, item.title))
+                              (artist, title))
             if fallback:
                 lyrics = fallback
             else:
                 return
         else:
             log.log(loglevel, u'fetched lyrics: %s - %s' %
-                              (item.artist, item.title))
+                              (artist, title))
 
         item.lyrics = lyrics
 
@@ -457,11 +477,6 @@ class LyricsPlugin(BeetsPlugin):
         """Fetch lyrics, trying each source in turn. Return a string or
         None if no lyrics were found.
         """
-        # Remove featuring artists from search.
-        pattern = u"(.*) feat(uring|\.)?\s\S+"
-        match = re.search(pattern, artist, re.IGNORECASE)
-        if match:
-            artist = match.group(0)
 
         for backend in self.backends:
             lyrics = backend(artist, title)
