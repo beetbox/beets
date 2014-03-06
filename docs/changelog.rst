@@ -12,6 +12,8 @@ New stuff:
   geigerzaehler.
 * Internally, beets has laid the groundwork for supporting multi-valued
   fields. Thanks to geigerzaehler.
+* The importer interface now shows the URL for MusicBrainz matches. Thanks to
+  johtso.
 
 Fixes:
 
