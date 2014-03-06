@@ -34,6 +34,9 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
 
 * On **FreeBSD**, there's a `beets port`_ at ``audio/beets``.
 
+* For **Slackware**, there's a `SlackBuild`_ available.
+
+.. _SlackBuild: http://slackbuilds.org/repository/14.1/multimedia/beets/
 .. _beets port: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
 .. _beets from AUR: http://aur.archlinux.org/packages.php?ID=39577
 .. _dev package: http://aur.archlinux.org/packages.php?ID=48617
