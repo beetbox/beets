@@ -456,13 +456,31 @@ class LyricsPlugin(BeetsPlugin):
 
         # Fetch lyrics.
         lyrics = self.get_lyrics(artist, title)
+
         if not lyrics:
-            log.log(loglevel, u'lyrics not found: %s - %s' %
-                              (artist, title))
-            if fallback:
-                lyrics = fallback
-            else:
-                return
+            # Check for a dual song (e.g. Pink Floyd - Speak to Me / Breathe)
+            pattern = u"^(.*?)\s+[/]\s+(.*)$"
+            match = re.search(pattern, title)
+            if match:
+                song1 = match.group(1)
+                song2 = match.group(2)
+                first = self.get_lyrics(artist, song1)
+                second = self.get_lyrics(artist, song2)
+                if first and second:
+                    log.debug("Found lyrics for %s and %s after searching separately" % (song1, song2))
+                    lyrics = u"%s:\n\n%s\n\n%s:\n\n%s" % (song1, first, song2, second)
+                elif second:
+                    lyrics = second
+                else:
+                    lyrics = first  # includes fail/fail case
+
+            if not lyrics:
+                log.log(loglevel, u'lyrics not found: %s - %s' %
+                                  (artist, title))
+                if fallback:
+                    lyrics = fallback
+                else:
+                    return
         else:
             log.log(loglevel, u'fetched lyrics: %s - %s' %
                               (artist, title))
