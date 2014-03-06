@@ -17,6 +17,8 @@
 import os
 import shutil
 
+import mutagen
+
 import _common
 from _common import unittest
 import beets.mediafile
@@ -80,6 +82,10 @@ class InvalidValueToleranceTest(unittest.TestCase):
 
     def test_safe_cast_string_to_bool(self):
         self.assertEqual(_sc(bool, 'whatever'), False)
+
+    def test_safe_cast_asfunicodeattribute_to_bool(self):
+        self.assertEqual(_sc(bool, mutagen.asf.ASFUnicodeAttribute('foo')),
+                         False)
 
     def test_safe_cast_intstring_to_bool(self):
         self.assertEqual(_sc(bool, '5'), True)

@@ -94,6 +94,9 @@ def _safe_cast(out_type, val):
     returned. out_type should be bool, int, or unicode; otherwise, the
     value is just passed through.
     """
+    if isinstance(val, mutagen.asf.ASFBaseAttribute):
+        val = val.value
+
     if out_type == int:
         if val is None:
             return 0
@@ -116,11 +119,8 @@ def _safe_cast(out_type, val):
             return False
         else:
             try:
-                if isinstance(val, mutagen.asf.ASFBoolAttribute):
-                    return val.value
-                else:
-                    # Should work for strings, bools, ints:
-                    return bool(int(val))
+                # Should work for strings, bools, ints:
+                return bool(int(val))
             except ValueError:
                 return False
 
