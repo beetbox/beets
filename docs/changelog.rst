@@ -27,6 +27,8 @@ Fixes:
   with quotation marks in their names. Thanks again to Pedro Silva.
 * Fix a crash when importing with both of the :ref:`group_albums` and
   :ref:`incremental` options enabled. Thanks to geigerzaehler.
+* Give a sensible error message when ``BEETSDIR`` points to a file. Thanks
+  again to geigerzaehler.
 
 
 1.3.3 (February 26, 2014)
