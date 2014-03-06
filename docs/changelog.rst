@@ -29,6 +29,8 @@ Fixes:
   :ref:`incremental` options enabled. Thanks to geigerzaehler.
 * Give a sensible error message when ``BEETSDIR`` points to a file. Thanks
   again to geigerzaehler.
+* Fix a crash when reading WMA files whose boolean-valued fields contain
+  strings. Thanks to johtso.
 
 
 1.3.3 (February 26, 2014)
