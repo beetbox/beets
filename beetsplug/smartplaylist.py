@@ -35,10 +35,6 @@ def update_playlists(lib):
         relative_to = normpath(relative_to)
 
     for playlist in playlists:
-        # Default is to not keep_duplicate
-        keep_duplicate = playlist.has_key('keep_duplicate') and \
-            playlist['keep_duplicate']
-
         # Query attribute could be a single query or a list of queries
         queries = playlist['query']
         if not isinstance(queries, (list, tuple)):
@@ -58,9 +54,7 @@ def update_playlists(lib):
             item_path = item.path
             if relative_to:
                 item_path = os.path.relpath(item.path, relative_to)
-            # Check if we want to add the item.
-            if keep_duplicate or not item_path in m3us[m3u_name]:
-                m3us[m3u_name].append(item_path)
+            m3us[m3u_name].append(item_path)
         # Now iterate through the m3us that we need to generate
         for m3u in m3us:
             m3u_path = normpath(os.path.join(playlist_dir, m3u))

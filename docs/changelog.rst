@@ -14,6 +14,8 @@ New stuff:
   fields. Thanks to geigerzaehler.
 * The importer interface now shows the URL for MusicBrainz matches. Thanks to
   johtso.
+* :doc:`/plugins/smartplaylist`: Playlists can now be generated from multiple
+  queries (combined with "or" logic). Thanks to brilnius.
 
 Fixes:
 
