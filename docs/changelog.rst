@@ -12,6 +12,8 @@ New stuff:
   geigerzaehler.
 * Internally, beets has laid the groundwork for supporting multi-valued
   fields. Thanks to geigerzaehler.
+* The importer interface now shows the URL for MusicBrainz matches. Thanks to
+  johtso.
 
 Fixes:
 
@@ -23,6 +25,12 @@ Fixes:
   Thanks to Pedro Silva.
 * :doc:`/plugins/duplicates`: Fix checksumming command execution for files
   with quotation marks in their names. Thanks again to Pedro Silva.
+* Fix a crash when importing with both of the :ref:`group_albums` and
+  :ref:`incremental` options enabled. Thanks to geigerzaehler.
+* Give a sensible error message when ``BEETSDIR`` points to a file. Thanks
+  again to geigerzaehler.
+* Fix a crash when reading WMA files whose boolean-valued fields contain
+  strings. Thanks to johtso.
 
 
 1.3.3 (February 26, 2014)

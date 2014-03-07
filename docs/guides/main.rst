@@ -21,8 +21,9 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
   official package (`Debian details`_, `Ubuntu details`_), so try typing:
   ``apt-get install beets``. But the version in the repositories might lag
   behind, so make sure you read the right version of these docs. If you want
-  the latest version, you can get everything you need by running:
-  ``apt-get install python-dev python-setuptools python-pip``
+  the latest version, you can get everything you need to install with pip
+  as described below by running:
+  ``apt-get install python-dev python-pip``
 
 * On **Arch Linux**, `beets is in [community]`_, so just run ``pacman -S
   beets``. (There's also a bleeding-edge `dev package`_ in the AUR, which will
@@ -34,6 +35,9 @@ You will need Python. (Beets is written for `Python 2.7`_, but it works with
 
 * On **FreeBSD**, there's a `beets port`_ at ``audio/beets``.
 
+* For **Slackware**, there's a `SlackBuild`_ available.
+
+.. _SlackBuild: http://slackbuilds.org/repository/14.1/multimedia/beets/
 .. _beets port: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
 .. _beets from AUR: http://aur.archlinux.org/packages.php?ID=39577
 .. _dev package: http://aur.archlinux.org/packages.php?ID=48617

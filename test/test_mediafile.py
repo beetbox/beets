@@ -256,6 +256,19 @@ class ReadWriteTestBase(ArtTestMixin):
         self.assertEqual(mediafile.original_day, 30)
         self.assertEqual(mediafile.original_date, datetime.date(1999,12,30))
 
+    def test_write_incomplete_date_components(self):
+        mediafile = self._mediafile_fixture('empty')
+        mediafile.year = 2001
+        mediafile.month = None
+        mediafile.day = 2
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(mediafile.year, 2001)
+        self.assertEqual(mediafile.month, 0)
+        self.assertEqual(mediafile.day, 0)
+        self.assertEqual(mediafile.date, datetime.date(2001,1,1))
+
     def test_write_dates(self):
         mediafile = self._mediafile_fixture('full')
         mediafile.date = datetime.date(2001,1,2)
@@ -487,6 +500,19 @@ class OggTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
         'bitdepth': 0,
         'channels': 1,
     }
+    def test_read_date_from_year_tag(self):
+        mediafile = self._mediafile_fixture('year')
+        self.assertEqual(mediafile.year, 2000)
+        self.assertEqual(mediafile.date, datetime.date(2000,1,1))
+
+    def test_write_date_to_year_tag(self):
+        mediafile = self._mediafile_fixture('empty')
+        mediafile.year = 2000
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(mediafile.mgfile['YEAR'], [u'2000'])
+
 class FlacTest(ReadWriteTestBase, PartialTestMixin,
                GenreListTestMixin, unittest.TestCase):
     extension = 'flac'

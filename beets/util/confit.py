@@ -794,7 +794,9 @@ class Configuration(RootView):
             appdir = os.environ[self._env_var]
             appdir = os.path.abspath(os.path.expanduser(appdir))
             if os.path.isfile(appdir):
-                raise ConfigError('%s must be a directory' % self._env_var)
+                raise ConfigError('{0} must be a directory'.format(
+                    self._env_var
+                ))
 
         else:
             # Search platform-specific locations. If no config file is

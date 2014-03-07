@@ -18,6 +18,7 @@ import logging
 import musicbrainzngs
 import re
 import traceback
+from urlparse import urljoin
 
 import beets.autotag.hooks
 import beets
@@ -26,6 +27,7 @@ from beets import config
 
 SEARCH_LIMIT = 5
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
+BASE_URL = 'http://musicbrainz.org/'
 
 musicbrainzngs.set_useragent('beets', beets.__version__,
                              'http://beets.radbox.org/')
@@ -48,6 +50,12 @@ log = logging.getLogger('beets')
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits', 'aliases']
 TRACK_INCLUDES = ['artists', 'aliases']
+
+def track_url(trackid):
+    return urljoin(BASE_URL, 'recording/' + trackid)
+
+def album_url(albumid):
+    return urljoin(BASE_URL, 'release/' + albumid)
 
 def configure():
     """Set up the python-musicbrainz-ngs module according to settings
@@ -148,6 +156,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
         medium=medium,
         medium_index=medium_index,
         medium_total=medium_total,
+        data_url=track_url(recording['id']),
     )
 
     if recording.get('artist-credit'):
@@ -232,6 +241,7 @@ def album_info(release):
         artist_sort=artist_sort_name,
         artist_credit=artist_credit_name,
         data_source='MusicBrainz',
+        data_url=album_url(release['id']),
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
     info.asin = release.get('asin')
