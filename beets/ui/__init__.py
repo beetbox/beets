@@ -641,7 +641,7 @@ class Subcommand(object):
     """A subcommand of a root command-line application that may be
     invoked by a SubcommandOptionParser.
     """
-    def __init__(self, name, parser=None, help='', aliases=()):
+    def __init__(self, name, parser=None, help='', aliases=(), hide=False):
         """Creates a new subcommand. name is the primary way to invoke
         the subcommand; aliases are alternate names. parser is an
         OptionParser responsible for parsing the subcommand's options.
@@ -652,6 +652,7 @@ class Subcommand(object):
         self.parser = parser or optparse.OptionParser()
         self.aliases = aliases
         self.help = help
+        self.hide = hide
 
 class SubcommandsOptionParser(optparse.OptionParser):
     """A variant of OptionParser that parses subcommands and their
@@ -709,7 +710,8 @@ class SubcommandsOptionParser(optparse.OptionParser):
         # Also determine the help position.
         disp_names = []
         help_position = 0
-        for subcommand in self.subcommands:
+        subcommands = [c for c in self.subcommands if not c.hide]
+        for subcommand in subcommands:
             name = subcommand.name
             if subcommand.aliases:
                 name += ' (%s)' % ', '.join(subcommand.aliases)
@@ -721,7 +723,7 @@ class SubcommandsOptionParser(optparse.OptionParser):
                 help_position = max(help_position, proposed_help_position)
 
         # Add each subcommand to the output.
-        for subcommand, name in zip(self.subcommands, disp_names):
+        for subcommand, name in zip(subcommands, disp_names):
             # Lifted directly from optparse.py.
             name_width = help_position - formatter.current_indent - 2
             if len(name) > name_width:

@@ -1401,4 +1401,5 @@ def completion_script(commands):
 
 
 completion_cmd.func = print_completion
+completion_cmd.hide = True
 default_commands.append(completion_cmd)
