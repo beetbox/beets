@@ -251,14 +251,6 @@ def _sc_encode(gain, peak):
 
 
 
-# Flags for encoding field behavior.
-
-# Determine style of packing, if any.
-packing = enum('SC',        # Sound Check gain/peak encoding
-               name='packing')
-
-
-
 # StorageStyle classes describe strategies for accessing values in
 # Mutagen file objects.
 
@@ -268,11 +260,6 @@ class StorageStyle(object):
      - key: The Mutagen key used to access the field's data.
      - as_type: Which type the value is stored as (unicode, int,
        bool, or str).
-     - packing: If this value is packed in a multiple-value storage
-       unit, which type of packing (in the packing enum). Otherwise,
-       None. (Makes as_type irrelevant).
-     - pack_pos: If the value is packed, in which position it is
-       stored.
      - suffix: When `as_type` is a string type, append this before
        storing the value.
      - float_places: When the value is a floating-point number and
@@ -283,12 +270,10 @@ class StorageStyle(object):
     # TODO Use mutagen file types instead of MediaFile formats
     formats = ['flac', 'opus', 'ogg', 'ape', 'wv', 'mpc']
 
-    def __init__(self, key, as_type=unicode, packing=None, pack_pos=0,
-                 suffix=None, float_places=2, formats=None):
+    def __init__(self, key, as_type=unicode, suffix=None,
+                 float_places=2, formats=None):
         self.key = key
         self.as_type = as_type
-        self.packing = packing
-        self.pack_pos = pack_pos
         self.suffix = suffix
         self.float_places = float_places
         if formats:
@@ -306,61 +291,19 @@ class StorageStyle(object):
             return None
 
     def get(self, mutagen_file):
-        """Retrieve the unpacked value of this field from the mediafile."""
         data = self.fetch(mutagen_file)
-        if self.packing:
-            try:
-                data = self.unpack(data)[self.pack_pos]
-            except IndexError:
-                data = None
-
         data = self._strip_possible_suffix(data)
         return data
-
-    def unpack(self, data):
-        """Splits raw data from a tag into a list of values."""
-        packing_length = 2
-
-        if data is None:
-            return [None] * packing_length
-
-        if self.packing == packing.SC:
-            items = _sc_decode(data)
-
-        return list(items) + [None] * (packing_length - len(items))
 
     def store(self, mutagen_file, value):
         """Stores a serialized value in the mediafile."""
         mutagen_file[self.key] = [value]
 
     def set(self, mutagen_file, value):
-        """Packs, serializes and stores the value in the mediafile."""
         if value is None:
             value = self._none_value()
-
-        if self.packing:
-            data = self.fetch(mutagen_file)
-            value = self.pack(data, value)
-
         value = self.serialize(value)
         self.store(mutagen_file, value)
-
-    def pack(self, data, value):
-        """Pack value into data.
-
-        It unpacks ``data`` into a list, updates the value at ``self.pack_pos``
-        and returns the updated list.
-        """
-        items = list(self.unpack(data))
-        for i in range(len(items)):
-            if not items[i]:
-                items[i] = self._none_value()
-
-        items[self.pack_pos] = value
-        if self.packing == packing.SC:
-            data = _sc_encode(*items)
-
-        return data
 
     def serialize(self, value):
         """Convert value to a type that is suitable for storing in a tag."""
@@ -387,7 +330,6 @@ class StorageStyle(object):
         return value
 
     def _none_value(self):
-        """The value that ``None`` atains when serializing and packing."""
         if self.out_type == int:
             return 0
         elif self.out_type == float:
@@ -411,9 +353,6 @@ class ListStorageStyle(StorageStyle):
     Subclasses may overwrite ``fetch`` and ``store``.  ``fetch`` must
     return a (possibly empty) list and ``store`` receives a serialized
     list of values as the second argument.
-
-    This class does not support packing. A call to the packing methods
-    raises an error.
     """
 
     def get(self, mutagen_file):
@@ -441,11 +380,25 @@ class ListStorageStyle(StorageStyle):
     def store(self, mutagen_file, values):
         mutagen_file[self.key] = values
 
-    def pack(self, data, value):
-        raise NotImplementedError('packing is not implemented for lists')
 
-    def unpack(self, data):
-        raise NotImplementedError('packing is not implemented for lists')
+class SoundCheckStorageStyleMixin(object):
+
+    def get(self, mutagen_file):
+        data = self.fetch(mutagen_file)
+        if data is None:
+            return 0
+        else:
+            return _sc_decode(data)[self.index]
+
+    def set(self, mutagen_file, value):
+        data = self.fetch(mutagen_file)
+        if data is None:
+            gain_peak = [0, 0]
+        else:
+            gain_peak = list(_sc_decode(data))
+        gain_peak[self.index] = value or 0
+        data = self.serialize(_sc_encode(*gain_peak))
+        self.store(mutagen_file, data)
 
 
 class ASFStorageStyle(StorageStyle):
@@ -456,7 +409,6 @@ class ASFStorageStyle(StorageStyle):
         if isinstance(data, mutagen.asf.ASFBaseAttribute):
             data = data.value
         return data
-
 
 
 class MP4StorageStyle(StorageStyle):
@@ -471,12 +423,6 @@ class MP4StorageStyle(StorageStyle):
 
     def serialize(self, value):
         value = super(MP4StorageStyle, self).serialize(value)
-        if self.key.startswith('----:') and isinstance(value, unicode):
-            value = value.encode('utf8')
-        return value
-
-    def pack(self, data, value):
-        value = super(MP4StorageStyle, self).pack(data, value)
         if self.key.startswith('----:') and isinstance(value, unicode):
             value = value.encode('utf8')
         return value
@@ -510,6 +456,12 @@ class MP4TupleStorageStyle(MP4StorageStyle):
 class MP4ListStorageStyle(ListStorageStyle, MP4StorageStyle):
     pass
 
+
+class MP4SoundCheckStorageStyle(SoundCheckStorageStyleMixin, MP4StorageStyle):
+
+    def __init__(self, index=0, **kwargs):
+        super(MP4SoundCheckStorageStyle, self).__init__(**kwargs)
+        self.index = index
 
 class MP4BoolStorageStyle(MP4StorageStyle):
 
@@ -701,6 +653,13 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
             data=image
         )
         mutagen_file.tags.setall(self.key, [frame])
+
+
+class MP3SoundCheckStorageStyle(SoundCheckStorageStyleMixin, MP3DescStorageStyle):
+
+    def __init__(self, index=0, **kwargs):
+        super(MP3SoundCheckStorageStyle, self).__init__(**kwargs)
+        self.index = index
 
 
 class ASFImageStorageStyle(ListStorageStyle):
@@ -1398,16 +1357,16 @@ class MediaFile(object):
                      float_places=2, suffix=u' dB'),
         MP3DescStorageStyle(u'replaygain_track_gain',
                      float_places=2, suffix=u' dB'),
-        MP3DescStorageStyle(key='COMM', desc=u'iTunNORM', id3_lang='eng',
-                     packing=packing.SC, pack_pos=0),
-        MP4StorageStyle('----:com.apple.iTunes:replaygain_track_gain',
+        MP3SoundCheckStorageStyle(key='COMM', index=0, desc=u'iTunNORM',
+                     id3_lang='eng'),
+        MP4StorageStyle(key='----:com.apple.iTunes:replaygain_track_gain',
                      float_places=2, suffix=b' dB'),
-        MP4StorageStyle('----:com.apple.iTunes:iTunNORM',
-                     packing=packing.SC, pack_pos=0),
+        MP4SoundCheckStorageStyle(key='----:com.apple.iTunes:iTunNORM',
+                     index=0),
         StorageStyle(u'REPLAYGAIN_TRACK_GAIN',
-                         float_places=2, suffix=u' dB'),
+                     float_places=2, suffix=u' dB'),
         ASFStorageStyle(u'replaygain_track_gain',
-                         float_places=2, suffix=u' dB'),
+                     float_places=2, suffix=u' dB'),
         out_type=float
     )
     rg_album_gain = MediaField(
@@ -1415,12 +1374,12 @@ class MediaFile(object):
                      float_places=2, suffix=u' dB'),
         MP3DescStorageStyle(u'replaygain_album_gain',
                      float_places=2, suffix=u' dB'),
-        MP4StorageStyle('----:com.apple.iTunes:replaygain_album_gain',
-                         float_places=2, suffix=b' dB'),
+        MP4SoundCheckStorageStyle(key='----:com.apple.iTunes:iTunNORM',
+                     index=1),
         StorageStyle(u'REPLAYGAIN_ALBUM_GAIN',
-                         float_places=2, suffix=u' dB'),
+                     float_places=2, suffix=u' dB'),
         ASFStorageStyle(u'replaygain_album_gain',
-                         float_places=2, suffix=u' dB'),
+                     float_places=2, suffix=u' dB'),
         out_type=float
     )
     rg_track_peak = MediaField(
@@ -1428,16 +1387,16 @@ class MediaFile(object):
                      float_places=6),
         MP3DescStorageStyle(u'replaygain_track_peak',
                      float_places=6),
-        MP3DescStorageStyle(key='COMM', desc=u'iTunNORM', id3_lang='eng',
-                     packing=packing.SC, pack_pos=1),
+        MP3SoundCheckStorageStyle(key='COMM', index=1, desc=u'iTunNORM',
+                     id3_lang='eng'),
         MP4StorageStyle('----:com.apple.iTunes:replaygain_track_peak',
                      float_places=6),
-        MP4StorageStyle('----:com.apple.iTunes:iTunNORM',
-                     packing=packing.SC, pack_pos=1),
+        MP4SoundCheckStorageStyle(key='----:com.apple.iTunes:iTunNORM',
+                     index=1),
         StorageStyle(u'REPLAYGAIN_TRACK_PEAK',
-                         float_places=6),
+                     float_places=6),
         ASFStorageStyle(u'replaygain_track_peak',
-                         float_places=6),
+                     float_places=6),
         out_type=float,
     )
     rg_album_peak = MediaField(
