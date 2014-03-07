@@ -257,8 +257,7 @@ def _sc_encode(gain, peak):
 # Flags for encoding field behavior.
 
 # Determine style of packing, if any.
-packing = enum('DATE',      # YYYY-MM-DD
-               'SC',        # Sound Check gain/peak encoding
+packing = enum('SC',        # Sound Check gain/peak encoding
                name='packing')
 
 
@@ -323,20 +322,12 @@ class StorageStyle(object):
 
     def unpack(self, data):
         """Splits raw data from a tag into a list of values."""
-        if self.packing == packing.DATE:
-            packing_length = 3
-        else:
-            packing_length = 2
+        packing_length = 2
 
         if data is None:
             return [None] * packing_length
 
-        if self.packing == packing.DATE:
-            # Remove time information from dates. Usually delimited by
-            # a "T" or a space.
-            data = re.sub(r'[Tt ].*$', '', unicode(data))
-            items = unicode(data).split('-')
-        elif self.packing == packing.SC:
+        if self.packing == packing.SC:
             items = _sc_decode(data)
 
         return list(items) + [None] * (packing_length - len(items))
@@ -369,20 +360,7 @@ class StorageStyle(object):
                 items[i] = self._none_value()
 
         items[self.pack_pos] = value
-
-        if self.packing == packing.DATE:
-            # Truncate the items wherever we reach an invalid (none)
-            # entry. This prevents dates like 2008-00-05.
-            for i, item in enumerate(items):
-                if item == self._none_value() or item is None:
-                    del(items[i:]) # truncate
-                    break
-            field_lengths = [4, 2, 2] # YYYY-MM-DD
-            elems = []
-            for i, item in enumerate(items):
-                elems.append('{0:0{1}}'.format(int(item), field_lengths[i]))
-            data = '-'.join(elems)
-        elif self.packing == packing.SC:
+        if self.packing == packing.SC:
             data = _sc_encode(*items)
 
         return data
@@ -851,7 +829,8 @@ class MediaField(object):
             if mediafile.type in style.formats:
                 yield style
 
-    def __get__(self, mediafile, owner):
+    def __get__(self, mediafile, owner=None):
+        out = None
         for style in self.styles(mediafile):
             out = style.get(mediafile.mgfile)
             if out:
@@ -889,43 +868,89 @@ class ListMediaField(MediaField):
         return MediaField(*self._styles, **options)
 
 
-class CompositeDateField(MediaField):
-    """A MediaFile field for conveniently accessing the year, month, and
-    day fields as a datetime.date object. Allows both getting and
-    setting of the component fields.
-    """
-    def __init__(self, year_field, month_field, day_field):
-        """Create a new date field from the indicated MediaFields for
-        the component values.
-        """
-        self.year_field = year_field
-        self.month_field = month_field
-        self.day_field = day_field
+class DateField(MediaField):
+    """Descriptor that handles serializing and deserializing dates
 
-    def __get__(self, mediafile, owner):
-        """Return a datetime.date object whose components indicating the
-        smallest valid date whose components are at least as large as
-        the three component fields (that is, if year == 1999, month == 0,
-        and day == 0, then date == datetime.date(1999, 1, 1)). If the
-        components indicate an invalid date (e.g., if month == 47),
-        datetime.date.min is returned.
+    The getter parses value from tags into a ``datetime.date`` instance
+    and setter serializes such an instance into a string.
+
+    For granular access to year, month, and day, use the ``*_field``
+    methods to create corresponding ``DateItemFields``.
+    """
+
+    def __init__(self, *date_styles, **kwargs):
+        """``date_styles`` is a list of ``StorageStyle``s to store and
+        retrieve the whole date from. The ``year`` option is an
+        additional list of fallback styles for the year. The year is
+        always set on this style, but is only retrieved if the main
+        storage styles do not return a value.
         """
+        super(DateField, self).__init__(*date_styles)
+        year_style = kwargs.get('year', None)
+        if year_style:
+            self._year_field = MediaField(*year_style)
+
+    def __get__(self, mediafile, owner=None):
+        year, month, day = self._get_date_tuple(mediafile)
         try:
             return datetime.date(
-                max(self.year_field.__get__(mediafile, owner), datetime.MINYEAR),
-                max(self.month_field.__get__(mediafile, owner), 1),
-                max(self.day_field.__get__(mediafile, owner), 1)
+                year or datetime.MINYEAR,
+                month or 1,
+                day or 1
             )
         except ValueError:  # Out of range values.
             return datetime.date.min
 
     def __set__(self, mediafile, date):
-        """Set the year, month, and day fields to match the components of
-        the provided datetime.date object.
-        """
-        self.year_field.__set__(mediafile, date.year)
-        self.month_field.__set__(mediafile, date.month)
-        self.day_field.__set__(mediafile, date.day)
+        self._set_date_tuple(mediafile, date.year, date.month, date.day)
+
+    def _get_date_tuple(self, mediafile):
+        datestring = MediaField.__get__(self, mediafile, None)
+        datestring = re.sub(r'[Tt ].*$', '', unicode(datestring))
+        items = unicode(datestring).split('-')
+        items = items + [None]*(3 - len(items))
+        if not items[0] and hasattr(self, '_year_field'):
+            # Fallback to addition year field
+            items[0] = self._year_field.__get__(mediafile)
+        return [int(item or 0) for item in items]
+
+    def _set_date_tuple(self, mediafile, year, month=None, day=None):
+        date = [year or 0]
+        if month:
+            date.append(month)
+        if month and day:
+            date.append(day)
+        date = map(unicode, date)
+        super(DateField, self).__set__(mediafile, '-'.join(date))
+
+        if hasattr(self, '_year_field'):
+            self._year_field.__set__(mediafile, year)
+
+    def year_field(self):
+        return DateItemField(self, 0)
+
+    def month_field(self):
+        return DateItemField(self, 1)
+
+    def day_field(self):
+        return DateItemField(self, 2)
+
+
+class DateItemField(MediaField):
+    """Descriptor that gets and sets parts of a ``DateField``.
+    """
+
+    def __init__(self, date_field, item_pos):
+        self.date_field = date_field
+        self.item_pos = item_pos
+
+    def __get__(self, mediafile, _):
+        return self.date_field._get_date_tuple(mediafile)[self.item_pos]
+
+    def __set__(self, mediafile, value):
+        items = self.date_field._get_date_tuple(mediafile)
+        items[self.item_pos] = value
+        self.date_field._set_date_tuple(mediafile, *items)
 
 
 class ImageField(MediaField):
@@ -1278,60 +1303,27 @@ class MediaFile(object):
     )
 
     # Release date.
-    year = MediaField(
-        MP3StorageStyle('TDRC', packing=packing.DATE, pack_pos=0),
-        MP4StorageStyle("\xa9day", packing=packing.DATE, pack_pos=0),
-        StorageStyle('DATE', packing=packing.DATE, pack_pos=0),
-        StorageStyle('YEAR'),
-        ASFStorageStyle('WM/Year', packing=packing.DATE, pack_pos=0),
-        out_type=int,
-    )
-    month = MediaField(
-        MP3StorageStyle('TDRC', packing=packing.DATE, pack_pos=1),
-        MP4StorageStyle("\xa9day", packing=packing.DATE, pack_pos=1),
-        StorageStyle('DATE', packing=packing.DATE, pack_pos=1),
-        ASFStorageStyle('WM/Year', packing=packing.DATE, pack_pos=1),
-        out_type=int,
-    )
-    day = MediaField(
-        MP3StorageStyle('TDRC', packing=packing.DATE, pack_pos=2),
-        MP4StorageStyle("\xa9day", packing=packing.DATE, pack_pos=2),
-        StorageStyle('DATE', packing=packing.DATE, pack_pos=2),
-        ASFStorageStyle('WM/Year', packing=packing.DATE, pack_pos=2),
-        out_type=int,
-    )
-    date = CompositeDateField(year, month, day)
+    date = DateField(
+        MP3StorageStyle('TDRC'),
+        MP4StorageStyle("\xa9day"),
+        StorageStyle('DATE'),
+        ASFStorageStyle('WM/Year'),
+        year=(StorageStyle('YEAR'),))
+
+    year = date.year_field()
+    month = date.month_field()
+    day = date.day_field()
 
     # *Original* release date.
-    original_year = MediaField(
-        MP3StorageStyle('TDOR', packing=packing.DATE, pack_pos=0),
-        MP4StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR',
-                         packing=packing.DATE, pack_pos=0),
-        StorageStyle('ORIGINALDATE', packing=packing.DATE, pack_pos=0),
-        ASFStorageStyle('WM/OriginalReleaseYear', packing=packing.DATE,
-                         pack_pos=0),
-        out_type=int,
-    )
-    original_month = MediaField(
-        MP3StorageStyle('TDOR', packing=packing.DATE, pack_pos=1),
-        MP4StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR',
-                         packing=packing.DATE, pack_pos=1),
-        StorageStyle('ORIGINALDATE', packing=packing.DATE, pack_pos=1),
-        ASFStorageStyle('WM/OriginalReleaseYear', packing=packing.DATE,
-                         pack_pos=1),
-        out_type=int,
-    )
-    original_day = MediaField(
-        MP3StorageStyle('TDOR', packing=packing.DATE, pack_pos=2),
-        MP4StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR',
-                         packing=packing.DATE, pack_pos=2),
-        StorageStyle('ORIGINALDATE', packing=packing.DATE, pack_pos=2),
-        ASFStorageStyle('WM/OriginalReleaseYear', packing=packing.DATE,
-                         pack_pos=2),
-        out_type=int,
-    )
-    original_date = CompositeDateField(original_year, original_month,
-                                       original_day)
+    original_date = DateField(
+        MP3StorageStyle('TDOR'),
+        MP4StorageStyle('----:com.apple.iTunes:ORIGINAL YEAR'),
+        StorageStyle('ORIGINALDATE'),
+        ASFStorageStyle('WM/OriginalReleaseYear'))
+
+    original_year = original_date.year_field()
+    original_month = original_date.month_field()
+    original_day = original_date.day_field()
 
     # Nonstandard metadata.
     artist_credit = MediaField(
