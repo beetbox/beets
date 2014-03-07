@@ -877,8 +877,11 @@ class CompletionTest(_common.TestCase):
                                   stdout=subprocess.PIPE)
 
         # Load bash_completion
-        with open(bash_completion, 'r') as bash_completion:
-            tester.stdin.writelines(bash_completion)
+        try:
+            with open(bash_completion, 'r') as bash_completion:
+                tester.stdin.writelines(bash_completion)
+        except IOError:
+            self.skipTest('bash-completion script not found')
 
         # Load complection script
         self.io.install()
