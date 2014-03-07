@@ -16,5 +16,5 @@
 Library.
 """
 from .db import Model, Database
-from .query import Query, FieldQuery, MatchQuery, AndQuery
+from .query import Query, FieldQuery, MatchQuery, AndQuery, OrQuery
 from .types import Type

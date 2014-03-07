@@ -18,6 +18,7 @@ from __future__ import print_function
 
 from beets.plugins import BeetsPlugin
 from beets import config, ui, library
+from beets import dbcore
 from beets.util import normpath, syspath
 import os
 
@@ -35,13 +36,13 @@ def update_playlists(lib):
         relative_to = normpath(relative_to)
 
     for playlist in playlists:
-        # Query attribute could be a single query or a list of queries
-        queries = playlist['query']
-        if not isinstance(queries, (list, tuple)):
-            queries = [queries]
-        items = []
-        for query in queries:
-            items.extend(lib.items(library.get_query(query, library.Item)))
+        # Parse the query. If it's a list, join the queries with OR.
+        query_strings = playlist['query']
+        if not isinstance(query_strings, (list, tuple)):
+            query_strings = [query_strings]
+        items = lib.items(dbcore.OrQuery(
+            [library.get_query(q, library.Item) for q in query_strings]
+        ))
 
         m3us = {}
         basename = playlist['name'].encode('utf8')

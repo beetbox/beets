@@ -307,6 +307,15 @@ class AndQuery(MutableCollectionQuery):
         return all([q.match(item) for q in self.subqueries])
 
 
+class OrQuery(MutableCollectionQuery):
+    """A conjunction of a list of other queries."""
+    def clause(self):
+        return self.clause_with_joiner('or')
+
+    def match(self, item):
+        return any([q.match(item) for q in self.subqueries])
+
+
 class TrueQuery(Query):
     """A query that always matches."""
     def clause(self):
