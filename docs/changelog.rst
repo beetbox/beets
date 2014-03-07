@@ -10,6 +10,8 @@ New stuff:
   you what you currently have in your config file, point you at where the file
   should be, or launch your text editor to let you modify the file. Thanks to
   geigerzaehler.
+* Beets now ships with a shell command completion script! See
+  :ref:`completion`. Thanks to geigerzaehler.
 * Internally, beets has laid the groundwork for supporting multi-valued
   fields. Thanks to geigerzaehler.
 * The importer interface now shows the URL for MusicBrainz matches. Thanks to

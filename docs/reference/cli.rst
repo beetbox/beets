@@ -330,40 +330,6 @@ Show or edit the user configuration. This command does one of three things:
   on Unix, and direct invocation on Windows.
 
 
-completion
-``````````
-
-::
-
-    beet completion
-
-Print a shell script that enables command line completion.
-
-The script completes the names of subcommands and (after typing
-``-``) options of the given command. If you are using a command that
-accepts a query, the script will also complete field names. ::
-
-    beet list ar[TAB]
-    # artist:  artist_credit:  artist_sort:  artpath:
-    beet list artp[TAB]
-    beet list artpat\:
-
-Don't worry about the slash in front of the colon: This is a escape
-sequence for the shell and won't be seen by beets.
-
-Note that completion of plugin commands only works for those plugins
-that were enabled when running ``beet completion``. If you add a plugin
-later on you might want to re-generate the script.
-
-To enable completion in your current shell, type ``eval "$(beet
-completion)"``. If you want to use it permanently, load the script from
-your shell's rc-file.
-
-Completion is only tested to work on Bash 3.2 and newer. It also
-requires the ``bash-completion`` package which is available OSX (through
-*homebrew* or *ports*) and Linuxes.
-
-
 .. _global-flags:
 
 Global Flags
@@ -381,6 +347,43 @@ import ...``.
 
 Beets also uses the ``BEETSDIR`` environment variable to look for
 configuration and data.
+
+
+.. _completion:
+
+Shell Completion
+----------------
+
+Beets includes support for shell command completion. The command ``beet
+completion`` prints out a `bash`_ 3.2 script; to enable completion put a line
+like this into your ``.bashrc`` or similar file::
+
+    eval $(beet completion)
+
+You will also need to source the `bash-completion`_ script, which is probably
+available via your package manager. On OS X, you can install it via Homebrew
+with ``brew install bash-completion``; Homebrew will give you instructions for
+sourcing the script.
+
+.. _bash-completion: http://bash-completion.alioth.debian.org/
+.. _bash: https://www.gnu.org/software/bash/
+
+The completion script suggests names of subcommands and (after typing
+``-``) options of the given command. If you are using a command that
+accepts a query, the script will also complete field names. ::
+
+    beet list ar[TAB]
+    # artist:  artist_credit:  artist_sort:  artpath:
+    beet list artp[TAB]
+    beet list artpath\:
+
+(Don't worry about the slash in front of the colon: this is a escape
+sequence for the shell and won't be seen by beets.)
+
+Completion of plugin commands only works for those plugins
+that were enabled when running ``beet completion``. If you add a plugin
+later on you will want to re-generate the script.
+
 
 .. only:: man
 
