@@ -641,12 +641,20 @@ class MP3SlashPackStorageStyle(MP3StorageStyle):
 
 
 class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
+    """Converts between APIC frames and ``TagImage`` instances.
+
+    The `get_list` method inherited from ``ListStorageStyle`` returns a
+    list of ``TagImage``s. Similarily the `set_list` method accepts a
+    list of ``TagImage``s as its ``values`` arguemnt.
+    """
 
     def __init__(self):
         super(MP3ImageStorageStyle, self).__init__(key='APIC')
         self.as_type = str
 
     def fetch(self, mutagen_file):
+        """Return a list of TagImages obtained from all APIC frames.
+        """
         frames = mutagen_file.tags.getall(self.key)
         images = []
         for frame in mutagen_file.tags.getall(self.key):
@@ -658,6 +666,8 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         mutagen_file.tags.setall(self.key, frames)
 
     def serialize(self, image):
+        """Return an APIC frame populated with data from ``image``.
+        """
         assert isinstance(image, TagImage)
         frame = mutagen.id3.Frames[self.key]()
         frame.data = image.data
@@ -669,6 +679,7 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         else:
             frame.type = 0
         return frame
+
 
 class MP3SoundCheckStorageStyle(SoundCheckStorageStyleMixin, MP3DescStorageStyle):
 
@@ -950,18 +961,6 @@ class CoverArtField(MediaField):
             out_type=str,
         )
 
-    @classmethod
-    def _mime(cls, data):
-        """Return the MIME type (either image/png or image/jpeg) of the
-        image data (a bytestring).
-        """
-        kind = imghdr.what(None, h=data)
-        if kind == 'png':
-            return 'image/png'
-        else:
-            # Currently just fall back to JPEG.
-            return 'image/jpeg'
-
     def __get__(self, mediafile, _):
         if mediafile.type == 'mp3':
             try:
@@ -986,15 +985,23 @@ class CoverArtField(MediaField):
 
 
 class ImageListField(MediaField):
+    """Descriptor to access the list of images embedded in tags.
+
+    The getter returns a list of ``TagImage`` instances obtained from
+    the tags. The setter accepts a list of ``TagImage`` instances to be
+    written to the tags.
+    """
 
     def __init__(self):
+        # The storage styles used here must implement the
+        # `ListStorageStyle` interface and get and set lists of
+        # `TagImage`s.
         super(ImageListField, self).__init__(
             MP3ImageStorageStyle(),
             MP4ImageStorageStyle(),
             ASFImageStorageStyle(),
             VorbisImageStorageStyle(),
             FlacImageStorageStyle(),
-            out_type=str,
         )
 
     def __get__(self, mediafile, _):
