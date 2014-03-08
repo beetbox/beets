@@ -60,7 +60,7 @@ def _splitstrip(string, delim=u','):
     return [s.strip() for s in string.split(delim)]
 
 
-def diff(item1, item2, attributes):
+def diff(item1, item2, attributes, max_bpm):
     result = 0.0
     for attr in attributes:
         try:
@@ -70,13 +70,28 @@ def diff(item1, item2, attributes):
             )
         except TypeError:
             result += 1.0
+
+    try:
+        result += abs(
+            float(item1.get('bpm', None)) / max_bpm -
+            float(item2.get('bpm', None)) / max_bpm
+        )
+    except TypeError:
+        result += 1.0
+
     return result
 
 
 def similar(lib, src_item, threshold=0.15):
+    max_bpm = reduce(lambda x, y: max(x, y),
+        [float(x.get('bpm', 0.0)) for x in lib.items()], 1.0)
+
+    attributes = ATTRIBUTES.values()
+    attributes.remove('bpm')
+
     for item in lib.items():
         if item.path != src_item.path:
-            d = diff(item, src_item, ATTRIBUTES.values())
+            d = diff(item, src_item, attributes, max_bpm)
             if d < threshold:
                 print(u'{1:2.2f}: {0}'.format(item.path, d))
 
