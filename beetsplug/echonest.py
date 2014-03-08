@@ -446,11 +446,14 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         fetch_cmd.func = fetch_func
 
         sim_cmd = ui.Subcommand('echosim', help='show related files')
+        sim_cmd.parser.add_option('-t', '--threshold', dest='threshold',
+            action='store', type='float', default=0.15,
+            help='Set difference threshold')
 
         def sim_func(lib, opts, args):
             self.config.set_args(opts)
             for item in lib.items(ui.decargs(args)):
-                similar(lib, item)
+                similar(lib, item, opts.threshold)
 
         sim_cmd.func = sim_func
 
