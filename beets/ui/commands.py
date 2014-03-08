@@ -22,7 +22,6 @@ import os
 import time
 import itertools
 import codecs
-import yaml
 import platform
 
 import beets
@@ -36,7 +35,6 @@ from beets import importer
 from beets import util
 from beets.util import syspath, normpath, ancestry, displayable_path
 from beets.util.functemplate import Template
-from beets.util.confit import ConfigTypeError
 from beets import library
 from beets import config
 from beets.util.confit import _package_path
@@ -1253,7 +1251,8 @@ default_commands.append(write_cmd)
 
 # config: Show and edit user configuration.
 
-config_cmd = ui.Subcommand('config', help='show or edit the user configuration')
+config_cmd = ui.Subcommand('config',
+                           help='show or edit the user configuration')
 config_cmd.parser.add_option('-p', '--paths', action='store_true',
         help='show files that configuration was loaded from')
 config_cmd.parser.add_option('-e', '--edit', action='store_true',
@@ -1355,7 +1354,9 @@ def completion_script(commands):
             else:
                 option_type = 'opts'
 
-            options[name][option_type].extend(opts._short_opts + opts._long_opts)
+            options[name][option_type].extend(
+                opts._short_opts + opts._long_opts
+            )
 
     # Add global options
     options['_global'] = {
@@ -1400,4 +1401,5 @@ def completion_script(commands):
 
 
 completion_cmd.func = print_completion
+completion_cmd.hide = True
 default_commands.append(completion_cmd)

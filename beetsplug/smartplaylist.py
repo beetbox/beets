@@ -18,6 +18,7 @@ from __future__ import print_function
 
 from beets.plugins import BeetsPlugin
 from beets import config, ui, library
+from beets import dbcore
 from beets.util import normpath, syspath
 import os
 
@@ -35,17 +36,13 @@ def update_playlists(lib):
         relative_to = normpath(relative_to)
 
     for playlist in playlists:
-        # Default is to not keep_duplicate
-        keep_duplicate = playlist.has_key('keep_duplicate') and \
-            playlist['keep_duplicate']
-
-        # Query attribute could be a single query or a list of queries
-        queries = playlist['query']
-        if not isinstance(queries, (list, tuple)):
-            queries = [queries]
-        items = []
-        for query in queries:
-            items.extend(lib.items(library.get_query(query, library.Item)))
+        # Parse the query. If it's a list, join the queries with OR.
+        query_strings = playlist['query']
+        if not isinstance(query_strings, (list, tuple)):
+            query_strings = [query_strings]
+        items = lib.items(dbcore.OrQuery(
+            [library.get_query(q, library.Item) for q in query_strings]
+        ))
 
         m3us = {}
         basename = playlist['name'].encode('utf8')
@@ -58,9 +55,7 @@ def update_playlists(lib):
             item_path = item.path
             if relative_to:
                 item_path = os.path.relpath(item.path, relative_to)
-            # Check if we want to add the item.
-            if keep_duplicate or not item_path in m3us[m3u_name]:
-                m3us[m3u_name].append(item_path)
+            m3us[m3u_name].append(item_path)
         # Now iterate through the m3us that we need to generate
         for m3u in m3us:
             m3u_path = normpath(os.path.join(playlist_dir, m3u))
