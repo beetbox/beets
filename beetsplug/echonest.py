@@ -65,7 +65,7 @@ def diff(item1, item2):
     fields.
     """
     result = 0.0
-    for attr in ATTRIBUTES:
+    for attr in ATTRIBUTES.values():
         if attr == 'bpm':
             # BPM (tempo) is handled specially to normalize.
             continue
