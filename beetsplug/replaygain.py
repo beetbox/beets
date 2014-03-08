@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Fabrice Laporte.
+# Copyright 2014, Fabrice Laporte, Yevgeny Bezman, and Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -18,8 +18,6 @@ import os
 import collections
 import itertools
 import sys
-import copy
-import time
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -28,6 +26,8 @@ from beets import config
 
 log = logging.getLogger('beets')
 
+
+# Utilities.
 
 class ReplayGainError(Exception):
     """Raised when an error occurs during mp3gain/aacgain execution.
@@ -49,27 +49,36 @@ def call(args):
         # http://code.google.com/p/beets/issues/detail?id=499
         raise ReplayGainError("argument encoding failed")
 
-class Backend(object):
-    Gain = collections.namedtuple("Gain", "gain peak")
-    AlbumGain = collections.namedtuple("AlbumGain", "album_gain track_gains")
 
+
+# Backend base and plumbing classes.
+
+Gain = collections.namedtuple("Gain", "gain peak")
+AlbumGain = collections.namedtuple("AlbumGain", "album_gain track_gains")
+
+class Backend(object):
+    """An abstract class representing engine for calculating RG values.
+    """
     def __init__(self, config):
-        pass
+        """Initialize the backend with the configuration view for the
+        plugin.
+        """
 
     def compute_track_gain(self, items):
         raise NotImplementedError()
 
     def compute_album_gain(self, album):
-        # TODO: implement album gain in terms of track gain of the individual tracks which can be used for any backend.
+        # TODO: implement album gain in terms of track gain of the
+        # individual tracks which can be used for any backend.
         raise NotImplementedError()
 
 
+# mpgain/aacgain CLI tool backend.
+
 class CommandBackend(Backend):
     def __init__(self, config):
-        super(CommandBackend, self).__init__(config)
-        
         self.command = config["command"].get(unicode)
-        
+
         if self.command:
             # Explicit executable path.
             if not os.path.isfile(self.command):
@@ -90,7 +99,7 @@ class CommandBackend(Backend):
             raise ui.UserError(
                 'no replaygain command found: install mp3gain or aacgain'
             )
-        
+
         self.noclip = config['noclip'].get(bool)
         target_level = config['targetlevel'].as_number()
         self.gain_offset = int(target_level - 89)
@@ -101,15 +110,16 @@ class CommandBackend(Backend):
         return output
 
     def compute_album_gain(self, album):
-        # TODO: What should be done when not all tracks in the album are supported?
+        # TODO: What should be done when not all tracks in the album are
+        # supported?
 
         supported_items = filter(self.format_supported, album.items())
         if len(supported_items) != len(album.items()):
-            return Backend.AlbumGain(None, [])
+            return AlbumGain(None, [])
 
         output = self.compute_gain(supported_items, True)
-        return Backend.AlbumGain(output[-1], output[:-1])
-    
+        return AlbumGain(output[-1], output[:-1])
+
     def format_supported(self, item):
         if 'mp3gain' in self.command and item.format != 'MP3':
             return False
@@ -149,10 +159,10 @@ class CommandBackend(Backend):
             log.warn(u'replaygain: analysis failed ({0})'.format(exc))
             return
         log.debug(u'replaygain: analysis finished')
-        results = self.parse_tool_output(output, len(items) + (1 if is_album else 0))
+        results = self.parse_tool_output(output,
+                                         len(items) + (1 if is_album else 0))
 
         return results
-    
 
     def parse_tool_output(self, text, num_lines):
         """Given the tab-delimited output from an invocation of mp3gain
@@ -171,16 +181,19 @@ class CommandBackend(Backend):
                 'mingain': int(parts[5]),
 
             }
-            out.append(Backend.Gain(d['gain'], d['peak']))
+            out.append(Gain(d['gain'], d['peak']))
         return out
-
 
     @staticmethod
     def initialize_config(config):
         config.add({
             'command': u"",
             'noclip': True,
-            'targetlevel': 89})
+            'targetlevel': 89,
+        })
+
+
+# GStreamer-based backend.
 
 class GStreamerBackend(object):
     def __init__(self, config):
@@ -191,7 +204,7 @@ class GStreamerBackend(object):
         self._rg = Gst.ElementFactory.make("rganalysis", "rg")
         self._rg.set_property("forced", True)
         self._sink = Gst.ElementFactory.make("fakesink", "sink")
-        
+
         self._pipe = Gst.Pipeline()
         self._pipe.add(self._src)
         self._pipe.add(self._decbin)
@@ -199,12 +212,12 @@ class GStreamerBackend(object):
         self._pipe.add(self._res)
         self._pipe.add(self._rg)
         self._pipe.add(self._sink)
-        
+
         self._src.link(self._decbin)
         self._conv.link(self._res)
         self._res.link(self._rg)
         self._rg.link(self._sink)
-        
+
         self._bus = self._pipe.get_bus()
         self._bus.add_signal_watch()
         self._bus.connect("message::eos", self._on_eos)
@@ -212,7 +225,7 @@ class GStreamerBackend(object):
         self._bus.connect("message::tag", self._on_tag)
         self._decbin.connect("pad-added", self._on_pad_added)
         self._decbin.connect("pad-removed", self._on_pad_removed)
-        
+
         self._main_loop = GObject.MainLoop()
 
         self._files = []
@@ -223,7 +236,7 @@ class GStreamerBackend(object):
 
 
         self._files = list(files)
-        
+
         if len(self._files) == 0:
             return
 
@@ -231,7 +244,7 @@ class GStreamerBackend(object):
 
         if album:
             self._rg.set_property("num-tracks", len(self._files))
-        
+
         if self._set_first_file():
             self._main_loop.run()
 
@@ -242,7 +255,8 @@ class GStreamerBackend(object):
 
         ret = []
         for item in items:
-            ret.append(Backend.Gain(self._file_tags[item]["TRACK_GAIN"], self._file_tags[item]["TRACK_PEAK"]))
+            ret.append(Gain(self._file_tags[item]["TRACK_GAIN"],
+                            self._file_tags[item]["TRACK_PEAK"]))
 
         return ret
 
@@ -254,51 +268,57 @@ class GStreamerBackend(object):
 
         ret = []
         for item in items:
-            ret.append(Backend.Gain(self._file_tags[item]["TRACK_GAIN"], self._file_tags[item]["TRACK_PEAK"]))
+            ret.append(Gain(self._file_tags[item]["TRACK_GAIN"],
+                            self._file_tags[item]["TRACK_PEAK"]))
 
         last_tags = self._file_tags[items[-1]]
-        return Backend.AlbumGain(Backend.Gain(last_tags["ALBUM_GAIN"], last_tags["ALBUM_PEAK"]), ret)
+        return AlbumGain(Gain(last_tags["ALBUM_GAIN"],
+                              last_tags["ALBUM_PEAK"]), ret)
 
     def close(self):
         self._bus.remove_signal_watch()
 
     def _on_eos(self, bus, message):
         if not self._set_next_file():
-            ret = self._pipe.set_state(Gst.State.NULL)
+            self._pipe.set_state(Gst.State.NULL)
             self._main_loop.quit()
-        
 
     def _on_error(self, bus, message):
         self._pipe.set_state(Gst.State.NULL)
         self._main_loop.quit()
         err, debug = message.parse_error()
-        raise Exception("Error %s - %s on file %s" % (err, debug, self._src.get_property("location")))
+        raise Exception("Error %s - %s on file %s" %
+                        (err, debug, self._src.get_property("location")))
 
     def _on_tag(self, bus, message):
         tags = message.parse_tag()
 
         def handle_tag(taglist, tag, userdata):
             if tag == Gst.TAG_TRACK_GAIN:
-                self._file_tags[self._file]["TRACK_GAIN"] = taglist.get_double(tag)[1]
+                self._file_tags[self._file]["TRACK_GAIN"] = \
+                        taglist.get_double(tag)[1]
             elif tag == Gst.TAG_TRACK_PEAK:
-                self._file_tags[self._file]["TRACK_PEAK"] = taglist.get_double(tag)[1]
+                self._file_tags[self._file]["TRACK_PEAK"] = \
+                        taglist.get_double(tag)[1]
             elif tag == Gst.TAG_ALBUM_GAIN:
-                self._file_tags[self._file]["ALBUM_GAIN"] = taglist.get_double(tag)[1]
+                self._file_tags[self._file]["ALBUM_GAIN"] = \
+                        taglist.get_double(tag)[1]
             elif tag == Gst.TAG_ALBUM_PEAK:
-                self._file_tags[self._file]["ALBUM_PEAK"] = taglist.get_double(tag)[1]
+                self._file_tags[self._file]["ALBUM_PEAK"] = \
+                        taglist.get_double(tag)[1]
             elif tag == Gst.TAG_REFERENCE_LEVEL:
-                self._file_tags[self._file]["REFERENCE_LEVEL"] = taglist.get_double(tag)[1]
-        
+                self._file_tags[self._file]["REFERENCE_LEVEL"] = \
+                        taglist.get_double(tag)[1]
+
         tags.foreach(handle_tag, None)
 
-    
     def _set_first_file(self):
         if len(self._files) == 0:
             return False
-        
+
         self._file = self._files.pop(0)
         self._src.set_property("location", syspath(self._file.path))
-        
+
         self._pipe.set_state(Gst.State.PLAYING)
 
         return True
@@ -306,48 +326,45 @@ class GStreamerBackend(object):
     def _set_file(self):
         if len(self._files) == 0:
             return False
-        
+
         self._file = self._files.pop(0)
-        
+
         self._decbin.unlink(self._conv)
         self._decbin.set_state(Gst.State.READY)
-        
+
         self._src.set_state(Gst.State.READY)
         self._src.set_property("location", syspath(self._file.path))
-        
+
         self._src.sync_state_with_parent()
         self._src.get_state(Gst.CLOCK_TIME_NONE)
         self._decbin.sync_state_with_parent()
         self._decbin.get_state(Gst.CLOCK_TIME_NONE)
-        
+
         return True
-        
-    
+
     def _set_next_file(self):
         self._pipe.set_state(Gst.State.PAUSED)
         self._pipe.get_state(Gst.CLOCK_TIME_NONE)
-        
+
         ret = self._set_file()
         if ret:
             self._pipe.seek_simple(Gst.Format.TIME, Gst.SeekFlags.FLUSH, 0)
             self._pipe.set_state(Gst.State.PLAYING)
 
         return ret
-        
-        
+
     def _on_pad_added(self, decbin, pad):
         sink_pad = self._conv.get_compatible_pad(pad, None)
         if sink_pad is None:
             raise Exception()
-        
+
         pad.link(sink_pad)
 
-    
     def _on_pad_removed(self, decbin, pad):
         peer = pad.get_peer()
         if peer is not None:
             raise Exception()
-    
+
     @staticmethod
     def initialize_config(config):
         global GObject, Gst
@@ -357,16 +374,18 @@ class GStreamerBackend(object):
         from gi.repository import GObject, Gst
         GObject.threads_init()
         Gst.init([sys.argv[0]])
-        
 
+
+
+# Main plugin logic.
 
 class ReplayGainPlugin(BeetsPlugin):
     """Provides ReplayGain analysis.
     """
 
     BACKENDS = {
-        "command"   : CommandBackend,
-        "gstreamer" : GStreamerBackend
+        "command"  : CommandBackend,
+        "gstreamer": GStreamerBackend,
     }
 
     def __init__(self):
@@ -383,16 +402,22 @@ class ReplayGainPlugin(BeetsPlugin):
         self.automatic = self.config['auto'].get(bool)
         backend_name = self.config['backend'].get(unicode)
         if backend_name not in ReplayGainPlugin.BACKENDS:
-            raise ui.UserError("Selected backend %s is not supported, please select one of: %s" % (backend_name, ReplayGainPlugin.BACKENDS.keys()))
+            raise ui.UserError(
+                u"Selected ReplayGain backend {0} is not supported. "
+                u"Please select one of: {1}".format(
+                    backend_name,
+                    u', '.join(ReplayGainPlugin.BACKENDS.keys())
+                )
+            )
         self.backend = ReplayGainPlugin.BACKENDS[backend_name].initialize_config(self.config)
 
-        self.backend_instance = ReplayGainPlugin.BACKENDS[backend_name](self.config)
+        self.backend_instance = ReplayGainPlugin.BACKENDS[backend_name](
+            self.config
+        )
 
-    
     def track_requires_gain(self, item):
         return self.overwrite or \
                (not item.rg_track_gain or not item.rg_track_peak)
-
 
     def album_requires_gain(self, album):
         # Skip calculating gain only when *all* files don't need
@@ -400,14 +425,14 @@ class ReplayGainPlugin(BeetsPlugin):
         # needs recalculation, we still get an accurate album gain
         # value.
         return self.overwrite or \
-               any([not item.rg_album_gain or not item.rg_album_peak for item in album.items()])
-
+               any([not item.rg_album_gain or not item.rg_album_peak
+                    for item in album.items()])
 
     def store_track_gain(self, item, track_gain):
         item.rg_track_gain = track_gain.gain
         item.rg_track_peak = track_gain.peak
         item.store()
-            
+
         log.debug(u'replaygain: applied track gain {0}, peak {1}'.format(
             item.rg_track_gain,
             item.rg_track_peak
@@ -417,53 +442,59 @@ class ReplayGainPlugin(BeetsPlugin):
         album.rg_album_gain = album_gain.gain
         album.rg_album_peak = album_gain.peak
         album.store()
-        
+
         log.debug(u'replaygain: applied album gain {0}, peak {1}'.format(
             album.rg_album_gain,
             album.rg_album_peak
         ))
-
 
     def handle_album(self, album, write):
         if not self.album_requires_gain(album):
             log.info(u'Skipping album {0} - {1}'.format(album.albumartist,
                                                         album.album))
             return
-        
+
         log.info(u'analyzing {0} - {1}'.format(album.albumartist,
                                                album.album))
 
         album_gain = self.backend_instance.compute_album_gain(album)
         if len(album_gain.track_gains) != len(album.items()):
-            log.warn("ReplayGain backend failed for some tracks in album %s - %s" % (album.albumartist, album.album))
+            log.warn(
+                u"ReplayGain backend failed "
+                u"for some tracks in album {0} - {1}".format(
+                    album.albumartist, album.album
+                )
+            )
             return
 
         self.store_album_gain(album, album_gain.album_gain)
-        for item, track_gain in itertools.izip(album.items(), album_gain.track_gains):
+        for item, track_gain in itertools.izip(album.items(),
+                                               album_gain.track_gains):
             self.store_track_gain(item, track_gain)
             if write:
                 item.write()
-            
-            
 
     def handle_track(self, item, write):
         if not self.track_requires_gain(item):
             log.info(u'Skipping track {0} - {1}'.format(item.artist,
                                                         item.title))
             return
-        
+
         log.info(u'analyzing {0} - {1}'.format(item.artist,
                                                item.title))
 
         track_gains = self.backend_instance.compute_track_gain([item])
         if len(track_gains) != 1:
-            log.warn("ReplayGain backend failed for track %s - %s" % (item.artist, item.title))
+            log.warn(
+                u"ReplayGain backend failed for track {0} - {1}".format(
+                    item.artist, item.title
+                )
+            )
             return
 
         self.store_track_gain(item, track_gains[0])
         if write:
             item.write()
-        
 
     def imported(self, session, task):
         """Our import stage function."""
@@ -475,7 +506,6 @@ class ReplayGainPlugin(BeetsPlugin):
             self.handle_album(album, False)
         else:
             self.handle_track(task.item, False)
-
 
     def commands(self):
         """Provide a ReplayGain command."""
@@ -495,6 +525,3 @@ class ReplayGainPlugin(BeetsPlugin):
                               help='analyze albums instead of tracks')
         cmd.func = func
         return [cmd]
-
-
-
