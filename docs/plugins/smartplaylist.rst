@@ -15,11 +15,11 @@ following example::
         relative_to: ~/Music
         playlist_dir: ~/.mpd/playlists
         playlists:
-            - query: ''
-              name: all.m3u
+            - name: all.m3u
+              query: ''
 
-            - query: 'artist:Beatles'
-              name: beatles.m3u
+            - name: beatles.m3u
+              query: 'artist:Beatles'
 
 If you intend to use this plugin to generate playlists for MPD, you should set
 ``relative_to`` to your MPD music directory (by default, ``relative_to`` is
@@ -38,8 +38,8 @@ will be overwritten when the plugin runs.
 For more advanced usage, you can use template syntax (see
 :doc:`/reference/pathformat/`) in the ``name`` field. For example::
 
-    - query: 'year::201(0|1)'
-      name: 'ReleasedIn$year.m3u'
+    - name: 'ReleasedIn$year.m3u'
+      query: 'year::201(0|1)'
 
 This will query all the songs in 2010 and 2011 and generate the two playlist
 files `ReleasedIn2010.m3u` and `ReleasedIn2011.m3u` using those songs.
@@ -47,8 +47,17 @@ files `ReleasedIn2010.m3u` and `ReleasedIn2011.m3u` using those songs.
 You can also gather the results of several queries by putting them in a list.
 (Items that match both queries are not included twice.) For example::
 
-    - query: ['artist:beatles', 'genre:"beatles cover"']
-      name: 'BeatlesUniverse.m3u'
+    - name: 'BeatlesUniverse.m3u'
+      query: ['artist:beatles', 'genre:"beatles cover"']
+
+For querying albums instead of items (mainly useful with extensible fields),
+use the ``album_query`` field. ``query`` and ``album_query`` can be used at the
+same time. The following example gathers single items but also items belonging
+to albums that have a ``for_travel`` extensible field set to 1::
+
+    - name: 'MyTravelPlaylist.m3u'
+      album_query: 'for_travel:1'
+      query: 'for_travel:1'
 
 By default, all playlists are regenerated after every beets command that
 changes the library database. To force regeneration, you can invoke it manually
