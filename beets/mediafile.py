@@ -720,43 +720,45 @@ class VorbisImageStorageStyle(ListStorageStyle):
     formats = ['opus', 'ogg', 'ape', 'wv', 'mpc']
 
     def __init__(self):
-        super(VorbisImageStorageStyle, self).__init__(key='')
+        super(VorbisImageStorageStyle, self).__init__(
+                key='metadata_block_picture')
         self.as_type = str
 
     def fetch(self, mutagen_file):
+        images = []
         if 'metadata_block_picture' not in mutagen_file:
             # Try legacy COVERART tags.
-            if 'coverart' in mutagen_file and mutagen_file['coverart']:
-                return base64.b64decode(mutagen_file['coverart'][0])
-            return []
-
-        pics = []
+            if 'coverart' in mutagen_file:
+                for data in mutagen_file['coverart']:
+                    images.append(TagImage(base64.b64decode(data)))
+            return images
         for data in mutagen_file["metadata_block_picture"]:
             try:
-                pics.append(mutagen.flac.Picture(base64.b64decode(data)).data)
+                pic = mutagen.flac.Picture(base64.b64decode(data))
             except (TypeError, AttributeError):
-                pass
-        return pics
+                continue
+            images.append(TagImage(data=pic.data, desc=pic.desc,
+                                   type=pic.type))
+        return images
 
     def store(self, mutagen_file, image_data):
         # Strip all art, including legacy COVERART.
-        if 'metadata_block_picture' in mutagen_file:
-            if 'metadata_block_picture' in mutagen_file:
-                del mutagen_file['metadata_block_picture']
-            if 'coverart' in mutagen_file:
-                del mutagen_file['coverart']
-            if 'coverartmime' in mutagen_file:
-                del mutagen_file['coverartmime']
+        if 'coverart' in mutagen_file:
+            del mutagen_file['coverart']
+        if 'coverartmime' in mutagen_file:
+            del mutagen_file['coverartmime']
+        super(VorbisImageStorageStyle, self).store(mutagen_file, image_data)
 
-        image_data = image_data[0]
-        # Add new art if provided.
-        if image_data is not None:
-            pic = mutagen.flac.Picture()
-            pic.data = image_data
-            pic.mime = _image_mime_type(image_data)
-            mutagen_file['metadata_block_picture'] = [
-                base64.b64encode(pic.write())
-            ]
+    
+    def serialize(self, image):
+        """Turn a TagImage into a base64 encoded FLAC picture block.
+        """
+        pic = mutagen.flac.Picture()
+        pic.data = image.data
+        pic.type = image.type_index or 3  # Front cover
+        pic.mime = image.mime_type
+        pic.desc = image.desc or u''
+        return base64.b64encode(pic.write())
 
 
 class FlacImageStorageStyle(ListStorageStyle):
@@ -969,7 +971,7 @@ class CoverArtField(MediaField):
         )
 
     def __get__(self, mediafile, _):
-        if mediafile.type in ['mp3', 'flac']:
+        if mediafile.type in ['mp3', 'flac'] + VorbisImageStorageStyle.formats:
             try:
                 return mediafile.images[0].data
             except IndexError:
@@ -978,7 +980,7 @@ class CoverArtField(MediaField):
             return style.get(mediafile.mgfile)
 
     def __set__(self, mediafile, data):
-        if mediafile.type in ['mp3', 'flac']:
+        if mediafile.type in ['mp3', 'flac'] + VorbisImageStorageStyle.formats:
             if data:
                 mediafile.images = [TagImage(data=data)]
             else:

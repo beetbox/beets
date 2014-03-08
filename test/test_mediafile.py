@@ -600,7 +600,8 @@ class WMATest(ReadWriteTestBase, unittest.TestCase):
         'bitdepth': 0,
         'channels': 1,
     }
-class OggTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
+class OggTest(ReadWriteTestBase, GenreListTestMixin,
+              ExtendedImageStructureTestMixin, unittest.TestCase):
     extension = 'ogg'
     audio_properties = {
         'length': 1.0,
