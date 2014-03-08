@@ -429,6 +429,9 @@ class ReplayGainPlugin(BeetsPlugin):
             log.info(u'Skipping album {0} - {1}'.format(album.albumartist,
                                                         album.album))
             return
+        
+        log.info(u'analyzing {0} - {1}'.format(album.albumartist,
+                                               album.album))
 
         album_gain = self.backend_instance.compute_album_gain(album)
         if len(album_gain.track_gains) != len(album.items()):
@@ -439,7 +442,6 @@ class ReplayGainPlugin(BeetsPlugin):
         for item, track_gain in itertools.izip(album.items(), album_gain.track_gains):
             self.store_track_gain(item, track_gain)
             if write:
-                print "WRITING"
                 item.write()
             
             
@@ -449,6 +451,9 @@ class ReplayGainPlugin(BeetsPlugin):
             log.info(u'Skipping track {0} - {1}'.format(item.artist,
                                                         item.title))
             return
+        
+        log.info(u'analyzing {0} - {1}'.format(item.artist,
+                                               item.title))
 
         track_gains = self.backend_instance.compute_track_gain([item])
         if len(track_gains) != 1:
@@ -479,13 +484,9 @@ class ReplayGainPlugin(BeetsPlugin):
 
             if opts.album:
                 for album in lib.albums(ui.decargs(args)):
-                    # log.info(u'analyzing {0} - {1}'.format(album.albumartist,
-                    #                                        album.album))
                     self.handle_album(album, write)
 
             else:
-                # log.info(u'analyzing {0} - {1}'.format(item.artist,
-                #                                        item.title))
                 for item in lib.items(ui.decargs(args)):
                     self.handle_track(item, write)
 
