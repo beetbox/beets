@@ -250,6 +250,16 @@ def _sc_encode(gain, peak):
     return (u' %08X' * 10) % values
 
 
+def _image_mime_type(data):
+    """Return the MIME type (either image/png or image/jpeg) of the
+    image data (a bytestring).
+    """
+    kind = imghdr.what(None, h=data)
+    if kind == 'png':
+        return 'image/png'
+    else:
+        # Currently just fall back to JPEG.
+        return 'image/jpeg'
 
 # StorageStyle classes describe strategies for accessing values in
 # Mutagen file objects.
@@ -637,23 +647,28 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         self.as_type = str
 
     def fetch(self, mutagen_file):
-        try:
-            frames = mutagen_file.tags.getall(self.key)
-            return [frame.data for frame in frames]
-        except IndexError:
-            return None
+        frames = mutagen_file.tags.getall(self.key)
+        images = []
+        for frame in mutagen_file.tags.getall(self.key):
+            images.append(TagImage(data=frame.data, desc=frame.desc,
+                                   type=TagImage.TYPES[frame.type]))
+        return images
 
-    def store(self, mutagen_file, images):
-        image = images[0]
-        frame = mutagen.id3.APIC(
-            encoding=3,
-            type=3,  # FrontCover
-            mime=ImageField._mime(image),
-            desc=u'',
-            data=image
-        )
-        mutagen_file.tags.setall(self.key, [frame])
+    def store(self, mutagen_file, frames):
+        mutagen_file.tags.setall(self.key, frames)
 
+    def serialize(self, image):
+        assert isinstance(image, TagImage)
+        frame = mutagen.id3.Frames[self.key]()
+        frame.data = image.data
+        frame.mime = image.mime_type
+        frame.desc = (image.desc or u'').encode('utf8')
+        frame.encoding = 3  # UTF-8 encoding of desc
+        if image.type:
+            frame.type = list(TagImage.TYPES).index(image.type)
+        else:
+            frame.type = 0
+        return frame
 
 class MP3SoundCheckStorageStyle(SoundCheckStorageStyleMixin, MP3DescStorageStyle):
 
@@ -688,7 +703,7 @@ class ASFImageStorageStyle(ListStorageStyle):
 
         for image in images:
             pic = mutagen.asf.ASFByteArrayAttribute()
-            pic.value = _pack_asf_image(ImageField._mime(image), image)
+            pic.value = _pack_asf_image(_image_mime_type(image), image)
             mutagen_file['WM/Picture'] = [pic]
 
 
@@ -730,7 +745,7 @@ class VorbisImageStorageStyle(ListStorageStyle):
         if image_data is not None:
             pic = mutagen.flac.Picture()
             pic.data = image_data
-            pic.mime = ImageField._mime(image_data)
+            pic.mime = _image_mime_type(image_data)
             mutagen_file['metadata_block_picture'] = [
                 base64.b64encode(pic.write())
             ]
@@ -758,7 +773,7 @@ class FlacImageStorageStyle(ListStorageStyle):
             pic = mutagen.flac.Picture()
             pic.data = image
             pic.type = 3  # front cover
-            pic.mime = ImageField._mime(image)
+            pic.mime = _image_mime_type(image)
             mutagen_file.add_picture(pic)
 
 
@@ -916,15 +931,17 @@ class DateItemField(MediaField):
         self.date_field._set_date_tuple(mediafile, *items)
 
 
-class ImageField(MediaField):
+class CoverArtField(MediaField):
     """A descriptor providing access to a file's embedded album art.
     Holds a bytestring reflecting the image data. The image should
     either be a JPEG or a PNG for cross-format compatibility. It's
     probably a bad idea to use anything but these two formats.
     """
+    # TODO make this into shim when ImageField is implemented for all
+    # formats.
 
     def __init__(self):
-        super(ImageField, self).__init__(
+        super(CoverArtField, self).__init__(
             MP3ImageStorageStyle(),
             MP4ImageStorageStyle(),
             ASFImageStorageStyle(),
@@ -946,16 +963,97 @@ class ImageField(MediaField):
             return 'image/jpeg'
 
     def __get__(self, mediafile, _):
+        if mediafile.type == 'mp3':
+            try:
+                return mediafile.images[0].data
+            except IndexError:
+                return None
         for style in self.styles(mediafile):
             return style.get(mediafile.mgfile)
 
     def __set__(self, mediafile, data):
+        if mediafile.type == 'mp3':
+            if data:
+                mediafile.images = [TagImage(data=data)]
+            else:
+                mediafile.images = []
+            return
         if data is not None:
             if not isinstance(data, str):
                 raise ValueError('value must be a byte string or None')
         for style in self.styles(mediafile):
             style.set(mediafile.mgfile, data)
 
+
+class ImageListField(MediaField):
+
+    def __init__(self):
+        super(ImageListField, self).__init__(
+            MP3ImageStorageStyle(),
+            MP4ImageStorageStyle(),
+            ASFImageStorageStyle(),
+            VorbisImageStorageStyle(),
+            FlacImageStorageStyle(),
+            out_type=str,
+        )
+
+    def __get__(self, mediafile, _):
+        images = []
+        for style in self.styles(mediafile):
+            images.extend(style.get_list(mediafile.mgfile))
+        return images
+
+    def __set__(self, mediafile, images):
+        for style in self.styles(mediafile):
+            style.set_list(mediafile.mgfile, images)
+
+
+class TagImage(object):
+    """Strucuture representing image data and metadata that can be
+    stored and retrieved from tags.
+
+    The structure has four properties.
+    * ``data``  The binary data of the image
+    * ``desc``  An optional descritpion of the image
+    * ``type``  A string denoting the type in relation to the music.
+                Must be one of the ``TYPES`` enum.
+    * ``mime_type`` Read-only property that contains the mime type of
+                    the binary data
+    """
+
+    TYPES = enum([
+        'other',
+        'icon',
+        'other icon',
+        'front',
+        'back',
+        'leaflet',
+        'media',
+        'lead artist',
+        'artist',
+        'conductor',
+        'group',
+        'composer',
+        'lyricist',
+        'recording location',
+        'recording session',
+        'performance',
+        'screen capture',
+        'fish',
+        'illustration',
+        'artist logo',
+        'publisher logo',
+    ], name='TageImage.TYPES')
+
+    def __init__(self, data, desc=None, type=None):
+        self.data = data
+        self.desc = desc
+        self.type = type
+
+    @property
+    def mime_type(self):
+        if self.data:
+            return _image_mime_type(self.data)
 
 
 # MediaFile is a collection of fields.
@@ -1302,8 +1400,11 @@ class MediaFile(object):
         ASFStorageStyle('beets/Album Artist Credit'),
     )
 
-    # Album art.
-    art = ImageField()
+    # Legacy album art field
+    art = CoverArtField()
+
+    # Image list
+    images = ImageListField()
 
     # MusicBrainz IDs.
     mb_trackid = MediaField(

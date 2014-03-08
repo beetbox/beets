@@ -116,7 +116,7 @@ class ImageStructureTestMixin(object):
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(len(mediafile.images), 3)
         self.assertExtendedImageAttributes(mediafile.images[2],
-                desc='another cover', type='composer')
+                desc='the composer', type=TagImage.TYPES.composer)
 
     @unittest.skip('editing list by reference is not implemented yet')
     def test_mutate_image_structure(self):
