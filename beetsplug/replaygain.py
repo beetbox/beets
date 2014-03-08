@@ -77,6 +77,12 @@ class Backend(object):
 
 class CommandBackend(Backend):
     def __init__(self, config):
+        config.add({
+            'command': u"",
+            'noclip': True,
+            'targetlevel': 89,
+        })
+
         self.command = config["command"].get(unicode)
 
         if self.command:
@@ -184,28 +190,20 @@ class CommandBackend(Backend):
             out.append(Gain(d['gain'], d['peak']))
         return out
 
-    @staticmethod
-    def initialize_config(config):
-        config.add({
-            'command': u"",
-            'noclip': True,
-            'targetlevel': 89,
-        })
-
 
 # GStreamer-based backend.
 
 class GStreamerBackend(object):
     def __init__(self, config):
-        self._src = Gst.ElementFactory.make("filesrc", "src")
-        self._decbin = Gst.ElementFactory.make("decodebin", "decbin")
-        self._conv = Gst.ElementFactory.make("audioconvert", "conv")
-        self._res = Gst.ElementFactory.make("audioresample", "res")
-        self._rg = Gst.ElementFactory.make("rganalysis", "rg")
+        self._src = self.Gst.ElementFactory.make("filesrc", "src")
+        self._decbin = self.Gst.ElementFactory.make("decodebin", "decbin")
+        self._conv = self.Gst.ElementFactory.make("audioconvert", "conv")
+        self._res = self.Gst.ElementFactory.make("audioresample", "res")
+        self._rg = self.Gst.ElementFactory.make("rganalysis", "rg")
         self._rg.set_property("forced", True)
-        self._sink = Gst.ElementFactory.make("fakesink", "sink")
+        self._sink = self.Gst.ElementFactory.make("fakesink", "sink")
 
-        self._pipe = Gst.Pipeline()
+        self._pipe = self.Gst.Pipeline()
         self._pipe.add(self._src)
         self._pipe.add(self._decbin)
         self._pipe.add(self._conv)
@@ -226,9 +224,23 @@ class GStreamerBackend(object):
         self._decbin.connect("pad-added", self._on_pad_added)
         self._decbin.connect("pad-removed", self._on_pad_removed)
 
-        self._main_loop = GObject.MainLoop()
+        self._main_loop = self.GObject.MainLoop()
 
         self._files = []
+
+    def _import_gst(self):
+        """Import the necessary GObject-related modules and assign `Gst`
+        and `GObject` fields on this object.
+        """
+        import gi
+        gi.require_version('Gst', '1.0')
+
+        from gi.repository import GObject, Gst
+        GObject.threads_init()
+        Gst.init([sys.argv[0]])
+
+        self.GObject = GObject
+        self.Gst = Gst
 
     def compute(self, files, album):
         if len(self._files) != 0:
@@ -280,11 +292,11 @@ class GStreamerBackend(object):
 
     def _on_eos(self, bus, message):
         if not self._set_next_file():
-            self._pipe.set_state(Gst.State.NULL)
+            self._pipe.set_state(self.Gst.State.NULL)
             self._main_loop.quit()
 
     def _on_error(self, bus, message):
-        self._pipe.set_state(Gst.State.NULL)
+        self._pipe.set_state(self.Gst.State.NULL)
         self._main_loop.quit()
         err, debug = message.parse_error()
         raise Exception("Error %s - %s on file %s" %
@@ -294,19 +306,19 @@ class GStreamerBackend(object):
         tags = message.parse_tag()
 
         def handle_tag(taglist, tag, userdata):
-            if tag == Gst.TAG_TRACK_GAIN:
+            if tag == self.Gst.TAG_TRACK_GAIN:
                 self._file_tags[self._file]["TRACK_GAIN"] = \
                         taglist.get_double(tag)[1]
-            elif tag == Gst.TAG_TRACK_PEAK:
+            elif tag == self.Gst.TAG_TRACK_PEAK:
                 self._file_tags[self._file]["TRACK_PEAK"] = \
                         taglist.get_double(tag)[1]
-            elif tag == Gst.TAG_ALBUM_GAIN:
+            elif tag == self.Gst.TAG_ALBUM_GAIN:
                 self._file_tags[self._file]["ALBUM_GAIN"] = \
                         taglist.get_double(tag)[1]
-            elif tag == Gst.TAG_ALBUM_PEAK:
+            elif tag == self.Gst.TAG_ALBUM_PEAK:
                 self._file_tags[self._file]["ALBUM_PEAK"] = \
                         taglist.get_double(tag)[1]
-            elif tag == Gst.TAG_REFERENCE_LEVEL:
+            elif tag == self.Gst.TAG_REFERENCE_LEVEL:
                 self._file_tags[self._file]["REFERENCE_LEVEL"] = \
                         taglist.get_double(tag)[1]
 
@@ -319,7 +331,7 @@ class GStreamerBackend(object):
         self._file = self._files.pop(0)
         self._src.set_property("location", syspath(self._file.path))
 
-        self._pipe.set_state(Gst.State.PLAYING)
+        self._pipe.set_state(self.Gst.State.PLAYING)
 
         return True
 
@@ -330,26 +342,28 @@ class GStreamerBackend(object):
         self._file = self._files.pop(0)
 
         self._decbin.unlink(self._conv)
-        self._decbin.set_state(Gst.State.READY)
+        self._decbin.set_state(self.Gst.State.READY)
 
-        self._src.set_state(Gst.State.READY)
+        self._src.set_state(self.Gst.State.READY)
         self._src.set_property("location", syspath(self._file.path))
 
         self._src.sync_state_with_parent()
-        self._src.get_state(Gst.CLOCK_TIME_NONE)
+        self._src.get_state(self.Gst.CLOCK_TIME_NONE)
         self._decbin.sync_state_with_parent()
-        self._decbin.get_state(Gst.CLOCK_TIME_NONE)
+        self._decbin.get_state(self.Gst.CLOCK_TIME_NONE)
 
         return True
 
     def _set_next_file(self):
-        self._pipe.set_state(Gst.State.PAUSED)
-        self._pipe.get_state(Gst.CLOCK_TIME_NONE)
+        self._pipe.set_state(self.Gst.State.PAUSED)
+        self._pipe.get_state(self.Gst.CLOCK_TIME_NONE)
 
         ret = self._set_file()
         if ret:
-            self._pipe.seek_simple(Gst.Format.TIME, Gst.SeekFlags.FLUSH, 0)
-            self._pipe.set_state(Gst.State.PLAYING)
+            self._pipe.seek_simple(self.Gst.Format.TIME,
+                                   self.Gst.SeekFlags.FLUSH,
+                                   0)
+            self._pipe.set_state(self.Gst.State.PLAYING)
 
         return ret
 
@@ -365,29 +379,17 @@ class GStreamerBackend(object):
         if peer is not None:
             raise Exception()
 
-    @staticmethod
-    def initialize_config(config):
-        global GObject, Gst
-
-        import gi
-        gi.require_version('Gst', '1.0')
-        from gi.repository import GObject, Gst
-        GObject.threads_init()
-        Gst.init([sys.argv[0]])
-
-
 
 # Main plugin logic.
+
+BACKENDS = {
+    "command":   CommandBackend,
+    "gstreamer": GStreamerBackend,
+}
 
 class ReplayGainPlugin(BeetsPlugin):
     """Provides ReplayGain analysis.
     """
-
-    BACKENDS = {
-        "command"  : CommandBackend,
-        "gstreamer": GStreamerBackend,
-    }
-
     def __init__(self):
         super(ReplayGainPlugin, self).__init__()
         self.import_stages = [self.imported]
@@ -409,7 +411,6 @@ class ReplayGainPlugin(BeetsPlugin):
                     u', '.join(ReplayGainPlugin.BACKENDS.keys())
                 )
             )
-        self.backend = ReplayGainPlugin.BACKENDS[backend_name].initialize_config(self.config)
 
         self.backend_instance = ReplayGainPlugin.BACKENDS[backend_name](
             self.config
