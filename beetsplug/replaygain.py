@@ -17,6 +17,9 @@ import subprocess
 import os
 import collections
 import itertools
+import sys
+import copy
+import time
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -178,6 +181,182 @@ class CommandBackend(Backend):
             'command': u"",
             'noclip': True,
             'targetlevel': 89})
+
+class GStreamerBackend(object):
+    def __init__(self, config):
+        self._src = Gst.ElementFactory.make("filesrc", "src")
+        self._decbin = Gst.ElementFactory.make("decodebin", "decbin")
+        self._conv = Gst.ElementFactory.make("audioconvert", "conv")
+        self._res = Gst.ElementFactory.make("audioresample", "res")
+        self._rg = Gst.ElementFactory.make("rganalysis", "rg")
+        self._rg.set_property("forced", True)
+        self._sink = Gst.ElementFactory.make("fakesink", "sink")
+        
+        self._pipe = Gst.Pipeline()
+        self._pipe.add(self._src)
+        self._pipe.add(self._decbin)
+        self._pipe.add(self._conv)
+        self._pipe.add(self._res)
+        self._pipe.add(self._rg)
+        self._pipe.add(self._sink)
+        
+        self._src.link(self._decbin)
+        self._conv.link(self._res)
+        self._res.link(self._rg)
+        self._rg.link(self._sink)
+        
+        self._bus = self._pipe.get_bus()
+        self._bus.add_signal_watch()
+        self._bus.connect("message::eos", self._on_eos)
+        self._bus.connect("message::error", self._on_error)
+        self._bus.connect("message::tag", self._on_tag)
+        self._decbin.connect("pad-added", self._on_pad_added)
+        self._decbin.connect("pad-removed", self._on_pad_removed)
+        
+        self._main_loop = GObject.MainLoop()
+
+        self._files = []
+
+    def compute(self, files, album):
+        if len(self._files) != 0:
+            raise Exception()
+
+
+        self._files = list(files)
+        
+        if len(self._files) == 0:
+            return
+
+        self._file_tags = collections.defaultdict(dict)
+
+        if album:
+            self._rg.set_property("num-tracks", len(self._files))
+        
+        if self._set_first_file():
+            self._main_loop.run()
+
+    def compute_track_gain(self, items):
+        self.compute(items, False)
+        if len(self._file_tags) != len(items):
+            raise Exception()
+
+        ret = []
+        for item in items:
+            ret.append(Backend.Gain(self._file_tags[item]["TRACK_GAIN"], self._file_tags[item]["TRACK_PEAK"]))
+
+        return ret
+
+    def compute_album_gain(self, album):
+        items = list(album.items())
+        self.compute(items, True)
+        if len(self._file_tags) != len(items):
+            raise Exception()
+
+        ret = []
+        for item in items:
+            ret.append(Backend.Gain(self._file_tags[item]["TRACK_GAIN"], self._file_tags[item]["TRACK_PEAK"]))
+
+        last_tags = self._file_tags[items[-1]]
+        return Backend.AlbumGain(Backend.Gain(last_tags["ALBUM_GAIN"], last_tags["ALBUM_PEAK"]), ret)
+
+    def close(self):
+        self._bus.remove_signal_watch()
+
+    def _on_eos(self, bus, message):
+        if not self._set_next_file():
+            ret = self._pipe.set_state(Gst.State.NULL)
+            self._main_loop.quit()
+        
+
+    def _on_error(self, bus, message):
+        self._pipe.set_state(Gst.State.NULL)
+        self._main_loop.quit()
+        err, debug = message.parse_error()
+        raise Exception("Error %s - %s on file %s" % (err, debug, self._src.get_property("location")))
+
+    def _on_tag(self, bus, message):
+        tags = message.parse_tag()
+
+        def handle_tag(taglist, tag, userdata):
+            if tag == Gst.TAG_TRACK_GAIN:
+                self._file_tags[self._file]["TRACK_GAIN"] = taglist.get_double(tag)[1]
+            elif tag == Gst.TAG_TRACK_PEAK:
+                self._file_tags[self._file]["TRACK_PEAK"] = taglist.get_double(tag)[1]
+            elif tag == Gst.TAG_ALBUM_GAIN:
+                self._file_tags[self._file]["ALBUM_GAIN"] = taglist.get_double(tag)[1]
+            elif tag == Gst.TAG_ALBUM_PEAK:
+                self._file_tags[self._file]["ALBUM_PEAK"] = taglist.get_double(tag)[1]
+            elif tag == Gst.TAG_REFERENCE_LEVEL:
+                self._file_tags[self._file]["REFERENCE_LEVEL"] = taglist.get_double(tag)[1]
+        
+        tags.foreach(handle_tag, None)
+
+    
+    def _set_first_file(self):
+        if len(self._files) == 0:
+            return False
+        
+        self._file = self._files.pop(0)
+        self._src.set_property("location", syspath(self._file.path))
+        
+        self._pipe.set_state(Gst.State.PLAYING)
+
+        return True
+
+    def _set_file(self):
+        if len(self._files) == 0:
+            return False
+        
+        self._file = self._files.pop(0)
+        
+        self._decbin.unlink(self._conv)
+        self._decbin.set_state(Gst.State.READY)
+        
+        self._src.set_state(Gst.State.READY)
+        self._src.set_property("location", syspath(self._file.path))
+        
+        self._src.sync_state_with_parent()
+        self._src.get_state(Gst.CLOCK_TIME_NONE)
+        self._decbin.sync_state_with_parent()
+        self._decbin.get_state(Gst.CLOCK_TIME_NONE)
+        
+        return True
+        
+    
+    def _set_next_file(self):
+        self._pipe.set_state(Gst.State.PAUSED)
+        self._pipe.get_state(Gst.CLOCK_TIME_NONE)
+        
+        ret = self._set_file()
+        if ret:
+            self._pipe.seek_simple(Gst.Format.TIME, Gst.SeekFlags.FLUSH, 0)
+            self._pipe.set_state(Gst.State.PLAYING)
+
+        return ret
+        
+        
+    def _on_pad_added(self, decbin, pad):
+        sink_pad = self._conv.get_compatible_pad(pad, None)
+        if sink_pad is None:
+            raise Exception()
+        
+        pad.link(sink_pad)
+
+    
+    def _on_pad_removed(self, decbin, pad):
+        peer = pad.get_peer()
+        if peer is not None:
+            raise Exception()
+    
+    @staticmethod
+    def initialize_config(config):
+        global GObject, Gst
+
+        import gi
+        gi.require_version('Gst', '1.0')
+        from gi.repository import GObject, Gst
+        GObject.threads_init()
+        Gst.init([sys.argv[0]])
         
 
 
@@ -185,7 +364,9 @@ class ReplayGainPlugin(BeetsPlugin):
     """Provides ReplayGain analysis.
     """
 
-    BACKENDS = { "command" : CommandBackend, # "gstreamer" : GStreamerBackend
+    BACKENDS = {
+        "command"   : CommandBackend,
+        "gstreamer" : GStreamerBackend
     }
 
     def __init__(self):
@@ -219,7 +400,7 @@ class ReplayGainPlugin(BeetsPlugin):
         # needs recalculation, we still get an accurate album gain
         # value.
         return self.overwrite or \
-               not all([not item.rg_album_gain or not item.rg_album_peak for item in album.items()])
+               any([not item.rg_album_gain or not item.rg_album_peak for item in album.items()])
 
 
     def store_track_gain(self, item, track_gain):
@@ -247,6 +428,7 @@ class ReplayGainPlugin(BeetsPlugin):
         if not self.album_requires_gain(album):
             log.info(u'Skipping album {0} - {1}'.format(album.albumartist,
                                                         album.album))
+            return
 
         album_gain = self.backend_instance.compute_album_gain(album)
         if len(album_gain.track_gains) != len(album.items()):
@@ -257,6 +439,7 @@ class ReplayGainPlugin(BeetsPlugin):
         for item, track_gain in itertools.izip(album.items(), album_gain.track_gains):
             self.store_track_gain(item, track_gain)
             if write:
+                print "WRITING"
                 item.write()
             
             
@@ -265,13 +448,16 @@ class ReplayGainPlugin(BeetsPlugin):
         if not self.track_requires_gain(item):
             log.info(u'Skipping track {0} - {1}'.format(item.artist,
                                                         item.title))
+            return
 
         track_gains = self.backend_instance.compute_track_gain([item])
         if len(track_gains) != 1:
             log.warn("ReplayGain backend failed for track %s - %s" % (item.artist, item.title))
             return
 
-        self.store_track_gain(item, track_gains[0], write)
+        self.store_track_gain(item, track_gains[0])
+        if write:
+            item.write()
         
 
     def imported(self, session, task):
