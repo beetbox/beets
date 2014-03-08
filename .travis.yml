@@ -10,7 +10,7 @@ branches:
 
 install:
     - travis_retry pip install .
-    - travis_retry pip install pylast flask
+    - travis_retry pip install pylast flask responses
     # unittest backport on Python < 2.7
     - "[[ $TRAVIS_PYTHON_VERSION == '2.6' ]] && pip install unittest2 || true"
     - travis_retry sudo apt-get update

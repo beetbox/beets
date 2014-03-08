@@ -83,6 +83,7 @@ setup(name='beets',
       # Plugin (optional) dependencies:
       extras_require={
           'beatport': ['requests'],
+          'fetchart': ['requests'],
           'chroma': ['pyacoustid'],
           'discogs': ['discogs-client'],
           'echonest_tempo': ['pyechonest'],
