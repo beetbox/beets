@@ -36,13 +36,25 @@ def update_playlists(lib):
         relative_to = normpath(relative_to)
 
     for playlist in playlists:
-        # Parse the query. If it's a list, join the queries with OR.
-        query_strings = playlist['query']
-        if not isinstance(query_strings, (list, tuple)):
-            query_strings = [query_strings]
-        items = lib.items(dbcore.OrQuery(
-            [library.get_query(q, library.Item) for q in query_strings]
-        ))
+        items = []
+        # Parse album quer(ies). If it's a list, join the queries with OR.
+        if playlist.has_key('album_query'):
+            query_strings = playlist['album_query']
+            if not isinstance(query_strings, (list, tuple)):
+                query_strings = [query_strings]
+            matching_albums = lib.albums(dbcore.OrQuery(
+                [library.get_query(q, library.Album) for q in query_strings]
+            ))
+            for album in matching_albums:
+                items.extend(album.items())
+        # Parse item quer(ies). If it's a list, join the queries with OR.
+        if playlist.has_key('query'):
+            query_strings = playlist['query']
+            if not isinstance(query_strings, (list, tuple)):
+                query_strings = [query_strings]
+            items.extend(lib.items(dbcore.OrQuery(
+                [library.get_query(q, library.Item) for q in query_strings]
+            )))
 
         m3us = {}
         basename = playlist['name'].encode('utf8')
@@ -55,7 +67,8 @@ def update_playlists(lib):
             item_path = item.path
             if relative_to:
                 item_path = os.path.relpath(item.path, relative_to)
-            m3us[m3u_name].append(item_path)
+            if not item_path in m3us[m3u_name]:
+                m3us[m3u_name].append(item_path)
         # Now iterate through the m3us that we need to generate
         for m3u in m3us:
             m3u_path = normpath(os.path.join(playlist_dir, m3u))
