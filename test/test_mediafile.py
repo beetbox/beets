@@ -624,7 +624,8 @@ class OggTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
         self.assertEqual(mediafile.mgfile['YEAR'], [u'2000'])
 
 class FlacTest(ReadWriteTestBase, PartialTestMixin,
-               GenreListTestMixin, unittest.TestCase):
+               GenreListTestMixin, ExtendedImageStructureTestMixin,
+               unittest.TestCase):
     extension = 'flac'
     audio_properties = {
         'length': 1.0,

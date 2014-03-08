@@ -659,7 +659,7 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         images = []
         for frame in mutagen_file.tags.getall(self.key):
             images.append(TagImage(data=frame.data, desc=frame.desc,
-                                   type=TagImage.TYPES[frame.type]))
+                                   type=frame.type))
         return images
 
     def store(self, mutagen_file, frames):
@@ -674,10 +674,7 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         frame.mime = image.mime_type
         frame.desc = (image.desc or u'').encode('utf8')
         frame.encoding = 3  # UTF-8 encoding of desc
-        if image.type:
-            frame.type = list(TagImage.TYPES).index(image.type)
-        else:
-            frame.type = 0
+        frame.type = image.type_index or 3  # front cover
         return frame
 
 
@@ -763,29 +760,39 @@ class VorbisImageStorageStyle(ListStorageStyle):
 
 
 class FlacImageStorageStyle(ListStorageStyle):
+    """Converts between ``mutagen.flac.Picture`` and ``TagImage`` instances.
+    """
 
     formats = ['flac']
 
     def __init__(self):
         super(FlacImageStorageStyle, self).__init__(key='')
-        self.as_type = str
 
     def fetch(self, mutagen_file):
-        pictures = mutagen_file.pictures
-        if pictures:
-            return [picture.data or None for picture in pictures]
-        else:
-            return []
+        """Return a list of TagImages stored in the tags.
+        """
+        images = []
+        for picture in mutagen_file.pictures:
+            images.append(TagImage(data=picture.data, desc=picture.desc,
+                                   type=picture.type))
+        return images
 
-    def store(self, mutagen_file, images):
+    def store(self, mutagen_file, pictures):
+        """``pictures`` is a list of mutagen.flac.Picture instances.
+        """
         mutagen_file.clear_pictures()
-
-        for image in images:
-            pic = mutagen.flac.Picture()
-            pic.data = image
-            pic.type = 3  # front cover
-            pic.mime = _image_mime_type(image)
+        for pic in pictures:
             mutagen_file.add_picture(pic)
+
+    def serialize(self, image):
+        """Turn a TagImage into a mutagen.flac.Picture.
+        """
+        pic = mutagen.flac.Picture()
+        pic.data = image.data
+        pic.type = image.type_index or 3  # Front cover
+        pic.mime = image.mime_type
+        pic.desc = image.desc or u''
+        return pic
 
 
 
@@ -962,7 +969,7 @@ class CoverArtField(MediaField):
         )
 
     def __get__(self, mediafile, _):
-        if mediafile.type == 'mp3':
+        if mediafile.type in ['mp3', 'flac']:
             try:
                 return mediafile.images[0].data
             except IndexError:
@@ -971,7 +978,7 @@ class CoverArtField(MediaField):
             return style.get(mediafile.mgfile)
 
     def __set__(self, mediafile, data):
-        if mediafile.type == 'mp3':
+        if mediafile.type in ['mp3', 'flac']:
             if data:
                 mediafile.images = [TagImage(data=data)]
             else:
@@ -1055,6 +1062,8 @@ class TagImage(object):
     def __init__(self, data, desc=None, type=None):
         self.data = data
         self.desc = desc
+        if isinstance(type, int):
+            type = self.TYPES[type]
         self.type = type
 
     @property
@@ -1062,6 +1071,11 @@ class TagImage(object):
         if self.data:
             return _image_mime_type(self.data)
 
+    @property
+    def type_index(self):
+        if self.type is None:
+            return None
+        return list(self.TYPES).index(self.type)
 
 # MediaFile is a collection of fields.
 
