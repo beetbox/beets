@@ -60,7 +60,7 @@ def _splitstrip(string, delim=u','):
     return [s.strip() for s in string.split(delim)]
 
 
-def diff(item1, item2, attributes, max_bpm):
+def diff(item1, item2, attributes):
     result = 0.0
     for attr in attributes:
         try:
@@ -72,10 +72,9 @@ def diff(item1, item2, attributes, max_bpm):
             result += 1.0
 
     try:
-        result += abs(
-            float(item1.get('bpm', None)) / max_bpm -
-            float(item2.get('bpm', None)) / max_bpm
-        )
+        bpm1 = float(item1.get('bpm', None))
+        bpm2 = float(item2.get('bpm', None))
+        result += abs(bpm1 - bpm2) / max(bpm1, bpm2, 1)
     except TypeError:
         result += 1.0
 
@@ -83,15 +82,12 @@ def diff(item1, item2, attributes, max_bpm):
 
 
 def similar(lib, src_item, threshold=0.15, fmt='${difference}: ${path}'):
-    max_bpm = reduce(lambda x, y: max(x, y),
-        [float(x.get('bpm', 0.0)) for x in lib.items()], 1.0)
-
     attributes = ATTRIBUTES.values()
     attributes.remove('bpm')
 
     for item in lib.items():
         if item.path != src_item.path:
-            d = diff(item, src_item, attributes, max_bpm)
+            d = diff(item, src_item, attributes)
             if d < threshold:
                 s = fmt.replace('${difference}', '{:2.2f}'.format(d))
                 ui.print_obj(item, lib, s)
