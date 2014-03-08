@@ -80,17 +80,18 @@ class ImageStructureTestMixin(object):
         self.assertEqual(image.data, self.png_data)
         self.assertEqual(image.mime_type, 'image/png')
         self.assertExtendedImageAttributes(image, desc='album cover',
-                                           type='front')
+                                           type=TagImage.TYPES.front)
 
         image = mediafile.images[1]
         self.assertEqual(image.data, self.jpg_data)
-        self.assertEqual(image.mime_type, 'image/jpg')
+        self.assertEqual(image.mime_type, 'image/jpeg')
         self.assertExtendedImageAttributes(image, desc='the artist',
-                                           type='performer')
+                                           type=TagImage.TYPES.artist)
 
     def test_set_image_structure(self):
         mediafile = self._mediafile_fixture('empty')
-        image = TagImage(data=self.png_data, desc='album cover', type=TagImage.FRONT)
+        image = TagImage(data=self.png_data, desc='album cover',
+                         type=TagImage.TYPES.front)
         mediafile.images = [image]
         mediafile.save()
 
@@ -101,22 +102,23 @@ class ImageStructureTestMixin(object):
         self.assertEqual(image.data, self.png_data)
         self.assertEqual(image.mime_type, 'image/png')
         self.assertExtendedImageAttributes(image, desc='album cover',
-                                           type='front')
+                                           type=TagImage.TYPES.front)
 
     def test_add_image_structure(self):
         mediafile = self._mediafile_fixture('image')
         self.assertEqual(len(mediafile.images), 2)
 
         image = TagImage(data=self.png_data, desc='the composer',
-                         type=TagImage.COMPOSER)
-        mediafile.images += image
-        mediafile.write()
+                         type=TagImage.TYPES.composer)
+        mediafile.images += [image]
+        mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(len(mediafile.images), 3)
         self.assertExtendedImageAttributes(mediafile.images[2],
                 desc='another cover', type='composer')
 
+    @unittest.skip('editing list by reference is not implemented yet')
     def test_mutate_image_structure(self):
         mediafile = self._mediafile_fixture('image')
         self.assertEqual(len(mediafile.images), 2)
@@ -125,12 +127,12 @@ class ImageStructureTestMixin(object):
         self.assertEqual(image.data, self.png_data)
         self.assertEqual(image.mime_type, 'image/png')
         self.assertExtendedImageAttributes(image, desc='album cover',
-                                           type='front')
+                                           type=TagImage.TYPES.front)
 
         image.data = self.jpg_data
         image.desc = 'new description'
         image.type = TagImage.COMPOSER
-        mediafile.write()
+        mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(len(mediafile.images), 2)
@@ -139,14 +141,15 @@ class ImageStructureTestMixin(object):
         self.assertEqual(image.data, self.jpg_data)
         self.assertEqual(image.mime_type, 'image/jpeg')
         self.assertExtendedImageAttributes(image, desc='new description',
-                                           type='composer')
+                                           type=TagImage.TYPES.composer)
 
+    @unittest.skip('editing list by reference is not implemented yet')
     def test_delete_image_structure(self):
         mediafile = self._mediafile_fixture('image')
         self.assertEqual(len(mediafile.images), 2)
 
         del mediafile.images[0]
-        mediafile.write()
+        mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(len(mediafile.images), 1)
@@ -155,7 +158,7 @@ class ImageStructureTestMixin(object):
         self.assertExtendedImageAttributes(image, desc='the artist',
                                            type='performer')
 
-    def assertExtendedImageAttributes(image, **kwargs):
+    def assertExtendedImageAttributes(self, image, **kwargs):
         """Ignore extended image attributes in the base tests.
         """
         pass
@@ -164,7 +167,7 @@ class ImageStructureTestMixin(object):
 class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
     """Checks for additional attributes in the image structure."""
 
-    def assertExtendedImageAttributes(image, desc, type):
+    def assertExtendedImageAttributes(self, image, desc=None, type=None):
         self.assertEqual(image.desc, desc)
         self.assertEqual(image.type, type)
 
@@ -545,7 +548,8 @@ class GenreListTestMixin(object):
 
 
 class MP3Test(ReadWriteTestBase, PartialTestMixin,
-              GenreListTestMixin, unittest.TestCase):
+              GenreListTestMixin, ExtendedImageStructureTestMixin,
+              unittest.TestCase):
     extension = 'mp3'
     audio_properties = {
         'length': 1.0,
