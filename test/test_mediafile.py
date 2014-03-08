@@ -23,7 +23,7 @@ import time
 
 import _common
 from _common import unittest
-from beets.mediafile import MediaFile
+from beets.mediafile import MediaFile, TagImage
 
 
 class ArtTestMixin(object):
@@ -61,6 +61,115 @@ class ArtTestMixin(object):
 
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(mediafile.art, self.jpg_data)
+
+
+class ImageStructureTestMixin(object):
+    """Test reading and writing multiple image tags.
+
+    The tests use the `image` media file fixture. The tags of these files
+    include two images, on in the PNG format, the other in JPEG format. If
+    the tag format supports it they also include additional metadata.
+    """
+
+    def test_read_image_structures(self):
+        mediafile = self._mediafile_fixture('image')
+
+        self.assertEqual(len(mediafile.images), 2)
+
+        image = mediafile.images[0]
+        self.assertEqual(image.data, self.png_data)
+        self.assertEqual(image.mime_type, 'image/png')
+        self.assertExtendedImageAttributes(image, desc='album cover',
+                                           type=TagImage.TYPES.front)
+
+        image = mediafile.images[1]
+        self.assertEqual(image.data, self.jpg_data)
+        self.assertEqual(image.mime_type, 'image/jpeg')
+        self.assertExtendedImageAttributes(image, desc='the artist',
+                                           type=TagImage.TYPES.artist)
+
+    def test_set_image_structure(self):
+        mediafile = self._mediafile_fixture('empty')
+        image = TagImage(data=self.png_data, desc='album cover',
+                         type=TagImage.TYPES.front)
+        mediafile.images = [image]
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(len(mediafile.images), 1)
+
+        image = mediafile.images[0]
+        self.assertEqual(image.data, self.png_data)
+        self.assertEqual(image.mime_type, 'image/png')
+        self.assertExtendedImageAttributes(image, desc='album cover',
+                                           type=TagImage.TYPES.front)
+
+    def test_add_image_structure(self):
+        mediafile = self._mediafile_fixture('image')
+        self.assertEqual(len(mediafile.images), 2)
+
+        image = TagImage(data=self.png_data, desc='the composer',
+                         type=TagImage.TYPES.composer)
+        mediafile.images += [image]
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(len(mediafile.images), 3)
+        self.assertExtendedImageAttributes(mediafile.images[2],
+                desc='the composer', type=TagImage.TYPES.composer)
+
+    @unittest.skip('editing list by reference is not implemented yet')
+    def test_mutate_image_structure(self):
+        mediafile = self._mediafile_fixture('image')
+        self.assertEqual(len(mediafile.images), 2)
+
+        image = mediafile.images[0]
+        self.assertEqual(image.data, self.png_data)
+        self.assertEqual(image.mime_type, 'image/png')
+        self.assertExtendedImageAttributes(image, desc='album cover',
+                                           type=TagImage.TYPES.front)
+
+        image.data = self.jpg_data
+        image.desc = 'new description'
+        image.type = TagImage.COMPOSER
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(len(mediafile.images), 2)
+
+        image = mediafile.images[0]
+        self.assertEqual(image.data, self.jpg_data)
+        self.assertEqual(image.mime_type, 'image/jpeg')
+        self.assertExtendedImageAttributes(image, desc='new description',
+                                           type=TagImage.TYPES.composer)
+
+    @unittest.skip('editing list by reference is not implemented yet')
+    def test_delete_image_structure(self):
+        mediafile = self._mediafile_fixture('image')
+        self.assertEqual(len(mediafile.images), 2)
+
+        del mediafile.images[0]
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(len(mediafile.images), 1)
+        self.assertEqual(image.data, self.png_data)
+        self.assertEqual(image.mime_type, 'image/jpg')
+        self.assertExtendedImageAttributes(image, desc='the artist',
+                                           type='performer')
+
+    def assertExtendedImageAttributes(self, image, **kwargs):
+        """Ignore extended image attributes in the base tests.
+        """
+        pass
+
+
+class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
+    """Checks for additional attributes in the image structure."""
+
+    def assertExtendedImageAttributes(self, image, desc=None, type=None):
+        self.assertEqual(image.desc, desc)
+        self.assertEqual(image.type, type)
 
 
 # TODO include this in ReadWriteTestBase if implemented
@@ -439,7 +548,8 @@ class GenreListTestMixin(object):
 
 
 class MP3Test(ReadWriteTestBase, PartialTestMixin,
-              GenreListTestMixin, unittest.TestCase):
+              GenreListTestMixin, ExtendedImageStructureTestMixin,
+              unittest.TestCase):
     extension = 'mp3'
     audio_properties = {
         'length': 1.0,
@@ -520,7 +630,8 @@ class OggTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
 
 
 class FlacTest(ReadWriteTestBase, PartialTestMixin,
-               GenreListTestMixin, unittest.TestCase):
+               GenreListTestMixin, ExtendedImageStructureTestMixin,
+               unittest.TestCase):
     extension = 'flac'
     audio_properties = {
         'length': 1.0,
