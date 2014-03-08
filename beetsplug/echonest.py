@@ -82,7 +82,7 @@ def diff(item1, item2, attributes, max_bpm):
     return result
 
 
-def similar(lib, src_item, threshold=0.15):
+def similar(lib, src_item, threshold=0.15, fmt='${difference}: ${path}'):
     max_bpm = reduce(lambda x, y: max(x, y),
         [float(x.get('bpm', 0.0)) for x in lib.items()], 1.0)
 
@@ -93,7 +93,8 @@ def similar(lib, src_item, threshold=0.15):
         if item.path != src_item.path:
             d = diff(item, src_item, attributes, max_bpm)
             if d < threshold:
-                print(u'{1:2.2f}: {0}'.format(item.path, d))
+                s = fmt.replace('${difference}', '{:2.2f}'.format(d))
+                ui.print_obj(item, lib, s)
 
 
 class EchonestMetadataPlugin(plugins.BeetsPlugin):
@@ -464,11 +465,13 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         sim_cmd.parser.add_option('-t', '--threshold', dest='threshold',
             action='store', type='float', default=0.15,
             help='Set difference threshold')
+        sim_cmd.parser.add_option('-f', '--format', action='store',
+            default='${difference}: ${path}', help='print with custom format')
 
         def sim_func(lib, opts, args):
             self.config.set_args(opts)
             for item in lib.items(ui.decargs(args)):
-                similar(lib, item, opts.threshold)
+                similar(lib, item, opts.threshold, opts.format)
 
         sim_cmd.func = sim_func
 
