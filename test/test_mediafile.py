@@ -500,6 +500,7 @@ class OggTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
         'bitdepth': 0,
         'channels': 1,
     }
+
     def test_read_date_from_year_tag(self):
         mediafile = self._mediafile_fixture('year')
         self.assertEqual(mediafile.year, 2000)
@@ -512,6 +513,17 @@ class OggTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
 
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(mediafile.mgfile['YEAR'], [u'2000'])
+
+    def test_legacy_coverart_tag(self):
+        mediafile = self._mediafile_fixture('coverart')
+        self.assertTrue('coverart' in mediafile.mgfile)
+        self.assertEqual(mediafile.art, self.png_data)
+
+        mediafile.art = self.png_data
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertFalse('coverart' in mediafile.mgfile)
 
 class FlacTest(ReadWriteTestBase, PartialTestMixin,
                GenreListTestMixin, unittest.TestCase):

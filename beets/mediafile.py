@@ -704,7 +704,8 @@ class VorbisImageStorageStyle(ListStorageStyle):
         if 'metadata_block_picture' not in mutagen_file:
             # Try legacy COVERART tags.
             if 'coverart' in mutagen_file and mutagen_file['coverart']:
-                return base64.b64decode(mutagen_file['coverart'][0])
+                return [base64.b64decode(data)
+                        for data in mutagen_file['coverart']]
             return []
 
         pics = []
@@ -717,13 +718,10 @@ class VorbisImageStorageStyle(ListStorageStyle):
 
     def store(self, mutagen_file, image_data):
         # Strip all art, including legacy COVERART.
-        if 'metadata_block_picture' in mutagen_file:
-            if 'metadata_block_picture' in mutagen_file:
-                del mutagen_file['metadata_block_picture']
-            if 'coverart' in mutagen_file:
-                del mutagen_file['coverart']
-            if 'coverartmime' in mutagen_file:
-                del mutagen_file['coverartmime']
+        if 'coverart' in mutagen_file:
+            del mutagen_file['coverart']
+        if 'coverartmime' in mutagen_file:
+            del mutagen_file['coverartmime']
 
         image_data = image_data[0]
         # Add new art if provided.
