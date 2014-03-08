@@ -70,15 +70,27 @@ def diff(item1, item2, attributes):
             )
         except TypeError:
             result += 1.0
+
+    try:
+        bpm1 = float(item1.get('bpm', None))
+        bpm2 = float(item2.get('bpm', None))
+        result += abs(bpm1 - bpm2) / max(bpm1, bpm2, 1)
+    except TypeError:
+        result += 1.0
+
     return result
 
 
-def similar(lib, src_item, threshold=0.15):
+def similar(lib, src_item, threshold=0.15, fmt='${difference}: ${path}'):
+    attributes = ATTRIBUTES.values()
+    attributes.remove('bpm')
+
     for item in lib.items():
         if item.path != src_item.path:
-            d = diff(item, src_item, ATTRIBUTES.values())
+            d = diff(item, src_item, attributes)
             if d < threshold:
-                print(u'{1:2.2f}: {0}'.format(item.path, d))
+                s = fmt.replace('${difference}', '{:2.2f}'.format(d))
+                ui.print_obj(item, lib, s)
 
 
 class EchonestMetadataPlugin(plugins.BeetsPlugin):
@@ -446,11 +458,16 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         fetch_cmd.func = fetch_func
 
         sim_cmd = ui.Subcommand('echosim', help='show related files')
+        sim_cmd.parser.add_option('-t', '--threshold', dest='threshold',
+            action='store', type='float', default=0.15,
+            help='Set difference threshold')
+        sim_cmd.parser.add_option('-f', '--format', action='store',
+            default='${difference}: ${path}', help='print with custom format')
 
         def sim_func(lib, opts, args):
             self.config.set_args(opts)
             for item in lib.items(ui.decargs(args)):
-                similar(lib, item)
+                similar(lib, item, opts.threshold, opts.format)
 
         sim_cmd.func = sim_func
 
