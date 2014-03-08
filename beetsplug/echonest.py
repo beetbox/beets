@@ -60,9 +60,16 @@ def _splitstrip(string, delim=u','):
     return [s.strip() for s in string.split(delim)]
 
 
-def diff(item1, item2, attributes):
+def diff(item1, item2):
+    """Score two Item objects according to the Echo Nest numerical
+    fields.
+    """
     result = 0.0
-    for attr in attributes:
+    for attr in ATTRIBUTES:
+        if attr == 'bpm':
+            # BPM (tempo) is handled specially to normalize.
+            continue
+
         try:
             result += abs(
                 float(item1.get(attr, None)) -
@@ -82,12 +89,9 @@ def diff(item1, item2, attributes):
 
 
 def similar(lib, src_item, threshold=0.15, fmt='${difference}: ${path}'):
-    attributes = ATTRIBUTES.values()
-    attributes.remove('bpm')
-
     for item in lib.items():
         if item.path != src_item.path:
-            d = diff(item, src_item, attributes)
+            d = diff(item, src_item)
             if d < threshold:
                 s = fmt.replace('${difference}', '{:2.2f}'.format(d))
                 ui.print_obj(item, lib, s)
