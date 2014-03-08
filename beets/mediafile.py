@@ -704,7 +704,8 @@ class VorbisImageStorageStyle(ListStorageStyle):
         if 'metadata_block_picture' not in mutagen_file:
             # Try legacy COVERART tags.
             if 'coverart' in mutagen_file and mutagen_file['coverart']:
-                return base64.b64decode(mutagen_file['coverart'][0])
+                return [base64.b64decode(data)
+                        for data in mutagen_file['coverart']]
             return []
 
         pics = []
