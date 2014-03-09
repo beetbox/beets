@@ -14,6 +14,11 @@
 
 """Tests for the album art fetchers."""
 
+import os
+import shutil
+
+import responses
+
 import _common
 from _common import unittest
 from beetsplug import fetchart
@@ -21,34 +26,26 @@ from beets.autotag import AlbumInfo, AlbumMatch
 from beets import library
 from beets import importer
 from beets import config
-import os
-import shutil
-import StringIO
 
-class MockHeaders(object):
-    def __init__(self, typeval):
-        self.typeval = typeval
-    def gettype(self):
-        return self.typeval
-class MockUrlRetrieve(object):
-    def __init__(self, typeval, pathval='fetched_path'):
-        self.pathval = pathval
-        self.headers = MockHeaders(typeval)
-        self.fetched = None
-    def __call__(self, url, filename=None):
-        self.fetched = url
-        return filename or self.pathval, self.headers
 
 class FetchImageTest(_common.TestCase):
+    @responses.activate
+    def run(self, *args, **kwargs):
+        super(FetchImageTest, self).run(*args, **kwargs)
+
+    def mock_response(self, content_type):
+        responses.add(responses.GET, 'http://example.com', content_type=content_type)
+
     def test_invalid_type_returns_none(self):
-        fetchart.urllib.urlretrieve = MockUrlRetrieve('')
+        self.mock_response('image/watercolour')
         artpath = fetchart._fetch_image('http://example.com')
         self.assertEqual(artpath, None)
 
     def test_jpeg_type_returns_path(self):
-        fetchart.urllib.urlretrieve = MockUrlRetrieve('image/jpeg')
+        self.mock_response('image/jpeg')
         artpath = fetchart._fetch_image('http://example.com')
         self.assertNotEqual(artpath, None)
+
 
 class FSArtTest(_common.TestCase):
     def setUp(self):
@@ -81,32 +78,32 @@ class FSArtTest(_common.TestCase):
         fn = fetchart.art_in_path(self.dpath, ('art',), True)
         self.assertEqual(fn, None)
 
+
 class CombinedTest(_common.TestCase):
+    ASIN = 'xxxx'
+    MBID = 'releaseid'
+    AMAZON_URL = 'http://images.amazon.com/images/P/{0}.01.LZZZZZZZ.jpg'.format(ASIN)
+    AAO_URL = 'http://www.albumart.org/index_detail.php?asin={0}'.format(ASIN)
+    CAA_URL = 'http://coverartarchive.org/release/{0}/front-500.jpg'.format(MBID)
+
     def setUp(self):
         super(CombinedTest, self).setUp()
-
         self.dpath = os.path.join(self.temp_dir, 'arttest')
         os.mkdir(self.dpath)
-        self.old_urlopen = fetchart.urllib.urlopen
-        fetchart.urllib.urlopen = self._urlopen
-        self.page_text = ""
-        self.urlopen_called = False
 
         # Set up configuration.
         fetchart.FetchArtPlugin()
 
-    def tearDown(self):
-        super(CombinedTest, self).tearDown()
-        fetchart.urllib.urlopen = self.old_urlopen
+    @responses.activate
+    def run(self, *args, **kwargs):
+        super(CombinedTest, self).run(*args, **kwargs)
 
-    def _urlopen(self, url):
-        self.urlopen_called = True
-        self.fetched_url = url
-        return StringIO.StringIO(self.page_text)
+    def mock_response(self, url, content_type='image/jpeg'):
+        responses.add(responses.GET, url, content_type=content_type)
 
     def test_main_interface_returns_amazon_art(self):
-        fetchart.urllib.urlretrieve = MockUrlRetrieve('image/jpeg')
-        album = _common.Bag(asin='xxxx')
+        self.mock_response(self.AMAZON_URL)
+        album = _common.Bag(asin=self.ASIN)
         artpath = fetchart.art_for_album(album, None)
         self.assertNotEqual(artpath, None)
 
@@ -117,83 +114,80 @@ class CombinedTest(_common.TestCase):
 
     def test_main_interface_gives_precedence_to_fs_art(self):
         _common.touch(os.path.join(self.dpath, 'art.jpg'))
-        fetchart.urllib.urlretrieve = MockUrlRetrieve('image/jpeg')
-        album = _common.Bag(asin='xxxx')
+        self.mock_response(self.AMAZON_URL)
+        album = _common.Bag(asin=self.ASIN)
         artpath = fetchart.art_for_album(album, [self.dpath])
         self.assertEqual(artpath, os.path.join(self.dpath, 'art.jpg'))
 
     def test_main_interface_falls_back_to_amazon(self):
-        fetchart.urllib.urlretrieve = MockUrlRetrieve('image/jpeg')
-        album = _common.Bag(asin='xxxx')
+        self.mock_response(self.AMAZON_URL)
+        album = _common.Bag(asin=self.ASIN)
         artpath = fetchart.art_for_album(album, [self.dpath])
         self.assertNotEqual(artpath, None)
         self.assertFalse(artpath.startswith(self.dpath))
 
     def test_main_interface_tries_amazon_before_aao(self):
-        fetchart.urllib.urlretrieve = MockUrlRetrieve('image/jpeg')
-        album = _common.Bag(asin='xxxx')
+        self.mock_response(self.AMAZON_URL)
+        album = _common.Bag(asin=self.ASIN)
         fetchart.art_for_album(album, [self.dpath])
-        self.assertFalse(self.urlopen_called)
+        self.assertEqual(len(responses.calls), 1)
+        self.assertEqual(responses.calls[0].request.url, self.AMAZON_URL)
 
     def test_main_interface_falls_back_to_aao(self):
-        fetchart.urllib.urlretrieve = MockUrlRetrieve('text/html')
-        album = _common.Bag(asin='xxxx')
+        self.mock_response(self.AMAZON_URL, content_type='text/html')
+        album = _common.Bag(asin=self.ASIN)
         fetchart.art_for_album(album, [self.dpath])
-        self.assertTrue(self.urlopen_called)
+        self.assertEqual(responses.calls[-1].request.url, self.AAO_URL)
 
     def test_main_interface_uses_caa_when_mbid_available(self):
-        mock_retrieve = MockUrlRetrieve('image/jpeg')
-        fetchart.urllib.urlretrieve = mock_retrieve
-        album = _common.Bag(mb_albumid='releaseid', asin='xxxx')
+        self.mock_response(self.CAA_URL)
+        album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
         artpath = fetchart.art_for_album(album, None)
         self.assertNotEqual(artpath, None)
-        self.assertTrue('coverartarchive.org' in mock_retrieve.fetched)
+        self.assertEqual(len(responses.calls), 1)
+        self.assertEqual(responses.calls[0].request.url, self.CAA_URL)
 
     def test_local_only_does_not_access_network(self):
-        mock_retrieve = MockUrlRetrieve('image/jpeg')
-        fetchart.urllib.urlretrieve = mock_retrieve
-        album = _common.Bag(mb_albumid='releaseid', asin='xxxx')
+        album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
         artpath = fetchart.art_for_album(album, [self.dpath], local_only=True)
         self.assertEqual(artpath, None)
-        self.assertFalse(self.urlopen_called)
-        self.assertFalse(mock_retrieve.fetched)
+        self.assertEqual(len(responses.calls), 0)
 
     def test_local_only_gets_fs_image(self):
         _common.touch(os.path.join(self.dpath, 'art.jpg'))
-        mock_retrieve = MockUrlRetrieve('image/jpeg')
-        fetchart.urllib.urlretrieve = mock_retrieve
-        album = _common.Bag(mb_albumid='releaseid', asin='xxxx')
+        album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
         artpath = fetchart.art_for_album(album, [self.dpath], None, local_only=True)
         self.assertEqual(artpath, os.path.join(self.dpath, 'art.jpg'))
-        self.assertFalse(self.urlopen_called)
-        self.assertFalse(mock_retrieve.fetched)
+        self.assertEqual(len(responses.calls), 0)
+
 
 class AAOTest(_common.TestCase):
-    def setUp(self):
-        super(AAOTest, self).setUp()
-        self.old_urlopen = fetchart.urllib.urlopen
-        fetchart.urllib.urlopen = self._urlopen
-        self.page_text = ''
-    def tearDown(self):
-        super(AAOTest, self).tearDown()
-        fetchart.urllib.urlopen = self.old_urlopen
+    ASIN = 'xxxx'
+    AAO_URL = 'http://www.albumart.org/index_detail.php?asin={0}'.format(ASIN)
 
-    def _urlopen(self, url):
-        return StringIO.StringIO(self.page_text)
+    @responses.activate
+    def run(self, *args, **kwargs):
+        super(AAOTest, self).run(*args, **kwargs)
+
+    def mock_response(self, url, body):
+        responses.add(responses.GET, url, body=body, content_type='text/html',
+                      match_querystring=True)
 
     def test_aao_scraper_finds_image(self):
-        self.page_text = """
+        body = """
         <br />
         <a href="TARGET_URL" title="View larger image" class="thickbox" style="color: #7E9DA2; text-decoration:none;">
         <img src="http://www.albumart.org/images/zoom-icon.jpg" alt="View larger image" width="17" height="15"  border="0"/></a>
         """
-        res = fetchart.aao_art('x')
+        self.mock_response(self.AAO_URL, body)
+        res = fetchart.aao_art(self.ASIN)
         self.assertEqual(res, 'TARGET_URL')
 
     def test_aao_scraper_returns_none_when_no_image_present(self):
-        self.page_text = "blah blah"
-        res = fetchart.aao_art('x')
+        self.mock_response(self.AAO_URL, 'blah blah')
+        res = fetchart.aao_art(self.ASIN)
         self.assertEqual(res, None)
+
 
 class ArtImporterTest(_common.TestCase):
     def setUp(self):

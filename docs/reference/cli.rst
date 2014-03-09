@@ -360,6 +360,9 @@ like this into your ``.bashrc`` or similar file::
 
     eval $(beet completion)
 
+Or, to avoid slowing down your shell startup time, you can pipe the ``beet
+completion`` output to a file and source that instead.
+
 You will also need to source the `bash-completion`_ script, which is probably
 available via your package manager. On OS X, you can install it via Homebrew
 with ``brew install bash-completion``; Homebrew will give you instructions for

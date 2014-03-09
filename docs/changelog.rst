@@ -4,6 +4,9 @@ Changelog
 1.3.4 (in development)
 ----------------------
 
+One note for upgraders: the :doc:`/plugins/fetchart` has a new dependency, the
+`requests`_ module.
+
 New stuff:
 
 * Added a :ref:`config-cmd` command to manage your configuration. It can show
@@ -17,7 +20,11 @@ New stuff:
 * The importer interface now shows the URL for MusicBrainz matches. Thanks to
   johtso.
 * :doc:`/plugins/smartplaylist`: Playlists can now be generated from multiple
-  queries (combined with "or" logic). Thanks to brilnius.
+  queries (combined with "or" logic). Album-level queries are also now
+  possible. Thanks to brilnius.
+* :doc:`/plugins/echonest`: Echo Nest similarity now weights the tempo in
+  better proportion to other metrics. Also, options were added to specify
+  custom thresholds and output formats. Thanks to Adam M.
 
 Fixes:
 
@@ -35,6 +42,11 @@ Fixes:
   again to geigerzaehler.
 * Fix a crash when reading WMA files whose boolean-valued fields contain
   strings. Thanks to johtso.
+* :doc:`/plugins/fetchart`: The plugin now sends "beets" as the User-Agent
+  when making scraping requests. This helps resolve some blocked requests. The
+  plugin now also depends on the `requests`_ Python library.
+
+.. _requests: http://www.python-requests.org/
 
 
 1.3.3 (February 26, 2014)
