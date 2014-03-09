@@ -63,7 +63,7 @@ class ArtTestMixin(object):
         self.assertEqual(mediafile.art, self.jpg_data)
 
 
-class ImageStructureTestMixin(object):
+class ImageStructureTestMixin(ArtTestMixin):
     """Test reading and writing multiple image tags.
 
     The tests use the `image` media file fixture. The tags of these files
