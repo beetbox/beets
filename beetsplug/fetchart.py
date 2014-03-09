@@ -32,11 +32,9 @@ from beets import config
 IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 CONTENT_TYPES = ('image/jpeg',)
 DOWNLOAD_EXTENSION = '.jpg'
+HEADERS = {'User-Agent': 'beets'}
 
 log = logging.getLogger('beets')
-
-requests_session = requests.Session()
-requests_session.headers = {'User-Agent': 'beets'}
 
 
 def _fetch_image(url):
@@ -46,13 +44,14 @@ def _fetch_image(url):
     """
     log.debug(u'fetchart: downloading art: {0}'.format(url))
     try:
-        with closing(requests_session.get(url, stream=True)) as resp:
+        with closing(requests.get(url, stream=True, headers=HEADERS)) as resp:
             if not resp.headers['Content-Type'] in CONTENT_TYPES:
                 log.debug(u'fetchart: not an image')
                 return
 
             # Generate a temporary file with the correct extension.
-            with NamedTemporaryFile(suffix=DOWNLOAD_EXTENSION, delete=False) as fh:
+            with NamedTemporaryFile(suffix=DOWNLOAD_EXTENSION, delete=False) \
+                    as fh:
                 for chunk in resp.iter_content():
                     fh.write(chunk)
             log.debug(u'fetchart: downloaded art to: {0}'.format(
@@ -102,7 +101,7 @@ def aao_art(asin):
     """Return art URL from AlbumArt.org given an ASIN."""
     # Get the page from albumart.org.
     try:
-        resp = requests_session.get(AAO_URL, params={'asin': asin})
+        resp = requests.get(AAO_URL, params={'asin': asin}, headers=HEADERS)
         log.debug(u'fetchart: scraped art URL: {0}'.format(resp.url))
     except requests.RequestException:
         log.debug(u'fetchart: error scraping art page')
