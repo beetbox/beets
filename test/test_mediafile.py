@@ -23,7 +23,7 @@ import time
 
 import _common
 from _common import unittest
-from beets.mediafile import MediaFile
+from beets.mediafile import MediaFile, Image
 
 
 class ArtTestMixin(object):
@@ -46,6 +46,14 @@ class ArtTestMixin(object):
         return self._jpg_data
     _jpg_data = None
 
+    @property
+    def tiff_data(self):
+        if not self._jpg_data:
+            with open(os.path.join(_common.RSRC, 'image-2x3.tiff'), 'rb') as f:
+                self._jpg_data = f.read()
+        return self._jpg_data
+    _jpg_data = None
+
     def test_set_png_art(self):
         mediafile = self._mediafile_fixture('empty')
         mediafile.art = self.png_data
@@ -61,6 +69,140 @@ class ArtTestMixin(object):
 
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(mediafile.art, self.jpg_data)
+
+
+class ImageStructureTestMixin(ArtTestMixin):
+    """Test reading and writing multiple image tags.
+
+    The tests use the `image` media file fixture. The tags of these files
+    include two images, on in the PNG format, the other in JPEG format. If
+    the tag format supports it they also include additional metadata.
+    """
+
+    def test_read_image_structures(self):
+        mediafile = self._mediafile_fixture('image')
+
+        self.assertEqual(len(mediafile.images), 2)
+
+        image = mediafile.images[0]
+        self.assertEqual(image.data, self.png_data)
+        self.assertEqual(image.mime_type, 'image/png')
+        self.assertExtendedImageAttributes(image, desc='album cover',
+                                           type=Image.TYPES.front)
+
+        image = mediafile.images[1]
+        self.assertEqual(image.data, self.jpg_data)
+        self.assertEqual(image.mime_type, 'image/jpeg')
+        self.assertExtendedImageAttributes(image, desc='the artist',
+                                           type=Image.TYPES.artist)
+
+    def test_set_image_structure(self):
+        mediafile = self._mediafile_fixture('empty')
+        image = Image(data=self.png_data, desc='album cover',
+                         type=Image.TYPES.front)
+        mediafile.images = [image]
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(len(mediafile.images), 1)
+
+        image = mediafile.images[0]
+        self.assertEqual(image.data, self.png_data)
+        self.assertEqual(image.mime_type, 'image/png')
+        self.assertExtendedImageAttributes(image, desc='album cover',
+                                           type=Image.TYPES.front)
+
+    def test_add_image_structure(self):
+        mediafile = self._mediafile_fixture('image')
+        self.assertEqual(len(mediafile.images), 2)
+
+        image = Image(data=self.png_data, desc='the composer',
+                         type=Image.TYPES.composer)
+        mediafile.images += [image]
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(len(mediafile.images), 3)
+
+        # WMA does not preserve the order, so we have to work around this
+        try:
+            image = filter(lambda i: i.desc == 'the composer',
+                           mediafile.images)[0]
+        except IndexError:
+            image = None
+        self.assertExtendedImageAttributes(image,
+                desc='the composer', type=Image.TYPES.composer)
+
+    @unittest.skip('editing list by reference is not implemented yet')
+    def test_mutate_image_structure(self):
+        mediafile = self._mediafile_fixture('image')
+        self.assertEqual(len(mediafile.images), 2)
+
+        image = mediafile.images[0]
+        self.assertEqual(image.data, self.png_data)
+        self.assertEqual(image.mime_type, 'image/png')
+        self.assertExtendedImageAttributes(image, desc='album cover',
+                                           type=Image.TYPES.front)
+
+        image.data = self.jpg_data
+        image.desc = 'new description'
+        image.type = Image.COMPOSER
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(len(mediafile.images), 2)
+
+        image = mediafile.images[0]
+        self.assertEqual(image.data, self.jpg_data)
+        self.assertEqual(image.mime_type, 'image/jpeg')
+        self.assertExtendedImageAttributes(image, desc='new description',
+                                           type=Image.TYPES.composer)
+
+    @unittest.skip('editing list by reference is not implemented yet')
+    def test_delete_image_structure(self):
+        mediafile = self._mediafile_fixture('image')
+        self.assertEqual(len(mediafile.images), 2)
+
+        del mediafile.images[0]
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(len(mediafile.images), 1)
+        self.assertEqual(image.data, self.png_data)
+        self.assertEqual(image.mime_type, 'image/jpg')
+        self.assertExtendedImageAttributes(image, desc='the artist',
+                                           type='performer')
+
+    def assertExtendedImageAttributes(self, image, **kwargs):
+        """Ignore extended image attributes in the base tests.
+        """
+        pass
+
+
+class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
+    """Checks for additional attributes in the image structure."""
+
+    def assertExtendedImageAttributes(self, image, desc=None, type=None):
+        self.assertEqual(image.desc, desc)
+        self.assertEqual(image.type, type)
+
+    def test_add_tiff_image(self):
+        mediafile = self._mediafile_fixture('image')
+        self.assertEqual(len(mediafile.images), 2)
+
+        image = Image(data=self.tiff_data, desc='the composer',
+                         type=Image.TYPES.composer)
+        mediafile.images += [image]
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(len(mediafile.images), 3)
+
+        # WMA does not preserve the order, so we have to work around this
+        image = filter(lambda i: i.mime_type == 'image/tiff',
+                           mediafile.images)[0]
+        self.assertExtendedImageAttributes(image,
+                desc='the composer', type=Image.TYPES.composer)
 
 
 # TODO include this in ReadWriteTestBase if implemented
@@ -439,7 +581,8 @@ class GenreListTestMixin(object):
 
 
 class MP3Test(ReadWriteTestBase, PartialTestMixin,
-              GenreListTestMixin, unittest.TestCase):
+              GenreListTestMixin, ExtendedImageStructureTestMixin,
+              unittest.TestCase):
     extension = 'mp3'
     audio_properties = {
         'length': 1.0,
@@ -450,7 +593,8 @@ class MP3Test(ReadWriteTestBase, PartialTestMixin,
         'channels': 1,
     }
 class MP4Test(ReadWriteTestBase, PartialTestMixin,
-              GenreListTestMixin, unittest.TestCase):
+              GenreListTestMixin, ImageStructureTestMixin,
+              unittest.TestCase):
     extension = 'm4a'
     audio_properties = {
         'length': 1.0,
@@ -460,6 +604,13 @@ class MP4Test(ReadWriteTestBase, PartialTestMixin,
         'bitdepth': 16,
         'channels': 2,
     }
+
+    def test_add_tiff_image_fails(self):
+        mediafile = self._mediafile_fixture('empty')
+        with self.assertRaises(ValueError):
+            mediafile.images = [Image(data=self.tiff_data)]
+
+
 class AlacTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
     extension = 'alac.m4a'
     audio_properties = {
@@ -480,7 +631,8 @@ class MusepackTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
         'bitdepth': 0,
         'channels': 2,
     }
-class WMATest(ReadWriteTestBase, unittest.TestCase):
+class WMATest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
+              unittest.TestCase):
     extension = 'wma'
     audio_properties = {
         'length': 1.0,
@@ -490,7 +642,8 @@ class WMATest(ReadWriteTestBase, unittest.TestCase):
         'bitdepth': 0,
         'channels': 1,
     }
-class OggTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
+class OggTest(ReadWriteTestBase, GenreListTestMixin,
+              ExtendedImageStructureTestMixin, unittest.TestCase):
     extension = 'ogg'
     audio_properties = {
         'length': 1.0,
@@ -526,7 +679,8 @@ class OggTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
         self.assertFalse('coverart' in mediafile.mgfile)
 
 class FlacTest(ReadWriteTestBase, PartialTestMixin,
-               GenreListTestMixin, unittest.TestCase):
+               GenreListTestMixin, ExtendedImageStructureTestMixin,
+               unittest.TestCase):
     extension = 'flac'
     audio_properties = {
         'length': 1.0,
