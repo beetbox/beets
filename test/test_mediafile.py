@@ -23,7 +23,7 @@ import time
 
 import _common
 from _common import unittest
-from beets.mediafile import MediaFile, TagImage
+from beets.mediafile import MediaFile, Image
 
 
 class ArtTestMixin(object):
@@ -80,18 +80,18 @@ class ImageStructureTestMixin(object):
         self.assertEqual(image.data, self.png_data)
         self.assertEqual(image.mime_type, 'image/png')
         self.assertExtendedImageAttributes(image, desc='album cover',
-                                           type=TagImage.TYPES.front)
+                                           type=Image.TYPES.front)
 
         image = mediafile.images[1]
         self.assertEqual(image.data, self.jpg_data)
         self.assertEqual(image.mime_type, 'image/jpeg')
         self.assertExtendedImageAttributes(image, desc='the artist',
-                                           type=TagImage.TYPES.artist)
+                                           type=Image.TYPES.artist)
 
     def test_set_image_structure(self):
         mediafile = self._mediafile_fixture('empty')
-        image = TagImage(data=self.png_data, desc='album cover',
-                         type=TagImage.TYPES.front)
+        image = Image(data=self.png_data, desc='album cover',
+                         type=Image.TYPES.front)
         mediafile.images = [image]
         mediafile.save()
 
@@ -102,14 +102,14 @@ class ImageStructureTestMixin(object):
         self.assertEqual(image.data, self.png_data)
         self.assertEqual(image.mime_type, 'image/png')
         self.assertExtendedImageAttributes(image, desc='album cover',
-                                           type=TagImage.TYPES.front)
+                                           type=Image.TYPES.front)
 
     def test_add_image_structure(self):
         mediafile = self._mediafile_fixture('image')
         self.assertEqual(len(mediafile.images), 2)
 
-        image = TagImage(data=self.png_data, desc='the composer',
-                         type=TagImage.TYPES.composer)
+        image = Image(data=self.png_data, desc='the composer',
+                         type=Image.TYPES.composer)
         mediafile.images += [image]
         mediafile.save()
 
@@ -123,7 +123,7 @@ class ImageStructureTestMixin(object):
         except IndexError:
             image = None
         self.assertExtendedImageAttributes(image,
-                desc='the composer', type=TagImage.TYPES.composer)
+                desc='the composer', type=Image.TYPES.composer)
 
     @unittest.skip('editing list by reference is not implemented yet')
     def test_mutate_image_structure(self):
@@ -134,11 +134,11 @@ class ImageStructureTestMixin(object):
         self.assertEqual(image.data, self.png_data)
         self.assertEqual(image.mime_type, 'image/png')
         self.assertExtendedImageAttributes(image, desc='album cover',
-                                           type=TagImage.TYPES.front)
+                                           type=Image.TYPES.front)
 
         image.data = self.jpg_data
         image.desc = 'new description'
-        image.type = TagImage.COMPOSER
+        image.type = Image.COMPOSER
         mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
@@ -148,7 +148,7 @@ class ImageStructureTestMixin(object):
         self.assertEqual(image.data, self.jpg_data)
         self.assertEqual(image.mime_type, 'image/jpeg')
         self.assertExtendedImageAttributes(image, desc='new description',
-                                           type=TagImage.TYPES.composer)
+                                           type=Image.TYPES.composer)
 
     @unittest.skip('editing list by reference is not implemented yet')
     def test_delete_image_structure(self):

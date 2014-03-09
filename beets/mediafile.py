@@ -497,7 +497,7 @@ class MP4ImageStorageStyle(MP4ListStorageStyle):
         super(MP4ImageStorageStyle, self).__init__(key='covr', **kwargs)
 
     def get_list(self, mutagen_file):
-        return [TagImage(data) for data in self.fetch(mutagen_file)]
+        return [Image(data) for data in self.fetch(mutagen_file)]
 
     def serialize(self, image):
         if image.mime_type == 'image/png':
@@ -629,11 +629,11 @@ class MP3SlashPackStorageStyle(MP3StorageStyle):
 
 
 class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
-    """Converts between APIC frames and ``TagImage`` instances.
+    """Converts between APIC frames and ``Image`` instances.
 
     The `get_list` method inherited from ``ListStorageStyle`` returns a
-    list of ``TagImage``s. Similarily the `set_list` method accepts a
-    list of ``TagImage``s as its ``values`` arguemnt.
+    list of ``Image``s. Similarily the `set_list` method accepts a
+    list of ``Image``s as its ``values`` arguemnt.
     """
 
     def __init__(self):
@@ -641,12 +641,12 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         self.as_type = str
 
     def fetch(self, mutagen_file):
-        """Return a list of TagImages obtained from all APIC frames.
+        """Return a list of Images obtained from all APIC frames.
         """
         frames = mutagen_file.tags.getall(self.key)
         images = []
         for frame in mutagen_file.tags.getall(self.key):
-            images.append(TagImage(data=frame.data, desc=frame.desc,
+            images.append(Image(data=frame.data, desc=frame.desc,
                                    type=frame.type))
         return images
 
@@ -656,7 +656,7 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
     def serialize(self, image):
         """Return an APIC frame populated with data from ``image``.
         """
-        assert isinstance(image, TagImage)
+        assert isinstance(image, Image)
         frame = mutagen.id3.Frames[self.key]()
         frame.data = image.data
         frame.mime = image.mime_type
@@ -690,7 +690,7 @@ class ASFImageStorageStyle(ListStorageStyle):
                 mime, data, type, desc = _unpack_asf_image(picture.value)
             except:
                 continue
-            pictures.append(TagImage(data, desc=desc, type=type))
+            pictures.append(Image(data, desc=desc, type=type))
         return pictures
 
     def serialize(self, image):
@@ -716,14 +716,14 @@ class VorbisImageStorageStyle(ListStorageStyle):
             # Try legacy COVERART tags.
             if 'coverart' in mutagen_file:
                 for data in mutagen_file['coverart']:
-                    images.append(TagImage(base64.b64decode(data)))
+                    images.append(Image(base64.b64decode(data)))
             return images
         for data in mutagen_file["metadata_block_picture"]:
             try:
                 pic = mutagen.flac.Picture(base64.b64decode(data))
             except (TypeError, AttributeError):
                 continue
-            images.append(TagImage(data=pic.data, desc=pic.desc,
+            images.append(Image(data=pic.data, desc=pic.desc,
                                    type=pic.type))
         return images
 
@@ -737,7 +737,7 @@ class VorbisImageStorageStyle(ListStorageStyle):
 
     
     def serialize(self, image):
-        """Turn a TagImage into a base64 encoded FLAC picture block.
+        """Turn a Image into a base64 encoded FLAC picture block.
         """
         pic = mutagen.flac.Picture()
         pic.data = image.data
@@ -748,7 +748,7 @@ class VorbisImageStorageStyle(ListStorageStyle):
 
 
 class FlacImageStorageStyle(ListStorageStyle):
-    """Converts between ``mutagen.flac.Picture`` and ``TagImage`` instances.
+    """Converts between ``mutagen.flac.Picture`` and ``Image`` instances.
     """
 
     formats = ['flac']
@@ -757,11 +757,11 @@ class FlacImageStorageStyle(ListStorageStyle):
         super(FlacImageStorageStyle, self).__init__(key='')
 
     def fetch(self, mutagen_file):
-        """Return a list of TagImages stored in the tags.
+        """Return a list of Images stored in the tags.
         """
         images = []
         for picture in mutagen_file.pictures:
-            images.append(TagImage(data=picture.data, desc=picture.desc,
+            images.append(Image(data=picture.data, desc=picture.desc,
                                    type=picture.type))
         return images
 
@@ -773,7 +773,7 @@ class FlacImageStorageStyle(ListStorageStyle):
             mutagen_file.add_picture(pic)
 
     def serialize(self, image):
-        """Turn a TagImage into a mutagen.flac.Picture.
+        """Turn a Image into a mutagen.flac.Picture.
         """
         pic = mutagen.flac.Picture()
         pic.data = image.data
@@ -949,7 +949,7 @@ class CoverArtField(MediaField):
 
     def __set__(self, mediafile, data):
         if data:
-            mediafile.images = [TagImage(data=data)]
+            mediafile.images = [Image(data=data)]
         else:
             mediafile.images = []
 
@@ -957,15 +957,15 @@ class CoverArtField(MediaField):
 class ImageListField(MediaField):
     """Descriptor to access the list of images embedded in tags.
 
-    The getter returns a list of ``TagImage`` instances obtained from
-    the tags. The setter accepts a list of ``TagImage`` instances to be
+    The getter returns a list of ``Image`` instances obtained from
+    the tags. The setter accepts a list of ``Image`` instances to be
     written to the tags.
     """
 
     def __init__(self):
         # The storage styles used here must implement the
         # `ListStorageStyle` interface and get and set lists of
-        # `TagImage`s.
+        # `Image`s.
         super(ImageListField, self).__init__(
             MP3ImageStorageStyle(),
             MP4ImageStorageStyle(),
@@ -985,7 +985,7 @@ class ImageListField(MediaField):
             style.set_list(mediafile.mgfile, images)
 
 
-class TagImage(object):
+class Image(object):
     """Strucuture representing image data and metadata that can be
     stored and retrieved from tags.
 
