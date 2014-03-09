@@ -96,6 +96,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         self.config.add({
             'relative_to': None,
             'playlist_dir': u'.',
+            'auto': True,
             'playlists': []
         })
 
@@ -116,5 +117,6 @@ def handle_change(lib):
 
 @SmartPlaylistPlugin.listen('cli_exit')
 def update(lib):
-    if database_changed:
+    auto = config['smartplaylist']['auto'].get(bool)
+    if database_changed and auto:
         update_playlists(lib)
