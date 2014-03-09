@@ -27,6 +27,28 @@ import os
 database_changed = False
 
 
+def query_from_parameter(lib, playlist, parameter, album=False):
+    if playlist.has_key(parameter):
+        # Parse quer(ies). If it's a list, join the queries with OR.
+        query_strings = playlist[parameter]
+        if not isinstance(query_strings, (list, tuple)):
+            query_strings = [query_strings]
+        model = library.Album if album else library.Item
+        query = dbcore.OrQuery(
+            [library.get_query(q, model) for q in query_strings]
+        )
+        # Execute query, depending on type
+        if album:
+            result = []
+            for album in lib.albums(query):
+                result.extend(album.items())
+            return result
+        else:
+            return lib.items(query)
+    else:
+        return []
+
+
 def update_playlists(lib):
     ui.print_("Updating smart playlists...")
     playlists = config['smartplaylist']['playlists'].get(list)
@@ -37,24 +59,8 @@ def update_playlists(lib):
 
     for playlist in playlists:
         items = []
-        # Parse album quer(ies). If it's a list, join the queries with OR.
-        if playlist.has_key('album_query'):
-            query_strings = playlist['album_query']
-            if not isinstance(query_strings, (list, tuple)):
-                query_strings = [query_strings]
-            matching_albums = lib.albums(dbcore.OrQuery(
-                [library.get_query(q, library.Album) for q in query_strings]
-            ))
-            for album in matching_albums:
-                items.extend(album.items())
-        # Parse item quer(ies). If it's a list, join the queries with OR.
-        if playlist.has_key('query'):
-            query_strings = playlist['query']
-            if not isinstance(query_strings, (list, tuple)):
-                query_strings = [query_strings]
-            items.extend(lib.items(dbcore.OrQuery(
-                [library.get_query(q, library.Item) for q in query_strings]
-            )))
+        items.extend(query_from_parameter(lib, playlist, 'album_query', True))
+        items.extend(query_from_parameter(lib, playlist, 'query', False))
 
         m3us = {}
         basename = playlist['name'].encode('utf8')
