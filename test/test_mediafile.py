@@ -117,8 +117,11 @@ class ImageStructureTestMixin(object):
         self.assertEqual(len(mediafile.images), 3)
 
         # WMA does not preserve the order, so we have to work around this
-        image = filter(lambda i: i.desc == 'the composer',
-                       mediafile.images)[0]
+        try:
+            image = filter(lambda i: i.desc == 'the composer',
+                           mediafile.images)[0]
+        except IndexError:
+            image = None
         self.assertExtendedImageAttributes(image,
                 desc='the composer', type=TagImage.TYPES.composer)
 
@@ -564,7 +567,8 @@ class MP3Test(ReadWriteTestBase, PartialTestMixin,
         'channels': 1,
     }
 class MP4Test(ReadWriteTestBase, PartialTestMixin,
-              GenreListTestMixin, unittest.TestCase):
+              GenreListTestMixin, ImageStructureTestMixin,
+              unittest.TestCase):
     extension = 'm4a'
     audio_properties = {
         'length': 1.0,

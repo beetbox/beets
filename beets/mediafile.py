@@ -495,28 +495,16 @@ class MP4ImageStorageStyle(MP4ListStorageStyle):
 
     def __init__(self, **kwargs):
         super(MP4ImageStorageStyle, self).__init__(key='covr', **kwargs)
-        self.as_type = str
 
-    def store(self, mutagen_file, images):
-        covers = [self._mp4_cover(image) for image in images]
-        mutagen_file['covr'] = covers
+    def get_list(self, mutagen_file):
+        return [TagImage(data) for data in self.fetch(mutagen_file)]
 
-    @classmethod
-    def _mp4_cover(cls, data):
-        """Make ``MP4Cover`` tag from image data.
-
-        Returns instance of ``mutagen.mp4.MP4Cover`` with correct cover
-        format.
-        """
-        kind = imghdr.what(None, h=data)
-        if kind == 'png':
+    def serialize(self, image):
+        if image.mime_type == 'image/png':
             kind = mutagen.mp4.MP4Cover.FORMAT_PNG
-        elif kind == 'jpeg':
+        elif image.mime_type == 'image/jpeg':
             kind = mutagen.mp4.MP4Cover.FORMAT_JPEG
-        else:
-            raise ValueError('MP4 only supports PNG and JPEG images')
-
-        return mutagen.mp4.MP4Cover(data, kind)
+        return mutagen.mp4.MP4Cover(image.data, kind)
 
 
 class MP3StorageStyle(StorageStyle):
@@ -950,45 +938,20 @@ class DateItemField(MediaField):
 
 
 class CoverArtField(MediaField):
-    """A descriptor providing access to a file's embedded album art.
-    Holds a bytestring reflecting the image data. The image should
-    either be a JPEG or a PNG for cross-format compatibility. It's
-    probably a bad idea to use anything but these two formats.
-    """
-    # TODO make this into shim when ImageField is implemented for all
-    # formats.
-
     def __init__(self):
-        super(CoverArtField, self).__init__(
-            MP3ImageStorageStyle(),
-            MP4ImageStorageStyle(),
-            ASFImageStorageStyle(),
-            VorbisImageStorageStyle(),
-            FlacImageStorageStyle(),
-            out_type=str,
-        )
+        pass
 
     def __get__(self, mediafile, _):
-        if mediafile.type in ['mp3', 'flac', 'asf'] + VorbisImageStorageStyle.formats:
-            try:
-                return mediafile.images[0].data
-            except IndexError:
-                return None
-        for style in self.styles(mediafile):
-            return style.get(mediafile.mgfile)
+        try:
+            return mediafile.images[0].data
+        except IndexError:
+            return None
 
     def __set__(self, mediafile, data):
-        if mediafile.type in ['mp3', 'flac', 'asf'] + VorbisImageStorageStyle.formats:
-            if data:
-                mediafile.images = [TagImage(data=data)]
-            else:
-                mediafile.images = []
-            return
-        if data is not None:
-            if not isinstance(data, str):
-                raise ValueError('value must be a byte string or None')
-        for style in self.styles(mediafile):
-            style.set(mediafile.mgfile, data)
+        if data:
+            mediafile.images = [TagImage(data=data)]
+        else:
+            mediafile.images = []
 
 
 class ImageListField(MediaField):
