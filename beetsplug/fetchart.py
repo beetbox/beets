@@ -14,11 +14,13 @@
 
 """Fetches album art.
 """
-import urllib
-import re
+from contextlib import closing
 import logging
 import os
-import tempfile
+import re
+from tempfile import NamedTemporaryFile
+
+import requests
 
 from beets.plugins import BeetsPlugin
 from beets.util.artresizer import ArtResizer
@@ -33,31 +35,32 @@ DOWNLOAD_EXTENSION = '.jpg'
 
 log = logging.getLogger('beets')
 
+requests_session = requests.Session()
+requests_session.headers = {'User-Agent': 'beets'}
+
 
 def _fetch_image(url):
     """Downloads an image from a URL and checks whether it seems to
     actually be an image. If so, returns a path to the downloaded image.
     Otherwise, returns None.
     """
-    # Generate a temporary filename with the correct extension.
-    fd, fn = tempfile.mkstemp(suffix=DOWNLOAD_EXTENSION)
-    os.close(fd)
-
     log.debug(u'fetchart: downloading art: {0}'.format(url))
     try:
-        _, headers = urllib.urlretrieve(url, filename=fn)
-    except IOError:
-        log.debug(u'error fetching art')
-        return
+        with closing(requests_session.get(url, stream=True)) as resp:
+            if not resp.headers['Content-Type'] in CONTENT_TYPES:
+                log.debug(u'fetchart: not an image')
+                return
 
-    # Make sure it's actually an image.
-    if headers.gettype() in CONTENT_TYPES:
-        log.debug(u'fetchart: downloaded art to: {0}'.format(
-            util.displayable_path(fn)
-        ))
-        return fn
-    else:
-        log.debug(u'fetchart: not an image')
+            # Generate a temporary file with the correct extension.
+            with NamedTemporaryFile(suffix=DOWNLOAD_EXTENSION, delete=False) as fh:
+                for chunk in resp.iter_content():
+                    fh.write(chunk)
+            log.debug(u'fetchart: downloaded art to: {0}'.format(
+                util.displayable_path(fh.name)
+            ))
+            return fh.name
+    except (IOError, requests.RequestException):
+        log.debug(u'fetchart: error fetching art')
 
 
 # ART SOURCES ################################################################
@@ -98,16 +101,15 @@ AAO_PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
 def aao_art(asin):
     """Return art URL from AlbumArt.org given an ASIN."""
     # Get the page from albumart.org.
-    url = '%s?%s' % (AAO_URL, urllib.urlencode({'asin': asin}))
     try:
-        log.debug(u'fetchart: scraping art URL: {0}'.format(url))
-        page = urllib.urlopen(url).read()
-    except IOError:
+        resp = requests_session.get(AAO_URL, params={'asin': asin})
+        log.debug(u'fetchart: scraped art URL: {0}'.format(resp.url))
+    except requests.RequestException:
         log.debug(u'fetchart: error scraping art page')
         return
 
     # Search the page for the image URL.
-    m = re.search(AAO_PAT, page)
+    m = re.search(AAO_PAT, resp.text)
     if m:
         image_url = m.group(1)
         return image_url
