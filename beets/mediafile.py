@@ -251,15 +251,10 @@ def _sc_encode(gain, peak):
 
 
 def _image_mime_type(data):
-    """Return the MIME type (either image/png or image/jpeg) of the
-    image data (a bytestring).
+    """Return the MIME type of the image data (a bytestring).
     """
     kind = imghdr.what(None, h=data)
-    if kind == 'png':
-        return 'image/png'
-    else:
-        # Currently just fall back to JPEG.
-        return 'image/jpeg'
+    return 'image/{0}'.format(kind)
 
 # StorageStyle classes describe strategies for accessing values in
 # Mutagen file objects.
@@ -504,6 +499,8 @@ class MP4ImageStorageStyle(MP4ListStorageStyle):
             kind = mutagen.mp4.MP4Cover.FORMAT_PNG
         elif image.mime_type == 'image/jpeg':
             kind = mutagen.mp4.MP4Cover.FORMAT_JPEG
+        else:
+            raise ValueError('The MP4 format only supports PNG and JPEG images')
         return mutagen.mp4.MP4Cover(image.data, kind)
 
 

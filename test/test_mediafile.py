@@ -46,6 +46,14 @@ class ArtTestMixin(object):
         return self._jpg_data
     _jpg_data = None
 
+    @property
+    def tiff_data(self):
+        if not self._jpg_data:
+            with open(os.path.join(_common.RSRC, 'image-2x3.tiff'), 'rb') as f:
+                self._jpg_data = f.read()
+        return self._jpg_data
+    _jpg_data = None
+
     def test_set_png_art(self):
         mediafile = self._mediafile_fixture('empty')
         mediafile.art = self.png_data
@@ -578,6 +586,13 @@ class MP4Test(ReadWriteTestBase, PartialTestMixin,
         'bitdepth': 16,
         'channels': 2,
     }
+
+    def test_add_tiff_image_fails(self):
+        mediafile = self._mediafile_fixture('empty')
+        with self.assertRaises(ValueError):
+            mediafile.images = [Image(data=self.tiff_data)]
+
+
 class AlacTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
     extension = 'alac.m4a'
     audio_properties = {
