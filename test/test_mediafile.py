@@ -186,6 +186,24 @@ class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
         self.assertEqual(image.desc, desc)
         self.assertEqual(image.type, type)
 
+    def test_add_tiff_image(self):
+        mediafile = self._mediafile_fixture('image')
+        self.assertEqual(len(mediafile.images), 2)
+
+        image = Image(data=self.tiff_data, desc='the composer',
+                         type=Image.TYPES.composer)
+        mediafile.images += [image]
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(len(mediafile.images), 3)
+
+        # WMA does not preserve the order, so we have to work around this
+        image = filter(lambda i: i.mime_type == 'image/tiff',
+                           mediafile.images)[0]
+        self.assertExtendedImageAttributes(image,
+                desc='the composer', type=Image.TYPES.composer)
+
 
 # TODO include this in ReadWriteTestBase if implemented
 class LazySaveTestMixin(object):
