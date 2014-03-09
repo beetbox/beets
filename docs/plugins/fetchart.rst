@@ -4,13 +4,20 @@ FetchArt Plugin
 The ``fetchart`` plugin retrieves album art images from various sources on the
 Web and stores them as image files.
 
+To use the plugin, first enable it in your configuration (see
+:ref:`using-plugins`). Then, install the `requests`_ library by typing::
+
+    pip install requests
+
+The plugin uses `requests`_ to fetch album art from the Web.
+
+.. _requests: http://docs.python-requests.org/en/latest/
 
 Fetching Album Art During Import
 --------------------------------
 
-To automatically get album art for every album you import, just enable the
-plugin by putting ``fetchart`` on your config file's ``plugins`` line (see
-:doc:`/plugins/index`).
+When the plugin is enabled, it automatically gets album art for every album
+you import.
 
 By default, beets stores album art image files alongside the music files for an
 album in a file called ``cover.jpg``. To customize the name of this file, use
