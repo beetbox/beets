@@ -370,13 +370,6 @@ class StorageStyle(object):
         elif self.out_type == unicode:
             return u''
 
-    def _strip_possible_suffix(self, data):
-        if self.suffix and isinstance(data, unicode) \
-                       and data.endswith(self.suffix):
-            return data[:-len(self.suffix)]
-        else:
-            return data
-
 
 class ListStorageStyle(StorageStyle):
     """Abstract class that provides access to lists.
@@ -444,12 +437,6 @@ class ASFStorageStyle(StorageStyle):
 class MP4StorageStyle(StorageStyle):
 
     formats = ['aac', 'alac']
-
-    def fetch(self, mutagen_file):
-        try:
-            return mutagen_file[self.key][0]
-        except KeyError:
-            return None
 
     def serialize(self, value):
         value = super(MP4StorageStyle, self).serialize(value)
