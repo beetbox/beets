@@ -243,7 +243,41 @@ class LazySaveTestMixin(object):
         return mtime
 
 
-class ReadWriteTestBase(ArtTestMixin):
+class GenreListTestMixin(object):
+    """Tests access to the ``genres`` property as a list.
+    """
+
+    def test_read_genre_list(self):
+        mediafile = self._mediafile_fixture('full')
+        self.assertItemsEqual(mediafile.genres, ['the genre'])
+
+    def test_write_genre_list(self):
+        mediafile = self._mediafile_fixture('empty')
+        mediafile.genres = [u'one', u'two']
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertItemsEqual(mediafile.genres, ['one', 'two'])
+
+    def test_write_genre_list_get_first(self):
+        mediafile = self._mediafile_fixture('empty')
+        mediafile.genres = [u'one', u'two']
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(mediafile.genre, 'one')
+
+    def test_append_genre_list(self):
+        mediafile = self._mediafile_fixture('full')
+        self.assertEqual(mediafile.genre, 'the genre')
+        mediafile.genres += [u'another']
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertItemsEqual(mediafile.genres, [u'the genre', u'another'])
+
+
+class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin):
     """Test writing and reading tags. Subclasses must set ``extension`` and
     ``audio_properties``.
     """
@@ -546,42 +580,8 @@ class PartialTestMixin(object):
         self.assertEqual(mediafile.disctotal, 0)
 
 
-class GenreListTestMixin(object):
-    """Tests access to the ``genres`` property as a list.
-    """
-
-    def test_read_genre_list(self):
-        mediafile = self._mediafile_fixture('full')
-        self.assertEqual(mediafile.genres, ['the genre'])
-
-    def test_write_genre_list(self):
-        mediafile = self._mediafile_fixture('empty')
-        mediafile.genres = ['one', 'two']
-        mediafile.save()
-
-        mediafile = MediaFile(mediafile.path)
-        self.assertEqual(mediafile.genres, ['one', 'two'])
-
-    def test_write_genre_list_get_first(self):
-        mediafile = self._mediafile_fixture('empty')
-        mediafile.genres = ['one', 'two']
-        mediafile.save()
-
-        mediafile = MediaFile(mediafile.path)
-        self.assertEqual(mediafile.genre, 'one')
-
-    def test_append_genre_list(self):
-        mediafile = self._mediafile_fixture('full')
-        self.assertEqual(mediafile.genre, 'the genre')
-        mediafile.genres += ['another']
-        mediafile.save()
-
-        mediafile = MediaFile(mediafile.path)
-        self.assertEqual(mediafile.genres, ['the genre', 'another'])
-
-
 class MP3Test(ReadWriteTestBase, PartialTestMixin,
-              GenreListTestMixin, ExtendedImageStructureTestMixin,
+              ExtendedImageStructureTestMixin,
               unittest.TestCase):
     extension = 'mp3'
     audio_properties = {
@@ -593,8 +593,7 @@ class MP3Test(ReadWriteTestBase, PartialTestMixin,
         'channels': 1,
     }
 class MP4Test(ReadWriteTestBase, PartialTestMixin,
-              GenreListTestMixin, ImageStructureTestMixin,
-              unittest.TestCase):
+              ImageStructureTestMixin, unittest.TestCase):
     extension = 'm4a'
     audio_properties = {
         'length': 1.0,
@@ -611,7 +610,7 @@ class MP4Test(ReadWriteTestBase, PartialTestMixin,
             mediafile.images = [Image(data=self.tiff_data)]
 
 
-class AlacTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
+class AlacTest(ReadWriteTestBase, unittest.TestCase):
     extension = 'alac.m4a'
     audio_properties = {
         'length': 1.0,
@@ -621,7 +620,7 @@ class AlacTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
         'bitdepth': 0,
         'channels': 0,
     }
-class MusepackTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
+class MusepackTest(ReadWriteTestBase, unittest.TestCase):
     extension = 'mpc'
     audio_properties = {
         'length': 1.0,
@@ -642,8 +641,18 @@ class WMATest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
         'bitdepth': 0,
         'channels': 1,
     }
-class OggTest(ReadWriteTestBase, GenreListTestMixin,
-              ExtendedImageStructureTestMixin, unittest.TestCase):
+
+    def test_write_genre_list_get_first(self):
+        # WMA does not preserve list order
+        mediafile = self._mediafile_fixture('empty')
+        mediafile.genres = [u'one', u'two']
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertIn(mediafile.genre, [u'one', u'two'])
+
+class OggTest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
+              unittest.TestCase):
     extension = 'ogg'
     audio_properties = {
         'length': 1.0,
@@ -679,7 +688,7 @@ class OggTest(ReadWriteTestBase, GenreListTestMixin,
         self.assertFalse('coverart' in mediafile.mgfile)
 
 class FlacTest(ReadWriteTestBase, PartialTestMixin,
-               GenreListTestMixin, ExtendedImageStructureTestMixin,
+               ExtendedImageStructureTestMixin,
                unittest.TestCase):
     extension = 'flac'
     audio_properties = {
@@ -690,7 +699,7 @@ class FlacTest(ReadWriteTestBase, PartialTestMixin,
         'bitdepth': 16,
         'channels': 1,
     }
-class ApeTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
+class ApeTest(ReadWriteTestBase, unittest.TestCase):
     extension = 'ape'
     audio_properties = {
         'length': 1.0,
@@ -700,7 +709,7 @@ class ApeTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
         'bitdepth': 16,
         'channels': 1,
     }
-class WavpackTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
+class WavpackTest(ReadWriteTestBase, unittest.TestCase):
     extension = 'wv'
     audio_properties = {
         'length': 1.0,
@@ -710,7 +719,7 @@ class WavpackTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
         'bitdepth': 0,
         'channels': 1,
     }
-class OpusTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
+class OpusTest(ReadWriteTestBase, unittest.TestCase):
     extension = 'opus'
     audio_properties = {
         'length': 1.0,

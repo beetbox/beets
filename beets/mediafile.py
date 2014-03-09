@@ -424,11 +424,10 @@ class SoundCheckStorageStyleMixin(object):
         self.store(mutagen_file, data)
 
 
-class ASFStorageStyle(StorageStyle):
+class ASFStorageStyle(ListStorageStyle):
     formats = ['asf']
 
-    def fetch(self, mutagen_file):
-        data = super(ASFStorageStyle,self).fetch(mutagen_file)
+    def deserialize(self, data):
         if isinstance(data, mutagen.asf.ASFBaseAttribute):
             data = data.value
         return data
