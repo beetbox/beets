@@ -274,6 +274,15 @@ def _image_mime_type(data):
 class StorageStyle(object):
     """Parameterizes the storage behavior of a single field for a
     certain tag format.
+
+    The ``get()`` method retrieves data from tags of a mutagen file. It
+    uses the fetch method to obtain the raw mutagen value. It then uses
+    the ``deserialize()`` method to convert it into a python value.
+
+    ``set()`` uses ``serialize()`` to convert the passed value into a
+    suitable mutagen type. The ``store()`` method is then used to write
+    that value to the tags.
+
      - key: The Mutagen key used to access the field's data.
      - as_type: Which type the value is stored as (unicode, int,
        bool, or str).
@@ -286,19 +295,25 @@ class StorageStyle(object):
 
     # TODO Use mutagen file types instead of MediaFile formats
     formats = ['flac', 'opus', 'ogg', 'ape', 'wv', 'mpc']
+    """List of file format the StorageStyle can handle.
 
-    def __init__(self, key, as_type=unicode, suffix=None,
-                 float_places=2, formats=None):
+    Format names correspond to those returned by ``mediafile.type``.
+    """
+
+    def __init__(self, key, as_type=unicode, suffix=None, float_places=2):
         self.key = key
         self.as_type = as_type
         self.suffix = suffix
         self.float_places = float_places
-        if formats:
-            self.formats = formats
 
         # Convert suffix to correct string type.
         if self.suffix and self.as_type == unicode:
             self.suffix = self.as_type(self.suffix)
+
+    def get(self, mutagen_file):
+        """Fetches raw data from tags and deserializes it into a python value.
+        """
+        return self.deserialize(self.fetch(mutagen_file))
 
     def fetch(self, mutagen_file):
         """Retrieve the first raw value of this tag from the mediafile."""
@@ -307,20 +322,19 @@ class StorageStyle(object):
         except KeyError:
             return None
 
-    def get(self, mutagen_file):
-        data = self.fetch(mutagen_file)
-        data = self._strip_possible_suffix(data)
-        return data
+    def deserialize(self, mutagen_value):
+        if self.suffix and isinstance(mutagen_value, unicode) \
+                       and mutagen_value.endswith(self.suffix):
+            return mutagen_value[:-len(self.suffix)]
+        else:
+            return mutagen_value
+
+    def set(self, mutagen_file, value):
+        self.store(mutagen_file, self.serialize(value))
 
     def store(self, mutagen_file, value):
         """Stores a serialized value in the mediafile."""
         mutagen_file[self.key] = [value]
-
-    def set(self, mutagen_file, value):
-        if value is None:
-            value = self._none_value()
-        value = self.serialize(value)
-        self.store(mutagen_file, value)
 
     def serialize(self, value):
         """Convert value to a type that is suitable for storing in a tag."""
@@ -379,8 +393,7 @@ class ListStorageStyle(StorageStyle):
             return None
 
     def get_list(self, mutagen_file):
-        data = self.fetch(mutagen_file)
-        return [self._strip_possible_suffix(item) for item in data]
+        return [self.deserialize(item) for item in self.fetch(mutagen_file)]
 
     def fetch(self, mutagen_file):
         try:
@@ -449,25 +462,24 @@ class MP4TupleStorageStyle(MP4StorageStyle):
     """Store values as part of a numeric pair.
     """
 
-    def __init__(self, key, pack_pos=0, **kwargs):
+    def __init__(self, key, index=0, **kwargs):
         super(MP4TupleStorageStyle, self).__init__(key, **kwargs)
-        self.pack_pos = pack_pos
+        self.index = index
 
-    def _fetch_unpacked(self, mutagen_file):
-        items = super(MP4TupleStorageStyle, self).fetch(mutagen_file) or []
+    def deserialize(self, mutagen_value):
+        items = mutagen_value or []
         packing_length = 2
         return list(items) + [0] * (packing_length - len(items))
 
     def get(self, mutagen_file):
-        data = self._fetch_unpacked(mutagen_file)[self.pack_pos]
-        return self._strip_possible_suffix(data)
+        return super(MP4TupleStorageStyle, self).get(mutagen_file)[self.index]
 
     def set(self, mutagen_file, value):
         if value is None:
             value = 0
-        data = self._fetch_unpacked(mutagen_file)
-        data[self.pack_pos] = int(value)
-        self.store(mutagen_file, data)
+        items = self.deserialize(self.fetch(mutagen_file))
+        items[self.index] = int(value)
+        self.store(mutagen_file, items)
 
 
 class MP4ListStorageStyle(ListStorageStyle, MP4StorageStyle):
@@ -503,8 +515,8 @@ class MP4ImageStorageStyle(MP4ListStorageStyle):
     def __init__(self, **kwargs):
         super(MP4ImageStorageStyle, self).__init__(key='covr', **kwargs)
 
-    def get_list(self, mutagen_file):
-        return [Image(data) for data in self.fetch(mutagen_file)]
+    def deserialize(self, data):
+        return Image(data)
 
     def serialize(self, image):
         if image.mime_type == 'image/png':
@@ -619,7 +631,7 @@ class MP3SlashPackStorageStyle(MP3StorageStyle):
         self.pack_pos = pack_pos
 
     def _fetch_unpacked(self, mutagen_file):
-        data = super(MP3SlashPackStorageStyle, self).fetch(mutagen_file) or ''
+        data = self.fetch(mutagen_file) or ''
         items = unicode(data).split('/')
         packing_length = 2
         return list(items) + [None] * (packing_length - len(items))
@@ -649,15 +661,13 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         super(MP3ImageStorageStyle, self).__init__(key='APIC')
         self.as_type = str
 
+    def deserialize(self, apic_frame):
+        """Convert APIC frame into Image."""
+        return Image(data=apic_frame.data, desc=apic_frame.desc,
+                     type=apic_frame.type)
+
     def fetch(self, mutagen_file):
-        """Return a list of Images obtained from all APIC frames.
-        """
-        frames = mutagen_file.tags.getall(self.key)
-        images = []
-        for frame in mutagen_file.tags.getall(self.key):
-            images.append(Image(data=frame.data, desc=frame.desc,
-                                   type=frame.type))
-        return images
+        return mutagen_file.tags.getall(self.key)
 
     def store(self, mutagen_file, frames):
         mutagen_file.tags.setall(self.key, frames)
@@ -689,18 +699,9 @@ class ASFImageStorageStyle(ListStorageStyle):
     def __init__(self):
         super(ASFImageStorageStyle, self).__init__(key='WM/Picture')
 
-    def fetch(self, mutagen_file):
-        if 'WM/Picture' not in mutagen_file:
-            return []
-
-        pictures = []
-        for picture in mutagen_file['WM/Picture']:
-            try:
-                mime, data, type, desc = _unpack_asf_image(picture.value)
-            except:
-                continue
-            pictures.append(Image(data, desc=desc, type=type))
-        return pictures
+    def deserialize(self, asf_picture):
+        mime, data, type, desc = _unpack_asf_image(asf_picture.value)
+        return Image(data, desc=desc, type=type)
 
     def serialize(self, image):
         pic = mutagen.asf.ASFByteArrayAttribute()
@@ -766,13 +767,11 @@ class FlacImageStorageStyle(ListStorageStyle):
         super(FlacImageStorageStyle, self).__init__(key='')
 
     def fetch(self, mutagen_file):
-        """Return a list of Images stored in the tags.
-        """
-        images = []
-        for picture in mutagen_file.pictures:
-            images.append(Image(data=picture.data, desc=picture.desc,
-                                   type=picture.type))
-        return images
+        return mutagen_file.pictures
+
+    def deserialize(self, flac_picture):
+        return Image(data=flac_picture.data, desc=flac_picture.desc,
+                     type=flac_picture.type)
 
     def store(self, mutagen_file, pictures):
         """``pictures`` is a list of mutagen.flac.Picture instances.
@@ -1200,7 +1199,7 @@ class MediaFile(object):
     )
     track = MediaField(
         MP3SlashPackStorageStyle('TRCK', pack_pos=0),
-        MP4TupleStorageStyle('trkn', pack_pos=0),
+        MP4TupleStorageStyle('trkn', index=0),
         StorageStyle('TRACK'),
         StorageStyle('TRACKNUMBER'),
         ASFStorageStyle('WM/TrackNumber'),
@@ -1208,7 +1207,7 @@ class MediaFile(object):
     )
     tracktotal = MediaField(
         MP3SlashPackStorageStyle('TRCK', pack_pos=1),
-        MP4TupleStorageStyle('trkn', pack_pos=1),
+        MP4TupleStorageStyle('trkn', index=1),
         StorageStyle('TRACKTOTAL'),
         StorageStyle('TRACKC'),
         StorageStyle('TOTALTRACKS'),
@@ -1217,7 +1216,7 @@ class MediaFile(object):
     )
     disc = MediaField(
         MP3SlashPackStorageStyle('TPOS', pack_pos=0),
-        MP4TupleStorageStyle('disk', pack_pos=0),
+        MP4TupleStorageStyle('disk', index=0),
         StorageStyle('DISC'),
         StorageStyle('DISCNUMBER'),
         ASFStorageStyle('WM/PartOfSet'),
@@ -1225,7 +1224,7 @@ class MediaFile(object):
     )
     disctotal = MediaField(
         MP3SlashPackStorageStyle('TPOS', pack_pos=1),
-        MP4TupleStorageStyle('disk', pack_pos=1),
+        MP4TupleStorageStyle('disk', index=1),
         StorageStyle('DISCTOTAL'),
         StorageStyle('DISCC'),
         StorageStyle('TOTALDISCS'),
