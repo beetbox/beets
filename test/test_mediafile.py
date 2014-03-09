@@ -115,7 +115,11 @@ class ImageStructureTestMixin(object):
 
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(len(mediafile.images), 3)
-        self.assertExtendedImageAttributes(mediafile.images[2],
+
+        # WMA does not preserve the order, so we have to work around this
+        image = filter(lambda i: i.desc == 'the composer',
+                       mediafile.images)[0]
+        self.assertExtendedImageAttributes(image,
                 desc='the composer', type=TagImage.TYPES.composer)
 
     @unittest.skip('editing list by reference is not implemented yet')
@@ -590,7 +594,8 @@ class MusepackTest(ReadWriteTestBase, GenreListTestMixin, unittest.TestCase):
         'bitdepth': 0,
         'channels': 2,
     }
-class WMATest(ReadWriteTestBase, unittest.TestCase):
+class WMATest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
+              unittest.TestCase):
     extension = 'wma'
     audio_properties = {
         'length': 1.0,

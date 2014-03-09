@@ -691,7 +691,6 @@ class ASFImageStorageStyle(ListStorageStyle):
 
     def __init__(self):
         super(ASFImageStorageStyle, self).__init__(key='WM/Picture')
-        self.as_type = str
 
     def fetch(self, mutagen_file):
         if 'WM/Picture' not in mutagen_file:
@@ -700,19 +699,18 @@ class ASFImageStorageStyle(ListStorageStyle):
         pictures = []
         for picture in mutagen_file['WM/Picture']:
             try:
-                pictures.append(_unpack_asf_image(picture.value)[1])
+                mime, data, type, desc = _unpack_asf_image(picture.value)
             except:
-                pass
+                continue
+            pictures.append(TagImage(data, desc=desc, type=type))
         return pictures
 
-    def store(self, mutagen_file, images):
-        if 'WM/Picture' in mutagen_file:
-            del mutagen_file['WM/Picture']
-
-        for image in images:
-            pic = mutagen.asf.ASFByteArrayAttribute()
-            pic.value = _pack_asf_image(_image_mime_type(image), image)
-            mutagen_file['WM/Picture'] = [pic]
+    def serialize(self, image):
+        pic = mutagen.asf.ASFByteArrayAttribute()
+        pic.value = _pack_asf_image(image.mime_type, image.data,
+                                    type=image.type_index or 3,
+                                    description=image.desc or u'')
+        return pic
 
 
 class VorbisImageStorageStyle(ListStorageStyle):
@@ -971,7 +969,7 @@ class CoverArtField(MediaField):
         )
 
     def __get__(self, mediafile, _):
-        if mediafile.type in ['mp3', 'flac'] + VorbisImageStorageStyle.formats:
+        if mediafile.type in ['mp3', 'flac', 'asf'] + VorbisImageStorageStyle.formats:
             try:
                 return mediafile.images[0].data
             except IndexError:
@@ -980,7 +978,7 @@ class CoverArtField(MediaField):
             return style.get(mediafile.mgfile)
 
     def __set__(self, mediafile, data):
-        if mediafile.type in ['mp3', 'flac'] + VorbisImageStorageStyle.formats:
+        if mediafile.type in ['mp3', 'flac', 'asf'] + VorbisImageStorageStyle.formats:
             if data:
                 mediafile.images = [TagImage(data=data)]
             else:
