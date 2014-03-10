@@ -90,6 +90,8 @@ You can add command-line options to your new command using the ``parser`` member
 of the ``Subcommand`` class, which is an ``OptionParser`` instance. Just use it
 like you would a normal ``OptionParser`` in an independent script.
 
+.. _plugin_events:
+
 Listen for Events
 ^^^^^^^^^^^^^^^^^
 
@@ -140,6 +142,9 @@ currently available are:
 
 * *write*: called with an ``Item`` object just before a file's metadata is
   written to disk (i.e., just before the file on disk is opened).
+
+* *after_write*: called with an ``Item`` object after a file's metadata is
+  written to disk (i.e., just after the file on disk is closed).
 
 * *import_task_start*: called when before an import task begins processing.
   Parameters: ``task`` (an `ImportTask`) and ``session`` (an `ImportSession`).

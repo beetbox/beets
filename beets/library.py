@@ -392,6 +392,7 @@ class Item(LibModel):
 
         # The file has a new mtime.
         self.mtime = self.current_mtime()
+        plugins.send('after_write', item=self)
 
 
     # Files themselves.
