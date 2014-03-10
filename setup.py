@@ -80,6 +80,10 @@ setup(name='beets',
       + (['colorama'] if (sys.platform == 'win32') else [])
       + (['ordereddict'] if sys.version_info < (2, 7, 0) else []),
 
+      tests_require=[
+          'responses',
+      ],
+
       # Plugin (optional) dependencies:
       extras_require={
           'beatport': ['requests'],
