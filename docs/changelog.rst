@@ -21,7 +21,8 @@ New stuff:
   johtso.
 * :doc:`/plugins/smartplaylist`: Playlists can now be generated from multiple
   queries (combined with "or" logic). Album-level queries are also now
-  possible. Thanks to brilnius.
+  possible. Automatic playlist regeneration can now be disabled. Thanks to
+  brilnius.
 * :doc:`/plugins/echonest`: Echo Nest similarity now weights the tempo in
   better proportion to other metrics. Also, options were added to specify
   custom thresholds and output formats. Thanks to Adam M.
