@@ -471,6 +471,7 @@ class InputTest(_common.TestCase):
 class ConfigTest(_common.TestCase):
     def setUp(self):
         super(ConfigTest, self).setUp()
+        self._orig_cwd = os.getcwd()
         self.test_cmd = self._make_test_cmd()
         commands.default_commands.append(self.test_cmd)
 
@@ -491,6 +492,8 @@ class ConfigTest(_common.TestCase):
         commands.default_commands.pop()
         if 'BEETSDIR' in os.environ:
             del os.environ['BEETSDIR']
+        if os.getcwd != self._orig_cwd:
+            os.chidr(self.self._orig_cwd)
 
     def _make_test_cmd(self):
         test_cmd = ui.Subcommand('test', help='test')
@@ -659,6 +662,7 @@ class ConfigTest(_common.TestCase):
                          os.path.join(self.beetsdir, 'state'))
 
     def test_command_line_option_relative_to_working_dir(self):
+        os.chdir(self.temp_dir)
         ui._raw_main(['--library', 'foo.db', 'test'])
         self.assertEqual(config['library'].as_filename(),
                          os.path.join(os.getcwd(), 'foo.db'))
