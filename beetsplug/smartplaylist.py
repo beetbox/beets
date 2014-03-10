@@ -117,6 +117,6 @@ def handle_change(lib):
 
 @SmartPlaylistPlugin.listen('cli_exit')
 def update(lib):
-    auto = config['smartplaylist']['auto'].get(bool)
+    auto = config['smartplaylist']['auto']
     if database_changed and auto:
         update_playlists(lib)
