@@ -59,9 +59,10 @@ to albums that have a ``for_travel`` extensible field set to 1::
       album_query: 'for_travel:1'
       query: 'for_travel:1'
 
-By default, all playlists are regenerated after every beets command that
-changes the library database. To force regeneration, you can invoke it manually
-from the command line::
+By default, all playlists are automatically regenerated after every beets
+command that changes the library database. This can be disabled by specifying
+``auto: no``. To force regeneration, you can invoke it manually from the
+command line::
 
     $ beet splupdate
 
