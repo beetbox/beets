@@ -47,6 +47,8 @@ Fixes:
 * :doc:`/plugins/fetchart`: The plugin now sends "beets" as the User-Agent
   when making scraping requests. This helps resolve some blocked requests. The
   plugin now also depends on the `requests`_ Python library.
+* The :ref:`write-cmd` now only shows the changes to fields that will actually
+  be written to a file.
 
 .. _requests: http://www.python-requests.org/
 

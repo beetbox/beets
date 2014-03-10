@@ -493,7 +493,7 @@ class ConfigTest(_common.TestCase):
         if 'BEETSDIR' in os.environ:
             del os.environ['BEETSDIR']
         if os.getcwd != self._orig_cwd:
-            os.chidr(self.self._orig_cwd)
+            os.chdir(self._orig_cwd)
 
     def _make_test_cmd(self):
         test_cmd = ui.Subcommand('test', help='test')
