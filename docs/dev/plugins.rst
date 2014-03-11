@@ -154,8 +154,8 @@ currently available are:
 
 * *import_task_choice*: called after a decision has been made about an import
   task. This event can be used to initiate further interaction with the user.
-  Use ``task.choice_flag`` to determine the action to be taken. Parameters:
-  ``task`` and ``session``.
+  Use ``task.choice_flag`` to determine or change the action to be
+  taken. Parameters: ``task`` and ``session``.
 
 * *import_task_files*: called after an import task finishes manipulating the
   filesystem (copying and moving files, writing metadata tags). Parameters:
