@@ -29,6 +29,7 @@ from beets import dbcore
 from beets import plugins
 from beets import util
 from beets import config
+from beets import ui
 from beets.util import pipeline
 from beets.util import syspath, normpath, displayable_path
 from beets.util.enumeration import enum
@@ -893,15 +894,7 @@ def manipulate_files(session):
                     item.move(True)
 
             if config['import']['write'] and task.should_write_tags():
-                # FIXME duplicates code from `ui.commands.write_items`.
-                try:
-                    item.write()
-                except (mediafile.UnreadableFileError,
-                        util.FilesystemError,
-                        plugins.BeforeWriteError) as exc:
-                    log.error(u'could not write {0}: {1}'.format(
-                        util.displayable_path(item.path), exc
-                    ))
+                ui.commands._item_write(item)
 
         # Save new paths.
         with session.lib.transaction():
