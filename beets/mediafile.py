@@ -27,6 +27,10 @@ Usage:
 A field will always return a reasonable value of the correct type, even
 if no tag is present. If no value is available, the value will be false
 (e.g., zero or the empty string).
+
+Internally ``MediaFile`` uses ``MediaField`` descriptors to access the
+data from the tags. In turn ``MediaField`` uses a number of
+``StorageStyle`` strategies to handle format specific logic.
 """
 import mutagen
 import mutagen.mp3
@@ -463,6 +467,10 @@ class StorageStyle(object):
 
 class ListStorageStyle(StorageStyle):
     """Abstract storage style that provides access to lists.
+
+    The ListMediaField descriptor uses a ListStorageStyle via two
+    methods: ``get_list()`` and ``set_list()``. It passes a Mutagen file
+    object to each.
 
     Subclasses may overwrite ``fetch`` and ``store``.  ``fetch`` must
     return a (possibly empty) list and ``store`` receives a serialized
