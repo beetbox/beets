@@ -659,9 +659,16 @@ def initial_lookup(session):
 
 def user_query(session):
     """A coroutine for interfacing with the user about the tagging
-    process. lib is the Library to import into and logfile may be
-    a file-like object for logging the import process. The coroutine
-    accepts and yields ImportTask objects.
+    process.
+
+    The coroutine accepts an ImportTask objects. It uses the
+    session's ``choose_match`` method to determine the ``action`` for
+    this task. Depending on the action additional stages are exectuted
+    and the processed task is yielded.
+
+    It emits the ``import_task_choice`` event for plugins. Plugins have
+    acces to the choice via the ``taks.choice_flag`` property and may
+    choose to change it.
     """
     recent = set()
     task = None
@@ -677,7 +684,7 @@ def user_query(session):
         plugins.send('import_task_choice', session=session, task=task)
 
         # As-tracks: transition to singleton workflow.
-        if choice is action.TRACKS:
+        if task.choice_flag is action.TRACKS:
             # Set up a little pipeline for dealing with the singletons.
             def emitter(task):
                 for item in task.items:
@@ -693,7 +700,7 @@ def user_query(session):
             continue
 
         # As albums: group items by albums and create task for each album
-        if choice is action.ALBUMS:
+        if task.choice_flag is action.ALBUMS:
             def emitter(task):
                 yield task
 

@@ -1230,7 +1230,7 @@ def write_items(lib, query, pretend):
 
         # Check for and display changes.
         changed = ui.show_model_changes(item, clean_item,
-                                        library.ITEM_KEYS_META, always=True)
+                                        library.ITEM_KEYS_WRITABLE, always=True)
         if changed and not pretend:
             try:
                 item.write()

@@ -21,10 +21,12 @@ New stuff:
   johtso.
 * :doc:`/plugins/smartplaylist`: Playlists can now be generated from multiple
   queries (combined with "or" logic). Album-level queries are also now
-  possible. Thanks to brilnius.
+  possible. Automatic playlist regeneration can now be disabled. Thanks to
+  brilnius.
 * :doc:`/plugins/echonest`: Echo Nest similarity now weights the tempo in
   better proportion to other metrics. Also, options were added to specify
   custom thresholds and output formats. Thanks to Adam M.
+* Added the :ref:`after_write <plugin_events>` plugin event.
 
 Fixes:
 
@@ -45,6 +47,8 @@ Fixes:
 * :doc:`/plugins/fetchart`: The plugin now sends "beets" as the User-Agent
   when making scraping requests. This helps resolve some blocked requests. The
   plugin now also depends on the `requests`_ Python library.
+* The :ref:`write-cmd` now only shows the changes to fields that will actually
+  be written to a file.
 
 .. _requests: http://www.python-requests.org/
 

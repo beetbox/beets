@@ -27,6 +27,10 @@ Usage:
 A field will always return a reasonable value of the correct type, even
 if no tag is present. If no value is available, the value will be false
 (e.g., zero or the empty string).
+
+Internally ``MediaFile`` uses ``MediaField`` descriptors to access the
+data from the tags. In turn ``MediaField`` uses a number of
+``StorageStyle`` strategies to handle format specific logic.
 """
 import mutagen
 import mutagen.mp3
@@ -250,6 +254,10 @@ def _sc_encode(gain, peak):
     return (u' %08X' * 10) % values
 
 
+
+# Cover art and other images.
+
+
 def _image_mime_type(data):
     """Return the MIME type of the image data (a bytestring).
     """
@@ -268,717 +276,6 @@ def _image_mime_type(data):
         return 'image/x-{0}'.format(kind)
 
 
-# StorageStyle classes describe strategies for accessing values in
-# Mutagen file objects.
-
-class StorageStyle(object):
-    """Parameterizes the storage behavior of a single field for a
-    certain tag format.
-
-    The ``get()`` method retrieves data from tags of a mutagen file. It
-    uses the fetch method to obtain the raw mutagen value. It then uses
-    the ``deserialize()`` method to convert it into a python value.
-
-    ``set()`` uses ``serialize()`` to convert the passed value into a
-    suitable mutagen type. The ``store()`` method is then used to write
-    that value to the tags.
-
-     - key: The Mutagen key used to access the field's data.
-     - as_type: Which type the value is stored as (unicode, int,
-       bool, or str).
-     - suffix: When `as_type` is a string type, append this before
-       storing the value.
-     - float_places: When the value is a floating-point number and
-       encoded as a string, the number of digits to store after the
-       point.
-    """
-
-    # TODO Use mutagen file types instead of MediaFile formats
-    formats = ['flac', 'opus', 'ogg', 'ape', 'wv', 'mpc']
-    """List of file format the StorageStyle can handle.
-
-    Format names correspond to those returned by ``mediafile.type``.
-    """
-
-    def __init__(self, key, as_type=unicode, suffix=None, float_places=2):
-        self.key = key
-        self.as_type = as_type
-        self.suffix = suffix
-        self.float_places = float_places
-
-        # Convert suffix to correct string type.
-        if self.suffix and self.as_type == unicode:
-            self.suffix = self.as_type(self.suffix)
-
-    def get(self, mutagen_file):
-        """Fetches raw data from tags and deserializes it into a python value.
-        """
-        return self.deserialize(self.fetch(mutagen_file))
-
-    def fetch(self, mutagen_file):
-        """Retrieve the first raw value of this tag from the mediafile."""
-        try:
-            return mutagen_file[self.key][0]
-        except KeyError:
-            return None
-
-    def deserialize(self, mutagen_value):
-        if self.suffix and isinstance(mutagen_value, unicode) \
-                       and mutagen_value.endswith(self.suffix):
-            return mutagen_value[:-len(self.suffix)]
-        else:
-            return mutagen_value
-
-    def set(self, mutagen_file, value):
-        self.store(mutagen_file, self.serialize(value))
-
-    def store(self, mutagen_file, value):
-        """Stores a serialized value in the mediafile."""
-        mutagen_file[self.key] = [value]
-
-    def serialize(self, value):
-        """Convert value to a type that is suitable for storing in a tag."""
-        if value is None:
-            value = self._none_value()
-
-        if isinstance(value, float) and self.as_type is unicode:
-            value = u'{0:.{1}f}'.format(value, self.float_places)
-            value = self.as_type(value)
-        elif self.as_type is unicode:
-            if isinstance(value, bool):
-                # Store bools as 1/0 instead of True/False.
-                value = unicode(int(bool(value)))
-            elif isinstance(value, str):
-                value = value.decode('utf8', 'ignore')
-            else:
-                value = unicode(value)
-        else:
-            value = self.as_type(value)
-
-        if self.suffix:
-            value += self.suffix
-
-        return value
-
-    def _none_value(self):
-        if self.out_type == int:
-            return 0
-        elif self.out_type == float:
-            return 0.0
-        elif self.out_type == bool:
-            return False
-        elif self.out_type == unicode:
-            return u''
-
-
-class ListStorageStyle(StorageStyle):
-    """Abstract class that provides access to lists.
-
-    Subclasses may overwrite ``fetch`` and ``store``.  ``fetch`` must
-    return a (possibly empty) list and ``store`` receives a serialized
-    list of values as the second argument.
-    """
-
-    def get(self, mutagen_file):
-        try:
-            return self.get_list(mutagen_file)[0]
-        except IndexError:
-            return None
-
-    def get_list(self, mutagen_file):
-        return [self.deserialize(item) for item in self.fetch(mutagen_file)]
-
-    def fetch(self, mutagen_file):
-        try:
-            return mutagen_file[self.key]
-        except KeyError:
-            return []
-
-    def set(self, mutagen_file, value):
-        self.set_list(mutagen_file, [value])
-
-    def set_list(self, mutagen_file, values):
-        self.store(mutagen_file, [self.serialize(value) for value in values])
-
-    def store(self, mutagen_file, values):
-        mutagen_file[self.key] = values
-
-
-class SoundCheckStorageStyleMixin(object):
-
-    def get(self, mutagen_file):
-        data = self.fetch(mutagen_file)
-        if data is None:
-            return 0
-        else:
-            return _sc_decode(data)[self.index]
-
-    def set(self, mutagen_file, value):
-        data = self.fetch(mutagen_file)
-        if data is None:
-            gain_peak = [0, 0]
-        else:
-            gain_peak = list(_sc_decode(data))
-        gain_peak[self.index] = value or 0
-        data = self.serialize(_sc_encode(*gain_peak))
-        self.store(mutagen_file, data)
-
-
-class ASFStorageStyle(ListStorageStyle):
-    formats = ['asf']
-
-    def deserialize(self, data):
-        if isinstance(data, mutagen.asf.ASFBaseAttribute):
-            data = data.value
-        return data
-
-
-class MP4StorageStyle(StorageStyle):
-
-    formats = ['aac', 'alac']
-
-    def serialize(self, value):
-        value = super(MP4StorageStyle, self).serialize(value)
-        if self.key.startswith('----:') and isinstance(value, unicode):
-            value = value.encode('utf8')
-        return value
-
-
-class MP4TupleStorageStyle(MP4StorageStyle):
-    """Store values as part of a numeric pair.
-    """
-
-    def __init__(self, key, index=0, **kwargs):
-        super(MP4TupleStorageStyle, self).__init__(key, **kwargs)
-        self.index = index
-
-    def deserialize(self, mutagen_value):
-        items = mutagen_value or []
-        packing_length = 2
-        return list(items) + [0] * (packing_length - len(items))
-
-    def get(self, mutagen_file):
-        return super(MP4TupleStorageStyle, self).get(mutagen_file)[self.index]
-
-    def set(self, mutagen_file, value):
-        if value is None:
-            value = 0
-        items = self.deserialize(self.fetch(mutagen_file))
-        items[self.index] = int(value)
-        self.store(mutagen_file, items)
-
-
-class MP4ListStorageStyle(ListStorageStyle, MP4StorageStyle):
-    pass
-
-
-class MP4SoundCheckStorageStyle(SoundCheckStorageStyleMixin, MP4StorageStyle):
-
-    def __init__(self, index=0, **kwargs):
-        super(MP4SoundCheckStorageStyle, self).__init__(**kwargs)
-        self.index = index
-
-class MP4BoolStorageStyle(MP4StorageStyle):
-
-    def get(self, mutagen_file):
-        try:
-            return mutagen_file[self.key]
-        except KeyError:
-            return None
-
-    def get_list(self, mutagen_file):
-        raise NotImplementedError('MP4 bool storage does not support lists')
-
-    def set(self, mutagen_file, value):
-        mutagen_file[self.key] = value
-
-    def set_list(self, mutagen_file, values):
-        raise NotImplementedError('MP4 bool storage does not support lists')
-
-
-class MP4ImageStorageStyle(MP4ListStorageStyle):
-
-    def __init__(self, **kwargs):
-        super(MP4ImageStorageStyle, self).__init__(key='covr', **kwargs)
-
-    def deserialize(self, data):
-        return Image(data)
-
-    def serialize(self, image):
-        if image.mime_type == 'image/png':
-            kind = mutagen.mp4.MP4Cover.FORMAT_PNG
-        elif image.mime_type == 'image/jpeg':
-            kind = mutagen.mp4.MP4Cover.FORMAT_JPEG
-        else:
-            raise ValueError('The MP4 format only supports PNG and JPEG images')
-        return mutagen.mp4.MP4Cover(image.data, kind)
-
-
-class MP3StorageStyle(StorageStyle):
-
-    formats = ['mp3']
-
-    def __init__(self, key, id3_lang=None, **kwargs):
-        self.id3_lang = id3_lang
-        super(MP3StorageStyle, self).__init__(key, **kwargs)
-
-    def fetch(self, mutagen_file):
-        try:
-            return mutagen_file[self.key].text[0]
-        except KeyError:
-            return None
-
-    def store(self, mutagen_file, value):
-        frame = mutagen.id3.Frames[self.key](encoding=3, text=[value])
-        mutagen_file.tags.setall(self.key, [frame])
-
-
-class MP3ListStorageStyle(ListStorageStyle, MP3StorageStyle):
-
-    def fetch(self, mutagen_file):
-        try:
-            return mutagen_file[self.key].text
-        except KeyError:
-            return []
-
-    def store(self, mutagen_file, values):
-        frame = mutagen.id3.Frames[self.key](encoding=3, text=values)
-        mutagen_file.tags.setall(self.key, [frame])
-
-
-class MP3UFIDStorageStyle(MP3StorageStyle):
-
-    def __init__(self, owner, **kwargs):
-        self.owner = owner
-        super(MP3UFIDStorageStyle, self).__init__('UFID:' + owner, **kwargs)
-
-    def fetch(self, mutagen_file):
-        try:
-            return mutagen_file[self.key].data
-        except KeyError:
-            return None
-
-    def store(self, mutagen_file, value):
-        frames = mutagen_file.tags.getall(self.key)
-        for frame in frames:
-            # Replace existing frame data.
-            if frame.owner == self.owner:
-                frame.data = value
-        else:
-            # New frame.
-            frame = mutagen.id3.UFID(owner=self.owner, data=value)
-            mutagen_file.tags.setall(self.key, [frame])
-
-
-class MP3DescStorageStyle(MP3StorageStyle):
-
-    def __init__(self, desc=u'', key='TXXX', **kwargs):
-        self.description = desc
-        super(MP3DescStorageStyle, self).__init__(key=key, **kwargs)
-
-    def store(self, mutagen_file, value):
-        frames = mutagen_file.tags.getall(self.key)
-        if self.key != 'USLT':
-            value = [value]
-
-        # try modifying in place
-        found = False
-        for frame in frames:
-            if frame.desc.lower() == self.description.lower():
-                frame.text = value
-                found = True
-
-        # need to make a new frame?
-        if not found:
-            frame = mutagen.id3.Frames[self.key](
-                    desc=str(self.description), text=value, encoding=3)
-            if self.id3_lang:
-                frame.lang = self.id3_lang
-            mutagen_file.tags.add(frame)
-
-    def fetch(self, mutagen_file):
-        for frame in mutagen_file.tags.getall(self.key):
-            if frame.desc.lower() == self.description.lower():
-                if self.key == 'USLT':
-                    return frame.text
-                try:
-                    return frame.text[0]
-                except IndexError:
-                    return None
-
-
-class MP3SlashPackStorageStyle(MP3StorageStyle):
-    """Store value as part of pair that is serialized as a slash
-    separated string.
-    """
-
-    def __init__(self, key, pack_pos=0, **kwargs):
-        super(MP3SlashPackStorageStyle, self).__init__(key, **kwargs)
-        self.pack_pos = pack_pos
-
-    def _fetch_unpacked(self, mutagen_file):
-        data = self.fetch(mutagen_file) or ''
-        items = unicode(data).split('/')
-        packing_length = 2
-        return list(items) + [None] * (packing_length - len(items))
-
-    def get(self, mutagen_file):
-        return self._fetch_unpacked(mutagen_file)[self.pack_pos] or 0
-
-    def set(self, mutagen_file, value):
-        items = self._fetch_unpacked(mutagen_file)
-        items[self.pack_pos] = value
-        if items[0] is None:
-            items[0] = 0
-        if items[1] is None:
-            items.pop()  # Do not store last value
-        self.store(mutagen_file, '/'.join(map(unicode, items)))
-
-
-class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
-    """Converts between APIC frames and ``Image`` instances.
-
-    The `get_list` method inherited from ``ListStorageStyle`` returns a
-    list of ``Image``s. Similarily the `set_list` method accepts a
-    list of ``Image``s as its ``values`` arguemnt.
-    """
-
-    def __init__(self):
-        super(MP3ImageStorageStyle, self).__init__(key='APIC')
-        self.as_type = str
-
-    def deserialize(self, apic_frame):
-        """Convert APIC frame into Image."""
-        return Image(data=apic_frame.data, desc=apic_frame.desc,
-                     type=apic_frame.type)
-
-    def fetch(self, mutagen_file):
-        return mutagen_file.tags.getall(self.key)
-
-    def store(self, mutagen_file, frames):
-        mutagen_file.tags.setall(self.key, frames)
-
-    def serialize(self, image):
-        """Return an APIC frame populated with data from ``image``.
-        """
-        assert isinstance(image, Image)
-        frame = mutagen.id3.Frames[self.key]()
-        frame.data = image.data
-        frame.mime = image.mime_type
-        frame.desc = (image.desc or u'').encode('utf8')
-        frame.encoding = 3  # UTF-8 encoding of desc
-        frame.type = image.type_index or 3  # front cover
-        return frame
-
-
-class MP3SoundCheckStorageStyle(SoundCheckStorageStyleMixin, MP3DescStorageStyle):
-
-    def __init__(self, index=0, **kwargs):
-        super(MP3SoundCheckStorageStyle, self).__init__(**kwargs)
-        self.index = index
-
-
-class ASFImageStorageStyle(ListStorageStyle):
-
-    formats = ['asf']
-
-    def __init__(self):
-        super(ASFImageStorageStyle, self).__init__(key='WM/Picture')
-
-    def deserialize(self, asf_picture):
-        mime, data, type, desc = _unpack_asf_image(asf_picture.value)
-        return Image(data, desc=desc, type=type)
-
-    def serialize(self, image):
-        pic = mutagen.asf.ASFByteArrayAttribute()
-        pic.value = _pack_asf_image(image.mime_type, image.data,
-                                    type=image.type_index or 3,
-                                    description=image.desc or u'')
-        return pic
-
-
-class VorbisImageStorageStyle(ListStorageStyle):
-
-    formats = ['opus', 'ogg', 'ape', 'wv', 'mpc']
-
-    def __init__(self):
-        super(VorbisImageStorageStyle, self).__init__(
-                key='metadata_block_picture')
-        self.as_type = str
-
-    def fetch(self, mutagen_file):
-        images = []
-        if 'metadata_block_picture' not in mutagen_file:
-            # Try legacy COVERART tags.
-            if 'coverart' in mutagen_file:
-                for data in mutagen_file['coverart']:
-                    images.append(Image(base64.b64decode(data)))
-            return images
-        for data in mutagen_file["metadata_block_picture"]:
-            try:
-                pic = mutagen.flac.Picture(base64.b64decode(data))
-            except (TypeError, AttributeError):
-                continue
-            images.append(Image(data=pic.data, desc=pic.desc,
-                                   type=pic.type))
-        return images
-
-    def store(self, mutagen_file, image_data):
-        # Strip all art, including legacy COVERART.
-        if 'coverart' in mutagen_file:
-            del mutagen_file['coverart']
-        if 'coverartmime' in mutagen_file:
-            del mutagen_file['coverartmime']
-        super(VorbisImageStorageStyle, self).store(mutagen_file, image_data)
-
-    
-    def serialize(self, image):
-        """Turn a Image into a base64 encoded FLAC picture block.
-        """
-        pic = mutagen.flac.Picture()
-        pic.data = image.data
-        pic.type = image.type_index or 3  # Front cover
-        pic.mime = image.mime_type
-        pic.desc = image.desc or u''
-        return base64.b64encode(pic.write())
-
-
-class FlacImageStorageStyle(ListStorageStyle):
-    """Converts between ``mutagen.flac.Picture`` and ``Image`` instances.
-    """
-
-    formats = ['flac']
-
-    def __init__(self):
-        super(FlacImageStorageStyle, self).__init__(key='')
-
-    def fetch(self, mutagen_file):
-        return mutagen_file.pictures
-
-    def deserialize(self, flac_picture):
-        return Image(data=flac_picture.data, desc=flac_picture.desc,
-                     type=flac_picture.type)
-
-    def store(self, mutagen_file, pictures):
-        """``pictures`` is a list of mutagen.flac.Picture instances.
-        """
-        mutagen_file.clear_pictures()
-        for pic in pictures:
-            mutagen_file.add_picture(pic)
-
-    def serialize(self, image):
-        """Turn a Image into a mutagen.flac.Picture.
-        """
-        pic = mutagen.flac.Picture()
-        pic.data = image.data
-        pic.type = image.type_index or 3  # Front cover
-        pic.mime = image.mime_type
-        pic.desc = image.desc or u''
-        return pic
-
-
-
-# MediaField is a descriptor that represents a single logical field. It
-# aggregates several StorageStyles describing how to access the data for
-# each file type.
-
-class MediaField(object):
-    """A descriptor providing access to a particular (abstract) metadata
-    field.
-    """
-    def __init__(self, *styles, **kwargs):
-        """Creates a new MediaField.
-
-         - styles: A list of ``StorageStyle``s that perform the actual
-           storing of tags depending on the media file format.
-         - kwargs: ``out_type`` is the type of the value that should be
-           returned when getting this property
-        """
-        self.out_type = kwargs.get('out_type', unicode)
-        self._styles = styles
-        for style in styles:
-            style.out_type = self.out_type
-
-    def styles(self, mediafile):
-        """Yields the list of storage styles of this field that can
-        handle the mediafile's format.
-        """
-        for style in self._styles:
-            if mediafile.type in style.formats:
-                yield style
-
-    def __get__(self, mediafile, owner=None):
-        out = None
-        for style in self.styles(mediafile):
-            out = style.get(mediafile.mgfile)
-            if out:
-                break
-        return _safe_cast(self.out_type, out)
-
-
-    def __set__(self, mediafile, value):
-        for style in self.styles(mediafile):
-            style.set(mediafile.mgfile, value)
-
-
-class ListMediaField(MediaField):
-    """Property descriptor that retrieves a list from a tag.
-
-    Uses ``get_list`` and set_list`` methods of its ``StorageStyle``
-    strategies to do the actual work.
-    """
-
-    def __get__(self, mediafile, _):
-        values = []
-        for style in self.styles(mediafile):
-            values.extend(style.get_list(mediafile.mgfile))
-        return [_safe_cast(self.out_type, value) for value in values]
-
-    def __set__(self, mediafile, values):
-        for style in self.styles(mediafile):
-            style.set_list(mediafile.mgfile, values)
-
-    def single_field(self):
-        """Returns a ``MediaField`` descriptor that gets and sets the
-        first item.
-        """
-        options = {'out_type': self.out_type}
-        return MediaField(*self._styles, **options)
-
-
-class DateField(MediaField):
-    """Descriptor that handles serializing and deserializing dates
-
-    The getter parses value from tags into a ``datetime.date`` instance
-    and setter serializes such an instance into a string.
-
-    For granular access to year, month, and day, use the ``*_field``
-    methods to create corresponding ``DateItemFields``.
-    """
-
-    def __init__(self, *date_styles, **kwargs):
-        """``date_styles`` is a list of ``StorageStyle``s to store and
-        retrieve the whole date from. The ``year`` option is an
-        additional list of fallback styles for the year. The year is
-        always set on this style, but is only retrieved if the main
-        storage styles do not return a value.
-        """
-        super(DateField, self).__init__(*date_styles)
-        year_style = kwargs.get('year', None)
-        if year_style:
-            self._year_field = MediaField(*year_style)
-
-    def __get__(self, mediafile, owner=None):
-        year, month, day = self._get_date_tuple(mediafile)
-        try:
-            return datetime.date(
-                year or datetime.MINYEAR,
-                month or 1,
-                day or 1
-            )
-        except ValueError:  # Out of range values.
-            return datetime.date.min
-
-    def __set__(self, mediafile, date):
-        self._set_date_tuple(mediafile, date.year, date.month, date.day)
-
-    def _get_date_tuple(self, mediafile):
-        datestring = MediaField.__get__(self, mediafile, None)
-        datestring = re.sub(r'[Tt ].*$', '', unicode(datestring))
-        items = unicode(datestring).split('-')
-        items = items + [None]*(3 - len(items))
-        if not items[0] and hasattr(self, '_year_field'):
-            # Fallback to addition year field
-            items[0] = self._year_field.__get__(mediafile)
-        return [int(item or 0) for item in items]
-
-    def _set_date_tuple(self, mediafile, year, month=None, day=None):
-        date = [year or 0]
-        if month:
-            date.append(month)
-        if month and day:
-            date.append(day)
-        date = map(unicode, date)
-        super(DateField, self).__set__(mediafile, '-'.join(date))
-
-        if hasattr(self, '_year_field'):
-            self._year_field.__set__(mediafile, year)
-
-    def year_field(self):
-        return DateItemField(self, 0)
-
-    def month_field(self):
-        return DateItemField(self, 1)
-
-    def day_field(self):
-        return DateItemField(self, 2)
-
-
-class DateItemField(MediaField):
-    """Descriptor that gets and sets parts of a ``DateField``.
-    """
-
-    def __init__(self, date_field, item_pos):
-        self.date_field = date_field
-        self.item_pos = item_pos
-
-    def __get__(self, mediafile, _):
-        return self.date_field._get_date_tuple(mediafile)[self.item_pos]
-
-    def __set__(self, mediafile, value):
-        items = self.date_field._get_date_tuple(mediafile)
-        items[self.item_pos] = value
-        self.date_field._set_date_tuple(mediafile, *items)
-
-
-class CoverArtField(MediaField):
-    def __init__(self):
-        pass
-
-    def __get__(self, mediafile, _):
-        try:
-            return mediafile.images[0].data
-        except IndexError:
-            return None
-
-    def __set__(self, mediafile, data):
-        if data:
-            mediafile.images = [Image(data=data)]
-        else:
-            mediafile.images = []
-
-
-class ImageListField(MediaField):
-    """Descriptor to access the list of images embedded in tags.
-
-    The getter returns a list of ``Image`` instances obtained from
-    the tags. The setter accepts a list of ``Image`` instances to be
-    written to the tags.
-    """
-
-    def __init__(self):
-        # The storage styles used here must implement the
-        # `ListStorageStyle` interface and get and set lists of
-        # `Image`s.
-        super(ImageListField, self).__init__(
-            MP3ImageStorageStyle(),
-            MP4ImageStorageStyle(),
-            ASFImageStorageStyle(),
-            VorbisImageStorageStyle(),
-            FlacImageStorageStyle(),
-        )
-
-    def __get__(self, mediafile, _):
-        images = []
-        for style in self.styles(mediafile):
-            images.extend(style.get_list(mediafile.mgfile))
-        return images
-
-    def __set__(self, mediafile, images):
-        for style in self.styles(mediafile):
-            style.set_list(mediafile.mgfile, images)
-
-
 class Image(object):
     """Strucuture representing image data and metadata that can be
     stored and retrieved from tags.
@@ -991,7 +288,6 @@ class Image(object):
     * ``mime_type`` Read-only property that contains the mime type of
                     the binary data
     """
-
     TYPES = enum([
         'other',
         'icon',
@@ -1034,7 +330,795 @@ class Image(object):
             return None
         return list(self.TYPES).index(self.type)
 
+
+
+# StorageStyle classes describe strategies for accessing values in
+# Mutagen file objects.
+
+class StorageStyle(object):
+    """A strategy for storing a value for a certain tag format (or set
+    of tag formats). This basic StorageStyle describes simple 1:1
+    mapping from raw values to keys in a Mutagen file object; subclasses
+    describe more sophisticated translations or format-specific access
+    strategies.
+
+    MediaFile uses a StorageStyle via two methods: ``get()`` and
+    ``set()``. It passes a Mutagen file object to each.
+
+    Internally, the StorageStyle implements ``get()`` and ``set()``
+    using two steps that may be overridden by subtypes. To get a value,
+    the StorageStyle first calls ``fetch()`` to retrieve the value
+    corresponding to a key and then ``deserialize()`` to convert the raw
+    Mutagen value to a consumable Python value. Similarly, to set a
+    field, we call ``serialize()`` to encode the value and then
+    ``store()`` to assign the result into the Mutagen object.
+
+    Each StorageStyle type has a class-level `formats` attribute that is
+    a list of strings indicating the formats that the style applies to.
+    MediaFile only uses StorageStyles that apply to the correct type for
+    a given audio file.
+    """
+
+    # TODO Use mutagen file types instead of MediaFile formats
+    formats = ['flac', 'opus', 'ogg', 'ape', 'wv', 'mpc']
+    """List of file formats the StorageStyle can handle.
+
+    Format names correspond to those returned by ``mediafile.type``.
+    """
+
+    def __init__(self, key, as_type=unicode, suffix=None, float_places=2):
+        """Create a basic storage strategy. Parameters:
+
+        - `key`: The key on the Mutagen file object used to access the
+          field's data.
+        - `as_type`: The Python type that the value is stored as
+          internally (`unicode`, `int`, `bool`, or `bytes`).
+        - `suffix`: When `as_type` is a string type, append this before
+          storing the value.
+        - `float_places`: When the value is a floating-point number and
+          encoded as a string, the number of digits to store after the
+          decimal point.
+        """
+        self.key = key
+        self.as_type = as_type
+        self.suffix = suffix
+        self.float_places = float_places
+
+        # Convert suffix to correct string type.
+        if self.suffix and self.as_type is unicode:
+            self.suffix = self.as_type(self.suffix)
+
+    # Getter.
+
+    def get(self, mutagen_file):
+        """Get the value for the field using this style.
+        """
+        return self.deserialize(self.fetch(mutagen_file))
+
+    def fetch(self, mutagen_file):
+        """Retrieve the raw value of for this tag from the Mutagen file
+        object.
+        """
+        try:
+            return mutagen_file[self.key][0]
+        except KeyError:
+            return None
+
+    def deserialize(self, mutagen_value):
+        """Given a raw value stored on a Mutagen object, decode and
+        return the represented value.
+        """
+        if self.suffix and isinstance(mutagen_value, unicode) \
+                       and mutagen_value.endswith(self.suffix):
+            return mutagen_value[:-len(self.suffix)]
+        else:
+            return mutagen_value
+
+    # Setter.
+
+    def set(self, mutagen_file, value):
+        """Assign the value for the field using this style.
+        """
+        self.store(mutagen_file, self.serialize(value))
+
+    def store(self, mutagen_file, value):
+        """Store a serialized value in the Mutagen file object.
+        """
+        mutagen_file[self.key] = [value]
+
+    def serialize(self, value):
+        """Convert the external Python value to a type that is suitable for
+        storing in a Mutagen file object.
+        """
+        if value is None:
+            value = self._none_value()
+
+        if isinstance(value, float) and self.as_type is unicode:
+            value = u'{0:.{1}f}'.format(value, self.float_places)
+            value = self.as_type(value)
+        elif self.as_type is unicode:
+            if isinstance(value, bool):
+                # Store bools as 1/0 instead of True/False.
+                value = unicode(int(bool(value)))
+            elif isinstance(value, str):
+                value = value.decode('utf8', 'ignore')
+            else:
+                value = unicode(value)
+        else:
+            value = self.as_type(value)
+
+        if self.suffix:
+            value += self.suffix
+
+        return value
+
+    # Utility.
+
+    def _none_value(self):
+        if self.out_type == int:
+            return 0
+        elif self.out_type == float:
+            return 0.0
+        elif self.out_type == bool:
+            return False
+        elif self.out_type == unicode:
+            return u''
+
+
+class ListStorageStyle(StorageStyle):
+    """Abstract storage style that provides access to lists.
+
+    The ListMediaField descriptor uses a ListStorageStyle via two
+    methods: ``get_list()`` and ``set_list()``. It passes a Mutagen file
+    object to each.
+
+    Subclasses may overwrite ``fetch`` and ``store``.  ``fetch`` must
+    return a (possibly empty) list and ``store`` receives a serialized
+    list of values as the second argument.
+
+    The `serialize` and `deserialize` methods (from the base
+    `StorageStyle`) are still called with individual values. This class
+    handles packing and unpacking the values into lists.
+    """
+    def get(self, mutagen_file):
+        """Get the first value in the field's value list.
+        """
+        try:
+            return self.get_list(mutagen_file)[0]
+        except IndexError:
+            return None
+
+    def get_list(self, mutagen_file):
+        """Get a list of all values for the field using this style.
+        """
+        return [self.deserialize(item) for item in self.fetch(mutagen_file)]
+
+    def fetch(self, mutagen_file):
+        """Get the list of raw (serialized) values.
+        """
+        try:
+            return mutagen_file[self.key]
+        except KeyError:
+            return []
+
+    def set(self, mutagen_file, value):
+        """Set an individual value as the only value for the field using
+        this style.
+        """
+        self.set_list(mutagen_file, [value])
+
+    def set_list(self, mutagen_file, values):
+        """Set all values for the field using this style. `values`
+        should be an iterable.
+        """
+        self.store(mutagen_file, [self.serialize(value) for value in values])
+
+    def store(self, mutagen_file, values):
+        """Set the list of all raw (serialized) values for this field.
+        """
+        mutagen_file[self.key] = values
+
+
+class SoundCheckStorageStyleMixin(object):
+    """A mixin for storage styles that read and write iTunes SoundCheck
+    analysis values. The object must have an `index` field that
+    indicates which half of the gain/peak pair---0 or 1---the field
+    represents.
+    """
+    def get(self, mutagen_file):
+        data = self.fetch(mutagen_file)
+        if data is None:
+            return 0
+        else:
+            return _sc_decode(data)[self.index]
+
+    def set(self, mutagen_file, value):
+        data = self.fetch(mutagen_file)
+        if data is None:
+            gain_peak = [0, 0]
+        else:
+            gain_peak = list(_sc_decode(data))
+        gain_peak[self.index] = value or 0
+        data = self.serialize(_sc_encode(*gain_peak))
+        self.store(mutagen_file, data)
+
+
+class ASFStorageStyle(ListStorageStyle):
+    """A general storage style for Windows Media/ASF files.
+    """
+    formats = ['asf']
+
+    def deserialize(self, data):
+        if isinstance(data, mutagen.asf.ASFBaseAttribute):
+            data = data.value
+        return data
+
+
+class MP4StorageStyle(StorageStyle):
+    """A general storage style for MPEG-4 tags.
+    """
+    formats = ['aac', 'alac']
+
+    def serialize(self, value):
+        value = super(MP4StorageStyle, self).serialize(value)
+        if self.key.startswith('----:') and isinstance(value, unicode):
+            value = value.encode('utf8')
+        return value
+
+
+class MP4TupleStorageStyle(MP4StorageStyle):
+    """A style for storing values as part of a pair of numbers in an
+    MPEG-4 file.
+    """
+    def __init__(self, key, index=0, **kwargs):
+        super(MP4TupleStorageStyle, self).__init__(key, **kwargs)
+        self.index = index
+
+    def deserialize(self, mutagen_value):
+        items = mutagen_value or []
+        packing_length = 2
+        return list(items) + [0] * (packing_length - len(items))
+
+    def get(self, mutagen_file):
+        return super(MP4TupleStorageStyle, self).get(mutagen_file)[self.index]
+
+    def set(self, mutagen_file, value):
+        if value is None:
+            value = 0
+        items = self.deserialize(self.fetch(mutagen_file))
+        items[self.index] = int(value)
+        self.store(mutagen_file, items)
+
+
+class MP4ListStorageStyle(ListStorageStyle, MP4StorageStyle):
+    pass
+
+
+class MP4SoundCheckStorageStyle(SoundCheckStorageStyleMixin, MP4StorageStyle):
+    def __init__(self, index=0, **kwargs):
+        super(MP4SoundCheckStorageStyle, self).__init__(**kwargs)
+        self.index = index
+
+class MP4BoolStorageStyle(MP4StorageStyle):
+    """A style for booleans in MPEG-4 files. (MPEG-4 has an atom type
+    specifically for representing booleans.)
+    """
+    def get(self, mutagen_file):
+        try:
+            return mutagen_file[self.key]
+        except KeyError:
+            return None
+
+    def get_list(self, mutagen_file):
+        raise NotImplementedError('MP4 bool storage does not support lists')
+
+    def set(self, mutagen_file, value):
+        mutagen_file[self.key] = value
+
+    def set_list(self, mutagen_file, values):
+        raise NotImplementedError('MP4 bool storage does not support lists')
+
+
+class MP4ImageStorageStyle(MP4ListStorageStyle):
+    """Store images as MPEG-4 image atoms. Values are `Image` objects.
+    """
+    def __init__(self, **kwargs):
+        super(MP4ImageStorageStyle, self).__init__(key='covr', **kwargs)
+
+    def deserialize(self, data):
+        return Image(data)
+
+    def serialize(self, image):
+        if image.mime_type == 'image/png':
+            kind = mutagen.mp4.MP4Cover.FORMAT_PNG
+        elif image.mime_type == 'image/jpeg':
+            kind = mutagen.mp4.MP4Cover.FORMAT_JPEG
+        else:
+            raise ValueError('MP4 files only supports PNG and JPEG images')
+        return mutagen.mp4.MP4Cover(image.data, kind)
+
+
+class MP3StorageStyle(StorageStyle):
+    """Store data in ID3 frames.
+    """
+    formats = ['mp3']
+
+    def __init__(self, key, id3_lang=None, **kwargs):
+        """Create a new ID3 storage style. `id3_lang` is the value for
+        the language field of newly created frames.
+        """
+        self.id3_lang = id3_lang
+        super(MP3StorageStyle, self).__init__(key, **kwargs)
+
+    def fetch(self, mutagen_file):
+        try:
+            return mutagen_file[self.key].text[0]
+        except KeyError:
+            return None
+
+    def store(self, mutagen_file, value):
+        frame = mutagen.id3.Frames[self.key](encoding=3, text=[value])
+        mutagen_file.tags.setall(self.key, [frame])
+
+
+class MP3ListStorageStyle(ListStorageStyle, MP3StorageStyle):
+    """Store lists of data in multiple ID3 frames.
+    """
+    def fetch(self, mutagen_file):
+        try:
+            return mutagen_file[self.key].text
+        except KeyError:
+            return []
+
+    def store(self, mutagen_file, values):
+        frame = mutagen.id3.Frames[self.key](encoding=3, text=values)
+        mutagen_file.tags.setall(self.key, [frame])
+
+
+class MP3UFIDStorageStyle(MP3StorageStyle):
+    """Store data in a UFID ID3 frame with a particular owner.
+    """
+    def __init__(self, owner, **kwargs):
+        self.owner = owner
+        super(MP3UFIDStorageStyle, self).__init__('UFID:' + owner, **kwargs)
+
+    def fetch(self, mutagen_file):
+        try:
+            return mutagen_file[self.key].data
+        except KeyError:
+            return None
+
+    def store(self, mutagen_file, value):
+        frames = mutagen_file.tags.getall(self.key)
+        for frame in frames:
+            # Replace existing frame data.
+            if frame.owner == self.owner:
+                frame.data = value
+        else:
+            # New frame.
+            frame = mutagen.id3.UFID(owner=self.owner, data=value)
+            mutagen_file.tags.setall(self.key, [frame])
+
+
+class MP3DescStorageStyle(MP3StorageStyle):
+    """Store data in a TXXX (or similar) ID3 frame. The frame is
+    selected based its ``desc`` field.
+    """
+    def __init__(self, desc=u'', key='TXXX', **kwargs):
+        self.description = desc
+        super(MP3DescStorageStyle, self).__init__(key=key, **kwargs)
+
+    def store(self, mutagen_file, value):
+        frames = mutagen_file.tags.getall(self.key)
+        if self.key != 'USLT':
+            value = [value]
+
+        # try modifying in place
+        found = False
+        for frame in frames:
+            if frame.desc.lower() == self.description.lower():
+                frame.text = value
+                found = True
+
+        # need to make a new frame?
+        if not found:
+            frame = mutagen.id3.Frames[self.key](
+                    desc=str(self.description), text=value, encoding=3)
+            if self.id3_lang:
+                frame.lang = self.id3_lang
+            mutagen_file.tags.add(frame)
+
+    def fetch(self, mutagen_file):
+        for frame in mutagen_file.tags.getall(self.key):
+            if frame.desc.lower() == self.description.lower():
+                if self.key == 'USLT':
+                    return frame.text
+                try:
+                    return frame.text[0]
+                except IndexError:
+                    return None
+
+
+class MP3SlashPackStorageStyle(MP3StorageStyle):
+    """Store value as part of pair that is serialized as a slash-
+    separated string.
+    """
+    def __init__(self, key, pack_pos=0, **kwargs):
+        super(MP3SlashPackStorageStyle, self).__init__(key, **kwargs)
+        self.pack_pos = pack_pos
+
+    def _fetch_unpacked(self, mutagen_file):
+        data = self.fetch(mutagen_file) or ''
+        items = unicode(data).split('/')
+        packing_length = 2
+        return list(items) + [None] * (packing_length - len(items))
+
+    def get(self, mutagen_file):
+        return self._fetch_unpacked(mutagen_file)[self.pack_pos] or 0
+
+    def set(self, mutagen_file, value):
+        items = self._fetch_unpacked(mutagen_file)
+        items[self.pack_pos] = value
+        if items[0] is None:
+            items[0] = 0
+        if items[1] is None:
+            items.pop()  # Do not store last value
+        self.store(mutagen_file, '/'.join(map(unicode, items)))
+
+
+class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
+    """Converts between APIC frames and ``Image`` instances.
+
+    The `get_list` method inherited from ``ListStorageStyle`` returns a
+    list of ``Image``s. Similarily the `set_list` method accepts a
+    list of ``Image``s as its ``values`` arguemnt.
+    """
+    def __init__(self):
+        super(MP3ImageStorageStyle, self).__init__(key='APIC')
+        self.as_type = str
+
+    def deserialize(self, apic_frame):
+        """Convert APIC frame into Image."""
+        return Image(data=apic_frame.data, desc=apic_frame.desc,
+                     type=apic_frame.type)
+
+    def fetch(self, mutagen_file):
+        return mutagen_file.tags.getall(self.key)
+
+    def store(self, mutagen_file, frames):
+        mutagen_file.tags.setall(self.key, frames)
+
+    def serialize(self, image):
+        """Return an APIC frame populated with data from ``image``.
+        """
+        assert isinstance(image, Image)
+        frame = mutagen.id3.Frames[self.key]()
+        frame.data = image.data
+        frame.mime = image.mime_type
+        frame.desc = (image.desc or u'').encode('utf8')
+        frame.encoding = 3  # UTF-8 encoding of desc
+        frame.type = image.type_index or 3  # front cover
+        return frame
+
+
+class MP3SoundCheckStorageStyle(SoundCheckStorageStyleMixin,
+                                MP3DescStorageStyle):
+    def __init__(self, index=0, **kwargs):
+        super(MP3SoundCheckStorageStyle, self).__init__(**kwargs)
+        self.index = index
+
+
+class ASFImageStorageStyle(ListStorageStyle):
+    """Store images packed into Windows Media/ASF byte array attributes.
+    Values are `Image` objects.
+    """
+    formats = ['asf']
+
+    def __init__(self):
+        super(ASFImageStorageStyle, self).__init__(key='WM/Picture')
+
+    def deserialize(self, asf_picture):
+        mime, data, type, desc = _unpack_asf_image(asf_picture.value)
+        return Image(data, desc=desc, type=type)
+
+    def serialize(self, image):
+        pic = mutagen.asf.ASFByteArrayAttribute()
+        pic.value = _pack_asf_image(image.mime_type, image.data,
+                                    type=image.type_index or 3,
+                                    description=image.desc or u'')
+        return pic
+
+
+class VorbisImageStorageStyle(ListStorageStyle):
+    """Store images in Vorbis comments. Both legacy COVERART fields and
+    modern METADATA_BLOCK_PICTURE tags are supported. Data is
+    base64-encoded. Values are `Image` objects.
+    """
+    formats = ['opus', 'ogg', 'ape', 'wv', 'mpc']
+
+    def __init__(self):
+        super(VorbisImageStorageStyle, self).__init__(
+                key='metadata_block_picture')
+        self.as_type = str
+
+    def fetch(self, mutagen_file):
+        images = []
+        if 'metadata_block_picture' not in mutagen_file:
+            # Try legacy COVERART tags.
+            if 'coverart' in mutagen_file:
+                for data in mutagen_file['coverart']:
+                    images.append(Image(base64.b64decode(data)))
+            return images
+        for data in mutagen_file["metadata_block_picture"]:
+            try:
+                pic = mutagen.flac.Picture(base64.b64decode(data))
+            except (TypeError, AttributeError):
+                continue
+            images.append(Image(data=pic.data, desc=pic.desc,
+                                   type=pic.type))
+        return images
+
+    def store(self, mutagen_file, image_data):
+        # Strip all art, including legacy COVERART.
+        if 'coverart' in mutagen_file:
+            del mutagen_file['coverart']
+        if 'coverartmime' in mutagen_file:
+            del mutagen_file['coverartmime']
+        super(VorbisImageStorageStyle, self).store(mutagen_file, image_data)
+
+    def serialize(self, image):
+        """Turn a Image into a base64 encoded FLAC picture block.
+        """
+        pic = mutagen.flac.Picture()
+        pic.data = image.data
+        pic.type = image.type_index or 3  # Front cover
+        pic.mime = image.mime_type
+        pic.desc = image.desc or u''
+        return base64.b64encode(pic.write())
+
+
+class FlacImageStorageStyle(ListStorageStyle):
+    """Converts between ``mutagen.flac.Picture`` and ``Image`` instances.
+    """
+    formats = ['flac']
+
+    def __init__(self):
+        super(FlacImageStorageStyle, self).__init__(key='')
+
+    def fetch(self, mutagen_file):
+        return mutagen_file.pictures
+
+    def deserialize(self, flac_picture):
+        return Image(data=flac_picture.data, desc=flac_picture.desc,
+                     type=flac_picture.type)
+
+    def store(self, mutagen_file, pictures):
+        """``pictures`` is a list of mutagen.flac.Picture instances.
+        """
+        mutagen_file.clear_pictures()
+        for pic in pictures:
+            mutagen_file.add_picture(pic)
+
+    def serialize(self, image):
+        """Turn a Image into a mutagen.flac.Picture.
+        """
+        pic = mutagen.flac.Picture()
+        pic.data = image.data
+        pic.type = image.type_index or 3  # Front cover
+        pic.mime = image.mime_type
+        pic.desc = image.desc or u''
+        return pic
+
+
+
+# MediaField is a descriptor that represents a single logical field. It
+# aggregates several StorageStyles describing how to access the data for
+# each file type.
+
+class MediaField(object):
+    """A descriptor providing access to a particular (abstract) metadata
+    field.
+    """
+    def __init__(self, *styles, **kwargs):
+        """Creates a new MediaField.
+
+         - `styles`: `StorageStyle` instances that describe the strategy
+           for reading and writing the field in particular formats.
+           There must be at least one style for each possible file
+           format.
+        - `out_type`: the type of the value that should be returned when
+           getting this property.
+        """
+        self.out_type = kwargs.get('out_type', unicode)
+        self._styles = styles
+        for style in styles:
+            style.out_type = self.out_type
+
+    def styles(self, mediafile):
+        """Yields the list of storage styles of this field that can
+        handle the MediaFile's format.
+        """
+        for style in self._styles:
+            if mediafile.type in style.formats:
+                yield style
+
+    def __get__(self, mediafile, owner=None):
+        out = None
+        for style in self.styles(mediafile):
+            out = style.get(mediafile.mgfile)
+            if out:
+                break
+        return _safe_cast(self.out_type, out)
+
+
+    def __set__(self, mediafile, value):
+        for style in self.styles(mediafile):
+            style.set(mediafile.mgfile, value)
+
+
+class ListMediaField(MediaField):
+    """Property descriptor that retrieves a list of multiple values from
+    a tag.
+
+    Uses ``get_list`` and set_list`` methods of its ``StorageStyle``
+    strategies to do the actual work.
+    """
+    def __get__(self, mediafile, _):
+        values = []
+        for style in self.styles(mediafile):
+            values.extend(style.get_list(mediafile.mgfile))
+        return [_safe_cast(self.out_type, value) for value in values]
+
+    def __set__(self, mediafile, values):
+        for style in self.styles(mediafile):
+            style.set_list(mediafile.mgfile, values)
+
+    def single_field(self):
+        """Returns a ``MediaField`` descriptor that gets and sets the
+        first item.
+        """
+        options = {'out_type': self.out_type}
+        return MediaField(*self._styles, **options)
+
+
+class DateField(MediaField):
+    """Descriptor that handles serializing and deserializing dates
+
+    The getter parses value from tags into a ``datetime.date`` instance
+    and setter serializes such an instance into a string.
+
+    For granular access to year, month, and day, use the ``*_field``
+    methods to create corresponding `DateItemField`s.
+    """
+    def __init__(self, *date_styles, **kwargs):
+        """``date_styles`` is a list of ``StorageStyle``s to store and
+        retrieve the whole date from. The ``year`` option is an
+        additional list of fallback styles for the year. The year is
+        always set on this style, but is only retrieved if the main
+        storage styles do not return a value.
+        """
+        super(DateField, self).__init__(*date_styles)
+        year_style = kwargs.get('year', None)
+        if year_style:
+            self._year_field = MediaField(*year_style)
+
+    def __get__(self, mediafile, owner=None):
+        year, month, day = self._get_date_tuple(mediafile)
+        try:
+            return datetime.date(
+                year or datetime.MINYEAR,
+                month or 1,
+                day or 1
+            )
+        except ValueError:  # Out of range values.
+            return datetime.date.min
+
+    def __set__(self, mediafile, date):
+        self._set_date_tuple(mediafile, date.year, date.month, date.day)
+
+    def _get_date_tuple(self, mediafile):
+        datestring = MediaField.__get__(self, mediafile, None)
+        datestring = re.sub(r'[Tt ].*$', '', unicode(datestring))
+        items = unicode(datestring).split('-')
+        items = items + [None] * (3 - len(items))
+        if not items[0] and hasattr(self, '_year_field'):
+            # Fallback to addition year field
+            items[0] = self._year_field.__get__(mediafile)
+        return [int(item or 0) for item in items]
+
+    def _set_date_tuple(self, mediafile, year, month=None, day=None):
+        date = [year or 0]
+        if month:
+            date.append(month)
+        if month and day:
+            date.append(day)
+        date = map(unicode, date)
+        super(DateField, self).__set__(mediafile, '-'.join(date))
+
+        if hasattr(self, '_year_field'):
+            self._year_field.__set__(mediafile, year)
+
+    def year_field(self):
+        return DateItemField(self, 0)
+
+    def month_field(self):
+        return DateItemField(self, 1)
+
+    def day_field(self):
+        return DateItemField(self, 2)
+
+
+class DateItemField(MediaField):
+    """Descriptor that gets and sets constituent parts of a `DateField`:
+    the month, day, or year.
+    """
+    def __init__(self, date_field, item_pos):
+        self.date_field = date_field
+        self.item_pos = item_pos
+
+    def __get__(self, mediafile, _):
+        return self.date_field._get_date_tuple(mediafile)[self.item_pos]
+
+    def __set__(self, mediafile, value):
+        items = self.date_field._get_date_tuple(mediafile)
+        items[self.item_pos] = value
+        self.date_field._set_date_tuple(mediafile, *items)
+
+
+class CoverArtField(MediaField):
+    """A descriptor that provides access to the *raw image data* for the
+    first image on a file. This is used for backwards compatibility: the
+    full `ImageListField` provides richer `Image` objects.
+    """
+    def __init__(self):
+        pass
+
+    def __get__(self, mediafile, _):
+        try:
+            return mediafile.images[0].data
+        except IndexError:
+            return None
+
+    def __set__(self, mediafile, data):
+        if data:
+            mediafile.images = [Image(data=data)]
+        else:
+            mediafile.images = []
+
+
+class ImageListField(MediaField):
+    """Descriptor to access the list of images embedded in tags.
+
+    The getter returns a list of `Image` instances obtained from
+    the tags. The setter accepts a list of `Image` instances to be
+    written to the tags.
+    """
+    def __init__(self):
+        # The storage styles used here must implement the
+        # `ListStorageStyle` interface and get and set lists of
+        # `Image`s.
+        super(ImageListField, self).__init__(
+            MP3ImageStorageStyle(),
+            MP4ImageStorageStyle(),
+            ASFImageStorageStyle(),
+            VorbisImageStorageStyle(),
+            FlacImageStorageStyle(),
+        )
+
+    def __get__(self, mediafile, _):
+        images = []
+        for style in self.styles(mediafile):
+            images.extend(style.get_list(mediafile.mgfile))
+        return images
+
+    def __set__(self, mediafile, images):
+        for style in self.styles(mediafile):
+            style.set_list(mediafile.mgfile, images)
+
+
+
 # MediaFile is a collection of fields.
+
 
 class MediaFile(object):
     """Represents a multimedia file on disk and provides access to its
