@@ -86,12 +86,6 @@ class BeetsPlugin(object):
         """
         return ()
 
-    def configure(self, config):
-        """This method is called with the ConfigParser object after
-        the CLI starts up.
-        """
-        pass
-
     def item_fields(self):
         """Returns field descriptors to be added to the MediaFile class,
         in the form of a dictionary whose keys are field names and whose
@@ -292,11 +286,6 @@ def track_for_id(track_id):
         if res:
             out.append(res)
     return out
-
-def configure(config):
-    """Sends the configuration object to each plugin."""
-    for plugin in find_plugins():
-        plugin.configure(config)
 
 def template_funcs():
     """Get all the template functions declared by plugins as a
