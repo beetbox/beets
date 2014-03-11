@@ -25,7 +25,7 @@ import codecs
 import platform
 
 import beets
-from beets import ui
+from beets import ui, mediafile
 from beets.ui import print_, input_, decargs
 from beets import autotag
 from beets.autotag import recommendation
