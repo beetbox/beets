@@ -1135,7 +1135,16 @@ def modify_items(lib, mods, query, write, move, album, confirm):
         else:
             changed_items = changed
         for item in changed_items:
-            item.write()
+            # FIXME duplicates code from `ui.commands.write_items`.
+            try:
+                item.write()
+            except (mediafile.UnreadableFileError,
+                    util.FilesystemError,
+                    plugins.BeforeWriteError) as exc:
+                log.error(u'could not write {0}: {1}'.format(
+                    util.displayable_path(item.path), exc
+                ))
+                continue
 
 modify_cmd = ui.Subcommand('modify',
     help='change metadata fields', aliases=('mod',))
@@ -1234,7 +1243,9 @@ def write_items(lib, query, pretend):
         if changed and not pretend:
             try:
                 item.write()
-            except Exception as exc:
+            except (mediafile.UnreadableFileError,
+                    util.FilesystemError,
+                    plugins.BeforeWriteError) as exc:
                 log.error(u'could not write {0}: {1}'.format(
                     util.displayable_path(item.path), exc
                 ))

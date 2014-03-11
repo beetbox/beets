@@ -893,6 +893,7 @@ def manipulate_files(session):
                     item.move(True)
 
             if config['import']['write'] and task.should_write_tags():
+                # FIXME duplicates code from `ui.commands.write_items`.
                 try:
                     item.write()
                 except (mediafile.UnreadableFileError,
