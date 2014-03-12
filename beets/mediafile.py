@@ -430,9 +430,6 @@ class StorageStyle(object):
         """Convert the external Python value to a type that is suitable for
         storing in a Mutagen file object.
         """
-        if value is None:
-            value = self._none_value()
-
         if isinstance(value, float) and self.as_type is unicode:
             value = u'{0:.{1}f}'.format(value, self.float_places)
             value = self.as_type(value)
@@ -451,18 +448,6 @@ class StorageStyle(object):
             value += self.suffix
 
         return value
-
-    # Utility.
-
-    def _none_value(self):
-        if self.out_type == int:
-            return 0
-        elif self.out_type == float:
-            return 0.0
-        elif self.out_type == bool:
-            return False
-        elif self.out_type == unicode:
-            return u''
 
 
 class ListStorageStyle(StorageStyle):
@@ -931,8 +916,6 @@ class MediaField(object):
         """
         self.out_type = kwargs.get('out_type', unicode)
         self._styles = styles
-        for style in styles:
-            style.out_type = self.out_type
 
     def styles(self, mediafile):
         """Yields the list of storage styles of this field that can
@@ -950,10 +933,24 @@ class MediaField(object):
                 break
         return _safe_cast(self.out_type, out)
 
-
     def __set__(self, mediafile, value):
+        if value is None:
+            value = self._none_value()
         for style in self.styles(mediafile):
             style.set(mediafile.mgfile, value)
+
+    def _none_value(self):
+        """Get an appropriate "null" value for this field's type. This
+        is used internally when setting the field to None.
+        """
+        if self.out_type == int:
+            return 0
+        elif self.out_type == float:
+            return 0.0
+        elif self.out_type == bool:
+            return False
+        elif self.out_type == unicode:
+            return u''
 
 
 class ListMediaField(MediaField):
