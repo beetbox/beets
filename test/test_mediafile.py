@@ -133,46 +133,6 @@ class ImageStructureTestMixin(ArtTestMixin):
         self.assertExtendedImageAttributes(image,
                 desc='the composer', type=Image.TYPES.composer)
 
-    @unittest.skip('editing list by reference is not implemented yet')
-    def test_mutate_image_structure(self):
-        mediafile = self._mediafile_fixture('image')
-        self.assertEqual(len(mediafile.images), 2)
-
-        image = mediafile.images[0]
-        self.assertEqual(image.data, self.png_data)
-        self.assertEqual(image.mime_type, 'image/png')
-        self.assertExtendedImageAttributes(image, desc='album cover',
-                                           type=Image.TYPES.front)
-
-        image.data = self.jpg_data
-        image.desc = 'new description'
-        image.type = Image.COMPOSER
-        mediafile.save()
-
-        mediafile = MediaFile(mediafile.path)
-        self.assertEqual(len(mediafile.images), 2)
-
-        image = mediafile.images[0]
-        self.assertEqual(image.data, self.jpg_data)
-        self.assertEqual(image.mime_type, 'image/jpeg')
-        self.assertExtendedImageAttributes(image, desc='new description',
-                                           type=Image.TYPES.composer)
-
-    @unittest.skip('editing list by reference is not implemented yet')
-    def test_delete_image_structure(self):
-        mediafile = self._mediafile_fixture('image')
-        self.assertEqual(len(mediafile.images), 2)
-
-        del mediafile.images[0]
-        mediafile.save()
-
-        mediafile = MediaFile(mediafile.path)
-        self.assertEqual(len(mediafile.images), 1)
-        self.assertEqual(image.data, self.png_data)
-        self.assertEqual(image.mime_type, 'image/jpg')
-        self.assertExtendedImageAttributes(image, desc='the artist',
-                                           type='performer')
-
     def assertExtendedImageAttributes(self, image, **kwargs):
         """Ignore extended image attributes in the base tests.
         """
