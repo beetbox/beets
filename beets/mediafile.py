@@ -359,11 +359,9 @@ class StorageStyle(object):
     a given audio file.
     """
 
-    # TODO Use mutagen file types instead of MediaFile formats
-    formats = ['flac', 'opus', 'ogg', 'ape', 'wv', 'mpc']
-    """List of file formats the StorageStyle can handle.
-
-    Format names correspond to those returned by ``mediafile.type``.
+    formats = ['FLAC', 'OggOpus', 'OggTheora', 'OggSpeex', 'OggVorbis',
+               'OggFlac', 'APEv2File', 'WavPack', 'Musepack', 'MonkeysAudio']
+    """List of mutagen classes the StorageStyle can handle.
     """
 
     def __init__(self, key, as_type=unicode, suffix=None, float_places=2):
@@ -531,7 +529,7 @@ class SoundCheckStorageStyleMixin(object):
 class ASFStorageStyle(ListStorageStyle):
     """A general storage style for Windows Media/ASF files.
     """
-    formats = ['asf']
+    formats = ['ASF']
 
     def deserialize(self, data):
         if isinstance(data, mutagen.asf.ASFBaseAttribute):
@@ -542,7 +540,7 @@ class ASFStorageStyle(ListStorageStyle):
 class MP4StorageStyle(StorageStyle):
     """A general storage style for MPEG-4 tags.
     """
-    formats = ['aac', 'alac']
+    formats = ['MP4']
 
     def serialize(self, value):
         value = super(MP4StorageStyle, self).serialize(value)
@@ -626,7 +624,7 @@ class MP4ImageStorageStyle(MP4ListStorageStyle):
 class MP3StorageStyle(StorageStyle):
     """Store data in ID3 frames.
     """
-    formats = ['mp3']
+    formats = ['MP3']
 
     def __init__(self, key, id3_lang=None, **kwargs):
         """Create a new ID3 storage style. `id3_lang` is the value for
@@ -797,7 +795,7 @@ class ASFImageStorageStyle(ListStorageStyle):
     """Store images packed into Windows Media/ASF byte array attributes.
     Values are `Image` objects.
     """
-    formats = ['asf']
+    formats = ['ASF']
 
     def __init__(self):
         super(ASFImageStorageStyle, self).__init__(key='WM/Picture')
@@ -819,7 +817,8 @@ class VorbisImageStorageStyle(ListStorageStyle):
     modern METADATA_BLOCK_PICTURE tags are supported. Data is
     base64-encoded. Values are `Image` objects.
     """
-    formats = ['opus', 'ogg', 'ape', 'wv', 'mpc']
+    formats = ['OggOpus', 'OggTheora', 'OggSpeex', 'OggVorbis',
+               'OggFlac', 'APEv2File', 'WavPack', 'Musepack', 'MonkeysAudio']
 
     def __init__(self):
         super(VorbisImageStorageStyle, self).__init__(
@@ -865,7 +864,7 @@ class VorbisImageStorageStyle(ListStorageStyle):
 class FlacImageStorageStyle(ListStorageStyle):
     """Converts between ``mutagen.flac.Picture`` and ``Image`` instances.
     """
-    formats = ['flac']
+    formats = ['FLAC']
 
     def __init__(self):
         super(FlacImageStorageStyle, self).__init__(key='')
@@ -917,17 +916,17 @@ class MediaField(object):
         self.out_type = kwargs.get('out_type', unicode)
         self._styles = styles
 
-    def styles(self, mediafile):
+    def styles(self, mutagen_file):
         """Yields the list of storage styles of this field that can
         handle the MediaFile's format.
         """
         for style in self._styles:
-            if mediafile.type in style.formats:
+            if mutagen_file.__class__.__name__ in style.formats:
                 yield style
 
     def __get__(self, mediafile, owner=None):
         out = None
-        for style in self.styles(mediafile):
+        for style in self.styles(mediafile.mgfile):
             out = style.get(mediafile.mgfile)
             if out:
                 break
@@ -936,7 +935,7 @@ class MediaField(object):
     def __set__(self, mediafile, value):
         if value is None:
             value = self._none_value()
-        for style in self.styles(mediafile):
+        for style in self.styles(mediafile.mgfile):
             style.set(mediafile.mgfile, value)
 
     def _none_value(self):
@@ -962,12 +961,12 @@ class ListMediaField(MediaField):
     """
     def __get__(self, mediafile, _):
         values = []
-        for style in self.styles(mediafile):
+        for style in self.styles(mediafile.mgfile):
             values.extend(style.get_list(mediafile.mgfile))
         return [_safe_cast(self.out_type, value) for value in values]
 
     def __set__(self, mediafile, values):
-        for style in self.styles(mediafile):
+        for style in self.styles(mediafile.mgfile):
             style.set_list(mediafile.mgfile, values)
 
     def single_field(self):
@@ -1104,12 +1103,12 @@ class ImageListField(MediaField):
 
     def __get__(self, mediafile, _):
         images = []
-        for style in self.styles(mediafile):
+        for style in self.styles(mediafile.mgfile):
             images.extend(style.get_list(mediafile.mgfile))
         return images
 
     def __set__(self, mediafile, images):
-        for style in self.styles(mediafile):
+        for style in self.styles(mediafile.mgfile):
             style.set_list(mediafile.mgfile, images)
 
 
