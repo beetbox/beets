@@ -170,7 +170,7 @@ class BeetsPlugin(object):
             return func
         return helper
 
-_classes = []
+_classes = set()
 def load_plugins(names=()):
     """Imports the modules for a sequence of plugin names. Each name
     must be the name of a Python module under the "beetsplug" namespace
@@ -191,8 +191,8 @@ def load_plugins(names=()):
             else:
                 for obj in getattr(namespace, name).__dict__.values():
                     if isinstance(obj, type) and issubclass(obj, BeetsPlugin) \
-                            and obj != BeetsPlugin:
-                        _classes.append(obj)
+                            and obj != BeetsPlugin and obj not in _classes:
+                        _classes.add(obj)
 
         except:
             log.warn('** error loading plugin %s' % name)
