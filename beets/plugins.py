@@ -14,13 +14,14 @@
 
 """Support for beets plugins."""
 
+import sys
 import logging
 import traceback
 from collections import defaultdict
-import inspect
 
 import beets
 from beets import mediafile
+from beets import util
 
 PLUGIN_NAMESPACE = 'beetsplug'
 
@@ -176,204 +177,239 @@ class BeetsPlugin(object):
             return func
         return helper
 
+class Registry(list):
+    """Loads plugins and exposes their hooks.
 
-_classes = set()
-
-
-def load_plugins(names=()):
-    """Imports the modules for a sequence of plugin names. Each name
-    must be the name of a Python module under the "beetsplug" namespace
-    package in sys.path; the module indicated should contain the
-    BeetsPlugin subclasses desired.
+    The items of the list are instances of ``BeetsPlugin``.
     """
-    for name in names:
-        modname = '%s.%s' % (PLUGIN_NAMESPACE, name)
-        try:
+
+    def __init__(self):
+        super(Registry, self).__init__()
+        self._loaded_classes = set()
+        self._beetsplug_loaded = False
+
+    def load(self, names, paths=()):
+        """Add plugins from module names.
+
+        ``names`` is a list of module names in the beetsplug namespace
+        package. The method tries to load each module. It then collects
+        all proper subclasses of BeetsPlugin from that module,
+        instantiates them and adds them to the registry. It will keep
+        track of all loaded classes so they won't be added twice.
+
+        ``paths`` is a list of additional paths to load modules from.
+        They are added to the registry with ``add_paths``.
+        """
+        self.add_paths(paths)
+        for name in names:
+            modname = '%s.%s' % (PLUGIN_NAMESPACE, name)
             try:
-                namespace = __import__(modname, None, None)
-            except ImportError as exc:
-                # Again, this is hacky:
-                if exc.args[0].endswith(' ' + name):
-                    log.warn('** plugin %s not found' % name)
+                try:
+                    namespace = __import__(modname, None, None)
+                    self._beetsplug_loaded = True
+                except ImportError as exc:
+                    # Again, this is hacky:
+                    if exc.args[0].endswith(' ' + name):
+                        log.warn('** plugin %s not found' % name)
+                    else:
+                        raise
                 else:
-                    raise
-            else:
-                for obj in getattr(namespace, name).__dict__.values():
-                    if isinstance(obj, type) and issubclass(obj, BeetsPlugin) \
-                            and obj != BeetsPlugin and obj not in _classes:
-                        _classes.add(obj)
+                    for cls in getattr(namespace, name).__dict__.values():
+                        if isinstance(cls, type) and issubclass(cls, BeetsPlugin) \
+                                and cls != BeetsPlugin:
+                            self._load_class(cls)
 
-        except:
-            log.warn('** error loading plugin %s' % name)
-            log.warn(traceback.format_exc())
+            except:
+                log.warn('** error loading plugin %s' % name)
+                log.warn(traceback.format_exc())
+        send('pluginload')
+
+    def add_paths(self, paths):
+        """Adds a list of paths to beetsplug namespace package and
+        ``sys.path``.
+
+        If you have a beetsplug module in say
+        ``/lib/beetsplug/mymodule.py``, you can either add the path as
+        '/lib' or '/lib/beetsplug'. If you use the former you need to
+        add an ``__init__.py`` file which uses ``pkgutil.extend_path``
+        to the beetsplug directory. Additionally you may only use this
+        approach once with ``add_paths`` since python will refuse to
+        load beetsplug from additional ``sys.path``s once it has already
+        been loaded.
+
+        For the beetsplug package, paths are prepended. This means
+        that modules are loaded from the most recently added path.
+        """
+        # TODO clarify this, see also
+        # https://gist.github.com/geigerzaehler/9508410
+        paths =  map(util.normpath, paths)
+        sys.path += paths
+        import beetsplug
+        beetsplug.__path__ = paths + beetsplug.__path__
+
+    def _load_class(self, cls):
+        if cls not in self._loaded_classes:
+            self._loaded_classes.add(cls)
+            self.append(cls())
 
 
-_instances = {}
+    def commands(self):
+        """Returns a list of Subcommand objects from all loaded plugins.
+        """
+        out = []
+        for plugin in self:
+            out += plugin.commands()
+        return out
+
+    def queries(self):
+        """Returns a dict mapping prefix strings to Query subclasses all loaded
+        plugins.
+        """
+        out = {}
+        for plugin in self:
+            out.update(plugin.queries())
+        return out
+
+    def track_distance(self, item, info):
+        """Gets the track distance calculated by all loaded plugins.
+        Returns a Distance object.
+        """
+        from beets.autotag.hooks import Distance
+        dist = Distance()
+        for plugin in self:
+            dist.update(plugin.track_distance(item, info))
+        return dist
+
+    def album_distance(self, items, album_info, mapping):
+        """Returns the album distance calculated by plugins."""
+        from beets.autotag.hooks import Distance
+        dist = Distance()
+        for plugin in self:
+            dist.update(plugin.album_distance(items, album_info, mapping))
+        return dist
+
+    def candidates(self, items, artist, album, va_likely):
+        """Gets MusicBrainz candidates for an album from each plugin.
+        """
+        out = []
+        for plugin in self:
+            out.extend(plugin.candidates(items, artist, album, va_likely))
+        return out
+
+    def item_candidates(self, item, artist, title):
+        """Gets MusicBrainz candidates for an item from the plugins.
+        """
+        out = []
+        for plugin in self:
+            out.extend(plugin.item_candidates(item, artist, title))
+        return out
+
+    def album_for_id(self, album_id):
+        """Get AlbumInfo objects for a given ID string.
+        """
+        out = []
+        for plugin in self:
+            res = plugin.album_for_id(album_id)
+            if res:
+                out.append(res)
+        return out
+
+    def track_for_id(self, track_id):
+        """Get TrackInfo objects for a given ID string.
+        """
+        out = []
+        for plugin in self:
+            res = plugin.track_for_id(track_id)
+            if res:
+                out.append(res)
+        return out
+
+    def template_funcs(self):
+        """Get all the template functions declared by plugins as a
+        dictionary.
+        """
+        funcs = {}
+        for plugin in self:
+            if plugin.template_funcs:
+                funcs.update(plugin.template_funcs)
+        return funcs
+
+    def import_stages(self):
+        """Get a list of import stage functions defined by plugins."""
+        stages = []
+        for plugin in self:
+            if hasattr(plugin, 'import_stages'):
+                stages += plugin.import_stages
+        return stages
 
 
+    # New-style (lazy) plugin-provided fields.
+
+    def item_field_getters(self):
+        """Get a dictionary mapping field names to unary functions that
+        compute the field's value.
+        """
+        funcs = {}
+        for plugin in self:
+            if plugin.template_fields:
+                funcs.update(plugin.template_fields)
+        return funcs
+
+    def album_field_getters(self):
+        """As above, for album fields.
+        """
+        funcs = {}
+        for plugin in self:
+            if plugin.album_template_fields:
+                funcs.update(plugin.album_template_fields)
+        return funcs
+
+
+    # Event dispatch.
+
+    def event_handlers(self):
+        """Find all event handlers from plugins as a dictionary mapping
+        event names to sequences of callables.
+        """
+        all_handlers = defaultdict(list)
+        for plugin in self:
+            if plugin.listeners:
+                for event, handlers in plugin.listeners.items():
+                    all_handlers[event] += handlers
+        return all_handlers
+
+    def send(self, event, **arguments):
+        """Sends an event to all assigned event listeners. Event is the
+        name of  the event to send, all other named arguments go to the
+        event handler(s).
+
+        Returns the number of handlers called.
+        """
+        log.debug('Sending event: %s' % event)
+        handlers = event_handlers()[event]
+        for handler in handlers:
+            handler(**arguments)
+        return len(handlers)
+
+
+registry = Registry()
+
+# For backwards compatibility
+load_plugins = registry.load
 def find_plugins():
-    """Returns a list of BeetsPlugin subclass instances from all
-    currently loaded beets plugins. Loads the default plugin set
-    first.
-    """
-    load_plugins()
-    plugins = []
-    for cls in _classes:
-        # Only instantiate each plugin class once.
-        if cls not in _instances:
-            _instances[cls] = cls()
-        plugins.append(_instances[cls])
-    return plugins
-
-
-# Communication with plugins.
-
-def commands():
-    """Returns a list of Subcommand objects from all loaded plugins.
-    """
-    out = []
-    for plugin in find_plugins():
-        out += plugin.commands()
-    return out
-
-
-def queries():
-    """Returns a dict mapping prefix strings to Query subclasses all loaded
-    plugins.
-    """
-    out = {}
-    for plugin in find_plugins():
-        out.update(plugin.queries())
-    return out
-
-
-def track_distance(item, info):
-    """Gets the track distance calculated by all loaded plugins.
-    Returns a Distance object.
-    """
-    from beets.autotag.hooks import Distance
-    dist = Distance()
-    for plugin in find_plugins():
-        dist.update(plugin.track_distance(item, info))
-    return dist
-
-
-def album_distance(items, album_info, mapping):
-    """Returns the album distance calculated by plugins."""
-    from beets.autotag.hooks import Distance
-    dist = Distance()
-    for plugin in find_plugins():
-        dist.update(plugin.album_distance(items, album_info, mapping))
-    return dist
-
-
-def candidates(items, artist, album, va_likely):
-    """Gets MusicBrainz candidates for an album from each plugin.
-    """
-    out = []
-    for plugin in find_plugins():
-        out.extend(plugin.candidates(items, artist, album, va_likely))
-    return out
-
-
-def item_candidates(item, artist, title):
-    """Gets MusicBrainz candidates for an item from the plugins.
-    """
-    out = []
-    for plugin in find_plugins():
-        out.extend(plugin.item_candidates(item, artist, title))
-    return out
-
-
-def album_for_id(album_id):
-    """Get AlbumInfo objects for a given ID string.
-    """
-    out = []
-    for plugin in find_plugins():
-        res = plugin.album_for_id(album_id)
-        if res:
-            out.append(res)
-    return out
-
-
-def track_for_id(track_id):
-    """Get TrackInfo objects for a given ID string.
-    """
-    out = []
-    for plugin in find_plugins():
-        res = plugin.track_for_id(track_id)
-        if res:
-            out.append(res)
-    return out
-
-
-def template_funcs():
-    """Get all the template functions declared by plugins as a
-    dictionary.
-    """
-    funcs = {}
-    for plugin in find_plugins():
-        if plugin.template_funcs:
-            funcs.update(plugin.template_funcs)
-    return funcs
-
-
-def import_stages():
-    """Get a list of import stage functions defined by plugins."""
-    stages = []
-    for plugin in find_plugins():
-        if hasattr(plugin, 'import_stages'):
-            stages += plugin.import_stages
-    return stages
-
-
-# New-style (lazy) plugin-provided fields.
-
-def item_field_getters():
-    """Get a dictionary mapping field names to unary functions that
-    compute the field's value.
-    """
-    funcs = {}
-    for plugin in find_plugins():
-        if plugin.template_fields:
-            funcs.update(plugin.template_fields)
-    return funcs
-
-
-def album_field_getters():
-    """As above, for album fields.
-    """
-    funcs = {}
-    for plugin in find_plugins():
-        if plugin.album_template_fields:
-            funcs.update(plugin.album_template_fields)
-    return funcs
-
-
-# Event dispatch.
-
-def event_handlers():
-    """Find all event handlers from plugins as a dictionary mapping
-    event names to sequences of callables.
-    """
-    all_handlers = defaultdict(list)
-    for plugin in find_plugins():
-        if plugin.listeners:
-            for event, handlers in plugin.listeners.items():
-                all_handlers[event] += handlers
-    return all_handlers
-
-
-def send(event, **arguments):
-    """Sends an event to all assigned event listeners. Event is the
-    name of  the event to send, all other named arguments go to the
-    event handler(s).
-
-    Returns a list of return values from the handlers.
-    """
-    log.debug('Sending event: %s' % event)
-    for handler in event_handlers()[event]:
-        # Don't break legacy plugins if we want to pass more arguments
-        argspec = inspect.getargspec(handler).args
-        args = dict((k, v) for k, v in arguments.items() if k in argspec)
-        handler(**args)
+    return registry
+commands = registry.commands
+queries = registry.queries
+track_distance = registry.track_distance
+album_distance = registry.album_distance
+candidates = registry.candidates
+item_candidates = registry.item_candidates
+album_for_id = registry.album_for_id
+track_for_id = registry.track_for_id
+template_funcs = registry.template_funcs
+_add_media_fields = registry._add_media_fields
+import_stages = registry.import_stages
+item_field_getters = registry.item_field_getters
+album_field_getters = registry.album_field_getters
+event_handlers = registry.event_handlers
+send = registry.send

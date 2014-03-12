@@ -499,6 +499,7 @@ def get_plugin_paths():
     The value for "pluginpath" may be a single string or a list of
     strings.
     """
+    # TODO use confit for this
     pluginpaths = config['pluginpath'].get()
     if isinstance(pluginpaths, basestring):
         pluginpaths = [pluginpaths]
@@ -506,7 +507,7 @@ def get_plugin_paths():
         raise confit.ConfigTypeError(
             u'pluginpath must be string or a list of strings'
         )
-    return map(util.normpath, pluginpaths)
+    return pluginpaths
 
 
 def _pick_format(album, fmt=None):
@@ -845,21 +846,6 @@ def vararg_callback(option, opt_str, value, parser):
 
 # The main entry point and bootstrapping.
 
-def _load_plugins():
-    """Load the plugins specified in the configuration.
-    """
-    # Add plugin paths.
-    import beetsplug
-    beetsplug.__path__ = get_plugin_paths() + beetsplug.__path__
-
-    # For backwards compatibility.
-    sys.path += get_plugin_paths()
-
-    # Load requested plugins.
-    plugins.load_plugins(config['plugins'].as_str_seq())
-    plugins.send("pluginload")
-
-
 def _configure(args):
     """Parse the command line, load configuration files (including
     loading any indicated plugins), and return the invoked subcomand,
@@ -912,7 +898,7 @@ def _configure(args):
             util.displayable_path(config_path)))
 
     # Now add the plugin commands to the parser.
-    _load_plugins()
+    plugins.registry.load(config['plugins'].as_str_seq(), get_plugin_paths())
     for cmd in plugins.commands():
         parser.add_subcommand(cmd)
 

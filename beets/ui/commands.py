@@ -85,7 +85,7 @@ def fields_func(lib, opts, args):
 
     def _show_plugin_fields(album):
         plugin_fields = []
-        for plugin in plugins.find_plugins():
+        for plugin in plugins.registry:
             if album:
                 fdict = plugin.album_template_fields
             else:
@@ -1149,7 +1149,7 @@ default_commands.append(stats_cmd)
 def show_version(lib, opts, args):
     print_('beets version %s' % beets.__version__)
     # Show plugins.
-    names = [p.name for p in plugins.find_plugins()]
+    names = [p.name for p in plugins.registry]
     if names:
         print_('plugins:', ', '.join(names))
     else:
