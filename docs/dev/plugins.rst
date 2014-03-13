@@ -142,8 +142,8 @@ currently available are:
 
 * *write*: called with an ``Item`` object just before a file's metadata is
   written to disk (i.e., just before the file on disk is opened). Event
-  handlers may raise ``plugins.BeforeWriteError`` to prevent beets from
-  writing the file and display an error to the user.
+  handlers may return a truthy value to prevent beets from writing the
+  file. In that case make sure that you log an appropriate message.
 
 * *after_write*: called with an ``Item`` object after a file's metadata is
   written to disk (i.e., just after the file on disk is closed).

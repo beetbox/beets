@@ -371,15 +371,26 @@ class Item(LibModel):
         self.path = read_path
 
     def write(self):
-        """Writes the item's metadata to the associated file.
+        """Try to write the item's metadata to the associated file.
+
+        Returns ``True`` if the write was successful. The method catches
+        file system read and write exceptions and logs an error message.
+        If any of 'write' event handlers returns a truthy value the
+        write will not be performed and an error message is logged.
         """
-        plugins.send('write', item=self)
+        if any(plugins.send('write', item=self)):
+            log.error(u'plugin aborted writing {0}'.format(
+                           util.displayable_path(item.path)))
+            return
+
 
         try:
             f = MediaFile(syspath(self.path))
         except (OSError, IOError) as exc:
-            raise util.FilesystemError(exc, 'read', (self.path,),
-                                       traceback.format_exc())
+            log.error(u'could not read {0}: {1}'.format(
+                util.displayable_path(item.path), exc
+            ))
+            return
 
         for key in ITEM_KEYS_WRITABLE:
             setattr(f, key, self[key])
@@ -387,12 +398,15 @@ class Item(LibModel):
         try:
             f.save(id3v23=beets.config['id3v23'].get(bool))
         except (OSError, IOError) as exc:
-            raise util.FilesystemError(exc, 'write', (self.path,),
-                                       traceback.format_exc())
+            log.error(u'could not write {0}: {1}'.format(
+                util.displayable_path(item.path), exc
+            ))
+            return
 
         # The file has a new mtime.
         self.mtime = self.current_mtime()
         plugins.send('after_write', item=self)
+        return True
 
 
     # Files themselves.

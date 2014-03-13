@@ -76,20 +76,6 @@ def _do_query(lib, query, album, also_items=True):
 
     return items, albums
 
-def _item_write(item):
-    """Wrapper for ``item.write()`` that handles exceptions and logs
-    errors during user interaction.
-    """
-    try:
-        item.write()
-    except (mediafile.UnreadableFileError,
-            util.FilesystemError,
-            plugins.BeforeWriteError) as exc:
-        log.error(u'could not write {0}: {1}'.format(
-            util.displayable_path(item.path), exc
-        ))
-
-
 
 # fields: Shows a list of available fields for queries and format strings.
 
@@ -1148,7 +1134,7 @@ def modify_items(lib, mods, query, write, move, album, confirm):
         else:
             changed_items = changed
         for item in changed_items:
-            _item_write(item)
+            item.write()
 
 modify_cmd = ui.Subcommand('modify',
     help='change metadata fields', aliases=('mod',))
@@ -1245,7 +1231,7 @@ def write_items(lib, query, pretend):
         changed = ui.show_model_changes(item, clean_item,
                                         library.ITEM_KEYS_WRITABLE, always=True)
         if changed and not pretend:
-            _item_write(item)
+            item.write()
 
 write_cmd = ui.Subcommand('write', help='write tag information to files')
 write_cmd.parser.add_option('-p', '--pretend', action='store_true',

@@ -894,7 +894,7 @@ def manipulate_files(session):
                     item.move(True)
 
             if config['import']['write'] and task.should_write_tags():
-                ui.commands._item_write(item)
+                item.write()
 
         # Save new paths.
         with session.lib.transaction():
