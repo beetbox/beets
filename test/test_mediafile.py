@@ -165,7 +165,6 @@ class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
                 desc='the composer', type=Image.TYPES.composer)
 
 
-# TODO include this in ReadWriteTestBase if implemented
 class LazySaveTestMixin(object):
     """Mediafile should only write changes when tags have changed
     """
@@ -196,6 +195,20 @@ class LazySaveTestMixin(object):
         mediafile.album = 'another'
         mediafile.save()
         self.assertNotEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+    def test_delete_tags(self):
+        mediafile = self._mediafile_fixture('full')
+        mtime = self._set_past_mtime(mediafile.path)
+        self.assertEqual(mediafile.title, 'full')
+        self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+        mediafile.delete()
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertNotEqual(os.stat(mediafile.path).st_mtime, mtime)
+        self.assertEqual(mediafile.title, '')
+
 
     def _set_past_mtime(self, path):
         mtime = round(time.time()-10000)
@@ -237,7 +250,7 @@ class GenreListTestMixin(object):
         self.assertItemsEqual(mediafile.genres, [u'the genre', u'another'])
 
 
-class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin):
+class ReadWriteTestBase(ArtTestMixin, LazySaveTestMixin, GenreListTestMixin):
     """Test writing and reading tags. Subclasses must set ``extension`` and
     ``audio_properties``.
     """
