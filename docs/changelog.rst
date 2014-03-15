@@ -49,6 +49,8 @@ Fixes:
   plugin now also depends on the `requests`_ Python library.
 * The :ref:`write-cmd` now only shows the changes to fields that will actually
   be written to a file.
+* :doc:`/plugins/duplicates`: Spurious reports are now avoided for tracks with
+  missing values (e.g., no MBIDs). Thanks to Pedro Silva.
 
 .. _requests: http://www.python-requests.org/
 

@@ -86,12 +86,6 @@ class BeetsPlugin(object):
         """
         return ()
 
-    def configure(self, config):
-        """This method is called with the ConfigParser object after
-        the CLI starts up.
-        """
-        pass
-
     def item_fields(self):
         """Returns field descriptors to be added to the MediaFile class,
         in the form of a dictionary whose keys are field names and whose
@@ -176,7 +170,7 @@ class BeetsPlugin(object):
             return func
         return helper
 
-_classes = []
+_classes = set()
 def load_plugins(names=()):
     """Imports the modules for a sequence of plugin names. Each name
     must be the name of a Python module under the "beetsplug" namespace
@@ -197,8 +191,8 @@ def load_plugins(names=()):
             else:
                 for obj in getattr(namespace, name).__dict__.values():
                     if isinstance(obj, type) and issubclass(obj, BeetsPlugin) \
-                            and obj != BeetsPlugin:
-                        _classes.append(obj)
+                            and obj != BeetsPlugin and obj not in _classes:
+                        _classes.add(obj)
 
         except:
             log.warn('** error loading plugin %s' % name)
@@ -292,11 +286,6 @@ def track_for_id(track_id):
         if res:
             out.append(res)
     return out
-
-def configure(config):
-    """Sends the configuration object to each plugin."""
-    for plugin in find_plugins():
-        plugin.configure(config)
 
 def template_funcs():
     """Get all the template functions declared by plugins as a

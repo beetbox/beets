@@ -80,8 +80,15 @@ def _group_by(objs, keys):
     import collections
     counts = collections.defaultdict(list)
     for obj in objs:
-        key = '\001'.join(repr(getattr(obj, k, '')) for k in keys)
-        counts[key].append(obj)
+        values = [getattr(obj, k, None) for k in keys]
+        values = [v for v in values if v not in (None, '')]
+        if values:
+            key = '\001'.join(values)
+            counts[key].append(obj)
+        else:
+            log.debug('%s: all keys %s on item %s are null: skipping',
+                      PLUGIN, str(keys), displayable_path(obj.path))
+
     return counts
 
 
