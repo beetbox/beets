@@ -85,7 +85,10 @@ class AutotagStub(object):
             id = ' ' + 'M' * distance
         else:
             id = ''
-        artist = artist.replace('Tag', 'Applied') + id
+        if artist == None:
+            artist = "Various Artists"
+        else:
+            artist = artist.replace('Tag', 'Applied') + id
         album = album.replace('Tag', 'Applied') + id
 
         trackInfos = []
