@@ -358,14 +358,14 @@ def _parse_id(s):
     if match:
         return match.group()
 
-def album_for_id(albumid):
+def album_for_id(releaseid):
     """Fetches an album by its MusicBrainz ID and returns an AlbumInfo
     object or None if the album is not found. May raise a
     MusicBrainzAPIError.
     """
-    albumid = _parse_id(albumid)
+    albumid = _parse_id(releaseid)
     if not albumid:
-        log.error('Invalid MBID.')
+        log.error('Invalid MBID (%s).' % (releaseid))
         return
     try:
         res = musicbrainzngs.get_release_by_id(albumid,
@@ -378,13 +378,13 @@ def album_for_id(albumid):
                                   traceback.format_exc())
     return album_info(res['release'])
 
-def track_for_id(trackid):
+def track_for_id(releaseid):
     """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
     or None if no track is found. May raise a MusicBrainzAPIError.
     """
-    trackid = _parse_id(trackid)
+    trackid = _parse_id(releaseid)
     if not trackid:
-        log.error('Invalid MBID.')
+        log.error('Invalid MBID (%s).' % (releaseid))
         return
     try:
         res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
