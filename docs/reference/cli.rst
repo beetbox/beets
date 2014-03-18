@@ -201,20 +201,21 @@ modify
 ``````
 ::
 
-    beet modify [-MWay] QUERY FIELD=VALUE...
+    beet modify [-MWay] QUERY [FIELD=VALUE...] [FIELD!...]
 
 Change the metadata for items or albums in the database.
 
 Supply a :doc:`query <query>` matching the things you want to change and a
 series of ``field=value`` pairs. For example, ``beet modify genius of love
 artist="Tom Tom Club"`` will change the artist for the track "Genius of Love."
-The ``-a`` switch operates on albums instead of individual tracks. Items will
-automatically be moved around when necessary if they're in your library
-directory, but you can disable that with ``-M``. Tags will be written to the
-files according to the settings you have for imports, but these can be
-overridden with ``-w`` (write tags, the default) and ``-W`` (don't write tags).
-Finally, this command politely asks for your permission before making any
-changes, but you can skip that prompt with the ``-y`` switch.
+For removing fields (only possible with flexible attributes), specify one or
+more ``field!`` argument(s). The ``-a`` switch operates on albums instead of
+individual tracks. Items will automatically be moved around when necessary if
+they're in your library directory, but you can disable that with ``-M``. Tags
+will be written to the files according to the settings you have for imports,
+but these can be overridden with ``-w`` (write tags, the default) and ``-W``
+(don't write tags).  Finally, this command politely asks for your permission
+before making any changes, but you can skip that prompt with the ``-y`` switch.
 
 .. _move-cmd:
 
