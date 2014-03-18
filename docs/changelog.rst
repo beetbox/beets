@@ -32,8 +32,10 @@ New stuff:
 * We now only use "primary" aliases for artist names from MusicBrainz. This
   eliminates some strange naming that could occur when the `languages` config
   option was set. Thanks to Filipe Fortes.
-
-
+* The :ref:`modify-cmd` command now allows removing flexible attribute. For
+  example: ``beet modify artist:beatles oldies!`` deletes the ``oldies``
+  flexible attribute from the database, for the matching items. Thanks to
+  brilnius.
 
 Fixes:
 

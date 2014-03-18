@@ -111,9 +111,9 @@ Store any data you like
 
 The beets database keeps track of a long list of :ref:`built-in fields
 <itemfields>`, but you're not limited to just that list. Say, for example,
-that you like to like to categorize your music by the setting where it should
-be played. You can invent a new ``context`` attribute store this. Set the
-field using the :ref:`modify-cmd` command::
+that you like to categorize your music by the setting where it should be
+played. You can invent a new ``context`` attribute store this. Set the field
+using the :ref:`modify-cmd` command::
 
     beet modify context=party artist:'beastie boys'
 
@@ -124,6 +124,10 @@ other field::
 
 You can even use these fields in your filenames (see
 :ref:`path-format-config`).
+
+And, unlike :ref:`built-in fields <itemfields>`, such fields can be removed::
+
+    beet modify context! artist:'beastie boys'
 
 Read more than you ever wanted to know about the *flexible attributes*
 feature `on the beets blog`_.
