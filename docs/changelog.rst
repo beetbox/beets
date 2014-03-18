@@ -27,6 +27,8 @@ New stuff:
   better proportion to other metrics. Also, options were added to specify
   custom thresholds and output formats. Thanks to Adam M.
 * Added the :ref:`after_write <plugin_events>` plugin event.
+* :doc:`/plugins/lastgenre`: Separator in genre list can be
+  customized. Thanks to brilnius.
 
 Fixes:
 

@@ -114,7 +114,9 @@ def _strings_to_genre(tags):
         tags = out
 
     tags = [t.title() for t in tags]
-    return u', '.join(tags[:config['lastgenre']['count'].get(int)])
+    return config['lastgenre']['separator'].get().join(
+        tags[:config['lastgenre']['count'].get(int)]
+    )
 
 def fetch_genre(lastfm_obj):
     """Return the genre for a pylast entity or None if no suitable genre
@@ -217,6 +219,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'source': 'album',
             'force': True,
             'auto': True,
+            'separator': u', ',
         })
 
         if self.config['auto']:
