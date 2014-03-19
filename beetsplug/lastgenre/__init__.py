@@ -114,7 +114,7 @@ def _strings_to_genre(tags):
         tags = out
 
     tags = [t.title() for t in tags]
-    return config['lastgenre']['separator'].get().join(
+    return config['lastgenre']['separator'].get(unicode).join(
         tags[:config['lastgenre']['count'].get(int)]
     )
 
