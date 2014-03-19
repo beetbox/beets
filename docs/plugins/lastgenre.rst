@@ -97,7 +97,7 @@ genres are separated by commas by default, but you can change this with the
 ``separator`` config option::
 
     lastgenre:
-        sepator: ' / '
+        separator: ' / '
 
 `Last.fm`_ provides a popularity factor, a.k.a. *weight*, for each tag ranging
 from 100 for the most popular tag down to 0 for the least popular.
