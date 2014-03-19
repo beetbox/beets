@@ -21,7 +21,7 @@ import re
 
 from beets.plugins import BeetsPlugin
 from beets.util import normpath, syspath, bytestring_path
-from beets import config
+from beets import config, util
 
 M3U_DEFAULT_NAME = 'imported.m3u'
 
@@ -63,11 +63,14 @@ def _get_feeds_dir(lib):
         os.makedirs(syspath(dirpath))
     return dirpath
 
-def _build_m3u_filename(basename):
+def _build_m3u_filename(lib, basename):
     """Builds unique m3u filename by appending given basename to current
     date."""
 
-    basename = re.sub(r"[\s,'\"]", '_', basename)
+    # Truncate components and remove forbidden characters.
+    basename = util.sanitize_path(basename, lib.replacements)
+
+    # Append date component to filename
     date = datetime.datetime.now().strftime("%Y%m%d_%Hh%M")
     path = normpath(os.path.join(
         config['importfeeds']['dir'].as_filename(),
@@ -108,7 +111,7 @@ def _record_items(lib, basename, items):
         _write_m3u(m3u_path, paths)
 
     if 'm3u_multi' in formats:
-        m3u_path = _build_m3u_filename(basename)
+        m3u_path = _build_m3u_filename(lib, basename)
         _write_m3u(m3u_path, paths)
 
     if 'link' in formats:
