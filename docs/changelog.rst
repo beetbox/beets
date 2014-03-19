@@ -51,7 +51,8 @@ Fixes:
   be written to a file.
 * :doc:`/plugins/duplicates`: Spurious reports are now avoided for tracks with
   missing values (e.g., no MBIDs). Thanks to Pedro Silva.
-* Fix default :ref:`replace` value so leading whitespace are also removed.
+* The default :ref:`replace` sanitation options now remove leading whitespace
+  by default. Thanks to brilnius.
 * :doc:`/plugins/importfeeds`: Fix crash when importing albums
   containing ``/`` with the ``m3u_multi`` format.
 

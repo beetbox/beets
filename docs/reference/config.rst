@@ -110,6 +110,7 @@ unexpected behavior on all popular platforms::
         '[<>:"\?\*\|]': _
         '\.$': _
         '\s+$': ''
+        '^\s+': ''
 
 These substitutions remove forward and back slashes, leading dots, and
 control characters—all of which is a good idea on any OS. The fourth line
