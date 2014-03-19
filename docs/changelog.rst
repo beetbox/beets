@@ -51,6 +51,7 @@ Fixes:
   be written to a file.
 * :doc:`/plugins/duplicates`: Spurious reports are now avoided for tracks with
   missing values (e.g., no MBIDs). Thanks to Pedro Silva.
+* Fix default :ref:`replace` value so leading whitespace are also removed.
 
 .. _requests: http://www.python-requests.org/
 
