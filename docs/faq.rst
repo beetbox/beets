@@ -149,8 +149,8 @@ it's helpful to run on the "bleeding edge". To run the latest source:
       to clone beets from BitBucket using Mercurial and install it,
       allowing you to modify the source in-place to try out changes.
 
-More details about the beets source are available on the :doc:dev:`index`
-page.
+More details about the beets source are available on the :doc:`developer documentation </dev/index>`
+pages.
 
 
 .. _bugs:
