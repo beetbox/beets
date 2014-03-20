@@ -27,6 +27,8 @@ New stuff:
   better proportion to other metrics. Also, options were added to specify
   custom thresholds and output formats. Thanks to Adam M.
 * Added the :ref:`after_write <plugin_events>` plugin event.
+* :doc:`/plugins/lastgenre`: Separator in genre lists can now be
+  configured. Thanks to brilnius.
 
 Fixes:
 
@@ -51,6 +53,10 @@ Fixes:
   be written to a file.
 * :doc:`/plugins/duplicates`: Spurious reports are now avoided for tracks with
   missing values (e.g., no MBIDs). Thanks to Pedro Silva.
+* The default :ref:`replace` sanitation options now remove leading whitespace
+  by default. Thanks to brilnius.
+* :doc:`/plugins/importfeeds`: Fix crash when importing albums
+  containing ``/`` with the ``m3u_multi`` format.
 
 .. _requests: http://www.python-requests.org/
 
