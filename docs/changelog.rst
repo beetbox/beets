@@ -57,6 +57,7 @@ Fixes:
   by default. Thanks to brilnius.
 * :doc:`/plugins/importfeeds`: Fix crash when importing albums
   containing ``/`` with the ``m3u_multi`` format.
+* Avoid crashing on Mutagen bugs while writing files' tags.
 
 .. _requests: http://www.python-requests.org/
 
