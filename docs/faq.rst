@@ -149,7 +149,7 @@ it's helpful to run on the "bleeding edge". To run the latest source:
       to clone beets from BitBucket using Mercurial and install it,
       allowing you to modify the source in-place to try out changes.
 
-More details about the beets source are available on the [[Hacking]]
+More details about the beets source are available on the :doc:dev:`index`
 page.
 
 
