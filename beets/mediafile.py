@@ -62,13 +62,20 @@ log = logging.getLogger('beets')
 
 # Exceptions.
 
-# Raised for any file MediaFile can't read.
 class UnreadableFileError(Exception):
+    """Indicates a file that MediaFile can't read.
+    """
     pass
 
-# Raised for files that don't seem to have a type MediaFile supports.
 class FileTypeError(UnreadableFileError):
+    """Raised for files that don't seem to have a type MediaFile
+    supports.
+    """
     pass
+
+class MutagenError(UnreadableFileError):
+    """Raised when Mutagen fails unexpectedly---probably due to a bug.
+    """
 
 
 
@@ -1150,12 +1157,12 @@ class MediaFile(object):
                 raise
             else:
                 log.debug(traceback.format_exc())
-                raise UnreadableFileError('Mutagen raised an exception')
+                raise MutagenError('Mutagen raised an exception')
         except Exception as exc:
-            # Hide bugs in Mutagen.
+            # Isolate bugs in Mutagen.
             log.debug(traceback.format_exc())
-            log.error('uncaught Mutagen exception: {0}'.format(exc))
-            raise UnreadableFileError('Mutagen raised an exception')
+            log.error('uncaught Mutagen exception in open: {0}'.format(exc))
+            raise MutagenError('Mutagen raised an exception')
 
         if self.mgfile is None: # Mutagen couldn't guess the type
             raise FileTypeError('file type unsupported by Mutagen')
@@ -1201,15 +1208,22 @@ class MediaFile(object):
         By default, MP3 files are saved with ID3v2.4 tags. You can use
         the older ID3v2.3 standard by specifying the `id3v23` option.
         """
+        kwargs = {}
         if id3v23 and self.type == 'mp3':
             id3 = self.mgfile
             if hasattr(id3, 'tags'):
                 # In case this is an MP3 object, not an ID3 object.
                 id3 = id3.tags
             id3.update_to_v23()
-            self.mgfile.save(v2_version=3)
-        else:
-            self.mgfile.save()
+            kwargs['v2_version'] = 3
+
+        # Isolate bugs in Mutagen.
+        try:
+            self.mgfile.save(**kwargs)
+        except Exception as exc:
+            log.debug(traceback.format_exc())
+            log.error('uncaught Mutagen exception in save: {0}'.format(exc))
+            raise MutagenError('Mutagen raised an exception')
 
     def delete(self):
         """Remove the current metadata tag from the file.
