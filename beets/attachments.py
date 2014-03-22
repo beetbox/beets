@@ -39,6 +39,10 @@ class Attachment(dbcore.db.Model):
         super(Attachment, self).__init__(db, **values)
         self.libdir = libdir
 
+    @classmethod
+    def _getters(cls):
+        return []
+
     @property
     def location(self):
         """Return an url string with the ``file`` scheme omitted and
@@ -54,13 +58,13 @@ class Attachment(dbcore.db.Model):
     def entity(self):
         """Return the ``Item`` or ``Album`` we are attached to.
         """
-        if ref is None or ref_type is None:
+        if self.ref is None or self.ref_type is None:
             return None
-        # TODO implement correct query
-        if ref_type == 'item':
-            self._db.items(id=self.ref)
-        elif ref_type == 'album':
-            self._db.albums(id=self.ref)
+        query = dbcore.query.MatchQuery('id', self.ref)
+        if self.ref_type == 'item':
+            self._db.items(query)
+        elif self.ref_type == 'album':
+            self._db.albums(query)
 
     @entity.setter
     def entity(self, entity):
@@ -72,9 +76,10 @@ class Attachment(dbcore.db.Model):
         elif isinstance(entity, library.Album):
             self.ref_type = 'album'
         else:
-            assert false
+            raise ValueError('{} must be a Item or Album'.format(entity))
 
-        assert entity.id
+        if not entity.id:
+            raise ValueError('{} must have an id',format(entity))
         self.ref = entity.id
 
     def move(self, destination=None, copy=False, force=False):
@@ -123,6 +128,18 @@ class Attachment(dbcore.db.Model):
         assert re.match(r'^[a-zA-Z][-\w]*', self.type)
         urlparse.urlparse(self.url)
 
+    def __getattr__(self, key):
+        if key in self._fields.keys():
+            return self[key]
+        else:
+            return object.__getattr__(self, key)
+
+    def __setattr__(self, key, value):
+        if key in self._fields.keys():
+            self[key] = value
+        else:
+            object.__setattr__(self, key, value)
+
 
 class AttachmentFactory(object):
     """Factory that creates or finds attachments in the database.
@@ -157,24 +174,23 @@ class AttachmentFactory(object):
             # discoverers for general URLs.
             return
 
-        for type in  self._discover_types(url.path)
+        for type in  self._discover_types(url.path):
             yield self.create(url.path, type, entity)
 
-    def create(self, path, type, entity=None):
+    def create(self, url, type, entity=None):
         """Return a populated ``Attachment`` instance.
 
-        The ``url`` and ``type`` properties are set corresponding to the
-        arguments. If ``entity`` is not ``None`` it attaches the entity
-        to the attachment.
-
-        The method also populates the ``meta`` property with data
-        retrieved from all registered collectors.
+        The ``url``, ``type``, and ``entity`` properties of the
+        attachment are set corresponding to the arguments.  The method
+        also populates the ``meta`` property with data retrieved from
+        all registered collectors.
         """
         # TODO extend this to handle general urls
-        attachment = Attachment(path, db=self._db, beetsdir=self._libdir)
+        attachment = Attachment(db=self._db, beetsdir=self._libdir,
+                                url=url, type=type)
         if entity is not None:
-            attachement.attach_to(entity)
-        for key, value in self._collect_meta(type, path).items():
+            attachment.entity = entity
+        for key, value in self._collect_meta(type, url).items():
             attachment[key] = value
         return attachment
 
@@ -189,8 +205,8 @@ class AttachmentFactory(object):
         self._collectors.append(collector)
 
     def register_plugin(self, plugin):
-        self.register_discoverer(plugin.attachment_discoverer):
-        self.register_collector(plugin.attachment_collector):
+        self.register_discoverer(plugin.attachment_discoverer)
+        self.register_collector(plugin.attachment_collector)
 
     def _discover_types(self, url):
         types = []
@@ -206,12 +222,9 @@ class AttachmentFactory(object):
     def _collect_meta(self, type, url):
         all_meta = {}
         for collector in self._collectors:
-            try:
-                meta = discover(type,url)
-                if isinstance(dict, meta):
-                    all_meta.update(meta)
-            except:
-                pass
+            meta = collector(type, url)
+            if isinstance(meta, dict):
+                all_meta.update(meta)
         return all_meta
 
 
