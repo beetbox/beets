@@ -198,7 +198,7 @@ class LazySaveTestMixin(object):
         self.assertNotEqual(os.stat(mediafile.path).st_mtime, mtime)
 
     def _set_past_mtime(self, path):
-        mtime = round(time.time()-10000)
+        mtime = round(time.time() - 10000)
         os.utime(path, (mtime, mtime))
         return mtime
 
@@ -333,7 +333,8 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin):
         mediafile = self._mediafile_fixture('full')
         for key, value in self.audio_properties.items():
             if isinstance(value, float):
-                self.assertAlmostEqual(getattr(mediafile, key), value, delta=0.1)
+                self.assertAlmostEqual(getattr(mediafile, key), value,
+                                       delta=0.1)
             else:
                 self.assertEqual(getattr(mediafile, key), value)
 
@@ -474,7 +475,6 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin):
         self.assertEqual(mediafile.date, datetime.date.min)
 
     def assertTags(self, mediafile, tags):
-        __unittest = True
         errors = []
         for key, value in tags.items():
             try:
