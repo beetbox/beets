@@ -190,6 +190,7 @@ If you've never reported a bug before, Mozilla has some well-written
 `general guidelines for good bug
 reports <http://www.mozilla.org/bugs/>`__.
 
+
 .. _find-config:
 
 …find the configuration file (config.yaml)?
@@ -197,6 +198,15 @@ reports <http://www.mozilla.org/bugs/>`__.
 
 You create this file yourself; beets just reads it. See
 :doc:`/reference/config`.
+
+
+.. _special-chars:
+
+…avoid using special characters in my filenames?
+------------------------------------------------
+
+Use the ``%asciify{}`` function in your path formats. See
+:ref:`template-functions`.
 
 
 Why does beets…
@@ -339,3 +349,16 @@ safely.
 Most notably, Windows forbids trailing dots, so a folder called "M.I.A."
 will be rewritten to "M.I.A\_" by default. Change the ``replace`` config
 if you don't want this behavior and don't need Windows-safe names.
+
+
+.. _pathq:
+
+…say "command not found"?
+-------------------------
+
+You need to put the ``beet`` program on your system's search path. If you
+installed using pip, the command ``pip show -f beets`` can show you where
+``beet`` was placed on your system. If you need help extending your ``$PATH``,
+try `this Super User answer`_.
+
+.. _this Super User answer: http://superuser.com/a/284361/4569
