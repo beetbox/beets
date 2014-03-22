@@ -1023,11 +1023,15 @@ class DateField(MediaField):
         datestring = MediaField.__get__(self, mediafile, None)
         datestring = re.sub(r'[Tt ].*$', '', unicode(datestring))
         items = unicode(datestring).split('-')
+        # A date with more than 3 components is not a date we understand.  In
+        # that case, act like we saw no date components.
+        if len(items) > 3:
+            items = []
         items = items + [None] * (3 - len(items))
         if not items[0] and hasattr(self, '_year_field'):
             # Fallback to addition year field
             items[0] = self._year_field.__get__(mediafile)
-        return [int(item or 0) for item in items]
+        return [_safe_cast(int, item) for item in items]
 
     def _set_date_tuple(self, mediafile, year, month=None, day=None):
         date = [year or 0]

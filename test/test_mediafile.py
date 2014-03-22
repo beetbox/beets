@@ -467,6 +467,11 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin):
         self.assertEqual(mediafile.disc, 10)
         self.assertEqual(mediafile.disctotal, 0)
 
+    def test_unparseable_date(self):
+        mediafile = self._mediafile_fixture('unparseable')
+
+        self.assertEqual(mediafile.year, 0)
+        self.assertEqual(mediafile.date, datetime.date.min)
 
     def assertTags(self, mediafile, tags):
         __unittest = True
