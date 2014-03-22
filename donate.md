@@ -12,9 +12,17 @@ your support.
 These are some organizations doing work that is even more important than music
 organization software. They need support more than I do.
 
-* <a href="https://www.unpac.org/donate/">unPAC</a>
+* <a href="http://www.rootstrikers.org/donate">Rootstrikers</a>
 * <a href="http://www.stopcorporateabuse.org/">Corporate Accountability International</a>
 * <a href="http://www.hrc.org/">Human Rights Campaign</a>
+
+## Bitcoin
+
+You can send Bitcoin donations to [1444ZujQGp3ciNbDwyuoaxjWNrz5suuCYo](bitcoin:1444ZujQGp3ciNbDwyuoaxjWNrz5suuCYo). Or you might prefer to donate using [Coinbase][]:
+
+<a class="coinbase-button" data-code="6e3e345d83540da9fddb4473386af9b9" data-button-style="custom_large" href="https://coinbase.com/checkouts/6e3e345d83540da9fddb4473386af9b9">Donate Bitcoins</a><script src="https://coinbase.com/assets/button.js" type="text/javascript"></script>
+
+[coinbase]: https://coinbase.com/
 
 ## PayPal
 
