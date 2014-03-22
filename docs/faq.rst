@@ -190,6 +190,14 @@ If you've never reported a bug before, Mozilla has some well-written
 `general guidelines for good bug
 reports <http://www.mozilla.org/bugs/>`__.
 
+.. _find-config:
+
+…find the configuration file (config.yaml)?
+-------------------------------------------
+
+You create this file yourself; beets just reads it. See
+:doc:`/reference/config`.
+
 
 Why does beets…
 ===============
