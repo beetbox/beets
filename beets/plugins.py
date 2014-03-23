@@ -206,7 +206,7 @@ class BeetsPlugin(object):
         """Called after a modification has been made to the library
         database. The change might not be committed yet.
         """
-        self._call_listener('database_chanage', lib=lib)
+        self._call_listener('database_change', lib=lib)
 
     def on_cli_exit(self, lib=None):
         """Called just before the ``beet`` command-line program exits.
