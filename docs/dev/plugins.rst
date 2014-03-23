@@ -100,80 +100,24 @@ operation. For instance, a plugin could write a log message every time an album
 is successfully autotagged or update MPD's index whenever the database is
 changed.
 
-You can "listen" for events using the ``BeetsPlugin.listen`` decorator. Here's
-an example::
+You can "listen" for events by implementing the ``on_*`` methods in your
+plugin class::
 
     from beets.plugins import BeetsPlugin
 
     class SomePlugin(BeetsPlugin):
-        pass
-
-    @SomePlugin.listen('pluginload')
-    def loaded():
-        print 'Plugin loaded!'
+        def on_before_write(self, item=None):
+            print('Item "{}" written!'.format(item.path))
 
 Pass the name of the event in question to the ``listen`` decorator. The events
 currently available are:
 
-* *pluginload*: called after all the plugins have been loaded after the ``beet``
-  command starts
-
-* *import*: called after a ``beet import`` command finishes (the ``lib`` keyword
-  argument is a Library object; ``paths`` is a list of paths (strings) that were
-  imported)
-
-* *album_imported*: called with an ``Album`` object every time the ``import``
-  command finishes adding an album to the library. Parameters: ``lib``,
-  ``album``
-
-* *item_copied*: called with an ``Item`` object whenever its file is copied.
-  Parameters: ``item``, ``source`` path, ``destination`` path
-
-* *item_imported*: called with an ``Item`` object every time the importer adds a
-  singleton to the library (not called for full-album imports). Parameters:
-  ``lib``, ``item``
-
-* *item_moved*: called with an ``Item`` object whenever its file is moved.
-  Parameters: ``item``, ``source`` path, ``destination`` path
-
-* *item_removed*: called with an ``Item`` object every time an item (singleton
-  or album's part) is removed from the library (even when its file is not
-  deleted from disk).
-
-* *write*: called with an ``Item`` object just before a file's metadata is
-  written to disk (i.e., just before the file on disk is opened). Event
-  handlers may raise a ``library.FileOperationError`` exception to abort
-  the write operation. Beets will catch that exception, print an error
-  message and continue.
-
-* *after_write*: called with an ``Item`` object after a file's metadata is
-  written to disk (i.e., just after the file on disk is closed).
-
-* *import_task_start*: called when before an import task begins processing.
-  Parameters: ``task`` (an `ImportTask`) and ``session`` (an `ImportSession`).
-
-* *import_task_apply*: called after metadata changes have been applied in an
-  import task. Parameters: ``task`` and ``session``.
-
-* *import_task_choice*: called after a decision has been made about an import
-  task. This event can be used to initiate further interaction with the user.
-  Use ``task.choice_flag`` to determine or change the action to be
-  taken. Parameters: ``task`` and ``session``.
-
-* *import_task_files*: called after an import task finishes manipulating the
-  filesystem (copying and moving files, writing metadata tags). Parameters:
-  ``task`` and ``session``.
-
-* *library_opened*: called after beets starts up and initializes the main
-  Library object. Parameter: ``lib``.
-
-* *database_change*: a modification has been made to the library database. The
-  change might not be committed yet. Parameter: ``lib``.
-
-* *cli_exit*: called just before the ``beet`` command-line program exits.
-  Parameter: ``lib``.
-
-The included ``mpdupdate`` plugin provides an example use case for event listeners.
+.. autoclass:: beets.plugins.BeetsPlugin
+    :members: on_pluginload, on_import, on_album_imported,
+        on_item_imported, on_item_copied, on_item_moved, on_item_removed,
+        on_before_write, on_after_write, on_import_task_start,
+        on_import_task_choice, on_import_task_apply, on_import_task_files,
+        on_library_opened, on_database_change, on_cli_exit, 
 
 Extend the Autotagger
 ^^^^^^^^^^^^^^^^^^^^^

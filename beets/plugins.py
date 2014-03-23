@@ -114,8 +114,117 @@ class BeetsPlugin(object):
         mediafile.MediaFile.add_field(name, descriptor)
         library.Item._media_fields.add(name)
 
+    # Events with backwards compatibility
+
+    def on_pluginload(self):
+        """Called after all the plugins have been loaded after the
+        ``beet`` command starts
+        """
+        self._call_listener('pluginload')
+
+    def on_import(self):
+        """"Called after a ``beet import`` command finishes (the ``lib``
+        keyword argument is a Library object; ``paths`` is a list of
+        paths (strings) that were imported).
+        """
+        self._call_listener('import')
+
+    def on_album_imported(self, lib=None, album=None):
+        """Called with an ``Album`` object every time the ``import``
+        command finishes adding an album to the library.
+        """
+        self._call_listener('album_imported', lib=lib, album=album)
+
+    def on_item_imported(self, lib=None, item=None):
+        """Called with an ``Item`` object every time the importer adds a
+        singleton to the library (not called for full-album imports).
+        """
+        self._call_listener('item_imported', lib=lib, item=item)
+
+    def on_item_copied(self, item=None, source=None, destination=None):
+        """Called with an ``Item`` object whenever its file is copied.
+        Parameters: ``item``, ``source`` path, ``destination`` path
+        """
+        self._call_listener('item_copied', item=item, source=source,
+                                           destination=destination)
+
+    def on_item_moved(self, item=None, source=None, destination=None):
+        """Called with an ``Item`` object whenever its file is moved.
+        """
+        self._call_listener('item_moved', item=item, source=source,
+                                          destination=destination)
+
+    def on_item_removed(self, item=None):
+        """Called when an item (singleton or album's part) is removed
+        from the library (even when its file is not deleted from disk).
+        """
+        self._call_listener('item_removed', item=item)
+
+    def on_before_write(self, item=None):
+        """Called just before a file's metadata is written to disk
+        (i.e., just before the file on disk is opened).
+        """
+        self._call_listener('write', item=item)
+
+    def on_after_write(self, item=None):
+        """Called a file's metadata is written to disk (i.e., just after
+        the file on disk is closed).
+        """
+        self._call_listener('after_write', item=item)
+
+    def on_import_task_start(self, task=None, session=None):
+        """Called before an import task begins processing.
+        """
+        self._call_listener('import_task_start', task=task, session=task)
+
+    def on_import_task_apply(self, task=None, session=None):
+        """Called after metadata changes have been applied in an import
+        task.
+        """
+        self._call_listener('import_task_apply', task=task, session=session)
+
+    def on_import_task_choice(self, task=None, session=None):
+        """Called after a decision has been made about an import task.
+        This event can be used to initiate further interaction with the
+        user.  Use ``task.choice_flag`` to determine or change the
+        action to be taken.
+        """
+        self._call_listener('import_task_choice', task=task, session=session)
+
+    def on_import_task_files(self, task=None, session=None):
+        """Called after an import task finishes manipulating the
+        filesystem (copying and moving files, writing metadata tags).
+        """
+        self._call_listener('import_task_files', task=task, session=session)
+
+    def on_library_opened(self, lib=None):
+        """Called after beets starts up and initializes the main Library object.
+        """
+        self._call_listener('library_opened', lib=lib)
+
+    def on_database_change(self, lib=None):
+        """Called after a modification has been made to the library
+        database. The change might not be committed yet.
+        """
+        self._call_listener('database_chanage', lib=lib)
+
+    def on_cli_exit(self, lib=None):
+        """Called just before the ``beet`` command-line program exits.
+        """
+        self._call_listener('cli_exit', lib=lib)
+
+    def _call_listener(self, event, **args):
+        """Calls listeners registered with the legacy API.
+        """
+        if self.listeners is None:
+            self.listeners = defaultdict(list)
+        for listener in self.listeners[event]:
+            listener(**args)
+
+
     listeners = None
 
+    # DEPRECATED
     @classmethod
     def register_listener(cls, event, func):
         """Add a function as a listener for the specified event. (An
@@ -125,6 +234,7 @@ class BeetsPlugin(object):
             cls.listeners = defaultdict(list)
         cls.listeners[event].append(func)
 
+    # DEPRECATED
     @classmethod
     def listen(cls, event):
         """Decorator that adds a function as an event handler for the
@@ -176,6 +286,7 @@ class BeetsPlugin(object):
             cls.template_fields[name] = func
             return func
         return helper
+
 
 class Registry(list):
     """Loads plugins and exposes their hooks.
@@ -365,19 +476,6 @@ class Registry(list):
         return funcs
 
 
-    # Event dispatch.
-
-    def event_handlers(self):
-        """Find all event handlers from plugins as a dictionary mapping
-        event names to sequences of callables.
-        """
-        all_handlers = defaultdict(list)
-        for plugin in self:
-            if plugin.listeners:
-                for event, handlers in plugin.listeners.items():
-                    all_handlers[event] += handlers
-        return all_handlers
-
     def send(self, event, **arguments):
         """Sends an event to all assigned event listeners. Event is the
         name of  the event to send, all other named arguments go to the
@@ -386,10 +484,10 @@ class Registry(list):
         Returns the number of handlers called.
         """
         log.debug('Sending event: %s' % event)
-        handlers = event_handlers()[event]
-        for handler in handlers:
-            handler(**arguments)
-        return len(handlers)
+        for plugin in self:
+            handlername = 'on_{}'.format(event)
+            if hasattr(plugin, handlername):
+                getattr(plugin, handlername)(**arguments)
 
 
 registry = Registry()
@@ -411,5 +509,4 @@ _add_media_fields = registry._add_media_fields
 import_stages = registry.import_stages
 item_field_getters = registry.item_field_getters
 album_field_getters = registry.album_field_getters
-event_handlers = registry.event_handlers
 send = registry.send
