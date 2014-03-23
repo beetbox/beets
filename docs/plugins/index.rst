@@ -154,8 +154,6 @@ Here are a few of the plugins written by the beets community:
 * `beets-artistcountry`_ fetches the artist's country of origin from
   MusicBrainz.
 
-* `gbeets`_ integrates beets with Google Music.
-
 * `dsedivec`_ has two plugins: ``edit`` and ``moveall``.
 
 * `beet-amazon`_ adds Amazon.com as a tagger data source.
@@ -164,7 +162,6 @@ Here are a few of the plugins written by the beets community:
 
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
-.. _gbeets: https://github.com/mister-walter/gbeets
 .. _beets-artistcountry: https://github.com/agrausem/beets-artistcountry
 .. _beetFs: http://code.google.com/p/beetfs/
 .. _Beet-MusicBrainz-Collection:

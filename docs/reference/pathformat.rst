@@ -45,8 +45,8 @@ As a convenience, however, beets allows ``$albumartist`` to fall back to the val
 
 .. _template-functions:
 
-Functions
----------
+Template Functions
+------------------
 
 Beets path formats also support *function calls*, which can be used to transform
 text and perform logical manipulations. The syntax for function calls is like

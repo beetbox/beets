@@ -1020,16 +1020,33 @@ class DateField(MediaField):
         self._set_date_tuple(mediafile, date.year, date.month, date.day)
 
     def _get_date_tuple(self, mediafile):
-        datestring = MediaField.__get__(self, mediafile, None)
+        """Get a 3-item sequence representing the date consisting of a
+        year, month, and day number. Each number is either an integer or
+        None.
+        """
+        # Get the underlying data and split on hyphens.
+        datestring = super(DateField, self).__get__(mediafile, None)
         datestring = re.sub(r'[Tt ].*$', '', unicode(datestring))
         items = unicode(datestring).split('-')
-        items = items + [None] * (3 - len(items))
+
+        # Ensure that we have exactly 3 components, possibly by
+        # truncating or padding.
+        items = items[:3]
+        if len(items) < 3:
+            items += [None] * (3 - len(items))
+
+        # Use year field if year is missing.
         if not items[0] and hasattr(self, '_year_field'):
-            # Fallback to addition year field
             items[0] = self._year_field.__get__(mediafile)
-        return [int(item or 0) for item in items]
+
+        # Convert each component to an integer if possible.
+        return [_safe_cast(int, item) for item in items]
 
     def _set_date_tuple(self, mediafile, year, month=None, day=None):
+        """Set the value of the field given a year, month, and day
+        number. Each number can be an integer or None to indicate an
+        unset component.
+        """
         date = [year or 0]
         if month:
             date.append(month)
