@@ -485,7 +485,7 @@ class Registry(list):
         """
         log.debug('Sending event: %s' % event)
         for plugin in self:
-            handlername = 'on_{}'.format(event)
+            handlername = 'on_{0}'.format(event)
             if hasattr(plugin, handlername):
                 getattr(plugin, handlername)(**arguments)
 
