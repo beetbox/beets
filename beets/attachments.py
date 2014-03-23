@@ -24,6 +24,12 @@ from beets import dbcore
 
 
 class Attachment(dbcore.db.Model):
+    """Represents an attachment in the database.
+
+    An attachment has four properties that correspond to fields in the
+    database: ``url``, ``type``, ``ref``, and ``ref_type``. Flexible
+    attributes are accessed as ``attachment[key]``.
+    """
 
     _fields = {
         'url':      dbcore.types.String(),
