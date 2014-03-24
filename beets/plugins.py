@@ -43,6 +43,7 @@ class BeetsPlugin(object):
         """Perform one-time plugin setup.
         """
         self.import_stages = []
+        self.name = self.__module__.split('.')[-1]
         if not self.template_funcs:
             self.template_funcs = {}
         if not self.template_fields:
@@ -51,14 +52,10 @@ class BeetsPlugin(object):
             self.album_template_fields = {}
 
     @property
-    def name(self):
-        return self.__module__.split('.')[-1]
-
-    @property
     def config(self):
-        """Convenience access to plugin configuration.
+        """Shortcut to plugin configuration.
 
-        Equivalent to ``beets.config[self.name]``.
+        Equivalent to ``beest.config[self.name]``.
         """
         return beets.config[self.name]
 
