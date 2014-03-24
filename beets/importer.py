@@ -894,7 +894,11 @@ def manipulate_files(session):
                     item.move(True)
 
             if config['import']['write'] and task.should_write_tags():
-                item.write()
+                try:
+                    item.write()
+                except library.FileOperationError as exc:
+                    log.error(u'could not write {0}: {1}'.format(
+                                  util.displayable_path(item.path), exc))
 
         # Save new paths.
         with session.lib.transaction():

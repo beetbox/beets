@@ -142,8 +142,9 @@ currently available are:
 
 * *write*: called with an ``Item`` object just before a file's metadata is
   written to disk (i.e., just before the file on disk is opened). Event
-  handlers may return a truthy value to prevent beets from writing the
-  file. In that case make sure that you log an appropriate message.
+  handlers may raise a ``library.FileOperationError`` exception to abort
+  the write operation. Beets will catch that exception, print an error
+  message and continue.
 
 * *after_write*: called with an ``Item`` object after a file's metadata is
   written to disk (i.e., just after the file on disk is closed).

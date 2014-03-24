@@ -23,7 +23,7 @@ import unicodedata
 import traceback
 import time
 from unidecode import unidecode
-from beets.mediafile import MediaFile
+from beets.mediafile import MediaFile, MutagenError
 from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile
@@ -283,6 +283,16 @@ class LibModel(dbcore.Model):
         super(LibModel, self).add(lib)
         plugins.send('database_change', lib=self._db)
 
+class FileOperationError(Exception):
+    """Raised by ``item.write()`` to indicate an error when interacting
+    with the file.
+    """
+
+class ReadError(FileOperationError):
+    pass
+
+class WriteError(FileOperationError):
+    pass
 
 class Item(LibModel):
     _fields = dict((name, typ) for (name, typ, _, _) in ITEM_FIELDS)
@@ -342,6 +352,8 @@ class Item(LibModel):
     def read(self, read_path=None):
         """Read the metadata from the associated file. If read_path is
         specified, read metadata from that file instead.
+
+        Raises ``ReadError`` if the file could not be read.
         """
         if read_path is None:
             read_path = self.path
@@ -350,8 +362,7 @@ class Item(LibModel):
         try:
             f = MediaFile(syspath(read_path))
         except (OSError, IOError) as exc:
-            raise util.FilesystemError(exc, 'read', (read_path,),
-                                       traceback.format_exc())
+            raise ReadError(exc.message)
 
         for key in ITEM_KEYS_META:
             value = getattr(f, key)
@@ -371,42 +382,27 @@ class Item(LibModel):
         self.path = read_path
 
     def write(self):
-        """Try to write the item's metadata to the associated file.
+        """Write the item's metadata to the associated file.
 
-        Returns ``True`` if the write was successful. The method catches
-        file system read and write exceptions and logs an error message.
-        If any of 'write' event handlers returns a truthy value the
-        write will not be performed and an error message is logged.
+        Raises ``ReadError`` or ``WriteError``.
         """
-        if any(plugins.send('write', item=self)):
-            log.error(u'plugin aborted writing {0}'.format(
-                           util.displayable_path(item.path)))
-            return
-
-
         try:
             f = MediaFile(syspath(self.path))
         except (OSError, IOError) as exc:
-            log.error(u'could not read {0}: {1}'.format(
-                util.displayable_path(item.path), exc
-            ))
-            return
+            raise ReadError(str(exc))
+
+        plugins.send('write', item=self)
 
         for key in ITEM_KEYS_WRITABLE:
             setattr(f, key, self[key])
-
         try:
             f.save(id3v23=beets.config['id3v23'].get(bool))
-        except (OSError, IOError) as exc:
-            log.error(u'could not write {0}: {1}'.format(
-                util.displayable_path(item.path), exc
-            ))
-            return
+        except (OSError, IOError, MutagenError) as exc:
+            raise WriteError(str(exc))
 
         # The file has a new mtime.
         self.mtime = self.current_mtime()
         plugins.send('after_write', item=self)
-        return True
 
 
     # Files themselves.

@@ -15,6 +15,8 @@
 """Tests for non-query database functions of Item.
 """
 import os
+import os.path
+import stat
 import shutil
 import re
 import unicodedata
@@ -941,6 +943,20 @@ class TemplateTest(_common.LibTestCase):
         self.album.foo = 'baz'
         self.album.store()
         self.assertEqual(self.i.evaluate_template('$foo'), 'baz')
+
+class WriteTest(_common.LibTestCase):
+
+    def test_write_nonexistant(self):
+        self.i.path = '/path/does/not/exist'
+        self.assertRaises(beets.library.ReadError, self.i.write)
+
+    def test_no_write_permission(self):
+        path = os.path.join(self.temp_dir, 'file.mp3')
+        shutil.copy(os.path.join(_common.RSRC, 'empty.mp3'), path)
+        os.chmod(path, stat.S_IRUSR)
+
+        self.i.path = path
+        self.assertRaises(beets.library.WriteError, self.i.write)
 
 
 def suite():
