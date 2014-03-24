@@ -29,7 +29,6 @@ from beets import dbcore
 from beets import plugins
 from beets import util
 from beets import config
-from beets import ui
 from beets.util import pipeline
 from beets.util import syspath, normpath, displayable_path
 from beets.util.enumeration import enum
