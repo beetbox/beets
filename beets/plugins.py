@@ -43,7 +43,6 @@ class BeetsPlugin(object):
         """Perform one-time plugin setup.
         """
         self.import_stages = []
-        self.name = self.__module__.split('.')[-1]
         if not self.template_funcs:
             self.template_funcs = {}
         if not self.template_fields:
@@ -58,6 +57,10 @@ class BeetsPlugin(object):
         Equivalent to ``beest.config[self.name]``.
         """
         return beets.config[self.name]
+
+    @property
+    def name(self):
+        return self.__module__.split('.')[-1]
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
