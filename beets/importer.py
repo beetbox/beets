@@ -895,13 +895,9 @@ def manipulate_files(session):
             if config['import']['write'] and task.should_write_tags():
                 try:
                     item.write()
-                except mediafile.UnreadableFileError as exc:
-                    log.error(u'error while writing ({0}): {0}'.format(
-                        exc,
-                        util.displayable_path(item.path)
-                    ))
-                except util.FilesystemError as exc:
-                    exc.log(log)
+                except library.FileOperationError as exc:
+                    log.error(u'could not write {0}: {1}'.format(
+                                  util.displayable_path(item.path), exc))
 
         # Save new paths.
         with session.lib.transaction():
