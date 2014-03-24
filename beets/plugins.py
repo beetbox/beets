@@ -39,18 +39,28 @@ class BeetsPlugin(object):
     functionality by defining a subclass of BeetsPlugin and overriding
     the abstract methods defined here.
     """
-    def __init__(self, name=None):
+    def __init__(self):
         """Perform one-time plugin setup.
         """
         self.import_stages = []
-        self.name = name or self.__module__.split('.')[-1]
-        self.config = beets.config[self.name]
         if not self.template_funcs:
             self.template_funcs = {}
         if not self.template_fields:
             self.template_fields = {}
         if not self.album_template_fields:
             self.album_template_fields = {}
+
+    @property
+    def name(self):
+        return self.__module__.split('.')[-1]
+
+    @property
+    def config(self):
+        """Convenience access to plugin configuration.
+
+        Equivalent to ``beets.config[self.name]``.
+        """
+        return beets.config[self.name]
 
     def commands(self):
         """Should return a list of beets.ui.Subcommand objects for
