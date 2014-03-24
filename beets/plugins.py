@@ -60,6 +60,11 @@ class BeetsPlugin(object):
 
     @property
     def name(self):
+        """Name of the plugin used to access the configuration.
+
+        The name is the basename of the module the plugin class is
+        contained in.
+        """
         return self.__module__.split('.')[-1]
 
     def commands(self):
@@ -515,7 +520,6 @@ item_candidates = registry.item_candidates
 album_for_id = registry.album_for_id
 track_for_id = registry.track_for_id
 template_funcs = registry.template_funcs
-_add_media_fields = registry._add_media_fields
 import_stages = registry.import_stages
 item_field_getters = registry.item_field_getters
 album_field_getters = registry.album_field_getters
