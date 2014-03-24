@@ -136,12 +136,10 @@ class BeetsPlugin(object):
         """
         self._call_listener('pluginload')
 
-    def on_import(self):
-        """"Called after a ``beet import`` command finishes (the ``lib``
-        keyword argument is a Library object; ``paths`` is a list of
-        paths (strings) that were imported).
+    def on_import(self, lib=None, paths=None):
+        """"Called after a ``beet import`` command finishes.
         """
-        self._call_listener('import')
+        self._call_listener('import', lib=lib, paths=paths)
 
     def on_album_imported(self, lib=None, album=None):
         """Called with an ``Album`` object every time the ``import``
