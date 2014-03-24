@@ -117,7 +117,7 @@ currently available are:
         on_item_imported, on_item_copied, on_item_moved, on_item_removed,
         on_before_write, on_after_write, on_import_task_start,
         on_import_task_choice, on_import_task_apply, on_import_task_files,
-        on_library_opened, on_database_change, on_cli_exit, 
+        on_library_opened, on_database_change, on_cli_exit
 
 Extend the Autotagger
 ^^^^^^^^^^^^^^^^^^^^^
@@ -290,18 +290,29 @@ manipulation has occurred (copying and moving files, writing tags to disk).
 Multiple stages run in parallel but each stage processes only one task at a time
 and each task is processed by only one stage at a time.
 
-Plugins provide stages as functions that take two arguments: ``config`` and
-``task``, which are ``ImportConfig`` and ``ImportTask`` objects (both defined in
-``beets.importer``). Add such a function to the plugin's ``import_stages`` field
-to register it::
+To take advantage of import stages your plugin has to inherit from the
+``ImportStagePlugin`` class in the ``beets.plugins`` module. This class
+also inherits from ``BeetsPlugin`` so you can extend all the standard
+plugin functionality. Your stage is implemented in the ``imported()``
+method. The method takes two arugments: ``session`` and ``task``, which
+are ``ImportSession`` and ``ImportTask`` objects (both defined in
+``beets.importer``).::
 
-    from beets.plugins import BeetsPlugin
-    class ExamplePlugin(BeetsPlugin):
-        def __init__(self):
-            super(ExamplePlugin, self).__init__()
-            self.import_stages = [self.stage]
-        def stage(self, config, task):
+    from beets.plugins import ImportStagePlugin
+
+    class ExamplePlugin(ImportStagePlugin):
+        def imported(self, session, task):
             print('Importing something!')
+
+All import stage plugins have a special configuration option ``auto``.
+This is a boolean value that indicates whether to run the stage during
+the import. By default it is set to ``True``, so we can add::
+
+    example:
+        auto: no
+
+to our configuration to prevent the plugin from printing "Importing
+something!".
 
 .. _extend-query:
 

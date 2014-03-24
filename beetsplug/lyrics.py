@@ -23,7 +23,7 @@ import json
 import unicodedata
 import difflib
 
-from beets.plugins import BeetsPlugin
+from beets.plugins import ImportStagePlugin
 from beets import ui
 from beets import config
 
@@ -424,11 +424,9 @@ def fetch_google(artist, title):
 
 # Plugin logic.
 
-
-class LyricsPlugin(BeetsPlugin):
+class LyricsPlugin(ImportStagePlugin):
     def __init__(self):
         super(LyricsPlugin, self).__init__()
-        self.import_stages = [self.imported]
         self.config.add({
             'auto': True,
             'google_API_key': None,
@@ -466,10 +464,9 @@ class LyricsPlugin(BeetsPlugin):
     def imported(self, session, task):
         """Import hook for fetching lyrics automatically.
         """
-        if self.config['auto']:
-            for item in task.imported_items():
-                self.fetch_item_lyrics(session.lib, logging.DEBUG, item,
-                                       False, False)
+        for item in task.imported_items():
+            self.fetch_item_lyrics(session.lib, logging.DEBUG, item,
+                                   False, False)
 
     def fetch_item_lyrics(self, lib, loglevel, item, write, force):
         """Fetch and store lyrics for a single item. If ``write``, then the

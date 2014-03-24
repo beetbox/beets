@@ -42,7 +42,6 @@ class BeetsPlugin(object):
     def __init__(self):
         """Perform one-time plugin setup.
         """
-        self.import_stages = []
         if not self.template_funcs:
             self.template_funcs = {}
         if not self.template_fields:
@@ -301,6 +300,33 @@ class BeetsPlugin(object):
             cls.template_fields[name] = func
             return func
         return helper
+
+class ImportStagePlugin(BeetsPlugin):
+    """Plugin that adds custom stages to the import process.
+
+    Subclasses need to implement the ``imported(session, task)`` method.
+    The method is called for each import task after the user has chosen
+    the match and before the files are moved and written. The method is
+    only added to the import stages if the ``auto`` configuration for
+    the plugin is true.
+
+    Since stages are run in threads this can be used to perform
+    expensive operations.
+    """
+
+    def __init__(self):
+        super(ImportStagePlugin, self).__init__()
+        self.config.add({'auto': True})
+
+    def imported(self, session, task):
+        raise NotImplementedError
+
+    @property
+    def import_stages(self):
+        if self.config['auto'].get(bool):
+            return (self.imported,)
+        else:
+            return ()
 
 
 class Registry(list):
