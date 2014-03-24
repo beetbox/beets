@@ -42,6 +42,11 @@ beetsplug.__path__ = [ os.path.abspath(
 # Test resources/sandbox path.
 RSRC = os.path.join(os.path.dirname(__file__), 'rsrc')
 
+# Propagate to root loger so nosetest can capture it
+log = logging.getLogger('beets')
+log.propagate = True
+log.setLevel(logging.DEBUG)
+
 # Dummy item creation.
 _item_ident = 0
 def item(lib=None):
@@ -113,10 +118,6 @@ class TestCase(unittest.TestCase):
 
         # Initialize, but don't install, a DummyIO.
         self.io = DummyIO()
-
-        # Suppress logging output.
-        log = logging.getLogger('beets')
-        log.setLevel(logging.CRITICAL)
 
     def tearDown(self):
         if os.path.isdir(self.temp_dir):
