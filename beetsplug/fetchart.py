@@ -22,7 +22,7 @@ from tempfile import NamedTemporaryFile
 
 import requests
 
-from beets.plugins import BeetsPlugin
+from beets.plugins import ImportStagePlugin
 from beets.util.artresizer import ArtResizer
 from beets import importer
 from beets import ui
@@ -242,12 +242,11 @@ def batch_fetch_art(lib, albums, force, maxwidth=None):
                                           message))
 
 
-class FetchArtPlugin(BeetsPlugin):
+class FetchArtPlugin(ImportStagePlugin):
     def __init__(self):
         super(FetchArtPlugin, self).__init__()
 
         self.config.add({
-            'auto': True,
             'maxwidth': 0,
             'remote_priority': False,
             'cautious': False,
@@ -261,7 +260,6 @@ class FetchArtPlugin(BeetsPlugin):
         self.maxwidth = self.config['maxwidth'].get(int)
         if self.config['auto']:
             # Enable two import hooks when fetching is enabled.
-            self.import_stages = [self.fetch_art]
             self.register_listener('import_task_files', self.assign_art)
 
     # Asynchronous; after music is added to the library.
@@ -283,6 +281,8 @@ class FetchArtPlugin(BeetsPlugin):
 
             if path:
                 self.art_paths[task] = path
+
+    imported = fetch_art
 
     # Synchronous; after music files are put in place.
     def assign_art(self, session, task):

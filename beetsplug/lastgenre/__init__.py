@@ -218,7 +218,7 @@ options = {
 }
 
 
-class LastGenrePlugin(plugins.BeetsPlugin):
+class LastGenrePlugin(plugins.ImportStagePlugin):
     def __init__(self):
         super(LastGenrePlugin, self).__init__()
 
@@ -230,12 +230,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'canonical': None,
             'source': 'album',
             'force': True,
-            'auto': True,
             'separator': u', ',
         })
-
-        if self.config['auto']:
-            self.import_stages = [self.imported]
 
         # Read the whitelist file.
         wl_filename = self.config['whitelist'].as_filename()

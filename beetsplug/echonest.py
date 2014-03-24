@@ -103,11 +103,10 @@ def similar(lib, src_item, threshold=0.15, fmt='${difference}: ${path}'):
                 ui.print_obj(item, lib, s)
 
 
-class EchonestMetadataPlugin(plugins.BeetsPlugin):
+class EchonestMetadataPlugin(plugins.ImportStagePlugin):
     def __init__(self):
         super(EchonestMetadataPlugin, self).__init__()
         self.config.add({
-            'auto':    True,
             'apikey':  u'NY2KTZHQ0QDSHBAP6',
             'codegen': None,
             'upload':  True,
@@ -122,9 +121,6 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         if config['echonest']['codegen']:
             pyechonest.config.CODEGEN_BINARY_OVERRIDE = \
                 config['echonest']['codegen'].get(unicode)
-
-        if self.config['auto']:
-            self.import_stages = [self.imported]
 
     def _echofun(self, func, **kwargs):
         """Wrapper for requests to the EchoNest API.  Will retry up to

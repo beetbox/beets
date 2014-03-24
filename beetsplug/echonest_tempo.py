@@ -17,7 +17,7 @@ the pyechonest library (https://github.com/echonest/pyechonest).
 """
 import time
 import logging
-from beets.plugins import BeetsPlugin
+from beets.plugins import ImportStagePlugin
 from beets import ui
 from beets import config
 import pyechonest.config
@@ -119,13 +119,11 @@ def get_tempo(artist, title, duration):
     return pick
 
 
-class EchoNestTempoPlugin(BeetsPlugin):
+class EchoNestTempoPlugin(ImportStagePlugin):
     def __init__(self):
         super(EchoNestTempoPlugin, self).__init__()
-        self.import_stages = [self.imported]
         self.config.add({
             'apikey': u'NY2KTZHQ0QDSHBAP6',
-            'auto': True,
         })
 
         pyechonest.config.ECHO_NEST_API_KEY = \
@@ -151,6 +149,5 @@ class EchoNestTempoPlugin(BeetsPlugin):
 
     # Auto-fetch tempo on import.
     def imported(self, config, task):
-        if self.config['auto']:
-            for item in task.imported_items():
-                fetch_item_tempo(config.lib, logging.DEBUG, item, False)
+        for item in task.imported_items():
+            fetch_item_tempo(config.lib, logging.DEBUG, item, False)

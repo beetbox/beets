@@ -23,7 +23,7 @@ from string import Template
 import pipes
 
 from beets import ui, util, plugins, config
-from beets.plugins import BeetsPlugin
+from beets.plugins import ImportStagePlugin
 from beetsplug.embedart import _embed
 
 log = logging.getLogger('beets')
@@ -246,7 +246,7 @@ def convert_func(lib, opts, args):
     pipe.run_parallel()
 
 
-class ConvertPlugin(BeetsPlugin):
+class ConvertPlugin(ImportStagePlugin):
     def __init__(self):
         super(ConvertPlugin, self).__init__()
         self.config.add({
@@ -293,7 +293,6 @@ class ConvertPlugin(BeetsPlugin):
             u'embed': True,
             u'paths': {},
         })
-        self.import_stages = [self.auto_convert]
 
     def commands(self):
         cmd = ui.Subcommand('convert', help='convert to external location')
@@ -310,10 +309,9 @@ class ConvertPlugin(BeetsPlugin):
         cmd.func = convert_func
         return [cmd]
 
-    def auto_convert(self, config, task):
-        if self.config['auto']:
-            for item in task.imported_items():
-                convert_on_import(config.lib, item)
+    def imported(self, session, task):
+        for item in task.imported_items():
+            convert_on_import(session.lib, item)
 
 
 @ConvertPlugin.listen('import_task_files')

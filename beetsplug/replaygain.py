@@ -21,7 +21,7 @@ import sys
 import warnings
 
 from beets import ui
-from beets.plugins import BeetsPlugin
+from beets.plugins import ImportStagePlugin
 from beets.util import syspath, command_output, displayable_path
 from beets import config
 
@@ -447,7 +447,7 @@ class GStreamerBackend(object):
 
 # Main plugin logic.
 
-class ReplayGainPlugin(BeetsPlugin):
+class ReplayGainPlugin(ImportStagePlugin):
     """Provides ReplayGain analysis.
     """
 
@@ -458,18 +458,15 @@ class ReplayGainPlugin(BeetsPlugin):
 
     def __init__(self):
         super(ReplayGainPlugin, self).__init__()
-        self.import_stages = [self.imported]
 
         # default backend is 'command' for backward-compatibility.
         self.config.add({
             'overwrite': False,
-            'auto': True,
             'backend': u'command',
             'targetlevel': 89,
         })
 
         self.overwrite = self.config['overwrite'].get(bool)
-        self.automatic = self.config['auto'].get(bool)
         backend_name = self.config['backend'].get(unicode)
         if backend_name not in self.backends:
             raise ui.UserError(
@@ -597,9 +594,6 @@ class ReplayGainPlugin(BeetsPlugin):
     def imported(self, session, task):
         """Add replay gain info to items or albums of ``task``.
         """
-        if not self.automatic:
-            return
-
         if task.is_album:
             album = session.lib.get_album(task.album_id)
             self.handle_album(album, False)
