@@ -20,7 +20,6 @@ import sys
 import logging
 import shlex
 import unicodedata
-import traceback
 import time
 from unidecode import unidecode
 from beets.mediafile import MediaFile, MutagenError
@@ -258,6 +257,27 @@ def _orelse(exp1, exp2):
 
 
 
+# Exceptions.
+
+
+class FileOperationError(Exception):
+    """Indicates an error when interacting with a file on disk.
+    Possibilities include an unsupported media type, a permissions
+    error, and an unhandled Mutagen exception.
+    """
+
+
+class ReadError(FileOperationError):
+    """An error while reading a file (i.e. in `Item.read`).
+    """
+
+
+class WriteError(FileOperationError):
+    """An error while writing a file (i.e. in `Item.write`).
+    """
+
+
+
 # Item and Album model classes.
 
 
@@ -283,16 +303,6 @@ class LibModel(dbcore.Model):
         super(LibModel, self).add(lib)
         plugins.send('database_change', lib=self._db)
 
-class FileOperationError(Exception):
-    """Raised by ``item.write()`` to indicate an error when interacting
-    with the file.
-    """
-
-class ReadError(FileOperationError):
-    pass
-
-class WriteError(FileOperationError):
-    pass
 
 class Item(LibModel):
     _fields = dict((name, typ) for (name, typ, _, _) in ITEM_FIELDS)
@@ -353,7 +363,7 @@ class Item(LibModel):
         """Read the metadata from the associated file. If read_path is
         specified, read metadata from that file instead.
 
-        Raises ``ReadError`` if the file could not be read.
+        Raises a `ReadError` if the file could not be read.
         """
         if read_path is None:
             read_path = self.path
@@ -362,7 +372,7 @@ class Item(LibModel):
         try:
             f = MediaFile(syspath(read_path))
         except (OSError, IOError) as exc:
-            raise ReadError(exc.message)
+            raise ReadError(str(exc))
 
         for key in ITEM_KEYS_META:
             value = getattr(f, key)
@@ -384,7 +394,7 @@ class Item(LibModel):
     def write(self):
         """Write the item's metadata to the associated file.
 
-        Raises ``ReadError`` or ``WriteError``.
+        Can raises either a `ReadError` or a `WriteError`.
         """
         try:
             f = MediaFile(syspath(self.path))
