@@ -896,8 +896,7 @@ def manipulate_files(session):
                 try:
                     item.write()
                 except library.FileOperationError as exc:
-                    log.error(u'could not write {0}: {1}'.format(
-                                  util.displayable_path(item.path), exc))
+                    log.error(exc)
 
         # Save new paths.
         with session.lib.transaction():

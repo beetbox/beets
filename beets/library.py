@@ -265,28 +265,39 @@ class FileOperationError(Exception):
     Possibilities include an unsupported media type, a permissions
     error, and an unhandled Mutagen exception.
     """
-    def __init__(self, reason):
-        """Create an exception with the underlying (chained) exception
-        `reason`.
+    def __init__(self, path, reason):
+        """Create an exception describing an operation on the file at
+        `path` with the underlying (chained) exception `reason`.
         """
-        super(FileOperationError, self).__init__(reason)
+        super(FileOperationError, self).__init__(path, reason)
+        self.path = path
         self.reason = reason
 
-    def __str__(self):
-        """Get a string representing the error. Uses the same string as
-        the underlying reason.
+    def __unicode__(self):
+        """Get a string representing the error. Describes both the
+        underlying reason and the file path in question.
         """
-        return str(self.reason)
+        return u'{0}: {1}'.format(
+            util.displayable_path(self.path),
+            unicode(self.reason)
+        )
+
+    def __str__(self):
+        return unicode(self).encode('utf8')
 
 
 class ReadError(FileOperationError):
     """An error while reading a file (i.e. in `Item.read`).
     """
+    def __unicode__(self):
+        return u'error reading ' + super(ReadError, self).__unicode__()
 
 
 class WriteError(FileOperationError):
     """An error while writing a file (i.e. in `Item.write`).
     """
+    def __unicode__(self):
+        return u'error writing ' + super(WriteError, self).__unicode__()
 
 
 
@@ -384,7 +395,7 @@ class Item(LibModel):
         try:
             f = MediaFile(syspath(read_path))
         except (OSError, IOError) as exc:
-            raise ReadError(exc)
+            raise ReadError(read_path, exc)
 
         for key in ITEM_KEYS_META:
             value = getattr(f, key)
@@ -406,12 +417,12 @@ class Item(LibModel):
     def write(self):
         """Write the item's metadata to the associated file.
 
-        Can raises either a `ReadError` or a `WriteError`.
+        Can raise either a `ReadError` or a `WriteError`.
         """
         try:
             f = MediaFile(syspath(self.path))
         except (OSError, IOError) as exc:
-            raise ReadError(exc)
+            raise ReadError(self.path, exc)
 
         plugins.send('write', item=self)
 
@@ -420,7 +431,7 @@ class Item(LibModel):
         try:
             f.save(id3v23=beets.config['id3v23'].get(bool))
         except (OSError, IOError, MutagenError) as exc:
-            raise WriteError(exc)
+            raise WriteError(self.path, exc)
 
         # The file has a new mtime.
         self.mtime = self.current_mtime()
