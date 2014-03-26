@@ -26,3 +26,6 @@ global-exclude .DS_Store
 
 # Include default config
 include beets/config_default.yaml
+
+# Shell completion template
+include beets/ui/completion_base.sh
