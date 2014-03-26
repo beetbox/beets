@@ -29,6 +29,11 @@ New stuff:
 * Added the :ref:`after_write <plugin_events>` plugin event.
 * :doc:`/plugins/lastgenre`: Separator in genre lists can now be
   configured. Thanks to brilnius.
+* We now only use "primary" aliases for artist names from MusicBrainz. This
+  eliminates some strange naming that could occur when the `languages` config
+  option was set. Thanks to Filipe Fortes.
+
+
 
 Fixes:
 
