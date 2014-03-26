@@ -1237,6 +1237,9 @@ class MediaFile(object):
         # Isolate bugs in Mutagen.
         try:
             self.mgfile.save(**kwargs)
+        except (IOError, OSError):
+            # Propagate these through: they don't represent Mutagen bugs.
+            raise
         except Exception as exc:
             log.debug(traceback.format_exc())
             log.error('uncaught Mutagen exception in save: {0}'.format(exc))
