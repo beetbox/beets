@@ -265,6 +265,18 @@ class FileOperationError(Exception):
     Possibilities include an unsupported media type, a permissions
     error, and an unhandled Mutagen exception.
     """
+    def __init__(self, reason):
+        """Create an exception with the underlying (chained) exception
+        `reason`.
+        """
+        super(FileOperationError, self).__init__(reason)
+        self.reason = reason
+
+    def __str__(self):
+        """Get a string representing the error. Uses the same string as
+        the underlying reason.
+        """
+        return str(self.reason)
 
 
 class ReadError(FileOperationError):
@@ -372,7 +384,7 @@ class Item(LibModel):
         try:
             f = MediaFile(syspath(read_path))
         except (OSError, IOError) as exc:
-            raise ReadError(str(exc))
+            raise ReadError(exc)
 
         for key in ITEM_KEYS_META:
             value = getattr(f, key)
@@ -399,7 +411,7 @@ class Item(LibModel):
         try:
             f = MediaFile(syspath(self.path))
         except (OSError, IOError) as exc:
-            raise ReadError(str(exc))
+            raise ReadError(exc)
 
         plugins.send('write', item=self)
 
@@ -408,7 +420,7 @@ class Item(LibModel):
         try:
             f.save(id3v23=beets.config['id3v23'].get(bool))
         except (OSError, IOError, MutagenError) as exc:
-            raise WriteError(str(exc))
+            raise WriteError(exc)
 
         # The file has a new mtime.
         self.mtime = self.current_mtime()
