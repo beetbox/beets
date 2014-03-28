@@ -448,6 +448,22 @@ def move(path, dest, replace=False):
             raise FilesystemError(exc, 'move', (path, dest),
                                   traceback.format_exc())
 
+def link(path, dest, replace=False):
+    """Create a symbolic link from path to `dest`. Raises an OSError if `dest` already exists, unless `replace` is True. Does nothing if `path` == `dest`."""
+    if (samefile(path, dest)):
+        return
+
+    path = syspath(path)
+    dest = syspath(dest)
+    if os.path.exists(dest) and not replace:
+        raise FilesystemError('file exists', 'rename', (path, dest),
+                              traceback.format_exc())
+
+    try:
+        os.symlink(path, dest)
+    except OSError:
+        print "WAAT!"
+
 
 def unique_path(path):
     """Returns a version of ``path`` that does not exist on the

@@ -480,7 +480,7 @@ class Item(LibModel):
 
     # Files themselves.
 
-    def move_file(self, dest, copy=False):
+    def move_file(self, dest, copy=False, link=False):
         """Moves or copies the item's file, updating the path value if
         the move succeeds. If a file exists at ``dest``, then it is
         slightly modified to be unique.
@@ -490,6 +490,10 @@ class Item(LibModel):
         if copy:
             util.copy(self.path, dest)
             plugins.send("item_copied", item=self, source=self.path,
+                         destination=dest)
+        elif link:
+            util.link(self.path, dest)
+            plugins.send("item_linked", item=self, source=self.path,
                          destination=dest)
         else:
             plugins.send("before_item_moved", item=self, source=self.path,
