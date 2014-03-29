@@ -110,11 +110,17 @@ class CommandBackend(Backend):
         target_level = config['targetlevel'].as_number()
         self.gain_offset = int(target_level - 89)
 
+    """
+    Computes the track gain of the given tracks, returns a list of TrackGain objects
+    """
     def compute_track_gain(self, items):
         supported_items = filter(self.format_supported, items)
         output = self.compute_gain(supported_items, False)
         return output
 
+    """
+    Computes the album gain of the given album, returns an AlbumGain object
+    """
     def compute_album_gain(self, album):
         # TODO: What should be done when not all tracks in the album are
         # supported?
@@ -126,6 +132,9 @@ class CommandBackend(Backend):
         output = self.compute_gain(supported_items, True)
         return AlbumGain(output[-1], output[:-1])
 
+    """
+    Checks whether the given item is supported by the selected tool
+    """
     def format_supported(self, item):
         if 'mp3gain' in self.command and item.format != 'MP3':
             return False
@@ -133,6 +142,10 @@ class CommandBackend(Backend):
             return False
         return True
 
+    """
+    Computes the track or album gain of a list of items, returns a list of TrackGain objects
+    When computing album gain, the last TrackGain object returned is the album gain
+    """
     def compute_gain(self, items, is_album):
         if len(items) == 0:
             return []
@@ -195,11 +208,19 @@ class CommandBackend(Backend):
 
 class GStreamerBackend(object):
     def __init__(self, config):
+        self._import_gst()
+
+        # Initialized a GStreamer pipeline of the form
+        # filesrc -> decodebin -> audioconvert -> audioresample -> rganalysis -> fakesink
+        # The connection between decodebin and audioconvert is handled dynamically after decodebin
+        # figures out the type of the input file.
         self._src = self.Gst.ElementFactory.make("filesrc", "src")
         self._decbin = self.Gst.ElementFactory.make("decodebin", "decbin")
         self._conv = self.Gst.ElementFactory.make("audioconvert", "conv")
         self._res = self.Gst.ElementFactory.make("audioresample", "res")
         self._rg = self.Gst.ElementFactory.make("rganalysis", "rg")
+        # We check which files need gain ourselves, so all files given to rganalsys should have their gain
+        # computed, even if it already exists.
         self._rg.set_property("forced", True)
         self._sink = self.Gst.ElementFactory.make("fakesink", "sink")
 
@@ -221,6 +242,7 @@ class GStreamerBackend(object):
         self._bus.connect("message::eos", self._on_eos)
         self._bus.connect("message::error", self._on_error)
         self._bus.connect("message::tag", self._on_tag)
+        # Needed for handling the dynamic connection between decodebin and audioconvert
         self._decbin.connect("pad-added", self._on_pad_added)
         self._decbin.connect("pad-removed", self._on_pad_removed)
 
@@ -236,6 +258,8 @@ class GStreamerBackend(object):
         gi.require_version('Gst', '1.0')
 
         from gi.repository import GObject, Gst
+        # Thread initialization. The pipeline freezes if not initialized at this point. Not entirely sure why
+        # this is not handled by the framwork.
         GObject.threads_init()
         Gst.init([sys.argv[0]])
 
@@ -244,8 +268,8 @@ class GStreamerBackend(object):
 
     def compute(self, files, album):
         if len(self._files) != 0:
+            # Previous invocation did not consume all files
             raise Exception()
-
 
         self._files = list(files)
 
@@ -263,6 +287,7 @@ class GStreamerBackend(object):
     def compute_track_gain(self, items):
         self.compute(items, False)
         if len(self._file_tags) != len(items):
+            # Some items did not recieve tags
             raise Exception()
 
         ret = []
@@ -276,6 +301,7 @@ class GStreamerBackend(object):
         items = list(album.items())
         self.compute(items, True)
         if len(self._file_tags) != len(items):
+            # Some items did not receive tags
             raise Exception()
 
         ret = []
@@ -291,6 +317,8 @@ class GStreamerBackend(object):
         self._bus.remove_signal_watch()
 
     def _on_eos(self, bus, message):
+        # A file finished playing in all elements of the pipeline. The RG tags have already been propagated.
+        # If we don't have a next file, we stop processing.
         if not self._set_next_file():
             self._pipe.set_state(self.Gst.State.NULL)
             self._main_loop.quit()
@@ -299,6 +327,7 @@ class GStreamerBackend(object):
         self._pipe.set_state(self.Gst.State.NULL)
         self._main_loop.quit()
         err, debug = message.parse_error()
+        # A GStreamer error, either an unsupported format or a bug.
         raise Exception("Error %s - %s on file %s" %
                         (err, debug, self._src.get_property("location")))
 
@@ -306,6 +335,8 @@ class GStreamerBackend(object):
         tags = message.parse_tag()
 
         def handle_tag(taglist, tag, userdata):
+            # The rganalysis element provides both the existing tags for files and the new computes tags.
+            # In order to ensure we store the computed tags, we overwrite the RG values of received a second time.
             if tag == self.Gst.TAG_TRACK_GAIN:
                 self._file_tags[self._file]["TRACK_GAIN"] = \
                         taglist.get_double(tag)[1]
@@ -335,31 +366,48 @@ class GStreamerBackend(object):
 
         return True
 
+    """
+    Initialize the filesrc element with the next file to be analyzed.
+    """
     def _set_file(self):
+        # No more files, we're done
         if len(self._files) == 0:
             return False
 
         self._file = self._files.pop(0)
 
+        # Disconnect the decodebin element from the pipeline, set its state to READY to to clear it.
         self._decbin.unlink(self._conv)
         self._decbin.set_state(self.Gst.State.READY)
 
+        # Set a new file on the filesrc element, can only be done in the READY state
         self._src.set_state(self.Gst.State.READY)
         self._src.set_property("location", syspath(self._file.path))
 
+        # Ensure the filesrc element received the paused state of the pipeline in a blocking manner
         self._src.sync_state_with_parent()
         self._src.get_state(self.Gst.CLOCK_TIME_NONE)
+
+        # Ensure the decodebin element receives the paused state of the pipeline in a blocking manner
         self._decbin.sync_state_with_parent()
         self._decbin.get_state(self.Gst.CLOCK_TIME_NONE)
 
         return True
 
+    """
+    Set the next file to be analyzed while keeping the pipeline in the PAUSED state
+    so that the rganalysis element can correctly handle album gain
+    """
     def _set_next_file(self):
+        # A blocking pause
         self._pipe.set_state(self.Gst.State.PAUSED)
         self._pipe.get_state(self.Gst.CLOCK_TIME_NONE)
 
+        # Try setting the next file
         ret = self._set_file()
         if ret:
+            # Seek to the beginning in order to clear the EOS state of the
+            # various elements of the pipeline
             self._pipe.seek_simple(self.Gst.Format.TIME,
                                    self.Gst.SeekFlags.FLUSH,
                                    0)
@@ -370,13 +418,16 @@ class GStreamerBackend(object):
     def _on_pad_added(self, decbin, pad):
         sink_pad = self._conv.get_compatible_pad(pad, None)
         if sink_pad is None:
+            # TODO: fatal, how should this be handled?
             raise Exception()
 
         pad.link(sink_pad)
 
     def _on_pad_removed(self, decbin, pad):
+        # Called when the decodebin element is disconnected from the rest of the pipeline while switching input files
         peer = pad.get_peer()
         if peer is not None:
+            # TODO: fatal, how should this be handled?
             raise Exception()
 
 
@@ -394,25 +445,26 @@ class ReplayGainPlugin(BeetsPlugin):
         super(ReplayGainPlugin, self).__init__()
         self.import_stages = [self.imported]
 
+        # default backend is 'command' for backward-compatibility.
         self.config.add({
             'overwrite': False,
             'auto': True,
-            'backend': u'',
+            'backend': u'command',
         })
 
         self.overwrite = self.config['overwrite'].get(bool)
         self.automatic = self.config['auto'].get(bool)
         backend_name = self.config['backend'].get(unicode)
-        if backend_name not in ReplayGainPlugin.BACKENDS:
+        if backend_name not in BACKENDS:
             raise ui.UserError(
                 u"Selected ReplayGain backend {0} is not supported. "
                 u"Please select one of: {1}".format(
                     backend_name,
-                    u', '.join(ReplayGainPlugin.BACKENDS.keys())
+                    u', '.join(BACKENDS.keys())
                 )
             )
 
-        self.backend_instance = ReplayGainPlugin.BACKENDS[backend_name](
+        self.backend_instance = BACKENDS[backend_name](
             self.config
         )
 
