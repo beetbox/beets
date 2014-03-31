@@ -353,10 +353,7 @@ def send(event, **arguments):
     name of  the event to send, all other named arguments go to the
     event handler(s).
 
-    Returns the number of handlers called.
+    Returns a list of return values from the handlers.
     """
     log.debug('Sending event: %s' % event)
-    handlers = event_handlers()[event]
-    for handler in handlers:
-        handler(**arguments)
-    return len(handlers)
+    return [handler(**arguments) for handler in event_handlers()[event]]

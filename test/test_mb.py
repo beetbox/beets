@@ -366,33 +366,39 @@ class ArtistFlatteningTest(_common.TestCase):
 
     def test_alias(self):
         credit_dict = self._credit_dict()
-        self._add_alias(credit_dict, suffix='en', locale='en')
-        self._add_alias(credit_dict, suffix='en_GB', locale='en_GB')
+        self._add_alias(credit_dict, suffix='en', locale='en', primary=True)
+        self._add_alias(credit_dict, suffix='en_GB', locale='en_GB', primary=True)
         self._add_alias(credit_dict, suffix='fr', locale='fr')
         self._add_alias(credit_dict, suffix='fr_P', locale='fr', primary=True)
+        self._add_alias(credit_dict, suffix='pt_BR', locale='pt_BR')
 
         # test no alias
         config['import']['languages'] = ['']
         flat = mb._flatten_artist_credit([credit_dict])
         self.assertEqual(flat, ('NAME', 'SORT', 'CREDIT'))
 
-        # test en
+        # test en primary
         config['import']['languages'] = ['en']
         flat = mb._flatten_artist_credit([credit_dict])
         self.assertEqual(flat, ('ALIASen', 'ALIASSORTen', 'CREDIT'))
 
-        # test en_GB en
+        # test en_GB en primary
         config['import']['languages'] = ['en_GB', 'en']
         flat = mb._flatten_artist_credit([credit_dict])
         self.assertEqual(flat, ('ALIASen_GB', 'ALIASSORTen_GB', 'CREDIT'))
 
-        # test en en_GB
+        # test en en_GB primary
         config['import']['languages'] = ['en', 'en_GB']
         flat = mb._flatten_artist_credit([credit_dict])
         self.assertEqual(flat, ('ALIASen', 'ALIASSORTen', 'CREDIT'))
 
         # test fr primary
         config['import']['languages'] = ['fr']
+        flat = mb._flatten_artist_credit([credit_dict])
+        self.assertEqual(flat, ('ALIASfr_P', 'ALIASSORTfr_P', 'CREDIT'))
+
+        # test for not matching non-primary
+        config['import']['languages'] = ['pt_BR', 'fr']
         flat = mb._flatten_artist_credit([credit_dict])
         self.assertEqual(flat, ('ALIASfr_P', 'ALIASSORTfr_P', 'CREDIT'))
 

@@ -141,7 +141,10 @@ currently available are:
   deleted from disk).
 
 * *write*: called with an ``Item`` object just before a file's metadata is
-  written to disk (i.e., just before the file on disk is opened).
+  written to disk (i.e., just before the file on disk is opened). Event
+  handlers may raise a ``library.FileOperationError`` exception to abort
+  the write operation. Beets will catch that exception, print an error
+  message and continue.
 
 * *after_write*: called with an ``Item`` object after a file's metadata is
   written to disk (i.e., just after the file on disk is closed).

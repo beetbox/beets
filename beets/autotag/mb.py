@@ -80,20 +80,13 @@ def _preferred_alias(aliases):
 
     # Search configured locales in order.
     for locale in config['import']['languages'].as_str_seq():
-        # Find matching aliases for this locale.
-        matches = [a for a in aliases if a['locale'] == locale]
+        # Find matching primary aliases for this locale.
+        matches = [a for a in aliases if a['locale'] == locale and 'primary' in a]
         # Skip to the next locale if we have no matches
         if not matches:
             continue
 
-        # Find the aliases that have the primary flag set.
-        primaries = [a for a in matches if 'primary' in a]
-        # Take the primary if we have it, otherwise take the first
-        # match with the correct locale.
-        if primaries:
-            return primaries[0]
-        else:
-            return matches[0]
+        return matches[0]
 
 def _flatten_artist_credit(credit):
     """Given a list representing an ``artist-credit`` block, flatten the

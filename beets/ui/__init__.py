@@ -834,7 +834,7 @@ def vararg_callback(option, opt_str, value, parser):
             break
         value.append(arg)
 
-    del parser.rargs[:len(value)-1]
+    del parser.rargs[:len(value) - 1]
     setattr(parser.values, option.dest, value)
 
 
@@ -960,8 +960,15 @@ def main(args=None):
     except util.HumanReadableException as exc:
         exc.log(log)
         sys.exit(1)
+    except library.FileOperationError as exc:
+        # These errors have reasonable human-readable descriptions, but
+        # we still want to log their tracebacks for debugging.
+        log.debug(traceback.format_exc())
+        log.error(exc)
+        sys.exit(1)
     except confit.ConfigError as exc:
         log.error(u'configuration error: {0}'.format(exc))
+        sys.exit(1)
     except IOError as exc:
         if exc.errno == errno.EPIPE:
             # "Broken pipe". End silently.
