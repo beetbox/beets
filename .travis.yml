@@ -24,3 +24,10 @@ before_script:
     - "[[ $TRAVIS_PYTHON_VERSION == '2.7' ]] && pip install coveralls || true"
 after_success:
     - "[[ $TRAVIS_PYTHON_VERSION == '2.7' ]] && coveralls || true"
+
+notifications:
+    irc:
+        channels:
+            - "irc.freenode.org#beets"
+        use_notice: true
+        skip_join: true
