@@ -42,6 +42,7 @@ ESCAPE_CHAR = u'$'
 VARIABLE_PREFIX = '__var_'
 FUNCTION_PREFIX = '__func_'
 
+
 class Environment(object):
     """Contains the values and functions to be substituted into a
     template.
@@ -57,9 +58,11 @@ def ex_lvalue(name):
     """A variable load expression."""
     return ast.Name(name, ast.Store())
 
+
 def ex_rvalue(name):
     """A variable store expression."""
     return ast.Name(name, ast.Load())
+
 
 def ex_literal(val):
     """An int, float, long, bool, string, or None literal with the given
@@ -75,6 +78,7 @@ def ex_literal(val):
         return ast.Str(val)
     raise TypeError('no literal for {0}'.format(type(val)))
 
+
 def ex_varassign(name, expr):
     """Assign an expression into a single variable. The expression may
     either be an `ast.expr` object or a value to be used as a literal.
@@ -82,6 +86,7 @@ def ex_varassign(name, expr):
     if not isinstance(expr, ast.expr):
         expr = ex_literal(expr)
     return ast.Assign([ex_lvalue(name)], expr)
+
 
 def ex_call(func, args):
     """A function-call expression with only positional parameters. The
@@ -97,6 +102,7 @@ def ex_call(func, args):
             args[i] = ex_literal(args[i])
 
     return ast.Call(func, args, [], None, None)
+
 
 def compile_func(arg_names, statements, name='_the_func', debug=False):
     """Compile a list of statements as the body of a function and return
@@ -157,6 +163,7 @@ class Symbol(object):
         expr = ex_rvalue(VARIABLE_PREFIX + self.ident.encode('utf8'))
         return [expr], set([self.ident.encode('utf8')]), set()
 
+
 class Call(object):
     """A function call in a template."""
     def __init__(self, ident, args, original):
@@ -214,6 +221,7 @@ class Call(object):
         )
         return [subexpr_call], varnames, funcnames
 
+
 class Expression(object):
     """Top-level template construct: contains a list of text blobs,
     Symbols, and Calls.
@@ -258,6 +266,7 @@ class Expression(object):
 
 class ParseError(Exception):
     pass
+
 
 class Parser(object):
     """Parses a template expression string. Instantiate the class with
@@ -316,13 +325,13 @@ class Parser(object):
 
             next_char = self.string[self.pos + 1]
             if char == ESCAPE_CHAR and next_char in \
-                  (SYMBOL_DELIM, FUNC_DELIM, GROUP_CLOSE, ARG_SEP):
+                    (SYMBOL_DELIM, FUNC_DELIM, GROUP_CLOSE, ARG_SEP):
                 # An escaped special character ($$, $}, etc.). Note that
                 # ${ is not an escape sequence: this is ambiguous with
                 # the start of a symbol and it's not necessary (just
                 # using { suffices in all cases).
                 text_parts.append(next_char)
-                self.pos += 2 # Skip the next character.
+                self.pos += 2  # Skip the next character.
                 continue
 
             # Shift all characters collected so far into a single string.
@@ -372,7 +381,7 @@ class Parser(object):
 
         if next_char == GROUP_OPEN:
             # A symbol like ${this}.
-            self.pos += 1 # Skip opening.
+            self.pos += 1  # Skip opening.
             closer = self.string.find(GROUP_CLOSE, self.pos)
             if closer == -1 or closer == self.pos:
                 # No closing brace found or identifier is empty.
@@ -431,7 +440,7 @@ class Parser(object):
             self.parts.append(self.string[start_pos:self.pos])
             return
 
-        self.pos += 1 # Move past closing brace.
+        self.pos += 1  # Move past closing brace.
         self.parts.append(Call(ident, args, self.string[start_pos:self.pos]))
 
     def parse_argument_list(self):
@@ -471,6 +480,7 @@ class Parser(object):
         ident = re.match(ur'\w*', remainder).group(0)
         self.pos += len(ident)
         return ident
+
 
 def _parse(template):
     """Parse a top-level template string Expression. Any extraneous text

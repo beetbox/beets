@@ -20,6 +20,7 @@ import subprocess
 import shutil
 from setuptools import setup
 
+
 def _read(fn):
     path = os.path.join(os.path.dirname(__file__), fn)
     return open(path).read()
@@ -51,7 +52,7 @@ setup(name='beets',
       platforms='ALL',
       long_description=_read('README.rst'),
       test_suite='test.testall.suite',
-      include_package_data=True, # Install plugin resources.
+      include_package_data=True,  # Install plugin resources.
 
       packages=[
           'beets',

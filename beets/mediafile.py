@@ -54,10 +54,8 @@ from beets.util.enumeration import enum
 __all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
 
 
-
 # Logger.
 log = logging.getLogger('beets')
-
 
 
 # Exceptions.
@@ -67,16 +65,17 @@ class UnreadableFileError(Exception):
     """
     pass
 
+
 class FileTypeError(UnreadableFileError):
     """Raised for files that don't seem to have a type MediaFile
     supports.
     """
     pass
 
+
 class MutagenError(UnreadableFileError):
     """Raised when Mutagen fails unexpectedly---probably due to a bug.
     """
-
 
 
 # Constants.
@@ -94,7 +93,6 @@ TYPES = {
     'mpc':  'Musepack',
     'asf':  'Windows Media',
 }
-
 
 
 # Utility.
@@ -161,7 +159,6 @@ def _safe_cast(out_type, val):
         return val
 
 
-
 # Image coding for ASF/WMA.
 
 def _unpack_asf_image(data):
@@ -189,6 +186,7 @@ def _unpack_asf_image(data):
     return (mime.decode("utf-16-le"), image_data, type,
             description.decode("utf-16-le"))
 
+
 def _pack_asf_image(mime, data, type=3, description=""):
     """Pack image data for a WM/Picture tag.
     """
@@ -197,7 +195,6 @@ def _pack_asf_image(mime, data, type=3, description=""):
     tag_data += description.encode("utf-16-le") + "\x00\x00"
     tag_data += data
     return tag_data
-
 
 
 # iTunes Sound Check encoding.
@@ -237,6 +234,7 @@ def _sc_decode(soundcheck):
 
     return round(gain, 2), round(peak, 6)
 
+
 def _sc_encode(gain, peak):
     """Encode ReplayGain gain/peak values as a Sound Check string.
     """
@@ -259,7 +257,6 @@ def _sc_encode(gain, peak):
     uk = 0
     values = (g1, g1, g2, g2, uk, uk, peak, peak, uk, uk)
     return (u' %08X' * 10) % values
-
 
 
 # Cover art and other images.
@@ -336,7 +333,6 @@ class Image(object):
         if self.type is None:
             return None
         return list(self.TYPES).index(self.type)
-
 
 
 # StorageStyle classes describe strategies for accessing values in
@@ -588,6 +584,7 @@ class MP4SoundCheckStorageStyle(SoundCheckStorageStyleMixin, MP4StorageStyle):
     def __init__(self, index=0, **kwargs):
         super(MP4SoundCheckStorageStyle, self).__init__(**kwargs)
         self.index = index
+
 
 class MP4BoolStorageStyle(MP4StorageStyle):
     """A style for booleans in MPEG-4 files. (MPEG-4 has an atom type
@@ -901,7 +898,6 @@ class FlacImageStorageStyle(ListStorageStyle):
         return pic
 
 
-
 # MediaField is a descriptor that represents a single logical field. It
 # aggregates several StorageStyles describing how to access the data for
 # each file type.
@@ -1136,7 +1132,6 @@ class ImageListField(MediaField):
             style.set_list(mediafile.mgfile, images)
 
 
-
 # MediaFile is a collection of fields.
 
 
@@ -1255,7 +1250,6 @@ class MediaFile(object):
             # ASF), just delete each tag individually.
             for tag in self.mgfile.keys():
                 del self.mgfile[tag]
-
 
     # Field definitions.
 
