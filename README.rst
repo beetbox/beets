@@ -1,3 +1,9 @@
+.. image:: https://travis-ci.org/sampsyo/beets.svg?branch=master
+    :target: https://travis-ci.org/sampsyo/beets
+
+.. image:: https://coveralls.io/repos/sampsyo/beets/badge.png?branch=master
+    :target: https://coveralls.io/r/sampsyo/beets?branch=master
+
 Beets is the media library management system for obsessive-compulsive music
 geeks.
 
