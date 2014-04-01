@@ -171,12 +171,8 @@ class CommandBackend(Backend):
         cmd = cmd + [syspath(i.path) for i in items]
 
         log.debug(u'replaygain: analyzing {0} files'.format(len(items)))
-        try:
-            log.debug(u"replaygain: executing %s" % " ".join(cmd))
-            output = call(cmd)
-        except ReplayGainError as exc:
-            log.warn(u'replaygain: analysis failed ({0})'.format(exc))
-            return
+        log.debug(u"replaygain: executing %s" % " ".join(cmd))
+        output = call(cmd)
         log.debug(u'replaygain: analysis finished')
         results = self.parse_tool_output(output,
                                          len(items) + (1 if is_album else 0))
@@ -254,23 +250,22 @@ class GStreamerBackend(object):
         """Import the necessary GObject-related modules and assign `Gst`
         and `GObject` fields on this object.
         """
+        print "here 1"
         import gi
         gi.require_version('Gst', '1.0')
+        print "here 1.5"
 
         from gi.repository import GObject, Gst
         # Thread initialization. The pipeline freezes if not initialized at this point. Not entirely sure why
         # this is not handled by the framwork.
         GObject.threads_init()
         Gst.init([sys.argv[0]])
+        print "here 2"
 
         self.GObject = GObject
         self.Gst = Gst
 
     def compute(self, files, album):
-        if len(self._files) != 0:
-            # Previous invocation did not consume all files
-            raise Exception()
-
         self._files = list(files)
 
         if len(self._files) == 0:
@@ -287,8 +282,7 @@ class GStreamerBackend(object):
     def compute_track_gain(self, items):
         self.compute(items, False)
         if len(self._file_tags) != len(items):
-            # Some items did not recieve tags
-            raise Exception()
+            raise ReplayGainError("Some tracks did not receive tags")
 
         ret = []
         for item in items:
@@ -301,8 +295,7 @@ class GStreamerBackend(object):
         items = list(album.items())
         self.compute(items, True)
         if len(self._file_tags) != len(items):
-            # Some items did not receive tags
-            raise Exception()
+            raise ReplayGainError("Some items in album did not receive tags")
 
         ret = []
         for item in items:
@@ -328,7 +321,7 @@ class GStreamerBackend(object):
         self._main_loop.quit()
         err, debug = message.parse_error()
         # A GStreamer error, either an unsupported format or a bug.
-        raise Exception("Error %s - %s on file %s" %
+        raise ReplayGainError("Error %s - %s on file %s" %
                         (err, debug, self._src.get_property("location")))
 
     def _on_tag(self, bus, message):
@@ -360,6 +353,9 @@ class GStreamerBackend(object):
             return False
 
         self._file = self._files.pop(0)
+
+        self._pipe.set_state(self.Gst.State.NULL)
+
         self._src.set_property("location", syspath(self._file.path))
 
         self._pipe.set_state(self.Gst.State.PLAYING)
@@ -417,18 +413,13 @@ class GStreamerBackend(object):
 
     def _on_pad_added(self, decbin, pad):
         sink_pad = self._conv.get_compatible_pad(pad, None)
-        if sink_pad is None:
-            # TODO: fatal, how should this be handled?
-            raise Exception()
-
+        assert(sink_pad is not None)
         pad.link(sink_pad)
 
     def _on_pad_removed(self, decbin, pad):
         # Called when the decodebin element is disconnected from the rest of the pipeline while switching input files
         peer = pad.get_peer()
-        if peer is not None:
-            # TODO: fatal, how should this be handled?
-            raise Exception()
+        assert(peer is None)
 
 
 # Main plugin logic.
@@ -510,22 +501,24 @@ class ReplayGainPlugin(BeetsPlugin):
         log.info(u'analyzing {0} - {1}'.format(album.albumartist,
                                                album.album))
 
-        album_gain = self.backend_instance.compute_album_gain(album)
-        if len(album_gain.track_gains) != len(album.items()):
-            log.warn(
-                u"ReplayGain backend failed "
-                u"for some tracks in album {0} - {1}".format(
-                    album.albumartist, album.album
+        try:
+            album_gain = self.backend_instance.compute_album_gain(album)
+            if len(album_gain.track_gains) != len(album.items()):
+                raise ReplayGainError(
+                    u"ReplayGain backend failed "
+                    u"for some tracks in album {0} - {1}".format(
+                        album.albumartist, album.album
+                    )
                 )
-            )
-            return
 
-        self.store_album_gain(album, album_gain.album_gain)
-        for item, track_gain in itertools.izip(album.items(),
-                                               album_gain.track_gains):
-            self.store_track_gain(item, track_gain)
-            if write:
-                item.write()
+            self.store_album_gain(album, album_gain.album_gain)
+            for item, track_gain in itertools.izip(album.items(),
+                                                   album_gain.track_gains):
+                self.store_track_gain(item, track_gain)
+                if write:
+                    item.write()
+        except ReplayGainError, e:
+            log.warn(e)
 
     def handle_track(self, item, write):
         if not self.track_requires_gain(item):
@@ -536,18 +529,21 @@ class ReplayGainPlugin(BeetsPlugin):
         log.info(u'analyzing {0} - {1}'.format(item.artist,
                                                item.title))
 
-        track_gains = self.backend_instance.compute_track_gain([item])
-        if len(track_gains) != 1:
-            log.warn(
+        try:
+            track_gains = self.backend_instance.compute_track_gain([item])
+            if len(track_gains) != 1:
+                raise ReplayGainError(
                 u"ReplayGain backend failed for track {0} - {1}".format(
                     item.artist, item.title
                 )
             )
-            return
 
-        self.store_track_gain(item, track_gains[0])
-        if write:
-            item.write()
+            self.store_track_gain(item, track_gains[0])
+            if write:
+                item.write()
+        except RepalyGainError, e:
+            log.warn(e)
+
 
     def imported(self, session, task):
         """Our import stage function."""
