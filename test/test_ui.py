@@ -157,9 +157,10 @@ class ModifyTest(_common.TestCase):
         self.i.move(True)
         self.album = self.lib.add_album([self.i])
 
-    def _modify(self, mods, query=(), write=False, move=False, album=False):
+    def _modify(self, mods, dels=(), query=(), write=False, move=False,
+                album=False):
         self.io.addinput('y')
-        commands.modify_items(self.lib, mods, query,
+        commands.modify_items(self.lib, mods, dels, query,
                               write, move, album, True)
 
     def test_modify_item_dbdata(self):

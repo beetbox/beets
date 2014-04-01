@@ -1082,7 +1082,7 @@ default_commands.append(version_cmd)
 
 # modify: Declaratively change metadata.
 
-def modify_items(lib, mods, query, write, move, album, confirm):
+def modify_items(lib, mods, dels, query, write, move, album, confirm):
     """Modifies matching items according to key=value assignments."""
     # Parse key=value specifications into a dictionary.
     model_cls = library.Album if album else library.Item
@@ -1102,6 +1102,8 @@ def modify_items(lib, mods, query, write, move, album, confirm):
     for obj in objs:
         for field, value in fsets.iteritems():
             obj[field] = value
+        for field in dels:
+            del obj[field]
         if ui.show_model_changes(obj):
             changed.add(obj)
 
@@ -1155,13 +1157,22 @@ modify_cmd.parser.add_option('-f', '--format', action='store',
     help='print with custom format', default=None)
 def modify_func(lib, opts, args):
     args = decargs(args)
-    mods = [a for a in args if '=' in a]
-    query = [a for a in args if '=' not in a]
-    if not mods:
+    mods = []
+    dels = []
+    query = []
+    for arg in args:
+        if arg.endswith('!') and '=' not in arg and ':' not in arg:
+            dels.append(arg[:-1])
+        elif '=' in arg:
+            mods.append(arg)
+        else:
+            query.append(arg)
+    if not mods and not dels:
         raise ui.UserError('no modifications specified')
     write = opts.write if opts.write is not None else \
         config['import']['write'].get(bool)
-    modify_items(lib, mods, query, write, opts.move, opts.album, not opts.yes)
+    modify_items(lib, mods, dels, query, write, opts.move, opts.album,
+                 not opts.yes)
 modify_cmd.func = modify_func
 default_commands.append(modify_cmd)
 
