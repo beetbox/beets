@@ -162,11 +162,11 @@ class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
                 desc='the composer', type=Image.TYPES.composer)
 
 
-# TODO include this in ReadWriteTestBase if implemented
 class LazySaveTestMixin(object):
     """Mediafile should only write changes when tags have changed
     """
 
+    @unittest.skip('not yet implemented')
     def test_unmodified(self):
         mediafile = self._mediafile_fixture('full')
         mtime = self._set_past_mtime(mediafile.path)
@@ -175,6 +175,7 @@ class LazySaveTestMixin(object):
         mediafile.save()
         self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
 
+    @unittest.skip('not yet implemented')
     def test_same_tag_value(self):
         mediafile = self._mediafile_fixture('full')
         mtime = self._set_past_mtime(mediafile.path)
@@ -184,6 +185,15 @@ class LazySaveTestMixin(object):
         mediafile.save()
         self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
 
+    def test_update_same_tag_value(self):
+        mediafile = self._mediafile_fixture('full')
+        mtime = self._set_past_mtime(mediafile.path)
+        self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+        mediafile.update({'title': mediafile.title})
+        self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+    @unittest.skip('not yet implemented')
     def test_tag_value_change(self):
         mediafile = self._mediafile_fixture('full')
         mtime = self._set_past_mtime(mediafile.path)
@@ -192,6 +202,14 @@ class LazySaveTestMixin(object):
         mediafile.title = mediafile.title
         mediafile.album = 'another'
         mediafile.save()
+        self.assertNotEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+    def test_update_changed_tag_value(self):
+        mediafile = self._mediafile_fixture('full')
+        mtime = self._set_past_mtime(mediafile.path)
+        self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+        mediafile.update({'title': mediafile.title, 'album': 'another'})
         self.assertNotEqual(os.stat(mediafile.path).st_mtime, mtime)
 
     def _set_past_mtime(self, path):
@@ -234,7 +252,7 @@ class GenreListTestMixin(object):
         self.assertItemsEqual(mediafile.genres, [u'the genre', u'another'])
 
 
-class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin):
+class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin, LazySaveTestMixin):
     """Test writing and reading tags. Subclasses must set ``extension`` and
     ``audio_properties``.
     """
