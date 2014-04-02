@@ -42,7 +42,8 @@ class IndexableEnumMeta(EnumMeta):
     def __getitem__(obj, x):
         if isinstance(x, int):
             return obj._value2member_map_[x]
-        return super(IndexableEnumMeta, EnumMeta).__getitem__(obj, x)
+        #import code; code.interact(local=locals())
+        return super(IndexableEnumMeta, obj).__getitem__(x)
 
 class IndexableEnum(Enum):
     """
