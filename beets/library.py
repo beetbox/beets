@@ -122,71 +122,71 @@ class PathType(types.Type):
 # - Is the field writable?
 # - Does the field reflect an attribute of a MediaFile?
 ITEM_FIELDS = [
-    ('id',       types.Id(),      False, False),
-    ('path',     PathType(),      False, False),
-    ('album_id', types.Integer(), False, False),
+    ('id',       types.Id(),      False),
+    ('path',     PathType(),      False),
+    ('album_id', types.Integer(), False),
 
-    ('title',                types.String(),     True, True),
-    ('artist',               types.String(),     True, True),
-    ('artist_sort',          types.String(),     True, True),
-    ('artist_credit',        types.String(),     True, True),
-    ('album',                types.String(),     True, True),
-    ('albumartist',          types.String(),     True, True),
-    ('albumartist_sort',     types.String(),     True, True),
-    ('albumartist_credit',   types.String(),     True, True),
-    ('genre',                types.String(),     True, True),
-    ('composer',             types.String(),     True, True),
-    ('grouping',             types.String(),     True, True),
-    ('year',                 types.PaddedInt(4), True, True),
-    ('month',                types.PaddedInt(2), True, True),
-    ('day',                  types.PaddedInt(2), True, True),
-    ('track',                types.PaddedInt(2), True, True),
-    ('tracktotal',           types.PaddedInt(2), True, True),
-    ('disc',                 types.PaddedInt(2), True, True),
-    ('disctotal',            types.PaddedInt(2), True, True),
-    ('lyrics',               types.String(),     True, True),
-    ('comments',             types.String(),     True, True),
-    ('bpm',                  types.Integer(),    True, True),
-    ('comp',                 types.Boolean(),    True, True),
-    ('mb_trackid',           types.String(),     True, True),
-    ('mb_albumid',           types.String(),     True, True),
-    ('mb_artistid',          types.String(),     True, True),
-    ('mb_albumartistid',     types.String(),     True, True),
-    ('albumtype',            types.String(),     True, True),
-    ('label',                types.String(),     True, True),
-    ('acoustid_fingerprint', types.String(),     True, True),
-    ('acoustid_id',          types.String(),     True, True),
-    ('mb_releasegroupid',    types.String(),     True, True),
-    ('asin',                 types.String(),     True, True),
-    ('catalognum',           types.String(),     True, True),
-    ('script',               types.String(),     True, True),
-    ('language',             types.String(),     True, True),
-    ('country',              types.String(),     True, True),
-    ('albumstatus',          types.String(),     True, True),
-    ('media',                types.String(),     True, True),
-    ('albumdisambig',        types.String(),     True, True),
-    ('disctitle',            types.String(),     True, True),
-    ('encoder',              types.String(),     True, True),
-    ('rg_track_gain',        types.Float(),      True, True),
-    ('rg_track_peak',        types.Float(),      True, True),
-    ('rg_album_gain',        types.Float(),      True, True),
-    ('rg_album_peak',        types.Float(),      True, True),
-    ('original_year',        types.PaddedInt(4), True, True),
-    ('original_month',       types.PaddedInt(2), True, True),
-    ('original_day',         types.PaddedInt(2), True, True),
+    ('title',                types.String(),     True),
+    ('artist',               types.String(),     True),
+    ('artist_sort',          types.String(),     True),
+    ('artist_credit',        types.String(),     True),
+    ('album',                types.String(),     True),
+    ('albumartist',          types.String(),     True),
+    ('albumartist_sort',     types.String(),     True),
+    ('albumartist_credit',   types.String(),     True),
+    ('genre',                types.String(),     True),
+    ('composer',             types.String(),     True),
+    ('grouping',             types.String(),     True),
+    ('year',                 types.PaddedInt(4), True),
+    ('month',                types.PaddedInt(2), True),
+    ('day',                  types.PaddedInt(2), True),
+    ('track',                types.PaddedInt(2), True),
+    ('tracktotal',           types.PaddedInt(2), True),
+    ('disc',                 types.PaddedInt(2), True),
+    ('disctotal',            types.PaddedInt(2), True),
+    ('lyrics',               types.String(),     True),
+    ('comments',             types.String(),     True),
+    ('bpm',                  types.Integer(),    True),
+    ('comp',                 types.Boolean(),    True),
+    ('mb_trackid',           types.String(),     True),
+    ('mb_albumid',           types.String(),     True),
+    ('mb_artistid',          types.String(),     True),
+    ('mb_albumartistid',     types.String(),     True),
+    ('albumtype',            types.String(),     True),
+    ('label',                types.String(),     True),
+    ('acoustid_fingerprint', types.String(),     True),
+    ('acoustid_id',          types.String(),     True),
+    ('mb_releasegroupid',    types.String(),     True),
+    ('asin',                 types.String(),     True),
+    ('catalognum',           types.String(),     True),
+    ('script',               types.String(),     True),
+    ('language',             types.String(),     True),
+    ('country',              types.String(),     True),
+    ('albumstatus',          types.String(),     True),
+    ('media',                types.String(),     True),
+    ('albumdisambig',        types.String(),     True),
+    ('disctitle',            types.String(),     True),
+    ('encoder',              types.String(),     True),
+    ('rg_track_gain',        types.Float(),      True),
+    ('rg_track_peak',        types.Float(),      True),
+    ('rg_album_gain',        types.Float(),      True),
+    ('rg_album_peak',        types.Float(),      True),
+    ('original_year',        types.PaddedInt(4), True),
+    ('original_month',       types.PaddedInt(2), True),
+    ('original_day',         types.PaddedInt(2), True),
 
-    ('length',      types.Float(),                  False, True),
-    ('bitrate',     types.ScaledInt(1000, u'kbps'), False, True),
-    ('format',      types.String(),                 False, True),
-    ('samplerate',  types.ScaledInt(1000, u'kHz'),  False, True),
-    ('bitdepth',    types.Integer(),                False, True),
-    ('channels',    types.Integer(),                False, True),
-    ('mtime',       DateType(),                     False, False),
-    ('added',       DateType(),                     False, False),
+    ('length',      types.Float(),                  True),
+    ('bitrate',     types.ScaledInt(1000, u'kbps'), True),
+    ('format',      types.String(),                 True),
+    ('samplerate',  types.ScaledInt(1000, u'kHz'),  True),
+    ('bitdepth',    types.Integer(),                True),
+    ('channels',    types.Integer(),                True),
+    ('mtime',       DateType(),                     False),
+    ('added',       DateType(),                     False),
 ]
-ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
-ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
+ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[2]]
 ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
+ITEM_KEYS_WRITABLE = set(MediaFile.fields()).intersection(ITEM_KEYS)
 
 # Database fields for the "albums" table.
 # The third entry in each tuple indicates whether the field reflects an
@@ -328,7 +328,7 @@ class LibModel(dbcore.Model):
 
 
 class Item(LibModel):
-    _fields = dict((name, typ) for (name, typ, _, _) in ITEM_FIELDS)
+    _fields = dict((name, typ) for (name, typ, _) in ITEM_FIELDS)
     _table = 'items'
     _flex_table = 'item_attributes'
     _search_fields = ITEM_DEFAULT_FIELDS
@@ -357,7 +357,7 @@ class Item(LibModel):
             elif isinstance(value, buffer):
                 value = str(value)
 
-        if key in ITEM_KEYS_WRITABLE:
+        if key in MediaFile.fields():
             self.mtime = 0  # Reset mtime on dirty.
 
         super(Item, self).__setitem__(key, value)
