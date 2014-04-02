@@ -24,6 +24,7 @@ import time
 import _common
 from _common import unittest
 from beets.mediafile import MediaFile, Image
+from beets.library import ITEM_KEYS_WRITABLE, ITEM_KEYS
 
 
 class ArtTestMixin(object):
@@ -724,6 +725,10 @@ class MediaFieldTest(unittest.TestCase):
         fields = ReadWriteTestBase.empty_tags.keys()
         fields.extend(('encoder', 'images', 'genres', 'albumtype'))
         self.assertItemsEqual(MediaFile.fields(), fields)
+
+    def test_item_keys_writable_migration(self):
+        keys_writable = set(MediaFile.fields()).intersection(ITEM_KEYS)
+        self.assertItemsEqual(keys_writable, ITEM_KEYS_WRITABLE)
 
 
 def suite():
