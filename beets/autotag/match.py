@@ -25,11 +25,12 @@ from munkres import Munkres
 from beets import plugins
 from beets import config
 from beets.util import plurality
-from beets.util.enumeration import enum
+from beets.util.enumeration import OrderedEnum
 from beets.autotag import hooks
 
 # Recommendation enumeration.
-recommendation = enum('none', 'low', 'medium', 'strong', name='recommendation')
+recommendation = OrderedEnum('recommendation', ['none', 'low', 'medium',
+                                                'strong'])
 
 # Artist signals that indicate "various artists". These are used at the
 # album level to determine whether a given release is likely a VA

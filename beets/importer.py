@@ -31,13 +31,12 @@ from beets import util
 from beets import config
 from beets.util import pipeline
 from beets.util import syspath, normpath, displayable_path
-from beets.util.enumeration import enum
+from enum import Enum
 from beets import mediafile
 
-action = enum(
-    'SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'APPLY', 'MANUAL_ID',
-    'ALBUMS', name='action'
-)
+action = Enum('action',
+              ['SKIP', 'ASIS', 'TRACKS', 'MANUAL', 'APPLY', 'MANUAL_ID',
+               'ALBUMS'])
 
 QUEUE_SIZE = 128
 SINGLE_ARTIST_THRESH = 0.25

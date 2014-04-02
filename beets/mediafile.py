@@ -49,7 +49,7 @@ import imghdr
 import os
 import logging
 import traceback
-from beets.util.enumeration import enum
+from beets.util.enumeration import IndexableEnum
 
 __all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
 
@@ -295,29 +295,31 @@ class Image(object):
     * ``mime_type`` Read-only property that contains the mime type of
                     the binary data
     """
-    TYPES = enum([
+    # By default, enums are 1-indexed. We make this enum zero-indexed
+    # by explicitly specifying the indicies of field
+    TYPES = IndexableEnum('TageImage.TYPES', [(k, i) for (i, k) in enumerate([
         'other',
         'icon',
-        'other icon',
+        'other_icon',
         'front',
         'back',
         'leaflet',
         'media',
-        'lead artist',
+        'lead_artist',
         'artist',
         'conductor',
         'group',
         'composer',
         'lyricist',
-        'recording location',
-        'recording session',
+        'recording_location',
+        'recording_session',
         'performance',
-        'screen capture',
+        'screen_capture',
         'fish',
         'illustration',
-        'artist logo',
-        'publisher logo',
-    ], name='TageImage.TYPES')
+        'artist_logo',
+        'publisher_logo',
+    ])])
 
     def __init__(self, data, desc=None, type=None):
         self.data = data
