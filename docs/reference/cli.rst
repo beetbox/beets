@@ -102,9 +102,10 @@ right now; this is something we need to work on. Read the
   metadata match. To disable this and have the importer ask you every time,
   use the ``-t`` (for *timid*) option.
 
-* The importer typically works in a whole-album-at-a-time mode. If you
-  instead want to import individual, non-album tracks, use the *singleton*
-  mode by supplying the ``-s`` option.
+* The importer typically works in a whole-album-at-a-time mode. If you instead
+  want to import individual, non-album tracks, use the *singleton* mode by
+  supplying the ``-s`` option. This also allows you to point beets to single
+  files, instead of folders only.
 
 * If you have an album that's split across several directories under a common
   top directory, use the ``--flat`` option. This takes all the music files

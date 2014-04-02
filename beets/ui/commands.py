@@ -748,8 +748,10 @@ def import_files(lib, paths, query):
     for path in paths:
         fullpath = syspath(normpath(path))
         if not config['import']['singletons'] and not os.path.isdir(fullpath):
-            raise ui.UserError(u'not a directory: {0}'.format(
-                displayable_path(path)))
+            msg = u'not a directory: {0}'.format(displayable_path(path))
+            if os.path.exists(fullpath):
+                msg += '\nhint: use -s to import single files'
+            raise ui.UserError(msg)
         elif config['import']['singletons'] and not os.path.exists(fullpath):
             raise ui.UserError(u'no such file: {0}'.format(
                 displayable_path(path)))
