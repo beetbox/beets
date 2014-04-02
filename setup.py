@@ -71,6 +71,7 @@ setup(name='beets',
       },
 
       install_requires=[
+          'enum34',
           'mutagen>=1.22',
           'munkres',
           'unidecode',
