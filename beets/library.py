@@ -32,9 +32,7 @@ from beets.dbcore import types
 import beets
 
 
-
 # Library-specific query types.
-
 
 class PathQuery(dbcore.FieldQuery):
     """A query that matches all items under a given path."""
@@ -48,7 +46,7 @@ class PathQuery(dbcore.FieldQuery):
 
     def match(self, item):
         return (item.path == self.file_path) or \
-               item.path.startswith(self.dir_path)
+            item.path.startswith(self.dir_path)
 
     def clause(self):
         dir_pat = buffer(self.dir_path + '%')
@@ -72,9 +70,7 @@ class SingletonQuery(dbcore.Query):
         return (not item.album_id) == self.sense
 
 
-
 # Library-specific field types.
-
 
 class DateType(types.Type):
     sql = u'REAL'
@@ -107,7 +103,6 @@ class PathType(types.Type):
 
     def parse(self, string):
         return normpath(bytestring_path(string))
-
 
 
 # Model field lists.
@@ -256,7 +251,6 @@ def _orelse(exp1, exp2):
                       'ELSE {0} END)').format(exp1, exp2)
 
 
-
 # Exceptions.
 
 
@@ -298,7 +292,6 @@ class WriteError(FileOperationError):
     """
     def __unicode__(self):
         return u'error writing ' + super(WriteError, self).__unicode__()
-
 
 
 # Item and Album model classes.
@@ -379,7 +372,6 @@ class Item(LibModel):
             return None
         return self._db.get_album(self)
 
-
     # Interaction with file metadata.
 
     def read(self, read_path=None):
@@ -437,7 +429,6 @@ class Item(LibModel):
         self.mtime = self.current_mtime()
         plugins.send('after_write', item=self)
 
-
     # Files themselves.
 
     def move_file(self, dest, copy=False):
@@ -464,7 +455,6 @@ class Item(LibModel):
         integer.
         """
         return int(os.path.getmtime(syspath(self.path)))
-
 
     # Model methods.
 
@@ -532,7 +522,6 @@ class Item(LibModel):
         # Prune vacated directory.
         if not copy:
             util.prune_dirs(os.path.dirname(old_path), self._db.directory)
-
 
     # Templating.
 
@@ -805,7 +794,6 @@ class Album(LibModel):
                     item.store()
 
 
-
 # Query construction and parsing helpers.
 
 
@@ -820,6 +808,7 @@ PARSE_QUERY_PART_REGEX = re.compile(
 
     re.I  # Case-insensitive.
 )
+
 
 def parse_query_part(part, query_classes={}, prefixes={},
                      default_class=dbcore.query.SubstringQuery):
@@ -878,7 +867,7 @@ def construct_query_part(query_part, model_cls):
     prefixes = {':': dbcore.query.RegexpQuery}
     prefixes.update(plugins.queries())
     key, pattern, query_class = \
-            parse_query_part(query_part, query_classes, prefixes)
+        parse_query_part(query_part, query_classes, prefixes)
 
     # No key specified.
     if key is None:
@@ -947,7 +936,6 @@ def get_query(val, model_cls):
         raise ValueError('query must be None or have type Query or str')
 
 
-
 # The Library: interface to the database.
 
 
@@ -970,7 +958,6 @@ class Library(dbcore.Database):
         self.replacements = replacements
 
         self._memotable = {}  # Used for template substitution performance.
-
 
     # Adding objects to the database.
 
@@ -1004,7 +991,6 @@ class Library(dbcore.Database):
 
         return album
 
-
     # Querying.
 
     def _fetch(self, model_cls, query, order_by=None):
@@ -1032,7 +1018,6 @@ class Library(dbcore.Database):
         )
         return self._fetch(Item, query, order)
 
-
     # Convenience accessors.
 
     def get_item(self, id):
@@ -1053,7 +1038,6 @@ class Library(dbcore.Database):
         if album_id is None:
             return None
         return self._get(Album, album_id)
-
 
 
 # Default path template resources.

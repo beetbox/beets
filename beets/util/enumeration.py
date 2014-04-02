@@ -43,6 +43,7 @@ will be chosen for you.
 """
 import random
 
+
 class Enumeration(type):
     """A metaclass whose classes are enumerations.
 
@@ -106,6 +107,7 @@ class Enumeration(type):
         # pydoc.
         return True
 
+
 class Enumerated(object):
     """An item in an enumeration.
 
@@ -147,6 +149,7 @@ class Enumerated(object):
         else:
             return NotImplemented
 
+
 def enum(*values, **kwargs):
     """Shorthand for creating a new Enumeration class.
 
@@ -165,7 +168,7 @@ def enum(*values, **kwargs):
         # Create a probably-unique name. It doesn't really have to be
         # unique, but getting distinct names each time helps with
         # identification in debugging.
-        name = 'Enumeration' + hex(random.randint(0,0xfffffff))[2:].upper()
+        name = 'Enumeration' + hex(random.randint(0, 0xfffffff))[2:].upper()
     else:
         name = kwargs['name']
 

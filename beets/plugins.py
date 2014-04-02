@@ -106,7 +106,6 @@ class BeetsPlugin(object):
         """
         return None
 
-
     listeners = None
 
     @classmethod
@@ -171,6 +170,8 @@ class BeetsPlugin(object):
         return helper
 
 _classes = set()
+
+
 def load_plugins(names=()):
     """Imports the modules for a sequence of plugin names. Each name
     must be the name of a Python module under the "beetsplug" namespace
@@ -199,6 +200,8 @@ def load_plugins(names=()):
             log.warn(traceback.format_exc())
 
 _instances = {}
+
+
 def find_plugins():
     """Returns a list of BeetsPlugin subclass instances from all
     currently loaded beets plugins. Loads the default plugin set
@@ -224,6 +227,7 @@ def commands():
         out += plugin.commands()
     return out
 
+
 def queries():
     """Returns a dict mapping prefix strings to Query subclasses all loaded
     plugins.
@@ -232,6 +236,7 @@ def queries():
     for plugin in find_plugins():
         out.update(plugin.queries())
     return out
+
 
 def track_distance(item, info):
     """Gets the track distance calculated by all loaded plugins.
@@ -243,6 +248,7 @@ def track_distance(item, info):
         dist.update(plugin.track_distance(item, info))
     return dist
 
+
 def album_distance(items, album_info, mapping):
     """Returns the album distance calculated by plugins."""
     from beets.autotag.hooks import Distance
@@ -250,6 +256,7 @@ def album_distance(items, album_info, mapping):
     for plugin in find_plugins():
         dist.update(plugin.album_distance(items, album_info, mapping))
     return dist
+
 
 def candidates(items, artist, album, va_likely):
     """Gets MusicBrainz candidates for an album from each plugin.
@@ -259,6 +266,7 @@ def candidates(items, artist, album, va_likely):
         out.extend(plugin.candidates(items, artist, album, va_likely))
     return out
 
+
 def item_candidates(item, artist, title):
     """Gets MusicBrainz candidates for an item from the plugins.
     """
@@ -266,6 +274,7 @@ def item_candidates(item, artist, title):
     for plugin in find_plugins():
         out.extend(plugin.item_candidates(item, artist, title))
     return out
+
 
 def album_for_id(album_id):
     """Get AlbumInfo objects for a given ID string.
@@ -277,6 +286,7 @@ def album_for_id(album_id):
             out.append(res)
     return out
 
+
 def track_for_id(track_id):
     """Get TrackInfo objects for a given ID string.
     """
@@ -286,6 +296,7 @@ def track_for_id(track_id):
         if res:
             out.append(res)
     return out
+
 
 def template_funcs():
     """Get all the template functions declared by plugins as a
@@ -297,12 +308,14 @@ def template_funcs():
             funcs.update(plugin.template_funcs)
     return funcs
 
+
 def _add_media_fields(fields):
     """Adds a {name: descriptor} dictionary of fields to the MediaFile
     class. Called during the plugin initialization.
     """
     for key, value in fields.iteritems():
         setattr(mediafile.MediaFile, key, value)
+
 
 def import_stages():
     """Get a list of import stage functions defined by plugins."""
@@ -324,6 +337,7 @@ def item_field_getters():
         if plugin.template_fields:
             funcs.update(plugin.template_fields)
     return funcs
+
 
 def album_field_getters():
     """As above, for album fields.
@@ -347,6 +361,7 @@ def event_handlers():
             for event, handlers in plugin.listeners.items():
                 all_handlers[event] += handlers
     return all_handlers
+
 
 def send(event, **arguments):
     """Sends an event to all assigned event listeners. Event is the

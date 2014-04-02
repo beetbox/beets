@@ -37,7 +37,7 @@ def resize_url(url, maxwidth):
     maxwidth (preserving aspect ratio).
     """
     return '{0}?{1}'.format(PROXY_URL, urllib.urlencode({
-        'url': url.replace('http://',''),
+        'url': url.replace('http://', ''),
         'w': str(maxwidth),
     }))
 
