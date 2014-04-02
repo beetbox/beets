@@ -1265,6 +1265,25 @@ class MediaFile(object):
             if isinstance(descriptor, MediaField):
                 yield property
 
+    @classmethod
+    def add_field(cls, name, descriptor):
+        """Add a field to store custom tags.
+
+        ``name`` is the name of the property the field is accessed
+        through. It must not already exist for the class. If the name
+        coincides with the name of a property of ``Item`` it will be set
+        from the item in ``item.write()``.
+
+        ``descriptor`` must be an instance of ``MediaField``.
+        """
+        if not isinstance(descriptor, MediaField):
+            raise ValueError(
+                u'{} must be an instance of MediaField'.format(descriptor))
+        if name in cls.__dict__:
+            raise ValueError(
+                u'property "{}" already exists on MediaField'.format(name))
+        setattr(cls, name, descriptor)
+
     def update(self, dict, id3v23=False):
         """Update tags from the dictionary and write them to the file.
 

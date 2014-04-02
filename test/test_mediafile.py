@@ -23,8 +23,10 @@ import time
 
 import _common
 from _common import unittest
-from beets.mediafile import MediaFile, Image
-from beets.library import ITEM_KEYS_WRITABLE, ITEM_KEYS
+from beets.mediafile import MediaFile, MediaField, Image, \
+                            MP3StorageStyle, StorageStyle, \
+                            MP4StorageStyle, ASFStorageStyle
+from beets.library import ITEM_KEYS_WRITABLE, ITEM_KEYS, Item
 
 
 class ArtTestMixin(object):
@@ -252,7 +254,50 @@ class GenreListTestMixin(object):
         self.assertItemsEqual(mediafile.genres, [u'the genre', u'another'])
 
 
-class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin, LazySaveTestMixin):
+field_extension = MediaField(
+    MP3StorageStyle('TKEY'),
+    MP4StorageStyle('----:com.apple.iTunes:initialkey'),
+    StorageStyle('INITIALKEY'),
+    ASFStorageStyle('INITIALKEY'),
+)
+class ExtendedFieldTestMixin(object):
+
+    def test_extended_field_write(self):
+        MediaFile.add_field('initialkey', field_extension)
+
+        mediafile = self._mediafile_fixture('empty')
+        mediafile.initialkey = 'F#'
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(mediafile.initialkey, 'F#')
+        delattr(MediaFile, 'initialkey')
+
+    def test_extended_attribute_from_item(self):
+        MediaFile.add_field('initialkey', field_extension)
+
+        mediafile = self._mediafile_fixture('empty')
+        self.assertEqual(mediafile.initialkey, '')
+
+        item = Item(path=mediafile.path, initialkey='Gb')
+        item.write()
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(mediafile.initialkey, 'Gb')
+        delattr(MediaFile, 'initialkey')
+
+    def test_invalid_descriptor(self):
+        with self.assertRaises(ValueError) as cm:
+            MediaFile.add_field('somekey', True)
+        self.assertIn('must be an instance of MediaField', str(cm.exception))
+
+    def test_overwrite_property(self):
+        with self.assertRaises(ValueError) as cm:
+            MediaFile.add_field('artist', MediaField())
+        self.assertIn('property "artist" already exists', str(cm.exception))
+
+
+class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
+                        LazySaveTestMixin, ExtendedFieldTestMixin):
     """Test writing and reading tags. Subclasses must set ``extension`` and
     ``audio_properties``.
     """
@@ -743,10 +788,6 @@ class MediaFieldTest(unittest.TestCase):
         fields = ReadWriteTestBase.empty_tags.keys()
         fields.extend(('encoder', 'images', 'genres', 'albumtype'))
         self.assertItemsEqual(MediaFile.fields(), fields)
-
-    def test_item_keys_writable_migration(self):
-        keys_writable = set(MediaFile.fields()).intersection(ITEM_KEYS)
-        self.assertItemsEqual(keys_writable, ITEM_KEYS_WRITABLE)
 
 
 def suite():
