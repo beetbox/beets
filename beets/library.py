@@ -420,16 +420,14 @@ class Item(LibModel):
         Can raise either a `ReadError` or a `WriteError`.
         """
         try:
-            f = MediaFile(syspath(self.path))
+            mediafile = MediaFile(syspath(self.path))
         except (OSError, IOError) as exc:
             raise ReadError(self.path, exc)
 
         plugins.send('write', item=self)
 
-        for key in ITEM_KEYS_WRITABLE:
-            setattr(f, key, self[key])
         try:
-            f.save(id3v23=beets.config['id3v23'].get(bool))
+            mediafile.update(self, id3v23=beets.config['id3v23'].get(bool))
         except (OSError, IOError, MutagenError) as exc:
             raise WriteError(self.path, exc)
 

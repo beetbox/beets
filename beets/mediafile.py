@@ -1219,6 +1219,7 @@ class MediaFile(object):
         if self.mgfile.tags is None:
             self.mgfile.add_tags()
 
+    # FIXME Deprecated. Use `update` instead
     def save(self, id3v23=False):
         """Write the object's tags back to the file.
 
@@ -1263,6 +1264,25 @@ class MediaFile(object):
         for property, descriptor in cls.__dict__.items():
             if isinstance(descriptor, MediaField):
                 yield property
+
+    def update(self, dict, id3v23=False):
+        """Update tags from the dictionary and write them to the file.
+
+        For any key in ``dict`` that is also a field to store tags the
+        method retrieves the corresponding value from ``dict`` and
+        updates the ``MediaFile``. If any of the tags are changed, these
+        changes are written to the disk.
+
+        By default, MP3 files are saved with ID3v2.4 tags. You can use
+        the older ID3v2.3 standard by specifying the `id3v23` option.
+        """
+        updated = False
+        for field in self.fields():
+            if field in dict and getattr(self, field) != dict[field]:
+                updated = True
+                setattr(self, field, dict[field])
+        if updated:
+            self.save(id3v23)
 
 
     # Field definitions.

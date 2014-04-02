@@ -353,6 +353,15 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin):
         mediafile = MediaFile(mediafile.path)
         self.assertTags(mediafile, tags)
 
+    def test_update_empty(self):
+        mediafile = self._mediafile_fixture('empty')
+        tags = self._generate_tags()
+
+        mediafile.update(tags)
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertTags(mediafile, tags)
+
     def test_overwrite_full(self):
         mediafile = self._mediafile_fixture('full')
         tags = self._generate_tags()
@@ -365,6 +374,17 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin):
         for key, value in tags.items():
             setattr(mediafile, key, value)
         mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertTags(mediafile, tags)
+
+    def test_update_full(self):
+        mediafile = self._mediafile_fixture('full')
+        tags = self._generate_tags()
+
+        mediafile.update(tags)
+        # Make sure the tags are already set when writing a second time
+        mediafile.update(tags)
 
         mediafile = MediaFile(mediafile.path)
         self.assertTags(mediafile, tags)
