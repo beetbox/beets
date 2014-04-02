@@ -84,22 +84,22 @@ class ImageStructureTestMixin(ArtTestMixin):
 
         self.assertEqual(len(mediafile.images), 2)
 
-        image = mediafile.images[0]
+        image = next(i for i in mediafile.images
+                     if i.mime_type == 'image/png')
         self.assertEqual(image.data, self.png_data)
-        self.assertEqual(image.mime_type, 'image/png')
         self.assertExtendedImageAttributes(image, desc='album cover',
                                            type=Image.TYPES.front)
 
-        image = mediafile.images[1]
+        image = next(i for i in mediafile.images
+                     if i.mime_type == 'image/jpeg')
         self.assertEqual(image.data, self.jpg_data)
-        self.assertEqual(image.mime_type, 'image/jpeg')
         self.assertExtendedImageAttributes(image, desc='the artist',
                                            type=Image.TYPES.artist)
 
     def test_set_image_structure(self):
         mediafile = self._mediafile_fixture('empty')
         image = Image(data=self.png_data, desc='album cover',
-                         type=Image.TYPES.front)
+                      type=Image.TYPES.front)
         mediafile.images = [image]
         mediafile.save()
 
@@ -124,12 +124,8 @@ class ImageStructureTestMixin(ArtTestMixin):
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(len(mediafile.images), 3)
 
-        # WMA does not preserve the order, so we have to work around this
-        try:
-            image = filter(lambda i: i.desc == 'the composer',
-                           mediafile.images)[0]
-        except IndexError:
-            image = None
+        image = next(
+           (i for i in mediafile.images if i.desc == 'the composer'), None)
         self.assertExtendedImageAttributes(image,
                 desc='the composer', type=Image.TYPES.composer)
 
