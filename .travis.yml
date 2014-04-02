@@ -19,7 +19,7 @@ matrix:
 install:
     - travis_retry sudo apt-get update
     - travis_retry sudo apt-get install -qq bash-completion
-    - travis_retry pip install tox
+    - travis_retry pip install tox sphinx
     - "[[ $TOX_ENV == 'py27' ]] && pip install coveralls || true"
 
 script: tox -e $TOX_ENV
