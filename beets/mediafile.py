@@ -1256,6 +1256,14 @@ class MediaFile(object):
             for tag in self.mgfile.keys():
                 del self.mgfile[tag]
 
+    @classmethod
+    def fields(cls):
+        """Yield the names of all properties that are MediaFields.
+        """
+        for property, descriptor in cls.__dict__.items():
+            if isinstance(descriptor, MediaField):
+                yield property
+
 
     # Field definitions.
 

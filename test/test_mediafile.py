@@ -692,6 +692,20 @@ class OpusTest(ReadWriteTestBase, unittest.TestCase):
     }
 
 
+class MediaFieldTest(unittest.TestCase):
+
+    def test_properties_from_fields(self):
+        path = os.path.join(_common.RSRC, 'full.mp3')
+        mediafile = MediaFile(path)
+        for field in MediaFile.fields():
+            self.assertTrue(hasattr(mediafile, field))
+
+    def test_known_fields(self):
+        fields = ReadWriteTestBase.empty_tags.keys()
+        fields.extend(('encoder', 'images', 'genres', 'albumtype'))
+        self.assertItemsEqual(MediaFile.fields(), fields)
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
