@@ -1,29 +1,33 @@
 language: python
-python:
-    - "2.7"
-    - "2.6"
-    - "pypy"
+python: 2.7
 
 branches:
     only:
         - master
 
+env:
+    - TOX_ENV=py26
+    - TOX_ENV=py27
+    - TOX_ENV=pypy
+    - TOX_ENV=docs
+    - TOX_ENV=flake8
+
+matrix:
+    allow_failures:
+        - env: TOX_ENV=flake8
+
 install:
-    - travis_retry pip install .
-    - travis_retry pip install pylast flask responses
-    # unittest backport on Python < 2.7
-    - "[[ $TRAVIS_PYTHON_VERSION == '2.6' ]] && pip install unittest2 || true"
     - travis_retry sudo apt-get update
     - travis_retry sudo apt-get install -qq bash-completion
+    - travis_retry pip install tox
+    - "[[ $TOX_ENV == 'py27' ]] && pip install coveralls || true"
 
-script: nosetests --with-coverage --cover-package=beets
+script: tox -e $TOX_ENV
 
 # coveralls.io reporting, using https://github.com/coagulant/coveralls-python
 # Only report coverage for one version.
-before_script:
-    - "[[ $TRAVIS_PYTHON_VERSION == '2.7' ]] && pip install coveralls || true"
 after_success:
-    - "[[ $TRAVIS_PYTHON_VERSION == '2.7' ]] && coveralls || true"
+    - "[[ $TOX_ENV == 'py27' ]] && coveralls || true"
 
 notifications:
     irc:
