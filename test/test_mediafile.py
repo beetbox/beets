@@ -26,7 +26,7 @@ from _common import unittest
 from beets.mediafile import MediaFile, MediaField, Image, \
                             MP3StorageStyle, StorageStyle, \
                             MP4StorageStyle, ASFStorageStyle
-from beets.library import ITEM_KEYS_WRITABLE, ITEM_KEYS, Item
+from beets.library import ITEM_KEYS_META, ITEM_KEYS, Item
 
 
 class ArtTestMixin(object):
@@ -784,10 +784,26 @@ class MediaFieldTest(unittest.TestCase):
         for field in MediaFile.fields():
             self.assertTrue(hasattr(mediafile, field))
 
+    def test_properties_from_readable_fields(self):
+        path = os.path.join(_common.RSRC, 'full.mp3')
+        mediafile = MediaFile(path)
+        for field in MediaFile.readable_fields():
+            self.assertTrue(hasattr(mediafile, field))
+
     def test_known_fields(self):
         fields = ReadWriteTestBase.empty_tags.keys()
         fields.extend(('encoder', 'images', 'genres', 'albumtype'))
         self.assertItemsEqual(MediaFile.fields(), fields)
+
+    def test_fields_in_readable_fields(self):
+        readable = MediaFile.readable_fields()
+        for field in MediaFile.fields():
+            self.assertIn(field, readable)
+
+    def test_readable_fields_are_item_meta_keys(self):
+        readable = MediaFile.readable_fields()
+        meta_keys = set(readable).intersection(ITEM_KEYS)
+        self.assertItemsEqual(meta_keys, ITEM_KEYS_META)
 
 
 def suite():

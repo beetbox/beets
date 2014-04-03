@@ -1266,6 +1266,17 @@ class MediaFile(object):
                 yield property
 
     @classmethod
+    def readable_fields(cls):
+        """Yield the elements of ``fields()`` and all additional
+        properties retrieved from the file
+        """
+        for property in cls.fields():
+            yield property
+        for property in ['length', 'samplerate', 'bitdepth', 'bitrate',
+                         'channels', 'format']:
+            yield property
+
+    @classmethod
     def add_field(cls, name, descriptor):
         """Add a field to store custom tags.
 
