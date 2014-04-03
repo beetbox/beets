@@ -36,6 +36,8 @@ New stuff:
   example: ``beet modify artist:beatles oldies!`` deletes the ``oldies``
   flexible attribute from the database, for the matching items. Thanks to
   brilnius.
+* The :ref:`import-cmd` command can now accept individual files as arguments
+  even in non-singleton mode. Files are imported as one-track albums.
 
 Fixes:
 
