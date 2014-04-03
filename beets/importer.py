@@ -563,8 +563,7 @@ def read_tasks(session):
 
     for toppath in session.paths:
         # Check whether the path is to a file.
-        if config['import']['singletons'] and \
-                not os.path.isdir(syspath(toppath)):
+        if not os.path.isdir(syspath(toppath)):
             try:
                 item = library.Item.from_path(toppath)
             except mediafile.UnreadableFileError:
@@ -572,7 +571,10 @@ def read_tasks(session):
                     util.displayable_path(toppath)
                 ))
                 continue
-            yield ImportTask.item_task(item)
+            if config['import']['singletons']:
+                yield ImportTask.item_task(item)
+            else:
+                yield ImportTask(toppath, [toppath], [item])
             continue
 
         # A flat album import merges all items into one album.

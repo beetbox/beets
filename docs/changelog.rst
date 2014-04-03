@@ -38,6 +38,8 @@ New stuff:
 * The performance of the autotagger's matching mechanism is vastly improved.
   This should be noticeable when matching against very large releases such as
   box sets.
+* The :ref:`import-cmd` command can now accept individual files as arguments
+  even in non-singleton mode. Files are imported as one-track albums.
 
 Fixes:
 

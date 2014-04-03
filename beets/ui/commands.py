@@ -746,12 +746,8 @@ def import_files(lib, paths, query):
     """
     # Check the user-specified directories.
     for path in paths:
-        fullpath = syspath(normpath(path))
-        if not config['import']['singletons'] and not os.path.isdir(fullpath):
-            raise ui.UserError(u'not a directory: {0}'.format(
-                displayable_path(path)))
-        elif config['import']['singletons'] and not os.path.exists(fullpath):
-            raise ui.UserError(u'no such file: {0}'.format(
+        if not os.path.exists(syspath(normpath(path))):
+            raise ui.UserError(u'no such file or directory: {0}'.format(
                 displayable_path(path)))
 
     # Check parameter consistency.
