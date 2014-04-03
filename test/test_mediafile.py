@@ -26,7 +26,7 @@ from _common import unittest
 from beets.mediafile import MediaFile, MediaField, Image, \
                             MP3StorageStyle, StorageStyle, \
                             MP4StorageStyle, ASFStorageStyle
-from beets.library import ITEM_KEYS_META, ITEM_KEYS, Item
+from beets.library import Item
 
 
 class ArtTestMixin(object):
@@ -799,11 +799,6 @@ class MediaFieldTest(unittest.TestCase):
         readable = MediaFile.readable_fields()
         for field in MediaFile.fields():
             self.assertIn(field, readable)
-
-    def test_readable_fields_are_item_meta_keys(self):
-        readable = MediaFile.readable_fields()
-        meta_keys = set(readable).intersection(ITEM_KEYS)
-        self.assertItemsEqual(meta_keys, ITEM_KEYS_META)
 
 
 def suite():
