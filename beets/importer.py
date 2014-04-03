@@ -580,27 +580,28 @@ def read_tasks(session):
             all_items = []
             for _, items in autotag.albums_in_dir(toppath):
                 all_items += items
-            yield ImportTask(toppath, toppath, all_items)
+            yield ImportTask(toppath, [toppath], all_items)
             yield ImportTask.done_sentinel(toppath)
             continue
 
         # Produce paths under this directory.
         if _resume():
             resume_dir = resume_dirs.get(toppath)
-        for path, items in autotag.albums_in_dir(toppath):
+        for paths, items in autotag.albums_in_dir(toppath):
             # Skip according to progress.
             if _resume() and resume_dir:
                 # We're fast-forwarding to resume a previous tagging.
-                if path == resume_dir:
+                if paths == resume_dir:
                     # We've hit the last good path! Turn off the
                     # fast-forwarding.
                     resume_dir = None
                 continue
 
             # When incremental, skip paths in the history.
-            if config['import']['incremental'] and tuple(path) in history_dirs:
+            if config['import']['incremental'] \
+               and tuple(paths) in history_dirs:
                 log.debug(u'Skipping previously-imported path: %s' %
-                          displayable_path(path))
+                          displayable_path(paths))
                 incremental_skipped += 1
                 continue
 
@@ -608,9 +609,9 @@ def read_tasks(session):
             if config['import']['singletons']:
                 for item in items:
                     yield ImportTask.item_task(item)
-                yield ImportTask.progress_sentinel(toppath, path)
+                yield ImportTask.progress_sentinel(toppath, paths)
             else:
-                yield ImportTask(toppath, path, items)
+                yield ImportTask(toppath, paths, items)
 
         # Indicate the directory is finished.
         yield ImportTask.done_sentinel(toppath)
