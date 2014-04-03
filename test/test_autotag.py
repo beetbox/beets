@@ -104,6 +104,12 @@ def _make_trackinfo():
         TrackInfo(u'three', None, u'some artist', length=1, index=3),
     ]
 
+def _clear_weights():
+    """Hack around the lazy descriptor used to cache weights for
+    Distance calculations.
+    """
+    Distance.__dict__['_weights'].computed = False
+
 class DistanceTest(_common.TestCase):
     def test_add(self):
         dist = Distance()
@@ -196,6 +202,8 @@ class DistanceTest(_common.TestCase):
     def test_distance(self):
         config['match']['distance_weights']['album'] = 2.0
         config['match']['distance_weights']['medium'] = 1.0
+        _clear_weights()
+
         dist = Distance()
         dist.add('album', 0.5)
         dist.add('media', 0.25)
@@ -209,6 +217,8 @@ class DistanceTest(_common.TestCase):
     def test_max_distance(self):
         config['match']['distance_weights']['album'] = 3.0
         config['match']['distance_weights']['medium'] = 1.0
+        _clear_weights()
+
         dist = Distance()
         dist.add('album', 0.5)
         dist.add('medium', 0.0)
@@ -219,6 +229,8 @@ class DistanceTest(_common.TestCase):
         config['match']['distance_weights']['source'] = 1.0
         config['match']['distance_weights']['album'] = 2.0
         config['match']['distance_weights']['medium'] = 1.0
+        _clear_weights()
+
         dist = Distance()
         dist.add('source', 0.0)
         dist.add('album', 0.5)
@@ -236,6 +248,8 @@ class DistanceTest(_common.TestCase):
     def test_raw_distance(self):
         config['match']['distance_weights']['album'] = 3.0
         config['match']['distance_weights']['medium'] = 1.0
+        _clear_weights()
+
         dist = Distance()
         dist.add('album', 0.5)
         dist.add('medium', 0.25)
@@ -245,6 +259,8 @@ class DistanceTest(_common.TestCase):
     def test_items(self):
         config['match']['distance_weights']['album'] = 4.0
         config['match']['distance_weights']['medium'] = 2.0
+        _clear_weights()
+
         dist = Distance()
         dist.add('album', 0.1875)
         dist.add('medium', 0.75)
