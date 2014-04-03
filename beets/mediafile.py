@@ -913,12 +913,14 @@ class MediaField(object):
     def __init__(self, *styles, **kwargs):
         """Creates a new MediaField.
 
-         - `styles`: `StorageStyle` instances that describe the strategy
-           for reading and writing the field in particular formats.
-           There must be at least one style for each possible file
-           format.
+        - `styles`: `StorageStyle` instances that describe the strategy
+          for reading and writing the field in particular formats.
+          There must be at least one style for each possible file
+          format.
+
         - `out_type`: the type of the value that should be returned when
-           getting this property.
+          getting this property.
+
         """
         self.out_type = kwargs.get('out_type', unicode)
         self._styles = styles

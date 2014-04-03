@@ -300,38 +300,37 @@ template fields by adding a function accepting an ``Album`` argument to the
 Extend MediaFile
 ^^^^^^^^^^^^^^^^
 
-`MediaFile`_ is the file tag abstraction layer that beets uses to make
+:ref:`MediaFile` is the file tag abstraction layer that beets uses to make
 cross-format metadata manipulation simple. Plugins can add fields to MediaFile
 to extend the kinds of metadata that they can easily manage.
 
-The ``item_fields`` method on plugins should be overridden to return a
-dictionary whose keys are field names and whose values are descriptor objects
-that provide the field in question. The descriptors should probably be
-``MediaField`` instances (defined in ``beets.mediafile``). Here's an example
-plugin that provides a meaningless new field "foo"::
+The ``MediaFile`` class uses ``MediaField`` descriptors to provide
+access to file tags. Have a look at the ``beets.mediafile`` source code
+to learn how to use this descriptor class. If you have created a
+descriptor you can add it through your plugins ``add_media_field()``
+method.
 
-    from beets import mediafile, plugins, ui
-    class FooPlugin(plugins.BeetsPlugin):
-        def item_fields(self):
-            return {
-                'foo': mediafile.MediaField(
-                    mp3 = mediafile.StorageStyle(
-                        'TXXX', id3_desc=u'Foo Field'),
-                    mp4 = mediafile.StorageStyle(
-                        '----:com.apple.iTunes:Foo Field'),
-                    etc = mediafile.StorageStyle('FOO FIELD')
-                ),
-            }
+.. automethod:: beets.plugins.BeetsPlugin.add_media_field
 
-Later, the plugin can manipulate this new field by saying something like
-``mf.foo = 'bar'`` where ``mf`` is a ``MediaFile`` instance.
 
-Note that, currently, these additional fields are *only* applied to
-``MediaFile`` itself. The beets library database schema and the ``Item`` class
-are not extended, so the fields are second-class citizens. This may change
-eventually.
+Here's an example plugin that provides a meaningless new field "foo"::
 
-.. _MediaFile: https://github.com/sampsyo/beets/wiki/MediaFile
+    class FooPlugin(BeetsPlugin):
+        def __init__(self):
+            field = mediafile.MediaField(
+                mediafile.MP3DescStorageStyle(u'foo')
+                mediafile.StorageStyle(u'foo')
+            )
+            self.add_media_field('foo', field)
+
+    FooPlugin()
+    item = Item.from_path('/path/to/foo/tag.mp3')
+    assert item['foo'] == 'spam'
+
+    item['foo'] == 'ham'
+    item.write()
+    # The "foo" tag of the file is now "ham"
+
 
 Add Import Pipeline Stages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

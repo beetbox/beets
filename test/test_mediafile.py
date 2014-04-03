@@ -27,6 +27,7 @@ from beets.mediafile import MediaFile, MediaField, Image, \
                             MP3StorageStyle, StorageStyle, \
                             MP4StorageStyle, ASFStorageStyle
 from beets.library import Item
+from beets.plugins import BeetsPlugin
 
 
 class ArtTestMixin(object):
@@ -263,7 +264,8 @@ field_extension = MediaField(
 class ExtendedFieldTestMixin(object):
 
     def test_extended_field_write(self):
-        MediaFile.add_field('initialkey', field_extension)
+        plugin = BeetsPlugin()
+        plugin.add_media_field('initialkey', field_extension)
 
         mediafile = self._mediafile_fixture('empty')
         mediafile.initialkey = 'F#'
@@ -272,9 +274,11 @@ class ExtendedFieldTestMixin(object):
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(mediafile.initialkey, 'F#')
         delattr(MediaFile, 'initialkey')
+        Item.media_fields.remove('initialkey')
 
     def test_write_extended_tag_from_item(self):
-        MediaFile.add_field('initialkey', field_extension)
+        plugin = BeetsPlugin()
+        plugin.add_media_field('initialkey', field_extension)
 
         mediafile = self._mediafile_fixture('empty')
         self.assertEqual(mediafile.initialkey, '')
@@ -285,10 +289,11 @@ class ExtendedFieldTestMixin(object):
         self.assertEqual(mediafile.initialkey, 'Gb')
 
         delattr(MediaFile, 'initialkey')
+        Item.media_fields.remove('initialkey')
 
     def test_read_flexible_attribute_from_file(self):
-        MediaFile.add_field('initialkey', field_extension)
-        Item.media_fields.add('initialkey')
+        plugin = BeetsPlugin()
+        plugin.add_media_field('initialkey', field_extension)
 
         mediafile = self._mediafile_fixture('empty')
         mediafile.update({'initialkey': 'F#'})
