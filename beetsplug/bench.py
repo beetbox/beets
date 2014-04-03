@@ -57,8 +57,12 @@ def aunique_benchmark(lib, prof):
         print('Without %aunique:', interval)
 
 
-def match_benchmark(lib, prof, query=None,
-                    album_id='9c5c043e-bc69-4edb-81a4-1aaf9c81e6dc'):
+def match_benchmark(lib, prof, query=None, album_id=None):
+    # If no album ID is provided, we'll match against a suitably huge
+    # album.
+    if not album_id:
+        album_id = '9c5c043e-bc69-4edb-81a4-1aaf9c81e6dc'
+
     # Get an album from the library to use as the source for the match.
     items = lib.albums(query).get().items()
 
@@ -94,7 +98,9 @@ class BenchmarkPlugin(BeetsPlugin):
         match_bench_cmd.parser.add_option('-p', '--profile',
                                           action='store_true', default=False,
                                           help='performance profiling')
+        match_bench_cmd.parser.add_option('-i', '--id', default=None,
+                                          help='album ID to match against')
         match_bench_cmd.func = lambda lib, opts, args: \
-                match_benchmark(lib, opts.profile, ui.decargs(args))
+                match_benchmark(lib, opts.profile, ui.decargs(args), opts.id)
 
         return [aunique_bench_cmd, match_bench_cmd]
