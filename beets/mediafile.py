@@ -1276,6 +1276,8 @@ class MediaFile(object):
                          'channels', 'format']:
             yield property
 
+    custom_fields = []
+
     @classmethod
     def add_field(cls, name, descriptor):
         """Add a field to store custom tags.
@@ -1293,6 +1295,7 @@ class MediaFile(object):
         if name in cls.__dict__:
             raise ValueError(
                 u'property "{0}" already exists on MediaField'.format(name))
+        cls.custom_fields.append(name)
         setattr(cls, name, descriptor)
 
     def update(self, dict, id3v23=False):

@@ -272,6 +272,7 @@ class ExtendedFieldTestMixin(object):
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(mediafile.initialkey, 'F#')
         delattr(MediaFile, 'initialkey')
+        MediaFile.custom_fields = []
 
     def test_extended_attribute_from_item(self):
         MediaFile.add_field('initialkey', field_extension)
@@ -284,6 +285,19 @@ class ExtendedFieldTestMixin(object):
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(mediafile.initialkey, 'Gb')
         delattr(MediaFile, 'initialkey')
+        MediaFile.custom_fields = []
+
+    def test_flexible_attribute_from_file(self):
+        MediaFile.add_field('initialkey', field_extension)
+
+        mediafile = self._mediafile_fixture('empty')
+        mediafile.update({'initialkey': 'F#'})
+
+        item = Item.from_path(mediafile.path)
+        self.assertEqual(item['initialkey'], 'F#')
+
+        delattr(MediaFile, 'initialkey')
+        MediaFile.custom_fields = []
 
     def test_invalid_descriptor(self):
         with self.assertRaises(ValueError) as cm:

@@ -397,7 +397,7 @@ class Item(LibModel):
         except (OSError, IOError) as exc:
             raise ReadError(read_path, exc)
 
-        for key in ITEM_KEYS_META:
+        for key in list(ITEM_KEYS_META) + MediaFile.custom_fields:
             value = getattr(f, key)
             if isinstance(value, (int, long)):
                 # Filter values wider than 64 bits (in signed
