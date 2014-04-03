@@ -208,8 +208,10 @@ Change the metadata for items or albums in the database.
 Supply a :doc:`query <query>` matching the things you want to change and a
 series of ``field=value`` pairs. For example, ``beet modify genius of love
 artist="Tom Tom Club"`` will change the artist for the track "Genius of Love."
-For removing fields (only possible with flexible attributes), specify one or
-more ``field!`` argument(s). The ``-a`` switch operates on albums instead of
+To remove fields (which is only possible for flexible attributes), follow a
+field name with an exclamation point: ``field!``.
+
+The ``-a`` switch operates on albums instead of
 individual tracks. Items will automatically be moved around when necessary if
 they're in your library directory, but you can disable that with ``-M``. Tags
 will be written to the files according to the settings you have for imports,

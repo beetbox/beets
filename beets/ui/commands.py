@@ -1083,7 +1083,10 @@ default_commands.append(version_cmd)
 # modify: Declaratively change metadata.
 
 def modify_items(lib, mods, dels, query, write, move, album, confirm):
-    """Modifies matching items according to key=value assignments."""
+    """Modifies matching items according to user-specified assignments and
+    deletions. `mods` is a list of "field=value" strings indicating
+    assignments. `dels` is a list of fields to be deleted.
+    """
     # Parse key=value specifications into a dictionary.
     model_cls = library.Album if album else library.Item
     fsets = {}
@@ -1157,16 +1160,20 @@ modify_cmd.parser.add_option('-f', '--format', action='store',
     help='print with custom format', default=None)
 def modify_func(lib, opts, args):
     args = decargs(args)
+
+    # Split the arguments into query parts, assignments (field=value),
+    # and deletions (field!).
     mods = []
     dels = []
     query = []
     for arg in args:
         if arg.endswith('!') and '=' not in arg and ':' not in arg:
-            dels.append(arg[:-1])
+            dels.append(arg[:-1])  # Strip trailing !.
         elif '=' in arg:
             mods.append(arg)
         else:
             query.append(arg)
+
     if not mods and not dels:
         raise ui.UserError('no modifications specified')
     write = opts.write if opts.write is not None else \
@@ -1243,7 +1250,8 @@ def write_items(lib, query, pretend):
 
         # Check for and display changes.
         changed = ui.show_model_changes(item, clean_item,
-                                        library.ITEM_KEYS_WRITABLE, always=True)
+                                        library.ITEM_KEYS_WRITABLE,
+                                        always=True)
         if changed and not pretend:
             try:
                 item.write()
