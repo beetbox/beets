@@ -35,6 +35,9 @@ New stuff:
 * The :ref:`modify-cmd` command now allows removing flexible attributes. For
   example, ``beet modify artist:beatles oldies!`` deletes the ``oldies``
   attribute from matching items. Thanks to brilnius.
+* The performance of the autotagger's matching mechanism is vastly improved.
+  This should be noticeable when matching against very large releases such as
+  box sets.
 
 Fixes:
 

@@ -260,6 +260,22 @@ def string_dist(str1, str2):
     return base_dist + penalty
 
 
+class LazyClassProperty(object):
+    """A decorator implementing a read-only property that is *lazy* in
+    the sense that the getter is only invoked once. Subsequent accesses
+    through *any* instance use the cached result.
+    """
+    def __init__(self, getter):
+        self.getter = getter
+        self.computed = False
+
+    def __get__(self, obj, owner):
+        if not self.computed:
+            self.value = self.getter(owner)
+            self.computed = True
+        return self.value
+
+
 class Distance(object):
     """Keeps track of multiple distance penalties. Provides a single
     weighted distance for all penalties as well as a weighted distance
@@ -268,10 +284,16 @@ class Distance(object):
     def __init__(self):
         self._penalties = {}
 
+
+    @LazyClassProperty
+    def _weights(cls):
+        """A dictionary from keys to floating-point weights.
+        """
         weights_view = config['match']['distance_weights']
-        self._weights = {}
+        weights = {}
         for key in weights_view.keys():
-            self._weights[key] = weights_view[key].as_number()
+            weights[key] = weights_view[key].as_number()
+        return weights
 
 
     # Access the components and their aggregates.
