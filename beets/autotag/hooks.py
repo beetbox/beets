@@ -116,6 +116,7 @@ class AlbumInfo(object):
             for track in self.tracks:
                 track.decode(codec)
 
+
 class TrackInfo(object):
     """Describes a canonical track present on a release. Appears as part
     of an AlbumInfo's ``tracks`` list. Consists of these data members:
@@ -187,6 +188,7 @@ SD_REPLACE = [
     (r'&', 'and'),
 ]
 
+
 def _string_dist_basic(str1, str2):
     """Basic edit distance between two strings, ignoring
     non-alphanumeric characters and case. Comparisons are based on a
@@ -201,13 +203,14 @@ def _string_dist_basic(str1, str2):
         return 0.0
     return levenshtein(str1, str2) / float(max(len(str1), len(str2)))
 
+
 def string_dist(str1, str2):
     """Gives an "intuitive" edit distance between two strings. This is
     an edit distance, normalized by the string length, with a number of
     tweaks that reflect intuition about text.
     """
-    if str1 == None and str2 == None: return 0.0
-    if str1 == None or str2 == None:  return 1.0
+    if str1 is None and str2 is None: return 0.0
+    if str1 is None or str2 is None:  return 1.0
 
     str1 = str1.lower()
     str2 = str2.lower()
@@ -217,9 +220,9 @@ def string_dist(str1, str2):
     # "something, the".
     for word in SD_END_WORDS:
         if str1.endswith(', %s' % word):
-            str1 = '%s %s' % (word, str1[:-len(word)-2])
+            str1 = '%s %s' % (word, str1[:-len(word) - 2])
         if str2.endswith(', %s' % word):
-            str2 = '%s %s' % (word, str2[:-len(word)-2])
+            str2 = '%s %s' % (word, str2[:-len(word) - 2])
 
     # Perform a couple of basic normalizing substitutions.
     for pat, repl in SD_REPLACE:
@@ -255,6 +258,7 @@ def string_dist(str1, str2):
             penalty += weight * case_delta
 
     return base_dist + penalty
+
 
 class Distance(object):
     """Keeps track of multiple distance penalties. Provides a single
@@ -313,7 +317,7 @@ class Distance(object):
         # Convert distance into a negative float we can sort items in
         # ascending order (for keys, when the penalty is equal) and
         # still get the items with the biggest distance first.
-        return sorted(list_, key=lambda (key, dist): (0-dist, key))
+        return sorted(list_, key=lambda (key, dist): (0 - dist, key))
 
 
     # Behave like a float.
@@ -476,6 +480,7 @@ def album_for_mbid(release_id):
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
 
+
 def track_for_mbid(recording_id):
     """Get a TrackInfo object for a MusicBrainz recording ID. Return None
     if the ID is not found.
@@ -485,17 +490,20 @@ def track_for_mbid(recording_id):
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
 
+
 def albums_for_id(album_id):
     """Get a list of albums for an ID."""
     candidates = [album_for_mbid(album_id)]
     candidates.extend(plugins.album_for_id(album_id))
     return filter(None, candidates)
 
+
 def tracks_for_id(track_id):
     """Get a list of tracks for an ID."""
     candidates = [track_for_mbid(track_id)]
     candidates.extend(plugins.track_for_id(track_id))
     return filter(None, candidates)
+
 
 def album_candidates(items, artist, album, va_likely):
     """Search for album matches. ``items`` is a list of Item objects
@@ -524,6 +532,7 @@ def album_candidates(items, artist, album, va_likely):
     out.extend(plugins.candidates(items, artist, album, va_likely))
 
     return out
+
 
 def item_candidates(item, artist, title):
     """Search for item matches. ``item`` is the Item to be matched.
