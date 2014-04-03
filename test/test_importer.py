@@ -327,6 +327,7 @@ class ImportSingletonTest(_common.TestCase, ImportHelper):
     """Test ``APPLY`` and ``ASIS`` choices for an import session with singletons
     config set to True.
     """
+
     def setUp(self):
         super(ImportSingletonTest, self).setUp()
         self._setup_library()
@@ -390,6 +391,26 @@ class ImportSingletonTest(_common.TestCase, ImportHelper):
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
         self.assertEqual(len(self.lib.items()), 1)
+
+    def test_import_single_files(self):
+        resource_path = os.path.join(_common.RSRC, u'empty.mp3')
+        single_path = os.path.join(self.import_dir, u'track_2.mp3')
+
+        shutil.copy(resource_path, single_path)
+        import_files = [
+            os.path.join(self.import_dir, u'the_album'),
+            single_path
+        ]
+        self._setup_import_session(singletons = False)
+        self.importer.paths = import_files
+
+        self.importer.add_choice(importer.action.ASIS)
+        self.importer.add_choice(importer.action.ASIS)
+        self.importer.run()
+
+        self.assertEqual(len(self.lib.items()), 2)
+        self.assertEqual(len(self.lib.albums()), 2)
+
 
 class ImportTest(_common.TestCase, ImportHelper):
     """Test APPLY, ASIS and SKIP choices.
