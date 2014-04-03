@@ -185,7 +185,6 @@ ITEM_FIELDS = [
     ('added',       DateType()),
 ]
 ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
-ITEM_KEYS_WRITABLE = set(MediaFile.fields()).intersection(ITEM_KEYS)
 
 
 # Database fields for the "albums" table.
