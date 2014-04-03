@@ -186,7 +186,7 @@ ITEM_FIELDS = [
 ]
 ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 ITEM_KEYS_WRITABLE = set(MediaFile.fields()).intersection(ITEM_KEYS)
-ITEM_KEYS_META     = set(MediaFile.readable_fields()).intersection(ITEM_KEYS)
+
 
 # Database fields for the "albums" table.
 # The third entry in each tuple indicates whether the field reflects an
@@ -333,6 +333,13 @@ class Item(LibModel):
     _flex_table = 'item_attributes'
     _search_fields = ITEM_DEFAULT_FIELDS
 
+    media_fields = set(MediaFile.readable_fields()).intersection(ITEM_KEYS)
+    """Set of property names to read from ``MediaFile``.
+
+    ``item.read()`` will read all properties in this set from
+    ``MediaFile`` and set them on the item.
+    """
+
     @classmethod
     def _getters(cls):
         return plugins.item_field_getters()
@@ -383,8 +390,11 @@ class Item(LibModel):
     # Interaction with file metadata.
 
     def read(self, read_path=None):
-        """Read the metadata from the associated file. If read_path is
-        specified, read metadata from that file instead.
+        """Read the metadata from the associated file.
+
+        If ``read_path`` is specified, read metadata from that file
+        instead. Updates all the properties in ``Item.media_fields``
+        from the media file.
 
         Raises a `ReadError` if the file could not be read.
         """
@@ -393,20 +403,19 @@ class Item(LibModel):
         else:
             read_path = normpath(read_path)
         try:
-            f = MediaFile(syspath(read_path))
+            mediafile = MediaFile(syspath(read_path))
         except (OSError, IOError) as exc:
             raise ReadError(read_path, exc)
 
-        for key in list(ITEM_KEYS_META) + MediaFile.custom_fields:
-            value = getattr(f, key)
+        for key in list(self.media_fields):
+            value = getattr(mediafile, key)
             if isinstance(value, (int, long)):
-                # Filter values wider than 64 bits (in signed
-                # representation). SQLite cannot store them.
-                # py26: Post transition, we can use:
+                # Filter values wider than 64 bits (in signed representation).
+                # SQLite cannot store them. py26: Post transition, we can use:
                 # value.bit_length() > 63
                 if abs(value) >= 2 ** 63:
                     value = 0
-            setattr(self, key, value)
+            self[key] = value
 
         # Database's mtime should now reflect the on-disk value.
         if read_path == self.path:
@@ -416,6 +425,8 @@ class Item(LibModel):
 
     def write(self):
         """Write the item's metadata to the associated file.
+
+        Updates the mediafile with properties from itself.
 
         Can raise either a `ReadError` or a `WriteError`.
         """

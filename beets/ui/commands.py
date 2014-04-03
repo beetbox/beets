@@ -923,7 +923,7 @@ def update_items(lib, query, album, move, pretend):
 
             # Check for and display changes.
             changed = ui.show_model_changes(item,
-                                            fields=library.ITEM_KEYS_META)
+                                            fields=library.Item.media_fields)
 
             # Save changes.
             if not pretend:
