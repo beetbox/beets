@@ -160,6 +160,9 @@ Here are a few of the plugins written by the beets community:
 
 * `copyartifacts`_ helps bring non-music files along during import.
 
+* `beets-check`_ automatically checksums your files to detect corruption.
+
+.. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
 .. _beets-artistcountry: https://github.com/agrausem/beets-artistcountry
