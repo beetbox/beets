@@ -27,6 +27,13 @@ from beets import plugins
 from beets.library import Item, Album
 from beets.mediafile import MediaFile
 
+try:
+    import gi
+    gi.require_version('Gst', '1.0')
+    GST_AVAILABLE = True
+except ImportError, ValueError:
+    GST_AVAILABLE = False
+
 
 class ReplayGainCliTestBase(object):
 
@@ -117,8 +124,6 @@ class ReplayGainCliTestBase(object):
         self.assertEqual(item.rg_track_gain, 0.0)
         self.assertEqual(item.rg_track_peak, peak)
 
-
-
     def test_cli_saves_album_gain_to_file(self):
         for item in self.lib.items():
             mediafile = MediaFile(item.path)
@@ -142,6 +147,7 @@ class ReplayGainCliTestBase(object):
         self.assertNotEqual(max(peaks), 0.0)
 
 
+@unittest.skipIf(not GST_AVAILABLE, 'gstreamer cannot be found')
 class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
     backend = u'gstreamer'
 
