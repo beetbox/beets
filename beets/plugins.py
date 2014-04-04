@@ -17,6 +17,7 @@
 import logging
 import traceback
 from collections import defaultdict
+import inspect
 
 import beets
 
@@ -339,4 +340,8 @@ def send(event, **arguments):
     Returns a list of return values from the handlers.
     """
     log.debug('Sending event: %s' % event)
-    return [handler(**arguments) for handler in event_handlers()[event]]
+    for handler in event_handlers()[event]:
+        # Don't break legacy plugins if we want to pass more arguments
+        argspec = inspect.getargspec(handler).args
+        args = dict((k, v) for k, v in arguments.items() if k in argspec)
+        handler(**args)
