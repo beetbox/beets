@@ -87,7 +87,6 @@ class CommandBackend(Backend):
         config.add({
             'command': u"",
             'noclip': True,
-            'targetlevel': 89,
         })
 
         self.command = config["command"].get(unicode)
@@ -229,6 +228,8 @@ class GStreamerBackend(object):
         # to rganalsys should have their gain computed, even if it
         # already exists.
         self._rg.set_property("forced", True)
+        self._rg.set_property("reference-level",
+                              config["targetlevel"].as_number())
         self._sink = self.Gst.ElementFactory.make("fakesink", "sink")
 
         self._pipe = self.Gst.Pipeline()
@@ -459,6 +460,7 @@ class ReplayGainPlugin(BeetsPlugin):
             'overwrite': False,
             'auto': True,
             'backend': u'command',
+            'targetlevel': 89,
         })
 
         self.overwrite = self.config['overwrite'].get(bool)
