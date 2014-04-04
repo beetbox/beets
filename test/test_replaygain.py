@@ -108,6 +108,17 @@ class ReplayGainGstCliTest(unittest.TestCase):
             self.assertAlmostEqual(
                 mediafile.rg_track_gain, item.rg_track_gain, places=6)
 
+    def test_cli_skips_calculated_tracks(self):
+        ui._raw_main(['replaygain'])
+        item = self.lib.items()[0]
+        peak = item.rg_track_peak
+        item.rg_track_gain = 0.0
+        ui._raw_main(['replaygain'])
+        self.assertEqual(item.rg_track_gain, 0.0)
+        self.assertEqual(item.rg_track_peak, peak)
+
+
+
     def test_cli_saves_album_gain_to_file(self):
         for item in self.lib.items():
             mediafile = MediaFile(item.path)
