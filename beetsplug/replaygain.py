@@ -33,6 +33,7 @@ class ReplayGainError(Exception):
     """Raised when an error occurs during mp3gain/aacgain execution.
     """
 
+
 def call(args):
     """Execute the command and return its output or raise a
     ReplayGainError on failure.
@@ -50,11 +51,11 @@ def call(args):
         raise ReplayGainError("argument encoding failed")
 
 
-
 # Backend base and plumbing classes.
 
 Gain = collections.namedtuple("Gain", "gain peak")
 AlbumGain = collections.namedtuple("AlbumGain", "album_gain track_gains")
+
 
 class Backend(object):
     """An abstract class representing engine for calculating RG values.
@@ -110,18 +111,18 @@ class CommandBackend(Backend):
         target_level = config['targetlevel'].as_number()
         self.gain_offset = int(target_level - 89)
 
-    """
-    Computes the track gain of the given tracks, returns a list of TrackGain objects
-    """
     def compute_track_gain(self, items):
+        """Computes the track gain of the given tracks, returns a list
+        of TrackGain objects.
+        """
         supported_items = filter(self.format_supported, items)
         output = self.compute_gain(supported_items, False)
         return output
 
-    """
-    Computes the album gain of the given album, returns an AlbumGain object
-    """
     def compute_album_gain(self, album):
+        """Computes the album gain of the given album, returns an
+        AlbumGain object.
+        """
         # TODO: What should be done when not all tracks in the album are
         # supported?
 
@@ -132,21 +133,22 @@ class CommandBackend(Backend):
         output = self.compute_gain(supported_items, True)
         return AlbumGain(output[-1], output[:-1])
 
-    """
-    Checks whether the given item is supported by the selected tool
-    """
     def format_supported(self, item):
+        """Checks whether the given item is supported by the selected tool.
+        """
         if 'mp3gain' in self.command and item.format != 'MP3':
             return False
         elif 'aacgain' in self.command and item.format not in ('MP3', 'AAC'):
             return False
         return True
 
-    """
-    Computes the track or album gain of a list of items, returns a list of TrackGain objects
-    When computing album gain, the last TrackGain object returned is the album gain
-    """
     def compute_gain(self, items, is_album):
+        """Computes the track or album gain of a list of items, returns
+        a list of TrackGain objects.
+
+        When computing album gain, the last TrackGain object returned is
+        the album gain
+        """
         if len(items) == 0:
             return []
 
@@ -206,17 +208,20 @@ class GStreamerBackend(object):
     def __init__(self, config):
         self._import_gst()
 
-        # Initialized a GStreamer pipeline of the form
-        # filesrc -> decodebin -> audioconvert -> audioresample -> rganalysis -> fakesink
-        # The connection between decodebin and audioconvert is handled dynamically after decodebin
-        # figures out the type of the input file.
+        # Initialized a GStreamer pipeline of the form filesrc ->
+        # decodebin -> audioconvert -> audioresample -> rganalysis ->
+        # fakesink The connection between decodebin and audioconvert is
+        # handled dynamically after decodebin figures out the type of
+        # the input file.
         self._src = self.Gst.ElementFactory.make("filesrc", "src")
         self._decbin = self.Gst.ElementFactory.make("decodebin", "decbin")
         self._conv = self.Gst.ElementFactory.make("audioconvert", "conv")
         self._res = self.Gst.ElementFactory.make("audioresample", "res")
         self._rg = self.Gst.ElementFactory.make("rganalysis", "rg")
-        # We check which files need gain ourselves, so all files given to rganalsys should have their gain
-        # computed, even if it already exists.
+
+        # We check which files need gain ourselves, so all files given
+        # to rganalsys should have their gain computed, even if it
+        # already exists.
         self._rg.set_property("forced", True)
         self._sink = self.Gst.ElementFactory.make("fakesink", "sink")
 
@@ -238,7 +243,8 @@ class GStreamerBackend(object):
         self._bus.connect("message::eos", self._on_eos)
         self._bus.connect("message::error", self._on_error)
         self._bus.connect("message::tag", self._on_tag)
-        # Needed for handling the dynamic connection between decodebin and audioconvert
+        # Needed for handling the dynamic connection between decodebin
+        # and audioconvert
         self._decbin.connect("pad-added", self._on_pad_added)
         self._decbin.connect("pad-removed", self._on_pad_removed)
 
@@ -256,8 +262,9 @@ class GStreamerBackend(object):
         print "here 1.5"
 
         from gi.repository import GObject, Gst
-        # Thread initialization. The pipeline freezes if not initialized at this point. Not entirely sure why
-        # this is not handled by the framwork.
+        # Thread initialization. The pipeline freezes if not initialized
+        # at this point. Not entirely sure why this is not handled by
+        # the framwork.
         GObject.threads_init()
         Gst.init([sys.argv[0]])
         print "here 2"
@@ -310,8 +317,9 @@ class GStreamerBackend(object):
         self._bus.remove_signal_watch()
 
     def _on_eos(self, bus, message):
-        # A file finished playing in all elements of the pipeline. The RG tags have already been propagated.
-        # If we don't have a next file, we stop processing.
+        # A file finished playing in all elements of the pipeline. The
+        # RG tags have already been propagated.  If we don't have a next
+        # file, we stop processing.
         if not self._set_next_file():
             self._pipe.set_state(self.Gst.State.NULL)
             self._main_loop.quit()
@@ -322,29 +330,31 @@ class GStreamerBackend(object):
         err, debug = message.parse_error()
         # A GStreamer error, either an unsupported format or a bug.
         raise ReplayGainError("Error %s - %s on file %s" %
-                        (err, debug, self._src.get_property("location")))
+                              (err, debug, self._src.get_property("location")))
 
     def _on_tag(self, bus, message):
         tags = message.parse_tag()
 
         def handle_tag(taglist, tag, userdata):
-            # The rganalysis element provides both the existing tags for files and the new computes tags.
-            # In order to ensure we store the computed tags, we overwrite the RG values of received a second time.
+            # The rganalysis element provides both the existing tags for
+            # files and the new computes tags.  In order to ensure we
+            # store the computed tags, we overwrite the RG values of
+            # received a second time.
             if tag == self.Gst.TAG_TRACK_GAIN:
                 self._file_tags[self._file]["TRACK_GAIN"] = \
-                        taglist.get_double(tag)[1]
+                    taglist.get_double(tag)[1]
             elif tag == self.Gst.TAG_TRACK_PEAK:
                 self._file_tags[self._file]["TRACK_PEAK"] = \
-                        taglist.get_double(tag)[1]
+                    taglist.get_double(tag)[1]
             elif tag == self.Gst.TAG_ALBUM_GAIN:
                 self._file_tags[self._file]["ALBUM_GAIN"] = \
-                        taglist.get_double(tag)[1]
+                    taglist.get_double(tag)[1]
             elif tag == self.Gst.TAG_ALBUM_PEAK:
                 self._file_tags[self._file]["ALBUM_PEAK"] = \
-                        taglist.get_double(tag)[1]
+                    taglist.get_double(tag)[1]
             elif tag == self.Gst.TAG_REFERENCE_LEVEL:
                 self._file_tags[self._file]["REFERENCE_LEVEL"] = \
-                        taglist.get_double(tag)[1]
+                    taglist.get_double(tag)[1]
 
         tags.foreach(handle_tag, None)
 
@@ -353,48 +363,47 @@ class GStreamerBackend(object):
             return False
 
         self._file = self._files.pop(0)
-
         self._pipe.set_state(self.Gst.State.NULL)
-
         self._src.set_property("location", syspath(self._file.path))
-
         self._pipe.set_state(self.Gst.State.PLAYING)
-
         return True
 
-    """
-    Initialize the filesrc element with the next file to be analyzed.
-    """
     def _set_file(self):
+        """Initialize the filesrc element with the next file to be analyzed.
+        """
         # No more files, we're done
         if len(self._files) == 0:
             return False
 
         self._file = self._files.pop(0)
 
-        # Disconnect the decodebin element from the pipeline, set its state to READY to to clear it.
+        # Disconnect the decodebin element from the pipeline, set its
+        # state to READY to to clear it.
         self._decbin.unlink(self._conv)
         self._decbin.set_state(self.Gst.State.READY)
 
-        # Set a new file on the filesrc element, can only be done in the READY state
+        # Set a new file on the filesrc element, can only be done in the
+        # READY state
         self._src.set_state(self.Gst.State.READY)
         self._src.set_property("location", syspath(self._file.path))
 
-        # Ensure the filesrc element received the paused state of the pipeline in a blocking manner
+        # Ensure the filesrc element received the paused state of the
+        # pipeline in a blocking manner
         self._src.sync_state_with_parent()
         self._src.get_state(self.Gst.CLOCK_TIME_NONE)
 
-        # Ensure the decodebin element receives the paused state of the pipeline in a blocking manner
+        # Ensure the decodebin element receives the paused state of the
+        # pipeline in a blocking manner
         self._decbin.sync_state_with_parent()
         self._decbin.get_state(self.Gst.CLOCK_TIME_NONE)
 
         return True
 
-    """
-    Set the next file to be analyzed while keeping the pipeline in the PAUSED state
-    so that the rganalysis element can correctly handle album gain
-    """
     def _set_next_file(self):
+        """Set the next file to be analyzed while keeping the pipeline
+        in the PAUSED state so that the rganalysis element can correctly
+        handle album gain.
+        """
         # A blocking pause
         self._pipe.set_state(self.Gst.State.PAUSED)
         self._pipe.get_state(self.Gst.CLOCK_TIME_NONE)
@@ -417,7 +426,8 @@ class GStreamerBackend(object):
         pad.link(sink_pad)
 
     def _on_pad_removed(self, decbin, pad):
-        # Called when the decodebin element is disconnected from the rest of the pipeline while switching input files
+        # Called when the decodebin element is disconnected from the
+        # rest of the pipeline while switching input files
         peer = pad.get_peer()
         assert(peer is None)
 
@@ -428,6 +438,7 @@ BACKENDS = {
     "command":   CommandBackend,
     "gstreamer": GStreamerBackend,
 }
+
 
 class ReplayGainPlugin(BeetsPlugin):
     """Provides ReplayGain analysis.
@@ -461,7 +472,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
     def track_requires_gain(self, item):
         return self.overwrite or \
-               (not item.rg_track_gain or not item.rg_track_peak)
+            (not item.rg_track_gain or not item.rg_track_peak)
 
     def album_requires_gain(self, album):
         # Skip calculating gain only when *all* files don't need
@@ -469,8 +480,8 @@ class ReplayGainPlugin(BeetsPlugin):
         # needs recalculation, we still get an accurate album gain
         # value.
         return self.overwrite or \
-               any([not item.rg_album_gain or not item.rg_album_peak
-                    for item in album.items()])
+            any([not item.rg_album_gain or not item.rg_album_peak
+                 for item in album.items()])
 
     def store_track_gain(self, item, track_gain):
         item.rg_track_gain = track_gain.gain
@@ -489,10 +500,16 @@ class ReplayGainPlugin(BeetsPlugin):
 
         log.debug(u'replaygain: applied album gain {0}, peak {1}'.format(
             album.rg_album_gain,
-            album.rg_album_peak
-        ))
+            album.rg_album_peak))
 
     def handle_album(self, album, write):
+        """Compute album and track replay gain store it in all of the
+        album's items.
+
+        If ``write`` is truthy then ``item.write()`` is called for each
+        item. If replay gain information is already present in all
+        items, nothing is done.
+        """
         if not self.album_requires_gain(album):
             log.info(u'Skipping album {0} - {1}'.format(album.albumartist,
                                                         album.album))
@@ -521,6 +538,12 @@ class ReplayGainPlugin(BeetsPlugin):
             log.warn(e)
 
     def handle_track(self, item, write):
+        """Compute track replay gain and store it in the item.
+
+        If ``write`` is truthy then ``item.write()`` is called to write
+        the data to disk.  If replay gain information is already present
+        in the item, nothing is done.
+        """
         if not self.track_requires_gain(item):
             log.info(u'Skipping track {0} - {1}'.format(item.artist,
                                                         item.title))
@@ -533,20 +556,20 @@ class ReplayGainPlugin(BeetsPlugin):
             track_gains = self.backend_instance.compute_track_gain([item])
             if len(track_gains) != 1:
                 raise ReplayGainError(
-                u"ReplayGain backend failed for track {0} - {1}".format(
-                    item.artist, item.title
+                    u"ReplayGain backend failed for track {0} - {1}".format(
+                        item.artist, item.title
+                    )
                 )
-            )
 
             self.store_track_gain(item, track_gains[0])
             if write:
                 item.write()
-        except RepalyGainError, e:
+        except ReplayGainError, e:
             log.warn(e)
 
-
     def imported(self, session, task):
-        """Our import stage function."""
+        """Add replay gain info to items or albums of ``task``.
+        """
         if not self.automatic:
             return
 
@@ -557,7 +580,8 @@ class ReplayGainPlugin(BeetsPlugin):
             self.handle_track(task.item, False)
 
     def commands(self):
-        """Provide a ReplayGain command."""
+        """Return the "replaygain" ui subcommand.
+        """
         def func(lib, opts, args):
             write = config['import']['write'].get(bool)
 
