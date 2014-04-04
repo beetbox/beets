@@ -572,7 +572,7 @@ def cpu_count():
             num = 0
     elif sys.platform == 'darwin':
         try:
-            num = int(os.popen('sysctl -n hw.ncpu').read())
+            num = int(command_output(['sysctl', '-n', 'hw.ncpu']))
         except ValueError:
             num = 0
     else:
