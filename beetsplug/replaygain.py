@@ -266,9 +266,8 @@ class GStreamerBackend(object):
             gi.require_version('Gst', '1.0')
 
             from gi.repository import GObject, Gst
-            # Thread initialization. The pipeline freezes if not initialized
-            # at this point. Not entirely sure why this is not handled by
-            # the framwork.
+            # Calling GObject.threads_init() is not needed for
+            # PyGObject 3.10.2+
             GObject.threads_init()
             Gst.init([sys.argv[0]])
         except:
