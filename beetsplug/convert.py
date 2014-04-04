@@ -174,13 +174,12 @@ def convert_item(dest_dir, keep_new, path_formats):
                 encode(item.path, dest)
 
         # Write tags from the database to the converted file.
-        if not keep_new:
-            item.path = dest
-        item.write()
+        item.write(path=dest)
 
-        # If we're keeping the transcoded file, read it again (after
-        # writing) to get new bitrate, duration, etc.
         if keep_new:
+            # If we're keeping the transcoded file, read it again (after
+            # writing) to get new bitrate, duration, etc.
+            item.path = dest
             item.read()
             item.store()  # Store new path and audio data.
 

@@ -414,17 +414,23 @@ class Item(LibModel):
 
         self.path = read_path
 
-    def write(self):
-        """Write the item's metadata to the associated file.
+    def write(self, path=None):
+        """Write the item's metadata to a media file.
+
+        ``path`` defaults to the item's path property.
 
         Can raise either a `ReadError` or a `WriteError`.
         """
+        if path is None:
+            path = self.path
+        else:
+            path = normpath(path)
         try:
-            f = MediaFile(syspath(self.path))
+            f = MediaFile(syspath(path))
         except (OSError, IOError) as exc:
             raise ReadError(self.path, exc)
 
-        plugins.send('write', item=self)
+        plugins.send('write', item=self, path=path)
 
         for key in ITEM_KEYS_WRITABLE:
             setattr(f, key, self[key])
