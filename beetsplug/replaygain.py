@@ -30,7 +30,11 @@ log = logging.getLogger('beets')
 # Utilities.
 
 class ReplayGainError(Exception):
-    """Raised when an error occurs during mp3gain/aacgain execution.
+    """Raised when a local (to a track or an album) error occurs in one of the backends.
+    """
+
+class FatalReplayGainError(Exception):
+    """Raised when a fatal error occurs in one of the backends.
     """
 
 
@@ -89,7 +93,7 @@ class CommandBackend(Backend):
         if self.command:
             # Explicit executable path.
             if not os.path.isfile(self.command):
-                raise ui.UserError(
+                raise FatalReplayGainError(
                     'replaygain command does not exist: {0}'.format(
                         self.command
                     )
@@ -103,7 +107,7 @@ class CommandBackend(Backend):
                 except OSError:
                     pass
         if not self.command:
-            raise ui.UserError(
+            raise FatalReplayGainError(
                 'no replaygain command found: install mp3gain or aacgain'
             )
 
@@ -256,15 +260,19 @@ class GStreamerBackend(object):
         """Import the necessary GObject-related modules and assign `Gst`
         and `GObject` fields on this object.
         """
-        import gi
-        gi.require_version('Gst', '1.0')
 
-        from gi.repository import GObject, Gst
-        # Thread initialization. The pipeline freezes if not initialized
-        # at this point. Not entirely sure why this is not handled by
-        # the framwork.
-        GObject.threads_init()
-        Gst.init([sys.argv[0]])
+        try:
+            import gi
+            gi.require_version('Gst', '1.0')
+
+            from gi.repository import GObject, Gst
+            # Thread initialization. The pipeline freezes if not initialized
+            # at this point. Not entirely sure why this is not handled by
+            # the framwork.
+            GObject.threads_init()
+            Gst.init([sys.argv[0]])
+        except:
+            raise FatalReplayGainError("GStreamer failed to initialize")
 
         self.GObject = GObject
         self.Gst = Gst
@@ -463,9 +471,14 @@ class ReplayGainPlugin(BeetsPlugin):
                 )
             )
 
-        self.backend_instance = self.backends[backend_name](
-            self.config
-        )
+        try:
+            self.backend_instance = self.backends[backend_name](
+                self.config
+            )
+        except (ReplayGainError, FatalReplayGainError) as e:
+            raise ui.UserError(
+                'An error occured in backend initialization: {0}'.format(e)
+            )
 
     def track_requires_gain(self, item):
         return self.overwrite or \
@@ -531,8 +544,12 @@ class ReplayGainPlugin(BeetsPlugin):
                 self.store_track_gain(item, track_gain)
                 if write:
                     item.write()
-        except ReplayGainError, e:
-            log.warn(e)
+        except ReplayGainError as e:
+            log.warn(u"ReplayGain error: {1}".format(e))
+        except FatalReplayGainError as e:
+            raise ui.UserError(
+                u"Fatal replay gain error: {1}".format(e)
+            )
 
     def handle_track(self, item, write):
         """Compute track replay gain and store it in the item.
@@ -561,8 +578,12 @@ class ReplayGainPlugin(BeetsPlugin):
             self.store_track_gain(item, track_gains[0])
             if write:
                 item.write()
-        except ReplayGainError, e:
-            log.warn(e)
+        except ReplayGainError as e:
+            log.warn(u"ReplayGain error: {1}".format(e))
+        except FatalReplayGainError as e:
+            raise ui.UserError(
+                u"Fatal replay gain error: {1}".format(e)
+            )
 
     def imported(self, session, task):
         """Add replay gain info to items or albums of ``task``.
