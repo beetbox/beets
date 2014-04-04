@@ -25,8 +25,10 @@ import traceback
 import subprocess
 import platform
 
+
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = u'\\\\?\\'
+
 
 class HumanReadableException(Exception):
     """An Exception that can include a human-readable error message to
@@ -57,7 +59,7 @@ class HumanReadableException(Exception):
         gerund = self.verb[:-1] if self.verb.endswith('e') else self.verb
         gerund += 'ing'
         return gerund
-    
+
     def _reasonstr(self):
         """Get the reason as a string."""
         if isinstance(self.reason, unicode):
@@ -82,6 +84,7 @@ class HumanReadableException(Exception):
         if self.tb:
             logger.debug(self.tb)
         logger.error(u'{0}: {1}'.format(self.error_kind, self.args[0]))
+
 
 class FilesystemError(HumanReadableException):
     """An error that occurred while performing a filesystem manipulation
@@ -112,6 +115,7 @@ class FilesystemError(HumanReadableException):
 
         return u'{0} {1}'.format(self._reasonstr(), clause)
 
+
 def normpath(path):
     """Provide the canonical form of the path suitable for storing in
     the database.
@@ -119,6 +123,7 @@ def normpath(path):
     path = syspath(path, prefix=False)
     path = os.path.normpath(os.path.abspath(os.path.expanduser(path)))
     return bytestring_path(path)
+
 
 def ancestry(path):
     """Return a list consisting of path's parent directory, its
@@ -141,6 +146,7 @@ def ancestry(path):
         if path: # don't yield ''
             out.insert(0, path)
     return out
+
 
 def sorted_walk(path, ignore=(), logger=None):
     """Like `os.walk`, but yields things in case-insensitive sorted,
@@ -193,6 +199,7 @@ def sorted_walk(path, ignore=(), logger=None):
         for res in sorted_walk(cur, ignore, logger):
             yield res
 
+
 def mkdirall(path):
     """Make all the enclosing directories of path (like mkdir -p on the
     parent).
@@ -204,6 +211,7 @@ def mkdirall(path):
             except (OSError, IOError) as exc:
                 raise FilesystemError(exc, 'create', (ancestor,),
                                       traceback.format_exc())
+
 
 def fnmatch_all(names, patterns):
     """Determine whether all strings in `names` match at least one of
@@ -218,6 +226,7 @@ def fnmatch_all(names, patterns):
         if not matches:
             return False
     return True
+
 
 def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
     """If path is an empty directory, then remove it. Recursively remove
@@ -237,7 +246,7 @@ def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
         ancestors = []
     elif root in ancestors:
         # Only remove directories below the root.
-        ancestors = ancestors[ancestors.index(root)+1:]
+        ancestors = ancestors[ancestors.index(root) + 1:]
     else:
         # Remove nothing.
         return
@@ -258,6 +267,7 @@ def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
                 break
         else:
             break
+
 
 def components(path):
     """Return a list of the path components in path. For instance:
@@ -282,6 +292,7 @@ def components(path):
 
     return comps
 
+
 def _fsencoding():
     """Get the system's filesystem encoding. On Windows, this is always
     UTF-8 (not MBCS).
@@ -295,6 +306,7 @@ def _fsencoding():
         # choose UTF-8.
         encoding = 'utf8'
     return encoding
+
 
 def bytestring_path(path):
     """Given a path, which is either a str or a unicode, returns a str
@@ -316,6 +328,7 @@ def bytestring_path(path):
     except (UnicodeError, LookupError):
         return path.encode('utf8')
 
+
 def displayable_path(path, separator=u'; '):
     """Attempts to decode a bytestring path to a unicode object for the
     purpose of displaying it to the user. If the `path` argument is a
@@ -333,6 +346,7 @@ def displayable_path(path, separator=u'; '):
         return path.decode(_fsencoding(), 'ignore')
     except (UnicodeError, LookupError):
         return path.decode('utf8', 'ignore')
+
 
 def syspath(path, prefix=True):
     """Convert a path for use by the operating system. In particular,
@@ -363,9 +377,11 @@ def syspath(path, prefix=True):
 
     return path
 
+
 def samefile(p1, p2):
     """Safer equality for paths."""
     return shutil._samefile(syspath(p1), syspath(p2))
+
 
 def remove(path, soft=True):
     """Remove the file. If `soft`, then no error will be raised if the
@@ -378,6 +394,7 @@ def remove(path, soft=True):
         os.remove(path)
     except (OSError, IOError) as exc:
         raise FilesystemError(exc, 'delete', (path,), traceback.format_exc())
+
 
 def copy(path, dest, replace=False):
     """Copy a plain file. Permissions are not copied. If `dest` already
@@ -396,6 +413,7 @@ def copy(path, dest, replace=False):
     except (OSError, IOError) as exc:
         raise FilesystemError(exc, 'copy', (path, dest),
                               traceback.format_exc())
+
 
 def move(path, dest, replace=False):
     """Rename a file. `dest` may not be a directory. If `dest` already
@@ -424,6 +442,7 @@ def move(path, dest, replace=False):
         except (OSError, IOError) as exc:
             raise FilesystemError(exc, 'move', (path, dest),
                                   traceback.format_exc())
+
 
 def unique_path(path):
     """Returns a version of ``path`` that does not exist on the
@@ -478,6 +497,7 @@ def sanitize_path(path, replacements=None):
         comps[i] = comp
     return os.path.join(*comps)
 
+
 def truncate_path(path, length=MAX_FILENAME_LENGTH):
     """Given a bytestring path or a Unicode path fragment, truncate the
     components to a legal length. In the last component, the extension
@@ -494,12 +514,14 @@ def truncate_path(path, length=MAX_FILENAME_LENGTH):
 
     return os.path.join(*out)
 
+
 def str2bool(value):
     """Returns a boolean reflecting a human-entered string."""
     if value.lower() in ('yes', '1', 'true', 't', 'y'):
         return True
     else:
         return False
+
 
 def as_string(value):
     """Convert a value to a Unicode object for matching with a query.
@@ -513,6 +535,7 @@ def as_string(value):
         return value.decode('utf8', 'ignore')
     else:
         return unicode(value)
+
 
 def levenshtein(s1, s2):
     """A nice DP edit distance implementation from Wikibooks:
@@ -536,6 +559,7 @@ def levenshtein(s1, s2):
 
     return previous_row[-1]
 
+
 def plurality(objs):
     """Given a sequence of comparable objects, returns the object that
     is most common in the set and the frequency of that object. The
@@ -558,6 +582,7 @@ def plurality(objs):
             res = obj
 
     return res, max_freq
+
 
 def cpu_count():
     """Return the number of hardware thread contexts (cores or SMT
@@ -585,6 +610,7 @@ def cpu_count():
     else:
         return 1
 
+
 def command_output(cmd):
     """Wraps the `subprocess` module to invoke a command (given as a
     list of arguments starting with the command name) and collect
@@ -602,6 +628,7 @@ def command_output(cmd):
     if proc.returncode:
         raise subprocess.CalledProcessError(proc.returncode, cmd)
     return stdout
+
 
 def max_filename_length(path, limit=MAX_FILENAME_LENGTH):
     """Attempt to determine the maximum filename length for the
