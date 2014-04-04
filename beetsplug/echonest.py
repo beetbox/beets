@@ -298,7 +298,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
 
         # Run the command.
         try:
-            subprocess.check_call(opts, close_fds=True, stderr=DEVNULL)
+            util.command_output(opts)
         except (OSError, subprocess.CalledProcessError) as exc:
             log.debug(u'echonest: encode failed: {0}'.format(exc))
             util.remove(dest)
