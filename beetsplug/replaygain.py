@@ -30,8 +30,10 @@ log = logging.getLogger('beets')
 # Utilities.
 
 class ReplayGainError(Exception):
-    """Raised when a local (to a track or an album) error occurs in one of the backends.
+    """Raised when a local (to a track or an album) error occurs in one
+    of the backends.
     """
+
 
 class FatalReplayGainError(Exception):
     """Raised when a fatal error occurs in one of the backends.
