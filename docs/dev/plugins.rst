@@ -297,41 +297,6 @@ This field works for *item* templates. Similarly, you can register *album*
 template fields by adding a function accepting an ``Album`` argument to the
 ``album_template_fields`` dict.
 
-Extend MediaFile
-^^^^^^^^^^^^^^^^
-
-`MediaFile`_ is the file tag abstraction layer that beets uses to make
-cross-format metadata manipulation simple. Plugins can add fields to MediaFile
-to extend the kinds of metadata that they can easily manage.
-
-The ``item_fields`` method on plugins should be overridden to return a
-dictionary whose keys are field names and whose values are descriptor objects
-that provide the field in question. The descriptors should probably be
-``MediaField`` instances (defined in ``beets.mediafile``). Here's an example
-plugin that provides a meaningless new field "foo"::
-
-    from beets import mediafile, plugins, ui
-    class FooPlugin(plugins.BeetsPlugin):
-        def item_fields(self):
-            return {
-                'foo': mediafile.MediaField(
-                    mp3 = mediafile.StorageStyle(
-                        'TXXX', id3_desc=u'Foo Field'),
-                    mp4 = mediafile.StorageStyle(
-                        '----:com.apple.iTunes:Foo Field'),
-                    etc = mediafile.StorageStyle('FOO FIELD')
-                ),
-            }
-
-Later, the plugin can manipulate this new field by saying something like
-``mf.foo = 'bar'`` where ``mf`` is a ``MediaFile`` instance.
-
-Note that, currently, these additional fields are *only* applied to
-``MediaFile`` itself. The beets library database schema and the ``Item`` class
-are not extended, so the fields are second-class citizens. This may change
-eventually.
-
-.. _MediaFile: https://github.com/sampsyo/beets/wiki/MediaFile
 
 Add Import Pipeline Stages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
