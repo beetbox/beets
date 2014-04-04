@@ -30,8 +30,9 @@ from beets.plugins import BeetsPlugin
 import beets.ui
 from beets import vfs
 from beets.util import bluelet
-from beets.library import ITEM_KEYS_WRITABLE
+from beets.library import ITEM_KEYS
 from beets import dbcore
+from beets.mediafile import MediaFile
 
 PROTOCOL_VERSION = '0.13.0'
 BUFSIZE = 1024
@@ -67,6 +68,7 @@ SAFE_COMMANDS = (
     u'close', u'commands', u'notcommands', u'password', u'ping',
 )
 
+ITEM_KEYS_WRITABLE = set(MediaFile.fields()).intersection(ITEM_KEYS)
 
 # Loggers.
 log = logging.getLogger('beets.bpd')

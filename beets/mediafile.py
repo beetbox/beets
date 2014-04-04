@@ -913,12 +913,14 @@ class MediaField(object):
     def __init__(self, *styles, **kwargs):
         """Creates a new MediaField.
 
-         - `styles`: `StorageStyle` instances that describe the strategy
-           for reading and writing the field in particular formats.
-           There must be at least one style for each possible file
-           format.
+        - `styles`: `StorageStyle` instances that describe the strategy
+          for reading and writing the field in particular formats.
+          There must be at least one style for each possible file
+          format.
+
         - `out_type`: the type of the value that should be returned when
-           getting this property.
+          getting this property.
+
         """
         self.out_type = kwargs.get('out_type', unicode)
         self._styles = styles
@@ -1255,6 +1257,60 @@ class MediaFile(object):
             # ASF), just delete each tag individually.
             for tag in self.mgfile.keys():
                 del self.mgfile[tag]
+
+    @classmethod
+    def fields(cls):
+        """Yield the names of all properties that are MediaFields.
+        """
+        for property, descriptor in cls.__dict__.items():
+            if isinstance(descriptor, MediaField):
+                yield property
+
+    @classmethod
+    def readable_fields(cls):
+        """Yield the elements of ``fields()`` and all additional
+        properties retrieved from the file
+        """
+        for property in cls.fields():
+            yield property
+        for property in ['length', 'samplerate', 'bitdepth', 'bitrate',
+                         'channels', 'format']:
+            yield property
+
+    @classmethod
+    def add_field(cls, name, descriptor):
+        """Add a field to store custom tags.
+
+        ``name`` is the name of the property the field is accessed
+        through. It must not already exist for the class. If the name
+        coincides with the name of a property of ``Item`` it will be set
+        from the item in ``item.write()``.
+
+        ``descriptor`` must be an instance of ``MediaField``.
+        """
+        if not isinstance(descriptor, MediaField):
+            raise ValueError(
+                u'{0} must be an instance of MediaField'.format(descriptor))
+        if name in cls.__dict__:
+            raise ValueError(
+                u'property "{0}" already exists on MediaField'.format(name))
+        setattr(cls, name, descriptor)
+
+    def update(self, dict, id3v23=False):
+        """Update tags from the dictionary and write them to the file.
+
+        For any key in ``dict`` that is also a field to store tags the
+        method retrieves the corresponding value from ``dict`` and
+        updates the ``MediaFile``. The changes are then written to the
+        disk.
+
+        By default, MP3 files are saved with ID3v2.4 tags. You can use
+        the older ID3v2.3 standard by specifying the `id3v23` option.
+        """
+        for field in self.fields():
+            if field in dict:
+                setattr(self, field, dict[field])
+        self.save(id3v23)
 
 
     # Field definitions.
