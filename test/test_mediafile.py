@@ -580,6 +580,34 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         self.assertEqual(mediafile.year, 0)
         self.assertEqual(mediafile.date, datetime.date.min)
 
+    def test_delete_tag(self):
+        mediafile = self._mediafile_fixture('full')
+
+        keys = self.full_initial_tags.keys()
+        keys.remove('art')
+        for key in keys:
+            self.assertIsNotNone(getattr(mediafile, key))
+            delattr(mediafile, key)
+
+        mediafile.save()
+        mediafile = MediaFile(mediafile.path)
+
+        # TODO Eventually the tags should have None values
+        empty_tags = dict((k, v) for k, v in self.empty_tags.items()
+                                 if k in keys)
+        self.assertTags(mediafile, empty_tags)
+
+    def test_delete_packed_total(self):
+        mediafile = self._mediafile_fixture('full')
+
+        delattr(mediafile, 'tracktotal')
+        delattr(mediafile, 'disctotal')
+
+        mediafile.save()
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(mediafile.track, self.full_initial_tags['track'])
+        self.assertEqual(mediafile.disc, self.full_initial_tags['disc'])
+
     def assertTags(self, mediafile, tags):
         errors = []
         for key, value in tags.items():

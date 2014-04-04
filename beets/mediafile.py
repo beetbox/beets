@@ -342,8 +342,9 @@ class StorageStyle(object):
     describe more sophisticated translations or format-specific access
     strategies.
 
-    MediaFile uses a StorageStyle via two methods: ``get()`` and
-    ``set()``. It passes a Mutagen file object to each.
+    MediaFile uses a StorageStyle via three methods: ``get()``,
+    ``set()``, and ``delete()``. It passes a Mutagen file object to
+    each.
 
     Internally, the StorageStyle implements ``get()`` and ``set()``
     using two steps that may be overridden by subtypes. To get a value,
@@ -446,6 +447,12 @@ class StorageStyle(object):
             value += self.suffix
 
         return value
+
+    def delete(self, mutagen_file):
+        """Remove the tag from the file.
+        """
+        if self.key in mutagen_file:
+            del mutagen_file[self.key]
 
 
 class ListStorageStyle(StorageStyle):
@@ -571,6 +578,12 @@ class MP4TupleStorageStyle(MP4StorageStyle):
         items = self.deserialize(self.fetch(mutagen_file))
         items[self.index] = int(value)
         self.store(mutagen_file, items)
+
+    def delete(self, mutagen_file):
+        if self.index == 0:
+            super(MP4TupleStorageStyle, self).delete(mutagen_file)
+        else:
+            self.set(mutagen_file, None)
 
 
 class MP4ListStorageStyle(ListStorageStyle, MP4StorageStyle):
@@ -725,6 +738,15 @@ class MP3DescStorageStyle(MP3StorageStyle):
                 except IndexError:
                     return None
 
+    def delete(self, mutagen_file):
+        frame = None
+        for frame in mutagen_file.tags.getall(self.key):
+            if frame.desc.lower() == self.description.lower():
+                break
+        if frame is not None:
+            del mutagen_file[frame.HashKey]
+
+
 
 class MP3SlashPackStorageStyle(MP3StorageStyle):
     """Store value as part of pair that is serialized as a slash-
@@ -751,6 +773,12 @@ class MP3SlashPackStorageStyle(MP3StorageStyle):
         if items[1] is None:
             items.pop()  # Do not store last value
         self.store(mutagen_file, '/'.join(map(unicode, items)))
+
+    def delete(self, mutagen_file):
+        if self.pack_pos == 0:
+            super(MP3SlashPackStorageStyle, self).delete(mutagen_file)
+        else:
+            self.set(mutagen_file, None)
 
 
 class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
@@ -943,6 +971,10 @@ class MediaField(object):
             value = self._none_value()
         for style in self.styles(mediafile.mgfile):
             style.set(mediafile.mgfile, value)
+    
+    def __delete__(self, mediafile):
+        for style in self.styles(mediafile.mgfile):
+            style.delete(mediafile.mgfile)
 
     def _none_value(self):
         """Get an appropriate "null" value for this field's type. This
@@ -1082,6 +1114,9 @@ class DateItemField(MediaField):
         items = self.date_field._get_date_tuple(mediafile)
         items[self.item_pos] = value
         self.date_field._set_date_tuple(mediafile, *items)
+
+    def __delete__(self, mediafile):
+        self.__set__(mediafile, None)
 
 
 class CoverArtField(MediaField):
