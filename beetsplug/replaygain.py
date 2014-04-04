@@ -431,15 +431,15 @@ class GStreamerBackend(object):
 
 # Main plugin logic.
 
-BACKENDS = {
-    "command":   CommandBackend,
-    "gstreamer": GStreamerBackend,
-}
-
-
 class ReplayGainPlugin(BeetsPlugin):
     """Provides ReplayGain analysis.
     """
+
+    backends = {
+        "command":   CommandBackend,
+        "gstreamer": GStreamerBackend,
+    }
+
     def __init__(self):
         super(ReplayGainPlugin, self).__init__()
         self.import_stages = [self.imported]
@@ -454,16 +454,16 @@ class ReplayGainPlugin(BeetsPlugin):
         self.overwrite = self.config['overwrite'].get(bool)
         self.automatic = self.config['auto'].get(bool)
         backend_name = self.config['backend'].get(unicode)
-        if backend_name not in BACKENDS:
+        if backend_name not in self.backends:
             raise ui.UserError(
                 u"Selected ReplayGain backend {0} is not supported. "
                 u"Please select one of: {1}".format(
                     backend_name,
-                    u', '.join(BACKENDS.keys())
+                    u', '.join(self.backends.keys())
                 )
             )
 
-        self.backend_instance = BACKENDS[backend_name](
+        self.backend_instance = self.backends[backend_name](
             self.config
         )
 
