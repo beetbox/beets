@@ -254,7 +254,7 @@ class GStreamerBackend(object):
         self._decbin.connect("pad-added", self._on_pad_added)
         self._decbin.connect("pad-removed", self._on_pad_removed)
 
-        self._main_loop = self.GObject.MainLoop()
+        self._main_loop = self.GLib.MainLoop()
 
         self._files = []
 
@@ -267,7 +267,7 @@ class GStreamerBackend(object):
             import gi
             gi.require_version('Gst', '1.0')
 
-            from gi.repository import GObject, Gst
+            from gi.repository import GObject, Gst, GLib
             # Calling GObject.threads_init() is not needed for
             # PyGObject 3.10.2+
             GObject.threads_init()
@@ -276,6 +276,7 @@ class GStreamerBackend(object):
             raise FatalReplayGainError("GStreamer failed to initialize")
 
         self.GObject = GObject
+        self.GLib = GLib
         self.Gst = Gst
 
     def compute(self, files, album):
