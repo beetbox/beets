@@ -23,6 +23,7 @@ from _common import unittest
 
 import beets
 from beets import ui
+from beets import plugins
 from beets.library import Item, Album
 from beets.mediafile import MediaFile
 
@@ -38,6 +39,10 @@ class ReplayGainGstCliTest(unittest.TestCase):
     def tearDown(self):
         del os.environ['BEETSDIR']
         shutil.rmtree(self.temp_dir)
+        self.config.clear()
+        self.config.read(user=False)
+        plugins._classes = set()
+        plugins._instances = {}
 
     def setupBeets(self):
         self.temp_dir = tempfile.mkdtemp()
