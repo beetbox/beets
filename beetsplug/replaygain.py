@@ -256,10 +256,8 @@ class GStreamerBackend(object):
         """Import the necessary GObject-related modules and assign `Gst`
         and `GObject` fields on this object.
         """
-        print "here 1"
         import gi
         gi.require_version('Gst', '1.0')
-        print "here 1.5"
 
         from gi.repository import GObject, Gst
         # Thread initialization. The pipeline freezes if not initialized
@@ -267,7 +265,6 @@ class GStreamerBackend(object):
         # the framwork.
         GObject.threads_init()
         Gst.init([sys.argv[0]])
-        print "here 2"
 
         self.GObject = GObject
         self.Gst = Gst
