@@ -316,7 +316,7 @@ class ExtendedFieldTestMixin(object):
 
 
 class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
-                        LazySaveTestMixin, ExtendedFieldTestMixin):
+                        ExtendedFieldTestMixin):
     """Test writing and reading tags. Subclasses must set ``extension`` and
     ``audio_properties``.
     """
