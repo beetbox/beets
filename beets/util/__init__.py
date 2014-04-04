@@ -23,6 +23,7 @@ import fnmatch
 from collections import defaultdict
 import traceback
 import subprocess
+import platform
 
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = u'\\\\?\\'
@@ -594,8 +595,9 @@ def command_output(cmd):
     Python 2.6 and which can have problems if lots of output is sent to
     stderr.
     """
-    with open(os.devnull, 'w') as devnull:
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=devnull)
+    with open(os.devnull, 'wb') as devnull:
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=devnull,
+                                close_fds=platform.system() != 'Windows')
         stdout, _ = proc.communicate()
     if proc.returncode:
         raise subprocess.CalledProcessError(proc.returncode, cmd)

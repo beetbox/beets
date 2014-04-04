@@ -17,11 +17,10 @@
 import logging
 import os
 import threading
-from subprocess import Popen
+import subprocess
 import tempfile
 from string import Template
 import pipes
-import platform
 
 from beets.plugins import BeetsPlugin
 from beets import ui, util
@@ -37,19 +36,6 @@ ALIASES = {
     u'wma': u'windows media',
     u'vorbis': u'ogg',
 }
-
-
-def _silent_popen(args):
-    """Invoke a command (like subprocess.Popen) while silencing its
-    error output. Return the Popen object.
-    """
-    # On Windows, close_fds doesn't work (i.e., raises an exception)
-    # when stderr is redirected.
-    return Popen(
-        args,
-        close_fds=platform.system() != 'Windows',
-        stderr=open(os.devnull, 'wb'),
-    )
 
 
 def _destination(dest_dir, item, keep_new, path_formats):
@@ -113,16 +99,22 @@ def encode(source, dest):
     log.debug(u'convert: executing: {0}'.format(
         u' '.join(pipes.quote(o.decode('utf8', 'ignore')) for o in opts)
     ))
-    encode = _silent_popen(opts)
-    encode.wait()
 
-    if encode.returncode != 0:
+    try:
+        util.command_output(opts)
+
+    except subprocess.CalledProcessError:
         # Something went wrong (probably Ctrl+C), remove temporary files
         log.info(u'Encoding {0} failed. Cleaning up...'
                  .format(util.displayable_path(source)))
         util.remove(dest)
         util.prune_dirs(os.path.dirname(dest))
         return
+
+    except OSError as exc:
+        raise ui.UserError(
+            u'convert: could invoke ffmpeg: {0}'.format(exc)
+        )
 
     if not quiet:
         log.info(u'Finished encoding {0}'.format(

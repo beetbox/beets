@@ -69,6 +69,8 @@ Fixes:
 * :doc:`/plugins/importfeeds`: Fix crash when importing albums
   containing ``/`` with the ``m3u_multi`` format.
 * Avoid crashing on Mutagen bugs while writing files' tags.
+* :doc:`/plugins/convert`: Display a useful error message when the FFmpeg
+  executable can't be found.
 
 .. _requests: http://www.python-requests.org/
 
