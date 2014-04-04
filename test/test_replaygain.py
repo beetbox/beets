@@ -28,11 +28,11 @@ from beets.library import Item, Album
 from beets.mediafile import MediaFile
 
 
-class ReplayGainGstCliTest(unittest.TestCase):
+class ReplayGainCliTestBase(object):
 
     def setUp(self):
         self.setupBeets()
-        self.config['replaygain']['backend'] = u'gstreamer'
+        self.config['replaygain']['backend'] = self.backend
         self.config['plugins'] = ['replaygain']
         self.setupLibrary(2)
 
@@ -140,6 +140,14 @@ class ReplayGainGstCliTest(unittest.TestCase):
 
         self.assertNotEqual(max(gains), 0.0)
         self.assertNotEqual(max(peaks), 0.0)
+
+
+class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
+    backend = u'gstreamer'
+
+
+class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase):
+    backend = u'command'
 
 
 def suite():
