@@ -19,7 +19,7 @@ matrix:
 install:
     - travis_retry sudo add-apt-repository -y ppa:gstreamer-developers/ppa
     - travis_retry sudo apt-get update
-    - travis_retry sudo apt-get install -qq bash-completion python-gi gstreamer1.0-plugins-good gstramer1.0-plugins-bad
+    - travis_retry sudo apt-get install -qq bash-completion python-gi gstreamer1.0-plugins-good gstreamer1.0-plugins-bad
     - travis_retry pip install tox sphinx
     - "[[ $TOX_ENV == 'py27' ]] && pip install coveralls || true"
 
