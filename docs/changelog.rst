@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.3.4 (April 4, 2014)
+1.3.4 (April 5, 2014)
 ---------------------
 
 This release brings a hodgepodge of medium-sized conveniences to beets. A new
