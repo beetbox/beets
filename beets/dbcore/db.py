@@ -152,8 +152,15 @@ class Model(object):
     def __setitem__(self, key, value):
         """Assign the value for a field.
         """
-        source = self._values_fixed if key in self._fields \
-                 else self._values_flex
+        # Choose where to place the value. If the corresponding field
+        # has a type, filter the value.
+        if key in self._fields:
+            source = self._values_fixed
+            value = self._fields[key].normalize(value)
+        else:
+            source = self._values_flex
+
+        # Assign value and possibly mark as dirty.
         old_value = source.get(key)
         source[key] = value
         if old_value != value:

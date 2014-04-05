@@ -79,6 +79,7 @@ class SingletonQuery(dbcore.Query):
 class DateType(types.Type):
     sql = u'REAL'
     query = dbcore.query.DateQuery
+    null = 0.0
 
     def format(self, value):
         return time.strftime(beets.config['time_format'].get(unicode),
@@ -95,7 +96,7 @@ class DateType(types.Type):
             try:
                 return float(string)
             except ValueError:
-                return 0.0
+                return self.null
 
 
 class PathType(types.Type):
@@ -122,9 +123,9 @@ class PathType(types.Type):
 # - Is the field writable?
 # - Does the field reflect an attribute of a MediaFile?
 ITEM_FIELDS = [
-    ('id',       types.Id(),      False, False),
+    ('id',       types.Id(True),  False, False),
     ('path',     PathType(),      False, False),
-    ('album_id', types.Integer(), False, False),
+    ('album_id', types.Id(False), False, False),
 
     ('title',                types.String(),     True, True),
     ('artist',               types.String(),     True, True),
@@ -192,9 +193,9 @@ ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
 # The third entry in each tuple indicates whether the field reflects an
 # identically-named field in the items table.
 ALBUM_FIELDS = [
-    ('id',      types.Id(), False),
-    ('artpath', PathType(), False),
-    ('added',   DateType(), True),
+    ('id',      types.Id(True), False),
+    ('artpath', PathType(),     False),
+    ('added',   DateType(),     True),
 
     ('albumartist',        types.String(),     True),
     ('albumartist_sort',   types.String(),     True),

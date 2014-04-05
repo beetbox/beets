@@ -219,6 +219,16 @@ class ModelTest(_common.TestCase):
         with self.assertRaises(KeyError):
             del model['field_one']
 
+    def test_null_value_normalization_by_type(self):
+        model = TestModel1()
+        model.field_one = None
+        self.assertEqual(model.field_one, 0)
+
+    def test_null_value_stays_none_for_untyped_field(self):
+        model = TestModel1()
+        model.foo = None
+        self.assertEqual(model.foo, None)
+
 
 class FormatTest(_common.TestCase):
     def test_format_fixed_field(self):

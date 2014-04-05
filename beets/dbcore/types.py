@@ -24,8 +24,8 @@ from beets.util import str2bool
 
 class Type(object):
     """An object encapsulating the type of a model field. Includes
-    information about how to store the value in the database, query,
-    format, and parse a given field.
+    information about how to store, query, format, and parse a given
+    field.
     """
 
     sql = None
@@ -34,6 +34,10 @@ class Type(object):
 
     query = None
     """The `Query` subclass to be used when querying the field.
+    """
+
+    null = None
+    """The value to be exposed when the underlying value is None.
     """
 
     def format(self, value):
@@ -48,6 +52,16 @@ class Type(object):
         """
         raise NotImplementedError()
 
+    def normalize(self, value):
+        """Given a value that will be assigned into a field of this
+        type, normalize the value to have the appropriate type. This
+        base implementation only reinterprets `None`.
+        """
+        if value is None:
+            return self.null
+        else:
+            return value
+
 
 
 # Reusable types.
@@ -58,6 +72,7 @@ class Integer(Type):
     """
     sql = u'INTEGER'
     query = query.NumericQuery
+    null = 0
 
     def format(self, value):
         return unicode(value or 0)
@@ -93,9 +108,14 @@ class ScaledInt(Integer):
 
 
 class Id(Integer):
-    """An integer used as the row key for a SQLite table.
+    """An integer used as the row id or a foreign key in a SQLite table.
+    This type is nullable: None values are not translated to zero.
     """
-    sql = u'INTEGER PRIMARY KEY'
+    null = None
+
+    def __init__(self, primary=True):
+        if primary:
+            self.sql = u'INTEGER PRIMARY KEY'
 
 
 class Float(Type):
@@ -103,6 +123,7 @@ class Float(Type):
     """
     sql = u'REAL'
     query = query.NumericQuery
+    null = 0.0
 
     def format(self, value):
         return u'{0:.1f}'.format(value or 0.0)
@@ -119,6 +140,7 @@ class String(Type):
     """
     sql = u'TEXT'
     query = query.SubstringQuery
+    null = u''
 
     def format(self, value):
         return unicode(value) if value else u''
@@ -132,6 +154,7 @@ class Boolean(Type):
     """
     sql = u'INTEGER'
     query = query.BooleanQuery
+    null = False
 
     def format(self, value):
         return unicode(bool(value))
