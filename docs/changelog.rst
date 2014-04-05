@@ -1,11 +1,17 @@
 Changelog
 =========
 
-1.3.4 (in development)
-----------------------
+1.3.4 (April 4, 2014)
+---------------------
 
-One note for upgraders: the :doc:`/plugins/fetchart` has a new dependency, the
-`requests`_ module.
+This release brings a hodgepodge of medium-sized conveniences to beets. A new
+:ref:`config-cmd` command manages your configuration, we now have :ref:`bash
+completion <completion>`, and the :ref:`modify-cmd` command can delete
+attributes. There are also some significant performance optimizations to the
+autotagger's matching logic.
+
+One note for upgraders: if you use the :doc:`/plugins/fetchart`, it has a new
+dependency, the `requests`_ module.
 
 New stuff:
 
@@ -15,13 +21,16 @@ New stuff:
   geigerzaehler.
 * Beets now ships with a shell command completion script! See
   :ref:`completion`. Thanks to geigerzaehler.
+* The :ref:`modify-cmd` command now allows removing flexible attributes. For
+  example, ``beet modify artist:beatles oldies!`` deletes the ``oldies``
+  attribute from matching items. Thanks to brilnius.
 * Internally, beets has laid the groundwork for supporting multi-valued
   fields. Thanks to geigerzaehler.
 * The importer interface now shows the URL for MusicBrainz matches. Thanks to
   johtso.
 * :doc:`/plugins/smartplaylist`: Playlists can now be generated from multiple
   queries (combined with "or" logic). Album-level queries are also now
-  possible. Automatic playlist regeneration can now be disabled. Thanks to
+  possible and automatic playlist regeneration can now be disabled. Thanks to
   brilnius.
 * :doc:`/plugins/echonest`: Echo Nest similarity now weights the tempo in
   better proportion to other metrics. Also, options were added to specify
@@ -32,9 +41,6 @@ New stuff:
 * We now only use "primary" aliases for artist names from MusicBrainz. This
   eliminates some strange naming that could occur when the `languages` config
   option was set. Thanks to Filipe Fortes.
-* The :ref:`modify-cmd` command now allows removing flexible attributes. For
-  example, ``beet modify artist:beatles oldies!`` deletes the ``oldies``
-  attribute from matching items. Thanks to brilnius.
 * The performance of the autotagger's matching mechanism is vastly improved.
   This should be noticeable when matching against very large releases such as
   box sets.
@@ -60,8 +66,8 @@ Fixes:
 * :doc:`/plugins/fetchart`: The plugin now sends "beets" as the User-Agent
   when making scraping requests. This helps resolve some blocked requests. The
   plugin now also depends on the `requests`_ Python library.
-* The :ref:`write-cmd` now only shows the changes to fields that will actually
-  be written to a file.
+* The :ref:`write-cmd` command now only shows the changes to fields that will
+  actually be written to a file.
 * :doc:`/plugins/duplicates`: Spurious reports are now avoided for tracks with
   missing values (e.g., no MBIDs). Thanks to Pedro Silva.
 * The default :ref:`replace` sanitation options now remove leading whitespace
