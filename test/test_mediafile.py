@@ -351,7 +351,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         'label':      u'the label',
     }
 
-    tag_fields = {
+    tag_fields = [
         'title',
         'artist',
         'album',
@@ -401,7 +401,8 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         'original_month',
         'original_day',
         'original_date',
-    }
+    ]
+
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
 
@@ -568,7 +569,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         mediafile = self._mediafile_fixture('full')
 
         keys = self.full_initial_tags.keys()
-        for key in set(keys) - {'art', 'month', 'day'}:
+        for key in set(keys) - set(['art', 'month', 'day']):
             self.assertIsNotNone(getattr(mediafile, key))
         for key in keys:
             delattr(mediafile, key)
