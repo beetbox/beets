@@ -284,7 +284,7 @@ class ExtendedFieldTestMixin(object):
         plugin.add_media_field('initialkey', field_extension)
 
         mediafile = self._mediafile_fixture('empty')
-        self.assertEqual(mediafile.initialkey, '')
+        self.assertIsNone(mediafile.initialkey)
 
         item = Item(path=mediafile.path, initialkey='Gb')
         item.write()
@@ -333,8 +333,8 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         'composer':   u'the composer',
         'grouping':   u'the grouping',
         'year':       2001,
-        'month':      0,
-        'day':        0,
+        'month':      None,
+        'day':        None,
         'date':       datetime.date(2001, 1, 1),
         'track':      2,
         'tracktotal': 3,
@@ -351,60 +351,57 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         'label':      u'the label',
     }
 
-    empty_tags = {
-        'title':      u'',
-        'artist':     u'',
-        'album':      u'',
-        'genre':      u'',
-        'composer':   u'',
-        'grouping':   u'',
-        'year':       0,
-        'month':      0,
-        'day':        0,
-        'date':       datetime.date.min,
-        'track':      0,
-        'tracktotal': 0,
-        'disc':       0,
-        'disctotal':  0,
-        'lyrics':     u'',
-        'comments':   u'',
-        'bpm':        0,
-        'comp':       False,
-        'mb_trackid': u'',
-        'mb_albumid': u'',
-        'mb_artistid':u'',
-        'art':        None,
-        'label':      u'',
-
-        # Additional, non-iTunes fields.
-        'rg_track_peak':        0.0,
-        'rg_track_gain':        0.0,
-        'rg_album_peak':        0.0,
-        'rg_album_gain':        0.0,
-        'albumartist':          u'',
-        'mb_albumartistid':     u'',
-        'artist_sort':          u'',
-        'albumartist_sort':     u'',
-        'acoustid_fingerprint': u'',
-        'acoustid_id':          u'',
-        'mb_releasegroupid':    u'',
-        'asin':                 u'',
-        'catalognum':           u'',
-        'disctitle':            u'',
-        'script':               u'',
-        'language':             u'',
-        'country':              u'',
-        'albumstatus':          u'',
-        'media':                u'',
-        'albumdisambig':        u'',
-        'artist_credit':        u'',
-        'albumartist_credit':   u'',
-        'original_year':        0,
-        'original_month':       0,
-        'original_day':         0,
-        'original_date':        datetime.date.min,
+    tag_fields = {
+        'title',
+        'artist',
+        'album',
+        'genre',
+        'composer',
+        'grouping',
+        'year',
+        'month',
+        'day',
+        'date',
+        'track',
+        'tracktotal',
+        'disc',
+        'disctotal',
+        'lyrics',
+        'comments',
+        'bpm',
+        'comp',
+        'mb_trackid',
+        'mb_albumid',
+        'mb_artistid',
+        'art',
+        'label',
+        'rg_track_peak',
+        'rg_track_gain',
+        'rg_album_peak',
+        'rg_album_gain',
+        'albumartist',
+        'mb_albumartistid',
+        'artist_sort',
+        'albumartist_sort',
+        'acoustid_fingerprint',
+        'acoustid_id',
+        'mb_releasegroupid',
+        'asin',
+        'catalognum',
+        'disctitle',
+        'script',
+        'language',
+        'country',
+        'albumstatus',
+        'media',
+        'albumdisambig',
+        'artist_credit',
+        'albumartist_credit',
+        'original_year',
+        'original_month',
+        'original_day',
+        'original_date',
     }
-
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
 
@@ -427,7 +424,8 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
 
     def test_read_empty(self):
         mediafile = self._mediafile_fixture('empty')
-        self.assertTags(mediafile, self.empty_tags)
+        for field in self.tag_fields:
+            self.assertIsNone(getattr(mediafile, field))
 
     def test_write_empty(self):
         mediafile = self._mediafile_fixture('empty')
@@ -508,8 +506,8 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
 
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(mediafile.year, 2001)
-        self.assertEqual(mediafile.month, 0)
-        self.assertEqual(mediafile.day, 0)
+        self.assertIsNone(mediafile.month)
+        self.assertIsNone(mediafile.day)
         self.assertEqual(mediafile.date, datetime.date(2001,1,1))
 
     def test_write_dates(self):
@@ -527,22 +525,6 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         self.assertEqual(mediafile.original_month, 12)
         self.assertEqual(mediafile.original_day, 30)
         self.assertEqual(mediafile.original_date, datetime.date(1999,12,30))
-
-    def test_read_write_float_none(self):
-        mediafile = self._mediafile_fixture('full')
-        mediafile.rg_track_gain = None
-        mediafile.rg_track_peak = None
-        mediafile.original_year = None
-        mediafile.original_month = None
-        mediafile.original_day = None
-        mediafile.save()
-
-        mediafile = MediaFile(mediafile.path)
-        self.assertEqual(mediafile.rg_track_gain, 0)
-        self.assertEqual(mediafile.rg_track_peak, 0)
-        self.assertEqual(mediafile.original_year, 0)
-        self.assertEqual(mediafile.original_month, 0)
-        self.assertEqual(mediafile.original_day, 0)
 
     def test_write_packed(self):
         mediafile = self._mediafile_fixture('empty')
@@ -563,39 +545,39 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         self.assertEqual(mediafile.disctotal, 5)
 
         mediafile.track = 10
-        mediafile.tracktotal = None
+        delattr(mediafile, 'tracktotal')
         mediafile.disc = 10
-        mediafile.disctotal = None
+        delattr(mediafile, 'disctotal')
         mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(mediafile.track, 10)
-        self.assertEqual(mediafile.tracktotal, 0)
+        self.assertEqual(mediafile.tracktotal, None)
         self.assertEqual(mediafile.disc, 10)
-        self.assertEqual(mediafile.disctotal, 0)
+        self.assertEqual(mediafile.disctotal, None)
 
     def test_unparseable_date(self):
         mediafile = self._mediafile_fixture('unparseable')
 
-        self.assertEqual(mediafile.year, 0)
-        self.assertEqual(mediafile.date, datetime.date.min)
+        self.assertIsNone(mediafile.date)
+        self.assertIsNone(mediafile.year)
+        self.assertIsNone(mediafile.month)
+        self.assertIsNone(mediafile.day)
 
     def test_delete_tag(self):
         mediafile = self._mediafile_fixture('full')
 
         keys = self.full_initial_tags.keys()
-        keys.remove('art')
-        for key in keys:
+        for key in set(keys) - {'art', 'month', 'day'}:
             self.assertIsNotNone(getattr(mediafile, key))
+        for key in keys:
             delattr(mediafile, key)
 
         mediafile.save()
         mediafile = MediaFile(mediafile.path)
 
-        # TODO Eventually the tags should have None values
-        empty_tags = dict((k, v) for k, v in self.empty_tags.items()
-                                 if k in keys)
-        self.assertTags(mediafile, empty_tags)
+        for key in keys:
+            self.assertIsNone(getattr(mediafile, key))
 
     def test_delete_packed_total(self):
         mediafile = self._mediafile_fixture('full')
@@ -607,6 +589,38 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(mediafile.track, self.full_initial_tags['track'])
         self.assertEqual(mediafile.disc, self.full_initial_tags['disc'])
+
+    def test_delete_partial_date(self):
+        mediafile = self._mediafile_fixture('empty')
+
+        mediafile.date = datetime.date(2001, 12, 3)
+        mediafile.save()
+        mediafile = MediaFile(mediafile.path)
+        self.assertIsNotNone(mediafile.date)
+        self.assertIsNotNone(mediafile.year)
+        self.assertIsNotNone(mediafile.month)
+        self.assertIsNotNone(mediafile.day)
+
+        delattr(mediafile, 'month')
+        mediafile.save()
+        mediafile = MediaFile(mediafile.path)
+        self.assertIsNotNone(mediafile.date)
+        self.assertIsNotNone(mediafile.year)
+        self.assertIsNone(mediafile.month)
+        self.assertIsNone(mediafile.day)
+
+    def test_delete_year(self):
+        mediafile = self._mediafile_fixture('full')
+
+        self.assertIsNotNone(mediafile.date)
+        self.assertIsNotNone(mediafile.year)
+
+        delattr(mediafile, 'year')
+        mediafile.save()
+        mediafile = MediaFile(mediafile.path)
+        self.assertIsNone(mediafile.date)
+        self.assertIsNone(mediafile.year)
+
 
     def assertTags(self, mediafile, tags):
         errors = []
@@ -634,20 +648,19 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         """Return dictionary of tags, mapping tag names to values.
         """
         tags = {}
-        if base is None:
-            base = self.empty_tags
 
-        for key, value in base.items():
-            if key == 'art':
-                tags[key] = self.jpg_data
-            elif isinstance(value, unicode):
-                tags[key] = 'value\u2010%s' % key
-            elif isinstance(value, int):
-                tags[key] = 1
-            elif isinstance(value, float):
+        for key in self.tag_fields:
+            if key.startswith('rg_'):
+                # ReplayGain is float
                 tags[key] = 1.0
-            elif isinstance(value, bool):
-                tags[key] = True
+            else:
+                tags[key] = 'value\u2010%s' % key
+
+        for key in ['disc', 'disctotal', 'track', 'tracktotal', 'bpm']:
+            tags[key] = 1
+
+        tags['art'] = self.jpg_data
+        tags['comp'] = True
 
         date = datetime.date(2001, 4, 3)
         tags['date'] = date
@@ -674,9 +687,9 @@ class PartialTestMixin(object):
     def test_read_track_without_total(self):
         mediafile = self._mediafile_fixture('partial')
         self.assertEqual(mediafile.track, 2)
-        self.assertEqual(mediafile.tracktotal, 0)
+        self.assertIsNone(mediafile.tracktotal)
         self.assertEqual(mediafile.disc, 4)
-        self.assertEqual(mediafile.disctotal, 0)
+        self.assertIsNone(mediafile.disctotal)
 
 
 class MP3Test(ReadWriteTestBase, PartialTestMixin,
@@ -845,7 +858,7 @@ class MediaFieldTest(unittest.TestCase):
             self.assertTrue(hasattr(mediafile, field))
 
     def test_known_fields(self):
-        fields = ReadWriteTestBase.empty_tags.keys()
+        fields = list(ReadWriteTestBase.tag_fields)
         fields.extend(('encoder', 'images', 'genres', 'albumtype'))
         self.assertItemsEqual(MediaFile.fields(), fields)
 
