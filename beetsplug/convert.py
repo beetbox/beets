@@ -120,6 +120,7 @@ def encode(source, dest):
         log.info(u'Finished encoding {0}'.format(
             util.displayable_path(source))
         )
+    return True
 
 
 def should_transcode(item):
@@ -200,7 +201,9 @@ def convert_on_import(lib, item):
         fd, dest = tempfile.mkstemp(ext)
         os.close(fd)
         _temp_files.append(dest)  # Delete the transcode later.
-        encode(item.path, dest)
+        if encode(item.path, dest) is None:
+            # FIXME we should raise an exception instead
+            return
         item.path = dest
         item.write()
         item.read()  # Load new audio information data.
