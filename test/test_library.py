@@ -29,6 +29,7 @@ import beets.library
 from beets import util
 from beets import plugins
 from beets import config
+from beets.mediafile import MediaFile
 
 TEMP_LIB = os.path.join(_common.RSRC, 'test_copy.blb')
 
@@ -957,6 +958,20 @@ class WriteTest(_common.LibTestCase):
 
         self.i.path = path
         self.assertRaises(beets.library.WriteError, self.i.write)
+
+    def test_write_with_custom_path(self):
+        custom_path = os.path.join(self.temp_dir, 'file.mp3')
+        self.i.path = os.path.join(self.temp_dir, 'item_file.mp3')
+        shutil.copy(os.path.join(_common.RSRC, 'empty.mp3'), custom_path)
+        shutil.copy(os.path.join(_common.RSRC, 'empty.mp3'), self.i.path)
+
+        self.i['artist'] = 'new artist'
+        self.assertNotEqual(MediaFile(custom_path).artist, 'new artist')
+        self.assertNotEqual(MediaFile(self.i.path).artist, 'new artist')
+
+        self.i.write(custom_path)
+        self.assertEqual(MediaFile(custom_path).artist, 'new artist')
+        self.assertNotEqual(MediaFile(self.i.path).artist, 'new artist')
 
 
 def suite():

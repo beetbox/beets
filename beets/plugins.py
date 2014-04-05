@@ -17,9 +17,9 @@
 import logging
 import traceback
 from collections import defaultdict
+import inspect
 
 import beets
-from beets import mediafile
 
 PLUGIN_NAMESPACE = 'beetsplug'
 
@@ -40,7 +40,6 @@ class BeetsPlugin(object):
     def __init__(self, name=None):
         """Perform one-time plugin setup.
         """
-        _add_media_fields(self.item_fields())
         self.import_stages = []
         self.name = name or self.__module__.split('.')[-1]
         self.config = beets.config[self.name]
@@ -85,14 +84,6 @@ class BeetsPlugin(object):
         item provided.
         """
         return ()
-
-    def item_fields(self):
-        """Returns field descriptors to be added to the MediaFile class,
-        in the form of a dictionary whose keys are field names and whose
-        values are descriptor (e.g., MediaField) instances. The Library
-        database schema is not (currently) extended.
-        """
-        return {}
 
     def album_for_id(self, album_id):
         """Return an AlbumInfo object or None if no matching release was
@@ -297,13 +288,6 @@ def template_funcs():
             funcs.update(plugin.template_funcs)
     return funcs
 
-def _add_media_fields(fields):
-    """Adds a {name: descriptor} dictionary of fields to the MediaFile
-    class. Called during the plugin initialization.
-    """
-    for key, value in fields.iteritems():
-        setattr(mediafile.MediaFile, key, value)
-
 def import_stages():
     """Get a list of import stage functions defined by plugins."""
     stages = []
@@ -356,4 +340,8 @@ def send(event, **arguments):
     Returns a list of return values from the handlers.
     """
     log.debug('Sending event: %s' % event)
-    return [handler(**arguments) for handler in event_handlers()[event]]
+    for handler in event_handlers()[event]:
+        # Don't break legacy plugins if we want to pass more arguments
+        argspec = inspect.getargspec(handler).args
+        args = dict((k, v) for k, v in arguments.items() if k in argspec)
+        handler(**args)

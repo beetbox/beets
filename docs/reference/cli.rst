@@ -361,7 +361,7 @@ Beets includes support for shell command completion. The command ``beet
 completion`` prints out a `bash`_ 3.2 script; to enable completion put a line
 like this into your ``.bashrc`` or similar file::
 
-    eval $(beet completion)
+    eval "$(beet completion)"
 
 Or, to avoid slowing down your shell startup time, you can pipe the ``beet
 completion`` output to a file and source that instead.
