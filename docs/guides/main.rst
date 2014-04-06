@@ -68,22 +68,19 @@ get it right:
 
 1. If you don't have it, `install Python`_ (you want Python 2.7).
 
-2. Install `Setuptools`_ from PyPI. To do this, scroll to the bottom of that
-   page and download the Windows installer (``.exe``, not ``.egg``) for your
-   Python version (for example: ``setuptools-0.6c11.win32-py2.7.exe``).
-
-3. If you haven't done so already, set your ``PATH`` environment variable to
+2. If you haven't done so already, set your ``PATH`` environment variable to
    include Python and its scripts. To do so, you have to get the "Properties"
    window for "My Computer", then choose the "Advanced" tab, then hit the
    "Environment Variables" button, and then look for the ``PATH`` variable in
    the table. Add the following to the end of the variable's value:
    ``;C:\Python27;C:\Python27\Scripts``.
 
-4. Open a command prompt and install pip by running: ``easy_install pip``
+3. Next, `install pip`_ (if you don't have it already) by downloading and
+   running the `get-pip.py`_ script.
 
-5. Now install beets by running: ``pip install beets``
+4. Now install beets by running: ``pip install beets``
 
-6. You're all set! Type ``beet`` at the command prompt to make sure everything's
+5. You're all set! Type ``beet`` at the command prompt to make sure everything's
    in order.
 
 Windows users may also want to install a context menu item for importing files
@@ -97,8 +94,9 @@ trouble or you have more detail to contribute here, please direct it to
 `the mailing list`_.
 
 .. _install Python: http://python.org/download/
-.. _Setuptools: http://pypi.python.org/pypi/setuptools
 .. _beets.reg: https://github.com/sampsyo/beets/blob/master/extra/beets.reg
+.. _install pip: http://www.pip-installer.org/en/latest/installing.html#install-pip
+.. _get-pip.py: https://raw.github.com/pypa/pip/master/contrib/get-pip.py
 
 
 Configuring
