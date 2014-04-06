@@ -47,7 +47,8 @@ def _fetch_image(url):
     log.debug(u'fetchart: downloading art: {0}'.format(url))
     try:
         with closing(requests_session.get(url, stream=True)) as resp:
-            if not resp.headers['Content-Type'] in CONTENT_TYPES:
+            if not 'Content-Type' in resp.headers \
+                or not resp.headers['Content-Type'] in CONTENT_TYPES:
                 log.debug(u'fetchart: not an image')
                 return
 
