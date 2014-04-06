@@ -6,6 +6,13 @@ Changelog
 
 Changelog goes here!
 
+New stuff:
+
+* :doc:`/plugins/replaygain`: Added support for calcuating ReplayGain values with
+  GStreamer as well as the mp3gain/aacgain command. This enables ReplayGain
+  calculation for practially all formats. The upgraded plugin is backward
+  compatible configuration-wise.
+
 
 1.3.4 (April 5, 2014)
 ---------------------
