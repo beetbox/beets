@@ -12,21 +12,41 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+import sys
 import os
 import os.path
 import shutil
 import tempfile
+from pathlib import Path
 from glob import glob
+from contextlib import contextmanager
+from StringIO import StringIO
 
 import beets
 from beets import config
 import beets.plugins
-from beets.library import Library
+from beets.library import Library, Item
 
 # TODO Move this here, along with AutotagMock
 from test_importer import TestImportSession
 import _common
 
+
+@contextmanager
+def controlStdin(input=None):
+    """Sends ``input`` to stdin.
+
+    >>> with controlStdin('yes'):
+    ...     in = input()
+    'yes'
+    """
+    org = sys.stdin
+    sys.stdin = StringIO(input)
+    sys.stdin.encoding = 'utf8'
+    try:
+        yield sys.stdin
+    finally:
+        sys.stdin = org
 
 class TestHelper(object):
     """Helper mixin for high-level cli and plugin tests.
@@ -97,6 +117,8 @@ class TestHelper(object):
         """Unload all plugins and remove the from the configuration.
         """
         beets.config['plugins'] = []
+        for plugin in beets.plugins._classes:
+            plugin.listeners = None
         beets.plugins._classes = set()
         beets.plugins._instances = {}
 
@@ -119,3 +141,17 @@ class TestHelper(object):
 
         return TestImportSession(self.lib, logfile=None, query=None,
                                  paths=[import_dir])
+
+    def add_item_fixtures(self, ext='mp3', count=1):
+        items = []
+        paths = list(Path(_common.RSRC).glob('*.' + ext))
+        for path in paths[0:count]:
+            item = Item.from_path(str(path))
+            item.add(self.lib)
+            item.move(copy=True)
+            item.store()
+            items.append(item)
+        return items
+
+    def run_command(self, *args):
+        beets.ui._raw_main(list(args))

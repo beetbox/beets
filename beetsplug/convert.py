@@ -180,7 +180,6 @@ def convert_item(dest_dir, keep_new, path_formats):
         if keep_new:
             # If we're keeping the transcoded file, read it again (after
             # writing) to get new bitrate, duration, etc.
-            item.path = dest
             item.read()
             item.store()  # Store new path and audio data.
 
