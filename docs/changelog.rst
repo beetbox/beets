@@ -15,6 +15,8 @@ Fixes:
 
 * :doc:`/plugins/fetchart`: Fix a crash when the server does not specify a
   content type. Thanks to Lee Reinhardt.
+* :doc:`/plugins/convert`: The ``--keep-new`` flag now works correctly
+  and the library includes the converted item.
 
 
 1.3.4 (April 5, 2014)
