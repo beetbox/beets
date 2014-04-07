@@ -41,6 +41,7 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
         self.assertIsNotNone(item)
         self.assertTrue(os.path.isfile(item.path))
 
+
 class ImportCliTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
@@ -71,6 +72,7 @@ class ImportCliTest(unittest.TestCase, TestHelper):
 
         self.item.load()
         self.assertEqual(Path(self.item.path).suffix, '.mp3')
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

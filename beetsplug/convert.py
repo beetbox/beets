@@ -22,10 +22,9 @@ import tempfile
 from string import Template
 import pipes
 
+from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
-from beets import ui, util
 from beetsplug.embedart import _embed
-from beets import config
 
 log = logging.getLogger('beets')
 _fs_lock = threading.Lock()
@@ -83,6 +82,12 @@ def get_format():
 
 
 def encode(source, dest):
+    """Encode ``source`` to ``dest`` using the command from ``get_format()``.
+
+    Raises an ``ui.UserError`` if the command was not found and a
+    ``subprocess.CalledProcessError`` if the command exited with a
+    non-zero status code.
+    """
     quiet = config['convert']['quiet'].get()
 
     if not quiet:
@@ -102,15 +107,13 @@ def encode(source, dest):
 
     try:
         util.command_output(opts)
-
     except subprocess.CalledProcessError:
         # Something went wrong (probably Ctrl+C), remove temporary files
         log.info(u'Encoding {0} failed. Cleaning up...'
                  .format(util.displayable_path(source)))
         util.remove(dest)
         util.prune_dirs(os.path.dirname(dest))
-        return
-
+        raise
     except OSError as exc:
         raise ui.UserError(
             u'convert: could invoke ffmpeg: {0}'.format(exc)
@@ -120,7 +123,6 @@ def encode(source, dest):
         log.info(u'Finished encoding {0}'.format(
             util.displayable_path(source))
         )
-    return True
 
 
 def should_transcode(item):
@@ -157,25 +159,28 @@ def convert_item(dest_dir, keep_new, path_formats):
             log.info(u'Moving to {0}'.
                      format(util.displayable_path(dest)))
             util.move(item.path, dest)
+            original = dest
+            _, ext = get_format()
+            converted = os.path.splitext(item.path)[0] + ext
+        else:
+            original = item.path
+            converted = dest
 
         if not should_transcode(item):
             # No transcoding necessary.
             log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
-            if keep_new:
-                util.copy(dest, item.path)
-            else:
-                util.copy(item.path, dest)
-
+            util.copy(original, converted)
         else:
-            if keep_new:
-                _, ext = get_format()
-                item.path = os.path.splitext(item.path)[0] + ext
-                encode(dest, item.path)
-            else:
-                encode(item.path, dest)
+            try:
+                encode(original, converted)
+            except subprocess.CalledProcessError:
+                continue
+
+        if keep_new:
+            item.path = converted
 
         # Write tags from the database to the converted file.
-        item.write(path=dest)
+        item.write(path=converted)
 
         if keep_new:
             # If we're keeping the transcoded file, read it again (after
@@ -189,6 +194,7 @@ def convert_item(dest_dir, keep_new, path_formats):
                 artpath = album.artpath
                 if artpath:
                     _embed(artpath, [item])
+        plugins.send('after_convert', item=item, dest=dest, keepnew=keep_new)
 
 
 def convert_on_import(lib, item):
@@ -200,8 +206,9 @@ def convert_on_import(lib, item):
         fd, dest = tempfile.mkstemp(ext)
         os.close(fd)
         _temp_files.append(dest)  # Delete the transcode later.
-        if encode(item.path, dest) is None:
-            # FIXME we should raise an exception instead
+        try:
+            encode(item.path, dest)
+        except subprocess.CalledProcessError:
             return
         item.path = dest
         item.write()
