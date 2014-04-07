@@ -82,7 +82,6 @@ setup(name='beets',
 
       tests_require=[
           'responses',
-          'pathlib',
       ],
 
       # Plugin (optional) dependencies:

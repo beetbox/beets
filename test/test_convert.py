@@ -13,7 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 import os.path
-from pathlib import Path
 from _common import unittest
 from helper import TestHelper, controlStdin
 
@@ -49,7 +48,7 @@ class ImportCliTest(unittest.TestCase, TestHelper):
         self.item, = self.add_item_fixtures(ext='ogg')
         self.load_plugins('convert')
 
-        self.convert_dest = Path(self.temp_dir) / 'convert_dest'
+        self.convert_dest = os.path.join(self.temp_dir, 'convert_dest')
         self.config['convert']['dest'] = str(self.convert_dest)
         self.config['convert']['command'] = u'cp $source $dest'
         self.config['convert']['paths']['default'] = u'converted'
@@ -61,17 +60,17 @@ class ImportCliTest(unittest.TestCase, TestHelper):
     def test_convert(self):
         with controlStdin('y'):
             self.run_command('convert', self.item.path)
-        converted = Path(self.convert_dest) / 'converted.mp3'
-        self.assertTrue(converted.is_file())
+        converted = os.path.join(self.convert_dest, 'converted.mp3')
+        self.assertTrue(os.path.isfile(converted))
 
     def test_convert_keep_new(self):
-        self.assertEqual(Path(self.item.path).suffix, '.ogg')
+        self.assertEqual(os.path.splitext(self.item.path)[1], '.ogg')
 
         with controlStdin('y'):
             self.run_command('convert', '--keep-new', self.item.path)
 
         self.item.load()
-        self.assertEqual(Path(self.item.path).suffix, '.mp3')
+        self.assertEqual(os.path.splitext(self.item.path)[1], '.mp3')
 
 
 def suite():

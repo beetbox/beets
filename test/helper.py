@@ -17,7 +17,6 @@ import os
 import os.path
 import shutil
 import tempfile
-from pathlib import Path
 from glob import glob
 from contextlib import contextmanager
 from StringIO import StringIO
@@ -144,7 +143,7 @@ class TestHelper(object):
 
     def add_item_fixtures(self, ext='mp3', count=1):
         items = []
-        paths = list(Path(_common.RSRC).glob('*.' + ext))
+        paths = glob(os.path.join(_common.RSRC, '*.' + ext))
         for path in paths[0:count]:
             item = Item.from_path(str(path))
             item.add(self.lib)
