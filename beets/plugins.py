@@ -537,9 +537,6 @@ class Registry(list):
 registry = Registry()
 
 # For backwards compatibility
-load_plugins = registry.load
-def find_plugins():
-    return registry
 commands = registry.commands
 queries = registry.queries
 track_distance = registry.track_distance

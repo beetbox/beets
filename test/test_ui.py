@@ -738,7 +738,7 @@ class ConfigTest(_common.TestCase):
             file.write('plugins: test')
 
         ui._raw_main(['--config', cli_config_path, 'plugin'])
-        self.assertTrue(plugins.find_plugins()[0].is_test_plugin)
+        self.assertTrue(plugins.registry[0].is_test_plugin)
 
     def test_beetsdir_config(self):
         os.environ['BEETSDIR'] = self.beetsdir
