@@ -47,13 +47,14 @@ def _fetch_image(url):
     log.debug(u'fetchart: downloading art: {0}'.format(url))
     try:
         with closing(requests_session.get(url, stream=True)) as resp:
-            if not 'Content-Type' in resp.headers \
-                or not resp.headers['Content-Type'] in CONTENT_TYPES:
+            if 'Content-Type' not in resp.headers \
+                    or resp.headers['Content-Type'] not in CONTENT_TYPES:
                 log.debug(u'fetchart: not an image')
                 return
 
             # Generate a temporary file with the correct extension.
-            with NamedTemporaryFile(suffix=DOWNLOAD_EXTENSION, delete=False) as fh:
+            with NamedTemporaryFile(suffix=DOWNLOAD_EXTENSION, delete=False) \
+                    as fh:
                 for chunk in resp.iter_content():
                     fh.write(chunk)
             log.debug(u'fetchart: downloaded art to: {0}'.format(
