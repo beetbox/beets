@@ -278,7 +278,7 @@ As usual, there are also innumerable little fixes and improvements:
 
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
-.. _MPD: http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
+.. _MPD: http://www.musicpd.org/
 
 
 1.3.1 (October 12, 2013)

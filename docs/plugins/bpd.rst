@@ -105,7 +105,7 @@ Unimplemented Commands
 These are the commands from `the MPD protocol`_ that have not yet been
 implemented in BPD.
 
-.. _the MPD protocol: http://mpd.wikia.com/wiki/MusicPlayerDaemonCommands
+.. _the MPD protocol: http://www.musicpd.org/doc/protocol/
 
 Saved playlists:
 

@@ -9,7 +9,7 @@ habits from `MPD`_.  It collects the following information about tracks:
 * last_played:  UNIX timestamp when you last played this track.
 * rating: A rating based on *play_count* and *skip_count*.
 
-.. _MPD: http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
+.. _MPD: http://www.musicpd.org/
 
 Installing Dependencies
 -----------------------
