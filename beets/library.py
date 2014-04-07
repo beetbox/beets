@@ -441,8 +441,9 @@ class Item(LibModel):
             raise WriteError(self.path, exc)
 
         # The file has a new mtime.
-        self.mtime = self.current_mtime()
-        plugins.send('after_write', item=self)
+        if path == self.path:
+            self.mtime = self.current_mtime()
+        plugins.send('after_write', item=self, path=path)
 
 
     # Files themselves.

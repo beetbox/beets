@@ -176,15 +176,13 @@ def convert_item(dest_dir, keep_new, path_formats):
             except subprocess.CalledProcessError:
                 continue
 
-        if keep_new:
-            item.path = converted
-
         # Write tags from the database to the converted file.
         item.write(path=converted)
 
         if keep_new:
             # If we're keeping the transcoded file, read it again (after
             # writing) to get new bitrate, duration, etc.
+            item.path = converted
             item.read()
             item.store()  # Store new path and audio data.
 
@@ -194,6 +192,7 @@ def convert_item(dest_dir, keep_new, path_formats):
                 artpath = album.artpath
                 if artpath:
                     _embed(artpath, [item])
+
         plugins.send('after_convert', item=item, dest=dest, keepnew=keep_new)
 
 
