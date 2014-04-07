@@ -33,17 +33,7 @@ def _embed(path, items, maxwidth=0):
         path = ArtResizer.shared.resize(maxwidth, syspath(path))
 
     data = open(syspath(path), 'rb').read()
-    kindstr = imghdr.what(None, data)
-    if kindstr is None:
-        log.error(u'Could not embed art of unkown type: {0}'.format(
-            displayable_path(path)
-        ))
-        return
-    elif kindstr not in ('jpeg', 'png'):
-        log.error(u'Image type {0} is not allowed as cover art: {1}'.format(
-            kindstr, displayable_path(path)
-        ))
-        return
+    image = mediafile.Image(data, type=Image.TYPES.front)
 
     # Add art to each file.
     log.debug('Embedding album art.')
@@ -56,7 +46,7 @@ def _embed(path, items, maxwidth=0):
                 displayable_path(item.path), exc
             ))
             continue
-        f.art = data
+        f.images = [image]
         f.save(config['id3v23'].get(bool))
 
 class EmbedCoverArtPlugin(BeetsPlugin):
@@ -139,11 +129,8 @@ def embed_current(lib, query):
 
 # "extractart" command.
 def extract(lib, outpath, query):
-    items = lib.items(query)
-    for i_item in items:
-        item = i_item
-        break
-    else:
+    item = lib.items(query).get()
+    if not item:
         log.error('No item matches query.')
         return
 
