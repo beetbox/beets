@@ -4,7 +4,7 @@ MPDUpdate Plugin
 ``mpdupdate`` is a very simple plugin for beets that lets you automatically
 update `MPD`_'s index whenever you change your beets library.
 
-.. _MPD: http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
+.. _MPD: http://www.musicpd.org/
 
 To use it, enable it in your ``config.yaml`` by putting ``mpdupdate`` on your
 ``plugins`` line. Then, you'll probably want to configure the specifics of your

@@ -122,7 +122,7 @@ Miscellaneous
 * :doc:`missing`: List missing tracks.
 * :doc:`duplicates`: List duplicate tracks or albums.
 
-.. _MPD: http://mpd.wikia.com/
+.. _MPD: http://www.musicpd.org/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients
 
 .. _other-plugins:

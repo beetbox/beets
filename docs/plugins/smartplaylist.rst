@@ -5,7 +5,7 @@ Smart Playlist Plugin
 beets queries every time your library changes. This plugin is specifically
 created to work well with `MPD's`_ playlist functionality.
 
-.. _MPD's: http://mpd.wikia.com/wiki/Music_Player_Daemon_Wiki
+.. _MPD's: http://www.musicpd.org/
 
 To use it, enable the plugin by putting ``smartplaylist`` in the ``plugins``
 section in your ``config.yaml``. Then configure your smart playlists like the

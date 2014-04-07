@@ -45,7 +45,7 @@ If beets doesn't do what you want yet, `writing your own plugin`_ is
 shockingly simple if you know a little Python.
 
 .. _plugins: http://beets.readthedocs.org/page/plugins/
-.. _MPD: http://mpd.wikia.com/
+.. _MPD: http://www.musicpd.org/
 .. _MusicBrainz music collection: http://musicbrainz.org/doc/Collections/
 .. _writing your own plugin:
     http://beets.readthedocs.org/page/dev/plugins.html
