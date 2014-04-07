@@ -73,6 +73,11 @@ class Queue(object):
         for i in range(self.concurrency):
             self._queue()
 
+    def wait(self):
+        self._start()
+        for future in self.sync():
+            pass
+
     def sync(self):
         """Yield the results of the tasks as soon as they are finished.
 
@@ -139,14 +144,20 @@ class CommandQueue(Queue):
 
     @asyncio.coroutine
     def make_command(self, args, data):
-        args = map(str, args)
-        log.debug('running {}'.format(' '.join(args)))
-
-        process = yield From(asyncio.create_subprocess_exec(
-            *args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        ))
-        stdout, stderr = yield From(process.communicate())
-        yield From(process.wait())
+        stdout, stderr, returncode = yield From(exec_cmd(args))
         raise Return(stdout, stderr, process.returncode, *data)
+
+
+@asyncio.coroutine
+def exec_cmd(args):
+    args = map(str, args)
+    log.debug('running {}'.format(' '.join(args)))
+
+    process = yield From(asyncio.create_subprocess_exec(
+        *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    ))
+    stdout, stderr = yield From(process.communicate())
+    yield From(process.wait())
+    raise Return(stdout, stderr, process.returncode)

@@ -19,12 +19,17 @@ import os
 import threading
 import subprocess
 import tempfile
+import asyncio
 from string import Template
 import pipes
+import asyncio
+from asyncio import From, Return
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
 from beetsplug.embedart import _embed
+
+from beets.util.queue import Queue, exec_cmd
 
 log = logging.getLogger('beets')
 _fs_lock = threading.Lock()
@@ -81,6 +86,7 @@ def get_format():
         )
 
 
+@asyncio.coroutine
 def encode(source, dest):
     """Encode ``source`` to ``dest`` using the command from ``get_format()``.
 
@@ -94,19 +100,21 @@ def encode(source, dest):
         log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
 
     command, _ = get_format()
-    opts = []
+    args = []
     for arg in command:
-        opts.append(Template(arg).safe_substitute({
+        args.append(Template(arg).safe_substitute({
             'source': source,
             'dest':   dest,
         }))
 
     log.debug(u'convert: executing: {0}'.format(
-        u' '.join(pipes.quote(o.decode('utf8', 'ignore')) for o in opts)
+        u' '.join(pipes.quote(o.decode('utf8', 'ignore')) for o in args)
     ))
 
     try:
-        util.command_output(opts)
+        _, _, returncode = yield From(exec_cmd(args))
+        if returncode != 0:
+            raise subprocess.CalledProcessError(returncode, args[0])
     except subprocess.CalledProcessError:
         # Something went wrong (probably Ctrl+C), remove temporary files
         log.info(u'Encoding {0} failed. Cleaning up...'
@@ -135,67 +143,67 @@ def should_transcode(item):
             item.bitrate >= 1000 * maxbr
 
 
-def convert_item(dest_dir, keep_new, path_formats):
-    while True:
-        item = yield
-        dest = _destination(dest_dir, item, keep_new, path_formats)
+@asyncio.coroutine
+def convert_item(item, dest_dir, keep_new, path_formats):
+    dest = _destination(dest_dir, item, keep_new, path_formats)
 
-        if os.path.exists(util.syspath(dest)):
-            log.info(u'Skipping {0} (target file exists)'.format(
-                util.displayable_path(item.path)
-            ))
-            continue
+    if os.path.exists(util.syspath(dest)):
+        log.info(u'Skipping {0} (target file exists)'.format(
+            util.displayable_path(item.path)
+        ))
+        raise Return()
 
-        # Ensure that only one thread tries to create directories at a
-        # time. (The existence check is not atomic with the directory
-        # creation inside this function.)
-        with _fs_lock:
-            util.mkdirall(dest)
+    # Ensure that only one thread tries to create directories at a
+    # time. (The existence check is not atomic with the directory
+    # creation inside this function.)
+    with _fs_lock:
+        util.mkdirall(dest)
 
-        # When keeping the new file in the library, we first move the
-        # current (pristine) file to the destination. We'll then copy it
-        # back to its old path or transcode it to a new path.
-        if keep_new:
-            log.info(u'Moving to {0}'.
-                     format(util.displayable_path(dest)))
-            util.move(item.path, dest)
-            original = dest
-            _, ext = get_format()
-            converted = os.path.splitext(item.path)[0] + ext
-        else:
-            original = item.path
-            converted = dest
+    # When keeping the new file in the library, we first move the
+    # current (pristine) file to the destination. We'll then copy it
+    # back to its old path or transcode it to a new path.
+    if keep_new:
+        log.info(u'Moving to {0}'.
+                 format(util.displayable_path(dest)))
+        util.move(item.path, dest)
+        original = dest
+        _, ext = get_format()
+        converted = os.path.splitext(item.path)[0] + ext
+    else:
+        original = item.path
+        converted = dest
 
-        if not should_transcode(item):
-            # No transcoding necessary.
-            log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
-            util.copy(original, converted)
-        else:
-            try:
-                encode(original, converted)
-            except subprocess.CalledProcessError:
-                continue
+    if not should_transcode(item):
+        # No transcoding necessary.
+        log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
+        util.copy(original, converted)
+    else:
+        try:
+            yield From(encode(original, converted))
+        except subprocess.CalledProcessError:
+            raise Return()
 
-        # Write tags from the database to the converted file.
-        item.write(path=converted)
+    # Write tags from the database to the converted file.
+    item.write(path=converted)
 
-        if keep_new:
-            # If we're keeping the transcoded file, read it again (after
-            # writing) to get new bitrate, duration, etc.
-            item.path = converted
-            item.read()
-            item.store()  # Store new path and audio data.
+    if keep_new:
+        # If we're keeping the transcoded file, read it again (after
+        # writing) to get new bitrate, duration, etc.
+        item.path = converted
+        item.read()
+        item.store()  # Store new path and audio data.
 
-        if config['convert']['embed']:
-            album = item.get_album()
-            if album:
-                artpath = album.artpath
-                if artpath:
-                    _embed(artpath, [item])
+    if config['convert']['embed']:
+        album = item.get_album()
+        if album:
+            artpath = album.artpath
+            if artpath:
+                _embed(artpath, [item])
 
-        plugins.send('after_convert', item=item, dest=dest, keepnew=keep_new)
+    plugins.send('after_convert', item=item, dest=dest, keepnew=keep_new)
 
 
+@asyncio.coroutine
 def convert_on_import(lib, item):
     """Transcode a file automatically after it is imported into the
     library.
@@ -206,7 +214,7 @@ def convert_on_import(lib, item):
         os.close(fd)
         _temp_files.append(dest)  # Delete the transcode later.
         try:
-            encode(item.path, dest)
+            yield From(encode(item.path, dest))
         except subprocess.CalledProcessError:
             return
         item.path = dest
@@ -241,10 +249,10 @@ def convert_func(lib, opts, args):
         items = (i for a in lib.albums(ui.decargs(args)) for i in a.items())
     else:
         items = iter(lib.items(ui.decargs(args)))
-    convert = [convert_item(dest, keep_new, path_formats)
-               for i in range(threads)]
-    pipe = util.pipeline.Pipeline([items, convert])
-    pipe.run_parallel()
+    queue = Queue(concurrency=config['convert']['threads'].as_number())
+    for item in items:
+        queue.push(convert_item(item, dest, keep_new, path_formats))
+    queue.wait()
 
 
 class ConvertPlugin(BeetsPlugin):
@@ -312,9 +320,12 @@ class ConvertPlugin(BeetsPlugin):
         return [cmd]
 
     def auto_convert(self, config, task):
-        if self.config['auto']:
-            for item in task.imported_items():
-                convert_on_import(config.lib, item)
+        if not self.config['auto']: return
+
+        queue = Queue(concurrency=self.config['threads'].as_number())
+        for item in task.imported_items():
+            queue.push(convert_on_import(config.lib, item))
+        queue.wait()
 
 
 @ConvertPlugin.listen('import_task_files')
