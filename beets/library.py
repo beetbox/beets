@@ -123,71 +123,70 @@ class PathType(types.Type):
 # - Is the field writable?
 # - Does the field reflect an attribute of a MediaFile?
 ITEM_FIELDS = [
-    ('id',       types.Id(True),  False, False),
-    ('path',     PathType(),      False, False),
-    ('album_id', types.Id(False), False, False),
+    ('id',       types.Id(True)),
+    ('path',     PathType()),
+    ('album_id', types.Id(False)),
 
-    ('title',                types.String(),     True, True),
-    ('artist',               types.String(),     True, True),
-    ('artist_sort',          types.String(),     True, True),
-    ('artist_credit',        types.String(),     True, True),
-    ('album',                types.String(),     True, True),
-    ('albumartist',          types.String(),     True, True),
-    ('albumartist_sort',     types.String(),     True, True),
-    ('albumartist_credit',   types.String(),     True, True),
-    ('genre',                types.String(),     True, True),
-    ('composer',             types.String(),     True, True),
-    ('grouping',             types.String(),     True, True),
-    ('year',                 types.PaddedInt(4), True, True),
-    ('month',                types.PaddedInt(2), True, True),
-    ('day',                  types.PaddedInt(2), True, True),
-    ('track',                types.PaddedInt(2), True, True),
-    ('tracktotal',           types.PaddedInt(2), True, True),
-    ('disc',                 types.PaddedInt(2), True, True),
-    ('disctotal',            types.PaddedInt(2), True, True),
-    ('lyrics',               types.String(),     True, True),
-    ('comments',             types.String(),     True, True),
-    ('bpm',                  types.Integer(),    True, True),
-    ('comp',                 types.Boolean(),    True, True),
-    ('mb_trackid',           types.String(),     True, True),
-    ('mb_albumid',           types.String(),     True, True),
-    ('mb_artistid',          types.String(),     True, True),
-    ('mb_albumartistid',     types.String(),     True, True),
-    ('albumtype',            types.String(),     True, True),
-    ('label',                types.String(),     True, True),
-    ('acoustid_fingerprint', types.String(),     True, True),
-    ('acoustid_id',          types.String(),     True, True),
-    ('mb_releasegroupid',    types.String(),     True, True),
-    ('asin',                 types.String(),     True, True),
-    ('catalognum',           types.String(),     True, True),
-    ('script',               types.String(),     True, True),
-    ('language',             types.String(),     True, True),
-    ('country',              types.String(),     True, True),
-    ('albumstatus',          types.String(),     True, True),
-    ('media',                types.String(),     True, True),
-    ('albumdisambig',        types.String(),     True, True),
-    ('disctitle',            types.String(),     True, True),
-    ('encoder',              types.String(),     True, True),
-    ('rg_track_gain',        types.Float(),      True, True),
-    ('rg_track_peak',        types.Float(),      True, True),
-    ('rg_album_gain',        types.Float(),      True, True),
-    ('rg_album_peak',        types.Float(),      True, True),
-    ('original_year',        types.PaddedInt(4), True, True),
-    ('original_month',       types.PaddedInt(2), True, True),
-    ('original_day',         types.PaddedInt(2), True, True),
+    ('title',                types.String()),
+    ('artist',               types.String()),
+    ('artist_sort',          types.String()),
+    ('artist_credit',        types.String()),
+    ('album',                types.String()),
+    ('albumartist',          types.String()),
+    ('albumartist_sort',     types.String()),
+    ('albumartist_credit',   types.String()),
+    ('genre',                types.String()),
+    ('composer',             types.String()),
+    ('grouping',             types.String()),
+    ('year',                 types.PaddedInt(4)),
+    ('month',                types.PaddedInt(2)),
+    ('day',                  types.PaddedInt(2)),
+    ('track',                types.PaddedInt(2)),
+    ('tracktotal',           types.PaddedInt(2)),
+    ('disc',                 types.PaddedInt(2)),
+    ('disctotal',            types.PaddedInt(2)),
+    ('lyrics',               types.String()),
+    ('comments',             types.String()),
+    ('bpm',                  types.Integer()),
+    ('comp',                 types.Boolean()),
+    ('mb_trackid',           types.String()),
+    ('mb_albumid',           types.String()),
+    ('mb_artistid',          types.String()),
+    ('mb_albumartistid',     types.String()),
+    ('albumtype',            types.String()),
+    ('label',                types.String()),
+    ('acoustid_fingerprint', types.String()),
+    ('acoustid_id',          types.String()),
+    ('mb_releasegroupid',    types.String()),
+    ('asin',                 types.String()),
+    ('catalognum',           types.String()),
+    ('script',               types.String()),
+    ('language',             types.String()),
+    ('country',              types.String()),
+    ('albumstatus',          types.String()),
+    ('media',                types.String()),
+    ('albumdisambig',        types.String()),
+    ('disctitle',            types.String()),
+    ('encoder',              types.String()),
+    ('rg_track_gain',        types.Float()),
+    ('rg_track_peak',        types.Float()),
+    ('rg_album_gain',        types.Float()),
+    ('rg_album_peak',        types.Float()),
+    ('original_year',        types.PaddedInt(4)),
+    ('original_month',       types.PaddedInt(2)),
+    ('original_day',         types.PaddedInt(2)),
 
-    ('length',      types.Float(),                  False, True),
-    ('bitrate',     types.ScaledInt(1000, u'kbps'), False, True),
-    ('format',      types.String(),                 False, True),
-    ('samplerate',  types.ScaledInt(1000, u'kHz'),  False, True),
-    ('bitdepth',    types.Integer(),                False, True),
-    ('channels',    types.Integer(),                False, True),
-    ('mtime',       DateType(),                     False, False),
-    ('added',       DateType(),                     False, False),
+    ('length',      types.Float()),
+    ('bitrate',     types.ScaledInt(1000, u'kbps')),
+    ('format',      types.String()),
+    ('samplerate',  types.ScaledInt(1000, u'kHz')),
+    ('bitdepth',    types.Integer()),
+    ('channels',    types.Integer()),
+    ('mtime',       DateType()),
+    ('added',       DateType()),
 ]
-ITEM_KEYS_WRITABLE = [f[0] for f in ITEM_FIELDS if f[3] and f[2]]
-ITEM_KEYS_META     = [f[0] for f in ITEM_FIELDS if f[3]]
 ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
+
 
 # Database fields for the "albums" table.
 # The third entry in each tuple indicates whether the field reflects an
@@ -329,10 +328,17 @@ class LibModel(dbcore.Model):
 
 
 class Item(LibModel):
-    _fields = dict((name, typ) for (name, typ, _, _) in ITEM_FIELDS)
+    _fields = dict((name, typ) for (name, typ) in ITEM_FIELDS)
     _table = 'items'
     _flex_table = 'item_attributes'
     _search_fields = ITEM_DEFAULT_FIELDS
+
+    media_fields = set(MediaFile.readable_fields()).intersection(ITEM_KEYS)
+    """Set of property names to read from ``MediaFile``.
+
+    ``item.read()`` will read all properties in this set from
+    ``MediaFile`` and set them on the item.
+    """
 
     @classmethod
     def _getters(cls):
@@ -358,7 +364,7 @@ class Item(LibModel):
             elif isinstance(value, buffer):
                 value = str(value)
 
-        if key in ITEM_KEYS_WRITABLE:
+        if key in MediaFile.fields():
             self.mtime = 0  # Reset mtime on dirty.
 
         super(Item, self).__setitem__(key, value)
@@ -384,8 +390,11 @@ class Item(LibModel):
     # Interaction with file metadata.
 
     def read(self, read_path=None):
-        """Read the metadata from the associated file. If read_path is
-        specified, read metadata from that file instead.
+        """Read the metadata from the associated file.
+
+        If ``read_path`` is specified, read metadata from that file
+        instead. Updates all the properties in ``Item.media_fields``
+        from the media file.
 
         Raises a `ReadError` if the file could not be read.
         """
@@ -394,20 +403,19 @@ class Item(LibModel):
         else:
             read_path = normpath(read_path)
         try:
-            f = MediaFile(syspath(read_path))
+            mediafile = MediaFile(syspath(read_path))
         except (OSError, IOError) as exc:
             raise ReadError(read_path, exc)
 
-        for key in ITEM_KEYS_META:
-            value = getattr(f, key)
+        for key in list(self.media_fields):
+            value = getattr(mediafile, key)
             if isinstance(value, (int, long)):
-                # Filter values wider than 64 bits (in signed
-                # representation). SQLite cannot store them.
-                # py26: Post transition, we can use:
+                # Filter values wider than 64 bits (in signed representation).
+                # SQLite cannot store them. py26: Post transition, we can use:
                 # value.bit_length() > 63
                 if abs(value) >= 2 ** 63:
                     value = 0
-            setattr(self, key, value)
+            self[key] = value
 
         # Database's mtime should now reflect the on-disk value.
         if read_path == self.path:
@@ -418,7 +426,7 @@ class Item(LibModel):
     def write(self, path=None):
         """Write the item's metadata to a media file.
 
-        ``path`` defaults to the item's path property.
+        Updates the mediafile with properties from itself.
 
         Can raise either a `ReadError` or a `WriteError`.
         """
@@ -427,16 +435,14 @@ class Item(LibModel):
         else:
             path = normpath(path)
         try:
-            f = MediaFile(syspath(path))
+            mediafile = MediaFile(path)
         except (OSError, IOError) as exc:
             raise ReadError(self.path, exc)
 
         plugins.send('write', item=self, path=path)
 
-        for key in ITEM_KEYS_WRITABLE:
-            setattr(f, key, self[key])
         try:
-            f.save(id3v23=beets.config['id3v23'].get(bool))
+            mediafile.update(self, id3v23=beets.config['id3v23'].get(bool))
         except (OSError, IOError, MutagenError) as exc:
             raise WriteError(self.path, exc)
 

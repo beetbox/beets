@@ -20,6 +20,7 @@ from collections import defaultdict
 import inspect
 
 import beets
+from beets import mediafile
 
 PLUGIN_NAMESPACE = 'beetsplug'
 
@@ -97,6 +98,20 @@ class BeetsPlugin(object):
         """
         return None
 
+    def add_media_field(self, name, descriptor):
+        """Add a field that is synchronized between media files and items.
+
+        When a media field is added ``item.write()`` will set the name
+        property of the item's MediaFile to ``item[name]`` and save the
+        changes. Similarly ``item.read()`` will set ``item[name]`` to
+        the value of the name property of the media file.
+
+        ``descriptor`` must be an instance of ``mediafile.MediaField``.
+        """
+        # Defer impor to prevent circular dependency
+        from beets import library
+        mediafile.MediaFile.add_field(name, descriptor)
+        library.Item.media_fields.add(name)
 
     listeners = None
 

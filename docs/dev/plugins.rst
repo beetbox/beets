@@ -297,6 +297,40 @@ This field works for *item* templates. Similarly, you can register *album*
 template fields by adding a function accepting an ``Album`` argument to the
 ``album_template_fields`` dict.
 
+Extend MediaFile
+^^^^^^^^^^^^^^^^
+
+:ref:`MediaFile` is the file tag abstraction layer that beets uses to make
+cross-format metadata manipulation simple. Plugins can add fields to MediaFile
+to extend the kinds of metadata that they can easily manage.
+
+The ``MediaFile`` class uses ``MediaField`` descriptors to provide
+access to file tags. Have a look at the ``beets.mediafile`` source code
+to learn how to use this descriptor class. If you have created a
+descriptor you can add it through your plugins ``add_media_field()``
+method.
+
+.. automethod:: beets.plugins.BeetsPlugin.add_media_field
+
+
+Here's an example plugin that provides a meaningless new field "foo"::
+
+    class FooPlugin(BeetsPlugin):
+        def __init__(self):
+            field = mediafile.MediaField(
+                mediafile.MP3DescStorageStyle(u'foo')
+                mediafile.StorageStyle(u'foo')
+            )
+            self.add_media_field('foo', field)
+
+    FooPlugin()
+    item = Item.from_path('/path/to/foo/tag.mp3')
+    assert item['foo'] == 'spam'
+
+    item['foo'] == 'ham'
+    item.write()
+    # The "foo" tag of the file is now "ham"
+
 
 Add Import Pipeline Stages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

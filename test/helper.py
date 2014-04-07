@@ -95,7 +95,7 @@ class TestHelper(object):
 
         self.lib = Library(self.config['library'].as_filename(),
                            self.libdir)
-    
+
     def teardown_beets(self):
         del os.environ['BEETSDIR']
         # FIXME somehow close all open fd to the ilbrary

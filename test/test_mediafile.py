@@ -23,7 +23,11 @@ import time
 
 import _common
 from _common import unittest
-from beets.mediafile import MediaFile, Image
+from beets.mediafile import MediaFile, MediaField, Image, \
+                            MP3StorageStyle, StorageStyle, \
+                            MP4StorageStyle, ASFStorageStyle
+from beets.library import Item
+from beets.plugins import BeetsPlugin
 
 
 class ArtTestMixin(object):
@@ -161,11 +165,11 @@ class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
                 desc='the composer', type=Image.TYPES.composer)
 
 
-# TODO include this in ReadWriteTestBase if implemented
 class LazySaveTestMixin(object):
     """Mediafile should only write changes when tags have changed
     """
 
+    @unittest.skip('not yet implemented')
     def test_unmodified(self):
         mediafile = self._mediafile_fixture('full')
         mtime = self._set_past_mtime(mediafile.path)
@@ -174,6 +178,7 @@ class LazySaveTestMixin(object):
         mediafile.save()
         self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
 
+    @unittest.skip('not yet implemented')
     def test_same_tag_value(self):
         mediafile = self._mediafile_fixture('full')
         mtime = self._set_past_mtime(mediafile.path)
@@ -183,6 +188,15 @@ class LazySaveTestMixin(object):
         mediafile.save()
         self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
 
+    def test_update_same_tag_value(self):
+        mediafile = self._mediafile_fixture('full')
+        mtime = self._set_past_mtime(mediafile.path)
+        self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+        mediafile.update({'title': mediafile.title})
+        self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+    @unittest.skip('not yet implemented')
     def test_tag_value_change(self):
         mediafile = self._mediafile_fixture('full')
         mtime = self._set_past_mtime(mediafile.path)
@@ -191,6 +205,14 @@ class LazySaveTestMixin(object):
         mediafile.title = mediafile.title
         mediafile.album = 'another'
         mediafile.save()
+        self.assertNotEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+    def test_update_changed_tag_value(self):
+        mediafile = self._mediafile_fixture('full')
+        mtime = self._set_past_mtime(mediafile.path)
+        self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
+
+        mediafile.update({'title': mediafile.title, 'album': 'another'})
         self.assertNotEqual(os.stat(mediafile.path).st_mtime, mtime)
 
     def _set_past_mtime(self, path):
@@ -233,7 +255,68 @@ class GenreListTestMixin(object):
         self.assertItemsEqual(mediafile.genres, [u'the genre', u'another'])
 
 
-class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin):
+field_extension = MediaField(
+    MP3StorageStyle('TKEY'),
+    MP4StorageStyle('----:com.apple.iTunes:initialkey'),
+    StorageStyle('INITIALKEY'),
+    ASFStorageStyle('INITIALKEY'),
+)
+class ExtendedFieldTestMixin(object):
+
+    def test_extended_field_write(self):
+        plugin = BeetsPlugin()
+        plugin.add_media_field('initialkey', field_extension)
+
+        mediafile = self._mediafile_fixture('empty')
+        mediafile.initialkey = 'F#'
+        mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(mediafile.initialkey, 'F#')
+        delattr(MediaFile, 'initialkey')
+        Item.media_fields.remove('initialkey')
+
+    def test_write_extended_tag_from_item(self):
+        plugin = BeetsPlugin()
+        plugin.add_media_field('initialkey', field_extension)
+
+        mediafile = self._mediafile_fixture('empty')
+        self.assertEqual(mediafile.initialkey, '')
+
+        item = Item(path=mediafile.path, initialkey='Gb')
+        item.write()
+        mediafile = MediaFile(mediafile.path)
+        self.assertEqual(mediafile.initialkey, 'Gb')
+
+        delattr(MediaFile, 'initialkey')
+        Item.media_fields.remove('initialkey')
+
+    def test_read_flexible_attribute_from_file(self):
+        plugin = BeetsPlugin()
+        plugin.add_media_field('initialkey', field_extension)
+
+        mediafile = self._mediafile_fixture('empty')
+        mediafile.update({'initialkey': 'F#'})
+
+        item = Item.from_path(mediafile.path)
+        self.assertEqual(item['initialkey'], 'F#')
+
+        delattr(MediaFile, 'initialkey')
+        Item.media_fields.remove('initialkey')
+
+    def test_invalid_descriptor(self):
+        with self.assertRaises(ValueError) as cm:
+            MediaFile.add_field('somekey', True)
+        self.assertIn('must be an instance of MediaField', str(cm.exception))
+
+    def test_overwrite_property(self):
+        with self.assertRaises(ValueError) as cm:
+            MediaFile.add_field('artist', MediaField())
+        self.assertIn('property "artist" already exists', str(cm.exception))
+
+
+class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
+                        ExtendedFieldTestMixin):
     """Test writing and reading tags. Subclasses must set ``extension`` and
     ``audio_properties``.
     """
@@ -353,6 +436,15 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin):
         mediafile = MediaFile(mediafile.path)
         self.assertTags(mediafile, tags)
 
+    def test_update_empty(self):
+        mediafile = self._mediafile_fixture('empty')
+        tags = self._generate_tags()
+
+        mediafile.update(tags)
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertTags(mediafile, tags)
+
     def test_overwrite_full(self):
         mediafile = self._mediafile_fixture('full')
         tags = self._generate_tags()
@@ -365,6 +457,17 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin):
         for key, value in tags.items():
             setattr(mediafile, key, value)
         mediafile.save()
+
+        mediafile = MediaFile(mediafile.path)
+        self.assertTags(mediafile, tags)
+
+    def test_update_full(self):
+        mediafile = self._mediafile_fixture('full')
+        tags = self._generate_tags()
+
+        mediafile.update(tags)
+        # Make sure the tags are already set when writing a second time
+        mediafile.update(tags)
 
         mediafile = MediaFile(mediafile.path)
         self.assertTags(mediafile, tags)
@@ -690,6 +793,31 @@ class OpusTest(ReadWriteTestBase, unittest.TestCase):
         'bitdepth': 0,
         'channels': 1,
     }
+
+
+class MediaFieldTest(unittest.TestCase):
+
+    def test_properties_from_fields(self):
+        path = os.path.join(_common.RSRC, 'full.mp3')
+        mediafile = MediaFile(path)
+        for field in MediaFile.fields():
+            self.assertTrue(hasattr(mediafile, field))
+
+    def test_properties_from_readable_fields(self):
+        path = os.path.join(_common.RSRC, 'full.mp3')
+        mediafile = MediaFile(path)
+        for field in MediaFile.readable_fields():
+            self.assertTrue(hasattr(mediafile, field))
+
+    def test_known_fields(self):
+        fields = ReadWriteTestBase.empty_tags.keys()
+        fields.extend(('encoder', 'images', 'genres', 'albumtype'))
+        self.assertItemsEqual(MediaFile.fields(), fields)
+
+    def test_fields_in_readable_fields(self):
+        readable = MediaFile.readable_fields()
+        for field in MediaFile.fields():
+            self.assertIn(field, readable)
 
 
 def suite():
