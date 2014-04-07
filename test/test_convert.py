@@ -23,17 +23,29 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
         self.importer = self.create_importer()
         self.load_plugins('convert')
 
+        self.config['convert'] = {
+            'dest': os.path.join(self.temp_dir, 'convert'),
+            # Truncated copy so we can determine if the file was
+            # converted
+            'command': u'dd bs=1024 count=6 if=$source of=$dest',
+            # Enforce running convert
+            'max_bitrate': 1,
+            'auto': True,
+            'quiet': False,
+        }
+
     def tearDown(self):
         self.teardown_beets()
         self.unload_plugins()
 
+    def test_import_converted(self):
+        self.importer.run()
+        item = self.lib.items().get()
+        self.assertEqual(os.path.getsize(item.path), 1024*6)
+
     def test_import_original_on_convert_error(self):
         # `false` exits with non-zero code
         self.config['convert']['command'] = u'false'
-        self.config['convert']['auto'] = True
-        # Enforce running convert
-        self.config['convert']['max_bitrate'] = 1
-        self.config['convert']['quiet'] = False
         self.importer.run()
 
         item = self.lib.items().get()
@@ -41,7 +53,7 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
         self.assertTrue(os.path.isfile(item.path))
 
 
-class ImportCliTest(unittest.TestCase, TestHelper):
+class ConvertCliTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
         self.setup_beets()
