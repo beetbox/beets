@@ -25,6 +25,8 @@ import traceback
 import subprocess
 import platform
 
+from beets.util.queue import Queue, CommandQueue
+
 
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = u'\\\\?\\'
