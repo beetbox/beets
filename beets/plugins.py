@@ -17,6 +17,7 @@
 import sys
 import logging
 import traceback
+import inspect
 from collections import defaultdict
 
 import beets
@@ -526,7 +527,11 @@ class Registry(list):
         for plugin in self:
             handlername = 'on_{0}'.format(event)
             if hasattr(plugin, handlername):
-                getattr(plugin, handlername)(**arguments)
+                handler = getattr(plugin, handlername)
+                # Don't break legacy plugins if we want to pass more arguments
+                argspec = inspect.getargspec(handler).args
+                args = dict((k, v) for k, v in arguments.items() if k in argspec)
+                handler(**args)
 
 
 registry = Registry()
