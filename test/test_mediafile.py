@@ -274,7 +274,7 @@ class ExtendedFieldTestMixin(object):
         mediafile = MediaFile(mediafile.path)
         self.assertEqual(mediafile.initialkey, 'F#')
         delattr(MediaFile, 'initialkey')
-        Item.media_fields.remove('initialkey')
+        Item._media_fields.remove('initialkey')
 
     def test_write_extended_tag_from_item(self):
         plugin = BeetsPlugin()
@@ -289,7 +289,7 @@ class ExtendedFieldTestMixin(object):
         self.assertEqual(mediafile.initialkey, 'Gb')
 
         delattr(MediaFile, 'initialkey')
-        Item.media_fields.remove('initialkey')
+        Item._media_fields.remove('initialkey')
 
     def test_read_flexible_attribute_from_file(self):
         plugin = BeetsPlugin()
@@ -302,7 +302,7 @@ class ExtendedFieldTestMixin(object):
         self.assertEqual(item['initialkey'], 'F#')
 
         delattr(MediaFile, 'initialkey')
-        Item.media_fields.remove('initialkey')
+        Item._media_fields.remove('initialkey')
 
     def test_invalid_descriptor(self):
         with self.assertRaises(ValueError) as cm:

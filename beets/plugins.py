@@ -111,7 +111,7 @@ class BeetsPlugin(object):
         # Defer impor to prevent circular dependency
         from beets import library
         mediafile.MediaFile.add_field(name, descriptor)
-        library.Item.media_fields.add(name)
+        library.Item._media_fields.add(name)
 
     listeners = None
 

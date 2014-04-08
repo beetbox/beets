@@ -333,11 +333,12 @@ class Item(LibModel):
     _flex_table = 'item_attributes'
     _search_fields = ITEM_DEFAULT_FIELDS
 
-    media_fields = set(MediaFile.readable_fields()).intersection(ITEM_KEYS)
-    """Set of property names to read from ``MediaFile``.
+    _media_fields = set(MediaFile.readable_fields()).intersection(ITEM_KEYS)
+    """Set of item fields that are backed by `MediaFile` fields.
 
-    ``item.read()`` will read all properties in this set from
-    ``MediaFile`` and set them on the item.
+    Any kind of field (fixed, flexible, and computed) may be a media
+    field. Only these fields are read from disk in `read` and written in
+    `write`.
     """
 
     @classmethod
@@ -393,7 +394,7 @@ class Item(LibModel):
         """Read the metadata from the associated file.
 
         If ``read_path`` is specified, read metadata from that file
-        instead. Updates all the properties in ``Item.media_fields``
+        instead. Updates all the properties in `_media_fields`
         from the media file.
 
         Raises a `ReadError` if the file could not be read.
@@ -407,7 +408,7 @@ class Item(LibModel):
         except (OSError, IOError) as exc:
             raise ReadError(read_path, exc)
 
-        for key in list(self.media_fields):
+        for key in list(self._media_fields):
             value = getattr(mediafile, key)
             if isinstance(value, (int, long)):
                 # Filter values wider than 64 bits (in signed representation).
