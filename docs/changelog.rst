@@ -4,6 +4,10 @@ Changelog
 1.3.5 (in development)
 ----------------------
 
+One note for upgraders and packagers: this version of beets has a new
+dependency in `enum34`_, which is a backport of the new `enum`_ standard
+library module.
+
 New stuff:
 
 * :doc:`/plugins/replaygain`: Added support for calculating ReplayGain values
@@ -18,6 +22,9 @@ Fixes:
   and the library includes the converted item.
 * The importer now logs a message instead of crashing when errors occur while
   opening the files to be imported.
+
+.. _enum34: https://pypi.python.org/pypi/enum34
+.. _enum: https://docs.python.org/3.4/library/enum.html
 
 
 1.3.4 (April 5, 2014)
