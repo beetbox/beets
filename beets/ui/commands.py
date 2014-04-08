@@ -1246,7 +1246,7 @@ def write_items(lib, query, pretend):
 
         # Check for and display changes.
         changed = ui.show_model_changes(item, clean_item,
-                                        MediaFile.fields(),
+                                        library.Item.media_fields,
                                         always=True)
         if changed and not pretend:
             try:
