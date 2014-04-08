@@ -408,7 +408,7 @@ class Item(LibModel):
         except (OSError, IOError) as exc:
             raise ReadError(read_path, exc)
 
-        for key in list(self._media_fields):
+        for key in self._media_fields:
             value = getattr(mediafile, key)
             if isinstance(value, (int, long)):
                 # Filter values wider than 64 bits (in signed representation).
@@ -427,7 +427,8 @@ class Item(LibModel):
     def write(self, path=None):
         """Write the item's metadata to a media file.
 
-        Updates the mediafile with properties from itself.
+        All fields in `_media_fields` are written to disk according to
+        the values on this object.
 
         Can raise either a `ReadError` or a `WriteError`.
         """
@@ -442,8 +443,9 @@ class Item(LibModel):
 
         plugins.send('write', item=self, path=path)
 
+        mediafile.update(self)
         try:
-            mediafile.update(self, id3v23=beets.config['id3v23'].get(bool))
+            mediafile.save(id3v23=beets.config['id3v23'].get(bool))
         except (OSError, IOError, MutagenError) as exc:
             raise WriteError(self.path, exc)
 

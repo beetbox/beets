@@ -1258,9 +1258,13 @@ class MediaFile(object):
             for tag in self.mgfile.keys():
                 del self.mgfile[tag]
 
+
+    # Convenient access to the set of available fields.
+
     @classmethod
     def fields(cls):
-        """Yield the names of all properties that are MediaFields.
+        """Get the names of all writable properties that reflect
+        metadata tags (i.e., those that are `MediaField`s).
         """
         for property, descriptor in cls.__dict__.items():
             if isinstance(descriptor, MediaField):
@@ -1268,13 +1272,13 @@ class MediaFile(object):
 
     @classmethod
     def readable_fields(cls):
-        """Yield the elements of ``fields()`` and all additional
-        properties retrieved from the file
+        """Get all metadata fields: the writable ones from `fields` and
+        also other audio properties.
         """
         for property in cls.fields():
             yield property
-        for property in ['length', 'samplerate', 'bitdepth', 'bitrate',
-                         'channels', 'format']:
+        for property in ('length', 'samplerate', 'bitdepth', 'bitrate',
+                         'channels', 'format'):
             yield property
 
     @classmethod
@@ -1282,9 +1286,7 @@ class MediaFile(object):
         """Add a field to store custom tags.
 
         ``name`` is the name of the property the field is accessed
-        through. It must not already exist for the class. If the name
-        coincides with the name of a property of ``Item`` it will be set
-        from the item in ``item.write()``.
+        through. It must not already exist on this class.
 
         ``descriptor`` must be an instance of ``MediaField``.
         """
@@ -1296,21 +1298,16 @@ class MediaFile(object):
                 u'property "{0}" already exists on MediaField'.format(name))
         setattr(cls, name, descriptor)
 
-    def update(self, dict, id3v23=False):
-        """Update tags from the dictionary and write them to the file.
+    def update(self, dict):
+        """Set all field values from a dictionary.
 
         For any key in ``dict`` that is also a field to store tags the
         method retrieves the corresponding value from ``dict`` and
-        updates the ``MediaFile``. The changes are then written to the
-        disk.
-
-        By default, MP3 files are saved with ID3v2.4 tags. You can use
-        the older ID3v2.3 standard by specifying the `id3v23` option.
+        updates the ``MediaFile``.
         """
         for field in self.fields():
             if field in dict:
                 setattr(self, field, dict[field])
-        self.save(id3v23)
 
 
     # Field definitions.

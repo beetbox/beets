@@ -194,6 +194,7 @@ class LazySaveTestMixin(object):
         self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
 
         mediafile.update({'title': mediafile.title})
+        mediafile.save()
         self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
 
     @unittest.skip('not yet implemented')
@@ -213,6 +214,7 @@ class LazySaveTestMixin(object):
         self.assertEqual(os.stat(mediafile.path).st_mtime, mtime)
 
         mediafile.update({'title': mediafile.title, 'album': 'another'})
+        mediafile.save()
         self.assertNotEqual(os.stat(mediafile.path).st_mtime, mtime)
 
     def _set_past_mtime(self, path):
@@ -297,6 +299,7 @@ class ExtendedFieldTestMixin(object):
 
         mediafile = self._mediafile_fixture('empty')
         mediafile.update({'initialkey': 'F#'})
+        mediafile.save()
 
         item = Item.from_path(mediafile.path)
         self.assertEqual(item['initialkey'], 'F#')
@@ -441,6 +444,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         tags = self._generate_tags()
 
         mediafile.update(tags)
+        mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
         self.assertTags(mediafile, tags)
@@ -466,8 +470,10 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         tags = self._generate_tags()
 
         mediafile.update(tags)
+        mediafile.save()
         # Make sure the tags are already set when writing a second time
         mediafile.update(tags)
+        mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
         self.assertTags(mediafile, tags)
