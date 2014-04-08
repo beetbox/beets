@@ -17,6 +17,8 @@ Fixes:
   content type. Thanks to Lee Reinhardt.
 * :doc:`/plugins/convert`: The ``--keep-new`` flag now works correctly
   and the library includes the converted item.
+* The importer now logs a message instead of crashing when errors occur while
+  opening the files to be imported.
 
 
 1.3.4 (April 5, 2014)

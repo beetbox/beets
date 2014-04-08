@@ -58,6 +58,10 @@ def albums_in_dir(path):
                 log.warn(u'unreadable file: {0}'.format(
                     displayable_path(filename))
                 )
+            except library.ReadError as exc:
+                log.error(u'error reading {0}: {1}'.format(
+                    displayable_path(filename), exc
+                ))
             else:
                 items.append(i)
 

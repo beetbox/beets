@@ -903,7 +903,7 @@ def update_items(lib, query, album, move, pretend):
             # Read new data.
             try:
                 item.read()
-            except Exception as exc:
+            except library.ReadError as exc:
                 log.error(u'error reading {0}: {1}'.format(
                     displayable_path(item.path), exc))
                 continue
@@ -1238,7 +1238,7 @@ def write_items(lib, query, pretend):
         # Get an Item object reflecting the "clean" (on-disk) state.
         try:
             clean_item = library.Item.from_path(item.path)
-        except Exception as exc:
+        except library.ReadError as exc:
             log.error(u'error reading {0}: {1}'.format(
                 displayable_path(item.path), exc
             ))
