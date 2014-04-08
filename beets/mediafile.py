@@ -913,13 +913,13 @@ class MediaField(object):
     def __init__(self, *styles, **kwargs):
         """Creates a new MediaField.
 
-        - `styles`: `StorageStyle` instances that describe the strategy
-          for reading and writing the field in particular formats.
-          There must be at least one style for each possible file
-          format.
+        :param styles: `StorageStyle` instances that describe the strategy
+                       for reading and writing the field in particular
+                       formats. There must be at least one style for
+                       each possible file format.
 
-        - `out_type`: the type of the value that should be returned when
-          getting this property.
+        :param out_type: the type of the value that should be returned when
+                         getting this property.
 
         """
         self.out_type = kwargs.get('out_type', unicode)
@@ -1147,8 +1147,8 @@ class MediaFile(object):
     metadata.
     """
     def __init__(self, path):
-        """Constructs a new MediaFile reflecting the file at path. May
-        throw UnreadableFileError.
+        """Constructs a new `MediaFile` reflecting the file at path. May
+        throw `UnreadableFileError`.
         """
         self.path = path
 
@@ -1264,7 +1264,8 @@ class MediaFile(object):
     @classmethod
     def fields(cls):
         """Get the names of all writable properties that reflect
-        metadata tags (i.e., those that are `MediaField`s).
+        metadata tags (i.e., those that are instances of
+        :class:`MediaField`).
         """
         for property, descriptor in cls.__dict__.items():
             if isinstance(descriptor, MediaField):
@@ -1272,8 +1273,8 @@ class MediaFile(object):
 
     @classmethod
     def readable_fields(cls):
-        """Get all metadata fields: the writable ones from `fields` and
-        also other audio properties.
+        """Get all metadata fields: the writable ones from
+        :meth:`fields` and also other audio properties.
         """
         for property in cls.fields():
             yield property
@@ -1285,10 +1286,10 @@ class MediaFile(object):
     def add_field(cls, name, descriptor):
         """Add a field to store custom tags.
 
-        ``name`` is the name of the property the field is accessed
-        through. It must not already exist on this class.
+        :param name: the name of the property the field is accessed
+                     through. It must not already exist on this class.
 
-        ``descriptor`` must be an instance of ``MediaField``.
+        :param descriptor: an instance of :class:`MediaField`.
         """
         if not isinstance(descriptor, MediaField):
             raise ValueError(
@@ -1301,9 +1302,9 @@ class MediaFile(object):
     def update(self, dict):
         """Set all field values from a dictionary.
 
-        For any key in ``dict`` that is also a field to store tags the
-        method retrieves the corresponding value from ``dict`` and
-        updates the ``MediaFile``.
+        For any key in `dict` that is also a field to store tags the
+        method retrieves the corresponding value from `dict` and
+        updates the `MediaFile`.
         """
         for field in self.fields():
             if field in dict:
