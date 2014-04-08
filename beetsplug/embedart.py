@@ -33,7 +33,7 @@ def _embed(path, items, maxwidth=0):
         path = ArtResizer.shared.resize(maxwidth, syspath(path))
 
     data = open(syspath(path), 'rb').read()
-    image = mediafile.Image(data, type=Image.TYPES.front)
+    image = mediafile.Image(data, type=mediafile.ImageType.front)
 
     # Add art to each file.
     log.debug('Embedding album art.')

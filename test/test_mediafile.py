@@ -25,7 +25,8 @@ import _common
 from _common import unittest
 from beets.mediafile import MediaFile, MediaField, Image, \
                             MP3StorageStyle, StorageStyle, \
-                            MP4StorageStyle, ASFStorageStyle
+                            MP4StorageStyle, ASFStorageStyle, \
+                            ImageType
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 
@@ -92,18 +93,18 @@ class ImageStructureTestMixin(ArtTestMixin):
                      if i.mime_type == 'image/png')
         self.assertEqual(image.data, self.png_data)
         self.assertExtendedImageAttributes(image, desc='album cover',
-                                           type=Image.TYPES.front)
+                                           type=ImageType.front)
 
         image = next(i for i in mediafile.images
                      if i.mime_type == 'image/jpeg')
         self.assertEqual(image.data, self.jpg_data)
         self.assertExtendedImageAttributes(image, desc='the artist',
-                                           type=Image.TYPES.artist)
+                                           type=ImageType.artist)
 
     def test_set_image_structure(self):
         mediafile = self._mediafile_fixture('empty')
         image = Image(data=self.png_data, desc='album cover',
-                      type=Image.TYPES.front)
+                      type=ImageType.front)
         mediafile.images = [image]
         mediafile.save()
 
@@ -114,14 +115,14 @@ class ImageStructureTestMixin(ArtTestMixin):
         self.assertEqual(image.data, self.png_data)
         self.assertEqual(image.mime_type, 'image/png')
         self.assertExtendedImageAttributes(image, desc='album cover',
-                                           type=Image.TYPES.front)
+                                           type=ImageType.front)
 
     def test_add_image_structure(self):
         mediafile = self._mediafile_fixture('image')
         self.assertEqual(len(mediafile.images), 2)
 
         image = Image(data=self.png_data, desc='the composer',
-                         type=Image.TYPES.composer)
+                         type=ImageType.composer)
         mediafile.images += [image]
         mediafile.save()
 
@@ -131,7 +132,7 @@ class ImageStructureTestMixin(ArtTestMixin):
         image = next(
            (i for i in mediafile.images if i.desc == 'the composer'), None)
         self.assertExtendedImageAttributes(image,
-                desc='the composer', type=Image.TYPES.composer)
+                desc='the composer', type=ImageType.composer)
 
     def assertExtendedImageAttributes(self, image, **kwargs):
         """Ignore extended image attributes in the base tests.
@@ -151,7 +152,7 @@ class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
         self.assertEqual(len(mediafile.images), 2)
 
         image = Image(data=self.tiff_data, desc='the composer',
-                         type=Image.TYPES.composer)
+                         type=ImageType.composer)
         mediafile.images += [image]
         mediafile.save()
 
@@ -162,7 +163,7 @@ class ExtendedImageStructureTestMixin(ImageStructureTestMixin):
         image = filter(lambda i: i.mime_type == 'image/tiff',
                            mediafile.images)[0]
         self.assertExtendedImageAttributes(image,
-                desc='the composer', type=Image.TYPES.composer)
+                desc='the composer', type=ImageType.composer)
 
 
 class LazySaveTestMixin(object):

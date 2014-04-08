@@ -49,7 +49,7 @@ import imghdr
 import os
 import logging
 import traceback
-from beets.util.enumeration import IndexableEnum
+import enum
 
 __all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
 
@@ -283,6 +283,32 @@ def _image_mime_type(data):
         return 'image/x-{0}'.format(kind)
 
 
+class ImageType(enum.Enum):
+    """Indicates the kind of an `Image` stored in a file's tag.
+    """
+    other = 0
+    icon = 1
+    other_icon = 2
+    front = 3
+    back = 4
+    leaflet = 5
+    media = 6
+    lead_artist = 7
+    artist = 8
+    conductor = 9
+    group = 10
+    composer = 11
+    lyricist = 12
+    recording_location = 13
+    recording_session = 14
+    performance = 15
+    screen_capture = 16
+    fish = 17
+    illustration = 18
+    artist_logo = 19
+    publisher_logo = 20
+
+
 class Image(object):
     """Strucuture representing image data and metadata that can be
     stored and retrieved from tags.
@@ -290,42 +316,15 @@ class Image(object):
     The structure has four properties.
     * ``data``  The binary data of the image
     * ``desc``  An optional descritpion of the image
-    * ``type``  A string denoting the type in relation to the music.
-                Must be one of the ``TYPES`` enum.
+    * ``type``  An instance of `ImageType` indicating the kind of image
     * ``mime_type`` Read-only property that contains the mime type of
                     the binary data
     """
-    # By default, enums are 1-indexed. We make this enum zero-indexed
-    # by explicitly specifying the indicies of field
-    TYPES = IndexableEnum('TageImage.TYPES', [(k, i) for (i, k) in enumerate([
-        'other',
-        'icon',
-        'other_icon',
-        'front',
-        'back',
-        'leaflet',
-        'media',
-        'lead_artist',
-        'artist',
-        'conductor',
-        'group',
-        'composer',
-        'lyricist',
-        'recording_location',
-        'recording_session',
-        'performance',
-        'screen_capture',
-        'fish',
-        'illustration',
-        'artist_logo',
-        'publisher_logo',
-    ])])
-
     def __init__(self, data, desc=None, type=None):
         self.data = data
         self.desc = desc
         if isinstance(type, int):
-            type = self.TYPES[type]
+            type = list(ImageType)[type]
         self.type = type
 
     @property
@@ -337,7 +336,7 @@ class Image(object):
     def type_index(self):
         if self.type is None:
             return None
-        return list(self.TYPES).index(self.type)
+        return self.type.value
 
 
 

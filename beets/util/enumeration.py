@@ -12,7 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from enum import Enum, EnumMeta
+from enum import Enum
 
 class OrderedEnum(Enum):
     """
@@ -20,34 +20,17 @@ class OrderedEnum(Enum):
     """
     def __ge__(self, other):
         if self.__class__ is other.__class__:
-            return self._value_ >= other._value_
+            return self.value >= other.value
         return NotImplemented
     def __gt__(self, other):
         if self.__class__ is other.__class__:
-            return self._value_ > other._value_
+            return self.value > other.value
         return NotImplemented
     def __le__(self, other):
         if self.__class__ is other.__class__:
-            return self._value_ <= other._value_
+            return self.value <= other.value
         return NotImplemented
     def __lt__(self, other):
         if self.__class__ is other.__class__:
-            return self._value_ < other._value_
+            return self.value < other.value
         return NotImplemented
-
-class IndexableEnumMeta(EnumMeta):
-    """
-    Metaclass for Enums that support indexing by value
-    """
-    def __getitem__(obj, x):
-        if isinstance(x, int):
-            return obj._value2member_map_[x]
-        #import code; code.interact(local=locals())
-        return super(IndexableEnumMeta, obj).__getitem__(x)
-
-class IndexableEnum(Enum):
-    """
-    An Enum subclass that suports indexing by value.
-    """
-    __metaclass__ = IndexableEnumMeta
-
