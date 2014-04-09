@@ -25,9 +25,9 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
 
         self.config['convert'] = {
             'dest': os.path.join(self.temp_dir, 'convert'),
-            # Truncated copy so we can determine if the file was
+            # Append string so we can determine if the file was
             # converted
-            'command': u'dd bs=1024 count=6 if=$source of=$dest',
+            'command': u'cp $source $dest; printf convert >> $dest',
             # Enforce running convert
             'max_bitrate': 1,
             'auto': True,
@@ -41,7 +41,7 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
     def test_import_converted(self):
         self.importer.run()
         item = self.lib.items().get()
-        self.assertEqual(os.path.getsize(item.path), 1024*6)
+        self.assertConverted(item.path)
 
     def test_import_original_on_convert_error(self):
         # `false` exits with non-zero code
@@ -51,6 +51,12 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
         item = self.lib.items().get()
         self.assertIsNotNone(item)
         self.assertTrue(os.path.isfile(item.path))
+
+    def assertConverted(self, path):
+        with open(path) as f:
+            f.seek(-7, os.SEEK_END)
+            self.assertEqual(f.read(), 'convert',
+                             '{0} was not converted'.format(path))
 
 
 class ConvertCliTest(unittest.TestCase, TestHelper):
