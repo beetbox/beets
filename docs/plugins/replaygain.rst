@@ -90,6 +90,11 @@ These options only work with the "command" backend:
   whatever amount would keep clipping from occurring.
 
 
+If you use *mp3gain* or *aacgain* as your backend, the plugin will run multiple
+instances of these commands in parallel to increase speed on multi-core systems.
+You can customize the number of simultaneous process with the ``concurrency``
+option. By default its value is the number of CPU cores.
+
 Manual Analysis
 ---------------
 

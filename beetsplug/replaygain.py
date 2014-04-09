@@ -18,11 +18,14 @@ import os
 import collections
 import itertools
 import sys
+import asyncio
+from asyncio import From, Return
 
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.util import syspath, command_output
+from beets.util import syspath, command_output, cpu_count
 from beets import config
+from beets.util.queue import exec_cmd, Queue
 
 log = logging.getLogger('beets')
 
@@ -40,12 +43,16 @@ class FatalReplayGainError(Exception):
     """
 
 
+@asyncio.coroutine
 def call(args):
     """Execute the command and return its output or raise a
     ReplayGainError on failure.
     """
     try:
-        return command_output(args)
+        stdout, stderr, returncode = yield From(exec_cmd(args))
+        if returncode:
+            raise subprocess.CalledProcessError(proc.returncode, args)
+        raise Return(stdout)
     except subprocess.CalledProcessError as e:
         raise ReplayGainError(
             "{0} exited with status {1}".format(args[0], e.returncode)
@@ -70,20 +77,153 @@ class Backend(object):
         """Initialize the backend with the configuration view for the
         plugin.
         """
+        self.overwrite = config['overwrite'].get(bool)
+        self.concurrency = config['concurrency'].get(int)
 
+    @asyncio.coroutine
     def compute_track_gain(self, items):
         raise NotImplementedError()
 
+    @asyncio.coroutine
     def compute_album_gain(self, album):
         # TODO: implement album gain in terms of track gain of the
         # individual tracks which can be used for any backend.
         raise NotImplementedError()
+
+    def track_requires_gain(self, item):
+        return self.overwrite or \
+            (not item.rg_track_gain or not item.rg_track_peak)
+
+    def album_requires_gain(self, album):
+        # Skip calculating gain only when *all* files don't need
+        # recalculation. This way, if any file among an album's tracks
+        # needs recalculation, we still get an accurate album gain
+        # value.
+        return self.overwrite or \
+            any([not item.rg_album_gain or not item.rg_album_peak
+                 for item in album.items()])
+
+    def store_track_gain(self, item, track_gain):
+        item.rg_track_gain = track_gain.gain
+        item.rg_track_peak = track_gain.peak
+        item.store()
+
+        log.debug(u'replaygain: applied track gain {0}, peak {1}'.format(
+            item.rg_track_gain,
+            item.rg_track_peak
+        ))
+
+    def store_album_gain(self, album, album_gain):
+        album.rg_album_gain = album_gain.gain
+        album.rg_album_peak = album_gain.peak
+        album.store()
+
+        log.debug(u'replaygain: applied album gain {0}, peak {1}'.format(
+            album.rg_album_gain,
+            album.rg_album_peak))
+
+    def handle_albums(self, albums, write):
+        """Call ``_handle_album()`` for each item and execute the calls
+        concurrently.
+        """
+        queue = Queue(self.concurrency)
+        for album in albums:
+            task = self._handle_album(album, write)
+            queue.push(task)
+        queue.wait()
+
+    @asyncio.coroutine
+    def _handle_album(self, album, write):
+        """Compute album and track replay gain store it in all of the
+        album's items.
+
+        If ``write`` is truthy then ``item.write()`` is called for each
+        item. If replay gain information is already present in all
+        items, nothing is done.
+        """
+        if not self.album_requires_gain(album):
+            log.info(u'Skipping album {0} - {1}'.format(album.albumartist,
+                                                        album.album))
+            raise Return()
+
+        log.info(u'analyzing {0} - {1}'.format(album.albumartist,
+                                               album.album))
+
+        try:
+            album_gain = yield From(self.compute_album_gain(album))
+            if len(album_gain.track_gains) != len(album.items()):
+                raise ReplayGainError(
+                    u"ReplayGain backend failed "
+                    u"for some tracks in album {0} - {1}".format(
+                        album.albumartist, album.album
+                    )
+                )
+
+            self.store_album_gain(album, album_gain.album_gain)
+            for item, track_gain in itertools.izip(album.items(),
+                                                   album_gain.track_gains):
+                self.store_track_gain(item, track_gain)
+                if write:
+                    item.write()
+        except ReplayGainError as e:
+            log.warn(u"ReplayGain error: {1}".format(e))
+        except FatalReplayGainError as e:
+            raise ui.UserError(
+                u"Fatal replay gain error: {1}".format(e)
+            )
+
+    def handle_tracks(self, items, write):
+        """Call ``_handle_track()`` for each item and execute the calls
+        concurrently.
+        """
+        queue = Queue(self.concurrency)
+        for item in items:
+            task = self._handle_track(item, write)
+            queue.push(task)
+        queue.wait()
+
+    @asyncio.coroutine
+    def _handle_track(self, item, write):
+        """Compute track replay gain and store it in the item.
+
+        If ``write`` is truthy then ``item.write()`` is called to write
+        the data to disk.  If replay gain information is already present
+        in the item, nothing is done.
+        """
+        if not self.track_requires_gain(item):
+            log.info(u'Skipping track {0} - {1}'.format(item.artist,
+                                                        item.title))
+            return
+
+        log.info(u'analyzing {0} - {1}'.format(item.artist,
+                                               item.title))
+
+        try:
+            track_gains = yield From(self.compute_track_gain([item]))
+            if len(track_gains) != 1:
+                raise ReplayGainError(
+                    u"ReplayGain backend failed for track {0} - {1}".format(
+                        item.artist, item.title
+                    )
+                )
+
+            self.store_track_gain(item, track_gains[0])
+            if write:
+                item.write()
+        except ReplayGainError as e:
+            log.warn(u"ReplayGain error: {1}".format(e))
+        except FatalReplayGainError as e:
+            raise ui.UserError(
+                u"Fatal replay gain error: {1}".format(e)
+            )
 
 
 # mpgain/aacgain CLI tool backend.
 
 class CommandBackend(Backend):
     def __init__(self, config):
+        super(CommandBackend, self).__init__(config)
+
         config.add({
             'command': u"",
             'noclip': True,
@@ -103,7 +243,7 @@ class CommandBackend(Backend):
             # Check whether the program is in $PATH.
             for cmd in ('mp3gain', 'aacgain'):
                 try:
-                    call([cmd, '-v'])
+                    command_output([cmd, '-v'])
                     self.command = cmd
                 except OSError:
                     pass
@@ -116,14 +256,16 @@ class CommandBackend(Backend):
         target_level = config['targetlevel'].as_number()
         self.gain_offset = int(target_level - 89)
 
+    @asyncio.coroutine
     def compute_track_gain(self, items):
         """Computes the track gain of the given tracks, returns a list
         of TrackGain objects.
         """
         supported_items = filter(self.format_supported, items)
-        output = self.compute_gain(supported_items, False)
-        return output
+        output = yield From(self.compute_gain(supported_items, is_album=False))
+        raise Return(output)
 
+    @asyncio.coroutine
     def compute_album_gain(self, album):
         """Computes the album gain of the given album, returns an
         AlbumGain object.
@@ -133,10 +275,10 @@ class CommandBackend(Backend):
 
         supported_items = filter(self.format_supported, album.items())
         if len(supported_items) != len(album.items()):
-            return AlbumGain(None, [])
+            raise Return(AlbumGain(None, []))
 
-        output = self.compute_gain(supported_items, True)
-        return AlbumGain(output[-1], output[:-1])
+        output = yield From(self.compute_gain(supported_items, is_album=True))
+        raise Return(AlbumGain(output[-1], output[:-1]))
 
     def format_supported(self, item):
         """Checks whether the given item is supported by the selected tool.
@@ -147,6 +289,7 @@ class CommandBackend(Backend):
             return False
         return True
 
+    @asyncio.coroutine
     def compute_gain(self, items, is_album):
         """Computes the track or album gain of a list of items, returns
         a list of TrackGain objects.
@@ -155,7 +298,7 @@ class CommandBackend(Backend):
         the album gain
         """
         if len(items) == 0:
-            return []
+            raise Return([])
 
         """Compute ReplayGain values and return a list of results
         dictionaries as given by `parse_tool_output`.
@@ -179,12 +322,11 @@ class CommandBackend(Backend):
 
         log.debug(u'replaygain: analyzing {0} files'.format(len(items)))
         log.debug(u"replaygain: executing %s" % " ".join(cmd))
-        output = call(cmd)
+        output = yield From(call(cmd))
         log.debug(u'replaygain: analysis finished')
         results = self.parse_tool_output(output,
                                          len(items) + (1 if is_album else 0))
-
-        return results
+        raise Return(results)
 
     def parse_tool_output(self, text, num_lines):
         """Given the tab-delimited output from an invocation of mp3gain
@@ -209,8 +351,13 @@ class CommandBackend(Backend):
 
 # GStreamer-based backend.
 
-class GStreamerBackend(object):
+class GStreamerBackend(Backend):
     def __init__(self, config):
+        super(GStreamerBackend, self).__init__(config)
+
+        # TODO Use glib to run multiple threads
+        self.concurrency = 1
+
         self._import_gst()
 
         # Initialized a GStreamer pipeline of the form filesrc ->
@@ -294,6 +441,7 @@ class GStreamerBackend(object):
         if self._set_first_file():
             self._main_loop.run()
 
+    @asyncio.coroutine
     def compute_track_gain(self, items):
         self.compute(items, False)
         if len(self._file_tags) != len(items):
@@ -306,6 +454,7 @@ class GStreamerBackend(object):
 
         return ret
 
+    @asyncio.coroutine
     def compute_album_gain(self, album):
         items = list(album.items())
         self.compute(items, True)
@@ -461,9 +610,9 @@ class ReplayGainPlugin(BeetsPlugin):
             'auto': True,
             'backend': u'command',
             'targetlevel': 89,
+            'concurrency': cpu_count(),
         })
 
-        self.overwrite = self.config['overwrite'].get(bool)
         self.automatic = self.config['auto'].get(bool)
         backend_name = self.config['backend'].get(unicode)
         if backend_name not in self.backends:
@@ -484,111 +633,6 @@ class ReplayGainPlugin(BeetsPlugin):
                 'An error occured in backend initialization: {0}'.format(e)
             )
 
-    def track_requires_gain(self, item):
-        return self.overwrite or \
-            (not item.rg_track_gain or not item.rg_track_peak)
-
-    def album_requires_gain(self, album):
-        # Skip calculating gain only when *all* files don't need
-        # recalculation. This way, if any file among an album's tracks
-        # needs recalculation, we still get an accurate album gain
-        # value.
-        return self.overwrite or \
-            any([not item.rg_album_gain or not item.rg_album_peak
-                 for item in album.items()])
-
-    def store_track_gain(self, item, track_gain):
-        item.rg_track_gain = track_gain.gain
-        item.rg_track_peak = track_gain.peak
-        item.store()
-
-        log.debug(u'replaygain: applied track gain {0}, peak {1}'.format(
-            item.rg_track_gain,
-            item.rg_track_peak
-        ))
-
-    def store_album_gain(self, album, album_gain):
-        album.rg_album_gain = album_gain.gain
-        album.rg_album_peak = album_gain.peak
-        album.store()
-
-        log.debug(u'replaygain: applied album gain {0}, peak {1}'.format(
-            album.rg_album_gain,
-            album.rg_album_peak))
-
-    def handle_album(self, album, write):
-        """Compute album and track replay gain store it in all of the
-        album's items.
-
-        If ``write`` is truthy then ``item.write()`` is called for each
-        item. If replay gain information is already present in all
-        items, nothing is done.
-        """
-        if not self.album_requires_gain(album):
-            log.info(u'Skipping album {0} - {1}'.format(album.albumartist,
-                                                        album.album))
-            return
-
-        log.info(u'analyzing {0} - {1}'.format(album.albumartist,
-                                               album.album))
-
-        try:
-            album_gain = self.backend_instance.compute_album_gain(album)
-            if len(album_gain.track_gains) != len(album.items()):
-                raise ReplayGainError(
-                    u"ReplayGain backend failed "
-                    u"for some tracks in album {0} - {1}".format(
-                        album.albumartist, album.album
-                    )
-                )
-
-            self.store_album_gain(album, album_gain.album_gain)
-            for item, track_gain in itertools.izip(album.items(),
-                                                   album_gain.track_gains):
-                self.store_track_gain(item, track_gain)
-                if write:
-                    item.write()
-        except ReplayGainError as e:
-            log.warn(u"ReplayGain error: {1}".format(e))
-        except FatalReplayGainError as e:
-            raise ui.UserError(
-                u"Fatal replay gain error: {1}".format(e)
-            )
-
-    def handle_track(self, item, write):
-        """Compute track replay gain and store it in the item.
-
-        If ``write`` is truthy then ``item.write()`` is called to write
-        the data to disk.  If replay gain information is already present
-        in the item, nothing is done.
-        """
-        if not self.track_requires_gain(item):
-            log.info(u'Skipping track {0} - {1}'.format(item.artist,
-                                                        item.title))
-            return
-
-        log.info(u'analyzing {0} - {1}'.format(item.artist,
-                                               item.title))
-
-        try:
-            track_gains = self.backend_instance.compute_track_gain([item])
-            if len(track_gains) != 1:
-                raise ReplayGainError(
-                    u"ReplayGain backend failed for track {0} - {1}".format(
-                        item.artist, item.title
-                    )
-                )
-
-            self.store_track_gain(item, track_gains[0])
-            if write:
-                item.write()
-        except ReplayGainError as e:
-            log.warn(u"ReplayGain error: {1}".format(e))
-        except FatalReplayGainError as e:
-            raise ui.UserError(
-                u"Fatal replay gain error: {1}".format(e)
-            )
-
     def imported(self, session, task):
         """Add replay gain info to items or albums of ``task``.
         """
@@ -597,9 +641,9 @@ class ReplayGainPlugin(BeetsPlugin):
 
         if task.is_album:
             album = session.lib.get_album(task.album_id)
-            self.handle_album(album, False)
+            self.backend_instance.handle_albums([album], False)
         else:
-            self.handle_track(task.item, False)
+            self.backend_instance.handle_track([task.item], False)
 
     def commands(self):
         """Return the "replaygain" ui subcommand.
@@ -608,12 +652,11 @@ class ReplayGainPlugin(BeetsPlugin):
             write = config['import']['write'].get(bool)
 
             if opts.album:
-                for album in lib.albums(ui.decargs(args)):
-                    self.handle_album(album, write)
-
+                albums = lib.albums(ui.decargs(args))
+                self.backend_instance.handle_albums(albums, write)
             else:
-                for item in lib.items(ui.decargs(args)):
-                    self.handle_track(item, write)
+                items = lib.items(ui.decargs(args))
+                self.backend_instance.handle_tracks(items, write)
 
         cmd = ui.Subcommand('replaygain', help='analyze for ReplayGain')
         cmd.parser.add_option('-a', '--album', action='store_true',

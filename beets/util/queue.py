@@ -74,7 +74,6 @@ class Queue(object):
             self._queue()
 
     def wait(self):
-        self._start()
         for future in self.sync():
             pass
 
@@ -145,13 +144,13 @@ class CommandQueue(Queue):
     @asyncio.coroutine
     def make_command(self, args, data):
         stdout, stderr, returncode = yield From(exec_cmd(args))
-        raise Return(stdout, stderr, process.returncode, *data)
+        raise Return(stdout, stderr, returncode, *data)
 
 
 @asyncio.coroutine
 def exec_cmd(args):
     args = map(str, args)
-    log.debug('running {}'.format(' '.join(args)))
+    log.debug('running {0}'.format(' '.join(args)))
 
     process = yield From(asyncio.create_subprocess_exec(
         *args,
