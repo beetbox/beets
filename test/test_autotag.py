@@ -1020,6 +1020,21 @@ class StringDistanceTest(unittest.TestCase):
         dist = string_dist(u'\xe9\xe1\xf1', u'ean')
         self.assertEqual(dist, 0.0)
 
+
+class EnumTest(_common.TestCase):
+    """
+    Test Enum Subclasses defined in beets.util.enumeration
+    """
+    def test_ordered_enum(self):
+        OrderedEnumTest = match.OrderedEnum('OrderedEnumTest', ['a', 'b', 'c'])
+        self.assertLess(OrderedEnumTest.a, OrderedEnumTest.b)
+        self.assertLess(OrderedEnumTest.a, OrderedEnumTest.c)
+        self.assertLess(OrderedEnumTest.b, OrderedEnumTest.c)
+        self.assertGreater(OrderedEnumTest.b, OrderedEnumTest.a)
+        self.assertGreater(OrderedEnumTest.c, OrderedEnumTest.a)
+        self.assertGreater(OrderedEnumTest.c, OrderedEnumTest.b)
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

@@ -436,7 +436,7 @@ class AutotagTest(_common.TestCase):
             'path',
             [_common.item()],
         )
-        task.set_candidates('artist', 'album', [], autotag.recommendation.none)
+        task.set_candidates('artist', 'album', [], autotag.Recommendation.none)
         session = _common.import_session(cli=True)
         res = session.choose_match(task)
         self.assertEqual(res, result)
@@ -791,7 +791,8 @@ class ShowChangeTest(_common.TestCase):
         self.info = autotag.AlbumInfo(
             u'the album', u'album id', u'the artist', u'artist id', [
                 autotag.TrackInfo(u'the title', u'track id', index=1)
-        ])
+            ]
+        )
 
     def _show_change(self, items=None, info=None,
                      cur_artist=u'the artist', cur_album=u'the album',

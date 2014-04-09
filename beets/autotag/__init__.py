@@ -24,7 +24,7 @@ from beets.util import sorted_walk, ancestry, displayable_path
 # Parts of external interface.
 from .hooks import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch
 from .match import tag_item, tag_album
-from .match import recommendation
+from .match import Recommendation
 
 # Global logger.
 log = logging.getLogger('beets')

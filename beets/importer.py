@@ -664,7 +664,7 @@ def user_query(session):
     process.
 
     The coroutine accepts an ImportTask objects. It uses the
-    session's ``choose_match`` method to determine the ``action`` for
+    session's `choose_match` method to determine the `action` for
     this task. Depending on the action additional stages are exectuted
     and the processed task is yielded.
 

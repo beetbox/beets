@@ -21,16 +21,14 @@ import datetime
 import logging
 import re
 from munkres import Munkres
+import enum
 
 from beets import plugins
 from beets import config
 from beets.util import plurality
-from beets.util.enumeration import OrderedEnum
 from beets.autotag import hooks
 
 # Recommendation enumeration.
-recommendation = OrderedEnum('recommendation', ['none', 'low', 'medium',
-                                                'strong'])
 
 # Artist signals that indicate "various artists". These are used at the
 # album level to determine whether a given release is likely a VA
@@ -40,6 +38,40 @@ VA_ARTISTS = (u'', u'various artists', u'various', u'va', u'unknown')
 
 # Global logger.
 log = logging.getLogger('beets')
+
+
+# Recommendation enumeration.
+
+# https://docs.python.org/3.4/library/enum.html#orderedenum
+class OrderedEnum(enum.Enum):
+    """An Enum subclass that allows comparison of members.
+    """
+    def __ge__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value >= other.value
+        return NotImplemented
+    def __gt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value > other.value
+        return NotImplemented
+    def __le__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value <= other.value
+        return NotImplemented
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value < other.value
+        return NotImplemented
+
+
+class Recommendation(OrderedEnum):
+    """Indicates a qualitative suggestion to the user about what should
+    be done with a given match.
+    """
+    none = 0
+    low = 1
+    medium = 2
+    strong = 3
 
 
 # Primary matching functionality.
@@ -252,7 +284,7 @@ def match_by_id(items):
         return None
 
     # If all album IDs are equal, look up the album.
-    if bool(reduce(lambda x,y: x if x==y else (), albumids)):
+    if bool(reduce(lambda x,y: x if x == y else (), albumids)):
         albumid = albumids[0]
         log.debug('Searching for discovered album ID: ' + albumid)
         return hooks.album_for_mbid(albumid)
@@ -269,26 +301,26 @@ def _recommendation(results):
     """
     if not results:
         # No candidates: no recommendation.
-        return recommendation.none
+        return Recommendation.none
 
     # Basic distance thresholding.
     min_dist = results[0].distance
     if min_dist < config['match']['strong_rec_thresh'].as_number():
         # Strong recommendation level.
-        rec = recommendation.strong
+        rec = Recommendation.strong
     elif min_dist <= config['match']['medium_rec_thresh'].as_number():
         # Medium recommendation level.
-        rec = recommendation.medium
+        rec = Recommendation.medium
     elif len(results) == 1:
         # Only a single candidate.
-        rec = recommendation.low
+        rec = Recommendation.low
     elif results[1].distance - min_dist >= \
             config['match']['rec_gap_thresh'].as_number():
         # Gap between first two candidates is large.
-        rec = recommendation.low
+        rec = Recommendation.low
     else:
         # No conclusion. Return immediately. Can't be downgraded any further.
-        return recommendation.none
+        return Recommendation.none
 
     # Downgrade to the max rec if it is lower than the current rec for an
     # applied penalty.
@@ -300,10 +332,10 @@ def _recommendation(results):
     for key in keys:
         if key in max_rec_view.keys():
             max_rec = max_rec_view[key].as_choice({
-                'strong': recommendation.strong,
-                'medium': recommendation.medium,
-                'low': recommendation.low,
-                'none': recommendation.none,
+                'strong': Recommendation.strong,
+                'medium': Recommendation.medium,
+                'low': Recommendation.low,
+                'none': Recommendation.none,
             })
             rec = min(rec, max_rec)
 
@@ -347,7 +379,7 @@ def tag_album(items, search_artist=None, search_album=None,
         - The current album.
         - A list of AlbumMatch objects. The candidates are sorted by
           distance (i.e., best match first).
-        - A recommendation.
+        - A :class:`Recommendation`.
     If search_artist and search_album or search_id are provided, then
     they are used as search terms in place of the current metadata.
     """
@@ -378,7 +410,7 @@ def tag_album(items, search_artist=None, search_album=None,
                 # If we have a very good MBID match, return immediately.
                 # Otherwise, this match will compete against metadata-based
                 # matches.
-                if rec == recommendation.strong:
+                if rec == Recommendation.strong:
                     log.debug('ID match.')
                     return cur_artist, cur_album, candidates.values(), rec
 
@@ -429,7 +461,7 @@ def tag_item(item, search_artist=None, search_title=None,
                     hooks.TrackMatch(dist, track_info)
             # If this is a good match, then don't keep searching.
             rec = _recommendation(candidates.values())
-            if rec == recommendation.strong and not config['import']['timid']:
+            if rec == Recommendation.strong and not config['import']['timid']:
                 log.debug('Track ID match.')
                 return candidates.values(), rec
 
@@ -438,7 +470,7 @@ def tag_item(item, search_artist=None, search_title=None,
         if candidates:
             return candidates.values(), rec
         else:
-            return [], recommendation.none
+            return [], Recommendation.none
 
     # Search terms.
     if not (search_artist and search_title):

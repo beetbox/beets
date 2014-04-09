@@ -28,7 +28,7 @@ import beets
 from beets import ui
 from beets.ui import print_, input_, decargs
 from beets import autotag
-from beets.autotag import recommendation
+from beets.autotag import Recommendation
 from beets.autotag import hooks
 from beets import plugins
 from beets import importer
@@ -402,7 +402,7 @@ def _summary_judment(rec):
     made.
     """
     if config['import']['quiet']:
-        if rec == recommendation.strong:
+        if rec == Recommendation.strong:
             return importer.action.APPLY
         else:
             action = config['import']['quiet_fallback'].as_choice({
@@ -410,7 +410,7 @@ def _summary_judment(rec):
                 'asis': importer.action.ASIS,
             })
 
-    elif rec == recommendation.none:
+    elif rec == Recommendation.none:
         action = config['import']['none_rec_action'].as_choice({
             'skip': importer.action.SKIP,
             'asis': importer.action.ASIS,
@@ -479,13 +479,13 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
 
     # Is the change good enough?
     bypass_candidates = False
-    if rec != recommendation.none:
+    if rec != Recommendation.none:
         match = candidates[0]
         bypass_candidates = True
 
     while True:
         # Display and choose from candidates.
-        require = rec <= recommendation.low
+        require = rec <= Recommendation.low
 
         if not bypass_candidates:
             # Display list of candidates.
@@ -559,7 +559,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             show_change(cur_artist, cur_album, match)
 
         # Exact match => tag automatically if we're not in timid mode.
-        if rec == recommendation.strong and not config['import']['timid']:
+        if rec == Recommendation.strong and not config['import']['timid']:
             return match
 
         # Ask for confirmation.
