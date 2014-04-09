@@ -20,9 +20,11 @@ import subprocess
 import shutil
 from setuptools import setup
 
+
 def _read(fn):
     path = os.path.join(os.path.dirname(__file__), fn)
     return open(path).read()
+
 
 # Build manpages if we're making a source distribution tarball.
 if 'sdist' in sys.argv:
@@ -41,73 +43,74 @@ if 'sdist' in sys.argv:
         shutil.rmtree(mandir)
     shutil.copytree(os.path.join(docdir, '_build', 'man'), mandir)
 
-setup(name='beets',
-      version='1.3.5',
-      description='music tagger and library organizer',
-      author='Adrian Sampson',
-      author_email='adrian@radbox.org',
-      url='http://beets.radbox.org/',
-      license='MIT',
-      platforms='ALL',
-      long_description=_read('README.rst'),
-      test_suite='test.testall.suite',
-      include_package_data=True, # Install plugin resources.
+setup(
+    name='beets',
+    version='1.3.5',
+    description='music tagger and library organizer',
+    author='Adrian Sampson',
+    author_email='adrian@radbox.org',
+    url='http://beets.radbox.org/',
+    license='MIT',
+    platforms='ALL',
+    long_description=_read('README.rst'),
+    test_suite='test.testall.suite',
+    include_package_data=True,  # Install plugin resources.
 
-      packages=[
-          'beets',
-          'beets.ui',
-          'beets.autotag',
-          'beets.util',
-          'beets.dbcore',
-          'beetsplug',
-          'beetsplug.bpd',
-          'beetsplug.web',
-          'beetsplug.lastgenre',
-      ],
-      entry_points={
-          'console_scripts': [
-              'beet = beets.ui:main',
-          ],
-      },
+    packages=[
+        'beets',
+        'beets.ui',
+        'beets.autotag',
+        'beets.util',
+        'beets.dbcore',
+        'beetsplug',
+        'beetsplug.bpd',
+        'beetsplug.web',
+        'beetsplug.lastgenre',
+    ],
+    entry_points={
+        'console_scripts': [
+            'beet = beets.ui:main',
+        ],
+    },
 
-      install_requires=[
-          'enum34',
-          'mutagen>=1.22',
-          'munkres',
-          'unidecode',
-          'musicbrainzngs>=0.4',
-          'pyyaml',
-      ]
-      + (['colorama'] if (sys.platform == 'win32') else [])
-      + (['ordereddict'] if sys.version_info < (2, 7, 0) else []),
+    install_requires=[
+        'enum34',
+        'mutagen>=1.22',
+        'munkres',
+        'unidecode',
+        'musicbrainzngs>=0.4',
+        'pyyaml',
+    ]
+    + (['colorama'] if (sys.platform == 'win32') else [])
+    + (['ordereddict'] if sys.version_info < (2, 7, 0) else []),
 
-      tests_require=[
-          'responses',
-      ],
+    tests_require=[
+        'responses',
+    ],
 
-      # Plugin (optional) dependencies:
-      extras_require={
-          'beatport': ['requests'],
-          'fetchart': ['requests'],
-          'chroma': ['pyacoustid'],
-          'discogs': ['discogs-client'],
-          'echonest_tempo': ['pyechonest'],
-          'lastgenre': ['pylast'],
-          'web': ['flask'],
-      },
-      # Non-Python/non-PyPI plugin dependencies:
-      # replaygain: mp3gain || aacgain
-      # convert: ffmpeg
-      # bpd: pygst
+    # Plugin (optional) dependencies:
+    extras_require={
+        'beatport': ['requests'],
+        'fetchart': ['requests'],
+        'chroma': ['pyacoustid'],
+        'discogs': ['discogs-client'],
+        'echonest_tempo': ['pyechonest'],
+        'lastgenre': ['pylast'],
+        'web': ['flask'],
+    },
+    # Non-Python/non-PyPI plugin dependencies:
+    # replaygain: mp3gain || aacgain
+    # convert: ffmpeg
+    # bpd: pygst
 
-      classifiers=[
-          'Topic :: Multimedia :: Sound/Audio',
-          'Topic :: Multimedia :: Sound/Audio :: Players :: MP3',
-          'License :: OSI Approved :: MIT License',
-          'Environment :: Console',
-          'Environment :: Web Environment',
-          'Programming Language :: Python :: 2',
-          'Programming Language :: Python :: 2.6',
-          'Programming Language :: Python :: 2.7',
-      ],
+    classifiers=[
+        'Topic :: Multimedia :: Sound/Audio',
+        'Topic :: Multimedia :: Sound/Audio :: Players :: MP3',
+        'License :: OSI Approved :: MIT License',
+        'Environment :: Console',
+        'Environment :: Web Environment',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+    ],
 )
