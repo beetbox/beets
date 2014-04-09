@@ -744,7 +744,6 @@ class MP3DescStorageStyle(MP3StorageStyle):
             del mutagen_file[frame.HashKey]
 
 
-
 class MP3SlashPackStorageStyle(MP3StorageStyle):
     """Store value as part of pair that is serialized as a slash-
     separated string.
@@ -971,7 +970,7 @@ class MediaField(object):
             value = self._none_value()
         for style in self.styles(mediafile.mgfile):
             style.set(mediafile.mgfile, value)
-    
+
     def __delete__(self, mediafile):
         for style in self.styles(mediafile.mgfile):
             style.delete(mediafile.mgfile)
@@ -1115,7 +1114,6 @@ class DateField(MediaField):
 
     def day_field(self):
         return DateItemField(self, 2)
-
 
 
 class DateItemField(MediaField):
