@@ -11,10 +11,6 @@ env:
     - TOX_ENV=docs
     - TOX_ENV=flake8
 
-matrix:
-    allow_failures:
-        - env: TOX_ENV=flake8
-
 install:
     - travis_retry sudo apt-get update
     - travis_retry sudo apt-get install -qq bash-completion mp3gain
