@@ -335,7 +335,9 @@ class Image(object):
     @property
     def type_index(self):
         if self.type is None:
-            return None
+            # This method is used when a tag format requires the type
+            # index to be set, so we return "other" as the default value.
+            return 0
         return self.type.value
 
 
@@ -788,7 +790,7 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
         frame.mime = image.mime_type
         frame.desc = (image.desc or u'').encode('utf8')
         frame.encoding = 3  # UTF-8 encoding of desc
-        frame.type = image.type_index or 3  # front cover
+        frame.type = image.type_index
         return frame
 
 
@@ -815,7 +817,7 @@ class ASFImageStorageStyle(ListStorageStyle):
     def serialize(self, image):
         pic = mutagen.asf.ASFByteArrayAttribute()
         pic.value = _pack_asf_image(image.mime_type, image.data,
-                                    type=image.type_index or 3,
+                                    type=image.type_index,
                                     description=image.desc or u'')
         return pic
 
@@ -863,7 +865,7 @@ class VorbisImageStorageStyle(ListStorageStyle):
         """
         pic = mutagen.flac.Picture()
         pic.data = image.data
-        pic.type = image.type_index or 3  # Front cover
+        pic.type = image.type_index
         pic.mime = image.mime_type
         pic.desc = image.desc or u''
         return base64.b64encode(pic.write())
@@ -896,7 +898,7 @@ class FlacImageStorageStyle(ListStorageStyle):
         """
         pic = mutagen.flac.Picture()
         pic.data = image.data
-        pic.type = image.type_index or 3  # Front cover
+        pic.type = image.type_index
         pic.mime = image.mime_type
         pic.desc = image.desc or u''
         return pic
