@@ -72,8 +72,10 @@ def get_format():
         format_info['extension'] = config['convert']['extension'].get(unicode)
 
     try:
-        return [a.encode('utf8') for a in format_info['command'].split()], \
-                (u'.' + format_info['extension']).encode('utf8')
+        return (
+            format_info['command'].encode('utf8'),
+            (u'.' + format_info['extension']).encode('utf8'),
+        )
     except KeyError:
         raise ui.UserError(
             u'convert: format {0} needs "command" and "extension" fields'
@@ -94,19 +96,15 @@ def encode(source, dest):
         log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
 
     command, _ = get_format()
-    opts = []
-    for arg in command:
-        opts.append(Template(arg).safe_substitute({
-            'source': source,
-            'dest':   dest,
-        }))
+    command = Template(command).safe_substitute({
+        'source': pipes.quote(source),
+        'dest':   pipes.quote(dest),
+    })
 
-    log.debug(u'convert: executing: {0}'.format(
-        u' '.join(pipes.quote(o.decode('utf8', 'ignore')) for o in opts)
-    ))
+    log.debug(u'convert: executing: {0}'.format(command))
 
     try:
-        util.command_output(opts)
+        util.command_output(command, shell=True)
     except subprocess.CalledProcessError:
         # Something went wrong (probably Ctrl+C), remove temporary files
         log.info(u'Encoding {0} failed. Cleaning up...'

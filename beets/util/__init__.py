@@ -614,11 +614,16 @@ def cpu_count():
         return 1
 
 
-def command_output(cmd):
-    """Wraps the `subprocess` module to invoke a command (given as a
-    list of arguments starting with the command name) and collect
-    stdout. The stderr stream is ignored. May raise
-    `subprocess.CalledProcessError` or an `OSError`.
+def command_output(cmd, shell=False):
+    """Runs the command and returns its output after it has exited.
+
+    ``cmd`` is a list of arguments starting with the command names.  If
+    ``shell`` is true, ``cmd`` is assumed to be a string and passed to a
+    shell to execute.
+
+    If the process exits with a non-zero return code
+    ``subprocess.CalledProcessError`` is raised. May also raise
+    ``OSError``.
 
     This replaces `subprocess.check_output`, which isn't available in
     Python 2.6 and which can have problems if lots of output is sent to
@@ -626,7 +631,8 @@ def command_output(cmd):
     """
     with open(os.devnull, 'wb') as devnull:
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=devnull,
-                                close_fds=platform.system() != 'Windows')
+                                close_fds=platform.system() != 'Windows',
+                                shell=shell)
         stdout, _ = proc.communicate()
     if proc.returncode:
         raise subprocess.CalledProcessError(proc.returncode, cmd)
