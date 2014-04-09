@@ -18,9 +18,7 @@ from . import query
 from beets.util import str2bool
 
 
-
 # Abstract base.
-
 
 class Type(object):
     """An object encapsulating the type of a model field. Includes
@@ -63,9 +61,7 @@ class Type(object):
             return value
 
 
-
 # Reusable types.
-
 
 class Integer(Type):
     """A basic integer type.

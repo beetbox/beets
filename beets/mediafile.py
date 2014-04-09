@@ -53,33 +53,7 @@ import enum
 
 __all__ = ['UnreadableFileError', 'FileTypeError', 'MediaFile']
 
-
-
-# Logger.
 log = logging.getLogger('beets')
-
-
-
-# Exceptions.
-
-class UnreadableFileError(Exception):
-    """Indicates a file that MediaFile can't read.
-    """
-    pass
-
-class FileTypeError(UnreadableFileError):
-    """Raised for files that don't seem to have a type MediaFile
-    supports.
-    """
-    pass
-
-class MutagenError(UnreadableFileError):
-    """Raised when Mutagen fails unexpectedly---probably due to a bug.
-    """
-
-
-
-# Constants.
 
 # Human-readable type names.
 TYPES = {
@@ -95,6 +69,25 @@ TYPES = {
     'asf':  'Windows Media',
 }
 
+
+# Exceptions.
+
+class UnreadableFileError(Exception):
+    """Indicates a file that MediaFile can't read.
+    """
+    pass
+
+
+class FileTypeError(UnreadableFileError):
+    """Raised for files that don't seem to have a type MediaFile
+    supports.
+    """
+    pass
+
+
+class MutagenError(UnreadableFileError):
+    """Raised when Mutagen fails unexpectedly---probably due to a bug.
+    """
 
 
 # Utility.
@@ -161,7 +154,6 @@ def _safe_cast(out_type, val):
         return val
 
 
-
 # Image coding for ASF/WMA.
 
 def _unpack_asf_image(data):
@@ -189,6 +181,7 @@ def _unpack_asf_image(data):
     return (mime.decode("utf-16-le"), image_data, type,
             description.decode("utf-16-le"))
 
+
 def _pack_asf_image(mime, data, type=3, description=""):
     """Pack image data for a WM/Picture tag.
     """
@@ -197,7 +190,6 @@ def _pack_asf_image(mime, data, type=3, description=""):
     tag_data += description.encode("utf-16-le") + "\x00\x00"
     tag_data += data
     return tag_data
-
 
 
 # iTunes Sound Check encoding.
@@ -237,6 +229,7 @@ def _sc_decode(soundcheck):
 
     return round(gain, 2), round(peak, 6)
 
+
 def _sc_encode(gain, peak):
     """Encode ReplayGain gain/peak values as a Sound Check string.
     """
@@ -261,9 +254,7 @@ def _sc_encode(gain, peak):
     return (u' %08X' * 10) % values
 
 
-
 # Cover art and other images.
-
 
 def _image_mime_type(data):
     """Return the MIME type of the image data (a bytestring).
@@ -341,7 +332,6 @@ class Image(object):
         return self.type.value
 
 
-
 # StorageStyle classes describe strategies for accessing values in
 # Mutagen file objects.
 
@@ -417,7 +407,7 @@ class StorageStyle(object):
         return the represented value.
         """
         if self.suffix and isinstance(mutagen_value, unicode) \
-                       and mutagen_value.endswith(self.suffix):
+           and mutagen_value.endswith(self.suffix):
             return mutagen_value[:-len(self.suffix)]
         else:
             return mutagen_value
@@ -588,9 +578,10 @@ class MP4ListStorageStyle(ListStorageStyle, MP4StorageStyle):
 
 
 class MP4SoundCheckStorageStyle(SoundCheckStorageStyleMixin, MP4StorageStyle):
-    def __init__(self, index=0, **kwargs):
-        super(MP4SoundCheckStorageStyle, self).__init__(**kwargs)
+    def __init__(self, key, index=0, **kwargs):
+        super(MP4SoundCheckStorageStyle, self).__init__(key, **kwargs)
         self.index = index
+
 
 class MP4BoolStorageStyle(MP4StorageStyle):
     """A style for booleans in MPEG-4 files. (MPEG-4 has an atom type
@@ -716,7 +707,10 @@ class MP3DescStorageStyle(MP3StorageStyle):
         # need to make a new frame?
         if not found:
             frame = mutagen.id3.Frames[self.key](
-                    desc=str(self.description), text=value, encoding=3)
+                desc=str(self.description),
+                text=value,
+                encoding=3
+            )
             if self.id3_lang:
                 frame.lang = self.id3_lang
             mutagen_file.tags.add(frame)
@@ -832,7 +826,8 @@ class VorbisImageStorageStyle(ListStorageStyle):
 
     def __init__(self):
         super(VorbisImageStorageStyle, self).__init__(
-                key='metadata_block_picture')
+            key='metadata_block_picture'
+        )
         self.as_type = str
 
     def fetch(self, mutagen_file):
@@ -849,7 +844,7 @@ class VorbisImageStorageStyle(ListStorageStyle):
             except (TypeError, AttributeError):
                 continue
             images.append(Image(data=pic.data, desc=pic.desc,
-                                   type=pic.type))
+                                type=pic.type))
         return images
 
     def store(self, mutagen_file, image_data):
@@ -902,7 +897,6 @@ class FlacImageStorageStyle(ListStorageStyle):
         pic.mime = image.mime_type
         pic.desc = image.desc or u''
         return pic
-
 
 
 # MediaField is a descriptor that represents a single logical field. It
@@ -1141,9 +1135,7 @@ class ImageListField(MediaField):
             style.set_list(mediafile.mgfile, images)
 
 
-
 # MediaFile is a collection of fields.
-
 
 class MediaFile(object):
     """Represents a multimedia file on disk and provides access to its
@@ -1186,10 +1178,11 @@ class MediaFile(object):
             log.error('uncaught Mutagen exception in open: {0}'.format(exc))
             raise MutagenError('Mutagen raised an exception')
 
-        if self.mgfile is None: # Mutagen couldn't guess the type
+        if self.mgfile is None:
+            # Mutagen couldn't guess the type
             raise FileTypeError('file type unsupported by Mutagen')
-        elif type(self.mgfile).__name__ == 'M4A' or \
-             type(self.mgfile).__name__ == 'MP4':
+        elif (type(self.mgfile).__name__ == 'M4A' or
+              type(self.mgfile).__name__ == 'MP4'):
             # This hack differentiates AAC and ALAC until we find a more
             # deterministic approach. Mutagen only sets the sample rate
             # for AAC files. See:
@@ -1199,8 +1192,8 @@ class MediaFile(object):
                 self.type = 'aac'
             else:
                 self.type = 'alac'
-        elif type(self.mgfile).__name__ == 'ID3' or \
-             type(self.mgfile).__name__ == 'MP3':
+        elif (type(self.mgfile).__name__ == 'ID3' or
+              type(self.mgfile).__name__ == 'MP3'):
             self.type = 'mp3'
         elif type(self.mgfile).__name__ == 'FLAC':
             self.type = 'flac'
@@ -1261,7 +1254,6 @@ class MediaFile(object):
             for tag in self.mgfile.keys():
                 del self.mgfile[tag]
 
-
     # Convenient access to the set of available fields.
 
     @classmethod
@@ -1312,7 +1304,6 @@ class MediaFile(object):
         for field in self.fields():
             if field in dict:
                 setattr(self, field, dict[field])
-
 
     # Field definitions.
 
@@ -1487,8 +1478,8 @@ class MediaFile(object):
     )
     country = MediaField(
         MP3DescStorageStyle('MusicBrainz Album Release Country'),
-        MP4StorageStyle("----:com.apple.iTunes:MusicBrainz Album "
-                         "Release Country"),
+        MP4StorageStyle("----:com.apple.iTunes:MusicBrainz "
+                        "Album Release Country"),
         StorageStyle('RELEASECOUNTRY'),
         ASFStorageStyle('MusicBrainz/Album Release Country'),
     )
@@ -1603,63 +1594,101 @@ class MediaFile(object):
 
     # ReplayGain fields.
     rg_track_gain = MediaField(
-        MP3DescStorageStyle(u'REPLAYGAIN_TRACK_GAIN',
-                     float_places=2, suffix=u' dB'),
-        MP3DescStorageStyle(u'replaygain_track_gain',
-                     float_places=2, suffix=u' dB'),
-        MP3SoundCheckStorageStyle(key='COMM', index=0, desc=u'iTunNORM',
-                     id3_lang='eng'),
-        MP4StorageStyle(key='----:com.apple.iTunes:replaygain_track_gain',
-                     float_places=2, suffix=b' dB'),
-        MP4SoundCheckStorageStyle(key='----:com.apple.iTunes:iTunNORM',
-                     index=0),
-        StorageStyle(u'REPLAYGAIN_TRACK_GAIN',
-                     float_places=2, suffix=u' dB'),
-        ASFStorageStyle(u'replaygain_track_gain',
-                     float_places=2, suffix=u' dB'),
+        MP3DescStorageStyle(
+            u'REPLAYGAIN_TRACK_GAIN',
+            float_places=2, suffix=u' dB'
+        ),
+        MP3DescStorageStyle(
+            u'replaygain_track_gain',
+            float_places=2, suffix=u' dB'
+        ),
+        MP3SoundCheckStorageStyle(
+            key='COMM',
+            index=0, desc=u'iTunNORM',
+            id3_lang='eng'
+        ),
+        MP4StorageStyle(
+            '----:com.apple.iTunes:replaygain_track_gain',
+            float_places=2, suffix=b' dB'
+        ),
+        MP4SoundCheckStorageStyle(
+            '----:com.apple.iTunes:iTunNORM',
+            index=0
+        ),
+        StorageStyle(
+            u'REPLAYGAIN_TRACK_GAIN',
+            float_places=2, suffix=u' dB'
+        ),
+        ASFStorageStyle(
+            u'replaygain_track_gain',
+            float_places=2, suffix=u' dB'
+        ),
         out_type=float
     )
     rg_album_gain = MediaField(
-        MP3DescStorageStyle(u'REPLAYGAIN_ALBUM_GAIN',
-                     float_places=2, suffix=u' dB'),
-        MP3DescStorageStyle(u'replaygain_album_gain',
-                     float_places=2, suffix=u' dB'),
-        MP4SoundCheckStorageStyle(key='----:com.apple.iTunes:iTunNORM',
-                     index=1),
-        StorageStyle(u'REPLAYGAIN_ALBUM_GAIN',
-                     float_places=2, suffix=u' dB'),
-        ASFStorageStyle(u'replaygain_album_gain',
-                     float_places=2, suffix=u' dB'),
+        MP3DescStorageStyle(
+            u'REPLAYGAIN_ALBUM_GAIN',
+            float_places=2, suffix=u' dB'
+        ),
+        MP3DescStorageStyle(
+            u'replaygain_album_gain',
+            float_places=2, suffix=u' dB'
+        ),
+        MP4SoundCheckStorageStyle(
+            '----:com.apple.iTunes:iTunNORM',
+            index=1
+        ),
+        StorageStyle(
+            u'REPLAYGAIN_ALBUM_GAIN',
+            float_places=2, suffix=u' dB'
+        ),
+        ASFStorageStyle(
+            u'replaygain_album_gain',
+            float_places=2, suffix=u' dB'
+        ),
         out_type=float
     )
     rg_track_peak = MediaField(
-        MP3DescStorageStyle(u'REPLAYGAIN_TRACK_PEAK',
-                     float_places=6),
-        MP3DescStorageStyle(u'replaygain_track_peak',
-                     float_places=6),
-        MP3SoundCheckStorageStyle(key='COMM', index=1, desc=u'iTunNORM',
-                     id3_lang='eng'),
-        MP4StorageStyle('----:com.apple.iTunes:replaygain_track_peak',
-                     float_places=6),
-        MP4SoundCheckStorageStyle(key='----:com.apple.iTunes:iTunNORM',
-                     index=1),
-        StorageStyle(u'REPLAYGAIN_TRACK_PEAK',
-                     float_places=6),
-        ASFStorageStyle(u'replaygain_track_peak',
-                     float_places=6),
+        MP3DescStorageStyle(
+            u'REPLAYGAIN_TRACK_PEAK',
+            float_places=6
+        ),
+        MP3DescStorageStyle(
+            u'replaygain_track_peak',
+            float_places=6
+        ),
+        MP3SoundCheckStorageStyle(
+            key=u'COMM',
+            index=1, desc=u'iTunNORM',
+            id3_lang='eng'
+        ),
+        MP4StorageStyle(
+            '----:com.apple.iTunes:replaygain_track_peak',
+            float_places=6
+        ),
+        MP4SoundCheckStorageStyle(
+            '----:com.apple.iTunes:iTunNORM',
+            index=1
+        ),
+        StorageStyle(u'REPLAYGAIN_TRACK_PEAK', float_places=6),
+        ASFStorageStyle(u'replaygain_track_peak', float_places=6),
         out_type=float,
     )
     rg_album_peak = MediaField(
-        MP3DescStorageStyle(u'REPLAYGAIN_ALBUM_PEAK',
-                     float_places=6),
-        MP3DescStorageStyle(u'replaygain_album_peak',
-                     float_places=6),
-        MP4StorageStyle('----:com.apple.iTunes:replaygain_album_peak',
-                         float_places=6),
-        StorageStyle(u'REPLAYGAIN_ALBUM_PEAK',
-                         float_places=6),
-        ASFStorageStyle(u'replaygain_album_peak',
-                         float_places=6),
+        MP3DescStorageStyle(
+            u'REPLAYGAIN_ALBUM_PEAK',
+            float_places=6
+        ),
+        MP3DescStorageStyle(
+            u'replaygain_album_peak',
+            float_places=6
+        ),
+        MP4StorageStyle(
+            '----:com.apple.iTunes:replaygain_album_peak',
+            float_places=6
+        ),
+        StorageStyle(u'REPLAYGAIN_ALBUM_PEAK', float_places=6),
+        ASFStorageStyle(u'replaygain_album_peak', float_places=6),
         out_type=float,
     )
 

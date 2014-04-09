@@ -104,8 +104,11 @@ class StringFieldQuery(FieldQuery):
 class SubstringQuery(StringFieldQuery):
     """A query that matches a substring in a specific item field."""
     def col_clause(self):
-        search = '%' + (self.pattern.replace('\\','\\\\').replace('%','\\%')
-                            .replace('_','\\_')) + '%'
+        pattern = (self.pattern
+                       .replace('\\', '\\\\')
+                       .replace('%', '\\%')
+                       .replace('_', '\\_'))
+        search = '%' + pattern + '%'
         clause = self.field + " like ? escape '\\'"
         subvals = [search]
         return clause, subvals
@@ -236,12 +239,16 @@ class CollectionQuery(Query):
         self.subqueries = subqueries
 
     # Act like a sequence.
+
     def __len__(self):
         return len(self.subqueries)
+
     def __getitem__(self, key):
         return self.subqueries[key]
+
     def __iter__(self):
         return iter(self.subqueries)
+
     def __contains__(self, item):
         return item in self.subqueries
 
@@ -334,9 +341,7 @@ class FalseQuery(Query):
         return False
 
 
-
 # Time/date queries.
-
 
 def _to_epoch_time(date):
     """Convert a `datetime` object to an integer number of seconds since

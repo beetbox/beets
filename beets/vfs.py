@@ -20,6 +20,7 @@ from beets import util
 
 Node = namedtuple('Node', ['files', 'dirs'])
 
+
 def _insert(node, path, itemid):
     """Insert an item into a virtual filesystem node."""
     if len(path) == 1:
@@ -32,6 +33,7 @@ def _insert(node, path, itemid):
         if dirname not in node.dirs:
             node.dirs[dirname] = Node({}, {})
         _insert(node.dirs[dirname], rest, itemid)
+
 
 def libtree(lib):
     """Generates a filesystem-like directory tree for the files

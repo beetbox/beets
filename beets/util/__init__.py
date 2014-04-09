@@ -143,7 +143,8 @@ def ancestry(path):
             break
         last_path = path
 
-        if path: # don't yield ''
+        if path:
+            # don't yield ''
             out.insert(0, path)
     return out
 
@@ -477,6 +478,8 @@ CHAR_REPLACE = [
     (re.compile(ur'\.$'), u'_'),  # Trailing dots.
     (re.compile(ur'\s+$'), u''),  # Trailing whitespace.
 ]
+
+
 def sanitize_path(path, replacements=None):
     """Takes a path (as a Unicode string) and makes sure that it is
     legal. Returns a new path. Only works with fragments; won't work
