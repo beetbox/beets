@@ -24,11 +24,12 @@ from beets.util import confit
 __author__ = 'baobab@heresiarch.info'
 __version__ = '0.10'
 
+log = logging.getLogger('beets')
+
 
 class ZeroPlugin(BeetsPlugin):
 
     _instance = None
-    _log = logging.getLogger('beets')
 
     def __init__(self):
         super(ZeroPlugin, self).__init__()
@@ -45,19 +46,21 @@ class ZeroPlugin(BeetsPlugin):
         self.patterns = {}
         self.warned = False
 
-        for f in self.config['fields'].as_str_seq():
-            if f not in Item._fields.keys():
-                self._log.error(u'[zero] invalid field: {0}'.format(f))
-            else:
-                try:
-                    self.patterns[f] = self.config[f].as_str_seq()
-                except confit.NotFoundError:
-                    self.patterns[f] = [u'']
+        for field in self.config['fields'].as_str_seq():
+            if field not in Item._fields.keys():
+                log.error(u'[zero] invalid field: {0}'.format(field))
+                continue
+
+            try:
+                self.patterns[field] = self.config[field].as_str_seq()
+            except confit.NotFoundError:
+                # Matches everything
+                self.patterns[field] = [u'']
 
     def import_task_choice_event(self, session, task):
         """Listen for import_task_choice event."""
         if task.choice_flag == action.ASIS and not self.warned:
-            self._log.warn(u'[zero] cannot zero in \"as-is\" mode')
+            log.warn(u'[zero] cannot zero in \"as-is\" mode')
             self.warned = True
         # TODO request write in as-is mode 
 
@@ -74,22 +77,16 @@ class ZeroPlugin(BeetsPlugin):
     def write_event(self, item):
         """Listen for write event."""
         if not self.patterns:
-            self._log.warn(u'[zero] no fields, nothing to do')
+            log.warn(u'[zero] no fields, nothing to do')
             return
-        for fn, patterns in self.patterns.items():
+
+        for field, patterns in self.patterns.items():
             try:
-                fval = getattr(item, fn)
+                value = getattr(item, field)
             except AttributeError:
-                self._log.error(u'[zero] no such field: {0}'.format(fn))
-            else:
-                if not self.match_patterns(fval, patterns):
-                    self._log.debug(u'[zero] \"{0}\" ({1}) not match: {2}'
-                                    .format(fval, fn, 
-                                            ' '.join(patterns)))
-                    continue
-                self._log.debug(u'[zero] \"{0}\" ({1}) match: {2}'
-                                .format(fval, fn, ' '.join(patterns)))
-                new_val = None if fval is None else type(fval)()
-                setattr(item, fn, new_val)
-                self._log.debug(u'[zero] {0}={1}'
-                                .format(fn, getattr(item, fn)))
+                log.error(u'[zero] no such field: {0}'.format(field))
+                continue
+
+            if self.match_patterns(value, patterns):
+                log.debug(u'[zero] {0}: {1} -> None'.format(field, value))
+                setattr(item, field, None)
