@@ -55,6 +55,7 @@ class Type(object):
         type, normalize the value to have the appropriate type. This
         base implementation only reinterprets `None`.
         """
+        # TODO gradually remove the normalization of None.
         if value is None:
             return self.null
         else:
@@ -129,6 +130,12 @@ class Float(Type):
             return float(string)
         except ValueError:
             return 0.0
+
+
+class NullFloat(Float):
+    """Same as `Float`, but does not normalize `None` to `0.0`.
+    """
+    null = None
 
 
 class String(Type):

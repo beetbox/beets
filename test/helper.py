@@ -16,7 +16,7 @@ import sys
 import os
 import os.path
 import shutil
-import tempfile
+from tempfile import mkdtemp, mkstemp
 from glob import glob
 from contextlib import contextmanager
 from StringIO import StringIO
@@ -36,7 +36,7 @@ def controlStdin(input=None):
     """Sends ``input`` to stdin.
 
     >>> with controlStdin('yes'):
-    ...     in = input()
+    ...     input()
     'yes'
     """
     org = sys.stdin
@@ -46,6 +46,7 @@ def controlStdin(input=None):
         yield sys.stdin
     finally:
         sys.stdin = org
+
 
 class TestHelper(object):
     """Helper mixin for high-level cli and plugin tests.
@@ -77,7 +78,7 @@ class TestHelper(object):
 
         Make sure you call ``teardown_beets()`` afterwards.
         """
-        self.temp_dir = tempfile.mkdtemp()
+        self.temp_dir = mkdtemp()
         os.environ['BEETSDIR'] = self.temp_dir
 
         self.config = beets.config
@@ -151,6 +152,16 @@ class TestHelper(object):
             item.store()
             items.append(item)
         return items
+
+    def create_file_fixture(self, pattern='*.mp3'):
+        """Copies a file matching the glob pattern to a temporary
+        location and returns the path.
+        """
+        src = glob(os.path.join(_common.RSRC, pattern))[0]
+        handle, path = mkstemp()
+        os.close(handle)
+        shutil.copy(src, path)
+        return path
 
     def run_command(self, *args):
         beets.ui._raw_main(list(args))

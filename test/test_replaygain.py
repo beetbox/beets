@@ -90,25 +90,25 @@ class ReplayGainCliTestBase(object):
             self._reset_replaygain(item)
 
     def _reset_replaygain(self, item):
-        item['rg_track_peak'] = 0
-        item['rg_track_gain'] = 0
-        item['rg_album_gain'] = 0
-        item['rg_album_gain'] = 0
+        item['rg_track_peak'] = None
+        item['rg_track_gain'] = None
+        item['rg_album_gain'] = None
+        item['rg_album_gain'] = None
         item.write()
         item.store()
 
     def test_cli_saves_track_gain(self):
         for item in self.lib.items():
-            self.assertEqual(item.rg_track_peak, 0.0)
-            self.assertEqual(item.rg_track_gain, 0.0)
+            self.assertIsNone(item.rg_track_peak)
+            self.assertIsNone(item.rg_track_gain)
             mediafile = MediaFile(item.path)
-            self.assertEqual(mediafile.rg_track_peak, 0.0)
-            self.assertEqual(mediafile.rg_track_gain, 0.0)
+            self.assertIsNone(mediafile.rg_track_peak)
+            self.assertIsNone(mediafile.rg_track_gain)
 
         ui._raw_main(['replaygain'])
         for item in self.lib.items():
-            self.assertNotEqual(item.rg_track_peak, 0.0)
-            self.assertNotEqual(item.rg_track_gain, 0.0)
+            self.assertIsNotNone(item.rg_track_peak)
+            self.assertIsNotNone(item.rg_track_gain)
             mediafile = MediaFile(item.path)
             self.assertAlmostEqual(
                 mediafile.rg_track_peak, item.rg_track_peak, places=6)
@@ -127,8 +127,8 @@ class ReplayGainCliTestBase(object):
     def test_cli_saves_album_gain_to_file(self):
         for item in self.lib.items():
             mediafile = MediaFile(item.path)
-            self.assertEqual(mediafile.rg_album_peak, 0.0)
-            self.assertEqual(mediafile.rg_album_gain, 0.0)
+            self.assertIsNone(mediafile.rg_album_peak)
+            self.assertIsNone(mediafile.rg_album_gain)
 
         ui._raw_main(['replaygain', '-a'])
 

@@ -1,11 +1,21 @@
 """Tests for the 'zero' plugin"""
 
 from _common import unittest
+from helper import TestHelper
+
+
 from beets.library import Item
+from beets import config
 from beetsplug.zero import ZeroPlugin
+from beets.mediafile import MediaFile
 
 
-class ZeroPluginTest(unittest.TestCase):
+class ZeroPluginTest(unittest.TestCase, TestHelper):
+
+    def tearDown(self):
+        config.clear()
+        self.unload_plugins()
+
     def test_no_patterns(self):
         i = Item(
             comments='test comment',
@@ -38,6 +48,25 @@ class ZeroPluginTest(unittest.TestCase):
         z.write_event(i)
         self.assertEqual(i.comments, '')
         self.assertEqual(i.year, 2012)
+
+    def test_delete_replaygain_tag(self):
+        path = self.create_file_fixture()
+        item = Item.from_path(path)
+        item.rg_track_peak = 0.0
+        item.write()
+
+        mediafile = MediaFile(item.path)
+        self.assertIsNotNone(mediafile.rg_track_peak)
+
+        config['zero'] = {
+            'fields': ['rg_track_peak'],
+        }
+        self.load_plugins('zero')
+
+        item.write()
+        mediafile = MediaFile(item.path)
+        self.assertIsNone(mediafile.rg_track_peak)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
