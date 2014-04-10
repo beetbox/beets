@@ -18,7 +18,6 @@
 import os
 
 from beets.plugins import BeetsPlugin
-from beets import library
 from beets import ui
 from beets import mediafile
 from beets import util
@@ -26,10 +25,7 @@ from beets import util
 
 def info(paths):
     # Set up fields to output.
-    fields = []
-    for name, _, _, mffield in library.ITEM_FIELDS:
-        if mffield:
-            fields.append(name)
+    fields = list(mediafile.MediaFile.fields())
 
     # Line format.
     other_fields = ['album art']
