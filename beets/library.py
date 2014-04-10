@@ -389,7 +389,8 @@ class Item(LibModel):
         plugins.send('after_write', item=self, path=path)
 
     def try_write(self, path=None):
-        """Calls `write()` but catches and logs `FileOperationError`s.
+        """Calls `write()` but catches and logs `FileOperationError`
+        exceptions.
 
         Returns `False` an exception was caught and `True` otherwise.
         """
