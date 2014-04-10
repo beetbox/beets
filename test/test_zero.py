@@ -50,7 +50,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(i.year, 2012)
 
     def test_delete_replaygain_tag(self):
-        path = self.create_file_fixture()
+        path = self.create_mediafile_fixture()
         item = Item.from_path(path)
         item.rg_track_peak = 0.0
         item.write()
