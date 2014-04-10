@@ -38,13 +38,8 @@ def _print_and_apply_changes(lib, item, old_data, move, pretend, write):
         if move and lib.directory in util.ancestry(item.path):
             item.move(with_album=False)
 
-        if write:
-            try:
-                item.write()
-            except Exception as exc:
-                log.error(u'could not sync {0}: {1}'.format(
-                    util.displayable_path(item.path), exc))
-                return False
+        if write and not item.try_write():
+            return False
         item.store()
 
     return True

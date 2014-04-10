@@ -547,7 +547,7 @@ class ReplayGainPlugin(BeetsPlugin):
                                                    album_gain.track_gains):
                 self.store_track_gain(item, track_gain)
                 if write:
-                    item.write()
+                    item.try_write()
         except ReplayGainError as e:
             log.warn(u"ReplayGain error: {1}".format(e))
         except FatalReplayGainError as e:
@@ -581,7 +581,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
             self.store_track_gain(item, track_gains[0])
             if write:
-                item.write()
+                item.try_write()
         except ReplayGainError as e:
             log.warn(u"ReplayGain error: {1}".format(e))
         except FatalReplayGainError as e:
