@@ -1135,10 +1135,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
         else:
             changed_items = changed
         for item in changed_items:
-            try:
-                item.write()
-            except library.FileOperationError as exc:
-                log.error(exc)
+            item.try_write()
 
 modify_cmd = ui.Subcommand('modify',
     help='change metadata fields', aliases=('mod',))
@@ -1249,10 +1246,7 @@ def write_items(lib, query, pretend):
                                         library.Item._media_fields,
                                         always=True)
         if changed and not pretend:
-            try:
-                item.write()
-            except library.FileOperationError as exc:
-                log.error(exc)
+            item.try_write()
 
 write_cmd = ui.Subcommand('write', help='write tag information to files')
 write_cmd.parser.add_option('-p', '--pretend', action='store_true',

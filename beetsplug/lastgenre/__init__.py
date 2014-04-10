@@ -358,7 +358,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                         ))
 
                     if write:
-                        item.write()
+                        item.try_write()
 
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]

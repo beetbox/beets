@@ -270,7 +270,7 @@ def fingerprint_item(item, write=False):
                 log.info(u'{0}: writing fingerprint'.format(
                     util.displayable_path(item.path)
                 ))
-                item.write()
+                item.try_write()
             if item._db:
                 item.store()
             return item.acoustid_fingerprint

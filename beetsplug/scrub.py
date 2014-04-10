@@ -77,7 +77,7 @@ class ScrubPlugin(BeetsPlugin):
                 # Restore tags, if enabled.
                 if opts.write:
                     log.debug(u'writing new tags after scrub')
-                    item.write()
+                    item.try_write()
                     if art:
                         log.info('restoring art')
                         mf = mediafile.MediaFile(item.path)

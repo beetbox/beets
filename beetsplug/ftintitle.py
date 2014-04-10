@@ -121,6 +121,6 @@ class FtInTitlePlugin(BeetsPlugin):
                 ft_in_title(item)
                 item.store()
                 if write:
-                    item.write()
+                    item.try_write()
         cmd.func = func
         return [cmd]

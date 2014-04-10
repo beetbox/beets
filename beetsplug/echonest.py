@@ -414,7 +414,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
 
         # Write and save.
         if write:
-            item.write()
+            item.try_write()
         item.store()
 
 
