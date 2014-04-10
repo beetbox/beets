@@ -30,7 +30,7 @@ class EdgeTest(unittest.TestCase):
         emptylist = beets.mediafile.MediaFile(
                                 os.path.join(_common.RSRC, 'emptylist.mp3'))
         genre = emptylist.genre
-        self.assertEqual(genre, '')
+        self.assertEqual(genre, None)
 
     def test_release_time_with_space(self):
         # Ensures that release times delimited by spaces are ignored.
@@ -215,7 +215,7 @@ class TypeTest(unittest.TestCase):
 
     def test_set_year_to_none(self):
         self.mf.year = None
-        self.assertEqual(self.mf.year, 0)
+        self.assertIsNone(self.mf.year)
 
     def test_set_track_to_none(self):
         self.mf.track = None

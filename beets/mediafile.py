@@ -98,10 +98,11 @@ def _safe_cast(out_type, val):
     returned. out_type should be bool, int, or unicode; otherwise, the
     value is just passed through.
     """
+    if val is None:
+        return None
+
     if out_type == int:
-        if val is None:
-            return 0
-        elif isinstance(val, int) or isinstance(val, float):
+        if isinstance(val, int) or isinstance(val, float):
             # Just a number.
             return int(val)
         else:
@@ -116,30 +117,22 @@ def _safe_cast(out_type, val):
                 return int(val)
 
     elif out_type == bool:
-        if val is None:
+        try:
+            # Should work for strings, bools, ints:
+            return bool(int(val))
+        except ValueError:
             return False
-        else:
-            try:
-                # Should work for strings, bools, ints:
-                return bool(int(val))
-            except ValueError:
-                return False
 
     elif out_type == unicode:
-        if val is None:
-            return u''
+        if isinstance(val, str):
+            return val.decode('utf8', 'ignore')
+        elif isinstance(val, unicode):
+            return val
         else:
-            if isinstance(val, str):
-                return val.decode('utf8', 'ignore')
-            elif isinstance(val, unicode):
-                return val
-            else:
-                return unicode(val)
+            return unicode(val)
 
     elif out_type == float:
-        if val is None:
-            return 0.0
-        elif isinstance(val, int) or isinstance(val, float):
+        if isinstance(val, int) or isinstance(val, float):
             return float(val)
         else:
             if not isinstance(val, basestring):
@@ -342,8 +335,9 @@ class StorageStyle(object):
     describe more sophisticated translations or format-specific access
     strategies.
 
-    MediaFile uses a StorageStyle via two methods: ``get()`` and
-    ``set()``. It passes a Mutagen file object to each.
+    MediaFile uses a StorageStyle via three methods: ``get()``,
+    ``set()``, and ``delete()``. It passes a Mutagen file object to
+    each.
 
     Internally, the StorageStyle implements ``get()`` and ``set()``
     using two steps that may be overridden by subtypes. To get a value,
@@ -447,6 +441,12 @@ class StorageStyle(object):
 
         return value
 
+    def delete(self, mutagen_file):
+        """Remove the tag from the file.
+        """
+        if self.key in mutagen_file:
+            del mutagen_file[self.key]
+
 
 class ListStorageStyle(StorageStyle):
     """Abstract storage style that provides access to lists.
@@ -510,9 +510,7 @@ class SoundCheckStorageStyleMixin(object):
     """
     def get(self, mutagen_file):
         data = self.fetch(mutagen_file)
-        if data is None:
-            return 0
-        else:
+        if data is not None:
             return _sc_decode(data)[self.index]
 
     def set(self, mutagen_file, value):
@@ -563,7 +561,13 @@ class MP4TupleStorageStyle(MP4StorageStyle):
         return list(items) + [0] * (packing_length - len(items))
 
     def get(self, mutagen_file):
-        return super(MP4TupleStorageStyle, self).get(mutagen_file)[self.index]
+        value = super(MP4TupleStorageStyle, self).get(mutagen_file)[self.index]
+        if value == 0:
+            # The values are always present and saved as integers. So we
+            # assume that "0" indicates it is not set.
+            return None
+        else:
+            return value
 
     def set(self, mutagen_file, value):
         if value is None:
@@ -571,6 +575,12 @@ class MP4TupleStorageStyle(MP4StorageStyle):
         items = self.deserialize(self.fetch(mutagen_file))
         items[self.index] = int(value)
         self.store(mutagen_file, items)
+
+    def delete(self, mutagen_file):
+        if self.index == 0:
+            super(MP4TupleStorageStyle, self).delete(mutagen_file)
+        else:
+            self.set(mutagen_file, None)
 
 
 class MP4ListStorageStyle(ListStorageStyle, MP4StorageStyle):
@@ -725,6 +735,14 @@ class MP3DescStorageStyle(MP3StorageStyle):
                 except IndexError:
                     return None
 
+    def delete(self, mutagen_file):
+        frame = None
+        for frame in mutagen_file.tags.getall(self.key):
+            if frame.desc.lower() == self.description.lower():
+                break
+        if frame is not None:
+            del mutagen_file[frame.HashKey]
+
 
 class MP3SlashPackStorageStyle(MP3StorageStyle):
     """Store value as part of pair that is serialized as a slash-
@@ -735,22 +753,31 @@ class MP3SlashPackStorageStyle(MP3StorageStyle):
         self.pack_pos = pack_pos
 
     def _fetch_unpacked(self, mutagen_file):
-        data = self.fetch(mutagen_file) or ''
-        items = unicode(data).split('/')
+        data = self.fetch(mutagen_file)
+        if data:
+            items = unicode(data).split('/')
+        else:
+            items = []
         packing_length = 2
         return list(items) + [None] * (packing_length - len(items))
 
     def get(self, mutagen_file):
-        return self._fetch_unpacked(mutagen_file)[self.pack_pos] or 0
+        return self._fetch_unpacked(mutagen_file)[self.pack_pos]
 
     def set(self, mutagen_file, value):
         items = self._fetch_unpacked(mutagen_file)
         items[self.pack_pos] = value
         if items[0] is None:
-            items[0] = 0
+            items[0] = ''
         if items[1] is None:
             items.pop()  # Do not store last value
         self.store(mutagen_file, '/'.join(map(unicode, items)))
+
+    def delete(self, mutagen_file):
+        if self.pack_pos == 0:
+            super(MP3SlashPackStorageStyle, self).delete(mutagen_file)
+        else:
+            self.set(mutagen_file, None)
 
 
 class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
@@ -944,6 +971,10 @@ class MediaField(object):
         for style in self.styles(mediafile.mgfile):
             style.set(mediafile.mgfile, value)
 
+    def __delete__(self, mediafile):
+        for style in self.styles(mediafile.mgfile):
+            style.delete(mediafile.mgfile)
+
     def _none_value(self):
         """Get an appropriate "null" value for this field's type. This
         is used internally when setting the field to None.
@@ -1006,17 +1037,24 @@ class DateField(MediaField):
 
     def __get__(self, mediafile, owner=None):
         year, month, day = self._get_date_tuple(mediafile)
+        if not year:
+            return None
         try:
             return datetime.date(
-                year or datetime.MINYEAR,
+                year,
                 month or 1,
                 day or 1
             )
         except ValueError:  # Out of range values.
-            return datetime.date.min
+            return None
 
     def __set__(self, mediafile, date):
         self._set_date_tuple(mediafile, date.year, date.month, date.day)
+
+    def __delete__(self, mediafile):
+        super(DateField, self).__delete__(mediafile)
+        if hasattr(self, '_year_field'):
+            self._year_field.__delete__(mediafile)
 
     def _get_date_tuple(self, mediafile):
         """Get a 3-item sequence representing the date consisting of a
@@ -1025,8 +1063,11 @@ class DateField(MediaField):
         """
         # Get the underlying data and split on hyphens.
         datestring = super(DateField, self).__get__(mediafile, None)
-        datestring = re.sub(r'[Tt ].*$', '', unicode(datestring))
-        items = unicode(datestring).split('-')
+        if isinstance(datestring, basestring):
+            datestring = re.sub(r'[Tt ].*$', '', unicode(datestring))
+            items = unicode(datestring).split('-')
+        else:
+            items = []
 
         # Ensure that we have exactly 3 components, possibly by
         # truncating or padding.
@@ -1039,14 +1080,22 @@ class DateField(MediaField):
             items[0] = self._year_field.__get__(mediafile)
 
         # Convert each component to an integer if possible.
-        return [_safe_cast(int, item) for item in items]
+        items_ = []
+        for item in items:
+            try:
+                items_.append(int(item))
+            except:
+                items_.append(None)
+        return items_
 
     def _set_date_tuple(self, mediafile, year, month=None, day=None):
         """Set the value of the field given a year, month, and day
         number. Each number can be an integer or None to indicate an
         unset component.
         """
-        date = [year or 0]
+        if year is None:
+            self.__delete__(mediafile)
+        date = [year]
         if month:
             date.append(month)
         if month and day:
@@ -1083,6 +1132,9 @@ class DateItemField(MediaField):
         items[self.item_pos] = value
         self.date_field._set_date_tuple(mediafile, *items)
 
+    def __delete__(self, mediafile):
+        self.__set__(mediafile, None)
+
 
 class CoverArtField(MediaField):
     """A descriptor that provides access to the *raw image data* for the
@@ -1103,6 +1155,9 @@ class CoverArtField(MediaField):
             mediafile.images = [Image(data=data)]
         else:
             mediafile.images = []
+
+    def __delete__(self, mediafile):
+        delattr(mediafile, 'images')
 
 
 class ImageListField(MediaField):
@@ -1298,12 +1353,16 @@ class MediaFile(object):
         """Set all field values from a dictionary.
 
         For any key in `dict` that is also a field to store tags the
-        method retrieves the corresponding value from `dict` and
-        updates the `MediaFile`.
+        method retrieves the corresponding value from `dict` and updates
+        the `MediaFile`. If a key has the value `None`, the
+        corresponding property is deleted from the `MediaFile`.
         """
         for field in self.fields():
             if field in dict:
-                setattr(self, field, dict[field])
+                if dict[field] is None:
+                    delattr(self, field)
+                else:
+                    setattr(self, field, dict[field])
 
     # Field definitions.
 
