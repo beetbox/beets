@@ -23,6 +23,10 @@ Fixes:
 * The importer now logs a message instead of crashing when errors occur while
   opening the files to be imported.
 * :doc:`/plugins/embedart`: Better error messages in exceptional conditions.
+* Silenced some confusing error messages when searching for a non-MusicBrainz
+  ID. Using an invalid ID (of any kind---Discogs IDs can be used there too) at
+  the "Enter ID:" importer prompt now just silently returns no results. More
+  info is in the verbose logs.
 
 .. _enum34: https://pypi.python.org/pypi/enum34
 .. _enum: https://docs.python.org/3.4/library/enum.html
