@@ -260,7 +260,7 @@ class BeetsPlugin(object):
 
             >>> @MyPlugin.listen("imported")
             >>> def importListener(**kwargs):
-            >>>     pass
+            ...     pass
         """
         def helper(func):
             if cls.listeners is None:
@@ -337,7 +337,6 @@ class Registry(list):
     def __init__(self):
         super(Registry, self).__init__()
         self._loaded_classes = set()
-        self._beetsplug_loaded = False
 
     def load(self, names, paths=()):
         """Add plugins from module names.
@@ -357,7 +356,6 @@ class Registry(list):
             try:
                 try:
                     namespace = __import__(modname, None, None)
-                    self._beetsplug_loaded = True
                 except ImportError as exc:
                     # Again, this is hacky:
                     if exc.args[0].endswith(' ' + name):
