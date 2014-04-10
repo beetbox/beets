@@ -81,8 +81,10 @@ class QueryParseTest(_common.TestCase):
 
 class AnyFieldQueryTest(_common.LibTestCase):
     def test_no_restriction(self):
-        q = dbcore.query.AnyFieldQuery('title', beets.library.ITEM_KEYS,
-                                       dbcore.query.SubstringQuery)
+        q = dbcore.query.AnyFieldQuery(
+            'title', beets.library.Item._fields.keys(),
+            dbcore.query.SubstringQuery
+        )
         self.assertEqual(self.lib.items(q).get().title, 'the title')
 
     def test_restriction_completeness(self):

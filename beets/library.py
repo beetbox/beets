@@ -110,84 +110,6 @@ class PathType(types.Type):
         return normpath(bytestring_path(string))
 
 
-
-# Model field lists.
-
-
-# Fields in the "items" database table; all the metadata available for
-# items in the library. These are used directly in SQL; they are
-# vulnerable to injection if accessible to the user.
-# Each tuple has the following values:
-# - The name of the field.
-# - The (Python) type of the field.
-# - Is the field writable?
-# - Does the field reflect an attribute of a MediaFile?
-ITEM_FIELDS = [
-    ('id',       types.Id(True)),
-    ('path',     PathType()),
-    ('album_id', types.Id(False)),
-
-    ('title',                types.String()),
-    ('artist',               types.String()),
-    ('artist_sort',          types.String()),
-    ('artist_credit',        types.String()),
-    ('album',                types.String()),
-    ('albumartist',          types.String()),
-    ('albumartist_sort',     types.String()),
-    ('albumartist_credit',   types.String()),
-    ('genre',                types.String()),
-    ('composer',             types.String()),
-    ('grouping',             types.String()),
-    ('year',                 types.PaddedInt(4)),
-    ('month',                types.PaddedInt(2)),
-    ('day',                  types.PaddedInt(2)),
-    ('track',                types.PaddedInt(2)),
-    ('tracktotal',           types.PaddedInt(2)),
-    ('disc',                 types.PaddedInt(2)),
-    ('disctotal',            types.PaddedInt(2)),
-    ('lyrics',               types.String()),
-    ('comments',             types.String()),
-    ('bpm',                  types.Integer()),
-    ('comp',                 types.Boolean()),
-    ('mb_trackid',           types.String()),
-    ('mb_albumid',           types.String()),
-    ('mb_artistid',          types.String()),
-    ('mb_albumartistid',     types.String()),
-    ('albumtype',            types.String()),
-    ('label',                types.String()),
-    ('acoustid_fingerprint', types.String()),
-    ('acoustid_id',          types.String()),
-    ('mb_releasegroupid',    types.String()),
-    ('asin',                 types.String()),
-    ('catalognum',           types.String()),
-    ('script',               types.String()),
-    ('language',             types.String()),
-    ('country',              types.String()),
-    ('albumstatus',          types.String()),
-    ('media',                types.String()),
-    ('albumdisambig',        types.String()),
-    ('disctitle',            types.String()),
-    ('encoder',              types.String()),
-    ('rg_track_gain',        types.Float()),
-    ('rg_track_peak',        types.Float()),
-    ('rg_album_gain',        types.Float()),
-    ('rg_album_peak',        types.Float()),
-    ('original_year',        types.PaddedInt(4)),
-    ('original_month',       types.PaddedInt(2)),
-    ('original_day',         types.PaddedInt(2)),
-
-    ('length',      types.Float()),
-    ('bitrate',     types.ScaledInt(1000, u'kbps')),
-    ('format',      types.String()),
-    ('samplerate',  types.ScaledInt(1000, u'kHz')),
-    ('bitdepth',    types.Integer()),
-    ('channels',    types.Integer()),
-    ('mtime',       DateType()),
-    ('added',       DateType()),
-]
-ITEM_KEYS          = [f[0] for f in ITEM_FIELDS]
-
-
 # Database fields for the "albums" table.
 # The third entry in each tuple indicates whether the field reflects an
 # identically-named field in the items table.
@@ -232,7 +154,6 @@ ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
 
 # Default search fields for each model.
 ALBUM_DEFAULT_FIELDS = ('album', 'albumartist', 'genre')
-ITEM_DEFAULT_FIELDS = ALBUM_DEFAULT_FIELDS + ('artist', 'title', 'comments')
 
 
 # Special path format key.
@@ -328,12 +249,76 @@ class LibModel(dbcore.Model):
 
 
 class Item(LibModel):
-    _fields = dict((name, typ) for (name, typ) in ITEM_FIELDS)
     _table = 'items'
     _flex_table = 'item_attributes'
-    _search_fields = ITEM_DEFAULT_FIELDS
+    _fields = {
+        'id':       types.Id(True),
+        'path':     PathType(),
+        'album_id': types.Id(False),
 
-    _media_fields = set(MediaFile.readable_fields()).intersection(ITEM_KEYS)
+        'title':                types.String(),
+        'artist':               types.String(),
+        'artist_sort':          types.String(),
+        'artist_credit':        types.String(),
+        'album':                types.String(),
+        'albumartist':          types.String(),
+        'albumartist_sort':     types.String(),
+        'albumartist_credit':   types.String(),
+        'genre':                types.String(),
+        'composer':             types.String(),
+        'grouping':             types.String(),
+        'year':                 types.PaddedInt(4),
+        'month':                types.PaddedInt(2),
+        'day':                  types.PaddedInt(2),
+        'track':                types.PaddedInt(2),
+        'tracktotal':           types.PaddedInt(2),
+        'disc':                 types.PaddedInt(2),
+        'disctotal':            types.PaddedInt(2),
+        'lyrics':               types.String(),
+        'comments':             types.String(),
+        'bpm':                  types.Integer(),
+        'comp':                 types.Boolean(),
+        'mb_trackid':           types.String(),
+        'mb_albumid':           types.String(),
+        'mb_artistid':          types.String(),
+        'mb_albumartistid':     types.String(),
+        'albumtype':            types.String(),
+        'label':                types.String(),
+        'acoustid_fingerprint': types.String(),
+        'acoustid_id':          types.String(),
+        'mb_releasegroupid':    types.String(),
+        'asin':                 types.String(),
+        'catalognum':           types.String(),
+        'script':               types.String(),
+        'language':             types.String(),
+        'country':              types.String(),
+        'albumstatus':          types.String(),
+        'media':                types.String(),
+        'albumdisambig':        types.String(),
+        'disctitle':            types.String(),
+        'encoder':              types.String(),
+        'rg_track_gain':        types.Float(),
+        'rg_track_peak':        types.Float(),
+        'rg_album_gain':        types.Float(),
+        'rg_album_peak':        types.Float(),
+        'original_year':        types.PaddedInt(4),
+        'original_month':       types.PaddedInt(2),
+        'original_day':         types.PaddedInt(2),
+
+        'length':      types.Float(),
+        'bitrate':     types.ScaledInt(1000, u'kbps'),
+        'format':      types.String(),
+        'samplerate':  types.ScaledInt(1000, u'kHz'),
+        'bitdepth':    types.Integer(),
+        'channels':    types.Integer(),
+        'mtime':       DateType(),
+        'added':       DateType(),
+    }
+
+    _search_fields = ALBUM_DEFAULT_FIELDS + ('artist', 'title', 'comments')
+
+    _media_fields = set(MediaFile.readable_fields()) \
+        .intersection(_fields.keys())
     """Set of item fields that are backed by `MediaFile` fields.
 
     Any kind of field (fixed, flexible, and computed) may be a media
@@ -563,7 +548,7 @@ class Item(LibModel):
         album = self.get_album()
         if album:
             for key in album.keys(True):
-                if key in ALBUM_KEYS_ITEM or key not in ITEM_KEYS:
+                if key in ALBUM_KEYS_ITEM or key not in self._fields.keys():
                     mapping[key] = album._get_formatted(key, for_path)
 
         # Use the album artist if the track artist is not set and

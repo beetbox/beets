@@ -99,7 +99,7 @@ def fields_func(lib, opts, args):
             _print_rows(plugin_fields)
 
     print("Item fields:")
-    _print_rows(library.ITEM_KEYS)
+    _print_rows(library.Item._fields.keys())
     _show_plugin_fields(False)
 
     print("\nAlbum fields:")
@@ -1401,7 +1401,7 @@ def completion_script(commands):
 
     # Fields
     yield "  fields='%s'\n" % ' '.join(
-            set(library.ITEM_KEYS + library.ALBUM_KEYS))
+            set(library.Item._fields.keys() + library.ALBUM_KEYS))
 
     # Command options
     for cmd, opts in options.items():

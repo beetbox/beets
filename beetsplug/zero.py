@@ -17,7 +17,7 @@
 import re
 import logging
 from beets.plugins import BeetsPlugin
-from beets.library import ITEM_KEYS
+from beets.library import Item
 from beets.importer import action
 from beets.util import confit
 
@@ -46,7 +46,7 @@ class ZeroPlugin(BeetsPlugin):
         self.warned = False
 
         for f in self.config['fields'].as_str_seq():
-            if f not in ITEM_KEYS:
+            if f not in Item._fields.keys():
                 self._log.error(u'[zero] invalid field: {0}'.format(f))
             else:
                 try:
