@@ -32,7 +32,12 @@ def _embed(path, items, maxwidth=0):
     if maxwidth:
         path = ArtResizer.shared.resize(maxwidth, syspath(path))
 
-    data = open(syspath(path), 'rb').read()
+    try:
+        with open(syspath(path), 'rb') as f:
+            data = f.read()
+    except IOError as exc:
+        log.error(u'embedart: could not read image file: {0}'.format(exc))
+        return
     image = mediafile.Image(data, type=mediafile.ImageType.front)
 
     # Add art to each file.
@@ -41,7 +46,7 @@ def _embed(path, items, maxwidth=0):
     for item in items:
         try:
             f = mediafile.MediaFile(syspath(item.path))
-        except mediafile.UnreadableFileError as exc:
+        except (mediafile.UnreadableFileError, IOError) as exc:
             log.warn('Could not embed art in {0}: {1}'.format(
                 displayable_path(item.path), exc
             ))

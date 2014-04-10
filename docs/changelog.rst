@@ -22,6 +22,7 @@ Fixes:
   and the library includes the converted item.
 * The importer now logs a message instead of crashing when errors occur while
   opening the files to be imported.
+* :doc:`/plugins/embedart`: Better error messages in exceptional conditions.
 
 .. _enum34: https://pypi.python.org/pypi/enum34
 .. _enum: https://docs.python.org/3.4/library/enum.html
