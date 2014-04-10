@@ -115,7 +115,7 @@ def mbsync_albums(lib, query, move, pretend, write):
 
             if not pretend:
                 # Update album structure to reflect an item in it.
-                for key in library.ALBUM_KEYS_ITEM:
+                for key in library.Album.item_keys:
                     setattr(a, key, getattr(items[0], key))
 
                 # Move album art (and any inconsistent items).

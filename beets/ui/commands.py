@@ -103,7 +103,7 @@ def fields_func(lib, opts, args):
     _show_plugin_fields(False)
 
     print("\nAlbum fields:")
-    _print_rows(library.ALBUM_KEYS)
+    _print_rows(library.Album._fields.keys())
     _show_plugin_fields(True)
 
 fields_cmd.func = fields_func
@@ -952,7 +952,7 @@ def update_items(lib, query, album, move, pretend):
             first_item = album.items().get()
 
             # Update album structure to reflect an item in it.
-            for key in library.ALBUM_KEYS_ITEM:
+            for key in library.Album.item_keys:
                 album[key] = first_item[key]
             album.store()
 
@@ -1401,7 +1401,7 @@ def completion_script(commands):
 
     # Fields
     yield "  fields='%s'\n" % ' '.join(
-            set(library.Item._fields.keys() + library.ALBUM_KEYS))
+            set(library.Item._fields.keys() + library.Album._fields.keys()))
 
     # Command options
     for cmd, opts in options.items():

@@ -110,52 +110,6 @@ class PathType(types.Type):
         return normpath(bytestring_path(string))
 
 
-# Database fields for the "albums" table.
-# The third entry in each tuple indicates whether the field reflects an
-# identically-named field in the items table.
-ALBUM_FIELDS = [
-    ('id',      types.Id(True), False),
-    ('artpath', PathType(),     False),
-    ('added',   DateType(),     True),
-
-    ('albumartist',        types.String(),     True),
-    ('albumartist_sort',   types.String(),     True),
-    ('albumartist_credit', types.String(),     True),
-    ('album',              types.String(),     True),
-    ('genre',              types.String(),     True),
-    ('year',               types.PaddedInt(4), True),
-    ('month',              types.PaddedInt(2), True),
-    ('day',                types.PaddedInt(2), True),
-    ('tracktotal',         types.PaddedInt(2), True),
-    ('disctotal',          types.PaddedInt(2), True),
-    ('comp',               types.Boolean(),    True),
-    ('mb_albumid',         types.String(),     True),
-    ('mb_albumartistid',   types.String(),     True),
-    ('albumtype',          types.String(),     True),
-    ('label',              types.String(),     True),
-    ('mb_releasegroupid',  types.String(),     True),
-    ('asin',               types.String(),     True),
-    ('catalognum',         types.String(),     True),
-    ('script',             types.String(),     True),
-    ('language',           types.String(),     True),
-    ('country',            types.String(),     True),
-    ('albumstatus',        types.String(),     True),
-    ('media',              types.String(),     True),
-    ('albumdisambig',      types.String(),     True),
-    ('rg_album_gain',      types.Float(),      True),
-    ('rg_album_peak',      types.Float(),      True),
-    ('original_year',      types.PaddedInt(4), True),
-    ('original_month',     types.PaddedInt(2), True),
-    ('original_day',       types.PaddedInt(2), True),
-]
-ALBUM_KEYS = [f[0] for f in ALBUM_FIELDS]
-ALBUM_KEYS_ITEM = [f[0] for f in ALBUM_FIELDS if f[2]]
-
-
-# Default search fields for each model.
-ALBUM_DEFAULT_FIELDS = ('album', 'albumartist', 'genre')
-
-
 # Special path format key.
 PF_KEY_DEFAULT = 'default'
 
@@ -315,7 +269,8 @@ class Item(LibModel):
         'added':       DateType(),
     }
 
-    _search_fields = ALBUM_DEFAULT_FIELDS + ('artist', 'title', 'comments')
+    _search_fields = ('artist', 'title', 'comments',
+                      'album', 'albumartist', 'genre')
 
     _media_fields = set(MediaFile.readable_fields()) \
         .intersection(_fields.keys())
@@ -548,7 +503,7 @@ class Item(LibModel):
         album = self.get_album()
         if album:
             for key in album.keys(True):
-                if key in ALBUM_KEYS_ITEM or key not in self._fields.keys():
+                if key in Album.item_keys or key not in self._fields.keys():
                     mapping[key] = album._get_formatted(key, for_path)
 
         # Use the album artist if the track artist is not set and
@@ -635,10 +590,80 @@ class Album(LibModel):
     library. Reflects the library's "albums" table, including album
     art.
     """
-    _fields = dict((name, typ) for (name, typ, _) in ALBUM_FIELDS)
     _table = 'albums'
     _flex_table = 'album_attributes'
-    _search_fields = ALBUM_DEFAULT_FIELDS
+    _fields = {
+        'id':      types.Id(True),
+        'artpath': PathType(),
+        'added':   DateType(),
+
+        'albumartist':        types.String(),
+        'albumartist_sort':   types.String(),
+        'albumartist_credit': types.String(),
+        'album':              types.String(),
+        'genre':              types.String(),
+        'year':               types.PaddedInt(4),
+        'month':              types.PaddedInt(2),
+        'day':                types.PaddedInt(2),
+        'tracktotal':         types.PaddedInt(2),
+        'disctotal':          types.PaddedInt(2),
+        'comp':               types.Boolean(),
+        'mb_albumid':         types.String(),
+        'mb_albumartistid':   types.String(),
+        'albumtype':          types.String(),
+        'label':              types.String(),
+        'mb_releasegroupid':  types.String(),
+        'asin':               types.String(),
+        'catalognum':         types.String(),
+        'script':             types.String(),
+        'language':           types.String(),
+        'country':            types.String(),
+        'albumstatus':        types.String(),
+        'media':              types.String(),
+        'albumdisambig':      types.String(),
+        'rg_album_gain':      types.Float(),
+        'rg_album_peak':      types.Float(),
+        'original_year':      types.PaddedInt(4),
+        'original_month':     types.PaddedInt(2),
+        'original_day':       types.PaddedInt(2),
+    }
+
+    _search_fields = ('album', 'albumartist', 'genre')
+
+    item_keys = [
+        'added',
+        'albumartist',
+        'albumartist_sort',
+        'albumartist_credit',
+        'album',
+        'genre',
+        'year',
+        'month',
+        'day',
+        'tracktotal',
+        'disctotal',
+        'comp',
+        'mb_albumid',
+        'mb_albumartistid',
+        'albumtype',
+        'label',
+        'mb_releasegroupid',
+        'asin',
+        'catalognum',
+        'script',
+        'language',
+        'country',
+        'albumstatus',
+        'media',
+        'albumdisambig',
+        'rg_album_gain',
+        'rg_album_peak',
+        'original_year',
+        'original_month',
+        'original_day',
+    ]
+    """List of keys that are set on an album's items.
+    """
 
     @classmethod
     def _getters(cls):
@@ -794,7 +819,7 @@ class Album(LibModel):
         """
         # Get modified track fields.
         track_updates = {}
-        for key in ALBUM_KEYS_ITEM:
+        for key in self.item_keys:
             if key in self._dirty:
                 track_updates[key] = self[key]
 
@@ -990,7 +1015,7 @@ class Library(dbcore.Database):
         new :class:`Album` object.
         """
         # Create the album structure using metadata from the first item.
-        values = dict((key, items[0][key]) for key in ALBUM_KEYS_ITEM)
+        values = dict((key, items[0][key]) for key in Album.item_keys)
         album = Album(self, **values)
 
         # Add the album structure and set the items' album_id fields.
