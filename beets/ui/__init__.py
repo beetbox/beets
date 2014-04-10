@@ -38,9 +38,7 @@ from beets import config
 from beets.util import confit
 from beets.autotag import mb
 
-
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
-
 if sys.platform == 'win32':
     try:
         import colorama
@@ -50,27 +48,21 @@ if sys.platform == 'win32':
         colorama.init()
 
 
-
-# Constants.
-
+log = logging.getLogger('beets')
 
 PF_KEY_QUERIES = {
     'comp': 'comp:true',
     'singleton': 'singleton:true',
 }
 
-# UI exception. Commands should throw this in order to display
-# nonrecoverable errors to the user.
+
 class UserError(Exception):
-    pass
-
-# Main logger.
-log = logging.getLogger('beets')
-
+    """UI exception. Commands should throw this in order to display
+    nonrecoverable errors to the user.
+    """
 
 
 # Utilities.
-
 
 def _encoding():
     """Tries to guess the encoding used by the terminal."""
@@ -170,7 +162,7 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
             # Infer a letter.
             for letter in option:
                 if not letter.isalpha():
-                    continue # Don't use punctuation.
+                    continue  # Don't use punctuation.
                 if letter not in letters:
                     found_letter = letter
                     break
@@ -181,9 +173,10 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         index = option.index(found_letter)
 
         # Mark the option's shortcut letter for display.
-        if not require and ((default is None and not numrange and first) or
-                (isinstance(default, basestring) and
-                 found_letter.lower() == default.lower())):
+        if not require and (
+            (default is None and not numrange and first) or
+            (isinstance(default, basestring) and
+             found_letter.lower() == default.lower())):
             # The first option is the default; mark it.
             show_letter = '[%s]' % found_letter.upper()
             is_default = True
@@ -352,11 +345,13 @@ def human_seconds_short(interval):
 # http://dev.pocoo.org/hg/pygments-main/file/b2deea5b5030/pygments/console.py
 # (pygments is by Tim Hatch, Armin Ronacher, et al.)
 COLOR_ESCAPE = "\x1b["
-DARK_COLORS  = ["black", "darkred", "darkgreen", "brown", "darkblue",
-                "purple", "teal", "lightgray"]
+DARK_COLORS = ["black", "darkred", "darkgreen", "brown", "darkblue",
+               "purple", "teal", "lightgray"]
 LIGHT_COLORS = ["darkgray", "red", "green", "yellow", "blue",
                 "fuchsia", "turquoise", "white"]
 RESET_COLOR = COLOR_ESCAPE + "39;49;00m"
+
+
 def _colorize(color, text):
     """Returns a string that prints the given text in the given color
     in a terminal that is ANSI color-aware. The color must be something
@@ -461,8 +456,8 @@ def color_diff_suffix(a, b, highlight='red'):
         first_diff = min(len(a), len(b))
 
     # Colorize from the first difference on.
-    return a[:first_diff] + colorize(highlight, a[first_diff:]), \
-           b[:first_diff] + colorize(highlight, b[first_diff:])
+    return (a[:first_diff] + colorize(highlight, a[first_diff:]),
+            b[:first_diff] + colorize(highlight, b[first_diff:]))
 
 
 def get_path_formats(subview=None):
@@ -558,6 +553,8 @@ def term_width():
 
 
 FLOAT_EPSILON = 0.01
+
+
 def _field_diff(field, old, new):
     """Given two Model objects, format their values for `field` and
     highlight changes among them. Return a human-readable string. If the
@@ -627,10 +624,8 @@ def show_model_changes(new, old=None, fields=None, always=False):
     return bool(changes)
 
 
-
 # Subcommand parsing infrastructure.
-
-
+#
 # This is a fairly generic subcommand parser for optparse. It is
 # maintained externally here:
 # http://gist.github.com/462717
@@ -654,14 +649,17 @@ class Subcommand(object):
         self.help = help
         self.hide = hide
 
+
 class SubcommandsOptionParser(optparse.OptionParser):
     """A variant of OptionParser that parses subcommands and their
     arguments.
     """
     # A singleton command used to give help on other subcommands.
-    _HelpSubcommand = Subcommand('help', optparse.OptionParser(),
+    _HelpSubcommand = Subcommand(
+        'help', optparse.OptionParser(),
         help='give detailed help on a specific sub-command',
-        aliases=('?',))
+        aliases=('?',)
+    )
 
     def __init__(self, *args, **kwargs):
         """Create a new subcommand-aware option parser. All of the
@@ -684,7 +682,7 @@ class SubcommandsOptionParser(optparse.OptionParser):
         # Adjust the help-visible name of each subcommand.
         for subcommand in self.subcommands:
             subcommand.parser.prog = '%s %s' % \
-                    (self.get_prog_name(), subcommand.name)
+                (self.get_prog_name(), subcommand.name)
 
         # Our root parser needs to stop on the first unrecognized argument.
         self.disable_interspersed_args()
@@ -802,6 +800,8 @@ class SubcommandsOptionParser(optparse.OptionParser):
 
 
 optparse.Option.ALWAYS_TYPED_ACTIONS += ('callback',)
+
+
 def vararg_callback(option, opt_str, value, parser):
     """Callback for an option with variable arguments.
     Manually collect arguments right of a callback-action
@@ -838,9 +838,7 @@ def vararg_callback(option, opt_str, value, parser):
     setattr(parser.values, option.dest, value)
 
 
-
 # The main entry point and bootstrapping.
-
 
 def _load_plugins():
     """Load the plugins specified in the configuration.
@@ -932,12 +930,11 @@ def _raw_main(args):
     log.debug(u'data directory: {0}\n'
               u'library database: {1}\n'
               u'library directory: {2}'
-        .format(
-            util.displayable_path(config.config_dir()),
-            util.displayable_path(lib.path),
-            util.displayable_path(lib.directory),
-        )
-    )
+              .format(
+                  util.displayable_path(config.config_dir()),
+                  util.displayable_path(lib.path),
+                  util.displayable_path(lib.directory),
+              ))
 
     # Configure the MusicBrainz API.
     mb.configure()

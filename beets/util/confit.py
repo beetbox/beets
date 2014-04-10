@@ -47,6 +47,7 @@ BASESTRING = str if PY3 else basestring
 NUMERIC_TYPES = (int, float) if PY3 else (int, float, long)
 TYPE_TYPES = (type,) if PY3 else (type, types.ClassType)
 
+
 def iter_first(sequence):
     """Get the first element from an iterable or raise a ValueError if
     the iterator generates no values.
@@ -67,16 +68,20 @@ class ConfigError(Exception):
     """Base class for exceptions raised when querying a configuration.
     """
 
+
 class NotFoundError(ConfigError):
     """A requested value could not be found in the configuration trees.
     """
+
 
 class ConfigTypeError(ConfigError, TypeError):
     """The value in the configuration did not match the expected type.
     """
 
+
 class ConfigValueError(ConfigError, ValueError):
     """The value in the configuration is illegal."""
+
 
 class ConfigReadError(ConfigError):
     """A configuration file could not be read."""
@@ -131,6 +136,7 @@ class ConfigSource(dict):
             return ConfigSource(value)
         else:
             raise TypeError('source value must be a dict')
+
 
 class ConfigView(object):
     """A configuration "view" is a query into a program's configuration
@@ -518,6 +524,7 @@ def _package_path(name):
 
     return os.path.dirname(os.path.abspath(filepath))
 
+
 def config_dirs():
     """Return a platform-specific list of candidates for user
     configuration directories on the system.
@@ -606,9 +613,11 @@ class Loader(yaml.SafeLoader):
         plain = super(Loader, self).check_plain()
         return plain or self.peek() == '%'
 
+
 Loader.add_constructor('tag:yaml.org,2002:str', Loader._construct_unicode)
 Loader.add_constructor('tag:yaml.org,2002:map', Loader.construct_yaml_map)
 Loader.add_constructor('tag:yaml.org,2002:omap', Loader.construct_yaml_map)
+
 
 def load_yaml(filename):
     """Read a YAML document from a file. If the file cannot be read or
@@ -679,10 +688,12 @@ class Dumper(yaml.SafeDumper):
         """
         return self.represent_scalar('tag:yaml.org,2002:null', '')
 
+
 Dumper.add_representer(OrderedDict, Dumper.represent_dict)
 Dumper.add_representer(bool, Dumper.represent_bool)
 Dumper.add_representer(type(None), Dumper.represent_none)
 Dumper.add_representer(list, Dumper.represent_list)
+
 
 def restore_yaml_comments(data, default_data):
     """Scan default_data for comments (we include empty lines in our
