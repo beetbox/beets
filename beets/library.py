@@ -32,9 +32,10 @@ from beets.dbcore import types
 import beets
 
 
+log = logging.getLogger('beets')
+
 
 # Library-specific query types.
-
 
 class PathQuery(dbcore.FieldQuery):
     """A query that matches all items under a given path."""
@@ -112,13 +113,6 @@ class PathType(types.Type):
 
 # Special path format key.
 PF_KEY_DEFAULT = 'default'
-
-
-# Logger.
-log = logging.getLogger('beets')
-if not log.handlers:
-    log.addHandler(logging.StreamHandler())
-log.propagate = False  # Don't propagate to root handler.
 
 
 # A little SQL utility.
