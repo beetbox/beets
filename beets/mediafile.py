@@ -1353,12 +1353,16 @@ class MediaFile(object):
         """Set all field values from a dictionary.
 
         For any key in `dict` that is also a field to store tags the
-        method retrieves the corresponding value from `dict` and
-        updates the `MediaFile`.
+        method retrieves the corresponding value from `dict` and updates
+        the `MediaFile`. If a key has the value `None`, the
+        corresponding property is deleted from the `MediaFile`.
         """
         for field in self.fields():
             if field in dict:
-                setattr(self, field, dict[field])
+                if dict[field] is None:
+                    delattr(self, field)
+                else:
+                    setattr(self, field, dict[field])
 
     # Field definitions.
 
