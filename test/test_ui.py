@@ -154,10 +154,10 @@ class ModifyTest(_common.TestCase):
         self.lib = library.Library(':memory:', self.libdir)
         self.i = library.Item.from_path(os.path.join(_common.RSRC, 'full.mp3'))
         self.lib.add(self.i)
-        self.i.move(True)
+        self.i.move(copy=True)
         self.album = self.lib.add_album([self.i])
 
-    def _modify(self, mods, dels=(), query=(), write=False, move=False,
+    def _modify(self, mods=(), dels=(), query=(), write=False, move=False,
                 album=False):
         self.io.addinput('y')
         commands.modify_items(self.lib, mods, dels, query,
@@ -218,6 +218,26 @@ class ModifyTest(_common.TestCase):
         item = self.lib.items().get()
         item.read()
         self.assertFalse('newAlbum' in item.path)
+
+    def test_write_initial_key_tag(self):
+        self._modify(["initial_key=C#m"], write=True)
+        item = self.lib.items().get()
+        mediafile = MediaFile(item.path)
+        self.assertEqual(mediafile.initial_key, 'C#m')
+
+    @unittest.skip('not yet implemented')
+    def test_delete_initial_key_tag(self):
+        item = self.i
+        item.initial_key = 'C#m'
+        item.write()
+        item.store()
+
+        mediafile = MediaFile(item.path)
+        self.assertEqual(mediafile.initial_key, 'C#m')
+
+        self._modify(dels=["initial_key!"], write=True)
+        mediafile = MediaFile(item.path)
+        self.assertIsNone(mediafile.initial_key)
 
 class MoveTest(_common.TestCase):
     def setUp(self):

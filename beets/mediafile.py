@@ -1752,6 +1752,13 @@ class MediaFile(object):
         out_type=float,
     )
 
+    initial_key = MediaField(
+        MP3StorageStyle('TKEY'),
+        MP4StorageStyle('----:com.apple.iTunes:initialkey'),
+        StorageStyle('INITIALKEY'),
+        ASFStorageStyle('INITIALKEY'),
+    )
+
     @property
     def length(self):
         """The duration of the audio in seconds (a float)."""

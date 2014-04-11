@@ -13,6 +13,11 @@ New stuff:
 * :doc:`/plugins/replaygain`: Added support for calculating ReplayGain values
   with GStreamer as well the mp3gain programs. This enables ReplayGain
   calculation for any audio format.
+* Add support for `initial_key` as field in the library and tag for
+  media files. When the user sets this field with ``beet modify
+  initial_key=Am`` the media files will reflect this in their tags. The
+  :doc:`/plugins/echonest` plugin also sets this field if the data is
+  available.
 
 Fixes:
 

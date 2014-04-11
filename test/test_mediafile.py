@@ -24,7 +24,7 @@ import time
 import _common
 from _common import unittest
 from beets.mediafile import MediaFile, MediaField, Image, \
-                            MP3StorageStyle, StorageStyle, \
+                            MP3DescStorageStyle, StorageStyle, \
                             MP4StorageStyle, ASFStorageStyle, \
                             ImageType
 from beets.library import Item
@@ -259,54 +259,54 @@ class GenreListTestMixin(object):
 
 
 field_extension = MediaField(
-    MP3StorageStyle('TKEY'),
-    MP4StorageStyle('----:com.apple.iTunes:initialkey'),
-    StorageStyle('INITIALKEY'),
-    ASFStorageStyle('INITIALKEY'),
+    MP3DescStorageStyle('customtag'),
+    MP4StorageStyle('----:com.apple.iTunes:customtag'),
+    StorageStyle('customtag'),
+    ASFStorageStyle('customtag'),
 )
 class ExtendedFieldTestMixin(object):
 
     def test_extended_field_write(self):
         plugin = BeetsPlugin()
-        plugin.add_media_field('initialkey', field_extension)
+        plugin.add_media_field('customtag', field_extension)
 
         mediafile = self._mediafile_fixture('empty')
-        mediafile.initialkey = 'F#'
+        mediafile.customtag = 'F#'
         mediafile.save()
 
         mediafile = MediaFile(mediafile.path)
-        self.assertEqual(mediafile.initialkey, 'F#')
-        delattr(MediaFile, 'initialkey')
-        Item._media_fields.remove('initialkey')
+        self.assertEqual(mediafile.customtag, 'F#')
+        delattr(MediaFile, 'customtag')
+        Item._media_fields.remove('customtag')
 
     def test_write_extended_tag_from_item(self):
         plugin = BeetsPlugin()
-        plugin.add_media_field('initialkey', field_extension)
+        plugin.add_media_field('customtag', field_extension)
 
         mediafile = self._mediafile_fixture('empty')
-        self.assertIsNone(mediafile.initialkey)
+        self.assertIsNone(mediafile.customtag)
 
-        item = Item(path=mediafile.path, initialkey='Gb')
+        item = Item(path=mediafile.path, customtag='Gb')
         item.write()
         mediafile = MediaFile(mediafile.path)
-        self.assertEqual(mediafile.initialkey, 'Gb')
+        self.assertEqual(mediafile.customtag, 'Gb')
 
-        delattr(MediaFile, 'initialkey')
-        Item._media_fields.remove('initialkey')
+        delattr(MediaFile, 'customtag')
+        Item._media_fields.remove('customtag')
 
     def test_read_flexible_attribute_from_file(self):
         plugin = BeetsPlugin()
-        plugin.add_media_field('initialkey', field_extension)
+        plugin.add_media_field('customtag', field_extension)
 
         mediafile = self._mediafile_fixture('empty')
-        mediafile.update({'initialkey': 'F#'})
+        mediafile.update({'customtag': 'F#'})
         mediafile.save()
 
         item = Item.from_path(mediafile.path)
-        self.assertEqual(item['initialkey'], 'F#')
+        self.assertEqual(item['customtag'], 'F#')
 
-        delattr(MediaFile, 'initialkey')
-        Item._media_fields.remove('initialkey')
+        delattr(MediaFile, 'customtag')
+        Item._media_fields.remove('customtag')
 
     def test_invalid_descriptor(self):
         with self.assertRaises(ValueError) as cm:
@@ -401,6 +401,7 @@ class ReadWriteTestBase(ArtTestMixin, GenreListTestMixin,
         'original_month',
         'original_day',
         'original_date',
+        'initial_key',
     ]
 
     def setUp(self):

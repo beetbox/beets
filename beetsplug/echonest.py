@@ -47,6 +47,11 @@ ATTRIBUTES = {
     'valence':      'valence',
     'tempo':        'bpm',
 }
+
+MUSICAL_SCALE = ['C', 'C#', 'D', 'D#', 'E' 'F',
+                 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
+
 # We also use echonest_id (song_id) and echonest_fingerprint to speed up
 # lookups.
 ID_KEY = 'echonest_id'
@@ -407,6 +412,11 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                     item[field] = int(v)
                 else:
                     item[field] = v
+        if 'key' in values and 'mode' in values:
+            key = MUSICAL_SCALE[values['key'] - 1]
+            if values['mode'] == 0:  # Minor key
+                key += 'm'
+            item['initial_key'] = key
         if 'id' in values:
             enid = values['id']
             log.debug(u'echonest: metadata: {0} = {1}'.format(ID_KEY, enid))

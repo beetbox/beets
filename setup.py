@@ -86,6 +86,8 @@ setup(
 
     tests_require=[
         'responses',
+        'pyechonest',
+        'mock',
     ],
 
     # Plugin (optional) dependencies:

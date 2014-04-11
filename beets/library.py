@@ -252,6 +252,7 @@ class Item(LibModel):
         'original_year':        types.PaddedInt(4),
         'original_month':       types.PaddedInt(2),
         'original_day':         types.PaddedInt(2),
+        'initial_key':          types.MusicalKey(),
 
         'length':      types.Float(),
         'bitrate':     types.ScaledInt(1000, u'kbps'),
