@@ -57,10 +57,12 @@ YAML_COMMENT = '# Automatically migrated from legacy .beetsconfig.\n\n'
 
 log = logging.getLogger('beets')
 
+
 # An itertools recipe.
 def grouper(n, iterable):
     args = [iter(iterable)] * n
     return itertools.izip_longest(*args)
+
 
 def _displace(fn):
     """Move a file aside using a timestamp suffix so a new file can be
@@ -71,6 +73,7 @@ def _displace(fn):
         u'{0}.old.{1}'.format(fn, int(time.time())),
         True
     )
+
 
 def default_paths():
     """Produces the appropriate default config and library database
@@ -96,6 +99,7 @@ def default_paths():
 
     return config, libpath
 
+
 def get_config():
     """Using the same logic as beets 1.0, locate and read the
     .beetsconfig file. Return a ConfigParser instance or None if no
@@ -115,6 +119,7 @@ def get_config():
     else:
         return None, configpath
 
+
 def flatten_config(config):
     """Given a ConfigParser, flatten the values into a dict-of-dicts
     representation where each section gets its own dictionary of values.
@@ -125,6 +130,7 @@ def flatten_config(config):
         for option in config.options(section):
             sec_dict[option] = config.get(section, option, True)
     return out
+
 
 def transform_value(value):
     """Given a string read as the value of a config option, return a
@@ -147,8 +153,9 @@ def transform_value(value):
         return float(value)
     except ValueError:
         pass
-    
+
     return value
+
 
 def transform_data(data):
     """Given a dict-of-dicts representation of legacy config data, tweak
@@ -209,10 +216,11 @@ def transform_data(data):
                 if section == 'importfeeds':
                     if key.startswith(IMPORTFEEDS_PREFIX):
                         key = key[len(IMPORTFEEDS_PREFIX):]
-                
+
                 sec_out[key] = transform_value(value)
 
     return out
+
 
 class Dumper(yaml.SafeDumper):
     """A PyYAML Dumper that represents OrderedDicts as ordinary mappings
@@ -230,10 +238,10 @@ class Dumper(yaml.SafeDumper):
         for item_key, item_value in mapping:
             node_key = self.represent_data(item_key)
             node_value = self.represent_data(item_value)
-            if not (isinstance(node_key, yaml.ScalarNode) and \
+            if not (isinstance(node_key, yaml.ScalarNode) and
                     not node_key.style):
                 best_style = False
-            if not (isinstance(node_value, yaml.ScalarNode) and \
+            if not (isinstance(node_value, yaml.ScalarNode) and
                     not node_value.style):
                 best_style = False
             value.append((node_key, node_value))
@@ -244,6 +252,7 @@ class Dumper(yaml.SafeDumper):
                 node.flow_style = best_style
         return node
 Dumper.add_representer(confit.OrderedDict, Dumper.represent_dict)
+
 
 def migrate_config(replace=False):
     """Migrate a legacy beetsconfig file to a new-style config.yaml file
@@ -257,7 +266,7 @@ def migrate_config(replace=False):
     if not config:
         log.debug(u'no config file found at {0}'.format(
             util.displayable_path(configpath)
-            ))
+        ))
         return
 
     # Get the new configuration file path and possibly move it out of
@@ -302,6 +311,7 @@ def migrate_config(replace=False):
         f.write(yaml_out)
     return destfn
 
+
 def migrate_db(replace=False):
     """Copy the beets library database file to the new location (e.g.,
     from ~/.beetsmusic.blb to ~/.config/beets/library.db).
@@ -313,7 +323,7 @@ def migrate_db(replace=False):
         # Old DB does not exist or we're configured to point to the same
         # database. Do nothing.
         return
-    
+
     if os.path.exists(destfn):
         if replace:
             log.debug(u'moving old database aside: {0}'.format(
@@ -328,6 +338,7 @@ def migrate_db(replace=False):
     ))
     util.copy(srcfn, destfn)
     return destfn
+
 
 def migrate_state(replace=False):
     """Copy the beets runtime state file from the old path (i.e.,
@@ -379,6 +390,8 @@ def automigrate():
 # CLI command for explicit migration.
 
 migrate_cmd = ui.Subcommand('migrate', help='convert legacy config')
+
+
 def migrate_func(lib, opts, args):
     """Explicit command for migrating files. Existing files in each
     destination are moved aside.

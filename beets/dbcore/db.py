@@ -26,9 +26,7 @@ from beets.util.functemplate import Template
 from .query import MatchQuery
 
 
-
 # Abstract base for model classes.
-
 
 class Model(object):
     """An abstract object representing an object in the database. Model
@@ -94,7 +92,6 @@ class Model(object):
         # As above: we could consider caching this result.
         raise NotImplementedError()
 
-
     # Basic operation.
 
     def __init__(self, db=None, **values):
@@ -131,7 +128,6 @@ class Model(object):
             raise ValueError('{0} has no database'.format(type(self).__name__))
         if need_id and not self.id:
             raise ValueError('{0} has no id'.format(type(self).__name__))
-
 
     # Essential field accessors.
 
@@ -190,7 +186,6 @@ class Model(object):
         else:
             return base_keys
 
-
     # Act like a dictionary.
 
     def update(self, values):
@@ -226,7 +221,6 @@ class Model(object):
         """
         return iter(self.keys())
 
-
     # Convenient attribute access.
 
     def __getattr__(self, key):
@@ -249,7 +243,6 @@ class Model(object):
             super(Model, self).__delattr__(key)
         else:
             del self[key]
-
 
     # Database interaction (CRUD methods).
 
@@ -351,7 +344,6 @@ class Model(object):
                     self._dirty.add(key)
             self.store()
 
-
     # Formatting and templating.
 
     @classmethod
@@ -364,7 +356,7 @@ class Model(object):
             # Formatting must result in a string. To deal with
             # Python2isms, implicitly convert ASCII strings.
             assert isinstance(value, basestring), \
-                    u'field formatter must produce strings'
+                u'field formatter must produce strings'
             if isinstance(value, bytes):
                 value = value.decode('utf8', 'ignore')
 
@@ -421,7 +413,6 @@ class Model(object):
             template = Template(template)
         return template.substitute(mapping, funcs)
 
-
     # Parsing.
 
     @classmethod
@@ -439,9 +430,7 @@ class Model(object):
             return string
 
 
-
 # Database controller and supporting interfaces.
-
 
 class Results(object):
     """An item query result set. Iterating over the collection lazily
@@ -611,7 +600,6 @@ class Database(object):
             self._make_table(model_cls._table, model_cls._fields)
             self._make_attribute_table(model_cls._flex_table)
 
-
     # Primitive access control: connections and transactions.
 
     def _connection(self):
@@ -650,7 +638,6 @@ class Database(object):
         with the underlying SQLite database.
         """
         return Transaction(self)
-
 
     # Schema setup and migration.
 
@@ -704,7 +691,6 @@ class Database(object):
                 CREATE INDEX IF NOT EXISTS {0}_by_entity
                     ON {0} (entity_id);
                 """.format(flex_table))
-
 
     # Querying.
 

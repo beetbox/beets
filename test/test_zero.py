@@ -1,6 +1,5 @@
 """Tests for the 'zero' plugin"""
 
-import _common
 from _common import unittest
 from helper import TestHelper
 

@@ -105,8 +105,9 @@ def albums_in_dir(path):
                     if not subdir_pat:
                         match = marker_pat.match(subdir)
                         if match:
-                            subdir_pat = re.compile(r'^%s\d' %
-                                re.escape(match.group(1)), re.I)
+                            subdir_pat = re.compile(
+                                r'^%s\d' % re.escape(match.group(1)), re.I
+                            )
                         else:
                             start_collapsing = False
                             break
@@ -126,8 +127,9 @@ def albums_in_dir(path):
                 start_collapsing = True
                 # Set the current pattern to match directories with the same
                 # prefix as this one, followed by a digit.
-                collapse_pat = re.compile(r'^%s\d' %
-                    re.escape(match.group(1)), re.I)
+                collapse_pat = re.compile(
+                    r'^%s\d' % re.escape(match.group(1)), re.I
+                )
                 break
 
         # If either of the above heuristics indicated that this is the
@@ -147,6 +149,7 @@ def albums_in_dir(path):
     if collapse_paths and collapse_items:
         yield collapse_paths, collapse_items
 
+
 def apply_item_metadata(item, track_info):
     """Set an item's metadata from its matched TrackInfo object.
     """
@@ -159,6 +162,7 @@ def apply_item_metadata(item, track_info):
         item.mb_artistid = track_info.artist_id
     # At the moment, the other metadata is left intact (including album
     # and track number). Perhaps these should be emptied?
+
 
 def apply_metadata(album_info, mapping):
     """Set the items' metadata to match an AlbumInfo object using a
@@ -175,8 +179,8 @@ def apply_metadata(album_info, mapping):
 
         # Artist sort and credit names.
         item.artist_sort = track_info.artist_sort or album_info.artist_sort
-        item.artist_credit = track_info.artist_credit or \
-                             album_info.artist_credit
+        item.artist_credit = (track_info.artist_credit or
+                              album_info.artist_credit)
         item.albumartist_sort = album_info.artist_sort
         item.albumartist_credit = album_info.artist_credit
 
