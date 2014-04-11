@@ -1,8 +1,8 @@
 """Tests for the 'zero' plugin"""
 
+import _common
 from _common import unittest
 from helper import TestHelper
-
 
 from beets.library import Item
 from beets import config
@@ -57,15 +57,17 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 
         mediafile = MediaFile(item.path)
         self.assertIsNotNone(mediafile.rg_track_peak)
+        self.assertIsNotNone(mediafile.rg_track_gain)
 
         config['zero'] = {
-            'fields': ['rg_track_peak'],
+            'fields': ['rg_track_peak', 'rg_track_gain'],
         }
         self.load_plugins('zero')
 
         item.write()
         mediafile = MediaFile(item.path)
         self.assertIsNone(mediafile.rg_track_peak)
+        self.assertIsNone(mediafile.rg_track_gain)
 
 
 def suite():
