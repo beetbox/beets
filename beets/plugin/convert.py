@@ -24,7 +24,7 @@ import pipes
 
 from beets import ui, util, plugins, config
 from beets.plugins import ImportStagePlugin
-from beetsplug.embedart import _embed
+from beets.plugin.embedart import _embed
 
 log = logging.getLogger('beets')
 _fs_lock = threading.Lock()

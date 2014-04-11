@@ -15,7 +15,7 @@
 """Tests for BPD and music playing.
 """
 from _common import unittest
-from beetsplug import bpd
+from beets.plugin import bpd
 
 class CommandParseTest(unittest.TestCase):
     def test_no_args(self):

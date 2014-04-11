@@ -742,7 +742,7 @@ class Server(BaseServer):
 
     def __init__(self, library, host, port, password):
         try:
-            from beetsplug.bpd import gstplayer
+            from beets.plugin.bpd import gstplayer
         except ImportError as e:
             # This is a little hacky, but it's the best I know for now.
             if e.args[0].endswith(' gst'):

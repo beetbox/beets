@@ -34,11 +34,6 @@ from beets import importer
 from beets.ui import commands
 import beets
 
-# Make sure the development versions of the plugins are used
-import beetsplug
-beetsplug.__path__ = [ os.path.abspath(
-    os.path.join(__file__, '..', '..', 'beetsplug')) ]
-
 # Test resources path.
 RSRC = os.path.join(os.path.dirname(__file__), 'rsrc')
 

@@ -5,9 +5,8 @@ from helper import TestHelper
 
 from beets.library import Item
 from beets import config
-from beetsplug.zero import ZeroPlugin
+from beets.plugin.zero import ZeroPlugin
 from beets.mediafile import MediaFile
-
 
 class ZeroPluginTest(unittest.TestCase, TestHelper):
 

@@ -3,7 +3,7 @@
 from _common import unittest
 from beets import importer
 from beets.library import Item
-from beetsplug.ihate import IHatePlugin
+from beets.plugin.ihate import IHatePlugin
 
 
 class IHatePluginTest(unittest.TestCase):

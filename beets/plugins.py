@@ -14,6 +14,7 @@
 
 """Support for beets plugins."""
 
+import imp
 import sys
 import logging
 import traceback
@@ -22,9 +23,8 @@ from collections import defaultdict
 
 import beets
 from beets import mediafile
-from beets import util
+import beets.plugin
 
-PLUGIN_NAMESPACE = 'beetsplug'
 
 # Plugins using the Last.fm API can share the same API key.
 LASTFM_KEY = '2dc3914abf35f0d9c92d97d8f8e42b43'
@@ -334,67 +334,40 @@ class Registry(list):
     The items of the list are instances of ``BeetsPlugin``.
     """
 
-    def __init__(self):
+    def __init__(self, paths=[]):
         super(Registry, self).__init__()
         self._loaded_classes = set()
+        self.paths = paths
 
-    def load(self, names, paths=()):
-        """Add plugins from module names.
-
-        ``names`` is a list of module names in the beetsplug namespace
-        package. The method tries to load each module. It then collects
-        all proper subclasses of BeetsPlugin from that module,
-        instantiates them and adds them to the registry. It will keep
-        track of all loaded classes so they won't be added twice.
-
-        ``paths`` is a list of additional paths to load modules from.
-        They are added to the registry with ``add_paths``.
-        """
-        self.add_paths(paths)
+    def load(self, *names):
         for name in names:
-            modname = '%s.%s' % (PLUGIN_NAMESPACE, name)
+            modname = 'beets_' + name
             try:
+                file, path, desc = imp.find_module(modname,
+                                                   self.paths + sys.path)
+            except ImportError:
+                modname = name
                 try:
-                    namespace = __import__(modname, None, None)
-                except ImportError as exc:
-                    # Again, this is hacky:
-                    if exc.args[0].endswith(' ' + name):
-                        log.warn('** plugin %s not found' % name)
-                    else:
-                        raise
-                else:
-                    for cls in getattr(namespace, name).__dict__.values():
-                        if isinstance(cls, type) and issubclass(cls, BeetsPlugin) \
-                                and cls != BeetsPlugin:
-                            self._load_class(cls)
+                    file, path, desc = imp.find_module(modname,
+                                                       beets.plugin.__path__)
+                except ImportError:
+                    log.warn('** plugin {0} not found'.format(name))
+                    continue
 
+            try:
+                module = imp.load_module(modname, file, path, desc)
+                for cls in module.__dict__.values():
+                    if (isinstance(cls, type)
+                        and issubclass(cls, BeetsPlugin)
+                        and cls != BeetsPlugin):
+                        self._load_class(cls)
             except:
-                log.warn('** error loading plugin %s' % name)
+                log.warn('** error loading plugin {0}'.format(name))
                 log.warn(traceback.format_exc())
+            finally:
+                file.close()
+
         send('pluginload')
-
-    def add_paths(self, paths):
-        """Adds a list of paths to beetsplug namespace package and
-        ``sys.path``.
-
-        If you have a beetsplug module in say
-        ``/lib/beetsplug/mymodule.py``, you can either add the path as
-        '/lib' or '/lib/beetsplug'. If you use the former you need to
-        add an ``__init__.py`` file which uses ``pkgutil.extend_path``
-        to the beetsplug directory. Additionally you may only use this
-        approach once with ``add_paths`` since python will refuse to
-        load beetsplug from additional ``sys.path``s once it has already
-        been loaded.
-
-        For the beetsplug package, paths are prepended. This means
-        that modules are loaded from the most recently added path.
-        """
-        # TODO clarify this, see also
-        # https://gist.github.com/geigerzaehler/9508410
-        paths =  map(util.normpath, paths)
-        sys.path += paths
-        import beetsplug
-        beetsplug.__path__ = paths + beetsplug.__path__
 
     def _load_class(self, cls):
         if cls not in self._loaded_classes:

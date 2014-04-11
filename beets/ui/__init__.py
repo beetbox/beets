@@ -507,7 +507,7 @@ def get_plugin_paths():
         raise confit.ConfigTypeError(
             u'pluginpath must be string or a list of strings'
         )
-    return pluginpaths
+    return map(util.normpath, pluginpaths)
 
 
 def _pick_format(album, fmt=None):
@@ -898,7 +898,8 @@ def _configure(args):
             util.displayable_path(config_path)))
 
     # Now add the plugin commands to the parser.
-    plugins.registry.load(config['plugins'].as_str_seq(), get_plugin_paths())
+    plugins.registry.paths = get_plugin_paths()
+    plugins.registry.load(*config['plugins'].as_str_seq())
     for cmd in plugins.commands():
         parser.add_subcommand(cmd)
 

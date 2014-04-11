@@ -21,7 +21,7 @@ import responses
 
 import _common
 from _common import unittest
-from beetsplug import fetchart
+from beets.plugin import fetchart
 from beets.autotag import AlbumInfo, AlbumMatch
 from beets import library
 from beets import importer
