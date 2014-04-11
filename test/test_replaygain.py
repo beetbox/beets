@@ -14,16 +14,14 @@
 
 
 import os
-import tempfile
 import shutil
 from glob import glob
 
 import _common
 from _common import unittest
+from helper import TestHelper
 
-import beets
 from beets import ui
-from beets import plugins
 from beets.library import Item, Album
 from beets.mediafile import MediaFile
 
@@ -35,44 +33,18 @@ except ImportError, ValueError:
     GST_AVAILABLE = False
 
 
-class ReplayGainCliTestBase(object):
+class ReplayGainCliTestBase(TestHelper):
 
     def setUp(self):
-        self.setupBeets()
+        self.setup_beets()
+        self.load_plugins('replaygain')
         self.config['replaygain']['backend'] = self.backend
         self.config['plugins'] = ['replaygain']
         self.setupLibrary(2)
 
     def tearDown(self):
-        del os.environ['BEETSDIR']
-        shutil.rmtree(self.temp_dir)
-        self.config.clear()
-        self.config.read(user=False)
-        plugins._classes = set()
-        plugins._instances = {}
-
-    def setupBeets(self):
-        self.temp_dir = tempfile.mkdtemp()
-        os.environ['BEETSDIR'] = self.temp_dir
-
-        self.config = beets.config
-        self.config.clear()
-        self.config.read(user=False)
-
-        self.config['verbose'] = True
-        self.config['color'] = False
-        self.config['threaded'] = False
-        self.config['import']['copy'] = False
-
-        self.libdir = os.path.join(self.temp_dir, 'libdir')
-        os.mkdir(self.libdir)
-        self.config['directory'] = self.libdir
-
-        self.libpath = os.path.join(self.temp_dir, 'lib')
-        self.config['library'] = self.libpath
-
-        self.lib = beets.library.Library(self.config['library'].as_filename(),
-                                         self.libdir)
+        self.teardown_beets()
+        self.unload_plugins()
 
     def setupLibrary(self, file_count):
         """Add an album to the library with ``file_count`` items.
@@ -113,7 +85,7 @@ class ReplayGainCliTestBase(object):
             self.assertAlmostEqual(
                 mediafile.rg_track_peak, item.rg_track_peak, places=6)
             self.assertAlmostEqual(
-                mediafile.rg_track_gain, item.rg_track_gain, places=6)
+                mediafile.rg_track_gain, item.rg_track_gain, places=2)
 
     def test_cli_skips_calculated_tracks(self):
         ui._raw_main(['replaygain'])

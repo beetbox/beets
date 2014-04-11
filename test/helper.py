@@ -156,12 +156,25 @@ class TestHelper(object):
     def create_mediafile_fixture(self, ext='mp3'):
         """Copies a fixture mediafile with the extension to a temporary
         location and returns the path.
+
+        It keeps track of the created locations and will delete the with
+        `remove_mediafile_fixtures()`
         """
         src = os.path.join(_common.RSRC, 'full.' + ext)
         handle, path = mkstemp()
         os.close(handle)
-        shutil.copy(src, path)
+        shutil.copyfile(src, path)
+
+        if not hasattr(self, '_mediafile_fixtures'):
+            self._mediafile_fixtures = []
+        self._mediafile_fixtures.append(path)
+
         return path
+
+    def remove_mediafile_fixtures(self):
+        if hasattr(self, '_mediafile_fixtures'):
+            for path in self._mediafile_fixtures:
+                os.remove(path)
 
     def run_command(self, *args):
         beets.ui._raw_main(list(args))
