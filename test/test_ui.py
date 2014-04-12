@@ -21,7 +21,7 @@ import subprocess
 
 import _common
 from _common import unittest
-from helper import captureStdout
+from helper import capture_stdout
 
 from beets import library
 from beets import ui
@@ -47,7 +47,7 @@ class ListTest(unittest.TestCase):
         commands.list_items(self.lib, query, album, fmt)
 
     def test_list_outputs_item(self):
-        with captureStdout() as stdout:
+        with capture_stdout() as stdout:
             self._run_list()
         self.assertIn(u'the title', stdout.getvalue())
 
@@ -56,56 +56,56 @@ class ListTest(unittest.TestCase):
         self.item.store()
         self.lib._connection().commit()
 
-        with captureStdout() as stdout:
+        with capture_stdout() as stdout:
             self._run_list([u'na\xefve'])
         out = stdout.getvalue()
         self.assertTrue(u'na\xefve' in out.decode(stdout.encoding))
 
     def test_list_item_path(self):
-        with captureStdout() as stdout:
+        with capture_stdout() as stdout:
             self._run_list(fmt='$path')
         self.assertEqual(stdout.getvalue().strip(), u'xxx/yyy')
 
     def test_list_album_outputs_something(self):
-        with captureStdout() as stdout:
+        with capture_stdout() as stdout:
             self._run_list(album=True)
         self.assertGreater(len(stdout.getvalue()), 0)
 
     def test_list_album_path(self):
-        with captureStdout() as stdout:
+        with capture_stdout() as stdout:
             self._run_list(album=True, fmt='$path')
         self.assertEqual(stdout.getvalue().strip(), u'xxx')
 
     def test_list_album_omits_title(self):
-        with captureStdout() as stdout:
+        with capture_stdout() as stdout:
             self._run_list(album=True)
         self.assertNotIn(u'the title', stdout.getvalue())
 
     def test_list_uses_track_artist(self):
-        with captureStdout() as stdout:
+        with capture_stdout() as stdout:
             self._run_list()
         self.assertIn(u'the artist', stdout.getvalue())
         self.assertNotIn(u'the album artist', stdout.getvalue())
 
     def test_list_album_uses_album_artist(self):
-        with captureStdout() as stdout:
+        with capture_stdout() as stdout:
             self._run_list(album=True)
         self.assertNotIn(u'the artist', stdout.getvalue())
         self.assertIn(u'the album artist', stdout.getvalue())
 
     def test_list_item_format_artist(self):
-        with captureStdout() as stdout:
+        with capture_stdout() as stdout:
             self._run_list(fmt='$artist')
         self.assertIn(u'the artist', stdout.getvalue())
 
     def test_list_item_format_multiple(self):
-        with captureStdout() as stdout:
+        with capture_stdout() as stdout:
             self._run_list(fmt='$artist - $album - $year')
         self.assertEqual(u'the artist - the album - 0001',
                          stdout.getvalue().strip())
 
     def test_list_album_format(self):
-        with captureStdout() as stdout:
+        with capture_stdout() as stdout:
             self._run_list(album=True, fmt='$genre')
         self.assertIn(u'the genre', stdout.getvalue())
         self.assertNotIn(u'the album', stdout.getvalue())

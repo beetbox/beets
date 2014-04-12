@@ -14,7 +14,7 @@
 
 import os.path
 from _common import unittest
-from helper import TestHelper, controlStdin
+from helper import TestHelper, control_stdin
 
 class ImportConvertTest(unittest.TestCase, TestHelper):
 
@@ -76,7 +76,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
         self.unload_plugins()
 
     def test_convert(self):
-        with controlStdin('y'):
+        with control_stdin('y'):
             self.run_command('convert', self.item.path)
         converted = os.path.join(self.convert_dest, 'converted.mp3')
         self.assertTrue(os.path.isfile(converted))
@@ -84,7 +84,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
     def test_convert_keep_new(self):
         self.assertEqual(os.path.splitext(self.item.path)[1], '.ogg')
 
-        with controlStdin('y'):
+        with control_stdin('y'):
             self.run_command('convert', '--keep-new', self.item.path)
 
         self.item.load()

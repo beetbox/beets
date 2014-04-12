@@ -9,7 +9,7 @@ from beets import config
 
 import _common
 from _common import unittest
-from helper import TestHelper, captureStdout
+from helper import TestHelper, capture_stdout
 
 
 class ConfigCommandTest(unittest.TestCase, TestHelper):
@@ -36,13 +36,13 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         rmtree(self.temp_dir)
 
     def test_show_user_config(self):
-        with captureStdout() as output:
+        with capture_stdout() as output:
             self.run_command('config')
         output = yaml.load(output.getvalue())
         self.assertEqual(output['option'], 'value')
 
     def test_show_user_config_with_defaults(self):
-        with captureStdout() as output:
+        with capture_stdout() as output:
             self.run_command('config', '-d')
         output = yaml.load(output.getvalue())
         self.assertEqual(output['option'], 'value')
@@ -50,21 +50,21 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         self.assertEqual(output['import']['timid'], False)
 
     def test_show_user_config_with_cli(self):
-        with captureStdout() as output:
+        with capture_stdout() as output:
             self.run_command('--config', self.cli_config_path, 'config')
         output = yaml.load(output.getvalue())
         self.assertEqual(output['library'], 'lib')
         self.assertEqual(output['option'], 'cli overwrite')
 
     def test_config_paths(self):
-        with captureStdout() as output:
+        with capture_stdout() as output:
             self.run_command('config', '-p')
         paths = output.getvalue().split('\n')
         self.assertEqual(len(paths), 2)
         self.assertEqual(paths[0], self.config_path)
 
     def test_config_paths_with_cli(self):
-        with captureStdout() as output:
+        with capture_stdout() as output:
             self.run_command('--config', self.cli_config_path, 'config', '-p')
         paths = output.getvalue().split('\n')
         self.assertEqual(len(paths), 3)

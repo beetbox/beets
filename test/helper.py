@@ -32,10 +32,10 @@ import _common
 
 
 @contextmanager
-def controlStdin(input=None):
+def control_stdin(input=None):
     """Sends ``input`` to stdin.
 
-    >>> with controlStdin('yes'):
+    >>> with control_stdin('yes'):
     ...     input()
     'yes'
     """
@@ -49,10 +49,10 @@ def controlStdin(input=None):
 
 
 @contextmanager
-def captureStdout():
+def capture_stdout():
     """Save stdout in a StringIO.
 
-    >>> with captureStdout() as output:
+    >>> with capture_stdout() as output:
     ...     print('spam')
     ...
     >>> output.getvalue()
