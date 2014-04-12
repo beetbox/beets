@@ -14,8 +14,8 @@ New stuff:
   with GStreamer as well the mp3gain programs. This enables ReplayGain
   calculation for any audio format.
 * :doc:`/plugins/lyrics`: Better handling of songs whose title contain a 
-featured artist. Songs combinations are resolved now (all lyrics are appended).
-Thanks to KraYmer and paulp. 
+  featured artist. Songs combinations are resolved now (all lyrics are 
+  appended). Thanks to KraYmer and paulp. 
 * Add support for `initial_key` as field in the library and tag for
   media files. When the user sets this field with ``beet modify
   initial_key=Am`` the media files will reflect this in their tags. The
