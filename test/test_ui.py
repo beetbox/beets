@@ -21,6 +21,8 @@ import subprocess
 
 import _common
 from _common import unittest
+from helper import captureStdout
+
 from beets import library
 from beets import ui
 from beets.ui import commands
@@ -33,85 +35,81 @@ from beets import plugins
 from beets.util.confit import ConfigError
 
 
-class ListTest(_common.TestCase):
+class ListTest(unittest.TestCase):
     def setUp(self):
-        super(ListTest, self).setUp()
-        self.io.install()
-
         self.lib = library.Library(':memory:')
-        i = _common.item()
-        i.path = 'xxx/yyy'
-        self.lib.add(i)
-        self.lib.add_album([i])
-        self.item = i
+        self.item = _common.item()
+        self.item.path = 'xxx/yyy'
+        self.lib.add(self.item)
+        self.lib.add_album([self.item])
 
     def _run_list(self, query='', album=False, path=False, fmt=None):
         commands.list_items(self.lib, query, album, fmt)
 
     def test_list_outputs_item(self):
-        self._run_list()
-        out = self.io.getoutput()
-        self.assertTrue(u'the title' in out)
+        with captureStdout() as stdout:
+            self._run_list()
+        self.assertIn(u'the title', stdout.getvalue())
 
     def test_list_unicode_query(self):
         self.item.title = u'na\xefve'
         self.item.store()
         self.lib._connection().commit()
 
-        self._run_list([u'na\xefve'])
-        out = self.io.getoutput()
-        self.assertTrue(u'na\xefve' in out.decode(self.io.stdout.encoding))
+        with captureStdout() as stdout:
+            self._run_list([u'na\xefve'])
+        out = stdout.getvalue()
+        self.assertTrue(u'na\xefve' in out.decode(stdout.encoding))
 
     def test_list_item_path(self):
-        self._run_list(fmt='$path')
-        out = self.io.getoutput()
-        self.assertEqual(out.strip(), u'xxx/yyy')
+        with captureStdout() as stdout:
+            self._run_list(fmt='$path')
+        self.assertEqual(stdout.getvalue().strip(), u'xxx/yyy')
 
     def test_list_album_outputs_something(self):
-        self._run_list(album=True)
-        out = self.io.getoutput()
-        self.assertGreater(len(out), 0)
+        with captureStdout() as stdout:
+            self._run_list(album=True)
+        self.assertGreater(len(stdout.getvalue()), 0)
 
     def test_list_album_path(self):
-        self._run_list(album=True, fmt='$path')
-        out = self.io.getoutput()
-        self.assertEqual(out.strip(), u'xxx')
+        with captureStdout() as stdout:
+            self._run_list(album=True, fmt='$path')
+        self.assertEqual(stdout.getvalue().strip(), u'xxx')
 
     def test_list_album_omits_title(self):
-        self._run_list(album=True)
-        out = self.io.getoutput()
-        self.assertTrue(u'the title' not in out)
+        with captureStdout() as stdout:
+            self._run_list(album=True)
+        self.assertNotIn(u'the title', stdout.getvalue())
 
     def test_list_uses_track_artist(self):
-        self._run_list()
-        out = self.io.getoutput()
-        self.assertTrue(u'the artist' in out)
-        self.assertTrue(u'the album artist' not in out)
+        with captureStdout() as stdout:
+            self._run_list()
+        self.assertIn(u'the artist', stdout.getvalue())
+        self.assertNotIn(u'the album artist', stdout.getvalue())
 
     def test_list_album_uses_album_artist(self):
-        self._run_list(album=True)
-        out = self.io.getoutput()
-        self.assertTrue(u'the artist' not in out)
-        self.assertTrue(u'the album artist' in out)
+        with captureStdout() as stdout:
+            self._run_list(album=True)
+        self.assertNotIn(u'the artist', stdout.getvalue())
+        self.assertIn(u'the album artist', stdout.getvalue())
 
     def test_list_item_format_artist(self):
-        self._run_list(fmt='$artist')
-        out = self.io.getoutput()
-        self.assertTrue(u'the artist' in out)
+        with captureStdout() as stdout:
+            self._run_list(fmt='$artist')
+        self.assertIn(u'the artist', stdout.getvalue())
 
     def test_list_item_format_multiple(self):
-        self._run_list(fmt='$artist - $album - $year')
-        out = self.io.getoutput()
-        self.assertTrue(u'1' in out)
-        self.assertTrue(u'the album' in out)
-        self.assertTrue(u'the artist' in out)
-        self.assertEqual(u'the artist - the album - 0001', out.strip())
+        with captureStdout() as stdout:
+            self._run_list(fmt='$artist - $album - $year')
+        self.assertEqual(u'the artist - the album - 0001',
+                         stdout.getvalue().strip())
 
     def test_list_album_format(self):
-        self._run_list(album=True, fmt='$genre')
-        out = self.io.getoutput()
-        self.assertTrue(u'the genre' in out)
-        self.assertTrue(u'the album' not in out)
+        with captureStdout() as stdout:
+            self._run_list(album=True, fmt='$genre')
+        self.assertIn(u'the genre', stdout.getvalue())
+        self.assertNotIn(u'the album', stdout.getvalue())
+
 
 class RemoveTest(_common.TestCase):
     def setUp(self):

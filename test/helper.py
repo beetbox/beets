@@ -48,6 +48,25 @@ def controlStdin(input=None):
         sys.stdin = org
 
 
+@contextmanager
+def captureStdout():
+    """Save stdout in a StringIO.
+
+    >>> with captureStdout() as output:
+    ...     print('spam')
+    ...
+    >>> output.getvalue()
+    'spam'
+    """
+    org = sys.stdout
+    sys.stdout = StringIO()
+    sys.stdout.encoding = 'utf8'
+    try:
+        yield sys.stdout
+    finally:
+        sys.stdout = org
+
+
 class TestHelper(object):
     """Helper mixin for high-level cli and plugin tests.
 

@@ -1,21 +1,21 @@
 import os
 import yaml
+from mock import patch
+from tempfile import mkdtemp
+from shutil import rmtree
 
 from beets import ui
 from beets import config
-from beets.library import Library
 
 import _common
 from _common import unittest
-from helper import TestHelper
+from helper import TestHelper, captureStdout
 
 
-class ConfigCommandTest(_common.TestCase, TestHelper):
+class ConfigCommandTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
-        super(ConfigCommandTest, self).setUp()
-        self.io.install()
-
+        self.temp_dir = mkdtemp()
         if 'EDITOR' in os.environ:
             del os.environ['EDITOR']
 
@@ -33,88 +33,77 @@ class ConfigCommandTest(_common.TestCase, TestHelper):
         config._materialized = False
 
     def tearDown(self):
-        super(ConfigCommandTest, self).tearDown()
-        self.execlp_restore()
+        rmtree(self.temp_dir)
 
     def test_show_user_config(self):
-        self.run_command('config')
-        output = yaml.load(self.io.getoutput())
+        with captureStdout() as output:
+            self.run_command('config')
+        output = yaml.load(output.getvalue())
         self.assertEqual(output['option'], 'value')
 
     def test_show_user_config_with_defaults(self):
-        self.run_command('config', '-d')
-        output = yaml.load(self.io.getoutput())
+        with captureStdout() as output:
+            self.run_command('config', '-d')
+        output = yaml.load(output.getvalue())
         self.assertEqual(output['option'], 'value')
         self.assertEqual(output['library'], 'lib')
         self.assertEqual(output['import']['timid'], False)
 
     def test_show_user_config_with_cli(self):
-        self.run_command('--config', self.cli_config_path, 'config')
-        output = yaml.load(self.io.getoutput())
+        with captureStdout() as output:
+            self.run_command('--config', self.cli_config_path, 'config')
+        output = yaml.load(output.getvalue())
         self.assertEqual(output['library'], 'lib')
         self.assertEqual(output['option'], 'cli overwrite')
 
     def test_config_paths(self):
-        self.run_command('config', '-p')
-        paths = self.io.getoutput().split('\n')
+        with captureStdout() as output:
+            self.run_command('config', '-p')
+        paths = output.getvalue().split('\n')
         self.assertEqual(len(paths), 2)
         self.assertEqual(paths[0], self.config_path)
 
     def test_config_paths_with_cli(self):
-        self.run_command('--config', self.cli_config_path, 'config', '-p')
-        paths = self.io.getoutput().split('\n')
+        with captureStdout() as output:
+            self.run_command('--config', self.cli_config_path, 'config', '-p')
+        paths = output.getvalue().split('\n')
         self.assertEqual(len(paths), 3)
         self.assertEqual(paths[0], self.cli_config_path)
 
     def test_edit_config_with_editor_env(self):
-        self.execlp_stub()
         os.environ['EDITOR'] = 'myeditor'
-
-        self.run_command('config', '-e')
-        self.assertEqual(self._execlp_call, ['myeditor', self.config_path])
+        with patch('os.execlp') as execlp:
+            self.run_command('config', '-e')
+        execlp.assert_called_once_with(
+            'myeditor', 'myeditor', self.config_path)
 
     def test_edit_config_with_open(self):
-        self.execlp_stub()
-
         with _common.system_mock('Darwin'):
-            self.run_command('config', '-e')
-        self.assertEqual(self._execlp_call, ['open', '-n', self.config_path])
-
+            with patch('os.execlp') as execlp:
+                self.run_command('config', '-e')
+        execlp.assert_called_once_with(
+            'open', 'open', '-n', self.config_path)
 
     def test_edit_config_with_xdg_open(self):
-        self.execlp_stub()
-
         with _common.system_mock('Linux'):
-            self.run_command('config', '-e')
-        self.assertEqual(self._execlp_call, ['xdg-open', self.config_path])
+            with patch('os.execlp') as execlp:
+                self.run_command('config', '-e')
+        execlp.assert_called_once_with(
+            'xdg-open', 'xdg-open', self.config_path)
 
     def test_edit_config_with_windows_exec(self):
-        self.execlp_stub()
-
         with _common.system_mock('Windows'):
-            self.run_command('config', '-e')
-        self.assertEqual(self._execlp_call, [self.config_path])
+            with patch('os.execlp') as execlp:
+                self.run_command('config', '-e')
+        execlp.assert_called_once_with(self.config_path, self.config_path)
 
     def test_config_editor_not_found(self):
-        def raise_os_error(*args):
-            raise OSError
-        os.execlp = raise_os_error
         with self.assertRaises(ui.UserError) as user_error:
-            self.run_command('config', '-e')
+            with patch('os.execlp') as execlp:
+                execlp.side_effect = OSError()
+                self.run_command('config', '-e')
         self.assertIn('Could not edit configuration',
                       str(user_error.exception.args[0]))
-
-    def execlp_stub(self):
-        self._execlp_call = None
-        def _execlp_stub(file, *args):
-            self._execlp_call = [file] + list(args[1:])
-
-        self._orig_execlp = os.execlp
-        os.execlp = _execlp_stub
-
-    def execlp_restore(self):
-        if hasattr(self, '_orig_execlp'):
-            os.execlp = self._orig_execlp
 
 
 def suite():
