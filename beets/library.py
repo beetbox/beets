@@ -58,22 +58,6 @@ class PathQuery(dbcore.FieldQuery):
                (file_blob, dir_pat)
 
 
-class SingletonQuery(dbcore.Query):
-    """Matches either singleton or non-singleton items."""
-    def __init__(self, sense):
-        self.sense = sense
-
-    def clause(self):
-        if self.sense:
-            return "album_id ISNULL", ()
-        else:
-            return "NOT album_id ISNULL", ()
-
-    def match(self, item):
-        return (not item.album_id) == self.sense
-
-
-
 # Library-specific field types.
 
 
@@ -278,7 +262,9 @@ class Item(LibModel):
 
     @classmethod
     def _getters(cls):
-        return plugins.item_field_getters()
+        getters = plugins.item_field_getters()
+        getters['singleton'] = Item.singleton
+        return getters
 
     @classmethod
     def from_path(cls, path):
@@ -305,8 +291,13 @@ class Item(LibModel):
 
         super(Item, self).__setitem__(key, value)
 
+    def singleton(self):
+        """Returns a boolean indicating whether this item is a singleton
+        (doesn't belong to an album)"""
+        return self.album_id is None
+
     def update(self, values):
-        """Sett all key/value pairs in the mapping. If mtime is
+        """Set all key/value pairs in the mapping. If mtime is
         specified, it is not reset (as it might otherwise be).
         """
         super(Item, self).update(values)
@@ -932,14 +923,7 @@ def construct_query_part(query_part, model_cls):
             return query_class(pattern)
 
     key = key.lower()
-
-    # Singleton query (not a real field).
-    if key == 'singleton':
-        return SingletonQuery(util.str2bool(pattern))
-
-    # Other field.
-    else:
-        return query_class(key.lower(), pattern, key in model_cls._fields)
+    return query_class(key.lower(), pattern, key in model_cls._fields)
 
 
 def query_from_strings(query_cls, model_cls, query_parts):

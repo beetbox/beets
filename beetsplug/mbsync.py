@@ -49,7 +49,7 @@ def mbsync_singletons(lib, query, move, pretend, write):
     """Synchronize matching singleton items.
     """
     singletons_query = library.get_query(query, library.Item)
-    singletons_query.subqueries.append(library.SingletonQuery(True))
+    singletons_query.subqueries.append(library.BooleanQuery('singleton', True))
     for s in lib.items(singletons_query):
         if not s.mb_trackid:
             log.info(u'Skipping singleton {0}: has no mb_trackid'
