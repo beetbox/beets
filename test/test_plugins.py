@@ -31,7 +31,7 @@ class LogCapture(logging.Handler):
         self.logger.setLevel(level)
 
     def emit(self, record):
-        self.logs.append((record.levelno, record.message))
+        self.logs.append((record.levelno, record.getMessage()))
 
     def __enter__(self):
         self.logger.addHandler(self)
