@@ -209,8 +209,10 @@ def string_dist(str1, str2):
     an edit distance, normalized by the string length, with a number of
     tweaks that reflect intuition about text.
     """
-    if str1 is None and str2 is None: return 0.0
-    if str1 is None or str2 is None:  return 1.0
+    if str1 is None and str2 is None:
+        return 0.0
+    if str1 is None or str2 is None:
+        return 1.0
 
     str1 = str1.lower()
     str2 = str2.lower()
@@ -284,7 +286,6 @@ class Distance(object):
     def __init__(self):
         self._penalties = {}
 
-
     @LazyClassProperty
     def _weights(cls):
         """A dictionary from keys to floating-point weights.
@@ -294,7 +295,6 @@ class Distance(object):
         for key in weights_view.keys():
             weights[key] = weights_view[key].as_number()
         return weights
-
 
     # Access the components and their aggregates.
 
@@ -341,7 +341,6 @@ class Distance(object):
         # still get the items with the biggest distance first.
         return sorted(list_, key=lambda (key, dist): (0 - dist, key))
 
-
     # Behave like a float.
 
     def __cmp__(self, other):
@@ -349,12 +348,12 @@ class Distance(object):
 
     def __float__(self):
         return self.distance
+
     def __sub__(self, other):
         return self.distance - other
 
     def __rsub__(self, other):
         return other - self.distance
-
 
     # Behave like a dict.
 
@@ -381,10 +380,10 @@ class Distance(object):
         """
         if not isinstance(dist, Distance):
             raise ValueError(
-                    '`dist` must be a Distance object. It is: %r' % dist)
+                '`dist` must be a Distance object, not {0}'.format(type(dist))
+            )
         for key, penalties in dist._penalties.iteritems():
             self._penalties.setdefault(key, []).extend(penalties)
-
 
     # Adding components.
 
@@ -405,7 +404,8 @@ class Distance(object):
         """
         if not 0.0 <= dist <= 1.0:
             raise ValueError(
-                    '`dist` must be between 0.0 and 1.0. It is: %r' % dist)
+                '`dist` must be between 0.0 and 1.0, not {0}'.format(dist)
+            )
         self._penalties.setdefault(key, []).append(dist)
 
     def add_equality(self, key, value, options):

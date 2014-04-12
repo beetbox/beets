@@ -50,14 +50,17 @@ class OrderedEnum(enum.Enum):
         if self.__class__ is other.__class__:
             return self.value >= other.value
         return NotImplemented
+
     def __gt__(self, other):
         if self.__class__ is other.__class__:
             return self.value > other.value
         return NotImplemented
+
     def __le__(self, other):
         if self.__class__ is other.__class__:
             return self.value <= other.value
         return NotImplemented
+
     def __lt__(self, other):
         if self.__class__ is other.__class__:
             return self.value < other.value
@@ -100,6 +103,7 @@ def current_metadata(items):
 
     return likelies, consensus
 
+
 def assign_items(items, tracks):
     """Given a list of Items and a list of TrackInfo objects, find the
     best mapping between them. Returns a mapping from Items to TrackInfo
@@ -126,11 +130,13 @@ def assign_items(items, tracks):
     extra_tracks.sort(key=lambda t: (t.index, t.title))
     return mapping, extra_items, extra_tracks
 
+
 def track_index_changed(item, track_info):
     """Returns True if the item and track info index is different. Tolerates
     per disc and per release numbering.
     """
     return item.track not in (track_info.medium_index, track_info.index)
+
 
 def track_distance(item, track_info, incl_artist=False):
     """Determines the significance of a track metadata change. Returns a
@@ -142,7 +148,7 @@ def track_distance(item, track_info, incl_artist=False):
     # Length.
     if track_info.length:
         diff = abs(item.length - track_info.length) - \
-               config['match']['track_length_grace'].as_number()
+            config['match']['track_length_grace'].as_number()
         dist.add_ratio('track_length', diff,
                        config['match']['track_length_max'].as_number())
 
@@ -166,6 +172,7 @@ def track_distance(item, track_info, incl_artist=False):
     dist.update(plugins.track_distance(item, track_info))
 
     return dist
+
 
 def distance(items, album_info, mapping):
     """Determines how "significant" an album metadata change would be.
@@ -272,6 +279,7 @@ def distance(items, album_info, mapping):
 
     return dist
 
+
 def match_by_id(items):
     """If the items are tagged with a MusicBrainz album ID, returns an
     AlbumInfo object for the corresponding album. Otherwise, returns
@@ -284,12 +292,13 @@ def match_by_id(items):
         return None
 
     # If all album IDs are equal, look up the album.
-    if bool(reduce(lambda x,y: x if x == y else (), albumids)):
+    if bool(reduce(lambda x, y: x if x == y else (), albumids)):
         albumid = albumids[0]
         log.debug('Searching for discovered album ID: ' + albumid)
         return hooks.album_for_mbid(albumid)
     else:
         log.debug('No album ID consensus.')
+
 
 def _recommendation(results):
     """Given a sorted list of AlbumMatch or TrackMatch objects, return a
@@ -341,6 +350,7 @@ def _recommendation(results):
 
     return rec
 
+
 def _add_candidate(items, results, info):
     """Given a candidate AlbumInfo object, attempt to add the candidate
     to the output dictionary of AlbumMatch objects. This involves
@@ -370,6 +380,7 @@ def _add_candidate(items, results, info):
     log.debug('Success. Distance: %f' % dist)
     results[info.album_id] = hooks.AlbumMatch(dist, info, mapping,
                                               extra_items, extra_tracks)
+
 
 def tag_album(items, search_artist=None, search_album=None,
               search_id=None):
@@ -422,8 +433,8 @@ def tag_album(items, search_artist=None, search_album=None,
 
         # Is this album likely to be a "various artist" release?
         va_likely = ((not consensus['artist']) or
-                    (search_artist.lower() in VA_ARTISTS) or
-                    any(item.comp for item in items))
+                     (search_artist.lower() in VA_ARTISTS) or
+                     any(item.comp for item in items))
         log.debug(u'Album might be VA: %s' % str(va_likely))
 
         # Get the results from the data sources.
@@ -438,6 +449,7 @@ def tag_album(items, search_artist=None, search_album=None,
     candidates = sorted(candidates.itervalues())
     rec = _recommendation(candidates)
     return cur_artist, cur_album, candidates, rec
+
 
 def tag_item(item, search_artist=None, search_title=None,
              search_id=None):
@@ -458,7 +470,7 @@ def tag_item(item, search_artist=None, search_title=None,
         for track_info in hooks.tracks_for_id(trackid):
             dist = track_distance(item, track_info, incl_artist=True)
             candidates[track_info.track_id] = \
-                    hooks.TrackMatch(dist, track_info)
+                hooks.TrackMatch(dist, track_info)
             # If this is a good match, then don't keep searching.
             rec = _recommendation(candidates.values())
             if rec == Recommendation.strong and not config['import']['timid']:

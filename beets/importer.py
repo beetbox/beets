@@ -41,9 +41,12 @@ action = Enum('action',
 QUEUE_SIZE = 128
 SINGLE_ARTIST_THRESH = 0.25
 VARIOUS_ARTISTS = u'Various Artists'
+PROGRESS_KEY = 'tagprogress'
+HISTORY_KEY = 'taghistory'
 
 # Global logger.
 log = logging.getLogger('beets')
+
 
 class ImportAbort(Exception):
     """Raised when the user aborts the tagging operation.
@@ -76,6 +79,7 @@ def _duplicate_check(lib, task):
             found_albums.append(album_cand)
     return found_albums
 
+
 def _item_duplicate_check(lib, task):
     """Check whether an item already exists in the library. Returns a
     list of Item objects.
@@ -95,6 +99,7 @@ def _item_duplicate_check(lib, task):
         found_items.append(other_item)
     return found_items
 
+
 def _infer_album_fields(task):
     """Given an album and an associated import task, massage the
     album-level metadata. This ensures that the album artist is set
@@ -108,8 +113,10 @@ def _infer_album_fields(task):
     if task.choice_flag == action.ASIS:
         # Taking metadata "as-is". Guess whether this album is VA.
         plur_albumartist, freq = util.plurality(
-                [i.albumartist or i.artist for i in task.items])
-        if freq == len(task.items) or (freq > 1 and
+            [i.albumartist or i.artist for i in task.items]
+        )
+        if freq == len(task.items) or \
+            (freq > 1 and
                 float(freq) / len(task.items) >= SINGLE_ARTIST_THRESH):
             # Single-artist album.
             changes['albumartist'] = plur_albumartist
@@ -142,11 +149,13 @@ def _infer_album_fields(task):
             for k, v in changes.iteritems():
                 setattr(item, k, v)
 
+
 def _resume():
     """Check whether an import should resume and return a boolean or the
     string 'ask' indicating that the user should be queried.
     """
     return config['import']['resume'].as_choice([True, False, 'ask'])
+
 
 def _open_state():
     """Reads the state file, returning a dictionary."""
@@ -155,6 +164,8 @@ def _open_state():
             return pickle.load(f)
     except (IOError, EOFError):
         return {}
+
+
 def _save_state(state):
     """Writes the state dictionary out to disk."""
     try:
@@ -166,7 +177,7 @@ def _save_state(state):
 
 # Utilities for reading and writing the beets progress file, which
 # allows long tagging tasks to be resumed when they pause (or crash).
-PROGRESS_KEY = 'tagprogress'
+
 def progress_set(toppath, paths):
     """Record that tagging for the given `toppath` was successful up to
     `paths`. If paths is None, then clear the progress value (indicating
@@ -184,6 +195,8 @@ def progress_set(toppath, paths):
         state[PROGRESS_KEY][toppath] = paths
 
     _save_state(state)
+
+
 def progress_get(toppath):
     """Get the last successfully tagged subpath of toppath. If toppath
     has no progress information, returns None.
@@ -197,7 +210,7 @@ def progress_get(toppath):
 # Similarly, utilities for manipulating the "incremental" import log.
 # This keeps track of all directories that were ever imported, which
 # allows the importer to only import new stuff.
-HISTORY_KEY = 'taghistory'
+
 def history_add(paths):
     """Indicate that the import of the album in `paths` is completed and
     should not be repeated in incremental imports.
@@ -209,6 +222,8 @@ def history_add(paths):
     state[HISTORY_KEY].add(tuple(paths))
 
     _save_state(state)
+
+
 def history_get():
     """Get the set of completed path tuples in incremental imports.
     """
@@ -456,7 +471,6 @@ class ImportTask(object):
         if self.is_album and self.paths and not self.sentinel:
             history_add(self.paths)
 
-
     # Logical decisions.
 
     def should_write_tags(self):
@@ -473,7 +487,6 @@ class ImportTask(object):
         sentinel or it has been marked for skipping.
         """
         return self.sentinel or self.choice_flag == action.SKIP
-
 
     # Convenient data.
 
@@ -511,7 +524,6 @@ class ImportTask(object):
                 assert False
         else:
             return [self.item]
-
 
     # Utilities.
 
@@ -622,6 +634,7 @@ def read_tasks(session):
         log.info(u'Incremental import: skipped %i directories.' %
                  incremental_skipped)
 
+
 def query_tasks(session):
     """A generator that works as a drop-in-replacement for read_tasks.
     Instead of finding files from the filesystem, a query is used to
@@ -639,6 +652,7 @@ def query_tasks(session):
                       (album.id, album.albumartist, album.album))
             items = list(album.items())
             yield ImportTask(None, [album.item_dir()], items)
+
 
 def initial_lookup(session):
     """A coroutine for performing the initial MusicBrainz lookup for an
@@ -658,6 +672,7 @@ def initial_lookup(session):
         task.set_candidates(
             *autotag.tag_album(task.items)
         )
+
 
 def user_query(session):
     """A coroutine for interfacing with the user about the tagging
@@ -726,6 +741,7 @@ def user_query(session):
                 session.log_choice(task, True)
             recent.add(ident)
 
+
 def show_progress(session):
     """This stage replaces the initial_lookup and user_query stages
     when the importer is run without autotagging. It displays the album
@@ -742,6 +758,7 @@ def show_progress(session):
         # Behave as if ASIS were selected.
         task.set_null_candidates()
         task.set_choice(action.ASIS)
+
 
 def apply_choices(session):
     """A coroutine for applying changes to albums and singletons during
@@ -830,6 +847,7 @@ def apply_choices(session):
                 for item in items:
                     session.lib.add(item)
 
+
 def plugin_stage(session, func):
     """A coroutine (pipeline stage) that calls the given function with
     each non-skipped import task. These stages occur between applying
@@ -845,6 +863,7 @@ def plugin_stage(session, func):
         # Stage may modify DB, so re-load cached item data.
         for item in task.imported_items():
             item.load()
+
 
 def manipulate_files(session):
     """A coroutine (pipeline stage) that performs necessary file
@@ -904,6 +923,7 @@ def manipulate_files(session):
 
         # Plugin event.
         plugins.send('import_task_files', session=session, task=task)
+
 
 def finalize(session):
     """A coroutine that finishes up importer tasks. In particular, the
@@ -969,6 +989,7 @@ def item_lookup(session):
 
         task.set_item_candidates(*autotag.tag_item(task.item))
 
+
 def item_query(session):
     """A coroutine that queries the user for input on single-item
     lookups.
@@ -992,6 +1013,7 @@ def item_query(session):
                 session.resolve_duplicate(task)
                 session.log_choice(task, True)
             recent.add(ident)
+
 
 def item_progress(session):
     """Skips the lookup and query stages in a non-autotagged singleton
