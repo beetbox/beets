@@ -32,6 +32,8 @@ Fixes:
   ID. Using an invalid ID (of any kind---Discogs IDs can be used there too) at
   the "Enter ID:" importer prompt now just silently returns no results. More
   info is in the verbose logs.
+* :doc:`/plugins/mbsync`: Fix application of album-level metadata. Due to a
+  regression a few releases ago, only track-level metadata was being updated.
 
 .. _enum34: https://pypi.python.org/pypi/enum34
 .. _enum: https://docs.python.org/3.4/library/enum.html
