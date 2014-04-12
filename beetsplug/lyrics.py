@@ -64,16 +64,19 @@ def fetch_url(url):
         log.debug(u'failed to fetch: {0} ({1})'.format(url, unicode(exc)))
         return None
 
+
 def unescape(text):
     """Resolves &#xxx; HTML entities (and some others)."""
     if isinstance(text, str):
         text = text.decode('utf8', 'ignore')
     out = text.replace(u'&nbsp;', u' ')
+
     def replchar(m):
         num = m.group(1)
         return unichr(int(num))
     out = re.sub(u"&#(\d+);", replchar, out)
     return out
+
 
 def extract_text(html, starttag):
     """Extract the text from a <DIV> tag in the HTML starting with
@@ -90,11 +93,11 @@ def extract_text(html, starttag):
     parts = []
     pos = 0
     for match in DIV_RE.finditer(html):
-        if match.group(1): # Closing tag.
+        if match.group(1):  # Closing tag.
             level -= 1
             if level == 0:
                 pos = match.end()
-        else: # Opening tag.
+        else:  # Opening tag.
             if level == 0:
                 parts.append(html[pos:match.start()])
 
@@ -109,6 +112,7 @@ def extract_text(html, starttag):
     lyrics = ''.join(parts)
     return strip_cruft(lyrics)
 
+
 def strip_cruft(lyrics, wscollapse=True):
     """Clean up HTML from an extracted lyrics string. For example, <BR>
     tags are replaced with newlines.
@@ -116,14 +120,45 @@ def strip_cruft(lyrics, wscollapse=True):
     lyrics = COMMENT_RE.sub('', lyrics)
     lyrics = unescape(lyrics)
     if wscollapse:
-        lyrics = re.sub(r'\s+', ' ', lyrics) # Whitespace collapse.
-    lyrics = BREAK_RE.sub('\n', lyrics) # <BR> newlines.
+        lyrics = re.sub(r'\s+', ' ', lyrics)  # Whitespace collapse.
+    lyrics = BREAK_RE.sub('\n', lyrics)  # <BR> newlines.
     lyrics = re.sub(r'\n +', '\n', lyrics)
     lyrics = re.sub(r' +\n', '\n', lyrics)
-    lyrics = TAG_RE.sub('', lyrics) # Strip remaining HTML tags.
-    lyrics = lyrics.replace('\r','\n')
+    lyrics = TAG_RE.sub('', lyrics)  # Strip remaining HTML tags.
+    lyrics = lyrics.replace('\r', '\n')
     lyrics = lyrics.strip()
     return lyrics
+
+
+def split_multi_titles(s):
+    """Check for a dual song (e.g. Pink Floyd - Speak to Me / Breathe)
+    and returns titles as a list or None if song is not dual."""
+    if '/' not in s:
+        return None
+    return [x.strip() for x in s.split('/')]
+
+
+def remove_ft_artist_suffix(s):
+    """Remove featuring artist from string"""
+    
+    # Remove "featuring" suffixes 
+    pattern = r"(.*?) (&|\b(and|feat(uring)?\b))"
+    match = re.search(pattern, s, re.IGNORECASE)
+    if match:
+        s = match.group(1)
+    return s
+
+
+def remove_parenthesized_suffix(s):
+    """Remove parenthesized suffix from string common examples are (live), 
+    (remix), (acoustic)"""
+
+    pattern = r"(.+?)\s+[(].*[)]$"
+    match = re.search(pattern, s, re.IGNORECASE)
+    if match:
+        s = match.group(1)
+    return s
+
 
 def _encode(s):
     """Encode the string for inclusion in a URL (common to both
@@ -139,6 +174,7 @@ def _encode(s):
 # LyricsWiki.
 
 LYRICSWIKI_URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
+
 def _lw_encode(s):
     s = re.sub(r'\s+', '_', s)
     s = s.replace("<", "Less_Than")
@@ -147,6 +183,7 @@ def _lw_encode(s):
     s = re.sub(r'[\[\{]', '(', s)
     s = re.sub(r'[\]\}]', ')', s)
     return _encode(s)
+
 
 def fetch_lyricswiki(artist, title):
     """Fetch lyrics from LyricsWiki."""
@@ -167,10 +204,12 @@ LYRICSCOM_NOT_FOUND = (
     'Sorry, we do not have the lyric',
     'Submit Lyrics',
 )
+
 def _lc_encode(s):
     s = re.sub(r'[^\w\s-]', '', s)
     s = re.sub(r'\s+', '-', s)
     return _encode(s).lower()
+
 
 def fetch_lyricscom(artist, title):
     """Fetch lyrics from Lyrics.com."""
@@ -227,12 +266,13 @@ def is_page_candidate(urlLink, urlTitle, title, artist):
         return True
     # or try extracting song title from URL title and check if
     # they are close enough
-    tokens = [by+'%20'+artist for by in BY_TRANS] + \
+    tokens = [by + '%20' + artist for by in BY_TRANS] + \
              [artist, sitename, sitename.replace('www.','')] + LYRICS_TRANS
-    songTitle = re.sub(u'(%s)' % u'|'.join(tokens) ,u'', urlTitle).strip('%20')
+    songTitle = re.sub(u'(%s)' % u'|'.join(tokens) , u'', urlTitle).strip('%20')
 
     typoRatio = .8
     return difflib.SequenceMatcher(None, songTitle, title).ratio() >= typoRatio
+
 
 def insert_line_feeds(text):
     """Insert newlines before upper-case characters.
@@ -242,6 +282,7 @@ def insert_line_feeds(text):
         ltoken = list(tokensStr[idx])
         tokensStr[idx] = ltoken[0] + '\n' + ltoken[1]
     return ''.join(tokensStr)
+
 
 def sanitize_lyrics(text):
     """Clean text, returning raw lyrics as output or None if it happens
@@ -254,13 +295,14 @@ def sanitize_lyrics(text):
     if '\n' not in text:
         text = insert_line_feeds(text)
 
-    while text.count('\n\n') > text.count('\n')/4:
+    while text.count('\n\n') > text.count('\n') / 4:
         # Remove first occurrence of \n for each sequence of \n
         text = re.sub(r'\n(\n+)', '\g<1>', text)
 
     text = re.sub(r'\n\n+', '\n\n', text)   # keep at most two \n in a row
 
     return text
+
 
 def is_lyrics(text, artist):
     """Determine whether the text seems to be valid lyrics.
@@ -290,6 +332,7 @@ def is_lyrics(text, artist):
 
     return len(badTriggers) < 2
 
+
 def scrape_lyrics_from_url(url):
     """Scrape lyrics from a URL. If no lyrics can be found, return None
     instead.
@@ -306,7 +349,7 @@ def scrape_lyrics_from_url(url):
 
     # Remove non relevant html parts
     [s.extract() for s in soup(['head', 'script'])]
-    comments = soup.findAll(text=lambda text:isinstance(text, Comment))
+    comments = soup.findAll(text=lambda text: isinstance(text, Comment))
     [s.extract() for s in comments]
 
     try:
@@ -315,7 +358,7 @@ def scrape_lyrics_from_url(url):
 
     except Exception, e:
         log.debug('Error %s when replacing containing marker by p marker' % e,
-            exc_info=True)
+                   exc_info=True)
 
     # Make better soup from current soup! The previous unclosed <p> sections
     # are now closed.  Use str() rather than prettify() as it's more
@@ -342,6 +385,7 @@ def scrape_lyrics_from_url(url):
         tagTokens = sorted(tagTokens, key=len, reverse=True)
         soup = BeautifulSoup(tagTokens[0])
         return unescape(tagTokens[0].strip("\n\r: "))
+
 
 def fetch_google(artist, title):
     """Fetch lyrics from Google search results.
@@ -378,6 +422,7 @@ def fetch_google(artist, title):
 
 # Plugin logic.
 
+
 class LyricsPlugin(BeetsPlugin):
     def __init__(self):
         super(LyricsPlugin, self).__init__()
@@ -393,6 +438,7 @@ class LyricsPlugin(BeetsPlugin):
 
         if self.config['google_API_key'].get():
             self.backends.insert(0, fetch_google)
+
 
     def commands(self):
         cmd = ui.Subcommand('lyrics', help='fetch song lyrics')
@@ -414,11 +460,14 @@ class LyricsPlugin(BeetsPlugin):
         cmd.func = func
         return [cmd]
 
-    # Auto-fetch lyrics on import.
+
     def imported(self, session, task):
+        """Auto-fetch lyrics on import"""
         if self.config['auto']:
             for item in task.imported_items():
-                self.fetch_item_lyrics(session.lib, logging.DEBUG, item, False, False)
+                self.fetch_item_lyrics(session.lib, logging.DEBUG, item, \
+                    False, False)
+
 
     def fetch_item_lyrics(self, lib, loglevel, item, write, force):
         """Fetch and store lyrics for a single item. If ``write``, then the
@@ -434,24 +483,42 @@ class LyricsPlugin(BeetsPlugin):
                               (item.artist, item.title))
             return
 
+        artist = remove_ft_artist_suffix(item.artist)
+        title  = remove_parenthesized_suffix(\
+                    remove_ft_artist_suffix(item.title))
+
         # Fetch lyrics.
-        lyrics = self.get_lyrics(item.artist, item.title)
+        lyrics = self.get_lyrics(artist, title)
+
+        if not lyrics:
+            # Check for a songs combinations 
+            # (e.g. Pink Floyd - Speak to Me / Breathe)
+            titles = split_multi_titles(title)
+            for t in titles:
+                lyrics_title = self.get_lyrics(artist, t)
+                if lyrics_title:
+                    if lyrics :
+                        lyrics += u"\n\n---\n\n%s" % lyrics_title
+                    else:
+                        lyrics = lyrics_title
+
         if not lyrics:
             log.log(loglevel, u'lyrics not found: %s - %s' %
-                              (item.artist, item.title))
+                              (artist, title))
             if fallback:
                 lyrics = fallback
             else:
                 return
         else:
-            log.log(loglevel, u'fetched lyrics: %s - %s' %
-                              (item.artist, item.title))
+            log.log(loglevel, u'fetched lyrics : %s - %s' %
+                              (artist, title))
 
         item.lyrics = lyrics
 
         if write:
             item.try_write()
         item.store()
+
 
     def get_lyrics(self, artist, title):
         """Fetch lyrics, trying each source in turn. Return a string or
@@ -471,4 +538,4 @@ class LyricsPlugin(BeetsPlugin):
                 log.debug(u'got lyrics from backend: {0}'.format(
                     backend.__name__
                 ))
-                return lyrics
+                return lyrics.strip()
