@@ -29,6 +29,7 @@ import errno
 import re
 import struct
 import traceback
+import os.path
 
 from beets import library
 from beets import plugins
@@ -896,6 +897,20 @@ def _configure(args):
         config.set_file(config_path)
     config.set_args(options)
 
+    # Configure the logger.
+    if config['verbose'].get(bool):
+        log.setLevel(logging.DEBUG)
+    else:
+        log.setLevel(logging.INFO)
+
+    config_path = config.user_config_path()
+    if os.path.isfile(config_path):
+        log.debug('user configuration: {0}'.format(
+            util.displayable_path(config_path)))
+    else:
+        log.debug('no user configuration found at {0}'.format(
+            util.displayable_path(config_path)))
+
     # Now add the plugin commands to the parser.
     _load_plugins()
     for cmd in plugins.commands():
@@ -927,11 +942,6 @@ def _raw_main(args, lib=None):
             ))
         plugins.send("library_opened", lib=lib)
 
-    # Configure the logger.
-    if config['verbose'].get(bool):
-        log.setLevel(logging.DEBUG)
-    else:
-        log.setLevel(logging.INFO)
     log.debug(u'data directory: {0}\n'
               u'library database: {1}\n'
               u'library directory: {2}'
