@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2014, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -139,9 +139,8 @@ def split_multi_titles(s):
 
 
 def remove_ft_artist_suffix(s):
-    """Remove featuring artist from string"""
-    
-    # Remove "featuring" suffixes 
+    """Remove any featuring artists from an artist string.
+    """
     pattern = r"(.*?) (&|\b(and|feat(uring)?\b))"
     match = re.search(pattern, s, re.IGNORECASE)
     if match:
@@ -150,9 +149,9 @@ def remove_ft_artist_suffix(s):
 
 
 def remove_parenthesized_suffix(s):
-    """Remove parenthesized suffix from string common examples are (live), 
-    (remix), (acoustic)"""
-
+    """Remove a parenthesized suffix from a title string. Common
+    examples include (live), (remix), and (acoustic).
+    """
     pattern = r"(.+?)\s+[(].*[)]$"
     match = re.search(pattern, s, re.IGNORECASE)
     if match:
@@ -295,7 +294,7 @@ def sanitize_lyrics(text):
     if '\n' not in text:
         text = insert_line_feeds(text)
 
-    while text.count('\n\n') > text.count('\n') / 4:
+    while text.count('\n\n') > text.count('\n') // 4:
         # Remove first occurrence of \n for each sequence of \n
         text = re.sub(r'\n(\n+)', '\g<1>', text)
 
@@ -462,7 +461,8 @@ class LyricsPlugin(BeetsPlugin):
 
 
     def imported(self, session, task):
-        """Auto-fetch lyrics on import"""
+        """Import hook for fetching lyrics automatically.
+        """
         if self.config['auto']:
             for item in task.imported_items():
                 self.fetch_item_lyrics(session.lib, logging.DEBUG, item, \
@@ -484,23 +484,25 @@ class LyricsPlugin(BeetsPlugin):
             return
 
         artist = remove_ft_artist_suffix(item.artist)
-        title  = remove_parenthesized_suffix(\
-                    remove_ft_artist_suffix(item.title))
+        title  = remove_parenthesized_suffix(
+                    remove_ft_artist_suffix(item.title)
+        )
 
         # Fetch lyrics.
         lyrics = self.get_lyrics(artist, title)
 
         if not lyrics:
-            # Check for a songs combinations 
+            # Check for combined title.
             # (e.g. Pink Floyd - Speak to Me / Breathe)
             titles = split_multi_titles(title)
-            for t in titles:
-                lyrics_title = self.get_lyrics(artist, t)
-                if lyrics_title:
-                    if lyrics :
-                        lyrics += u"\n\n---\n\n%s" % lyrics_title
-                    else:
-                        lyrics = lyrics_title
+            if titles:
+                for t in titles:
+                    lyrics_title = self.get_lyrics(artist, t)
+                    if lyrics_title:
+                        if lyrics :
+                            lyrics += u"\n\n---\n\n%s" % lyrics_title
+                        else:
+                            lyrics = lyrics_title
 
         if not lyrics:
             log.log(loglevel, u'lyrics not found: %s - %s' %
