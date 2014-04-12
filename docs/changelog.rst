@@ -18,6 +18,9 @@ New stuff:
   initial_key=Am`` the media files will reflect this in their tags. The
   :doc:`/plugins/echonest` plugin also sets this field if the data is
   available.
+* There is also a new :doc:`/plugins/keyfinder` that runs a command line
+  program to get the key from audio data and store it in the
+  `initial_key` field.
 
 Fixes:
 

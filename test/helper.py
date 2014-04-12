@@ -154,8 +154,12 @@ class TestHelper(object):
         import_dir = os.path.join(self.temp_dir, 'import')
         if not os.path.isdir(import_dir):
             os.mkdir(import_dir)
-        for fixture in glob(os.path.join(_common.RSRC, '*.mp3'))[0:file_count]:
-            shutil.copy(fixture, import_dir)
+
+        for i in range(file_count):
+            title = 'track {0}'.format(i)
+            src = os.path.join(_common.RSRC, 'full.mp3')
+            dest = os.path.join(import_dir, '{0}.mp3'.format(title))
+            shutil.copy(src, dest)
 
         config['import']['quiet'] = True
         config['import']['autotag'] = False

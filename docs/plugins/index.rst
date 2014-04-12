@@ -56,6 +56,7 @@ by typing ``beet version``.
    beatport
    fromfilename
    ftintitle
+   keyfinder
 
 Autotagger Extensions
 ---------------------
@@ -86,9 +87,12 @@ Metadata
   field.
 * :doc:`mpdstats`: Connect to `MPD`_ and update the beets library with play
   statistics (last_played, play_count, skip_count, rating).
+* :doc:`keyfinder`: Use the `KeyFinder`_ program to detect the musical
+  key from the audio.
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
 .. _the Echo Nest: http://www.echonest.com
+.. _KeyFinder: http://www.ibrahimshaath.co.uk/keyfinder/
 
 Path Formats
 ------------
