@@ -263,7 +263,7 @@ class Item(LibModel):
     @classmethod
     def _getters(cls):
         getters = plugins.item_field_getters()
-        getters['singleton'] = Item.singleton
+        getters['singleton'] = lambda i: i.album_id is None
         return getters
 
     @classmethod
@@ -290,11 +290,6 @@ class Item(LibModel):
             self.mtime = 0  # Reset mtime on dirty.
 
         super(Item, self).__setitem__(key, value)
-
-    def singleton(self):
-        """Returns a boolean indicating whether this item is a singleton
-        (doesn't belong to an album)"""
-        return self.album_id is None
 
     def update(self, values):
         """Set all key/value pairs in the mapping. If mtime is
