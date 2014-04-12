@@ -138,7 +138,7 @@ class TestHelper(object):
         self.config.clear()
         self.config.read()
 
-        self.config['plugins'] = []
+        self.unload_plugins()
         self.config['verbose'] = True
         self.config['color'] = False
         self.config['threaded'] = False
@@ -167,17 +167,16 @@ class TestHelper(object):
         sure you call ``unload_plugins()`` afterwards.
         """
         beets.config['plugins'] = plugins
-        beets.plugins.load_plugins(plugins)
-        beets.plugins.find_plugins()
+        beets.plugins.registry.load(*plugins)
 
     def unload_plugins(self):
         """Unload all plugins and remove the from the configuration.
         """
         beets.config['plugins'] = []
-        for plugin in beets.plugins._classes:
-            plugin.listeners = None
-        beets.plugins._classes = set()
-        beets.plugins._instances = {}
+        registry = beets.plugins.registry
+        while len(registry):
+            plugin = registry.pop()
+            plugin.__class__.listeners = None
 
     def create_importer(self, item_count=1, album_count=1):
         """Returns import session with fixtures.
