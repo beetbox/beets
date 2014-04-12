@@ -16,6 +16,7 @@
 """
 
 import logging
+import subprocess
 
 from beets import ui
 from beets import util
@@ -57,7 +58,13 @@ class KeyFinderPlugin(BeetsPlugin):
         for item in items:
             if item['initial_key'] and not overwrite:
                 continue
-            key = util.command_output([bin, '-f', item.path])
+
+            try:
+                key = util.command_output([bin, '-f', item.path])
+            except (subprocess.CalledProcessError, OSError) as exc:
+                log.error(u'KeyFinder execution failed: {0}'.format(exc))
+                continue
+
             item['initial_key'] = key
             log.debug('added computed initial key {0} for {1}'
                       .format(key, util.displayable_path(item.path)))
