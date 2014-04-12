@@ -138,7 +138,7 @@ def _encode(s):
 
 # LyricsWiki.
 
-LYRICSWIKI_URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
+LYRICSWIKI_URL_PATTERN = u'http://lyrics.wikia.com/%s:%s'
 def _lw_encode(s):
     s = re.sub(r'\s+', '_', s)
     s = s.replace("<", "Less_Than")
@@ -201,10 +201,11 @@ def slugify(text):
 
     # Remove content within parentheses
     pat = "([^,\(]*)\((.*?)\)"
-    text = re.sub(pat,'\g<1>', text).strip()
+    text = re.sub(pat,'\g<1>', text)
+    text = re.sub('[\'\"]',' ',text).strip()
     try:
         text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore')
-        text = unicode(re.sub('[-\s]+', ' ', text))
+        text = unicode(re.sub("[-\s]+", ' ', text))
     except UnicodeDecodeError:
         log.exception("Failing to normalize '%s'" % (text))
     return urllib.quote(text)
@@ -221,7 +222,6 @@ def is_page_candidate(urlLink, urlTitle, title, artist):
     artist = slugify(artist.lower())
     sitename = re.search(u"//([^/]+)/.*", slugify(urlLink.lower())).group(1)
     urlTitle = slugify(urlTitle.lower())
-
     # Check if URL title contains song title (exact match)
     if urlTitle.find(title) != -1:
         return True
@@ -260,35 +260,55 @@ def sanitize_lyrics(text):
 
     text = re.sub(r'\n\n+', '\n\n', text)   # keep at most two \n in a row
 
+    # Remove lyrics keyword in credits (check first and last lines)
+    textlines = text.split('\n')
+    popped = False
+    for i in [len(textlines)-1, 0]:
+        if 'lyrics' in textlines[i].lower():
+            popped = textlines.pop(i)
+    if popped:
+        text = '\n'.join(textlines)
+
     return text
 
-def is_lyrics(text, artist):
-    """Determine whether the text seems to be valid lyrics.
-    """
-    badTriggers = []
+
+def is_lyrics_javascript(text):
+    # To complete using unit tests outputs
+    return text.count('function(') > 0
+
+def lyrics_shortness_penalty(text):
+    """Return 1 if lyrics are too short, 0 if not, .5 if in doubt."""
+
     nbLines = text.count('\n')
-    if nbLines <= 1:
-        log.debug("Ignoring too short lyrics '%s'" % text)
-        return 0
-    elif nbLines < 5:
-        badTriggers.append('too_short')
-    else:
-        # Don't penalize long text because of lyrics keyword in credits
-        textlines = text.split('\n')
-        popped = False
-        for i in [len(textlines)-1, 0]:
-            if 'lyrics' in textlines[i].lower():
-                popped = textlines.pop(i)
-        if popped:
-            text = '\n'.join(textlines)
+    log.debug("Lyrics length: %d lines" % nbLines)
+    if nbLines < 1:
+        return 1
+    if nbLines < 5:
+        return .5
+    return 0
 
-    for item in artist, 'lyrics', 'copyright', 'property':
+
+def is_lyrics_boilerplate(text, artist):
+    blacklist = ['lyrics', 'copyright', 'property']
+    badTriggers = []
+    if artist:
+        blacklist += [artist]
+    for item in blacklist :
         badTriggers += [item] * len(re.findall(r'\W%s\W' % item, text, re.I))
-
+    
     if badTriggers:
         log.debug('Bad triggers detected: %s' % badTriggers)
+    return ((len(badTriggers) + lyrics_shortness_penalty(text)*2) >= 2) 
 
-    return len(badTriggers) < 2
+
+def is_lyrics(text, artist=''):
+    """Determine whether the text seems to be valid lyrics.
+    """
+
+    if not text or is_lyrics_javascript(text):
+       return False
+    return not is_lyrics_boilerplate(text, artist)
+
 
 def scrape_lyrics_from_url(url):
     """Scrape lyrics from a URL. If no lyrics can be found, return None
@@ -341,7 +361,8 @@ def scrape_lyrics_from_url(url):
         # Lyrics are expected to be the longest paragraph
         tagTokens = sorted(tagTokens, key=len, reverse=True)
         soup = BeautifulSoup(tagTokens[0])
-        return unescape(tagTokens[0].strip("\n\r: "))
+        lyrics = unescape(tagTokens[0].strip("\n\r: "))
+        return sanitize_lyrics(lyrics)
 
 def fetch_google(artist, title):
     """Fetch lyrics from Google search results.
@@ -352,8 +373,8 @@ def fetch_google(artist, title):
     url = u'https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s' % \
           (api_key, engine_id, urllib.quote(query.encode('utf8')))
 
-    data = urllib.urlopen(url)
-    data = json.load(data)
+    data = fetch_url(url)
+    data = json.loads(data)
     if 'error' in data:
         reason = data['error']['errors'][0]['reason']
         log.debug(u'google lyrics backend error: %s' % reason)
@@ -369,12 +390,19 @@ def fetch_google(artist, title):
             if not lyrics:
                 continue
 
-            lyrics = sanitize_lyrics(lyrics)
-
             if is_lyrics(lyrics, artist):
                 log.debug(u'got lyrics from %s' % item['displayLink'])
                 return lyrics
 
+
+def remove_featuring_artist(artist):
+    """Remove 'featuring' variants from artist name"""
+
+    pattern = r"(?P<artist1>.+) (&|\b(and|feat(uring)?\b))"
+    match = re.search(pattern, artist, re.IGNORECASE)
+    if match:
+        return match.group("artist1")
+    return artist
 
 # Plugin logic.
 
@@ -458,10 +486,7 @@ class LyricsPlugin(BeetsPlugin):
         None if no lyrics were found.
         """
         # Remove featuring artists from search.
-        pattern = u"(.*) feat(uring|\.)?\s\S+"
-        match = re.search(pattern, artist, re.IGNORECASE)
-        if match:
-            artist = match.group(0)
+        artist = remove_featuring_artist(artist)
 
         for backend in self.backends:
             lyrics = backend(artist, title)
