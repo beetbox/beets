@@ -184,9 +184,9 @@ class MusicalKey(String):
 
     def parse(self, key):
         key = key.lower()
-        for flat, sharp in self.ENHARMONIC:
-            re.sub(flat, sharp, key)
-        re.sub(r'[\W\s]+minor', 'm', key)
+        for flat, sharp in self.ENHARMONIC.items():
+            key = re.sub(flat, sharp, key)
+        key = re.sub(r'[\W\s]+minor', 'm', key)
         return key.capitalize()
 
     def normalize(self, key):
