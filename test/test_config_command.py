@@ -3,12 +3,14 @@ import yaml
 
 from beets import ui
 from beets import config
+from beets.library import Library
 
 import _common
 from _common import unittest
+from helper import TestHelper
 
 
-class ConfigCommandTest(_common.TestCase):
+class ConfigCommandTest(_common.TestCase, TestHelper):
 
     def setUp(self):
         super(ConfigCommandTest, self).setUp()
@@ -35,31 +37,31 @@ class ConfigCommandTest(_common.TestCase):
         self.execlp_restore()
 
     def test_show_user_config(self):
-        ui._raw_main(['config'])
+        self.run_command('config')
         output = yaml.load(self.io.getoutput())
         self.assertEqual(output['option'], 'value')
 
     def test_show_user_config_with_defaults(self):
-        ui._raw_main(['config', '-d'])
+        self.run_command('config', '-d')
         output = yaml.load(self.io.getoutput())
         self.assertEqual(output['option'], 'value')
         self.assertEqual(output['library'], 'lib')
         self.assertEqual(output['import']['timid'], False)
 
     def test_show_user_config_with_cli(self):
-        ui._raw_main(['--config', self.cli_config_path, 'config'])
+        self.run_command('--config', self.cli_config_path, 'config')
         output = yaml.load(self.io.getoutput())
         self.assertEqual(output['library'], 'lib')
         self.assertEqual(output['option'], 'cli overwrite')
 
     def test_config_paths(self):
-        ui._raw_main(['config', '-p'])
+        self.run_command('config', '-p')
         paths = self.io.getoutput().split('\n')
         self.assertEqual(len(paths), 2)
         self.assertEqual(paths[0], self.config_path)
 
     def test_config_paths_with_cli(self):
-        ui._raw_main(['--config', self.cli_config_path, 'config', '-p'])
+        self.run_command('--config', self.cli_config_path, 'config', '-p')
         paths = self.io.getoutput().split('\n')
         self.assertEqual(len(paths), 3)
         self.assertEqual(paths[0], self.cli_config_path)
@@ -68,14 +70,14 @@ class ConfigCommandTest(_common.TestCase):
         self.execlp_stub()
         os.environ['EDITOR'] = 'myeditor'
 
-        ui._raw_main(['config', '-e'])
+        self.run_command('config', '-e')
         self.assertEqual(self._execlp_call, ['myeditor', self.config_path])
 
     def test_edit_config_with_open(self):
         self.execlp_stub()
 
         with _common.system_mock('Darwin'):
-            ui._raw_main(['config', '-e'])
+            self.run_command('config', '-e')
         self.assertEqual(self._execlp_call, ['open', '-n', self.config_path])
 
 
@@ -83,14 +85,14 @@ class ConfigCommandTest(_common.TestCase):
         self.execlp_stub()
 
         with _common.system_mock('Linux'):
-            ui._raw_main(['config', '-e'])
+            self.run_command('config', '-e')
         self.assertEqual(self._execlp_call, ['xdg-open', self.config_path])
 
     def test_edit_config_with_windows_exec(self):
         self.execlp_stub()
 
         with _common.system_mock('Windows'):
-            ui._raw_main(['config', '-e'])
+            self.run_command('config', '-e')
         self.assertEqual(self._execlp_call, [self.config_path])
 
     def test_config_editor_not_found(self):
@@ -98,10 +100,9 @@ class ConfigCommandTest(_common.TestCase):
             raise OSError
         os.execlp = raise_os_error
         with self.assertRaises(ui.UserError) as user_error:
-            ui._raw_main(['config', '-e'])
+            self.run_command('config', '-e')
         self.assertIn('Could not edit configuration',
                       str(user_error.exception.args[0]))
-
 
     def execlp_stub(self):
         self._execlp_call = None

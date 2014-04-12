@@ -13,14 +13,12 @@
 # included in all copies or substantial portions of the Software.
 
 
-import os.path
 from mock import Mock, patch
 
-import _common
 from _common import unittest
 from helper import TestHelper
 
-from beets.library import Item, Album
+from beets.library import Item
 
 
 class EchonestCliTest(unittest.TestCase, TestHelper):

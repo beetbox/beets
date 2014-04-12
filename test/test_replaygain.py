@@ -21,7 +21,6 @@ import _common
 from _common import unittest
 from helper import TestHelper
 
-from beets import ui
 from beets.library import Item, Album
 from beets.mediafile import MediaFile
 
@@ -77,7 +76,7 @@ class ReplayGainCliTestBase(TestHelper):
             self.assertIsNone(mediafile.rg_track_peak)
             self.assertIsNone(mediafile.rg_track_gain)
 
-        ui._raw_main(['replaygain'])
+        self.run_command('replaygain')
         for item in self.lib.items():
             self.assertIsNotNone(item.rg_track_peak)
             self.assertIsNotNone(item.rg_track_gain)
@@ -88,11 +87,11 @@ class ReplayGainCliTestBase(TestHelper):
                 mediafile.rg_track_gain, item.rg_track_gain, places=2)
 
     def test_cli_skips_calculated_tracks(self):
-        ui._raw_main(['replaygain'])
+        self.run_command('replaygain')
         item = self.lib.items()[0]
         peak = item.rg_track_peak
         item.rg_track_gain = 0.0
-        ui._raw_main(['replaygain'])
+        self.run_command('replaygain')
         self.assertEqual(item.rg_track_gain, 0.0)
         self.assertEqual(item.rg_track_peak, peak)
 
@@ -102,7 +101,7 @@ class ReplayGainCliTestBase(TestHelper):
             self.assertIsNone(mediafile.rg_album_peak)
             self.assertIsNone(mediafile.rg_album_gain)
 
-        ui._raw_main(['replaygain', '-a'])
+        self.run_command('replaygain', '-a')
 
         peaks = []
         gains = []

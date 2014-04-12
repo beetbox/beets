@@ -905,26 +905,27 @@ def _configure(args):
     return parser._parse_sub(args)
 
 
-def _raw_main(args):
+def _raw_main(args, lib=None):
     """A helper function for `main` without top-level exception
     handling.
     """
     subcommand, suboptions, subargs = _configure(args)
 
-    # Open library file.
-    dbpath = config['library'].as_filename()
-    try:
-        lib = library.Library(
-            dbpath,
-            config['directory'].as_filename(),
-            get_path_formats(),
-            get_replacements(),
-        )
-    except sqlite3.OperationalError:
-        raise UserError(u"database file {0} could not be opened".format(
-            util.displayable_path(dbpath)
-        ))
-    plugins.send("library_opened", lib=lib)
+    if lib is None:
+        # Open library file.
+        dbpath = config['library'].as_filename()
+        try:
+            lib = library.Library(
+                dbpath,
+                config['directory'].as_filename(),
+                get_path_formats(),
+                get_replacements(),
+            )
+        except sqlite3.OperationalError:
+            raise UserError(u"database file {0} could not be opened".format(
+                util.displayable_path(dbpath)
+            ))
+        plugins.send("library_opened", lib=lib)
 
     # Configure the logger.
     if config['verbose'].get(bool):

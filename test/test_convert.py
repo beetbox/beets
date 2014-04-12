@@ -19,7 +19,7 @@ from helper import TestHelper, controlStdin
 class ImportConvertTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
-        self.setup_beets()
+        self.setup_beets(disk=True)  # Converter is threaded
         self.importer = self.create_importer()
         self.load_plugins('convert')
 
@@ -62,7 +62,7 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
 class ConvertCliTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
-        self.setup_beets()
+        self.setup_beets(disk=True)  # Converter is threaded
         self.item, = self.add_item_fixtures(ext='ogg')
         self.load_plugins('convert')
 

@@ -56,7 +56,7 @@ class TestHelper(object):
     """
     # TODO automate teardown through hook registration
 
-    def setup_beets(self):
+    def setup_beets(self, disk=False):
         """Setup pristine global configuration and library for testing.
 
         Sets ``beets.config`` so we can safely use any functionality
@@ -94,8 +94,11 @@ class TestHelper(object):
         os.mkdir(self.libdir)
         self.config['directory'] = self.libdir
 
-        self.lib = Library(self.config['library'].as_filename(),
-                           self.libdir)
+        if disk:
+            dbpath = self.config['library'].as_filename()
+        else:
+            dbpath = ':memory:'
+        self.lib = Library(dbpath, self.libdir)
 
     def teardown_beets(self):
         del os.environ['BEETSDIR']
@@ -177,4 +180,8 @@ class TestHelper(object):
                 os.remove(path)
 
     def run_command(self, *args):
-        beets.ui._raw_main(list(args))
+        if hasattr(self, 'lib'):
+            lib = self.lib
+        else:
+            lib = Library(':memory:')
+        beets.ui._raw_main(list(args), lib)
