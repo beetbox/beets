@@ -62,10 +62,10 @@ setup(
         'beets.autotag',
         'beets.util',
         'beets.dbcore',
-        'beetsplug',
-        'beetsplug.bpd',
-        'beetsplug.web',
-        'beetsplug.lastgenre',
+        'beets.plugin',
+        'beets.plugin.bpd',
+        'beets.plugin.web',
+        'beets.plugin.lastgenre',
     ],
     entry_points={
         'console_scripts': [

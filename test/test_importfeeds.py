@@ -6,7 +6,7 @@ import shutil
 from _common import unittest
 from beets import config
 from beets.library import Item, Album, Library
-from beetsplug.importfeeds import album_imported, ImportFeedsPlugin
+from beets.plugin.importfeeds import album_imported, ImportFeedsPlugin
 
 
 class ImportfeedsTestTest(unittest.TestCase):
