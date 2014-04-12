@@ -124,6 +124,9 @@ class ImportHelper(object):
             ('comp:true', os.path.join('compilations','$album', '$title')),
         ]
 
+    def _close_library(self):
+        self.lib._connection().close()
+
     def _create_import_dir(self, count=3):
         """Creates a directory with media files to import.
         Sets ``self.import_dir`` to the path of the directory. Also sets
@@ -240,6 +243,10 @@ class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
         self._create_import_dir(2)
         self._setup_import_session(autotag=False)
 
+    def tearDown(self):
+        self._close_library()
+        super(NonAutotaggedImportTest, self).tearDown()
+
     def test_album_created_with_track_artist(self):
         self.importer.run()
         albums = self.lib.albums()
@@ -337,6 +344,7 @@ class ImportSingletonTest(_common.TestCase, ImportHelper):
         self.matcher = AutotagStub().install()
 
     def tearDown(self):
+        self._close_library()
         super(ImportSingletonTest, self).tearDown()
         self.matcher.restore()
 
@@ -424,6 +432,7 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.matcher.macthin = AutotagStub.GOOD
 
     def tearDown(self):
+        self._close_library()
         super(ImportTest, self).tearDown()
         self.matcher.restore()
 
@@ -507,6 +516,7 @@ class ImportTracksTest(_common.TestCase, ImportHelper):
         self.matcher = AutotagStub().install()
 
     def tearDown(self):
+        self._close_library()
         super(ImportTracksTest, self).tearDown()
         self.matcher.restore()
 
@@ -541,6 +551,7 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
         self.matcher = AutotagStub().install()
 
     def tearDown(self):
+        self._close_library()
         super(ImportCompilationTest, self).tearDown()
         self.matcher.restore()
 
@@ -620,6 +631,7 @@ class ImportExistingTest(_common.TestCase, ImportHelper):
         self._setup_import_session(import_dir=self.libdir)
 
     def tearDown(self):
+        self._close_library()
         super(ImportExistingTest, self).tearDown()
         self.matcher.restore()
 
@@ -732,6 +744,7 @@ class GroupAlbumsImportTest(_common.TestCase, ImportHelper):
         self.importer.add_choice(importer.action.ASIS)
 
     def tearDown(self):
+        self._close_library()
         super(GroupAlbumsImportTest, self).tearDown()
         self.matcher.restore()
 
@@ -799,6 +812,7 @@ class ChooseCandidateTest(_common.TestCase, ImportHelper):
         self.matcher.matching = AutotagStub.BAD
 
     def tearDown(self):
+        self._close_library()
         super(ChooseCandidateTest, self).tearDown()
         self.matcher.restore()
 

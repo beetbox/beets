@@ -122,7 +122,10 @@ class TestCase(unittest.TestCase):
     def tearDown(self):
         if os.path.isdir(self.temp_dir):
             shutil.rmtree(self.temp_dir)
-        os.environ['HOME'] = self._old_home
+        if self._old_home is None:
+            del os.environ['HOME']
+        else:
+            os.environ['HOME'] = self._old_home
         self.io.restore()
 
     def assertExists(self, path):
@@ -142,6 +145,9 @@ class LibTestCase(TestCase):
         self.lib = beets.library.Library(':memory:')
         self.i = item(self.lib)
 
+    def tearDown(self):
+        self.lib._connection().close()
+        super(LibTestCase, self).tearDown()
 
 
 

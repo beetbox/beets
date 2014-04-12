@@ -233,6 +233,7 @@ class ArtImporterTest(_common.TestCase):
         self.task.set_choice(AlbumMatch(0, info, {}, set(), set()))
 
     def tearDown(self):
+        self.lib._connection().close()
         super(ArtImporterTest, self).tearDown()
         fetchart.art_for_album = self.old_afa
 

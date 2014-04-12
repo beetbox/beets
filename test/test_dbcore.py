@@ -40,9 +40,11 @@ class TestModel1(dbcore.Model):
     def _template_funcs(self):
         return {}
 
+
 class TestDatabase1(dbcore.Database):
     _models = (TestModel1,)
     pass
+
 
 class TestModel2(TestModel1):
     _fields = {
@@ -51,9 +53,11 @@ class TestModel2(TestModel1):
         'field_two': dbcore.types.Integer(),
     }
 
+
 class TestDatabase2(dbcore.Database):
     _models = (TestModel2,)
     pass
+
 
 class TestModel3(TestModel1):
     _fields = {
@@ -63,9 +67,11 @@ class TestModel3(TestModel1):
         'field_three': dbcore.types.Integer(),
     }
 
+
 class TestDatabase3(dbcore.Database):
     _models = (TestModel3,)
     pass
+
 
 class TestModel4(TestModel1):
     _fields = {
@@ -76,9 +82,11 @@ class TestModel4(TestModel1):
         'field_four': dbcore.types.Integer(),
     }
 
+
 class TestDatabase4(dbcore.Database):
     _models = (TestModel4,)
     pass
+
 
 class AnotherTestModel(TestModel1):
     _table = 'another'
@@ -87,6 +95,7 @@ class AnotherTestModel(TestModel1):
         'id': dbcore.types.Id(),
         'foo': dbcore.types.Integer(),
     }
+
 
 class TestDatabaseTwoModels(dbcore.Database):
     _models = (TestModel2, AnotherTestModel)
@@ -152,6 +161,10 @@ class ModelTest(_common.TestCase):
         super(ModelTest, self).setUp()
         dbfile = os.path.join(self.temp_dir, 'temp.db')
         self.db = TestDatabase1(dbfile)
+
+    def tearDown(self):
+        self.db._connection().close()
+        super(ModelTest, self).tearDown()
 
     def test_add_model(self):
         model = TestModel1()
