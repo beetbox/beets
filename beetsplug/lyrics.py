@@ -174,6 +174,7 @@ def _encode(s):
 
 LYRICSWIKI_URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
 
+
 def _lw_encode(s):
     s = re.sub(r'\s+', '_', s)
     s = s.replace("<", "Less_Than")
@@ -203,6 +204,7 @@ LYRICSCOM_NOT_FOUND = (
     'Sorry, we do not have the lyric',
     'Submit Lyrics',
 )
+
 
 def _lc_encode(s):
     s = re.sub(r'[^\w\s-]', '', s)
@@ -239,7 +241,7 @@ def slugify(text):
 
     # Remove content within parentheses
     pat = "([^,\(]*)\((.*?)\)"
-    text = re.sub(pat,'\g<1>', text).strip()
+    text = re.sub(pat, '\g<1>', text).strip()
     try:
         text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore')
         text = unicode(re.sub('[-\s]+', ' ', text))
@@ -248,8 +250,9 @@ def slugify(text):
     return urllib.quote(text)
 
 
-BY_TRANS     = ['by', 'par']
+BY_TRANS = ['by', 'par']
 LYRICS_TRANS = ['lyrics', 'paroles']
+
 
 def is_page_candidate(urlLink, urlTitle, title, artist):
     """Return True if the URL title makes it a good candidate to be a
@@ -266,8 +269,8 @@ def is_page_candidate(urlLink, urlTitle, title, artist):
     # or try extracting song title from URL title and check if
     # they are close enough
     tokens = [by + '%20' + artist for by in BY_TRANS] + \
-             [artist, sitename, sitename.replace('www.','')] + LYRICS_TRANS
-    songTitle = re.sub(u'(%s)' % u'|'.join(tokens) , u'', urlTitle).strip('%20')
+             [artist, sitename, sitename.replace('www.', '')] + LYRICS_TRANS
+    songTitle = re.sub(u'(%s)' % u'|'.join(tokens), u'', urlTitle).strip('%20')
 
     typoRatio = .8
     return difflib.SequenceMatcher(None, songTitle, title).ratio() >= typoRatio
@@ -317,7 +320,7 @@ def is_lyrics(text, artist):
         # Don't penalize long text because of lyrics keyword in credits
         textlines = text.split('\n')
         popped = False
-        for i in [len(textlines)-1, 0]:
+        for i in [len(textlines) - 1, 0]:
             if 'lyrics' in textlines[i].lower():
                 popped = textlines.pop(i)
         if popped:
@@ -336,7 +339,7 @@ def scrape_lyrics_from_url(url):
     """Scrape lyrics from a URL. If no lyrics can be found, return None
     instead.
     """
-    from bs4 import BeautifulSoup, Tag, Comment
+    from bs4 import BeautifulSoup, Comment
     html = fetch_url(url)
     if not html:
         return None
@@ -357,7 +360,7 @@ def scrape_lyrics_from_url(url):
 
     except Exception, e:
         log.debug('Error %s when replacing containing marker by p marker' % e,
-                   exc_info=True)
+                  exc_info=True)
 
     # Make better soup from current soup! The previous unclosed <p> sections
     # are now closed.  Use str() rather than prettify() as it's more
@@ -438,7 +441,6 @@ class LyricsPlugin(BeetsPlugin):
         if self.config['google_API_key'].get():
             self.backends.insert(0, fetch_google)
 
-
     def commands(self):
         cmd = ui.Subcommand('lyrics', help='fetch song lyrics')
         cmd.parser.add_option('-p', '--print', dest='printlyr',
@@ -447,6 +449,7 @@ class LyricsPlugin(BeetsPlugin):
         cmd.parser.add_option('-f', '--force', dest='force_refetch',
                               action='store_true', default=False,
                               help='always re-download lyrics')
+
         def func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.
@@ -456,18 +459,17 @@ class LyricsPlugin(BeetsPlugin):
                                        opts.force_refetch)
                 if opts.printlyr and item.lyrics:
                     ui.print_(item.lyrics)
+
         cmd.func = func
         return [cmd]
-
 
     def imported(self, session, task):
         """Import hook for fetching lyrics automatically.
         """
         if self.config['auto']:
             for item in task.imported_items():
-                self.fetch_item_lyrics(session.lib, logging.DEBUG, item, \
-                    False, False)
-
+                self.fetch_item_lyrics(session.lib, logging.DEBUG, item,
+                                       False, False)
 
     def fetch_item_lyrics(self, lib, loglevel, item, write, force):
         """Fetch and store lyrics for a single item. If ``write``, then the
@@ -484,8 +486,8 @@ class LyricsPlugin(BeetsPlugin):
             return
 
         artist = remove_ft_artist_suffix(item.artist)
-        title  = remove_parenthesized_suffix(
-                    remove_ft_artist_suffix(item.title)
+        title = remove_parenthesized_suffix(
+            remove_ft_artist_suffix(item.title)
         )
 
         # Fetch lyrics.
@@ -499,7 +501,7 @@ class LyricsPlugin(BeetsPlugin):
                 for t in titles:
                     lyrics_title = self.get_lyrics(artist, t)
                     if lyrics_title:
-                        if lyrics :
+                        if lyrics:
                             lyrics += u"\n\n---\n\n%s" % lyrics_title
                         else:
                             lyrics = lyrics_title
@@ -520,7 +522,6 @@ class LyricsPlugin(BeetsPlugin):
         if write:
             item.try_write()
         item.store()
-
 
     def get_lyrics(self, artist, title):
         """Fetch lyrics, trying each source in turn. Return a string or
