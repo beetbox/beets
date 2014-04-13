@@ -31,6 +31,7 @@ from beets import config
 # once before beets exits.
 database_changed = False
 
+
 # No need to introduce a dependency on an MPD library for such a
 # simple use case. Here's a simple socket abstraction to make things
 # easier.
@@ -64,6 +65,7 @@ class BufferedSocket(object):
     def close(self):
         self.sock.close()
 
+
 def update_mpd(host='localhost', port=6600, password=None):
     """Sends the "update" command to the MPD server indicated,
     possibly authenticating with a password first.
@@ -93,6 +95,7 @@ def update_mpd(host='localhost', port=6600, password=None):
     s.send('close\n')
     s.close()
     print('... updated.')
+
 
 class MPDUpdatePlugin(BeetsPlugin):
     def __init__(self):

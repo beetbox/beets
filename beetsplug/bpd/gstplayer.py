@@ -29,6 +29,7 @@ import pygst
 pygst.require('0.10')
 import gst
 
+
 class GstPlayer(object):
     """A music player abstracting GStreamer's Playbin element.
 
@@ -138,6 +139,7 @@ class GstPlayer(object):
         """
         # If we don't use the MainLoop, messages are never sent.
         gobject.threads_init()
+
         def start():
             loop = gobject.MainLoop()
             loop.run()
@@ -150,8 +152,8 @@ class GstPlayer(object):
         """
         fmt = gst.Format(gst.FORMAT_TIME)
         try:
-            pos = self.player.query_position(fmt, None)[0]/(10**9)
-            length = self.player.query_duration(fmt, None)[0]/(10**9)
+            pos = self.player.query_position(fmt, None)[0] / (10 ** 9)
+            length = self.player.query_duration(fmt, None)[0] / (10 ** 9)
             self.cached_time = (pos, length)
             return (pos, length)
 
@@ -172,7 +174,7 @@ class GstPlayer(object):
             return
 
         fmt = gst.Format(gst.FORMAT_TIME)
-        ns = position * 10**9 # convert to nanoseconds
+        ns = position * 10 ** 9  # convert to nanoseconds
         self.player.seek_simple(fmt, gst.SEEK_FLAG_FLUSH, ns)
 
         # save new cached time
@@ -194,11 +196,13 @@ def play_simple(paths):
         p.play_file(path)
         p.block()
 
+
 def play_complicated(paths):
     """Play the files in the path one after the other by using the
     callback function to advance to the next song.
     """
     my_paths = copy.copy(paths)
+
     def next_song():
         my_paths.pop(0)
         p.play_file(my_paths[0])
@@ -215,4 +219,3 @@ if __name__ == '__main__':
              for p in sys.argv[1:]]
     # play_simple(paths)
     play_complicated(paths)
-

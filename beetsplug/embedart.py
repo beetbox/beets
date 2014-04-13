@@ -26,6 +26,7 @@ from beets import config
 
 log = logging.getLogger('beets')
 
+
 def _embed(path, items, maxwidth=0):
     """Embed an image file, located at `path`, into each item.
     """
@@ -54,6 +55,7 @@ def _embed(path, items, maxwidth=0):
         f.images = [image]
         f.save(config['id3v23'].get(bool))
 
+
 class EmbedCoverArtPlugin(BeetsPlugin):
     """Allows albumart to be embedded into the actual files.
     """
@@ -75,6 +77,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             help='embed image files into file metadata')
         embed_cmd.parser.add_option('-f', '--file', metavar='PATH',
             help='the image file to embed')
+
         def embed_func(lib, opts, args):
             if opts.file:
                 imagepath = normpath(opts.file)
@@ -88,6 +91,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                                     help='extract an image from file metadata')
         extract_cmd.parser.add_option('-o', dest='outpath',
                                       help='image output file')
+
         def extract_func(lib, opts, args):
             outpath = normpath(opts.outpath or 'cover')
             extract(lib, outpath, decargs(args))
@@ -96,14 +100,17 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         # Clear command.
         clear_cmd = ui.Subcommand('clearart',
                                   help='remove images from file metadata')
+
         def clear_func(lib, opts, args):
             clear(lib, decargs(args))
         clear_cmd.func = clear_func
 
         return [embed_cmd, extract_cmd, clear_cmd]
 
-# "embedart" command with --file argument.
+
 def embed(lib, imagepath, query):
+    """'embedart' command with --file argument.
+    """
     albums = lib.albums(query)
     for i_album in albums:
         album = i_album
@@ -118,8 +125,10 @@ def embed(lib, imagepath, query):
     _embed(imagepath, album.items(),
            config['embedart']['maxwidth'].get(int))
 
-# "embedart" command without explicit file.
+
 def embed_current(lib, query):
+    """'embedart' command without explicit file.
+    """
     albums = lib.albums(query)
     for album in albums:
         if not album.artpath:
@@ -132,8 +141,10 @@ def embed_current(lib, query):
         _embed(album.artpath, album.items(),
                config['embedart']['maxwidth'].get(int))
 
-# "extractart" command.
+
 def extract(lib, outpath, query):
+    """'extractart' command.
+    """
     item = lib.items(query).get()
     if not item:
         log.error('No item matches query.')
@@ -166,8 +177,10 @@ def extract(lib, outpath, query):
     with open(syspath(outpath), 'wb') as f:
         f.write(art)
 
-# "clearart" command.
+
 def clear(lib, query):
+    """'clearart' command.
+    """
     log.info('Clearing album art from items:')
     for item in lib.items(query):
         log.info(u'%s - %s' % (item.artist, item.title))
@@ -181,9 +194,11 @@ def clear(lib, query):
         mf.art = None
         mf.save(config['id3v23'].get(bool))
 
-# Automatically embed art into imported albums.
+
 @EmbedCoverArtPlugin.listen('album_imported')
 def album_imported(lib, album):
+    """Automatically embed art into imported albums.
+    """
     if album.artpath and config['embedart']['auto']:
         _embed(album.artpath, album.items(),
                config['embedart']['maxwidth'].get(int))

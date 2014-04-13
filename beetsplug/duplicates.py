@@ -178,6 +178,7 @@ class DuplicatesPlugin(BeetsPlugin):
                                         ' attribute')
 
     def commands(self):
+
         def _dup(lib, opts, args):
             self.config.set_args(opts)
             fmt = self.config['format'].get()

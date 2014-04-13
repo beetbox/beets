@@ -97,8 +97,8 @@ class BeatportRelease(BeatportObject):
         else:
             artist_str = "Various Artists"
         return u"<BeatportRelease: {0} - {1} ({2})>".format(artist_str,
-                                                            self.name,
-                                                            self.catalog_number)
+                                                        self.name,
+                                                        self.catalog_number)
 
     def __init__(self, data):
         BeatportObject.__init__(self, data)
@@ -129,7 +129,8 @@ class BeatportTrack(BeatportObject):
 
     def __unicode__(self):
         artist_str = ", ".join(x[1] for x in self.artists)
-        return u"<BeatportTrack: {0} - {1} ({2})>".format(artist_str, self.name,
+        return u"<BeatportTrack: {0} - {1} ({2})>".format(artist_str,
+                                                          self.name,
                                                           self.mix_name)
 
     def __init__(self, data):

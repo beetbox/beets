@@ -25,6 +25,7 @@ PATTERN_THE = u'^[the]{3}\s'
 PATTERN_A = u'^[a][n]?\s'
 FORMAT = u'{0}, {1}'
 
+
 class ThePlugin(BeetsPlugin):
 
     _instance = None
@@ -67,14 +68,12 @@ class ThePlugin(BeetsPlugin):
         if not self.patterns:
             self._log.warn(u'[the] no patterns defined!')
 
-
     def unthe(self, text, pattern):
         """Moves pattern in the path format string or strips it
 
         text -- text to handle
         pattern -- regexp pattern (case ignore is already on)
         strip -- if True, pattern will be removed
-
         """
         if text:
             r = re.compile(pattern, flags=re.IGNORECASE)
