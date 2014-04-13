@@ -26,6 +26,7 @@ from beets import config
 
 log = logging.getLogger('beets')
 
+
 def rewriter(field, rules):
     """Create a template field function that rewrites the given field
     with the given rewriting rules. ``rules`` must be a list of
@@ -40,6 +41,7 @@ def rewriter(field, rules):
         # Not activated; return original value.
         return value
     return fieldfunc
+
 
 class RewritePlugin(BeetsPlugin):
     def __init__(self):

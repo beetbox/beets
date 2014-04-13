@@ -136,6 +136,7 @@ class EchoNestTempoPlugin(BeetsPlugin):
         cmd.parser.add_option('-p', '--print', dest='printbpm',
                               action='store_true', default=False,
                               help='print tempo (bpm) to console')
+
         def func(lib, opts, args):
             # The "write to files" option corresponds to the
             # import_write config value.

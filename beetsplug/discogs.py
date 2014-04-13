@@ -34,7 +34,9 @@ urllib3_logger.setLevel(logging.CRITICAL)
 discogs_client.user_agent = 'beets/%s +http://beets.radbox.org/' % \
     beets.__version__
 
+
 class DiscogsPlugin(BeetsPlugin):
+
     def __init__(self):
         super(DiscogsPlugin, self).__init__()
         self.config.add({
@@ -72,7 +74,7 @@ class DiscogsPlugin(BeetsPlugin):
         # of an input string as to avoid confusion with other metadata plugins.
         # An optional bracket can follow the integer, as this is how discogs
         # displays the release ID on its webpage.
-        match  = re.search(r'(^|\[*r|discogs\.com/.+/release/)(\d+)($|\])',
+        match = re.search(r'(^|\[*r|discogs\.com/.+/release/)(\d+)($|\])',
                            album_id)
         if not match:
             return None
@@ -112,10 +114,10 @@ class DiscogsPlugin(BeetsPlugin):
         album = re.sub(r' +', ' ', result.title)
         album_id = result.data['id']
         artist, artist_id = self.get_artist(result.data['artists'])
-        # Use `.data` to access the tracklist directly instead of the convenient
-        # `.tracklist` property, which will strip out useful artist information
-        # and leave us with skeleton `Artist` objects that will each make an API
-        # call just to get the same data back.
+        # Use `.data` to access the tracklist directly instead of the
+        # convenient `.tracklist` property, which will strip out useful artist
+        # information and leave us with skeleton `Artist` objects that will
+        # each make an API call just to get the same data back.
         tracks = self.get_tracks(result.data['tracklist'])
         albumtype = ', '.join(
             result.data['formats'][0].get('descriptions', [])) or None
@@ -172,7 +174,7 @@ class DiscogsPlugin(BeetsPlugin):
                 index += 1
                 tracks.append(self.get_track_info(track, index))
             else:
-                index_tracks[index+1] = track['title']
+                index_tracks[index + 1] = track['title']
 
         # Fix up medium and medium_index for each track. Discogs position is
         # unreliable, but tracks are in order.
@@ -217,8 +219,8 @@ class DiscogsPlugin(BeetsPlugin):
         artist, artist_id = self.get_artist(track.get('artists', []))
         length = self.get_track_length(track['duration'])
         return TrackInfo(title, track_id, artist, artist_id, length, index,
-                         medium, medium_index, artist_sort=None, disctitle=None,
-                         artist_credit=None)
+                         medium, medium_index, artist_sort=None,
+                         disctitle=None, artist_credit=None)
 
     def get_track_index(self, position):
         """Returns the medium and medium index for a discogs track position.

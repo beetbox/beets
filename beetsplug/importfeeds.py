@@ -25,6 +25,7 @@ from beets import config
 
 M3U_DEFAULT_NAME = 'imported.m3u'
 
+
 class ImportFeedsPlugin(BeetsPlugin):
     def __init__(self):
         super(ImportFeedsPlugin, self).__init__()
@@ -50,6 +51,7 @@ class ImportFeedsPlugin(BeetsPlugin):
         else:
             self.config['relative_to'] = feeds_dir
 
+
 def _get_feeds_dir(lib):
     """Given a Library object, return the path to the feeds directory to be
     used (either in the library directory or an explicitly configured
@@ -63,6 +65,7 @@ def _get_feeds_dir(lib):
         os.makedirs(syspath(dirpath))
     return dirpath
 
+
 def _build_m3u_filename(basename):
     """Builds unique m3u filename by appending given basename to current
     date."""
@@ -75,12 +78,14 @@ def _build_m3u_filename(basename):
     ))
     return path
 
+
 def _write_m3u(m3u_path, items_paths):
     """Append relative paths to items into m3u file.
     """
     with open(syspath(m3u_path), 'a') as f:
         for path in items_paths:
             f.write(path + '\n')
+
 
 def _record_items(lib, basename, items):
     """Records relative paths to the given items for each feed format
@@ -117,14 +122,17 @@ def _record_items(lib, basename, items):
             if not os.path.exists(syspath(dest)):
                 os.symlink(syspath(path), syspath(dest))
 
+
 @ImportFeedsPlugin.listen('library_opened')
 def library_opened(lib):
     if config['importfeeds']['dir'].get() is None:
         config['importfeeds']['dir'] = _get_feeds_dir(lib)
 
+
 @ImportFeedsPlugin.listen('album_imported')
 def album_imported(lib, album):
     _record_items(lib, album.album, album.items())
+
 
 @ImportFeedsPlugin.listen('item_imported')
 def item_imported(lib, item):

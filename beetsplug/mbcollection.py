@@ -1,16 +1,16 @@
-#Copyright (c) 2011, Jeffrey Aylesworth <jeffrey@aylesworth.ca>
+# Copyright (c) 2011, Jeffrey Aylesworth <jeffrey@aylesworth.ca>
 #
-#Permission to use, copy, modify, and/or distribute this software for any
-#purpose with or without fee is hereby granted, provided that the above
-#copyright notice and this permission notice appear in all copies.
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
 #
-#THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-#WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-#MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-#ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-#WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-#ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-#OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from __future__ import print_function
 
@@ -28,6 +28,7 @@ UUID_REGEX = r'^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$'
 
 log = logging.getLogger('beets.bpd')
 
+
 def mb_call(func, *args, **kwargs):
     """Call a MusicBrainz API function and catch exceptions.
     """
@@ -40,6 +41,7 @@ def mb_call(func, *args, **kwargs):
     except musicbrainzngs.UsageError:
         raise ui.UserError('MusicBrainz credentials missing')
 
+
 def submit_albums(collection_id, release_ids):
     """Add all of the release IDs to the indicated collection. Multiple
     requests are made if there are many release IDs to submit.
@@ -50,6 +52,7 @@ def submit_albums(collection_id, release_ids):
             musicbrainzngs.add_releases_to_collection,
             collection_id, chunk
         )
+
 
 def update_collection(lib, opts, args):
     # Get the collection to modify.
@@ -76,6 +79,7 @@ def update_collection(lib, opts, args):
 update_mb_collection_cmd = Subcommand('mbupdate',
         help='Update MusicBrainz collection')
 update_mb_collection_cmd.func = update_collection
+
 
 class MusicBrainzCollectionPlugin(BeetsPlugin):
     def __init__(self):

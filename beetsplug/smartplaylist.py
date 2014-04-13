@@ -79,7 +79,7 @@ def update_playlists(lib):
             item_path = item.path
             if relative_to:
                 item_path = os.path.relpath(item.path, relative_to)
-            if not item_path in m3us[m3u_name]:
+            if item_path not in m3us[m3u_name]:
                 m3us[m3u_name].append(item_path)
         # Now iterate through the m3us that we need to generate
         for m3u in m3us:
@@ -104,7 +104,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         def update(lib, opts, args):
             update_playlists(lib)
         spl_update = ui.Subcommand('splupdate',
-            help='update the smart playlists')
+                        help='update the smart playlists')
         spl_update.func = update
         return [spl_update]
 

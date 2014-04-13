@@ -72,10 +72,12 @@ def _fetch_image(url):
 CAA_URL = 'http://coverartarchive.org/release/{mbid}/front-500.jpg'
 CAA_GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front-500.jpg'
 
+
 def caa_art(release_id):
     """Return the Cover Art Archive URL given a MusicBrainz release ID.
     """
     return CAA_URL.format(mbid=release_id)
+
 
 def caa_group_art(release_group_id):
     """Return the Cover Art Archive release group URL given a MusicBrainz
@@ -89,6 +91,7 @@ def caa_group_art(release_group_id):
 AMAZON_URL = 'http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg'
 AMAZON_INDICES = (1, 2)
 
+
 def art_for_asin(asin):
     """Generate URLs for an Amazon ID (ASIN) string."""
     for index in AMAZON_INDICES:
@@ -99,6 +102,7 @@ def art_for_asin(asin):
 
 AAO_URL = 'http://www.albumart.org/index_detail.php'
 AAO_PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
+
 
 def aao_art(asin):
     """Return art URL from AlbumArt.org given an ASIN."""
@@ -120,6 +124,7 @@ def aao_art(asin):
 
 
 # Art from the filesystem.
+
 
 def art_in_path(path, cover_names, cautious):
     """Look for album art files in a specified directory."""
@@ -152,6 +157,7 @@ def art_in_path(path, cover_names, cautious):
 
 # Try each source in turn.
 
+
 def _source_urls(album):
     """Generate possible source URLs for an album's art. The URLs are
     not guaranteed to work so they each need to be attempted in turn.
@@ -172,6 +178,7 @@ def _source_urls(album):
         url = aao_art(album.asin)
         if url:
             yield url
+
 
 def art_for_album(album, paths, maxwidth=None, local_only=False):
     """Given an Album object, returns a path to downloaded art for the
@@ -209,6 +216,7 @@ def art_for_album(album, paths, maxwidth=None, local_only=False):
 
 # PLUGIN LOGIC ###############################################################
 
+
 def batch_fetch_art(lib, albums, force, maxwidth=None):
     """Fetch album art for each of the albums. This implements the manual
     fetchart CLI command.
@@ -233,6 +241,7 @@ def batch_fetch_art(lib, albums, force, maxwidth=None):
         log.info(u'{0} - {1}: {2}'.format(album.albumartist, album.album,
                                           message))
 
+
 class FetchArtPlugin(BeetsPlugin):
     def __init__(self):
         super(FetchArtPlugin, self).__init__()
@@ -255,9 +264,10 @@ class FetchArtPlugin(BeetsPlugin):
             self.import_stages = [self.fetch_art]
             self.register_listener('import_task_files', self.assign_art)
 
-    # Asynchronous; after music is added to the library.
     def fetch_art(self, session, task):
         """Find art for the album being imported."""
+        # Asynchronous; after music is added to the library.
+
         if task.is_album:  # Only fetch art for full albums.
             if task.choice_flag == importer.action.ASIS:
                 # For as-is imports, don't search Web sources for art.
@@ -275,9 +285,10 @@ class FetchArtPlugin(BeetsPlugin):
             if path:
                 self.art_paths[task] = path
 
-    # Synchronous; after music files are put in place.
     def assign_art(self, session, task):
         """Place the discovered art in the filesystem."""
+        # Synchronous; after music files are put in place.
+
         if task in self.art_paths:
             path = self.art_paths.pop(task)
 
@@ -289,12 +300,14 @@ class FetchArtPlugin(BeetsPlugin):
             if src_removed:
                 task.prune(path)
 
-    # Manual album art fetching.
     def commands(self):
+        # Manual album art fetching.
+
         cmd = ui.Subcommand('fetchart', help='download album art')
         cmd.parser.add_option('-f', '--force', dest='force',
                               action='store_true', default=False,
                               help='re-download art when already present')
+
         def func(lib, opts, args):
             batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force,
                             self.maxwidth)

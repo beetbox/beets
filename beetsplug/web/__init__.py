@@ -51,6 +51,7 @@ def _rep(obj, expand=False):
             out['items'] = [_rep(item) for item in obj.items()]
         return out
 
+
 def json_generator(items, root):
     """Generator that dumps list of beets Items or Albums as JSON
 
@@ -67,6 +68,7 @@ def json_generator(items, root):
             yield ','
         yield json.dumps(_rep(item))
     yield ']}'
+
 
 def resource(name):
     """Decorates a function to handle RESTful HTTP requests for a resource.
@@ -88,6 +90,7 @@ def resource(name):
         return responder
     return make_responder
 
+
 def resource_query(name):
     """Decorates a function to handle RESTful HTTP queries for resources.
     """
@@ -99,6 +102,7 @@ def resource_query(name):
         responder.__name__ = 'query_%s' % name
         return responder
     return make_responder
+
 
 def resource_list(name):
     """Decorates a function to handle RESTful HTTP request for a list of
@@ -148,6 +152,7 @@ app = flask.Flask(__name__)
 app.url_map.converters['idlist'] = IdListConverter
 app.url_map.converters['query'] = QueryConverter
 
+
 @app.before_request
 def before_request():
     g.lib = app.config['lib']
@@ -167,6 +172,7 @@ def get_item(id):
 def all_items():
     return g.lib.items()
 
+
 @app.route('/item/<int:item_id>/file')
 def item_file(item_id):
     item = g.lib.get_item(item_id)
@@ -174,6 +180,7 @@ def item_file(item_id):
                                attachment_filename=os.path.basename(item.path))
     response.headers['Content-Length'] = os.path.getsize(item.path)
     return response
+
 
 @app.route('/item/query/<query:queries>')
 @resource_query('items')
@@ -188,16 +195,19 @@ def item_query(queries):
 def get_album(id):
     return g.lib.get_album(id)
 
+
 @app.route('/album/')
 @app.route('/album/query/')
 @resource_list('albums')
 def all_albums():
     return g.lib.albums()
 
+
 @app.route('/album/query/<query:queries>')
 @resource_query('albums')
 def album_query(queries):
     return g.lib.albums(queries)
+
 
 @app.route('/album/<int:album_id>/art')
 def album_art(album_id):
@@ -249,6 +259,7 @@ class WebPlugin(BeetsPlugin):
         cmd = ui.Subcommand('web', help='start a Web interface')
         cmd.parser.add_option('-d', '--debug', action='store_true',
                               default=False, help='debug mode')
+
         def func(lib, opts, args):
             args = ui.decargs(args)
             if args:

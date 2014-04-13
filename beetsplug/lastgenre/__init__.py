@@ -86,6 +86,7 @@ def _tags_for(obj):
     ))
     return tags
 
+
 def _is_allowed(genre):
     """Determine whether the genre is present in the whitelist,
     returning a boolean.
@@ -95,6 +96,7 @@ def _is_allowed(genre):
     if not options['whitelist'] or genre in options['whitelist']:
         return True
     return False
+
 
 def _strings_to_genre(tags):
     """Given a list of strings, return a genre by joining them into a
@@ -118,6 +120,7 @@ def _strings_to_genre(tags):
         tags[:config['lastgenre']['count'].get(int)]
     )
 
+
 def fetch_genre(lastfm_obj):
     """Return the genre for a pylast entity or None if no suitable genre
     can be found. Ex. 'Electronic, House, Dance'
@@ -126,6 +129,7 @@ def fetch_genre(lastfm_obj):
 
 
 # Canonicalization tree processing.
+
 
 def flatten_tree(elem, path, branches):
     """Flatten nested lists/dictionaries into lists of strings
@@ -142,6 +146,7 @@ def flatten_tree(elem, path, branches):
             flatten_tree(sub, path, branches)
     else:
         branches.append(path + [unicode(elem)])
+
 
 def find_parents(candidate, branches):
     """Find parents genre of a given genre, ordered from the closest to
@@ -160,6 +165,7 @@ def find_parents(candidate, branches):
 
 _genre_cache = {}
 
+
 def _cached_lookup(entity, method, *args):
     """Get a genre based on the named entity using the callable `method`
     whose arguments are given in the sequence `args`. The genre lookup
@@ -177,21 +183,25 @@ def _cached_lookup(entity, method, *args):
         _genre_cache[key] = genre
         return genre
 
+
 def fetch_album_genre(obj):
     """Return the album genre for this Item or Album.
     """
     return _cached_lookup(u'album', LASTFM.get_album, obj.albumartist,
                           obj.album)
 
+
 def fetch_album_artist_genre(obj):
     """Return the album artist genre for this Item or Album.
     """
     return _cached_lookup(u'artist', LASTFM.get_artist, obj.albumartist)
 
+
 def fetch_artist_genre(item):
     """Returns the track artist genre for this Item.
     """
     return _cached_lookup(u'artist', LASTFM.get_artist, item.artist)
+
 
 def fetch_track_genre(obj):
     """Returns the track genre for this Item.
@@ -206,6 +216,8 @@ options = {
     'branches': None,
     'c14n': False,
 }
+
+
 class LastGenrePlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(LastGenrePlugin, self).__init__()
@@ -336,6 +348,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         lastgenre_cmd.parser.add_option('-s', '--source', dest='source',
                               type='string',
                               help='genre source: artist, album, or track')
+
         def lastgenre_func(lib, opts, args):
             write = config['import']['write'].get(bool)
             self.config.set_args(opts)
@@ -353,9 +366,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     if 'track' in self.sources:
                         item.genre, src = self._get_genre(item)
                         item.store()
-                        log.info(u'genre for track {0} - {1} ({2}): {3}'.format(
-                            item.artist, item.title, src, item.genre
-                        ))
+                        log.info(u'genre for track {0} - {1} ({2}): {3}'.
+                            format(item.artist, item.title, src, item.genre))
 
                     if write:
                         item.try_write()

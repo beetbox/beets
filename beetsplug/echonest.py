@@ -193,7 +193,6 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         values['id'] = song.id
         return values
 
-
     # "Profile" (ID-based) lookup.
 
     def profile(self, item):
@@ -221,7 +220,6 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                 buckets=['id:musicbrainz', 'audio_summary'])
         return self._flatten_song(self._pick_song(songs, item))
 
-
     # "Search" (metadata-based) lookup.
 
     def search(self, item):
@@ -232,7 +230,6 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                               buckets=['id:musicbrainz', 'tracks',
                                        'audio_summary'])
         return self._flatten_song(self._pick_song(songs, item))
-
 
     # "Identify" (fingerprinting) lookup.
 
@@ -275,7 +272,6 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             return
 
         return self._flatten_song(max(songs, key=lambda s: s.score))
-
 
     # "Analyze" (upload the audio itself) method.
 
@@ -370,7 +366,6 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                 return self._flatten_song(pick)
         return from_track  # Fall back to track metadata.
 
-
     # Shared top-level logic.
 
     def fetch_song(self, item):
@@ -427,7 +422,6 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             item.try_write()
         item.store()
 
-
     # Automatic (on-import) metadata fetching.
 
     def imported(self, session, task):
@@ -437,7 +431,6 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             song = self.fetch_song(item)
             if song:
                 self.apply_metadata(item, song)
-
 
     # Explicit command invocation.
 
