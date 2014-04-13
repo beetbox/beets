@@ -19,7 +19,11 @@ import shutil
 
 import _common
 from _common import unittest
+from helper import TestHelper
 import beets.mediafile
+
+
+_sc = beets.mediafile._safe_cast
 
 
 class EdgeTest(unittest.TestCase):
@@ -28,7 +32,8 @@ class EdgeTest(unittest.TestCase):
         # This is very hard to produce, so this is just the first 8192
         # bytes of a file found "in the wild".
         emptylist = beets.mediafile.MediaFile(
-                                os.path.join(_common.RSRC, 'emptylist.mp3'))
+            os.path.join(_common.RSRC, 'emptylist.mp3')
+        )
         genre = emptylist.genre
         self.assertEqual(genre, None)
 
@@ -36,7 +41,8 @@ class EdgeTest(unittest.TestCase):
         # Ensures that release times delimited by spaces are ignored.
         # Amie Street produces such files.
         space_time = beets.mediafile.MediaFile(
-                                os.path.join(_common.RSRC, 'space_time.mp3'))
+            os.path.join(_common.RSRC, 'space_time.mp3')
+        )
         self.assertEqual(space_time.year, 2009)
         self.assertEqual(space_time.month, 9)
         self.assertEqual(space_time.day, 4)
@@ -45,7 +51,8 @@ class EdgeTest(unittest.TestCase):
         # Ensures that release times delimited by Ts are ignored.
         # The iTunes Store produces such files.
         t_time = beets.mediafile.MediaFile(
-                                os.path.join(_common.RSRC, 't_time.m4a'))
+            os.path.join(_common.RSRC, 't_time.m4a')
+        )
         self.assertEqual(t_time.year, 1987)
         self.assertEqual(t_time.month, 3)
         self.assertEqual(t_time.day, 31)
@@ -69,7 +76,6 @@ class EdgeTest(unittest.TestCase):
         self.assertEqual(f.bitrate, 0)
 
 
-_sc = beets.mediafile._safe_cast
 class InvalidValueToleranceTest(unittest.TestCase):
 
     def test_safe_cast_string_to_int(self):
@@ -102,15 +108,21 @@ class InvalidValueToleranceTest(unittest.TestCase):
         self.assertTrue(us.startswith(u'caf'))
 
 
-class SafetyTest(unittest.TestCase):
+class SafetyTest(unittest.TestCase, TestHelper):
+    def setUp(self):
+        self.create_temp_dir()
+
+    def tearDown(self):
+        self.remove_temp_dir()
+
     def _exccheck(self, fn, exc, data=''):
-        fn = os.path.join(_common.RSRC, fn)
+        fn = os.path.join(self.temp_dir, fn)
         with open(fn, 'w') as f:
             f.write(data)
         try:
             self.assertRaises(exc, beets.mediafile.MediaFile, fn)
         finally:
-            os.unlink(fn) # delete the temporary file
+            os.unlink(fn)  # delete the temporary file
 
     def test_corrupt_mp3_raises_unreadablefileerror(self):
         # Make sure we catch Mutagen reading errors appropriately.
@@ -139,6 +151,7 @@ class SafetyTest(unittest.TestCase):
         self._exccheck('nothing.xml', beets.mediafile.UnreadableFileError,
                        "ftyp")
 
+    @unittest.skipIf(not hasattr(os, 'symlink'), 'platform lacks symlink')
     def test_broken_symlink(self):
         fn = os.path.join(_common.RSRC, 'brokenlink')
         os.symlink('does_not_exist', fn)
@@ -160,16 +173,17 @@ class SideEffectsTest(unittest.TestCase):
         self.assertEqual(old_mtime, new_mtime)
 
 
-class EncodingTest(unittest.TestCase):
+class EncodingTest(unittest.TestCase, TestHelper):
     def setUp(self):
+        self.create_temp_dir()
         src = os.path.join(_common.RSRC, 'full.m4a')
-        self.path = os.path.join(_common.RSRC, 'test.m4a')
+        self.path = os.path.join(self.temp_dir, 'test.m4a')
         shutil.copy(src, self.path)
 
         self.mf = beets.mediafile.MediaFile(self.path)
 
     def tearDown(self):
-        os.remove(self.path)
+        self.remove_temp_dir()
 
     def test_unicode_label_in_m4a(self):
         self.mf.label = u'foo\xe8bar'
@@ -191,7 +205,7 @@ class MissingAudioDataTest(unittest.TestCase):
         self.mf = ZeroLengthMediaFile(path)
 
     def test_bitrate_with_zero_length(self):
-        del self.mf.mgfile.info.bitrate # Not available directly.
+        del self.mf.mgfile.info.bitrate  # Not available directly.
         self.assertEqual(self.mf.bitrate, 0)
 
 
@@ -242,15 +256,16 @@ class SoundCheckTest(unittest.TestCase):
         self.assertEqual(peak, 0.0)
 
 
-class ID3v23Test(unittest.TestCase):
+class ID3v23Test(unittest.TestCase, TestHelper):
     def _make_test(self, ext='mp3'):
+        self.create_temp_dir()
         src = os.path.join(_common.RSRC, 'full.{0}'.format(ext))
-        self.path = os.path.join(_common.RSRC, 'test.{0}'.format(ext))
+        self.path = os.path.join(self.temp_dir, 'test.{0}'.format(ext))
         shutil.copy(src, self.path)
         return beets.mediafile.MediaFile(self.path)
 
     def _delete_test(self):
-        os.remove(self.path)
+        self.remove_temp_dir()
 
     def test_v24_year_tag(self):
         mf = self._make_test()

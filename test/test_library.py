@@ -31,8 +31,6 @@ from beets import plugins
 from beets import config
 from beets.mediafile import MediaFile
 
-TEMP_LIB = os.path.join(_common.RSRC, 'test_copy.blb')
-
 # Shortcut to path normalization.
 np = util.normpath
 
@@ -62,7 +60,7 @@ class StoreTest(_common.LibTestCase):
 
     def test_store_only_writes_dirty_fields(self):
         original_genre = self.i.genre
-        self.i._values_fixed['genre'] = 'beatboxing' # change w/o dirtying
+        self.i._values_fixed['genre'] = 'beatboxing'  # change w/o dirtying
         self.i.store()
         new_genre = self.lib._connection().execute(
             'select genre from items where '
@@ -132,6 +130,7 @@ class DestinationTest(_common.TestCase):
         super(DestinationTest, self).setUp()
         self.lib = beets.library.Library(':memory:')
         self.i = item(self.lib)
+
     def tearDown(self):
         super(DestinationTest, self).tearDown()
         self.lib._connection().close()
@@ -452,6 +451,7 @@ class PathFormattingMixin(object):
     """Utilities for testing path formatting."""
     def _setf(self, fmt):
         self.lib.path_formats.insert(0, ('default', fmt))
+
     def _assert_dest(self, dest, i=None):
         if i is None:
             i = self.i
@@ -467,6 +467,7 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
         self.lib.directory = '/base'
         self.lib.path_formats = [('default', u'path')]
         self.i = item(self.lib)
+
     def tearDown(self):
         super(DestinationFunctionTest, self).tearDown()
         self.lib._connection().close()
@@ -613,11 +614,13 @@ class PluginDestinationTest(_common.TestCase):
 
         # Mock beets.plugins.item_field_getters.
         self._tv_map = {}
+
         def field_getters():
             getters = {}
             for key, value in self._tv_map.items():
                 getters[key] = lambda _: value
             return getters
+
         self.old_field_getters = plugins.item_field_getters
         plugins.item_field_getters = field_getters
 
@@ -876,7 +879,7 @@ class PathTruncationTest(_common.TestCase):
 class MtimeTest(_common.TestCase):
     def setUp(self):
         super(MtimeTest, self).setUp()
-        self.ipath = os.path.join(_common.RSRC, 'testfile.mp3')
+        self.ipath = os.path.join(self.temp_dir, 'testfile.mp3')
         shutil.copy(os.path.join(_common.RSRC, 'full.mp3'), self.ipath)
         self.i = beets.library.Item.from_path(self.ipath)
         self.lib = beets.library.Library(':memory:')
@@ -945,8 +948,8 @@ class TemplateTest(_common.LibTestCase):
         self.album.store()
         self.assertEqual(self.i.evaluate_template('$foo'), 'baz')
 
-class WriteTest(_common.LibTestCase):
 
+class WriteTest(_common.LibTestCase):
     def test_write_nonexistant(self):
         self.i.path = '/path/does/not/exist'
         self.assertRaises(beets.library.ReadError, self.i.write)
@@ -956,8 +959,13 @@ class WriteTest(_common.LibTestCase):
         shutil.copy(os.path.join(_common.RSRC, 'empty.mp3'), path)
         os.chmod(path, stat.S_IRUSR)
 
-        self.i.path = path
-        self.assertRaises(beets.library.WriteError, self.i.write)
+        try:
+            self.i.path = path
+            self.assertRaises(beets.library.WriteError, self.i.write)
+
+        finally:
+            # Restore write permissions so the file can be cleaned up.
+            os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
 
     def test_write_with_custom_path(self):
         custom_path = os.path.join(self.temp_dir, 'file.mp3')

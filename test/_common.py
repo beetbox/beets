@@ -39,7 +39,7 @@ import beetsplug
 beetsplug.__path__ = [ os.path.abspath(
     os.path.join(__file__, '..', '..', 'beetsplug')) ]
 
-# Test resources/sandbox path.
+# Test resources path.
 RSRC = os.path.join(os.path.dirname(__file__), 'rsrc')
 
 # Propagate to root loger so nosetest can capture it
@@ -184,29 +184,41 @@ class Timecop(object):
 class InputException(Exception):
     def __init__(self, output=None):
         self.output = output
+
     def __str__(self):
         msg = "Attempt to read with no input provided."
         if self.output is not None:
             msg += " Output: %s" % self.output
         return msg
+
+
 class DummyOut(object):
     encoding = 'utf8'
+
     def __init__(self):
         self.buf = []
+
     def write(self, s):
         self.buf.append(s)
+
     def get(self):
         return ''.join(self.buf)
+
     def clear(self):
         self.buf = []
+
+
 class DummyIn(object):
     encoding = 'utf8'
+
     def __init__(self, out=None):
         self.buf = []
         self.reads = 0
         self.out = out
+
     def add(self, s):
         self.buf.append(s + '\n')
+
     def readline(self):
         if not self.buf:
             if self.out:
@@ -215,6 +227,8 @@ class DummyIn(object):
                 raise InputException()
         self.reads += 1
         return self.buf.pop(0)
+
+
 class DummyIO(object):
     """Mocks input and output streams for testing UI code."""
     def __init__(self):
@@ -246,6 +260,7 @@ class DummyIO(object):
 def touch(path):
     open(path, 'a').close()
 
+
 class Bag(object):
     """An object that exposes a set of fields given as keyword
     arguments. Any field not found in the dictionary appears to be None.
@@ -270,6 +285,7 @@ def platform_windows():
     finally:
         os.path = old_path
 
+
 @contextmanager
 def platform_posix():
     import posixpath
@@ -279,6 +295,7 @@ def platform_posix():
         yield
     finally:
         os.path = old_path
+
 
 @contextmanager
 def system_mock(name):

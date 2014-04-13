@@ -97,7 +97,7 @@ class TestHelper(object):
 
         Make sure you call ``teardown_beets()`` afterwards.
         """
-        self.temp_dir = mkdtemp()
+        self.create_temp_dir()
         os.environ['BEETSDIR'] = self.temp_dir
 
         self.config = beets.config
@@ -122,7 +122,7 @@ class TestHelper(object):
     def teardown_beets(self):
         del os.environ['BEETSDIR']
         # FIXME somehow close all open fd to the ilbrary
-        shutil.rmtree(self.temp_dir)
+        self.remove_temp_dir()
         self.config.clear()
 
     def load_plugins(self, *plugins):
@@ -208,3 +208,14 @@ class TestHelper(object):
         else:
             lib = Library(':memory:')
         beets.ui._raw_main(list(args), lib)
+
+    def create_temp_dir(self):
+        """Create a temporary directory and assign it into
+        `self.temp_dir`. Call `remove_temp_dir` later to delete it.
+        """
+        self.temp_dir = mkdtemp()
+
+    def remove_temp_dir(self):
+        """Delete the temporary directory created by `create_temp_dir`.
+        """
+        shutil.rmtree(self.temp_dir)
