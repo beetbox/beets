@@ -1113,7 +1113,15 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
 
     # Confirm action.
     if confirm:
-        extra = ' and write tags' if write else ''
+        if write and move:
+            extra = ', move and write tags'
+        elif write:
+            extra = ' and write tags'
+        elif move:
+            extra = ' and move'
+        else:
+            extra = ''
+
         if not ui.input_yn('Really modify%s (Y/n)?' % extra):
             return
 
