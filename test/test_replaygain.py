@@ -16,6 +16,7 @@
 import os
 import shutil
 from glob import glob
+import subprocess
 
 import _common
 from _common import unittest
@@ -36,7 +37,14 @@ class ReplayGainCliTestBase(TestHelper):
 
     def setUp(self):
         self.setup_beets()
-        self.load_plugins('replaygain')
+
+        try:
+            self.load_plugins('replaygain')
+        except:
+            self.teardown_beets()
+            self.unload_plugins()
+            raise
+
         self.config['replaygain']['backend'] = self.backend
         self.config['plugins'] = ['replaygain']
         self.setupLibrary(2)
@@ -125,6 +133,20 @@ class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
 
 class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase):
     backend = u'command'
+
+    def setUp(self):
+        # Check for the backend command.
+        for command in ['mp3gain', 'aacgain']:
+            try:
+                subprocess.check_call([command, '-v'])
+            except OSError:
+                pass
+            else:
+                break
+        else:
+            self.skipTest('no *gain command found')
+
+        super(ReplayGainCmdCliTest, self).setUp()
 
 
 def suite():
