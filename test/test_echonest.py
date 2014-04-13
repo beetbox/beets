@@ -22,8 +22,12 @@ from beets.library import Item
 
 
 class EchonestCliTest(unittest.TestCase, TestHelper):
-
     def setUp(self):
+        try:
+            __import__('pyechonest')
+        except ImportError:
+            self.skipTest('pyechonest not available')
+
         self.setup_beets()
         self.load_plugins('echonest')
 
