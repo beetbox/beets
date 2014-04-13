@@ -15,7 +15,7 @@
 """Tests for the 'lyrics' plugin."""
 
 from _common import unittest
-from beetsplug import lyrics
+from beets.plugin import lyrics
 
 
 class LyricsPluginTest(unittest.TestCase):
