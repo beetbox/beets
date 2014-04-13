@@ -35,8 +35,8 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
         }
 
     def tearDown(self):
-        self.teardown_beets()
         self.unload_plugins()
+        self.teardown_beets()
 
     def test_import_converted(self):
         self.importer.run()
@@ -72,8 +72,8 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
         self.config['convert']['paths']['default'] = u'converted'
 
     def tearDown(self):
-        self.teardown_beets()
         self.unload_plugins()
+        self.teardown_beets()
 
     def test_convert(self):
         with control_stdin('y'):

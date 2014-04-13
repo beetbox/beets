@@ -140,6 +140,7 @@ class RemoveTest(_common.TestCase):
         self.assertEqual(len(list(items)), 0)
         self.assertFalse(os.path.exists(self.i.path))
 
+
 class ModifyTest(_common.TestCase):
     def setUp(self):
         super(ModifyTest, self).setUp()
@@ -237,6 +238,7 @@ class ModifyTest(_common.TestCase):
         mediafile = MediaFile(item.path)
         self.assertIsNone(mediafile.initial_key)
 
+
 class MoveTest(_common.TestCase):
     def setUp(self):
         super(MoveTest, self).setUp()
@@ -303,6 +305,7 @@ class MoveTest(_common.TestCase):
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
+
 class UpdateTest(_common.TestCase):
     def setUp(self):
         super(UpdateTest, self).setUp()
@@ -319,7 +322,7 @@ class UpdateTest(_common.TestCase):
         self.album = self.lib.add_album([self.i])
 
         # Album art.
-        artfile = os.path.join(_common.RSRC, 'testart.jpg')
+        artfile = os.path.join(self.temp_dir, 'testart.jpg')
         _common.touch(artfile)
         self.album.set_art(artfile)
         self.album.store()
@@ -405,6 +408,7 @@ class UpdateTest(_common.TestCase):
         item = self.lib.items().get()
         self.assertEqual(item.title, 'full')
 
+
 class PrintTest(_common.TestCase):
     def setUp(self):
         super(PrintTest, self).setUp()
@@ -443,6 +447,7 @@ class PrintTest(_common.TestCase):
             else:
                 del os.environ['LC_CTYPE']
 
+
 class AutotagTest(_common.TestCase):
     def setUp(self):
         super(AutotagTest, self).setUp()
@@ -468,12 +473,14 @@ class AutotagTest(_common.TestCase):
         self.io.addinput('u')
         self._no_candidates_test(importer.action.ASIS)
 
+
 class ImportTest(_common.TestCase):
     def test_quiet_timid_disallowed(self):
         config['import']['quiet'] = True
         config['import']['timid'] = True
         self.assertRaises(ui.UserError, commands.import_files, None, [],
                           None)
+
 
 class InputTest(_common.TestCase):
     def setUp(self):
@@ -486,6 +493,7 @@ class InputTest(_common.TestCase):
         artist, album = commands.manual_search(False)
         self.assertEqual(artist, u'\xc2me')
         self.assertEqual(album, u'\xc2me')
+
 
 class ConfigTest(_common.TestCase):
     def setUp(self):
@@ -507,19 +515,21 @@ class ConfigTest(_common.TestCase):
         self._reset_config()
 
     def tearDown(self):
-        super(ConfigTest, self).tearDown()
         commands.default_commands.pop()
         if 'BEETSDIR' in os.environ:
             del os.environ['BEETSDIR']
         if os.getcwd != self._orig_cwd:
             os.chdir(self._orig_cwd)
+        super(ConfigTest, self).tearDown()
 
     def _make_test_cmd(self):
         test_cmd = ui.Subcommand('test', help='test')
+
         def run(lib, options, args):
             test_cmd.lib = lib
             test_cmd.options = options
             test_cmd.args = args
+
         test_cmd.func = run
         return test_cmd
 
@@ -532,7 +542,6 @@ class ConfigTest(_common.TestCase):
 
     def write_config_file(self):
         return open(self.user_config_path, 'w')
-
 
     def test_paths_section_respected(self):
         with self.write_config_file() as config:
@@ -865,6 +874,7 @@ class ShowChangeTest(_common.TestCase):
         self.assertTrue(u'caf\xe9.mp3 -> the title' in msg
                         or u'caf.mp3 ->' in msg)
 
+
 class PathFormatTest(_common.TestCase):
     def test_custom_paths_prepend(self):
         default_formats = ui.get_path_formats()
@@ -876,6 +886,7 @@ class PathFormatTest(_common.TestCase):
         self.assertEqual(tmpl.original, 'bar')
         self.assertEqual(pf[1:], default_formats)
 
+
 class PluginTest(_common.TestCase):
     def test_plugin_command_from_pluginpath(self):
         config['pluginpath'] = [os.path.join(_common.RSRC, 'beetsplug')]
@@ -884,19 +895,25 @@ class PluginTest(_common.TestCase):
 
 
 class CompletionTest(_common.TestCase):
-
     def test_completion(self):
         # Load plugin commands
         config['pluginpath'] = [os.path.join(_common.RSRC, 'beetsplug')]
         config['plugins'] = ['test']
 
-        test_script = os.path.join(os.path.dirname(__file__),
-                'test_completion.sh')
+        test_script = os.path.join(
+            os.path.dirname(__file__), 'test_completion.sh'
+        )
         bash_completion = os.path.abspath(os.environ.get(
             'BASH_COMPLETION_SCRIPT', '/etc/bash_completion'))
 
         # Tests run in bash
         shell = os.environ.get('BEETS_TEST_SHELL', '/bin/bash --norc')
+        try:
+            with open(os.devnull, 'wb') as devnull:
+                subprocess.check_call(shell.split() + ['--version'],
+                                      stdout=devnull)
+        except OSError:
+            self.skipTest('bash not available')
         tester = subprocess.Popen(shell.split(' '), stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE)
 
@@ -924,6 +941,7 @@ class CompletionTest(_common.TestCase):
         if tester.returncode != 0 or out != "completion tests passed\n":
             print(out)
             self.fail('test/test_completion.sh did not execute properly')
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
