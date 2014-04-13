@@ -372,8 +372,12 @@ def syspath(path, prefix=True):
             encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
             path = path.decode(encoding, 'replace')
 
-    # Add the magic prefix if it isn't already there
+    # Add the magic prefix if it isn't already there.
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
     if prefix and not path.startswith(WINDOWS_MAGIC_PREFIX):
+        if path.startswith(u'\\\\'):
+            # UNC path. Final path should look like \\?\UNC\...
+            path = u'UNC' + path[1:]
         path = WINDOWS_MAGIC_PREFIX + path
 
     return path
