@@ -1170,7 +1170,7 @@ def modify_func(lib, opts, args):
     for arg in args:
         if arg.endswith('!') and '=' not in arg and ':' not in arg:
             dels.append(arg[:-1])  # Strip trailing !.
-        elif '=' in arg:
+        elif '=' in arg and ':' not in arg.split('=', 1)[0]:
             mods.append(arg)
         else:
             query.append(arg)
