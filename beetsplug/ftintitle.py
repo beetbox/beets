@@ -115,6 +115,7 @@ class FtInTitlePlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand('ftintitle',
                             help='move featured artists to the title field')
+
         def func(lib, opts, args):
             write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):

@@ -12,7 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-""" Clears tag fields in media files.""" 
+""" Clears tag fields in media files."""
 
 import re
 import logging
@@ -62,11 +62,11 @@ class ZeroPlugin(BeetsPlugin):
         if task.choice_flag == action.ASIS and not self.warned:
             log.warn(u'[zero] cannot zero in \"as-is\" mode')
             self.warned = True
-        # TODO request write in as-is mode 
+        # TODO request write in as-is mode
 
     @classmethod
     def match_patterns(cls, field, patterns):
-        """Check if field (as string) is matching any of the patterns in 
+        """Check if field (as string) is matching any of the patterns in
         the list.
         """
         for p in patterns:

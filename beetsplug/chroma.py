@@ -93,6 +93,7 @@ def acoustid_match(path):
 
 # Plugin structure and autotagging logic.
 
+
 def _all_releases(items):
     """Given an iterable of Items, determines (according to Acoustid)
     which releases the items have in common. Generates release IDs.
@@ -110,6 +111,7 @@ def _all_releases(items):
     for release_id, count in relcounts.iteritems():
         if float(count) / len(items) > COMMON_REL_THRESH:
             yield release_id
+
 
 class AcoustidPlugin(plugins.BeetsPlugin):
     def track_distance(self, item, info):
@@ -148,6 +150,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
     def commands(self):
         submit_cmd = ui.Subcommand('submit',
                                    help='submit Acoustid fingerprints')
+
         def submit_cmd_func(lib, opts, args):
             try:
                 apikey = config['acoustid']['apikey'].get(unicode)
@@ -157,7 +160,8 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         submit_cmd.func = submit_cmd_func
 
         fingerprint_cmd = ui.Subcommand('fingerprint',
-            help='generate fingerprints for items without them')
+                          help='generate fingerprints for items without them')
+
         def fingerprint_cmd_func(lib, opts, args):
             for item in lib.items(ui.decargs(args)):
                 fingerprint_item(item,
@@ -169,6 +173,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
 
 # Hooks into import process.
 
+
 @AcoustidPlugin.listen('import_task_start')
 def fingerprint_task(task, session):
     """Fingerprint each item in the task for later use during the
@@ -177,6 +182,7 @@ def fingerprint_task(task, session):
     items = task.items if task.is_album else [task.item]
     for item in items:
         acoustid_match(item.path)
+
 
 @AcoustidPlugin.listen('import_task_apply')
 def apply_acoustid_metadata(task, session):
@@ -191,10 +197,12 @@ def apply_acoustid_metadata(task, session):
 
 # UI commands.
 
+
 def submit_items(userkey, items, chunksize=64):
     """Submit fingerprints for the items to the Acoustid server.
     """
     data = []  # The running list of dictionaries to submit.
+
     def submit_chunk():
         """Submit the current accumulated fingerprint data."""
         log.info('submitting {0} fingerprints'.format(len(data)))

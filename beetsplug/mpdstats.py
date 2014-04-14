@@ -177,8 +177,8 @@ class MPDStats(object):
     @staticmethod
     def update_item(item, attribute, value=None, increment=None):
         """Update the beets item. Set attribute to value or increment the value
-        of attribute. If the increment argument is used the value is cast to the
-        corresponding type.
+        of attribute. If the increment argument is used the value is cast to
+        the corresponding type.
         """
         if item is None:
             return
@@ -297,7 +297,8 @@ class MPDStats(object):
                 if handler:
                     handler(status)
                 else:
-                    log.debug(u'mpdstats: unhandled status "{0}"'.format(status))
+                    log.debug(u'mpdstats: unhandled status "{0}"'.
+                                format(status))
 
             events = self.mpd.events()
 

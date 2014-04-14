@@ -139,6 +139,7 @@ def apply_matches(d):
 class FromFilenamePlugin(plugins.BeetsPlugin):
     pass
 
+
 @FromFilenamePlugin.listen('import_task_start')
 def filename_task(task, session):
     """Examine each item in the task to see if we can extract a title

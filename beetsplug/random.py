@@ -23,6 +23,7 @@ from operator import attrgetter
 from itertools import groupby
 import collections
 
+
 def random_item(lib, opts, args):
     query = decargs(args)
     if opts.path:
@@ -81,6 +82,7 @@ random_cmd.parser.add_option('-n', '--number', action='store', type="int",
 random_cmd.parser.add_option('-e', '--equal-chance', action='store_true',
         help='each artist has the same chance')
 random_cmd.func = random_item
+
 
 class Random(BeetsPlugin):
     def commands(self):

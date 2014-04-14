@@ -25,14 +25,16 @@ log = logging.getLogger('beets')
 
 FUNC_NAME = u'__INLINE_FUNC__'
 
+
 class InlineError(Exception):
     """Raised when a runtime error occurs in an inline expression.
     """
     def __init__(self, code, exc):
         super(InlineError, self).__init__(
-            (u"error in inline path field code:\n" \
+            (u"error in inline path field code:\n"
              u"%s\n%s: %s") % (code, type(exc).__name__, unicode(exc))
         )
+
 
 def _compile_func(body):
     """Given Python code for a function body, return a compiled
@@ -46,6 +48,7 @@ def _compile_func(body):
     env = {}
     eval(code, env)
     return env[FUNC_NAME]
+
 
 def compile_inline(python_code, album):
     """Given a Python expression or function body, compile it as a path
@@ -94,6 +97,7 @@ def compile_inline(python_code, album):
             except Exception as exc:
                 raise InlineError(python_code, exc)
         return _func_func
+
 
 class InlinePlugin(BeetsPlugin):
     def __init__(self):
