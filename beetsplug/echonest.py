@@ -360,7 +360,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
 
         if os.stat(item.path).st_size > UPLOAD_MAX_SIZE:
             if config['echonest']['truncate']:
-                source = self.convert(item)
+                source = self.truncate(item)
                 if not source:
                     log.debug(u'echonest: failed to truncate file')
                     return
