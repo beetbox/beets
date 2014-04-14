@@ -79,12 +79,6 @@ def _do_query(lib, query, album, also_items=True):
 
 # fields: Shows a list of available fields for queries and format strings.
 
-fields_cmd = ui.Subcommand(
-    'fields',
-    help='show fields available for queries and format strings'
-)
-
-
 def fields_func(lib, opts, args):
     def _print_rows(names):
         print("  " + "\n  ".join(names))
@@ -109,6 +103,11 @@ def fields_func(lib, opts, args):
     _print_rows(library.Album._fields.keys())
     _show_plugin_fields(True)
 
+
+fields_cmd = ui.Subcommand(
+    'fields',
+    help='show fields available for queries and format strings'
+)
 fields_cmd.func = fields_func
 default_commands.append(fields_cmd)
 
@@ -796,6 +795,27 @@ def import_files(lib, paths, query):
     # Emit event.
     plugins.send('import', lib=lib, paths=paths)
 
+
+def import_func(lib, opts, args):
+    config['import'].set_args(opts)
+
+    # Special case: --copy flag suppresses import_move (which would
+    # otherwise take precedence).
+    if opts.copy:
+        config['import']['move'] = False
+
+    if opts.library:
+        query = decargs(args)
+        paths = []
+    else:
+        query = None
+        paths = args
+        if not paths:
+            raise ui.UserError('no path specified')
+
+    import_files(lib, paths, query)
+
+
 import_cmd = ui.Subcommand(
     'import', help='import new music', aliases=('imp', 'im')
 )
@@ -867,26 +887,6 @@ import_cmd.parser.add_option(
     '-g', '--group-albums', dest='group_albums', action='store_true',
     help='group tracks in a folder into seperate albums'
 )
-
-
-def import_func(lib, opts, args):
-    config['import'].set_args(opts)
-
-    # Special case: --copy flag suppresses import_move (which would
-    # otherwise take precedence).
-    if opts.copy:
-        config['import']['move'] = False
-
-    if opts.library:
-        query = decargs(args)
-        paths = []
-    else:
-        query = None
-        paths = args
-        if not paths:
-            raise ui.UserError('no path specified')
-
-    import_files(lib, paths, query)
 import_cmd.func = import_func
 default_commands.append(import_cmd)
 
@@ -906,6 +906,14 @@ def list_items(lib, query, album, fmt):
             ui.print_obj(item, lib, tmpl)
 
 
+def list_func(lib, opts, args):
+    if opts.path:
+        fmt = '$path'
+    else:
+        fmt = opts.format
+    list_items(lib, decargs(args), opts.album, fmt)
+
+
 list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
 list_cmd.parser.add_option(
     '-a', '--album', action='store_true',
@@ -919,14 +927,6 @@ list_cmd.parser.add_option(
     '-f', '--format', action='store',
     help='print with custom format', default=None
 )
-
-
-def list_func(lib, opts, args):
-    if opts.path:
-        fmt = '$path'
-    else:
-        fmt = opts.format
-    list_items(lib, decargs(args), opts.album, fmt)
 list_cmd.func = list_func
 default_commands.append(list_cmd)
 
@@ -1020,6 +1020,10 @@ def update_items(lib, query, album, move, pretend):
                 album.move()
 
 
+def update_func(lib, opts, args):
+    update_items(lib, decargs(args), opts.album, opts.move, opts.pretend)
+
+
 update_cmd = ui.Subcommand(
     'update', help='update the library', aliases=('upd', 'up',)
 )
@@ -1039,12 +1043,6 @@ update_cmd.parser.add_option(
     '-f', '--format', action='store',
     help='print with custom format', default=None
 )
-
-
-def update_func(lib, opts, args):
-    update_items(lib, decargs(args), opts.album, opts.move, opts.pretend)
-
-
 update_cmd.func = update_func
 default_commands.append(update_cmd)
 
@@ -1078,6 +1076,10 @@ def remove_items(lib, query, album, delete):
             obj.remove(delete)
 
 
+def remove_func(lib, opts, args):
+    remove_items(lib, decargs(args), opts.album, opts.delete)
+
+
 remove_cmd = ui.Subcommand(
     'remove', help='remove matching items from the library', aliases=('rm',)
 )
@@ -1089,12 +1091,6 @@ remove_cmd.parser.add_option(
     '-a', '--album', action='store_true',
     help='match albums instead of tracks'
 )
-
-
-def remove_func(lib, opts, args):
-    remove_items(lib, decargs(args), opts.album, opts.delete)
-
-
 remove_cmd.func = remove_func
 default_commands.append(remove_cmd)
 
@@ -1133,6 +1129,10 @@ Albums: {5}""".format(total_items, ui.human_seconds(total_time), total_time,
                       size_str, len(artists), len(albums)))
 
 
+def stats_func(lib, opts, args):
+    show_stats(lib, decargs(args), opts.exact)
+
+
 stats_cmd = ui.Subcommand(
     'stats', help='show statistics about the library or a query'
 )
@@ -1140,12 +1140,6 @@ stats_cmd.parser.add_option(
     '-e', '--exact', action='store_true',
     help='get exact file sizes'
 )
-
-
-def stats_func(lib, opts, args):
-    show_stats(lib, decargs(args), opts.exact)
-
-
 stats_cmd.func = stats_func
 default_commands.append(stats_cmd)
 
@@ -1256,6 +1250,17 @@ def modify_parse_args(args):
             query.append(arg)
     return query, mods, dels
 
+
+def modify_func(lib, opts, args):
+    query, mods, dels = modify_parse_args(decargs(args))
+    if not mods and not dels:
+        raise ui.UserError('no modifications specified')
+    write = opts.write if opts.write is not None else \
+        config['import']['write'].get(bool)
+    modify_items(lib, mods, dels, query, write, opts.move, opts.album,
+                 not opts.yes)
+
+
 modify_cmd = ui.Subcommand(
     'modify', help='change metadata fields', aliases=('mod',)
 )
@@ -1283,18 +1288,6 @@ modify_cmd.parser.add_option(
     '-f', '--format', action='store',
     help='print with custom format', default=None
 )
-
-
-def modify_func(lib, opts, args):
-    query, mods, dels = modify_parse_args(decargs(args))
-    if not mods and not dels:
-        raise ui.UserError('no modifications specified')
-    write = opts.write if opts.write is not None else \
-        config['import']['write'].get(bool)
-    modify_items(lib, mods, dels, query, write, opts.move, opts.album,
-                 not opts.yes)
-
-
 modify_cmd.func = modify_func
 default_commands.append(modify_cmd)
 
@@ -1319,6 +1312,16 @@ def move_items(lib, dest, query, copy, album):
         obj.store()
 
 
+def move_func(lib, opts, args):
+    dest = opts.dest
+    if dest is not None:
+        dest = normpath(dest)
+        if not os.path.isdir(dest):
+            raise ui.UserError('no such directory: %s' % dest)
+
+    move_items(lib, dest, decargs(args), opts.copy, opts.album)
+
+
 move_cmd = ui.Subcommand(
     'move', help='move or copy items', aliases=('mv',)
 )
@@ -1334,18 +1337,6 @@ move_cmd.parser.add_option(
     '-a', '--album', default=False, action='store_true',
     help='match whole albums instead of tracks'
 )
-
-
-def move_func(lib, opts, args):
-    dest = opts.dest
-    if dest is not None:
-        dest = normpath(dest)
-        if not os.path.isdir(dest):
-            raise ui.UserError('no such directory: %s' % dest)
-
-    move_items(lib, dest, decargs(args), opts.copy, opts.album)
-
-
 move_cmd.func = move_func
 default_commands.append(move_cmd)
 
@@ -1383,38 +1374,20 @@ def write_items(lib, query, pretend):
             item.try_write()
 
 
+def write_func(lib, opts, args):
+    write_items(lib, decargs(args), opts.pretend)
+
+
 write_cmd = ui.Subcommand('write', help='write tag information to files')
 write_cmd.parser.add_option(
     '-p', '--pretend', action='store_true',
     help="show all changes but do nothing"
 )
-
-
-def write_func(lib, opts, args):
-    write_items(lib, decargs(args), opts.pretend)
-
-
 write_cmd.func = write_func
 default_commands.append(write_cmd)
 
 
 # config: Show and edit user configuration.
-
-config_cmd = ui.Subcommand('config',
-                           help='show or edit the user configuration')
-config_cmd.parser.add_option(
-    '-p', '--paths', action='store_true',
-    help='show files that configuration was loaded from'
-)
-config_cmd.parser.add_option(
-    '-e', '--edit', action='store_true',
-    help='edit user configuration with $EDITOR'
-)
-config_cmd.parser.add_option(
-    '-d', '--defaults', action='store_true',
-    help='include the default configuration'
-)
-
 
 def config_func(lib, opts, args):
     # Make sure lazy configuration is loaded
@@ -1466,17 +1439,25 @@ def config_func(lib, opts, args):
         print(config.dump(full=opts.defaults))
 
 
+config_cmd = ui.Subcommand('config',
+                           help='show or edit the user configuration')
+config_cmd.parser.add_option(
+    '-p', '--paths', action='store_true',
+    help='show files that configuration was loaded from'
+)
+config_cmd.parser.add_option(
+    '-e', '--edit', action='store_true',
+    help='edit user configuration with $EDITOR'
+)
+config_cmd.parser.add_option(
+    '-d', '--defaults', action='store_true',
+    help='include the default configuration'
+)
 config_cmd.func = config_func
 default_commands.append(config_cmd)
 
 
 # completion: print completion script
-
-completion_cmd = ui.Subcommand(
-    'completion',
-    help='print shell script that provides command line completion'
-)
-
 
 def print_completion(*args):
     for line in completion_script(default_commands + plugins.commands()):
@@ -1564,6 +1545,10 @@ def completion_script(commands):
     yield '}\n'
 
 
+completion_cmd = ui.Subcommand(
+    'completion',
+    help='print shell script that provides command line completion'
+)
 completion_cmd.func = print_completion
 completion_cmd.hide = True
 default_commands.append(completion_cmd)
