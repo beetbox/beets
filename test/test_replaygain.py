@@ -138,7 +138,10 @@ class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase):
         # Check for the backend command.
         for command in ['mp3gain', 'aacgain']:
             try:
-                subprocess.check_call([command, '-v'])
+                with open(os.devnull, 'wb') as devnull:
+                    subprocess.check_call(
+                        [command, '-v'], stderr=devnull
+                    )
             except OSError:
                 pass
             else:
