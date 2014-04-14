@@ -1145,6 +1145,24 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
         for item in changed_items:
             item.try_write()
 
+
+def modify_parse_args(args):
+    """Split the arguments for the modify subcommand into query parts,
+    assignments (field=value), and deletions (field!).  Returns the result as
+    a three-tuple in that order.
+    """
+    mods = []
+    dels = []
+    query = []
+    for arg in args:
+        if arg.endswith('!') and '=' not in arg and ':' not in arg:
+            dels.append(arg[:-1])  # Strip trailing !.
+        elif '=' in arg and ':' not in arg.split('=', 1)[0]:
+            mods.append(arg)
+        else:
+            query.append(arg)
+    return (query, mods, dels)
+
 modify_cmd = ui.Subcommand('modify',
     help='change metadata fields', aliases=('mod',))
 modify_cmd.parser.add_option('-M', '--nomove', action='store_false',
@@ -1162,18 +1180,7 @@ modify_cmd.parser.add_option('-f', '--format', action='store',
 def modify_func(lib, opts, args):
     args = decargs(args)
 
-    # Split the arguments into query parts, assignments (field=value),
-    # and deletions (field!).
-    mods = []
-    dels = []
-    query = []
-    for arg in args:
-        if arg.endswith('!') and '=' not in arg and ':' not in arg:
-            dels.append(arg[:-1])  # Strip trailing !.
-        elif '=' in arg and ':' not in arg.split('=', 1)[0]:
-            mods.append(arg)
-        else:
-            query.append(arg)
+    (query, mods, dels) = modify_parse_args(args)
 
     if not mods and not dels:
         raise ui.UserError('no modifications specified')

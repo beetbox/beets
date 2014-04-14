@@ -238,6 +238,30 @@ class ModifyTest(_common.TestCase):
         mediafile = MediaFile(item.path)
         self.assertIsNone(mediafile.initial_key)
 
+    def test_arg_parsing_colon_query(self):
+        (query, mods, dels) = commands.modify_parse_args(["title:oldTitle",
+                                                          "title=newTitle"])
+        self.assertEqual(query, ["title:oldTitle"])
+        self.assertEqual(mods, ["title=newTitle"])
+
+    def test_arg_parsing_delete(self):
+        (query, mods, dels) = commands.modify_parse_args(["title:oldTitle",
+                                                          "title!"])
+        self.assertEqual(query, ["title:oldTitle"])
+        self.assertEqual(dels, ["title"])
+
+    def test_arg_parsing_query_with_exclaimation(self):
+        (query, mods, dels) = commands.modify_parse_args(["title:oldTitle!",
+                                                          "title=newTitle!"])
+        self.assertEqual(query, ["title:oldTitle!"])
+        self.assertEqual(mods, ["title=newTitle!"])
+
+    def test_arg_parsing_equals_in_value(self):
+        (query, mods, dels) = commands.modify_parse_args(["title:foo=bar",
+                                                          "title=newTitle"])
+        self.assertEqual(query, ["title:foo=bar"])
+        self.assertEqual(mods, ["title=newTitle"])
+
 
 class MoveTest(_common.TestCase):
     def setUp(self):
