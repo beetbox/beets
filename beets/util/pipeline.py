@@ -35,7 +35,6 @@ from __future__ import print_function
 import Queue
 from threading import Thread, Lock
 import sys
-import types
 
 BUBBLE = '__PIPELINE_BUBBLE__'
 POISON = '__PIPELINE_POISON__'

@@ -22,7 +22,6 @@ from collections import defaultdict
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import library
-from beets import config
 
 log = logging.getLogger('beets')
 
