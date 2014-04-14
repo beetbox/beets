@@ -264,10 +264,9 @@ class FetchArtPlugin(BeetsPlugin):
             self.import_stages = [self.fetch_art]
             self.register_listener('import_task_files', self.assign_art)
 
+    # Asynchronous; after music is added to the library.
     def fetch_art(self, session, task):
         """Find art for the album being imported."""
-        # Asynchronous; after music is added to the library.
-
         if task.is_album:  # Only fetch art for full albums.
             if task.choice_flag == importer.action.ASIS:
                 # For as-is imports, don't search Web sources for art.
@@ -285,10 +284,9 @@ class FetchArtPlugin(BeetsPlugin):
             if path:
                 self.art_paths[task] = path
 
+    # Synchronous; after music files are put in place.
     def assign_art(self, session, task):
         """Place the discovered art in the filesystem."""
-        # Synchronous; after music files are put in place.
-
         if task in self.art_paths:
             path = self.art_paths.pop(task)
 
@@ -300,9 +298,8 @@ class FetchArtPlugin(BeetsPlugin):
             if src_removed:
                 task.prune(path)
 
+    # Manual album art fetching.
     def commands(self):
-        # Manual album art fetching.
-
         cmd = ui.Subcommand('fetchart', help='download album art')
         cmd.parser.add_option('-f', '--force', dest='force',
                               action='store_true', default=False,

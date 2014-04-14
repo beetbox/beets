@@ -108,9 +108,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         return [embed_cmd, extract_cmd, clear_cmd]
 
 
+# 'embedart' command with --file argument.
+
 def embed(lib, imagepath, query):
-    """'embedart' command with --file argument.
-    """
     albums = lib.albums(query)
     for i_album in albums:
         album = i_album
@@ -126,9 +126,9 @@ def embed(lib, imagepath, query):
            config['embedart']['maxwidth'].get(int))
 
 
+# 'embedart' command without explicit file.
+
 def embed_current(lib, query):
-    """'embedart' command without explicit file.
-    """
     albums = lib.albums(query)
     for album in albums:
         if not album.artpath:
@@ -142,9 +142,9 @@ def embed_current(lib, query):
                config['embedart']['maxwidth'].get(int))
 
 
+# 'extractart' command.
+
 def extract(lib, outpath, query):
-    """'extractart' command.
-    """
     item = lib.items(query).get()
     if not item:
         log.error('No item matches query.')
@@ -178,9 +178,9 @@ def extract(lib, outpath, query):
         f.write(art)
 
 
+# 'clearart' command.
+
 def clear(lib, query):
-    """'clearart' command.
-    """
     log.info('Clearing album art from items:')
     for item in lib.items(query):
         log.info(u'%s - %s' % (item.artist, item.title))
