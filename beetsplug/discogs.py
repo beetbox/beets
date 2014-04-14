@@ -75,7 +75,7 @@ class DiscogsPlugin(BeetsPlugin):
         # An optional bracket can follow the integer, as this is how discogs
         # displays the release ID on its webpage.
         match = re.search(r'(^|\[*r|discogs\.com/.+/release/)(\d+)($|\])',
-                           album_id)
+                          album_id)
         if not match:
             return None
         result = Release(match.group(2))
@@ -186,8 +186,9 @@ class DiscogsPlugin(BeetsPlugin):
             # is not sequential. For example, I, II, III, IV, V. Assume these
             # are the track index, not the medium.
             medium_is_index = track.medium and not track.medium_index and (
-                    len(track.medium) != 1 or
-                    ord(track.medium) - 64 != medium_count + 1)
+                len(track.medium) != 1 or
+                ord(track.medium) - 64 != medium_count + 1
+            )
 
             if not medium_is_index and medium != track.medium:
                 # Increment medium_count and reset index_count when medium

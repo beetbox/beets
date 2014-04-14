@@ -129,7 +129,7 @@ class EchoNestTempoPlugin(BeetsPlugin):
         })
 
         pyechonest.config.ECHO_NEST_API_KEY = \
-                self.config['apikey'].get(unicode)
+            self.config['apikey'].get(unicode)
 
     def commands(self):
         cmd = ui.Subcommand('tempo', help='fetch song tempo (bpm)')

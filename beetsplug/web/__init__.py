@@ -82,8 +82,9 @@ def resource(name):
                 return flask.jsonify(_rep(entities[0]))
             elif entities:
                 return app.response_class(
-                        json_generator(entities, root=name),
-                        mimetype='application/json')
+                    json_generator(entities, root=name),
+                    mimetype='application/json'
+                )
             else:
                 return flask.abort(404)
         responder.__name__ = 'get_%s' % name
@@ -97,8 +98,9 @@ def resource_query(name):
     def make_responder(query_func):
         def responder(queries):
             return app.response_class(
-                    json_generator(query_func(queries), root='results'),
-                    mimetype='application/json')
+                json_generator(query_func(queries), root='results'),
+                mimetype='application/json'
+            )
         responder.__name__ = 'query_%s' % name
         return responder
     return make_responder
@@ -111,8 +113,9 @@ def resource_list(name):
     def make_responder(list_all):
         def responder():
             return app.response_class(
-                    json_generator(list_all(), root=name),
-                    mimetype='application/json')
+                json_generator(list_all(), root=name),
+                mimetype='application/json'
+            )
         responder.__name__ = 'all_%s' % name
         return responder
     return make_responder

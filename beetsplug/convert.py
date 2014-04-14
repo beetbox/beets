@@ -130,7 +130,7 @@ def should_transcode(item):
     maxbr = config['convert']['max_bitrate'].get(int)
     format_name = config['convert']['format'].get(unicode)
     return format_name.lower() != item.format.lower() or \
-            item.bitrate >= 1000 * maxbr
+        item.bitrate >= 1000 * maxbr
 
 
 def convert_item(dest_dir, keep_new, path_formats):
@@ -215,14 +215,14 @@ def convert_on_import(lib, item):
 
 def convert_func(lib, opts, args):
     dest = opts.dest if opts.dest is not None else \
-            config['convert']['dest'].get()
+        config['convert']['dest'].get()
 
     if not dest:
         raise ui.UserError('no convert destination set')
 
     dest = util.bytestring_path(dest)
     threads = opts.threads if opts.threads is not None else \
-            config['convert']['threads'].get(int)
+        config['convert']['threads'].get(int)
     keep_new = opts.keep_new
 
     if not config['convert']['paths']:

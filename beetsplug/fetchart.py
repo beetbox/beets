@@ -291,8 +291,8 @@ class FetchArtPlugin(BeetsPlugin):
             path = self.art_paths.pop(task)
 
             album = session.lib.get_album(task.album_id)
-            src_removed = config['import']['delete'].get(bool) or \
-                          config['import']['move'].get(bool)
+            src_removed = (config['import']['delete'].get(bool) or
+                           config['import']['move'].get(bool))
             album.set_art(path, not src_removed)
             album.store()
             if src_removed:

@@ -98,12 +98,13 @@ class BPDError(Exception):
         """Returns a string to be used as the response code for the
         erring command.
         """
-        return self.template.substitute({'resp':     RESP_ERR,
-                                         'code':     self.code,
-                                         'index':    self.index,
-                                         'cmd_name': self.cmd_name,
-                                         'message':  self.message
-                                        })
+        return self.template.substitute({
+            'resp':     RESP_ERR,
+            'code':     self.code,
+            'index':    self.index,
+            'cmd_name': self.cmd_name,
+            'message':  self.message,
+        })
 
 
 def make_bpd_error(s_code, s_message):
@@ -301,13 +302,14 @@ class BaseServer(object):
         Gives a list of response-lines for: volume, repeat, random,
         playlist, playlistlength, and xfade.
         """
-        yield (u'volume: ' + unicode(self.volume),
-               u'repeat: ' + unicode(int(self.repeat)),
-               u'random: ' + unicode(int(self.random)),
-               u'playlist: ' + unicode(self.playlist_version),
-               u'playlistlength: ' + unicode(len(self.playlist)),
-               u'xfade: ' + unicode(self.crossfade),
-              )
+        yield (
+            u'volume: ' + unicode(self.volume),
+            u'repeat: ' + unicode(int(self.repeat)),
+            u'random: ' + unicode(int(self.random)),
+            u'playlist: ' + unicode(self.playlist_version),
+            u'playlistlength: ' + unicode(len(self.playlist)),
+            u'xfade: ' + unicode(self.crossfade),
+        )
 
         if self.current_index == -1:
             state = u'stop'
@@ -765,13 +767,14 @@ class Server(BaseServer):
     # Metadata helper functions.
 
     def _item_info(self, item):
-        info_lines = [u'file: ' + item.destination(fragment=True),
-                      u'Time: ' + unicode(int(item.length)),
-                      u'Title: ' + item.title,
-                      u'Artist: ' + item.artist,
-                      u'Album: ' + item.album,
-                      u'Genre: ' + item.genre,
-                     ]
+        info_lines = [
+            u'file: ' + item.destination(fragment=True),
+            u'Time: ' + unicode(int(item.length)),
+            u'Title: ' + item.title,
+            u'Artist: ' + item.artist,
+            u'Album: ' + item.album,
+            u'Genre: ' + item.genre,
+        ]
 
         track = unicode(item.track)
         if item.tracktotal:
@@ -951,14 +954,15 @@ class Server(BaseServer):
                         'FROM items'
             artists, albums, songs, totaltime = tx.query(statement)[0]
 
-        yield (u'artists: ' + unicode(artists),
-               u'albums: ' + unicode(albums),
-               u'songs: ' + unicode(songs),
-               u'uptime: ' + unicode(int(time.time() - self.startup_time)),
-               u'playtime: ' + u'0',  # Missing.
-               u'db_playtime: ' + unicode(int(totaltime)),
-               u'db_update: ' + unicode(int(self.updated_time)),
-              )
+        yield (
+            u'artists: ' + unicode(artists),
+            u'albums: ' + unicode(albums),
+            u'songs: ' + unicode(songs),
+            u'uptime: ' + unicode(int(time.time() - self.startup_time)),
+            u'playtime: ' + u'0',  # Missing.
+            u'db_playtime: ' + unicode(int(totaltime)),
+            u'db_update: ' + unicode(int(self.updated_time)),
+        )
 
     # Searching.
 
@@ -1010,8 +1014,9 @@ class Server(BaseServer):
             for tag, value in zip(it, it):
                 if tag.lower() == u'any':
                     if any_query_type:
-                        queries.append(any_query_type(value, 
-                            ITEM_KEYS_WRITABLE, query_type))
+                        queries.append(any_query_type(value,
+                                                      ITEM_KEYS_WRITABLE,
+                                                      query_type))
                     else:
                         raise BPDError(ERROR_UNKNOWN, u'no such tagtype')
                 else:
@@ -1072,10 +1077,11 @@ class Server(BaseServer):
 
     def cmd_outputs(self, conn):
         """List the available outputs."""
-        yield (u'outputid: 0',
-               u'outputname: gstreamer',
-               u'outputenabled: 1',
-              )
+        yield (
+            u'outputid: 0',
+            u'outputname: gstreamer',
+            u'outputenabled: 1',
+        )
 
     def cmd_enableoutput(self, conn, output_id):
         output_id = cast_arg(int, output_id)
@@ -1159,10 +1165,13 @@ class BPDPlugin(BeetsPlugin):
                              'or similar package to use BPD.')
 
     def commands(self):
-        cmd = beets.ui.Subcommand('bpd',
-            help='run an MPD-compatible music player server')
-        cmd.parser.add_option('-d', '--debug', action='store_true',
-            help='dump all MPD traffic to stdout')
+        cmd = beets.ui.Subcommand(
+            'bpd', help='run an MPD-compatible music player server'
+        )
+        cmd.parser.add_option(
+            '-d', '--debug', action='store_true',
+            help='dump all MPD traffic to stdout'
+        )
 
         def func(lib, opts, args):
             host = args.pop(0) if args else self.config['host'].get(unicode)

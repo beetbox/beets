@@ -217,7 +217,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
 
         # Use the Echo Nest ID to look up the song.
         songs = self._echofun(pyechonest.song.profile, ids=enid,
-                buckets=['id:musicbrainz', 'audio_summary'])
+                              buckets=['id:musicbrainz', 'audio_summary'])
         return self._flatten_song(self._pick_song(songs, item))
 
     # "Search" (metadata-based) lookup.
@@ -446,17 +446,18 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
 
     def commands(self):
         fetch_cmd = ui.Subcommand('echonest',
-            help='Fetch metadata from the EchoNest')
-        fetch_cmd.parser.add_option('-f', '--force', dest='force',
-            action='store_true', default=False,
-            help='(re-)download information from the EchoNest')
+                                  help='Fetch metadata from the EchoNest')
+        fetch_cmd.parser.add_option(
+            '-f', '--force', dest='force', action='store_true', default=False,
+            help='(re-)download information from the EchoNest'
+        )
 
         def fetch_func(lib, opts, args):
             self.config.set_args(opts)
             write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
                 log.info(u'echonest: {0} - {1}'.format(item.artist,
-                        item.title))
+                                                       item.title))
                 if self.config['force'] or self.requires_update(item):
                     song = self.fetch_song(item)
                     if song:
@@ -465,11 +466,14 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         fetch_cmd.func = fetch_func
 
         sim_cmd = ui.Subcommand('echosim', help='show related files')
-        sim_cmd.parser.add_option('-t', '--threshold', dest='threshold',
-            action='store', type='float', default=0.15,
-            help='Set difference threshold')
-        sim_cmd.parser.add_option('-f', '--format', action='store',
-            default='${difference}: ${path}', help='print with custom format')
+        sim_cmd.parser.add_option(
+            '-t', '--threshold', dest='threshold', action='store',
+            type='float', default=0.15, help='Set difference threshold'
+        )
+        sim_cmd.parser.add_option(
+            '-f', '--format', action='store', default='${difference}: ${path}',
+            help='print with custom format'
+        )
 
         def sim_func(lib, opts, args):
             self.config.set_args(opts)

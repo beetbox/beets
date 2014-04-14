@@ -159,8 +159,10 @@ class AcoustidPlugin(plugins.BeetsPlugin):
             submit_items(apikey, lib.items(ui.decargs(args)))
         submit_cmd.func = submit_cmd_func
 
-        fingerprint_cmd = ui.Subcommand('fingerprint',
-                          help='generate fingerprints for items without them')
+        fingerprint_cmd = ui.Subcommand(
+            'fingerprint',
+            help='generate fingerprints for items without them'
+        )
 
         def fingerprint_cmd_func(lib, opts, args):
             for item in lib.items(ui.decargs(args)):
@@ -260,7 +262,7 @@ def fingerprint_item(item, write=False):
     elif item.acoustid_fingerprint:
         if write:
             log.info(u'{0}: fingerprint exists, skipping'.format(
-                    util.displayable_path(item.path)
+                util.displayable_path(item.path)
             ))
         else:
             log.info(u'{0}: using existing fingerprint'.format(

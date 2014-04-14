@@ -73,10 +73,12 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
     def commands(self):
         # Embed command.
-        embed_cmd = ui.Subcommand('embedart',
-            help='embed image files into file metadata')
-        embed_cmd.parser.add_option('-f', '--file', metavar='PATH',
-            help='the image file to embed')
+        embed_cmd = ui.Subcommand(
+            'embedart', help='embed image files into file metadata'
+        )
+        embed_cmd.parser.add_option(
+            '-f', '--file', metavar='PATH', help='the image file to embed'
+        )
 
         def embed_func(lib, opts, args):
             if opts.file:

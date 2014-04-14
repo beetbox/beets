@@ -95,7 +95,7 @@ class BenchmarkPlugin(BeetsPlugin):
             aunique_benchmark(lib, opts.profile)
 
         match_bench_cmd = ui.Subcommand('bench_match',
-                                          help='benchmark for track matching')
+                                        help='benchmark for track matching')
         match_bench_cmd.parser.add_option('-p', '--profile',
                                           action='store_true', default=False,
                                           help='performance profiling')

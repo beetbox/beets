@@ -77,7 +77,7 @@ def update_collection(lib, opts, args):
     print('...MusicBrainz collection updated.')
 
 update_mb_collection_cmd = Subcommand('mbupdate',
-        help='Update MusicBrainz collection')
+                                      help='Update MusicBrainz collection')
 update_mb_collection_cmd.func = update_collection
 
 

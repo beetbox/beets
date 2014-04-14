@@ -341,13 +341,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     def commands(self):
         lastgenre_cmd = ui.Subcommand('lastgenre', help='fetch genres')
-        lastgenre_cmd.parser.add_option('-f', '--force', dest='force',
-                              action='store_true',
-                              default=False,
-                              help='re-download genre when already present')
-        lastgenre_cmd.parser.add_option('-s', '--source', dest='source',
-                              type='string',
-                              help='genre source: artist, album, or track')
+        lastgenre_cmd.parser.add_option(
+            '-f', '--force', dest='force', action='store_true', default=False,
+            help='re-download genre when already present'
+        )
+        lastgenre_cmd.parser.add_option(
+            '-s', '--source', dest='source', type='string',
+            help='genre source: artist, album, or track'
+        )
 
         def lastgenre_func(lib, opts, args):
             write = config['import']['write'].get(bool)
@@ -366,8 +367,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     if 'track' in self.sources:
                         item.genre, src = self._get_genre(item)
                         item.store()
-                        log.info(u'genre for track {0} - {1} ({2}): {3}'.
-                            format(item.artist, item.title, src, item.genre))
+                        log.info(
+                            u'genre for track {0} - {1} ({2}): {3}'. format(
+                                item.artist, item.title, src, item.genre
+                            )
+                        )
 
                     if write:
                         item.try_write()
@@ -381,19 +385,22 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             album = session.lib.get_album(task.album_id)
             album.genre, src = self._get_genre(album)
             log.debug(u'added last.fm album genre ({0}): {1}'.format(
-                  src, album.genre))
+                src, album.genre
+            ))
             album.store()
 
             if 'track' in self.sources:
                 for item in album.items():
                     item.genre, src = self._get_genre(item)
                     log.debug(u'added last.fm item genre ({0}): {1}'.format(
-                          src, item.genre))
+                        src, item.genre
+                    ))
                     item.store()
 
         else:
             item = task.item
             item.genre, src = self._get_genre(item)
             log.debug(u'added last.fm item genre ({0}): {1}'.format(
-                  src, item.genre))
+                src, item.genre
+            ))
             item.store()

@@ -93,7 +93,7 @@ def _record_items(lib, basename, items):
     feedsdir = bytestring_path(config['importfeeds']['dir'].as_filename())
     formats = config['importfeeds']['formats'].as_str_seq()
     relative_to = config['importfeeds']['relative_to'].get() \
-            or config['importfeeds']['dir'].as_filename()
+        or config['importfeeds']['dir'].as_filename()
     relative_to = bytestring_path(relative_to)
 
     paths = []

@@ -298,7 +298,7 @@ class MPDStats(object):
                     handler(status)
                 else:
                     log.debug(u'mpdstats: unhandled status "{0}"'.
-                                format(status))
+                              format(status))
 
             events = self.mpd.events()
 
