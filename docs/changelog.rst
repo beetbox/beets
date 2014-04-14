@@ -45,6 +45,7 @@ Fixes:
   regression a few releases ago, only track-level metadata was being updated.
 * On Windows, paths on network shares (UNC paths) no longer cause "invalid
   filename" errors.
+* :doc:`/plugins/replaygain`: Fix crashes when attempting to log errors.
 
 .. _enum34: https://pypi.python.org/pypi/enum34
 .. _enum: https://docs.python.org/3.4/library/enum.html

@@ -550,10 +550,10 @@ class ReplayGainPlugin(BeetsPlugin):
                 if write:
                     item.try_write()
         except ReplayGainError as e:
-            log.warn(u"ReplayGain error: {1}".format(e))
+            log.warn(u"ReplayGain error: {0}".format(e))
         except FatalReplayGainError as e:
             raise ui.UserError(
-                u"Fatal replay gain error: {1}".format(e)
+                u"Fatal replay gain error: {0}".format(e)
             )
 
     def handle_track(self, item, write):
@@ -584,10 +584,10 @@ class ReplayGainPlugin(BeetsPlugin):
             if write:
                 item.try_write()
         except ReplayGainError as e:
-            log.warn(u"ReplayGain error: {1}".format(e))
+            log.warn(u"ReplayGain error: {0}".format(e))
         except FatalReplayGainError as e:
             raise ui.UserError(
-                u"Fatal replay gain error: {1}".format(e)
+                u"Fatal replay gain error: {0}".format(e)
             )
 
     def imported(self, session, task):
