@@ -49,7 +49,7 @@ class PathQuery(dbcore.FieldQuery):
 
     def match(self, item):
         return (item.path == self.file_path) or \
-               item.path.startswith(self.dir_path)
+            item.path.startswith(self.dir_path)
 
     def clause(self):
         dir_pat = buffer(self.dir_path + '%')
@@ -104,14 +104,12 @@ def _orelse(exp1, exp2):
     """Generates an SQLite expression that evaluates to exp1 if exp1 is
     non-null and non-empty or exp2 otherwise.
     """
-    return ('(CASE {0} WHEN NULL THEN {1} '
-                      'WHEN "" THEN {1} '
-                      'ELSE {0} END)').format(exp1, exp2)
-
+    return ("""(CASE {0} WHEN NULL THEN {1}
+                         WHEN "" THEN {1}
+                         ELSE {0} END)""").format(exp1, exp2)
 
 
 # Exceptions.
-
 
 class FileOperationError(Exception):
     """Indicates an error when interacting with a file on disk.
@@ -153,9 +151,7 @@ class WriteError(FileOperationError):
         return u'error writing ' + super(WriteError, self).__unicode__()
 
 
-
 # Item and Album model classes.
-
 
 class LibModel(dbcore.Model):
     """Shared concrete functionality for Items and Albums.
@@ -308,7 +304,6 @@ class Item(LibModel):
             return None
         return self._db.get_album(self)
 
-
     # Interaction with file metadata.
 
     def read(self, read_path=None):
@@ -388,7 +383,6 @@ class Item(LibModel):
             log.error(exc)
             return False
 
-
     # Files themselves.
 
     def move_file(self, dest, copy=False):
@@ -415,7 +409,6 @@ class Item(LibModel):
         integer.
         """
         return int(os.path.getmtime(syspath(self.path)))
-
 
     # Model methods.
 
@@ -483,7 +476,6 @@ class Item(LibModel):
         # Prune vacated directory.
         if not copy:
             util.prune_dirs(os.path.dirname(old_path), self._db.directory)
-
 
     # Templating.
 
@@ -826,21 +818,20 @@ class Album(LibModel):
                     item.store()
 
 
-
 # Query construction and parsing helpers.
-
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
     r'(?:'
-        r'(\S+?)'    # The field key.
-        r'(?<!\\):'  # Unescaped :
+    r'(\S+?)'    # The field key.
+    r'(?<!\\):'  # Unescaped :
     r')?'
 
     r'(.*)',         # The term itself.
 
     re.I  # Case-insensitive.
 )
+
 
 def parse_query_part(part, query_classes={}, prefixes={},
                      default_class=dbcore.query.SubstringQuery):
@@ -899,7 +890,7 @@ def construct_query_part(query_part, model_cls):
     prefixes = {':': dbcore.query.RegexpQuery}
     prefixes.update(plugins.queries())
     key, pattern, query_class = \
-            parse_query_part(query_part, query_classes, prefixes)
+        parse_query_part(query_part, query_classes, prefixes)
 
     # No key specified.
     if key is None:
@@ -961,9 +952,7 @@ def get_query(val, model_cls):
         raise ValueError('query must be None or have type Query or str')
 
 
-
 # The Library: interface to the database.
-
 
 class Library(dbcore.Database):
     """A database of music containing songs and albums.
@@ -971,10 +960,10 @@ class Library(dbcore.Database):
     _models = (Item, Album)
 
     def __init__(self, path='library.blb',
-                       directory='~/Music',
-                       path_formats=((PF_KEY_DEFAULT,
-                                      '$artist/$album/$track $title'),),
-                       replacements=None):
+                 directory='~/Music',
+                 path_formats=((PF_KEY_DEFAULT,
+                               '$artist/$album/$track $title'),),
+                 replacements=None):
         if path != ':memory:':
             self.path = bytestring_path(normpath(path))
         super(Library, self).__init__(path)
@@ -984,7 +973,6 @@ class Library(dbcore.Database):
         self.replacements = replacements
 
         self._memotable = {}  # Used for template substitution performance.
-
 
     # Adding objects to the database.
 
@@ -1018,7 +1006,6 @@ class Library(dbcore.Database):
 
         return album
 
-
     # Querying.
 
     def _fetch(self, model_cls, query, order_by=None):
@@ -1046,7 +1033,6 @@ class Library(dbcore.Database):
         )
         return self._fetch(Item, query, order)
 
-
     # Convenience accessors.
 
     def get_item(self, id):
@@ -1069,9 +1055,7 @@ class Library(dbcore.Database):
         return self._get(Album, album_id)
 
 
-
 # Default path template resources.
-
 
 def _int_arg(s):
     """Convert a string argument to an integer for use in a template
