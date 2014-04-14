@@ -1161,7 +1161,7 @@ def modify_parse_args(args):
             mods.append(arg)
         else:
             query.append(arg)
-    return (query, mods, dels)
+    return query, mods, dels
 
 modify_cmd = ui.Subcommand('modify',
     help='change metadata fields', aliases=('mod',))
@@ -1178,10 +1178,7 @@ modify_cmd.parser.add_option('-y', '--yes', action='store_true',
 modify_cmd.parser.add_option('-f', '--format', action='store',
     help='print with custom format', default=None)
 def modify_func(lib, opts, args):
-    args = decargs(args)
-
-    (query, mods, dels) = modify_parse_args(args)
-
+    query, mods, dels = modify_parse_args(decargs(args))
     if not mods and not dels:
         raise ui.UserError('no modifications specified')
     write = opts.write if opts.write is not None else \

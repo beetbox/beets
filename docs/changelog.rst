@@ -46,6 +46,9 @@ Fixes:
 * On Windows, paths on network shares (UNC paths) no longer cause "invalid
   filename" errors.
 * :doc:`/plugins/replaygain`: Fix crashes when attempting to log errors.
+* The :ref:`modify-cmd` command can now accept query arguments that contain =
+  signs. An argument is considered a query part when a : appears before any
+  =s. Thanks to mook.
 
 .. _enum34: https://pypi.python.org/pypi/enum34
 .. _enum: https://docs.python.org/3.4/library/enum.html
