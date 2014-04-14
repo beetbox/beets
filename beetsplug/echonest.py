@@ -36,6 +36,7 @@ RETRY_INTERVAL = 10
 
 DEVNULL = open(os.devnull, 'wb')
 ALLOWED_FORMATS = ('MP3', 'OGG', 'AAC')
+UPLOAD_MAX_SIZE = 50 * 1024 * 1024
 
 # The attributes we can import and where to store them in beets fields.
 ATTRIBUTES = {
@@ -111,6 +112,7 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             'codegen': None,
             'upload':  True,
             'convert': True,
+            'truncate': True,
         })
         self.config.add(ATTRIBUTES)
 
@@ -310,6 +312,36 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
         )
         return dest
 
+    def truncate(self, item):
+        """Truncates an item to a size less than UPLOAD_MAX_SIZE."""
+        fd, dest = tempfile.mkstemp(u'.ogg')
+        os.close(fd)
+        source = item.path
+
+        log.info(u'echonest: truncating {0} to {1}'.format(
+            util.displayable_path(source),
+            util.displayable_path(dest),
+        ))
+
+        command = u'ffmpeg -t 300 -i $source -y -acodec copy $dest'
+        opts = []
+        for arg in command.split():
+            arg = arg.encode('utf-8')
+            opts.append(Template(arg).substitute(source=source, dest=dest))
+
+        # Run the command.
+        try:
+            util.command_output(opts)
+        except (OSError, subprocess.CalledProcessError) as exc:
+            log.debug(u'echonest: truncate failed: {0}'.format(exc))
+            util.remove(dest)
+            return
+
+        log.info(u'echonest: truncate encoding {0}'.format(
+            util.displayable_path(source))
+        )
+        return dest
+
     def analyze(self, item):
         """Upload the item to the EchoNest for analysis. May require to
         convert the item to a supported media format.
@@ -322,6 +354,15 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
                 source = self.convert(item)
                 if not source:
                     log.debug(u'echonest: failed to convert file')
+                    return
+            else:
+                return
+
+        if os.stat(item.path).st_size > UPLOAD_MAX_SIZE:
+            if config['echonest']['truncate']:
+                source = self.convert(item)
+                if not source:
+                    log.debug(u'echonest: failed to truncate file')
                     return
             else:
                 return

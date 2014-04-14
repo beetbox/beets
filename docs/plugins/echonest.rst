@@ -71,12 +71,20 @@ can not be identified by other means.  If you don't want that, disable the
     echonest:
         upload: no
 
-The Echo Nest server only supports a limited range of file formats.  The
-``plugin`` automatically converts unsupported files to ``ogg``.  If you don't
-want that, disable the ``convert`` config option like so::
+The Echo Nest server only supports a limited range of file formats.  The plugin
+automatically converts unsupported files to ``ogg``.  If you don't want that,
+disable the ``convert`` config option like so::
 
     echonest:
         convert: no
+
+The Echo Nest server does not allow uploading of files with sizes greater than
+50MB. The plugin automatically truncates large files to their first 5
+minutes. If you don't want that, disable the ``truncate`` config option like
+so::
+
+    echonest:
+        truncate: no
 
 To enable fingerprinting, you'll need to tell the plugin where to find the
 Echoprint or ENMFP codegen binary. Use the ``codegen`` key under the

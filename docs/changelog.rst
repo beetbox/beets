@@ -16,7 +16,7 @@ New stuff:
 * :doc:`/plugins/lyrics`: Lyrics should now be found for more songs. Searching
   is now sensitive to featured artists and parenthesized title suffixes.
   When a song has multiple titles, lyrics from all the named songs are now
-  concatenated. Thanks to Fabrice Laporte and Paul Phillips. 
+  concatenated. Thanks to Fabrice Laporte and Paul Phillips.
 * Add support for `initial_key` as field in the library and tag for
   media files. When the user sets this field with ``beet modify
   initial_key=Am`` the media files will reflect this in their tags. The
@@ -28,6 +28,8 @@ New stuff:
 
 Fixes:
 
+* :doc:`/plugins/echonest`: Truncate files larger than 50MB before uploading for
+  analysis.
 * :doc:`/plugins/fetchart`: Fix a crash when the server does not specify a
   content type. Thanks to Lee Reinhardt.
 * :doc:`/plugins/convert`: The ``--keep-new`` flag now works correctly
