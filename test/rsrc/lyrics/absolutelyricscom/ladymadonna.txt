@@ -1,0 +1,414 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>The Beatles :: Lady Madonna Lyrics - Absolute Lyrics</title>
+
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+<meta name="keywords" content="The Beatles, Lady Madonna, lyrics, music lyrics" />
+<meta name="description" content="" />
+
+<link rel="shorturl" type="text/html" href="http://www.absolutelyrics.com/l/l81518" />
+<link rel="shortlink" type="text/html" href="http://www.absolutelyrics.com/l/l81518" />
+
+
+
+<link href="/static/style2.css" rel="stylesheet" type= "text/css" />
+
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-115691-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+<script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+
+<script type="text/javascript" src="/static/js2.js"></script>
+</head>
+
+<body>
+
+<div id="headerweb">
+	<div id="header">
+		<h1><a href="/">absolute lyrics</a></h1>
+
+		<div id="quicksearchbox">
+			<form method="get" action="/lyrics/search">search
+				<input type="text" name="q" id="q" value="" size="20" />
+				<input type="submit" name="search" id="search" value="go" />
+			</form>
+		</div><!-- quicksearchbox -->
+
+		<div id="mainmenu">
+			<ul>
+				<li><a href="/" title="home">home</a></li>
+				<li><a href="/lyrics/top50" title="top 50 lyrics" rel="nofollow">top 50 lyrics</a></li>
+				<li><a href="/lyrics/top50a" title="top 50 artists" rel="nofollow">top 50 artists</a></li>
+				<li><a href="/lyrics/searchpage" title="advance search" rel="nofollow">search</a></li>
+				<li><a href="/lyrics/privacy" rel="nofollow">privacy</a></li>
+			</ul>
+		</div><!-- mainmenu -->
+
+		<div id="alphalistcontainer">
+		</div>
+
+		<div class="clear"></div>
+	</div><!-- header -->
+</div><!-- headerweb -->
+
+	<div id="topbanner">
+	<script type="text/javascript">
+// <![CDATA[
+// Absolutelyrics 728x90 Brand Ads Only
+cf_page_artist = "The Beatles";
+cf_page_song = "Lady Madonna";
+cf_adunit_id = "39380976";
+// ]]>
+</script>
+<script type="text/javascript" src="http://srv.clickfuse.com/showads/showad.php"></script>	</div><!-- topbanner -->
+
+
+<div id="webpage">
+	<div id="content">
+		<div id="nav">
+			you are at : <a href="/" title="absolute lyrics home">home</a> &gt; <a href="/lyrics/artist/the_beatles" title="The Beatles lyrics">The Beatles Lyrics</a> &gt; Lady Madonna Lyrics		</div><!-- nav -->
+
+		<div id="left">
+
+
+
+
+
+
+
+<!--	<div id="advertising_kovideo" style="font-size: 13px; text-align: right;"> -->
+	<!--	</div> -->
+
+
+
+
+
+
+
+	<h2>Lady Madonna - The Beatles
+	<script language=JavaScript>
+		// buy mp3
+			document.write(Base64.decode('CTxzcGFuIGNsYXNzPSJidXlfbXAzIj48YSB0YXJnZXQ9Il9ibGFuayIgaHJlZj0iaHR0cDovL3d3dy5hbWF6b24uY29tL3MvP19lbmNvZGluZz1VVEY4JnJlZGlyZWN0PXRydWUmdGFnPWFic29sdXRlbHlyaWNzLTIwJmxpbmtDb2RlPXVyMiZjYW1wPTE3ODkmcmQ9MSZjcmVhdGl2ZT0zOTA5NTcmZmllbGQta2V5d29yZHM9JTI2JTIzMzQlM0JUaGUlMjBCZWF0bGVzJTI2JTIzMzQlM0IlMjAlMjYlMjMzNCUzQkxhZHklMjBNYWRvbm5hJTI2JTIzMzQlM0ImdXJsPXNlYXJjaC1hbGlhcyUzRGRpZ2l0YWwtbXVzaWMiICByZWw9Im5vZm9sbG93Ij5CdXkgTVAzPC9hPjxpbWcgc3JjPSJodHRwczovL3d3dy5hc3NvYy1hbWF6b24uY29tL2UvaXI/dD1hYnNvbHV0ZWx5cmljcy0yMCZsPXVyMiZvPTEiIHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGJvcmRlcj0iMCIgYWx0PSIiIHN0eWxlPSJib3JkZXI6bm9uZSAhaW1wb3J0YW50OyBtYXJnaW46MHB4ICFpbXBvcnRhbnQ7IiAvPjwvc3Bhbj4KCgk='));
+		</script>
+	</h2>
+
+
+	<script language=JavaScript>
+		// like button
+			document.write(Base64.decode('Cgk8ZGl2IHN0eWxlPSJtYXJnaW4tdG9wOiAxMHB4OyBtYXJnaW4tYm90dG9tOiAxMHB4OyI+Cgk8ZGl2IGlkPSJmYiIgc3R5bGU9ImRpc3BsYXk6aW5saW5lLWJsb2NrOyB2ZXJ0aWNhbC1hbGlnbjp0ZXh0LXRvcDsgcGFkZGluZy1ib3R0b206MnB4OyI+CgkJPGRpdiBpZD0iZmItcm9vdCI+PC9kaXY+CgkJPGRpdiBjbGFzcz0iZmItbGlrZSIgZGF0YS1ocmVmPSJodHRwOi8vd3d3LmFic29sdXRlbHlyaWNzLmNvbS9sL2w4MTUxOCIgZGF0YS1zZW5kPSJmYWxzZSIgZGF0YS1sYXlvdXQ9ImJ1dHRvbl9jb3VudCIgZGF0YS1zaG93LWZhY2VzPSJmYWxzZSI+PC9kaXY+Cgk8L2Rpdj4KCgk8ZGl2IGlkPSJnZyIgc3R5bGU9ImRpc3BsYXk6aW5saW5lLWJsb2NrOyB2ZXJ0aWNhbC1hbGlnbjp0ZXh0LXRvcDsgaGVpZ2h0OjIwcHg7IHdpZHRoOiA3NXB4OyBvdmVyZmxvdzogaGlkZGVuO3BhZGRpbmctYm90dG9tOjJweDsiPgoJPCEtLSBQbGFjZSB0aGlzIHRhZyB3aGVyZSB5b3Ugd2FudCB0aGUgKzEgYnV0dG9uIHRvIHJlbmRlciAtLT4KCQk8ZGl2IGNsYXNzPSJnLXBsdXNvbmUiIGRhdGEtc2l6ZT0ibWVkaXVtIiBkYXRhLWhyZWY9Imh0dHA6Ly93d3cuYWJzb2x1dGVseXJpY3MuY29tL2wvbDgxNTE4Ij48L2Rpdj4KCgk8L2Rpdj4KCTxkaXYgaWQ9InR3IiBzdHlsZT0iZGlzcGxheTppbmxpbmUtYmxvY2s7IHZlcnRpY2FsLWFsaWduOnRleHQtdG9wOyBoZWlnaHQ6MjBweDsgd2lkdGg6MTAwcHg7IG92ZXJmbG93OiBoaWRkZW47cGFkZGluZy1ib3R0b206MnB4OyI+CgkJPGEgaHJlZj0iaHR0cHM6Ly90d2l0dGVyLmNvbS9zaGFyZSIgY2xhc3M9InR3aXR0ZXItc2hhcmUtYnV0dG9uIiBkYXRhLXVybD0iaHR0cDovL3d3dy5hYnNvbHV0ZWx5cmljcy5jb20vbC9sODE1MTgiIGRhdGEtdGV4dD0iTGFkeSBNYWRvbm5hIGJ5IFRoZSBCZWF0bGVzIGx5cmljcyIgZGF0YS1jb3VudD0iaG9yaXpvbnRhbCIgcmVsPSJub2ZvbGxvdyI+VHdlZXQ8L2E+Cgk8L2Rpdj4KPC9kaXY+CgoJ'));
+		</script>
+	<!-- Poisemedia -->
+		<script language=JavaScript>
+		document.write(Base64.decode('PGRpdiBpZD0iYWR2ZXJ0aXNpbmdfcG9pc2VtZWRpYSI+Cgk8cCBzdHlsZT0iY29sb3I6cmVkOyBmb250LXdlaWdodDpib2xkOyBmb250LXNpemU6MTRweDsgZm9udC1mYW1pbHk6IGFyaWFsOyB0ZXh0LWFsaWduOmxlZnQ7Ij4KCTxhIGhyZWY9Imh0dHA6Ly93d3cucmluZ3RvbmVtYXRjaGVyLmNvbS9jby9yaW5ndG9uZW1hdGNoZXIvMDIvbm9jLmFzcD9zaWQ9QUJURXJvcyZhbXA7YXJ0aXN0PVRoZSUyMEJlYXRsZXMmYW1wO3Nvbmc9TGFkeSUyME1hZG9ubmEiIHRhcmdldD0iX2JsYW5rIiBzdHlsZT0iY29sb3I6cmVkOyIgcmVsPSJub2ZvbGxvdyI+Cgk8aW1nIHNyYz0iL3N0YXRpYy9waG9uZV9pY29uX2JsdWVfc21hbGxfdHJhbnNfbGVmdC5naWYiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNyIgYm9yZGVyPSIwIiBzdHlsZT0idmVydGljYWwtYWxpZ246bWlkZGxlIiBhbHQ9IioiIC8+CglTZW5kICJMYWR5IE1hZG9ubmEiIFJpbmd0b25lIHRvIHlvdXIgQ2VsbAoJPGltZyBzcmM9Ii9zdGF0aWMvcGhvbmVfaWNvbl9ibHVlX3NtYWxsX3RyYW5zX3JpZ2h0LmdpZiIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE3IiBib3JkZXI9IjAiIHN0eWxlPSJ2ZXJ0aWNhbC1hbGlnbjptaWRkbGUiIGFsdD0iKiIgLz48L2E+PC9wPgoJPC9kaXY+'));
+	</script>
+	<!-- end poisemedia -->
+
+	<p id="view_lyrics">
+	The Beatles - Lady Madonna<br />
+<br />
+Lady Madonna, children at your feet.<br />
+Wonder how you manage to make ends meet.<br />
+Who finds the money? When you pay the rent?<br />
+Did you think that money was heaven sent?<br />
+Friday night arrives without a suitcase.<br />
+Sunday morning creep in like a nun.<br />
+Monday's child has learned to tie his bootlace.<br />
+See how they run.<br />
+Lady Madonna, baby at your breast.<br />
+Wonder how you manage to feed the rest.<br />
+See how they run.<br />
+Lady Madonna, lying on the bed,<br />
+Listen to the music playing in your head.<br />
+Tuesday afternoon is never ending.<br />
+Wednesday morning papers didn't come.<br />
+Thursday night you stockings needed mending.<br />
+See how they run.<br />
+Lady Madonna, children at your feet.<br />
+Wonder how you manage to make ends meet.	</p>
+
+	<!-- Poisemedia -->
+		<script language=JavaScript>
+		document.write(Base64.decode('PGRpdiBpZD0iYWR2ZXJ0aXNpbmdfcG9pc2VtZWRpYTIiPgoJPHAgc3R5bGU9ImNvbG9yOnJlZDsgZm9udC13ZWlnaHQ6Ym9sZDsgZm9udC1zaXplOjE0cHg7IGZvbnQtZmFtaWx5OiBhcmlhbDsgdGV4dC1hbGlnbjpsZWZ0OyI+Cgk8YSBocmVmPSJodHRwOi8vd3d3LnJpbmd0b25lbWF0Y2hlci5jb20vY28vcmluZ3RvbmVtYXRjaGVyLzAyL25vYy5hc3A/c2lkPUFCVEVyb3MmYW1wO2FydGlzdD1UaGUlMjBCZWF0bGVzJmFtcDtzb25nPUxhZHklMjBNYWRvbm5hIiB0YXJnZXQ9Il9ibGFuayIgc3R5bGU9ImNvbG9yOnJlZDsiIHJlbD0ibm9mb2xsb3ciPgoJPGltZyBzcmM9Ii9zdGF0aWMvcGhvbmVfaWNvbl9ibHVlX3NtYWxsX3RyYW5zX2xlZnQuZ2lmIiB3aWR0aD0iMTYiIGhlaWdodD0iMTciIGJvcmRlcj0iMCIgc3R5bGU9InZlcnRpY2FsLWFsaWduOm1pZGRsZSIgYWx0PSIqIiAvPgoJU2VuZCAiTGFkeSBNYWRvbm5hIiBSaW5ndG9uZSB0byB5b3VyIENlbGwKCTxpbWcgc3JjPSIvc3RhdGljL3Bob25lX2ljb25fYmx1ZV9zbWFsbF90cmFuc19yaWdodC5naWYiIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNyIgYm9yZGVyPSIwIiBzdHlsZT0idmVydGljYWwtYWxpZ246bWlkZGxlIiBhbHQ9IioiIC8+PC9hPjwvcD4KCTwvZGl2Pg=='));
+	</script>
+	<!-- end poisemedia -->
+
+	<div id="view_lyricsinfo">
+	view 9,699 times, correct by Diesel	</div>
+
+			<div style="text-align: center; padding:10px;">
+			<script type="text/javascript" >
+// <![CDATA[
+google_ad_client = "pub-4230952243334764";
+google_ad_width = 300;
+google_ad_height = 250;
+google_ad_format = "300x250_as";
+google_ad_channel ="0091933132";
+//google_page_url = document.location;
+google_color_border = "FFFFFF";
+google_color_bg = "FFFFFF";
+google_color_link = "0000FF";
+google_color_url = "0000FF";
+google_color_text = "000000";
+// ]]>
+</script>
+<script type="text/javascript"
+  src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>			</div>
+
+
+
+
+
+
+
+
+
+
+<!-- comment -->
+	<div style="padding-top: 20px;">
+	<h2>comments</h2>
+
+	<div class="fb-comments" data-href="http://www.absolutelyrics.com/l/l81518" data-num-posts="5" data-width="550" style="padding-left: 10px;"></div>
+	</div>
+		</div> <!-- left -->
+
+		<div id="right">
+			<div id="boxbanner">
+				<script type="text/javascript">
+				// <![CDATA[
+					/* Artist-Album-List-300x250 */
+					cf_page_artist = "The Beatles";
+					cf_page_song = "Lady Madonna";
+					cf_adunit_id = "39380943";
+				// ]]>
+				</script>
+				<script type="text/javascript" src="http://srv.clickfuse.com/showads/showad.php"></script>
+							</div><!-- boxbanner -->
+
+			<div class="box" id="relatedvideocontainer">
+				<h3>related videos</h3>
+				<div id="relatedvideos">
+
+				</div>
+			</div>
+
+
+
+	<div class="box">
+		<h3>share this page</h3>
+
+<label for="copyurl" style="cursor: pointer;">link </label>
+<input id="copyurl" value="http://www.absolutelyrics.com/l/l81518" style="border: 1px solid rgb(208, 208, 208); cursor: pointer; width: 250px;" onclick="this.select();this.focus();" onfocus="this.select();this.focus();" /><br />
+
+<div style="padding-top: 3px;">
+
+	<a href="http://www.facebook.com/sharer.php?u=http%3A%2F%2Fwww.absolutelyrics.com%2Fl%2Fl81518&amp;t=Lady%20Madonna%20by%20The%20Beatles%20lyrics" target="_blank" title="Share on Facebook" rel="nofollow">
+	<img src="/static/share-facebook.png" alt="Facebook" border="0" /></a>
+
+	<a href="http://twitter.com/home/?status=Lady%20Madonna%20by%20The%20Beatles%20lyrics%20http%3A%2F%2Fwww.absolutelyrics.com%2Fl%2Fl81518" target="_blank" title="Share on Twitter" rel="nofollow">
+	<img src="/static/share-twitter.png" alt="Twitter" border="0" /></a>
+
+	<a href="http://www.myspace.com/index.cfm?fuseaction=postto&amp;t=Lady%20Madonna%20by%20The%20Beatles%20lyrics&amp;c=http%3A%2F%2Fwww.absolutelyrics.com%2Fl%2Fl81518&amp;u=http%3A%2F%2Fwww.absolutelyrics.com%2Fl%2Fl81518" target="_blank" title="Share on MySpace" rel="nofollow">
+	<img src="/static/share-myspace.png" alt="MySpace" border="0" /></a>
+
+	<a href="http://del.icio.us/post?url=http%3A%2F%2Fwww.absolutelyrics.com%2Fl%2Fl81518&amp;title=Lady%20Madonna%20by%20The%20Beatles%20lyrics" target="_blank" title="Bookmark on Delicious" rel="nofollow">
+	<img src="/static/share-delicious.png" alt="Delicious" border="0" /></a>
+
+	<a href="http://www.bebo.com/c/share?Url=http%3A%2F%2Fwww.absolutelyrics.com%2Fl%2Fl81518&amp;Title=Lady%20Madonna%20by%20The%20Beatles%20lyrics" target="_blank" title="Post on Bebo" rel="nofollow">
+	<img src="/static/share-bebo.png" alt="Bebo" border="0" /></a>
+
+	</div>
+
+	</div>
+	
+
+
+			<div class="box">
+				<h3>related artists</h3>
+				<div class="artistlist">
+					<ul>
+														<li><a href="/lyrics/artist/john_lennon" title="John Lennon lyrics">John Lennon</a></li>
+																<li><a href="/lyrics/artist/bee_gees" title="Bee Gees lyrics">Bee Gees</a></li>
+																<li><a href="/lyrics/artist/elvis_presley" title="Elvis Presley lyrics">Elvis Presley</a></li>
+																<li><a href="/lyrics/artist/the_rolling_stones" title="The Rolling Stones lyrics">The Rolling Stones</a></li>
+																<li><a href="/lyrics/artist/elton_john" title="Elton John lyrics">Elton John</a></li>
+																<li><a href="/lyrics/artist/queen" title="Queen lyrics">Queen</a></li>
+																<li><a href="/lyrics/artist/the_carpenters" title="The Carpenters lyrics">The Carpenters</a></li>
+													</ul>
+				</div>
+			</div>
+
+
+			<div class="box">
+				<h3>popular The Beatles's lyrics</h3>
+				<div class="songlist">
+					<ul>
+														<li><a href="/lyrics/view/the_beatles/yesterday" title="Yesterday lyrics">Yesterday</a></li>
+																<li><a href="/lyrics/view/the_beatles/let_it_be" title="Let It Be lyrics">Let It Be</a></li>
+																<li><a href="/lyrics/view/the_beatles/all_my_loving" title="All My Loving lyrics">All My Loving</a></li>
+																<li><a href="/lyrics/view/the_beatles/hey_jude" title="Hey Jude lyrics">Hey Jude</a></li>
+																<li><a href="/lyrics/view/the_beatles/in_my_life" title="In My Life lyrics">In My Life</a></li>
+																<li><a href="/lyrics/view/the_beatles/strawberry_fields_forever" title="Strawberry Fields Forever lyrics">Strawberry Fields Forever</a></li>
+																<li><a href="/lyrics/view/the_beatles/yellow_submarine" title="Yellow Submarine lyrics">Yellow Submarine</a></li>
+													</ul>
+				</div>
+			</div>
+
+
+
+
+
+		</div>
+
+		<div class="clear"></div>
+
+	</div><!-- right -->
+
+	<div id="footer">
+
+		<div id="alphalist">
+			<div id="alphalistartists">
+				artists -
+				<ul>
+					<li><a href="/lyrics/artistlist/9">0-9</a></li>
+					<li><a href="/lyrics/artistlist/a">a</a></li>
+<li><a href="/lyrics/artistlist/b">b</a></li>
+<li><a href="/lyrics/artistlist/c">c</a></li>
+<li><a href="/lyrics/artistlist/d">d</a></li>
+<li><a href="/lyrics/artistlist/e">e</a></li>
+<li><a href="/lyrics/artistlist/f">f</a></li>
+<li><a href="/lyrics/artistlist/g">g</a></li>
+<li><a href="/lyrics/artistlist/h">h</a></li>
+<li><a href="/lyrics/artistlist/i">i</a></li>
+<li><a href="/lyrics/artistlist/j">j</a></li>
+<li><a href="/lyrics/artistlist/k">k</a></li>
+<li><a href="/lyrics/artistlist/l">l</a></li>
+<li><a href="/lyrics/artistlist/m">m</a></li>
+<li><a href="/lyrics/artistlist/n">n</a></li>
+<li><a href="/lyrics/artistlist/o">o</a></li>
+<li><a href="/lyrics/artistlist/p">p</a></li>
+<li><a href="/lyrics/artistlist/q">q</a></li>
+<li><a href="/lyrics/artistlist/r">r</a></li>
+<li><a href="/lyrics/artistlist/s">s</a></li>
+<li><a href="/lyrics/artistlist/t">t</a></li>
+<li><a href="/lyrics/artistlist/u">u</a></li>
+<li><a href="/lyrics/artistlist/v">v</a></li>
+<li><a href="/lyrics/artistlist/w">w</a></li>
+<li><a href="/lyrics/artistlist/x">x</a></li>
+<li><a href="/lyrics/artistlist/y">y</a></li>
+<li><a href="/lyrics/artistlist/z">z</a></li>
+				</ul>
+			</div><!-- alphalistartists -->
+			<div id="alphalistsongs">
+				songs -
+				<ul>
+					<li><a href="/lyrics/songlist/9" rel="nofollow">0-9</a></li>
+					<li><a href="/lyrics/songlist/a" rel="nofollow">a</a></li>
+<li><a href="/lyrics/songlist/b" rel="nofollow">b</a></li>
+<li><a href="/lyrics/songlist/c" rel="nofollow">c</a></li>
+<li><a href="/lyrics/songlist/d" rel="nofollow">d</a></li>
+<li><a href="/lyrics/songlist/e" rel="nofollow">e</a></li>
+<li><a href="/lyrics/songlist/f" rel="nofollow">f</a></li>
+<li><a href="/lyrics/songlist/g" rel="nofollow">g</a></li>
+<li><a href="/lyrics/songlist/h" rel="nofollow">h</a></li>
+<li><a href="/lyrics/songlist/i" rel="nofollow">i</a></li>
+<li><a href="/lyrics/songlist/j" rel="nofollow">j</a></li>
+<li><a href="/lyrics/songlist/k" rel="nofollow">k</a></li>
+<li><a href="/lyrics/songlist/l" rel="nofollow">l</a></li>
+<li><a href="/lyrics/songlist/m" rel="nofollow">m</a></li>
+<li><a href="/lyrics/songlist/n" rel="nofollow">n</a></li>
+<li><a href="/lyrics/songlist/o" rel="nofollow">o</a></li>
+<li><a href="/lyrics/songlist/p" rel="nofollow">p</a></li>
+<li><a href="/lyrics/songlist/q" rel="nofollow">q</a></li>
+<li><a href="/lyrics/songlist/r" rel="nofollow">r</a></li>
+<li><a href="/lyrics/songlist/s" rel="nofollow">s</a></li>
+<li><a href="/lyrics/songlist/t" rel="nofollow">t</a></li>
+<li><a href="/lyrics/songlist/u" rel="nofollow">u</a></li>
+<li><a href="/lyrics/songlist/v" rel="nofollow">v</a></li>
+<li><a href="/lyrics/songlist/w" rel="nofollow">w</a></li>
+<li><a href="/lyrics/songlist/x" rel="nofollow">x</a></li>
+<li><a href="/lyrics/songlist/y" rel="nofollow">y</a></li>
+<li><a href="/lyrics/songlist/z" rel="nofollow">z</a></li>
+				</ul>
+			</div><!-- alphalistsongs -->
+		</div><!-- alphalist -->
+
+		all lyrics are the property and copyright of their owners, provided for educational purposes only.<br />
+	&copy; absolutelyrics.com.<br /><br /><br /><br />
+	</div><!-- footer -->
+
+</div><!-- webpage -->
+
+<!-- Move alphalist to top -->
+<script type='text/javascript'>
+a = document.getElementById('alphalist');
+c = document.getElementById('alphalistcontainer');
+c.appendChild(a);
+
+// show content
+//d = document.getElementById('webpage');
+//d.style.display = '';
+</script>
+
+<!-- show related video -->
+<script type="text/javascript" src="http://gdata.youtube.com/feeds/api/videos/-/music?orderby=relevance&amp;max-results=3&amp;format=5&amp;restriction=82.244.48.203&amp;q=&quot;Lady Madonna&quot; official mv &quot;The Beatles&quot;&amp;alt=json-in-script&amp;callback=vdoupdate"></script>
+
+
+<script>
+/* Flex */
+cf_page_artist = "The Beatles";
+cf_page_song = "Lady Madonna";
+cf_page_genre = "";
+cf_adunit_id = "39381071";
+cf_flex = true;
+</script>
+<script src="//srv.clickfuse.com/showads/showad.php"></script>
+
+<!-- facebook, twitter, plusone -->
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+  js.async = true;
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en'};
+
+  (function() {
+	var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+	po.src = 'https://apis.google.com/js/plusone.js';
+	var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<script type="text/javascript" src="//platform.twitter.com/widgets.js"></script>
+
+
+<!-- Kontera(TM);-->
+<script type='text/javascript'>
+var dc_AdLinkColor = '#ee1c24' ;
+var dc_PublisherID = 83635 ;
+
+</script>
+<script type='text/javascript' src='http://kona.kontera.com/javascript/lib/KonaLibInline.js'>
+</script>
+<!-- end Kontera(TM) -->
+
+
+
+</body>
+</html>

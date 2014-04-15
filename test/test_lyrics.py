@@ -71,6 +71,21 @@ class LyricsPluginTest(unittest.TestCase):
             'Song'
         )
 
+    def test_remove_credits(self):
+        self.assertEqual(
+            lyrics.remove_credits("""It's close to midnight
+                                     Lyrics brought by example.com"""),
+            "It's close to midnight"
+        )
+        self.assertEqual(
+            lyrics.remove_credits("""Lyrics brought by example.com"""),
+            ""
+        )
+        text = """Look at all the shit that i done bought her
+                  See lyrics ain't nothin 
+                  if the beat aint crackin"""
+        self.assertEqual(lyrics.remove_credits(text), text)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
