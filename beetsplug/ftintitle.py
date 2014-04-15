@@ -48,7 +48,7 @@ def contains_feat(title):
     ))
 
 
-def update_metadata(item, feat_part):
+def update_metadata(item, feat_part, drop):
     """Choose how to add new artists to the title and set the new
     metadata. Also, print out messages about any changes that are made.
     """
@@ -60,14 +60,14 @@ def update_metadata(item, feat_part):
         item.artist_sort, _ = split_on_feat(item.artist_sort)
 
     # Only update the title if it does not already contain a featured
-    # artist.
-    if not contains_feat(item.title):
+    # artist and if we do not drop featuring information.
+    if not drop and not contains_feat(item.title):
         new_title = u"{0} feat. {1}".format(item.title, feat_part)
         ui.print_(u'title: {0} -> {1}'.format(item.title, new_title))
         item.title = new_title
 
 
-def ft_in_title(item):
+def ft_in_title(item, drop):
     """Look for featured artists in the item's artist fields and move
     them to the title.
     """
@@ -104,7 +104,7 @@ def ft_in_title(item):
 
         # If we have a featuring artist, move it to the title.
         if feat_part:
-            update_metadata(item, feat_part)
+            update_metadata(item, feat_part, drop)
         else:
             ui.print_(u'no featuring artists found')
 
@@ -115,13 +115,16 @@ class FtInTitlePlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand('ftintitle',
                             help='move featured artists to the title field')
-
+        cmd.parser.add_option('-d', '--drop', dest='drop_feat',
+                              action='store_true', default=False,
+                              help='drop featuring from artist (ignore title update)')
         def func(lib, opts, args):
             write = config['import']['write'].get(bool)
             for item in lib.items(ui.decargs(args)):
-                ft_in_title(item)
+                ft_in_title(item, opts.drop_feat)
                 item.store()
                 if write:
                     item.try_write()
+
         cmd.func = func
         return [cmd]
