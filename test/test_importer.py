@@ -23,7 +23,7 @@ from tarfile import TarFile
 
 import _common
 from _common import unittest
-from helper import TestImportSession, TestHelper
+from helper import TestImportSession, TestHelper, has_program
 from beets import library
 from beets import importer
 from beets.mediafile import MediaFile
@@ -342,6 +342,7 @@ class ImportTarTest(ImportZipTest):
         return path
 
 
+@unittest.skipIf(not has_program('unrar'), 'unrar program not found')
 class ImportRarTest(ImportZipTest):
 
     def create_archive(self):

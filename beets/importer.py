@@ -665,7 +665,7 @@ def read_tasks(session):
             archive_task = ArchiveImportTask(toppath)
             try:
                 archive_task.extract()
-            except IOError as exc:
+            except Exception as exc:
                 log.error('extraction failed: {0}'.format(exc))
                 continue
             toppath = archive_task.toppath
