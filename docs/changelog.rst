@@ -20,7 +20,7 @@ New stuff:
 * Add support for `initial_key` as field in the library and tag for
   media files. When the user sets this field with ``beet modify
   initial_key=Am`` the media files will reflect this in their tags. The
-  :doc:`/plugins/echonest` plugin also sets this field if the data is
+  :doc:`/plugins/echonest` also sets this field if the data is
   available.
 * There is also a new :doc:`/plugins/keyfinder` that runs a command line
   program to get the key from audio data and store it in the
