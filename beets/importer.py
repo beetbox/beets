@@ -22,6 +22,8 @@ import logging
 import pickle
 import itertools
 from collections import defaultdict
+from tempfile import mkdtemp
+import shutil
 
 from beets import autotag
 from beets import library
@@ -525,6 +527,11 @@ class ImportTask(object):
         else:
             return [self.item]
 
+    def cleanup(self):
+        """Perform clean up during `finalize` stage.
+        """
+        pass
+
     # Utilities.
 
     def prune(self, filename):
@@ -538,6 +545,78 @@ class ImportTask(object):
             util.prune_dirs(os.path.dirname(filename),
                             self.toppath,
                             clutter=config['clutter'].as_str_seq())
+
+
+class ArchiveImportTask(ImportTask):
+    """Additional methods for handling archives.
+
+    Use when `toppath` points to a `zip`, `tar`, or `rar` archive.
+    """
+
+    def __init__(self, toppath):
+        super(ArchiveImportTask, self).__init__(toppath)
+        self.sentinel = True
+        self.extracted = False
+
+    @classmethod
+    def is_archive(cls, path):
+        """Returns true if the given path points to an archive that can
+        be handled.
+        """
+        if not os.path.isfile(path):
+            return False
+
+        for path_test, _ in cls.handlers():
+            if path_test(path):
+                return True
+        return False
+
+    @classmethod
+    def handlers(cls):
+        """Returns a list of archive handlers.
+
+        Each handler is a `(path_test, ArchiveClass)` tuple. `path_test`
+        is a function that returns `True` if the given path can be
+        handled by `ArchiveClass`. `ArchiveClass` is a class that
+        implements the same interface as `tarfile.TarFile`.
+        """
+        if not hasattr(cls, '_handlers'):
+            cls._handlers = []
+            from zipfile import is_zipfile, ZipFile
+            cls._handlers.append((is_zipfile, ZipFile))
+            from tarfile import is_tarfile, TarFile
+            cls._handlers.append((is_tarfile, TarFile))
+            try:
+                from rarfile import is_rarfile, RarFile
+            except ImportError:
+                pass
+            else:
+                cls._handlers.append((is_rarfile, RarFile))
+
+        return cls._handlers
+
+    def cleanup(self):
+        """Removes the temporary directory the archive was extracted to.
+        """
+        if self.extracted:
+            shutil.rmtree(self.toppath)
+
+    def extract(self):
+        """Extracts the archive to a temporary directory and sets
+        `toppath` to that directory.
+        """
+        for path_test, handler_class in self.handlers():
+            if path_test(self.toppath):
+                break
+
+        try:
+            extract_to = mkdtemp()
+            archive = handler_class(self.toppath, mode='r')
+            archive.extractall(extract_to)
+        finally:
+            archive.close()
+        self.extracted = True
+        self.toppath = extract_to
 
 
 # Full-album pipeline stages.
@@ -573,6 +652,24 @@ def read_tasks(session):
         history_dirs = history_get()
 
     for toppath in session.paths:
+        # Extract archives
+        archive_task = None
+        if ArchiveImportTask.is_archive(syspath(toppath)):
+            if not (config['import']['move'] or config['import']['copy']):
+                log.warn("Cannot import archive. Please set "
+                         "the 'move' or 'copy' option.")
+                continue
+
+            log.debug('extracting archive {0}'
+                      .format(displayable_path(toppath)))
+            archive_task = ArchiveImportTask(toppath)
+            try:
+                archive_task.extract()
+            except Exception as exc:
+                log.error('extraction failed: {0}'.format(exc))
+                continue
+            toppath = archive_task.toppath
+
         # Check whether the path is to a file.
         if not os.path.isdir(syspath(toppath)):
             try:
@@ -627,7 +724,11 @@ def read_tasks(session):
                 yield ImportTask(toppath, paths, items)
 
         # Indicate the directory is finished.
-        yield ImportTask.done_sentinel(toppath)
+        # FIXME hack to delete extraced archives
+        if archive_task is None:
+            yield ImportTask.done_sentinel(toppath)
+        else:
+            yield archive_task
 
     # Show skipped directories.
     if config['import']['incremental'] and incremental_skipped:
@@ -937,6 +1038,7 @@ def finalize(session):
                 task.save_progress()
             if config['import']['incremental']:
                 task.save_history()
+            task.cleanup()
             continue
 
         items = task.imported_items()
@@ -971,6 +1073,7 @@ def finalize(session):
             task.save_progress()
         if config['import']['incremental']:
             task.save_history()
+        task.cleanup()
 
 
 # Singleton pipeline stages.

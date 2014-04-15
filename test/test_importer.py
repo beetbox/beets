@@ -17,10 +17,13 @@
 import os
 import shutil
 import StringIO
+from tempfile import mkstemp
+from zipfile import ZipFile
+from tarfile import TarFile
 
 import _common
 from _common import unittest
-from helper import TestImportSession, TestHelper
+from helper import TestImportSession, TestHelper, has_program
 from beets import library
 from beets import importer
 from beets.mediafile import MediaFile
@@ -297,6 +300,60 @@ class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
         self.assertExists(os.path.join(self.import_dir, 'the_album'))
         self.importer.run()
         self.assertNotExists(os.path.join(self.import_dir, 'the_album'))
+
+
+class ImportZipTest(unittest.TestCase, ImportHelper):
+
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_import_zip(self):
+        zip_path = self.create_archive()
+        self.assertEqual(len(self.lib.items()), 0)
+        self.assertEqual(len(self.lib.albums()), 0)
+
+        self._setup_import_session(autotag=False, import_dir=zip_path)
+        self.importer.run()
+        self.assertEqual(len(self.lib.items()), 1)
+        self.assertEqual(len(self.lib.albums()), 1)
+
+    def create_archive(self):
+        (handle, path) = mkstemp(dir=self.temp_dir)
+        os.close(handle)
+        archive = ZipFile(path, mode='w')
+        archive.write(os.path.join(_common.RSRC, 'full.mp3'),
+                      'full.mp3')
+        archive.close()
+        return path
+
+
+class ImportTarTest(ImportZipTest):
+
+    def create_archive(self):
+        (handle, path) = mkstemp(dir=self.temp_dir)
+        os.close(handle)
+        archive = TarFile(path, mode='w')
+        archive.add(os.path.join(_common.RSRC, 'full.mp3'),
+                    'full.mp3')
+        archive.close()
+        return path
+
+
+@unittest.skipIf(not has_program('unrar'), 'unrar program not found')
+class ImportRarTest(ImportZipTest):
+
+    def create_archive(self):
+        return os.path.join(_common.RSRC, 'archive.rar')
+
+
+@unittest.skip('Implment me!')
+class ImportPasswordRarTest(ImportZipTest):
+
+    def create_archive(self):
+        return os.path.join(_common.RSRC, 'password.rar')
 
 
 class ImportSingletonTest(_common.TestCase, ImportHelper):

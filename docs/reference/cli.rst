@@ -43,21 +43,25 @@ import
 ``````
 ::
 
-    beet import [-CWAPRqst] [-l LOGPATH] DIR...
+    beet import [-CWAPRqst] [-l LOGPATH] PATH...
     beet import [options] -L QUERY
 
 Add music to your library, attempting to get correct tags for it from
 MusicBrainz.
 
-Point the command at a directory full of music. The directory can be a single
-album or a directory whose leaf subdirectories are albums (the latter case is
-true of typical Artist/Album organizations and many people's "downloads"
-folders). The music will be copied to a configurable directory structure (see
-below) and added to a library database (see below). The command is interactive
-and will try to get you to verify MusicBrainz tags that it thinks are suspect.
-(This means that importing a large amount of music is therefore very tedious
-right now; this is something we need to work on. Read the
-:doc:`autotagging guide </guides/tagger>` if you need help.)
+Point the command at a directory full of music. The directory can be a
+single album or a directory whose leaf subdirectories are albums (the
+latter case is true of typical Artist/Album organizations and many
+people's "downloads" folders). The path can also be a single file or an
+archive. Beets supports `zip` and `tar` archives out of the box. To
+extract `rar` files you need to install the `rarfile`_ package and the
+`unrar` command. The music will be copied to a configurable directory
+structure (see below) and added to a library database (see below). The
+command is interactive and will try to get you to verify MusicBrainz
+tags that it thinks are suspect.  (This means that importing a large
+amount of music is therefore very tedious right now; this is something
+we need to work on. Read the :doc:`autotagging guide </guides/tagger>`
+if you need help.)
 
 * By default, the command copies files your the library directory and
   updates the ID3 tags on your music. If you'd like to leave your music
@@ -115,6 +119,8 @@ right now; this is something we need to work on. Read the
 * Similarly, if you have one directory that contains multiple albums, use the
   ``--group-albums`` option to split the files based on their metadata before
   matching them as separate albums.
+
+.. _rarfile: https://pypi.python.org/pypi/rarfile/2.2
 
 .. only:: html
 

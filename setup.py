@@ -99,6 +99,7 @@ setup(
         'echonest_tempo': ['pyechonest'],
         'lastgenre': ['pylast'],
         'web': ['flask'],
+        'import': ['rarfile'],
     },
     # Non-Python/non-PyPI plugin dependencies:
     # replaygain: mp3gain || aacgain
