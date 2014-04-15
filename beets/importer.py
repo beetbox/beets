@@ -22,6 +22,9 @@ import logging
 import pickle
 import itertools
 from collections import defaultdict
+from zipfile import is_zipfile, ZipFile
+from tempfile import mkdtemp
+import shutil
 
 from beets import autotag
 from beets import library
@@ -525,6 +528,11 @@ class ImportTask(object):
         else:
             return [self.item]
 
+    def cleanup(self):
+        """Perform clean up during `finalize` stage.
+        """
+        pass
+
     # Utilities.
 
     def prune(self, filename):
@@ -538,6 +546,16 @@ class ImportTask(object):
             util.prune_dirs(os.path.dirname(filename),
                             self.toppath,
                             clutter=config['clutter'].as_str_seq())
+
+
+class ArchiveImportTask(ImportTask):
+
+    def __init__(self, toppath):
+        super(ArchiveImportTask, self).__init__(toppath)
+        self.sentinel = True
+
+    def cleanup(self):
+        shutil.rmtree(self.toppath)
 
 
 # Full-album pipeline stages.
@@ -573,6 +591,26 @@ def read_tasks(session):
         history_dirs = history_get()
 
     for toppath in session.paths:
+        extracted = None
+        if is_zipfile(syspath(toppath)):
+            if not (config['import']['move'] or config['import']['copy']):
+                log.warn("Cannot import archive. Please set "
+                         "the 'move' or 'copy' option.")
+                continue
+
+            log.debug('extracting archive {0}'
+                      .format(displayable_path(toppath)))
+            try:
+                extracted = mkdtemp()
+                zip_file = ZipFile(toppath, mode='r')
+                zip_file.extractall(extracted)
+            except IOError as exc:
+                log.error('extraction failed: {0}'.format(exc))
+                continue
+            finally:
+                zip_file.close()
+            toppath = extracted
+
         # Check whether the path is to a file.
         if not os.path.isdir(syspath(toppath)):
             try:
@@ -627,7 +665,11 @@ def read_tasks(session):
                 yield ImportTask(toppath, paths, items)
 
         # Indicate the directory is finished.
-        yield ImportTask.done_sentinel(toppath)
+        # FIXME hack to delete extraced archives
+        if extracted is None:
+            yield ImportTask.done_sentinel(toppath)
+        else:
+            yield ArchiveImportTask(extracted)
 
     # Show skipped directories.
     if config['import']['incremental'] and incremental_skipped:
@@ -937,6 +979,7 @@ def finalize(session):
                 task.save_progress()
             if config['import']['incremental']:
                 task.save_history()
+            task.cleanup()
             continue
 
         items = task.imported_items()
@@ -971,6 +1014,7 @@ def finalize(session):
             task.save_progress()
         if config['import']['incremental']:
             task.save_history()
+        task.cleanup()
 
 
 # Singleton pipeline stages.

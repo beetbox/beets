@@ -17,6 +17,8 @@
 import os
 import shutil
 import StringIO
+from tempfile import mkstemp
+from zipfile import ZipFile
 
 import _common
 from _common import unittest
@@ -297,6 +299,34 @@ class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
         self.assertExists(os.path.join(self.import_dir, 'the_album'))
         self.importer.run()
         self.assertNotExists(os.path.join(self.import_dir, 'the_album'))
+
+
+class ImportArchiveTest(unittest.TestCase, ImportHelper):
+
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_import_zip(self):
+        zip_path = self.create_zip_archive()
+        self.assertEqual(len(self.lib.items()), 0)
+        self.assertEqual(len(self.lib.albums()), 0)
+
+        self._setup_import_session(autotag=False, import_dir=zip_path)
+        self.importer.run()
+        self.assertEqual(len(self.lib.items()), 1)
+        self.assertEqual(len(self.lib.albums()), 1)
+
+    def create_zip_archive(self):
+        (handle, zip_path) = mkstemp('.zip', dir=self.temp_dir)
+        os.close(handle)
+        zip_file = ZipFile(zip_path, mode='w')
+        zip_file.write(os.path.join(_common.RSRC, 'full.mp3'),
+                       'full.mp3')
+        zip_file.close()
+        return zip_path
 
 
 class ImportSingletonTest(_common.TestCase, ImportHelper):
