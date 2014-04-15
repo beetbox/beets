@@ -342,6 +342,19 @@ class ImportTarTest(ImportZipTest):
         return path
 
 
+class ImportRarTest(ImportZipTest):
+
+    def create_archive(self):
+        return os.path.join(_common.RSRC, 'archive.rar')
+
+
+@unittest.skip('Implment me!')
+class ImportPasswordRarTest(ImportZipTest):
+
+    def create_archive(self):
+        return os.path.join(_common.RSRC, 'password.rar')
+
+
 class ImportSingletonTest(_common.TestCase, ImportHelper):
     """Test ``APPLY`` and ``ASIS`` choices for an import session with singletons
     config set to True.

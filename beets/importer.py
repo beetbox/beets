@@ -548,6 +548,10 @@ class ImportTask(object):
 
 
 class ArchiveImportTask(ImportTask):
+    """Additional methods for handling archives.
+
+    Use when `toppath` points to a `zip`, `tar`, or `rar` archive.
+    """
 
     def __init__(self, toppath):
         super(ArchiveImportTask, self).__init__(toppath)
@@ -582,6 +586,13 @@ class ArchiveImportTask(ImportTask):
             cls._handlers.append((is_zipfile, ZipFile))
             from tarfile import is_tarfile, TarFile
             cls._handlers.append((is_tarfile, TarFile))
+            try:
+                from rarfile import is_rarfile, RarFile
+            except ImportError:
+                pass
+            else:
+                cls._handlers.append((is_rarfile, RarFile))
+
         return cls._handlers
 
     def cleanup(self):
