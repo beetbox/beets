@@ -156,7 +156,7 @@ For albums, the following endpoints are provided:
 
 The interface and response format is similar to the item API, except replacing
 the encapsulation key ``"items"`` with ``"albums"`` when requesting ``/album/``
-or ``/album/5,7``. In addtion we can request the cover art of an album with
+or ``/album/5,7``. In addition we can request the cover art of an album with
 ``GET /album/5/art``.
 
 
