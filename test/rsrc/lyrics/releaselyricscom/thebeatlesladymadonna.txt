@@ -1,0 +1,264 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="canonical" href="http://www.releaselyrics.com/e35f/the-beatles-lady-madonna/" />
+<meta name="description" content="Lady Madonna lyrics by The Beatles. See all 745 songs and 19 albums from The Beatles." />
+<meta name="robots" content="noarchive" />
+<meta name="google" content="notranslate" />
+<link href="http://www.releaselyrics.com/css/simple-v2.css" rel="stylesheet" type="text/css">
+<title>THE BEATLES - Lady Madonna Lyrics</title>
+<meta property="og:image" content="http://www.releaselyrics.com/img/nocover.jpg" />
+<script>
+document.cookie="jscheck=6940208719844826998d718b26665982; path=/";
+function submitComment() { document.getElementById('comment-form').submit(); }
+function readComments() { document.location.href='http://www.releaselyrics.com/e35f-c0/the-beatles-lady-madonna/'; }
+</script>
+<script type="text/javascript">
+//<![CDATA[
+if(window.addEventListener)
+	window.addEventListener("load", func_contentLoad);
+else if(window.attachEvent)
+	window.attachEvent("onload", func_contentLoad);
+
+function func_contentLoad() {
+	var contentDiv = document.getElementById('id-content');
+	var contentLines = contentDiv.getElementsByTagName('a');
+	contentNumLines = contentLines.length;
+	for(var i = 0; i < contentNumLines; i++) {
+		contentLines[i].removeAttribute('href');
+	}
+}
+//]]>
+</script>
+<script type="text/javascript" src="http://www.releaselyrics.com/js/comment.js"></script>
+</head>
+<body>
+
+<div class="header">
+<a href="http://www.releaselyrics.com/">ReleaseLyrics</a> &gt; <a href="http://www.releaselyrics.com/7371/the-beatles/">The Beatles</a> &gt; <a href="http://www.releaselyrics.com/e35f/the-beatles-lady-madonna/">Lady Madonna Lyrics</a>
+</div>
+
+<div class="container">
+
+<div class="content">
+
+<div class="content-title">
+<h1>Lady Madonna Lyrics</h1>
+<span class="h2"><a href="http://www.releaselyrics.com/7371/the-beatles/">The Beatles</a></span>
+</div>
+
+<script>
+/* Above Lyrics */
+(function() {
+	var opts = {
+		artist: "The Beatles",
+		song: "Lady Madonna",
+		adunit_id: 39382063,
+		div_id: "cf_async_" + Math.floor((Math.random() * 999999999)),
+	};
+	document.write('<div id="'+opts.div_id+'"></div>');var c=function(){cf.showAsyncAd(opts)};if(window.cf)c();else{cf_async=!0;var r=document.createElement("script"),s=document.getElementsByTagName("script")[0];r.async=!0;r.src="//srv.tonefuse.com/showads/showad.js";r.readyState?r.onreadystatechange=function(){if("loaded"==r.readyState||"complete"==r.readyState)r.onreadystatechange=null,c()}:r.onload=c;s.parentNode.insertBefore(r,s)};
+})();
+</script>
+<div class="content-lyrics" id="id-content">
+Lady Madonna, children at your feet<br>
+Wonder how you manage to make ends meet<br>
+Who find the money when you pay the rent<br>
+Did you think that money was heaven sent<br>
+<br>
+Friday night arrives without a suitcase<br>
+Sunday morning creeping like a nun<br>
+Monday's child has learned to tie his bootlegs<br>
+See how they run<br>
+<br>
+Lady Madonna, baby at your breast<br>
+Wonders how you manage to feed the rest<br>
+Pa pa pa pa...<br>
+See how they run<br>
+<br>
+Lady Madonna lying on the bed<br>
+Listen to the music playing in your head<br>
+<br>
+Tuesday afternoon is never ending<br>
+Wednesday morning papers didn't come<br>
+Thursday night you stocking needed mending<br>
+See how they run<br>
+<br>
+Lady Madonna, children at your feet<br>
+Wonder how you manage to make ends meet<br>
+</div><script>
+/* Below Lyrics */
+(function() {
+	var opts = {
+		artist: "The Beatles",
+		song: "Lady Madonna",
+		adunit_id: 39382064,
+		div_id: "cf_async_" + Math.floor((Math.random() * 999999999)),
+	};
+	document.write('<div id="'+opts.div_id+'"></div>');var c=function(){cf.showAsyncAd(opts)};if(window.cf)c();else{cf_async=!0;var r=document.createElement("script"),s=document.getElementsByTagName("script")[0];r.async=!0;r.src="//srv.tonefuse.com/showads/showad.js";r.readyState?r.onreadystatechange=function(){if("loaded"==r.readyState||"complete"==r.readyState)r.onreadystatechange=null,c()}:r.onload=c;s.parentNode.insertBefore(r,s)};
+})();
+</script>
+
+
+<div class="content-commentform">
+<form id="comment-form" action="http://www.releaselyrics.com/comment/comment.php" method="post">
+<input type="hidden" name="comment-target" value="81b60e0864983e12fc2efa74c7cbe35f" />
+<div style="margin-bottom: 20px;"><a href="http://www.releaselyrics.com/e35f-c0/the-beatles-lady-madonna/" rel="nofollow">Read comments</a></div>
+<div style="float: left; line-height: 1.8em;">Name:</div>
+<div style="margin-left: 80px; margin-right: 10px;"><input type="text" name="comment-author" value="" class="tmpinput2" style="width: 100%;" /></div>
+<div style="margin-right: 10px; margin-top: 5px; margin-bottom: 5px;"><textarea name="comment-content" id="comment-contentform" class="tmpinput2" style="width: 100%;" rows="3"></textarea></div>
+<div style="float: right;"><input type="button" value="Add comment" class="tmpinput" onclick="javascript:submitComment();" /></div>
+<div style="clear: both;"></div>
+</form>
+</div>
+
+
+<div class="content-video">
+<iframe width="520" height="324" id="frame-video" frameborder="0" allowfullscreen=""></iframe>
+</div>
+<script>
+if(window.addEventListener)
+	window.addEventListener("load", loadVideoDynamic);
+else if(window.attachEvent)
+	window.attachEvent("onload", loadVideoDynamic);
+
+function loadVideoDynamic() {
+	document.getElementById("frame-video").contentDocument.body.innerHTML = '<html><body><div style="position: absolute; top: 0px; left: 0px;"><iframe width="520" height="324" src="http://www.youtube.com/embed/VfthrizXKOM" frameborder="0" allowfullscreen=""></iframe></div></body></html>';
+}
+</script>
+
+</div>
+
+<div class="sidebar">
+
+<div class="toptracks"><ul class="parent-list"><li class="big"><a href="http://www.releaselyrics.com/7371/the-beatles/" class="big">The Beatles</a></li><ul class="child-list"><li class="small"><a href="http://www.releaselyrics.com/1055/the-beatles-let-it-be/" class="small" rel="nofollow">Let It Be</a></li><li class="small"><a href="http://www.releaselyrics.com/d75b/the-beatles-yesterday/" class="small" rel="nofollow">Yesterday</a></li><li class="small"><a href="http://www.releaselyrics.com/2ca8/the-beatles-hey-jude/" class="small" rel="nofollow">Hey Jude</a></li><li class="small"><a href="http://www.releaselyrics.com/4cef/the-beatles-help%21/" class="small" rel="nofollow">Help!</a></li><li class="small"><a href="http://www.releaselyrics.com/9036/the-beatles-come-together/" class="small" rel="nofollow">Come Together</a></li><li class="small"><a href="http://www.releaselyrics.com/2eab/the-beatles-here-comes-the-sun/" class="small" rel="nofollow">Here Comes the Sun</a></li><li class="small"><a href="http://www.releaselyrics.com/885b/the-beatles-something/" class="small" rel="nofollow">Something</a></li><li class="small"><a href="http://www.releaselyrics.com/2fd0/the-beatles-all-you-need-is-love/" class="small" rel="nofollow">All You Need Is Love</a></li><li class="small"><a href="http://www.releaselyrics.com/0e37/the-beatles-yellow-submarine/" class="small" rel="nofollow">Yellow Submarine</a></li><li class="small"><a href="http://www.releaselyrics.com/b131/the-beatles-love-me-do/" class="small" rel="nofollow">Love Me Do</a></li><li class="small" style="border-bottom: none;"><a href="http://www.releaselyrics.com/7371/the-beatles/" class="small" rel="nofollow">more...</a></li></ul></ul></div>
+
+<div class="media-rect">
+<script>
+cf_page_artist = "The Beatles";
+cf_page_song = "Lady Madonna";
+cf_adunit_id = "39382395";
+cf_hostname = "srv.clickfuse.com";
+</script>
+<script src="//srv.clickfuse.com/showads/showad.js"></script>
+</div>
+
+</div>
+
+<div class="clear"></div>
+
+</div>
+
+<div class="release-container"><div class="release-list">
+<table class="release-table"><tr><td class="release-td">
+<a href="http://www.releaselyrics.com/3167/the-beatles-revolver-sgt.-pepper%27s-lonely-hearts-club-band/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/img/nocover.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/3167/the-beatles-revolver-sgt.-pepper%27s-lonely-hearts-club-band/" rel="nofollow">Revolver / Sgt. Pepper's Lonely Hearts Club Band</a> (2009)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/711c/the-beatles-please-please-me-with-the-beatles/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/img/nocover.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/711c/the-beatles-please-please-me-with-the-beatles/" rel="nofollow">Please Please Me / With The Beatles</a> (2000)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/6fe7/the-beatles-let-it-be/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/6fe7/the-beatles-let-it-be.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/6fe7/the-beatles-let-it-be/" rel="nofollow">Let It Be</a> (1970)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/b434/the-beatles-abbey-road/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/b434/the-beatles-abbey-road.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/b434/the-beatles-abbey-road/" rel="nofollow">Abbey Road</a> (1969)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/a00b/the-beatles-the-beatles/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/a00b/the-beatles-the-beatles.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/a00b/the-beatles-the-beatles/" rel="nofollow">The Beatles</a> (1968)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/ffab/the-beatles-sgt.-pepper%27s-lonely-hearts-club-band/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/ffab/the-beatles-sgt.-pepper%27s-lonely-hearts-club-band.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/ffab/the-beatles-sgt.-pepper%27s-lonely-hearts-club-band/" rel="nofollow">Sgt. Pepper's Lonely Hearts Club Band</a> (1967)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/0357/the-beatles-revolver/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/0357/the-beatles-revolver.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/0357/the-beatles-revolver/" rel="nofollow">Revolver</a> (1966)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/9937/the-beatles-rubber-soul/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/9937/the-beatles-rubber-soul.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/9937/the-beatles-rubber-soul/" rel="nofollow">Rubber Soul</a> (1965)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/78da/the-beatles-beatles-vi/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/78da/the-beatles-beatles-vi.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/78da/the-beatles-beatles-vi/" rel="nofollow">Beatles VI</a> (1965)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/5424/the-beatles-beatles-%2765/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/5424/the-beatles-beatles-%2765.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/5424/the-beatles-beatles-%2765/" rel="nofollow">Beatles '65</a> (1964)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/4ab6/the-beatles-beatles-for-sale/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/4ab6/the-beatles-beatles-for-sale.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/4ab6/the-beatles-beatles-for-sale/" rel="nofollow">Beatles for Sale</a> (1964)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/88ec/the-beatles-something-new/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/88ec/the-beatles-something-new.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/88ec/the-beatles-something-new/" rel="nofollow">Something New</a> (1964)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/8b2e/the-beatles-the-beatles%27-long-tall-sally/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/8b2e/the-beatles-the-beatles%27-long-tall-sally.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/8b2e/the-beatles-the-beatles%27-long-tall-sally/" rel="nofollow">The Beatles' Long Tall Sally</a> (1964)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/f9e7/the-beatles-the-beatles%27-second-album/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/f9e7/the-beatles-the-beatles%27-second-album.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/f9e7/the-beatles-the-beatles%27-second-album/" rel="nofollow">The Beatles' Second Album</a> (1964)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/7053/the-beatles-twist-and-shout/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/7053/the-beatles-twist-and-shout.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/7053/the-beatles-twist-and-shout/" rel="nofollow">Twist and Shout</a> (1964)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/0b13/the-beatles-meet-the-beatles%21/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/0b13/the-beatles-meet-the-beatles%21.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/0b13/the-beatles-meet-the-beatles%21/" rel="nofollow">Meet The Beatles!</a> (1964)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/8e52/the-beatles-introducing...-the-beatles/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/8e52/the-beatles-introducing...-the-beatles.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/8e52/the-beatles-introducing...-the-beatles/" rel="nofollow">Introducing... The Beatles</a> (1964)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/4dc5/the-beatles-with-the-beatles/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/4dc5/the-beatles-with-the-beatles.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/4dc5/the-beatles-with-the-beatles/" rel="nofollow">With The Beatles</a> (1963)
+</td>
+<td class="release-td">
+<a href="http://www.releaselyrics.com/8a2b/the-beatles-please-please-me/" class="release-plain" rel="nofollow"><img src="http://www.releaselyrics.com/8a2b/the-beatles-please-please-me.jpg" class="release-img-small" /></a><br/><a href="http://www.releaselyrics.com/8a2b/the-beatles-please-please-me/" rel="nofollow">Please Please Me</a> (1963)
+</td>
+</tr></table>
+</div></div>
+
+<div class="footer">
+<a href="http://www.releaselyrics.com/">ReleaseLyrics</a> - <a href="http://www.releaselyrics.com/sitemap/">Sitemap</a> - <a href="http://www.releaselyrics.com/privacy/" rel="nofollow">Privacy</a>
+<div class="footer-fb">
+<iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Fwww.releaselyrics.com%2F&amp;width=90&amp;height=21&amp;colorscheme=light&amp;layout=button_count&amp;action=like&amp;show_faces=false&amp;send=false&amp;locale=en_US" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:90px; height:21px;" allowTransparency="true"></iframe>&nbsp;&nbsp;
+</div>
+</div>
+
+<div style="position: absolute; top: 10px; right: 5px;">
+<iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Fwww.releaselyrics.com%2F&amp;width=90&amp;height=21&amp;colorscheme=light&amp;layout=button_count&amp;action=like&amp;show_faces=false&amp;send=false&amp;locale=en_US" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:90px; height:21px;" allowTransparency="true"></iframe>&nbsp;&nbsp;
+<img src="http://www.releaselyrics.com/img/spacer.php?id=81b60e0864983e12fc2efa74c7cbe35f" />
+</div>
+
+<div style="position: absolute; top: 50px; right: 10px; color: #b0b0b0;">
+<script type="text/javascript" src="http://www.releaselyrics.com/js/var.js"></script>
+<script type="text/javascript" src="http://www.releaselyrics.com/js/ads.js"></script>
+<script>
+document.write(spacerOuter);
+document.write(spacerInner);
+</script>
+<img src="http://www.releaselyrics.com/img/spacer-raw.php?t=1397918737" />
+</div>
+
+<div class="media-top">
+<script>
+cf_page_artist = "The Beatles";
+cf_page_song = "Lady Madonna";
+cf_adunit_id = "39382396";
+cf_hostname = "srv.clickfuse.com";
+</script>
+<script src="//srv.clickfuse.com/showads/showad.js"></script>
+</div>
+
+<script>
+cf_page_artist = "The Beatles";
+cf_page_song = "Lady Madonna";
+cf_adunit_id = "39382397";
+cf_flex = true;
+cf_hostname = "srv.clickfuse.com";
+</script>
+<script src="//srv.clickfuse.com/showads/showad.js"></script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-47346127-1', 'releaselyrics.com'); ga('send', 'pageview');
+</script>
+
+</body>
+</html>

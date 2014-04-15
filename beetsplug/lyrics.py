@@ -22,6 +22,7 @@ import urllib
 import json
 import unicodedata
 import difflib
+import string
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -239,8 +240,8 @@ def slugify(text):
     # http://stackoverflow.com/questions/295135/turn-a-string-into-a-valid-
     # filename-in-python
 
-    # Remove content within parentheses
-    pat = "([^,\(]*)\((.*?)\)"
+    text = re.sub("['_-]", ' ', text)
+    pat = "([^,\(]*)\((.*?)\)"  # Remove content within parentheses
     text = re.sub(pat, '\g<1>', text).strip()
     try:
         text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore')
@@ -305,34 +306,49 @@ def sanitize_lyrics(text):
 
     return text
 
+def remove_credits(text):
+    """Remove first/last line of text if it contains the word 'lyrics'
+    eg 'Lyrics by songsdatabase.com'
+    """
+    textlines = text.split('\n')
+    credits = None
+    for i in (0,-1):
+        if textlines and 'lyrics' in textlines[i].lower():
+            credits = textlines.pop(i)
+    if credits:
+        text = '\n'.join(textlines)
+    return text
 
-def is_lyrics(text, artist):
+
+def is_lyrics(text, artist=None):
     """Determine whether the text seems to be valid lyrics.
     """
-    badTriggers = []
+    if not text:
+        return
+
+    badTriggersOcc = []
     nbLines = text.count('\n')
     if nbLines <= 1:
         log.debug("Ignoring too short lyrics '%s'" % text)
         return 0
     elif nbLines < 5:
-        badTriggers.append('too_short')
+        badTriggersOcc.append('too_short')
     else:
-        # Don't penalize long text because of lyrics keyword in credits
-        textlines = text.split('\n')
-        popped = False
-        for i in [len(textlines) - 1, 0]:
-            if 'lyrics' in textlines[i].lower():
-                popped = textlines.pop(i)
-        if popped:
-            text = '\n'.join(textlines)
+        # Lyrics look legit, remove credits to avoid being penalized further
+        # down
+        text = remove_credits(text)
 
-    for item in artist, 'lyrics', 'copyright', 'property':
-        badTriggers += [item] * len(re.findall(r'\W%s\W' % item, text, re.I))
+    badTriggers = ['lyrics', 'copyright', 'property']
+    if artist:
+        badTriggersOcc += [artist]
 
-    if badTriggers:
-        log.debug('Bad triggers detected: %s' % badTriggers)
+    for item in badTriggers:
+        badTriggersOcc += [item] * len(re.findall(r'\W%s\W' % item, text, re.I))
 
-    return len(badTriggers) < 2
+    if badTriggersOcc:
+        log.debug('Bad triggers detected: %s' % badTriggersOcc)
+
+    return len(badTriggersOcc) < 2
 
 
 def scrape_lyrics_from_url(url):
@@ -403,7 +419,7 @@ def fetch_google(artist, title):
     if 'error' in data:
         reason = data['error']['errors'][0]['reason']
         log.debug(u'google lyrics backend error: %s' % reason)
-        return None
+        return
 
     if 'items' in data.keys():
         for item in data['items']:

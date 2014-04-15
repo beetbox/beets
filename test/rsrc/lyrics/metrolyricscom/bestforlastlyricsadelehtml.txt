@@ -1,0 +1,1157 @@
+
+<!DOCTYPE html>
+<!--[if lt IE 7]><html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="http://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8 lt-ie7"><![endif]-->
+<!--[if IE 7]><html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="http://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8"><![endif]-->
+<!--[if IE 8]><html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="http://www.facebook.com/2008/fbml" class="no-js lt-ie9"><![endif]-->
+<!--[if gt IE 8]><!--><html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="http://www.facebook.com/2008/fbml" class="no-js"><!--<![endif]-->
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><script type="text/psajs" orig_index="0">(window.NREUM||(NREUM={})).loader_config={xpid:"VwMBUVBUGwEJUFdXAQQ="};window.NREUM||(NREUM={}),__nr_require=function a(b,c,d){function e(f){if(!c[f]){var g=c[f]={exports:{}};b[f][0].call(g.exports,function(a){var c=b[f][1][a];return e(c?c:a)},g,g.exports,a,b,c,d)}return c[f].exports}for(var f=0;f<d.length;f++)e(d[f]);return e}({1:[function(a,b){function c(a,b,c){c||(c={});for(var d=f[a],e=d&&d.length||0,h=c[g]||(c[g]={}),i=0;e>i;i++)d[i].apply(h,b);return h}function d(a,b){var c=f[a]||(f[a]=[]);c.push(b)}function e(a){return delete a[g]}var f={},g="nr@context";b.exports={on:d,emit:c,clear:e}},{}],2:[function(a){function b(a,b,e,g,i){return h?h-=1:c("err",[i||new UncaughtException(a,b,e)]),"function"==typeof f?f.apply(this,d(arguments)):!1}function UncaughtException(a,b,c){this.message=a||"Uncaught error with no additional information",this.sourceURL=b,this.line=c}var c=a("handle"),d=a("lodash._slice"),e=a("../../../contextual-ee"),f=window.onerror,g=!1,h=0;a("loader").features.push("err"),window.onerror=b;try{throw new Error}catch(i){"stack"in i&&(a("../../wrap-timer"),a("../../wrap-raf"),"addEventListener"in window&&a("../../wrap-events"),window.XMLHttpRequest&&XMLHttpRequest.prototype&&XMLHttpRequest.prototype.addEventListener&&a("../../wrap-xhr"),g=!0)}e.on("fn-start",function(){g&&(h+=1)}),e.on("fn-err",function(a,b,d){g&&(this.thrown=!0,c("err",[d,(new Date).getTime()]))}),e.on("fn-end",function(){g&&!this.thrown&&h>0&&(h-=1)})},{"../../../contextual-ee":1,"../../wrap-events":3,"../../wrap-raf":4,"../../wrap-timer":5,"../../wrap-xhr":6,handle:"4O2Y62",loader:"YLUGVp","lodash._slice":14}],3:[function(a){function b(a){d.inPlace(a,["addEventListener","removeEventListener"],"-",c)}function c(a){return a[1]}var d=a("../wrap-function"),e=(a("lodash._slice"),a("../contextual-ee"));if(b(window),"getPrototypeOf"in Object){for(var f=document;f&&!f.hasOwnProperty("addEventListener");)f=Object.getPrototypeOf(f);f&&b(f);for(var g=XMLHttpRequest.prototype;g&&!g.hasOwnProperty("addEventListener");)g=Object.getPrototypeOf(g);g&&b(g)}else XMLHttpRequest.prototype.hasOwnProperty("addEventListener")&&b(XMLHttpRequest.prototype);e.on("addEventListener-start",function(a){if(a[1]){var b=a[1];"function"==typeof b?this.wrapped=b["nr@wrapped"]?a[1]=b["nr@wrapped"]:b["nr@wrapped"]=a[1]=d(b,"fn-"):"function"==typeof b.handleEvent&&d.inPlace(b,["handleEvent"],"fn-")}}),e.on("removeEventListener-start",function(a){var b=this.wrapped;b&&(a[1]=b)})},{"../contextual-ee":1,"../wrap-function":15,"lodash._slice":14}],4:[function(a){var b=(a("lodash._slice"),a("../wrap-function")),c=a("../contextual-ee");b.inPlace(window,["requestAnimationFrame","mozRequestAnimationFrame","webkitRequestAnimationFrame","msRequestAnimationFrame"],"raf-"),c.on("raf-start",function(a){a[0]=b(a[0],"fn-")})},{"../contextual-ee":1,"../wrap-function":15,"lodash._slice":14}],5:[function(a){function b(a){var b=a[0];"string"==typeof b&&(b=new Function(b)),a[0]=c(b,"fn-")}var c=(a("lodash._slice"),a("../wrap-function")),d=a("../contextual-ee");c.inPlace(window,["setTimeout","setInterval","setImmediate"],"setTimer-"),d.on("setTimer-start",b)},{"../contextual-ee":1,"../wrap-function":15,"lodash._slice":14}],6:[function(a){function b(){c.inPlace(this,f,"fn-")}var c=a("../wrap-function"),d=a("../contextual-ee"),e=window.XMLHttpRequest,f=["onload","onerror","onabort","onloadstart","onloadend","onprogress","onreadystatechange","ontimeout"];window.XMLHttpRequest=function(a){var f=new e(a);return d.emit("new-xhr",[],f),c.inPlace(f,["addEventListener","removeEventListener"],"-",function(a,b){return b}),f.addEventListener("readystatechange",b,!1),f},window.XMLHttpRequest.prototype=e.prototype},{"../contextual-ee":1,"../wrap-function":15}],7:[function(a){function b(a){if("string"==typeof a&&a.length)return a.length;if("object"!=typeof a)return void 0;if("undefined"!=typeof ArrayBuffer&&a instanceof ArrayBuffer&&a.byteLength)return a.byteLength;if("undefined"!=typeof Blob&&a instanceof Blob&&a.size)return a.size;if("undefined"!=typeof FormData&&a instanceof FormData)return void 0;try{return JSON.stringify(a).length}catch(b){return void 0}}function c(a){var c=this.params,d=this.metrics;if(!this.ended){this.ended=!0;for(var e=0;k>e;e++)a.removeEventListener(j[e],this.listener,!1);if(!c.aborted){if(d.duration=(new Date).getTime()-this.startTime,4===a.readyState){c.status=a.status;var g=a.responseType,h="arraybuffer"===g||"blob"===g||"json"===g?a.response:a.responseText,i=b(h);if(i&&(d.rxSize=i),this.sameOrigin){var l=a.getResponseHeader("X-NewRelic-App-Data");l&&(c.cat=l.split(", ").pop())}}else c.status=0;d.cbTime=this.cbTime,f("xhr",[c,d])}}}function d(a,b){var c=g(b),d=a.params;d.host=c.hostname+":"+c.port,d.pathname=c.pathname,a.sameOrigin=c.sameOrigin}function e(a,b){return b}if(window.XMLHttpRequest&&XMLHttpRequest.prototype&&XMLHttpRequest.prototype.addEventListener&&!/CriOS/.test(navigator.userAgent)){a("loader").features.push("xhr");var f=a("handle"),g=a("./parse-url.js"),h=a("../../../wrap-function"),i=a("../../../contextual-ee"),j=["load","error","abort","timeout"],k=j.length,l=a("../../../loader/id");a("../../wrap-events"),a("../../wrap-xhr"),i.on("new-xhr",function(){this.totalCbs=0,this.called=0,this.cbTime=0,this.end=c,this.ended=!1,this.xhrGuids={}}),h.inPlace(XMLHttpRequest.prototype,["open","send"],"-xhr-",e),i.on("open-xhr-start",function(a){this.params={method:a[0]},d(this,a[1]),this.metrics={}}),i.on("open-xhr-end",function(a,b){"loader_config"in NREUM&&"xpid"in NREUM.loader_config&&this.sameOrigin&&b.setRequestHeader("X-NewRelic-ID",NREUM.loader_config.xpid)}),i.on("send-xhr-start",function(a,c){var d=this.metrics,e=a[0],f=this;if(d&&e){var g=b(e);g&&(d.txSize=g)}this.startTime=(new Date).getTime(),this.listener=function(a){try{"abort"===a.type&&(f.params.aborted=!0),("load"!==a.type||f.called===f.totalCbs&&(f.onloadCalled||"function"!=typeof c.onload))&&f.end(c)}catch(b){}};for(var h=0;k>h;h++)c.addEventListener(j[h],this.listener,!1)}),i.on("xhr-cb-time",function(a,b,c){this.cbTime+=a,b?this.onloadCalled=!0:this.called+=1,this.called!==this.totalCbs||!this.onloadCalled&&"function"==typeof c.onload||this.end(c)}),i.on("xhr-load-added",function(a,b){var c=""+l(a)+!!b;this.xhrGuids&&!this.xhrGuids[c]&&(this.xhrGuids[c]=!0,this.totalCbs+=1)}),i.on("xhr-load-removed",function(a,b){var c=""+l(a)+!!b;this.xhrGuids&&this.xhrGuids[c]&&(delete this.xhrGuids[c],this.totalCbs-=1)}),i.on("addEventListener-end",function(a,b){b instanceof XMLHttpRequest&&"load"===a[0]&&i.emit("xhr-load-added",[a[1],a[2]],b)}),i.on("removeEventListener-end",function(a,b){b instanceof XMLHttpRequest&&"load"===a[0]&&i.emit("xhr-load-removed",[a[1],a[2]],b)}),i.on("fn-start",function(a,b,c){b instanceof XMLHttpRequest&&("onload"===c&&(this.onload=!0),("load"===(a[0]&&a[0].type)||this.onload)&&(this.xhrCbStart=(new Date).getTime()))}),i.on("fn-end",function(a,b){this.xhrCbStart&&i.emit("xhr-cb-time",[(new Date).getTime()-this.xhrCbStart,this.onload,b],b)})}},{"../../../contextual-ee":1,"../../../loader/id":11,"../../../wrap-function":15,"../../wrap-events":3,"../../wrap-xhr":6,"./parse-url.js":8,handle:"4O2Y62",loader:"YLUGVp"}],8:[function(a,b){b.exports=function(a){var b=document.createElement("a"),c=window.location,d={};b.href=a,d.port=b.port;var e=b.href.split("://");return!d.port&&e[1]&&(d.port=e[1].split("/")[0].split(":")[1]),d.port&&"0"!==d.port||(d.port="https"===e[0]?"443":"80"),d.hostname=b.hostname||c.hostname,d.pathname=b.pathname,"/"!==d.pathname.charAt(0)&&(d.pathname="/"+d.pathname),d.sameOrigin=!b.hostname||b.hostname===document.domain&&b.port===c.port&&b.protocol===c.protocol,d}},{}],handle:[function(a,b){b.exports=a("4O2Y62")},{}],"4O2Y62":[function(a,b){function c(a,b){var c=d[a];return c?c.apply(this,b):(e[a]||(e[a]=[]),void e[a].push(b))}var d={},e={};b.exports=c,c.queues=e,c.handlers=d},{}],11:[function(a,b){function c(a){if(!a||"object"!=typeof a&&"function"!=typeof a)return-1;if(a===window)return 0;if(e.call(a,"__nr"))return a.__nr;try{return Object.defineProperty(a,"__nr",{value:d,writable:!0,enumerable:!1}),d}catch(b){return a.__nr=d,d}finally{d+=1}}var d=1,e=Object.prototype.hasOwnProperty;b.exports=c},{}],loader:[function(a,b){b.exports=a("YLUGVp")},{}],YLUGVp:[function(a,b){function c(){var a=m.info=NREUM.info;if(a&&a.agent&&a.licenseKey&&a.applicationID){m.proto="https"===l.split(":")[0]||a.sslForHttp?"https://":"http://",g("mark",["onload",f()]);var b=i.createElement("script");b.src=m.proto+a.agent,i.body.appendChild(b)}}function d(){"complete"===i.readyState&&e()}function e(){g("mark",["domContent",f()])}function f(){return(new Date).getTime()}var g=a("handle"),h=window,i=h.document,j="addEventListener",k="attachEvent",l=(""+location).split("?")[0],m=b.exports={offset:f(),origin:l,features:[]};i[j]?(i[j]("DOMContentLoaded",e,!1),h[j]("load",c,!1)):(i[k]("onreadystatechange",d),h[k]("onload",c)),g("mark",["firstbyte",f()])},{handle:"4O2Y62"}],14:[function(a,b){function c(a,b,c){b||(b=0),"undefined"==typeof c&&(c=a?a.length:0);for(var d=-1,e=c-b||0,f=Array(0>e?0:e);++d<e;)f[d]=a[b+d];return f}b.exports=c},{}],15:[function(a,b){function c(a,b,c,d){function nrWrapper(){var g,h=f(arguments),i=this,j=c&&c(h,i)||{};try{e.emit(b+"start",[h,i,d],j)}catch(k){}try{return g=a.apply(i,h)}catch(l){throw e.emit(b+"err",[h,i,l],j),l}finally{try{e.emit(b+"end",[h,i,g],j)}catch(k){}}}return a&&"function"==typeof a&&a.apply&&!a._wrapped?(b||(b=""),nrWrapper._wrapped=!0,nrWrapper):a}function d(a,b,d,e){d||(d="");var f,g,h,i="-"===d.charAt(0);for(h=0;h<b.length;h++)g=b[h],f=a[g],f&&"function"==typeof f&&f.apply&&!f._wrapped&&(a[g]=c(f,i?g+d:d,e,g,a))}var e=a("../contextual-ee"),f=a("lodash._slice");b.exports=c,c.inPlace=d},{"../contextual-ee":1,"lodash._slice":14}]},{},["YLUGVp",7,2]);</script>
+<!-- http://www.phpied.com/conditional-comments-block-downloads/ -->
+<!--[if IE]><![endif]-->
+<meta name="description" content="Lyrics to 'Best for Last' by Adele. Wait, do you see my heart on my sleeve? / It's been there for days on end / And it's been waitin' for you to open up / Just"/>
+<meta name="viewport" content="width=device-width, maximum-scale=1.0"/>
+<title>Adele - Best For Last Lyrics | MetroLyrics</title>
+<link rel="canonical" href="http://www.metrolyrics.com/best-for-last-lyrics-adele.html"/>	<link rel="alternate" href="http://m.metrolyrics.com/best-for-last-lyrics-adele.html"/>
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<link rel="search" type="application/opensearchdescription+xml" title="metrolyrics" href="/tools/ff_search_bar.xml">
+<link rel="stylesheet" href="http://www.metrolyrics.com/css/desktop/lyrics-v5.1.3.1.css">
+<script type="text/psajs" orig_index="1">(function(_,e,rr,s){_errs=[s];var c=_.onerror;_.onerror=function(){var a=arguments;_errs.push(a);c&&c.apply(this,a)};var b=function(){var c=e.createElement(rr),b=e.getElementsByTagName(rr)[0];c.src="//beacon.errorception.com/"+s+".js";c.async=!0;b.parentNode.insertBefore(c,b)};_.addEventListener?_.addEventListener("load",b,!1):_.attachEvent("onload",b)})(window,document,"script","51c4bc00f7fef3f548000134");</script>
+<script pagespeed_no_defer="" src="http://www.metrolyrics.com/js/mobiledetector-v5.1.3.1.js"></script>	<script pagespeed_no_defer="" src="http://www.metrolyrics.com/js/vendor/uuid.min-v5.1.3.1.js"></script>
+<script src="http://www.metrolyrics.com/js/vendor/modernizr-2.6.2.min.js.pagespeed.jm.HFGCZXAk6a.js" type="text/psajs" orig_index="2"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js" type="text/psajs" orig_index="3"></script>
+<script pagespeed_no_defer="">var ml=ml||{"v":"5.1.3.1","is_dev":false,"eC":"Artist Lyric Specific","shareImage":"http:\/\/userserve-ak.last.fm\/serve\/252\/71796946.png","lyricid":1224192483,"lyricLocked":0,"intro_locked":"0","artistid":1198975325,"searcht":"best-for-last-lyrics-adele","lyricLength":46,"introAPIUrl":"http:\/\/www.metrolyrics.com\/introsubmission\/submit","smAPIUrl":"http:\/\/www.metrolyrics.com\/meaningsubmission\/submit","encodedLyric":{"title":"Best%20for%20Last","artist":"Adele","amgid":13856244}},vguid=uuid.v1(),googletag=googletag||{};googletag.cmd=googletag.cmd||[];ml.adData={isSkin:false,isBlank:true,skinType:"null"};ml.ev=function(eA,eL,eV){var keys=['eA','eL','eV'],data={'event':'ge','eC':ml.eC};for(var i=0;i<arguments.length;i++){data[keys[i]]=arguments[i];};return dataLayer.push(data);};window.ev=ml.ev;document.cookie="s_tagEnv=live; path=/";</script>
+<script pagespeed_no_defer="">var dataLayer=dataLayer||[];(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-6QP2');</script>
+<script type="text/psajs" orig_index="4">(function(){var gads=document.createElement('script');gads.async=true;gads.type='text/javascript';var useSSL='https:'==document.location.protocol;gads.src=(useSSL?'https:':'http:')+'//www.googletagservices.com/tag/js/gpt.js';var node=document.getElementsByTagName('script')[0];node.parentNode.insertBefore(gads,node);})();googletag.cmd.push(function(){googletag.defineOutOfPageSlot("/8264/aw-metrolyrics/artist/lyrics/gn","interstitial").addService(googletag.pubads());googletag.defineSlot('/8264/aw-metrolyrics/artist/lyrics/gn',[[1600,1000]],'div-gpt-ad-skin').addService(googletag.pubads()).setTargeting("pos","top");googletag.defineSlot('/8264/aw-metrolyrics/artist/lyrics/gn',[[300,250],[300,500],[300,600]],'div-gpt-ad-mpu').addService(googletag.pubads()).setTargeting("pos","top");if(ml.eC!=="Homepage"){window.lb_slot=googletag.defineSlot('/8264/aw-metrolyrics/artist/lyrics/gn',[[728,90],[970,66],[970,250]],'div-gpt-ad-leaderboard').addService(googletag.pubads()).setTargeting("pos","top");}googletag.defineSlot('/8264/aw-metrolyrics/artist/lyrics/gn',[[728,90],[970,66],[970,250]],'div-gpt-ad-leaderboard_bottom').addService(googletag.pubads()).setTargeting("pos","bottom");googletag.defineSlot('/8264/aw-metrolyrics/artist/lyrics/gn',[[300,250]],'div-gpt-ad-mpu_middle').addService(googletag.pubads()).setTargeting("pos","middle");googletag.defineSlot('/8264/aw-metrolyrics/artist/lyrics/gn',[[300,250]],'div-gpt-ad-mpu_middle2').addService(googletag.pubads()).setTargeting("pos","middle2");googletag.defineSlot('/8264/aw-metrolyrics/artist/lyrics/gn',[[300,250]],'div-gpt-ad-mpu_bottom').addService(googletag.pubads()).setTargeting("pos","bottom");googletag.defineSlot('/8264/aw-metrolyrics/artist/lyrics/gn',[[728,90]],'div-gpt-ad-bottom').addService(googletag.pubads()).setTargeting("pos","bottom");googletag.pubads().setTargeting('vguid',vguid).setTargeting("ptype","lyrics").setTargeting("inskin","yes").setTargeting("ar",["adele","katenash","maccabees","jamiet","caseydienel","rachaelyamagata","milla","lenemarlin","samphillips","toriamos","mariamena"]).setTargeting("track","BestforLast").setTargeting("explicit","0").setTargeting("tag","Pop").setTargeting("top50","0").setTargeting("top100","0");googletag.pubads().enableAsyncRendering();googletag.pubads().enableSingleRequest();googletag.pubads().collapseEmptyDivs();googletag.enableServices();});function renderAdCallback(adData){ml.adData=adData;$('.social-buttons .sticker').hide();if(ml.eC==="Homepage"&&adData.isSkin&&!adData.isBlank){var lbh=$('#div-gpt-ad-leaderboard_homepage');$('#div-gpt-ad-leaderboard').html(lbh.html());lbh.remove();}}</script>
+<!-- End Quantcast Tag -->
+<link rel=dns-prefetch href="//cn.cbsimg.net"><link rel=dns-prefetch href="//c.compete.com"><link rel=dns-prefetch href="//metrolyrics.disqus.com"><link rel=dns-prefetch href="//edge.quantserve.com"><link rel=dns-prefetch href="//tcr.tynt.com"><link rel=dns-prefetch href="//c9.static.nrcdn.com">	</head>
+<body itemscope itemtype="http://schema.org/WebPage"><noscript><meta HTTP-EQUIV="refresh" content="0;url='http://www.metrolyrics.com/best-for-last-lyrics-adele.html?ModPagespeed=noscript'" /><style><!--table,div,span,font,p{display:none} --></style><div style="display:block">Please click <a href="http://www.metrolyrics.com/best-for-last-lyrics-adele.html?ModPagespeed=noscript">here</a> if you are not redirected within a few seconds.</div></noscript>
+<div class="page" id="page">
+<div style="display:none" id='div-gpt-ad-skin'></div>	<div class="overlay" id="overlay"></div>
+<header class="page-header">
+<div class="header-top" id="header-top">
+<div class="row">
+<div class="logo grid_3">
+<a href="http://www.metrolyrics.com/" onmousedown="ev('Header','Logo');">Lyrics</a>
+</div>
+<nav class="nav-main grid_6">
+<ul class="clearfix">
+<li><a href="http://www.metrolyrics.com/top100.html" onmousedown="ev('Header','Lyrics');">Top 100</a></li>
+<li><a href="http://www.metrolyrics.com/videos.html" onmousedown="ev('Header','Videos');">Videos</a></li>
+<li><a href="http://www.metrolyrics.com/news.html" onmousedown="ev('Header','News');">News</a></li>
+<li class="active"><a href="http://www.metrolyrics.com/top-artists.html" onmousedown="ev('Header','Artists');">Artists</a></li>
+</ul>
+</nav>
+<div class="hdr-search grid_3" id="search-container">
+<form class="search-form" action="/search">
+<input type="text" placeholder="Search for lyrics" class="search-ip" id="search-ip" name="search" onmousedown="ev('Search','Header');"/>
+<input type="submit" value="Search" class="search-btn" onmousedown="ev('Search','Header Button');"/>
+</form>
+</div>
+</div>
+</div>
+</header>
+<div class="top-ad">
+<div id='div-gpt-ad-leaderboard'></div>	</div>
+<div id="skin-wrap">
+<div id="bg-top" class="bg-top">
+<div><script pagespeed_no_defer="">//<![CDATA[
+(function(){var d=window,e=document,f="documentElement",g="scrollTop",k="prototype",l="body",m="getAttribute",n="",p="1",q="data",r="img",s="load",t="number",u="on",v="onload",w="pagespeed_lazy_position",x="pagespeed_lazy_replaced_functions",y="pagespeed_lazy_src",z="position",A="relative",B="resize",C="scroll",D="src",E=function(a,b,c){if(a.addEventListener)a.addEventListener(b,c,!1);else if(a.attachEvent)a.attachEvent(u+b,c);else{var h=a[u+b];a[u+b]=function(){c.call(this);h&&h.call(this)}}};d.pagespeed=d.pagespeed||{};var F=d.pagespeed,G=function(a){this.d=[];this.a=0;this.b=!1;this.n=a;this.e=null;this.i=0;this.j=200;this.c=!1};G[k].r=function(){var a=0;typeof d.pageYOffset==t?a=d.pageYOffset:e[l]&&e[l][g]?a=e[l][g]:e[f]&&e[f][g]&&(a=e[f][g]);var b=d.innerHeight||e[f].clientHeight||e[l].clientHeight;return{top:a,bottom:a+b,height:b}};G[k].m=function(a){var b=a[m](w);if(b)return parseInt(b,0);var b=a.offsetTop,c=a.offsetParent;c&&(b+=this.m(c));b=Math.max(b,0);a.setAttribute(w,b);return b};
+G[k].q=function(a){var b=this.m(a);return{top:b,bottom:b+a.offsetHeight}};G[k].p=function(a,b){if(a.currentStyle)return a.currentStyle[b];if(e.defaultView&&e.defaultView.getComputedStyle){var c=e.defaultView.getComputedStyle(a,null);if(c)return c.getPropertyValue(b)}return a.style&&a.style[b]?a.style[b]:n};
+G[k].o=function(a){if(!this.c&&(0==a.offsetHeight||0==a.offsetWidth))return!1;if(this.p(a,z)==A)return!0;var b=this.r(),c=a.getBoundingClientRect();c?(a=c.top-b.height,b=c.bottom):(c=this.q(a),a=c.top-b.bottom,b=c.bottom-b.top);return a<=this.a&&0<=b+this.a};
+G[k].l=function(a){this.k(a);var b=this;d.setTimeout(function(){var c=a[m](y);if(null!=c)if((b.b||b.o(a))&&-1!=a.src.indexOf(b.n)){var h=a.parentNode,H=a.nextSibling;h&&h.removeChild(a);a.g&&(a.getAttribute=a.g);a.removeAttribute(v);a.removeAttribute(y);a.removeAttribute(x);h&&h.insertBefore(a,H);a.src=c}else b.d.push(a)},0)};G[k].loadIfVisible=G[k].l;G[k].t=function(){this.b=!0;this.f()};G[k].loadAllImages=G[k].t;G[k].f=function(){var a=this.d,b=a.length;this.d=[];for(var c=0;c<b;++c)this.l(a[c])};
+G[k].h=function(a,b){return a.a?null!=a.a(b):null!=a[m](b)};G[k].u=function(){for(var a=e.getElementsByTagName(r),b=0;b<a.length;++b){var c=a[b];this.h(c,y)&&this.k(c)}};G[k].overrideAttributeFunctions=G[k].u;G[k].k=function(a){var b=this;this.h(a,x)||(a.g=a[m],a.getAttribute=function(a){a.toLowerCase()==D&&b.h(this,y)&&(a=y);return this.g(a)},a.setAttribute(x,p))};
+F.s=function(a,b){var c=new G(b);F.lazyLoadImages=c;E(d,s,function(){c.c=!0;c.b=a;c.a=200;c.f()});0!=b.indexOf(q)&&((new Image).src=b);var h=function(){if(!(c.c&&a||c.e)){var b=c.j;(new Date).getTime()-c.i>c.j&&(b=0);c.e=d.setTimeout(function(){c.i=(new Date).getTime();c.f();c.e=null},b)}};E(d,C,h);E(d,B,h)};F.lazyLoadInit=F.s;})();
+
+pagespeed.lazyLoadInit(false, "http://www.gstatic.com/psa/static/1.gif");
+
+//]]></script><img pagespeed_lazy_src="http://netstorage.metrolyrics.com/artists/hero/adele-52fe4f14-hero.jpg" alt="Adele lyrics" pagespeed_url_hash="3625369262" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/></div>
+</div>
+<div class="main clearfix" role="main">
+<div id="lyrics">
+<div itemscope itemtype="http://schema.org/MusicGroup">
+<meta itemprop="name" content="Adele"/>
+<meta itemprop="description" content="Lyrics to 'Best for Last' by Adele. Wait, do you see my heart on my sleeve? / It's been there for days on end / And it's been waitin' for you to open up / Just"/>
+</div>
+<div class="artist-header content-header row">
+<div class="grid_6 suffix_6">
+<h1>Adele</h1>
+<p>
+<a href="http://www.metrolyrics.com/adele-overview.html" onmousedown="ev('Artist Menu','Overview');">Overview</a> /
+<a href="http://www.metrolyrics.com/adele-lyrics.html" class="active" onmousedown="ev('Artist Menu','Lyrics');">Lyrics
+</a> /
+<a href="http://www.metrolyrics.com/adele-pictures.html" onmousedown="ev('Artist Menu','Photos');">Photos</a> /
+<a href="http://www.metrolyrics.com/adele-videos.html" onmousedown="ev('Artist Menu','Videos');">Videos
+</a> /
+<a href="http://www.metrolyrics.com/adele-news.html" onmousedown="ev('Artist Menu','News');">News</a>
+</p>
+</div>
+</div>
+<section id="lyrics-main" class="row">
+<div class="left-panel">
+<div class="lyrics-top">
+<ul class="share clearfix social-buttons">
+<li class="gplus">
+<div class="sticker">LIKE US HERE</div>
+<div href="https://plus.google.com/share?url=http://www.metrolyrics.com/best-for-last-lyrics-adele.html" class="socialite googleplus-one" data-size="medium" data-href="http://www.metrolyrics.com/best-for-last-lyrics-adele.html" rel="nofollow" target="_blank"><span class="vhidden">Share on Google+</span></div>
+</li>
+<li><div href="http://www.facebook.com/sharer.php?uhttp://www.metrolyrics.com/best-for-last-lyrics-adele.html&amp;t=Adele+-+Best+For+Last+Lyrics" class="socialite facebook-like" data-href="http://www.metrolyrics.com/best-for-last-lyrics-adele.html" data-send="false" data-layout="button_count" data-width="60" data-show-faces="false" rel="nofollow" target="_blank"><span class="vhidden">Share on Facebook</span></div></li>
+<li><div href="http://twitter.com/share" class="socialite twitter-share" data-text="Adele - Best For Last Lyrics" data-url="http://www.metrolyrics.com/best-for-last-lyrics-adele.html" rel="nofollow" target="_blank"><span class="vhidden">Share on Twitter</span></div></li>
+</ul>
+</div>
+<div class="lyrics">
+<header>
+<h1 style='font-size:2.3em;'>
+Best for Last Lyrics
+</h1>
+<p class="album-name"><span aria-hidden="true" class="icon icon-cd"></span><em>from <a href="http://www.metrolyrics.com/adele-albums-list.html#19-album-adele" id="album-name-link" onmousedown="ev('Lyrics Body','Album Track List');">19</a></em></p></header>
+<div class="album-songs popover arrow" id="album-songs">
+<span class="close"><span aria-hidden="true" class="icon icon-cancel"></span></span>
+<div class="song-header">
+<img class="header-thumb" pagespeed_lazy_src="http://netstorage.metrolyrics.com/albums/small/1215797286adele19.jpg" alt="Adele - lyrics" pagespeed_url_hash="614945748" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+<span class="header-label">
+<span class="label-link">
+<a href="http://www.metrolyrics.com/adele-albums-list.html#19-album-adele" onmousedown="ev('Lyrics Body','Album Track List Inside');dataLayer.push({'trackpv': 'other-album-songs-1215797286'});dataLayer.push({'event': 'trackpv'});">19</a>
+</span>
+<span class="label-text">
+Other Album Songs
+</span>
+<hr class="label-hr"/>
+</span>
+</div>
+<ul class="song-content">
+<li>
+<div>
+<a href="http://www.metrolyrics.com/make-you-feel-my-love-lyrics-adele.html" onmousedown="ev('Lyrics Body','Album Track List Item');">
+<span class="num">1</span>
+<span class="title">Make You Feel My Love</span>
+<span content="19"/>
+</a>
+</div>
+</li>
+<li>
+<div>
+<a href="http://www.metrolyrics.com/my-same-lyrics-adele.html" onmousedown="ev('Lyrics Body','Album Track List Item');">
+<span class="num">2</span>
+<span class="title">My Same</span>
+<span content="19"/>
+</a>
+</div>
+</li>
+<li class="cur">
+<div>
+<a href="javascript:void(0);" onmousedown="ev('Lyrics Body','Album Track List Item');">
+<span class="num">3</span>
+<span class="title">Best for Last</span>
+<span content="19"/>
+</a>
+</div>
+</li>
+<li>
+<div>
+<a href="http://www.metrolyrics.com/cold-shoulder-lyrics-adele.html" onmousedown="ev('Lyrics Body','Album Track List Item');">
+<span class="num">4</span>
+<span class="title">Cold Shoulder</span>
+<span content="19"/>
+</a>
+</div>
+</li>
+<li>
+<div>
+<a href="http://www.metrolyrics.com/tired-lyrics-adele.html" onmousedown="ev('Lyrics Body','Album Track List Item');">
+<span class="num">5</span>
+<span class="title">Tired</span>
+<span content="19"/>
+</a>
+</div>
+</li>
+<li>
+<div>
+<a href="http://www.metrolyrics.com/chasing-pavements-lyrics-adele.html" onmousedown="ev('Lyrics Body','Album Track List Item');">
+<span class="num">6</span>
+<span class="title">Chasing Pavements</span>
+<span content="19"/>
+</a>
+</div>
+</li>
+<li>
+<div>
+<a href="http://www.metrolyrics.com/melt-my-heart-to-stone-lyrics-adele.html" onmousedown="ev('Lyrics Body','Album Track List Item');">
+<span class="num">7</span>
+<span class="title">Melt My Heart To Stone</span>
+<span content="19"/>
+</a>
+</div>
+</li>
+<li>
+<div>
+<a href="http://www.metrolyrics.com/hometown-glory-lyrics-adele.html" onmousedown="ev('Lyrics Body','Album Track List Item');">
+<span class="num">8</span>
+<span class="title">Hometown Glory</span>
+<span content="19"/>
+</a>
+</div>
+</li>
+<li>
+<div>
+<a href="http://www.metrolyrics.com/daydreamer-lyrics-adele.html" onmousedown="ev('Lyrics Body','Album Track List Item');">
+<span class="num">9</span>
+<span class="title">Daydreamer</span>
+<span content="19"/>
+</a>
+</div>
+</li>
+<li>
+<div>
+<a href="http://www.metrolyrics.com/right-as-rain-lyrics-adele.html" onmousedown="ev('Lyrics Body','Album Track List Item');">
+<span class="num">10</span>
+<span class="title">Right As Rain</span>
+<span content="19"/>
+</a>
+</div>
+</li>
+<li>
+<div>
+<a href="http://www.metrolyrics.com/first-love-lyrics-adele.html" onmousedown="ev('Lyrics Body','Album Track List Item');">
+<span class="num">11</span>
+<span class="title">First Love</span>
+<span content="19"/>
+</a>
+</div>
+</li>
+<li>
+<div>
+<a href="http://www.metrolyrics.com/crazy-for-you-lyrics-adele.html" onmousedown="ev('Lyrics Body','Album Track List Item');">
+<span class="num">12</span>
+<span class="title">Crazy For You</span>
+<span content="19"/>
+</a>
+</div>
+</li>
+</ul>
+</div>
+<div id="lyrics-intro">
+<!-- view -->
+<div class="intro-view active">
+<div class="view-description">
+&quot;Best for Last&quot; is track #3 on the album 19. It was written by Adkins, Adele Laurie Blue.	</div>
+<div class="view-edit-btn" onmousedown="ev('Lyrics Intro','Edit');">
+<i class="icon icon-correct"></i>
+Edit
+</div>
+</div>
+<!-- edit -->
+<div class="intro-edit">
+<div class="edit-header">&quot;Best for Last&quot; is track #3 on the album 19. It was written by Adkins, Adele Laurie Blue.</div>
+<div class="edit-info" style="display:none;"></div>
+<textarea class="edit-description"></textarea>
+<div class="edit-action">
+<span class="edit-help">
+<div class="help-title">For Example...</div>
+<div class="help-text">
+What chart rank did the song debut? What is the song about? Has it won any awards?, etc.
+</div>
+</span>
+<a class="edit-cancel-btn" onmousedown="ev('Lyrics Intro','Cancel');">Cancel</a>
+<span class="edit-submit-btn" onmousedown="ev('Lyrics Intro','Submit')">Submit</span>
+</div>
+</div>
+<!-- done -->
+<div class="intro-done">
+<div class="done-title">Thank You For Your Submission</div>
+<div class="done-text">Your introduction will appear once it has been deemed awesome by our team of wizards.</div>
+</div>
+</div>
+<div class="grid_1 alpha" style="margin-top:30px;">
+<ul class="lyrics-tools" id="lyrics-tools">
+<li class="ring first">
+<a target="_blank" href="http://www.metrolyrics.com/track/ringtone.html?artist=Adele&title=Best%20for%20Last&sid=MLLYros" rel="nofollow" onmousedown="ev('Lyrics Toolbar','Ringtone');om.trackSongRingtoneGet();"><span aria-hidden="true" class="icon icon-ringtone"></span>
+Get the ringtone</a>
+</li>
+<li class="video">
+<a href="#startvideo" onmousedown="ev('Lyrics Toolbar', 'Start Video');" alt="Play Video">
+<span aria-hidden="true" class="icon icon-play-2"></span>
+Play Video
+</a>
+</li>
+<li class="shar expandable">
+<span class="action" onmousedown="ev('Lyrics Toolbar','Lyrics Share');"><span aria-hidden="true" class="icon icon-sharefbtw"></span>Share<br/></span>
+<div class="box">
+<span class="close"><span aria-hidden="true" class="icon icon-cancel"></span></span>
+<div class="content">
+<h3>Spread The Words...</h3>
+<ul class="share clearfix social-buttons social-buttons-tall">
+<li><div href="https://plus.google.com/share?url=http://www.metrolyrics.com/best-for-last-lyrics-adele.html" class="socialite googleplus-one" data-size="tall" data-href="http://www.metrolyrics.com/best-for-last-lyrics-adele.html" rel="nofollow" target="_blank"><span class="vhidden">Share on Google+</span></div></li>
+<li><div href="http://www.facebook.com/sharer.php?uhttp://www.metrolyrics.com/best-for-last-lyrics-adele.html&amp;t=Adele+-+Best+For+Last+Lyrics" class="socialite facebook-like" data-href="http://www.metrolyrics.com/best-for-last-lyrics-adele.html" data-send="false" data-layout="box_count" data-width="60" data-show-faces="false" rel="nofollow" target="_blank"><span class="vhidden">Share on Facebook</span></div></li>
+<li><div href="http://twitter.com/share" class="socialite twitter-share " data-count="vertical" data-text="Adele - Best For Last Lyrics" data-url="http://www.metrolyrics.com/best-for-last-lyrics-adele.html" rel="nofollow" target="_blank"><span class="vhidden">Share on Twitter</span></div></li>
+</ul>
+<p class="form"><input type="text" id="share-url" value="http://www.metrolyrics.com/best-for-last-lyrics-adele.html" readonly /></p>
+</div>
+</div>
+</li>
+<li class="corr">
+<span class="action" onmousedown="ev('Lyrics Toolbar','Lyrics Correct');dataLayer.push({'trackpv': 'lyric-correct-1224192483'});dataLayer.push({'event': 'trackpv'});"><span aria-hidden="true" class="icon icon-correct"></span>
+Correct</span>
+</li>
+<li class="prin">
+<a href="http://www.metrolyrics.com/printlyric/best-for-last-lyrics-adele.html" onmousedown="ev('Lyrics Toolbar','Print');om.trackSocialClick({'id':15});" target='_blank' alt='Print' rel="nofollow">
+<span aria-hidden="true" class="icon icon-print"></span>
+Print
+</a>
+</li>
+</ul>
+</div>
+<div class="grid_5 omega">
+<div class="lyrics-correct" id="lyrics-correct">
+<form method="post" action="/">
+<div class="popover edit-box">
+<p class="heading"><span>Best for Last</span>
+Submit Correct Lyrics</p>
+<div class="hr"></div>
+<textarea name="lyricCorrection" id="lyricCorrection" class="redactor_editor"></textarea>
+</div>
+<div class="lyricCorrectionError"></div>
+<p class="actions">
+<span class="action button" id="submitLyrCorr" onmousedown="ev('Lyrics Toolbar','Submit Corrections');"><span aria-hidden="true" class="icon icon-meanings"></span>Submit Corrections</span>
+<span class="action alt" id="cancelLyrCorr" onmousedown="ev('Lyrics Toolbar','Cancel Correction');">Cancel</span>
+</p>
+</form>
+</div>
+<div id="lyrics-body">
+<div class="lyrics-body">
+<ul class="share-lyrics" id="share-lyrics">
+<li class="fb" onmousedown="ev('Lyric Share','Facebook');om.trackSongUC({'share':'Facebook'});"><span class="action"></span></li>
+<li class="tw" onmousedown="ev('Lyric Share','Twitter');om.trackSongUC({'share':'Twitter'});"><span class="action"></span></li>
+<li class="gp" onmousedown="ev('Lyric Share','Google+');om.trackSongUC({'share':'Google+'});"><span class="action"></span></li>
+</ul>
+<div id="lyrics-body-text">
+<p class='verse'>Wait, do you see my heart on my sleeve?<br/>
+It's been there for days on end<br/>
+And it's been waitin' for you to open up<br/>
+Just you baby, come on now, I'm trying to tell you just how<br/>
+I like to hear the words roll out of your mouth finally<br/>
+Say that it's always been me</p><p class='verse'>That's made you feel a way you've never felt before<br/>
+And I'm all you need and that you never want more<br/>
+Then you'd say all of the right things without a clue<br/>
+But you'd save the best for last like I'm the one for you</p><p class='verse'>You should know that you're just a temporary fix<br/>
+This is not rooted with you, it don't mean that much to me<br/>
+You're just a filler in the space that happened to be free<br/>
+How dare you think you'd get away with tryin' to play me</p><p class='verse'>Why is it every time I think I've tried my hardest<br/>
+It turns out it ain't enough, you're still not mentionin' love?<br/>
+What am I supposed to do to make you want me properly?<br/>
+I'm takin' these chances and gettin' nowhere<br/>
+And though I'm trying my hardest you go back to her<br/>
+And I think that I know things may never change<br/>
+I'm still hopin' one day I might hear you say</p><p class='verse'>I make you feel a way you've never felt before<br/>
+And I'm all you need and that you never want more<br/>
+Then you'd say all of the right things without a clue<br/>
+But you'd save the best for last like I'm the one for you</p><p class='verse'>You should know that you're just a temporary fix<br/>
+This is not rooted with you it don't mean that much to me<br/>
+You're just a filler in the space that happened to be free<br/>
+How dare you think you'd get away with trying to play me</p><p class='verse'>But, despite the truth that I know<br/>
+I find it hard to let go and give up on you<br/>
+Seems I love the things you do<br/>
+Like the meaner you treat me the more eager I am<br/>
+To persist with this heartbreak runnin' around<br/>
+And I will do until I find myself with you</p><p class='verse'>And make you feel a way you've never felt before<br/>
+And be all you need so that you never want more<br/>
+Then you'd say all of the right things without a clue<br/>
+And you'll be the one for me and me the one for you</p>	</div>
+<div id="selected-song-meaning-open" unselectable="on" style="display:none;">
+<span class="arrow"></span>
+<span class="open-text">Add song meaning</span>
+</div>
+<div id="selected-song-meaning-popup" style="display:none">
+<span class="arrow"></span>
+<span class="popup-close close"><span aria-hidden="true" class="icon icon-cancel"></span></span>
+<div class="redactor_ref"></div>
+<hr/>
+<div class="popup-action">
+<div class="action-example">
+<span class="example-text">Not sure what to write?</span>
+<span class="example-link">See example</span>
+<div class="example-popup" style="display:none">
+<span class="popup-close close"><span aria-hidden="true" class="icon icon-cancel"></span></span>
+<div class="popup-title">Example Song Meanings</div>
+<div class="popup-content">
+Here is where you can write about what the highlighted lyrics are about and
+their meaning. An example would be...<br/>
+<br/>
+"'Post code envy' describe the envious feeling towards the people who can live in expansive area with well known post code (such as 90210 for hollywood)."<br/>
+<br/>
+You can also add pictures, videos and links to other sites using the links at the top of the box<br/>
+<br/>
+</div>
+</div>
+</div>
+<div class="action-submit">SUBMIT</div>
+</div>
+</div><!-- #selected-song-meaning-popup -->
+<div id="selected-song-meaning-done" style="display:none">
+<span class="arrow"></span>
+<span class="popup-close close"><span aria-hidden="true" class="icon icon-cancel"></span></span>
+<div class="done-title">Thank You For Your Submission</div>
+<hr/>
+<div class="done-content">Your song meaning will appear once it has been deemed awesome byour team of wizards. Add more meanings to earn more points!</div>
+</div>
+</div>
+<p class="writers"><strong>Songwriters</strong><br/>
+ADKINS, ADELE LAURIE BLUE</p>	<p class="writers"><strong>Published by</strong><br/>
+Lyrics &copy; Universal Music Publishing Group</p>
+</div>
+</div>
+<div class="lyrics-footer grid_6 alpha" id="comments">
+<div class="lyrics-footer-title">Discuss these lyrics...</div>
+<div class="terms">
+<a href="http://legalterms.cbsinteractive.com/terms-of-use" rel='nofollow' target='_blank' onmousedown="ev('Lyrics Body','Terms of Use');">Terms of Use</a>
+</div>	<div id='disqus_thread'></div>
+</div>
+</div>
+</div>
+<div class="right-panel">
+<div class="video-container">
+<div class="lyrics-video" id="LyricHeaderVideo" data-driver='1'>
+<span class="action clearfix" onmousedown="ev('Lyrics Body','Featured Video Driver 2');dataLayer.push({'trackpv': 'video-driver-featured-videoid-2'});dataLayer.push({'event': 'trackpv'});" id="lyrics-video" alt="What&#039;s That Line? - Misheard Lyrics video" title="What&#039;s That Line? - Misheard Lyrics video">
+<div class="tmb grid_3 alpha">
+<span class="tmb tmb-m w">
+<div class="center-wide">
+<img pagespeed_lazy_src="http://thumbnails.cbsig.net/CBS_Production_CBS_Music_VMS/229/287/2014/04/11/223577667949/MisheardLyrics_VideoThumb2_thumb_640x360.jpg" alt="What&#039;s That Line? - Misheard Lyrics video" pagespeed_url_hash="412948069" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</div>
+</span>
+<span aria-hidden="true" class="icon icon-play"></span>
+</div>
+<div class="info grid_3 omega">
+<h3>What&#039;s That Line? - Misheard Lyrics</h3>
+<p>Featured Video</p>
+</div>
+</span>
+<div class="lyrics-video-over" id="lyrics-video-over">
+<div class="lyrics-video-scroll" id="lyrics-video-scroll">
+<header class="clearfix">
+<span class="close"><span aria-hidden="true" class="icon icon-cancel"></span></span>
+<h3>What&#039;s That Line? - Misheard Lyrics</h3>
+</header>
+<div class="embed">
+<object width="460" height="259" id="can" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"><param name="movie" value="http://can.cbs.com/thunder/player/chrome/canplayer.swf"></param><param name="allowFullScreen" value="true"></param><param name="allowScriptAccess" value="always"></param><param name="bgcolor" value="666666"></param><param name="FlashVars" value="pid=yJFAoYidEiL3&partner=metrolyrics&autoPlayVid=true"></param><embed src="http://can.cbs.com/thunder/player/chrome/canplayer.swf" bgcolor="666666" name="can" allowscriptaccess="always" allowfullscreen="true" flashvars="pid=yJFAoYidEiL3&partner=metrolyrics&autoPlayVid=true" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" height="259" width="460"></object>	</div>
+<div class="module">
+<header>
+<p class="more-link"><a href="http://www.metrolyrics.com/adele-videos.html" onmousedown="ev('Lyrics Body','Video Driver - More');">More</a></p>
+<h3><span>Related</span> Videos</h3>
+</header>
+<ul class="content img-grid clearfix">
+<li class="grid_2 alpha clear">
+<a href="http://www.metrolyrics.com/set-fire-to-the-rain-live-at-the-royal-albert-hall-adele-ml-video-pcg.html" title="Set Fire To The Rain (Live at The Royal Albert Hall)" onmousedown="ev('Lyrics Body','Video Driver - Related Item');">
+<span class="tmb tmb-s w">
+<div class="center-wide">
+<img pagespeed_lazy_src="http://cache.vevo.com/Content/VevoImages/video/9FEEB2CBF8D5729862C5A61C0B7CE64F.jpg?width=220" alt="Set Fire To The Rain (Live at The Royal Albert Hall)" title="Set Fire To The Rain (Live at The Royal Albert Hall)" pagespeed_url_hash="2772224527" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</div>
+</span>
+Watch Set Fire To The Rain (Live at&hellip;	<span aria-hidden="true" class="icon icon-play"></span>
+</a>
+</li>
+<li class="grid_2">
+<a href="http://www.metrolyrics.com/make-you-feel-my-love-live-on-letterman-adele-ml-video-f0p.html" title="Make You Feel My Love (Live on Letterman)" onmousedown="ev('Lyrics Body','Video Driver - Related Item');">
+<span class="tmb tmb-s w">
+<div class="center-wide">
+<img pagespeed_lazy_src="http://cache.vevo.com/Content/VevoImages/video/8F3CF9065CCAC23BB3E2024357747B48.jpg?width=220" alt="Make You Feel My Love (Live on Letterman)" title="Make You Feel My Love (Live on Letterman)" pagespeed_url_hash="4209863882" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</div>
+</span>
+Watch Make You Feel My Love (Live&hellip;	<span aria-hidden="true" class="icon icon-play"></span>
+</a>
+</li>
+<li class="grid_2 omega">
+<a href="http://www.metrolyrics.com/chasing-pavements-adele-ml-video-jui.html" title="Chasing Pavements" onmousedown="ev('Lyrics Body','Video Driver - Related Item');">
+<span class="tmb tmb-s w">
+<div class="center-wide">
+<img pagespeed_lazy_src="http://cache.vevo.com/Content/VevoImages/video/0F8C3F36751BBC0F1265A5E98FE2ED3D.jpg?width=220" alt="Chasing Pavements" title="Chasing Pavements" pagespeed_url_hash="2424322400" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</div>
+</span>
+Watch Chasing Pavements	<span aria-hidden="true" class="icon icon-play"></span>
+</a>
+</li>
+<li class="grid_2 alpha clear">
+<a href="http://www.metrolyrics.com/love-story-taylor-swift-ml-video-wvp.html" title="Taylor Swift - Love Story (Lyric Video)" onmousedown="ev('Lyrics Body','Video Driver - Related Item');">
+<span class="tmb tmb-s w">
+<div class="center-wide">
+<img pagespeed_lazy_src="http://thumbnails.cbsig.net/CBS_Production_CBS_Music_VMS/6/995/2013/10/23/55840835965/taylorswift-lovestory-lyricvideocoverart_thumb_640x360.jpg" alt="Taylor Swift - Love Story (Lyric Video)" title="Taylor Swift - Love Story (Lyric Video)" pagespeed_url_hash="81114792" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</div>
+</span>
+Watch Taylor Swift - Love Story&hellip;	<span aria-hidden="true" class="icon icon-play"></span>
+</a>
+</li>
+<li class="grid_2">
+<a href="http://www.metrolyrics.com/mean-taylor-swift-ml-video-ywc.html" title="Taylor Swift - Mean" onmousedown="ev('Lyrics Body','Video Driver - Related Item');">
+<span class="tmb tmb-s w">
+<div class="center-wide">
+<img pagespeed_lazy_src="http://thumbnails.cbsig.net/CBS_Production_CBS_Music/212/974/Taylor_Swift_Mean_640x360_2370273045.jpg" alt="Taylor Swift - Mean" title="Taylor Swift - Mean" pagespeed_url_hash="70298580" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</div>
+</span>
+Watch Taylor Swift - Mean	<span aria-hidden="true" class="icon icon-play"></span>
+</a>
+</li>
+<li class="grid_2 omega">
+<a href="http://www.metrolyrics.com/long-live-taylor-swift-ml-video-awh.html" title="Taylor Swift - Long Live" onmousedown="ev('Lyrics Body','Video Driver - Related Item');">
+<span class="tmb tmb-s w">
+<div class="center-wide">
+<img pagespeed_lazy_src="http://thumbnails.cbsig.net/CBS_Production_CBS_Music/212/973/Taylor_Swift_Long_Live_640x360_2370266367.jpg" alt="Taylor Swift - Long Live" title="Taylor Swift - Long Live" pagespeed_url_hash="4286014904" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</div>
+</span>
+Watch Taylor Swift - Long Live	<span aria-hidden="true" class="icon icon-play"></span>
+</a>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="module jango">
+<span class="broadcast"></span>Listen to Adele Radio on
+<a class="alt" href="http://www.last.fm/music/Adele" onmousedown="ev('Radio partners','Last.FM');" target="_blank" rel="nofollow">Last.fm</a>,
+<a class="alt" href="http://radio.com/station-directory/music/pop/" onmousedown="ev('Radio partners','Radio.com');" target="_blank" rel="nofollow">Radio.com</a>
+or
+<a class="alt" href="http://www.jango.com/music/Adele" onmousedown="ev('Radio partners','Jango');" target="_blank" rel="nofollow">Jango</a>
+</div>
+<div class="module poll clearfix">
+<img id='poll_loading' pagespeed_lazy_src='img/spindicate.gif' pagespeed_url_hash="3601473304" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);">
+<div id='poll' class="grid_2 alpha" style="opacity:0; visibility:hidden;">
+<header>
+<h3><span>Poll</span></h3>
+</header>
+<div class="content">
+<div id='poll_body' data-url="http://api.metrolyrics.com/v1/poll">
+<script type="text/javascript" pagespeed_no_defer="">pagespeed.lazyLoadImages.overrideAttributeFunctions();</script><script id="poll-tmpl" type="text/x-handlebars-template">
+			<p class="question" id="poll_info" data-id="{{pollid}}">{{question}}</p>
+			<ul class="options">
+				{{#options}}
+				<li>
+					<label for="mlPoll_{{answerid}}" class="cb" onmousedown="ev('Poll','Voted')">
+						<input type="radio" data-id="{{answerid}}" name="mlPoll" id="mlPoll_{{answerid}}">
+						{{answer}}
+					</label>
+				</li>
+				{{/options}}
+			</ul>
+		</script>
+<script id="results-tmpl" type="text/x-handlebars-template">
+			<p class="question" id="poll_info" data-id="{{pollid}}">Results for: {{question}}</p>
+			<ul class="results">
+				{{#options}}
+				<li>
+					<p>{{answer}} - {{percent}}%</p>
+					<span class="bar" style="width:{{percent}}%;"></span>
+				</li>
+				{{/options}}
+			</ul>
+		</script>
+</div>
+</div>
+<span id='poll_button' class="button vote">Vote Now</span>
+</div>
+<div class="expanding-ad ad-box grid_4 omega">
+<div id='div-gpt-ad-mpu'></div>	</div>
+</div>
+<div id='driver' class="module content-driver medium">
+<header>
+<p class='more-link'>
+<a href='http://www.metrolyrics.com/news-story-10-songs-that-will-instantly-put-you-in-a-good-mood-part-two.html' title='View Now' onmousedown="ev('Driver Module','View Now');">View Now</a>
+</p>
+<h3>
+<span>LISTS</span> </h3>
+</header>
+<div class="content">
+<a href="http://www.metrolyrics.com/news-story-10-songs-that-will-instantly-put-you-in-a-good-mood-part-two.html" onmousedown="ev('Driver Module','http://www.metrolyrics.com/news-story-10-songs-that-will-instantly-put-you-in-a-good-mood-part-two.html');" title="LISTS">
+<figure class="tmb tmb-lead cap-bot">
+<div class="center-wide">
+<img pagespeed_lazy_src="http://netstorage.metrolyrics.com/drivers/28de3/10songs-driver-53472066-image.jpg" pagespeed_url_hash="254190051" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</div>
+<span aria-hidden="true" class="icon icon-play"></span>	<figcaption>
+<div class="title">10 Songs That Will INSTANTLY Put You In A Good Mood</div>
+<div class="subtitle">In need of a pick me up? This list will help.</div>
+</figcaption>
+</figure>
+</a>
+</div>
+</div>
+<div class="module news" id="music-news">
+<header>
+<p class='more-link'>
+<a href='http://www.metrolyrics.com/news.html' title='View All' onmousedown="ev('News Module View All','View All');">View All</a>
+</p>
+<h3>
+<span>Music</span> News	</h3>
+</header>
+<ul class="content img-stacked">
+<li class="clearfix">
+<div class="grid_2 img alpha">
+<span class="tmb tmb-s w">
+<div class="center-wide">
+<img pagespeed_no_defer="" src="http://netstorage.metrolyrics.com/editorials/lana-del-reys-west-coast-other-new-songs-you-need-to-hear/xsmall-image.jpg" alt="Lana Del Rey Tops List of Songs You Need To Hear This Week" title="Lana Del Rey Tops List of Songs You Need To Hear This Week" pagespeed_url_hash="2819122509"/>
+</div>
+</span>
+</div>
+<div class="grid_4 omega">
+<h5><a href="http://www.metrolyrics.com/news-story-lana-del-reys-west-coast-other-new-songs-you-need-to-hear.html" title="Lana Del Rey Tops List of Songs You Need To Hear This Week" onmousedown="ev('News Module','searche:lana-del-reys-west-coast-other-new-songs-you-need-to-hear');">Lana Del Rey Tops List of Songs You Need To Hear This Week</a></h5>
+<p>There's a reason these songs are #Trending this Tuesday. Find out what they are!</p>	</div>
+</li>
+<li class="clearfix">
+<div class="grid_2 img alpha">
+<span class="tmb tmb-s w">
+<div class="center-wide">
+<img pagespeed_no_defer="" src="http://netstorage.metrolyrics.com/editorials/ed-sheeran-tops-the-the-fault-in-our-stars-soundtrack/xsmall-image.jpg" alt="Ed Sheeran Tops The The Fault In Our Stars' Soundtrack " title="Ed Sheeran Tops The The Fault In Our Stars' Soundtrack " pagespeed_url_hash="2111232181"/>
+</div>
+</span>
+</div>
+<div class="grid_4 omega">
+<h5><a href="http://www.metrolyrics.com/news-story-ed-sheeran-tops-the-the-fault-in-our-stars-soundtrack.html" title="Ed Sheeran Tops The The Fault In Our Stars' Soundtrack " onmousedown="ev('News Module','searche:ed-sheeran-tops-the-the-fault-in-our-stars-soundtrack');">Ed Sheeran Tops The The Fault In Our Stars&#039; Soundtrack</a></h5>
+<p>The young-adult blockbuster's soundtrack boasts originals from Birdy, Charli XCX, and much more...</p>	</div>
+</li>
+<li class="clearfix">
+<div class="grid_2 img alpha">
+<span class="tmb tmb-s w">
+<div class="center-wide">
+<img pagespeed_no_defer="" src="http://netstorage.metrolyrics.com/editorials/imagine-dragons-lead-the-2014-billboard-music-awards-finalists/xsmall-image.jpg" alt="Imagine Dragons Lead the 2014 Billboard Music Awards Finalists" title="Imagine Dragons Lead the 2014 Billboard Music Awards Finalists" pagespeed_url_hash="3421530452"/>
+</div>
+</span>
+</div>
+<div class="grid_4 omega">
+<h5><a href="http://www.metrolyrics.com/news-story-imagine-dragons-lead-the-2014-billboard-music-awards-finalists.html" title="Imagine Dragons Lead the 2014 Billboard Music Awards Finalists" onmousedown="ev('News Module','searche:imagine-dragons-lead-the-2014-billboard-music-awards-finalists');">Imagine Dragons Lead the 2014 Billboard Music Awards Finalists</a></h5>
+<p>Plus Lorde, Katy, and Miley are all nominated: see the list of potential winners!</p>	</div>
+</li>
+</ul>
+</div>
+<div class="module news_gallery clearfix">
+<div class="grid_2 alpha">
+<div class="module news" id="blogTrack1">
+<img id='blogTrack_loading' class="blogTrack loading" style='position:relative; top: 2em; left: 3em;' pagespeed_lazy_src='img/spindicate.gif' pagespeed_url_hash="3601473304" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);">
+<img id='blogTrack_loading' class="blogTrack loading" style='position:relative; top: 10em; left: 1em;' pagespeed_lazy_src='img/spindicate.gif' pagespeed_url_hash="3601473304" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);">
+<div id="blogTrack" class="blogTrack" data-url="http://api.metrolyrics.com/v1/blogtrack" style='opacity:0; visibility:hidden;'>
+<script type="text/javascript" pagespeed_no_defer="">pagespeed.lazyLoadImages.overrideAttributeFunctions();</script><script class="blogTrack-tmpl" type="text/x-handlebars-template">
+			<ul class="content">
+				{{#entries}}
+				<li>
+					<figure class="cap-bot tmb tmb-s">
+						<a href="{{link}}" title="{{title}}" onmousedown="ev('External News','{{link}}');" target='_blank'>
+							<div class="center-wide">
+																	<img pagespeed_no_defer="" src="{{imageUrl}}" title="{{title}}"/>
+															</div>
+							<figcaption>
+								{{title}}
+								<br />
+								{{excerpt}}
+							</figcaption>
+						</a>
+					</figure>
+				</li>
+				{{/entries}}
+			</ul>
+		</script>
+</div>
+</div>
+</div>
+<div class="expanding-ad ad-box grid_2 omega">
+<div id='div-gpt-ad-mpu_middle'></div>	</div>
+</div>
+<div class="module artist-gallery" id="artistGallery">
+<header>
+<p class='more-link'>
+<a alt="Adele - Best for Last Photos" title="Adele - Best for Last Photos" href="http://www.metrolyrics.com/adele-pictures.html" onmousedown="ev('Gallery Module View All','View All Photos');">Photos</a> | <a alt="Adele - Best for Last Videos" title="Adele - Best for Last Videos" href="http://www.metrolyrics.com/adele-videos.html" onmousedown="ev('Gallery Module View All','View All Videos');">Videos</a>	</p>
+<h3>
+<span>Artist</span> Gallery	</h3>
+</header>
+<ul class="content img-grid clearfix">
+<li class="grid_6 alpha omega">
+<a href="http://www.metrolyrics.com/adele-pictures.html#pic-299793" onmousedown="ev('Gallery Module','Hero');">
+<span class="tmb tmb-lead">
+<img pagespeed_lazy_src="http://userserve-ak.last.fm/serve/500/61616161/Adele+Untitled1.png" alt="Adele Photo: 299793" pagespeed_url_hash="1484873915" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</span>
+<div class="lfm">Images sourced by <span>Last.fm</span></div>
+</a>
+</li>
+<li class="grid_2 alpha clear">
+<a href="http://www.metrolyrics.com/set-fire-to-the-rain-live-at-the-royal-albert-hall-adele-ml-video-pcg.html" title="Set Fire To The Rain (Live at The Royal Albert Hall)" onmousedown="ev('Gallery Module','Video Item');">
+<span class="tmb tmb-s">
+<div class="center-wide">
+<img pagespeed_lazy_src="http://cache.vevo.com/Content/VevoImages/video/9FEEB2CBF8D5729862C5A61C0B7CE64F.jpg?width=150" alt="Adele - Set Fire To The Rain (Live at The Royal Albert Hall) Music Video" title="Set Fire To The Rain (Live at The Royal Albert Hall)" pagespeed_url_hash="2772207759" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</div>
+</span>
+Set Fire To The Rain (Live at The Royal Albert Hall)	<span aria-hidden="true" class="icon icon-play"></span>
+</a>
+</li>
+<li class="grid_2">
+<a href="http://www.metrolyrics.com/make-you-feel-my-love-live-on-letterman-adele-ml-video-f0p.html" title="Make You Feel My Love (Live on Letterman)" onmousedown="ev('Gallery Module','Video Item');">
+<span class="tmb tmb-s">
+<div class="center-wide">
+<img pagespeed_lazy_src="http://cache.vevo.com/Content/VevoImages/video/8F3CF9065CCAC23BB3E2024357747B48.jpg?width=150" alt="Adele - Make You Feel My Love (Live on Letterman) Music Video" title="Make You Feel My Love (Live on Letterman)" pagespeed_url_hash="4209847114" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</div>
+</span>
+Make You Feel My Love (Live on Letterman)	<span aria-hidden="true" class="icon icon-play"></span>
+</a>
+</li>
+<li class="grid_2 omega">
+<a href="http://www.metrolyrics.com/chasing-pavements-adele-ml-video-jui.html" title="Chasing Pavements" onmousedown="ev('Gallery Module','Video Item');">
+<span class="tmb tmb-s">
+<div class="center-wide">
+<img pagespeed_lazy_src="http://cache.vevo.com/Content/VevoImages/video/0F8C3F36751BBC0F1265A5E98FE2ED3D.jpg?width=150" alt="Adele - Chasing Pavements Music Video" title="Chasing Pavements" pagespeed_url_hash="2424305632" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</div>
+</span>
+Chasing Pavements	<span aria-hidden="true" class="icon icon-play"></span>
+</a>
+</li>
+<li class="grid_2 alpha clear">
+<a href="http://www.metrolyrics.com/adele-pictures.html#pic-299746" onmousedown="ev('Gallery Module','Photo Item');">
+<span class="tmb tmb-s">
+<div class="center-tall">
+<img pagespeed_lazy_src="http://userserve-ak.last.fm/serve/126/74305534/Adele+6GRAMMYs.png" alt="Adele Photo: 299746" pagespeed_url_hash="324674402" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</div>
+</span>
+</a>
+</li>
+<li class="grid_2">
+<a href="http://www.metrolyrics.com/adele-pictures.html#pic-299738" onmousedown="ev('Gallery Module','Photo Item');">
+<span class="tmb tmb-s">
+<div class="center-tall">
+<img pagespeed_lazy_src="http://userserve-ak.last.fm/serve/126/58297223/Adele+PNG.png" alt="Adele Photo: 299738" pagespeed_url_hash="2689206078" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</div>
+</span>
+</a>
+</li>
+<li class="grid_2 omega">
+<a href="http://www.metrolyrics.com/adele-pictures.html#pic-8256129" onmousedown="ev('Gallery Module','Photo Item');">
+<span class="tmb tmb-s">
+<div class="center-tall">
+<img pagespeed_lazy_src="http://userserve-ak.last.fm/serve/126/8448213/Adele+a1.jpg" alt="Adele Photo: 8256129" pagespeed_url_hash="813636149" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</div>
+</span>
+</a>
+</li>
+</ul>
+</div>
+<div class="module news_gallery clearfix">
+<div class="grid_2 alpha">
+<div class="module news" id="blogTrack2">
+<img id='blogTrack_loading' class="blogTrack loading" style='position:relative; top: 2em; left: 3em;' pagespeed_lazy_src='img/spindicate.gif' pagespeed_url_hash="3601473304" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);">
+<img id='blogTrack_loading' class="blogTrack loading" style='position:relative; top: 10em; left: 1em;' pagespeed_lazy_src='img/spindicate.gif' pagespeed_url_hash="3601473304" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);">
+<div id="blogTrack" class="blogTrack" data-url="http://api.metrolyrics.com/v1/blogtrack" style='opacity:0; visibility:hidden;'>
+<script type="text/javascript" pagespeed_no_defer="">pagespeed.lazyLoadImages.overrideAttributeFunctions();</script><script class="blogTrack-tmpl" type="text/x-handlebars-template">
+			<ul class="content">
+				{{#entries}}
+				<li>
+					<figure class="cap-bot tmb tmb-s">
+						<a href="{{link}}" title="{{title}}" onmousedown="ev('External News','{{link}}');" target='_blank'>
+							<div class="center-wide">
+																	<img pagespeed_no_defer="" src="{{imageUrl}}" title="{{title}}"/>
+															</div>
+							<figcaption>
+								{{title}}
+								<br />
+								{{excerpt}}
+							</figcaption>
+						</a>
+					</figure>
+				</li>
+				{{/entries}}
+			</ul>
+		</script>
+</div>
+</div>
+</div>
+<div class="expanding-ad ad-box" style="float: right;">
+<div id='div-gpt-ad-mpu_middle2'></div>	</div>
+</div>
+<div class="module tabs-wrapper top-songs">
+<header>
+<p class="more-link"><a href="http://www.metrolyrics.com/top100.html" onmousedown="ev('Hot Songs Module','View Top 100');">View Top 100</a></p>
+<h3><span>Hot</span> Songs</h3>
+</header>
+<ul class="tabs clearfix">
+<li class="active"><span class="action" data-ref="top-lyrics" onmousedown="ev('Hot Songs Module','Top Lyrics');">Top Lyrics</span></li>
+<li class=""><span class="action" data-ref="featured-lyrics" onmousedown="ev('Hot Songs Module','Featured Lyrics');">Featured Lyrics</span></li>
+<li class=""><span class="action" data-ref="latest-lyrics" onmousedown="ev('Hot Songs Module','Latest Lyrics');">Latest Lyrics</span></li>
+<li class=""><span class="action" data-ref="similar-lyrics" onmousedown="ev('Hot Songs Module','Similar Lyrics');">Similar Lyrics</span></li>
+</ul>
+<ul class="top-lyrics switchable content chart active" style="display: block;">
+<li>
+<div class="info">
+<span class="tmb tmb-xs">
+<img pagespeed_lazy_src="http://userserve-ak.last.fm/serve/252/87168773.png" title="Idina Menzel Let It Go lyrics" alt="Idina Menzel Let It Go lyrics" pagespeed_url_hash="1048193039" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</span>
+<a href="http://www.metrolyrics.com/let-it-go-lyrics-idina-menzel.html" class="song" onmousedown="ev('Hot Songs Module','Top Lyrics Item');">
+Let It Go Lyrics
+<em>Idina Menzel</em>
+</a>
+</div>
+<div class="bar" style="width:72%;"></div>
+</li>
+<li>
+<div class="info">
+<span class="tmb tmb-xs">
+<img pagespeed_lazy_src="http://userserve-ak.last.fm/serve/252/51884987.png" title="Kristen Bell Do You Wanna Build a Snowman? lyrics" alt="Kristen Bell Do You Wanna Build a Snowman? lyrics" pagespeed_url_hash="3283039964" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</span>
+<a href="http://www.metrolyrics.com/do-you-wanna-build-a-snowman-lyrics-kristen-bell.html" class="song" onmousedown="ev('Hot Songs Module','Top Lyrics Item');">
+Do You Wanna Build a Snowman? Lyrics
+<em>Kristen Bell</em>
+</a>
+</div>
+<div class="bar" style="width:68%;"></div>
+</li>
+<li>
+<div class="info">
+<span class="tmb tmb-xs">
+<img pagespeed_lazy_src="http://userserve-ak.last.fm/serve/252/87168773.png" title="Idina Menzel (Disney&#039;s Frozen) Let It Go lyrics" alt="Idina Menzel (Disney&#039;s Frozen) Let It Go lyrics" pagespeed_url_hash="1048193039" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</span>
+<a href="http://www.metrolyrics.com/disneys-frozen-let-it-go-lyrics-idina-menzel.html" class="song" onmousedown="ev('Hot Songs Module','Top Lyrics Item');">
+(Disney&#039;s Frozen) Let It Go Lyrics
+<em>Idina Menzel</em>
+</a>
+</div>
+<div class="bar" style="width:66%;"></div>
+</li>
+<li>
+<div class="info">
+<span class="tmb tmb-xs">
+<img pagespeed_lazy_src="http://userserve-ak.last.fm/serve/252/296049.jpg" title="John Legend All Of Me lyrics" alt="John Legend All Of Me lyrics" pagespeed_url_hash="3057704718" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</span>
+<a href="http://www.metrolyrics.com/all-of-me-lyrics-john-legend.html" class="song" onmousedown="ev('Hot Songs Module','Top Lyrics Item');">
+All Of Me Lyrics
+<em>John Legend</em>
+</a>
+</div>
+<div class="bar" style="width:64%;"></div>
+</li>
+<li>
+<div class="info">
+<span class="tmb tmb-xs">
+<img pagespeed_lazy_src="http://userserve-ak.last.fm/serve/252/91858597.png" title="Demi Lovato Let It Go lyrics" alt="Demi Lovato Let It Go lyrics" pagespeed_url_hash="4193163296" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"/>
+</span>
+<a href="http://www.metrolyrics.com/let-it-go-lyrics-demi-lovato.html" class="song" onmousedown="ev('Hot Songs Module','Top Lyrics Item');">
+Let It Go Lyrics
+<em>Demi Lovato</em>
+</a>
+</div>
+<div class="bar" style="width:62%;"></div>
+</li>
+</ul>
+<ul class="featured-lyrics star-list switchable content">
+<li class="num1">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/battlefield-lyrics-jordin-sparks.html" onmousedown="ev('Hot Songs Module','Featured Lyrics Item');">
+Battlefield Lyrics
+</a> by Jordin Sparks	</li>
+<li class="num2">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/nasty-lyrics-pixie-lott.html" onmousedown="ev('Hot Songs Module','Featured Lyrics Item');">
+Nasty Lyrics
+</a> by Pixie Lott	</li>
+<li class="num3">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/tick-tick-boom-lyrics-britney-spears.html" onmousedown="ev('Hot Songs Module','Featured Lyrics Item');">
+Tick Tick Boom Lyrics
+</a> by Britney Spears	</li>
+<li class="num4">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/danse-lyrics-mia-martina.html" onmousedown="ev('Hot Songs Module','Featured Lyrics Item');">
+Danse Lyrics
+</a> by Mia Martina	</li>
+<li class="num5">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/mamas-song-lyrics-carrie-underwood.html" onmousedown="ev('Hot Songs Module','Featured Lyrics Item');">
+Mama&#039;s Song Lyrics
+</a> by Carrie Underwood	</li>
+<li class="num6">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/she-wolf-lyrics-shakira.html" onmousedown="ev('Hot Songs Module','Featured Lyrics Item');">
+She Wolf Lyrics
+</a> by Shakira	</li>
+<li class="num7">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/kill-me-lyrics-pretty-reckless.html" onmousedown="ev('Hot Songs Module','Featured Lyrics Item');">
+Kill Me Lyrics
+</a> by Pretty Reckless	</li>
+<li class="num8">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/manos-al-aire-lyrics-nelly-furtado.html" onmousedown="ev('Hot Songs Module','Featured Lyrics Item');">
+Manos Al Aire Lyrics
+</a> by Nelly Furtado	</li>
+<li class="num9">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/manos-al-aire-lyrics-nelly-furtado.html" onmousedown="ev('Hot Songs Module','Featured Lyrics Item');">
+Manos Al Aire Lyrics
+</a> by Nelly Furtado	</li>
+<li class="num10">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/cash-in-lyrics-solange.html" onmousedown="ev('Hot Songs Module','Featured Lyrics Item');">
+Cash In Lyrics
+</a> by Solange	</li>
+</ul>
+<ul class="latest-lyrics star-list switchable content">
+<li class="num1">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/fake-smile-lyrics-rebecca-ferguson.html" onmousedown="ev('Hot Songs Module','Latest Lyrics Item');">
+Fake Smile Lyrics
+</a> by Rebecca Ferguson	</li>
+<li class="num2">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/soldier-lyrics-samantha-jade.html" onmousedown="ev('Hot Songs Module','Latest Lyrics Item');">
+Soldier Lyrics
+</a> by Samantha Jade	</li>
+<li class="num3">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/drinking-and-driving-lyrics-jhene-aiko.html" onmousedown="ev('Hot Songs Module','Latest Lyrics Item');">
+Drinking And Driving Lyrics
+</a> by Jhene Aiko	</li>
+<li class="num4">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/whippin-a-brick-lyrics-mike-will-made-it.html" onmousedown="ev('Hot Songs Module','Latest Lyrics Item');">
+Whippin A Brick Lyrics
+</a> by Mike Will Made It	</li>
+<li class="num5">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/somewhere-only-we-know-lyrics-lily-allen.html" onmousedown="ev('Hot Songs Module','Latest Lyrics Item');">
+Somewhere Only We Know Lyrics
+</a> by Lily Allen	</li>
+<li class="num6">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/hard-out-here-lyrics-lily-allen.html" onmousedown="ev('Hot Songs Module','Latest Lyrics Item');">
+Hard Out Here Lyrics
+</a> by Lily Allen	</li>
+<li class="num7">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/some-nights-lyrics-fun.html" onmousedown="ev('Hot Songs Module','Latest Lyrics Item');">
+Some Nights Lyrics
+</a> by Fun.	</li>
+<li class="num8">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/all-of-the-lights-lyrics-kanye-west.html" onmousedown="ev('Hot Songs Module','Latest Lyrics Item');">
+All Of The Lights Lyrics
+</a> by Kanye West	</li>
+<li class="num9">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/all-of-the-lights-lyrics-kanye-west.html" onmousedown="ev('Hot Songs Module','Latest Lyrics Item');">
+All Of The Lights Lyrics
+</a> by Kanye West	</li>
+<li class="num10">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/all-of-the-lights-lyrics-kanye-west.html" onmousedown="ev('Hot Songs Module','Latest Lyrics Item');">
+All Of The Lights Lyrics
+</a> by Kanye West	</li>
+</ul>
+<ul class="similar-lyrics star-list switchable content">
+<li class="num1">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/stay-ready-lyrics-jhene-aiko.html" onmousedown="ev('Hot Songs Module','Similar Lyrics Item');">
+Stay Ready Lyrics
+</a> by Jhene Aiko	</li>
+<li class="num2">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/take-your-shirt-off-lyrics-t-pain.html" onmousedown="ev('Hot Songs Module','Similar Lyrics Item');">
+Take Your Shirt Off Lyrics
+</a> by T PAIN	</li>
+<li class="num3">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/all-bad-lyrics-justin-bieber.html" onmousedown="ev('Hot Songs Module','Similar Lyrics Item');">
+All Bad Lyrics
+</a> by Justin Bieber	</li>
+<li class="num4">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/just-do-it-lyrics-kid-ink.html" onmousedown="ev('Hot Songs Module','Similar Lyrics Item');">
+Just Do It Lyrics
+</a> by Kid Ink	</li>
+<li class="num5">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/passenger-lyrics-britney-spears.html" onmousedown="ev('Hot Songs Module','Similar Lyrics Item');">
+Passenger Lyrics
+</a> by Britney Spears	</li>
+<li class="num6">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/see-the-world-lyrics-asher-roth.html" onmousedown="ev('Hot Songs Module','Similar Lyrics Item');">
+See The World Lyrics
+</a> by Asher Roth	</li>
+<li class="num7">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/indo-lyrics-cassie.html" onmousedown="ev('Hot Songs Module','Similar Lyrics Item');">
+Indo Lyrics
+</a> by Cassie	</li>
+<li class="num8">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/have-yourself-a-merry-little-christmas-lyrics-tamar-braxton.html" onmousedown="ev('Hot Songs Module','Similar Lyrics Item');">
+Have Yourself a Merry Little Christmas Lyrics
+</a> by Tamar Braxton	</li>
+<li class="num9">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/maison-margiela-lyrics-future.html" onmousedown="ev('Hot Songs Module','Similar Lyrics Item');">
+Maison Margiela Lyrics
+</a> by Future	</li>
+<li class="num10">
+<span aria-hidden="true" class="star"></span>
+<a href="http://www.metrolyrics.com/heart-attack-lyrics-trey-songz.html" onmousedown="ev('Hot Songs Module','Similar Lyrics Item');">
+Heart Attack Lyrics
+</a> by Trey Songz	</li>
+</ul>
+</div>
+<div class="expanding-ad ad-box grid_6 alpha omega"><div id='div-gpt-ad-mpu_bottom'></div></div>
+</div>
+</section>
+<div class='module tabs-wrapper row' id='similarArtists'>
+<div class="grid_12">
+<header>
+<p class="more-link">
+<a href="http://www.metrolyrics.com/top-artists.html" alt="music artist view all" onmousedown="ev('Footer Similar Artist Module View All','View All');">All Artists</a>
+</p>
+<h3>
+<span>Similar</span> Artists	</h3>
+</header>
+<ul class="similar-artists content title-overlay clearfix">
+<li class="grid_3 alpha">
+<a href="http://www.metrolyrics.com/kate-nash-lyrics.html" title="Kate&nbsp;Nash lyrics" onmousedown="ev('Footer Similar Artist Module','artistLink:http://www.metrolyrics.com/kate-nash-lyrics.html');">
+<span class="tmb tmb-m"><img pagespeed_lazy_src="http://userserve-ak.last.fm/serve/252/5999731/Kate+Nash+KateNashu06.jpg" title="Kate&nbsp;Nash lyrics" alt="Kate&nbsp;Nash lyrics" pagespeed_url_hash="3053843389" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"></span>
+<p>
+Kate&nbsp;Nash	</p>
+</a>
+</li>
+<li class="grid_3">
+<a href="http://www.metrolyrics.com/jamie-t-lyrics.html" title="Jamie&nbsp;T lyrics" onmousedown="ev('Footer Similar Artist Module','artistLink:http://www.metrolyrics.com/jamie-t-lyrics.html');">
+<span class="tmb tmb-m"><img pagespeed_lazy_src="http://userserve-ak.last.fm/serve/252/9460635/Jamie+T+jamieWEB02.jpg" title="Jamie&nbsp;T lyrics" alt="Jamie&nbsp;T lyrics" pagespeed_url_hash="4069956228" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"></span>
+<p>
+Jamie&nbsp;T	</p>
+</a>
+</li>
+<li class="grid_3">
+<a href="http://www.metrolyrics.com/tori-amos-lyrics.html" title="Tori&nbsp;Amos lyrics" onmousedown="ev('Footer Similar Artist Module','artistLink:http://www.metrolyrics.com/tori-amos-lyrics.html');">
+<span class="tmb tmb-m"><img pagespeed_lazy_src="http://userserve-ak.last.fm/serve/252/681/Tori+Amos.jpg" title="Tori&nbsp;Amos lyrics" alt="Tori&nbsp;Amos lyrics" pagespeed_url_hash="2191009151" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"></span>
+<p>
+Tori&nbsp;Amos	</p>
+</a>
+</li>
+<li class="grid_3 omega">
+<a href="http://www.metrolyrics.com/regina-spektor-lyrics.html" title="Regina&nbsp;Spektor lyrics" onmousedown="ev('Footer Similar Artist Module','artistLink:http://www.metrolyrics.com/regina-spektor-lyrics.html');">
+<span class="tmb tmb-m"><img pagespeed_lazy_src="http://userserve-ak.last.fm/serve/252/18628141/Regina+Spektor+11.png" title="Regina&nbsp;Spektor lyrics" alt="Regina&nbsp;Spektor lyrics" pagespeed_url_hash="3840616172" src="http://www.gstatic.com/psa/static/1.gif" onload="pagespeed.lazyLoadImages.loadIfVisible(this);"></span>
+<p>
+Regina&nbsp;Spektor	</p>
+</a>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="bottom-ad">
+<div id='div-gpt-ad-leaderboard_bottom'></div>	</div>
+</div>
+</div>
+<footer class="page-footer" id="page-footer">
+<div class="row">
+<div class="hot-songs module">
+<header>
+<p class='discover-more-link'>
+Discover the top 100 songs in:
+<a onmousedown="ev('Footer','LATM')" href='http://www.metrolyrics.com/es/latm/top100.html '>Latin America</a> |
+<a onmousedown="ev('Footer','France')" href='http://www.metrolyrics.com/fr/eu/top100.html '>France</a> |
+<a onmousedown="ev('Footer','Asia')" href='http://www.metrolyrics.com/en/sea/top100.html '>Asia</a>
+</p>
+<h3><span>Songs So Hot</span> They're Sizzling</h3>
+</header>
+<ul class="clearfix">	<li class="grid_3 alpha">
+<a href="http://www.metrolyrics.com/all-i-ever-need-lyrics-austin-mahone.html" title="All I Ever Need Lyrics" onmousedown="ev('Footer','Hot Songs Item');">All I Ever Need Lyrics</a>Austin Mahone	</li>	<li class="grid_3">
+<a href="http://www.metrolyrics.com/let-it-go-lyrics-clean-bandit.html" title="Let It Go Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Let It Go Lyrics</a>Clean Bandit	</li>	<li class="grid_3">
+<a href="http://www.metrolyrics.com/cant-fight-this-love-lyrics-austin-mahone.html" title="Can’t Fight This Love Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Can’t Fight This Love Lyrics</a>Austin Mahone	</li>	<li class="grid_3 omega">
+<a href="http://www.metrolyrics.com/secret-lyrics-austin-mahone.html" title="Secret Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Secret Lyrics</a>Austin Mahone	</li>	</ul>
+<ul class="clearfix">	<li class="grid_3 alpha">
+<a href="http://www.metrolyrics.com/till-i-find-you-lyrics-austin-mahone.html" title="Till I Find You  Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Till I Find You Lyrics</a>Austin Mahone	</li>	<li class="grid_3">
+<a href="http://www.metrolyrics.com/black-widow-lyrics-iggy-azalea.html" title="Black Widow Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Black Widow Lyrics</a>Iggy Azalea	</li>	<li class="grid_3">
+<a href="http://www.metrolyrics.com/problem-lyrics-ariana-grande.html" title="Problem Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Problem Lyrics</a>Ariana Grande </li>	<li class="grid_3 omega">
+<a href="http://www.metrolyrics.com/benz-friendz-whatchutola-lyrics-future.html" title="Benz Friendz (Whatchutola) Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Benz Friendz (Whatchutola) Lyrics</a>Future	</li>	</ul>
+<ul class="clearfix">	<li class="grid_3 alpha">
+<a href="http://www.metrolyrics.com/never-satisfied-lyrics-future.html" title="Never Satisfied Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Never Satisfied Lyrics</a>Future	</li>	<li class="grid_3">
+<a href="http://www.metrolyrics.com/walk-it-out-lyrics-jennifer-hudson.html" title="Walk It Out Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Walk It Out Lyrics</a>Jennifer Hudson	</li>	<li class="grid_3">
+<a href="http://www.metrolyrics.com/love-never-felt-so-good-lyrics-michael-jackson.html" title="Love Never Felt So Good Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Love Never Felt So Good Lyrics</a>Michael Jackson	</li>	<li class="grid_3 omega">
+<a href="http://www.metrolyrics.com/tenerife-lyrics-ed-sheeran.html" title="Tenerife Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Tenerife Lyrics</a>Ed Sheeran	</li>	</ul>
+<ul class="clearfix">	<li class="grid_3 alpha">
+<a href="http://www.metrolyrics.com/bubblegum-lyrics-jason-derulo.html" title="Bubblegum  Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Bubblegum Lyrics</a>Jason DeRulo	</li>	<li class="grid_3">
+<a href="http://www.metrolyrics.com/bloodstream-lyrics-ed-sheeran.html" title="Bloodstream Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Bloodstream Lyrics</a>Ed Sheeran	</li>	<li class="grid_3">
+<a href="http://www.metrolyrics.com/slay-lyrics-bonnie-mckee.html" title="SLAY Lyrics" onmousedown="ev('Footer','Hot Songs Item');">SLAY Lyrics</a>Bonnie Mckee	</li>	<li class="grid_3 omega">
+<a href="http://www.metrolyrics.com/mess-lyrics-ed-sheeran.html" title="Mess Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Mess Lyrics</a>Ed Sheeran	</li>	</ul>
+<ul class="clearfix">	<li class="grid_3 alpha">
+<a href="http://www.metrolyrics.com/another-world-lyrics-vamps.html" title="Another World Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Another World Lyrics</a>Vamps	</li>	<li class="grid_3">
+<a href="http://www.metrolyrics.com/get-ya-money-lyrics-august-alsina.html" title="Get Ya Money Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Get Ya Money Lyrics</a>August Alsina	</li>	<li class="grid_3">
+<a href="http://www.metrolyrics.com/move-my-way-lyrics-vamps.html" title="Move My Way Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Move My Way Lyrics</a>Vamps	</li>	<li class="grid_3 omega">
+<a href="http://www.metrolyrics.com/lay-it-down-lyrics-jt-hodges.html" title="Lay It Down Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Lay It Down Lyrics</a>JT Hodges	</li>	</ul>
+<ul class="clearfix">	<li class="grid_3 alpha">
+<a href="http://www.metrolyrics.com/keep-us-safe-lyrics-carrie-underwood.html" title="Keep Us Safe Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Keep Us Safe Lyrics</a>Carrie Underwood	</li>	<li class="grid_3">
+<a href="http://www.metrolyrics.com/i-won-lyrics-future.html" title="I Won Lyrics" onmousedown="ev('Footer','Hot Songs Item');">I Won Lyrics</a>Future	</li>	<li class="grid_3">
+<a href="http://www.metrolyrics.com/xscape-lyrics-michael-jackson.html" title="Xscape Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Xscape Lyrics</a>Michael Jackson	</li>	<li class="grid_3 omega">
+<a href="http://www.metrolyrics.com/clockwork-lyrics-ashley-roberts.html" title="Clockwork Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Clockwork Lyrics</a>Ashley Roberts	</li>	</ul>
+<ul class="clearfix">	<li class="grid_3 alpha">
+<a href="http://www.metrolyrics.com/storyline-lyrics-hunter-hayes.html" title="Storyline Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Storyline Lyrics</a>Hunter Hayes	</li>	<li class="grid_3">
+<a href="http://www.metrolyrics.com/the-man-lyrics-aloe-blacc.html" title="The Man Lyrics" onmousedown="ev('Footer','Hot Songs Item');">The Man Lyrics</a>Aloe Blacc	</li>	<li class="grid_3">
+<a href="http://www.metrolyrics.com/pompeii-lyrics-bastille.html" title="Pompeii Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Pompeii Lyrics</a>Bastille	</li>	<li class="grid_3 omega">
+<a href="http://www.metrolyrics.com/dark-horse-lyrics-katy-perry.html" title="Dark Horse Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Dark Horse Lyrics</a>Katy Perry	</li>	</ul>
+<ul class="clearfix">	<li class="grid_3 alpha">
+<a href="http://www.metrolyrics.com/hold-on-lyrics-drake.html" title="Hold On Lyrics" onmousedown="ev('Footer','Hot Songs Item');">Hold On Lyrics</a>Drake	</li>	</ul>
+</div>
+<div class="hr"></div>
+<div class="footer-iframe-wrapper">
+<script type="text/javascript" pagespeed_no_defer="">pagespeed.lazyLoadImages.overrideAttributeFunctions();</script><script type="text/psajs" orig_index="5">//<![CDATA[
+(function(){var b="pagespeed_iframe",c="iframe";window.pagespeed=window.pagespeed||{};var g=window.pagespeed,h=function(){};h.prototype.a=function(){var a=document.getElementsByTagName(b);if(0<a.length){for(var a=a[0],f=document.createElement(c),d=0,e=a.attributes,k=e.length;d<k;++d)f.setAttribute(e[d].name,e[d].value);a.parentNode.replaceChild(f,a)}};h.prototype.convertToIframe=h.prototype.a;g.b=function(){g.deferIframe=new h};g.deferIframeInit=g.b;})();
+pagespeed.deferIframeInit();
+//]]></script><pagespeed_iframe frameborder="0" id="footer-iframe" src="http://www.metrolyrics.com/en/iframes/footer.html" allowtransparency="yes" scrolling="no"><script pagespeed_orig_type="text/javascript" type="text/psajs" orig_index="6">
+pagespeed.deferIframe.convertToIframe();</script></pagespeed_iframe>
+</div>
+</div>
+</footer>
+<ng-include src="'full-page-overlay-tpl'"/>
+<script type="text/ng-template" id="full-page-overlay-tpl">
+
+				<div id="full-page-overlay" ng-show="overlay.visible" ng-click="overlay.visible = false;" ng-controller="FPOController">
+
+					<!-- page header nav bar -->
+					<div class="header-container" stop-event="click">
+						<form class="fpo-search-form" action="http://www.metrolyrics.com/search.html" method="get">
+							<div class="search-by-text">
+								<input name="search" ng-model="search.value" type="text" class="search-value" placeholder="Search for lyrics"/>
+								<i class="icon icon-magnifier" ng-click="search.submit()" ev-action="Search" ev-value="Header Button"></i>
+							</div>
+
+							<div class="search-by-alphabet">
+								<div class="label">Or browse by:</div>
+								<div class="alphabets">
+									<a class="alphabet"
+										 ng-repeat="alphabet in search.alphabets"
+										 ng-href="/artists-{{alphabet}}.html"
+										 ng-bind="alphabet"
+										 ev-action="Alphabetical" ev-value="{{alphabet}}"></a>
+								</div>
+							</div>
+						</form>
+					</div>
+
+				</div>
+
+			</script>
+</div>
+<div id="interstitial" style="display:none"></div>
+<script pagespeed_no_defer="">var amc=amc||{},aData={"siteSection":"artist","pageType":"lyrics_lyric","musicSongTitle":"Best for Last","musicArtistName":"Adele","musicSongId":"ml-lyric-1224192483","musicArtistId":"ml-artist-1198975325","lyricLength":46,"assetType":"l","musicAlbumId":"ml-album-1215797286","musicAlbumTitle":"19","pageFindingMethod":"External"}||{},omdata={context:aData};if(!amc.on){amc.on=amc.call=function(){}}
+omdata.context.pageViewGuid=aData.pageViewGuid=vguid;dataLayer.push(aData);</script>
+<script pagespeed_no_defer="" src="//www.adobetag.com/d2/v2/ZDItY2JzaW50ZXJhY3RpdmUtNDgxNC00NTQt/amc.js"></script>
+<script id='req-config' type="text/psajs" orig_index="7">var requirejs={paths:{baseUrl:'/js/desktop',lib:'/js/lib',vendor:'/js/vendor',ng:'/js/lib/ng',jquery:'//ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min',hammer:'http://www.metrolyrics.com/js/vendor/jquery.hammer-full.min',facebook:'//connect.facebook.net/en_US/all',youtube:'https://www.youtube.com/iframe_api?noext',ngCookie:'http://www.metrolyrics.com/js/vendor/angular/angular-cookies'},shim:{'facebook':{exports:'FB'},'hammer':{deps:['jquery'],exports:'Hammer'},'handlebars':{exports:'Handlebars'},'youtube':{exports:'YT'},'domReady':{exports:'domReady'},'angular':{deps:['jquery'],exports:'angular'},'ngCookie':{deps:['angular']}}};requirejs.paths.angular='//ajax.googleapis.com/ajax/libs/angularjs/1.2.9/angular.min';</script>
+<script src="http://www.metrolyrics.com/js/vendor/require-v5.1.3.1.min.js" type="text/psajs" orig_index="8"></script>
+<script src="http://www.metrolyrics.com/js/desktop/lyrics-v5.1.3.1.min.js.pagespeed.jm.xPmXgKyT42.js" type="text/psajs" orig_index="9"></script>
+<script type="text/psajs" orig_index="10">googletag.cmd.push(function(){googletag.display('div-gpt-ad-skin');googletag.display('div-gpt-ad-mpu');googletag.display('div-gpt-ad-leaderboard');googletag.display('div-gpt-ad-leaderboard_bottom');googletag.display('div-gpt-ad-mpu_middle');googletag.display('div-gpt-ad-mpu_middle2');googletag.display('div-gpt-ad-mpu_bottom');googletag.display('div-gpt-ad-bottom');googletag.display('interstitial');});</script>
+<!-- Begin BlueKai Tag -->
+<pagespeed_iframe name="__bkframe" height="0" width="0" frameborder="0" src="javascript:void(0)" style="display:none"><script pagespeed_orig_type="text/javascript" type="text/psajs" orig_index="11">
+pagespeed.deferIframe.convertToIframe();</script></pagespeed_iframe>
+<script src="//tags.bkrtx.com/js/bk-coretag.js" type="text/psajs" orig_index="12"></script>
+<script type="text/psajs" orig_index="13">var XCLGFbrowser=document.cookie.match('XCLGFbrowser=(.+?);')[1];bk_addPageCtx("anon_id",XCLGFbrowser);bk_addPageCtx("site","cbsimetrolryicssite");bk_addPageCtx("ptype","lyrics");bk_addPageCtx("path","/8264/aw-metrolyrics/artist/lyrics/gn");bk_addPageCtx("ar","adele,katenash,maccabees,jamiet,caseydienel,rachaelyamagata,milla,lenemarlin,samphillips,toriamos,mariamena");bk_addPageCtx("tag","Pop");bk_ignore_meta=true;bk_doJSTag(16833,4);</script>
+<!-- End BlueKai Tag -->
+<div style="display:none">
+<!-- Compete CrossPoint Tag for metrolyrics.com -->
+<script pagespeed_no_defer="">__compete_code='c15342d3ffbab36cc15dcdea08365df6';</script>
+<script pagespeed_no_defer="" src="//c.compete.com/bootstrap/s/c15342d3ffbab36cc15dcdea08365df6/metrolyrics-com/bootstrap.js"></script>
+<noscript>
+<img width="0" height="0" src="https://ssl-metrolyrics-com-c15342.c-col.com" pagespeed_url_hash="716140774"/>
+</noscript>
+</div>
+<script type='text/x-gubedml' id='gubedml'>eyJTZXJ2ZXIiOiJ3d3cubWV0cm9seXJpY3MuY29tIiwiSG9zdG5hbWUiOiJ3czc3LnBoeDEuY2JzaWcubmV0IiwiR2VuZXJhdGlvbiBEYXRlIjoiU2F0LCAxOSBBcHIgMjAxNCAxMzozOTo0NCAtMDcwMCIsIlN0YXJ0IFRpbWUiOjEzOTc5Mzk5ODQsIkVuZCBUaW1lIjoxMzk3OTM5OTg0LCJSZW5kZXIgU2Vjb25kcyI6MCwiU3RhcnQgbWljcm9zZWNvbmRzIjoxMzk3OTM5OTg0LjQ5NTYsIkVuZCBtaWNyb3NlY29uZHMiOjEzOTc5Mzk5ODQuNTcwMywiUmVuZGVyIG1pY3Jvc2Vjb25kcyI6MC4wNzQ3MzQ5MjYyMjM3NTUsIldpZ2V0IENvbmZpZyI6eyJmb290ZXJMaW5rcyI6IkZvb3RlckxpbmtzIiwibHlyaWNIZWFkZXJWaWRlbyA6IEx5cmljSGVhZGVyVmlkZW8iOnsiYXJ0aXN0Ijp7ImFydGlzdGlkIjoxMTk4OTc1MzI1LCJhcnRpc3QiOiJBZGVsZSIsImNhbm9uaWNhbF9uYW1lIjoiQWRlbGUiLCJ0d2l0dGVyX3VzZXJuYW1lIjoiIiwibHlyaWNzIjo0MywicmVsYXRlZGlkcyI6IjExODY3NjcyOTcsMTE3Nzk1NzAxMiwxODMyNTk2OTA0LDIwNjA0LDIyNTk5LDgxMzcsNjk3MywxMDQ0MywxMjUwMSwxNTYxMzYzMTMsNDI2ODcwMzc5LDIxODYwLDE4NDkyNzAxOTMsMTE3OTQzNzAyOSwyMDMxMiwxMTU5MjI2NjcwLDY5MDMsMTE4NjYxMjE4OCwxODg2ODc3NDY0LDY3MiwxNDEyOTUxMTE1LDEwOTA5OTQ5Niw3MjY3LDIwMTc5LDExNjg0ODgzOTYsMTI5MTAiLCJzaG9ydHRleHQiOiIiLCJhbGJ1bXMiOjYsInZpZXdzIjoyMTMwNzMyNjIsInZpZXdzd2VlayI6NTgxNjYsImNyYW1tZWQiOiJhZGVsZSIsInNlYXJjaGEiOiJhZGVsZSIsInByb2ZpbGVwaWMiOiJhZGVsZS1wcm9maWxlLmpwZyIsImhlcm9waWMiOiJhZGVsZS01MmZlNGYxNC1oZXJvLmpwZyIsImZhY2VwaWMiOiIxMTk4OTc1MzI1YWRlbGUtZmFjZS5qcGciLCJwYXJ0bmVyX2xpbmtzIjoieXl5IiwibGFzdGZtX3JhZGlvIjoiMSIsImxhc3R1cGRhdGUiOiIyMDEzLTA5LTExIiwiZ2VucmUiOiJQb3AiLCJnZW5yZWlkIjoiMyIsInRhZ19jcmFtbWVkIjoicG9wIiwibGFzdGZtX3BpYyI6Imh0dHA6XC9cL3VzZXJzZXJ2ZS1hay5sYXN0LmZtXC9zZXJ2ZVwvMjUyXC83MTc5Njk0Ni5wbmciLCJtZXRhZGVzY190eXBlIjoiZGVmYXVsdCIsIm1ldGFkZXNjX2N1c3RvbSI6IiJ9LCJseXJpYyI6eyJseXJpY2lkIjoxMjI0MTkyNDgzLCJ0aXRsZSI6IkJlc3QgZm9yIExhc3QiLCJkYXRlbGluZSI6MTIxNTc5NzI5OCwicHVibGlzaGVycyI6Ikx5cmljcyBcdTAwYTkgVW5pdmVyc2FsIE11c2ljIFB1Ymxpc2hpbmcgR3JvdXAiLCJzb25nd3JpdGVycyI6IkFES0lOUywgQURFTEUgTEFVUklFIEJMVUUiLCJmZWF0dXJpbmciOiIiLCJndWl0YXIiOiIiLCJ2aWV3cyI6MzQ1MTM3LCJ2aWV3c3dlZWsiOjEwOSwibG9ja2VkIjowLCJhcnRpc3RpZCI6MTE5ODk3NTMyNSwic2VhcmNodCI6ImJlc3QtZm9yLWxhc3QtbHlyaWNzLWFkZWxlIiwiaGFzYm9keSI6MiwibGljZW5zZSI6MiwiYm9keSI6IldhaXQsIGRvIHlvdSBzZWUgbXkgaGVhcnQgb24gbXkgc2xlZXZlP1xuSXQncyBiZWVuIHRoZXJlIGZvciBkYXlzIG9uIGVuZFxuQW5kIGl0J3MgYmVlbiB3YWl0aW4nIGZvciB5b3UgdG8gb3BlbiB1cFxuSnVzdCB5b3UgYmFieSwgY29tZSBvbiBub3csIEknbSB0cnlpbmcgdG8gdGVsbCB5b3UganVzdCBob3dcbkkgbGlrZSB0byBoZWFyIHRoZSB3b3JkcyByb2xsIG91dCBvZiB5b3VyIG1vdXRoIGZpbmFsbHlcblNheSB0aGF0IGl0J3MgYWx3YXlzIGJlZW4gbWVcblxuVGhhdCdzIG1hZGUgeW91IGZlZWwgYSB3YXkgeW91J3ZlIG5ldmVyIGZlbHQgYmVmb3JlXG5BbmQgSSdtIGFsbCB5b3UgbmVlZCBhbmQgdGhhdCB5b3UgbmV2ZXIgd2FudCBtb3JlXG5UaGVuIHlvdSdkIHNheSBhbGwgb2YgdGhlIHJpZ2h0IHRoaW5ncyB3aXRob3V0IGEgY2x1ZVxuQnV0IHlvdSdkIHNhdmUgdGhlIGJlc3QgZm9yIGxhc3QgbGlrZSBJJ20gdGhlIG9uZSBmb3IgeW91XG5cbllvdSBzaG91bGQga25vdyB0aGF0IHlvdSdyZSBqdXN0IGEgdGVtcG9yYXJ5IGZpeFxuVGhpcyBpcyBub3Qgcm9vdGVkIHdpdGggeW91LCBpdCBkb24ndCBtZWFuIHRoYXQgbXVjaCB0byBtZVxuWW91J3JlIGp1c3QgYSBmaWxsZXIgaW4gdGhlIHNwYWNlIHRoYXQgaGFwcGVuZWQgdG8gYmUgZnJlZVxuSG93IGRhcmUgeW91IHRoaW5rIHlvdSdkIGdldCBhd2F5IHdpdGggdHJ5aW4nIHRvIHBsYXkgbWVcblxuV2h5IGlzIGl0IGV2ZXJ5IHRpbWUgSSB0aGluayBJJ3ZlIHRyaWVkIG15IGhhcmRlc3Rcbkl0IHR1cm5zIG91dCBpdCBhaW4ndCBlbm91Z2gsIHlvdSdyZSBzdGlsbCBub3QgbWVudGlvbmluJyBsb3ZlP1xuV2hhdCBhbSBJIHN1cHBvc2VkIHRvIGRvIHRvIG1ha2UgeW91IHdhbnQgbWUgcHJvcGVybHk/XG5JJ20gdGFraW4nIHRoZXNlIGNoYW5jZXMgYW5kIGdldHRpbicgbm93aGVyZVxuQW5kIHRob3VnaCBJJ20gdHJ5aW5nIG15IGhhcmRlc3QgeW91IGdvIGJhY2sgdG8gaGVyXG5BbmQgSSB0aGluayB0aGF0IEkga25vdyB0aGluZ3MgbWF5IG5ldmVyIGNoYW5nZVxuSSdtIHN0aWxsIGhvcGluJyBvbmUgZGF5IEkgbWlnaHQgaGVhciB5b3Ugc2F5XG5cbkkgbWFrZSB5b3UgZmVlbCBhIHdheSB5b3UndmUgbmV2ZXIgZmVsdCBiZWZvcmVcbkFuZCBJJ20gYWxsIHlvdSBuZWVkIGFuZCB0aGF0IHlvdSBuZXZlciB3YW50IG1vcmVcblRoZW4geW91J2Qgc2F5IGFsbCBvZiB0aGUgcmlnaHQgdGhpbmdzIHdpdGhvdXQgYSBjbHVlXG5CdXQgeW91J2Qgc2F2ZSB0aGUgYmVzdCBmb3IgbGFzdCBsaWtlIEknbSB0aGUgb25lIGZvciB5b3VcblxuWW91IHNob3VsZCBrbm93IHRoYXQgeW91J3JlIGp1c3QgYSB0ZW1wb3JhcnkgZml4XG5UaGlzIGlzIG5vdCByb290ZWQgd2l0aCB5b3UgaXQgZG9uJ3QgbWVhbiB0aGF0IG11Y2ggdG8gbWVcbllvdSdyZSBqdXN0IGEgZmlsbGVyIGluIHRoZSBzcGFjZSB0aGF0IGhhcHBlbmVkIHRvIGJlIGZyZWVcbkhvdyBkYXJlIHlvdSB0aGluayB5b3UnZCBnZXQgYXdheSB3aXRoIHRyeWluZyB0byBwbGF5IG1lXG5cbkJ1dCwgZGVzcGl0ZSB0aGUgdHJ1dGggdGhhdCBJIGtub3dcbkkgZmluZCBpdCBoYXJkIHRvIGxldCBnbyBhbmQgZ2l2ZSB1cCBvbiB5b3VcblNlZW1zIEkgbG92ZSB0aGUgdGhpbmdzIHlvdSBkb1xuTGlrZSB0aGUgbWVhbmVyIHlvdSB0cmVhdCBtZSB0aGUgbW9yZSBlYWdlciBJIGFtXG5UbyBwZXJzaXN0IHdpdGggdGhpcyBoZWFydGJyZWFrIHJ1bm5pbicgYXJvdW5kXG5BbmQgSSB3aWxsIGRvIHVudGlsIEkgZmluZCBteXNlbGYgd2l0aCB5b3VcblxuQW5kIG1ha2UgeW91IGZlZWwgYSB3YXkgeW91J3ZlIG5ldmVyIGZlbHQgYmVmb3JlXG5BbmQgYmUgYWxsIHlvdSBuZWVkIHNvIHRoYXQgeW91IG5ldmVyIHdhbnQgbW9yZVxuVGhlbiB5b3UnZCBzYXkgYWxsIG9mIHRoZSByaWdodCB0aGluZ3Mgd2l0aG91dCBhIGNsdWVcbkFuZCB5b3UnbGwgYmUgdGhlIG9uZSBmb3IgbWUgYW5kIG1lIHRoZSBvbmUgZm9yIHlvdSIsImludHJvIjoiIiwiaW50cm9fbG9ja2VkIjoiMCIsImV4cGFuZGVkIjoiMCIsInBhcnRuZXJfbGlua3MiOiJ5eXkiLCJzbmlwcGV0IjoiIiwiZXhwbGljaXQiOmZhbHNlLCJpdHVuZXNpZCI6IjI4MjM3NDA2NyIsIml0dW5lc19hbGJ1bWlkIjoiMjgyMzc0MDQzIiwiY3JhbW1lZCI6ImJlc3Rmb3JsYXN0IiwiYW1naWQiOjEzODU2MjQ0LCJ2aWRlbyI6MSwibWV0YWRlc2NfdHlwZSI6ImRlZmF1bHQiLCJtZXRhZGVzY19jdXN0b20iOiIiLCJtZXRhdGl0bGUiOiIiLCJkdXJhdGlvbiI6IjI1OCIsImxhc3RmbWlkIjoiOTA5MDI3OTQiLCJsYXN0Zm1fdXJsIjoiaHR0cDpcL1wvd3d3Lmxhc3QuZm1cL211c2ljXC9BZGVsZVwvX1wvQmVzdCtmb3IrTGFzdCIsImxhc3RfeW91dHViZV9jaGVjayI6IjEzOTYyNTg1NjEiLCJsYXN0X3Zldm9fY2hlY2siOiIwIiwibGFzdF9jYnNfY2hlY2siOiIwIiwiYWxidW1pZCI6MTIxNTc5NzI4NiwidHJhY2tObyI6MywiYWxidW0iOiIxOSJ9LCJkaXNhYmxlTGF6eUxvYWQiOnRydWV9LCJhcnRpc3RIZWFkZXIgOiBBcnRpc3RIZWFkZXIiOnsiYWN0aXZlIjoibHlyaWNzIiwiYXJ0aXN0aWQiOjExOTg5NzUzMjV9LCJ0b3BTb25ncyA6IFRvcFNvbmdzIjp7InNob3dfc2VvIjp0cnVlLCJsaW1pdCI6NSwibHlyaWNpZCI6MTIyNDE5MjQ4MywiZGlzYWJsZUxhenlMb2FkIjp0cnVlfSwibHlyaWNCb2R5SGVhZGVyIDogTHlyaWNCb2R5SGVhZGVyIjp7ImFydGlzdCI6eyJhcnRpc3RpZCI6MTE5ODk3NTMyNSwiYXJ0aXN0IjoiQWRlbGUiLCJjYW5vbmljYWxfbmFtZSI6IkFkZWxlIiwidHdpdHRlcl91c2VybmFtZSI6IiIsImx5cmljcyI6NDMsInJlbGF0ZWRpZHMiOiIxMTg2NzY3Mjk3LDExNzc5NTcwMTIsMTgzMjU5NjkwNCwyMDYwNCwyMjU5OSw4MTM3LDY5NzMsMTA0NDMsMTI1MDEsMTU2MTM2MzEzLDQyNjg3MDM3OSwyMTg2MCwxODQ5MjcwMTkzLDExNzk0MzcwMjksMjAzMTIsMTE1OTIyNjY3MCw2OTAzLDExODY2MTIxODgsMTg4Njg3NzQ2NCw2NzIsMTQxMjk1MTExNSwxMDkwOTk0OTYsNzI2NywyMDE3OSwxMTY4NDg4Mzk2LDEyOTEwIiwic2hvcnR0ZXh0IjoiIiwiYWxidW1zIjo2LCJ2aWV3cyI6MjEzMDczMjYyLCJ2aWV3c3dlZWsiOjU4MTY2LCJjcmFtbWVkIjoiYWRlbGUiLCJzZWFyY2hhIjoiYWRlbGUiLCJwcm9maWxlcGljIjoiYWRlbGUtcHJvZmlsZS5qcGciLCJoZXJvcGljIjoiYWRlbGUtNTJmZTRmMTQtaGVyby5qcGciLCJmYWNlcGljIjoiMTE5ODk3NTMyNWFkZWxlLWZhY2UuanBnIiwicGFydG5lcl9saW5rcyI6Inl5eSIsImxhc3RmbV9yYWRpbyI6IjEiLCJsYXN0dXBkYXRlIjoiMjAxMy0wOS0xMSIsImdlbnJlIjoiUG9wIiwiZ2VucmVpZCI6IjMiLCJ0YWdfY3JhbW1lZCI6InBvcCIsImxhc3RmbV9waWMiOiJodHRwOlwvXC91c2Vyc2VydmUtYWsubGFzdC5mbVwvc2VydmVcLzI1MlwvNzE3OTY5NDYucG5nIiwibWV0YWRlc2NfdHlwZSI6ImRlZmF1bHQiLCJtZXRhZGVzY19jdXN0b20iOiIifSwibHlyaWMiOnsibHlyaWNpZCI6MTIyNDE5MjQ4MywidGl0bGUiOiJCZXN0IGZvciBMYXN0IiwiZGF0ZWxpbmUiOjEyMTU3OTcyOTgsInB1Ymxpc2hlcnMiOiJMeXJpY3MgXHUwMGE5IFVuaXZlcnNhbCBNdXNpYyBQdWJsaXNoaW5nIEdyb3VwIiwic29uZ3dyaXRlcnMiOiJBREtJTlMsIEFERUxFIExBVVJJRSBCTFVFIiwiZmVhdHVyaW5nIjoiIiwiZ3VpdGFyIjoiIiwidmlld3MiOjM0NTEzNywidmlld3N3ZWVrIjoxMDksImxvY2tlZCI6MCwiYXJ0aXN0aWQiOjExOTg5NzUzMjUsInNlYXJjaHQiOiJiZXN0LWZvci1sYXN0LWx5cmljcy1hZGVsZSIsImhhc2JvZHkiOjIsImxpY2Vuc2UiOjIsImJvZHkiOiJXYWl0LCBkbyB5b3Ugc2VlIG15IGhlYXJ0IG9uIG15IHNsZWV2ZT9cbkl0J3MgYmVlbiB0aGVyZSBmb3IgZGF5cyBvbiBlbmRcbkFuZCBpdCdzIGJlZW4gd2FpdGluJyBmb3IgeW91IHRvIG9wZW4gdXBcbkp1c3QgeW91IGJhYnksIGNvbWUgb24gbm93LCBJJ20gdHJ5aW5nIHRvIHRlbGwgeW91IGp1c3QgaG93XG5JIGxpa2UgdG8gaGVhciB0aGUgd29yZHMgcm9sbCBvdXQgb2YgeW91ciBtb3V0aCBmaW5hbGx5XG5TYXkgdGhhdCBpdCdzIGFsd2F5cyBiZWVuIG1lXG5cblRoYXQncyBtYWRlIHlvdSBmZWVsIGEgd2F5IHlvdSd2ZSBuZXZlciBmZWx0IGJlZm9yZVxuQW5kIEknbSBhbGwgeW91IG5lZWQgYW5kIHRoYXQgeW91IG5ldmVyIHdhbnQgbW9yZVxuVGhlbiB5b3UnZCBzYXkgYWxsIG9mIHRoZSByaWdodCB0aGluZ3Mgd2l0aG91dCBhIGNsdWVcbkJ1dCB5b3UnZCBzYXZlIHRoZSBiZXN0IGZvciBsYXN0IGxpa2UgSSdtIHRoZSBvbmUgZm9yIHlvdVxuXG5Zb3Ugc2hvdWxkIGtub3cgdGhhdCB5b3UncmUganVzdCBhIHRlbXBvcmFyeSBmaXhcblRoaXMgaXMgbm90IHJvb3RlZCB3aXRoIHlvdSwgaXQgZG9uJ3QgbWVhbiB0aGF0IG11Y2ggdG8gbWVcbllvdSdyZSBqdXN0IGEgZmlsbGVyIGluIHRoZSBzcGFjZSB0aGF0IGhhcHBlbmVkIHRvIGJlIGZyZWVcbkhvdyBkYXJlIHlvdSB0aGluayB5b3UnZCBnZXQgYXdheSB3aXRoIHRyeWluJyB0byBwbGF5IG1lXG5cbldoeSBpcyBpdCBldmVyeSB0aW1lIEkgdGhpbmsgSSd2ZSB0cmllZCBteSBoYXJkZXN0XG5JdCB0dXJucyBvdXQgaXQgYWluJ3QgZW5vdWdoLCB5b3UncmUgc3RpbGwgbm90IG1lbnRpb25pbicgbG92ZT9cbldoYXQgYW0gSSBzdXBwb3NlZCB0byBkbyB0byBtYWtlIHlvdSB3YW50IG1lIHByb3Blcmx5P1xuSSdtIHRha2luJyB0aGVzZSBjaGFuY2VzIGFuZCBnZXR0aW4nIG5vd2hlcmVcbkFuZCB0aG91Z2ggSSdtIHRyeWluZyBteSBoYXJkZXN0IHlvdSBnbyBiYWNrIHRvIGhlclxuQW5kIEkgdGhpbmsgdGhhdCBJIGtub3cgdGhpbmdzIG1heSBuZXZlciBjaGFuZ2VcbkknbSBzdGlsbCBob3Bpbicgb25lIGRheSBJIG1pZ2h0IGhlYXIgeW91IHNheVxuXG5JIG1ha2UgeW91IGZlZWwgYSB3YXkgeW91J3ZlIG5ldmVyIGZlbHQgYmVmb3JlXG5BbmQgSSdtIGFsbCB5b3UgbmVlZCBhbmQgdGhhdCB5b3UgbmV2ZXIgd2FudCBtb3JlXG5UaGVuIHlvdSdkIHNheSBhbGwgb2YgdGhlIHJpZ2h0IHRoaW5ncyB3aXRob3V0IGEgY2x1ZVxuQnV0IHlvdSdkIHNhdmUgdGhlIGJlc3QgZm9yIGxhc3QgbGlrZSBJJ20gdGhlIG9uZSBmb3IgeW91XG5cbllvdSBzaG91bGQga25vdyB0aGF0IHlvdSdyZSBqdXN0IGEgdGVtcG9yYXJ5IGZpeFxuVGhpcyBpcyBub3Qgcm9vdGVkIHdpdGggeW91IGl0IGRvbid0IG1lYW4gdGhhdCBtdWNoIHRvIG1lXG5Zb3UncmUganVzdCBhIGZpbGxlciBpbiB0aGUgc3BhY2UgdGhhdCBoYXBwZW5lZCB0byBiZSBmcmVlXG5Ib3cgZGFyZSB5b3UgdGhpbmsgeW91J2QgZ2V0IGF3YXkgd2l0aCB0cnlpbmcgdG8gcGxheSBtZVxuXG5CdXQsIGRlc3BpdGUgdGhlIHRydXRoIHRoYXQgSSBrbm93XG5JIGZpbmQgaXQgaGFyZCB0byBsZXQgZ28gYW5kIGdpdmUgdXAgb24geW91XG5TZWVtcyBJIGxvdmUgdGhlIHRoaW5ncyB5b3UgZG9cbkxpa2UgdGhlIG1lYW5lciB5b3UgdHJlYXQgbWUgdGhlIG1vcmUgZWFnZXIgSSBhbVxuVG8gcGVyc2lzdCB3aXRoIHRoaXMgaGVhcnRicmVhayBydW5uaW4nIGFyb3VuZFxuQW5kIEkgd2lsbCBkbyB1bnRpbCBJIGZpbmQgbXlzZWxmIHdpdGggeW91XG5cbkFuZCBtYWtlIHlvdSBmZWVsIGEgd2F5IHlvdSd2ZSBuZXZlciBmZWx0IGJlZm9yZVxuQW5kIGJlIGFsbCB5b3UgbmVlZCBzbyB0aGF0IHlvdSBuZXZlciB3YW50IG1vcmVcblRoZW4geW91J2Qgc2F5IGFsbCBvZiB0aGUgcmlnaHQgdGhpbmdzIHdpdGhvdXQgYSBjbHVlXG5BbmQgeW91J2xsIGJlIHRoZSBvbmUgZm9yIG1lIGFuZCBtZSB0aGUgb25lIGZvciB5b3UiLCJpbnRybyI6IiIsImludHJvX2xvY2tlZCI6IjAiLCJleHBhbmRlZCI6IjAiLCJwYXJ0bmVyX2xpbmtzIjoieXl5Iiwic25pcHBldCI6IiIsImV4cGxpY2l0IjpmYWxzZSwiaXR1bmVzaWQiOiIyODIzNzQwNjciLCJpdHVuZXNfYWxidW1pZCI6IjI4MjM3NDA0MyIsImNyYW1tZWQiOiJiZXN0Zm9ybGFzdCIsImFtZ2lkIjoxMzg1NjI0NCwidmlkZW8iOjEsIm1ldGFkZXNjX3R5cGUiOiJkZWZhdWx0IiwibWV0YWRlc2NfY3VzdG9tIjoiIiwibWV0YXRpdGxlIjoiIiwiZHVyYXRpb24iOiIyNTgiLCJsYXN0Zm1pZCI6IjkwOTAyNzk0IiwibGFzdGZtX3VybCI6Imh0dHA6XC9cL3d3dy5sYXN0LmZtXC9tdXNpY1wvQWRlbGVcL19cL0Jlc3QrZm9yK0xhc3QiLCJsYXN0X3lvdXR1YmVfY2hlY2siOiIxMzk2MjU4NTYxIiwibGFzdF92ZXZvX2NoZWNrIjoiMCIsImxhc3RfY2JzX2NoZWNrIjoiMCIsImFsYnVtaWQiOjEyMTU3OTcyODYsInRyYWNrTm8iOjMsImFsYnVtIjoiMTkifSwidGl0bGVTaXplIjoyLjN9LCJzaW1pbGFyQXJ0aXN0cyA6IFNpbWlsYXJBcnRpc3RzIjp7ImFydGlzdGlkIjoxMTk4OTc1MzI1fSwibGlzdGVuQmFubmVyIDogTGlzdGVuQmFubmVyIjp7ImFydGlzdE5hbWUiOiJBZGVsZSIsImFydGlzdFVybCI6IkFkZWxlIn0sIm11c2ljTmV3c1RvcCA6IE11c2ljTmV3cyI6eyJsYXlvdXQiOiJtZWRpdW0iLCJsaW1pdCI6MywiZGlzYWJsZUxhenlMb2FkIjp0cnVlLCJ0YWciOjExOTg5NzUzMjUsImdlbnJlaWQiOiIzIiwiYmxlbmRlZCI6dHJ1ZSwidHlwZSI6ImFydGlzdCJ9LCJtdXNpY05ld3NBZDIgOiBNdXNpY05ld3MiOnsibGF5b3V0IjoiYmxvZ1RyYWNrIiwibGltaXQiOjIsImRpc2FibGVMYXp5TG9hZCI6dHJ1ZSwidGFnIjoxMTk4OTc1MzI1LCJnZW5yZWlkIjoiMyIsImJsZW5kZWQiOnRydWUsInR5cGUiOiJhcnRpc3QiLCJtb2R1bGVJZCI6ImJsb2dUcmFjazEifSwibXVzaWNOZXdzQWQzIDogTXVzaWNOZXdzIjp7ImxheW91dCI6ImJsb2dUcmFjayIsImxpbWl0IjoyLCJkaXNhYmxlTGF6eUxvYWQiOnRydWUsInRhZyI6MTE5ODk3NTMyNSwiZ2VucmVpZCI6IjMiLCJibGVuZGVkIjp0cnVlLCJtb2R1bGVJZCI6ImJsb2dUcmFjazIifSwiYXJ0aXN0R2FsbGVyeSA6IEFydGlzdEdhbGxlcnkiOnsiYXJ0aXN0aWQiOjExOTg5NzUzMjUsImZlYXR1cmVQaWMiOnRydWUsInZpZGVvTGltaXQiOjMsImltYWdlTGltaXQiOjMsImRpc2FibGVMYXp5TG9hZCI6dHJ1ZSwic2VvVGFncyI6IkJlc3QgZm9yIExhc3QifSwiaGVyb0ltYWdlQmFja2dyb3VuZCA6IEhlcm9JbWFnZUJhY2tncm91bmQiOnsiYXJ0aXN0aWQiOjExOTg5NzUzMjV9LCJjb250ZW50RHJpdmVyIDogQ29udGVudERyaXZlciI6eyJseXJpY2lkIjoxMjI0MTkyNDgzLCJhcnRpc3RpZCI6MTE5ODk3NTMyNSwiZ2VucmVpZCI6IjMifSwicG9sbCI6IlBvbGwifX0=</script>	<script type="text/psajs" orig_index="14">window.NREUM||(NREUM={});NREUM.info={"beacon":"beacon-4.newrelic.com","licenseKey":"7ba9e88a5c","applicationID":"2946565","transactionName":"MlAANRAACkRUVxdZCgsaIwIWCAtZGngaQgwGGhEEAxMHX0E=","queueTime":0,"applicationTime":145,"ttGuid":"","agentToken":"","userAttributes":"","errorBeacon":"jserror.newrelic.com","agent":"js-agent.newrelic.com\/nr-361.min.js"}</script></body>
+</html>
+<script pagespeed_no_defer="">//<![CDATA[
+(function(){var e=encodeURIComponent,f=window,h=document,m="width",n="documentElement",p="height",q="length",r="prototype",s="body",t="&",u="&ci=",w="&n=",x="&rd=",y=",",z="?",A="Content-Type",B="Microsoft.XMLHTTP",C="Msxml2.XMLHTTP",D="POST",E="application/x-www-form-urlencoded",F="img",G="input",H="load",I="oh=",J="on",K="pagespeed_url_hash",L="url=",M=function(a,c,d){if(a.addEventListener)a.addEventListener(c,d,!1);else if(a.attachEvent)a.attachEvent(J+c,d);else{var b=a[J+c];a[J+c]=function(){d.call(this);b&&b.call(this)}}};f.pagespeed=f.pagespeed||{};var N=f.pagespeed,O=function(a,c,d,b,g){this.d=a;this.f=c;this.g=d;this.a=g;this.c={height:f.innerHeight||h[n].clientHeight||h[s].clientHeight,width:f.innerWidth||h[n].clientWidth||h[s].clientWidth};this.e=b;this.b={}};O[r].j=function(a){a=a.getBoundingClientRect();return{top:a.top+(void 0!==f.pageYOffset?f.pageYOffset:(h[n]||h[s].parentNode||h[s]).scrollTop),left:a.left+(void 0!==f.pageXOffset?f.pageXOffset:(h[n]||h[s].parentNode||h[s]).scrollLeft)}};O[r].i=function(a){if(0>=a.offsetWidth&&0>=a.offsetHeight)return!1;a=this.j(a);var c=a.top.toString()+y+a.left.toString();if(this.b.hasOwnProperty(c))return!1;this.b[c]=!0;return a.top<=this.c[p]&&a.left<=this.c[m]};O[r].l=function(){for(var a=[F,G],c=[],d={},b=0;b<a[q];++b)for(var g=h.getElementsByTagName(a[b]),k=0;k<g[q];++k){var v=g[k].getAttribute(K);v&&g[k].getBoundingClientRect&&this.i(g[k])&&!(v in d)&&(c.push(v),d[v]=!0)}b=!1;a=I+this.g;this.a&&(a+=w+this.a);if(0!=c[q]){a+=u+e(c[0]);for(b=1;b<c[q];++b){d=y+e(c[b]);if(131072<a[q]+d[q])break;a+=d}b=!0}this.e&&(d=x+e(JSON.stringify(this.h())),131072>=a[q]+d[q]&&(a+=d),b=!0);N.criticalImagesBeaconData=a;if(b){var c=this.d,b=this.f,l;if(f.XMLHttpRequest)l=new XMLHttpRequest;else if(f.ActiveXObject)try{l=new ActiveXObject(C)}catch(P){try{l=new ActiveXObject(B)}catch(Q){}}l&&(l.open(D,c+(-1==c.indexOf(z)?z:t)+L+e(b)),l.setRequestHeader(A,E),l.send(a))}};O[r].h=function(){for(var a={},c=h.getElementsByTagName(F),d=0;d<c[q];++d){var b=c[d],g=b.getAttribute(K);if("undefined"==typeof b.naturalWidth||"undefined"==typeof b.naturalHeight||"undefined"==typeof g)break;if("undefined"==typeof a[b.src]&&0<b[m]&&0<b[p]&&0<b.naturalWidth&&0<b.naturalHeight||"undefined"!=typeof a[b.src]&&b[m]>=a[b.src].n&&b[p]>=a[b.src].m)a[g]={renderedWidth:b[m],renderedHeight:b[p],originalWidth:b.naturalWidth,originalHeight:b.naturalHeight}}return a};N.k=function(a,c,d,b,g){var k=new O(a,c,d,b,g);M(f,H,function(){f.setTimeout(function(){k.l()},0)})};N.criticalImagesBeaconInit=N.k;})();pagespeed.criticalImagesBeaconInit('/mod_pagespeed_beacon','http://www.metrolyrics.com/best-for-last-lyrics-adele.html','6NeELuT_GV',false,'hL9n3PifP_Q');
+//]]></script><script type="text/javascript" src="/mod_pagespeed_static/js_defer.IRaJtkfeqL.js"></script>
