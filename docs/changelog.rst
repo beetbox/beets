@@ -25,6 +25,7 @@ New stuff:
 * There is also a new :doc:`/plugins/keyfinder` that runs a command line
   program to get the key from audio data and store it in the
   `initial_key` field.
+* Beets can now import `zip`, `tar` and `rar` archives.
 
 Fixes:
 
