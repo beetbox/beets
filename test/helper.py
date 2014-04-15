@@ -25,9 +25,9 @@ import beets
 from beets import config
 import beets.plugins
 from beets.library import Library, Item
+from beets import importer
 
-# TODO Move this here, along with AutotagMock
-from test_importer import TestImportSession
+# TODO Move AutotagMock here
 import _common
 
 
@@ -120,6 +120,7 @@ class TestHelper(object):
         self.lib = Library(dbpath, self.libdir)
 
     def teardown_beets(self):
+        self.lib._connection().close()
         del os.environ['BEETSDIR']
         # FIXME somehow close all open fd to the ilbrary
         self.remove_temp_dir()
@@ -219,3 +220,46 @@ class TestHelper(object):
         """Delete the temporary directory created by `create_temp_dir`.
         """
         shutil.rmtree(self.temp_dir)
+
+
+class TestImportSession(importer.ImportSession):
+    """ImportSession that can be controlled programaticaly.
+
+    >>> lib = Library(':memory:')
+    >>> importer = TestImportSession(lib, paths=['/path/to/import'])
+    >>> importer.add_choice(importer.action.SKIP)
+    >>> importer.add_choice(importer.action.ASIS)
+    >>> importer.default_choice = importer.action.APPLY
+    >>> importer.run()
+
+    This imports ``/path/to/import`` into `lib`. It skips the first
+    album and imports thesecond one with metadata from the tags. For the
+    remaining albums, the metadata from the autotagger will be applied.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(TestImportSession, self).__init__(*args, **kwargs)
+        self._choices = []
+
+    default_choice = importer.action.APPLY
+
+    def add_choice(self, choice):
+        self._choices.append(choice)
+
+    def clear_choices(self):
+        self._choices = []
+
+    def choose_match(self, task):
+        try:
+            choice = self._choices.pop(0)
+        except IndexError:
+            choice = self.default_choice
+
+        if choice == importer.action.APPLY:
+            return task.candidates[0]
+        elif isinstance(choice, int):
+            return task.candidates[choice-1]
+        else:
+            return choice
+
+    choose_item = choose_match

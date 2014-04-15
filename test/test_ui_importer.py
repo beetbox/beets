@@ -17,11 +17,12 @@ test_importer module. But here the test importer inherits from
 ``TerminalImportSession``. So we test this class, too.
 """
 
-from _common import unittest
+from _common import unittest, DummyIO
 from test import test_importer
 from beets.ui.commands import TerminalImportSession
 from beets import importer
 from beets import config
+
 
 class TestTerminalImportSession(TerminalImportSession):
 
@@ -69,13 +70,14 @@ class TestTerminalImportSession(TerminalImportSession):
         else:
             raise Exception('Unknown choice %s' % choice)
 
+
 class TerminalImportSessionSetup(object):
     """Overwrites test_importer.ImportHelper to provide a terminal importer
     """
 
-    def _setup_import_session(self, import_dir=None,
-            delete=False, threaded=False, copy=True,
-            singletons=False, move=False, autotag=True):
+    def _setup_import_session(self, import_dir=None, delete=False,
+                              threaded=False, copy=True, singletons=False,
+                              move=False, autotag=True):
         config['import']['copy'] = copy
         config['import']['delete'] = delete
         config['import']['timid'] = True
@@ -85,32 +87,58 @@ class TerminalImportSessionSetup(object):
         config['import']['autotag'] = autotag
         config['import']['resume'] = False
 
+        if not hasattr(self, 'io'):
+            self.io = DummyIO()
         self.io.install()
-        self.importer = TestTerminalImportSession(self.lib,
-                                logfile=None,
-                                paths=[import_dir or self.import_dir],
-                                query=None,
-                                io=self.io)
+        self.importer = TestTerminalImportSession(
+            self.lib, logfile=None, query=None, io=self.io,
+            paths=[import_dir or self.import_dir],
+        )
 
 
 class NonAutotaggedImportTest(TerminalImportSessionSetup,
-        test_importer.NonAutotaggedImportTest): pass
+                              test_importer.NonAutotaggedImportTest):
+    pass
+
+
 class ImportTest(TerminalImportSessionSetup,
-        test_importer.ImportTest): pass
+                 test_importer.ImportTest):
+    pass
+
+
 class ImportSingletonTest(TerminalImportSessionSetup,
-        test_importer.ImportSingletonTest): pass
+                          test_importer.ImportSingletonTest):
+    pass
+
+
 class ImportTracksTest(TerminalImportSessionSetup,
-        test_importer.ImportTracksTest): pass
+                       test_importer.ImportTracksTest):
+    pass
+
+
 class ImportCompilationTest(TerminalImportSessionSetup,
-        test_importer.ImportCompilationTest): pass
+                            test_importer.ImportCompilationTest):
+    pass
+
+
 class ImportExistingTest(TerminalImportSessionSetup,
-        test_importer.ImportExistingTest): pass
+                         test_importer.ImportExistingTest):
+    pass
+
+
 class ChooseCandidateTest(TerminalImportSessionSetup,
-        test_importer.ChooseCandidateTest): pass
+                          test_importer.ChooseCandidateTest):
+    pass
+
+
 class GroupAlbumsImportTest(TerminalImportSessionSetup,
-        test_importer.GroupAlbumsImportTest): pass
+                            test_importer.GroupAlbumsImportTest):
+    pass
+
+
 class GlobalGroupAlbumsImportTest(TerminalImportSessionSetup,
-        test_importer.GlobalGroupAlbumsImportTest): pass
+                                  test_importer.GlobalGroupAlbumsImportTest):
+    pass
 
 
 def suite():
