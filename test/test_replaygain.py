@@ -16,11 +16,10 @@
 import os
 import shutil
 from glob import glob
-import subprocess
 
 import _common
 from _common import unittest
-from helper import TestHelper
+from helper import TestHelper, has_program
 
 from beets.library import Item, Album
 from beets.mediafile import MediaFile
@@ -31,6 +30,11 @@ try:
     GST_AVAILABLE = True
 except ImportError, ValueError:
     GST_AVAILABLE = False
+
+if any(has_program(cmd, ['-v']) for cmd in ['mp3gain', 'aacgain']):
+    GAIN_PROG_AVAILABLE = True
+else:
+    GAIN_PROG_AVAILABLE = False
 
 
 class ReplayGainCliTestBase(TestHelper):
@@ -131,25 +135,9 @@ class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
     backend = u'gstreamer'
 
 
+@unittest.skipIf(not GAIN_PROG_AVAILABLE, 'no *gain command found')
 class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase):
     backend = u'command'
-
-    def setUp(self):
-        # Check for the backend command.
-        for command in ['mp3gain', 'aacgain']:
-            try:
-                with open(os.devnull, 'wb') as devnull:
-                    subprocess.check_call(
-                        [command, '-v'], stderr=devnull
-                    )
-            except OSError:
-                pass
-            else:
-                break
-        else:
-            self.skipTest('no *gain command found')
-
-        super(ReplayGainCmdCliTest, self).setUp()
 
 
 def suite():

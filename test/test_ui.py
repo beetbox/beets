@@ -21,7 +21,7 @@ import subprocess
 
 import _common
 from _common import unittest
-from helper import capture_stdout
+from helper import capture_stdout, has_program
 
 from beets import library
 from beets import ui
@@ -931,14 +931,10 @@ class CompletionTest(_common.TestCase):
             'BASH_COMPLETION_SCRIPT', '/etc/bash_completion'))
 
         # Tests run in bash
-        shell = os.environ.get('BEETS_TEST_SHELL', '/bin/bash --norc')
-        try:
-            with open(os.devnull, 'wb') as devnull:
-                subprocess.check_call(shell.split() + ['--version'],
-                                      stdout=devnull)
-        except OSError:
+        cmd = os.environ.get('BEETS_TEST_SHELL', '/bin/bash --norc').split()
+        if not has_program(cmd[0]):
             self.skipTest('bash not available')
-        tester = subprocess.Popen(shell.split(' '), stdin=subprocess.PIPE,
+        tester = subprocess.Popen(cmd, stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE)
 
         # Load bash_completion
@@ -954,9 +950,6 @@ class CompletionTest(_common.TestCase):
         completion_script = self.io.getoutput()
         self.io.restore()
         tester.stdin.writelines(completion_script)
-        # from beets import plugins
-        # for cmd in plugins.commands():
-        #     print(cmd.name)
 
         # Load testsuite
         with open(test_script, 'r') as test_script:

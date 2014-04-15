@@ -16,6 +16,7 @@ import sys
 import os
 import os.path
 import shutil
+import subprocess
 from tempfile import mkdtemp, mkstemp
 from glob import glob
 from contextlib import contextmanager
@@ -65,6 +66,19 @@ def capture_stdout():
         yield sys.stdout
     finally:
         sys.stdout = org
+
+
+def has_program(cmd, args=['--version']):
+    """Returns `True` if `cmd` can be executed.
+    """
+    try:
+        with open(os.devnull, 'wb') as devnull:
+            subprocess.check_call([cmd] + args, stderr=devnull,
+                                  stdout=devnull, stdin=devnull)
+    except OSError:
+        return False
+    else:
+        return True
 
 
 class TestHelper(object):
