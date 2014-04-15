@@ -103,11 +103,11 @@ Configuring
 -----------
 
 You'll want to set a few basic options before you start using beets. The
-configuration is stored in a text file: on Unix-like OSes, the config file is
-at ``~/.config/beets/config.yaml``; on Windows, it's at
-``%APPDATA%\beets\config.yaml``. Create and edit the appropriate file with your
-favorite text editor. (You may need to create the enclosing directories also.)
-The file will start out empty, but here's good place to start::
+:doc:`configuration </reference/config>` is stored in a text file. You
+can show its location by running ``beet config -p``, though it may not
+exist yet. Run ``beet config -e`` to edit the configuration in your
+favorite text editor. The file will start out empty, but here's good
+place to start::
 
     directory: ~/music
     library: ~/data/musiclibrary.blb
