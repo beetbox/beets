@@ -4,7 +4,10 @@ Changelog
 1.3.6 (in development)
 ----------------------
 
-Changelog goes here!
+Fixes:
+
+* :doc:`/plugins/mbsync`: Fix a regression in 1.3.5 that broke the plugin
+  entirely.
 
 
 1.3.5 (April 15, 2014)
