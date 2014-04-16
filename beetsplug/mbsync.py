@@ -28,7 +28,9 @@ def mbsync_singletons(lib, query, move, pretend, write):
     """Retrieve and apply info from the autotagger for items matched by
     query.
     """
-    for item in lib.items(query + ['singletons:true']):
+    for item in lib.items(query):
+        if not item.singleton:
+            continue
         if not item.mb_trackid:
             log.info(u'Skipping singleton {0}: has no mb_trackid'
                      .format(item.title))
