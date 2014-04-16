@@ -482,7 +482,7 @@ class ReplayGainPlugin(BeetsPlugin):
             )
         except (ReplayGainError, FatalReplayGainError) as e:
             raise ui.UserError(
-                'An error occured in backend initialization: {0}'.format(e)
+                'An error occurred in backend initialization: {0}'.format(e)
             )
 
     def track_requires_gain(self, item):

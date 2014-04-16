@@ -885,7 +885,7 @@ import_cmd.parser.add_option(
 )
 import_cmd.parser.add_option(
     '-g', '--group-albums', dest='group_albums', action='store_true',
-    help='group tracks in a folder into seperate albums'
+    help='group tracks in a folder into separate albums'
 )
 import_cmd.func = import_func
 default_commands.append(import_cmd)

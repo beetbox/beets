@@ -117,7 +117,7 @@ code.
 
 Response with a list of tracks with the ids *6*, *12* and *13*.  The format of
 the response is the same as for `GET /item/`_. It is *not guaranteed* that the
-reponse includes all the items requested. If a track is not found it is silently
+response includes all the items requested. If a track is not found it is silently
 dropped from the response.
 
 

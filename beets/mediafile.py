@@ -785,7 +785,7 @@ class MP3ImageStorageStyle(ListStorageStyle, MP3StorageStyle):
     """Converts between APIC frames and ``Image`` instances.
 
     The `get_list` method inherited from ``ListStorageStyle`` returns a
-    list of ``Image``s. Similarily the `set_list` method accepts a
+    list of ``Image``s. Similarly, the `set_list` method accepts a
     list of ``Image``s as its ``values`` arguemnt.
     """
     def __init__(self):
