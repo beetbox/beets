@@ -329,7 +329,7 @@ ALBUM_INFO_FIELDS = ['album', 'album_id', 'artist', 'artist_id',
                      'data_source', 'data_url']
 
 
-def generate_track_info(track_id='track info'):
+def generate_track_info(track_id='track info', values={}):
     """Return `TrackInfo` populated with mock data.
 
     The `track_id` field is set to the corresponding argument. All other
@@ -341,6 +341,8 @@ def generate_track_info(track_id='track info'):
     )
     for field in TRACK_INFO_FIELDS:
         setattr(track, field, 'track info')
+    for field, value in values.items():
+        setattr(track, field, value)
     return track
 
 TRACK_INFO_FIELDS = ['artist', 'artist_id', 'artist_sort',

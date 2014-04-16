@@ -33,53 +33,39 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     @patch('beets.autotag.hooks.album_for_mbid')
-    def test_update_album(self, album_for_mbid):
+    @patch('beets.autotag.hooks.track_for_mbid')
+    def test_update_library(self, track_for_mbid, album_for_mbid):
         album_for_mbid.return_value = \
             generate_album_info('album id', ['track id'])
+        track_for_mbid.return_value = \
+            generate_track_info('singleton track id',
+                                {'title': 'singleton info'})
 
-        self.lib.add_album([
-            Item(
-                artist='old artist',
-                album='old album',
-                title='old title',
-                mb_albumid='album id',
-                mb_trackid='track id',
-                path=''
-            ),
-        ])
-
-        item = self.lib.items().get()
-        album = self.lib.albums().get()
-
-        self.assertNotEqual(item.title, 'track info')
-        self.assertNotEqual(item.artist, 'track info')
-        self.assertNotEqual(album.album, 'album info')
-
-        self.run_command('mbsync')
-
-        item.load()
-        album.load()
-        self.assertEqual(item.title, 'track info')
-        self.assertEqual(item.artist, 'track info')
-        self.assertEqual(album.album, 'album info')
-
-    @patch('beets.autotag.hooks.track_for_mbid')
-    def test_update_singleton(self, track_for_mbid):
-        track_for_mbid.return_value = generate_track_info('track id')
+        album_item = Item(
+            title='old title',
+            mb_albumid='album id',
+            mb_trackid='track id',
+            path=''
+        )
+        album = self.lib.add_album([album_item])
 
         item = Item(
-            artist='old artist',
-            album='old album',
             title='old title',
-            mb_trackid='track id',
+            mb_trackid='singleton track id',
             path='',
         )
         self.lib.add(item)
 
-        self.assertNotEqual(item.title, 'track info')
         self.run_command('mbsync')
+
         item.load()
-        self.assertEqual(item.title, 'track info')
+        self.assertEqual(item.title, 'singleton info')
+
+        album_item.load()
+        self.assertEqual(album_item.title, 'track info')
+
+        album.load()
+        self.assertEqual(album.album, 'album info')
 
 
 def suite():
