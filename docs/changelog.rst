@@ -1,33 +1,42 @@
 Changelog
 =========
 
-1.3.5 (in development)
+1.3.5 (April 15, 2014)
 ----------------------
+
+This is a short-term release that adds some great new stuff to beets. There's
+support for tracking and calculating musical keys, the ReplayGain plugin was
+expanded to work with more music formats via GStreamer, we can now import
+directly from compressed archives, and the lyrics plugin is more robust.
 
 One note for upgraders and packagers: this version of beets has a new
 dependency in `enum34`_, which is a backport of the new `enum`_ standard
 library module.
 
-New stuff:
+The major new features are:
 
+* Beets can now import `zip`, `tar` and `rar` archives. Just type ``beet
+  import music.zip`` to have beets transparently extract the files to import.
 * :doc:`/plugins/replaygain`: Added support for calculating ReplayGain values
-  with GStreamer as well the mp3gain programs. This enables ReplayGain
-  calculation for any audio format.
+  with GStreamer as well the mp3gain program. This enables ReplayGain
+  calculation for any audio format. Thanks to Yevgeny Bezman.
 * :doc:`/plugins/lyrics`: Lyrics should now be found for more songs. Searching
   is now sensitive to featured artists and parenthesized title suffixes.
   When a song has multiple titles, lyrics from all the named songs are now
   concatenated. Thanks to Fabrice Laporte and Paul Phillips.
-* Add support for `initial_key` as field in the library and tag for
-  media files. When the user sets this field with ``beet modify
-  initial_key=Am`` the media files will reflect this in their tags. The
-  :doc:`/plugins/echonest` also sets this field if the data is
-  available.
-* There is also a new :doc:`/plugins/keyfinder` that runs a command line
-  program to get the key from audio data and store it in the
-  `initial_key` field.
-* Beets can now import `zip`, `tar` and `rar` archives.
 
-Fixes:
+In particular, a full complement of features for supporting musical keys are
+new in this release:
+
+* A new `initial_key` is available in the database and files' tags. You can
+  set the field manually using a command like ``beet modify
+  initial_key=Am``.
+* The :doc:`/plugins/echonest` sets the `initial_key` field if the data is
+  available.
+* A new :doc:`/plugins/keyfinder` runs a command-line tool to get the key from
+  audio data and store it in the `initial_key` field.
+
+There are also many bug fixes and little enhancements:
 
 * :doc:`/plugins/echonest`: Truncate files larger than 50MB before uploading for
   analysis.
