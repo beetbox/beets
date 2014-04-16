@@ -12,6 +12,24 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+"""This module includes various helpers that provide fixtures, capture
+information or mock the environment.
+
+- The `control_stdin` and `capture_output` context managers allow one to
+  interact with the user interface.
+
+- `has_program` checks the presence of a command on the system.
+
+- The `generate_album_info` and `generate_track_info` functions return
+  fixtures to be used when mocking the autotagger.
+
+- The `TestImportSession` allows one to run importer code while
+  controlling the interactions through code.
+
+- The `TestHelper` class encapsulates various fixtures that can be set up.
+"""
+
+
 import sys
 import os
 import os.path
@@ -27,6 +45,7 @@ from beets import config
 import beets.plugins
 from beets.library import Library, Item
 from beets import importer
+from beets.autotag.hooks import AlbumInfo, TrackInfo
 
 # TODO Move AutotagMock here
 import _common
@@ -139,6 +158,7 @@ class TestHelper(object):
         # FIXME somehow close all open fd to the ilbrary
         self.remove_temp_dir()
         self.config.clear()
+        beets.config.read(user=False, defaults=True)
 
     def load_plugins(self, *plugins):
         """Load and initialize plugins by names.
@@ -277,3 +297,52 @@ class TestImportSession(importer.ImportSession):
             return choice
 
     choose_item = choose_match
+
+
+def generate_album_info(album_id, track_ids):
+    """Return `AlbumInfo` populated with mock data.
+
+    Sets the album info's `album_id` field is set to the corresponding
+    argument. For each value in `track_ids` the `TrackInfo` from
+    `generate_track_info` is added to the album info's `tracks` field.
+    Most other fields of the album and track info are set to "album
+    info" and "track info", respectively.
+    """
+    tracks = [generate_track_info(id) for id in track_ids]
+    album = AlbumInfo(
+        album_id='album info',
+        album='album info',
+        artist='album info',
+        artist_id='album info',
+        tracks=tracks,
+    )
+    for field in ALBUM_INFO_FIELDS:
+        setattr(album, field, 'album info')
+
+    return album
+
+ALBUM_INFO_FIELDS = ['album', 'album_id', 'artist', 'artist_id',
+                     'asin', 'albumtype', 'va','label',
+                     'artist_sort', 'releasegroup_id', 'catalognum',
+                     'language', 'country', 'albumstatus', 'media',
+                     'albumdisambig', 'artist_credit',
+                     'data_source', 'data_url']
+
+
+def generate_track_info(track_id='track info'):
+    """Return `TrackInfo` populated with mock data.
+
+    The `track_id` field is set to the corresponding argument. All other
+    string fields are set to "track info".
+    """
+    track = TrackInfo(
+        title='track info',
+        track_id=track_id,
+    )
+    for field in TRACK_INFO_FIELDS:
+        setattr(track, field, 'track info')
+    return track
+
+TRACK_INFO_FIELDS = ['artist', 'artist_id', 'artist_sort',
+                     'disctitle', 'artist_credit', 'data_source',
+                     'data_url']
