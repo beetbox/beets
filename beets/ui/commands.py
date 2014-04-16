@@ -1462,11 +1462,16 @@ default_commands.append(config_cmd)
 def print_completion(*args):
     for line in completion_script(default_commands + plugins.commands()):
         print(line, end='')
-    if not (os.path.isfile(u'/etc/bash_completion') or
-       os.path.isfile(u'/usr/share/bash-completion/bash_completion') or
-       os.path.isfile(u'/usr/share/local/bash-completion/bash_completion')):
+    if not any(map(os.path.isfile, BASH_COMPLETION_PATHS)):
         log.warn(u'Warning: Unable to find the bash-completion package. '
                  u'Command line completion might not work.')
+
+BASH_COMPLETION_PATHS = [
+    u'/etc/bash_completion',
+    u'/usr/share/bash-completion/bash_completion',
+    u'/usr/share/local/bash-completion/bash_completion',
+    u'/opt/local/share/bash-completion/bash_completion',
+]
 
 
 def completion_script(commands):
