@@ -496,12 +496,20 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
         self._setf(u'x%if{,foo}')
         self._assert_dest('/base/x')
 
+    def test_if_false_value(self):
+        self._setf(u'x%if{false,foo}')
+        self._assert_dest('/base/x')
+
     def test_if_true(self):
         self._setf(u'%if{bar,foo}')
         self._assert_dest('/base/foo')
 
     def test_if_else_false(self):
         self._setf(u'%if{,foo,baz}')
+        self._assert_dest('/base/baz')
+
+    def test_if_else_false_value(self):
+        self._setf(u'%if{false,foo,baz}')
         self._assert_dest('/base/baz')
 
     def test_if_int_value(self):

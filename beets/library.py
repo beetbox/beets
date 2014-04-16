@@ -1123,6 +1123,8 @@ class DefaultTemplateFunctions(object):
         try:
             condition = _int_arg(condition)
         except ValueError:
+            if condition.lower() == "false":
+                return falseval
             condition = condition.strip()
         if condition:
             return trueval
