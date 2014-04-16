@@ -20,7 +20,6 @@ from beets.plugins import BeetsPlugin
 from beets import autotag, library, ui, util
 from beets.autotag import hooks
 from beets import config
-from beets import dbcore
 
 log = logging.getLogger('beets')
 
@@ -29,16 +28,11 @@ def mbsync_singletons(lib, query, move, pretend, write):
     """Retrieve and apply info from the autotagger for items matched by
     query.
     """
-    singletons_query = library.get_query(query, library.Item)
-    singletons_query.subqueries.append(
-        dbcore.query.BooleanQuery('singleton', True)
-    )
-    for item in lib.items(singletons_query):
+    for item in lib.items(query + ['singletons:true']):
         if not item.mb_trackid:
             log.info(u'Skipping singleton {0}: has no mb_trackid'
                      .format(item.title))
             continue
-
 
         # Get the MusicBrainz recording info.
         track_info = hooks.track_for_mbid(item.mb_trackid)
@@ -116,7 +110,6 @@ def apply_item_changes(lib, item, move, pretend, write):
         if write:
             item.try_write()
         item.store()
-
 
 
 def mbsync_func(lib, opts, args):
