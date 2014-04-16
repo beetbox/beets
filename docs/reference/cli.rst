@@ -49,19 +49,22 @@ import
 Add music to your library, attempting to get correct tags for it from
 MusicBrainz.
 
-Point the command at a directory full of music. The directory can be a
-single album or a directory whose leaf subdirectories are albums (the
-latter case is true of typical Artist/Album organizations and many
-people's "downloads" folders). The path can also be a single file or an
-archive. Beets supports `zip` and `tar` archives out of the box. To
-extract `rar` files you need to install the `rarfile`_ package and the
-`unrar` command. The music will be copied to a configurable directory
-structure (see below) and added to a library database (see below). The
-command is interactive and will try to get you to verify MusicBrainz
-tags that it thinks are suspect.  (This means that importing a large
-amount of music is therefore very tedious right now; this is something
-we need to work on. Read the :doc:`autotagging guide </guides/tagger>`
-if you need help.)
+Point the command at some music: directories, single files, or
+compressed archives. The music will be copied to a configurable
+directory structure and added to a library database. The command is
+interactive and will try to get you to verify MusicBrainz tags that it
+thinks are suspect. See the :doc:`autotagging guide </guides/tagger>`
+for detail on how to use the interactive tag-correction flow.
+
+Directories passed to the import command can contain either a single
+album or many, in which case the leaf directories will be considered
+albums (the latter case is true of typical Artist/Album organizations
+and many people's "downloads" folders). The path can also be a single
+song or an archive. Beets supports `zip` and `tar` archives out of the
+box. To extract `rar` files, install the `rarfile`_ package and the
+`unrar` command.
+
+Optional command flags:
 
 * By default, the command copies files your the library directory and
   updates the ID3 tags on your music. If you'd like to leave your music

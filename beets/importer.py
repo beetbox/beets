@@ -652,12 +652,12 @@ def read_tasks(session):
         history_dirs = history_get()
 
     for toppath in session.paths:
-        # Extract archives
+        # Extract archives.
         archive_task = None
         if ArchiveImportTask.is_archive(syspath(toppath)):
             if not (config['import']['move'] or config['import']['copy']):
-                log.warn("Cannot import archive. Please set "
-                         "the 'move' or 'copy' option.")
+                log.warn("Archive importing requires either "
+                         "'copy' or 'move' to be enabled.")
                 continue
 
             log.debug('extracting archive {0}'
@@ -668,6 +668,8 @@ def read_tasks(session):
             except Exception as exc:
                 log.error('extraction failed: {0}'.format(exc))
                 continue
+
+            # Continue reading albums from the extracted directory.
             toppath = archive_task.toppath
 
         # Check whether the path is to a file.
@@ -724,7 +726,7 @@ def read_tasks(session):
                 yield ImportTask(toppath, paths, items)
 
         # Indicate the directory is finished.
-        # FIXME hack to delete extraced archives
+        # FIXME hack to delete extracted archives
         if archive_task is None:
             yield ImportTask.done_sentinel(toppath)
         else:
