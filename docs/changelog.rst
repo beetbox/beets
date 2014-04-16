@@ -8,6 +8,8 @@ Fixes:
 
 * :doc:`/plugins/mbsync`: Fix a regression in 1.3.5 that broke the plugin
   entirely.
+* `Shell completion <completion>` now searches more common paths for its
+  ``bash_completion`` dependency.
 
 
 1.3.5 (April 15, 2014)
