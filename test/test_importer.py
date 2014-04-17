@@ -20,6 +20,7 @@ import StringIO
 from tempfile import mkstemp
 from zipfile import ZipFile
 from tarfile import TarFile
+from mock import patch
 
 import _common
 from _common import unittest
@@ -1077,6 +1078,53 @@ class TagLogTest(_common.TestCase):
         session = _common.import_session(logfile=sio)
         session.tag_log('status', 'caf\xc3\xa9')
         assert 'status caf' in sio.getvalue()
+
+
+class ResumeImportTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    @patch('beets.plugins.send')
+    def test_resume_album(self, plugins_send):
+        self.importer = self.create_importer(album_count=2)
+        self.config['import']['resume'] = True
+
+        def raise_exception(event, **kwargs):
+            if event == 'album_imported':
+                raise importer.ImportAbort
+        plugins_send.side_effect = raise_exception
+
+        self.importer.run()
+        self.assertEqual(len(self.lib.albums()), 1)
+        self.assertIsNotNone(self.lib.albums('album:album 0').get())
+
+        self.importer.run()
+        self.assertEqual(len(self.lib.albums()), 2)
+        self.assertIsNotNone(self.lib.albums('album:album 1').get())
+
+    @unittest.skip('not working yet')
+    @patch('beets.plugins.send')
+    def test_resume_singleton(self, plugins_send):
+        self.importer = self.create_importer(item_count=2)
+        self.config['import']['resume'] = True
+        self.config['import']['singletons'] = True
+
+        def raise_exception(event, **kwargs):
+            if event == 'item_imported':
+                raise importer.ImportAbort
+        plugins_send.side_effect = raise_exception
+
+        self.importer.run()
+        self.assertEqual(len(self.lib.items()), 1)
+        self.assertIsNotNone(self.lib.items('title:track 0').get())
+
+        self.importer.run()
+        self.assertEqual(len(self.lib.items()), 2)
+        self.assertIsNotNone(self.lib.items('title:track 1').get())
 
 
 def suite():

@@ -45,6 +45,7 @@ import beets.plugins
 from beets.library import Library, Item
 from beets import importer
 from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.mediafile import MediaFile
 
 # TODO Move AutotagMock here
 import _common
@@ -177,7 +178,7 @@ class TestHelper(object):
         beets.plugins._classes = set()
         beets.plugins._instances = {}
 
-    def create_importer(self, file_count=1):
+    def create_importer(self, item_count=1, album_count=1):
         """Returns import session with fixtures.
 
         Copies the specified number of files to a subdirectory of
@@ -188,11 +189,18 @@ class TestHelper(object):
         if not os.path.isdir(import_dir):
             os.mkdir(import_dir)
 
-        for i in range(file_count):
-            title = 'track {0}'.format(i)
-            src = os.path.join(_common.RSRC, 'full.mp3')
-            dest = os.path.join(import_dir, '{0}.mp3'.format(title))
-            shutil.copy(src, dest)
+        for i in range(album_count):
+            album = u'album {0}'.format(i)
+            album_dir = os.path.join(import_dir, album)
+            os.mkdir(album_dir)
+            for j in range(item_count):
+                title = 'track {0}'.format(j)
+                src = os.path.join(_common.RSRC, 'full.mp3')
+                dest = os.path.join(album_dir, '{0}.mp3'.format(title))
+                shutil.copy(src, dest)
+                mediafile = MediaFile(dest)
+                mediafile.update({'title': title, 'album': album})
+                mediafile.save()
 
         config['import']['quiet'] = True
         config['import']['autotag'] = False

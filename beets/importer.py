@@ -1045,16 +1045,6 @@ def finalize(session):
 
         items = task.imported_items()
 
-        # Announce that we've added an album.
-        if task.is_album:
-            album = session.lib.get_album(task.album_id)
-            plugins.send('album_imported',
-                         lib=session.lib, album=album)
-        else:
-            for item in items:
-                plugins.send('item_imported',
-                             lib=session.lib, item=item)
-
         # When copying and deleting originals, delete old files.
         if config['import']['copy'] and config['import']['delete']:
             new_paths = [os.path.realpath(item.path) for item in items]
@@ -1076,6 +1066,16 @@ def finalize(session):
         if config['import']['incremental']:
             task.save_history()
         task.cleanup()
+
+        # Announce that we've added an album.
+        if task.is_album:
+            album = session.lib.get_album(task.album_id)
+            plugins.send('album_imported',
+                         lib=session.lib, album=album)
+        else:
+            for item in items:
+                plugins.send('item_imported',
+                             lib=session.lib, item=item)
 
 
 # Singleton pipeline stages.
