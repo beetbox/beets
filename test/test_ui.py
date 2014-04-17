@@ -544,6 +544,8 @@ class ConfigTest(_common.TestCase):
             del os.environ['BEETSDIR']
         if os.getcwd != self._orig_cwd:
             os.chdir(self._orig_cwd)
+        if hasattr(self.test_cmd, 'lib'):
+            self.test_cmd.lib._connection().close()
         super(ConfigTest, self).tearDown()
 
     def _make_test_cmd(self):

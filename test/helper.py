@@ -152,9 +152,8 @@ class TestHelper(object):
         self.lib = Library(dbpath, self.libdir)
 
     def teardown_beets(self):
-        self.lib._connection().close()
+        del self.lib._connections
         del os.environ['BEETSDIR']
-        # FIXME somehow close all open fd to the ilbrary
         self.remove_temp_dir()
         self.config.clear()
         beets.config.read(user=False, defaults=True)
