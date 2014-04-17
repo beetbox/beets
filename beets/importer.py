@@ -152,13 +152,6 @@ def _infer_album_fields(task):
                 setattr(item, k, v)
 
 
-def _resume():
-    """Check whether an import should resume and return a boolean or the
-    string 'ask' indicating that the user should be queried.
-    """
-    return config['import']['resume'].as_choice([True, False, 'ask'])
-
-
 def _open_state():
     """Reads the state file, returning a dictionary."""
     try:
@@ -280,6 +273,8 @@ class ImportSession(object):
         # Only delete when copying.
         if not iconfig['copy']:
             iconfig['delete'] = False
+
+        self.want_resume = iconfig['resume'].as_choice([True, False, 'ask'])
 
     def tag_log(self, status, paths):
         """Log a message about a given album to logfile. The status should
@@ -653,24 +648,7 @@ def read_tasks(session):
     import, yields single-item tasks instead.
     """
     # Look for saved progress.
-    if _resume():
-        resume_dirs = {}
-        for path in session.paths:
-            resume_dir = progress_get(path)
-            if resume_dir:
-
-                # Either accept immediately or prompt for input to decide.
-                if _resume() is True:
-                    do_resume = True
-                    log.warn('Resuming interrupted import of %s' % path)
-                else:
-                    do_resume = session.should_resume(path)
-
-                if do_resume:
-                    resume_dirs[path] = resume_dir
-                else:
-                    # Clear progress; we're starting from the top.
-                    progress_set(path, None)
+    resume_dirs = {}
 
     # Look for saved incremental directories.
     if config['import']['incremental']:
@@ -722,12 +700,23 @@ def read_tasks(session):
             yield SentinelImportTask(toppath)
             continue
 
+        resume_dir = None
+        if session.want_resume:
+            resume_dir = progress_get(toppath)
+            if resume_dir:
+                # Either accept immediately or prompt for input to decide.
+                if session.want_resume is True or \
+                   session.should_resume(toppath):
+                    log.warn('Resuming interrupted import of %s' % toppath)
+                else:
+                    # Clear progress; we're starting from the top.
+                    resume_dir = None
+                    progress_set(toppath, None)
+
         # Produce paths under this directory.
-        if _resume():
-            resume_dir = resume_dirs.get(toppath)
         for paths, items in autotag.albums_in_dir(toppath):
             # Skip according to progress.
-            if _resume() and resume_dir:
+            if session.want_resume and resume_dir:
                 # We're fast-forwarding to resume a previous tagging.
                 if paths == resume_dir:
                     # We've hit the last good path! Turn off the
@@ -1057,7 +1046,7 @@ def finalize(session):
     while True:
         task = yield
         if task.should_skip():
-            if _resume():
+            if session.want_resume:
                 task.save_progress()
             if config['import']['incremental']:
                 task.save_history()
@@ -1082,7 +1071,7 @@ def finalize(session):
                 task.prune(old_path)
 
         # Update progress.
-        if _resume():
+        if session.want_resume:
             task.save_progress()
         if config['import']['incremental']:
             task.save_history()
