@@ -402,19 +402,10 @@ class ImportTask(object):
         obj.sentinel = True
         return obj
 
-    @classmethod
-    def item_task(cls, item):
-        """Creates an ImportTask for a single item."""
-        obj = cls()
-        obj.item = item
-        obj.is_album = False
-        return obj
-
     def set_candidates(self, cur_artist, cur_album, candidates, rec):
         """Sets the candidates for this album matched by the
         `autotag.tag_album` method.
         """
-        assert self.is_album
         assert not self.sentinel
         self.cur_artist = cur_artist
         self.cur_album = cur_album
@@ -430,11 +421,7 @@ class ImportTask(object):
         self.rec = None
 
     def set_item_candidates(self, candidates, rec):
-        """Set the match for a single-item task."""
-        assert not self.is_album
-        assert self.item is not None
-        self.candidates = candidates
-        self.rec = rec
+        raise NotImplementedError
 
     def set_choice(self, choice):
         """Given an AlbumMatch or TrackMatch object or an action constant,
@@ -462,7 +449,7 @@ class ImportTask(object):
         if self.sentinel and self.paths is None:
             # "Done" sentinel.
             progress_set(self.toppath, None)
-        elif self.sentinel or self.is_album:
+        elif self.sentinel:
             # "Directory progress" sentinel for singletons or a real
             # album task, which implies the same.
             progress_set(self.toppath, self.paths)
@@ -470,7 +457,7 @@ class ImportTask(object):
     def save_history(self):
         """Save the directory in the history for incremental imports.
         """
-        if self.is_album and self.paths and not self.sentinel:
+        if self.paths and not self.sentinel:
             history_add(self.paths)
 
     # Logical decisions.
@@ -499,17 +486,10 @@ class ImportTask(object):
         (in which case the data comes from the files' current metadata)
         or APPLY (data comes from the choice).
         """
-        assert self.choice_flag in (action.ASIS, action.APPLY)
-        if self.is_album:
-            if self.choice_flag is action.ASIS:
-                return (self.cur_artist, self.cur_album)
-            elif self.choice_flag is action.APPLY:
-                return (self.match.info.artist, self.match.info.album)
-        else:
-            if self.choice_flag is action.ASIS:
-                return (self.item.artist, self.item.title)
-            elif self.choice_flag is action.APPLY:
-                return (self.match.info.artist, self.match.info.title)
+        if self.choice_flag is action.ASIS:
+            return (self.cur_artist, self.cur_album)
+        elif self.choice_flag is action.APPLY:
+            return (self.match.info.artist, self.match.info.album)
 
     def imported_items(self):
         """Return a list of Items that should be added to the library.
@@ -517,15 +497,12 @@ class ImportTask(object):
         selected match or everything if the choice is ASIS. If this is a
         singleton task, return a list containing the item.
         """
-        if self.is_album:
-            if self.choice_flag == action.ASIS:
-                return list(self.items)
-            elif self.choice_flag == action.APPLY:
-                return self.match.mapping.keys()
-            else:
-                assert False
+        if self.choice_flag == action.ASIS:
+            return list(self.items)
+        elif self.choice_flag == action.APPLY:
+            return self.match.mapping.keys()
         else:
-            return [self.item]
+            assert False
 
     def cleanup(self):
         """Perform clean up during `finalize` stage.
@@ -619,6 +596,43 @@ class ArchiveImportTask(ImportTask):
         self.toppath = extract_to
 
 
+class SingletonImportTask(ImportTask):
+    """ImportTask for a single track that is not associated to an album.
+    """
+
+    def __init__(self, item):
+        super(SingletonImportTask, self).__init__()
+        self.item = item
+        self.is_album = False
+
+    def chosen_ident(self):
+        assert self.choice_flag in (action.ASIS, action.APPLY)
+        if self.choice_flag is action.ASIS:
+            return (self.item.artist, self.item.title)
+        elif self.choice_flag is action.APPLY:
+            return (self.match.info.artist, self.match.info.title)
+
+    def imported_items(self):
+        return [self.item]
+
+    def save_progress(self):
+        # TODO we should also save progress for singletons
+        pass
+
+    def save_history(self):
+        # TODO we should also save history for singletons
+        pass
+
+    def set_item_candidates(self, candidates, rec):
+        """Set the match for a single-item task."""
+        assert self.item is not None
+        self.candidates = candidates
+        self.rec = rec
+
+    def set_candidates(self, cur_artist, cur_album, candidates, rec):
+        raise NotImplementedError
+
+
 # Full-album pipeline stages.
 
 def read_tasks(session):
@@ -682,7 +696,7 @@ def read_tasks(session):
                 ))
                 continue
             if config['import']['singletons']:
-                yield ImportTask.item_task(item)
+                yield SingletonImportTask(item)
             else:
                 yield ImportTask(toppath, [toppath], [item])
             continue
@@ -720,7 +734,7 @@ def read_tasks(session):
             # Yield all the necessary tasks.
             if config['import']['singletons']:
                 for item in items:
-                    yield ImportTask.item_task(item)
+                    yield SingletonImportTask(item)
                 yield ImportTask.progress_sentinel(toppath, paths)
             else:
                 yield ImportTask(toppath, paths, items)
@@ -746,7 +760,7 @@ def query_tasks(session):
     if config['import']['singletons']:
         # Search for items.
         for item in session.lib.items(session.query):
-            yield ImportTask.item_task(item)
+            yield SingletonImportTask(item)
 
     else:
         # Search for albums.
@@ -808,7 +822,7 @@ def user_query(session):
             # Set up a little pipeline for dealing with the singletons.
             def emitter(task):
                 for item in task.items:
-                    yield ImportTask.item_task(item)
+                    yield SingletonImportTask(item)
                 yield ImportTask.progress_sentinel(task.toppath, task.paths)
 
             ipl = pipeline.Pipeline([
