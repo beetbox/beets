@@ -446,7 +446,7 @@ class ImportTask(object):
         if self.sentinel and self.paths is None:
             # "Done" sentinel.
             progress_set(self.toppath, None)
-        elif self.sentinel:
+        elif self.sentinel or self.is_album:
             # "Directory progress" sentinel for singletons or a real
             # album task, which implies the same.
             progress_set(self.toppath, self.paths)
