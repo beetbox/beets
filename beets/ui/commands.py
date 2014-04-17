@@ -1466,12 +1466,13 @@ def print_completion(*args):
         log.warn(u'Warning: Unable to find the bash-completion package. '
                  u'Command line completion might not work.')
 
-BASH_COMPLETION_PATHS = [
+BASH_COMPLETION_PATHS = map(syspath, [
     u'/etc/bash_completion',
     u'/usr/share/bash-completion/bash_completion',
     u'/usr/share/local/bash-completion/bash_completion',
-    u'/opt/local/share/bash-completion/bash_completion',
-]
+    u'/opt/local/share/bash-completion/bash_completion',  # SmartOS
+    u'/usr/local/etc/bash_completion',  # Homebrew
+])
 
 
 def completion_script(commands):
