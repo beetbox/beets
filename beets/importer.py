@@ -378,36 +378,15 @@ class ImportTask(object):
         self.toppath = toppath
         self.paths = paths
         self.items = items
-        self.sentinel = False
-        self.remove_duplicates = False
-        # TODO remove this eventually
-        self.is_album = True
         self.choice_flag = None
-
-    @classmethod
-    def done_sentinel(cls, toppath):
-        """Create an ImportTask that indicates the end of a top-level
-        directory import.
-        """
-        obj = cls(toppath)
-        obj.sentinel = True
-        return obj
-
-    @classmethod
-    def progress_sentinel(cls, toppath, paths):
-        """Create a task indicating that a single directory in a larger
-        import has finished. This is only required for singleton
-        imports; progress is implied for album imports.
-        """
-        obj = cls(toppath, paths)
-        obj.sentinel = True
-        return obj
+        # TODO remove this eventually
+        self.remove_duplicates = False
+        self.is_album = True
 
     def set_candidates(self, cur_artist, cur_album, candidates, rec):
         """Sets the candidates for this album matched by the
         `autotag.tag_album` method.
         """
-        assert not self.sentinel
         self.cur_artist = cur_artist
         self.cur_album = cur_album
         self.candidates = candidates
@@ -428,7 +407,6 @@ class ImportTask(object):
         """Given an AlbumMatch or TrackMatch object or an action constant,
         indicates that an action has been selected for this task.
         """
-        assert not self.sentinel
         # Not part of the task structure:
         assert choice not in (action.MANUAL, action.MANUAL_ID)
         assert choice != action.APPLY  # Only used internally.
@@ -443,18 +421,12 @@ class ImportTask(object):
         """Updates the progress state to indicate that this album has
         finished.
         """
-        if self.sentinel and self.paths is None:
-            # "Done" sentinel.
-            progress_set(self.toppath, None)
-        elif self.sentinel or self.is_album:
-            # "Directory progress" sentinel for singletons or a real
-            # album task, which implies the same.
-            progress_set(self.toppath, self.paths)
+        progress_set(self.toppath, self.paths)
 
     def save_history(self):
         """Save the directory in the history for incremental imports.
         """
-        if self.paths and not self.sentinel:
+        if self.paths:
             history_add(self.paths)
 
     # Logical decisions.
@@ -469,10 +441,7 @@ class ImportTask(object):
             assert False
 
     def should_skip(self):
-        """After a choice has been made, returns True if this is a
-        sentinel or it has been marked for skipping.
-        """
-        return self.sentinel or self.choice_flag == action.SKIP
+        return self.choice_flag == action.SKIP
 
     # Convenient data.
 
@@ -526,7 +495,86 @@ class ImportTask(object):
                             clutter=config['clutter'].as_str_seq())
 
 
-class ArchiveImportTask(ImportTask):
+class SingletonImportTask(ImportTask):
+    """ImportTask for a single track that is not associated to an album.
+    """
+
+    def __init__(self, item):
+        super(SingletonImportTask, self).__init__(paths=[item.path])
+        self.item = item
+        self.is_album = False
+
+    def chosen_ident(self):
+        assert self.choice_flag in (action.ASIS, action.APPLY)
+        if self.choice_flag is action.ASIS:
+            return (self.item.artist, self.item.title)
+        elif self.choice_flag is action.APPLY:
+            return (self.match.info.artist, self.match.info.title)
+
+    def imported_items(self):
+        return [self.item]
+
+    def save_progress(self):
+        # TODO we should also save progress for singletons
+        pass
+
+    def save_history(self):
+        # TODO we should also save history for singletons
+        pass
+
+    def set_item_candidates(self, candidates, rec):
+        """Set the match for a single-item task."""
+        assert self.item is not None
+        self.candidates = candidates
+        self.rec = rec
+
+    def set_candidates(self, cur_artist, cur_album, candidates, rec):
+        raise NotImplementedError
+
+    def apply_metadata(self):
+        autotag.apply_item_metadata(self.item, self.match.info)
+
+
+class SentinelImportTask(ImportTask):
+    """This class marks the progress of an import and does not import
+    any items itself.
+
+    If only `toppath` is set the task indicats the end of a top-level
+    directory import. If the `paths` argument is givent, too, the task
+    indicates the progress in the `toppath` import.
+    """
+
+    def __init__(self, toppath=None, paths=None):
+        self.toppath = toppath
+        self.paths = paths
+        # TODO Remove the remaining attributes eventually
+        self.items = None
+        self.remove_duplicates = False
+        self.is_album = True
+        self.choice_flag = None
+
+    def save_history(self):
+        pass
+
+    def save_progress(self):
+        if self.paths is None:
+            # "Done" sentinel.
+            progress_set(self.toppath, None)
+        else:
+            # "Directory progress" sentinel for singletons
+            progress_set(self.toppath, self.paths)
+
+    def should_skip(self):
+        return True
+
+    def set_choice(self, choice):
+        raise NotImplementedError
+
+    def set_candidates(self, cur_artist, cur_album, candidates, rec):
+        raise NotImplementedError
+
+
+class ArchiveImportTask(SentinelImportTask):
     """Additional methods for handling archives.
 
     Use when `toppath` points to a `zip`, `tar`, or `rar` archive.
@@ -534,7 +582,6 @@ class ArchiveImportTask(ImportTask):
 
     def __init__(self, toppath):
         super(ArchiveImportTask, self).__init__(toppath)
-        self.sentinel = True
         self.extracted = False
 
     @classmethod
@@ -596,46 +643,6 @@ class ArchiveImportTask(ImportTask):
             archive.close()
         self.extracted = True
         self.toppath = extract_to
-
-
-class SingletonImportTask(ImportTask):
-    """ImportTask for a single track that is not associated to an album.
-    """
-
-    def __init__(self, item):
-        super(SingletonImportTask, self).__init__(paths=[item.path])
-        self.item = item
-        self.is_album = False
-
-    def chosen_ident(self):
-        assert self.choice_flag in (action.ASIS, action.APPLY)
-        if self.choice_flag is action.ASIS:
-            return (self.item.artist, self.item.title)
-        elif self.choice_flag is action.APPLY:
-            return (self.match.info.artist, self.match.info.title)
-
-    def imported_items(self):
-        return [self.item]
-
-    def save_progress(self):
-        # TODO we should also save progress for singletons
-        pass
-
-    def save_history(self):
-        # TODO we should also save history for singletons
-        pass
-
-    def set_item_candidates(self, candidates, rec):
-        """Set the match for a single-item task."""
-        assert self.item is not None
-        self.candidates = candidates
-        self.rec = rec
-
-    def set_candidates(self, cur_artist, cur_album, candidates, rec):
-        raise NotImplementedError
-
-    def apply_metadata(self):
-        autotag.apply_item_metadata(self.item, self.match.info)
 
 
 # Full-album pipeline stages.
@@ -712,7 +719,7 @@ def read_tasks(session):
             for _, items in autotag.albums_in_dir(toppath):
                 all_items += items
             yield ImportTask(toppath, [toppath], all_items)
-            yield ImportTask.done_sentinel(toppath)
+            yield SentinelImportTask(toppath)
             continue
 
         # Produce paths under this directory.
@@ -740,14 +747,14 @@ def read_tasks(session):
             if config['import']['singletons']:
                 for item in items:
                     yield SingletonImportTask(item)
-                yield ImportTask.progress_sentinel(toppath, paths)
+                yield SentinelImportTask(toppath, paths)
             else:
                 yield ImportTask(toppath, paths, items)
 
         # Indicate the directory is finished.
         # FIXME hack to delete extracted archives
         if archive_task is None:
-            yield ImportTask.done_sentinel(toppath)
+            yield SentinelImportTask(toppath)
         else:
             yield archive_task
 
@@ -828,7 +835,7 @@ def user_query(session):
             def emitter(task):
                 for item in task.items:
                     yield SingletonImportTask(item)
-                yield ImportTask.progress_sentinel(task.toppath, task.paths)
+                yield SentinelImportTask(task.toppath, task.paths)
 
             ipl = pipeline.Pipeline([
                 emitter(task),
@@ -1165,6 +1172,6 @@ def group_albums(session):
         tasks = []
         for _, items in itertools.groupby(task.items, group):
             tasks.append(ImportTask(items=list(items)))
-        tasks.append(ImportTask.progress_sentinel(task.toppath, task.paths))
+        tasks.append(SentinelImportTask(task.toppath, task.paths))
 
         task = pipeline.multiple(tasks)
