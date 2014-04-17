@@ -18,6 +18,7 @@ import os
 import collections
 import itertools
 import sys
+import warnings
 
 from beets import ui
 from beets.plugins import BeetsPlugin
