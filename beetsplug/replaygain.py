@@ -273,7 +273,9 @@ class GStreamerBackend(object):
             from gi.repository import GObject, Gst, GLib
             # Calling GObject.threads_init() is not needed for
             # PyGObject 3.10.2+
-            GObject.threads_init()
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                GObject.threads_init()
             Gst.init([sys.argv[0]])
         except:
             raise FatalReplayGainError("GStreamer failed to initialize")
