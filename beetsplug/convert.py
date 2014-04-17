@@ -101,7 +101,8 @@ def encode(source, dest):
         'dest':   pipes.quote(dest),
     })
 
-    log.debug(u'convert: executing: {0}'.format(command))
+    log.debug(u'convert: executing: {0}'
+              .format(util.displayable_path(command)))
 
     try:
         util.command_output(command, shell=True)

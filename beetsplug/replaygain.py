@@ -21,7 +21,7 @@ import sys
 
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.util import syspath, command_output
+from beets.util import syspath, command_output, displayable_path
 from beets import config
 
 log = logging.getLogger('beets')
@@ -179,7 +179,8 @@ class CommandBackend(Backend):
         cmd = cmd + [syspath(i.path) for i in items]
 
         log.debug(u'replaygain: analyzing {0} files'.format(len(items)))
-        log.debug(u"replaygain: executing %s" % " ".join(cmd))
+        log.debug(u"replaygain: executing {0}"
+                  .format(" ".join(map(displayable_path, cmd))))
         output = call(cmd)
         log.debug(u'replaygain: analysis finished')
         results = self.parse_tool_output(output,

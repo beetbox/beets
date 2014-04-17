@@ -204,15 +204,34 @@ class TestHelper(object):
                                  paths=[import_dir])
 
     def add_item_fixtures(self, ext='mp3', count=1):
+        """Add a number of items with files to the database.
+        """
         items = []
-        paths = glob(os.path.join(_common.RSRC, '*.' + ext))
-        for path in paths[0:count]:
+        path = os.path.join(_common.RSRC, 'full.' + ext)
+        for i in range(count):
             item = Item.from_path(str(path))
+            item.album = u'\xc3\xa4lbum {0}'.format(i)  # Check unicode paths
+            item.title = u't\xc3\x8ftle {0}'.format(i)
             item.add(self.lib)
             item.move(copy=True)
             item.store()
             items.append(item)
         return items
+
+    def add_album_fixture(self, track_count=1):
+        """Add an album with files to the database.
+        """
+        items = []
+        path = os.path.join(_common.RSRC, 'full.mp3')
+        for i in range(track_count):
+            item = Item.from_path(str(path))
+            item.album = u'\xc3\xa4lbum'  # Check unicode paths
+            item.title = u't\xc3\x8ftle {0}'.format(i)
+            item.add(self.lib)
+            item.move(copy=True)
+            item.store()
+            items.append(item)
+        return self.lib.add_album(items)
 
     def create_mediafile_fixture(self, ext='mp3'):
         """Copies a fixture mediafile with the extension to a temporary

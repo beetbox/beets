@@ -50,27 +50,13 @@ class ReplayGainCliTestBase(TestHelper):
             raise
 
         self.config['replaygain']['backend'] = self.backend
-        self.config['plugins'] = ['replaygain']
-        self.setupLibrary(2)
+        album = self.add_album_fixture(2)
+        for item in album.items():
+            self._reset_replaygain(item)
 
     def tearDown(self):
         self.teardown_beets()
         self.unload_plugins()
-
-    def setupLibrary(self, file_count):
-        """Add an album to the library with ``file_count`` items.
-        """
-        album = Album(id=1)
-        album.add(self.lib)
-
-        fixture_glob = os.path.join(_common.RSRC, '*.mp3')
-        for src in glob(fixture_glob)[0:file_count]:
-            dst = os.path.join(self.libdir, os.path.basename(src))
-            shutil.copy(src, dst)
-            item = Item.from_path(dst)
-            item.album_id = 1
-            item.add(self.lib)
-            self._reset_replaygain(item)
 
     def _reset_replaygain(self, item):
         item['rg_track_peak'] = None
