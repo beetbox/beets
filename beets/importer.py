@@ -295,7 +295,7 @@ class ImportSession(object):
         ``duplicate``, then this is a secondary choice after a duplicate was
         detected and a decision was made.
         """
-        paths = task.paths if task.is_album else [task.item.path]
+        paths = task.paths
         if duplicate:
             # Duplicate: log all three choices (skip, keep both, and trump).
             if task.remove_duplicates:
@@ -380,6 +380,7 @@ class ImportTask(object):
         self.items = items
         self.sentinel = False
         self.remove_duplicates = False
+        # TODO remove this eventually
         self.is_album = True
         self.choice_flag = None
 
@@ -435,10 +436,6 @@ class ImportTask(object):
             self.choice_flag = choice
             self.match = None
         else:
-            if self.is_album:
-                assert isinstance(choice, autotag.AlbumMatch)
-            else:
-                assert isinstance(choice, autotag.TrackMatch)
             self.choice_flag = action.APPLY  # Implicit choice.
             self.match = choice
 
@@ -508,6 +505,11 @@ class ImportTask(object):
         """Perform clean up during `finalize` stage.
         """
         pass
+
+    def apply_metadata(self):
+        """Copy metadata from match info to the items.
+        """
+        autotag.apply_metadata(self.match.info, self.match.mapping)
 
     # Utilities.
 
@@ -601,7 +603,7 @@ class SingletonImportTask(ImportTask):
     """
 
     def __init__(self, item):
-        super(SingletonImportTask, self).__init__()
+        super(SingletonImportTask, self).__init__(paths=[item.path])
         self.item = item
         self.is_album = False
 
@@ -631,6 +633,9 @@ class SingletonImportTask(ImportTask):
 
     def set_candidates(self, cur_artist, cur_album, candidates, rec):
         raise NotImplementedError
+
+    def apply_metadata(self):
+        autotag.apply_item_metadata(self.item, self.match.info)
 
 
 # Full-album pipeline stages.
@@ -895,12 +900,7 @@ def apply_choices(session):
 
         # Change metadata.
         if task.should_write_tags():
-            if task.is_album:
-                autotag.apply_metadata(
-                    task.match.info, task.match.mapping
-                )
-            else:
-                autotag.apply_item_metadata(task.item, task.match.info)
+            task.apply_metadata()
             plugins.send('import_task_apply', session=session, task=task)
 
         # Infer album-level fields.
