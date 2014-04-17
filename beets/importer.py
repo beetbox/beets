@@ -475,6 +475,46 @@ class ImportTask(object):
         """
         autotag.apply_metadata(self.match.info, self.match.mapping)
 
+    def finalize(self, session):
+        """Move files, save progress and emit plugin event.
+        """
+        # FIXME the session argument is unfortunate. It should be
+        # present as an attribute of the task.
+
+        # Update progress.
+        if session.want_resume:
+            self.save_progress()
+        if config['import']['incremental']:
+            self.save_history()
+        self.cleanup()
+
+        # FIXME This shouldn't be here. Skipped tasks should be removed from
+        # the pipeline.
+        if not self.should_skip():
+            self._move_files()
+            self._emit_imported(session)
+
+    def _move_files(self):
+        items = self.imported_items()
+
+        # When copying and deleting originals, delete old files.
+        if config['import']['copy'] and config['import']['delete']:
+            new_paths = [os.path.realpath(item.path) for item in items]
+            for old_path in self.old_paths:
+                # Only delete files that were actually copied.
+                if old_path not in new_paths:
+                    util.remove(syspath(old_path), False)
+                    self.prune(old_path)
+
+        # When moving, prune empty directories containing the original files.
+        elif config['import']['move']:
+            for old_path in self.old_paths:
+                self.prune(old_path)
+
+    def _emit_imported(self, session):
+        album = session.lib.get_album(self.album_id)
+        plugins.send('album_imported', lib=session.lib, album=album)
+
     # Utilities.
 
     def prune(self, filename):
@@ -529,7 +569,14 @@ class SingletonImportTask(ImportTask):
     def apply_metadata(self):
         autotag.apply_item_metadata(self.item, self.match.info)
 
+    def _emit_imported(self, session):
+        for item in self.imported_items():
+            plugins.send('item_imported', lib=session.lib, item=item)
 
+
+# FIXME The inheritance relationships are inverted. This is why there
+# are so many methods which pass. We should introduce a new
+# BaseImportTask class.
 class SentinelImportTask(ImportTask):
     """This class marks the progress of an import and does not import
     any items itself.
@@ -567,6 +614,12 @@ class SentinelImportTask(ImportTask):
 
     def set_candidates(self, cur_artist, cur_album, candidates, rec):
         raise NotImplementedError
+
+    def _move_files(self):
+        pass
+
+    def _emit_imported(self):
+        pass
 
 
 class ArchiveImportTask(SentinelImportTask):
@@ -647,9 +700,6 @@ def read_tasks(session):
     in the user-specified list of paths. In the case of a singleton
     import, yields single-item tasks instead.
     """
-    # Look for saved progress.
-    resume_dirs = {}
-
     # Look for saved incremental directories.
     if config['import']['incremental']:
         incremental_skipped = 0
@@ -1038,54 +1088,11 @@ def manipulate_files(session):
         plugins.send('import_task_files', session=session, task=task)
 
 
+# TODO Get rid of this.
 def finalize(session):
-    """A coroutine that finishes up importer tasks. In particular, the
-    coroutine sends plugin events, deletes old files, and saves
-    progress. This is a "terminal" coroutine (it yields None).
-    """
     while True:
         task = yield
-        if task.should_skip():
-            if session.want_resume:
-                task.save_progress()
-            if config['import']['incremental']:
-                task.save_history()
-            task.cleanup()
-            continue
-
-        items = task.imported_items()
-
-        # When copying and deleting originals, delete old files.
-        if config['import']['copy'] and config['import']['delete']:
-            new_paths = [os.path.realpath(item.path) for item in items]
-            for old_path in task.old_paths:
-                # Only delete files that were actually copied.
-                if old_path not in new_paths:
-                    util.remove(syspath(old_path), False)
-                    task.prune(old_path)
-
-        # When moving, prune empty directories containing the original
-        # files.
-        elif config['import']['move']:
-            for old_path in task.old_paths:
-                task.prune(old_path)
-
-        # Update progress.
-        if session.want_resume:
-            task.save_progress()
-        if config['import']['incremental']:
-            task.save_history()
-        task.cleanup()
-
-        # Announce that we've added an album.
-        if task.is_album:
-            album = session.lib.get_album(task.album_id)
-            plugins.send('album_imported',
-                         lib=session.lib, album=album)
-        else:
-            for item in items:
-                plugins.send('item_imported',
-                             lib=session.lib, item=item)
+        task.finalize(session)
 
 
 # Singleton pipeline stages.
