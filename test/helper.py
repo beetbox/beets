@@ -36,7 +36,6 @@ import os.path
 import shutil
 import subprocess
 from tempfile import mkdtemp, mkstemp
-from glob import glob
 from contextlib import contextmanager
 from StringIO import StringIO
 
@@ -311,7 +310,7 @@ class TestImportSession(importer.ImportSession):
         if choice == importer.action.APPLY:
             return task.candidates[0]
         elif isinstance(choice, int):
-            return task.candidates[choice-1]
+            return task.candidates[choice - 1]
         else:
             return choice
 
@@ -341,7 +340,7 @@ def generate_album_info(album_id, track_ids):
     return album
 
 ALBUM_INFO_FIELDS = ['album', 'album_id', 'artist', 'artist_id',
-                     'asin', 'albumtype', 'va','label',
+                     'asin', 'albumtype', 'va', 'label',
                      'artist_sort', 'releasegroup_id', 'catalognum',
                      'language', 'country', 'albumstatus', 'media',
                      'albumdisambig', 'artist_credit',
