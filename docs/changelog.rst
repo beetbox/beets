@@ -12,6 +12,8 @@ Fixes:
   ``bash_completion`` dependency.
 * Fix encoding-related logging errors in :doc:`/plugins/convert` and
   :doc:`/plugins/replaygain`.
+* :doc:`/plugins/replaygain`: Suppress a deprecation warning emitted by later
+  version of PyGI.
 
 
 1.3.5 (April 15, 2014)
