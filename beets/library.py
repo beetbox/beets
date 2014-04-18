@@ -25,7 +25,7 @@ from unidecode import unidecode
 from beets.mediafile import MediaFile, MutagenError
 from beets import plugins
 from beets import util
-from beets.util import bytestring_path, syspath, normpath, samefile
+from beets.util import bytestring_path, syspath, normpath, samefile, str2bool
 from beets.util.functemplate import Template
 from beets import dbcore
 from beets.dbcore import types
@@ -1121,11 +1121,13 @@ class DefaultTemplateFunctions(object):
         otherwise, emit ``falseval`` (if provided).
         """
         try:
-            condition = _int_arg(condition)
+            int_condition = _int_arg(condition)
         except ValueError:
             if condition.lower() == "false":
                 return falseval
-            condition = condition.strip()
+        else:
+            condition = int_condition
+
         if condition:
             return trueval
         else:
