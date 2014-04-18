@@ -16,14 +16,15 @@ class ImportfeedsTestTest(unittest.TestCase):
         self.lib = Library(':memory:')
         self.feeds_dir = tempfile.mkdtemp()
         config['importfeeds']['dir'] = self.feeds_dir
-        
+
     def tearDown(self):
         shutil.rmtree(self.feeds_dir)
 
     def test_multi_format_album_playlist(self):
         config['importfeeds']['formats'] = 'm3u_multi'
         album = Album(album='album/name', id=1)
-        item = Item(title='song', album_id=1, path='/path/to/item')
+        item_path = os.path.join('path', 'to', 'item')
+        item = Item(title='song', album_id=1, path=item_path)
         self.lib.add(album)
         self.lib.add(item)
 
@@ -32,7 +33,7 @@ class ImportfeedsTestTest(unittest.TestCase):
                                      os.listdir(self.feeds_dir)[0])
         self.assertTrue(playlist_path.endswith('album_name.m3u'))
         with open(playlist_path) as playlist:
-            self.assertIn('/path/to/item', playlist.read())
+            self.assertIn(item_path, playlist.read())
 
 
 def suite():

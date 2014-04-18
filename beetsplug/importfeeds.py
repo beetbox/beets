@@ -101,9 +101,13 @@ def _record_items(lib, basename, items):
         if config['importfeeds']['absolute_path']:
             paths.append(item.path)
         else:
-            paths.append(os.path.relpath(
-                item.path, relative_to
-            ))
+            try:
+                relpath = os.path.relpath(item.path, relative_to)
+            except ValueError:
+                # On Windows, it is sometimes not possible to construct a
+                # relative path (if the files are on different disks).
+                relpath = item.path
+            paths.append(relpath)
 
     if 'm3u' in formats:
         basename = bytestring_path(
