@@ -14,6 +14,8 @@ Fixes:
   :doc:`/plugins/replaygain`.
 * :doc:`/plugins/replaygain`: Suppress a deprecation warning emitted by later
   version of PyGI.
+* Fix a crash when reading files whose iTunes SoundCheck tags contain
+  non-ASCII characters.
 
 
 1.3.5 (April 15, 2014)
@@ -30,7 +32,7 @@ library module.
 
 The major new features are:
 
-* Beets can now import `zip`, `tar` and `rar` archives. Just type ``beet
+* Beets can now import `zip`, `tar`, and `rar` archives. Just type ``beet
   import music.zip`` to have beets transparently extract the files to import.
 * :doc:`/plugins/replaygain`: Added support for calculating ReplayGain values
   with GStreamer as well the mp3gain program. This enables ReplayGain
@@ -43,8 +45,8 @@ The major new features are:
 In particular, a full complement of features for supporting musical keys are
 new in this release:
 
-* A new `initial_key` is available in the database and files' tags. You can
-  set the field manually using a command like ``beet modify
+* A new `initial_key` field is available in the database and files' tags. You
+  can set the field manually using a command like ``beet modify
   initial_key=Am``.
 * The :doc:`/plugins/echonest` sets the `initial_key` field if the data is
   available.

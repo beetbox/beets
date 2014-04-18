@@ -196,7 +196,7 @@ def _sc_decode(soundcheck):
     try:
         soundcheck = soundcheck.replace(' ', '').decode('hex')
         soundcheck = struct.unpack('!iiiiiiiiii', soundcheck)
-    except (struct.error, TypeError):
+    except (struct.error, TypeError, UnicodeEncodeError):
         # SoundCheck isn't in the format we expect, so return default
         # values.
         return 0.0, 0.0
