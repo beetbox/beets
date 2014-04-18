@@ -8,7 +8,7 @@ Fixes:
 
 * :doc:`/plugins/mbsync`: Fix a regression in 1.3.5 that broke the plugin
   entirely.
-* `Shell completion <completion>` now searches more common paths for its
+* :ref:`Shell completion <completion>` now searches more common paths for its
   ``bash_completion`` dependency.
 * Fix encoding-related logging errors in :doc:`/plugins/convert` and
   :doc:`/plugins/replaygain`.
