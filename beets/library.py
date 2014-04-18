@@ -769,7 +769,7 @@ class Album(LibModel):
             for item in self.items():
                 item.remove(delete, False)
 
-    def move_art(self, copy=False):
+    def move_art(self, copy=False, link=False):
         """Move or copy any existing album art so that it remains in the
         same directory as the items.
         """
@@ -785,6 +785,8 @@ class Album(LibModel):
         log.debug('moving album art %s to %s' % (old_art, new_art))
         if copy:
             util.copy(old_art, new_art)
+        elif link:
+            util.link(old_art, new_art)
         else:
             util.move(old_art, new_art)
         self.artpath = new_art
@@ -895,7 +897,7 @@ class Album(LibModel):
                     item.store()
 
 
-# Query construction helper.
+# Query construction and parsing helpers.
 
 def get_query_sort(val, model_cls):
     """Take a value which may be None, a query string, a query string
