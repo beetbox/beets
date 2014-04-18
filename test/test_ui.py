@@ -18,6 +18,7 @@ import os
 import shutil
 import re
 import subprocess
+import platform
 
 import _common
 from _common import unittest
@@ -527,7 +528,14 @@ class ConfigTest(_common.TestCase):
         commands.default_commands.append(self.test_cmd)
 
         # Default user configuration
-        self.user_config_dir = os.path.join(self.temp_dir, '.config', 'beets')
+        if platform.system() == 'Windows':
+            self.user_config_dir = os.path.join(
+                self.temp_dir, 'AppData', 'Roaming', 'beets'
+            )
+        else:
+            self.user_config_dir = os.path.join(
+                self.temp_dir, '.config', 'beets'
+            )
         os.makedirs(self.user_config_dir)
         self.user_config_path = os.path.join(self.user_config_dir,
                                              'config.yaml')
