@@ -449,7 +449,9 @@ def move(path, dest, replace=False):
                                   traceback.format_exc())
 
 def link(path, dest, replace=False):
-    """Create a symbolic link from path to `dest`. Raises an OSError if `dest` already exists, unless `replace` is True. Does nothing if `path` == `dest`."""
+    """Create a symbolic link from path to `dest`. Raises an OSError if 
+    `dest` already exists, unless `replace` is True. Does nothing if 
+    `path` == `dest`."""
     if (samefile(path, dest)):
         return
 

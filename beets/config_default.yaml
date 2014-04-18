@@ -5,6 +5,7 @@ import:
     write: yes
     copy: yes
     move: no
+    link: no
     delete: no
     resume: ask
     incremental: no
