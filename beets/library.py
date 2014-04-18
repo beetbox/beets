@@ -1121,9 +1121,13 @@ class DefaultTemplateFunctions(object):
         otherwise, emit ``falseval`` (if provided).
         """
         try:
-            condition = _int_arg(condition)
+            int_condition = _int_arg(condition)
         except ValueError:
-            condition = condition.strip()
+            if condition.lower() == "false":
+                return falseval
+        else:
+            condition = int_condition
+
         if condition:
             return trueval
         else:
