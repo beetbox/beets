@@ -25,7 +25,7 @@ from unidecode import unidecode
 from beets.mediafile import MediaFile, MutagenError
 from beets import plugins
 from beets import util
-from beets.util import bytestring_path, syspath, normpath, samefile, str2bool
+from beets.util import bytestring_path, syspath, normpath, samefile
 from beets.util.functemplate import Template
 from beets import dbcore
 from beets.dbcore import types
