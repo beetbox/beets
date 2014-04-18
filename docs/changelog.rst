@@ -16,6 +16,8 @@ Fixes:
   version of PyGI.
 * Fix a crash when reading files whose iTunes SoundCheck tags contain
   non-ASCII characters.
+* The ``%if{}`` template function now appropriately interprets the condition
+  as false when it contains the string "false". Thanks to Ayberk Yilmaz.
 
 
 1.3.5 (April 15, 2014)
