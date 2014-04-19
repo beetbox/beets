@@ -383,7 +383,7 @@ class ImportTask(object):
                                 lib.directory)
 
     def finalize(self, session):
-        """Save items to library, save progress and emit plugin event.
+        """Save progress clean up files, and emit plugin event.
         """
         # FIXME the session argument is unfortunate. It should be
         # present as an attribute of the task.
@@ -393,11 +393,6 @@ class ImportTask(object):
             self.save_progress()
         if config['import']['incremental']:
             self.save_history()
-
-        if not self.skip:
-            with session.lib.transaction():
-                for item in self.imported_items():
-                    item.store()
 
         self.cleanup()
         self._emit_imported(session)
@@ -537,6 +532,10 @@ class ImportTask(object):
 
             if config['import']['write'] and self.apply:
                 item.try_write()
+
+        with session.lib.transaction():
+            for item in self.imported_items():
+                item.store()
 
         plugins.send('import_task_files', session=session, task=self)
 
