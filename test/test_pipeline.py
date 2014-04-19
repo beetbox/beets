@@ -210,7 +210,7 @@ class MultiMessageTest(unittest.TestCase):
 
 class StageDecoratorTest(unittest.TestCase):
 
-    def test_decorator(self):
+    def test_stage_decorator(self):
         @pipeline.stage
         def add(n, i):
             return i + n
@@ -220,6 +220,18 @@ class StageDecoratorTest(unittest.TestCase):
             add(2)
         ])
         self.assertEqual(list(pl.pull()), [3, 4, 5])
+
+    def test_mutator_stage_decorator(self):
+        @pipeline.mutator_stage
+        def setkey(key, item):
+            item[key] = True
+
+        pl = pipeline.Pipeline([
+            iter([{'x': False}, {'a': False}]),
+            setkey('x'),
+        ])
+        self.assertEqual(list(pl.pull()),
+                         [{'x': True}, {'a': False, 'x': True}])
 
 
 def suite():

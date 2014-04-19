@@ -159,6 +159,28 @@ def stage(func):
     return coro
 
 
+def mutator_stage(func):
+    """Decorate a function that manipulates items in a coroutine to
+    become a simple stage.
+
+    >>> @mutator_stage
+    ... def setkey(key, item):
+    ...     item[key] = True
+    >>> pipe = Pipeline([
+    ...     iter([{'x': False}, {'a': False}]),
+    ...     setkey('x'),
+    ... ])
+    >>> list(pipe.pull())
+    [{'x': True}, {'a': False, 'x': True}]
+    """
+
+    def coro(*args):
+        task = None
+        while True:
+            task = yield task
+            func(*(args + (task,)))
+    return coro
+
 
 def _allmsgs(obj):
     """Returns a list of all the messages encapsulated in obj. If obj
