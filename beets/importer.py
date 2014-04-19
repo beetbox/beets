@@ -237,7 +237,7 @@ class ImportSession(object):
         if config['import']['singletons']:
             # Singleton importer.
             if config['import']['autotag']:
-                stages += [lookup_candidates(self), item_query(self),
+                stages += [lookup_candidates(self), user_query(self),
                            resolve_duplicates(self)]
         else:
             # Whole-album importer.
@@ -573,6 +573,13 @@ class ImportTask(object):
         log.debug('%i of %i items replaced' % (len(self.replaced_items),
                                                len(self.imported_items())))
 
+    def choose_match(self, session):
+        """Ask the session which match should apply and apply it.
+        """
+        choice = session.choose_match(self)
+        self.set_choice(choice)
+        session.log_choice(self)
+
     # Utilities.
 
     def prune(self, filename):
@@ -665,6 +672,13 @@ class SingletonImportTask(ImportTask):
 
     def infer_album_fields(self):
         raise NotImplementedError
+
+    def choose_match(self, session):
+        """Ask the session which match should apply and apply it.
+        """
+        choice = session.choose_item(self)
+        self.set_choice(choice)
+        session.log_choice(self)
 
 
 # FIXME The inheritance relationships are inverted. This is why there
@@ -955,9 +969,7 @@ def user_query(session):
             continue
 
         # Ask the user for a choice.
-        choice = session.choose_match(task)
-        task.set_choice(choice)
-        session.log_choice(task)
+        task.choose_match(session)
         plugins.send('import_task_choice', session=session, task=task)
 
         # As-tracks: transition to singleton workflow.
@@ -971,7 +983,7 @@ def user_query(session):
             ipl = pipeline.Pipeline([
                 emitter(task),
                 lookup_candidates(session),
-                item_query(session),
+                user_query(session),
             ])
             task = pipeline.multiple(ipl.pull())
 
@@ -1093,24 +1105,6 @@ def finalize(session):
     while True:
         task = yield
         task.finalize(session)
-
-
-# Singleton pipeline stages.
-
-def item_query(session):
-    """A coroutine that queries the user for input on single-item
-    lookups.
-    """
-    task = None
-    while True:
-        task = yield task
-        if task.skip:
-            continue
-
-        choice = session.choose_item(task)
-        task.set_choice(choice)
-        session.log_choice(task)
-        plugins.send('import_task_choice', session=session, task=task)
 
 
 def group_albums(session):
