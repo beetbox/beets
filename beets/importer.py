@@ -58,50 +58,6 @@ class ImportAbort(Exception):
 
 # Utilities.
 
-def _duplicate_check(lib, task):
-    """Check whether an album already exists in the library. Returns a
-    list of Album objects (empty if no duplicates are found).
-    """
-    assert task.choice_flag in (action.ASIS, action.APPLY)
-    artist, album = task.chosen_ident()
-
-    if artist is None:
-        # As-is import with no artist. Skip check.
-        return []
-
-    found_albums = []
-    cur_paths = set(i.path for i in task.items if i)
-    for album_cand in lib.albums(dbcore.MatchQuery('albumartist', artist)):
-        if album_cand.album == album:
-            # Check whether the album is identical in contents, in which
-            # case it is not a duplicate (will be replaced).
-            other_paths = set(i.path for i in album_cand.items())
-            if other_paths == cur_paths:
-                continue
-            found_albums.append(album_cand)
-    return found_albums
-
-
-def _item_duplicate_check(lib, task):
-    """Check whether an item already exists in the library. Returns a
-    list of Item objects.
-    """
-    assert task.choice_flag in (action.ASIS, action.APPLY)
-    artist, title = task.chosen_ident()
-
-    found_items = []
-    query = dbcore.AndQuery((
-        dbcore.MatchQuery('artist', artist),
-        dbcore.MatchQuery('title', title),
-    ))
-    for other_item in lib.items(query):
-        # Existing items not considered duplicates.
-        if other_item.path == task.item.path:
-            continue
-        found_items.append(other_item)
-    return found_items
-
-
 def _infer_album_fields(task):
     """Given an album and an associated import task, massage the
     album-level metadata. This ensures that the album artist is set
@@ -520,6 +476,30 @@ class ImportTask(object):
         """
         self.set_candidates(*autotag.tag_album(self.items))
 
+    def find_duplicates(self, lib):
+        """Return a list of albums from `lib` with the same artist and
+        album name as the task.
+        """
+        artist, album = self.chosen_ident()
+
+        if artist is None:
+            # As-is import with no artist. Skip check.
+            return []
+
+        duplicates = []
+        task_paths = set(i.path for i in self.items if i)
+        duplicate_query = dbcore.AndQuery((
+            dbcore.MatchQuery('albumartist', artist),
+            dbcore.MatchQuery('album', album),
+        ))
+
+        for album in lib.albums(duplicate_query):
+            # Check whether the album is identical in contents, in which
+            # case it is not a duplicate (will be replaced).
+            album_paths = set(i.path for i in album.items())
+            if album_paths != task_paths:
+                duplicates.append(album)
+        return duplicates
 
     # Utilities.
 
@@ -587,7 +567,22 @@ class SingletonImportTask(ImportTask):
     def lookup_candidates(self):
         self.set_item_candidates(*autotag.tag_item(self.item))
 
+    def find_duplicates(self, lib):
+        """Return a list of items from `lib` that have the same artist
+        and title as the task.
+        """
+        artist, title = self.chosen_ident()
 
+        found_items = []
+        query = dbcore.AndQuery((
+            dbcore.MatchQuery('artist', artist),
+            dbcore.MatchQuery('title', title),
+        ))
+        for other_item in lib.items(query):
+            # Existing items not considered duplicates.
+            if other_item.path != self.item.path:
+                found_items.append(other_item)
+        return found_items
 
 
 # FIXME The inheritance relationships are inverted. This is why there
@@ -917,7 +912,7 @@ def user_query(session):
             # The "recent" set keeps track of identifiers for recently
             # imported albums -- those that haven't reached the database
             # yet.
-            if ident in recent or _duplicate_check(session.lib, task):
+            if ident in recent or task.find_duplicates(session.lib):
                 session.resolve_duplicate(task)
                 session.log_choice(task, True)
             recent.add(ident)
@@ -986,10 +981,10 @@ def apply_choices(session):
         duplicate_items = []
         if task.remove_duplicates:
             if task.is_album:
-                for album in _duplicate_check(session.lib, task):
+                for album in task.find_duplicates(session.lib):
                     duplicate_items += album.items()
             else:
-                duplicate_items = _item_duplicate_check(session.lib, task)
+                duplicate_items = task.find_dupliates(session.lib)
             log.debug('removing %i old duplicated items' %
                       len(duplicate_items))
 
@@ -1129,7 +1124,7 @@ def item_query(session):
         # Duplicate check.
         if task.choice_flag in (action.ASIS, action.APPLY):
             ident = task.chosen_ident()
-            if ident in recent or _item_duplicate_check(session.lib, task):
+            if ident in recent or task.find_duplicates(session.lib):
                 session.resolve_duplicate(task)
                 session.log_choice(task, True)
             recent.add(ident)
