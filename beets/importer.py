@@ -435,8 +435,7 @@ class ImportTask(object):
         # the pipeline.
         if self.skip:
             return
-        album = session.lib.get_album(self.album_id)
-        plugins.send('album_imported', lib=session.lib, album=album)
+        plugins.send('album_imported', lib=session.lib, album=self.album)
 
     def lookup_candidates(self):
         """Retrieve and store candidates for this album.
@@ -549,6 +548,10 @@ class ImportTask(object):
 
         plugins.send('import_task_files', session=session, task=self)
 
+    def add(self, lib):
+        """Add the items as an album to the library.
+        """
+        self.album = lib.add_album(self.imported_items())
 
     # Utilities.
 
@@ -634,6 +637,10 @@ class SingletonImportTask(ImportTask):
         return found_items
 
     duplicate_items = find_duplicates
+
+    def add(self, lib):
+        lib.add(self.item)
+
 
     def infer_album_fields(self):
         raise NotImplementedError
@@ -1047,14 +1054,7 @@ def apply_choices(session):
                     item.remove()
 
             # Add new ones.
-            if task.is_album:
-                # Add an album.
-                album = session.lib.add_album(items)
-                task.album_id = album.id
-            else:
-                # Add tracks.
-                for item in items:
-                    session.lib.add(item)
+            task.add(session.lib)
 
 
 def plugin_stage(session, func):
