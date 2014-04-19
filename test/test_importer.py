@@ -963,9 +963,13 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
         self.setup_beets()
+
+        # Original album
+        self.add_album_fixture(albumartist=u'artist', album=u'album')
+
+        # Create duplicate through autotagger
         self.match_album_patcher = patch('beets.autotag.mb.match_album')
         self.match_album = self.match_album_patcher.start()
-
         track_info = TrackInfo(
             title=u'new title',
             track_id=u'trackid',
@@ -979,18 +983,20 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
         )
         self.match_album.return_value = iter([album_info])
 
+        # Create import session
+        self.importer = self.create_importer()
+        config['import']['autotag'] = True
+
     def tearDown(self):
         self.match_album_patcher.stop()
         self.teardown_beets()
 
     def test_remove_duplicate_album(self):
-        self.add_album_fixture()
         item = self.lib.items().get()
-        self.assertNotEqual(item.title, u'new title')
+        self.assertEqual(item.title, u't\xeftle 0')
 
-        importer = self.create_importer()
-        importer.default_resolution = importer.Resolution.REMOVE
-        importer.run()
+        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.importer.run()
 
         self.assertEqual(len(self.lib.albums()), 1)
         self.assertEqual(len(self.lib.items()), 1)
@@ -998,23 +1004,18 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
         self.assertEqual(item.title, u'new title')
 
     def test_keep_duplicate_album(self):
-        self.add_album_fixture()
-
-        importer = self.create_importer()
-        importer.default_resolution = importer.Resolution.KEEPBOTH
-        importer.run()
+        self.importer.default_resolution = self.importer.Resolution.KEEPBOTH
+        self.importer.run()
 
         self.assertEqual(len(self.lib.albums()), 2)
         self.assertEqual(len(self.lib.items()), 2)
 
     def test_skip_duplicate_album(self):
-        self.add_album_fixture()
         item = self.lib.items().get()
         self.assertEqual(item.title, u't\xeftle 0')
 
-        importer = self.create_importer()
-        importer.default_resolution = importer.Resolution.SKIP
-        importer.run()
+        self.importer.default_resolution = self.importer.Resolution.SKIP
+        self.importer.run()
 
         self.assertEqual(len(self.lib.albums()), 1)
         self.assertEqual(len(self.lib.items()), 1)
@@ -1024,19 +1025,12 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
     def test_twice_in_import_dir(self):
         self.skipTest('write me')
 
-    def add_album_fixture(self):
+    def add_album_fixture(self, **kwargs):
         # TODO move this into upstream
         album = super(ImportDuplicateAlbumTest, self).add_album_fixture()
-        album.artist = 'artist'
-        album.albumartist = 'artist'
-        album.album = 'album'
+        album.update(kwargs)
         album.store()
         return album
-
-    def create_importer(self):
-        importer = super(ImportDuplicateAlbumTest, self).create_importer()
-        config['import']['autotag'] = True
-        return importer
 
 
 class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper):
