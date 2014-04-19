@@ -234,22 +234,16 @@ class ImportSession(object):
             stages = [read_tasks(self)]
         else:
             stages = [query_tasks(self)]
-        if config['import']['singletons']:
-            # Singleton importer.
-            if config['import']['autotag']:
-                stages += [lookup_candidates(self), user_query(self),
-                           resolve_duplicates(self)]
-        else:
-            # Whole-album importer.
-            if config['import']['group_albums']:
-                # Split directory tasks into one task for each album
-                stages += [group_albums(self)]
-            if config['import']['autotag']:
-                # Only look up and query the user when autotagging.
-                stages += [lookup_candidates(self), user_query(self),
-                           resolve_duplicates(self)]
 
-        if not config['import']['autotag']:
+        if config['import']['group_albums'] and \
+           not config['import']['singletons']:
+            # Split directory tasks into one task for each album
+            stages += [group_albums(self)]
+        if config['import']['autotag']:
+            # Only look up and query the user when autotagging.
+            stages += [lookup_candidates(self), user_query(self),
+                       resolve_duplicates(self)]
+        else:
             stages += [import_asis(self)]
         stages += [apply_choices(self)]
         for stage_func in plugins.import_stages():
