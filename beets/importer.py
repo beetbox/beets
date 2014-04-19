@@ -465,11 +465,6 @@ class ImportTask(object):
         else:
             assert False
 
-    def cleanup(self):
-        """Perform clean up during `finalize` stage.
-        """
-        pass
-
     def apply_metadata(self):
         """Copy metadata from match info to the items.
         """
@@ -487,14 +482,15 @@ class ImportTask(object):
         if config['import']['incremental']:
             self.save_history()
         self.cleanup()
+        self._emit_imported(session)
 
+    def cleanup(self):
+        """Remove and prune imported paths.
+        """
         # FIXME This shouldn't be here. Skipped tasks should be removed from
         # the pipeline.
-        if not self.should_skip():
-            self._move_files()
-            self._emit_imported(session)
-
-    def _move_files(self):
+        if self.should_skip():
+            return
         items = self.imported_items()
 
         # When copying and deleting originals, delete old files.
@@ -512,6 +508,10 @@ class ImportTask(object):
                 self.prune(old_path)
 
     def _emit_imported(self, session):
+        # FIXME This shouldn't be here. Skipped tasks should be removed from
+        # the pipeline.
+        if self.should_skip():
+            return
         album = session.lib.get_album(self.album_id)
         plugins.send('album_imported', lib=session.lib, album=album)
 
@@ -570,6 +570,10 @@ class SingletonImportTask(ImportTask):
         autotag.apply_item_metadata(self.item, self.match.info)
 
     def _emit_imported(self, session):
+        # FIXME This shouldn't be here. Skipped tasks should be removed from
+        # the pipeline.
+        if self.should_skip():
+            return
         for item in self.imported_items():
             plugins.send('item_imported', lib=session.lib, item=item)
 
@@ -615,10 +619,10 @@ class SentinelImportTask(ImportTask):
     def set_candidates(self, cur_artist, cur_album, candidates, rec):
         raise NotImplementedError
 
-    def _move_files(self):
+    def cleanup(self):
         pass
 
-    def _emit_imported(self):
+    def _emit_imported(self, session):
         pass
 
 
