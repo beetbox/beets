@@ -58,56 +58,6 @@ class ImportAbort(Exception):
 
 # Utilities.
 
-def _infer_album_fields(task):
-    """Given an album and an associated import task, massage the
-    album-level metadata. This ensures that the album artist is set
-    and that the "compilation" flag is set automatically.
-    """
-    assert task.is_album
-    assert task.items
-
-    changes = {}
-
-    if task.choice_flag == action.ASIS:
-        # Taking metadata "as-is". Guess whether this album is VA.
-        plur_albumartist, freq = util.plurality(
-            [i.albumartist or i.artist for i in task.items]
-        )
-        if freq == len(task.items) or \
-            (freq > 1 and
-                float(freq) / len(task.items) >= SINGLE_ARTIST_THRESH):
-            # Single-artist album.
-            changes['albumartist'] = plur_albumartist
-            changes['comp'] = False
-        else:
-            # VA.
-            changes['albumartist'] = VARIOUS_ARTISTS
-            changes['comp'] = True
-
-    elif task.choice_flag == action.APPLY:
-        # Applying autotagged metadata. Just get AA from the first
-        # item.
-        for item in task.items:
-            if item is not None:
-                first_item = item
-                break
-        else:
-            assert False, "all items are None"
-        if not first_item.albumartist:
-            changes['albumartist'] = first_item.artist
-        if not first_item.mb_albumartistid:
-            changes['mb_albumartistid'] = first_item.mb_artistid
-
-    else:
-        assert False
-
-    # Apply new metadata.
-    for item in task.items:
-        if item is not None:
-            for k, v in changes.iteritems():
-                setattr(item, k, v)
-
-
 def _open_state():
     """Reads the state file, returning a dictionary."""
     try:
@@ -503,6 +453,49 @@ class ImportTask(object):
                 duplicates.append(album)
         return duplicates
 
+    def infer_album_fields(self):
+        """Make the some album fields equal across `self.items`
+        """
+        changes = {}
+
+        if self.choice_flag == action.ASIS:
+            # Taking metadata "as-is". Guess whether this album is VA.
+            plur_albumartist, freq = util.plurality(
+                [i.albumartist or i.artist for i in self.items]
+            )
+            if freq == len(self.items) or \
+                (freq > 1 and
+                    float(freq) / len(self.items) >= SINGLE_ARTIST_THRESH):
+                # Single-artist album.
+                changes['albumartist'] = plur_albumartist
+                changes['comp'] = False
+            else:
+                # VA.
+                changes['albumartist'] = VARIOUS_ARTISTS
+                changes['comp'] = True
+
+        elif self.choice_flag == action.APPLY:
+            # Applying autotagged metadata. Just get AA from the first
+            # item.
+            # FIXME this is overly complicated. Can we assume that
+            # `self.items` contains only elements that are not none and
+            # at least one of them?
+            for item in self.items:
+                if item is not None:
+                    first_item = item
+                    break
+            else:
+                assert False, "all items are None"
+            if not first_item.albumartist:
+                changes['albumartist'] = first_item.artist
+            if not first_item.mb_albumartistid:
+                changes['mb_albumartistid'] = first_item.mb_artistid
+
+        # Apply new metadata.
+        for item in self.items:
+            if item is not None:
+                item.update(changes)
+
     # Utilities.
 
     def prune(self, filename):
@@ -585,6 +578,9 @@ class SingletonImportTask(ImportTask):
             if other_item.path != self.item.path:
                 found_items.append(other_item)
         return found_items
+
+    def infer_album_fields(self):
+        raise NotImplementedError
 
 
 # FIXME The inheritance relationships are inverted. This is why there
@@ -967,7 +963,7 @@ def apply_choices(session):
 
         # Infer album-level fields.
         if task.is_album:
-            _infer_album_fields(task)
+            task.infer_album_fields()
 
         # Find existing item entries that these are replacing (for
         # re-imports). Old album structures are automatically cleaned up
