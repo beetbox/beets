@@ -208,6 +208,20 @@ class MultiMessageTest(unittest.TestCase):
         self.assertEqual(list(pl.pull()), [0, 0, 1, -1, 2, -2, 3, -3, 4, -4])
 
 
+class StageDecoratorTest(unittest.TestCase):
+
+    def test_decorator(self):
+        @pipeline.stage
+        def add(n, i):
+            return i + n
+
+        pl = pipeline.Pipeline([
+            iter([1, 2, 3]),
+            add(2)
+        ])
+        self.assertEqual(list(pl.pull()), [3, 4, 5])
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

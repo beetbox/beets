@@ -137,6 +137,29 @@ def multiple(messages):
     return MultiMessage(messages)
 
 
+def stage(func):
+    """Decorate a function to become a simple stage.
+
+    >>> @stage
+    ... def add(n, i):
+    ...     return i + n
+    >>> pipe = Pipeline([
+    ...     iter([1, 2, 3]),
+    ...     add(2),
+    ... ])
+    >>> list(pipe.pull())
+    [3, 4, 5]
+    """
+
+    def coro(*args):
+        task = None
+        while True:
+            task = yield task
+            task = func(*(args + (task,)))
+    return coro
+
+
+
 def _allmsgs(obj):
     """Returns a list of all the messages encapsulated in obj. If obj
     is a MultiMessage, returns its enclosed messages. If obj is BUBBLE,
