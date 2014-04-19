@@ -912,6 +912,9 @@ def query_tasks(session):
             log.debug('yielding album %i: %s - %s' %
                       (album.id, album.albumartist, album.album))
             items = list(album.items())
+            for item in items:
+                item.id = None
+                item.album_id = None
             yield ImportTask(None, [album.item_dir()], items)
 
 
@@ -1034,12 +1037,6 @@ def apply_choices(session):
         task = yield task
         if task.skip:
             continue
-
-        items = task.imported_items()
-        # Clear IDs in case the items are being re-tagged.
-        for item in items:
-            item.id = None
-            item.album_id = None
 
         # Change metadata.
         if task.apply:
