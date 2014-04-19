@@ -48,6 +48,7 @@ by typing ``beet version``.
    ihate
    convert
    info
+   play
    smartplaylist
    mbsync
    missing
@@ -109,6 +110,7 @@ Interoperability
   changes.
 * :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
 * :doc:`smartplaylist`: Generate smart playlists based on beets queries.
+* :doc:`play`: Play beets queries in your music player.
 
 Miscellaneous
 -------------

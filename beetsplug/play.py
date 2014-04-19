@@ -12,34 +12,41 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""sends the results of a query to the configured music player as a playlist"""
+"""Sends the results of a query to the configured music player as a playlist.
+"""
+
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets import config
 from beets import ui
-
+import platform
 import subprocess
 import os
 from tempfile import NamedTemporaryFile
 
 
-def check_config():
-
-    if not config['play']['command'].get():
-        ui.print_(ui.colorize('red', 'no player command is set. Verify configuration.'))
-        return
-
 def play_music(lib, opts, args):
-    """execute query, create temporary playlist and execute player command passing that playlist"""
-    check_config()
+    """Execute query, create temporary playlist and execute player
+    command passing that playlist.
+    """
 
-    #get the music player command to launch and pass playlist to
     command = config['play']['command'].get()
-    isDebug = config['play']['debug'].get()
+    is_debug = config['play']['debug'].get()
 
-    if opts.album: #search by album
-    	#get all the albums to be added to playlist
+    # If a command isn't set then let the OS decide how to open the playlist.
+    if not command:
+        sys_name = platform.system()
+        if sys_name == 'Darwin':
+            command = 'open'
+        elif sys_name == 'Windows':
+            command = 'start'
+        else:
+            # If not Mac or Win then assume Linux(or posix based).
+            command = 'xdg-open'
+
+    # Preform search by album and add folders rather then tracks to playlist.
+    if opts.album:
         albums = lib.albums(ui.decargs(args))
         paths = []
 
@@ -47,42 +54,48 @@ def play_music(lib, opts, args):
             paths.append(album.item_dir())
         itemType = 'album'
 
-    else: #search by item name
+    # Preform item query and add tracks to playlist.
+    else:
         paths = [item.path for item in lib.items(ui.decargs(args))]
         itemType = 'track'
 
-    if len(paths) > 1:
-        itemType += 's'
+    itemType +=  's' if len(paths) > 1 else ''
 
     if not paths:
-    	ui.print_(ui.colorize('yellow', 'no {0} to play.'.format(itemType)))
-    	return
+        ui.print_(ui.colorize('yellow', 'no {0} to play.'.format(itemType)))
+        return
 
-    #warn user before playing any huge playlists
+    # Warn user before playing any huge playlists.
     if len(paths) > 100:
-    	ui.print_(ui.colorize('yellow', 'do you really want to play {0} {1}?'.format(len(paths), itemType)))
-    	opts = ('Continue', 'Abort')
-    	if ui.input_options(opts) == 'a':
-    		return
+        ui.print_(ui.colorize('yellow',
+            'do you really want to play {0} {1}?'
+            .format(len(paths), itemType)))
 
+        if ui.input_options(('Continue', 'Abort')) == 'a':
+            return
+
+    # Create temporary m3u file to hold our playlist.
     m3u = NamedTemporaryFile('w', suffix='.m3u', delete=False)
     for item in paths:
         m3u.write(item + '\n')
     m3u.close()
 
-    #prevent output from player poluting our console(unless debug is on)
-    if not isDebug:
+    # Prevent player output from poluting our console(unless debug is on).
+    if not is_debug:
         FNULL = open(os.devnull, 'w')
-        subprocess.Popen([command, m3u.name], stdout=FNULL, stderr=subprocess.STDOUT)
+
+        subprocess.Popen([command, m3u.name],
+            stdout=FNULL, stderr=subprocess.STDOUT)
+
         FNULL.close()
     else:
         subprocess.Popen([command, m3u.name])
 
     ui.print_('playing {0} {1}.'.format(len(paths), itemType))
-    
-        
+
+
 class PlayPlugin(BeetsPlugin):
-    
+
     def __init__(self):
         super(PlayPlugin, self).__init__()
 
@@ -92,9 +105,10 @@ class PlayPlugin(BeetsPlugin):
         })
 
     def commands(self):
-    	play_command = Subcommand('play', help='send query results to music player as playlist.')
-    	play_command.parser.add_option('-a', '--album',
-                                            action='store_true', default=False,
-                                            help='query and load albums(folders) rather then tracks.')
-    	play_command.func = play_music
-    	return [play_command]
+        play_command = Subcommand('play',
+            help='send query results to music player as playlist.')
+        play_command.parser.add_option('-a', '--album',
+            action='store_true', default=False,
+            help='query and load albums(folders) rather then tracks.')
+        play_command.func = play_music
+        return [play_command]

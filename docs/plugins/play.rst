@@ -8,11 +8,11 @@ To use the plugin, first enable it in your configuration (see
 file::
 
     play:
-        #Command to use to open playlist with music player(ie VLC on OSX: /Applications/VLC.app/Contents/MacOS/VLC). 
-        #Command must have a path or be in your PATH.
-        command: cvlc 
-        #Debug(optional) displays output from player for aiding in setting up command correctly. 
-        debug: 
+        # Command(optional) override the system default for m3u files.
+        # You can define a command to be executed by the shell which the m3u path will be appended to.
+        command: command: /Applications/VLC.app/Contents/MacOS/VLC
+        # Debug(optional) displays output from player for aiding in setting up command correctly.
+        debug: True
 
 How it works
 ============
