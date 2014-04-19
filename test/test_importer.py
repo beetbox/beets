@@ -25,11 +25,10 @@ from mock import patch
 import _common
 from _common import unittest
 from helper import TestImportSession, TestHelper, has_program
-from beets import library
 from beets import importer
 from beets.mediafile import MediaFile
 from beets import autotag
-from beets.autotag import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch
+from beets.autotag import AlbumInfo, TrackInfo, AlbumMatch
 from beets import config
 
 
@@ -1100,113 +1099,6 @@ class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper):
         item.update(kwargs)
         item.store()
         return item
-
-
-class DuplicateCheckTest(_common.TestCase):
-    def setUp(self):
-        super(DuplicateCheckTest, self).setUp()
-
-        self.lib = library.Library(':memory:')
-        self.i = _common.item()
-        self.album = self.lib.add_album([self.i])
-
-    def _album_task(self, asis, artist=None, album=None, existing=False):
-        if existing:
-            item = self.i
-        else:
-            item = _common.item()
-        artist = artist or item.albumartist
-        album = album or item.album
-
-        task = importer.ImportTask(paths=['a path'], toppath='top path',
-                                   items=[item])
-        task.set_candidates(artist, album, None, None)
-        if asis:
-            task.set_choice(importer.action.ASIS)
-        else:
-            info = AlbumInfo(album, None, artist, None, None)
-            task.set_choice(AlbumMatch(0, info, {}, set(), set()))
-        return task
-
-    def _item_task(self, asis, artist=None, title=None, existing=False):
-        if existing:
-            item = self.i
-        else:
-            item = _common.item()
-        artist = artist or item.artist
-        title = title or item.title
-
-        task = importer.ImportTask.item_task(item)
-        if asis:
-            item.artist = artist
-            item.title = title
-            task.set_choice(importer.action.ASIS)
-        else:
-            task.set_choice(TrackMatch(0, TrackInfo(title, None, artist)))
-        return task
-
-    def test_duplicate_album_apply(self):
-        res = importer._duplicate_check(self.lib, self._album_task(False))
-        self.assertTrue(res)
-
-    def test_different_album_apply(self):
-        res = importer._duplicate_check(self.lib,
-                                        self._album_task(False, 'xxx', 'yyy'))
-        self.assertFalse(res)
-
-    def test_duplicate_album_asis(self):
-        res = importer._duplicate_check(self.lib, self._album_task(True))
-        self.assertTrue(res)
-
-    def test_different_album_asis(self):
-        res = importer._duplicate_check(self.lib,
-                                        self._album_task(True, 'xxx', 'yyy'))
-        self.assertFalse(res)
-
-    def test_duplicate_va_album(self):
-        self.album.albumartist = 'an album artist'
-        self.album.store()
-        res = importer._duplicate_check(
-            self.lib,
-            self._album_task(False, 'an album artist')
-        )
-        self.assertTrue(res)
-
-    def test_duplicate_item_apply(self):
-        res = importer._item_duplicate_check(self.lib,
-                                             self._item_task(False))
-        self.assertTrue(res)
-
-    def test_different_item_apply(self):
-        res = importer._item_duplicate_check(
-            self.lib,
-            self._item_task(False, 'xxx', 'yyy')
-        )
-        self.assertFalse(res)
-
-    def test_duplicate_item_asis(self):
-        res = importer._item_duplicate_check(self.lib,
-                                             self._item_task(True))
-        self.assertTrue(res)
-
-    def test_different_item_asis(self):
-        res = importer._item_duplicate_check(
-            self.lib,
-            self._item_task(True, 'xxx', 'yyy')
-        )
-        self.assertFalse(res)
-
-    def test_duplicate_album_existing(self):
-        res = importer._duplicate_check(self.lib,
-                                        self._album_task(False, existing=True))
-        self.assertFalse(res)
-
-    def test_duplicate_item_existing(self):
-        res = importer._item_duplicate_check(
-            self.lib,
-            self._item_task(False, existing=True)
-        )
-        self.assertFalse(res)
 
 
 class TagLogTest(_common.TestCase):
