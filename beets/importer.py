@@ -510,7 +510,8 @@ class ImportTask(object):
             if item is not None:
                 item.update(changes)
 
-    def manipulate_files(self, move=False, copy=False, write=False, session=None):
+    def manipulate_files(self, move=False, copy=False, write=False,
+                         session=None):
         items = self.imported_items()
         # Save the original paths of all items for deletion and pruning
         # in the next step (finalization).
@@ -549,9 +550,28 @@ class ImportTask(object):
         plugins.send('import_task_files', session=session, task=self)
 
     def add(self, lib):
-        """Add the items as an album to the library.
+        """Add the items as an album to the library and remove replaced items.
         """
-        self.album = lib.add_album(self.imported_items())
+        with lib.transaction():
+            self.remove_replaced(lib)
+            self.album = lib.add_album(self.imported_items())
+
+    def remove_replaced(self, lib):
+        """Removes all the items from the library that have the same
+        path as an item from this task.
+
+        Records the replaced items in the `replaced_items` dictionary
+        """
+        self.replaced_items = defaultdict(list)
+        for item in self.imported_items():
+            dup_items = lib.items(dbcore.query.BytesQuery('path', item.path))
+            self.replaced_items[item] = dup_items
+            for dup_item in dup_items:
+                log.debug('replacing item %i: %s' %
+                          (dup_item.id, displayable_path(item.path)))
+                dup_item.remove()
+        log.debug('%i of %i items replaced' % (len(self.replaced_items),
+                                               len(self.imported_items())))
 
     # Utilities.
 
@@ -639,8 +659,9 @@ class SingletonImportTask(ImportTask):
     duplicate_items = find_duplicates
 
     def add(self, lib):
-        lib.add(self.item)
-
+        with lib.transaction():
+            self.remove_replaced(lib)
+            lib.add(self.item)
 
     def infer_album_fields(self):
         raise NotImplementedError
@@ -1029,32 +1050,7 @@ def apply_choices(session):
         if task.is_album:
             task.infer_album_fields()
 
-        # Find existing item entries that these are replacing (for
-        # re-imports). Old album structures are automatically cleaned up
-        # when the last item is removed.
-        task.replaced_items = defaultdict(list)
-        for item in items:
-            dup_items = session.lib.items(
-                dbcore.query.BytesQuery('path', item.path)
-            )
-            for dup_item in dup_items:
-                task.replaced_items[item].append(dup_item)
-                log.debug('replacing item %i: %s' %
-                          (dup_item.id, displayable_path(item.path)))
-        log.debug('%i of %i items replaced' % (len(task.replaced_items),
-                                               len(items)))
-
-        # Add items -- before path changes -- to the library. We add the
-        # items now (rather than at the end) so that album structures
-        # are in place before calls to destination().
-        with session.lib.transaction():
-            # Remove old items.
-            for replaced in task.replaced_items.itervalues():
-                for item in replaced:
-                    item.remove()
-
-            # Add new ones.
-            task.add(session.lib)
+        task.add(session.lib)
 
 
 def plugin_stage(session, func):
