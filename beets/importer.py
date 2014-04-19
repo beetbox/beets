@@ -239,8 +239,6 @@ class ImportSession(object):
             if config['import']['autotag']:
                 stages += [lookup_candidates(self), item_query(self),
                            resolve_duplicates(self)]
-            else:
-                stages += [item_progress(self)]
         else:
             # Whole-album importer.
             if config['import']['group_albums']:
@@ -250,9 +248,9 @@ class ImportSession(object):
                 # Only look up and query the user when autotagging.
                 stages += [lookup_candidates(self), user_query(self),
                            resolve_duplicates(self)]
-            else:
-                # When not autotagging, just display progress.
-                stages += [show_progress(self)]
+
+        if not config['import']['autotag']:
+            stages += [import_asis(self)]
         stages += [apply_choices(self)]
         for stage_func in plugins.import_stages():
             stages.append(plugin_stage(self, stage_func))
@@ -922,10 +920,11 @@ def resolve_duplicates(session):
             recent.add(ident)
 
 
-def show_progress(session):
-    """This stage replaces the initial_lookup and user_query stages
-    when the importer is run without autotagging. It displays the album
-    name and artist as the files are added.
+def import_asis(session):
+    """Select the `action.ASIS` choice for all tasks.
+
+    This stage replaces the initial_lookup and user_query stages
+    when the importer is run without autotagging.
     """
     task = None
     while True:
@@ -1123,22 +1122,6 @@ def item_query(session):
         task.set_choice(choice)
         session.log_choice(task)
         plugins.send('import_task_choice', session=session, task=task)
-
-
-def item_progress(session):
-    """Skips the lookup and query stages in a non-autotagged singleton
-    import. Just shows progress.
-    """
-    task = None
-    log.info('Importing items:')
-    while True:
-        task = yield task
-        if task.should_skip():
-            continue
-
-        log.info(displayable_path(task.item.path))
-        task.set_null_candidates()
-        task.set_choice(action.ASIS)
 
 
 def group_albums(session):
