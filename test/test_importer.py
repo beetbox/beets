@@ -993,10 +993,12 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
     def test_remove_duplicate_album(self):
         item = self.lib.items().get()
         self.assertEqual(item.title, u't\xeftle 0')
+        self.assertTrue(os.path.isfile(item.path))
 
         self.importer.default_resolution = self.importer.Resolution.REMOVE
         self.importer.run()
 
+        self.assertFalse(os.path.isfile(item.path))
         self.assertEqual(len(self.lib.albums()), 1)
         self.assertEqual(len(self.lib.items()), 1)
         item = self.lib.items().get()
@@ -1063,10 +1065,12 @@ class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper):
     def test_remove_duplicate(self):
         item = self.lib.items().get()
         self.assertEqual(item.mb_trackid, u'old trackid')
+        self.assertTrue(os.path.isfile(item.path))
 
         self.importer.default_resolution = self.importer.Resolution.REMOVE
         self.importer.run()
 
+        self.assertFalse(os.path.isfile(item.path))
         self.assertEqual(len(self.lib.items()), 1)
         item = self.lib.items().get()
         self.assertEqual(item.mb_trackid, u'new trackid')
