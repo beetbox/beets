@@ -372,14 +372,24 @@ class ImportTask(object):
         """
         autotag.apply_metadata(self.match.info, self.match.mapping)
 
+    def duplicate_items(self, lib):
+        duplicate_items = []
+        for album in self.find_duplicates(lib):
+            duplicate_items += album.items()
+        return duplicate_items
+
     def do_remove_duplicates(self, lib):
         # TODO: Bad name. Resolve naming conflict.
-        if self.remove_duplicates:
-            for duplicate_path in self.duplicate_paths:
-                log.debug(u'deleting replaced duplicate %s' %
-                          util.displayable_path(duplicate_path))
-                util.remove(duplicate_path)
-                util.prune_dirs(os.path.dirname(duplicate_path),
+        duplicate_items = self.duplicate_items(lib)
+        log.debug('removing %i old duplicated items' %
+                  len(duplicate_items))
+        for item in duplicate_items:
+            item.remove()
+            if lib.directory in util.ancestry(item.path):
+                log.debug(u'deleting duplicate %s' %
+                          util.displayable_path(item.path))
+                util.remove(item.path)
+                util.prune_dirs(os.path.dirname(item.path),
                                 lib.directory)
 
     def finalize(self, session):
@@ -622,6 +632,8 @@ class SingletonImportTask(ImportTask):
             if other_item.path != self.item.path:
                 found_items.append(other_item)
         return found_items
+
+    duplicate_items = find_duplicates
 
     def infer_album_fields(self):
         raise NotImplementedError
@@ -1025,27 +1037,6 @@ def apply_choices(session):
         log.debug('%i of %i items replaced' % (len(task.replaced_items),
                                                len(items)))
 
-        # Find old items that should be replaced as part of a duplicate
-        # resolution.
-        duplicate_items = []
-        if task.remove_duplicates:
-            if task.is_album:
-                for album in task.find_duplicates(session.lib):
-                    duplicate_items += album.items()
-            else:
-                duplicate_items = task.find_duplicates(session.lib)
-            log.debug('removing %i old duplicated items' %
-                      len(duplicate_items))
-
-            # Delete duplicate files that are located inside the library
-            # directory.
-            task.duplicate_paths = []
-            for duplicate_path in [i.path for i in duplicate_items]:
-                if session.lib.directory in util.ancestry(duplicate_path):
-                    # Mark the path for deletion in the manipulate_files
-                    # stage.
-                    task.duplicate_paths.append(duplicate_path)
-
         # Add items -- before path changes -- to the library. We add the
         # items now (rather than at the end) so that album structures
         # are in place before calls to destination().
@@ -1054,8 +1045,6 @@ def apply_choices(session):
             for replaced in task.replaced_items.itervalues():
                 for item in replaced:
                     item.remove()
-            for item in duplicate_items:
-                item.remove()
 
             # Add new ones.
             if task.is_album:
@@ -1095,7 +1084,8 @@ def manipulate_files(session):
         if task.skip:
             continue
 
-        task.do_remove_duplicates(session.lib)
+        if task.remove_duplicates:
+            task.do_remove_duplicates(session.lib)
 
         task.manipulate_files(
             move=config['import']['move'],
