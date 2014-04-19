@@ -1039,6 +1039,75 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
         return importer
 
 
+class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self.setup_beets()
+
+        # Original file in library
+        self.add_item_fixture(artist=u'artist', title=u'title',
+                              mb_trackid='old trackid')
+
+        # Create duplicate through autotagger
+        self.match_track_patcher = patch('beets.autotag.mb.match_track')
+        self.match_track = self.match_track_patcher.start()
+        track_info = TrackInfo(
+            artist=u'artist',
+            title=u'title',
+            track_id=u'new trackid',
+        )
+        self.match_track.return_value = iter([track_info])
+
+        # Import session
+        self.importer = self.create_importer()
+        config['import']['autotag'] = True
+        config['import']['singletons'] = True
+
+    def tearDown(self):
+        self.match_track_patcher.stop()
+        self.teardown_beets()
+
+    def test_remove_duplicate(self):
+        item = self.lib.items().get()
+        self.assertEqual(item.mb_trackid, u'old trackid')
+
+        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.importer.run()
+
+        self.assertEqual(len(self.lib.items()), 1)
+        item = self.lib.items().get()
+        self.assertEqual(item.mb_trackid, u'new trackid')
+
+    def test_keep_duplicate(self):
+        self.assertEqual(len(self.lib.items()), 1)
+
+        self.importer.default_resolution = self.importer.Resolution.KEEPBOTH
+        self.importer.run()
+
+        self.assertEqual(len(self.lib.items()), 2)
+
+    def test_skip_duplicate(self):
+        item = self.lib.items().get()
+        self.assertEqual(item.mb_trackid, u'old trackid')
+
+        self.importer.default_resolution = self.importer.Resolution.SKIP
+        self.importer.run()
+
+        self.assertEqual(len(self.lib.items()), 1)
+        item = self.lib.items().get()
+        self.assertEqual(item.mb_trackid, u'old trackid')
+
+    def test_twice_in_import_dir(self):
+        self.skipTest('write me')
+
+    def add_item_fixture(self, **kwargs):
+        # Move this to TestHelper
+        item = self.add_item_fixtures()[0]
+        item.update(kwargs)
+        item.store()
+        return item
+
+
 class DuplicateCheckTest(_common.TestCase):
     def setUp(self):
         super(DuplicateCheckTest, self).setUp()
