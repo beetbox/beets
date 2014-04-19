@@ -18,10 +18,12 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets import config
 from beets import ui
+from beets import util
 import platform
-import subprocess
-import os
+import logging
 from tempfile import NamedTemporaryFile
+
+log = logging.getLogger('beets')
 
 
 def play_music(lib, opts, args):
@@ -30,7 +32,6 @@ def play_music(lib, opts, args):
     """
 
     command = config['play']['command'].get()
-    is_debug = config['play']['debug'].get()
 
     # If a command isn't set then let the OS decide how to open the playlist.
     if not command:
@@ -78,18 +79,12 @@ def play_music(lib, opts, args):
         m3u.write(item + '\n')
     m3u.close()
 
-    # Prevent player output from poluting our console(unless debug is on).
-    if not is_debug:
-        FNULL = open(os.devnull, 'w')
+    # Invoke the command and log the output.
+    output = util.command_output([command, m3u.name])
+    if output:
+        log.debug(u'Output of {0}: {1}'.format(command, output))
 
-        subprocess.Popen([command, m3u.name],
-                         stdout=FNULL, stderr=subprocess.STDOUT)
-
-        FNULL.close()
-    else:
-        subprocess.Popen([command, m3u.name])
-
-    ui.print_('Playing {0} {1}.'.format(len(paths), itemType))
+    ui.print_(u'Playing {0} {1}.'.format(len(paths), itemType))
 
 
 class PlayPlugin(BeetsPlugin):
@@ -99,16 +94,17 @@ class PlayPlugin(BeetsPlugin):
 
         config['play'].add({
             'command': None,
-            'debug': False
         })
 
     def commands(self):
         play_command = Subcommand(
             'play',
-            help='Send query results to music player as playlist.')
+            help='send music to a player as a playlist'
+        )
         play_command.parser.add_option(
             '-a', '--album',
             action='store_true', default=False,
-            help='Query and load albums(as folders) rather then tracks.')
+            help='query and load albums (as folders) rather than tracks'
+        )
         play_command.func = play_music
         return [play_command]
