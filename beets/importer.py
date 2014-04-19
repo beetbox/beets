@@ -241,6 +241,9 @@ class ImportSession(object):
             stages += [group_albums(self)]
         if config['import']['autotag']:
             # Only look up and query the user when autotagging.
+
+            # FIXME We should also resolve duplicates when not
+            # autotagging.
             stages += [lookup_candidates(self), user_query(self),
                        resolve_duplicates(self)]
         else:
@@ -983,11 +986,8 @@ def user_query(session):
 
         # As albums: group items by albums and create task for each album
         elif task.choice_flag is action.ALBUMS:
-            def emitter(task):
-                yield task
-
             ipl = pipeline.Pipeline([
-                emitter(task),
+                iter([task]),
                 group_albums(session),
                 lookup_candidates(session),
                 user_query(session)
