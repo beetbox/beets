@@ -15,5 +15,6 @@ command, you can use a ``play:`` section in your configuration file::
 
     play:
         command: /Applications/VLC.app/Contents/MacOS/VLC
-        # Debug(optional) displays output from player for aiding in setting up command correctly.
-        debug: True
+
+Enable beets' verbose logging to see the command's output if you need to
+debug.
