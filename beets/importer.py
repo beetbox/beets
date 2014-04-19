@@ -331,7 +331,7 @@ class ImportSession(object):
         if config['import']['singletons']:
             # Singleton importer.
             if config['import']['autotag']:
-                stages += [item_lookup(self), item_query(self)]
+                stages += [lookup_candidates(self), item_query(self)]
             else:
                 stages += [item_progress(self)]
         else:
@@ -341,7 +341,7 @@ class ImportSession(object):
                 stages += [group_albums(self)]
             if config['import']['autotag']:
                 # Only look up and query the user when autotagging.
-                stages += [initial_lookup(self), user_query(self)]
+                stages += [lookup_candidates(self), user_query(self)]
             else:
                 # When not autotagging, just display progress.
                 stages += [show_progress(self)]
@@ -515,6 +515,12 @@ class ImportTask(object):
         album = session.lib.get_album(self.album_id)
         plugins.send('album_imported', lib=session.lib, album=album)
 
+    def lookup_candidates(self):
+        """Retrieve and store candidates for this album.
+        """
+        self.set_candidates(*autotag.tag_album(self.items))
+
+
     # Utilities.
 
     def prune(self, filename):
@@ -538,6 +544,7 @@ class SingletonImportTask(ImportTask):
         super(SingletonImportTask, self).__init__(paths=[item.path])
         self.item = item
         self.is_album = False
+        self.paths = [item.path]
 
     def chosen_ident(self):
         assert self.choice_flag in (action.ASIS, action.APPLY)
@@ -576,6 +583,11 @@ class SingletonImportTask(ImportTask):
             return
         for item in self.imported_items():
             plugins.send('item_imported', lib=session.lib, item=item)
+
+    def lookup_candidates(self):
+        self.set_item_candidates(*autotag.tag_item(self.item))
+
+
 
 
 # FIXME The inheritance relationships are inverted. This is why there
@@ -826,7 +838,7 @@ def query_tasks(session):
             yield ImportTask(None, [album.item_dir()], items)
 
 
-def initial_lookup(session):
+def lookup_candidates(session):
     """A coroutine for performing the initial MusicBrainz lookup for an
     album. It accepts lists of Items and yields
     (items, cur_artist, cur_album, candidates, rec) tuples. If no match
@@ -839,11 +851,8 @@ def initial_lookup(session):
             continue
 
         plugins.send('import_task_start', session=session, task=task)
-
         log.debug('Looking up: %s' % displayable_path(task.paths))
-        task.set_candidates(
-            *autotag.tag_album(task.items)
-        )
+        task.lookup_candidates()
 
 
 def user_query(session):
@@ -882,7 +891,7 @@ def user_query(session):
 
             ipl = pipeline.Pipeline([
                 emitter(task),
-                item_lookup(session),
+                lookup_candidates(session),
                 item_query(session),
             ])
             task = pipeline.multiple(ipl.pull())
@@ -896,7 +905,7 @@ def user_query(session):
             ipl = pipeline.Pipeline([
                 emitter(task),
                 group_albums(session),
-                initial_lookup(session),
+                lookup_candidates(session),
                 user_query(session)
             ])
             task = pipeline.multiple(ipl.pull())
@@ -1100,21 +1109,6 @@ def finalize(session):
 
 
 # Singleton pipeline stages.
-
-def item_lookup(session):
-    """A coroutine used to perform the initial MusicBrainz lookup for
-    an item task.
-    """
-    task = None
-    while True:
-        task = yield task
-        if task.should_skip():
-            continue
-
-        plugins.send('import_task_start', session=session, task=task)
-
-        task.set_item_candidates(*autotag.tag_item(task.item))
-
 
 def item_query(session):
     """A coroutine that queries the user for input on single-item
