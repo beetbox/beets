@@ -1,5 +1,5 @@
-# This file is a plugin on beets.
-# Copyright (c) <2013> David Hamp-Gonsalves
+# This file is part of beets.
+# Copyright 2014, David Hamp-Gonsalves
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,10 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Sends the results of a query to the configured music player as a playlist.
+"""Send the results of a query to the configured music player as a playlist.
 """
-
-
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets import config
