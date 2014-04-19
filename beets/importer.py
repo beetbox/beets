@@ -377,7 +377,7 @@ class ImportTask(object):
         autotag.apply_metadata(self.match.info, self.match.mapping)
 
     def finalize(self, session):
-        """Move files, save progress and emit plugin event.
+        """Save items to library, save progress and emit plugin event.
         """
         # FIXME the session argument is unfortunate. It should be
         # present as an attribute of the task.
@@ -387,6 +387,12 @@ class ImportTask(object):
             self.save_progress()
         if config['import']['incremental']:
             self.save_history()
+
+        if not self.should_skip():
+            with session.lib.transaction():
+                for item in self.imported_items():
+                    item.store()
+
         self.cleanup()
         self._emit_imported(session)
 
@@ -493,6 +499,41 @@ class ImportTask(object):
         for item in self.items:
             if item is not None:
                 item.update(changes)
+
+    def manipulate_files(self, move=False, copy=False, write=False, session=None):
+        items = self.imported_items()
+        # Save the original paths of all items for deletion and pruning
+        # in the next step (finalization).
+        self.old_paths = [item.path for item in items]
+        for item in items:
+            if config['import']['move']:
+                # Just move the file.
+                item.move(False)
+            elif config['import']['copy']:
+                # If it's a reimport, move in-library files and copy
+                # out-of-library files. Otherwise, copy and keep track
+                # of the old path.
+                old_path = item.path
+                if self.replaced_items[item]:
+                    # This is a reimport. Move in-library files and copy
+                    # out-of-library files.
+                    if session.lib.directory in util.ancestry(old_path):
+                        item.move(False)
+                        # We moved the item, so remove the
+                        # now-nonexistent file from old_paths.
+                        self.old_paths.remove(old_path)
+                    else:
+                        item.move(True)
+                else:
+                    # A normal import. Just copy files and keep track of
+                    # old paths.
+                    item.move(True)
+
+            if config['import']['write'] and self.should_write_tags():
+                item.try_write()
+
+        plugins.send('import_task_files', session=session, task=self)
+
 
     # Utilities.
 
@@ -1058,45 +1099,12 @@ def manipulate_files(session):
                 util.prune_dirs(os.path.dirname(duplicate_path),
                                 session.lib.directory)
 
-        # Move/copy/write files.
-        items = task.imported_items()
-        # Save the original paths of all items for deletion and pruning
-        # in the next step (finalization).
-        task.old_paths = [item.path for item in items]
-        for item in items:
-            if config['import']['move']:
-                # Just move the file.
-                item.move(False)
-            elif config['import']['copy']:
-                # If it's a reimport, move in-library files and copy
-                # out-of-library files. Otherwise, copy and keep track
-                # of the old path.
-                old_path = item.path
-                if task.replaced_items[item]:
-                    # This is a reimport. Move in-library files and copy
-                    # out-of-library files.
-                    if session.lib.directory in util.ancestry(old_path):
-                        item.move(False)
-                        # We moved the item, so remove the
-                        # now-nonexistent file from old_paths.
-                        task.old_paths.remove(old_path)
-                    else:
-                        item.move(True)
-                else:
-                    # A normal import. Just copy files and keep track of
-                    # old paths.
-                    item.move(True)
-
-            if config['import']['write'] and task.should_write_tags():
-                item.try_write()
-
-        # Save new paths.
-        with session.lib.transaction():
-            for item in items:
-                item.store()
-
-        # Plugin event.
-        plugins.send('import_task_files', session=session, task=task)
+        task.manipulate_files(
+            move=config['import']['move'],
+            copy=config['import']['copy'],
+            write=config['import']['write'],
+            session=session,
+        )
 
 
 # TODO Get rid of this.
