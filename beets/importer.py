@@ -332,16 +332,12 @@ class ImportTask(object):
 
     # Logical decisions.
 
-    def should_write_tags(self):
-        """Should new info be written to the files' metadata?"""
-        if self.choice_flag == action.APPLY:
-            return True
-        elif self.choice_flag in (action.ASIS, action.TRACKS, action.SKIP):
-            return False
-        else:
-            assert False
+    @property
+    def apply(self):
+        return self.choice_flag == action.APPLY
 
-    def should_skip(self):
+    @property
+    def skip(self):
         return self.choice_flag == action.SKIP
 
     # Convenient data.
@@ -388,7 +384,7 @@ class ImportTask(object):
         if config['import']['incremental']:
             self.save_history()
 
-        if not self.should_skip():
+        if not self.skip:
             with session.lib.transaction():
                 for item in self.imported_items():
                     item.store()
@@ -401,7 +397,7 @@ class ImportTask(object):
         """
         # FIXME This shouldn't be here. Skipped tasks should be removed from
         # the pipeline.
-        if self.should_skip():
+        if self.skip:
             return
         items = self.imported_items()
 
@@ -422,7 +418,7 @@ class ImportTask(object):
     def _emit_imported(self, session):
         # FIXME This shouldn't be here. Skipped tasks should be removed from
         # the pipeline.
-        if self.should_skip():
+        if self.skip:
             return
         album = session.lib.get_album(self.album_id)
         plugins.send('album_imported', lib=session.lib, album=album)
@@ -529,7 +525,7 @@ class ImportTask(object):
                     # old paths.
                     item.move(True)
 
-            if config['import']['write'] and self.should_write_tags():
+            if config['import']['write'] and self.apply:
                 item.try_write()
 
         plugins.send('import_task_files', session=session, task=self)
@@ -593,7 +589,7 @@ class SingletonImportTask(ImportTask):
     def _emit_imported(self, session):
         # FIXME This shouldn't be here. Skipped tasks should be removed from
         # the pipeline.
-        if self.should_skip():
+        if self.skip:
             return
         for item in self.imported_items():
             plugins.send('item_imported', lib=session.lib, item=item)
@@ -654,7 +650,7 @@ class SentinelImportTask(ImportTask):
             # "Directory progress" sentinel for singletons
             progress_set(self.toppath, self.paths)
 
-    def should_skip(self):
+    def skip(self):
         return True
 
     def set_choice(self, choice):
@@ -879,7 +875,7 @@ def lookup_candidates(session):
     task = None
     while True:
         task = yield task
-        if task.should_skip():
+        if task.skip:
             continue
 
         plugins.send('import_task_start', session=session, task=task)
@@ -903,7 +899,7 @@ def user_query(session):
     task = None
     while True:
         task = yield task
-        if task.should_skip():
+        if task.skip:
             continue
 
         # Ask the user for a choice.
@@ -970,7 +966,7 @@ def import_asis(session):
     task = None
     while True:
         task = yield task
-        if task.should_skip():
+        if task.skip:
             continue
 
         log.info(displayable_path(task.paths))
@@ -987,7 +983,7 @@ def apply_choices(session):
     task = None
     while True:
         task = yield task
-        if task.should_skip():
+        if task.skip:
             continue
 
         items = task.imported_items()
@@ -997,7 +993,7 @@ def apply_choices(session):
             item.album_id = None
 
         # Change metadata.
-        if task.should_write_tags():
+        if task.apply:
             task.apply_metadata()
             plugins.send('import_task_apply', session=session, task=task)
 
@@ -1071,7 +1067,7 @@ def plugin_stage(session, func):
     task = None
     while True:
         task = yield task
-        if task.should_skip():
+        if task.skip:
             continue
         func(session, task)
 
@@ -1087,7 +1083,7 @@ def manipulate_files(session):
     task = None
     while True:
         task = yield task
-        if task.should_skip():
+        if task.skip:
             continue
 
         # Remove duplicate files marked for deletion.
@@ -1123,7 +1119,7 @@ def item_query(session):
     task = None
     while True:
         task = yield task
-        if task.should_skip():
+        if task.skip:
             continue
 
         choice = session.choose_item(task)
@@ -1142,7 +1138,7 @@ def group_albums(session):
     task = None
     while True:
         task = yield task
-        if task.should_skip():
+        if task.skip:
             continue
         tasks = []
         for _, items in itertools.groupby(task.items, group):
