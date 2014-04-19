@@ -372,6 +372,16 @@ class ImportTask(object):
         """
         autotag.apply_metadata(self.match.info, self.match.mapping)
 
+    def do_remove_duplicates(self, lib):
+        # TODO: Bad name. Resolve naming conflict.
+        if self.remove_duplicates:
+            for duplicate_path in self.duplicate_paths:
+                log.debug(u'deleting replaced duplicate %s' %
+                          util.displayable_path(duplicate_path))
+                util.remove(duplicate_path)
+                util.prune_dirs(os.path.dirname(duplicate_path),
+                                lib.directory)
+
     def finalize(self, session):
         """Save items to library, save progress and emit plugin event.
         """
@@ -1086,14 +1096,7 @@ def manipulate_files(session):
         if task.skip:
             continue
 
-        # Remove duplicate files marked for deletion.
-        if task.remove_duplicates:
-            for duplicate_path in task.duplicate_paths:
-                log.debug(u'deleting replaced duplicate %s' %
-                          util.displayable_path(duplicate_path))
-                util.remove(duplicate_path)
-                util.prune_dirs(os.path.dirname(duplicate_path),
-                                session.lib.directory)
+        task.do_remove_duplicates(session.lib)
 
         task.manipulate_files(
             move=config['import']['move'],
