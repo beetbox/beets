@@ -287,7 +287,8 @@ class ImportSession(object):
         if config['import']['singletons']:
             # Singleton importer.
             if config['import']['autotag']:
-                stages += [lookup_candidates(self), item_query(self)]
+                stages += [lookup_candidates(self), item_query(self),
+                           resolve_duplicates(self)]
             else:
                 stages += [item_progress(self)]
         else:
@@ -297,7 +298,8 @@ class ImportSession(object):
                 stages += [group_albums(self)]
             if config['import']['autotag']:
                 # Only look up and query the user when autotagging.
-                stages += [lookup_candidates(self), user_query(self)]
+                stages += [lookup_candidates(self), user_query(self),
+                           resolve_duplicates(self)]
             else:
                 # When not autotagging, just display progress.
                 stages += [show_progress(self)]
@@ -863,7 +865,6 @@ def user_query(session):
     acces to the choice via the ``taks.choice_flag`` property and may
     choose to change it.
     """
-    recent = set()
     task = None
     while True:
         task = yield task
@@ -890,10 +891,9 @@ def user_query(session):
                 item_query(session),
             ])
             task = pipeline.multiple(ipl.pull())
-            continue
 
         # As albums: group items by albums and create task for each album
-        if task.choice_flag is action.ALBUMS:
+        elif task.choice_flag is action.ALBUMS:
             def emitter(task):
                 yield task
 
@@ -904,14 +904,22 @@ def user_query(session):
                 user_query(session)
             ])
             task = pipeline.multiple(ipl.pull())
-            continue
 
-        # Check for duplicates if we have a match (or ASIS).
+
+def resolve_duplicates(session):
+    """Check if a task conflicts with items or albums already imported
+    and ask the session to resolve this.
+
+    Two separate stages have to be created for albums and singletons
+    since `chosen_ident()` returns different types of data.
+    """
+    task = None
+    recent = set()
+    while True:
+        task = yield task
+
         if task.choice_flag in (action.ASIS, action.APPLY):
             ident = task.chosen_ident()
-            # The "recent" set keeps track of identifiers for recently
-            # imported albums -- those that haven't reached the database
-            # yet.
             if ident in recent or task.find_duplicates(session.lib):
                 session.resolve_duplicate(task)
                 session.log_choice(task, True)
@@ -984,7 +992,7 @@ def apply_choices(session):
                 for album in task.find_duplicates(session.lib):
                     duplicate_items += album.items()
             else:
-                duplicate_items = task.find_dupliates(session.lib)
+                duplicate_items = task.find_duplicates(session.lib)
             log.debug('removing %i old duplicated items' %
                       len(duplicate_items))
 
@@ -1110,7 +1118,6 @@ def item_query(session):
     lookups.
     """
     task = None
-    recent = set()
     while True:
         task = yield task
         if task.should_skip():
@@ -1120,14 +1127,6 @@ def item_query(session):
         task.set_choice(choice)
         session.log_choice(task)
         plugins.send('import_task_choice', session=session, task=task)
-
-        # Duplicate check.
-        if task.choice_flag in (action.ASIS, action.APPLY):
-            ident = task.chosen_ident()
-            if ident in recent or task.find_duplicates(session.lib):
-                session.resolve_duplicate(task)
-                session.log_choice(task, True)
-            recent.add(ident)
 
 
 def item_progress(session):
