@@ -283,15 +283,6 @@ class ImportTask(object):
         self.remove_duplicates = False
         self.is_album = True
 
-    def set_candidates(self, cur_artist, cur_album, candidates, rec):
-        """Sets the candidates for this album matched by the
-        `autotag.tag_album` method.
-        """
-        self.cur_artist = cur_artist
-        self.cur_album = cur_album
-        self.candidates = candidates
-        self.rec = rec
-
     def set_null_candidates(self):
         """Set the candidates to indicate no album match was found.
         """
@@ -299,9 +290,6 @@ class ImportTask(object):
         self.cur_album = None
         self.candidates = None
         self.rec = None
-
-    def set_item_candidates(self, candidates, rec):
-        raise NotImplementedError
 
     def set_choice(self, choice):
         """Given an AlbumMatch or TrackMatch object or an action constant,
@@ -439,7 +427,11 @@ class ImportTask(object):
     def lookup_candidates(self):
         """Retrieve and store candidates for this album.
         """
-        self.set_candidates(*autotag.tag_album(self.items))
+        artist, album, candidates, recommendation = autotag.tag_album(self.items)
+        self.cur_artist = artist
+        self.cur_album = album
+        self.candidates = candidates
+        self.rec = recommendation
 
     def find_duplicates(self, lib):
         """Return a list of albums from `lib` with the same artist and
@@ -622,15 +614,6 @@ class SingletonImportTask(ImportTask):
         # TODO we should also save history for singletons
         pass
 
-    def set_item_candidates(self, candidates, rec):
-        """Set the match for a single-item task."""
-        assert self.item is not None
-        self.candidates = candidates
-        self.rec = rec
-
-    def set_candidates(self, cur_artist, cur_album, candidates, rec):
-        raise NotImplementedError
-
     def apply_metadata(self):
         autotag.apply_item_metadata(self.item, self.match.info)
 
@@ -643,7 +626,9 @@ class SingletonImportTask(ImportTask):
             plugins.send('item_imported', lib=session.lib, item=item)
 
     def lookup_candidates(self):
-        self.set_item_candidates(*autotag.tag_item(self.item))
+        candidates, recommendation = autotag.tag_item(self.item)
+        self.candidates = candidates
+        self.rec = recommendation
 
     def find_duplicates(self, lib):
         """Return a list of items from `lib` that have the same artist
@@ -716,9 +701,6 @@ class SentinelImportTask(ImportTask):
         return True
 
     def set_choice(self, choice):
-        raise NotImplementedError
-
-    def set_candidates(self, cur_artist, cur_album, candidates, rec):
         raise NotImplementedError
 
     def cleanup(self, session):

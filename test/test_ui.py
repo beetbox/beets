@@ -473,32 +473,6 @@ class PrintTest(_common.TestCase):
                 del os.environ['LC_CTYPE']
 
 
-class AutotagTest(_common.TestCase):
-    def setUp(self):
-        super(AutotagTest, self).setUp()
-        self.io.install()
-
-    def _no_candidates_test(self, result):
-        task = importer.ImportTask(
-            'toppath',
-            'path',
-            [_common.item()],
-        )
-        task.set_candidates('artist', 'album', [], autotag.Recommendation.none)
-        session = _common.import_session(cli=True)
-        res = session.choose_match(task)
-        self.assertEqual(res, result)
-        self.assertTrue('No match' in self.io.getoutput())
-
-    def test_choose_match_with_no_candidates_skip(self):
-        self.io.addinput('s')
-        self._no_candidates_test(importer.action.SKIP)
-
-    def test_choose_match_with_no_candidates_asis(self):
-        self.io.addinput('u')
-        self._no_candidates_test(importer.action.ASIS)
-
-
 class ImportTest(_common.TestCase):
     def test_quiet_timid_disallowed(self):
         config['import']['quiet'] = True
