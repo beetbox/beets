@@ -155,12 +155,14 @@ class ImportSession(object):
         if self.paths:
             self.paths = map(normpath, self.paths)
 
-    def _amend_config(self):
-        """Make implied changes the importer configuration.
+    def set_config(self, config):
+        """Set `config` property from global import config and make
+        implied changes.
         """
         # FIXME: Maybe this function should not exist and should instead
         # provide "decision wrappers" like "should_resume()", etc.
-        iconfig = config['import']
+        iconfig = dict(config)
+        self.config = iconfig
 
         # Incremental and progress are mutually exclusive.
         if iconfig['incremental']:
@@ -180,7 +182,7 @@ class ImportSession(object):
         if not iconfig['copy']:
             iconfig['delete'] = False
 
-        self.want_resume = iconfig['resume'].as_choice([True, False, 'ask'])
+        self.want_resume = config['resume'].as_choice([True, False, 'ask'])
 
     def tag_log(self, status, paths):
         """Log a message about a given album to logfile. The status should
@@ -227,7 +229,7 @@ class ImportSession(object):
     def run(self):
         """Run the import task.
         """
-        self._amend_config()
+        self.set_config(config['import'])
 
         # Set up the pipeline.
         if self.query is None:
@@ -235,11 +237,11 @@ class ImportSession(object):
         else:
             stages = [query_tasks(self)]
 
-        if config['import']['group_albums'] and \
-           not config['import']['singletons']:
+        if self.config['group_albums'] and \
+           not self.config['singletons']:
             # Split directory tasks into one task for each album
             stages += [group_albums(self)]
-        if config['import']['autotag']:
+        if self.config['autotag']:
             # Only look up and query the user when autotagging.
 
             # FIXME We should also resolve duplicates when not
@@ -398,13 +400,13 @@ class ImportTask(object):
         # Update progress.
         if session.want_resume:
             self.save_progress()
-        if config['import']['incremental']:
+        if session.config['incremental']:
             self.save_history()
 
-        self.cleanup()
+        self.cleanup(session)
         self._emit_imported(session)
 
-    def cleanup(self):
+    def cleanup(self, session):
         """Remove and prune imported paths.
         """
         # FIXME This shouldn't be here. Skipped tasks should be removed from
@@ -414,7 +416,7 @@ class ImportTask(object):
         items = self.imported_items()
 
         # When copying and deleting originals, delete old files.
-        if config['import']['copy'] and config['import']['delete']:
+        if session.config['copy'] and session.config['delete']:
             new_paths = [os.path.realpath(item.path) for item in items]
             for old_path in self.old_paths:
                 # Only delete files that were actually copied.
@@ -423,7 +425,7 @@ class ImportTask(object):
                     self.prune(old_path)
 
         # When moving, prune empty directories containing the original files.
-        elif config['import']['move']:
+        elif session.config['move']:
             for old_path in self.old_paths:
                 self.prune(old_path)
 
@@ -514,10 +516,10 @@ class ImportTask(object):
         # in the next step (finalization).
         self.old_paths = [item.path for item in items]
         for item in items:
-            if config['import']['move']:
+            if session.config['move']:
                 # Just move the file.
                 item.move(False)
-            elif config['import']['copy']:
+            elif session.config['copy']:
                 # If it's a reimport, move in-library files and copy
                 # out-of-library files. Otherwise, copy and keep track
                 # of the old path.
@@ -537,7 +539,7 @@ class ImportTask(object):
                     # old paths.
                     item.move(True)
 
-            if config['import']['write'] and self.apply:
+            if session.config['write'] and self.apply:
                 item.try_write()
 
         with session.lib.transaction():
@@ -719,7 +721,7 @@ class SentinelImportTask(ImportTask):
     def set_candidates(self, cur_artist, cur_album, candidates, rec):
         raise NotImplementedError
 
-    def cleanup(self):
+    def cleanup(self, session):
         pass
 
     def _emit_imported(self, session):
@@ -773,7 +775,7 @@ class ArchiveImportTask(SentinelImportTask):
 
         return cls._handlers
 
-    def cleanup(self):
+    def cleanup(self, session):
         """Removes the temporary directory the archive was extracted to.
         """
         if self.extracted:
@@ -805,7 +807,7 @@ def read_tasks(session):
     import, yields single-item tasks instead.
     """
     # Look for saved incremental directories.
-    if config['import']['incremental']:
+    if session.config['incremental']:
         incremental_skipped = 0
         history_dirs = history_get()
 
@@ -813,7 +815,7 @@ def read_tasks(session):
         # Extract archives.
         archive_task = None
         if ArchiveImportTask.is_archive(syspath(toppath)):
-            if not (config['import']['move'] or config['import']['copy']):
+            if not (session.config['move'] or session.config['copy']):
                 log.warn("Archive importing requires either "
                          "'copy' or 'move' to be enabled.")
                 continue
@@ -839,14 +841,14 @@ def read_tasks(session):
                     util.displayable_path(toppath)
                 ))
                 continue
-            if config['import']['singletons']:
+            if session.config['singletons']:
                 yield SingletonImportTask(item)
             else:
                 yield ImportTask(toppath, [toppath], [item])
             continue
 
         # A flat album import merges all items into one album.
-        if config['import']['flat'] and not config['import']['singletons']:
+        if session.config['flat'] and not session.config['singletons']:
             all_items = []
             for _, items in autotag.albums_in_dir(toppath):
                 all_items += items
@@ -879,7 +881,7 @@ def read_tasks(session):
                 continue
 
             # When incremental, skip paths in the history.
-            if config['import']['incremental'] \
+            if session.config['incremental'] \
                and tuple(paths) in history_dirs:
                 log.debug(u'Skipping previously-imported path: %s' %
                           displayable_path(paths))
@@ -887,7 +889,7 @@ def read_tasks(session):
                 continue
 
             # Yield all the necessary tasks.
-            if config['import']['singletons']:
+            if session.config['singletons']:
                 for item in items:
                     yield SingletonImportTask(item)
                 yield SentinelImportTask(toppath, paths)
@@ -902,7 +904,7 @@ def read_tasks(session):
             yield archive_task
 
     # Show skipped directories.
-    if config['import']['incremental'] and incremental_skipped:
+    if session.config['incremental'] and incremental_skipped:
         log.info(u'Incremental import: skipped %i directories.' %
                  incremental_skipped)
 
@@ -912,7 +914,7 @@ def query_tasks(session):
     Instead of finding files from the filesystem, a query is used to
     match items from the library.
     """
-    if config['import']['singletons']:
+    if session.config['singletons']:
         # Search for items.
         for item in session.lib.items(session.query):
             yield SingletonImportTask(item)
@@ -1078,9 +1080,9 @@ def manipulate_files(session, task):
         task.do_remove_duplicates(session.lib)
 
     task.manipulate_files(
-        move=config['import']['move'],
-        copy=config['import']['copy'],
-        write=config['import']['write'],
+        move=session.config['move'],
+        copy=session.config['copy'],
+        write=session.config['write'],
         session=session,
     )
 
