@@ -38,6 +38,7 @@ import subprocess
 from tempfile import mkdtemp, mkstemp
 from contextlib import contextmanager
 from StringIO import StringIO
+from enum import Enum
 
 import beets
 from beets import config
@@ -199,7 +200,14 @@ class TestHelper(object):
                 dest = os.path.join(album_dir, '{0}.mp3'.format(title))
                 shutil.copy(src, dest)
                 mediafile = MediaFile(dest)
-                mediafile.update({'title': title, 'album': album})
+                mediafile.update({
+                    'artist': 'artist',
+                    'albumartist': 'album artist',
+                    'title': title,
+                    'album': album,
+                    'mb_albumid': None,
+                    'mb_trackid': None,
+                })
                 mediafile.save()
 
         config['import']['quiet'] = True
@@ -231,8 +239,8 @@ class TestHelper(object):
         path = os.path.join(_common.RSRC, 'full.mp3')
         for i in range(track_count):
             item = Item.from_path(str(path))
-            item.album = u'\xc3\xa4lbum'  # Check unicode paths
-            item.title = u't\xc3\x8ftle {0}'.format(i)
+            item.album = u'\u00e4lbum'  # Check unicode paths
+            item.title = u't\u00eftle {0}'.format(i)
             item.add(self.lib)
             item.move(copy=True)
             item.store()
@@ -299,6 +307,7 @@ class TestImportSession(importer.ImportSession):
     def __init__(self, *args, **kwargs):
         super(TestImportSession, self).__init__(*args, **kwargs)
         self._choices = []
+        self._resolutions = []
 
     default_choice = importer.action.APPLY
 
@@ -322,6 +331,25 @@ class TestImportSession(importer.ImportSession):
             return choice
 
     choose_item = choose_match
+
+    Resolution = Enum('Resolution', 'REMOVE SKIP KEEPBOTH')
+
+    default_resolution = 'REMOVE'
+
+    def add_resolution(self, resolution):
+        assert isinstance(resolution, self.Resolution)
+        self._resolutions.append(resolution)
+
+    def resolve_duplicate(self, task):
+        try:
+            res = self._resolutions.pop(0)
+        except IndexError:
+            res = self.default_resolution
+
+        if res == self.Resolution.SKIP:
+            task.set_choice(importer.action.SKIP)
+        elif res == self.Resolution.REMOVE:
+            task.remove_duplicates = True
 
 
 def generate_album_info(album_id, track_ids):
