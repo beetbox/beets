@@ -119,7 +119,8 @@ class FtInTitlePlugin(BeetsPlugin):
             'drop_feat': False
         })
 
-        self._command = ui.Subcommand('ftintitle',
+        self._command = ui.Subcommand(
+            'ftintitle',
             help='move featured artists to the title field')
 
         self._command.parser.add_option(
