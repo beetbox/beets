@@ -48,7 +48,7 @@ def contains_feat(title):
     ))
 
 
-def update_metadata(item, feat_part, drop):
+def update_metadata(item, feat_part, drop_feat):
     """Choose how to add new artists to the title and set the new
     metadata. Also, print out messages about any changes that are made.
     """
@@ -61,13 +61,13 @@ def update_metadata(item, feat_part, drop):
 
     # Only update the title if it does not already contain a featured
     # artist and if we do not drop featuring information.
-    if not drop and not contains_feat(item.title):
+    if not drop_feat and not contains_feat(item.title):
         new_title = u"{0} feat. {1}".format(item.title, feat_part)
         ui.print_(u'title: {0} -> {1}'.format(item.title, new_title))
         item.title = new_title
 
 
-def ft_in_title(item, drop):
+def ft_in_title(item, drop_feat):
     """Look for featured artists in the item's artist fields and move
     them to the title.
     """
@@ -104,7 +104,7 @@ def ft_in_title(item, drop):
 
         # If we have a featuring artist, move it to the title.
         if feat_part:
-            update_metadata(item, feat_part, drop)
+            update_metadata(item, feat_part, drop_feat)
         else:
             ui.print_(u'no featuring artists found')
 
@@ -112,19 +112,34 @@ def ft_in_title(item, drop):
 
 
 class FtInTitlePlugin(BeetsPlugin):
+    def __init__(self):
+        super(FtInTitlePlugin, self).__init__()
+
+        self.config.add({
+            'drop_feat': False
+        })
+
+        self._command = ui.Subcommand('ftintitle',
+                                        help='move featured artists to'
+                                        ' the title field')
+
+        self._command.parser.add_option('-d', '--drop', dest='drop_feat',
+                                        action='store_true', default=False,
+                                        help='drop featuring from artists'
+                                        ' and ignore title update')
+
     def commands(self):
-        cmd = ui.Subcommand('ftintitle',
-                            help='move featured artists to the title field')
-        cmd.parser.add_option('-d', '--drop', dest='drop_feat',
-                              action='store_true', default=False,
-                              help='drop featuring from artist (ignore title update)')
+
         def func(lib, opts, args):
+            self.config.set_args(opts)
+            drop_feat = self.config['drop_feat'].get(bool)
             write = config['import']['write'].get(bool)
+
             for item in lib.items(ui.decargs(args)):
-                ft_in_title(item, opts.drop_feat)
+                ft_in_title(item, drop_feat)
                 item.store()
                 if write:
                     item.try_write()
 
-        cmd.func = func
-        return [cmd]
+        self._command.func = func
+        return [self._command]
