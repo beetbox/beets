@@ -264,7 +264,7 @@ class ConvertPlugin(BeetsPlugin):
                     u'extension': u'm4a',
                 },
                 u'flac': {
-                    u'command': u'ffmpeg -i $source -y -acodec flac $dest',
+                    u'command': u'ffmpeg -i $source -y -acodec flac -vn $dest',
                     u'extension': u'flac',
                 },
                 u'mp3': {
