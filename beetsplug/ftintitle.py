@@ -120,13 +120,12 @@ class FtInTitlePlugin(BeetsPlugin):
         })
 
         self._command = ui.Subcommand('ftintitle',
-                                        help='move featured artists to'
-                                        ' the title field')
+            help='move featured artists to the title field')
 
-        self._command.parser.add_option('-d', '--drop', dest='drop_feat',
-                                        action='store_true', default=False,
-                                        help='drop featuring from artists'
-                                        ' and ignore title update')
+        self._command.parser.add_option(
+            '-d', '--drop', dest='drop_feat',
+            action='store_true', default=False,
+            help='drop featuring from artists and ignore title update')
 
     def commands(self):
 
