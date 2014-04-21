@@ -22,7 +22,6 @@ import urllib
 import json
 import unicodedata
 import difflib
-import string
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -306,13 +305,14 @@ def sanitize_lyrics(text):
 
     return text
 
+
 def remove_credits(text):
     """Remove first/last line of text if it contains the word 'lyrics'
     eg 'Lyrics by songsdatabase.com'
     """
     textlines = text.split('\n')
     credits = None
-    for i in (0,-1):
+    for i in (0, -1):
         if textlines and 'lyrics' in textlines[i].lower():
             credits = textlines.pop(i)
     if credits:
@@ -343,7 +343,8 @@ def is_lyrics(text, artist=None):
         badTriggersOcc += [artist]
 
     for item in badTriggers:
-        badTriggersOcc += [item] * len(re.findall(r'\W%s\W' % item, text, re.I))
+        badTriggersOcc += [item] * len(re.findall(r'\W%s\W' % item,
+                                                  text, re.I))
 
     if badTriggersOcc:
         log.debug('Bad triggers detected: %s' % badTriggersOcc)
