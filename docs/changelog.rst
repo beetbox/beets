@@ -21,8 +21,8 @@ Fixes:
   non-ASCII characters.
 * The ``%if{}`` template function now appropriately interprets the condition
   as false when it contains the string "false". Thanks to Ayberk Yilmaz.
-* :doc:`/plugins/convert`: Disable a potential video stream in flac files
-  conversion with ffmpeg
+* :doc:`/plugins/convert`: Fix conversion for files that include a video
+  stream by ignoring it.
 
 
 1.3.5 (April 15, 2014)

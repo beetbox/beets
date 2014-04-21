@@ -255,34 +255,34 @@ class ConvertPlugin(BeetsPlugin):
             u'format': u'mp3',
             u'formats': {
                 u'aac': {
-                    u'command': u'ffmpeg -i $source -y -acodec libfaac '
+                    u'command': u'ffmpeg -i $source -y -vn -acodec libfaac '
                                 u'-aq 100 $dest',
                     u'extension': u'm4a',
                 },
                 u'alac': {
-                    u'command': u'ffmpeg -i $source -y -acodec alac $dest',
+                    u'command': u'ffmpeg -i $source -y -vn -acodec alac $dest',
                     u'extension': u'm4a',
                 },
                 u'flac': {
-                    u'command': u'ffmpeg -i $source -y -acodec flac -vn $dest',
+                    u'command': u'ffmpeg -i $source -y -vn -acodec flac $dest',
                     u'extension': u'flac',
                 },
                 u'mp3': {
-                    u'command': u'ffmpeg -i $source -y -aq 2 $dest',
+                    u'command': u'ffmpeg -i $source -y -vn -aq 2 $dest',
                     u'extension': u'mp3',
                 },
                 u'opus': {
-                    u'command': u'ffmpeg -i $source -y -acodec libopus -vn '
+                    u'command': u'ffmpeg -i $source -y -vn -acodec libopus '
                                 u'-ab 96k $dest',
                     u'extension': u'opus',
                 },
                 u'ogg': {
-                    u'command': u'ffmpeg -i $source -y -acodec libvorbis -vn '
+                    u'command': u'ffmpeg -i $source -y -vn -acodec libvorbis '
                                 u'-aq 2 $dest',
                     u'extension': u'ogg',
                 },
                 u'windows media': {
-                    u'command': u'ffmpeg -i $source -y -acodec wmav2 '
+                    u'command': u'ffmpeg -i $source -y -vn -acodec wmav2 '
                                 u'-vn $dest',
                     u'extension': u'wma',
                 },
