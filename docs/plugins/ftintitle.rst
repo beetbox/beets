@@ -17,4 +17,7 @@ To use the plugin, just enable it and run the command::
 The query is optional; if it's left off, the transformation will be applied to
 your entire collection.
 
+The ``-d`` option drop only featuring information from the ``artist`` field. The
+``title`` field will not be updated.
+
 .. _MusicBrainz style: http://musicbrainz.org/doc/Style
