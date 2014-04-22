@@ -1,0 +1,812 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd">
+<html lang="en" xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Lilly Wood & The Prick - Hey It's Ok Lyrics</title>
+<link href="/files/aa2.css" type=text/css rel=stylesheet>
+<meta name="description" content="Lilly Wood & The Prick Hey It's Ok Lyrics. Hey It's Ok lyrics performed by Lilly Wood & The Prick: Mama, Papa, please forget the times <br />
+I wet my bed <br />
+I swear not to do it again <br />
+Please forgive the way I looked <br />
+" />
+<meta name="keywords" content="hey it's ok,lilly wood & the prick,lyrics,words,song" />
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+<meta name="language" content="en" />
+    <meta property="og:title" content="Lilly Wood & The Prick - Hey It's Ok Lyrics"/>
+    <meta property="og:type" content="song"/>
+    <meta property="og:url" content="http://www.lyricsmania.com/hey_its_ok_lyrics_lilly_wood_and_the_prick.html"/>  
+    <meta property="og:site_name" content="www.lyricsmania.com"/>
+    <meta property="og:description" content="Lilly Wood & The Prick Hey It's Ok Lyrics. Hey It's Ok lyrics performed by Lilly Wood & The Prick: Mama, Papa, please forget the times <br />
+I wet my bed <br />
+I swear not to do it again <br />
+Please forgive the way I looked <br />
+">
+    <meta property="og:language" content="en"/>
+    <meta property="fb:admins" content="100001599431689" />
+<meta http-equiv="expires" content="0" />
+<meta name="classification" content="Lilly Wood & The Prick lyrics" />
+<link href="http://www.lyricsmania.com/xml/last100album.xml" rel="alternate" type="application/rss+xml" title="Last 100 Albums" />
+<link href="http://www.lyricsmania.com/xml/last100artists.xml" rel="alternate" type="application/rss+xml" title="Last 100 Artists" />
+<link href="http://www.lyricsmania.com/xml/last100lyrics.xml" rel="alternate" type="application/rss+xml" title="Last 150 Lyrics" />
+<script type="text/javascript" src="/js/lm_js.js"></script>
+<script type="text/javascript" src="http://partner.googleadservices.com/gampad/google_service.js">
+</script>
+<script type="text/javascript">
+GS_googleAddAdSenseService("ca-pub-3687873374834629");
+GS_googleEnableAllServices();
+</script>
+<script type="text/javascript">
+GA_googleUseIframeRendering();
+GA_googleAddAttr("j_title", "Hey It's Ok");
+GA_googleAddAttr("j_artist", "Lilly Wood & The Prick");
+</script>
+<link rel="image_src" href="/files/toplogo4.jpg" />
+<script language="javascript" type="text/javascript" src="/copy.js"></script>
+<script type="text/javascript" src="https://apis.google.com/js/plusone.js">
+    {lang: 'en'}
+</script>
+<link rel="canonical" href="http://www.lyricsmania.com/hey_its_ok_lyrics_lilly_wood_and_the_prick.html">
+               
+<link rel="alternate" hreflang="it" href="http://www.testimania.com/" />
+<link rel="alternate" hreflang="es" href="http://www.letrasmania.com/" />        
+<link rel="alternate" hreflang="fr" href="http://www.parolesmania.com/" />
+<link rel="alternate" hreflang="de" href="http://www.songtextemania.com/" />
+
+<script type="text/javascript">
+window.___gcfg = {lang: 'en'};
+(function() 
+{var po = document.createElement("script");
+po.type = "text/javascript"; po.async = true;po.src = "https://apis.google.com/js/plusone.js";
+var s = document.getElementsByTagName("script")[0];
+s.parentNode.insertBefore(po, s);
+})();</script>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-435431-1']);
+  _gaq.push(['_setDomainName', 'lyricsmania.com']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+<script>
+cf_page_artist = "Lilly Wood & The Prick";
+cf_page_song = "Hey It's Ok";
+cf_page_genre = "";
+cf_adunit_id = "39381134";
+cf_flex = true;
+</script>
+<script src="//srv.clickfuse.com/showads/showad.php"></script>
+<script type="text/javascript">
+    function toolbar(id_el,id_eldue) {
+        el = document.getElementById(id_el);
+        eldue = document.getElementById(id_eldue);
+        _display = (el.style.display);
+        if (_display == "none") {
+            eldue.style.bottom = "-60px";
+            eldue.style.display = "none";
+            el.style.display = "block";
+            setTimeout(function(){slide(el)},2);
+        }
+        else {
+            el.style.display = "none";
+            eldue.style.display = "block";
+        }
+    }
+    function slide(id_el) { 
+        if(!id_el.id) {
+            el = document.getElementById(id_el);
+        }
+        _bottom = parseInt(el.style.bottom);
+        if (_bottom < '0') {
+            el.style.bottom = (_bottom+2)+"px";
+            setTimeout(function(){slide(id_el)},5);
+        }
+    }
+</script>
+<script type='text/javascript' language='javascript'>
+var cw = 1003; // specify content width
+var cp = 10; // specify the content padding if desired
+try{
+var s=document.createElement('script');
+s.id='specific_rome_js';
+s.type='text/javascript';
+s.src='http://rome.specificclick.net/rome/rome.js?l=31116&t=j&cw='+cw+'&cp='+cp;
+document.body.appendChild(s);
+}catch(e){}
+</script></head>
+<body id=page_bg>
+
+<h1>Hey It's Ok Lyrics</h1>
+<div class=center align=center style="margin-bottom: 49px;">
+<!-- Inizio Header -->
+<div id=aa>
+ <div id=aa1><a href="/" title="lyrics"><img src="/blank.gif" alt="lyrics" border="0" height="95" width="242"></a></div>
+ <div id=aa2>
+<script type="text/javascript"><!--
+google_ad_client = "ca-pub-4710666039840396";
+google_ad_slot = "4552504620/6029212500";
+google_ad_width = 728;
+google_ad_height = 90;
+//-->
+</script>
+<script type="text/javascript"
+src="//pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+ </div>
+ <div id=aa3></div>
+</div>
+<!-- Fine Header -->
+
+<div class=clr></div>
+
+<div id=sx>
+<div id=dx>
+
+<div id=tabs>
+ <div id=tabssx>
+  <div id=tabsdx>
+   <div id=tabber>
+    <ul>
+<li class=blue><a href="http://www.lyricsmania.com/">Lyrics</a></li>
+<li class=blue><a href="/soundtrackslyrics.html">Soundtrack Lyrics</a></li>
+<li class=blue><a href="/topartists.html">Top 100 Artists</a></li>
+<li class=blue><a href="/toplyrics.html">Top 100 Lyrics</a></li>
+<li class=blue><a href="/last100artists.html">Last 100 artists</a></li>
+<li class=blue><a href="/last100album.html">Last 100 albums</a></li>
+<li class=blue><a href="/add.html">Submit Lyrics</a></li>
+
+<li>
+<form class="logina" action="http://my.lyricsmania.com/login.php?destpage=/hey_its_ok_lyrics_lilly_wood_and_the_prick.html">
+<input class="formino" type="text" name="username" size="9" maxlength="18"  value="Username" onFocus="if(this.value == 'Username') {this.value = '';}" onBlur="if (this.value == '') {this.value = 'Username';}" />
+<input class="formino" type="password" name="password" size="9" maxlength="18" value="Password" onFocus="if(this.value == 'Password') {this.value = '';}" onBlur="if (this.value == '') {this.value = 'Password';}" />
+<input class="loginb" type="submit" value="Login"> or 
+</form>
+</li>
+<li class=beige><a href="http://my.lyricsmania.com/signup.html">Signup</a> </li>
+    </ul>
+   </div>
+  </div>
+ </div>
+</div>
+<div class=clr></div>
+
+<!-- Inizio Blocco Contenuti -->
+<div id=topmodule></div>
+<div id=whitebox>
+<div id=whitebox_t>
+<div id=whitebox_tl>
+<div id=whitebox_tr></div></div></div>
+<div id=whitebox_m>
+<div id=area>
+
+<div id=maincolumn2>
+
+<div id=albums>
+
+    <table cellpadding="2" cellspacing="0" width="100%">
+     <tr>
+      <td align=center>
+<table>
+<tr>
+<td>
+<form action="/searchnew.php">
+ <input id="s" type="text" name="k" onclick="if (this.value == 'Find Artist and/or Lyrics') this.value=''" value="Find Artist and/or Lyrics" onblur="if(this.value == '') this.value='Find Artist and/or Lyrics'" value="" style="margin:0;padding-left:2px;color:#35456e;font-size:22px;text-weight:bold;width:380px;height:30px;border: 2px solid #35456e;">
+</td>
+<td>
+ <input type="image" src="/sbut.png" value="Search!">
+</td>
+</tr>
+</table>
+</form>   </td>
+     </tr>
+     <tr>
+      <td noWrap align=center>
+<font style="color:#1b57b1; font-size: 1.0em !important;">Browse :</font> 
+<a href="/lyrics/num.html">0-9</a> 
+<a href="/lyrics/A.html">A</a> 
+<a href="/lyrics/B.html">B</a> 
+<a href="/lyrics/C.html">C</a> 
+<a href="/lyrics/D.html">D</a> 
+<a href="/lyrics/E.html">E</a> 
+<a href="/lyrics/F.html">F</a> 
+<a href="/lyrics/G.html">G</a> 
+<a href="/lyrics/H.html">H</a> 
+<a href="/lyrics/I.html">I</a> 
+<a href="/lyrics/J.html">J</a> 
+<a href="/lyrics/K.html">K</a> 
+<a href="/lyrics/L.html">L</a> 
+<a href="/lyrics/M.html">M</a> 
+<a href="/lyrics/N.html">N</a> 
+<a href="/lyrics/O.html">O</a> 
+<a href="/lyrics/P.html">P</a> 
+<a href="/lyrics/Q.html">Q</a> 
+<a href="/lyrics/R.html">R</a> 
+<a href="/lyrics/S.html">S</a> 
+<a href="/lyrics/T.html">T</a> 
+<a href="/lyrics/U.html">U</a> 
+<a href="/lyrics/V.html">V</a> 
+<a href="/lyrics/W.html">W</a> 
+<a href="/lyrics/X.html">X</a> 
+<a href="/lyrics/Y.html">Y</a> 
+<a href="/lyrics/Z.html">Z</a> 
+<font style="color:#1b57b1; font-size: 1.0em !important;"> | </font> <a href="/all.html">ALL</a>
+<br /><br />
+      </td>
+     </tr>
+    </table>
+<div class=thinbox>
+<div>
+<div>
+<div>
+<table width="100%"><tr>
+<td valign="top">
+<h2>Hey It's Ok lyrics</h2>
+<h3>Lilly Wood & The Prick</h3>
+<br />
+<a href="/correct.php?id=1069996"><img src="/files/correct.png" width=16 height=16 alt="Correct Hey It's Ok Lyrics" border=0> Correct these lyrics</a><br />
+<a href="/print/1069996.html" rel="nofollow" onclick="javascript: pageTracker._trackPageview('/print-testo');"><img src="/files/print.png" width=16 height=16 alt="Print Hey It's Ok Lyrics" border=0> Print these lyrics</a>
+<br />
+<a href="#commentlyrics" rel="nofollow"><img src="/images/pencil2.png" width=16 height=16 alt="Comment Lyrics" border=0>Comment lyrics</a><br>
+
+<a href="http://del.icio.us/post?url=http://www.lyricsmania.com/hey_its_ok_lyrics_lilly_wood_and_the_prick.html" rel="nofollow" target="_blank" title="Share this page on Del.icio.us"><img src="/images/deliciousoff.png" border="0"></a>
+<a href="http://www.google.com/bookmarks/mark?op=edit&bkmk=http://www.lyricsmania.com/hey_its_ok_lyrics_lilly_wood_and_the_prick.html&title=LYRICS" rel="nofollow" target="_blank" title="Share this page on Google Bookmarks"><img src="/images/googleoff.png" border="0"></a>
+<a href="http://digg.com/submit?phase=2&url=http://www.lyricsmania.com/hey_its_ok_lyrics_lilly_wood_and_the_prick.html" rel="nofollow" target="_blank" title="Share this page on Digg"><img src="/images/diggoff.png" border="0"></a>
+<a href="http://www.myspace.com/Modules/PostTo/Pages/?u=http://www.lyricsmania.com/hey_its_ok_lyrics_lilly_wood_and_the_prick.html" rel="nofollow" target="_blank" title="Share this page on Myspace"><img src="/images/myspaceoff.png" border="0"></a>
+
+</td>
+<td width="180" valign="top"> 
+
+ <div class="radio">
+<span class="charts">Rate this song:</span>
+ <form method="post" name="addme" action="http://my.lyricsmania.com/vote.html">
+ <input type="hidden" name="id_artista" value="57989">
+ <input type="hidden" name="id_testo" value="1069996">
+
+ <input type="radio" name="voto" value="1" onclick="this.form.submit()" />1
+ <input type="radio" name="voto" value="2" onclick="this.form.submit()" />2
+ <input type="radio" name="voto" value="3" onclick="this.form.submit()" />3
+ <input type="radio" name="voto" value="4" onclick="this.form.submit()" />4
+ <input type="radio" name="voto" value="5" onclick="this.form.submit()" />5 
+
+ </form>
+<div class="notes">
+No votes yet, be the first!
+<br/><br/>
+<a href="http://my.lyricsmania.com/playlist/add/.html"><img src="/files/addfavorites.png" border="0"></a> <a href="http://my.lyricsmania.com/playlist/add/1069996.html">Add to my playlist</a>
+</div>
+ </div> 
+
+</td>
+</tr>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+
+<div class=clr></div>
+
+<table width=100%><tr><td>
+Artist: <b><a href="http://www.lyricsmania.com/lilly_wood_and_the_prick_lyrics.html" title="Lilly Wood & The Prick lyrics">Lilly Wood & The Prick lyrics</a></b><br>
+Title: Hey It's Ok</td>
+<td width=70>
+
+    <iframe src="http://www.facebook.com/plugins/like.php?href=http://www.lyricsmania.com/hey_its_ok_lyrics_lilly_wood_and_the_prick.html&amp;send=false&amp;layout=box_count&amp;width=100&amp;show_faces=false&amp;action=like&amp;colorscheme=light&amp;font&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:85px; height:65px;" allowTransparency="true"></iframe>
+</td>
+<td width=70>
+    <a href="http://twitter.com/share" class="twitter-share-button" data-count="vertical" data-via="lyricsmaniacom">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+</td>
+<td width=70>
+    <g:plusone size="tall" href="http://www.lyricsmania.com/hey_its_ok_lyrics_lilly_wood_and_the_prick.html"></g:plusone>
+</td>
+</tr></table>
+<br>
+<center>
+<span style="font-size:14px;">
+            <a href="/redir.php?id=7&artist=Lilly Wood & The Prick&song=Hey It's Ok" target="_blank" onclick="javascript: pageTracker._trackPageview('/tonefuset1');"><img src="/images/phone_icon_red_small_trans.gif" border="0"></a>
+            <a href="/redir.php?id=7&artist=Lilly Wood & The Prick&song=Hey It's Ok" target="_blank" style="color: #cc0000; font-weight: bold; font-family: Arial; text-decoration: underline;" onclick="javascript: pageTracker._trackPageview('/tonefuset1');">Send "Hey It's Ok" to your Cell</a>
+
+            <a href="/redir.php?id=7&artist=Lilly Wood & The Prick&song=Hey It's Ok" target="_blank" onclick="javascript: pageTracker._trackPageview('/tonefuset1');"><img src="/images/phone_icon_red_small_trans2.gif" border="0"></a>
+</span>
+</center>
+<br>
+<div style="clear: both; overflow: hidden; text-align:center;">
+<a href="http://www.musictory.com/music/Lilly+Wood+%5Band%5D+The+Prick/Hey+It%27s+Ok" target="_blank"><img src="/bottone3.png" style="vertical-align: bottom; margin-right:5px;"></a>
+<a href="http://www.musictory.com/music/Lilly+Wood+%5Band%5D+The+Prick/Hey+It%27s+Ok" target="_blank">Watch "Hey It's Ok" video</a><a href="http://www.musictory.com/music/Lilly+Wood+%5Band%5D+The+Prick/Hey+It%27s+Ok" target="_blank"><img src="/bottone3.png" style="vertical-align: bottom; margin-left:5px;"></a>
+</div>
+
+<br>
+
+<div class="other-lyrics">
+    <strong>Other Lilly Wood & The Prick Lyrics:</strong><br><br>
+                <a href="/down_the_drain_lyrics_lilly_wood_and_the_prick.html" onclick="javascript: pageTracker._trackPageview('/other-lyrics-alto');">Down the Drain lyrics</a>
+            <a href="/this_is_a_love_song_lyrics_lilly_wood_and_the_prick.html" onclick="javascript: pageTracker._trackPageview('/other-lyrics-alto');">This Is A Love Song lyrics</a>
+            <a href="/my_best_lyrics_lilly_wood_and_the_prick.html" onclick="javascript: pageTracker._trackPageview('/other-lyrics-alto');">My Best lyrics</a>
+            <a href="/cover_my_face_lyrics_lilly_wood_and_the_prick.html" onclick="javascript: pageTracker._trackPageview('/other-lyrics-alto');">Cover My Face lyrics</a>
+            <a href="/water_ran_lyrics_lilly_wood_and_the_prick.html" onclick="javascript: pageTracker._trackPageview('/other-lyrics-alto');">Water Ran lyrics</a>
+            <a href="/prayer_in_c_lyrics_lilly_wood_and_the_prick.html" onclick="javascript: pageTracker._trackPageview('/other-lyrics-alto');">Prayer In C lyrics</a>
+            <a href="/little_johnny_lyrics_lilly_wood_and_the_prick.html" onclick="javascript: pageTracker._trackPageview('/other-lyrics-alto');">Little Johnny lyrics</a>
+            <a href="/middle_of_the_night_lyrics_lilly_wood_and_the_prick.html" onclick="javascript: pageTracker._trackPageview('/other-lyrics-alto');">Middle Of The Night lyrics</a>
+            <a href="/a_time_is_near_lyrics_lilly_wood_and_the_prick.html" onclick="javascript: pageTracker._trackPageview('/other-lyrics-alto');">A Time Is Near lyrics</a>
+            <a href="/down_the_drain_demo_version_lyrics_lilly_wood_and_the_prick.html" onclick="javascript: pageTracker._trackPageview('/other-lyrics-alto');">Down The Drain (Demo Version) lyrics</a>
+</div> <!-- other -->
+<strong>Lyrics to Hey It's Ok</strong> :<br />
+<div id='songlyrics_h' class='dn'>
+Mama, Papa, please forget the times <br />
+I wet my bed <br />
+I swear not to do it again <br />
+Please forgive the way I looked <br />
+when I was fourteen <br />
+I didn't know who I wanted to be <br />
+<br />
+Hey It's OK, It's OK <br />
+Cause I've found what i wanted <br />
+Hey It's OK, I'ts Ok <br />
+Cause I've found what i wanted <br />
+<br />
+Friends and lovers please forgive <br />
+the mean things I've said <br />
+I swear not to do again <br />
+Please forgive the way I act when <br />
+I've had too much to drink <br />
+I'm fighting against myself <br />
+<br />
+Hey It's OK, It's OK <br />
+Cause I've found what i wanted <br />
+Hey It's OK, I'ts Ok<br />
+<br />
+Cause I've found what i wanted <br />
+<br />
+And I swear not to do anything funny anymore <br />
+yes I swear not to do anything funny anymore <br />
+<br />
+Hey It's OK, It's OK <br />
+Cause I've found what i wanted <br />
+Hey It's OK, I'ts Ok <br />
+Cause I've found what i wanted <br />
+Hey It's OK, It's OK <br />
+Cause I've found what i wanted <br />
+Hey It's OK, I'ts Ok <br />
+Cause I've found what i wanted<br />
+<br />
+(Merci à Julia pour cettes paroles)<br />
+</div>
+<script type="text/javascript">
+    var song_id = "";
+    var youtube_video = false;
+    var lv_code = "";
+    var l_code = "";
+    var v_code = "";
+</script>
+<div id="songlyrics"></div>
+<script type="text/javascript">
+    gE('songlyrics').innerHTML = gE('songlyrics_h').innerHTML;
+    if (typeof startSignatureInsert === 'function')
+    {
+        startSignatureInsert();
+    }
+</script>
+
+<br />&#91; These are <a href="hey_its_ok_lyrics_lilly_wood_and_the_prick.html" title="Hey It's Ok Lyrics">Hey It's Ok Lyrics</a> on http://www.lyricsmania.com/ &#93;
+<br><br>
+<script>
+  google_ad_client =  'ca-pub-2633654272685046';
+  google_ad_channel =  '1908251867';
+  google_override_format =  'true';
+  google_ad_width =  430;
+  google_ad_height =  80;
+  google_ad_type =  'text/image';
+  google_color_link =  '#0057DA';
+  google_color_url =  '#000000';
+  google_color_url =  '#000000';
+  google_language =  'en';
+</script>
+<script src="https://pagead2.googlesyndication.com/pagead/show_ads.js
+"></script>
+<br><br>
+<center>
+<span style="font-size:14px;">
+            <a href="/redir.php?id=7&artist=Lilly Wood & The Prick&song=Hey It's Ok" target="_blank" onclick="javascript: pageTracker._trackPageview('/tonefuset2');"><img src="/images/phone_icon_red_small_trans.gif" border="0"></a>
+            <a href="/redir.php?id=7&artist=Lilly Wood & The Prick&song=Hey It's Ok" target="_blank" style="color: #cc0000; font-weight: bold; font-family: Arial; text-decoration: underline;" onclick="javascript: pageTracker._trackPageview('/tonefuset2');">Send "Hey It's Ok" to your Cell</a>
+            <a href="/redir.php?id=7&artist=Lilly Wood & The Prick&song=Hey It's Ok" target="_blank" onclick="javascript: pageTracker._trackPageview('/tonefuset2');"><img src="/images/phone_icon_red_small_trans2.gif" border="0"></a>
+</span>
+</center>
+<div class="clr"></div>
+<br>
+
+<div class=thinbox>
+<div>
+<div>
+<div>
+<h5><a name="commentlyrics">Comments to these lyrics</a></h5>
+<br />
+    <a href="javascript:void(0);" onclick="popolaDiv('comment_post','leave_comment')" id="leave_comment">Leave a Comment</a><br />
+    <div id="comment_post" style="display: none;">
+    
+<form method=post action="http://my.lyricsmania.com/login.php?destpage=/comments/add.html" id="add_comment_form" name="add_comment_form" onSubmit="validateForm(add_comment_form.comment)">
+            <input type="hidden" name="id_testo" value="1069996">
+            <textarea type=text maxlenght=50 rows="5" cols="33" wrap="virtual" name="comment" onKeyDown="limitText(this.form.comment,this.form.countdown,500);" 
+onKeyUp="limitText(this.form.comment,this.form.countdown,500);"></textarea><br /><font size="1">(Maximum characters: 500)<br>
+You have <input readonly type="text" name="countdown" size="3" value="500"> characters left.</font>
+<br />
+Verification: <input type="text" name="verification"><br>Enter the text in the image
+<br>
+<img border="0" src="/captcha.php">
+<br>
+            <input type="submit" name="add_comment" value="Add Comment" id="submit_comment">         </form>
+    </div>
+
+<br />
+No comments to these lyrics yet, be the first!
+
+</div>
+</div>
+</div>
+</div>
+<div></div>
+
+</div>
+
+<div id=rectangle>
+
+
+<div style='margin-bottom: 10px'>
+<script type="text/javascript"><!--
+    e9 = new Object();
+    e9.size = "300x250";
+    e9.addBlockingCategories="Audio,Pop-under,Pop-up";
+//--></script>
+<script type="text/javascript" src="http://tags.expo9.exponential.com/tags/LyricsMania/ROS/tags.js"></script></div>
+
+
+
+
+
+<div id="fb-root"></div>
+    <script>
+    /*
+        window.fbAsyncInit = function() {
+            FB.init({
+              appId      : '137256903140676',                      
+              channelUrl : '//www.facebook.com/pages/Lyrics-Mania/144174245625143',
+              status     : true,
+              xfbml      : true
+            });
+        }
+        ;*/
+        (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0];
+          if (d.getElementById(id)) return;
+          js = d.createElement(s); js.id = id;
+          js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+          fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+    </script>
+<div class="thinbox">
+    <div>
+        <div>
+            <div>
+                                <iframe src="http://www.facebook.com/plugins/likebox.php?href=http%3A%2F%2Fwww.facebook.com%2Fpages%2FLyrics-Mania%2F144174245625143&amp;width=292&amp;colorscheme=light&amp;show_faces=true&amp;stream=false&amp;header=false&amp;height=258" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:292px; height:258px;" allowTransparency="true"></iframe>
+                                <div class="g-plus" data-href="https://plus.google.com/112654762505809752225?rel=publisher" data-width="300" data-height="69" data-theme="light"></div>
+            </div>
+        </div>
+    </div>
+</div><div class=thinbox>
+<div>
+<div>
+<div>
+<h5>Last Added Lyrics</h5>
+
+<a href="/les_artistes_lyrics_lilly_wood_and_the_prick.html">L.E.S. Artistes lyrics</a><br>
+<a href="/a_time_is_near_lyrics_lilly_wood_and_the_prick.html">A  Time Is Near lyrics</a><br>
+<a href="/long_way_back_lyrics_lilly_wood_and_the_prick.html">Long Way Back lyrics</a><br>
+<a href="/middle_of_the_night_lyrics_lilly_wood_and_the_prick.html">Middle Of The Night lyrics</a><br>
+<a href="/hymn_to_my_invisible_friend_lyrics_lilly_wood_and_the_prick.html">Hymn To My Invisible Friend lyrics</a><br>
+<a href="/this_is_a_love_song_lyrics_lilly_wood_and_the_prick.html">This Is A Love Song lyrics</a><br>
+<a href="/go_slow_lyrics_lilly_wood_and_the_prick.html">Go Slow lyrics</a><br>
+<a href="/les_artistes_lyrics_lilly_wood_and_the_prick.html">L.e.s Artistes lyrics</a><br>
+<a href="/down_the_drain_demo_version_lyrics_lilly_wood_and_the_prick.html">Down The Drain (Demo Version) lyrics</a><br>
+<a href="/hymn_to_my_invisble_friend_lyrics_lilly_wood_and_the_prick.html">Hymn To My Invisble Friend lyrics</a><br>
+<a href="/a_time_is_near_lyrics_lilly_wood_and_the_prick.html">A Time Is Near lyrics</a><br>
+<a href="/hopeless_kids_lyrics_lilly_wood_and_the_prick.html">Hopeless Kids lyrics</a><br>
+<a href="/little_johnny_lyrics_lilly_wood_and_the_prick.html">Little Johnny lyrics</a><br>
+<a href="/my_best_lyrics_lilly_wood_and_the_prick.html">My Best lyrics</a><br>
+<a href="/prayer_in_c_lyrics_lilly_wood_and_the_prick.html">Prayer In C lyrics</a><br>
+
+</div>
+</div>
+</div>
+</div><div class=thinbox>
+<div>
+<div>
+<div>
+<h5>Last 20 Artists</h5>
+<a href="/traucoholik_lyrics.html" title="Traucoholik lyrics">Traucoholik lyrics</a> | 
+<a href="/mitochondrion_lyrics.html" title="Mitochondrion lyrics">Mitochondrion lyrics</a> | 
+<a href="/leela_and_the_rams_lyrics.html" title="Leela and The Rams lyrics">Leela and The Rams lyrics</a> | 
+<a href="/mariana_caetano_lyrics.html" title="Mariana Caetano lyrics">Mariana Caetano lyrics</a> | 
+<a href="/dosfire_lyrics.html" title="Dosfire lyrics">Dosfire lyrics</a> | 
+<a href="/kapone47_lyrics.html" title="Kapone47 lyrics">Kapone47 lyrics</a> | 
+<a href="/2anormal_lyrics.html" title="2anormal lyrics">2anormal lyrics</a> | 
+<a href="/poetic_teacher_lyrics.html" title="Poetic Teacher lyrics">Poetic Teacher lyrics</a> | 
+<a href="/stefano_bittelli_lyrics.html" title="Stefano Bittelli lyrics">Stefano Bittelli lyrics</a> | 
+<a href="/skeme_lyrics.html" title="Skeme lyrics">Skeme lyrics</a> | 
+<a href="/monica_sannino_lyrics.html" title="Monica Sannino lyrics">Monica Sannino lyrics</a> | 
+<a href="/mariachiara_castaldi_lyrics.html" title="Mariachiara Castaldi lyrics">Mariachiara Castaldi lyrics</a> | 
+<a href="/le_sparole_lyrics.html" title="Le Sparole lyrics">Le Sparole lyrics</a> | 
+<a href="/marco_colonna_lyrics.html" title="Marco Colonna lyrics">Marco Colonna lyrics</a> | 
+<a href="/lorenzo_luraca_lyrics.html" title="Lorenzo Luracà lyrics">Lorenzo Luracà lyrics</a> | 
+<a href="/eddi_santiago_figueroa_montes_lyrics.html" title="Eddi Santiago Figueroa Montes lyrics">Eddi Santiago Figueroa Montes lyrics</a> | 
+<a href="/valentina_livi_lyrics.html" title="Valentina Livi lyrics">Valentina Livi lyrics</a> | 
+<a href="/gabriele_morini_lyrics.html" title="Gabriele Morini lyrics">Gabriele Morini lyrics</a> | 
+<a href="/francesco_palma_lyrics.html" title="Francesco Palma lyrics">Francesco Palma lyrics</a> | 
+<a href="/violetta_zironi_lyrics.html" title="Violetta Zironi lyrics">Violetta Zironi lyrics</a> | 
+</div>
+</div>
+</div>
+</div>
+<div class=clr></div>
+
+</div>
+
+<div class=clr></div>
+
+<div id=topartists>
+
+
+<div class=thinbox>
+<div>
+<div>
+<div>
+<h5><a href="/topartists.html">Top Artists</a></h5>
+<table cellpadding="1" cellspacing="2" width="100%" height="150">
+<tr class=charts>
+<td valign="top">
+     <a href="/rihanna_lyrics.html" title="Rihanna lyrics">Rihanna lyrics</a><br>
+     <a href="/kapone47_lyrics.html" title="Kapone47 lyrics">Kapone47 lyrics</a><br>
+     <a href="/2anormal_lyrics.html" title="2anormal lyrics">2anormal lyrics</a><br>
+     <a href="/dvbbs_and_borgeous_lyrics.html" title="DVBBS & Borgeous lyrics">DVBBS & Borgeous lyrics</a><br>
+     <a href="/ross_lynch,_maia_mitchell_and_teen_beach_movie_cast_lyrics.html" title="Ross Lynch, Maia Mitchell & Teen Beach Movie Cast lyrics">Ross Lynch, Maia Mitchell & Teen Beach Movie Cast lyrics</a><br>
+     <a href="/miley_cyrus_lyrics.html" title="Miley Cyrus lyrics">Miley Cyrus lyrics</a><br>
+     <a href="/mumford_and_sons_lyrics.html" title="Mumford & Sons lyrics">Mumford & Sons lyrics</a><br>
+     <a href="/nicki_minaj_lyrics.html" title="Nicki Minaj lyrics">Nicki Minaj lyrics</a><br>
+     <a href="/arctic_monkeys_lyrics.html" title="Arctic Monkeys lyrics">Arctic Monkeys lyrics</a><br>
+     <a href="/adele_lyrics.html" title="Adele lyrics">Adele lyrics</a><br>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+<div></div>
+
+</div>
+
+<div id=toplyrics>
+
+<div class=thinbox>
+<div>
+<div>
+<div>
+<h5><a href="/toplyrics.html">Top Lyrics</a></h5>
+<table cellpadding="1" cellspacing="2" width="564" height="150">
+<tr class=charts>
+<td valign="top">
+    Katy Perry - <a href="/roar_lyrics_katy_perry.html" title="Roar lyrics">Roar lyrics</a><br>
+    Avicii - <a href="/wake_me_up_lyrics_avicii.html" title="Wake Me Up lyrics">Wake Me Up lyrics</a><br>
+    Martin Garrix - <a href="/animals_lyrics_martin_garrix.html" title="Animals lyrics">Animals lyrics</a><br>
+    Romeo Santos - <a href="/propuesta_indecente_lyrics_romeo_santos.html" title="Propuesta Indecente lyrics">Propuesta Indecente lyrics</a><br>
+    Of Monsters And Men - <a href="/little_talks_lyrics_of_monsters_and_men_1.html" title="Little Talks lyrics">Little Talks lyrics</a><br>
+    Ed Sheeran - <a href="/lego_house_lyrics_ed_sheeran.html" title="Lego House lyrics">Lego House lyrics</a><br>
+    Fray (The) - <a href="/how_to_save_a_life_lyrics_fray_the.html" title="How To Save A Life lyrics">How To Save A Life lyrics</a><br>
+    Capital Cities - <a href="/safe_and_sound_lyrics_capital_cities.html" title="Safe and Sound lyrics">Safe and Sound lyrics</a><br>
+    Lulu and the Lampshades - <a href="/youre_gonna_miss_me_lyrics_lulu_and_the_lampshades.html" title="You're Gonna Miss Me lyrics">You're Gonna Miss Me lyrics</a><br>
+    DVBBS & Borgeous - <a href="/tsunami_lyrics_dvbbs_and_borgeous.html" title="Tsunami lyrics">Tsunami lyrics</a><br>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+<div></div>
+
+</div>
+
+</div>
+
+<div id=leftcolumn2>
+<div class=thinbox>
+<div>
+<div>
+<div>
+<h5>Main Menu</h5>
+  <a href="/contact.html">Contact Us</a><br />
+  <a href="/dancelyrics.html">Dance Lyrics</a>
+  <a href="/jinglebellslyrics.html" title="Jingle Bells Lyrics">Jingle Bells Lyrics</a><br />
+  <a href="/biographies.html">Biographies</a><br />
+  <a href="/links.html">Links</a><br />
+  <a href="/linkus.html">Link To Us</a><br />
+  <a href="/toadvertise.html">To Advertise</a><br />
+  <a href="/contact.html">Request Lyrics</a><br />
+</div>
+</div>
+</div>
+</div>
+
+<div class=thinbox>
+<div>
+<div>
+<div>
+<h5>Play This Song</h5>
+<!-- start snippet -->
+<div class="boxcontent1"><!-- this line may not be needed-->
+<div class="boxcontent2" style="height:45px;"> <!-- this line may not be
+needed-->
+<!-- edit this DIV below for positioning -->
+
+<div style="position:relative;left:-41px;top:-35px;">
+<script type="text/javascript" src="
+http://cd02.static.jango.com/javascripts/promos/jangolib_3.js"></script>
+
+<link rel=StyleSheet href="
+http://cd02.static.jango.com/stylesheets/promo/jangoscroller_3b.css"
+type="text/css">
+<div class="scroller">
+<div class="expandBtn"><a href="http://www.jango.com" target="_blank"
+class="expandBtn"><img src="
+http://cd02.static.jango.com/images/promo/playerCornerSpacer_1.gif"
+border="0" width="10" height="10" alt="free music" /></a></div>
+  <div class="playerBG"><a href="http://www.jango.com/play/Lilly Wood & The Prick/Hey It's Ok"
+target="_blank">
+  <img src="
+http://cd02.static.jango.com/images/promo/playerLyrics160Black.gif"
+border="0" alt="free music" /></a></div>
+              <div style="position:absolute;top:26px;left:18px;">
+                 <marquee width="140" scrolldelay="150">
+                 <a href="http://www.jango.com/play/Lilly Wood & The Prick/Hey It's Ok" class="playList">Lilly Wood & The Prick - Hey It's Ok</a>
+                 </marquee>
+             </div>
+
+         </div>
+<img src="http://p.jango.com/lyricsmania.gif"
+style="width:1px;height:1px;" />
+</div>
+
+</div><!-- this line may not be needed-->
+</div><!-- this line may not be needed-->
+<div class="boxfooter"></div><!-- this line may not be needed-->
+<!-- snippet end -->
+
+<div style="text-align:center; margin-left:-20px;">
+<script type="text/javascript">
+  GA_googleFillSlotWithSize("ca-pub-3687873374834629",
+"LyricsMania_160x170_wrapper", 160, 170);
+</script>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+<div style='margin-bottom: 10px'>
+<script type="text/javascript"><!--
+    e9 = new Object();
+    e9.size = "160x600,120x600";
+    e9.addBlockingCategories="Audio,Pop-under,Pop-up";
+//--></script>
+<script type="text/javascript" src="http://tags.expo9.exponential.com/tags/LyricsMania/ROS/tags.js"></script>
+</div>
+<div class=thinbox>
+<div>
+<div>
+<div>
+<h5>Partners</h5>
+<a href="http://www.uplyrics.com/" target=_blank title="Lyrics">Lyrics</a><br>
+<a href="http://www.parolesmania.com/paroles_lilly_wood_and_the_prick_57989.html" target=_blank title="Paroles Lilly Wood & The Prick">Paroles Lilly Wood & The Prick</a><br>
+<a href="http://www.testimania.com/" target=_blank title="Testi Gratis">Testi Canzoni</a><br>
+<a href="http://www.letrasmania.com/" target=_blank title="Letras de canciones">Letras De Canciones</a><br>
+<a href="http://www.angolotesti.i/" target=_blank title="Testi Canzoni Gratis">Testi Di Canzoni</a><br>
+<a href="http://www.ricettemania.it" target=_blank>Ricette</a><br>
+<a href="http://www.musictory.com" title="Music Directory" target=_blank>Musictory</a><br>
+</div>
+</div>
+</div>
+</div>
+
+
+<div></div>
+
+
+</div>
+
+
+
+<div class=clr></div></div>
+<div class=clr></div></div>
+
+<div id=whitebox_b>
+ <div id=whitebox_bl>
+  <div id=whitebox_br>
+  </div>
+ </div>
+</div>
+
+</div>
+
+<div id=footer>
+ <div id=footer_l>
+  <div id=footer_r>
+   <div>LyricsMania.com - Copyright &#169; 2013 - All Rights Reserved<br /><a href="/privacy.php">Privacy Policy</a></div>
+  </div>
+ </div>
+</div>
+
+<div id="toolbar" style="bottom: -60px;">
+    <div id="toolbar-content">
+        <ul>
+                <li>
+                    <img src="/pictures/thumbnails/73507.jpg">
+                    <a href="/miranda_lambert_lyrics.html" onclick="javascript: pageTracker._trackPageview('/toolbar');">Miranda Lambert</a>
+                </li>
+                <li>
+                    <img src="/pictures/thumbnails/1974.jpg">
+                    <a href="/last_day_before_holiday_lyrics.html" onclick="javascript: pageTracker._trackPageview('/toolbar');">Last Day Before Holiday</a>
+                </li>
+                <li>
+                    <img src="/pictures/thumbnails/69023.jpg">
+                    <a href="/afrim_muqiqi_lyrics.html" onclick="javascript: pageTracker._trackPageview('/toolbar');">Afrim Muqiqi</a>
+                </li>
+                <li>
+                    <img src="/pictures/thumbnails/91173.jpg">
+                    <a href="/downset_lyrics.html" onclick="javascript: pageTracker._trackPageview('/toolbar');">Downset</a>
+                </li>
+                <li>
+                    <img src="/pictures/thumbnails/74453.jpg">
+                    <a href="/jamar_rogers_lyrics.html" onclick="javascript: pageTracker._trackPageview('/toolbar');">Jamar Rogers</a>
+                </li>
+            <div class="clear"></div>
+        </ul>
+    </div> <!-- toolbar-content -->
+    <div id="close"><a href="javascript:void(0);" onclick="toolbar('open-toolbar','toolbar')"><img src="/images/close-down.png"></a></div> <!-- close -->
+</div> <!-- toolbar --> 
+<div id="open-toolbar" style="display:none; bottom: -60px;"><a href="javascript:void(0);" onclick="toolbar('toolbar','open-toolbar')"><img src="/images/open-up.png"></a></div>
+<script>
+    setTimeout(function(){slide('toolbar')},2);
+</script>
+</div></div>
+
+<div id="rect_ad_loader" style="display:none;">
+<div class=thinbox>
+<div>
+<div>
+<div>
+<script type="text/javascript"><!--
+    e9 = new Object();
+    e9.size = "300x250";
+    e9.addBlockingCategories="Audio,Pop-under,Pop-up";
+//--></script>
+<script type="text/javascript" src="http://tags.expo9.exponential.com/tags/LyricsMania/ROS/tags.js"></script>
+
+<script type="text/javascript">
+document.getElementById("rect_ad").innerHTML = document.getElementById("rect_ad_loader").innerHTML
+</script></div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

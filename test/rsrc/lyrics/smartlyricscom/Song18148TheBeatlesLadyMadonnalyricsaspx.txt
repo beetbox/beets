@@ -1,0 +1,404 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>The Beatles - Lady Madonna Lyrics</title>
+  <!--//
+  The Beatles Lady Madonna lyrics starting with Lady Madonna, children at your feet  Wonder how you manage to make ends meet  Who find the money when yo
+  //-->
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+  <META HTTP-EQUIV="Window-Target" CONTENT="_top">
+  <META NAME="ROBOTS" CONTENT="INDEX,FOLLOW">
+  <META NAME="Description" CONTENT="The Beatles Lady Madonna lyrics starting with Lady Madonna, children at your feet  Wonder how you manage to make ends meet  Who find the money when yo">
+  <META NAME="Title" CONTENT="The Beatles - Lady Madonna Lyrics">
+  <META NAME="Keywords" CONTENT="The Beatles - Lady Madonna lyrics, The Beatles lyrics, Lady Madonna lyrics, lyrics, song lyric, music lyric, mp3 search, mp3 downloads, music videos">
+  <META NAME="verify-v1" content="ZUiHomoMRLMn7utqAokMm+W2kpdbcK3Plo4pawR8c4I=">
+<link rel="stylesheet" href="Styles.css" type="text/css">
+<SCRIPT LANGUAGE="JavaScript" type="text/javascript">
+<!--
+
+//Function creates new image object
+var url="http://www.smartlyrics.com/Song18148.aspx";
+var title="the beatles - lady madonna lyrics";
+
+function newImage(arg) {
+    if (document.images) {
+        rslt = new Image();
+        rslt.src = arg;
+        return rslt;
+    }
+}
+
+//Function will flip the button image
+function changeImages() {
+    if (document.images && (preloadFlag == true)) {
+        for (var i=0; i<changeImages.arguments.length; i+=2) {
+            document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+        }
+    }
+}
+
+function favorites(){
+if(document.all)
+window.external.AddFavorite(url,title);
+}
+//Function preloads the image specified
+var preloadFlag = false;
+function preloadImages() {
+        preloadFlag = true;
+    if (document.images) {
+    }
+}
+
+function emoticon(text) {
+    var txtarea = document.post.message;
+    text = ' ' + text + ' ';
+    if (txtarea.createTextRange && txtarea.caretPos) {
+        var caretPos = txtarea.caretPos;
+        caretPos.text = caretPos.text.charAt(caretPos.text.length - 1) == ' ' ? caretPos.text + text + ' ' : caretPos.text + text;
+        txtarea.focus();
+    } else {
+        txtarea.value  += text;
+        txtarea.focus();
+    }
+}
+function storeCaret(textEl) {
+    if (textEl.createTextRange) textEl.caretPos = document.selection.createRange().duplicate();
+}
+function callSelect(controlID)
+{
+   var control = document.getElementById(controlID);
+    if (control) control.select();
+}
+
+-->
+</SCRIPT>
+<script src="functions.js" type="text/javascript">
+</script>
+
+<style type="text/css">
+.black {font:8pt arial; color:#000000;}
+.grey {font:8pt arial; color:#989898;}
+</style>
+</head>
+<body onLoad="">
+<div style="width:100%; float:left" align="center"><div style="width:1003px; text-align:left"><h1 class="Text2">Lady Madonna Lyrics</h1><div id="logo"> <div id="logoimg"><a href="http://www.smartlyrics.com"><img src="images/smartlyrics.gif" alt="Music Lyrics" width="193" height="89"></a></div><div id="menuads" align="center" ><script type="text/javascript"><!--
+e9 = new Object();
+e9.size = "728x90,468x60";
+//--></script>
+<script type="text/javascript" src="http://tags.expo9.exponential.com/tags/lyricsbaycom/SmartLyricscom/tags.js">
+</script>
+
+</div>  <script type="text/javascript">
+function hidePass()
+{
+  document.getElementById('first').style.display = "none";
+  document.getElementById('sec').style.display = "block";
+  document.getElementById('pass1').focus();
+}
+function hideUsername()
+{
+  if(document.getElementById('uname').value == "Username")
+  {
+      document.getElementById('uname').value = "";
+      document.getElementById('uname').className = 'black';
+  }
+}
+function showUsername()
+{
+  if(document.getElementById('uname').value.length == 0)
+  {
+      document.getElementById('uname').className = 'grey';
+      document.getElementById('uname').value = "Username";
+  }
+}
+function showPass()
+{
+  if(document.getElementById('pass1').value.length == 0)
+  {
+      document.getElementById('sec').style.display = "none";
+      document.getElementById('first').style.display = "block";
+  }
+}
+</script>
+      <table width="69px" cellspacing=0 style="border-color:#BDCCDC; padding-left:2px;" border="0">
+        <tr>
+          <td>
+            <form name="login" action="Login.aspx" method="post"><table width="100%" cellspacing="0">
+              <tr><td><input type="hidden" name="Submitted" value="1">
+                <input type="text" id="uname"  class="grey" name="Username" value="Username" style="width:66px" onFocus="hideUsername()" onBlur="showUsername()">
+              </td></tr><tr>
+                <td><div id="first"><input type="text" name="ptext" value="Password" id="pass" class="grey" style="width:66px" onFocus="hidePass()"></div><div id="sec" style="display:none"><input type="password"  class="black" name="Password" value="" style="width:66px;" id="pass1" onBlur="showPass()">
+              </div></td></tr><tr><td align="left"><input type="submit" value="LOGIN" id="Button">
+            </td></tr><tr>
+                <td align="left">
+                  <a href="Default.aspx?Page=Login&amp;Cmd=Register" class="FrmLink" style="font-size:8pt;">Register</a>
+                </td></tr></table></form></td></tr>
+      </table>
+</div><div id="maindiv">  
+    
+
+
+
+
+    
+
+        
+        
+        <div id="leftdiv">
+        <div id="b2"><ul><li><div class="bhz"><span class="ht1">&nbsp;</span><span class="hw2">Navigation </span></div></li>     <li><a href="http://www.smartlyrics.com/" title="Music Lyrics"
+       >Music Lyrics</a></li>
+      <li><a href="New50.aspx" title="New Lyrics"
+       >New Lyrics</a></li>
+      <li><a href="Popular50.aspx" title="Most Popular"
+       >Most Popular</a></li>
+      <li><a href="Add.aspx" title="Add Lyrics"
+       >Add Lyrics</a></li>
+      <li><a href="About.aspx" title="About"
+       >About</a></li>
+      <li><a href="Contact.aspx" title="Contact"
+       >Contact</a></li>
+                  </ul>
+
+      
+        
+        <br>
+         
+         
+         <table cellpadding="0" cellspacing="0" border="0" width="160px"  style="border: 0px solid #D60000; font-family: verdana; color: #333333; text-align: justify">
+         <tr>
+           <td>
+                    <iframe align="middle" width="163px" scrolling="no" height="220" frameborder="0" 
+                        marginwidth="0" marginheight="0" style="border: 0px none; padding-left:4px"
+                      src="http://jmn.jangonetwork.com/sm?cust_params=j_artist=The Beatles&amp;j_title=Lady Madonna"></iframe>
+                    </td>
+             </tr>
+         </table><br>
+         
+         <div id="leftsideadtext"></div>
+         
+          </div>
+          
+        <div style="width:163px;" align="center">
+       <div style="padding-bottom:10px;padding-left:5px;">
+       
+           <script type="text/javascript"><!--
+e9 = new Object();
+e9.size = "120x600, 160x600";
+//--></script>
+<script type="text/javascript" src="http://tags.expo9.exponential.com/tags/lyricsbaycom/SmartLyricscom/tags.js">
+</script>
+
+       </div>
+       </div>
+    <br><table width="157px" align="center" style="border-color:#BDCCDC" border="1"><tr><td colspan="2" class="SubTitle" bgcolor="#BDCCDC" align="center">Other lyrics by The Beatles</td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">1. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Getting Better Lyrics" href="Song18079-The-Beatles-Getting-Better-lyrics.aspx"><font color="black" face="arial" size="2">Getting Better lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">2. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Good Day Sunshine Lyrics" href="Song18084-The-Beatles-Good-Day-Sunshine-lyrics.aspx"><font color="black" face="arial" size="2">Good Day Sunshine lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">3. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Help Lyrics" href="Song18091-The-Beatles-Help-lyrics.aspx"><font color="black" face="arial" size="2">Help lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">4. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="I Want To Hold Your Hand Lyrics" href="Song18116-The-Beatles-I-Want-To-Hold-Your-Hand-lyrics.aspx"><font color="black" face="arial" size="2">I Want To Hold Your Hand lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">5. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="I'm So Tired Lyrics" href="Song18131-The-Beatles-Im-So-Tired-lyrics.aspx"><font color="black" face="arial" size="2">I'm So Tired lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">6. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Not Guilty Lyrics" href="Song18182-The-Beatles-Not-Guilty-lyrics.aspx"><font color="black" face="arial" size="2">Not Guilty lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">7. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Run For Your Life Lyrics" href="Song18207-The-Beatles-Run-For-Your-Life-lyrics.aspx"><font color="black" face="arial" size="2">Run For Your Life lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">8. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="The Saints Lyrics" href="Song18249-The-Beatles-The-Saints-lyrics.aspx"><font color="black" face="arial" size="2">The Saints lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">9. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Please Please Me (Lennon/McCartney) Lyrics" href="Song478671-The-Beatles_PleasePlease-Me-LennonMcCartney-lyrics.aspx"><font color="black" face="arial" size="2">Please Please Me (Lennon/McCartney) lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">10. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Yellow Submarine (Lennon/McCartney) Lyrics" href="Song478761-The-Beatles-Yellow-Submarine-LennonMcCartney-lyrics.aspx"><font color="black" face="arial" size="2">Yellow Submarine (Lennon/McCartney) lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">11. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Cant Bye My Love Lyrics" href="Song478826-The-Beatles-Cant-Bye-My-Love-lyrics.aspx"><font color="black" face="arial" size="2">Cant Bye My Love lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">12. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Here Comes The Sun (Harrison) Lyrics" href="Song478904-The-Beatles-Here-Comes-The-Sun-Harrison-lyrics.aspx"><font color="black" face="arial" size="2">Here Comes The Sun (Harrison) lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">13. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Glass Onion (Lennon/McCartney) Lyrics" href="Song478906-The-Beatles-Glass-Onion-LennonMcCartney-lyrics.aspx"><font color="black" face="arial" size="2">Glass Onion (Lennon/McCartney) lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">14. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Dont Let Me Down Lyrics" href="Song478916-The-Beatles-Dont-Let-Me-Down-lyrics.aspx"><font color="black" face="arial" size="2">Dont Let Me Down lyrics</font></a></td></tr><tr><td valign="top" class="Text1" align="left" style="border: medium none"><font color="black" face="arial" size="2">15. </font></td><td class="Text1" align="left" style="border: medium none"><a class="regular" title="Don't Let Me Down (Lennon/McCartney) Lyrics" href="Song478917-The-Beatles-Dont-Let-Me-Down-LennonMcCartney-lyrics.aspx"><font color="black" face="arial" size="2">Don't Let Me Down (Lennon/McCartney) lyrics</font></a></td></tr></table><br>
+    </div>
+    <div id="centertdivNew">
+    <div align="center" style="margin-left:0px;margin-bottom:5px;">
+
+        <div style="margin-left:0px;margin-bottom:5px;width:100%;" align="center">
+           
+          </div>
+            <div style="width:100%;" align="center">
+                <div>
+ 
+    </div>
+    <div style="width:100%;" align="center">
+                    [<a class="regular" href="http://www.smartlyrics.com/New50.aspx" >New lyrics</a>] 
+                   </div></div></div>
+    <br><br><strong>The Beatles Lady Madonna lyrics</strong>
+    
+    
+    
+                    <form action="Default.aspx" method="get">
+                    <input type="hidden" name="Page" value="Search">
+                    <input type="radio" name="W" value="Lyrics" checked> Lyrics
+                    search for Artist - Song: <input type="text" name="Criteria" size=15>
+                    <input type="button" onClick="verify2()" value="SEARCH" id="Button2">
+                    </form>
+                    
+        <hr><strong>Back to the: <a title="Music Lyrics" href="http://www.smartlyrics.com/">Music Lyrics</a></strong> <strong> > </strong> <a class="" href="Artist1638-The-Beatles-lyrics.aspx" title="The Beatles Lyrics"> <strong>The Beatles lyrics</strong></a><strong> > </strong><strong>Lady Madonna lyrics</strong><br>
+        <table width="100%">
+                      <tr>
+                       <td class="Text" valign="top" align="center">
+       
+        <h2>The Beatles <br> Lady Madonna lyrics</h2>
+<img src="images/phone-left.gif" alt="Ringtones left icon" width="16" height="17"> <a href="http://www.ringtonematcher.com/go/?sid=LBSMros&amp;artist=The+Beatles&amp;song=Lady+Madonna" target="_blank"><b><font size="+1" color="red" face="arial">Send "Lady Madonna" Ringtone to your Cell</font></b></a> <img src="images/phone-right.gif" alt="Ringtones right icon" width="16" height="17"><br><br><center>Lady Madonna, children at your feet <br>
+Wonder how you manage to make ends meet <br>
+Who find the money when you pay the rent <br>
+Did you think that money was heaven sent <br>
+<br>
+Friday night arrives without a suitcase <br>
+Sunday morning creeping like a nun <br>
+Monday's child has learned to tie his bootlegs <br>
+See how they run <br>
+<br>
+Lady Madonna, baby at your breast <br>
+Wonders how you manage to feed the rest <br>
+Pa pa pa pa... <br>
+See how they run <br>
+<br>
+Lady Madonna lying on the bed <br>
+Listen to the music playing in your head <br>
+<br>
+Tuesday afternoon is never ending <br>
+Wednesday morning papers didn't come <br>
+Thursday night you stocking needed mending <br>
+See how they run <br>
+<br>
+Lady Madonna, children at your feet <br>
+Wonder how you manage to make ends meet<br><br></center>
+<img src="images/phone-left.gif" alt="Ringtones left icon" width="16" height="17"> <a href="http://www.ringtonematcher.com/go/?sid=LBSMros&amp;artist=The+Beatles&amp;song=Lady+Madonna" target="_blank"><b><font size="+1" color="red" face="arial">Send "Lady Madonna" Ringtone to your Cell</font></b></a> <img src="images/phone-right.gif" alt="Ringtones right icon" width="16" height="17"><br><br>
+        <center>
+         <font color="black" size="2" face="arial">Share <strong>Lady Madonna lyrics</strong></font><br><p style="height: 1px; margin: 3pt; padding: 0pt;"></p>
+                    
+                    <iframe src="http://www.facebook.com/plugins/like.php?href=&amp;layout=standard&amp;show_faces=true&amp;action=like&amp;font=arial&amp;colorscheme=light&amp;height=40" scrolling="no" frameborder="0" style="border:none; overflow:hidden;height:67px;"></iframe>
+                   
+                    </center>&nbsp;
+                    
+                                 RATE THIS SONG! <form action="Default.aspx?Page=Vote" method="post"> 
+                     
+                    <select name="Rating">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                   <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                    </select>
+                    <input type="submit" value="RATE" id="Submit1" style="width:60px;height:26px;background-color:#28414B;color:White;font-size:7pt;text-align:center;vertical-align:middle;font-weight:bold;"></form><br>   
+                    
+      
+           
+         
+       
+       <center style="margin-bottom: 10px;">
+       <table cellpadding="0" cellspacing="0">
+                      <tr>
+                       <td width="30"></td>
+                        <td width="25" align="center"><a href="javascript:favorites();"><img src="images/favorites.gif" width="20" height="20" border="0" alt="Add to Favorites Lyrics"></a></td>
+                        
+                       
+                        
+                        <td width=25 align="center"><a href="Default.aspx?Page=Email&amp;URL=/Song18148-The-Beatles-Lady-Madonna.aspx"><img src="images/email.gif" width="20" height="20" border=0 alt="Email to a Friend The Beatles - Lady Madonna Lyrics"></a></td> 
+                        <td width="30"></td></tr>
+                     <tr>
+                       <td height="15" colspan="7"></td></tr>
+                      <tr>
+                      
+                     
+                    <td valign="top" align="center" class="Text" colspan="7">Rating: 
+<img height="20" width="20" src="images/vote.gif" alt=""><img height="20" width="20" src="images/vote.gif" alt=""><img height="20" width="20" src="images/vote.gif" alt=""><img height="20" width="20" src="images/vote.gif" alt=""></td></tr>
+                  
+                    </table></center>
+                    
+                    
+                    
+                    <br><center> Use the following form to post your meaning of this song, rate it, or submit comments about this song.</center><br><br>
+                    
+                           0<input type="hidden" name="ID" value="18148">
+                    
+                    <form  method="post" action="">
+                    <table width="100%">
+                      <tr>
+                    <td></td>
+                  </tr>
+                  <tr>
+                   <td class="Text" align="right" width="50%">Name: </td>
+                    <td><input type="text" name="Name" maxlength="50"></td>
+                 </tr>
+                 <tr>
+                   <td class="Text" align="right" width="50%">Comment: </td>
+                   <td><textarea name="Comment" rows="5" cols="40"></textarea></td>
+                  </tr>
+                  <tr>
+                    <td class="Text" align="right" width="0%">Type <b>maps</b> backwards (spam prevention): </td>
+                    <td><input type="text" name="SP" maxlength="50"></td>
+                  </tr>
+                  <tr>
+                    <td></td>
+                   <td><input type="submit" value="SEND COMMENTS" id="Button1"><br></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2"><hr size="1"></td></tr>
+                      <tr>
+    <td align="center" colspan=2 class="Text">There are no comments for this song yet.
+ 
+                   
+                                    </td></tr></table></form>
+                    </table>
+                    
+                    
+                   
+                    
+    </div>
+    
+    <div style="width:29%;float:left;">
+     <div style="width:100%;float:left;margin-bottom:5px;">
+     
+    
+         <script type="text/javascript"><!--
+e9 = new Object();
+e9.size = "336x280,300x250";
+//--></script>
+<script type="text/javascript" src="http://tags.expo9.exponential.com/tags/lyricsbaycom/SmartLyricscom/tags.js">
+</script>
+
+     </div>
+    
+    
+    
+     <!--<div style="width:100%;float:left;margin-bottom:5px;">
+     
+     
+        <iframe src=""  frameborder="0" height="500" width="300" scrolling="no"></iframe> 
+       </div>-->
+
+        <div style="width:100%;float:left;padding-bottom:10px;">
+                
+           <table width="100%" align="left" style="border-color:#BDCCDC" border="0"><tr><td><table width="100%" style="border-color:#BDCCDC" border="1"><tr>   <td colspan="2" class="SubTitle" bgcolor="#BDCCDC" align="center">People who viewed The Beatles lyrics have also visited</td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">1. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Dessiree Johnson Lyrics" href="Artist1739-Dessiree-Johnson-lyrics.aspx"><font color="black" face="arial" size="2">Dessiree Johnson lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">2. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Cypress Hill F/ Q-Tip Lyrics" href="Artist2899-Cypress-Hill-F-Q-Tip-lyrics.aspx"><font color="black" face="arial" size="2">Cypress Hill F/ Q-Tip lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">3. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Jo-Burg Lyrics" href="Artist4532-Jo-Burg-lyrics.aspx"><font color="black" face="arial" size="2">Jo-Burg lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">4. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Avatar Lyrics" href="Artist7558-Avatar-lyrics.aspx"><font color="black" face="arial" size="2">Avatar lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">5. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Jurado Rocío Lyrics" href="Artist11337-Jurado-Roco-lyrics.aspx"><font color="black" face="arial" size="2">Jurado Rocío lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">6. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Moore Thurston Lyrics" href="Artist12748-Moore-Thurston-lyrics.aspx"><font color="black" face="arial" size="2">Moore Thurston lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">7. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Meditations Lyrics" href="Artist37576-Meditations-lyrics.aspx"><font color="black" face="arial" size="2">Meditations lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">8. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="(A Plus) Lyrics" href="Artist39647-A_Plus-lyrics.aspx"><font color="black" face="arial" size="2">(A Plus) lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">9. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Thriving Ivory Lyrics" href="Artist41857-Thriving-Ivory-lyrics.aspx"><font color="black" face="arial" size="2">Thriving Ivory lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">10. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Ithdabquth Qliphoth Lyrics" href="Artist43604-Ithdabquth-Qliphoth-lyrics.aspx"><font color="black" face="arial" size="2">Ithdabquth Qliphoth lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">11. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Perfect Gentlemen Lyrics" href="Artist46434-Perfect-Gentlemen-lyrics.aspx"><font color="black" face="arial" size="2">Perfect Gentlemen lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">12. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Nanne Grönvall Lyrics" href="Artist49329-Nanne-Grnvall-lyrics.aspx"><font color="black" face="arial" size="2">Nanne Grönvall lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">13. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Barbara Greene Lyrics" href="Artist51957-Barbara-Greene-lyrics.aspx"><font color="black" face="arial" size="2">Barbara Greene lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">14. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Skyzoo & Illmind Lyrics" href="Artist53406-Skyzoo--Illmind-lyrics.aspx"><font color="black" face="arial" size="2">Skyzoo & Illmind lyrics</font></a></td></tr><tr><td class="Text1" align="left" valign="top"  style="border:none"><font color="black" face="arial" size="2">15. </font></td><td class="Text1" align="left" valign="top" style="border:none"><a class="regular" title="Hopsin Lyrics" href="Artist53468-Hopsin-lyrics.aspx"><font color="black" face="arial" size="2">Hopsin lyrics</font></a></td></tr></table></td> </tr> 
+                      </table></div>
+    
+    
+   <br><br>
+               <object id="final" align="middle"type="application/x-shockwave-flash" style="width:240px; height:250px;" data="http://www.smartlyrics.com/scrollsongs.swf?lid=18148"><param name="movie" value="http://www.smartlyrics.com/scrollsongs.swf?lid=18148"></object>
+               
+               <table align="center" cellpadding="0" cellspacing="0" border="0" width="292px"  style="padding-top:10px;border: 0px solid #D60000; font-family: verdana; color: #333333; text-align: justify">
+                   <tr>
+                       <td>
+                           <font color="black" size="2" face="arial"><b>Put this scroller on your page!</b></font><br><br>
+                           
+                       <input type="text" name="embedcpy" id="embedid" onclick="javascript:document.getElementById('embedid').select();" value="&lt;object codebase='http://fpdownload.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,0,0' width='152' height='210' id='final' align='middle'&gt;&lt;embed src='http://www.smartlyrics.com/scrollsongs.swf?lid=18148' quality='high' width='200' height='210' name='Songs' align='middle' allowScriptAccess='sameDomain' type='application/x-shockwave-flash' pluginspage='http://www.macromedia.com/go/getflashplayer' /&gt; &lt;/object&gt;&lt;br&gt;&lt;a href='http://www.smartlyrics.com' target='window.open(this.href); return false;'&gt;SmartLyrics&lt;/a&gt; | &lt;a href=&quot;http://www.smartlyrics.com/Song18148-The-Beatles-Lady-Madonna.aspx&quot; onclick='window.open(this.href); return false;'&gt;Lady Madonna lyrics&lt;/a&gt;" style="width: 292px;" READONLY> 
+                       </td>
+                   </tr>
+               </table>
+
+                </div>
+    
+    
+    
+      
+    </div></div></div><div  class="Copyright">&copy; 2013 Smart Lyrics.  All rights reserved.
+</div>
+<script type="text/javascript">
+var _gaq = _gaq || [];_gaq.push(['_setAccount', 'UA-2423143-2']);_gaq.push(['_trackPageview']);(function() {var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);})();
+</script>
+<script type="text/javascript">
+var pageTracker = _gaq._getTracker("UA-2423143-2");
+pageTracker._initData();
+pageTracker._trackPageview();
+</script>
+<script type="text/javascript">
+cf_page_artist = 'The Beatles';
+cf_page_song = 'Lady Madonna';
+cf_adunit_id = '39381388';
+cf_flex = true
+</script><script type="text/javascript" src="//srv.clickfuse.com/showads/showad.php"></script>
+<center><img src="images/tonefuselogo.jpg" alt="ToneFuse Music" title="ToneFuse Music" width="150" height="30"><p style="height: 5px; margin: 0pt; padding: 0pt;"></p></center>
+</body>
+</html>

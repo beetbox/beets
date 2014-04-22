@@ -1,0 +1,148 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml" >
+ <head>
+  <title>I Could Beat Myself - Beres Hammond &#187; Reggae Lyrics</title>
+  <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+  
+  <meta name="description" content="Searchable reggae lyrics database with a large number of reggae, dancehall, ska, rocksteady, lovers rock and ragga songs." />
+  <meta name="keywords" content="lyrics, lyric, song, music, song lyrics, music lyrics, reggae, reggae lyrics, lyrics search, new lyrics, dancehall, sound clash, clash, riddim, riddims, DJ, deejay, jamaica, music, ska, ragga, rocksteady, dub, dub music, roots reggae, lovers rock, reggae fusion" />
+ 
+  <link rel="icon" href="http://www.reggaelyrics.info/favicon.ico" type="image/x-icon" />
+  <link rel="shortcut icon" href="http://www.reggaelyrics.info/favicon.ico" type="image/x-icon" /> 
+  <link rel="stylesheet" href="http://www.reggaelyrics.info/style/site.css" type="text/css" media="all" />
+  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>  
+  
+  <script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-7587978-3']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+  </script>
+   </head>
+ <body>
+  <img src="http://www.reggaelyrics.info/images/socialLogo.jpg" id="socialLogo" alt="" style="display: none;"/>
+  <div id="bg">
+    <div id="main">
+      
+      <div id="header">
+        <a title="ReggaeLyrics.info" href="http://www.reggaelyrics.info/">
+          <span id="logo"></span>
+        </a>
+        <div id="headBanner">
+          <script type="text/javascript"><!--
+          google_ad_client = "ca-pub-9116042048777073";
+          google_ad_slot = "8820782086";
+          google_ad_width = 728;
+          google_ad_height = 90;
+          //-->
+          </script>
+          <script type="text/javascript"
+          src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+          </script>
+        </div>
+      </div>
+      <div id="headNav">
+        <div id="headMenu">
+          <ul>
+            <li><a href="http://www.reggaelyrics.info/">Home</a> |</li>
+            <li><a href="http://www.reggaelyrics.info/submit/">Submit Lyrics</a> |</li>
+            <li><a href="http://www.reggaelyrics.info/about/">About</a> |</li>
+            <li><a href="http://www.reggaelyrics.info/community/">Community</a> |</li>
+            <li><a href="http://www.reggaelyrics.info/link/">Link to Us</a> |</li>
+            <li><a href="http://www.reggaelyrics.info/contact/">Contact</a></li>
+          </ul>
+        </div>
+        <div id="headSearch">
+          <form method="post" action="http://www.reggaelyrics.info/search/">
+            <div id="searchForm">
+              <input type="text" value="" name="queryString" /> <input type="radio" name="searchType" value="artist" checked/><label for="artist">Artist</label><input type="radio" name="searchType" value="song" /><label for="song">Song Title</label><input type="submit" value="&nbsp;" name="go" class="searchBt">
+            </div>
+          </form>
+        </div>
+      </div>
+      <div id="alphabet">
+        <ul>
+          <li><a href="http://www.reggaelyrics.info/0/">#</a></li>
+          <li><a href="http://www.reggaelyrics.info/a/">A</a></li>
+          <li><a href="http://www.reggaelyrics.info/b/">B</a></li>
+          <li><a href="http://www.reggaelyrics.info/c/">C</a></li>
+          <li><a href="http://www.reggaelyrics.info/d/">D</a></li>
+          <li><a href="http://www.reggaelyrics.info/e/">E</a></li>
+          <li><a href="http://www.reggaelyrics.info/f/">F</a></li>
+          <li><a href="http://www.reggaelyrics.info/g/">G</a></li>
+          <li><a href="http://www.reggaelyrics.info/h/">H</a></li>
+          <li><a href="http://www.reggaelyrics.info/i/">I</a></li>
+          <li><a href="http://www.reggaelyrics.info/j/">J</a></li>
+          <li><a href="http://www.reggaelyrics.info/k/">K</a></li>
+          <li><a href="http://www.reggaelyrics.info/l/">L</a></li>
+          <li><a href="http://www.reggaelyrics.info/m/">M</a></li>
+          <li><a href="http://www.reggaelyrics.info/n/">N</a></li>
+          <li><a href="http://www.reggaelyrics.info/o/">O</a></li>
+          <li><a href="http://www.reggaelyrics.info/p/">P</a></li>
+          <li><a href="http://www.reggaelyrics.info/q/">Q</a></li>
+          <li><a href="http://www.reggaelyrics.info/r/">R</a></li>
+          <li><a href="http://www.reggaelyrics.info/s/">S</a></li>
+          <li><a href="http://www.reggaelyrics.info/t/">T</a></li>
+          <li><a href="http://www.reggaelyrics.info/u/">U</a></li>
+          <li><a href="http://www.reggaelyrics.info/v/">V</a></li>
+          <li><a href="http://www.reggaelyrics.info/w/">W</a></li>
+          <li><a href="http://www.reggaelyrics.info/x/">X</a></li>
+          <li><a href="http://www.reggaelyrics.info/y/">Y</a></li>
+          <li><a href="http://www.reggaelyrics.info/z/">Z</a></li>
+        </ul>  
+      </div>      <div id="mainContent">
+        <div id="leftContainer">
+          <div id="insideBox" class="protected">          
+            <script type="text/javascript" src="http://www.reggaelyrics.info/scripts/c.js"></script>
+            <script type="text/javascript" src="http://s7.addthis.com/js/250/addthis_widget.js#pubid=ra-501d498e69752e44"></script>
+            <h2>I Could Beat Myself</h2>
+            <h3><a href="http://www.reggaelyrics.info/beres-hammond/">Beres Hammond</a></h3>
+            <div class="addthis_toolbox addthis_default_style " style="margin-bottom: 15px;">
+            <a class="addthis_button_facebook"></a>
+            <a class="addthis_button_twitter"></a>
+            <a class="addthis_button_pinterest_share"></a>
+            <a class="addthis_button_email"></a>
+            <a class="addthis_button_compact"></a>
+            <a class="addthis_counter addthis_bubble_style"></a>
+            </div>
+            <p>oooh ahh, I'm hurting, bad<br />oooh ahh I'm hurting bad!<br /><br />I did not see what I was supposed to see<br />taking it easy when a friend told me I was in<br />danger, so much danger.<br />Underestimating my woman, not taking her<br />out, working too hard and now she's gone off<br />with a stranger, someone I don't even know.<br /><br />I should have taken her out, every once and a<br />while, taken her to dinner on the finer side, shown<br />her a life that was all worth while, now I guese I gotta<br />walk an extra mile! I could beat myself! Ahh yeah.<br /><br />Now I'm gonna feel funny out there in the crowd<br />when my friends all ask me, where is your woman?<br />long time I don't see. Now I've got to think fast gotta<br />use my head, give a good story and make sure they<br />buy my version of the situation.<br /><br />All the while I wouldn't lie I'm gonna do this once<br />see my reputation sinking in the distance, if they<br />knew the truth that really existed...then my little sanity<br />would be wasted! I could beat myself ahh yes..I could<br />beat myself!!! Ohh lord lord.<br /><br />oooh ooh I'm hurting, hurting inside<br />oooh ooh I'm hurting<br /><br />Now I really want to hear a little news now and<br />then, this is not what I expect to hear from my<br />friend I'm dissapointed. He should realize that its<br />gonna destroy my position (remember I'm a name<br />brand) now I've gotta see....I should have held her tight<br />every once and a while, gotten it together on the finer style<br />shown her a life that was all worth while, now it seems I gotta<br />walk an extra mile....I could beat myself..ahh yes, I could beat myself<br />ooh lord...<br /><br />ooh I'm hurting...<br />ooooh I'm hurting,hurting inside<br /><br />I don't know what I wanna tell you<br />but I wanna tell you something real, real good yes<br />someting to make you<br />wanna shiver....</p>
+          </div>
+        </div>
+        <div id="right">
+                              <div id="righTopBanner">
+            <script type="text/javascript"><!--
+            google_ad_client = "ca-pub-9116042048777073";
+            google_ad_slot = "9914820990";
+            google_ad_width = 300;
+            google_ad_height = 250;
+            //-->
+            </script>
+            <script type="text/javascript"
+            src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+            </script>
+          </div>  
+        </div>
+      </div>
+    </div>
+    <div id="footer">
+      <ul>
+        <li><a href="http://www.reggaelyrics.info/">Home</a> |</li>
+        <li><a href="http://www.reggaelyrics.info/submit/">Submit Lyrics</a> |</li>
+        <li><a href="http://www.reggaelyrics.info/about/">About</a> |</li>
+        <li><a href="http://www.reggaelyrics.info/community/">Community</a> |</li>
+        <li><a href="http://www.reggaelyrics.info/link/">Link to Us</a> |</li>          
+        <li><a href="http://www.reggaelyrics.info/contact/">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+ </body>
+</html>
