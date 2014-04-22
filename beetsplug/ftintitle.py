@@ -51,6 +51,8 @@ def contains_feat(title):
 def update_metadata(item, feat_part, drop_feat):
     """Choose how to add new artists to the title and set the new
     metadata. Also, print out messages about any changes that are made.
+    If `drop_feat` is set, then do not add the artist to the title; just
+    remove it from the artist field.
     """
     # In all cases, update the artist fields.
     ui.print_(u'artist: {0} -> {1}'.format(item.artist, item.albumartist))
@@ -116,7 +118,7 @@ class FtInTitlePlugin(BeetsPlugin):
         super(FtInTitlePlugin, self).__init__()
 
         self.config.add({
-            'drop_feat': False
+            'drop': False
         })
 
         self._command = ui.Subcommand(
@@ -124,7 +126,7 @@ class FtInTitlePlugin(BeetsPlugin):
             help='move featured artists to the title field')
 
         self._command.parser.add_option(
-            '-d', '--drop', dest='drop_feat',
+            '-d', '--drop', dest='drop',
             action='store_true', default=False,
             help='drop featuring from artists and ignore title update')
 
@@ -132,7 +134,7 @@ class FtInTitlePlugin(BeetsPlugin):
 
         def func(lib, opts, args):
             self.config.set_args(opts)
-            drop_feat = self.config['drop_feat'].get(bool)
+            drop_feat = self.config['drop'].get(bool)
             write = config['import']['write'].get(bool)
 
             for item in lib.items(ui.decargs(args)):
