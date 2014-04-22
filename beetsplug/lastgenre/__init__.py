@@ -66,25 +66,32 @@ def _tags_for(obj):
         log.debug(u'last.fm error: %s' % unicode(exc))
         return []
 
-    tags = []
+    res = filter_tags(res)
+    return res
+
+def filter_tags(tags):
+    """Filter tags based on their weights and whitelist content
+    """
+
+    res = []
     min_weight = config['lastgenre']['min_weight'].get(int)
     count = config['lastgenre']['count'].get(int)
 
     dbg = []
-    for el in res:
+    for el in tags:
         weight = int(el.weight or 0)
         tag = el.item.get_name().lower()
         if _is_allowed(tag):
-            if min_weight > -1 and min_weight > weight and len(tags) > 0:
-                return tags
-            tags.append(tag)
+            if min_weight > -1 and min_weight > weight and len(res) > 0:
+                return res
+            res.append(tag)
             dbg.append(u'{0} [{1}]'.format(tag, weight))
-            if len(tags) == count:
+            if len(res) == count:
                 break
     log.debug(u'lastfm.tag (min. {0}): {1}'.format(
         min_weight, u', '.join(dbg)
     ))
-    return tags
+    return res
 
 
 def _is_allowed(genre):
