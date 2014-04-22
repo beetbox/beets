@@ -74,13 +74,44 @@ def _tags_for(obj):
     for el in res:
         weight = int(el.weight or 0)
         tag = el.item.get_name().lower()
+        log.debug(u'Fetched       : {0} ({1})'.format(
+          tag,weight))
         if _is_allowed(tag):
             if min_weight > -1 and min_weight > weight and len(tags) > 0:
                 return tags
+            log.debug(u'Allowed       : {0} ({1})'.format(
+               tag,weight))
             tags.append(tag)
             dbg.append(u'{0} [{1}]'.format(tag, weight))
-            if len(tags) == count:
-                break
+            log.debug(u'---------------'.format(
+               tag,weight))
+            break
+        else: 
+        # Moved canonicalization logic from _strings_to_genre to this place
+            log.debug(u'Disallowed    : {0} ({1})'.format(
+                tag,weight))
+            if options.get('c14n'):
+                log.debug(u'Funnel...')
+                parents = find_parents(tag, options['branches'])
+                for parent in parents:
+                    log.debug(u'Funneled      : {0} ({1})'.format(
+                       parent,weight))
+                    if _is_allowed(parent):
+                        log.debug(u'Allowed       : {0} ({1})'.format(
+                           parent,weight))
+                        tags.append(parent)
+                        dbg.append(u'{0} [{1}]'.format(parent, weight))
+                        log.debug(u'---------------')
+                        break
+                    else:
+                        log.debug(u'Disallowed    : {0} ({1})'.format(
+                            parent,weight))
+                        if parent is parents[-1]:
+                            log.debug(u'Funnel end.')
+                            log.debug(u'---------------')
+                        else:
+                            log.debug(u'Funnel...')
+    
     log.debug(u'lastfm.tag (min. {0}): {1}'.format(
         min_weight, u', '.join(dbg)
     ))
@@ -100,22 +131,24 @@ def _is_allowed(genre):
 
 def _strings_to_genre(tags):
     """Given a list of strings, return a genre by joining them into a
-    single string and (optionally) canonicalizing each.
+    single string.
     """
+    
+    log.debug(u'string_to_genre initial tags: {0}'.format(
+       tags))
+    
     if not tags:
         return None
 
-    if options.get('c14n'):
-        # Use the canonicalization tree.
-        out = []
-        for tag in tags:
-            for parent in find_parents(tag, options['branches']):
-                if _is_allowed(parent):
-                    out.append(parent)
-                    break
-        tags = out
-
     tags = [t.title() for t in tags]
+   
+    # Removes duplicates
+    from collections import OrderedDict
+    tags = list(OrderedDict.fromkeys(tags))
+
+    log.debug(u'string_to_genre modified tags: {0}'.format(
+       tags))
+    
     return config['lastgenre']['separator'].get(unicode).join(
         tags[:config['lastgenre']['count'].get(int)]
     )
@@ -329,7 +362,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Filter the existing genre.
         if obj.genre:
             result = _strings_to_genre([obj.genre])
-            if result:
+            if _is_allowed(result):
                 return result, 'original'
 
         # Fallback string.
