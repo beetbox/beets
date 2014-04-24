@@ -250,7 +250,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         with open(wl_filename) as f:
             for line in f:
                 line = line.decode('utf8').strip().lower()
-                if line:
+                if line and not line.startsWith(u'#'):
                     whitelist.add(line)
         options['whitelist'] = whitelist
 
