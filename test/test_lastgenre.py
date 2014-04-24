@@ -24,8 +24,10 @@ class LastGenrePluginTest(unittest.TestCase):
         """Set up configuration"""
         lastgenre.LastGenrePlugin()
 
-    def _setup_config(self, whitelist=set(), branches=None, count=1):
-        lastgenre.options['whitelist'] = whitelist
+    def _setup_config(self, _whitelist=set(), _branches=None, count=1):
+
+        if _whitelist:
+            lastgenre.options['whitelist'] = _whitelist
         if branches:
             lastgenre.options['branches'] = branches
             lastgenre.options['c14n'] = True
@@ -73,6 +75,9 @@ class LastGenrePluginTest(unittest.TestCase):
                          ['jazz', 'pop', 'country blues', 'rock']),
                          'Jazz, Blues')
 
+    def test_default_c14n(self):
+        """c14n with default config files should work out-of-the-box
+        """
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
