@@ -246,6 +246,9 @@ class ImportSession(object):
 
             # FIXME We should also resolve duplicates when not
             # autotagging.
+            # FIXME user_query and resolve_duplicates use the UI.
+            # Running them parallel in different stages might mess up
+            # the output.
             stages += [lookup_candidates(self), user_query(self),
                        resolve_duplicates(self)]
         else:
