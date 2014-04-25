@@ -12,6 +12,8 @@ from beetsplug.importfeeds import album_imported, ImportFeedsPlugin
 class ImportfeedsTestTest(unittest.TestCase):
 
     def setUp(self):
+        config.clear()
+        config.read(user=False)
         self.importfeeds = ImportFeedsPlugin()
         self.lib = Library(':memory:')
         self.feeds_dir = tempfile.mkdtemp()

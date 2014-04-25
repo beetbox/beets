@@ -88,6 +88,9 @@ setup(
         'responses',
         'pyechonest',
         'mock',
+        'flask',
+        'rarfile',
+        'pylast',
     ],
 
     # Plugin (optional) dependencies:
