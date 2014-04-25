@@ -985,10 +985,15 @@ class Library(dbcore.Database):
         return obj.id
 
     def add_album(self, items):
-        """Create a new album consisting of a list of items. The items
-        are added to the database if they don't yet have an ID. Return a
-        new :class:`Album` object.
+        """Create a new album consisting of a list of items.
+
+        The items are added to the database if they don't yet have an
+        ID. Return a new :class:`Album` object. The list items must not
+        be empty.
         """
+        if not items:
+            raise ValueError(u'need at least one item')
+
         # Create the album structure using metadata from the first item.
         values = dict((key, items[0][key]) for key in Album.item_keys)
         album = Album(self, **values)
