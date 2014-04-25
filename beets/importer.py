@@ -391,7 +391,8 @@ class ImportTask(object):
         if session.config['incremental']:
             self.save_history()
 
-        self.cleanup(copy=session.config['copy'], delete=session.config['delete'],
+        self.cleanup(copy=session.config['copy'],
+                     delete=session.config['delete'],
                      move=session.config['move'])
         self._emit_imported(session.lib)
 
@@ -430,7 +431,8 @@ class ImportTask(object):
     def lookup_candidates(self):
         """Retrieve and store candidates for this album.
         """
-        artist, album, candidates, recommendation = autotag.tag_album(self.items)
+        artist, album, candidates, recommendation = \
+            autotag.tag_album(self.items)
         self.cur_artist = artist
         self.cur_album = album
         self.candidates = candidates
@@ -574,6 +576,13 @@ class ImportTask(object):
         self.set_choice(choice)
         session.log_choice(self)
 
+    def reload(self):
+        """Reload albums and items from the database.
+        """
+        for item in self.imported_items():
+            item.load()
+        self.album.load()
+
     # Utilities.
 
     def prune(self, filename):
@@ -666,6 +675,9 @@ class SingletonImportTask(ImportTask):
         choice = session.choose_item(self)
         self.set_choice(choice)
         session.log_choice(self)
+
+    def reload(self):
+        self.item.load()
 
 
 # FIXME The inheritance relationships are inverted. This is why there
@@ -1055,8 +1067,9 @@ def plugin_stage(session, func, task):
     func(session, task)
 
     # Stage may modify DB, so re-load cached item data.
-    for item in task.imported_items():
-        item.load()
+    # FIXME Importer plugins should not modify the database but instead
+    # the albums and items attached to tasks.
+    task.reload()
 
 
 @pipeline.mutator_stage

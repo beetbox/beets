@@ -278,8 +278,7 @@ class FetchArtPlugin(BeetsPlugin):
                 # For any other choices (e.g., TRACKS), do nothing.
                 return
 
-            album = session.lib.get_album(task.album_id)
-            path = art_for_album(album, task.paths, self.maxwidth, local)
+            path = art_for_album(task.album, task.paths, self.maxwidth, local)
 
             if path:
                 self.art_paths[task] = path
@@ -290,7 +289,7 @@ class FetchArtPlugin(BeetsPlugin):
         if task in self.art_paths:
             path = self.art_paths.pop(task)
 
-            album = session.lib.get_album(task.album_id)
+            album = task.album
             src_removed = (config['import']['delete'].get(bool) or
                            config['import']['move'].get(bool))
             album.set_art(path, not src_removed)

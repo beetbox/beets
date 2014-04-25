@@ -601,8 +601,7 @@ class ReplayGainPlugin(BeetsPlugin):
             return
 
         if task.is_album:
-            album = session.lib.get_album(task.album_id)
-            self.handle_album(album, False)
+            self.handle_album(task.album, False)
         else:
             self.handle_track(task.item, False)
 
