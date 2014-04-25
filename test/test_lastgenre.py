@@ -14,45 +14,43 @@
 
 """Tests for the 'lastgenre' plugin."""
 
+import logging
 from _common import unittest
-from beetsplug import lastgenre
+from beetsplug.lastgenre import LastGenrePlugin
 from beets import config
 
+log = logging.getLogger('beets')
+
+lastGenrePlugin = LastGenrePlugin()
 
 class LastGenrePluginTest(unittest.TestCase):
-    def setUp(self):
-        """Set up configuration"""
-        lastgenre.LastGenrePlugin()
 
-    def _setup_config(self, _whitelist=set(), _branches=None, count=1):
-
-        if _whitelist:
-            lastgenre.options['whitelist'] = _whitelist
-        if branches:
-            lastgenre.options['branches'] = branches
-            lastgenre.options['c14n'] = True
-        else:
-            lastgenre.options['c14n'] = False
-
+    def _setup_config(self, whitelist=set(), canonical=None, count=1):
+        config['lastgenre']['canonical'] = canonical
         config['lastgenre']['count'] = count
+
+        if whitelist:
+            lastGenrePlugin.whitelist = whitelist
+
 
     def test_c14n(self):
         """Resolve genres that belong to a canonicalization branch.
         """
-        self._setup_config(whitelist=set(['blues']),
-                           branches=[['blues'], ['blues', 'country blues'],
-                                     ['blues', 'country blues',
-                                      'delta blues']])
+        # default whitelist and c14n
+        self._setup_config(canonical='')
+        self.assertEqual(lastGenrePlugin._strings_to_genre(['delta blues']), 'Blues')
+        self.assertEqual(lastGenrePlugin._strings_to_genre(['i got blues']), '')
 
-        self.assertEqual(lastgenre._strings_to_genre(['delta blues']), 'Blues')
-        self.assertEqual(lastgenre._strings_to_genre(['rhytm n blues']), '')
+        # custom whitelist
+        self._setup_config(canonical='', whitelist=set(['rock']))
+        self.assertEqual(lastGenrePlugin._strings_to_genre(['delta blues']), '')
 
     def test_whitelist(self):
         """Keep only genres that are in the whitelist.
         """
         self._setup_config(whitelist=set(['blues', 'rock', 'jazz']),
                            count=2)
-        self.assertEqual(lastgenre._strings_to_genre(['pop', 'blues']),
+        self.assertEqual(lastGenrePlugin._strings_to_genre(['pop', 'blues']),
                          'Blues')
 
     def test_count(self):
@@ -61,7 +59,7 @@ class LastGenrePluginTest(unittest.TestCase):
         """
         self._setup_config(whitelist=set(['blues', 'rock', 'jazz']),
                            count=2)
-        self.assertEqual(lastgenre._strings_to_genre(
+        self.assertEqual(lastGenrePlugin._strings_to_genre(
                          ['jazz', 'pop', 'rock', 'blues']),
                          'Jazz, Rock')
 
@@ -69,15 +67,11 @@ class LastGenrePluginTest(unittest.TestCase):
         """Keep the n first genres, after having applied c14n when necessary
         """
         self._setup_config(whitelist=set(['blues', 'rock', 'jazz']),
-                           branches=[['blues'], ['blues', 'country blues']],
+                           canonical='',
                            count=2)
-        self.assertEqual(lastgenre._strings_to_genre(
+        self.assertEqual(lastGenrePlugin._strings_to_genre(
                          ['jazz', 'pop', 'country blues', 'rock']),
                          'Jazz, Blues')
-
-    def test_default_c14n(self):
-        """c14n with default config files should work out-of-the-box
-        """
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
