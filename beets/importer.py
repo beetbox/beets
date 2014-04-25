@@ -397,8 +397,8 @@ class ImportTask(object):
     def cleanup(self, session):
         """Remove and prune imported paths.
         """
-        # FIXME This shouldn't be here. Skipped tasks should be removed from
-        # the pipeline.
+        # FIXME This shouldn't be here. Skipping should be handled in
+        # the stages.
         if self.skip:
             return
         items = self.imported_items()
@@ -418,8 +418,8 @@ class ImportTask(object):
                 self.prune(old_path)
 
     def _emit_imported(self, session):
-        # FIXME This shouldn't be here. Skipped tasks should be removed from
-        # the pipeline.
+        # FIXME This shouldn't be here. Skipping should be handled in
+        # the stages.
         if self.skip:
             return
         plugins.send('album_imported', lib=session.lib, album=self.album)
@@ -925,6 +925,8 @@ def lookup_candidates(session, task):
     is found, all of the yielded parameters (except items) are None.
     """
     if task.skip:
+        # FIXME This gets duplicated a lot. We need a better
+        # abstraction.
         return
 
     plugins.send('import_task_start', session=session, task=task)
@@ -1073,7 +1075,8 @@ def manipulate_files(session, task):
     )
 
 
-# TODO Get rid of this.
+# FIXME Boilerplate. Maybe we should move this to the `manipulate_files`
+# stage.
 @pipeline.stage
 def finalize(session, task):
     task.finalize(session)
