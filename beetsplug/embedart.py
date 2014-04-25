@@ -47,13 +47,14 @@ def _embed(path, items, maxwidth=0):
     for item in items:
         try:
             f = mediafile.MediaFile(syspath(item.path))
-        except (mediafile.UnreadableFileError, IOError) as exc:
-            log.warn('Could not embed art in {0}: {1}'.format(
+            f.images = [image]
+            f.save(config['id3v23'].get(bool))
+        except (OSError, IOError, mediafile.UnreadableFileError,
+                mediafile.MutagenError) as exc:
+            log.error('Could not embed art in {0}: {1}'.format(
                 displayable_path(item.path), exc
             ))
             continue
-        f.images = [image]
-        f.save(config['id3v23'].get(bool))
 
 
 class EmbedCoverArtPlugin(BeetsPlugin):
