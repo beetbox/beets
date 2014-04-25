@@ -25,6 +25,8 @@ Fixes:
   as false when it contains the string "false". Thanks to Ayberk Yilmaz.
 * :doc:`/plugins/convert`: Fix conversion for files that include a video
   stream by ignoring it. Thanks to brunal.
+* :doc:`/plugins/fetchart`: Log an error instead of crashing when tag
+  manipulation fails.
 
 
 1.3.5 (April 15, 2014)
