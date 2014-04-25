@@ -391,12 +391,15 @@ class ImportTask(object):
         if session.config['incremental']:
             self.save_history()
 
-        self.cleanup(session)
-        self._emit_imported(session)
+        self.cleanup(copy=session.config['copy'], delete=session.config['delete'],
+                     move=session.config['move'])
+        self._emit_imported(session.lib)
 
-    def cleanup(self, session):
+    def cleanup(self, copy=False, delete=False, move=False):
         """Remove and prune imported paths.
         """
+        # FIXME Maybe the keywords should be task properties.
+
         # FIXME This shouldn't be here. Skipping should be handled in
         # the stages.
         if self.skip:
@@ -404,7 +407,7 @@ class ImportTask(object):
         items = self.imported_items()
 
         # When copying and deleting originals, delete old files.
-        if session.config['copy'] and session.config['delete']:
+        if copy and delete:
             new_paths = [os.path.realpath(item.path) for item in items]
             for old_path in self.old_paths:
                 # Only delete files that were actually copied.
@@ -413,16 +416,16 @@ class ImportTask(object):
                     self.prune(old_path)
 
         # When moving, prune empty directories containing the original files.
-        elif session.config['move']:
+        elif move:
             for old_path in self.old_paths:
                 self.prune(old_path)
 
-    def _emit_imported(self, session):
+    def _emit_imported(self, lib):
         # FIXME This shouldn't be here. Skipping should be handled in
         # the stages.
         if self.skip:
             return
-        plugins.send('album_imported', lib=session.lib, album=self.album)
+        plugins.send('album_imported', lib=lib, album=self.album)
 
     def lookup_candidates(self):
         """Retrieve and store candidates for this album.
@@ -617,13 +620,13 @@ class SingletonImportTask(ImportTask):
     def apply_metadata(self):
         autotag.apply_item_metadata(self.item, self.match.info)
 
-    def _emit_imported(self, session):
+    def _emit_imported(self, lib):
         # FIXME This shouldn't be here. Skipped tasks should be removed from
         # the pipeline.
         if self.skip:
             return
         for item in self.imported_items():
-            plugins.send('item_imported', lib=session.lib, item=item)
+            plugins.send('item_imported', lib=lib, item=item)
 
     def lookup_candidates(self):
         candidates, recommendation = autotag.tag_item(self.item)
@@ -703,7 +706,7 @@ class SentinelImportTask(ImportTask):
     def set_choice(self, choice):
         raise NotImplementedError
 
-    def cleanup(self, session):
+    def cleanup(self, **kwargs):
         pass
 
     def _emit_imported(self, session):
@@ -757,7 +760,7 @@ class ArchiveImportTask(SentinelImportTask):
 
         return cls._handlers
 
-    def cleanup(self, session):
+    def cleanup(self, **kwargs):
         """Removes the temporary directory the archive was extracted to.
         """
         if self.extracted:
