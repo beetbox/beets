@@ -925,9 +925,13 @@ def query_tasks(session):
             log.debug('yielding album %i: %s - %s' %
                       (album.id, album.albumartist, album.album))
             items = list(album.items())
+
+            # Clear IDs from re-tagged items so they appear "fresh" when
+            # we add them back to the library.
             for item in items:
                 item.id = None
                 item.album_id = None
+
             yield ImportTask(None, [album.item_dir()], items)
 
 
