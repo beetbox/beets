@@ -236,10 +236,8 @@ def fetch_lyricscom(artist, title):
 def slugify(text):
     """Normalize a string and remove non-alphanumeric characters.
     """
-    # http://stackoverflow.com/questions/295135/turn-a-string-into-a-valid-
-    # filename-in-python
-
-    text = re.sub("['_-]", ' ', text)
+    text = re.sub(r"[-'_\s]", '_', text)
+    text = re.sub(r"_+", '_', text).strip('_')
     pat = "([^,\(]*)\((.*?)\)"  # Remove content within parentheses
     text = re.sub(pat, '\g<1>', text).strip()
     try:
@@ -247,7 +245,7 @@ def slugify(text):
         text = unicode(re.sub('[-\s]+', ' ', text))
     except UnicodeDecodeError:
         log.exception("Failing to normalize '%s'" % (text))
-    return urllib.quote(text)
+    return text
 
 
 BY_TRANS = ['by', 'par']
@@ -268,9 +266,10 @@ def is_page_candidate(urlLink, urlTitle, title, artist):
         return True
     # or try extracting song title from URL title and check if
     # they are close enough
-    tokens = [by + '%20' + artist for by in BY_TRANS] + \
+    tokens = [by + '_' + artist for by in BY_TRANS] + \
              [artist, sitename, sitename.replace('www.', '')] + LYRICS_TRANS
-    songTitle = re.sub(u'(%s)' % u'|'.join(tokens), u'', urlTitle).strip('%20')
+    songTitle = re.sub(u'(%s)' % u'|'.join(tokens), u'', urlTitle)
+
 
     typoRatio = .8
     return difflib.SequenceMatcher(None, songTitle, title).ratio() >= typoRatio
