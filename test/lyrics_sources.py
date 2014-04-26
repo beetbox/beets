@@ -16,15 +16,15 @@
 
 import os
 import logging
+import _common
 from _common import unittest
-import _lyricstext
 from beetsplug import lyrics
 from beets import config
 from beets.util import confit
 from bs4 import BeautifulSoup
-from nose.plugins.attrib import attr
 
 log = logging.getLogger('beets')
+LYRICS_TEXTS = confit.load_yaml(os.path.join(_common.RSRC, 'lyricstext.yaml'))
 
 try:
     googlekey = config['lyrics']['google_API_key'].get(unicode)
@@ -54,7 +54,7 @@ class MockFetchUrl(object):
 def is_lyrics_content_ok(title, text):
     """Compare lyrics text to expected lyrics for given title"""
 
-    setexpected = set(_lyricstext.texts[title].split())
+    setexpected = set(LYRICS_TEXTS[lyrics.slugify(title)].split())
     settext = set(text.split())
     setinter = setexpected.intersection(settext)
     # consider lyrics ok if they share 50% or more with the reference
@@ -80,11 +80,9 @@ class LyricsPluginTest(unittest.TestCase):
             self.assertTrue(is_lyrics_content_ok(definfo['title'], res))
 
     def test_missing_lyrics(self):
-        for msg in _lyricstext.missing_texts:
-            self.assertFalse(lyrics.is_lyrics(msg), msg)
+        self.assertFalse(lyrics.is_lyrics(LYRICS_TEXTS['missing_texts']))
 
 
-@attr('slow')
 class LyricsScrapingPluginTest(unittest.TestCase):
 
     # Every source entered in default beets google custom search engine
