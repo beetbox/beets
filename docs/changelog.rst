@@ -27,6 +27,8 @@ Fixes:
   stream by ignoring it. Thanks to brunal.
 * :doc:`/plugins/fetchart`: Log an error instead of crashing when tag
   manipulation fails.
+* :doc:`/plugins/convert`: Log an error instead of crashing when
+  embedding album art fails.
 
 
 1.3.5 (April 15, 2014)
