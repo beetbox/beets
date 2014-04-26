@@ -125,7 +125,7 @@ def embed(lib, imagepath, query):
     log.info(u'Embedding album art into {0.albumartist} - {0.album}.'.format(
         album
     ))
-    _embed(imagepath, album.items(),
+    _embed(imagepath, [i.path for i in album.items()],
            config['embedart']['maxwidth'].get(int))
 
 
@@ -141,7 +141,7 @@ def embed_current(lib, query):
 
         log.info(u'Embedding album art into {0} - {1}'.
                  format(album.albumartist, album.album))
-        _embed(album.artpath, album.items(),
+        _embed(album.artpath, [i.path for i in album.items()],
                config['embedart']['maxwidth'].get(int))
 
 
@@ -203,5 +203,5 @@ def album_imported(lib, album):
     """Automatically embed art into imported albums.
     """
     if album.artpath and config['embedart']['auto']:
-        _embed(album.artpath, album.items(),
+        _embed(album.artpath, [i.path for i in album.items()],
                config['embedart']['maxwidth'].get(int))
