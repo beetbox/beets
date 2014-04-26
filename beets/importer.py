@@ -983,20 +983,20 @@ def user_query(session, task):
             lookup_candidates(session),
             user_query(session),
         ])
-        task = pipeline.multiple(ipl.pull())
+        return pipeline.multiple(ipl.pull())
 
     # As albums: group items by albums and create task for each album
-    elif task.choice_flag is action.ALBUMS:
+    if task.choice_flag is action.ALBUMS:
         ipl = pipeline.Pipeline([
             iter([task]),
             group_albums(session),
             lookup_candidates(session),
             user_query(session)
         ])
-        task = pipeline.multiple(ipl.pull())
+        return pipeline.multiple(ipl.pull())
+
 
     resolve_duplicates(session, task)
-
     return task
 
 
@@ -1006,10 +1006,10 @@ def resolve_duplicates(session, task):
     """
     if task.choice_flag in (action.ASIS, action.APPLY):
         ident = task.chosen_ident()
-        if ident in session.seen_ident or task.find_duplicates(session.lib):
+        if ident in session.seen_idents or task.find_duplicates(session.lib):
             session.resolve_duplicate(task)
             session.log_choice(task, True)
-        session.seen_ident.add(ident)
+        session.seen_idents.add(ident)
 
 
 @pipeline.mutator_stage
