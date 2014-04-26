@@ -150,6 +150,7 @@ class ImportSession(object):
         self.logfile = logfile
         self.paths = paths
         self.query = query
+        self.seen_idents = set()
 
         # Normalize the paths.
         if self.paths:
@@ -246,11 +247,7 @@ class ImportSession(object):
 
             # FIXME We should also resolve duplicates when not
             # autotagging.
-            # FIXME user_query and resolve_duplicates use the UI.
-            # Running them parallel in different stages might mess up
-            # the output.
-            stages += [lookup_candidates(self), user_query(self),
-                       resolve_duplicates(self)]
+            stages += [lookup_candidates(self), user_query(self)]
         else:
             stages += [import_asis(self)]
         stages += [apply_choices(self)]
@@ -998,27 +995,21 @@ def user_query(session, task):
         ])
         task = pipeline.multiple(ipl.pull())
 
+    resolve_duplicates(session, task)
+
     return task
 
 
-def resolve_duplicates(session):
+def resolve_duplicates(session, task):
     """Check if a task conflicts with items or albums already imported
     and ask the session to resolve this.
-
-    Two separate stages have to be created for albums and singletons
-    since `chosen_ident()` returns different types of data.
     """
-    task = None
-    recent = set()
-    while True:
-        task = yield task
-
-        if task.choice_flag in (action.ASIS, action.APPLY):
-            ident = task.chosen_ident()
-            if ident in recent or task.find_duplicates(session.lib):
-                session.resolve_duplicate(task)
-                session.log_choice(task, True)
-            recent.add(ident)
+    if task.choice_flag in (action.ASIS, action.APPLY):
+        ident = task.chosen_ident()
+        if ident in session.seen_ident or task.find_duplicates(session.lib):
+            session.resolve_duplicate(task)
+            session.log_choice(task, True)
+        session.seen_ident.add(ident)
 
 
 @pipeline.mutator_stage
