@@ -29,6 +29,8 @@ Fixes:
   manipulation fails.
 * :doc:`/plugins/convert`: Log an error instead of crashing when
   embedding album art fails.
+* :doc:`/plugins/convert`: Embed cover art into converted files.
+  Previously they were embedded into the source files.
 
 
 1.3.5 (April 15, 2014)
