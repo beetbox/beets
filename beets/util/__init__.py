@@ -460,11 +460,12 @@ def link(path, dest, replace=False):
     if os.path.exists(dest) and not replace:
         raise FilesystemError('file exists', 'rename', (path, dest),
                               traceback.format_exc())
-
     try:
         os.symlink(path, dest)
     except OSError:
-        print "WAAT!"
+        raise FilesystemError('Operating system does not support symbolic '
+                              'links.', 'link', (path, dest), 
+                              traceback.format_exc())
 
 
 def unique_path(path):
