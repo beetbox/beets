@@ -87,5 +87,5 @@ Authors
 Beets is by `Adrian Sampson`_ with a supporting cast of thousands. For help,
 please contact the `mailing list`_.
 
-.. _mailing list: http://beets.radbox.org/
+.. _mailing list: https://groups.google.com/forum/#!forum/beets-users
 .. _Adrian Sampson: http://homes.cs.washington.edu/~asampson/
