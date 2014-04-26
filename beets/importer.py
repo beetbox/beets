@@ -995,7 +995,6 @@ def user_query(session, task):
         ])
         return pipeline.multiple(ipl.pull())
 
-
     resolve_duplicates(session, task)
     return task
 
