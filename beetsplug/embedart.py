@@ -27,14 +27,14 @@ from beets import config
 log = logging.getLogger('beets')
 
 
-def _embed(path, items, maxwidth=0):
-    """Embed an image file, located at `path`, into each item.
+def _embed(image_path, audio_paths, maxwidth=0):
+    """Embed an image file into each file audio file.
     """
     if maxwidth:
-        path = ArtResizer.shared.resize(maxwidth, syspath(path))
+        image_path = ArtResizer.shared.resize(maxwidth, syspath(image_path))
 
     try:
-        with open(syspath(path), 'rb') as f:
+        with open(syspath(image_path), 'rb') as f:
             data = f.read()
     except IOError as exc:
         log.error(u'embedart: could not read image file: {0}'.format(exc))
@@ -44,15 +44,15 @@ def _embed(path, items, maxwidth=0):
     # Add art to each file.
     log.debug('Embedding album art.')
 
-    for item in items:
+    for path in audio_paths:
         try:
-            f = mediafile.MediaFile(syspath(item.path))
+            f = mediafile.MediaFile(syspath(path))
             f.images = [image]
             f.save(config['id3v23'].get(bool))
         except (OSError, IOError, mediafile.UnreadableFileError,
                 mediafile.MutagenError) as exc:
             log.error('Could not embed art in {0}: {1}'.format(
-                displayable_path(item.path), exc
+                displayable_path(path), exc
             ))
             continue
 
