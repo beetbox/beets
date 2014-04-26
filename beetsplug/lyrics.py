@@ -248,8 +248,8 @@ def slugify(text):
     return text
 
 
-BY_TRANS = ['by', 'par']
-LYRICS_TRANS = ['lyrics', 'paroles']
+BY_TRANS = ['by', 'par', 'de', 'von']
+LYRICS_TRANS = ['lyrics', 'paroles', 'letras', 'liedtexte']
 
 
 def is_page_candidate(urlLink, urlTitle, title, artist):
@@ -269,7 +269,6 @@ def is_page_candidate(urlLink, urlTitle, title, artist):
     tokens = [by + '_' + artist for by in BY_TRANS] + \
              [artist, sitename, sitename.replace('www.', '')] + LYRICS_TRANS
     songTitle = re.sub(u'(%s)' % u'|'.join(tokens), u'', urlTitle)
-
 
     typoRatio = .8
     return difflib.SequenceMatcher(None, songTitle, title).ratio() >= typoRatio
