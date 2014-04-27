@@ -947,13 +947,6 @@ class InferAlbumDataTest(_common.TestCase):
         self.task.infer_album_fields()
         self.assertFalse(self.items[0].comp)
 
-    def test_first_item_null_apply(self):
-        self.items[0] = None
-        self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
-        self.task.infer_album_fields()
-        self.assertFalse(self.items[1].comp)
-        self.assertEqual(self.items[1].albumartist, self.items[2].artist)
-
 
 class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
 

@@ -487,24 +487,14 @@ class ImportTask(object):
         elif self.choice_flag == action.APPLY:
             # Applying autotagged metadata. Just get AA from the first
             # item.
-            # FIXME this is overly complicated. Can we assume that
-            # `self.items` contains only elements that are not none and
-            # at least one of them?
-            for item in self.items:
-                if item is not None:
-                    first_item = item
-                    break
-            else:
-                assert False, "all items are None"
-            if not first_item.albumartist:
-                changes['albumartist'] = first_item.artist
-            if not first_item.mb_albumartistid:
-                changes['mb_albumartistid'] = first_item.mb_artistid
+            if not self.items[0].albumartist:
+                changes['albumartist'] = self.items[0].artist
+            if not self.items[0].mb_albumartistid:
+                changes['mb_albumartistid'] = self.items[0].mb_artistid
 
         # Apply new metadata.
         for item in self.items:
-            if item is not None:
-                item.update(changes)
+            item.update(changes)
 
     def manipulate_files(self, move=False, copy=False, write=False,
                          session=None):
