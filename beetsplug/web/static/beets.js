@@ -198,6 +198,7 @@ var ItemEntryView = Backbone.View.extend({
 });
 var ItemDetailView = Backbone.View.extend({
     tagName: "div",
+    id: "innerdetail",
     template: _.template($('#item-detail-template').html()),
     events: {
         'click .play': 'play',
@@ -249,6 +250,11 @@ var AppView = Backbone.View.extend({
         // Show detail.
         var detailView = new ItemDetailView({model: view.model});
         $('#detail').empty().append(detailView.render().el);
+        
+        // Add linebreaks for lyrics.
+        if ($('#lyrics')[0] != null) {
+            $('#lyrics')[0].innerHTML = $('#lyrics')[0].innerHTML.replace(/\n/g, "<br>");
+        }
     },
     playItem: function(item) {
         var url = '/item/' + item.get('id') + '/file';
