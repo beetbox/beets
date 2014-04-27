@@ -254,7 +254,6 @@ class ImportSession(object):
         for stage_func in plugins.import_stages():
             stages.append(plugin_stage(self, stage_func))
         stages += [manipulate_files(self)]
-        stages += [finalize(self)]
         pl = pipeline.Pipeline(stages)
 
         # Run the pipeline.
@@ -379,7 +378,7 @@ class ImportTask(object):
                                 lib.directory)
 
     def finalize(self, session):
-        """Save progress clean up files, and emit plugin event.
+        """Save progress, clean up files, and emit plugin event.
         """
         # FIXME the session argument is unfortunate. It should be
         # present as an attribute of the task.
@@ -1054,10 +1053,11 @@ def plugin_stage(session, func, task):
     task.reload()
 
 
-@pipeline.mutator_stage
+@pipeline.stage
 def manipulate_files(session, task):
     """A coroutine (pipeline stage) that performs necessary file
-    manipulations *after* items have been added to the library.
+    manipulations *after* items have been added to the library and
+    finalizes each task.
     """
     if task.skip:
         return
@@ -1072,11 +1072,7 @@ def manipulate_files(session, task):
         session=session,
     )
 
-
-# FIXME Boilerplate. Maybe we should move this to the `manipulate_files`
-# stage.
-@pipeline.stage
-def finalize(session, task):
+    # Progress, cleanup, and event.
     task.finalize(session)
 
 
