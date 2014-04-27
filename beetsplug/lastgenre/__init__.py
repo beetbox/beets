@@ -382,7 +382,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def imported(self, session, task):
         """Event hook called when an import task finishes."""
         if task.is_album:
-            album = session.lib.get_album(task.album_id)
+            album = task.album
             album.genre, src = self._get_genre(album)
             log.debug(u'added last.fm album genre ({0}): {1}'.format(
                 src, album.genre

@@ -222,7 +222,7 @@ class ArtImporterTest(_common.TestCase):
         # Import task for the coroutine.
         self.task = importer.ImportTask(None, None, [self.i])
         self.task.is_album = True
-        self.task.album_id = self.album.id
+        self.task.album = self.album
         info = AlbumInfo(
             album = 'some album',
             album_id = 'albumid',

@@ -867,12 +867,9 @@ class InferAlbumDataTest(_common.TestCase):
                                         items=self.items)
         self.task.set_null_candidates()
 
-    def _infer(self):
-        importer._infer_album_fields(self.task)
-
     def test_asis_homogenous_single_artist(self):
         self.task.set_choice(importer.action.ASIS)
-        self._infer()
+        self.task.infer_album_fields()
         self.assertFalse(self.items[0].comp)
         self.assertEqual(self.items[0].albumartist, self.items[2].artist)
 
@@ -881,7 +878,7 @@ class InferAlbumDataTest(_common.TestCase):
         self.items[1].artist = 'some other artist'
         self.task.set_choice(importer.action.ASIS)
 
-        self._infer()
+        self.task.infer_album_fields()
 
         self.assertTrue(self.items[0].comp)
         self.assertEqual(self.items[0].albumartist, 'Various Artists')
@@ -891,7 +888,7 @@ class InferAlbumDataTest(_common.TestCase):
         self.items[1].artist = 'some other artist'
         self.task.set_choice(importer.action.ASIS)
 
-        self._infer()
+        self.task.infer_album_fields()
 
         for item in self.items:
             self.assertTrue(item.comp)
@@ -901,7 +898,7 @@ class InferAlbumDataTest(_common.TestCase):
         self.items[0].artist = 'another artist'
         self.task.set_choice(importer.action.ASIS)
 
-        self._infer()
+        self.task.infer_album_fields()
 
         self.assertFalse(self.items[0].comp)
         self.assertEqual(self.items[0].albumartist, self.items[2].artist)
@@ -914,7 +911,7 @@ class InferAlbumDataTest(_common.TestCase):
             item.mb_albumartistid = 'some album artist id'
         self.task.set_choice(importer.action.ASIS)
 
-        self._infer()
+        self.task.infer_album_fields()
 
         self.assertEqual(self.items[0].albumartist,
                          'some album artist')
@@ -924,7 +921,7 @@ class InferAlbumDataTest(_common.TestCase):
     def test_apply_gets_artist_and_id(self):
         self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
 
-        self._infer()
+        self.task.infer_album_fields()
 
         self.assertEqual(self.items[0].albumartist, self.items[0].artist)
         self.assertEqual(self.items[0].mb_albumartistid,
@@ -936,7 +933,7 @@ class InferAlbumDataTest(_common.TestCase):
             item.mb_albumartistid = 'some album artist id'
         self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
 
-        self._infer()
+        self.task.infer_album_fields()
 
         self.assertEqual(self.items[0].albumartist,
                          'some album artist')
@@ -947,15 +944,8 @@ class InferAlbumDataTest(_common.TestCase):
         self.items = [self.items[0]]
         self.task.items = self.items
         self.task.set_choice(importer.action.ASIS)
-        self._infer()
+        self.task.infer_album_fields()
         self.assertFalse(self.items[0].comp)
-
-    def test_first_item_null_apply(self):
-        self.items[0] = None
-        self.task.set_choice(AlbumMatch(0, None, {}, set(), set()))  # APPLY
-        self._infer()
-        self.assertFalse(self.items[1].comp)
-        self.assertEqual(self.items[1].albumartist, self.items[2].artist)
 
 
 class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):

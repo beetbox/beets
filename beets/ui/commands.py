@@ -740,7 +740,7 @@ class TerminalImportSession(importer.ImportSession):
             pass
         elif sel == 'r':
             # Remove old.
-            task.remove_duplicates = True
+            task.should_remove_duplicates = True
         else:
             assert False
 
