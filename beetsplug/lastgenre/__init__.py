@@ -179,7 +179,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if not tags:
             return None
 
-        count = config['lastgenre']['count'].get(int)
+        count = self.config['count'].get(int)
         if self.c14n_branches:
             # Extend the list to consider tags parents in the c14n tree
             tags_all = []
@@ -195,8 +195,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # the original tags list
         tags = [x.title() for x in tags if self._is_allowed(x)]
 
-        return config['lastgenre']['separator'].get(unicode).join(
-            tags[:config['lastgenre']['count'].get(int)]
+        return self.config['separator'].get(unicode).join(
+            tags[:self.config['count'].get(int)]
         )
 
     def fetch_genre(self, lastfm_obj):
