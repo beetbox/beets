@@ -49,10 +49,12 @@ PYLAST_EXCEPTIONS = (
 
 # Core genre identification routine.
 
-def _tags_for(obj):
-    """Given a pylast entity (album or track), returns a list of
-    tag names for that entity. Returns an empty list if the entity is
+def _tags_for(obj, min_weight=None):
+    """Given a pylast entity (album or track), return a list of
+    tag names for that entity. Return an empty list if the entity is
     not found or another error occurs.
+
+    If `min_weight` is specified, tags are filtered by weight.
     """
     try:
         # Work around an inconsistency in pylast where
@@ -66,6 +68,11 @@ def _tags_for(obj):
         log.debug(u'last.fm error: %s' % unicode(exc))
         return []
 
+    # Filter by weight (optionally).
+    if min_weight:
+        res = [el for el in res if (el.weight or 0) >= min_weight]
+
+    # Get strings from tags.
     res = [el.item.get_name().lower() for el in res]
 
     return res
@@ -133,7 +140,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self._genre_cache = {}
 
         # Read the whitelist file.
-        self.whitelist  = set()
+        self.whitelist = set()
         with open(self.config['whitelist'].as_filename()) as f:
             for line in f:
                 line = line.decode('utf8').strip().lower()
@@ -196,7 +203,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Return the genre for a pylast entity or None if no suitable genre
         can be found. Ex. 'Electronic, House, Dance'
         """
-        return self._resolve_genres(_tags_for(lastfm_obj))
+        min_weight = self.config['min_weight'].get(int)
+        return self._resolve_genres(_tags_for(lastfm_obj, min_weight))
 
     def _is_allowed(self, genre):
         """Determine whether the genre is present in the whitelist,
