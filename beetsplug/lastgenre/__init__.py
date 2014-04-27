@@ -194,13 +194,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             # Extend the list to consider tags parents in the c14n tree
             tags_all = []
             for tag in tags:
-                parents = [x for x in find_parents(tag, self.c14n_branches) if
-                           self._is_allowed(x)]
+                # Add parents that are in the whitelist, or add the oldest
+                # ancestor if no whitelist
+                if self.whitelist:
+                    parents = [x for x in find_parents(tag, self.c14n_branches)
+                               if self._is_allowed(x)]
+                else:
+                    parents = [find_parents(tag, self.c14n_branches)[-1]]
+
                 tags_all += parents
                 if len(tags_all) >= count:
                     break
             tags = tags_all
-
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
         tags = [x.title() for x in tags if self._is_allowed(x)]
