@@ -27,11 +27,11 @@ lastGenrePlugin = lastgenre.LastGenrePlugin()
 
 class LastGenrePluginTest(unittest.TestCase):
 
-    def _setup_config(self, whitelist=set(), canonical=None, count=1):
+    def _setup_config(self, whitelist=None, canonical=None, count=1):
         config['lastgenre']['canonical'] = canonical
         config['lastgenre']['count'] = count
-        config['lastgenre']['whitelist'] = \
-            os.path.join(os.path.dirname(lastgenre.__file__), 'genres.txt')
+        if whitelist == '':
+            config['lastgenre']['whitelist'] = whitelist
         lastGenrePlugin.setup()
         if whitelist:
             lastGenrePlugin.whitelist = whitelist
