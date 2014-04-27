@@ -38,7 +38,6 @@ from beets import library
 log = logging.getLogger('beets')
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
-C14N_TREE = os.path.join(os.path.dirname(__file__), 'genres-tree.yaml')
 
 PYLAST_EXCEPTIONS = (
     pylast.WSError,
@@ -113,12 +112,16 @@ def find_parents(candidate, branches):
 
 # Main plugin logic.
 
+WHITELIST = os.path.join(os.path.dirname(__file__), 'genres.txt')
+C14N_TREE = os.path.join(os.path.dirname(__file__), 'genres-tree.yaml')
+
+
 class LastGenrePlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(LastGenrePlugin, self).__init__()
 
         self.config.add({
-            'whitelist': os.path.join(os.path.dirname(__file__), 'genres.txt'),
+            'whitelist': None,
             'min_weight': 10,
             'count': 1,
             'fallback': None,
@@ -139,13 +142,20 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         self._genre_cache = {}
 
-        # Read the whitelist file.
+        # Read the whitelist file if enabled.
         self.whitelist = set()
-        with open(self.config['whitelist'].as_filename()) as f:
-            for line in f:
-                line = line.decode('utf8').strip().lower()
-                if line and not line.startswith(u'#'):
-                    self.whitelist.add(line)
+        wl_filename = self.config['whitelist'].get()
+        if wl_filename is not None:
+            wl_filename = wl_filename.strip()
+            if not wl_filename:
+                wl_filename = WHITELIST
+            wl_filename = normpath(wl_filename)
+            with open(wl_filename, 'r') as f:
+                # with open(self.config['whitelist'].as_filename()) as f:
+                for line in f:
+                    line = line.decode('utf8').strip().lower()
+                    if line and not line.startswith(u'#'):
+                        self.whitelist.add(line)
 
         # Read the genres tree for canonicalization if enabled.
         self.c14n_branches = []
@@ -184,13 +194,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             # Extend the list to consider tags parents in the c14n tree
             tags_all = []
             for tag in tags:
-                parents = [x for x in find_parents(tag, self.c14n_branches) if
-                           self._is_allowed(x)]
+                # Add parents that are in the whitelist, or add the oldest
+                # ancestor if no whitelist
+                if self.whitelist:
+                    parents = [x for x in find_parents(tag, self.c14n_branches)
+                               if self._is_allowed(x)]
+                else:
+                    parents = [find_parents(tag, self.c14n_branches)[-1]]
+
                 tags_all += parents
                 if len(tags_all) >= count:
                     break
             tags = tags_all
-
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
         tags = [x.title() for x in tags if self._is_allowed(x)]

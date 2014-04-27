@@ -27,30 +27,48 @@ lastGenrePlugin = lastgenre.LastGenrePlugin()
 
 class LastGenrePluginTest(unittest.TestCase):
 
-    def _setup_config(self, whitelist=set(), canonical=None, count=1):
+    def _setup_config(self, whitelist=None, canonical=None, count=1):
         config['lastgenre']['canonical'] = canonical
         config['lastgenre']['count'] = count
-        config['lastgenre']['whitelist'] = \
-            os.path.join(os.path.dirname(lastgenre.__file__), 'genres.txt')
+        if whitelist == '':
+            config['lastgenre']['whitelist'] = whitelist
         lastGenrePlugin.setup()
         if whitelist:
             lastGenrePlugin.whitelist = whitelist
 
-    def test_defaults(self):
-        """Tests whitelist and c14n options with default filepaths
+    def test_default(self):
+        """Fetch genres with whitelist and c14n deactivated
         """
-        # default whitelist and c14n
-        self._setup_config(canonical='')
-        self.assertEqual(lastGenrePlugin._resolve_genres(['delta blues']),
-                         'Blues')
-        self.assertEqual(lastGenrePlugin._resolve_genres(['iota blues']), '')
-
-        # default whitelist and no c14n
         self._setup_config()
         self.assertEqual(lastGenrePlugin._resolve_genres(['delta blues']),
-                         'delta blues')
+                         'Delta Blues')
 
-    def test_whitelist(self):
+    def test_c14n_only(self):
+        """Default c14n tree funnels up to most common genre except for *wrong*
+        genres that stay unchanged.
+        """
+        self._setup_config(canonical='', count=99)
+        self.assertEqual(lastGenrePlugin._resolve_genres(['delta blues']),
+                         'Blues')
+        self.assertEqual(lastGenrePlugin._resolve_genres(['iota blues']),
+                         'Iota Blues')
+
+    def test_whitelist_only(self):
+        """Default whitelist rejects *wrong* (non existing) genres.
+        """
+        self._setup_config(whitelist='')
+        self.assertEqual(lastGenrePlugin._resolve_genres(['iota blues']),
+                         '')
+
+    def test_whitelist_c14n(self):
+        """Default whitelist and c14n both activated result in all parents
+        genres being selected (from specific to common).
+        """
+        self._setup_config(canonical='', whitelist='', count=99)
+        self.assertEqual(lastGenrePlugin._resolve_genres(['delta blues']),
+                         'Delta Blues, Country Blues, Blues')
+
+    def test_whitelist_custom(self):
         """Keep only genres that are in the whitelist.
         """
         self._setup_config(whitelist=set(['blues', 'rock', 'jazz']),
@@ -78,12 +96,18 @@ class LastGenrePluginTest(unittest.TestCase):
         self._setup_config(whitelist=set(['blues', 'rock', 'jazz']),
                            canonical='',
                            count=2)
-
         # thanks to c14n, 'blues' superseeds 'country blues' and takes the
         # second slot
         self.assertEqual(lastGenrePlugin._resolve_genres(
                          ['jazz', 'pop', 'country blues', 'rock']),
                          'Jazz, Blues')
+
+    def test_c14n_whitelist(self):
+        """Genres first pass through c14n and are then filtered
+        """
+        self._setup_config(canonical='', whitelist=set(['rock']))
+        self.assertEqual(lastGenrePlugin._resolve_genres(['delta blues']),
+                         '')
 
 
 def suite():
