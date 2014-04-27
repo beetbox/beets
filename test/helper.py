@@ -349,7 +349,7 @@ class TestImportSession(importer.ImportSession):
         if res == self.Resolution.SKIP:
             task.set_choice(importer.action.SKIP)
         elif res == self.Resolution.REMOVE:
-            task.remove_duplicates = True
+            task.should_remove_duplicates = True
 
 
 def generate_album_info(album_id, track_ids):

@@ -202,7 +202,7 @@ class ImportSession(object):
         paths = task.paths
         if duplicate:
             # Duplicate: log all three choices (skip, keep both, and trump).
-            if task.remove_duplicates:
+            if task.should_remove_duplicates:
                 self.tag_log('duplicate-replace', paths)
             elif task.choice_flag in (action.ASIS, action.APPLY):
                 self.tag_log('duplicate-keep', paths)
@@ -280,7 +280,7 @@ class ImportTask(object):
         self.items = items
         self.choice_flag = None
         # TODO remove this eventually
-        self.remove_duplicates = False
+        self.should_remove_duplicates = False
         self.is_album = True
 
     def set_null_candidates(self):
@@ -365,8 +365,7 @@ class ImportTask(object):
             duplicate_items += album.items()
         return duplicate_items
 
-    def do_remove_duplicates(self, lib):
-        # TODO: Bad name. Resolve naming conflict.
+    def remove_duplicates(self, lib):
         duplicate_items = self.duplicate_items(lib)
         log.debug('removing %i old duplicated items' %
                   len(duplicate_items))
@@ -687,7 +686,7 @@ class SentinelImportTask(ImportTask):
         self.paths = paths
         # TODO Remove the remaining attributes eventually
         self.items = None
-        self.remove_duplicates = False
+        self.should_remove_duplicates = False
         self.is_album = True
         self.choice_flag = None
 
@@ -1063,8 +1062,8 @@ def manipulate_files(session, task):
     if task.skip:
         return
 
-    if task.remove_duplicates:
-        task.do_remove_duplicates(session.lib)
+    if task.should_remove_duplicates:
+        task.remove_duplicates(session.lib)
 
     task.manipulate_files(
         move=session.config['move'],
