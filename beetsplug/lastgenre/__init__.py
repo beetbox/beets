@@ -121,7 +121,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         super(LastGenrePlugin, self).__init__()
 
         self.config.add({
-            'whitelist': None,
+            'whitelist': WHITELIST,
             'min_weight': 10,
             'count': 1,
             'fallback': None,

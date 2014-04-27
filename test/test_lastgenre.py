@@ -15,7 +15,6 @@
 """Tests for the 'lastgenre' plugin."""
 
 import logging
-import os
 from _common import unittest
 from beetsplug import lastgenre
 from beets import config
@@ -30,7 +29,7 @@ class LastGenrePluginTest(unittest.TestCase):
     def _setup_config(self, whitelist=None, canonical=None, count=1):
         config['lastgenre']['canonical'] = canonical
         config['lastgenre']['count'] = count
-        if whitelist == '':
+        if not whitelist:  # Either None or default ('').
             config['lastgenre']['whitelist'] = whitelist
         lastGenrePlugin.setup()
         if whitelist:
