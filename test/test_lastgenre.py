@@ -36,19 +36,19 @@ class LastGenrePluginTest(unittest.TestCase):
         if whitelist:
             lastGenrePlugin.whitelist = whitelist
 
-    def test_c14n(self):
-        """Resolve genres that belong to a canonicalization branch.
+    def test_defaults(self):
+        """Tests whitelist and c14n options with default filepaths
         """
         # default whitelist and c14n
-        self._setup_config(canonical=' ')
+        self._setup_config(canonical='')
         self.assertEqual(lastGenrePlugin._resolve_genres(['delta blues']),
                          'Blues')
         self.assertEqual(lastGenrePlugin._resolve_genres(['iota blues']), '')
 
-        # custom whitelist
-        self._setup_config(canonical='', whitelist=set(['rock']))
+        # default whitelist and no c14n
+        self._setup_config()
         self.assertEqual(lastGenrePlugin._resolve_genres(['delta blues']),
-                         '')
+                         'delta blues')
 
     def test_whitelist(self):
         """Keep only genres that are in the whitelist.
@@ -57,6 +57,10 @@ class LastGenrePluginTest(unittest.TestCase):
                            count=2)
         self.assertEqual(lastGenrePlugin._resolve_genres(['pop', 'blues']),
                          'Blues')
+
+        self._setup_config(canonical='', whitelist=set(['rock']))
+        self.assertEqual(lastGenrePlugin._resolve_genres(['delta blues']),
+                         '')
 
     def test_count(self):
         """Keep the n first genres, as we expect them to be sorted from more to
