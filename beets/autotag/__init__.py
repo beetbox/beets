@@ -232,7 +232,7 @@ def apply_metadata(album_info, mapping):
         item.mb_releasegroupid = album_info.releasegroup_id
 
         # Compilation flag.
-        item.comp = album_info.va
+        item.comp = album_info.albumtype == 'compilation'
 
         # Miscellaneous metadata.
         for field in ('albumtype',
