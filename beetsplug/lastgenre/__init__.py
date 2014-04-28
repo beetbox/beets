@@ -125,7 +125,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'min_weight': 10,
             'count': 1,
             'fallback': None,
-            'canonical': None,
+            'canonical': 'false',
             'source': 'album',
             'force': True,
             'auto': True,
@@ -144,14 +144,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Read the whitelist file if enabled.
         self.whitelist = set()
-        wl_filename = self.config['whitelist'].get()
-        if wl_filename is not None:
-            wl_filename = wl_filename.strip()
-            if not wl_filename:
+        wl_filename = self.config['whitelist'].get().strip()
+        if wl_filename != 'false':
+            if wl_filename in ('true', ''):
                 wl_filename = WHITELIST
             wl_filename = normpath(wl_filename)
             with open(wl_filename, 'r') as f:
-                # with open(self.config['whitelist'].as_filename()) as f:
                 for line in f:
                     line = line.decode('utf8').strip().lower()
                     if line and not line.startswith(u'#'):
@@ -159,13 +157,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Read the genres tree for canonicalization if enabled.
         self.c14n_branches = []
-        c14n_filename = self.config['canonical'].get()
-        if c14n_filename is not None:
-            c14n_filename = c14n_filename.strip()
-            if not c14n_filename:
+        c14n_filename = self.config['canonical'].get().strip()
+        if c14n_filename != 'false':
+            if c14n_filename in ('true', ''):
                 c14n_filename = C14N_TREE
             c14n_filename = normpath(c14n_filename)
-
             genres_tree = yaml.load(open(c14n_filename, 'r'))
             flatten_tree(genres_tree, [], self.c14n_branches)
 
