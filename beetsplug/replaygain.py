@@ -135,6 +135,7 @@ class CommandBackend(Backend):
 
         supported_items = filter(self.format_supported, album.items())
         if len(supported_items) != len(album.items()):
+            log.debug('replaygain: tracks are of unsupported format')
             return AlbumGain(None, [])
 
         output = self.compute_gain(supported_items, True)
