@@ -15,11 +15,6 @@
 """Gets genres for imported music based on Last.fm tags.
 
 Uses a provided whitelist file to determine which tags are valid genres.
-The genre whitelist can be specified like so in .beetsconfig:
-
-    [lastgenre]
-    whitelist=/path/to/genres.txt
-
 The included (default) genre list was produced by scraping Wikipedia.
 The scraper script used is available here:
 https://gist.github.com/1241307
@@ -121,11 +116,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         super(LastGenrePlugin, self).__init__()
 
         self.config.add({
-            'whitelist': WHITELIST,
+            'whitelist': True,
             'min_weight': 10,
             'count': 1,
             'fallback': None,
-            'canonical': 'false',
+            'canonical': False,
             'source': 'album',
             'force': True,
             'auto': True,
@@ -144,10 +139,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Read the whitelist file if enabled.
         self.whitelist = set()
-        wl_filename = self.config['whitelist'].get().strip()
-        if wl_filename != 'false':
-            if wl_filename in ('true', ''):
-                wl_filename = WHITELIST
+        wl_filename = self.config['whitelist'].get()
+        if wl_filename in (True, ''):  # Indicates the default whitelist.
+            wl_filename = WHITELIST
+        if wl_filename:
             wl_filename = normpath(wl_filename)
             with open(wl_filename, 'r') as f:
                 for line in f:
@@ -157,10 +152,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Read the genres tree for canonicalization if enabled.
         self.c14n_branches = []
-        c14n_filename = self.config['canonical'].get().strip()
-        if c14n_filename != 'false':
-            if c14n_filename in ('true', ''):
-                c14n_filename = C14N_TREE
+        c14n_filename = self.config['canonical'].get()
+        if c14n_filename in (True, ''):  # Default tree.
+            c14n_filename = C14N_TREE
+        if c14n_filename:
             c14n_filename = normpath(c14n_filename)
             genres_tree = yaml.load(open(c14n_filename, 'r'))
             flatten_tree(genres_tree, [], self.c14n_branches)
