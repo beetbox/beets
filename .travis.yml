@@ -4,11 +4,6 @@ branches:
     only:
         - master
 
-python:
-    - 2.6
-    - 2.7
-    - pypy
-
 matrix:
     include:
         - python: 2.6
