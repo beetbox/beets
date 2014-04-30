@@ -379,6 +379,19 @@ equivalent, and the *G* interactive option invokes the same workflow.
 
 Default: ``no``.
 
+.. _autotag:
+
+autotag
+~~~~~~~
+
+By default, the beets importer will always attempt to autotag each file. If
+most of your collection consists of obscure music you may be interested in
+disabling this behavior by default, instead of having to pass the ``-A`` flag
+during each import. Setting this to 'no' will disable auttotagging unless you
+pass the ``-a`` flag.
+
+Default: ``yes``.
+
 
 .. _musicbrainz-config:
 
