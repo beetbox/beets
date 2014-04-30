@@ -384,11 +384,10 @@ Default: ``no``.
 autotag
 ~~~~~~~
 
-By default, the beets importer will always attempt to autotag each file. If
-most of your collection consists of obscure music you may be interested in
-disabling this behavior by default, instead of having to pass the ``-A`` flag
-during each import. Setting this to 'no' will disable auttotagging unless you
-pass the ``-a`` flag.
+By default, the beets importer always attempts to autotag new music. If
+most of your collection consists of obscure music, you may be interested in
+disabling autotagging by setting this option to ``no``. (You can re-enable it
+with the ``-a`` flag to the :ref:`import-cmd` command.)
 
 Default: ``yes``.
 
