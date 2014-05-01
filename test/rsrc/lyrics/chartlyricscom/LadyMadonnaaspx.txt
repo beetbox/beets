@@ -1,0 +1,74 @@
+
+<?xml version="1.0" encoding="UTF-8" ?> <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"> <head id="CL_headMasterpage"><meta http-equiv="X-UA-Compatible" content="IE=EmulateIE8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><link rel="shortcut icon" href="/img/favicon.ico" type="image/x-icon" /><link rel="stylesheet" type="text/css" media="screen" href="/img/stylesheet.css" /><title>
+The Beatles Lady Madonna    lyrics
+</title> <!-- Google Plus --> <script type="text/javascript">
+(function() {
+var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+po.src = 'https://apis.google.com/js/plusone.js';
+var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+})();
+</script> <!-- END Google Plus --> <!-- GA --> <script type="text/javascript">
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-5263824-1']);
+_gaq.push(['_trackPageview']);
+(function() {
+var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
+</script> <!-- [END] GA --> <meta name="Description" content="Lady Madonna, Children at your feet Wonder how you manage to make ends meet.  Who finds the money When you pay the rent? Did you think that money was heaven-sent?  Friday night arrives without a suitcase. Sunday morning creeping like a nun. Monday's child has learned to tie his bootlace.  See how they run.  Lady Madonna, Baby at your breast Wonders how you manage to fee..." /><link href="http://www.ChartLyrics.com/cover/L2Wek0R-vU-98Juy7QhlIg.aspx" rel="image_src" /></head> <body> <!-- Header --> <div id="header_wrap"> <div id="header"> <a href="/"> <img src="/img/logo.png" id="logo" alt="" /></a> <span class="desc">Weekly Chart Song
+Lyrics for Everyone</span> <ul class="navigation"> <li class="current_page_item"><a href="/" title="Lyrics">
+Lyrics</a></li> <li><a href="/search.aspx" title="Search">
+Search</a></li> <li><a href="/app/contact.aspx">
+Contact Us</a></li> <li><a href="/api.aspx" title="Search">
+API</a></li> </ul> </div> </div> <!-- [END] Header --> <!-- Content --> <div id="content_wrap"> <div id="content" class="clearfix"> <div id="adtop"> <!-- CL Top Ad --> <script type="text/javascript"><!--
+google_ad_client = "ca-pub-5439878055731936";
+/* CL Top */
+google_ad_slot = "3952105827";
+google_ad_width = 728;
+google_ad_height = 90;
+//--> </script> <script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js"> </script> <!-- [END] CL Top Ad --> </div> <!-- Page --> <div id="page"> <!-- Breadcrumb --> <div id="breadcrumb"> <a href="/">Chart Lyrics</a> &nbsp;&gt;&nbsp; <a href="/B06.aspx">BAT</a>  &nbsp;&gt;&nbsp; <a href="/_LsLsZ7P4EK-F-LD4dJgDQ.aspx">The Beatles</a>  &nbsp;&gt;&nbsp; Lady Madonna
+</div> <!-- [END] Breadcrumb --> <h1>
+The Beatles Lady Madonna</h1> <div class="post_meta"> <div class="date meta_small">
+5 March 2008</div> <div class="comment_count meta_small">
+1 Revision</div> <div class="comment_count meta_small"> <a href="/app/correct.aspx?lid=MwAzADMA" rel="nofollow">Correct this lyric</a></div> </div> <p> <img class="alignright" width="160" height="160" src="/cover/L2Wek0R-vU-98Juy7QhlIg.aspx" alt="" title="The Beatles Lady Madonna" />
+Lady Madonna,<br />
+Children at your feet<br />
+Wonder how you manage to make ends meet.<br /> <br />
+Who finds the money<br />
+When you pay the rent?<br />
+Did you think that money was heaven-sent?<br /> <br />
+Friday night arrives without a suitcase.<br />
+Sunday morning creeping like a nun.<br />
+Monday's child has learned to tie his bootlace.<br /> <br />
+See how they run.<br /> <br />
+Lady Madonna,<br />
+Baby at your breast<br />
+Wonders how you manage to feed the rest.<br /> <br />
+See how they run.<br /> <br />
+Lady Madonna,<br />
+Lying on the bed.<br />
+Listen to the music playing in your head.<br /> <br />
+Tuesday afternoon is never ending.<br />
+Wednesday morning papers didn't come.<br />
+Thursday night your stockings needed mending.<br /> <br />
+See how they run.<br /> <br />
+Lady Madonna,<br />
+Children at your feet<br />
+Wonder how you manage to make ends meet.
+</p> <div id="adlyric"> <script type="text/javascript"> <!--
+google_ad_client = "ca-pub-5439878055731936";
+/* CL Lyric */
+google_ad_slot = "7085891077";
+google_ad_width = 468;
+google_ad_height = 60;
+//--> </script> <script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js"> </script> </div> </div> <!-- [END] Page --> <!-- sidebar --> <div id="sidebar"> <div class="search"> <form id="searchform" method="get" action="/search.aspx"> <fieldset> <input name="q" id="s" size="15" value="Type in a Search Query" onblur="if (this.value == ''){this.value = 'Type in a Search Query';}"
+onfocus="if (this.value == 'Type in a Search Query'){this.value = '';}" type="text" /> </fieldset> </form> </div> <div class="actions_wrap"> <div class="actions"> <div class="action" style="background: url(/img/google-plus.png) no-repeat 23px 3px;"> <h3 class="side_head"> <g:plusone size="medium"></g:plusone> </h3> </div> <div class="action" style="background: url(/img/twitter.png) no-repeat 23px 3px;"><h3 class="side_head"><a href="http://twitter.com/home?status=Lyric http%3a%2f%2fwww.ChartLyrics.com%2f_LsLsZ7P4EK-F-LD4dJgDQ%2fLady%2bMadonna.aspx" rel="nofollow">Twitter</a></h3></div> <div class="action" style="background: url(/img/facebook.gif) no-repeat 23px 3px;"><h3 class="side_head"><a href="http://www.facebook.com/sharer.php?u=http%3a%2f%2fwww.ChartLyrics.com%2f_LsLsZ7P4EK-F-LD4dJgDQ%2fLady%2bMadonna.aspx&amp;t=The+Beatles%09Lady+Madonna%09lyrics" rel="nofollow">Facebook</a></h3></div> <div class="action" style="background: url(/img/digg.png) no-repeat 23px 3px;"><h3 class="side_head"><a href="http://digg.com/submit?phase=2&amp;url=http%3a%2f%2fwww.ChartLyrics.com%2f_LsLsZ7P4EK-F-LD4dJgDQ%2fLady%2bMadonna.aspx" rel="nofollow">Digg</a></h3></div> <div class="action" style="background: url(/img/stumbleit.png) no-repeat 23px 3px;"><h3 class="side_head"><a href="http://www.stumbleupon.com/submit?url=http%3a%2f%2fwww.ChartLyrics.com%2f_LsLsZ7P4EK-F-LD4dJgDQ%2fLady%2bMadonna.aspx&amp;title=The+Beatles%09Lady+Madonna%09lyrics" rel="nofollow">Stumbleupon</a></h3></div> <div class="action" style="background: url(/img/delicious.png) no-repeat 23px 3px;"><h3 class="side_head"><a href="http://del.icio.us/post?url=http%3a%2f%2fwww.ChartLyrics.com%2f_LsLsZ7P4EK-F-LD4dJgDQ%2fLady%2bMadonna.aspx&amp;title=The+Beatles%09Lady+Madonna%09lyrics" rel="nofollow">Del.icio.us</a></h3></div> </div> </div> <div class="actions_wrap"><div class="actions"><div style="text-align:center"><object type='application/x-shockwave-flash' data='http://www.youtube.com/v/gNyHymEhZmg&amp;feature=youtube_gdata_player' width='260' height='195'><param name='movie' value='http://www.youtube.com/v/gNyHymEhZmg&amp;feature=youtube_gdata_player' /><img src='http://i.ytimg.com/vi/gNyHymEhZmg/0.jpg' width='260' height='195' alt='The Beatles - Lady Madonna' /></object></div></div></div> <!-- Ad right --> <div class="actions_wrap"> <div class="actions"> <div id="adright"> <script type="text/javascript"><!--
+google_ad_client = "ca-pub-5439878055731936";
+/* CL Right */
+google_ad_slot = "2575381684";
+google_ad_width = 300;
+google_ad_height = 250;
+//--> </script> <script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js"> </script> </div> </div> </div> <!-- [END] Ad right --> </div> <!-- [END] Sidebar --> </div> </div> <!-- [END] Content --> <!-- Footer --> <div id="footer_wrap"> <div id="footer"> <a href="/"> <img src="/img/footer_logo.png" id="footer_logo" alt="" /></a> <div class="top_box"> </div> <div class="bottom_box"> <div style="text-align: center">
+Letras de canciones · Letras de canções · Lyrics · Lyrique · Songteksten · στιχοι · тексты песен · القصائد الغناءيه · เนื้อเพลง · リリック · 가사 · 叙情詩 · 抒情歌 · 歌詞 · 歌词
+</div> </div> </div> </div> <!-- [END] Footer --> </body> </html>
