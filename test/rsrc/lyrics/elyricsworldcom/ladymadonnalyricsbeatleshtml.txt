@@ -1,0 +1,535 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Beatles - Lady Madonna Lyrics</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf8">
+        <link rel="shortcut icon" href="http://www.elyricsworld.com/favicon.ico">       
+        <link rel="alternate" href="http://www.elyricsworld.com/rss/latest_music_lyrics.xml" type="application/rss+xml" title="Latest Music Lyrics RSS" />
+        <link rel="alternate" href="http://www.elyricsworld.com/rss/latest_news.xml" type="application/rss+xml" title="Latest News RSS" />
+        <meta name="description" content="Br Lady Madonna Children At Your Feet Br Wonder How You Manage To Make Ends Meet Br Who Finds The Money When You Pay The Rent Br D...">       
+        <meta name="keywords" content="Lady Madonna, Beatles, Lady Madonna Lyrics, Beatles Lyrics, Lady Madonna Music Video, Lady Madonna Song Lyrics">
+        <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+        <script src="/images/jquery-1.7.1.min.js"></script>
+        <link href="/css/styles.css?4" type="text/css" rel="stylesheet" />
+                
+        <script type="text/javascript">
+          (function() {
+            var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+            po.src = 'https://apis.google.com/js/plusone.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+          })();
+        </script>
+        <script>
+            $(document).ready(function() {
+            
+      function monkeyPatchAutocomplete() {
+
+          // Don't really need to save the old fn, 
+          // but I could chain if I wanted to
+          var oldFn = $.ui.autocomplete.prototype._renderItem;
+
+          $.ui.autocomplete.prototype._renderItem = function( ul, item) {
+              var re = new RegExp("^" + this.term, "i") ;
+              var t = item.label.replace(re,"<b>" + this.term + "</b>");
+              return $( "<li></li>" )
+                  .data( "item.autocomplete", item )
+                  .append( "<a>" + t + "</a>" )
+                  .appendTo( ul );
+          };
+      }
+      
+      //monkeyPatchAutocomplete();
+                            
+            var work = 0;
+            $("#news").mouseenter(function() {
+                work = 1;
+              }).mouseleave(function() {
+              work = 0;
+              });
+              
+            window.setInterval(function(){
+            if(work == 0){
+                var n = $("#n").val();
+                if(n == 'no')
+                {
+                }
+                else
+                {
+                  $(".single_new").removeClass('active');
+                  $('.nn'+n).toggleClass('active');
+                  var vv = $('.nn'+n).attr('news');
+                  $('.news_number:visible').fadeOut(200,  function () { $('#n'+vv).fadeIn(200) });
+                  if(n == 3)
+                  {
+                    var n = $("#n").val(0);
+                  }
+                  else
+                  {
+                    var n = $("#n").val(parseInt($("#n").val())+1);
+                  }
+                  }
+              }
+            }, 5000);
+
+                $("#bio_more").click(function() {
+                  $('.bio_summary').fadeOut(100, function() { $('.bio_full').fadeIn(200); });
+                });
+                
+                $("#bio_hide").click(function() {
+                  $('.bio_full').fadeOut(100, function() { $('.bio_summary').fadeIn(200); });
+                });
+                
+            
+            //index news click
+                $(".single_new").click(function() {
+                  if($(this).hasClass('active'))
+                  {
+                  }
+                  else
+                  {
+                      $(".single_new").removeClass('active');
+                      $(this).toggleClass('active');
+                      var vv = $(this).attr('news');
+                      $('.news_number:visible').fadeOut(200,  function () { $('#n'+vv).fadeIn(200) });
+                      if(vv == 3)
+                      {
+                        var n = $("#n").val(0);
+                      }
+                      else
+                      {
+                        var n = $("#n").val(parseInt(vv)+1);
+                      }
+                  }
+                });
+                
+                function __highlight(s, t) {
+                  var matcher = new RegExp("("+$.ui.autocomplete.escapeRegex(t)+")", "ig" );
+                  return s.replace(matcher, "<strong>$1</strong>");
+                }
+                
+                var ac_config = {
+                    source: "/js/autocomplete.php",
+                    noCache: true, //default is false, set to true to disable caching
+                    minLength: 2,
+                    select: function(event, ui) 
+                    { 
+                        var url = ui.item.url;
+                        //$('#sform').submit(); 
+                        document.location.href = url;
+                    },
+                };
+
+                $("#sfield").autocomplete(ac_config)
+
+            });
+        </script>
+        <script type="text/javascript">
+
+          var _gaq = _gaq || [];
+          _gaq.push(['_setAccount', 'UA-3484805-1']);
+          _gaq.push(['_trackPageview']);
+
+          (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+          })();
+
+        </script>
+        <script type="text/javascript">
+            function myevup(ar) {
+                if (window.XMLHttpRequest) {
+                    xmlhttp=new XMLHttpRequest()
+                } else {
+                    xmlhttp=new ActiveXObject("Microsoft.XMLHTTP")
+                }
+                xmlhttp.open("GET", "http://www.elyricsworld.com/songkick/test.php?artist=" + ar);
+                xmlhttp.send(null);
+            }
+        </script>
+        <!-- BEGIN ADREACTOR CODE -->
+        <script src="http://adserver.adreactor.com/js/libcode1_noajax.js" type="text/javascript"></script>
+        <script type="text/javascript">
+        var count = readCookie('AVPWCAP') || 0;
+
+        if (document.avp_ready && count < 2) {
+          avp_zone({ base: 'adserver.adreactor.com', type: 'window', zid: 23, pid: 28, custom1: '', custom2: '', custom3: '', exclude: 'no_popup', exit: 'true' });
+          createCookie('AVPWCAP', ++count, 1);
+        }
+
+        function createCookie (name, value, hours) {
+          var expires = "";
+
+          if (hours) {
+            var date = new Date();
+            date.setTime(date.getTime()+(hours*60*60*1000));
+            expires = "; expires="+date.toGMTString();
+          }
+
+          document.cookie = name+"="+value+expires+"; path=/";
+        }
+
+        function readCookie (name) {
+          if (!document.cookie) return null;
+          var nameEQ = name + "=";
+          var ca = document.cookie.split(';');
+          for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0)==' ') {
+              c = c.substring(1,c.length);
+            }
+            if (c.indexOf(nameEQ) == 0) {
+              return c.substring(nameEQ.length, c.length);
+            }
+          }
+          return null;
+        }
+        </script>
+        <!-- END ADREACTOR CODE -->     
+    </head>
+    <body>
+        <div id="main">
+            <div id="topnav">
+                <a href="/">HOME</a>
+                <a href="/toplyrics.html">TOPLYRICS</a>
+                <a href="/newestlyrics_1-50.html">NEWEST LYRICS</a>
+                <a href="/submit.html">SUBMIT LYRICS</a>
+                <a href="/latest_news.html" class="br">NEWS</a>
+                <a href="/calendar.html" class="br">CALENDAR</a>
+                <div id="social_top"></div>
+                <div style="clear:both;"></div>
+            </div>
+            <div id="logo_search">
+                <div id="logo">
+                    <a href="http://www.elyricsworld.com/"><img alt="Lyrics" src="/images/logo.png" style="border:0;" /></a>
+                </div>
+                <div id="search_b">
+                    <form action="/search.php" method="GET" id="sform">
+                        <input type="text" name="search" id="sfield" value="Search for lyrics" onclick="if(this.value=='Search for lyrics'){this.value=''}" onblur="if(this.value==''){this.value='Search for lyrics'}" /><input type="submit" value="" id="sbutton" />
+                    </form>
+                    <div id="alphabet">
+                        <a href="http://www.elyricsworld.com/a_artists.html">A</a>
+                        <a href="http://www.elyricsworld.com/b_artists.html">B</a>
+                        <a href="http://www.elyricsworld.com/c_artists.html">C</a>
+                        <a href="http://www.elyricsworld.com/d_artists.html">D</a>
+                        <a href="http://www.elyricsworld.com/e_artists.html">E</a>
+                        <a href="http://www.elyricsworld.com/f_artists.html">F</a>
+                        <a href="http://www.elyricsworld.com/g_artists.html">G</a>
+                        <a href="http://www.elyricsworld.com/h_artists.html">H</a>
+                        <a href="http://www.elyricsworld.com/i_artists.html">I</a>
+                        <a href="http://www.elyricsworld.com/j_artists.html">J</a>
+                        <a href="http://www.elyricsworld.com/k_artists.html">K</a>
+                        <a href="http://www.elyricsworld.com/l_artists.html">L</a>
+                        <a href="http://www.elyricsworld.com/m_artists.html">M</a>
+                        <a href="http://www.elyricsworld.com/n_artists.html">N</a>
+                        <a href="http://www.elyricsworld.com/o_artists.html">O</a>
+                        <a href="http://www.elyricsworld.com/p_artists.html">P</a>
+                        <a href="http://www.elyricsworld.com/q_artists.html">Q</a>
+                        <a href="http://www.elyricsworld.com/r_artists.html">R</a>
+                        <a href="http://www.elyricsworld.com/s_artists.html">S</a>
+                        <a href="http://www.elyricsworld.com/t_artists.html">T</a>
+                        <a href="http://www.elyricsworld.com/u_artists.html">U</a>
+                        <a href="http://www.elyricsworld.com/v_artists.html">V</a>
+                        <a href="http://www.elyricsworld.com/w_artists.html">W</a>
+                        <a href="http://www.elyricsworld.com/x_artists.html">X</a>
+                        <a href="http://www.elyricsworld.com/y_artists.html">Y</a>
+                        <a href="http://www.elyricsworld.com/z_artists.html">Z</a>
+                        <a href="http://www.elyricsworld.com/0-9_artists.html">#</a>
+                    </div>
+                </div>
+                <div style="clear:both;"></div>
+            </div>          <div id="pod_header">
+                <div id="pleft">
+                    <div class="bb"><a href="https://plus.google.com/b/114922196798796614096/" target="_blank"><img src="/images/gplus.png" border="0" /></a> <span><a target="_blank" href="https://plus.google.com/b/114922196798796614096/">Google+ page</a></span></div>
+                    <div class="bb"><a href="http://www.facebook.com/music.lyrics.world" rel="nofollow" target="_blank"><img src="/images/fb.png" border="0" /></a> <span><a target="_blank" href="http://www.facebook.com/music.lyrics.world" rel="nofollow">Facebook</a></span></div>
+                    <div class="bb"><a href="https://twitter.com/#!/elyricsworldcom" rel="nofollow" target="_blank"><img src="/images/twit.png" border="0" /></a> <span><a target="_blank" href="https://twitter.com/#!/elyricsworldcom" rel="nofollow">Twitter</a></span></div>
+                                        
+                    <div class="banner">
+                                                <script type="text/javascript"><!--
+                        google_ad_client = "pub-9143916203605768";
+                        google_alternate_ad_url = "http://www.elyricsworld.com/banners/120x600.html";
+                        google_ad_width = 120;
+                        google_ad_height = 600;
+                        google_ad_format = "120x600_as";
+                        google_ad_type = "text_image";
+                        google_ad_channel ="8936596857";
+                        google_color_border = "FFFFFF";
+                        google_color_bg = "FFFFFF";
+                        google_color_link = "6699FF";
+                        google_color_url = "6699FF";
+                        google_color_text = "000000";
+                        //--></script>
+                        <script type="text/javascript"
+                          src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+                        </script>                   </div>
+                    <div id="related_artists">
+                        <div id="ratitle">Latest Beatles Lyrics</div>
+                        
+                        <a href="http://www.elyricsworld.com/be-bop-a-lula_(live)_lyrics_beatles.html">BE-BOP-A-LULA (Live) Lyrics</a>
+                        
+                        <a href="http://www.elyricsworld.com/reminiscing_(live)_lyrics_beatles.html">REMINISCING (Live) Lyrics</a>
+                        
+                        <a href="http://www.elyricsworld.com/away_in_a_manger_(hide_your_love_away)_lyrics_beatles.html">Away In A Manger (Hide Your Love Away) Lyrics</a>
+                        
+                        <a href="http://www.elyricsworld.com/winter_wonderland_(matchbox)_lyrics_beatles.html">Winter Wonderland (Matchbox) Lyrics</a>
+                        
+                        <a href="http://www.elyricsworld.com/white_christmas_lyrics_beatles.html">White Christmas Lyrics</a>
+                        
+                        <a href="http://www.elyricsworld.com/what_child_is_this_(while_my_guitar)_lyrics_beatles.html">What Child Is This (While My Guitar) Lyrics</a>
+                        
+                        <a href="http://www.elyricsworld.com/while_my_guitar_genly_weeps_lyrics_beatles.html">While My Guitar Genly Weeps Lyrics</a>
+                        
+                        <a href="http://www.elyricsworld.com/strawberry_field_forever_(emi-remix_15.12.66)_lyrics_beatles.html">Strawberry Field Forever (Emi-remix 15.12.66) Lyrics</a>
+                        
+                        <a href="http://www.elyricsworld.com/step_inside_love_lyrics_beatles.html">Step Inside Love Lyrics</a>
+                        
+                        <a href="http://www.elyricsworld.com/it_came_upon_midnight_clear_(babys_in_black)_lyrics_beatles.html">It Came Upon Midnight Clear (Babys In Black) Lyrics</a>
+                    </div>              
+                </div>
+                <div id="pright">
+                                        <div id="top_banner">
+                    <!-- BEGIN ADREACTOR CODE -->
+                    <script src="http://adserver.adreactor.com/js/libcode1_noajax.js" type="text/javascript"></script>
+                    <script type="text/javascript">
+                    if (document.avp_ready) { avp_zone({ base: 'adserver.adreactor.com', type: 'banner', zid: 9, pid: 28, custom1: 'Beatles', custom2: 'Lady+Madonna', custom3: '' }); }
+                    </script>
+                    <!-- END ADREACTOR CODE -->
+                    </div>                  <div id="bread_social">
+                        <div class="bs_left" >
+                            <a href="/">Home</a> <img src="/images/pip2.png" /> 
+                            <span itemscope itemtype="http://data-vocabulary.org/Breadcrumb"> <a href="http://www.elyricsworld.com/b_artists.html" itemprop="url"><span itemprop="title">B</span></a></span> <img src="/images/pip2.png" /> 
+                            <span itemscope itemtype="http://data-vocabulary.org/Breadcrumb"> <a href="http://www.elyricsworld.com/beatles_lyrics.html" itemprop="url"><span itemprop="title">Beatles</span></a></span>
+                            <img src="/images/pip2.png" /> <strong>Lady Madonna</strong>
+                        </div>
+                        <div class="bs_right">
+                            <iframe src="http://www.facebook.com/plugins/like.php?app_id=221027461249362&amp;href=http://www.elyricsworld.com/lady_madonna_lyrics_beatles.html&amp;send=false&amp;layout=button_count&amp;width=95&amp;show_faces=false&amp;action=like&amp;colorscheme=light&amp;font&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:85px; height:21px;" allowTransparency="true"></iframe>
+                            <a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="elyricsworld.com">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+                        </div>
+                    </div>
+                    <div style="clear:both;"></div>
+                    <div id="artist_left">
+                                                
+                        <div id="artist_panel_l">
+                            <div id="artist_title">
+                                <div id="newsl" style="width:100%;"><h1 style="padding:0;margin:0; font-size:18px;"><strong><span class="wcspan" >Beatles - Lady Madonna Lyrics</span></strong></h1></div>
+                                <div style="clear:both;"></div>
+                            </div>
+                            <div id="panel_in" class="nopadding">                               
+                                <div id="lyric_itself">
+                                    <div id="ringtone" style="margin-bottom:8px;">
+                                        <img src="http://www.elyricsworld.com/phone_icon_blue_small_trans.gif" alt="Send Lady Madonna Ringtone to your Cell" border="0" height="17px" width="16px">&nbsp;&nbsp;<a href="http://www.ringtonematcher.com/co/ringtonematcher/02/noc.asp?sid=WDLDros&artist=Beatles&song=Lady+Madonna" title="Send Lady Madonna Ringtone to your Cell" rel="nofollow" target="_blank">Send "Lady Madonna" Ringtone to your Cell</a>&nbsp;&nbsp;<img src="http://www.elyricsworld.com/phone_icon_blue_small_trans_right_2.gif" alt="Send Lady Madonna Ringtone to your Cell" border="0" height="17px" width="16px">                                  </div>
+                                    <div id="lyric_tt"><h2 style="margin:0; padding:0; font-size:14px;">Lady Madonna</h2></div>
+                                    <p>
+                                    <br />Lady Madonna, children at your feet<br />Wonder how you manage to make ends meet<br />Who finds the money when you pay the rent?<br />Did you think that money was heaven sent?<br /><br />Friday night arrives without a suitcase<br />Sunday morning creeping like a nun<br />Monday's child has learned to tie his bootlace<br />See how they run<br /><br />Lady Madonna, baby at your breast<br />Wonders how you manage to feed the rest<br /><br />[Lady Madonna lyrics on http://www.elyricsworld.com]<br /><br />See how they run<br /><br />Lady Madonna lying on the bed<br />Listen to the music playing in your head<br /><br />Tuesday afternoon is never ending<br />Wednesday morning papers didn't come<br />Thursday night your stockings needed mending<br />See how they run<br /><br />Lady Madonna, children at your feet<br />Wonder how you manage to make ends meet<br />                                    </p>
+                                    <div id="ringtone">
+                                        <img src="http://www.elyricsworld.com/phone_icon_blue_small_trans.gif" alt="Send Lady Madonna Ringtone to your Cell" border="0" height="17px" width="16px">&nbsp;&nbsp;<a href="http://www.ringtonematcher.com/co/ringtonematcher/02/noc.asp?sid=WDLDros&artist=Beatles&song=Lady+Madonna" title="Send Lady Madonna Ringtone to your Cell" rel="nofollow" target="_blank">Send "Lady Madonna" Ringtone to your Cell</a>&nbsp;&nbsp;<img src="http://www.elyricsworld.com/phone_icon_blue_small_trans_right_2.gif" alt="Send Lady Madonna Ringtone to your Cell" border="0" height="17px" width="16px">                                  </div>
+                                </div>
+                                <div id="contrib">
+                                    <div id="contrib_left">
+                                        &nbsp;
+                                    </div>
+                                    <div id="contrib_right">
+                                                                            <a href="/submitlyrics.php?lyric_id=154160&type=correction" target="_blank" rel="nofollow"><img src="/images/correct.png" border="0" id="correct" /></a>
+                                                                        </div>
+                                    <div style="clear:both;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="comments">
+                        <div id="comments_number">
+                            Comments
+                        </div>
+                        <img src="/images/bot_arrow.png" id="bot_arrow" border="0" />
+                            <div id="fb-root"></div>
+                            <script>(function(d, s, id) {
+                              var js, fjs = d.getElementsByTagName(s)[0];
+                              if (d.getElementById(id)) {return;}
+                              js = d.createElement(s); js.id = id;
+                              js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+                              fjs.parentNode.insertBefore(js, fjs);
+                            }(document, 'script', 'facebook-jssdk'));
+                            </script>               
+                            <div class="fb-comments" style="margin-top:10px;" data-href="http://www.elyricsworld.com/lady_madonna_lyrics_beatles.html" data-num-posts="10" data-width="520"></div>
+
+                        </div>
+                    </div>
+                    <div id="artist_right" itemscope itemtype="http://data-vocabulary.org/Review-aggregate">
+                        <div id="stars_out" style="margin-bottom:20px;">
+                            <div id="stars">
+                                <div id="star_lyrics" style="float:left; "></div> 
+                                <span itemprop="rating" itemscope itemtype="http://data-vocabulary.org/Rating">
+                                <span><strong id="vnumber" itemprop="average">0</strong></span> <span id="votes" itemprop="votes">(1 votes)</span>
+                                <meta itemprop="best" content="5"/>
+                                <meta itemprop="worst" content="1"/>
+                                </span>
+                                
+                                <div style="clear:both;"></div>
+                            </div>
+                        </div>
+<script>
+$(document).ready(function() {
+                                        $('#star_lyrics').raty({
+                                                                                start:    0,
+                              precision:  true,
+                              path: '/images/rating/',
+                              size:       24,
+                              starHalf:   'star-half-big.png',
+                              starOff:    'star-off-big.png',
+                              starOn:     'star-on-big.png',
+click: function(score, evt) {
+    $.get('/scripts/rate.php?t=lyrics&v=154160&r='+score, function(data) {
+    });
+  }
+                            });
+                            });
+</script>
+                        <div id="artist_panel_l">
+                            <div id="artist_title">
+                                <div id="newsl" style="width:100%;"><span class="wcspan">Artist Information</div>
+                                <div style="clear:both;"></div>
+                            </div>
+                            <div id="panel_in">
+                                <div id="rightbio">
+                                    <div id="rbleft" class="mmg" style="width:60px;"><img src="http://www.mp3va.com/img/no_artist.gif" style="width:50px;" class="aright" alt="Lady Madonna Lyrics by Beatles" title="Lady Madonna"/></div>
+                                    <div id="rbright" class="rrg">
+                                        <a href="http://www.elyricsworld.com/beatles_lyrics.html">Beatles Lyrics</a><br />
+                                                                                <div style="padding:3px; padding-left:0;"><g:plusone size="medium"></g:plusone></div>
+                                    </div>
+                                    <div style="clear:both;"></div>                             
+                                </div>
+                                <div style="clear:both;"></div>                         
+                            </div>
+                        </div>
+                    <div id="banner_rr2">
+                                                    <script type="text/javascript"><!--
+                            google_ad_client = "pub-9143916203605768";
+                            /* 300x250, ???????? 10-7-29 */
+                            google_ad_slot = "4472986252";
+                            google_ad_width = 300;
+                            google_ad_height = 250;
+                            //-->
+                            </script>
+                            <script type="text/javascript"
+                            src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+                            </script>                   </div>
+                                                <div id="artist_panel_l" style="margin-top:20px; margin-bottom:10px;">
+                            <div id="artist_title">
+                                <div id="newsl" style="width:100%;"><span class="wcspan">Album Information</div>
+                                <div style="clear:both;"></div>
+                            </div>
+                            <div id="panel_in">
+                                <div id="rightbio">
+                                    <img src="http://images.amazon.com/images/P/B00005GKNP.01._SCMZZZZZZZ_.jpg" itemprop="photo" class="aright" style="float:left;" alt="Beatles CD Singles Collection Album Lyrics"/>
+                                    <img src="/images/cd.jpg" style="float:left; margin-top:15px;" />
+                                    <div style="clear:both;"></div>
+                                    <div id="ainfo">
+                                        CD Singles Collection<br />
+                                    </div>
+                                </div>
+                                <div style="clear:both;"></div>
+                            </div>
+                        </div>
+                                                <div id="artist_panel_l" style="margin-top:20px; margin-bottom:10px;">
+                                                        <div id="artist_title">
+                                <div id="newsl" style="width:100%;"><span class="wcspan">Lady Madonna Video</div>
+                                <div style="clear:both;"></div>
+                            </div>
+                            <div id="panel_in" style="padding-left:9px;">                           
+                                    <object width="279" height="193"><param name="movie" value="http://www.youtube.com/v/VfthrizXKOM&amp;hl=en_US&amp;fs=1"></param><param name="allowFullScreen" value="true"></param><param name="allowscriptaccess" value="always"></param><embed src="http://www.youtube.com/v/VfthrizXKOM&amp;hl=en_US&amp;fs=1" type="application/x-shockwave-flash" allowscriptaccess="always" allowfullscreen="true" width="280" height="193"></embed></object>
+                                    <div style="width:300px; margin-top:5px;">Embed Video <input onclick="select();" value="&lt;div style=&quot;text-align:center;width:302px;height:220px;&quot;&gt;&lt;object width=&quot;300&quot; height=&quot;193&quot;&gt;&lt;param name=&quot;movie&quot; value=&quot;http://www.youtube.com/v/VfthrizXKOM&amp;amp;hl=en_US&amp;amp;fs=1&quot;&gt;&lt;/param&gt;&lt;param name=&quot;allowFullScreen&quot; value=&quot;true&quot;&gt;&lt;/param&gt;&lt;param name=&quot;allowscriptaccess&quot; value=&quot;always&quot;&gt;&lt;/param&gt;&lt;embed src=&quot;http://www.youtube.com/v/VfthrizXKOM&amp;amp;hl=en_US&amp;amp;fs=1&quot; type=&quot;application/x-shockwave-flash&quot; allowscriptaccess=&quot;always&quot; allowfullscreen=&quot;true&quot; width=&quot;300&quot; height=&quot;193&quot;&gt;&lt;/embed&gt;&lt;/object&gt;&lt;br&gt;&lt;a href=&quot;http://www.elyricsworld.com/lady_madonna_lyrics_beatles.html&quot;&gt;Lady Madonna Lyrics&lt;/a&gt; at elw&lt;/div&gt;" style="width: 276px;" readonly="readonly" type="text"></div>
+                            </div>
+                                                    </div>
+                                                <div id="artist_panel_l" style="margin-top:20px; margin-bottom:10px;">
+                            <div id="artist_title">
+                                <div id="newsl" style="width:100%;"><span class="wcspan">Lyrics Widget</div>
+                                <div style="clear:both;"></div>
+                            </div>
+                            <div id="panel_in" style="padding-left:9px;">                           
+                                    <embed src='http://widget.elyricsworld.com/scroller.swf?lid=154160&speed=4' width='280' height='160' type='application/x-shockwave-flash'/></embed></object>
+                                    <div style="width:300px; margin-top:5px;">Embed Widget <input onclick="select();" value="&lt;div style='font-size:10px; font-family: Verdana, Tahoma, Sans-serif; line-height:10px; width:300px;'&gt;
+&lt;object width='300' height='175'&gt;
+&lt;embed src='http://widget.elyricsworld.com/scroller.swf?lid=154160&amp;speed=4' 
+width='300' height='175' type='application/x-shockwave-flash'/&gt;&lt;/embed&gt;
+&lt;/object&gt;
+&lt;br /&gt;&lt;center&gt;&lt;a href='http://www.elyricsworld.com/lady_madonna_lyrics_beatles.html' target='_blank'&gt;Lady Madonna&lt;/a&gt; 
+found at &lt;a href='http://www.elyricsworld.com' target='_blank'&gt;elyricsworld.com&lt;/a&gt;&lt;/center&gt;
+&lt;/div&gt;" style="width: 276px;" readonly="readonly" type="text"></div>
+                            </div>
+                        </div>
+                                                <div id="banner_rr2">
+                                                    <!-- BEGIN ADREACTOR CODE -->
+                        <script src="http://adserver.adreactor.com/js/libcode1_noajax.js" type="text/javascript"></script>
+                        <script type="text/javascript">
+                        if (document.avp_ready) { avp_zone({ base: 'adserver.adreactor.com', type: 'banner', zid: 6, pid: 28, custom1: 'Beatles', custom2: 'Lady+Madonna', custom3: '' }); }
+                        </script>
+                        <!-- END ADREACTOR CODE -->                     </div>
+                        <div id="artist_panel_l">
+                            <div id="artist_title">
+                                <div id="newsl" style="width:100%;"><span class="wcspan">Related Lyrics</div>
+                                <div style="clear:both;"></div>
+                            </div>
+                            <div id="panel_in">
+
+                        <div style="border-bottom:1px dashed #ccc;line-height:23px;"><a href="http://www.elyricsworld.com/tik_tok_lyrics_ke$ha.html">Ke$ha - Tik Tok Lyrics</a></div>
+                        <div style="border-bottom:1px dashed #ccc;line-height:23px;"><a href="http://www.elyricsworld.com/not_over_you_lyrics_gavin_degraw.html">Gavin Degraw - Not Over You Lyrics</a></div>
+                        <div style="border-bottom:1px dashed #ccc;line-height:23px;"><a href="http://www.elyricsworld.com/deuces_lyrics_chris_brown.html">Chris Brown - Deuces Lyrics</a></div>
+                        <div style="border-bottom:1px dashed #ccc;line-height:23px;"><a href="http://www.elyricsworld.com/i_dont_lie_(freestyle)_lyrics_wiz_khalifa.html">Wiz Khalifa - I Dont Lie (Freestyle) Lyrics</a></div>
+                        <div style="border-bottom:1px dashed #ccc;line-height:23px;"><a href="http://www.elyricsworld.com/lost_in_the_sauce_lyrics_kid_ink.html">Kid Ink - Lost In The Sauce Lyrics</a></div>
+                        <div style="border-bottom:1px dashed #ccc;line-height:23px;"><a href="http://www.elyricsworld.com/domino_the_destitute_lyrics_coheed_and_cambria.html">Coheed and Cambria - Domino The Destitute Lyrics</a></div>
+                        <div style="border-bottom:1px dashed #ccc;line-height:23px;"><a href="http://www.elyricsworld.com/rihanna_(that's_my_attitude)_lyrics_flo_rida.html">Flo Rida - Rihanna (That's My Attitude) Lyrics</a></div>
+                        <div style="border-bottom:1px dashed #ccc;line-height:23px;"><a href="http://www.elyricsworld.com/laserlight_lyrics_jessie_j.html">Jessie J - Laserlight Lyrics</a></div>
+                        <div style="border-bottom:1px dashed #ccc;line-height:23px;"><a href="http://www.elyricsworld.com/finally_found_you_lyrics_enrique_iglesias.html">Enrique Iglesias - Finally Found You Lyrics</a></div>
+                        <div style="border-bottom:1px dashed #ccc;line-height:23px;"><a href="http://www.elyricsworld.com/all_out_(br3ndan_song)_lyrics_justin_bieber.html">Justin Bieber - All Out (Br3ndan Song) Lyrics</a></div>
+
+                                    <div style="clear:both;"></div>                             
+                                </div>
+                                <div style="clear:both;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div style="clear:both;"></div>
+            </div>
+            <script>myevup('Beatles');</script>
+        </div>
+                </div>
+        <div id="footer">
+            <div id="fin">
+                <div class="fleft">
+                    <a href="http://www.elyricsworld.com/">Lyrics</a> | 
+                    <a href="/privacy_policy.html">Privacy Policy</a> | 
+                    <a href="/rss_feeds.html">RSS Feeds</a> | 
+                    <a href="/contact.html">Contacts</a>
+                </div>
+                <div class="fright">
+                    ©2004-2012 elyricsworld.com
+                </div>
+            </div>
+        </div>
+        <!-- Begin comScore Tag -->
+        <script type="text/javascript">
+        document.write(unescape("%3Cscript src='" + (document.location.protocol == "https:" ? "https://sb" : "http://b") + ".scorecardresearch.com/beacon.js'%3E%3C/script%3E"));
+        </script>
+        <script type="text/javascript">
+        // Note: it's important to keep these in separate script blocks
+        COMSCORE.beacon({
+            c1: 2,
+            c2: "6772046",
+            c3: "",
+            c4: "www.elyricsworld.com/lady_madonna_lyrics_beatles.html", // Replace this with the page URL that the site is on here, and also enter it into the <noscript> img below
+            c5: "",
+            c6: "",
+            c15: ""
+        });
+        </script>
+        <noscript>
+            <img src="http://b.scorecardresearch.com/p?c1=2&c2=6772046&c3=&c4=www.elyricsworld.com/lady_madonna_lyrics_beatles.html&c5=&c6=&c15=&cj=1" />
+        </noscript>
+        <!-- End comScore Tag -->       
+    </body>
+</html>

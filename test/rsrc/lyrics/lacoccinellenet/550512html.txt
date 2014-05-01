@@ -1,0 +1,522 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title>Paroles de Lilly Wood The Prick : Hey It's Ok - paroles de chanson</title>
+        <meta name="description" content="Lilly Wood The Prick : Hey It's Ok paroles de la chanson "/>
+        <link href="/s.css?1380773110" rel="stylesheet" type="text/css" title="default"/>
+        <script type="text/javascript" src="/g.js?1380773110"></script>
+        <script type="text/javascript"><!--
+        dwService.reload = false;
+        dwService.setTargetings({"pagId":"2508","pagType":"content","layId":"551","directories":["\/paroles-officielles\/","\/"],"conId":"550512","appId":"5873"});
+        initGA(['UA-4587199-1', 'UA-26394066-3']);
+        initWAI('dugwood', 474759, 474760);//-->
+        </script>
+        <link rel="icon" type="image/gif" href="/favicon.gif?1380773110"/>
+        <script type="text/javascript"><!--
+var cocci_sas_target = 'noft';
+if (document.location.pathname === '/index.html')
+{
+    cocci_sas_target = 'home';
+}
+var disableExpand = {2013918: 'sfr-red-tstm', 2013921: 'sfr-red-nuitsfr'},
+date = new Date(),
+cocci_sas_sfr = '';
+if (disableExpand['' + date.getFullYear() + (date.getMonth() + 1) + date.getDate()] || document.location.hash.indexOf('#sfr-red-') === 0)
+{
+    cocci_sas_sfr = disableExpand['' + date.getFullYear() + (date.getMonth() + 1) + date.getDate()] || document.location.hash.substring(1);
+}//-->
+</script>
+    </head>
+    <body id="layout551" class="dom1 contentPage cdirParolesOfficielles app5873 status3">
+        <div id="contener">
+            <div id="header-background">
+                <div id="header">
+                    <div id="header-content">
+                        <div class="header"></div>
+                <!--Ht@7076--><div class="headerLogo"><a href="/index.html"><img src="/logo-2013.png?1380773110" width="200" height="64" alt="Accueil paroles de chansons"/></a>
+</div><!--/Ht@7076--><!--LoBo@4755--><div class="zoneLogin"><div id="loginBoxLogged" style="display:none" class="loginBox">
+    
+    <div class="pseudo" style="float:left">
+        
+        
+        <a href="#" title="Mon compte" onclick="dwUser.go('account');return false;" id="loginBox_pseudo_">&nbsp;</a><script type="text/javascript"><!--
+        dwUser.displayIfLogged('loginBox_pseudo_');//-->
+        </script>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    </div>
+    
+    <div class="mypage" style="float:left">
+        
+        
+        
+        <a href="#" title="Ma page personnelle" onclick="dwUser.go('user');return false;" class="button">&nbsp;</a>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+    </div>
+    
+    <div class="admin" style="float:left">
+        
+        
+        
+        
+        <a href="#" title="Mes contenus" class="button" onclick="dwUser.go(); return false;">&nbsp;</a>
+        
+        
+        
+        
+        
+        
+        
+        
+    </div>
+    
+    <div class="addcontent" style="float:left">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <a href="#" onclick="dwUser.go('content');return false;" title="Ajouter un contenu" class="button">&nbsp;</a>
+        
+        
+    </div>
+    
+    <div class="editcontent" style="float:left">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <a href="#" title="Éditer ce contenu" class="button" style="display:none" id="loginBox_editcontent_">&nbsp;</a>
+        <script type="text/javascript"><!--
+            var m = document.location.href.match(/\/(\d+)\.html/);
+            if (m && m[1] && document.location.href.indexOf('/m/') === -1)
+            {
+                dwElement.setDisplayStyle('loginBox_editcontent_', true);
+                dwElement.get('loginBox_editcontent_').onclick = function ()
+                {
+                    dwUser.go('content', m[1]);return false;
+                }
+            } //-->
+        </script>
+        
+    </div>
+    
+    <div class="messages" style="float:left">
+        
+        
+        
+        
+        
+        
+        <a href="#" onclick="dwUser.go('message');return false;" title="Mes messages" class="button"><span id="loginBox_msg_" class="number">&nbsp;</span></a><script type="text/javascript"><!--
+        dwUser.displayIfLogged('loginBox_msg_');//-->
+        </script>
+        
+        
+        
+        
+        
+        
+        
+        
+    </div>
+    
+    <div class="notifications" style="float:left">
+        
+        
+        
+        
+        
+        
+        
+        
+        <a href="#" onclick="dwUser.go('notifications');return false;" title="Notifications" class="button"><span id="loginBox_notif_" class="number">&nbsp;</span></a><script type="text/javascript"><!--
+        dwUser.displayIfLogged('loginBox_notif_');//-->
+        </script>
+        
+        
+        
+        
+        
+        
+    </div>
+    
+    <div class="friends" style="float:left">
+        
+        
+        
+        
+        
+        
+        
+        <a href="#" onclick="dwUser.go('friends');return false;" title="Amis" class="button"><span id="loginBox_fr_" class="number">&nbsp;</span></a><script type="text/javascript"><!--
+        dwUser.displayIfLogged('loginBox_fr_');//-->
+        </script>
+        
+        
+        
+        
+        
+        
+        
+    </div>
+    
+    <div class="favorites" style="float:left">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <a href="#" onclick="dwLightBox.cache = true; dwLightBox.open('Mes contenus favoris', dwService.getUrl('s', 'contents.favorites'), 'ajax');return false;" title="Contenus favoris" class="button">&nbsp;</a>
+        
+        
+        
+        
+    </div>
+    
+    <div class="logout" style="float:left">
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <a href="#" title="Déconnexion" onclick="dwUser.logout(); return false;" class="button">&nbsp;</a>
+        
+        
+        
+    </div>
+    
+    <div class="clr-zone" style="clear:left">&nbsp;</div>
+</div>
+<div id="loginBoxNotLogged" class="loginBox">
+    <a href="#" title="Connexion" onclick="dwUser.login();return false;">Connexion</a> - <a href="#" title="Inscription" onclick="dwService.open('register', 'Inscription');return false;">Inscription</a>
+</div>
+<script type="text/javascript"><!--
+dwUser.displayIfLogged('loginBoxLogged','loginBoxNotLogged'); //-->
+</script></div><!--/LoBo@4755--><!--Ht@7075--><div class="headerMenu"><table cellpadding="0" cellspacing="0">
+<tr>
+<td><a href="/index.html">CHANSONS</a></td>
+<td><a href="/artistes/index.html">ARTISTES</a></td>
+<td><a href="/albums/index.html">ALBUMS</a></td>
+<td><a href="/paroles-officielles/index.html">PAROLES OFFICIELLES</a></td>
+</tr>
+</table>
+</div><!--/Ht@7075--><!--Ht@7077--><div class="headerTitle"><img src="/home-title.png?1380773110" width="693" height="110" alt="Paroles de chansons, traductions, explications"/>
+</div><!--/Ht@7077--><!--SeFo@7074--><div class="headerSearch">
+<form action="/s.html" method="post" id="searchForm-7074" onsubmit="return dwSearch.send(this.id);">
+    <p><span class="searchForm"><input type="text" name="q" id="searchForm-7074-q" size="15" alt="Rechercher une chanson, un artiste..." value="Rechercher une chanson, un artiste..." onfocus="if(typeof(dwSearch.d['searchForm-7074']) === 'undefined' || dwSearch.d['searchForm-7074'] === this.value) this.value = ''"/><a href="#" onclick="if (dwSearch.send('searchForm-7074') === true) dwElement.get('searchForm-7074').submit(); return false;"><img id="searchForm-7074-default" src="/spacer.gif?1380773110" alt="Rechercher une chanson, un artiste..."/></a></span><input type="submit" style="display:none"/><!-- affiché uniquement pour qu'en tapant sur entrée dans un champ ça POST le formulaire --></p>
+    <p id="searchForm-7074-message" style="display: none">&nbsp;</p>
+</form>
+<script type="text/javascript"><!--
+    dwAjax.setMessages('searchForm-7074', {1:'Veuillez entrer au moins un mot-clé de recherche'});
+    dwSearch.restore('searchForm-7074');//-->
+</script></div><!--/SeFo@7074--><!--Ht@4808--><div class="pub728"><script type="text/javascript"><!--
+SmartAdServerAjax('2301/16363',438,cocci_sas_target,'ww62.smartadserver.com');//-->
+</script>
+</div><!--/Ht@4808-->
+                        <div class="footer"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="body-background">
+                <div id="body-header"></div>
+                <div id="body">
+                    <div id="body-content">
+
+<div id="zone1"><div class="header"></div><div id="subzone1"><!--PaFi@6710--><div class="breadcrumb">
+<div id="breadcrumb" class="dwBreadcrumb"><a href="/index.html" title="Accueil">Accueil</a>  &gt;  <a href="/paroles-officielles/index.html" title="Paroles de chansons officielles">Paroles de chansons officielles</a>  &gt;  <a href="/paroles-officielles/830989.html" title="Lilly Wood The Prick">Lilly Wood The Prick</a>  </div></div><!--/PaFi@6710--><!--CoSo@5873--><div><div id="content550512" class="content contentSong item">
+
+<div class="title"><div class="inner"><h1 class="fn">Hey It's Ok - Lilly Wood The Prick</h1>
+</div></div>
+
+<div class="itunes" style="clear:right;float:right"><div class="inner"><a href="#" onclick="dwDocument.openWindow('http://clk.tradedoubler.com/click?p=23753&amp;a=1284621&amp;url=http%3A%2F%2Fphobos.apple.com%2FWebObjects%2FMZSearch.woa%2Fwa%2Fsearch%3Fterm=lilly%20wood%20the%20prick%20hey%20it%20s%20ok%26partnerId%3D2003'); return false;" title="Acheter l'album ou les MP3 sur iTunes"><img src="/itunes.png?1380773110" alt="Acheter l'album ou les MP3 sur iTunes"/></a></div></div>
+
+<div class="amazon" style="float:right"><div class="inner">
+<a href="#" onclick="dwDocument.openWindow('http://www.amazon.fr/gp/search?ie=UTF8&amp;index=mp3-downloads&amp;keywords=lilly%20wood%20the%20prick%20hey%20it%20s%20ok&amp;tag=lacoccindunet-21'); return false;" title="Acheter l'album ou les MP3 sur Amazon"><img src="/amazon.png?1380773110" alt="Acheter l'album ou les MP3 sur Amazon"/></a></div></div>
+
+<div class="fnac" style="float:right"><div class="inner">
+<a href="#" onclick="dwDocument.openWindow('http://ad.zanox.com/ppc/?8735413C1813773704T&amp;ULP=[[recherche.fnac.com%2FSearch%2FSearchResult.aspx%3FSCat=3%211&amp;Search=lilly%20wood%20the%20prick]]'); return false;" title="Acheter l'album ou les MP3 sur Fnac"><img src="/fnac.png?1380773110" alt="Acheter l'album ou les MP3 sur Fnac"/></a>
+</div></div>
+
+<div class="album" style="clear:right;"><div class="inner empty"><strong>Albums :</strong>
+</div></div>
+
+<div class="persons"><div class="inner">
+<strong>Chanteurs :</strong>
+<a href="/paroles-officielles/830989.html">Lilly Wood The Prick</a><br/>
+
+<strong>Compositeurs :</strong>
+<a href="/paroles-officielles/830987.html">Benjamin Cotto</a>, <a href="/paroles-officielles/830967.html">Nili Ben Meir</a><br/>
+
+<strong>Auteurs :</strong>
+<a href="/paroles-officielles/830987.html">Benjamin Cotto</a>, <a href="/paroles-officielles/830967.html">Nili Ben Meir</a><br/>
+
+<strong>Arrangeurs :</strong>
+<a href="/paroles-officielles/830934.html">Pierre Guimard</a><br/>
+
+<strong>Éditeurs :</strong>
+<a href="/paroles-officielles/545774.html">Choke Industry</a>, <a href="/paroles-officielles/545654.html">Warner Chappell Music France</a><br/>
+</div></div>
+
+<div class="tonefuse"><div class="inner"><a href="#" onclick="dwDocument.openWindow('http://www.ringtonematcher.com/co/ringtonematcher/02/noc.php?sid=LCCLros&amp;artist=lilly+wood+the+prick&amp;song=hey+it+s+ok'); return false"><img src="/tonefuseLeft.png?1380773110" alt=""/> <span>Télécharge la sonnerie de "Hey It's Ok" pour ton mobile</span></a></div></div>
+
+<div class="jukebo"><div class="inner"><table width="100%">
+    <tr>
+        <td><span>Voir tous les clips</span> <a href="#" title="jukebo" onclick="window.open('http://www.jukebo.fr/lilly-wood-and-the-prick', 'jukebo'); return false;">Lilly Wood And The Prick</a></td>
+        <td>
+            <div id="disableJukebo" style="display:none"><a href="#" onclick="dwUtils.createCookie('dwJukebo', '1', 30, '/'); dwElement.setValue('disableJukebo', 'Désactivation effectuée pour les 30 prochains jours'); return false;">Désactiver la lecture automatique des vidéos</a></div>
+        </td>
+    </tr>
+</table>
+<script type="text/javascript"><!--
+    var ULTIMEDIA_zone = '1', c = dwUtils.readCookie('dwJukebo');
+    // S'il y a le cookie sans autoplay, on utilise la zone 3
+    if (c && c === '1') {
+        ULTIMEDIA_zone = '3';
+    }
+    if (ULTIMEDIA_zone === '1') {
+        dwElement.setDisplayStyle('disableJukebo');
+    }
+    //-->
+</script>
+<script type='text/javascript'><!--
+    var ULTIMEDIA_include = '<scr' + 'ipt type="text/javascript" src="http://www.ultimedia.com/deliver/musique/js/mdtk/01497444/article/qksfuz/zone/' + ULTIMEDIA_zone + '/"></scr' + 'ipt>';document.write(ULTIMEDIA_include);
+//--></script>
+</div></div>
+
+<div class="text"><div class="inner"><h3>Paroles de la chanson &quot;Hey It's Ok&quot;</h3>
+<p>Mama, Papa please forget the times I wet my bed<br/>I swear not to do it again<br/>Please forget the way I looked when I was fourteen<br/>I didn’t know who I wanted to be<br class="clear" style="clear:both;"/></p><p>Hey ! It’s OK, it’s OK<br/>Cause I’ve found what I wanted<br/>I said hey ! It’s OK, it’s OK<br/>Cause I’ve found what I wanted<br class="clear" style="clear:both;"/></p><p>Friends and lovers please forgive the mean things I’ve said<br/>I swear not to do it again<br/>Please forget the way I act when I’ve had too much to drink<br/>I’m fighting against myself<br class="clear" style="clear:both;"/></p><p>Hey ! It’s OK, it’s OK<br/>Cause I’ve found what I wanted<br/>I said hey ! It’s OK, it’s OK<br/>Cause I’ve found what I wanted<br class="clear" style="clear:both;"/></p><p>And I swear not to do anything funny anymore<br/>Yes I swear not to do anything funny anymore<br class="clear" style="clear:both;"/></p><p>Hey ! It’s OK, it’s OK<br/>Cause I’ve found what I wanted<br/>I said hey ! It’s OK, it’s OK<br/>Cause I’ve found what I wanted<br class="clear" style="clear:both;"/></p><p>Hey ! It’s OK, it’s OK<br/>Cause I’ve found what I wanted<br/>I said hey ! It’s OK, it’s OK<br/>Cause I’ve found what I wanted</p>
+<div style="clear:both;" class="clr-zone">&nbsp;</div>
+</div></div>
+
+<div class="tonefuse"><div class="inner"><a href="#" onclick="dwDocument.openWindow('http://www.ringtonematcher.com/co/ringtonematcher/02/noc.php?sid=LCCLros&amp;artist=lilly+wood+the+prick&amp;song=hey+it+s+ok'); return false"><img src="/tonefuseLeft.png?1380773110" alt=""/> <span>Télécharge la sonnerie de "Hey It's Ok" pour ton mobile</span></a></div></div>
+
+
+</div></div><!--/CoSo@5873--><!--AdDFP@6768--><div class="pub300"><script type="text/javascript"><!--
+            dwService.dfpFillSlot("6768-300x250",300,250); //-->
+            </script><!-- dfp@0 --></div><!--/AdDFP@6768--></div><div class="footer"></div></div>
+<div id="clr-z1" class="clr-zone">&nbsp;</div>
+<div id="zone2"><div class="header"></div><div id="subzone2"><!--Ht@4807--><div class="pub300"><script type="text/javascript"><!--
+SmartAdServerAjax('2301/16363',439,cocci_sas_target,'ww62.smartadserver.com');//-->
+</script>
+</div><!--/Ht@4807--><!--Ht@4840--><div class="box facebox"><h4>Facebook / Soirées</h4>
+<div id="facebookIframe"></div><div id="soonnightIframe"></div>
+<script type="text/javascript"><!--
+dwElement.addEvent(null, 'load', function()
+{
+dwElement.setValue('facebookIframe', '<i' + 'frame src="http://www.facebook.com/plugins/likebox.php?href=http%3A%2F%2Fwww.facebook.com%2Flacoccinelle.net&amp;width=288&amp;colorscheme=light&amp;show_faces=false&amp;stream=false&amp;header=false&amp;height=70" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:288px; height:70px;" allowTransparency="true"></i' + 'frame>');
+// SoonNight
+dwElement.setValue('soonnightIframe', '<i' + 'frame src="http://www.soonnight.com/agenda/agenda,1039.html?r=1&amp;url_page=http://www.soonnight.com&amp;color=white&amp;go_soonnight=1" width="268" height="142" scrolling="no" frameborder="0"></ifr' + 'ame>');
+}); //-->
+</script>
+</div><!--/Ht@4840--></div><div class="footer"></div></div>
+<div id="clr-z2" class="clr-zone">&nbsp;</div>
+</div>
+</div>
+<div id="body-footer"></div>
+</div>
+<div id="footer-background">
+    <div id="footer">
+        <div id="footer-content">
+            <div class="header"></div>
+            <!--Ht@4820--><div class="boxFooter">
+
+<div id="htmlNotLogged-4820"><div class="titleFooter">À PROPOS</div>
+<p>Depuis 2001, La Coccinelle propose et construit une communauté musicale.</p>
+<br/><br/>
+<p>Le site s'est développé autour d'une idée simple : comprendre les paroles des chansons françaises et internationales, qui souvent regorgent de nombreux secrets.</p>
+<br/><br/>
+<div class="starFooter"><a href="#" onclick="dwUser.login(); return false">Devenir membre de la communauté</a></div></div>
+<div id="htmlLogged-4820"><div class="titleFooter">À PROPOS</div>
+<p>Depuis 2001, La Coccinelle propose et construit une communauté musicale.</p>
+<br/><br/>
+<p>Le site s'est développé autour d'une idée simple : comprendre les paroles des chansons françaises et internationales, qui souvent regorgent de nombreux secrets.</p>
+<br/><br/></div>
+<script type="text/javascript"><!--
+dwUser.displayIfLogged('htmlLogged-4820','htmlNotLogged-4820'); //-->
+</script>
+</div><!--/Ht@4820--><!--Ht@4821--><div class="boxFooter">
+
+<div id="htmlNotLogged-4821"><div class="titleFooter">TOP RUBRIQUES</div>
+
+<ul>
+<li><a href="/top/index.html">Top 50 chansons</a></li>
+<li><a href="/dc/index.html">Derniers ajouts</a></li>
+<li><a href="/liens/index.html">Partenaires</a></li>
+<li><a href="/faq/index.html">Foire aux questions</a></li>
+<li><a href="http://www.annonces.com" title="petite annonce">Annonce</a></li>
+</ul>
+
+<ul>
+<li><a href="/actus/index.html">Actualités</a></li>
+<li><a href="/index.html">Paroles de chansons</a></li>
+<li><a href="#" onclick="dwUser.login(); return false;">Inscription</a></li>
+</ul>
+
+
+</div>
+<div id="htmlLogged-4821"><div class="titleFooter">TOP RUBRIQUES</div>
+
+<ul>
+<li><a href="/top/index.html">Top 50 chansons</a></li>
+<li><a href="/dc/index.html">Derniers ajouts</a></li>
+<li><a href="/liens/index.html">Partenaires</a></li>
+<li><a href="/faq/index.html">Foire aux questions</a></li>
+<li><a href="http://www.annonces.com" title="petite annonce">Annonce</a></li>
+</ul>
+
+<ul>
+<li><a href="/actus/index.html">Actualités</a></li>
+<li><a href="/index.html">Paroles de chansons</a></li>
+<li><a href="#" onclick="dwUser.go('account'); return false;">Mon compte</a></li>
+</ul></div>
+<script type="text/javascript"><!--
+dwUser.displayIfLogged('htmlLogged-4821','htmlNotLogged-4821'); //-->
+</script>
+</div><!--/Ht@4821--><!--Ht@4822--><div class="boxFooter linkCocci"><div class="titleFooter">SUIVEZ LA COCCINELLE</div>
+
+<div class="icoFollow"><a href="/actus/rss.xml">Les actus via RSS</a></div>
+<div class="icoFollow twitterF"><a href="http://twitter.com/lacoccinellenet" onclick="dwDocument.openWindow(this.href, 'twitter');return false">Suivez-nous sur Twitter</a></div>
+<div class="icoFollow facebookF"><a href="http://www.facebook.com/pages/La-Coccinelle-du-Net/140698937843" onclick="dwDocument.openWindow(this.href, 'facebook');return false">Rejoignez-nous sur facebook</a></div>
+
+
+</div><!--/Ht@4822--><!--Ht@4816--><div class="copyright">&copy;2001-2014 LaCoccinelle.net
+<script type="text/javascript"><!--
+/* GestionPub Habillage temporaire */
+if (cocci_sas_target !== 'curly' && !cocci_sas_sfr)
+{
+    document.write('<sc' + 'ript type="text/javascript" src="http://a01.gestionpub.com/GP2a52c58652a78c759"></scr' + 'ipt>');
+    document.write('<sc' + 'ript type="text/javascript" src="http://a01.gestionpub.com/GP4221c74529ce2c"></scr' + 'ipt>');
+}
+dwElement.addEvent(null, 'load', function()
+{
+    var s = document.createElement('script'),
+    node = document.getElementsByTagName('script')[0],
+    online = new Image(), members = new Image(), xiti = new Image();
+    /* GestionPub Footer Expand DESACTIVE * /
+    if (cocci_sas_target !== 'curly')
+    {
+        s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://a01.gestionpub.com/GP2a72c88df2355ac48'; // Footer Expand
+        node.parentNode.insertBefore(s, node);
+    }
+    /* Connectés */
+    online.src = 'http://coccinelledunet.free.fr/online.png.php?host=lc';
+    if (dwUser.isLogged === true)
+    {
+        members.src = 'http://coccinelledunet.free.fr/online.png.php?host=lcm';
+    }
+    Xt_param = 's=175975&p=';
+    try {Xt_r = top.document.referrer;}
+    catch(e) {Xt_r = document.referrer; }
+    Xt_h = new Date();
+    Xt_i = 'http://logv26.xiti.com/hit.xiti?'+Xt_param;
+    Xt_i += '&hl='+Xt_h.getHours()+'x'+Xt_h.getMinutes()+'x'+Xt_h.getSeconds();
+    if(parseFloat(navigator.appVersion)>=4) {Xt_s=screen;Xt_i+='&r='+Xt_s.width+'x'+Xt_s.height+'x'+Xt_s.pixelDepth+'x'+Xt_s.colorDepth;}
+    xiti.src = Xt_i+'&ref='+Xt_r.replace(/[<>"]/g, '').replace(/&/g, '$');
+});//-->
+</script>
+</div><!--/Ht@4816--><!--Ht@4817--><div class="menuFooter"><a href="/index.html">Accueil</a> <!--<a href="">A propos de la coccinelle</a>--> <a href="#" onclick="dwService.open('tou');return false">CGU</a> <a href="/s/index.html">Contact</a>
+</div><!--/Ht@4817--><!--Ht@7031--><div class=""><script type="text/javascript"><!--
+if (cocci_sas_sfr && cocci_sas_sfr === 'sfr-red-nuitsfr')
+{
+    var sfrRed = {click:'http://ww62.smartadserver.com/call/cliccommand/8932016/[timestamp]?', image:'nuitsfr2', pixels:[]};
+}
+if (cocci_sas_sfr && cocci_sas_sfr.indexOf('sfr-red-') === 0)
+{
+    dwElement.addEvent(null, 'load', function ()
+    {
+        if (document.location.href.indexOf('index.html') !== -1)
+        {
+            dwElement.get('sas_438').id = 'sas_438_disabled';
+            dwElement.get('sas_438_disabled').style.display = 'none';
+        }
+        for (var i in sfrRed.pixels)
+        {
+            var img = document.createElement('img');
+            img.src = sfrRed.pixels[i];
+            dwElement.get('footer-content').appendChild(img);
+        }
+        dwElement.get('contener').style.background = 'url(/pub-sfr-' + sfrRed.image + '.jpg) top center no-repeat';
+        dwElement.get('header').style.paddingTop = '200px';
+        document.body.style.background = '#000';
+        document.body.style.cursor = 'pointer';
+        dwElement.get('header-content').style.cursor = 'default';
+        dwElement.get('footer-content').style.cursor = 'default';
+        dwElement.get('body-content').style.cursor = 'default';
+        dwElement.get('footer-content').style.background = '#000';
+        dwElement.get('footer-background').style.background = 'none';
+        dwElement.addEvent(document.body, 'click', function(event)
+        {
+            if (event.target && event.target.id)
+            {
+                if (event.target.id === 'header' || event.target.id === 'footer' || event.target.id === 'body' || event.target.id === 'header-background' || event.target.id === 'footer-background' || event.target.id === 'body-background')
+                {
+                    dwDocument.openWindow(sfrRed.click);
+                }
+            }
+        });
+    });
+}
+//-->
+</script>
+</div><!--/Ht@7031-->
+            <div class="footer"></div>
+        </div>
+    </div>
+</div>
+</div>
+
+
+</body>
+</html>
