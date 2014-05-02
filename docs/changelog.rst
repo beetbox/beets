@@ -31,6 +31,7 @@ Fixes:
   embedding album art fails.
 * :doc:`/plugins/convert`: Embed cover art into converted files.
   Previously they were embedded into the source files.
+* New plugin event: `before_item_moved`. Thanks to Robert Speicher.
 
 
 1.3.5 (April 15, 2014)
