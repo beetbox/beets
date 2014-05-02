@@ -80,7 +80,8 @@
                 </dd>
                 <% if (lyrics) { %>
                     <dt>Lyrics</dt>
-                    <dd><%= lyrics %></dd>
+                    <dd><%= lyrics.replace(/
+/g,'<br />') %></dd>
                 <% } %>
                 <% if (comments) { %>
                     <dt>Comments</dt>
