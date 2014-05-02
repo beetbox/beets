@@ -4,8 +4,20 @@
 import click
 import os
 import re
+import subprocess
+from contextlib import contextmanager
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+@contextmanager
+def chdir(d):
+    """A context manager that temporary changes the working directory.
+    """
+    olddir = os.getcwd()
+    os.chdir(d)
+    yield
+    os.chdir(olddir)
 
 
 @click.group()
@@ -106,6 +118,14 @@ def bump(version):
     # Write back.
     with open(changelog, 'w') as f:
         f.write(contents)
+
+
+@release.command()
+def build():
+    """Use `setup.py` to build a source tarball.
+    """
+    with chdir(BASE):
+        subprocess.check_call(['python2', 'setup.py', 'sdist'])
 
 
 if __name__ == '__main__':
