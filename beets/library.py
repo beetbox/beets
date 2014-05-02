@@ -397,6 +397,8 @@ class Item(LibModel):
             plugins.send("item_copied", item=self, source=self.path,
                          destination=dest)
         else:
+            plugins.send("before_item_moved", item=self, source=self.path,
+                         destination=dest)
             util.move(self.path, dest)
             plugins.send("item_moved", item=self, source=self.path,
                          destination=dest)
