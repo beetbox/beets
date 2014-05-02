@@ -8,6 +8,7 @@ import subprocess
 from contextlib import contextmanager
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CHANGELOG = os.path.join(BASE, 'docs', 'changelog.rst')
 
 
 @contextmanager
@@ -109,14 +110,13 @@ def bump(version):
     header += 'Changelog goes here!\n'
 
     # Insert into the right place.
-    changelog = os.path.join(BASE, 'docs', 'changelog.rst')
-    with open(changelog) as f:
+    with open(CHANGELOG) as f:
         contents = f.read()
     location = contents.find('\n\n')  # First blank line.
     contents = contents[:location] + header + contents[location:]
 
     # Write back.
-    with open(changelog, 'w') as f:
+    with open(CHANGELOG, 'w') as f:
         f.write(contents)
 
 
@@ -126,6 +126,32 @@ def build():
     """
     with chdir(BASE):
         subprocess.check_call(['python2', 'setup.py', 'sdist'])
+
+
+@release.command()
+def changelog():
+    """Translate the most recent version's changelog to Markdown using Pandoc.
+    """
+    # Extract the first section of the changelog.
+    started = False
+    lines = []
+    with open(CHANGELOG) as f:
+        for line in f:
+            if re.match(r'^--+$', line.strip()):
+                # Section boundary. Start or end.
+                if started:
+                    # Remove last line, which is the header of the next
+                    # section.
+                    del lines[-1]
+                    break
+                else:
+                    started = True
+
+            elif started:
+                lines.append(line)
+    changelog = ''.join(lines).strip()
+
+    print(changelog)
 
 
 if __name__ == '__main__':
