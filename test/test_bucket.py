@@ -45,11 +45,17 @@ class BucketPluginTest(unittest.TestCase, TestHelper):
     def test_year_single_year_last_folder(self):
         """Last folder of a range extends from its year to current year."""
         self._setup_config(bucket_year=['50', '70'])
-        self.assertEqual(self.plugin._tmpl_bucket('1999'), '70')
+        self.assertEqual(self.plugin._tmpl_bucket('2014'), '70')
+        self.assertEqual(self.plugin._tmpl_bucket('2015'), '2015')
 
     def test_year_two_years(self):
         self._setup_config(bucket_year=['50-59', '1960-69'])
-        self.assertEqual(self.plugin._tmpl_bucket('1954'), '50-59')
+        self.assertEqual(self.plugin._tmpl_bucket('1959'), '50-59')
+
+    def test_year_multiple_years(self):
+        self._setup_config(bucket_year=['1950,51,52,53'])
+        self.assertEqual(self.plugin._tmpl_bucket('1953'), '1950,51,52,53')
+        self.assertEqual(self.plugin._tmpl_bucket('1974'), '1974')
 
     def test_year_out_of_range(self):
         """If no range match, return the year"""

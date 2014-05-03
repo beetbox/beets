@@ -64,7 +64,6 @@ class BucketPlugin(plugins.BeetsPlugin):
         self.yearranges = [self.make_year_range(b) for b in yearranges]
         self.alpharanges = [self.make_alpha_range(b) for b in
                             self.config['bucket_alpha'].get()]
-        log.debug(self.alpharanges)
 
     def make_year_range(self, ys):
         """Express year-span as a list of years [from...to].
@@ -76,8 +75,8 @@ class BucketPlugin(plugins.BeetsPlugin):
             try:
                 ys.append(self.yearbounds[lb_idx + 1])
             except:
-                ys.append(datetime.now().year + 1)
-        return range(ys[0], ys[1])
+                ys.append(datetime.now().year)
+        return range(ys[0], ys[-1] + 1)
 
     def make_alpha_range(self, s):
         """Express chars range as a list of chars [from...to]
@@ -111,5 +110,4 @@ class BucketPlugin(plugins.BeetsPlugin):
             func = self.find_bucket_timerange
         else:
             func = self.find_bucket_alpha
-
         return func(text)
