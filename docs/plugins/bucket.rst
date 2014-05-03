@@ -29,6 +29,6 @@ The definition of a range is somewhat loose, and multiple formats are allowed :
 alphanumeric characters. eg *'ABCD'*, *'A-D'*, *'A->D'*, *[AD]* are equivalent.
 - for year ranges: digits characters are extracted, and in case of doubt XXth
 century is assumed. eg *'1975-77'*, *'1975,76,77'* and *'1975-1977'* are
- equivalent.
-If no upper bound is given, the range is extended to current year (unless a
+ equivalent. If no upper bound is given, the range is extended to current year (unless a
 later range is defined). eg *'1975'* encompasses all years from 1975 until now.
+
