@@ -105,6 +105,12 @@ body {
     font-style: italic;
 }
 
+/*Fix for correctly displaying line breaks in lyrics*/
+#detail .lyrics {
+    white-space: pre-wrap;
+}
+
+/*Fix for handling overflow of detail div*/
 #detail div {
     height: 90%;
 }
