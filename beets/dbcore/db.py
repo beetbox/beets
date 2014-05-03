@@ -386,15 +386,21 @@ class Model(object):
         """
         return self._format(key, self.get(key), for_path)
 
-    def _formatted_mapping(self, for_path=False):
-        """Get a mapping containing all values on this object formatted
+    def _formatted_mapping(self, for_path=False, varnames=None):
+        """Get a mapping containing values on this object formatted
         as human-readable strings.
+        If varnames is given, only computes the mapping for the
+        requested fields, otherwise the mapping for all fields is computed.
         """
-        # In the future, this could be made "lazy" to avoid computing
-        # fields unnecessarily.
         out = {}
         for key in self.keys(True):
-            out[key] = self._get_formatted(key, for_path)
+            # only compute formatted fields when actually used
+            if varnames:
+                if key in varnames:
+                    out[key] = self._get_formatted(key, for_path)
+            else:
+                out[key] = self._get_formatted(key, for_path)
+
         return out
 
     def evaluate_template(self, template, for_path=False):
@@ -402,18 +408,18 @@ class Model(object):
         the object's fields. If `for_path` is true, then no new path
         separators will be added to the template.
         """
-        # Build value mapping.
-        mapping = self._formatted_mapping(for_path)
 
         # Get template functions.
         funcs = self._template_funcs()
 
-        # Perform substitution.
         if isinstance(template, basestring):
             template = Template(template)
-        return template.substitute(mapping, funcs)
 
-    # Parsing.
+        # Build value mapping.
+        mapping = self._formatted_mapping(for_path, template.varnames)
+
+        # Perform substitution.
+        return template.substitute(mapping, funcs)
 
     @classmethod
     def _parse(cls, key, string):
@@ -455,6 +461,7 @@ class Results(object):
         """
         for row in self.rows:
             # Get the flexible attributes for the object.
+            # PRT : we should probably not load the flexattr just yet ?
             with self.db.transaction() as tx:
                 flex_rows = tx.query(
                     'SELECT * FROM {0} WHERE entity_id=?'.format(

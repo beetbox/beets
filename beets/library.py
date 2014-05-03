@@ -481,24 +481,44 @@ class Item(LibModel):
 
     # Templating.
 
-    def _formatted_mapping(self, for_path=False):
+    def _formatted_mapping(self, for_path=False, varnames=None):
         """Get a mapping containing string-formatted values from either
         this item or the associated album, if any.
+        If varnames is given, only computes the mapping for the requested
+        fields, otherwise the mapping for all fields is computed.
         """
-        mapping = super(Item, self)._formatted_mapping(for_path)
+
+        # request mapping for albumartist is artist field is rquested and empty
+        # and vice-versa
+        if varnames and 'artist' in varnames and not self.get('artist'):
+            varnames.add('albumartist')
+        if varnames and 'albumartist' in varnames and \
+                not self.get('albumartist'):
+            varnames.add('artist')
+
+        mapping = super(Item, self)._formatted_mapping(for_path, varnames)
 
         # Merge in album-level fields.
         album = self.get_album()
         if album:
             for key in album.keys(True):
-                if key in Album.item_keys or key not in self._fields.keys():
-                    mapping[key] = album._get_formatted(key, for_path)
+                # only format and merge album's fields that are really needed
+                if varnames:
+                    if key in varnames and \
+                            (key in Album.item_keys or
+                             key not in self._fields.keys()):
+                        mapping[key] = album._get_formatted(key, for_path)
+                else:
+                    if key in Album.item_keys or \
+                            key not in self._fields.keys():
+                        mapping[key] = album._get_formatted(key, for_path)
 
         # Use the album artist if the track artist is not set and
-        # vice-versa.
-        if not mapping['artist']:
+        # vice-versa (but only if these fields are needed).
+        if (not varnames or 'artist' in varnames) and not mapping['artist']:
             mapping['artist'] = mapping['albumartist']
-        if not mapping['albumartist']:
+        if (not varnames or 'albumartist' in varnames) \
+                and not mapping['albumartist']:
             mapping['albumartist'] = mapping['artist']
 
         return mapping

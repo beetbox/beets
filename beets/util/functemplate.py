@@ -502,6 +502,7 @@ class Template(object):
     """A string template, including text, Symbols, and Calls.
     """
     def __init__(self, template):
+        self.varnames = None
         self.expr = _parse(template)
         self.original = template
         self.compiled = self.translate()
@@ -529,6 +530,7 @@ class Template(object):
     def translate(self):
         """Compile the template to a Python function."""
         expressions, varnames, funcnames = self.expr.translate()
+        self.varnames = varnames
 
         argnames = []
         for varname in varnames:
