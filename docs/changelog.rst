@@ -25,6 +25,13 @@ Fixes:
   as false when it contains the string "false". Thanks to Ayberk Yilmaz.
 * :doc:`/plugins/convert`: Fix conversion for files that include a video
   stream by ignoring it. Thanks to brunal.
+* :doc:`/plugins/fetchart`: Log an error instead of crashing when tag
+  manipulation fails.
+* :doc:`/plugins/convert`: Log an error instead of crashing when
+  embedding album art fails.
+* :doc:`/plugins/convert`: Embed cover art into converted files.
+  Previously they were embedded into the source files.
+* New plugin event: `before_item_moved`. Thanks to Robert Speicher.
 
 
 1.3.5 (April 15, 2014)

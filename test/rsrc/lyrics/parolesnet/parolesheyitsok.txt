@@ -1,0 +1,836 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+    <!--[if lt IE 9]>
+
+       <script>
+
+          document.createElement('header');
+
+          document.createElement('nav');
+
+          document.createElement('section');
+
+          document.createElement('article');
+
+          document.createElement('aside');
+
+          document.createElement('footer');
+
+       </script>
+
+    <![endif]-->
+
+    <head>
+
+        <title>Paroles Hey It's Ok par Lilly Wood & The Prick - Paroles.net (clip, musique, traduction)</title>
+
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <meta name="Description" content="Paroles du titre Hey It's Ok - Lilly Wood & The Prick avec Paroles.net - Retrouvez également les paroles des chansons les plus populaires de Lilly Wood & The Prick" />
+
+        <meta name="google-site-verification" content="_xxKww1hfgERbbKqwOT3mYWgqrEk-S3rYC3BJw-WwK0" />
+
+        <meta name="robots" content="index, follow" />
+
+        
+
+        <link rel="shortcut icon" href="/lib/images/favicon.ico" />
+
+        <script type="text/javascript" src="/lib/js/jquery/jquery-1.8.0.min.js"></script>
+
+        <script type="text/javascript" src="/lib/js/jquery/jquery-ui-1.8.23.custom.min.js"></script>
+
+        <script type="text/javascript" src="/lib/js/search.js"></script>
+
+        <script type="text/javascript" src="/lib/js/front.js"></script>
+
+        <script src="//cdn.optimizely.com/js/200582459.js"></script>
+
+
+
+        <link rel="stylesheet" type="text/css" href="/lib/css/style.css" />
+
+        <link rel="stylesheet" type="text/css" media="screen" href="/lib/js/jquery/css/smoothness/jquery-ui-1.8.23.custom.css" />
+
+        <script language="javascript" type="text/javascript" src="http://a01.adoptima.com/GP2d96de88b87b22d55"></script><script type="text/javascript" src="http://ads.ayads.co/ajs.php?zid=488"></script><script type='text/javascript'>
+(function() {
+var useSSL = 'https:' == document.location.protocol;
+var src = (useSSL ? 'https:' : 'http:') +
+'//www.googletagservices.com/tag/js/gpt.js';
+document.write('<scr' + 'ipt src="' + src + '"></scr' + 'ipt>');
+})();
+</script>
+<script type='text/javascript'>
+googletag.defineSlot('/6975/FR/paroles.net', [[728, 90]], 'div-gpt-ad-154877467-0').addService(googletag.pubads()).setTargeting('pos', 'top');
+googletag.defineSlot('/6975/FR/paroles.net', [[300, 250], [300, 600]], 'div-gpt-ad-154877467-1').addService(googletag.pubads()).setTargeting('pos', 'top');
+googletag.defineOutOfPageSlot('/6975/FR/paroles.net', 'div-gpt-ad-154877467-2-oop').addService(googletag.pubads());
+googletag.pubads().enableSyncRendering();
+googletag.pubads().enableSingleRequest();
+googletag.enableServices();
+</script>
+    </head>
+
+    
+
+    <body>
+
+        <!-- FR/paroles.net -->
+<div id='div-gpt-ad-154877467-2-oop'>
+<script type='text/javascript'>
+googletag.display('div-gpt-ad-154877467-2-oop');
+</script>
+</div><script type="text/javascript" src="http://as.ebz.io/api/choixPubJS.htm?pid=303381&screenLayer=1&mode=NONE&home=http://www.paroles.net"></script>
+        <header>
+
+            <div id="header-wrapper">
+
+    <div id="header-inner">
+
+
+
+        <div id="header-left-block">
+
+                        
+            <a href="/" class="logo"><img   src="/lib/images/logo-paroles.jpg"  alt="paroles logo"></a><br>
+            <nav style="float:left;margin-top:8px;">
+
+                <ul class="main-nav" role="navigation">
+
+                    <li><a href="/"><span class="last">Paroles de chansons</span></a></li>
+
+                </ul>
+
+            </nav>
+            
+            
+
+        </div>
+
+        <!-- // header left block -->
+
+        <div id="header-right-block">
+
+            <div class="header-ad-wrapper">
+
+                <div class="header-ad-inner">
+
+                    <!-- FR/paroles.net -->
+<div id='div-gpt-ad-154877467-0'>
+<script type='text/javascript'>
+googletag.display('div-gpt-ad-154877467-0');
+</script>
+<noscript><a href="http://pubads.g.doubleclick.net/gampad/jump?iu=/6975/FR/paroles.net&sz=728x90&t=pos%3Dtop%26&c=154877467"><img src="http://pubads.g.doubleclick.net/gampad/ad?iu=/6975/FR/paroles.net&sz=728x90&t=pos%3Dtop%26&c=154877467">
+</a>
+</noscript>
+</div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- // header block righ -->
+
+
+
+        <div class="clear"></div>
+
+    </div>
+
+    <!-- // header -  inner -->
+
+</div>
+
+
+        </header>
+
+        <section>
+
+            <div id="search-box-top">
+
+                <div id="search-box-wrapper">
+
+                        <div class="search-box">
+
+                            <p id="search-box-title">
+
+                                RECHERCHEZ VOS CHANSONS ET VOS ARTISTES
+                            </p>
+
+                            <form class="mlm" action="/search" method="post" id="search-form-round">
+
+                                <fieldset>
+
+                                    <input aria-haspopup="true" aria-autocomplete="list" role="textbox" autocomplete="off" class="text ui-autocomplete-input" id="search-input" name="search" value="Patricia Kaas, Robbie Williams, J'attends L'amour" onclick="this.value = '';" type="text">
+
+                                    <input value="OK" class="search_button" type="submit">                  
+
+                                </fieldset>
+
+                           </form>
+
+                    </div>
+
+                    <!-- // search box -->
+
+                </div>
+
+            </div>
+
+            <div id="content">
+
+                        <div id="content-wrapper">
+            
+
+                    <div id="content-inner">
+
+                        <div class="breadcrumb">
+    <p>
+        <a href="/"><span class="breadcrumb-text">Paroles.net</span><span class="breadcrumb-separator"></span></a>
+        <a href="http://www.paroles.net/lilly-wood-the-prick"><span class="breadcrumb-text">Paroles Lilly Wood & The Prick</span><span class="breadcrumb-separator last"></span></a>
+        <span class="breadcrumb-current">Paroles Hey It's Ok</span>
+    </p>
+</div>
+<div class="main-separator"></div>
+<div class="one-column" id="main" style="width:570px;">
+    <div class="box left" xmlns:v="http://rdf.data-vocabulary.org/#" typeof="v:Review-aggregate">
+    <div rel="v:itemreviewed">
+    <div typeof="v:Song">
+        <h1>Chansons <span property="v:name">Hey It's Ok</span> - <span property="v:artist">Lilly Wood & The Prick</span></h1>
+        <div class="box-content" style="width:570px;">
+            <div class="song-details">
+                                    <p>Auteurs: 
+                    <strong>Nili Ben Meir</strong>,<strong>Benjamin Cotto</strong>                  </p>
+                                                        <p>Compositeurs: 
+                    <strong>Nili Ben Meir</strong>,<strong>Benjamin Cotto</strong>                  </p>
+                                                        <p>Editeurs: 
+                    <strong>Warner Chappell Music France</strong>,<strong>Choke Industry</strong>                   </p>
+                                </div>
+            <!-- // song details -->
+            
+            <table style="border:0px;margin:5px;">
+    <tr>
+        <td width="20%" style="border:0px;">
+            <!-- Facebook &appId=110267509025267 -->
+            <div id="fb-root"></div>
+            <script>(function(d, s, id) {  var js, fjs = d.getElementsByTagName(s)[0]; if (d.getElementById(id)) return;  js = d.createElement(s); js.id = id; js.src = "//connect.facebook.net/en_US/all.js#xfbml=1"; fjs.parentNode.insertBefore(js, fjs);}(document, 'script', 'facebook-jssdk'));</script>
+            <div class="fb-like" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false"></div>
+            
+        </td>
+        <td width="20%" style="border:0px;">
+            <!-- Google+ -->
+            <div class="g-plusone" data-size="medium"></div>
+            <script type="text/javascript">
+              (function() {var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;po.src = 'https://apis.google.com/js/plusone.js';var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);})();
+            </script>
+        </td>
+        <td width="20%" style="border:0px;">
+            <!-- Twitter -->
+            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
+            <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+        </td>
+        
+        <td style="border:0px;">
+            <script type="text/javascript">var ratingWidth = 120;</script>
+<div class="rating" itemprop="aggregateRating" itemscope itemtype="http://schema.org/AggregateRating" rel="v:rating">
+    <div class="message">Votez pour cette chanson</div>
+    <div class="stars">
+        <span class="yellow-stars" style="width:0px" 
+            itemprop="ratingValue" property="v:average" 
+            data-initial-percent="0"
+            data-element-type="2"
+            data-element-id="83783"
+            title="0 / 5 of 0 votes ">
+        0                   </span>
+    </div>
+    <span itemprop="bestRating" class="hidden" property="v:best">5</span>
+    <span itemprop="worstRating" class="hidden" property="v:worst">1</span>
+    <span itemprop="reviewCount" class="hidden" property="v:votes">0</span>
+</div>
+        </td>
+    </tr>
+</table>            <div class="song-text-wrapper">
+                <div class="song-text-inner">
+                    <div style="text-align:center;padding-top:10px;">
+                        <a style="font-size:14px;color:#ff3333;font-weight:bold;" href="http://track.effiliation.com/servlet/effi.click?id_compteur=12404002&effi_id=parolesnet&artist=Lilly+Wood+%26+The+Prick&song=Hey+It%27s+Ok">Téléchargez la sonnerie "Hey It's Ok" sur votre mobile</a>
+                    </div>
+                    <div class="song-text-frame">
+                        <div class="song-text">Mama, Papa please forget the times I wet my bed<br />
+I swear not to do it again<br />
+Please forget the way I looked when I was fourteen<br />
+I didn’t know who I wanted to be<br />
+<br />
+Hey ! It’s OK, it’s OK<br />
+Cause I’ve found what I wanted<br />
+I said hey ! It’s OK, it’s OK<br />
+Cause I’ve found what I wanted<br />
+<br />
+Friends and lovers please forgive the mean things I’ve said<br />
+I swear not to do it again<br />
+Please forget the way I act when I’ve had too much to drink<br />
+I’m fighting against myself<br />
+<br />
+Hey ! It’s OK, it’s OK<br />
+Cause I’ve found what I wanted<br />
+I said hey ! It’s OK, it’s OK<br />
+Cause I’ve found what I wanted<br />
+<br />
+And I swear not to do anything funny anymore<br />
+Yes I swear not to do anything funny anymore<br />
+<br />
+Hey ! It’s OK, it’s OK<br />
+Cause I’ve found what I wanted<br />
+I said hey ! It’s OK, it’s OK<br />
+Cause I’ve found what I wanted<br />
+<br />
+Hey ! It’s OK, it’s OK<br />
+Cause I’ve found what I wanted<br />
+I said hey ! It’s OK, it’s OK<br />
+Cause I’ve found what I wanted</div>
+                    </div>
+                </div>
+            </div>
+               
+            <div style="margin-bottom:10px;">
+                <h2>Les plus grands succès de Lilly Wood & The Prick</h2>
+            </div>                 
+            <div class="listing-sidebar">
+                <div class="listing-sidebar-wrapper">
+                    <div class="listing-sidebar-inner">
+                        <table cellspacing="0" cellpadding="0" class="">
+                            <tbody>
+                                <tr>
+                                                                            <td width="186" valign="middle" class="song-name">
+                                                                                                            <p><a href="http://www.paroles.net/lilly-wood-the-prick/paroles-down-the-drain">Down The Drain</a></p>
+                                                                                            </td>
+                                                                            <td width="186" valign="middle" class="song-name">
+                                                                                                            <p><a href="http://www.paroles.net/lilly-wood-the-prick/paroles-long-way-back">Long way back</a></p>
+                                                                                            </td>
+                                                                            <td width="186" valign="middle" class="song-name">
+                                                                                                            <p><a href="http://www.paroles.net/lilly-wood-the-prick/paroles-middle-of-the-night">Middle Of the Night</a></p>
+                                                                                            </td>
+                                </tr><tr>                                           <td width="186" valign="middle" class="song-name">
+                                                                                            </td>
+                                                                            <td width="186" valign="middle" class="song-name">
+                                                                                            </td>
+                                                                            <td width="186" valign="middle" class="song-name">
+                                                                                            </td>
+                                                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="listing-artist-shadow"></div>
+            </div>
+                    </div>
+    </div>
+    </div>
+    </div>
+    <div class="clear"></div>
+</div> 
+
+                        <div id="sidebar">
+
+                            <div id="sidebar">
+                
+                                
+                    <div class="sidebar-pager">
+                        <h5>ABC DE LA CHANSON</h5>
+                        <div class="sidebar-pager-wrapper">
+                            <div class="sidebar-pager-inner">                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-a" class="pager-letter">a</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-b" class="pager-letter">b</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-c" class="pager-letter">c</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-d" class="pager-letter">d</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-e" class="pager-letter">e</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-f" class="pager-letter">f</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-g" class="pager-letter">g</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-h" class="pager-letter">h</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-i" class="pager-letter">i</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-j" class="pager-letter">j</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-k" class="pager-letter">k</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-l" class="pager-letter">l</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-m" class="pager-letter">m</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-n" class="pager-letter">n</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-o" class="pager-letter">o</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-p" class="pager-letter">p</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-q" class="pager-letter">q</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-r" class="pager-letter">r</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-s" class="pager-letter">s</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-t" class="pager-letter">t</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-u" class="pager-letter">u</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-v" class="pager-letter">v</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-w" class="pager-letter">w</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-x" class="pager-letter">x</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-y" class="pager-letter">y</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-z" class="pager-letter">z</a>                               
+                                                                    
+                                    <a href="http://www.paroles.net/paroles-0_9" class="pager-letter">0-9</a>                               
+                                                                
+                                <div class="clear"></div>
+                            </div>
+                        </div>
+                        <div class="sidebar-pager-shadow"></div>
+                    </div>
+                                        <div class="sidebar-separator"></div>
+                            
+                                
+                    <div class="facebook-box">
+                        <h5>
+    Suivez-nous</h5>
+<table>
+    <tbody>
+        <tr>
+            <td width="33%">
+                <!-- Facebook -->
+<div id="fb-root"></div>
+<script>(function(d, s, id) {  var js, fjs = d.getElementsByTagName(s)[0]; if (d.getElementById(id)) return;  js = d.createElement(s); js.id = id; js.src = "//connect.facebook.net/en_US/all.js#xfbml=1"; fjs.parentNode.insertBefore(js, fjs);}(document, 'script', 'facebook-jssdk'));</script>
+<div class="fb-like" data-href="http://www.paroles.net" data-layout="button_count" data-send="false" data-show-faces="false" data-width="450"></div></td>
+            <td width="33%">
+                <!-- Google+ -->
+<div class="g-plusone" data-size="medium" data-href="http://www.paroles.net" ></div>
+<script type="text/javascript">(function() {var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;po.src = 'https://apis.google.com/js/plusone.js';var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);})();</script></td>
+            <td>
+                <!-- Twitter -->
+<a class="twitter-share-button" href="https://twitter.com/share"  data-url="http://www.paroles.net" >Tweet</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script></td>
+        </tr>
+    </tbody>
+</table>
+                        <script type="text/javascript">var ratingWidth = 120;</script>
+<div class="rating" itemprop="aggregateRating" itemscope itemtype="http://schema.org/AggregateRating" rel="v:rating">
+    <div class="message">Donnez votre avis sur le site</div>
+    <div class="stars">
+        <span class="yellow-stars" style="width:100px" 
+            itemprop="ratingValue" property="v:average" 
+            data-initial-percent="100"
+            data-element-type="1"
+            data-element-id="0"
+            title="4.2 / 5 of 5348 votes ">
+        4.2                 </span>
+    </div>
+    <span itemprop="bestRating" class="hidden" property="v:best">5</span>
+    <span itemprop="worstRating" class="hidden" property="v:worst">1</span>
+    <span itemprop="reviewCount" class="hidden" property="v:votes">5348</span>
+</div>
+                    </div>
+                                        <div class="sidebar-separator"></div>
+                            
+                                
+                    <div class="sidebar-textbox listing-sidebar" id="sidebar-item-33">
+                        <h5></h5>
+                        <div class="listing-sidebar-wrapper">
+                        <div class="listing-sidebar-inner">                                 
+                            <div id="my_first_container"></div>
+<script>
+    window.dmPublisherAsyncInit = function()
+    {
+var conf = [
+            { filters: 'creative-official', search: 'Lilly Wood & The Prick+Hey It s Ok', channel: 'music', page:1, limit: 1,  sort:'relevance', syndication: 127269, type: 'single_player', autoplay: 1, width: 300, containerId: 'my_first_container' } 
+        ];
+        DM_PublisherWidgets.render(conf);
+    };
+    (function() {
+        var e = document.createElement('script'); e.async = true;
+        e.src = 'http://static2.dmcdn.net/publisher/widgets.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(e, s);
+autoplay=1;
+    }());
+</script>                               </div>
+                        </div>
+                        <div class="sidebar-pager-shadow"></div>
+                    </div>                  
+                                        <div class="sidebar-separator"></div>
+                            
+                                
+                    <div class="sidebar-banner-box ">                       
+                        
+<!-- FR/paroles.net -->
+<div id='div-gpt-ad-154877467-1'>
+<script type='text/javascript'>
+googletag.display('div-gpt-ad-154877467-1');
+</script>
+<noscript><a href="http://pubads.g.doubleclick.net/gampad/jump?iu=/6975/FR/paroles.net&sz=300x250|300x600&t=pos%3Dtop%26&c=154877467"><img src="http://pubads.g.doubleclick.net/gampad/ad?iu=/6975/FR/paroles.net&sz=300x250|300x600&t=pos%3Dtop%26&c=154877467">
+</a>
+</noscript>
+</div>                  
+                    </div>                                      
+                                        <div class="sidebar-separator"></div>
+                            
+                        
+                                    <div class="facebook-box">
+                            <iframe src="//www.facebook.com/plugins/likebox.php?href=https%3A%2F%2Fwww.facebook.com%2FParoles.net&amp;width=292&amp;height=258&amp;colorscheme=light&amp;show_faces=true&amp;header=false&amp;stream=false&amp;show_border=true&amp;appId=110267509025267" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:292px; height:258px;" allowTransparency="true"></iframe>                       
+                        </div>
+                                        <div class="sidebar-separator"></div>
+                            
+                                
+                    <div class="listing-sidebar">
+                        <h5>On aime </h5>
+                        <div class="listing-sidebar-wrapper">
+                            <div class="listing-sidebar-inner">
+                                <table cellpadding="0" cellspacing="0" class="song-list">
+                                    <tbody>                                         
+                                                                                            
+                                                <tr>
+                                                    <td class="song-icon" valign="middle" width="30"><span>1</span></td>
+                                                    <td class="song-name" valign="middle" width="110">
+                                                        <p><a href=""></a></p>
+                                                    </td>
+                                                    <td class="song-artist" valign="middle" width="134">
+                                                        <p>
+                                                                                                                            <a href="http://www.paroles.net/generation-goldman">Génération Goldman</a>
+                                                                                                                    </p>
+                                                    </td>
+                                                </tr>
+                                                                                                
+                                                <tr>
+                                                    <td class="song-icon" valign="middle" width="30"><span>2</span></td>
+                                                    <td class="song-name" valign="middle" width="110">
+                                                        <p><a href=""></a></p>
+                                                    </td>
+                                                    <td class="song-artist" valign="middle" width="134">
+                                                        <p>
+                                                                                                                            <a href="http://www.paroles.net/grand-corps-malade">Grand Corps Malade</a>
+                                                                                                                    </p>
+                                                    </td>
+                                                </tr>
+                                                                                                
+                                                <tr>
+                                                    <td class="song-icon" valign="middle" width="30"><span>3</span></td>
+                                                    <td class="song-name" valign="middle" width="110">
+                                                        <p><a href=""></a></p>
+                                                    </td>
+                                                    <td class="song-artist" valign="middle" width="134">
+                                                        <p>
+                                                                                                                            <a href="http://www.paroles.net/juliette">Juliette</a>
+                                                                                                                    </p>
+                                                    </td>
+                                                </tr>
+                                                                                                
+                                                <tr>
+                                                    <td class="song-icon" valign="middle" width="30"><span>4</span></td>
+                                                    <td class="song-name" valign="middle" width="110">
+                                                        <p><a href=""></a></p>
+                                                    </td>
+                                                    <td class="song-artist" valign="middle" width="134">
+                                                        <p>
+                                                                                                                            <a href="http://www.paroles.net/mylene-farmer">Mylène Farmer</a>
+                                                                                                                    </p>
+                                                    </td>
+                                                </tr>
+                                                                                                
+                                                <tr>
+                                                    <td class="song-icon" valign="middle" width="30"><span>5</span></td>
+                                                    <td class="song-name" valign="middle" width="110">
+                                                        <p><a href=""></a></p>
+                                                    </td>
+                                                    <td class="song-artist" valign="middle" width="134">
+                                                        <p>
+                                                                                                                            <a href="http://www.paroles.net/la-lavrette">La Lavrette</a>
+                                                                                                                    </p>
+                                                    </td>
+                                                </tr>
+                                                                                                
+                                                <tr>
+                                                    <td class="song-icon" valign="middle" width="30"><span>6</span></td>
+                                                    <td class="song-name" valign="middle" width="110">
+                                                        <p><a href="http://www.paroles.net/dj-assad/paroles-li-tourner">Paroles Li Tourner</a></p>
+                                                    </td>
+                                                    <td class="song-artist" valign="middle" width="134">
+                                                        <p>
+                                                                                                                            DJ Assad                                                                                                                    </p>
+                                                    </td>
+                                                </tr>
+                                                                                                
+                                                <tr>
+                                                    <td class="song-icon" valign="middle" width="30"><span>7</span></td>
+                                                    <td class="song-name" valign="middle" width="110">
+                                                        <p><a href="http://www.paroles.net/joyce-jonathan/paroles-ca-ira">Paroles Ca ira</a></p>
+                                                    </td>
+                                                    <td class="song-artist" valign="middle" width="134">
+                                                        <p>
+                                                                                                                            Joyce Jonathan                                                                                                                  </p>
+                                                    </td>
+                                                </tr>
+                                                                                                
+                                                <tr>
+                                                    <td class="song-icon" valign="middle" width="30"><span>8</span></td>
+                                                    <td class="song-name" valign="middle" width="110">
+                                                        <p><a href="http://www.paroles.net/keen-v/paroles-la-vie-du-bon-cote">Paroles La vie du bon côté</a></p>
+                                                    </td>
+                                                    <td class="song-artist" valign="middle" width="134">
+                                                        <p>
+                                                                                                                            Keen'v                                                                                                                  </p>
+                                                    </td>
+                                                </tr>
+                                                                                                
+                                                <tr>
+                                                    <td class="song-icon" valign="middle" width="30"><span>9</span></td>
+                                                    <td class="song-name" valign="middle" width="110">
+                                                        <p><a href="http://www.paroles.net/rohff/paroles-j-accelere">Paroles J'accélère</a></p>
+                                                    </td>
+                                                    <td class="song-artist" valign="middle" width="134">
+                                                        <p>
+                                                                                                                            <a href="http://www.paroles.net/rohff">Rohff</a>
+                                                                                                                    </p>
+                                                    </td>
+                                                </tr>
+                                                                                                
+                                                <tr>
+                                                    <td class="song-icon" valign="middle" width="30">span>10</span></td>
+                                                    <td class="song-name" valign="middle" width="110">
+                                                        <p><a href="http://www.paroles.net/stromae/paroles-tous-les-memes">Paroles Tous les mêmes</a></p>
+                                                    </td>
+                                                    <td class="song-artist" valign="middle" width="134">
+                                                        <p>
+                                                                                                                            <a href="http://www.paroles.net/stromae">Stromae</a>
+                                                                                                                    </p>
+                                                    </td>
+                                                </tr>
+                                                                                                
+                                                <tr>
+                                                    <td class="song-icon" valign="middle" width="30"><span>11</span></td>
+                                                    <td class="song-name" valign="middle" width="110">
+                                                        <p><a href="http://www.paroles.net/stromae/paroles-papaoutai">Paroles Papaoutai</a></p>
+                                                    </td>
+                                                    <td class="song-artist" valign="middle" width="134">
+                                                        <p>
+                                                                                                                            Stromae                                                                                                                 </p>
+                                                    </td>
+                                                </tr>
+                                                                                </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="sidebar-pager-shadow"></div>
+                    </div>                                      
+                                        <div class="sidebar-separator"></div>
+                            
+                                
+                    <div class="sidebar-link">
+                        <a href="http://www.paroles.net/paroles-nouvelles-chansons">
+                            <span> Nouveautés </span>
+                        </a>
+                    </div>                                      
+                                        <div class="sidebar-separator"></div>
+                            
+                                
+                    <div class="sidebar-link" id="sidebar-item-19">
+                        <a href="http://www.paroles.net/les-plus-grands-succes-francophones">
+                            <span>Top 30 francophone</span>
+                        </a>
+                    </div>                                      
+                                        <div class="sidebar-separator"></div>
+                            
+                                
+                    <div class="sidebar-link" id="sidebar-item-21">
+                        <a href="http://www.paroles.net/top-chansons-d-amour">
+                            <span>Chansons d'Amour</span>
+                        </a>
+                    </div>                                      
+                                        <div class="sidebar-separator"></div>
+                            
+                                
+                    <div class="sidebar-link" id="sidebar-item-31">
+                        <a href="http://www.paroles.net/espoirs-francophones">
+                            <span>Espoirs Francophones</span>
+                        </a>
+                    </div>                                      
+                                        <div class="sidebar-separator"></div>
+                            
+                                
+                    <div class="sidebar-link" id="sidebar-item-13">
+                        <a href="http://www.paroles.net/rap-francais">
+                            <span>Rap Français</span>
+                        </a>
+                    </div>                                      
+                                        <div class="sidebar-separator"></div>
+                            
+                                
+                    <div class="selling separator left">
+                        <div class="selling-inner">
+                            <header>
+                                <h2 style="width: 150px;">Téléchargement</h2>
+                                <img src="/lib/images/itunes-icon.jpg" alt="itunes icon">
+                            </header>
+                            <section>
+                                <div class="selling-item">                                  
+                                                                                                                            
+                                            <a href="http://clkuk.tradedoubler.com/click?p=23753&a=2165759&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Falbum%2Fracine-carree%2Fid678899158%3Fuo%3D2%26partnerId%3D2003">
+                                                <span class="selling-text">
+                                                    <span class="selling-title">Racine Carrée - Stromae</span><br> 
+                                                    <span style="font-size: 10px;">Genre: Variété française</span><br>
+                                                    <em>Prix: 9,99 €</em>
+                                                </span> 
+                                                <span class="selling-arrow"> 
+                                                    <img src="/lib/images/red-arrow.png" alt="red arrow">
+                                                </span>
+                                            </a>
+                                                                                        
+                                            <a href="http://clkuk.tradedoubler.com/click?p=23753&a=2165759&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Falbum%2Faventine%2Fid681187053%3Fuo%3D2%26partnerId%3D2003">
+                                                <span class="selling-text">
+                                                    <span class="selling-title">Aventine - Agnes Obel</span><br> 
+                                                    <span style="font-size: 10px;">Genre: Alternative</span><br>
+                                                    <em>Prix: 9,99 €</em>
+                                                </span> 
+                                                <span class="selling-arrow"> 
+                                                    <img src="/lib/images/red-arrow.png" alt="red arrow">
+                                                </span>
+                                            </a>
+                                                                                        
+                                            <a href="http://clkuk.tradedoubler.com/click?p=23753&a=2165759&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Falbum%2Fnrj-200-hits-2013-vol.-2%2Fid699113552%3Fuo%3D2%26partnerId%3D2003">
+                                                <span class="selling-text">
+                                                    <span class="selling-title">NRJ 200% Hits 2013, vol. 2 - Various Artists</span><br> 
+                                                    <span style="font-size: 10px;">Genre: Pop</span><br>
+                                                    <em>Prix: 12,99 €</em>
+                                                </span> 
+                                                <span class="selling-arrow"> 
+                                                    <img src="/lib/images/red-arrow.png" alt="red arrow">
+                                                </span>
+                                            </a>
+                                                                                        
+                                            <a href="http://clkuk.tradedoubler.com/click?p=23753&a=2165759&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Falbum%2Finnocents%2Fid665943630%3Fuo%3D2%26partnerId%3D2003">
+                                                <span class="selling-text">
+                                                    <span class="selling-title">Innocents - Moby</span><br> 
+                                                    <span style="font-size: 10px;">Genre: Électronique</span><br>
+                                                    <em>Prix: 9,99 €</em>
+                                                </span> 
+                                                <span class="selling-arrow"> 
+                                                    <img src="/lib/images/red-arrow.png" alt="red arrow">
+                                                </span>
+                                            </a>
+                                                                                        
+                                            <a href="http://clkuk.tradedoubler.com/click?p=23753&a=2165759&url=https%3A%2F%2Fitunes.apple.com%2Ffr%2Falbum%2Fseine-zoo%2Fid703440410%3Fuo%3D2%26partnerId%3D2003">
+                                                <span class="selling-text">
+                                                    <span class="selling-title">Seine Zoo - S-Crew</span><br> 
+                                                    <span style="font-size: 10px;">Genre: Hip-hop/Rap</span><br>
+                                                    <em>Prix: 9,99 €</em>
+                                                </span> 
+                                                <span class="selling-arrow"> 
+                                                    <img src="/lib/images/red-arrow.png" alt="red arrow">
+                                                </span>
+                                            </a>
+                                                                                                            </div>
+                            </section>
+                            <footer>
+                                <div class="selling-footer"></div>
+                            </footer>
+                        </div>
+                    </div>
+                    <div class="clear"></div>                   
+                    </div>
+                        </div>
+
+                    </div>
+
+                <!-- // content wrapper -->
+
+                </div>
+
+            <!-- // content -->
+
+            </div>
+
+        </section>
+
+        <!-- // section -->
+
+        <footer>
+
+            <div id="footer-wrapper">
+    <div id="footer-inner">
+            <div class="footer-box">
+            <div class="footer-content">
+                <p>
+    <strong>Prochains Albums</strong></p>
+<p>
+    <!--
+<p>
+    ► <a href="/christophe-mae-album-je-veux-du-bonheur">Paroles Christophe Ma&eacute; - Je veux du bonheur</a></p>
+<p>
+    -->
+            </div>
+        </div>
+            <div class="footer-box">
+            <div class="footer-content">
+                <p>
+    <strong>Th&eacute;matiques</strong></p>
+<p>
+    ► <a href="/rap-francais">Rap Fran&ccedil;ais</a><br />
+    ► <a href="/top-chansons-d-amour">Chansons d&#39;amour</a></p>
+<p>
+    &nbsp;</p>
+            </div>
+        </div>
+            <div class="footer-box">
+            <div class="footer-content">
+                <p>
+    <strong>Plan de site</strong></p>
+<p>
+    ► <a href="/mentions-legales">Mentions l&eacute;gales</a></p>
+            </div>
+        </div>
+        <div class="clear"></div>
+    </div>
+</div>
+<p id="copyright">Copyright  &copy; 2012 Paroles.net </p>
+        </footer>
+
+        <script type="text/javascript">
+
+          var _gaq = _gaq || [];
+
+          _gaq.push(['_setAccount', 'UA-32671664-1']);
+
+          _gaq.push(['_trackPageview']);
+
+         
+
+          (function() {
+
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+
+          })();
+
+         
+
+        </script>
+
+        <script type="text/javascript" src="http://fr.slidein.clickintext.net/?a=12208"></script>
+    </body>
+
+</html>

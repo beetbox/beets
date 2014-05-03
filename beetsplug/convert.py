@@ -190,7 +190,12 @@ def convert_item(dest_dir, keep_new, path_formats):
             if album:
                 artpath = album.artpath
                 if artpath:
-                    _embed(artpath, [item])
+                    try:
+                        _embed(artpath, [converted])
+                    except IOError as exc:
+                        log.warn(u'could not embed cover art in {0}: {1}'
+                                 .format(util.displayable_path(item.path),
+                                         exc))
 
         plugins.send('after_convert', item=item, dest=dest, keepnew=keep_new)
 

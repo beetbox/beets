@@ -1,0 +1,191 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>THE BEATLES LYRICS - Lady Madonna</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="description" content="Lyrics to &quot;Lady Madonna&quot; song by THE BEATLES: Lady Madonna, children at your feet Wonder how you manage to make ends meet Who finds the money? Whe..." /> 
+<meta name="keywords" content="Lady Madonna lyrics, THE BEATLES Lady Madonna lyrics, THE BEATLES lyrics" />
+<meta name="robots" content="noarchive" />
+<link rel="stylesheet" type="text/css" href="../../azl.css" />
+<script type="text/javascript" src="http://www.azlyrics.com/external.js"></script>
+<script type="text/javascript" src="http://images.azlyrics.com/head.js"></script>
+<script type="text/javascript" language="JavaScript">
+ArtistName = "THE BEATLES";
+SongName = "Lady Madonna";
+</script>
+</head>
+<body>
+<div id="h1head"><h1>"Lady Madonna" lyrics</h1></div>
+
+<div id="main">
+<script type="text/javascript" src="http://images.azlyrics.com/top_rock.js"></script>
+
+<!-- flex -->
+<script>
+cf_page_artist = ArtistName;
+cf_page_song = SongName;
+cf_page_genre = "";
+cf_adunit_id = "39381789";
+cf_flex = true;
+</script>
+<script src="http://srv.clickfuse.com/showads/showad.php"></script>
+<!-- flex end -->
+
+<!-- AddThis Button BEGIN -->
+<iframe src="http://www.facebook.com/plugins/like.php?href=http://www.azlyrics.com/lyrics/beatles/ladymadonna.html&amp;layout=button_count&amp;show_faces=false&amp;width=140&amp;action=like&amp;font=verdana&amp;colorscheme=light&amp;height=21" scrolling="no" frameborder="0" style="float:left; border:none; overflow:hidden; width:140px; height:21px;" allowTransparency="true"></iframe>
+<script type="text/javascript">
+<!--
+var addthis_config = {
+      services_custom: {
+              name: "Amazon",
+              url: "http://www.amazon.com/gp/search?ie=UTF8&keywords=THE+BEATLES%20Lady+Madonna&tag=azlyricsunive-20&index=digital-music&linkCode=ur2&camp=1789&creative=9325",
+              icon: "http://images.azlyrics.com/play.gif"}
+}
+// -->
+</script>
+<div class="addthis_toolbox addthis_default_style" style="float:right;">
+    <a class="addthis_button_www.amazon.com" title="Get MP3!" style="text-decoration:none; color: black;">MP3&nbsp;</a>    
+    <a class="addthis_button_email">Email&nbsp;</a>
+    <a class="addthis_button_print">Print</a>
+</div>
+<script type="text/javascript" src="http://s7.addthis.com/js/300/addthis_widget.js#username=azlyrics"></script>
+
+<!-- AddThis Button END -->
+
+<!-- JANGO PLAYER -->
+<div style="clear:both;">
+<iframe width="325" scrolling="no" height="38" frameborder="0" vspace="0" hspace="0" allowTransparency="true" marginwidth="0" marginheight="0" style="border: 0px none; padding:5px 0 30px;" src="http://jmn.jangonetwork.com/az?cust_params=j_artist=THE BEATLES&amp;j_title=Lady Madonna"></iframe><br />
+</div>
+<!-- END OF JANGO PLAYER -->
+
+<h2>THE BEATLES LYRICS</h2>
+
+<div class="ringtone">
+<img src="http://images.azlyrics.com/phone.gif" width="16" height="17" alt="Lady Madonna Ringtone" />&nbsp;<a href="http://www.ringtonematcher.com/co/ringtonematcher/02/noc.asp?sid=DVAZros&amp;artist=THE+BEATLES&amp;song=Lady+Madonna" class="Ringtones">Send "Lady Madonna" Ringtone to your Cell</a>&nbsp;<img src="http://images.azlyrics.com/phone_flip.gif" width="16" height="17" alt="Lady Madonna Ringtone" />
+</div>
+
+<b>"Lady Madonna"</b><br />
+
+<br />
+
+<div style="margin-left:10px;margin-right:10px;">
+<!-- start of lyrics -->
+Lady Madonna, children at your feet<br />
+Wonder how you manage to make ends meet<br />
+Who finds the money? When you pay the rent?<br />
+Did you think that money was Heaven sent?<br />
+Friday night arrives without a suitcase<br />
+Sunday morning creep in like a nun<br />
+Monday's child has learned to tie his bootlace<br />
+See how they run<br />
+<br />
+Lady Madonna, baby at your breast<br />
+Wonder how you manage to feed the rest<br />
+<br />
+See how they run<br />
+<br />
+Lady Madonna, lying on the bed<br />
+Listen to the music playing in your head<br />
+<br />
+Tuesday afternoon is never ending<br />
+Wednesday morning papers didn't come<br />
+Thursday night you stockings needed mending<br />
+See how they run<br />
+<br />
+Lady Madonna, children at your feet<br />
+Wonder how you manage to make ends meet
+<!-- end of lyrics -->
+</div>
+
+<br /><br /><br /><br />
+
+
+
+
+<form action="../../add.php" method="post" id="corlyr">
+<input type="hidden" name="what" value="correct_lyrics" />
+<input type="hidden" name="song_id" value="115988" />
+</form>
+
+<br />
+<div class="bmenu"><ul>
+
+<li><a href="#" onclick="document.getElementById('corlyr').submit();return false;">Submit Corrections</a></li>
+<li><a href="http://www.azlyrics.com/b/beatles.html">THE BEATLES Lyrics</a></li>
+<li class="mlast"><a class="main" href="http://www.azlyrics.com">A-Z Lyrics</a></li>
+</ul></div>
+
+<div class="ringtone">
+<img src="http://images.azlyrics.com/phone.gif" width="16" height="17" alt="Lady Madonna Ringtone" />&nbsp;<a href="http://www.ringtonematcher.com/co/ringtonematcher/02/noc.asp?sid=DVAZros&amp;artist=THE+BEATLES&amp;song=Lady+Madonna" class="Ringtones">Send "Lady Madonna" Ringtone to your Cell</a>&nbsp;<img src="http://images.azlyrics.com/phone_flip.gif" width="16" height="17" alt="Lady Madonna Ringtone" />
+</div>
+
+<div class="smallfont">Writer(s): George Harrison, John Lennon, Paul Mccartney<br />
+Copyright: Harrisongs Ltd., Sony/ATV Tunes LLC</div>
+<br />
+
+<div class="powered"><span style="font-weight:bold;line-height:54px;vertical-align:top;">Powered by </span><img src="http://images.azlyrics.com/mxm.png" width="184" height="54" alt="MusixMatch" /></div>
+
+
+<!-- AddThis Button BEGIN -->
+<iframe src="http://www.facebook.com/plugins/like.php?href=http://www.azlyrics.com/lyrics/beatles/ladymadonna.html&amp;layout=button_count&amp;show_faces=false&amp;width=140&amp;action=like&amp;font=verdana&amp;colorscheme=light&amp;height=21" scrolling="no" frameborder="0" style="float:left; border:none; overflow:hidden; width:140px; height:21px;" allowTransparency="true"></iframe>
+<script type="text/javascript">
+<!--
+var addthis_config = {
+      services_custom: {
+              name: "Amazon",
+              url: "http://www.amazon.com/gp/search?ie=UTF8&keywords=THE+BEATLES%20Lady+Madonna&tag=azlyricsunive-20&index=digital-music&linkCode=ur2&camp=1789&creative=9325",
+              icon: "http://images.azlyrics.com/play.gif"}
+}
+// -->
+
+</script>
+<div class="addthis_toolbox addthis_default_style" style="float:right;">
+    <a class="addthis_button_www.amazon.com" title="Get MP3!" style="text-decoration:none; color: black;">MP3&nbsp;</a>    
+    <a class="addthis_button_email">Email&nbsp;</a>
+    <a class="addthis_button_print">Print</a>
+</div>
+<script type="text/javascript" src="http://s7.addthis.com/js/300/addthis_widget.js#username=azlyrics"></script>
+<!-- AddThis Button END -->
+<div class="cb"></div>
+
+<form class="search" method="get" action="http://search.azlyrics.com/search.php">
+
+Enter artist/album/song to search lyrics for:<div class="search_wr"><input id="q" name="q" class="search_text" type="text" value="" /><button class="search_btn" type="submit"></button><div id="qas"></div></div>
+</form>
+
+<script type="text/javascript" src="http://images.azlyrics.com/bot_rock.js"></script>
+
+<div class="smenu"><ul>
+<li><a href="http://www.azlyrics.com/adv.html">Advertise Here</a></li>
+<li><a href="http://www.azlyrics.com/privacy.html">Privacy Policy</a></li>
+<li><a href="http://www.azlyrics.com/copyright.html">DMCA Policy</a></li>
+<li class="mlast"><a href="http://www.azlyrics.com/contact.html">Contact Us</a></li>
+</ul></div>
+<div class="copyright">THE BEATLES lyrics are property and copyright of their owners.<br />"Lady Madonna" lyrics provided for educational purposes and personal use only.<br />
+
+<script type="text/javascript"><!--
+curdate=new Date();
+document.write("<b>Copyright &copy; 2000-"+curdate.getFullYear()+" AZLyrics.com<\/b>"); // -->
+</script>
+</div>
+
+</div>
+<script type="text/javascript">
+<!--
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+//  -->
+</script>
+<script type="text/javascript">
+<!--
+try {
+var pageTracker = _gat._getTracker("UA-4309237-1");
+pageTracker._setDomainName(".azlyrics.com");
+pageTracker._trackPageview();
+} catch(err) {}
+//  -->
+</script>
+<script type="text/javascript" src="http://tracking.musixmatch.com/t1.0/Ca5GnHcQrYhVRKy7ISCprGrOltL/xXpq5a4/t6GZ7uhXpsh7oakIpeu41P8GKWgtkCfnMlc5cUyUQOPRzCBKdlLEaM8VR828kNYNRDddkh2z0vPihcG4ORC2cVFzzCnOU/AMIv1M2862tLQRlXmpoxkD3sqtszWTmhQaybnfIZ78XmfiKEvm0LFocU9elQXzPnmuhPpIeouLgcR2nTgXKdMBapNwNMoSBfxDVqpNKRPwT3b6UYBqDcgBg/j3g0WE98SEKiLHPliKYzNmnpK7+KnO68akaK4TJIUW+9RML1UX7TLvZ9cuRZdnDeQhbQAULJm1EB4TGE7e8wL7xTFw6IYjT/vUpC5DqU6CMb7IQvqabvp5vSeGcAqWqmv17/7p/"></script>
+</body>
+</html>

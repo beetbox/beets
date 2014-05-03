@@ -42,7 +42,7 @@ class MusicBrainzAPIError(util.HumanReadableException):
         super(MusicBrainzAPIError, self).__init__(reason, verb, tb)
 
     def get_message(self):
-        return u'"{0}" in {1} with query {2}'.format(
+        return u'{0} in {1} with query {2}'.format(
             self._reasonstr(), self.verb, repr(self.query)
         )
 

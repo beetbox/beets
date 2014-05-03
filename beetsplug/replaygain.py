@@ -135,6 +135,7 @@ class CommandBackend(Backend):
 
         supported_items = filter(self.format_supported, album.items())
         if len(supported_items) != len(album.items()):
+            log.debug('replaygain: tracks are of unsupported format')
             return AlbumGain(None, [])
 
         output = self.compute_gain(supported_items, True)
@@ -601,8 +602,7 @@ class ReplayGainPlugin(BeetsPlugin):
             return
 
         if task.is_album:
-            album = session.lib.get_album(task.album_id)
-            self.handle_album(album, False)
+            self.handle_album(task.album, False)
         else:
             self.handle_track(task.item, False)
 
