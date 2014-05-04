@@ -2,7 +2,7 @@ Bucket Plugin
 ==============
 
 The ``bucket`` plugin helps you keep a balanced files tree for your library
-by gathering your files into buckets folders representing ranges.
+by grouping your files into buckets folders representing ranges.
 This kind of files organization is usually used to classify your music by
 periods (eg *1960s*, *1970s* etc), or to divide bloated folders into smaller
 subfolders by grouping albums/artist alphabetically (eg *A-F*, *G-M*, *N-Z*).
@@ -17,7 +17,7 @@ You must then define what ranges representations you allow in the ``bucket:``
 section of the config file :
 
     bucket:
-        bucket_alpha: ['A-F', 'G-M', 'N-Z']  
+        bucket_alpha: ['A-F', 'G-M', 'N-Z']
         bucket_year:  ['1980s', '1990s', '2000s']
 
 The ``bucket_year`` parameter is used for all substitutions occuring on the
@@ -25,6 +25,6 @@ The ``bucket_year`` parameter is used for all substitutions occuring on the
 
 The definition of a range is somewhat loose, and multiple formats are allowed :
 
-- for alpha ranges: the range is defined by the lowest and highest (ascii-wise) alphanumeric characters. eg *'ABCD'*, *'A-D'*, *'A->D'*, *[AD]* are equivalent.  
+- for alpha ranges: the range is defined by the lowest and highest (ascii-wise) alphanumeric characters. eg *'ABCD'*, *'A-D'*, *'A->D'*, *[AD]* are equivalent.
 - for year ranges: digits characters are extracted, and in case of doubt XXth century is assumed. eg *'1975-77'*, *'1975,76,77'* and *'1975-1977'* are equivalent. If no upper bound is given, the range is extended to current year (unless a later range is defined). eg *'1975'* encompasses all years from 1975 until now.
 

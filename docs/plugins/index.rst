@@ -58,6 +58,7 @@ by typing ``beet version``.
    fromfilename
    ftintitle
    keyfinder
+   bucket
 
 Autotagger Extensions
 ---------------------
@@ -102,6 +103,8 @@ Path Formats
 * :doc:`rewrite`: Substitute values in path formats.
 * :doc:`the`: Move patterns in path formats (i.e., move "a" and "the" to the
   end).
+* :doc:`bucket`: Group your files into bucket directories that cover different
+field values ranges.
 
 Interoperability
 ----------------
