@@ -104,7 +104,7 @@ Path Formats
 * :doc:`the`: Move patterns in path formats (i.e., move "a" and "the" to the
   end).
 * :doc:`bucket`: Group your files into bucket directories that cover different
-field values ranges.
+  field values ranges.
 
 Interoperability
 ----------------
