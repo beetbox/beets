@@ -61,6 +61,8 @@ class BucketPluginTest(unittest.TestCase, TestHelper):
         """If no range match, return the year"""
         self._setup_config(bucket_year=['50-59', '1960-69'])
         self.assertEqual(self.plugin._tmpl_bucket('1974'), '1974')
+        self._setup_config(bucket_year=[])
+        self.assertEqual(self.plugin._tmpl_bucket('1974'), '1974')
 
     def test_alpha_all_chars(self):
         self._setup_config(bucket_alpha=['ABCD', 'FGH', 'IJKL'])
@@ -72,6 +74,9 @@ class BucketPluginTest(unittest.TestCase, TestHelper):
 
     def test_alpha_out_of_range(self):
         """If no range match, return the initial"""
+        self._setup_config(bucket_alpha=['ABCD', 'FGH', 'IJKL'])
+        self.assertEqual(self.plugin._tmpl_bucket('errol'), 'E')
+        self._setup_config(bucket_alpha=[])
         self.assertEqual(self.plugin._tmpl_bucket('errol'), 'E')
 
 

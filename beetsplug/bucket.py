@@ -20,7 +20,6 @@ import logging
 import re
 import string
 from beets import plugins
-# from beets import config
 
 log = logging.getLogger('beets')
 
@@ -58,7 +57,6 @@ class BucketPlugin(plugins.BeetsPlugin):
     def setup(self):
         """Setup plugin from config options
         """
-
         yearranges = extract_years(self.config['bucket_year'].get())
         self.yearbounds = sorted([y for ys in yearranges for y in ys])
         self.yearranges = [self.make_year_range(b) for b in yearranges]
@@ -66,9 +64,10 @@ class BucketPlugin(plugins.BeetsPlugin):
                             self.config['bucket_alpha'].get()]
 
     def make_year_range(self, ys):
-        """Express year-span as a list of years [from...to].
-           If input year-span only contain the from year, the to is defined
-           as the from year of the next year-span minus one.
+        """Express year-range as a list of years [from...to].
+           If input year-range only contains the 'from' year, the 'to' is
+           defined as the 'from' year of the next year-range minus one or is
+           set to current year if there is no next year-range.
         """
         if len(ys) == 1:  # miss upper bound
             lb_idx = self.yearbounds.index(ys[0])
@@ -79,7 +78,8 @@ class BucketPlugin(plugins.BeetsPlugin):
         return range(ys[0], ys[-1] + 1)
 
     def make_alpha_range(self, s):
-        """Express chars range as a list of chars [from...to]
+        """Extract alphanumerics from string and return sorted list of chars
+        [from...to]
         """
         bucket = sorted([x for x in s.lower() if x.isalnum()])
         beginIdx = string.ascii_lowercase.index(bucket[0])
@@ -87,9 +87,8 @@ class BucketPlugin(plugins.BeetsPlugin):
         return string.ascii_lowercase[beginIdx:endIdx + 1]
 
     def find_bucket_timerange(self, date):
-        """Find folder whose range contains date
-        1960-1970
-        60s-70s
+        """Return year-range bucket that matches given date or return the date
+        if no matching bucket.
         """
         for (i, r) in enumerate(self.yearranges):
             if int(date) in r:
@@ -97,6 +96,9 @@ class BucketPlugin(plugins.BeetsPlugin):
         return date
 
     def find_bucket_alpha(self, s):
+        """Return alpha-range bucket that matches given string or return the
+        string initial if no matching bucket.
+        """
         for (i, r) in enumerate(self.alpharanges):
             if s.lower()[0] in r:
                 return self.config['bucket_alpha'].get()[i]
