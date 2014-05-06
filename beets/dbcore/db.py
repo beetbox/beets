@@ -390,12 +390,7 @@ class Model(object):
         """Get a mapping containing all values on this object formatted
         as human-readable strings.
         """
-        # In the future, this could be made "lazy" to avoid computing
-        # fields unnecessarily.
-        out = {}
-        for key in self.keys(True):
-            out[key] = self._get_formatted(key, for_path)
-        return out
+        return FormattedMapping(self, for_path)
 
     def evaluate_template(self, template, for_path=False):
         """Evaluate a template (a string or a `Template` object) using
@@ -428,6 +423,30 @@ class Model(object):
         else:
             # Fall back to unparsed string.
             return string
+
+
+class FormattedMapping(object):
+    """A `dict`-like formatted view of a model.
+
+    The accessor ``mapping[key]`` returns the formated version of
+    ``model[key]``. The formatting is handled by `model._format()`.
+    """
+    # TODO Move all formatting logic here
+    # TODO Add caching
+
+    def __init__(self, model, for_path=False):
+        self.for_path = for_path
+        self.model = model
+        self.model_keys = model.keys(True)
+
+    def __getitem__(self, key):
+        if key in self.model_keys:
+            return self.model._get_formatted(key, self.for_path)
+        else:
+            raise KeyError(key)
+
+    def __contains__(self, key):
+        return key in self.model_keys
 
 
 # Database controller and supporting interfaces.

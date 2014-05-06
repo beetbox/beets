@@ -485,23 +485,7 @@ class Item(LibModel):
         """Get a mapping containing string-formatted values from either
         this item or the associated album, if any.
         """
-        mapping = super(Item, self)._formatted_mapping(for_path)
-
-        # Merge in album-level fields.
-        album = self.get_album()
-        if album:
-            for key in album.keys(True):
-                if key in Album.item_keys or key not in self._fields.keys():
-                    mapping[key] = album._get_formatted(key, for_path)
-
-        # Use the album artist if the track artist is not set and
-        # vice-versa.
-        if not mapping['artist']:
-            mapping['artist'] = mapping['albumartist']
-        if not mapping['albumartist']:
-            mapping['albumartist'] = mapping['artist']
-
-        return mapping
+        return FormattedItemMapping(self, for_path)
 
     def destination(self, fragment=False, basedir=None, platform=None,
                     path_formats=None):
@@ -571,6 +555,48 @@ class Item(LibModel):
             return subpath
         else:
             return normpath(os.path.join(basedir, subpath))
+
+
+class FormattedItemMapping(dbcore.db.FormattedMapping):
+    """A `dict`-like formatted view of an item that inherits album fields.
+
+    The accessor ``mapping[key]`` returns the formated version of either
+    ``item[key]`` or ``album[key]``. Here `album` is the album
+    associated to `item` if it exists.
+    """
+    # FIXME This class should be in the same module as `FormattedMapping`
+
+    def __init__(self, item, for_path=False):
+        self.for_path = for_path
+        self.model = item
+        self.model_keys = item.keys(True)
+        self.album = item.get_album()
+        self.album_keys = []
+        if self.album:
+            for key in self.album.keys(True):
+                if key in Album.item_keys or key not in item._fields.keys():
+                    self.album_keys.append(key)
+
+    def get(self, key):
+        if key in self.album_keys:
+            return self.album._get_formatted(key, self.for_path)
+        elif key in self.model_keys:
+            return self.model._get_formatted(key, self.for_path)
+        else:
+            raise KeyError(key)
+
+    def __getitem__(self, key):
+        value = self.get(key)
+
+        if key == 'artist' and not value:
+            return self.get('albumartist')
+        if key == 'albumartist' and not value:
+            return self.get('artist')
+
+        return value
+
+    def __contains__(self, key):
+        return key in self.model_keys or key in self.album_keys
 
 
 class Album(LibModel):
