@@ -95,7 +95,7 @@ class Model(object):
 
     # Basic operation.
 
-    def __init__(self, db=None, **values):
+    def __init__(self, db=None, fixed=None, flexattr=None, **values):
         """Create a new object with an optional Database association and
         initial field values.
         """
@@ -105,6 +105,19 @@ class Model(object):
         self._values_flex = {}
 
         # Initial contents.
+        # For fields that are explicitly given as fixed or flex, we skip
+        # the checks made by update() to speed things up when loading objects
+        # from the database
+        if fixed:
+            for (key, value) in fixed.iteritems():
+                # read path buffers.
+                if key == 'path':
+                    value = str(value)
+                self._values_fixed[key] = self._fields[key].normalize(value)
+        if flexattr:
+            for (key, value) in flexattr:
+                self._values_flex[key] = value
+
         self.update(values)
         self.clear_dirty()
 
@@ -492,13 +505,11 @@ class Results(object):
                     (row['id'],)
                 )
             values = dict(row)
-            values.update(
-                dict((row['key'], row['value']) for row in flex_rows)
-            )
+            flex_values = dict((row['key'], row['value']) for row in flex_rows)
 
             # Construct the Python object and yield it if it passes the
             # predicate.
-            obj = self.model_class(self.db, **values)
+            obj = self.model_class(self.db, values, flex_values)
             if not self.query or self.query.match(obj):
                 yield obj
 
