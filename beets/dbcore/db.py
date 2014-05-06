@@ -393,6 +393,12 @@ class Model(object):
         """
         return FormattedMapping(self, for_path)
 
+    @property
+    def formatted(self):
+        """A `dict`-like view containing formatted values.
+        """
+        return self._formatted_mapping(False)
+
     def evaluate_template(self, template, for_path=False):
         """Evaluate a template (a string or a `Template` object) using
         the object's fields. If `for_path` is true, then no new path
