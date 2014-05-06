@@ -20,6 +20,7 @@ from collections import defaultdict
 import threading
 import sqlite3
 import contextlib
+import collections
 
 import beets
 from beets.util.functemplate import Template
@@ -425,7 +426,7 @@ class Model(object):
             return string
 
 
-class FormattedMapping(object):
+class FormattedMapping(collections.Mapping):
     """A `dict`-like formatted view of a model.
 
     The accessor ``mapping[key]`` returns the formated version of
@@ -445,8 +446,11 @@ class FormattedMapping(object):
         else:
             raise KeyError(key)
 
-    def __contains__(self, key):
-        return key in self.model_keys
+    def __iter__(self):
+        return iter(self.model_keys)
+
+    def __len__(self):
+        return len(self.model_keys)
 
 
 # Database controller and supporting interfaces.

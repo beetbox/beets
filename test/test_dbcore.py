@@ -269,6 +269,19 @@ class FormatTest(_common.TestCase):
         self.assertEqual(value, u'')
 
 
+class FormattedMappingTest(_common.TestCase):
+    def test_keys_equal_model_keys(self):
+        model = TestModel1()
+        formatted = model._formatted_mapping()
+        self.assertEqual(set(model.keys(True)), set(formatted.keys()))
+
+    def test_get_unset_field(self):
+        model = TestModel1()
+        formatted = model._formatted_mapping()
+        with self.assertRaises(KeyError):
+            formatted['other_field']
+
+
 class ParseTest(_common.TestCase):
     def test_parse_fixed_field(self):
         value = TestModel1._parse('field_one', u'2')
