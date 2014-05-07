@@ -12,35 +12,150 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Enrich path formatting with %bucket_alpha and %bucket_date functions
+"""Provides %bucket_alpha and %bucket_year functions for path formatting.
 """
 
 from datetime import datetime
 import logging
 import re
 import string
+from itertools import tee, izip
 from beets import plugins
 
 log = logging.getLogger('beets')
 
 
-def extract_years(lst):
-    """Extract years from a list of strings"""
+class BucketError(Exception):
+    pass
 
-    def make_date(s):
-        """Convert string representing a year to int
+
+def pairwise(iterable):
+    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+    a, b = tee(iterable)
+    next(b, None)
+    return izip(a, b)
+
+
+def span_from_str(span_str):
+    """Build a span dict from the span string representation.
+    """
+
+    def normalize_year(d, yearfrom):
+        """Convert string to a 4 digits year
         """
-        d = int(s)
-        if d < 100:  # two digits imply it is 20th century
-            d = 1900 + d
+        if yearfrom < 100:
+            raise BucketError("Bucket 'from' year %d must be expressed on 4 "
+                              "digits" % yearfrom)
+        # if two digits only, pick closest year that ends by these two
+        # digits starting from yearfrom
+        if d < 100:
+            if (d % 100) < (yearfrom % 100):
+                d = (yearfrom - yearfrom % 100) + 100 + d
+            else:
+                d = (yearfrom - yearfrom % 100) + d
         return d
 
-    res = []
-    for bucket in lst:
-        yearspan_str = re.findall('\d+', bucket)
-        yearspan = [make_date(x) for x in yearspan_str]
-        res.append(yearspan)
+    years = [int(x) for x in re.findall('\d+', span_str)]
+    years = [normalize_year(x, years[0]) for x in years]
+
+    res = {'from': years[0], 'str': span_str}
+    if len(years) > 1:
+        res['to'] = years[-1]
     return res
+
+
+def complete_year_spans(spans):
+    """Set the `to` value of spans if empty and sort them chronologically.
+    """
+    spans.sort(key=lambda x: x['from'])
+    for (x, y) in pairwise(spans):
+        if 'to' not in x:
+            x['to'] = y['from'] - 1
+    if spans and 'to' not in spans[-1]:
+        spans[-1]['to'] = datetime.now().year
+
+
+def extend_year_spans(spans, spanlen, start=1900, end=2014):
+    """Add new spans to given spans list so that every year of [start,end]
+    belongs to a span.
+    """
+    extended_spans = spans[:]
+    for (x, y) in pairwise(spans):
+        # if a gap between two spans, fill the gap with as much spans of
+        # spanlen length as necessary
+        for span_from in range(x['to'] + 1, y['from'], spanlen):
+            extended_spans.append({'from': span_from})
+    # Create spans prior to declared ones
+    for span_from in range(spans[0]['from'] - spanlen, start, -spanlen):
+        extended_spans.append({'from': span_from})
+    # Create spans after the declared ones
+    for span_from in range(spans[-1]['to'] + 1, end, spanlen):
+        extended_spans.append({'from': span_from})
+
+    complete_year_spans(extended_spans)
+    return extended_spans
+
+
+def build_year_spans(year_spans_str):
+    """Build a chronologically ordered list of spans dict from unordered spans
+    stringlist.
+    """
+    spans = []
+    for elem in year_spans_str:
+        spans.append(span_from_str(elem))
+    complete_year_spans(spans)
+    return spans
+
+
+def str2fmt(s):
+    """Deduces formatting syntax from a span string.
+    """
+    regex = re.compile("(?P<bef>\D*)(?P<fromyear>\d+)(?P<sep>\D*)"
+                       "(?P<toyear>\d*)(?P<after>\D*)")
+    m = re.match(regex, s)
+
+    def year_format(year):
+        return '%%0%dd' % len(year)
+
+    res = {'fromnchars': len(m.group('fromyear')),
+           'tonchars': len(m.group('toyear'))}
+    res['fmt'] = "%s%%s%s%s%s" % (m.group('bef'),
+                                  m.group('sep'),
+                                  '%s' if res['tonchars'] else '',
+                                  m.group('after'))
+    return res
+
+
+def format_span(fmt, yearfrom, yearto, fromnchars, tonchars):
+    """Return a span string representation.
+    """
+    args = (str(yearfrom)[-fromnchars:])
+    if tonchars:
+        args = (str(yearfrom)[-fromnchars:], str(yearto)[-tonchars:])
+    return fmt % args
+
+
+def extract_modes(spans):
+    """Extract the most common spans lengths and representation formats
+    """
+    rangelen = sorted([x['to'] - x['from'] + 1 for x in spans])
+    deflen = sorted(rangelen, key=rangelen.count)[-1]
+    reprs = [str2fmt(x['str']) for x in spans]
+    deffmt = sorted(reprs, key=reprs.count)[-1]
+    return deflen, deffmt
+
+
+def build_alpha_spans(alpha_spans_str):
+    """Extract alphanumerics from string and return sorted list of chars
+    [from...to]
+    """
+    spans = []
+    for elem in alpha_spans_str:
+        bucket = sorted([x for x in elem.lower() if x.isalnum()])
+        beginIdx = string.ascii_lowercase.index(bucket[0])
+        endIdx = string.ascii_lowercase.index(bucket[-1])
+        spans.append(string.ascii_lowercase[beginIdx:endIdx + 1])
+    return spans
 
 
 class BucketPlugin(plugins.BeetsPlugin):
@@ -51,56 +166,43 @@ class BucketPlugin(plugins.BeetsPlugin):
         self.config.add({
             'bucket_year': [],
             'bucket_alpha': [],
+            'extrapolate': False
         })
         self.setup()
 
     def setup(self):
         """Setup plugin from config options
         """
-        yearranges = extract_years(self.config['bucket_year'].get())
-        self.yearbounds = sorted([y for ys in yearranges for y in ys])
-        self.yearranges = [self.make_year_range(b) for b in yearranges]
-        self.alpharanges = [self.make_alpha_range(b) for b in
-                            self.config['bucket_alpha'].get()]
+        self.year_spans = build_year_spans(self.config['bucket_year'].get())
+        if self.year_spans and self.config['extrapolate']:
+            [self.ys_len_mode,
+                self.ys_repr_mode] = extract_modes(self.year_spans)
+            self.year_spans = extend_year_spans(self.year_spans,
+                                                self.ys_len_mode)
 
-    def make_year_range(self, ys):
-        """Express year-range as a list of years [from...to].
-           If input year-range only contains the 'from' year, the 'to' is
-           defined as the 'from' year of the next year-range minus one or is
-           set to current year if there is no next year-range.
-        """
-        if len(ys) == 1:  # miss upper bound
-            lb_idx = self.yearbounds.index(ys[0])
-            try:
-                ys.append(self.yearbounds[lb_idx + 1])
-            except:
-                ys.append(datetime.now().year)
-        return range(ys[0], ys[-1] + 1)
+        self.alpha_spans = build_alpha_spans(self.config['bucket_alpha'].get())
 
-    def make_alpha_range(self, s):
-        """Extract alphanumerics from string and return sorted list of chars
-        [from...to]
-        """
-        bucket = sorted([x for x in s.lower() if x.isalnum()])
-        beginIdx = string.ascii_lowercase.index(bucket[0])
-        endIdx = string.ascii_lowercase.index(bucket[-1])
-        return string.ascii_lowercase[beginIdx:endIdx + 1]
-
-    def find_bucket_timerange(self, date):
-        """Return year-range bucket that matches given date or return the date
+    def find_bucket_year(self, year):
+        """Return  bucket that matches given year or return the year
         if no matching bucket.
         """
-        for (i, r) in enumerate(self.yearranges):
-            if int(date) in r:
-                return self.config['bucket_year'].get()[i]
-        return date
+        for ys in self.year_spans:
+            if ys['from'] <= int(year) <= ys['to']:
+                if 'str' in ys:
+                    return ys['str']
+                else:
+                    return format_span(self.ys_repr_mode['fmt'],
+                                       ys['from'], ys['to'],
+                                       self.ys_repr_mode['fromnchars'],
+                                       self.ys_repr_mode['tonchars'])
+        return year
 
     def find_bucket_alpha(self, s):
         """Return alpha-range bucket that matches given string or return the
         string initial if no matching bucket.
         """
-        for (i, r) in enumerate(self.alpharanges):
-            if s.lower()[0] in r:
+        for (i, span) in enumerate(self.alpha_spans):
+            if s.lower()[0] in span:
                 return self.config['bucket_alpha'].get()[i]
         return s[0].upper()
 
@@ -109,7 +211,7 @@ class BucketPlugin(plugins.BeetsPlugin):
             field = 'year'
 
         if field == 'year':
-            func = self.find_bucket_timerange
+            func = self.find_bucket_year
         else:
             func = self.find_bucket_alpha
         return func(text)
