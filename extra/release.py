@@ -191,5 +191,14 @@ def changelog():
     print(changelog_as_markdown())
 
 
+@release.command()
+@click.argument('version')
+def upload(version):
+    """Upload the release to PyPI.
+    """
+    path = os.path.join(BASE, 'dist', 'beets-{}.tar.gz')
+    subprocess.check_call(['twine', 'upload', path])
+
+
 if __name__ == '__main__':
     release()
