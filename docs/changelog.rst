@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.3.6 (in development)
-----------------------
+1.3.6 (May 7, 2014)
+-------------------
 
 * The new :doc:`/plugins/play` lets you start your desktop music player with
   the songs that match a query. Thanks to David Hamp-Gonsalves.

@@ -6,6 +6,7 @@ import os
 import re
 import subprocess
 from contextlib import contextmanager
+import datetime
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHANGELOG = os.path.join(BASE, 'docs', 'changelog.rst')
@@ -198,6 +199,52 @@ def upload(version):
     """
     path = os.path.join(BASE, 'dist', 'beets-{}.tar.gz')
     subprocess.check_call(['twine', 'upload', path])
+
+
+def get_version():
+    """Read the current version from the changelog.
+    """
+    with open(CHANGELOG) as f:
+        for line in f:
+            match = re.search(r'\d+\.\d+\.\d+', line)
+            if match:
+                return match.group(0)
+
+
+@release.command()
+def version():
+    """Display the current version.
+    """
+    print(get_version())
+
+
+@release.command()
+def datestamp():
+    """Enter today's date as the release date in the changelog.
+    """
+    dt = datetime.datetime.now()
+    stamp = '({} {}, {})'.format(dt.strftime('%B'), dt.day, dt.year)
+    marker = '(in development)'
+
+    lines = []
+    underline_length = None
+    with open(CHANGELOG) as f:
+        for line in f:
+            if marker in line:
+                # The header line.
+                line = line.replace(marker, stamp)
+                lines.append(line)
+                underline_length = len(line.strip())
+            elif underline_length:
+                # This is the line after the header. Rewrite the dashes.
+                lines.append('-' * underline_length + '\n')
+                underline_length = None
+            else:
+                lines.append(line)
+
+    with open(CHANGELOG, 'w') as f:
+        for line in lines:
+            f.write(line)
 
 
 if __name__ == '__main__':
