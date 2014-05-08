@@ -576,8 +576,8 @@ def _field_diff(field, old, new):
         return None
 
     # Get formatted values for output.
-    oldstr = old.formatted.get(field, u'')
-    newstr = new.formatted.get(field, u'')
+    oldstr = old.formatted.get(field) or u''
+    newstr = new.formatted.get(field) or u''
 
     # For strings, highlight changes. For others, colorize the whole
     # thing.

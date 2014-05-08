@@ -61,6 +61,7 @@ VERSION_LOCS = [
     ),
 ]
 
+
 @release.command()
 @click.argument('version')
 def bump(version):
@@ -85,7 +86,9 @@ def bump(version):
                         old_version = match.group(1)
                         old_parts = [int(p) for p in old_version.split('.')]
                         assert version_parts > old_parts, \
-                                "version must be newer than {}".format(old_version)
+                            "version must be newer than {}".format(
+                                old_version
+                            )
 
                         # Insert the new version.
                         out_lines.append(template.format(
@@ -95,7 +98,7 @@ def bump(version):
                         ) + '\n')
 
                         break
-                    
+
                 else:
                     # Normal line.
                     out_lines.append(line)
@@ -103,7 +106,7 @@ def bump(version):
         # Write the file back.
         with open(filename, 'w') as f:
             f.write(''.join(out_lines))
-    
+
     # Generate bits to insert into changelog.
     header_line = '{} (in development)'.format(version)
     header = '\n\n' + header_line + '\n' + '-' * len(header_line) + '\n\n'
@@ -128,11 +131,9 @@ def build():
         subprocess.check_call(['python2', 'setup.py', 'sdist'])
 
 
-@release.command()
-def changelog():
-    """Translate the most recent version's changelog to Markdown using Pandoc.
+def get_latest_changelog():
+    """Extract the first section of the changelog.
     """
-    # Extract the first section of the changelog.
     started = False
     lines = []
     with open(CHANGELOG) as f:
@@ -149,9 +150,54 @@ def changelog():
 
             elif started:
                 lines.append(line)
-    changelog = ''.join(lines).strip()
+    return ''.join(lines).strip()
 
-    print(changelog)
+
+def rst2md(text):
+    """Use Pandoc to convert text from ReST to Markdown.
+    """
+    pandoc = subprocess.Popen(
+        ['pandoc', '--from=rst', '--to=markdown', '--no-wrap'],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    stdout, _ = pandoc.communicate(text.encode('utf8'))
+    md = stdout.decode('utf8').strip()
+
+    # Fix up odd spacing in lists.
+    return re.sub(r'^-   ', '- ', md, flags=re.M)
+
+
+def changelog_as_markdown():
+    """Get the latest changelog entry as hacked up Markdown.
+    """
+    rst = get_latest_changelog()
+
+    # Replace plugin links with plugin names.
+    rst = re.sub(r':doc:`/plugins/(\w+)`', r'``\1``', rst)
+
+    # References with text.
+    rst = re.sub(r':ref:`([^<]+)(<[^>]+>)`', r'\1', rst)
+
+    # Other backslashes with verbatim ranges.
+    rst = re.sub(r'(\s)`([^`]+)`([^_])', r'\1``\2``\3', rst)
+
+    return rst2md(rst)
+
+
+@release.command()
+def changelog():
+    """Get the most recent version's changelog as Markdown.
+    """
+    print(changelog_as_markdown())
+
+
+@release.command()
+@click.argument('version')
+def upload(version):
+    """Upload the release to PyPI.
+    """
+    path = os.path.join(BASE, 'dist', 'beets-{}.tar.gz')
+    subprocess.check_call(['twine', 'upload', path])
 
 
 if __name__ == '__main__':
