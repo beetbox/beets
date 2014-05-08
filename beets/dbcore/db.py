@@ -105,19 +105,7 @@ class Model(object):
         self._values_flex = {}
 
         # Initial contents.
-        # For fields that are explicitly given as fixed or flex, we skip
-        # the checks made by update() to speed things up when loading objects
-        # from the database
-        if fixed:
-            for (key, value) in fixed.iteritems():
-                # read path buffers.
-                if key == 'path':
-                    value = str(value)
-                self._values_fixed[key] = self._fields[key].normalize(value)
-        if flexattr:
-            for (key, value) in flexattr:
-                self._values_flex[key] = value
-
+        self._bulk_update(fixed, flexattr)
         self.update(values)
         self.clear_dirty()
 
@@ -207,6 +195,18 @@ class Model(object):
         """
         for key, value in values.items():
             self[key] = value
+
+    def _bulk_update(self, fixed, flexattr):
+        """Assign all values in the fixed and flex dicts.
+        Using _bulk_update() bypasses many tests made by update() and
+        should only be used when loading data from the db.
+        """
+        if fixed:
+            for (key, value) in fixed.items():
+                self._values_fixed[key] = self._fields[key].normalize(value)
+        if flexattr:
+            for (key, value) in flexattr.items():
+                self._values_flex[key] = value
 
     def items(self):
         """Iterate over (key, value) pairs that this object contains.
