@@ -63,9 +63,7 @@ VERSION_LOCS = [
 ]
 
 
-@release.command()
-@click.argument('version')
-def bump(version):
+def bump_version(version):
     """Update the version number in setup.py, docs config, changelog,
     and root module.
     """
@@ -125,11 +123,11 @@ def bump(version):
 
 
 @release.command()
-def build():
-    """Use `setup.py` to build a source tarball.
+@click.argument('version')
+def bump(version):
+    """Bump the version number.
     """
-    with chdir(BASE):
-        subprocess.check_call(['python2', 'setup.py', 'sdist'])
+    bump_version(version)
 
 
 def get_latest_changelog():
@@ -245,6 +243,37 @@ def datestamp():
     with open(CHANGELOG, 'w') as f:
         for line in lines:
             f.write(line)
+
+
+@release.command()
+def prep():
+    """Run all steps to prepare a release.
+
+    - Tag the commit.
+    - Build the sdist package.
+    - Generate the Markdown changelog to ``changelog.md``.
+    - Bump the version number to the next version.
+    """
+    cur_version = get_version()
+
+    # Tag.
+    subprocess.check_output(['git', 'tag', 'v{}'].format(cur_version))
+
+    # Build.
+    with chdir(BASE):
+        subprocess.check_call(['python2', 'setup.py', 'sdist'])
+
+    # Generate Markdown changelog.
+    cl = changelog_as_markdown()
+    with open(os.path.join(BASE, 'changelog.md'), 'w') as f:
+        f.write(cl)
+
+    # Version number bump.
+    # FIXME It should be possible to specify this as an argument.
+    version_parts = [int(n) for n in cur_version.split('.')]
+    version_parts[-1] += 1
+    next_version = '.'.join(version_parts)
+    bump_version(next_version)
 
 
 if __name__ == '__main__':
