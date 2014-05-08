@@ -150,11 +150,12 @@ def build_alpha_spans(alpha_spans_str):
     [from...to]
     """
     spans = []
+    ASCII_DIGITS = string.digits + string.ascii_lowercase
     for elem in alpha_spans_str:
         bucket = sorted([x for x in elem.lower() if x.isalnum()])
-        beginIdx = string.ascii_lowercase.index(bucket[0])
-        endIdx = string.ascii_lowercase.index(bucket[-1])
-        spans.append(string.ascii_lowercase[beginIdx:endIdx + 1])
+        beginIdx = ASCII_DIGITS.index(bucket[0])
+        endIdx = ASCII_DIGITS.index(bucket[-1])
+        spans.append(ASCII_DIGITS[beginIdx:endIdx + 1])
     return spans
 
 
