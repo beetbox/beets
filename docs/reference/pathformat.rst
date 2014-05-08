@@ -235,6 +235,6 @@ Remember to activate corresponding plugin before using one of those additional
 fields/functions :
 
 * missing by :doc:`/plugins/missing`: number of missing tracks per album
-* ``%the{text}`` by :doc:`/plugins/fetchart`: moves english articles to end of
+* ``%the{text}`` by :doc:`/plugins/the`: moves english articles to end of
 strings
 
