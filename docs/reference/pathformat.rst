@@ -227,3 +227,14 @@ Library metadata:
 
 * mtime: The modification time of the audio file.
 * added: The date and time that the music was added to your library.
+
+Template functions and values provided by plugins
+-------------------------------------------------
+
+Remember to activate corresponding plugin before using one of those additional
+fields/functions :
+
+* missing by :doc:`/plugins/missing`: number of missing tracks per album
+* ``%the{text}`` by :doc:`/plugins/fetchart`: moves english articles to end of
+strings
+
