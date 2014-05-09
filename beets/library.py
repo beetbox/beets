@@ -295,24 +295,13 @@ class Item(LibModel):
         if self.mtime == 0 and 'mtime' in values:
             self.mtime = values['mtime']
 
-    def _bulk_update(self, fixed, flexattr):
-        # For fields that are explicitly given as fixed or flex, we skip
-        # the checks made by update() to speed things up when loading objects
-        # from the database
-        if fixed:
-            for (key, value) in fixed.items():
-                # read path buffers.
-                if key == 'path':
-                    if isinstance(value, unicode):
-                        value = bytestring_path(value)
-                    elif isinstance(value, buffer):
-                        value = str(value)
-                self._values_fixed[key] = self._fields[key].normalize(value)
-        if flexattr:
-            for (key, value) in flexattr.items():
-                self._values_flex[key] = value
-
-        # TODO : set mtimes ?
+    def _set_fixed_attr(self, key, value):
+        if key == 'path':
+            if isinstance(value, unicode):
+                value = bytestring_path(value)
+            elif isinstance(value, buffer):
+                value = str(value)
+        super(Item, self)._set_fixed_attr(key, value)
 
     def get_album(self):
         """Get the Album object that this item belongs to, if any, or
@@ -706,22 +695,13 @@ class Album(LibModel):
         getters['path'] = Album.item_dir
         return getters
 
-    def _bulk_update(self, fixed, flexattr):
-        # For fields that are explicitly given as fixed or flex, we skip
-        # the checks made by update() to speed things up when loading objects
-        # from the database
-        if fixed:
-            for (key, value) in fixed.items():
-                # read path buffers.
-                if key == 'artpath':
-                    if isinstance(value, buffer):
-                        value = bytes(value)
-                    elif isinstance(value, unicode):
-                        value = bytestring_path(value)
-                self._values_fixed[key] = self._fields[key].normalize(value)
-        if flexattr:
-            for (key, value) in flexattr.items():
-                self._values_flex[key] = value
+    def _set_fixed_attr(self, key, value):
+        if key == 'artpath':
+            if isinstance(value, unicode):
+                value = bytestring_path(value)
+            elif isinstance(value, buffer):
+                value = bytes(value)
+        super(Album, self)._set_fixed_attr(key, value)
 
     def __setitem__(self, key, value):
         """Set the value of an album attribute."""

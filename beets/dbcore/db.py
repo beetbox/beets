@@ -203,10 +203,16 @@ class Model(object):
         """
         if fixed:
             for (key, value) in fixed.items():
-                self._values_fixed[key] = self._fields[key].normalize(value)
+                self._set_fixed_attr(key, value)
         if flexattr:
             for (key, value) in flexattr.items():
-                self._values_flex[key] = value
+                self._set_flex_attr(key, value)
+
+    def _set_fixed_attr(self, key, value):
+        self._values_fixed[key] = self._fields[key].normalize(value)
+
+    def _set_flex_attr(self, key, value):
+        self._values_flex[key] = value
 
     def items(self):
         """Iterate over (key, value) pairs that this object contains.
