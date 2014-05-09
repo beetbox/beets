@@ -80,7 +80,7 @@ These functions are built in to beets:
 .. _strftime: http://docs.python.org/2/library/time.html#time.strftime
 
 Plugins can extend beets with more template functions (see
-:ref:`writing-plugins`).
+:ref:`templ_plugins`).
 
 
 .. _aunique:
@@ -158,7 +158,7 @@ Available Values
 Here's a list of the different values available to path formats. The current
 list can be found definitively by running the command ``beet fields``. Note that
 plugins can add new (or replace existing) template values (see
-:ref:`writing-plugins`).
+:ref:`templ_plugins`).
 
 Ordinary metadata:
 
@@ -228,6 +228,8 @@ Library metadata:
 * mtime: The modification time of the audio file.
 * added: The date and time that the music was added to your library.
 
+.. _templ_plugins:
+
 Template functions and values provided by plugins
 -------------------------------------------------
 
@@ -236,5 +238,11 @@ fields/functions :
 
 * missing by :doc:`/plugins/missing`: number of missing tracks per album
 * ``%the{text}`` by :doc:`/plugins/fetchart`: moves english articles to end of
-strings
+  strings
 
+In case you would need a field not mentioned hereabove,
+:doc:`/plugins/inline` lets you define template fields in your beets
+configuration file using python snippets.
+And for more advanced processing, you can go all-in and write a dedicated
+plugin to register your own fields/functions (see
+:ref:`writing-plugins`).
