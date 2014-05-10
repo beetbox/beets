@@ -295,6 +295,14 @@ class Item(LibModel):
         if self.mtime == 0 and 'mtime' in values:
             self.mtime = values['mtime']
 
+    def _set_fixed_attr(self, key, value):
+        if key == 'path':
+            if isinstance(value, unicode):
+                value = bytestring_path(value)
+            elif isinstance(value, buffer):
+                value = str(value)
+        super(Item, self)._set_fixed_attr(key, value)
+
     def get_album(self):
         """Get the Album object that this item belongs to, if any, or
         None if the item is a singleton or is not associated with a
@@ -686,6 +694,14 @@ class Album(LibModel):
         getters = plugins.album_field_getters()
         getters['path'] = Album.item_dir
         return getters
+
+    def _set_fixed_attr(self, key, value):
+        if key == 'artpath':
+            if isinstance(value, unicode):
+                value = bytestring_path(value)
+            elif isinstance(value, buffer):
+                value = bytes(value)
+        super(Album, self)._set_fixed_attr(key, value)
 
     def __setitem__(self, key, value):
         """Set the value of an album attribute."""

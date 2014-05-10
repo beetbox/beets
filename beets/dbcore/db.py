@@ -95,7 +95,7 @@ class Model(object):
 
     # Basic operation.
 
-    def __init__(self, db=None, **values):
+    def __init__(self, db=None, fixed=None, flexattr=None, **values):
         """Create a new object with an optional Database association and
         initial field values.
         """
@@ -105,6 +105,7 @@ class Model(object):
         self._values_flex = {}
 
         # Initial contents.
+        self._bulk_update(fixed, flexattr)
         self.update(values)
         self.clear_dirty()
 
@@ -194,6 +195,24 @@ class Model(object):
         """
         for key, value in values.items():
             self[key] = value
+
+    def _bulk_update(self, fixed, flexattr):
+        """Assign all values in the fixed and flex dicts.
+        Using _bulk_update() bypasses many tests made by update() and
+        should only be used when loading data from the db.
+        """
+        if fixed:
+            for (key, value) in fixed.items():
+                self._set_fixed_attr(key, value)
+        if flexattr:
+            for (key, value) in flexattr.items():
+                self._set_flex_attr(key, value)
+
+    def _set_fixed_attr(self, key, value):
+        self._values_fixed[key] = self._fields[key].normalize(value)
+
+    def _set_flex_attr(self, key, value):
+        self._values_flex[key] = value
 
     def items(self):
         """Iterate over (key, value) pairs that this object contains.
@@ -492,13 +511,11 @@ class Results(object):
                     (row['id'],)
                 )
             values = dict(row)
-            values.update(
-                dict((row['key'], row['value']) for row in flex_rows)
-            )
+            flex_values = dict((row['key'], row['value']) for row in flex_rows)
 
             # Construct the Python object and yield it if it passes the
             # predicate.
-            obj = self.model_class(self.db, **values)
+            obj = self.model_class(self.db, values, flex_values)
             if not self.query or self.query.match(obj):
                 yield obj
 
