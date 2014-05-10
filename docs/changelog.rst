@@ -9,6 +9,9 @@ Changelog
 * :doc:`/plugins/ftintitle`: A new option lets you remove featured artists
   entirely instead of moving them to the title. Thanks to SUTJael.
 * Item and album queries are much faster.
+* The new :doc:`/plugins/bucket` provides a ``bucket()`` function for path 
+  formatting to generate folder names representing alphabetic/years ranges.
+  Thanks to Fabrice Laporte.
 
 Fixes:
 
