@@ -1,14 +1,14 @@
 Changelog
 =========
 
-1.3.6 (May 7, 2014)
--------------------
+1.3.6 (in development)
+----------------------
 
 * The new :doc:`/plugins/play` lets you start your desktop music player with
   the songs that match a query. Thanks to David Hamp-Gonsalves.
 * :doc:`/plugins/ftintitle`: A new option lets you remove featured artists
   entirely instead of moving them to the title. Thanks to SUTJael.
-* Album queries are much faster. Item queries are somewhat faster.
+* Item and album queries are much faster.
 
 Fixes:
 
