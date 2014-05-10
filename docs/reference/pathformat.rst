@@ -237,6 +237,8 @@ Remember to activate corresponding plugin before using one of those additional
 fields/functions :
 
 * missing by :doc:`/plugins/missing`: number of missing tracks per album
+* ``%bucket{text}`` by :doc:`/plugins/bucket`: substitute a string by the 
+  range it belongs to
 * ``%the{text}`` by :doc:`/plugins/the`: moves english articles to end of
   strings
 
