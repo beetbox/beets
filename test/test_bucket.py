@@ -14,9 +14,10 @@
 
 """Tests for the 'bucket' plugin."""
 
+from nose.tools import raises
 from _common import unittest
 from beetsplug import bucket
-from beets import config
+from beets import config, ui
 
 from helper import TestHelper
 
@@ -95,8 +96,9 @@ class BucketPluginTest(unittest.TestCase, TestHelper):
 
     def test_alpha_first_last_chars(self):
         """Alphabet buckets can be named by listing the 'from-to' syntax"""
-        self._setup_config(bucket_alpha=['A-D', 'F-H', 'I-Z'])
+        self._setup_config(bucket_alpha=['0->9','A->D', 'F-H', 'I->Z'])
         self.assertEqual(self.plugin._tmpl_bucket('garry'), 'F-H')
+        self.assertEqual(self.plugin._tmpl_bucket('2pac'), '0->9')
 
     def test_alpha_out_of_range(self):
         """If no range match, return the initial"""
@@ -104,6 +106,27 @@ class BucketPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(self.plugin._tmpl_bucket('errol'), 'E')
         self._setup_config(bucket_alpha=[])
         self.assertEqual(self.plugin._tmpl_bucket('errol'), 'E')
+
+    @raises(ui.UserError)
+    def test_bad_alpha_range_def(self):
+        """If bad alpha range definition, a UserError is raised"""
+        self._setup_config(bucket_alpha=['$%'])
+        self.assertEqual(self.plugin._tmpl_bucket('errol'), 'E')
+
+    @raises(ui.UserError)
+    def test_bad_year_range_def_no4digits(self):
+        """If bad year range definition, a UserError is raised.
+        Range origin must be expressed on 4 digits."""
+        self._setup_config(bucket_year=['62-64'])
+        # from year must be expressed on 4 digits
+        self.assertEqual(self.plugin._tmpl_bucket('1963'), '62-64')
+
+    @raises(ui.UserError)
+    def test_bad_year_range_def_nodigits(self):
+        """If bad year range definition, a UserError is raised.
+        At least the range origin must be declared."""
+        self._setup_config(bucket_year=['nodigits'])
+        self.assertEqual(self.plugin._tmpl_bucket('1963'), '62-64')
 
 
 def suite():

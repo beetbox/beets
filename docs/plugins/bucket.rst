@@ -37,6 +37,6 @@ of declared buckets.
         bucket_year: ['2000-05']
         extrapolate: true
 
-is enough to make the plugin return a five years range for any input year.
+is enough to make the plugin return an enclosing five years range for any input year.
 
 

@@ -20,7 +20,7 @@ import logging
 import re
 import string
 from itertools import tee, izip
-from beets import plugins
+from beets import plugins, ui
 
 log = logging.getLogger('beets')
 
@@ -44,8 +44,8 @@ def span_from_str(span_str):
         """Convert string to a 4 digits year
         """
         if yearfrom < 100:
-            raise BucketError("Bucket 'from' year %d must be expressed on 4 "
-                              "digits" % yearfrom)
+            raise BucketError("%d must be expressed on 4 digits" % yearfrom)
+
         # if two digits only, pick closest year that ends by these two
         # digits starting from yearfrom
         if d < 100:
@@ -56,7 +56,14 @@ def span_from_str(span_str):
         return d
 
     years = [int(x) for x in re.findall('\d+', span_str)]
-    years = [normalize_year(x, years[0]) for x in years]
+    if not years:
+        raise ui.UserError("invalid range defined for year bucket '%s': no "
+                           "year found" % span_str)
+    try:
+        years = [normalize_year(x, years[0]) for x in years]
+    except BucketError as exc:
+        raise ui.UserError("invalid range defined for year bucket '%s': %s" %
+                            (span_str, exc))
 
     res = {'from': years[0], 'str': span_str}
     if len(years) > 1:
@@ -153,8 +160,13 @@ def build_alpha_spans(alpha_spans_str):
     ASCII_DIGITS = string.digits + string.ascii_lowercase
     for elem in alpha_spans_str:
         bucket = sorted([x for x in elem.lower() if x.isalnum()])
-        beginIdx = ASCII_DIGITS.index(bucket[0])
-        endIdx = ASCII_DIGITS.index(bucket[-1])
+        if bucket:
+            beginIdx = ASCII_DIGITS.index(bucket[0])
+            endIdx = ASCII_DIGITS.index(bucket[-1])
+        else:
+            raise ui.UserError("invalid range defined for alpha bucket '%s'"
+                               " : no alphanumeric character found" %
+                               elem)
         spans.append(ASCII_DIGITS[beginIdx:endIdx + 1])
     return spans
 
