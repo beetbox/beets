@@ -95,7 +95,7 @@ class Model(object):
 
     # Basic operation.
 
-    def __init__(self, db=None, fixed=None, flexattr=None, **values):
+    def __init__(self, db=None, **values):
         """Create a new object with an optional Database association and
         initial field values.
         """
@@ -105,9 +105,23 @@ class Model(object):
         self._values_flex = {}
 
         # Initial contents.
-        self._bulk_update(fixed, flexattr)
         self.update(values)
         self.clear_dirty()
+
+    @classmethod
+    def _awaken(cls, db=None, fixed_values=None, flex_values=None):
+        """Create an object with values drawn from the database.
+
+        This is a performance optimization: the checks involved with
+        ordinary construction are bypassed.
+        """
+        obj = cls(db)
+        if fixed_values:
+            for key, value in fixed_values.items():
+                obj._values_fixed[key] = cls._fields[key].normalize(value)
+        if flex_values:
+            obj._values_flex.update(flex_values)
+        return obj
 
     def __repr__(self):
         return '{0}({1})'.format(
@@ -195,24 +209,6 @@ class Model(object):
         """
         for key, value in values.items():
             self[key] = value
-
-    def _bulk_update(self, fixed, flexattr):
-        """Assign all values in the fixed and flex dicts.
-        Using _bulk_update() bypasses many tests made by update() and
-        should only be used when loading data from the db.
-        """
-        if fixed:
-            for (key, value) in fixed.items():
-                self._set_fixed_attr(key, value)
-        if flexattr:
-            for (key, value) in flexattr.items():
-                self._set_flex_attr(key, value)
-
-    def _set_fixed_attr(self, key, value):
-        self._values_fixed[key] = self._fields[key].normalize(value)
-
-    def _set_flex_attr(self, key, value):
-        self._values_flex[key] = value
 
     def items(self):
         """Iterate over (key, value) pairs that this object contains.
@@ -515,7 +511,7 @@ class Results(object):
 
             # Construct the Python object and yield it if it passes the
             # predicate.
-            obj = self.model_class(self.db, values, flex_values)
+            obj = self.model_class._awaken(self.db, values, flex_values)
             if not self.query or self.query.match(obj):
                 yield obj
 

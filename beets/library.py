@@ -94,6 +94,19 @@ class PathType(types.Type):
     def parse(self, string):
         return normpath(bytestring_path(string))
 
+    def normalize(self, value):
+        if isinstance(value, unicode):
+            # Paths stored internally as encoded bytes.
+            return bytestring_path(value)
+
+        elif isinstance(value, buffer):
+            # SQLite must store bytestings as buffers to avoid decoding.
+            # We unwrap buffers to bytes.
+            return bytes(value)
+
+        else:
+            return value
+
 
 # Special path format key.
 PF_KEY_DEFAULT = 'default'
@@ -294,14 +307,6 @@ class Item(LibModel):
         super(Item, self).update(values)
         if self.mtime == 0 and 'mtime' in values:
             self.mtime = values['mtime']
-
-    def _set_fixed_attr(self, key, value):
-        if key == 'path':
-            if isinstance(value, unicode):
-                value = bytestring_path(value)
-            elif isinstance(value, buffer):
-                value = str(value)
-        super(Item, self)._set_fixed_attr(key, value)
 
     def get_album(self):
         """Get the Album object that this item belongs to, if any, or
@@ -694,23 +699,6 @@ class Album(LibModel):
         getters = plugins.album_field_getters()
         getters['path'] = Album.item_dir
         return getters
-
-    def _set_fixed_attr(self, key, value):
-        if key == 'artpath':
-            if isinstance(value, unicode):
-                value = bytestring_path(value)
-            elif isinstance(value, buffer):
-                value = bytes(value)
-        super(Album, self)._set_fixed_attr(key, value)
-
-    def __setitem__(self, key, value):
-        """Set the value of an album attribute."""
-        if key == 'artpath':
-            if isinstance(value, unicode):
-                value = bytestring_path(value)
-            elif isinstance(value, buffer):
-                value = bytes(value)
-        super(Album, self).__setitem__(key, value)
 
     def items(self):
         """Returns an iterable over the items associated with this
