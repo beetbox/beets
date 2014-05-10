@@ -108,6 +108,21 @@ class Model(object):
         self.update(values)
         self.clear_dirty()
 
+    @classmethod
+    def _awaken(cls, db=None, fixed_values=None, flex_values=None):
+        """Create an object with values drawn from the database.
+
+        This is a performance optimization: the checks involved with
+        ordinary construction are bypassed.
+        """
+        obj = cls(db)
+        if fixed_values:
+            for key, value in fixed_values.items():
+                obj._values_fixed[key] = cls._fields[key].normalize(value)
+        if flex_values:
+            obj._values_flex.update(flex_values)
+        return obj
+
     def __repr__(self):
         return '{0}({1})'.format(
             type(self).__name__,
@@ -492,13 +507,11 @@ class Results(object):
                     (row['id'],)
                 )
             values = dict(row)
-            values.update(
-                dict((row['key'], row['value']) for row in flex_rows)
-            )
+            flex_values = dict((row['key'], row['value']) for row in flex_rows)
 
             # Construct the Python object and yield it if it passes the
             # predicate.
-            obj = self.model_class(self.db, **values)
+            obj = self.model_class._awaken(self.db, values, flex_values)
             if not self.query or self.query.match(obj):
                 yield obj
 
