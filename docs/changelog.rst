@@ -4,7 +4,7 @@ Changelog
 in development
 --------------
 
-* The new :doc:`/plugins/bucket` provides a `bucket()` function for path 
+* The new :doc:`/plugins/bucket` provides a ``bucket()`` function for path 
   formatting to generate folder names representing alphabetic/years ranges.
   Thanks to Fabrice Laporte.
 
