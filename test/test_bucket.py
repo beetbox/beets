@@ -96,7 +96,7 @@ class BucketPluginTest(unittest.TestCase, TestHelper):
 
     def test_alpha_first_last_chars(self):
         """Alphabet buckets can be named by listing the 'from-to' syntax"""
-        self._setup_config(bucket_alpha=['0->9','A->D', 'F-H', 'I->Z'])
+        self._setup_config(bucket_alpha=['0->9', 'A->D', 'F-H', 'I->Z'])
         self.assertEqual(self.plugin._tmpl_bucket('garry'), 'F-H')
         self.assertEqual(self.plugin._tmpl_bucket('2pac'), '0->9')
 

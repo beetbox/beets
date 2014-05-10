@@ -63,7 +63,7 @@ def span_from_str(span_str):
         years = [normalize_year(x, years[0]) for x in years]
     except BucketError as exc:
         raise ui.UserError("invalid range defined for year bucket '%s': %s" %
-                            (span_str, exc))
+                           (span_str, exc))
 
     res = {'from': years[0], 'str': span_str}
     if len(years) > 1:
