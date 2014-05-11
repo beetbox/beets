@@ -1,19 +1,26 @@
 Changelog
 =========
 
-1.3.6 (in development)
-----------------------
+1.3.6 (May 10, 2014)
+--------------------
+
+This is primarily a bugfix release, but it also brings two new plugins: one
+for playing music in desktop players and another for organizing your
+directories into "buckets." It also brings huge performance optimizations to
+queries---your ``beet ls`` commands will now go much faster.
+
+New features:
 
 * The new :doc:`/plugins/play` lets you start your desktop music player with
   the songs that match a query. Thanks to David Hamp-Gonsalves.
-* :doc:`/plugins/ftintitle`: A new option lets you remove featured artists
-  entirely instead of moving them to the title. Thanks to SUTJael.
-* Item and album queries are much faster.
 * The new :doc:`/plugins/bucket` provides a ``%bucket{}`` function for path
   formatting to generate folder names representing ranges of years or initial
   letter. Thanks to Fabrice Laporte.
+* Item and album queries are much faster.
+* :doc:`/plugins/ftintitle`: A new option lets you remove featured artists
+  entirely instead of moving them to the title. Thanks to SUTJael.
 
-Fixes:
+And those all-important bug fixes:
 
 * :doc:`/plugins/mbsync`: Fix a regression in 1.3.5 that broke the plugin
   entirely.
@@ -22,7 +29,7 @@ Fixes:
 * Fix encoding-related logging errors in :doc:`/plugins/convert` and
   :doc:`/plugins/replaygain`.
 * :doc:`/plugins/replaygain`: Suppress a deprecation warning emitted by later
-  version of PyGI.
+  versions of PyGI.
 * Fix a crash when reading files whose iTunes SoundCheck tags contain
   non-ASCII characters.
 * The ``%if{}`` template function now appropriately interprets the condition
