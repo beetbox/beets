@@ -56,7 +56,7 @@ VERSION_LOCS = [
         [
             (
                 r'version\s*=\s*[\'"]([0-9\.]+)[\'"]',
-                "    version='{minor}',",
+                "    version='{version}',",
             )
         ]
     ),
@@ -252,7 +252,7 @@ def prep():
     cur_version = get_version()
 
     # Tag.
-    subprocess.check_output(['git', 'tag', 'v{}'].format(cur_version))
+    subprocess.check_output(['git', 'tag', 'v{}'.format(cur_version)])
 
     # Build.
     with chdir(BASE):
@@ -267,7 +267,7 @@ def prep():
     # FIXME It should be possible to specify this as an argument.
     version_parts = [int(n) for n in cur_version.split('.')]
     version_parts[-1] += 1
-    next_version = '.'.join(version_parts)
+    next_version = '.'.join(map(str, version_parts))
     bump_version(next_version)
 
 
