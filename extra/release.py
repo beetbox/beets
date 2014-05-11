@@ -190,23 +190,18 @@ def changelog():
     print(changelog_as_markdown())
 
 
-@release.command()
-@click.argument('version')
-def upload(version):
-    """Upload the release to PyPI.
-    """
-    path = os.path.join(BASE, 'dist', 'beets-{}.tar.gz')
-    subprocess.check_call(['twine', 'upload', path])
-
-
-def get_version():
+def get_version(index=0):
     """Read the current version from the changelog.
     """
     with open(CHANGELOG) as f:
+        cur_index = 0
         for line in f:
-            match = re.search(r'\d+\.\d+\.\d+', line)
+            match = re.search(r'^\d+\.\d+\.\d+', line)
             if match:
-                return match.group(0)
+                if cur_index == index:
+                    return match.group(0)
+                else:
+                    cur_index += 1
 
 
 @release.command()
@@ -274,6 +269,24 @@ def prep():
     version_parts[-1] += 1
     next_version = '.'.join(version_parts)
     bump_version(next_version)
+
+
+@release.command()
+def publish():
+    """Unleash a release unto the world.
+
+    - Push the tag to GitHub.
+    - Upload to PyPI.
+    """
+    version = get_version(1)
+
+    # Push to GitHub.
+    with chdir(BASE):
+        subprocess.check_call(['git', 'push', '--tags'])
+
+    # Upload to PyPI.
+    path = os.path.join(BASE, 'dist', 'beets-{}.tar.gz'.format(version))
+    subprocess.check_call(['twine', 'upload', path])
 
 
 if __name__ == '__main__':
