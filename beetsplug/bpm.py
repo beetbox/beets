@@ -12,9 +12,9 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Uses the `KeyFinder` program to add the `initial_key` field.
-"""
+"""Determine BPM from keyboard listening to Enter key strokes"""
 
+import time
 import logging
 
 from beets import ui
@@ -23,16 +23,16 @@ from beets.plugins import BeetsPlugin
 
 log = logging.getLogger('beets')
 
-import time
 
-def bpm(max_strokes=4):
-    """Determine BPM (possibly of a playing song) listening to Enter strokes"""
+def bpm(max_strokes):
+    """Returns average BPM (possibly of a playing song) 
+    listening to Enter strokes
+    """
     t0 = None
     dt = []
     for i in range(max_strokes):
-        s = raw_input()
-
         # Press enter to the rhythm...
+        s = raw_input()
         if s == '':
             t1 = time.time()
             # Only start measuring at the second stroke
@@ -68,20 +68,19 @@ class BPMPlugin(BeetsPlugin):
     def get_bpm(self, items, write=False):
         overwrite = self.config['overwrite'].get(bool)
         if len(items) > 1:
-            log.warning('Can only get bpm of one song at time')
-            return
-            #raise ValueError('Can only get bpm of one song at time')
+            raise ValueError('Can only get bpm of one song at time')
+
         item = items[0]
-        
         if item['bpm']:
-            log.info('existing bpm {0}'.format(item['bpm']))
+            log.info('Found bpm {0}'.format(item['bpm']))
             if not overwrite:
                 return
-
-        log.info('Press enter {0} times'.format(self.config['max_strokes'].get(int)))
+            
+        log.info('Press enter {0} times to the rhythm or Ctrl-D to exit'.format(
+                self.config['max_strokes'].get(int)))
         new_bpm = bpm(self.config['max_strokes'].get(int))
-        log.info('adding bpm {0} [old={1}]'.format(int(new_bpm), item['bpm']))
         item['bpm'] = int(new_bpm)
         if write:
             item.try_write()
         item.store()
+        log.info('Added new bpm {0}'.format(item['bpm']))
