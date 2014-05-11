@@ -7,7 +7,7 @@ body {
     left: 0;
     right: 0;
     top: 0;
-    height: 3em;
+    height: 36px;
 
     color: white;
 
@@ -35,7 +35,7 @@ body {
     width: 17em;
 
     position: fixed;
-    top: 3em;
+    top: 36px;
     left: 0;
     bottom: 0;
     margin: 0;
@@ -61,7 +61,7 @@ body {
     width: 17em;
 
     position: fixed;
-    top: 3em;
+    top: 36px;
     left: 0;
     bottom: 0;
     margin: 2.2em 0 0 0;
@@ -94,8 +94,8 @@ body {
     margin: 1.0em 0 0 1.5em;
 }
 #main-detail {
-    top: 3em;
-    height: 6.1em;
+    top: 36px;
+    height: 98px;
 }
 #main-detail .artist, #main-detail .album, #main-detail .title {
     display: block;
@@ -111,7 +111,7 @@ body {
 #extra-detail {
     overflow-x: hidden;
     overflow-y: auto;
-    top: 9em;
+    top: 134px;
     bottom: 0;
     right: 0;
 }
@@ -139,7 +139,7 @@ body {
 #player {
     float: left;
     width: 150px;
-    height: 3em;
+    height: 36px;
 }
 #player .play, #player .pause, #player .disabled {
     -webkit-appearance: none;
@@ -152,8 +152,8 @@ body {
     margin: 0;
     text-align: center;
 
-    width: 3em;
-    height: 3em;
+    width: 36px;
+    height: 36px;
 }
 #player .disabled {
     color: #666;
