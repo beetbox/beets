@@ -12,7 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Provides %bucket_alpha and %bucket_year functions for path formatting.
+"""Provides the %bucket{} function for path formatting.
 """
 
 from datetime import datetime
