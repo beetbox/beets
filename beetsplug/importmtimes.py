@@ -73,7 +73,7 @@ def update_album_times(lib, album):
             if config['importmtimes']['preserve_mtimes'].get(bool):
                 write_item_mtime(item, mtime)
                 item.store()
-        del item_mtime[item.path]
+            del item_mtime[item.path]
 
     album.added = min(album_mtimes)
     album.store()
