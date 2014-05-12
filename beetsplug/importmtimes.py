@@ -4,13 +4,15 @@ time (mtime) of the item's source file before import.
 
 from __future__ import unicode_literals, absolute_import, print_function
 
-import logging, os
+import logging
+import os
 
 from beets import config
 from beets import util
 from beets.plugins import BeetsPlugin
 
 log = logging.getLogger('beets')
+
 
 class ImportMtimesPlugin(BeetsPlugin):
     def __init__(self):
@@ -19,9 +21,11 @@ class ImportMtimesPlugin(BeetsPlugin):
             'preserve_mtimes': False,
         })
 
+
 @ImportMtimesPlugin.listen('import_task_start')
 def check_config(task, session):
     config['importmtimes']['preserve_mtimes'].get(bool)
+
 
 def write_file_mtime(path, mtime):
     """Write the given mtime to the destination path.
@@ -33,6 +37,7 @@ def write_file_mtime(path, mtime):
 # key: item path in the library
 # value: the file mtime of the file the item was imported from
 item_mtime = dict()
+
 
 def write_item_mtime(item, mtime):
     """Write the given mtime to an item's `mtime` field and to the mtime of the
@@ -46,6 +51,7 @@ def write_item_mtime(item, mtime):
     # The file's mtime on disk must be in sync with the item's mtime
     write_file_mtime(util.syspath(item.path), mtime)
     item.mtime = mtime
+
 
 @ImportMtimesPlugin.listen('before_item_moved')
 @ImportMtimesPlugin.listen('item_copied')
@@ -63,6 +69,7 @@ def record_import_mtime(item, source, destination):
               util.displayable_path(destination),
               util.displayable_path(source))
 
+
 @ImportMtimesPlugin.listen('album_imported')
 def update_album_times(lib, album):
     album_mtimes = []
@@ -77,6 +84,7 @@ def update_album_times(lib, album):
 
     album.added = min(album_mtimes)
     album.store()
+
 
 @ImportMtimesPlugin.listen('item_imported')
 def update_item_times(lib, item):
