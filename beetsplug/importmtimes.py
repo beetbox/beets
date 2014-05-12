@@ -1,6 +1,5 @@
-"""Preserve file modification times during copy imports.
-
-File modification times are also stored in the `added` field.
+"""Populate an items `added` and `mtime` field by using the file modification
+time (mtime) of the item's source file before import.
 """
 
 from __future__ import unicode_literals, absolute_import, print_function
@@ -14,64 +13,77 @@ from beets.plugins import BeetsPlugin
 log = logging.getLogger('beets')
 
 class ImportMtimesPlugin(BeetsPlugin):
-    pass
+    def __init__(self):
+        super(ImportMtimesPlugin, self).__init__()
+        self.config.add({
+            'preserve_mtimes': False,
+        })
 
 @ImportMtimesPlugin.listen('import_task_start')
 def check_config(task, session):
-    if not config['import']['copy']:
-        raise ValueError('The importmtimes plugin can only be used for copy'
-                         ' imports')
+    config['importmtimes']['preserve_mtimes'].get(bool)
 
-def copy_mtime(source_path, dest_path):
-    """Copy the file mtime from the source path to the destination path.
+def write_file_mtime(path, mtime):
+    """Write the given mtime to the destination path.
     """
-    source_stat = os.stat(util.syspath(source_path))
-    dest_stat = os.stat(util.syspath(dest_path))
-    os.utime(util.syspath(dest_path),
-             (dest_stat.st_atime, source_stat.st_mtime))
+    stat = os.stat(util.syspath(path))
+    os.utime(util.syspath(path),
+             (stat.st_atime, mtime))
 
 # key: item path in the library
-# value: file outside the library from which the item was imported
-item_source_paths = dict()
+# value: the file mtime of the file the item was imported from
+item_mtime = dict()
 
-def preserve_mtime(item):
-    """Preserve the file modification time of an imported item by copying the
-    mtime from the file that the item is copied from.
+def write_item_mtime(item, mtime):
+    """Write the given mtime to an item's `mtime` field and to the mtime of the
+    item's file.
     """
-    source_path = item_source_paths.get(item.path)
-    if source_path is None:
-        log.warn("No import source path found for item "
+    if mtime is None:
+        log.warn("No mtime to be preserved for item "
                  + util.displayable_path(item.path))
         return
 
-    copy_mtime(source_path, item.path)
-    item.mtime = os.path.getmtime(util.syspath(item.path))
-    del item_source_paths[item.path]
+    # The file's mtime on disk must be in sync with the item's mtime
+    write_file_mtime(util.syspath(item.path), mtime)
+    item.mtime = mtime
 
+@ImportMtimesPlugin.listen('before_item_moved')
 @ImportMtimesPlugin.listen('item_copied')
-def record_import_source_path(item, source, destination):
-    """Record which file an imported item is copied from.
+def record_import_mtime(item, source, destination):
+    """Record the file mtime of an item's path before import.
     """
     if (source == destination):
+        # Re-import of an existing library item?
         return
 
-    item_source_paths[destination] = source
-    log.debug('Recorded item source path "%s" <- "%s"',
+    mtime = os.stat(util.syspath(source)).st_mtime
+    item_mtime[destination] = mtime
+    log.debug('Recorded mtime %s for item "%s" imported from "%s"',
+              mtime,
               util.displayable_path(destination),
               util.displayable_path(source))
 
 @ImportMtimesPlugin.listen('album_imported')
 def update_album_times(lib, album):
+    album_mtimes = []
     for item in album.items():
-        preserve_mtime(item)
-        item.store()
+        mtime = item_mtime[item.path]
+        if mtime is not None:
+            album_mtimes.append(mtime)
+            if config['importmtimes']['preserve_mtimes'].get(bool):
+                write_item_mtime(item, mtime)
+                item.store()
+        del item_mtime[item.path]
 
-    item_mtimes = (item.mtime for item in album.items() if item.mtime > 0)
-    album.added = min(item_mtimes)
+    album.added = min(album_mtimes)
     album.store()
 
 @ImportMtimesPlugin.listen('item_imported')
 def update_item_times(lib, item):
-    preserve_mtime(item)
-    item.added = item.mtime
-    item.store()
+    mtime = item_mtime[item.path]
+    if mtime is not None:
+        item.added = mtime
+        if config['importmtimes']['preserve_mtimes'].get(bool):
+            write_item_mtime(item, mtime)
+        item.store()
+        del item_mtime[item.path]
