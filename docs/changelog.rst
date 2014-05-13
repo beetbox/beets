@@ -4,7 +4,9 @@ Changelog
 1.3.7 (in development)
 ----------------------
 
-Changelog goes here!
+* :doc:`/plugins/web`: Lyrics now display readably with correct line breaks.
+  Also, the detail view scrolls to reveal all of the lyrics. Thanks to Meet
+  Udeshi.
 
 
 1.3.6 (May 10, 2014)
