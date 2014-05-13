@@ -14,17 +14,17 @@ from beets.plugins import BeetsPlugin
 log = logging.getLogger('beets')
 
 
-class ImportMtimesPlugin(BeetsPlugin):
+class ImportAddedPlugin(BeetsPlugin):
     def __init__(self):
-        super(ImportMtimesPlugin, self).__init__()
+        super(ImportAddedPlugin, self).__init__()
         self.config.add({
             'preserve_mtimes': False,
         })
 
 
-@ImportMtimesPlugin.listen('import_task_start')
+@ImportAddedPlugin.listen('import_task_start')
 def check_config(task, session):
-    config['importmtimes']['preserve_mtimes'].get(bool)
+    config['importadded']['preserve_mtimes'].get(bool)
 
 
 def write_file_mtime(path, mtime):
@@ -53,8 +53,8 @@ def write_item_mtime(item, mtime):
     item.mtime = mtime
 
 
-@ImportMtimesPlugin.listen('before_item_moved')
-@ImportMtimesPlugin.listen('item_copied')
+@ImportAddedPlugin.listen('before_item_moved')
+@ImportAddedPlugin.listen('item_copied')
 def record_import_mtime(item, source, destination):
     """Record the file mtime of an item's path before import.
     """
@@ -70,14 +70,14 @@ def record_import_mtime(item, source, destination):
               util.displayable_path(source))
 
 
-@ImportMtimesPlugin.listen('album_imported')
+@ImportAddedPlugin.listen('album_imported')
 def update_album_times(lib, album):
     album_mtimes = []
     for item in album.items():
         mtime = item_mtime[item.path]
         if mtime is not None:
             album_mtimes.append(mtime)
-            if config['importmtimes']['preserve_mtimes'].get(bool):
+            if config['importadded']['preserve_mtimes'].get(bool):
                 write_item_mtime(item, mtime)
                 item.store()
             del item_mtime[item.path]
@@ -86,12 +86,12 @@ def update_album_times(lib, album):
     album.store()
 
 
-@ImportMtimesPlugin.listen('item_imported')
+@ImportAddedPlugin.listen('item_imported')
 def update_item_times(lib, item):
     mtime = item_mtime[item.path]
     if mtime is not None:
         item.added = mtime
-        if config['importmtimes']['preserve_mtimes'].get(bool):
+        if config['importadded']['preserve_mtimes'].get(bool):
             write_item_mtime(item, mtime)
         item.store()
         del item_mtime[item.path]

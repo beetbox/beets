@@ -1,7 +1,7 @@
-ImportMtimes Plugin
-===================
+ImportAdded Plugin
+==================
 
-The ``importmtimes`` plugin is useful when an existing collection is imported
+The ``importadded`` plugin is useful when an existing collection is imported
 and the time when albums and items were added should be preserved.
 
 The :abbr:`mtime (modification time)` of files that are imported into the
@@ -18,7 +18,7 @@ The ``item.added`` field is populated as follows:
 
 This plugin can optionally be configured to also preserve mtimes::
 
-    importmtimes:
+    importadded:
         preserve_mtimes: yes # default: no
 
 File modification times are preserved as follows:
@@ -29,5 +29,5 @@ File modification times are preserved as follows:
     from which the item is imported from.
   * The mtime of the file ``item.path`` is set to ``item.mtime``.
 
-Note that albums doesn't have an mtime field. The mtime of album
-directories are not preserved.
+Note that there is no ``album.mtime`` field in the database and that the mtime
+of album directories on disk aren't preserved.
