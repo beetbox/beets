@@ -4,6 +4,8 @@ Changelog
 1.3.7 (in development)
 ----------------------
 
+* The new :doc:`/plugins/importadded` reads files' modification times to set
+  their "added" date. Thanks to Stig Inge Lea Bjørnsen.
 * :doc:`/plugins/web`: Lyrics now display readably with correct line breaks.
   Also, the detail view scrolls to reveal all of the lyrics. Thanks to Meet
   Udeshi.
