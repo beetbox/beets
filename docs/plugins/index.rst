@@ -59,6 +59,7 @@ by typing ``beet version``.
    ftintitle
    keyfinder
    bucket
+   importadded
 
 Autotagger Extensions
 ---------------------
@@ -91,6 +92,8 @@ Metadata
   statistics (last_played, play_count, skip_count, rating).
 * :doc:`keyfinder`: Use the `KeyFinder`_ program to detect the musical
   key from the audio.
+* :doc:`importadded`: Use file modification times for guessing the value for
+  the `added` field in the database.
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
 .. _the Echo Nest: http://www.echonest.com
