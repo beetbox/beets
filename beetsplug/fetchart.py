@@ -22,6 +22,10 @@ from tempfile import NamedTemporaryFile
 
 import requests
 
+import urllib
+import urllib2
+import simplejson
+
 from beets.plugins import BeetsPlugin
 from beets.util.artresizer import ArtResizer
 from beets import importer
@@ -122,6 +126,26 @@ def aao_art(asin):
     else:
         log.debug(u'fetchart: no image found on page')
 
+# googleapis.org scraper.
+
+def google_art(album):
+    """Return art URL from google.org given an album title and interpreter"""
+    search_string = (album.albumartist + ',' + album.album).encode('utf-8')
+    url = ('https://ajax.googleapis.com/ajax/services/search/images?' + 'v=1.0&q='+ urllib.quote_plus(search_string)  +'&start='+str(0))
+    request = urllib2.Request(url, None, {'Referer': 'testing'})
+    response = urllib2.urlopen(request)
+
+    # Get results using JSON
+    try:
+        results = simplejson.load(response)
+        data = results['responseData']
+    	dataInfo = data['results']
+    	for myUrl in dataInfo:
+		return myUrl['unescapedUrl']
+    except requests.RequestException:
+        log.debug(u'fetchart: error scraping art page')
+        return
+
 
 # Art from the filesystem.
 
@@ -178,6 +202,12 @@ def _source_urls(album):
         url = aao_art(album.asin)
         if url:
             yield url
+
+    google_search = config['fetchart']['google_search'].get(bool)
+    if google_search == True:
+	 url = google_art(album)
+	 if url:
+	    yield url
 
 
 def art_for_album(album, paths, maxwidth=None, local_only=False):
@@ -251,6 +281,7 @@ class FetchArtPlugin(BeetsPlugin):
             'maxwidth': 0,
             'remote_priority': False,
             'cautious': False,
+            'google_search' : False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
         })
 
