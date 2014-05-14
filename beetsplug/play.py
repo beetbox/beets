@@ -21,6 +21,7 @@ from beets import ui
 from beets import util
 import platform
 import logging
+import shlex
 from tempfile import NamedTemporaryFile
 
 log = logging.getLogger('beets')
@@ -31,18 +32,21 @@ def play_music(lib, opts, args):
     command passing that playlist.
     """
 
-    command = config['play']['command'].get()
+    cmd = []
+
+    for part in shlex.split(config['play']['command'].get(unicode)):
+        cmd.append(part)
 
     # If a command isn't set then let the OS decide how to open the playlist.
-    if not command:
+    if not cmd:
         sys_name = platform.system()
         if sys_name == 'Darwin':
-            command = 'open'
+            cmd.append('open')
         elif sys_name == 'Windows':
-            command = 'start'
+            cmd.append('start')
         else:
             # If not Mac or Win then assume Linux(or posix based).
-            command = 'xdg-open'
+            cmd.append('xdg-open')
 
     # Preform search by album and add folders rather then tracks to playlist.
     if opts.album:
@@ -79,10 +83,12 @@ def play_music(lib, opts, args):
         m3u.write(item + '\n')
     m3u.close()
 
+    cmd.append(m3u.name)
+
     # Invoke the command and log the output.
-    output = util.command_output([command, m3u.name])
+    output = util.command_output(cmd)
     if output:
-        log.debug(u'Output of {0}: {1}'.format(command, output))
+        log.debug(u'Output of {0}: {1}'.format(cmd[0], output))
 
     ui.print_(u'Playing {0} {1}.'.format(len(paths), item_type))
 
