@@ -144,7 +144,7 @@ matches for the whole month.
 Date *intervals*, like the numeric intervals described above, are separated by
 two dots (``..``). You can specify a start, an end, or both.
 
-Here is an example that finds all the songs added in 2008::
+Here is an example that finds all the albums added in 2008::
 
     $ beet ls -a 'added:2008'
 
