@@ -8,7 +8,7 @@ To use the plugin, just put ``importfeeds`` on the ``plugins`` line in your
 ``importfeeds:`` section in the config file.
 
 The ``dir`` configuration option can be set to specify another folder
-than the default library directory.
+than the default library directory. This is where your playlist will be created.
 
 The ``relative_to`` configuration option can be set to make the m3u paths
 relative to another folder than where the playlist is being written. If you're
