@@ -22,10 +22,6 @@ from tempfile import NamedTemporaryFile
 
 import requests
 
-import urllib
-import urllib2
-import simplejson
-
 from beets.plugins import BeetsPlugin
 from beets.util.artresizer import ArtResizer
 from beets import importer
@@ -128,21 +124,21 @@ def aao_art(asin):
 
 # googleapis.org scraper.
 
+GOOGLE_URL = 'https://ajax.googleapis.com/ajax/services/search/images'
+
 def google_art(album):
     """Return art URL from google.org given an album title and interpreter"""
+     
     search_string = (album.albumartist + ',' + album.album).encode('utf-8')
-    url = ('https://ajax.googleapis.com/ajax/services/search/images?' + 'v=1.0&q='+ urllib.quote_plus(search_string)  +'&start='+str(0))
-    request = urllib2.Request(url, None, {'Referer': 'testing'})
-    response = urllib2.urlopen(request)
-
+    response = requests_session.get(GOOGLE_URL, params={'v': '1.0','q': search_string, 'start':'0'})
     # Get results using JSON
     try:
-        results = simplejson.load(response)
+        results = response.json()
         data = results['responseData']
-    	dataInfo = data['results']
-    	for myUrl in dataInfo:
-		return myUrl['unescapedUrl']
-    except requests.RequestException:
+        dataInfo = data['results']
+        for myUrl in dataInfo:
+            return myUrl['unescapedUrl']
+    except:
         log.debug(u'fetchart: error scraping art page')
         return
 
@@ -205,9 +201,9 @@ def _source_urls(album):
 
     google_search = config['fetchart']['google_search'].get(bool)
     if google_search == True:
-	 url = google_art(album)
-	 if url:
-	    yield url
+        url = google_art(album)
+        if url:
+            yield url
 
 
 def art_for_album(album, paths, maxwidth=None, local_only=False):
