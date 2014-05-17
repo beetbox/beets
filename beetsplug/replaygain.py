@@ -280,7 +280,9 @@ class GStreamerBackend(object):
                 GObject.threads_init()
             Gst.init([sys.argv[0]])
         except:
-            raise FatalReplayGainError("GStreamer failed to initialize")
+            raise FatalReplayGainError(
+                "Failed to load GStreamer; check that python-gi is installed"
+            )
 
         self.GObject = GObject
         self.GLib = GLib
