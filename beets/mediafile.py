@@ -926,6 +926,11 @@ class FlacImageStorageStyle(ListStorageStyle):
         pic.desc = image.desc or u''
         return pic
 
+    def delete(self, mutagen_file):
+        """Remove all images from the file.
+        """
+        mutagen_file.clear_pictures()
+
 
 # MediaField is a descriptor that represents a single logical field. It
 # aggregates several StorageStyles describing how to access the data for

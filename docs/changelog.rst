@@ -9,6 +9,7 @@ Changelog
 * :doc:`/plugins/web`: Lyrics now display readably with correct line breaks.
   Also, the detail view scrolls to reveal all of the lyrics. Thanks to Meet
   Udeshi.
+* Compatibility with the latest version of Mutagen, 1.23.
 
 
 1.3.6 (May 10, 2014)
