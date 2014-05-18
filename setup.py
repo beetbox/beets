@@ -75,7 +75,7 @@ setup(
 
     install_requires=[
         'enum34',
-        'mutagen>=1.22',
+        'mutagen>=1.23',
         'munkres',
         'unidecode',
         'musicbrainzngs>=0.4',

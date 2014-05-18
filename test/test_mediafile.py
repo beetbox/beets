@@ -801,6 +801,7 @@ class OggTest(ReadWriteTestBase, ExtendedImageStructureTestMixin,
         mediafile = MediaFile(mediafile.path)
         self.assertFalse('coverart' in mediafile.mgfile)
 
+
 class FlacTest(ReadWriteTestBase, PartialTestMixin,
                ExtendedImageStructureTestMixin,
                unittest.TestCase):
@@ -813,6 +814,8 @@ class FlacTest(ReadWriteTestBase, PartialTestMixin,
         'bitdepth': 16,
         'channels': 1,
     }
+
+
 class ApeTest(ReadWriteTestBase, unittest.TestCase):
     extension = 'ape'
     audio_properties = {
@@ -823,6 +826,8 @@ class ApeTest(ReadWriteTestBase, unittest.TestCase):
         'bitdepth': 16,
         'channels': 1,
     }
+
+
 class WavpackTest(ReadWriteTestBase, unittest.TestCase):
     extension = 'wv'
     audio_properties = {
@@ -833,6 +838,8 @@ class WavpackTest(ReadWriteTestBase, unittest.TestCase):
         'bitdepth': 0,
         'channels': 1,
     }
+
+
 class OpusTest(ReadWriteTestBase, unittest.TestCase):
     extension = 'opus'
     audio_properties = {
@@ -840,6 +847,18 @@ class OpusTest(ReadWriteTestBase, unittest.TestCase):
         'bitrate': 57984,
         'format': 'Opus',
         'samplerate': 48000,
+        'bitdepth': 0,
+        'channels': 1,
+    }
+
+
+class AIFFTest(ReadWriteTestBase, unittest.TestCase):
+    extension = 'aiff'
+    audio_properties = {
+        'length': 1.0,
+        'bitrate': 705600,
+        'format': 'AIFF',
+        'samplerate': 44100,
         'bitdepth': 0,
         'channels': 1,
     }

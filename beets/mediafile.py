@@ -40,6 +40,7 @@ import mutagen.mp4
 import mutagen.flac
 import mutagen.monkeysaudio
 import mutagen.asf
+import mutagen.aiff
 import datetime
 import re
 import base64
@@ -67,6 +68,7 @@ TYPES = {
     'wv':   'WavPack',
     'mpc':  'Musepack',
     'asf':  'Windows Media',
+    'aiff': 'AIFF',
 }
 
 
@@ -635,7 +637,7 @@ class MP4ImageStorageStyle(MP4ListStorageStyle):
 class MP3StorageStyle(StorageStyle):
     """Store data in ID3 frames.
     """
-    formats = ['MP3']
+    formats = ['MP3', 'AIFF']
 
     def __init__(self, key, id3_lang=None, **kwargs):
         """Create a new ID3 storage style. `id3_lang` is the value for
@@ -1219,6 +1221,7 @@ class MediaFile(object):
             mutagen.ogg.error,
             mutagen.asf.error,
             mutagen.apev2.error,
+            mutagen.aiff.error,
         )
         try:
             self.mgfile = mutagen.File(path)
@@ -1270,6 +1273,8 @@ class MediaFile(object):
             self.type = 'mpc'
         elif type(self.mgfile).__name__ == 'ASF':
             self.type = 'asf'
+        elif type(self.mgfile).__name__ == 'AIFF':
+            self.type = 'aiff'
         else:
             raise FileTypeError('file type %s unsupported by MediaFile' %
                                 type(self.mgfile).__name__)
