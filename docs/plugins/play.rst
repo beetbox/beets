@@ -16,5 +16,11 @@ command, you can use a ``play:`` section in your configuration file::
     play:
         command: /Applications/VLC.app/Contents/MacOS/VLC
 
+You can also specify additional space-separated options to command (like you
+would on the command-line)::
+
+    play:
+        command: /usr/bin/command --option1 --option2 some_other_option
+
 Enable beets' verbose logging to see the command's output if you need to
 debug.
