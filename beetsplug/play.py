@@ -32,6 +32,7 @@ def play_music(lib, opts, args):
     """
 
     command = config['play']['command'].get()
+    use_files = config['play']['use_files'].get(bool)
 
     # If a command isn't set then let the OS decide how to open the playlist.
     if not command:
@@ -46,29 +47,33 @@ def play_music(lib, opts, args):
 
     # Preform search by album and add folders rather then tracks to playlist.
     if opts.album:
-        albums = lib.albums(ui.decargs(args))
+        selection = lib.albums(ui.decargs(args))
         paths = []
 
-        for album in albums:
-            paths.append(album.item_dir())
+        for album in selection:
+            if use_files:
+                paths.extend([item.path for item in album.items()])
+            else:
+                paths.append(album.item_dir())
         item_type = 'album'
 
     # Preform item query and add tracks to playlist.
     else:
-        paths = [item.path for item in lib.items(ui.decargs(args))]
+        selection = lib.items(ui.decargs(args))
+        paths = [item.path for item in selection]
         item_type = 'track'
 
     item_type += 's' if len(paths) > 1 else ''
 
-    if not paths:
+    if not selection:
         ui.print_(ui.colorize('yellow', 'No {0} to play.'.format(item_type)))
         return
 
     # Warn user before playing any huge playlists.
-    if len(paths) > 100:
+    if len(selection) > 100:
         ui.print_(ui.colorize(
             'yellow',
-            'You are about to queue {0} {1}.'.format(len(paths), item_type)))
+            'You are about to queue {0} {1}.'.format(len(selection), item_type)))
 
         if ui.input_options(('Continue', 'Abort')) == 'a':
             return
@@ -84,7 +89,7 @@ def play_music(lib, opts, args):
     if output:
         log.debug(u'Output of {0}: {1}'.format(command, output))
 
-    ui.print_(u'Playing {0} {1}.'.format(len(paths), item_type))
+    ui.print_(u'Playing {0} {1}.'.format(len(selection), item_type))
 
 
 class PlayPlugin(BeetsPlugin):
@@ -94,6 +99,7 @@ class PlayPlugin(BeetsPlugin):
 
         config['play'].add({
             'command': None,
+            'use_files': False
         })
 
     def commands(self):
