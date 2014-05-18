@@ -122,6 +122,26 @@ def aao_art(asin):
     else:
         log.debug(u'fetchart: no image found on page')
 
+# googleapis.org scraper.
+
+GOOGLE_URL = 'https://ajax.googleapis.com/ajax/services/search/images'
+
+def google_art(album):
+    """Return art URL from google.org given an album title and interpreter"""
+     
+    search_string = (album.albumartist + ',' + album.album).encode('utf-8')
+    response = requests_session.get(GOOGLE_URL, params={'v': '1.0','q': search_string, 'start':'0'})
+    # Get results using JSON
+    try:
+        results = response.json()
+        data = results['responseData']
+        dataInfo = data['results']
+        for myUrl in dataInfo:
+            return myUrl['unescapedUrl']
+    except:
+        log.debug(u'fetchart: error scraping art page')
+        return
+
 
 # Art from the filesystem.
 
@@ -176,6 +196,12 @@ def _source_urls(album):
         for url in art_for_asin(album.asin):
             yield url
         url = aao_art(album.asin)
+        if url:
+            yield url
+
+    google_search = config['fetchart']['google_search'].get(bool)
+    if google_search == True:
+        url = google_art(album)
         if url:
             yield url
 
@@ -251,6 +277,7 @@ class FetchArtPlugin(BeetsPlugin):
             'maxwidth': 0,
             'remote_priority': False,
             'cautious': False,
+            'google_search' : False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
         })
 
