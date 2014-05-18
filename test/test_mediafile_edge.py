@@ -235,6 +235,13 @@ class TypeTest(unittest.TestCase):
         self.mf.track = None
         self.assertEqual(self.mf.track, 0)
 
+    def test_set_date_to_none(self):
+        self.mf.date = None
+        self.assertIsNone(self.mf.date)
+        self.assertIsNone(self.mf.year)
+        self.assertIsNone(self.mf.month)
+        self.assertIsNone(self.mf.day)
+
 
 class SoundCheckTest(unittest.TestCase):
     def test_round_trip(self):

@@ -1057,7 +1057,10 @@ class DateField(MediaField):
             return None
 
     def __set__(self, mediafile, date):
-        self._set_date_tuple(mediafile, date.year, date.month, date.day)
+        if date is None:
+            self._set_date_tuple(mediafile, None, None, None)
+        else:
+            self._set_date_tuple(mediafile, date.year, date.month, date.day)
 
     def __delete__(self, mediafile):
         super(DateField, self).__delete__(mediafile)
