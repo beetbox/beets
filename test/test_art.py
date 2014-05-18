@@ -187,32 +187,35 @@ class AAOTest(_common.TestCase):
         self.mock_response(self.AAO_URL, 'blah blah')
         res = fetchart.aao_art(self.ASIN)
         self.assertEqual(res, None)
-        
+
+
 class GoogleImageTest(_common.TestCase):
 
-    GOOGLE_URL = 'https://ajax.googleapis.com/ajax/services/search/images'
+    _google_url = 'https://ajax.googleapis.com/ajax/services/search/images'
 
     @responses.activate
     def run(self, *args, **kwargs):
         super(GoogleImageTest, self).run(*args, **kwargs)
 
     def mock_response(self, url, json):
-        responses.add(responses.GET, url, body=json, content_type='application/json')
-                      
+        responses.add(responses.GET, url, body=json,
+                      content_type='application/json')
 
     def test_google_art_finds_image(self):
-        album = _common.Bag(albumartist="some artist",album="some album")
-        json = """{"responseData": {"results": [{"unescapedUrl": "url_to_the_image"}]}}"""
-        self.mock_response(self.GOOGLE_URL, json)
+        album = _common.Bag(albumartist="some artist", album="some album")
+        json = """{"responseData": {"results":
+            [{"unescapedUrl": "url_to_the_image"}]}}"""
+        self.mock_response(self._google_url, json)
         result_url = fetchart.google_art(album)
         self.assertEqual(result_url, 'url_to_the_image')
 
     def test_google_art_dont_finds_image(self):
-        album = _common.Bag(albumartist="some artist",album="some album")
+        album = _common.Bag(albumartist="some artist", album="some album")
         json = """bla blup"""
-        self.mock_response(self.GOOGLE_URL, json)
+        self.mock_response(self._google_url, json)
         result_url = fetchart.google_art(album)
         self.assertEqual(result_url, None)
+
 
 class ArtImporterTest(_common.TestCase):
     def setUp(self):
