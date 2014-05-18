@@ -14,6 +14,8 @@ Changelog
   IFF chunks.
 * :doc:`/plugins/fetchart`: You can now optionally search for cover art on
   Google Image Search. Thanks to Lemutar.
+* :doc:`/plugins/play`: The ``command`` config option can now contain
+  arguments (rather than just an executable). Thanks to Alessandro Ghedini.
 
 
 1.3.6 (May 10, 2014)
