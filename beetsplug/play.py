@@ -31,22 +31,20 @@ def play_music(lib, opts, args):
     """Execute query, create temporary playlist and execute player
     command passing that playlist.
     """
-
-    command = []
-
-    for part in shlex.split(config['play']['command'].get(unicode)):
-        command.append(part)
-
-    # If a command isn't set then let the OS decide how to open the playlist.
-    if not command:
+    command_str = config['play']['command'].get()
+    if command_str:
+        command = shlex.split(command_str)
+    else:
+        # If a command isn't set, then let the OS decide how to open the
+        # playlist.
         sys_name = platform.system()
         if sys_name == 'Darwin':
-            command.append('open')
+            command = ['open']
         elif sys_name == 'Windows':
-            command.append('start')
+            command = ['start']
         else:
-            # If not Mac or Win then assume Linux(or posix based).
-            command.append('xdg-open')
+            # If not Mac or Windows, then assume Unixy.
+            command = ['xdg-open']
 
     # Preform search by album and add folders rather then tracks to playlist.
     if opts.album:
