@@ -32,21 +32,21 @@ def play_music(lib, opts, args):
     command passing that playlist.
     """
 
-    cmd = []
+    command = []
 
     for part in shlex.split(config['play']['command'].get(unicode)):
-        cmd.append(part)
+        command.append(part)
 
     # If a command isn't set then let the OS decide how to open the playlist.
-    if not cmd:
+    if not command:
         sys_name = platform.system()
         if sys_name == 'Darwin':
-            cmd.append('open')
+            command.append('open')
         elif sys_name == 'Windows':
-            cmd.append('start')
+            command.append('start')
         else:
             # If not Mac or Win then assume Linux(or posix based).
-            cmd.append('xdg-open')
+            command.append('xdg-open')
 
     # Preform search by album and add folders rather then tracks to playlist.
     if opts.album:
@@ -83,12 +83,12 @@ def play_music(lib, opts, args):
         m3u.write(item + '\n')
     m3u.close()
 
-    cmd.append(m3u.name)
+    command.append(m3u.name)
 
     # Invoke the command and log the output.
-    output = util.command_output(cmd)
+    output = util.command_output(command)
     if output:
-        log.debug(u'Output of {0}: {1}'.format(cmd[0], output))
+        log.debug(u'Output of {0}: {1}'.format(command[0], output))
 
     ui.print_(u'Playing {0} {1}.'.format(len(paths), item_type))
 
