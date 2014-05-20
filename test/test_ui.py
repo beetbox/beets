@@ -225,6 +225,14 @@ class ModifyTest(_common.TestCase):
         mediafile = MediaFile(item.path)
         self.assertEqual(mediafile.initial_key, 'C#m')
 
+    def test_remove_flexattr(self):
+        self._modify(["flexattr=testAttr"], write=True)
+        item = self.lib.items().get()
+        self.assertEqual(item.flexattr, 'testAttr')
+        self._modify(dels=["flexattr"], write=True)
+        item = self.lib.items().get()
+        self.assertTrue("flexattr" not in item)
+
     @unittest.skip('not yet implemented')
     def test_delete_initial_key_tag(self):
         item = self.i
