@@ -577,42 +577,47 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
     ``item[key]`` or ``album[key]``. Here `album` is the album
     associated to `item` if it exists.
     """
-    # FIXME This class should be in the same module as `FormattedMapping`
-
     def __init__(self, item, for_path=False):
-        self.for_path = for_path
-        self.model = item
-        self.model_keys = item.keys(True)
+        super(FormattedItemMapping, self).__init__(item, for_path)
         self.album = item.get_album()
         self.album_keys = []
         if self.album:
             for key in self.album.keys(True):
                 if key in Album.item_keys or key not in item._fields.keys():
                     self.album_keys.append(key)
+        self.all_keys = set(self.model_keys).union(self.album_keys)
 
-    def get(self, key, default=None):
+    def _get(self, key):
+        """Get the value for a key, either from the album or the item.
+        Raise a KeyError for invalid keys.
+        """
         if key in self.album_keys:
             return self.album._get_formatted(key, self.for_path)
         elif key in self.model_keys:
             return self.model._get_formatted(key, self.for_path)
         else:
-            if default is None:
-                raise KeyError(key)
-            else:
-                return default
+            raise KeyError(key)
 
     def __getitem__(self, key):
-        value = self.get(key)
+        """Get the value for a key. Certain unset values are remapped.
+        """
+        value = self._get(key)
 
+        # `artist` and `albumartist` fields fall back to one another.
+        # This is helpful in path formats when the album artist is unset
+        # on as-is imports.
         if key == 'artist' and not value:
-            return self.get('albumartist')
-        if key == 'albumartist' and not value:
-            return self.get('artist')
+            return self._get('albumartist')
+        elif key == 'albumartist' and not value:
+            return self._get('artist')
+        else:
+            return value
 
-        return value
+    def __iter__(self):
+        return iter(self.all_keys)
 
-    def __contains__(self, key):
-        return key in self.model_keys or key in self.album_keys
+    def __len__(self):
+        return len(self.all_keys)
 
 
 class Album(LibModel):

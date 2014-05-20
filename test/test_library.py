@@ -447,6 +447,53 @@ class DestinationTest(_common.TestCase):
         self.assertEqual(dest, u'foo.caf\xe9')
 
 
+class ItemFormattedMappingTest(_common.LibTestCase):
+    def test_formatted_item_value(self):
+        formatted = self.i._formatted_mapping()
+        self.assertEqual(formatted['artist'], 'the artist')
+
+    def test_get_unset_field(self):
+        formatted = self.i._formatted_mapping()
+        with self.assertRaises(KeyError):
+            formatted['other_field']
+
+    def test_get_method_with_none_default(self):
+        formatted = self.i._formatted_mapping()
+        self.assertIsNone(formatted.get('other_field'))
+
+    def test_get_method_with_specified_default(self):
+        formatted = self.i._formatted_mapping()
+        self.assertEqual(formatted.get('other_field', 'default'), 'default')
+
+    def test_album_field_overrides_item_field(self):
+        # Make the album inconsistent with the item.
+        album = self.lib.add_album([self.i])
+        album.album = 'foo'
+        album.store()
+        self.i.album = 'bar'
+        self.i.store()
+
+        # Ensure the album takes precedence.
+        formatted = self.i._formatted_mapping()
+        self.assertEqual(formatted['album'], 'foo')
+
+    def test_artist_falls_back_to_albumartist(self):
+        self.i.artist = ''
+        formatted = self.i._formatted_mapping()
+        self.assertEqual(formatted['artist'], 'the album artist')
+
+    def test_albumartist_falls_back_to_artist(self):
+        self.i.albumartist = ''
+        formatted = self.i._formatted_mapping()
+        self.assertEqual(formatted['albumartist'], 'the artist')
+
+    def test_both_artist_and_albumartist_empty(self):
+        self.i.artist = ''
+        self.i.albumartist = ''
+        formatted = self.i._formatted_mapping()
+        self.assertEqual(formatted['albumartist'], '')
+
+
 class PathFormattingMixin(object):
     """Utilities for testing path formatting."""
     def _setf(self, fmt):
@@ -723,8 +770,8 @@ class AlbumInfoTest(_common.TestCase):
 
     def test_album_items_consistent(self):
         ai = self.lib.get_album(self.i)
-        for item in ai.items():
-            if item.id == self.i.id:
+        for i in ai.items():
+            if i.id == self.i.id:
                 break
         else:
             self.fail("item not found")

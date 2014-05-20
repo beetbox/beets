@@ -281,6 +281,16 @@ class FormattedMappingTest(_common.TestCase):
         with self.assertRaises(KeyError):
             formatted['other_field']
 
+    def test_get_method_with_none_default(self):
+        model = TestModel1()
+        formatted = model._formatted_mapping()
+        self.assertIsNone(formatted.get('other_field'))
+
+    def test_get_method_with_specified_default(self):
+        model = TestModel1()
+        formatted = model._formatted_mapping()
+        self.assertEqual(formatted.get('other_field', 'default'), 'default')
+
 
 class ParseTest(_common.TestCase):
     def test_parse_fixed_field(self):
