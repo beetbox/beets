@@ -590,13 +590,16 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
                 if key in Album.item_keys or key not in item._fields.keys():
                     self.album_keys.append(key)
 
-    def get(self, key):
+    def get(self, key, default=None):
         if key in self.album_keys:
             return self.album._get_formatted(key, self.for_path)
         elif key in self.model_keys:
             return self.model._get_formatted(key, self.for_path)
         else:
-            raise KeyError(key)
+            if default is None:
+                raise KeyError(key)
+            else:
+                return default
 
     def __getitem__(self, key):
         value = self.get(key)
