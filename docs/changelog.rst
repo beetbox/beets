@@ -16,6 +16,8 @@ Changelog
   Google Image Search. Thanks to Lemutar.
 * :doc:`/plugins/play`: The ``command`` config option can now contain
   arguments (rather than just an executable). Thanks to Alessandro Ghedini.
+* Fix an error when using the :ref:`modify-cmd` command to remove a flexible
+  attribute. Thanks to Pierre Rust.
 
 
 1.3.6 (May 10, 2014)
