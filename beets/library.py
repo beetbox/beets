@@ -366,7 +366,7 @@ class Item(LibModel):
         else:
             path = normpath(path)
         try:
-            mediafile = MediaFile(path)
+            mediafile = MediaFile(syspath(path))
         except (OSError, IOError) as exc:
             raise ReadError(self.path, exc)
 
