@@ -548,8 +548,10 @@ class ImportTask(object):
         """
         self.replaced_items = defaultdict(list)
         for item in self.imported_items():
-            dup_items = lib.items(dbcore.query.BytesQuery('path', item.path))
-            self.replaced_items[item] = list(dup_items)
+            dup_items = list(lib.items(
+                dbcore.query.BytesQuery('path', item.path)
+            ))
+            self.replaced_items[item] = dup_items
             for dup_item in dup_items:
                 log.debug('replacing item %i: %s' %
                           (dup_item.id, displayable_path(item.path)))
