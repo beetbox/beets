@@ -25,7 +25,7 @@ from beets import util
 
 def info(paths):
     # Set up fields to output.
-    fields = list(mediafile.MediaFile.fields())
+    fields = list(mediafile.MediaFile.readable_fields())
     fields.remove('art')
     fields.remove('images')
 
