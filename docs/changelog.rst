@@ -4,20 +4,29 @@ Changelog
 1.3.7 (in development)
 ----------------------
 
+New stuff
+
 * The new :doc:`/plugins/importadded` reads files' modification times to set
   their "added" date. Thanks to Stig Inge Lea Bjørnsen.
+* Support for AIFF files. Tags are stored as ID3 frames in one of the file's
+  IFF chunks.
+
+Little improvements and fixes:
+
 * :doc:`/plugins/web`: Lyrics now display readably with correct line breaks.
   Also, the detail view scrolls to reveal all of the lyrics. Thanks to Meet
   Udeshi.
 * Compatibility with the latest version of Mutagen, 1.23.
-* Support for AIFF files. Tags are stored as ID3 frames in one of the file's
-  IFF chunks.
 * :doc:`/plugins/fetchart`: You can now optionally search for cover art on
   Google Image Search. Thanks to Lemutar.
 * :doc:`/plugins/play`: The ``command`` config option can now contain
   arguments (rather than just an executable). Thanks to Alessandro Ghedini.
 * Fix an error when using the :ref:`modify-cmd` command to remove a flexible
   attribute. Thanks to Pierre Rust.
+* :doc:`/plugins/info`: The command now shows audio properties (e.g., bitrate)
+  in addition to metadata. Thanks Alessandro Ghedini.
+* Avoid a crash on Windows when writing to files with special characters in
+  their names.
 
 
 1.3.6 (May 10, 2014)
