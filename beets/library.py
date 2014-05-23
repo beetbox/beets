@@ -917,7 +917,7 @@ def parse_query_part(part, query_classes={}, prefixes={},
     return key, term, query_class
 
 
-def construct_query_part(query_part, model_cls):
+def construct_query_part(model_cls, prefixes, query_part):
     """Create a query from a single query component, `query_part`, for
     querying instances of `model_cls`. Return a `Query` instance.
     """
@@ -927,8 +927,6 @@ def construct_query_part(query_part, model_cls):
 
     # Set up and parse the string.
     query_classes = dict((k, t.query) for (k, t) in model_cls._fields.items())
-    prefixes = {':': dbcore.query.RegexpQuery}
-    prefixes.update(plugins.queries())
     key, pattern, query_class = \
         parse_query_part(query_part, query_classes, prefixes)
 
@@ -952,22 +950,23 @@ def construct_query_part(query_part, model_cls):
     return query_class(key.lower(), pattern, key in model_cls._fields)
 
 
-def query_from_strings(query_cls, model_cls, query_parts):
+def query_from_strings(query_cls, model_cls, prefixes, query_parts):
     """Creates a collection query of type `query_cls` from a list of
     strings in the format used by parse_query_part. `model_cls`
     determines how queries are constructed from strings.
     """
     subqueries = []
     for part in query_parts:
-        subqueries.append(construct_query_part(part, model_cls))
+        subqueries.append(construct_query_part(model_cls, prefixes, part))
     if not subqueries:  # No terms in query.
         subqueries = [dbcore.query.TrueQuery()]
     return query_cls(subqueries)
 
 
-def get_query(val, model_cls):
-    """Takes a value which may be None, a query string, a query string
-    list, or a Query object, and returns a suitable Query object.
+def _get_query_helper(val, model_cls, prefixes):
+    """Take a value which may be None, a query string, a query string
+    list, or a Query object, and return a suitable Query object.
+
     `model_cls` is the subclass of Model indicating which entity this
     is a query for (i.e., Album or Item) and is used to determine which
     fields are searched.
@@ -985,11 +984,21 @@ def get_query(val, model_cls):
     if val is None:
         return dbcore.query.TrueQuery()
     elif isinstance(val, list) or isinstance(val, tuple):
-        return query_from_strings(dbcore.AndQuery, model_cls, val)
+        return query_from_strings(dbcore.AndQuery, model_cls, prefixes, val)
     elif isinstance(val, dbcore.Query):
         return val
     else:
         raise ValueError('query must be None or have type Query or str')
+
+
+def get_query(val, model_cls):
+    """Given a string or sequence or None, get a Query object.
+    """
+    # Get query types and their prefix characters.
+    prefixes = {':': dbcore.query.RegexpQuery}
+    prefixes.update(plugins.queries())
+
+    return _get_query_helper(val, model_cls, prefixes)
 
 
 # The Library: interface to the database.
