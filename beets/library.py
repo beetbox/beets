@@ -932,10 +932,7 @@ def construct_query_part(model_cls, prefixes, query_part):
 
     # No key specified.
     if key is None:
-        if os.sep in pattern and 'path' in model_cls._fields:
-            # This looks like a path.
-            return PathQuery('path', pattern)
-        elif issubclass(query_class, dbcore.FieldQuery):
+        if issubclass(query_class, dbcore.FieldQuery):
             # The query type matches a specific field, but none was
             # specified. So we use a version of the query that matches
             # any field.
@@ -963,7 +960,7 @@ def query_from_strings(query_cls, model_cls, prefixes, query_parts):
     return query_cls(subqueries)
 
 
-def _get_query_helper(val, model_cls, prefixes):
+def get_query(val, model_cls):
     """Take a value which may be None, a query string, a query string
     list, or a Query object, and return a suitable Query object.
 
@@ -971,6 +968,10 @@ def _get_query_helper(val, model_cls, prefixes):
     is a query for (i.e., Album or Item) and is used to determine which
     fields are searched.
     """
+    # Get query types and their prefix characters.
+    prefixes = {':': dbcore.query.RegexpQuery}
+    prefixes.update(plugins.queries())
+
     # Convert a single string into a list of space-separated
     # criteria.
     if isinstance(val, basestring):
@@ -984,21 +985,32 @@ def _get_query_helper(val, model_cls, prefixes):
     if val is None:
         return dbcore.query.TrueQuery()
     elif isinstance(val, list) or isinstance(val, tuple):
-        return query_from_strings(dbcore.AndQuery, model_cls, prefixes, val)
+        # Special-case path-like queries, which are non-field queries
+        # containing path separators (/).
+        if 'path' in model_cls._fields:
+            path_parts = []
+            non_path_parts = []
+            for s in val:
+                if s.find(os.sep, 0, s.find(':')) != -1:
+                    # Separator precedes colon.
+                    path_parts.append(s)
+                else:
+                    non_path_parts.append(s)
+        else:
+            path_parts = ()
+            non_path_parts = val
+
+        query = query_from_strings(dbcore.AndQuery, model_cls, prefixes,
+                                   non_path_parts)
+
+        # Add path queries to aggregate query.
+        if path_parts:
+            query.subqueries += [PathQuery('path', s) for s in path_parts]
+        return query
     elif isinstance(val, dbcore.Query):
         return val
     else:
         raise ValueError('query must be None or have type Query or str')
-
-
-def get_query(val, model_cls):
-    """Given a string or sequence or None, get a Query object.
-    """
-    # Get query types and their prefix characters.
-    prefixes = {':': dbcore.query.RegexpQuery}
-    prefixes.update(plugins.queries())
-
-    return _get_query_helper(val, model_cls, prefixes)
 
 
 # The Library: interface to the database.
