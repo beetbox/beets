@@ -27,6 +27,9 @@ Little improvements and fixes:
   in addition to metadata. Thanks Alessandro Ghedini.
 * Avoid a crash on Windows when writing to files with special characters in
   their names.
+* :doc:`/plugins/play`: Playing albums now generates filenames by default (as
+  opposed to directories) for better compatibility. The ``use_folders`` option
+  restores the old behavior. Thanks to Lucas Duailibe.
 
 
 1.3.6 (May 10, 2014)
