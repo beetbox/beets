@@ -20,6 +20,7 @@ import logging
 import shlex
 import unicodedata
 import time
+import re
 from unidecode import unidecode
 from beets.mediafile import MediaFile, MutagenError
 from beets import plugins
@@ -105,6 +106,33 @@ class PathType(types.Type):
 
         else:
             return value
+
+
+class MusicalKey(types.String):
+    """String representing the musical key of a song.
+
+    The standard format is C, Cm, C#, C#m, etc.
+    """
+    ENHARMONIC = {
+        r'db': 'c#',
+        r'eb': 'd#',
+        r'gb': 'f#',
+        r'ab': 'g#',
+        r'bb': 'a#',
+    }
+
+    def parse(self, key):
+        key = key.lower()
+        for flat, sharp in self.ENHARMONIC.items():
+            key = re.sub(flat, sharp, key)
+        key = re.sub(r'[\W\s]+minor', 'm', key)
+        return key.capitalize()
+
+    def normalize(self, key):
+        if key is None:
+            return None
+        else:
+            return self.parse(key)
 
 
 # Special path format key.
@@ -244,7 +272,7 @@ class Item(LibModel):
         'original_year':        types.PaddedInt(4),
         'original_month':       types.PaddedInt(2),
         'original_day':         types.PaddedInt(2),
-        'initial_key':          types.MusicalKey(),
+        'initial_key':          MusicalKey(),
 
         'length':      types.Float(),
         'bitrate':     types.ScaledInt(1000, u'kbps'),

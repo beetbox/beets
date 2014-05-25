@@ -14,8 +14,6 @@
 
 """Representation of type information for DBCore model fields.
 """
-import re
-
 from . import query
 from beets.util import str2bool
 
@@ -174,31 +172,3 @@ class Boolean(Type):
 
     def parse(self, string):
         return str2bool(string)
-
-
-class MusicalKey(String):
-    """String representing the musical key of a song.
-
-    The standard format is C, Cm, C#, C#m, etc.
-    """
-
-    ENHARMONIC = {
-        r'db': 'c#',
-        r'eb': 'd#',
-        r'gb': 'f#',
-        r'ab': 'g#',
-        r'bb': 'a#',
-    }
-
-    def parse(self, key):
-        key = key.lower()
-        for flat, sharp in self.ENHARMONIC.items():
-            key = re.sub(flat, sharp, key)
-        key = re.sub(r'[\W\s]+minor', 'm', key)
-        return key.capitalize()
-
-    def normalize(self, key):
-        if key is None:
-            return None
-        else:
-            return self.parse(key)
