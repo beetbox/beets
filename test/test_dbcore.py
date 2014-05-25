@@ -302,6 +302,88 @@ class ParseTest(_common.TestCase):
         self.assertEqual(value, u'2')
 
 
+class QueryParseTest(_common.TestCase):
+    def pqp(self, part):
+        return dbcore.queryparse.parse_query_part(
+            part,
+            {'year': dbcore.query.NumericQuery},
+            {':': dbcore.query.RegexpQuery},
+        )
+
+    def test_one_basic_term(self):
+        q = 'test'
+        r = (None, 'test', dbcore.query.SubstringQuery)
+        self.assertEqual(self.pqp(q), r)
+
+    def test_one_keyed_term(self):
+        q = 'test:val'
+        r = ('test', 'val', dbcore.query.SubstringQuery)
+        self.assertEqual(self.pqp(q), r)
+
+    def test_colon_at_end(self):
+        q = 'test:'
+        r = ('test', '', dbcore.query.SubstringQuery)
+        self.assertEqual(self.pqp(q), r)
+
+    def test_one_basic_regexp(self):
+        q = r':regexp'
+        r = (None, 'regexp', dbcore.query.RegexpQuery)
+        self.assertEqual(self.pqp(q), r)
+
+    def test_keyed_regexp(self):
+        q = r'test::regexp'
+        r = ('test', 'regexp', dbcore.query.RegexpQuery)
+        self.assertEqual(self.pqp(q), r)
+
+    def test_escaped_colon(self):
+        q = r'test\:val'
+        r = (None, 'test:val', dbcore.query.SubstringQuery)
+        self.assertEqual(self.pqp(q), r)
+
+    def test_escaped_colon_in_regexp(self):
+        q = r':test\:regexp'
+        r = (None, 'test:regexp', dbcore.query.RegexpQuery)
+        self.assertEqual(self.pqp(q), r)
+
+    def test_single_year(self):
+        q = 'year:1999'
+        r = ('year', '1999', dbcore.query.NumericQuery)
+        self.assertEqual(self.pqp(q), r)
+
+    def test_multiple_years(self):
+        q = 'year:1999..2010'
+        r = ('year', '1999..2010', dbcore.query.NumericQuery)
+        self.assertEqual(self.pqp(q), r)
+
+    def test_empty_query_part(self):
+        q = ''
+        r = (None, '', dbcore.query.SubstringQuery)
+        self.assertEqual(self.pqp(q), r)
+
+
+class QueryFromStringsTest(_common.TestCase):
+    def qfs(self, strings):
+        return dbcore.queryparse.query_from_strings(
+            dbcore.query.AndQuery,
+            TestModel1,
+            {':': dbcore.query.RegexpQuery},
+            strings,
+        )
+
+    def test_zero_parts(self):
+        q = self.qfs([])
+        self.assertIsInstance(q, dbcore.query.AndQuery)
+        self.assertEqual(len(q.subqueries), 1)
+        self.assertIsInstance(q.subqueries[0], dbcore.query.TrueQuery)
+
+    def test_two_parts(self):
+        q = self.qfs(['foo', 'bar:baz'])
+        self.assertIsInstance(q, dbcore.query.AndQuery)
+        self.assertEqual(len(q.subqueries), 2)
+        self.assertIsInstance(q.subqueries[0], dbcore.query.AnyFieldQuery)
+        self.assertIsInstance(q.subqueries[1], dbcore.query.SubstringQuery)
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
