@@ -25,7 +25,7 @@ import collections
 import beets
 from beets.util.functemplate import Template
 from .query import MatchQuery
-from .types import Type
+from .types import BASE_TYPE
 
 
 # Abstract base for model classes.
@@ -162,7 +162,7 @@ class Model(object):
         If the field has no explicit type, it is given the base `Type`,
         which does no conversion.
         """
-        return self._fields.get(key) or self._types.get(key) or Type()
+        return self._fields.get(key) or self._types.get(key) or BASE_TYPE
 
     def __getitem__(self, key):
         """Get the value for a field. Raise a KeyError if the field is

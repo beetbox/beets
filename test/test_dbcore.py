@@ -29,11 +29,11 @@ class TestModel1(dbcore.Model):
     _table = 'test'
     _flex_table = 'testflex'
     _fields = {
-        'id': dbcore.types.Id(),
-        'field_one': dbcore.types.Integer(),
+        'id': dbcore.types.PRIMARY_ID,
+        'field_one': dbcore.types.INTEGER,
     }
     _types = {
-        'some_float_field': dbcore.types.Float(),
+        'some_float_field': dbcore.types.FLOAT,
     }
 
     @classmethod
@@ -51,9 +51,9 @@ class TestDatabase1(dbcore.Database):
 
 class TestModel2(TestModel1):
     _fields = {
-        'id': dbcore.types.Id(),
-        'field_one': dbcore.types.Integer(),
-        'field_two': dbcore.types.Integer(),
+        'id': dbcore.types.PRIMARY_ID,
+        'field_one': dbcore.types.INTEGER,
+        'field_two': dbcore.types.INTEGER,
     }
 
 
@@ -64,10 +64,10 @@ class TestDatabase2(dbcore.Database):
 
 class TestModel3(TestModel1):
     _fields = {
-        'id': dbcore.types.Id(),
-        'field_one': dbcore.types.Integer(),
-        'field_two': dbcore.types.Integer(),
-        'field_three': dbcore.types.Integer(),
+        'id': dbcore.types.PRIMARY_ID,
+        'field_one': dbcore.types.INTEGER,
+        'field_two': dbcore.types.INTEGER,
+        'field_three': dbcore.types.INTEGER,
     }
 
 
@@ -78,11 +78,11 @@ class TestDatabase3(dbcore.Database):
 
 class TestModel4(TestModel1):
     _fields = {
-        'id': dbcore.types.Id(),
-        'field_one': dbcore.types.Integer(),
-        'field_two': dbcore.types.Integer(),
-        'field_three': dbcore.types.Integer(),
-        'field_four': dbcore.types.Integer(),
+        'id': dbcore.types.PRIMARY_ID,
+        'field_one': dbcore.types.INTEGER,
+        'field_two': dbcore.types.INTEGER,
+        'field_three': dbcore.types.INTEGER,
+        'field_four': dbcore.types.INTEGER,
     }
 
 
@@ -95,8 +95,8 @@ class AnotherTestModel(TestModel1):
     _table = 'another'
     _flex_table = 'anotherflex'
     _fields = {
-        'id': dbcore.types.Id(),
-        'foo': dbcore.types.Integer(),
+        'id': dbcore.types.PRIMARY_ID,
+        'foo': dbcore.types.INTEGER,
     }
 
 

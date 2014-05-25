@@ -172,3 +172,14 @@ class Boolean(Type):
 
     def parse(self, string):
         return str2bool(string)
+
+
+# Shared instances of common types.
+BASE_TYPE = Type()
+INTEGER = Integer()
+PRIMARY_ID = Id(True)
+FOREIGN_ID = Id(False)
+FLOAT = Float()
+NULL_FLOAT = NullFloat()
+STRING = String()
+BOOLEAN = Boolean()
