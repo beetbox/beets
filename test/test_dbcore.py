@@ -32,6 +32,9 @@ class TestModel1(dbcore.Model):
         'id': dbcore.types.Id(),
         'field_one': dbcore.types.Integer(),
     }
+    _types = {
+        'some_float_field': dbcore.types.Float(),
+    }
 
     @classmethod
     def _getters(cls):
@@ -242,6 +245,11 @@ class ModelTest(_common.TestCase):
         model.foo = None
         self.assertEqual(model.foo, None)
 
+    def test_normalization_for_typed_flex_fields(self):
+        model = TestModel1()
+        model.some_float_field = None
+        self.assertEqual(model.some_float_field, 0.0)
+
 
 class FormatTest(_common.TestCase):
     def test_format_fixed_field(self):
@@ -267,6 +275,12 @@ class FormatTest(_common.TestCase):
         model = TestModel1()
         value = model._get_formatted('other_field')
         self.assertEqual(value, u'')
+
+    def test_format_typed_flex_field(self):
+        model = TestModel1()
+        model.some_float_field = 3.14159265358979
+        value = model._get_formatted('some_float_field')
+        self.assertEqual(value, u'3.1')
 
 
 class FormattedMappingTest(_common.TestCase):
@@ -295,7 +309,13 @@ class FormattedMappingTest(_common.TestCase):
 class ParseTest(_common.TestCase):
     def test_parse_fixed_field(self):
         value = TestModel1._parse('field_one', u'2')
+        self.assertIsInstance(value, int)
         self.assertEqual(value, 2)
+
+    def test_parse_flex_field(self):
+        value = TestModel1._parse('some_float_field', u'2')
+        self.assertIsInstance(value, float)
+        self.assertEqual(value, 2.0)
 
     def test_parse_untyped_field(self):
         value = TestModel1._parse('field_nine', u'2')
@@ -382,6 +402,14 @@ class QueryFromStringsTest(_common.TestCase):
         self.assertEqual(len(q.subqueries), 2)
         self.assertIsInstance(q.subqueries[0], dbcore.query.AnyFieldQuery)
         self.assertIsInstance(q.subqueries[1], dbcore.query.SubstringQuery)
+
+    def test_parse_fixed_type_query(self):
+        q = self.qfs(['field_one:2..3'])
+        self.assertIsInstance(q.subqueries[0], dbcore.query.NumericQuery)
+
+    def test_parse_flex_type_query(self):
+        q = self.qfs(['some_float_field:2..3'])
+        self.assertIsInstance(q.subqueries[0], dbcore.query.NumericQuery)
 
 
 def suite():

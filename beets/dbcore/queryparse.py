@@ -15,6 +15,7 @@
 """Parsing of strings into DBCore queries.
 """
 import re
+import itertools
 from . import query
 
 
@@ -83,8 +84,13 @@ def construct_query_part(model_cls, prefixes, query_part):
     if not query_part:
         return query.TrueQuery()
 
-    # Set up and parse the string.
-    query_classes = dict((k, t.query) for (k, t) in model_cls._fields.items())
+    # Get the query classes for each possible field.
+    query_classes = {}
+    for k, t in itertools.chain(model_cls._fields.items(),
+                                model_cls._types.items()):
+        query_classes[k] = t.query
+
+    # Parse the string.
     key, pattern, query_class = \
         parse_query_part(query_part, query_classes, prefixes)
 

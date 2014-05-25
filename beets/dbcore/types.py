@@ -28,11 +28,11 @@ class Type(object):
     field.
     """
 
-    sql = None
+    sql = u'TEXT'
     """The SQLite column type for the value.
     """
 
-    query = None
+    query = query.SubstringQuery
     """The `Query` subclass to be used when querying the field.
     """
 
@@ -44,20 +44,28 @@ class Type(object):
         """Given a value of this type, produce a Unicode string
         representing the value. This is used in template evaluation.
         """
-        raise NotImplementedError()
+        # Fallback formatter. Convert to Unicode at all cost.
+        if value is None:
+            return u''
+        elif isinstance(value, basestring):
+            if isinstance(value, bytes):
+                return value.decode('utf8', 'ignore')
+            else:
+                return value
+        else:
+            return unicode(value)
 
     def parse(self, string):
         """Parse a (possibly human-written) string and return the
         indicated value of this type.
         """
-        raise NotImplementedError()
+        return string
 
     def normalize(self, value):
         """Given a value that will be assigned into a field of this
         type, normalize the value to have the appropriate type. This
         base implementation only reinterprets `None`.
         """
-        # TODO gradually remove the normalization of None.
         if value is None:
             return self.null
         else:

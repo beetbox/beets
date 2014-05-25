@@ -25,6 +25,7 @@ import collections
 import beets
 from beets.util.functemplate import Template
 from .query import MatchQuery
+from .types import Type
 
 
 # Abstract base for model classes.
@@ -65,7 +66,7 @@ class Model(object):
 
     _fields = {}
     """A mapping indicating available "fixed" fields on this type. The
-    keys are field names and the values are Type objects.
+    keys are field names and the values are `Type` objects.
     """
 
     _bytes_keys = ()
@@ -76,6 +77,10 @@ class Model(object):
     _search_fields = ()
     """The fields that should be queried by default by unqualified query
     terms.
+    """
+
+    _types = {}
+    """Optional Types for non-fixed (i.e., flexible and computed) fields.
     """
 
     @classmethod
@@ -120,7 +125,10 @@ class Model(object):
             for key, value in fixed_values.items():
                 obj._values_fixed[key] = cls._fields[key].normalize(value)
         if flex_values:
-            obj._values_flex.update(flex_values)
+            for key, value in flex_values.items():
+                if key in cls._types:
+                    value = cls._types[key].normalize(value)
+                obj._values_flex[key] = value
         return obj
 
     def __repr__(self):
@@ -147,6 +155,15 @@ class Model(object):
 
     # Essential field accessors.
 
+    @classmethod
+    def _type(self, key):
+        """Get the type of a field, a `Type` instance.
+
+        If the field has no explicit type, it is given the base `Type`,
+        which does no conversion.
+        """
+        return self._fields.get(key) or self._types.get(key) or Type()
+
     def __getitem__(self, key):
         """Get the value for a field. Raise a KeyError if the field is
         not available.
@@ -164,13 +181,14 @@ class Model(object):
     def __setitem__(self, key, value):
         """Assign the value for a field.
         """
-        # Choose where to place the value. If the corresponding field
-        # has a type, filter the value.
+        # Choose where to place the value.
         if key in self._fields:
             source = self._values_fixed
-            value = self._fields[key].normalize(value)
         else:
             source = self._values_flex
+
+        # If the field has a type, filter the value.
+        value = self._type(key).normalize(value)
 
         # Assign value and possibly mark as dirty.
         old_value = source.get(key)
@@ -366,25 +384,15 @@ class Model(object):
     def _format(cls, key, value, for_path=False):
         """Format a value as the given field for this model.
         """
-        # Format the value as a string according to its type, if any.
-        if key in cls._fields:
-            value = cls._fields[key].format(value)
-            # Formatting must result in a string. To deal with
-            # Python2isms, implicitly convert ASCII strings.
-            assert isinstance(value, basestring), \
-                u'field formatter must produce strings'
-            if isinstance(value, bytes):
-                value = value.decode('utf8', 'ignore')
+        # Format the value as a string according to its type.
+        value = cls._type(key).format(value)
 
-        elif not isinstance(value, unicode):
-            # Fallback formatter. Convert to unicode at all cost.
-            if value is None:
-                value = u''
-            elif isinstance(value, basestring):
-                if isinstance(value, bytes):
-                    value = value.decode('utf8', 'ignore')
-            else:
-                value = unicode(value)
+        # Formatting must result in a string. To deal with
+        # Python2isms, implicitly convert ASCII strings.
+        assert isinstance(value, basestring), \
+            u'field formatter must produce strings'
+        if isinstance(value, bytes):
+            value = value.decode('utf8', 'ignore')
 
         if for_path:
             sep_repl = beets.config['path_sep_replace'].get(unicode)
@@ -439,12 +447,7 @@ class Model(object):
         if not isinstance(string, basestring):
             raise TypeError("_parse() argument must be a string")
 
-        typ = cls._fields.get(key)
-        if typ:
-            return typ.parse(string)
-        else:
-            # Fall back to unparsed string.
-            return string
+        return cls._type(key).parse(string)
 
 
 class FormattedMapping(collections.Mapping):
