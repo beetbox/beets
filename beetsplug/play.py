@@ -77,7 +77,8 @@ def play_music(lib, opts, args):
     if len(selection) > 100:
         ui.print_(ui.colorize(
             'yellow',
-            'You are about to queue {0} {1}.'.format(len(selection), item_type)))
+            'You are about to queue {0} {1}.'.format(len(selection), item_type)
+        ))
 
         if ui.input_options(('Continue', 'Abort')) == 'a':
             return
