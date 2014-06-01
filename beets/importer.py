@@ -839,8 +839,9 @@ def read_tasks(session):
             all_items = []
             for _, items in autotag.albums_in_dir(toppath):
                 all_items += items
-            yield ImportTask(toppath, [toppath], all_items)
-            yield SentinelImportTask(toppath)
+            if all_items:
+                yield ImportTask(toppath, [toppath], all_items)
+                yield SentinelImportTask(toppath)
             continue
 
         resume_dir = None

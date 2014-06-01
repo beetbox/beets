@@ -30,6 +30,7 @@ Little improvements and fixes:
 * :doc:`/plugins/play`: Playing albums now generates filenames by default (as
   opposed to directories) for better compatibility. The ``use_folders`` option
   restores the old behavior. Thanks to Lucas Duailibe.
+* Fix an error when importing an empty directory with the ``--flat`` option.
 
 
 1.3.6 (May 10, 2014)
