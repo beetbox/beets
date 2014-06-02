@@ -232,11 +232,11 @@ class TestHelper(object):
             items.append(item)
         return items
 
-    def add_album_fixture(self, track_count=1):
+    def add_album_fixture(self, track_count=1, ext='mp3'):
         """Add an album with files to the database.
         """
         items = []
-        path = os.path.join(_common.RSRC, 'full.mp3')
+        path = os.path.join(_common.RSRC, 'full.' + ext)
         for i in range(track_count):
             item = Item.from_path(str(path))
             item.album = u'\u00e4lbum'  # Check unicode paths
