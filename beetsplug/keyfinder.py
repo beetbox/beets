@@ -66,7 +66,7 @@ class KeyFinderPlugin(BeetsPlugin):
                 continue
 
             item['initial_key'] = key
-            log.debug('added computed initial key {0} for {1}'
+            log.debug(u'added computed initial key {0} for {1}'
                       .format(key, util.displayable_path(item.path)))
             item.try_write()
             item.store()
