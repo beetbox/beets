@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2014, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -13,6 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Allows beets to embed album art into file metadata."""
+import os.path
 import logging
 import imghdr
 
@@ -25,36 +26,6 @@ from beets.util.artresizer import ArtResizer
 from beets import config
 
 log = logging.getLogger('beets')
-
-
-def _embed(image_path, audio_paths, maxwidth=0):
-    """Embed an image file into each file audio file.
-    """
-    if maxwidth:
-        image_path = ArtResizer.shared.resize(maxwidth, syspath(image_path))
-
-    try:
-        with open(syspath(image_path), 'rb') as f:
-            data = f.read()
-    except IOError as exc:
-        log.error(u'embedart: could not read image file: {0}'.format(exc))
-        return
-    image = mediafile.Image(data, type=mediafile.ImageType.front)
-
-    # Add art to each file.
-    log.debug('Embedding album art.')
-
-    for path in audio_paths:
-        try:
-            f = mediafile.MediaFile(syspath(path))
-            f.images = [image]
-            f.save(config['id3v23'].get(bool))
-        except (OSError, IOError, mediafile.UnreadableFileError,
-                mediafile.MutagenError) as exc:
-            log.error('Could not embed art in {0}: {1}'.format(
-                displayable_path(path), exc
-            ))
-            continue
 
 
 class EmbedCoverArtPlugin(BeetsPlugin):
@@ -80,13 +51,17 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         embed_cmd.parser.add_option(
             '-f', '--file', metavar='PATH', help='the image file to embed'
         )
+        maxwidth = config['embedart']['maxwidth'].get(int)
 
         def embed_func(lib, opts, args):
             if opts.file:
                 imagepath = normpath(opts.file)
-                embed(lib, imagepath, decargs(args))
+                for item in lib.items(decargs(args)):
+                    embed_item(item, imagepath, maxwidth)
             else:
-                embed_current(lib, decargs(args))
+                for album in lib.albums(decargs(args)):
+                    embed_album(album, maxwidth)
+
         embed_cmd.func = embed_func
 
         # Extract command.
@@ -111,38 +86,58 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         return [embed_cmd, extract_cmd, clear_cmd]
 
 
-# 'embedart' command with --file argument.
+@EmbedCoverArtPlugin.listen('album_imported')
+def album_imported(lib, album):
+    """Automatically embed art into imported albums.
+    """
+    if album.artpath and config['embedart']['auto']:
+        embed_album(album, config['embedart']['maxwidth'].get(int))
 
-def embed(lib, imagepath, query):
-    albums = lib.albums(query)
-    for i_album in albums:
-        album = i_album
-        break
-    else:
-        log.error('No album matches query.')
+
+def embed_item(item, imagepath, maxwidth=None, itempath=None):
+    """Embed an image into the item's media file.
+    """
+    try:
+        item['images'] = [_mediafile_image(imagepath, maxwidth)]
+        item.try_write(itempath)
+    except IOError as exc:
+        log.error(u'embedart: could not read image file: {0}'.format(exc))
+    finally:
+        # We don't want to store the image in the database
+        del item['images']
+
+
+def embed_album(album, maxwidth=None):
+    """Embed album art into all of the album's items.
+    """
+    imagepath = album.artpath
+    if not imagepath:
+        log.info(u'No album art present: {0} - {1}'.
+                 format(album.albumartist, album.album))
+        return
+    if not os.path.isfile(imagepath):
+        log.error(u'Album art not found at {0}'
+                  .format(imagepath))
         return
 
-    log.info(u'Embedding album art into {0.albumartist} - {0.album}.'.format(
-        album
-    ))
-    _embed(imagepath, [i.path for i in album.items()],
-           config['embedart']['maxwidth'].get(int))
+    log.info(u'Embedding album art into {0.albumartist} - {0.album}.'
+             .format(album))
+
+    for item in album.items():
+        embed_item(item, imagepath, maxwidth)
 
 
-# 'embedart' command without explicit file.
+def _mediafile_image(image_path, maxwidth=None):
+    """Return a `mediafile.Image` object for the path.
 
-def embed_current(lib, query):
-    albums = lib.albums(query)
-    for album in albums:
-        if not album.artpath:
-            log.info(u'No album art present: {0} - {1}'.
-                     format(album.albumartist, album.album))
-            continue
+    If maxwidth is set the image is resized if necessary.
+    """
+    if maxwidth:
+        image_path = ArtResizer.shared.resize(maxwidth, syspath(image_path))
 
-        log.info(u'Embedding album art into {0} - {1}'.
-                 format(album.albumartist, album.album))
-        _embed(album.artpath, [i.path for i in album.items()],
-               config['embedart']['maxwidth'].get(int))
+    with open(syspath(image_path), 'rb') as f:
+        data = f.read()
+    return mediafile.Image(data, type=mediafile.ImageType.front)
 
 
 # 'extractart' command.
@@ -196,12 +191,3 @@ def clear(lib, query):
             continue
         mf.art = None
         mf.save(config['id3v23'].get(bool))
-
-
-@EmbedCoverArtPlugin.listen('album_imported')
-def album_imported(lib, album):
-    """Automatically embed art into imported albums.
-    """
-    if album.artpath and config['embedart']['auto']:
-        _embed(album.artpath, [i.path for i in album.items()],
-               config['embedart']['maxwidth'].get(int))

@@ -24,7 +24,7 @@ import pipes
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
-from beetsplug.embedart import _embed
+from beetsplug.embedart import embed_item
 
 log = logging.getLogger('beets')
 _fs_lock = threading.Lock()
@@ -187,15 +187,8 @@ def convert_item(dest_dir, keep_new, path_formats):
 
         if config['convert']['embed']:
             album = item.get_album()
-            if album:
-                artpath = album.artpath
-                if artpath:
-                    try:
-                        _embed(artpath, [converted])
-                    except IOError as exc:
-                        log.warn(u'could not embed cover art in {0}: {1}'
-                                 .format(util.displayable_path(item.path),
-                                         exc))
+            if album and album.artpath:
+                embed_item(item, album.artpath, itempath=converted)
 
         plugins.send('after_convert', item=item, dest=dest, keepnew=keep_new)
 
