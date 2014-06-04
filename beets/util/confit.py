@@ -21,6 +21,8 @@ import pkgutil
 import sys
 import yaml
 import types
+import collections
+import re
 try:
     from collections import OrderedDict
 except ImportError:
@@ -74,13 +76,18 @@ class NotFoundError(ConfigError):
     """
 
 
-class ConfigTypeError(ConfigError, TypeError):
+class ConfigValueError(ConfigError):
+    """The value in the configuration is illegal."""
+
+
+class ConfigTypeError(ConfigValueError):
     """The value in the configuration did not match the expected type.
     """
 
 
-class ConfigValueError(ConfigError, ValueError):
-    """The value in the configuration is illegal."""
+class ConfigTemplateError(ConfigError):
+    """Base class for exceptions raised because of an invalid template.
+    """
 
 
 class ConfigReadError(ConfigError):
@@ -316,98 +323,6 @@ class ConfigView(object):
 
     # Validation and conversion.
 
-    def get(self, typ=None):
-        """Returns the canonical value for the view, checked against the
-        passed-in type. If the value is not an instance of the given
-        type, a ConfigTypeError is raised. May also raise a
-        NotFoundError.
-        """
-        value, _ = self.first()
-
-        if typ is not None:
-            if not isinstance(typ, TYPE_TYPES):
-                raise TypeError('argument to get() must be a type')
-
-            if not isinstance(value, typ):
-                raise ConfigTypeError(
-                    "{0} must be of type {1}, not {2}".format(
-                        self.name, typ.__name__, type(value).__name__
-                    )
-                )
-
-        return value
-
-    def as_filename(self):
-        """Get a string as a normalized as an absolute, tilde-free path.
-
-        Relative paths are relative to the configuration directory (see
-        the `config_dir` method) if they come from a file. Otherwise,
-        they are relative to the current working directory. This helps
-        attain the expected behavior when using command-line options.
-        """
-        path, source = self.first()
-        if not isinstance(path, BASESTRING):
-            raise ConfigTypeError('{0} must be a filename, not {1}'.format(
-                self.name, type(path).__name__
-            ))
-        path = os.path.expanduser(STRING(path))
-
-        if not os.path.isabs(path) and source.filename:
-            # From defaults: relative to the app's directory.
-            path = os.path.join(self.root().config_dir(), path)
-
-        return os.path.abspath(path)
-
-    def as_choice(self, choices):
-        """Ensure that the value is among a collection of choices and
-        return it. If `choices` is a dictionary, then return the
-        corresponding value rather than the value itself (the key).
-        """
-        value = self.get()
-
-        if value not in choices:
-            raise ConfigValueError(
-                '{0} must be one of {1}, not {2}'.format(
-                    self.name, repr(list(choices)), repr(value)
-                )
-            )
-
-        if isinstance(choices, dict):
-            return choices[value]
-        else:
-            return value
-
-    def as_number(self):
-        """Ensure that a value is of numeric type."""
-        value = self.get()
-        if isinstance(value, NUMERIC_TYPES):
-            return value
-        raise ConfigTypeError(
-            '{0} must be numeric, not {1}'.format(
-                self.name, type(value).__name__
-            )
-        )
-
-    def as_str_seq(self):
-        """Get the value as a list of strings. The underlying configured
-        value can be a sequence or a single string. In the latter case,
-        the string is treated as a white-space separated list of words.
-        """
-        value = self.get()
-        if isinstance(value, bytes):
-            value = value.decode('utf8', 'ignore')
-
-        if isinstance(value, STRING):
-            return value.split()
-        else:
-            try:
-                return list(value)
-            except TypeError:
-                raise ConfigTypeError(
-                    '{0} must be a whitespace-separated string or '
-                    'a list'.format(self.name)
-                )
-
     def flatten(self):
         """Create a hierarchy of OrderedDicts containing the data from
         this view, recursively reifying all views to get their
@@ -420,6 +335,35 @@ class ConfigView(object):
             except ConfigTypeError:
                 od[key] = view.get()
         return od
+
+    def get(self, template=None):
+        """Retrieve the value for this view according to the template.
+
+        The `template` against which the values are checked can be
+        anything convertible to a `Template` using `as_template`. This
+        means you can pass in a default integer or string value, for
+        example, or a type to just check that something matches the type
+        you expect.
+
+        May raise a `ConfigValueError` (or its subclass,
+        `ConfigTypeError`) or a `NotFoundError` when the configuration
+        doesn't satisfy the template.
+        """
+        return as_template(template).value(self, template)
+
+    # Old validation methods (deprecated).
+
+    def as_filename(self):
+        return self.get(Filename())
+
+    def as_choice(self, choices):
+        return self.get(Choice(choices))
+
+    def as_number(self):
+        return self.get(Number())
+
+    def as_str_seq(self):
+        return self.get(StrSeq())
 
 
 class RootView(ConfigView):
@@ -909,3 +853,398 @@ class LazyConfig(Configuration):
         del self.sources[:]
         self._lazy_suffix = []
         self._lazy_prefix = []
+
+
+# "Validated" configuration views: experimental!
+
+
+REQUIRED = object()
+"""A sentinel indicating that there is no default value and an exception
+should be raised when the value is missing.
+"""
+
+
+class Template(object):
+    """A value template for configuration fields.
+
+    The template works like a type and instructs Confit about how to
+    interpret a deserialized YAML value. This includes type conversions,
+    providing a default value, and validating for errors. For example, a
+    filepath type might expand tildes and check that the file exists.
+    """
+    def __init__(self, default=REQUIRED):
+        """Create a template with a given default value.
+
+        If `default` is the sentinel `REQUIRED` (as it is by default),
+        then an error will be raised when a value is missing. Otherwise,
+        missing values will instead return `default`.
+        """
+        self.default = default
+
+    def __call__(self, view):
+        """Invoking a template on a view gets the view's value according
+        to the template.
+        """
+        return self.value(view, self)
+
+    def value(self, view, template=None):
+        """Get the value for a `ConfigView`.
+
+        May raise a `NotFoundError` if the value is missing (and the
+        template requires it) or a `ConfigValueError` for invalid values.
+        """
+        if view.exists():
+            value, _ = view.first()
+            return self.convert(value, view)
+        elif self.default is REQUIRED:
+            # Missing required value. This is an error.
+            raise NotFoundError("{0} not found".format(view.name))
+        else:
+            # Missing value, but not required.
+            return self.default
+
+    def convert(self, value, view):
+        """Convert the YAML-deserialized value to a value of the desired
+        type.
+
+        Subclasses should override this to provide useful conversions.
+        May raise a `ConfigValueError` when the configuration is wrong.
+        """
+        # Default implementation does no conversion.
+        return value
+
+    def fail(self, message, view, type_error=False):
+        """Raise an exception indicating that a value cannot be
+        accepted.
+
+        `type_error` indicates whether the error is due to a type
+        mismatch rather than a malformed value. In this case, a more
+        specific exception is raised.
+        """
+        exc_class = ConfigTypeError if type_error else ConfigValueError
+        raise exc_class(
+            '{0}: {1}'.format(view.name, message)
+        )
+
+    def __repr__(self):
+        return '{0}({1})'.format(
+            type(self).__name__,
+            '' if self.default is REQUIRED else repr(self.default),
+        )
+
+
+class Integer(Template):
+    """An integer configuration value template.
+    """
+    def convert(self, value, view):
+        """Check that the value is an integer. Floats are rounded.
+        """
+        if isinstance(value, int):
+            return value
+        elif isinstance(value, float):
+            return int(value)
+        else:
+            self.fail('must be a number', view, True)
+
+
+class Number(Template):
+    """A numeric type: either an integer or a floating-point number.
+    """
+    def convert(self, value, view):
+        """Check that the value is an int or a float.
+        """
+        if isinstance(value, NUMERIC_TYPES):
+            return value
+        else:
+            self.fail(
+                'must be numeric, not {0}'.format(type(value).__name__),
+                view,
+                True
+            )
+
+
+class MappingTemplate(Template):
+    """A template that uses a dictionary to specify other types for the
+    values for a set of keys and produce a validated `AttrDict`.
+    """
+    def __init__(self, mapping):
+        """Create a template according to a dict (mapping). The
+        mapping's values should themselves either be Types or
+        convertible to Types.
+        """
+        subtemplates = {}
+        for key, typ in mapping.items():
+            subtemplates[key] = as_template(typ)
+        self.subtemplates = subtemplates
+
+    def value(self, view, template=None):
+        """Get a dict with the same keys as the template and values
+        validated according to the value types.
+        """
+        out = AttrDict()
+        for key, typ in self.subtemplates.items():
+            out[key] = typ.value(view[key], self)
+        return out
+
+    def __repr__(self):
+        return 'MappingTemplate({0})'.format(repr(self.subtemplates))
+
+
+class String(Template):
+    """A string configuration value template.
+    """
+    def __init__(self, default=REQUIRED, pattern=None):
+        """Create a template with the added optional `pattern` argument,
+        a regular expression string that the value should match.
+        """
+        super(String, self).__init__(default)
+        self.pattern = pattern
+        if pattern:
+            self.regex = re.compile(pattern)
+
+    def convert(self, value, view):
+        """Check that the value is a string and matches the pattern.
+        """
+        if isinstance(value, BASESTRING):
+            if self.pattern and not self.regex.match(value):
+                self.fail(
+                    "must match the pattern {0}".format(self.pattern),
+                    view
+                )
+            return value
+        else:
+            self.fail('must be a string', view, True)
+
+
+class Choice(Template):
+    """A template that permits values from a sequence of choices.
+    """
+    def __init__(self, choices):
+        """Create a template that validates any of the values from the
+        iterable `choices`.
+
+        If `choices` is a map, then the corresponding value is emitted.
+        Otherwise, the value itself is emitted.
+        """
+        self.choices = choices
+
+    def convert(self, value, view):
+        """Ensure that the value is among the choices (and remap if the
+        choices are a mapping).
+        """
+        if value not in self.choices:
+            self.fail(
+                'must be one of {0}, not {1}'.format(
+                    repr(list(self.choices)), repr(value)
+                ),
+                view
+            )
+
+        if isinstance(self.choices, collections.Mapping):
+            return self.choices[value]
+        else:
+            return value
+
+    def __repr__(self):
+        return 'Choice({0!r})'.format(self.choices)
+
+
+class StrSeq(Template):
+    """A template for values that are lists of strings.
+
+    Validates both actual YAML string lists and whitespace-separated
+    strings.
+    """
+    def convert(self, value, view):
+        if isinstance(value, bytes):
+            value = value.decode('utf8', 'ignore')
+
+        if isinstance(value, STRING):
+            return value.split()
+        else:
+            try:
+                value = list(value)
+            except TypeError:
+                self.fail('must be a whitespace-separated string or a list',
+                          view, True)
+            if all(isinstance(x, BASESTRING) for x in value):
+                return value
+            else:
+                self.fail('must be a list of strings', view, True)
+
+
+class Filename(Template):
+    """A template that validates strings as filenames.
+
+    Filenames are returned as absolute, tilde-free paths.
+
+    Relative paths are relative to the template's `cwd` argument
+    when it is specified, then the configuration directory (see
+    the `config_dir` method) if they come from a file. Otherwise,
+    they are relative to the current working directory. This helps
+    attain the expected behavior when using command-line options.
+    """
+    def __init__(self, default=REQUIRED, cwd=None, relative_to=None):
+        """ `relative_to` is the name of a sibling value that is
+        being validated at the same time.
+        """
+        super(Filename, self).__init__(default)
+        self.cwd, self.relative_to = cwd, relative_to
+
+    def __repr__(self):
+        args = []
+
+        if self.default is not REQUIRED:
+            args.append(repr(self.default))
+
+        if self.cwd is not None:
+            args.append('cwd=' + repr(self.cwd))
+
+        if self.relative_to is not None:
+            args.append('relative_to=' + repr(self.relative_to))
+
+        return 'Filename({0})'.format(', '.join(args))
+
+    def resolve_relative_to(self, view, template):
+        if not isinstance(template, (collections.Mapping, MappingTemplate)):
+            # disallow config.get(Filename(relative_to='foo'))
+            raise ConfigTemplateError(
+                'relative_to may only be used when getting multiple values.'
+            )
+
+        elif self.relative_to == view.key:
+            raise ConfigTemplateError(
+                '{0} is relative to itself'.format(view.name)
+            )
+
+        elif self.relative_to not in view.parent.keys():
+            # self.relative_to is not in the config
+            self.fail(
+                (
+                    'needs sibling value "{0}" to expand relative path'
+                ).format(self.relative_to),
+                view
+            )
+
+        old_template = {}
+        old_template.update(template.subtemplates)
+
+        # save time by skipping MappingTemplate's init loop
+        next_template = MappingTemplate({})
+        next_relative = self.relative_to
+
+        # gather all the needed templates and nothing else
+        while next_relative is not None:
+            try:
+                # pop to avoid infinite loop because of recursive
+                # relative paths
+                rel_to_template = old_template.pop(next_relative)
+            except KeyError:
+                if next_relative in template.subtemplates:
+                    # we encountered this config key previously
+                    raise ConfigTemplateError((
+                        '{0} and {1} are recursively relative'
+                    ).format(view.name, self.relative_to))
+                else:
+                    raise ConfigTemplateError((
+                        'missing template for {0}, needed to expand {1}\'s' +
+                        'relative path'
+                    ).format(self.relative_to, view.name))
+
+            next_template.subtemplates[next_relative] = rel_to_template
+            next_relative = rel_to_template.relative_to
+
+        return view.parent.get(next_template)[self.relative_to]
+
+    def value(self, view, template=None):
+        path, source = view.first()
+        if not isinstance(path, BASESTRING):
+            self.fail(
+                'must be a filename, not {0}'.format(type(path).__name__),
+                view,
+                True
+            )
+        path = os.path.expanduser(STRING(path))
+
+        if not os.path.isabs(path):
+            if self.cwd is not None:
+                # relative to the template's argument
+                path = os.path.join(self.cwd, path)
+
+            elif self.relative_to is not None:
+                path = os.path.join(
+                    self.resolve_relative_to(view, template),
+                    path,
+                )
+
+            elif source.filename:
+                # From defaults: relative to the app's directory.
+                path = os.path.join(view.root().config_dir(), path)
+
+        return os.path.abspath(path)
+
+
+class TypeTemplate(Template):
+    """A simple template that checks that a value is an instance of a
+    desired Python type.
+    """
+    def __init__(self, typ, default=REQUIRED):
+        """Create a template that checks that the value is an instance
+        of `typ`.
+        """
+        super(TypeTemplate, self).__init__(default)
+        self.typ = typ
+
+    def convert(self, value, view):
+        if not isinstance(value, self.typ):
+            self.fail(
+                'must be a {0}, not {1}'.format(
+                    self.typ.__name__,
+                    type(value).__name__,
+                ),
+                view,
+                True
+            )
+        return value
+
+
+class AttrDict(dict):
+    """A `dict` subclass that can be accessed via attributes (dot
+    notation) for convenience.
+    """
+    def __getattr__(self, key):
+        if key in self:
+            return self[key]
+        else:
+            raise AttributeError(key)
+
+
+def as_template(value):
+    """Convert a simple "shorthand" Python value to a `Template`.
+    """
+    if isinstance(value, Template):
+        # If it's already a Template, pass it through.
+        return value
+    elif isinstance(value, collections.Mapping):
+        # Dictionaries work as templates.
+        return MappingTemplate(value)
+    elif value is int:
+        return Integer()
+    elif isinstance(value, int):
+        return Integer(value)
+    elif isinstance(value, type) and issubclass(value, BASESTRING):
+        return String()
+    elif isinstance(value, BASESTRING):
+        return String(value)
+    elif value is float:
+        return Number()
+    elif value is None:
+        return Template()
+    elif value is dict:
+        return TypeTemplate(collections.Mapping)
+    elif value is list:
+        return TypeTemplate(collections.Sequence)
+    elif isinstance(value, type):
+        return TypeTemplate(value)
+    else:
+        raise ValueError('cannot convert to template: {0!r}'.format(value))
