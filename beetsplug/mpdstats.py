@@ -245,6 +245,10 @@ class MPDStats(object):
 
     def on_stop(self, status):
         log.info(u'mpdstats: stop')
+
+        if self.now_playing:
+            self.handle_song_change(self.now_playing)
+
         self.now_playing = None
 
     def on_pause(self, status):
