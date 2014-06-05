@@ -582,7 +582,7 @@ def _field_diff(field, old, new):
     # For strings, highlight changes. For others, colorize the whole
     # thing.
     if isinstance(oldval, basestring):
-        oldstr, newstr = colordiff(oldval, newval)
+        oldstr, newstr = colordiff(oldval, newstr)
     else:
         oldstr, newstr = colorize('red', oldstr), colorize('red', newstr)
 
