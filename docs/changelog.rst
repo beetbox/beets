@@ -31,6 +31,8 @@ Little improvements and fixes:
   opposed to directories) for better compatibility. The ``use_folders`` option
   restores the old behavior. Thanks to Lucas Duailibe.
 * Fix an error when importing an empty directory with the ``--flat`` option.
+* :doc:`/plugins/mpdstats`: The last song in a playlist is now correctly
+  counted as played. Thanks to Johann Klähn.
 
 
 1.3.6 (May 10, 2014)
