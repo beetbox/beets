@@ -1056,17 +1056,21 @@ def remove_items(lib, query, album, delete):
     # Get the matching items.
     items, albums = _do_query(lib, query, album)
 
-    # Show all the items.
-    for item in items:
-        ui.print_obj(item, lib)
-
-    # Confirm with user.
+    # Prepare confirmation with user.
     print_()
     if delete:
+        fmt = u'$path - $title'
         prompt = 'Really DELETE %i files (y/n)?' % len(items)
     else:
+        fmt = None
         prompt = 'Really remove %i items from the library (y/n)?' % \
                  len(items)
+
+    # Show all the items.
+    for item in items:
+        ui.print_obj(item, lib, fmt)
+
+    # Confirm with user
     if not ui.input_yn(prompt, True):
         return
 
