@@ -1070,7 +1070,7 @@ def remove_items(lib, query, album, delete):
     for item in items:
         ui.print_obj(item, lib, fmt)
 
-    # Confirm with user
+    # Confirm with user.
     if not ui.input_yn(prompt, True):
         return
 

@@ -35,6 +35,8 @@ Little improvements and fixes:
   counted as played. Thanks to Johann Klähn.
 * :doc:`/plugins/zero`: Prevent accidental nulling of dangerous fields (IDs
   and paths). Thanks to brunal.
+* The :ref:`remove-cmd` command now shows the paths of files that will be
+  deleted. Thanks again to brunal.
 
 
 1.3.6 (May 10, 2014)
