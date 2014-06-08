@@ -47,6 +47,10 @@ class ZeroPlugin(BeetsPlugin):
         self.warned = False
 
         for field in self.config['fields'].as_str_seq():
+            if field in ('id', 'path', 'album_id'):
+                log.warn(u'[zero] field \'{0}\' ignored, zeroing '
+                         u'it would be dangerous'.format(field))
+                continue
             if field not in Item._fields.keys():
                 log.error(u'[zero] invalid field: {0}'.format(field))
                 continue
