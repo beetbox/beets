@@ -33,6 +33,8 @@ Little improvements and fixes:
 * Fix an error when importing an empty directory with the ``--flat`` option.
 * :doc:`/plugins/mpdstats`: The last song in a playlist is now correctly
   counted as played. Thanks to Johann Klähn.
+* :doc:`/plugins/zero`: Prevent accidental nulling of dangerous fields (IDs
+  and paths). Thanks to brunal.
 
 
 1.3.6 (May 10, 2014)
