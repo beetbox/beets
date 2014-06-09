@@ -615,6 +615,9 @@ def show_model_changes(new, old=None, fields=None, always=False):
 
     # New fields.
     for field in set(new) - set(old):
+        if fields and field not in fields:
+            continue
+
         changes.append(u'  {0}: {1}'.format(
             field,
             colorize('red', new.formatted[field])
