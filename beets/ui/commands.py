@@ -1372,8 +1372,7 @@ def write_items(lib, query, pretend):
 
         # Check for and display changes.
         changed = ui.show_model_changes(item, clean_item,
-                                        library.Item._media_fields,
-                                        always=True)
+                                        library.Item._media_fields)
         if changed and not pretend:
             item.try_write()
 
