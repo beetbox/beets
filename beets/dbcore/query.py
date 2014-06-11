@@ -601,12 +601,13 @@ class FlexFieldSort(Sort):
     def union_clause(self):
         """ Returns an union sql fragment.
         """
-        return "LEFT JOIN {flextable} as sort_flexattr{index!s} \
-               ON {table}.id = sort_flexattr{index!s}.entity_id \
-               AND sort_flexattr{index!s}.key='{flexattr}' ".format(
+        union = ("LEFT JOIN {flextable} as sort_flexattr{index!s} "
+                 "ON {table}.id = sort_flexattr{index!s}.entity_id "
+                 "AND sort_flexattr{index!s}.key='{flexattr}' ").format(
             flextable=self.model_cls._flex_table,
             table=self.model_cls._table,
             index=self.field, flexattr=self.field)
+        return union
 
     def order_clause(self):
         """ Returns an order sql fragment.
@@ -647,8 +648,8 @@ def build_sql(model_cls, query, sort_order):
         sort_union = sort_order.union_clause()
         sort_order = " ORDER BY {0}".format(sort_order.order_clause())
 
-    sql = "SELECT {table}.* {sort_select} FROM {table} {sort_union} WHERE \
-            {query_clause} {sort_order}".format(
+    sql = ("SELECT {table}.* {sort_select} FROM {table} {sort_union} WHERE "
+           "{query_clause} {sort_order}").format(
         sort_select=sort_select,
         sort_union=sort_union,
         table=model_cls._table,
