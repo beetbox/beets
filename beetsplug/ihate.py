@@ -57,9 +57,9 @@ class IHatePlugin(BeetsPlugin):
             for query_string in action_patterns:
                 query = None
                 if task.is_album:
-                    query = get_query(query_string, Album)
+                    (query, _) = get_query(query_string, Album)
                 else:
-                    query = get_query(query_string, Item)
+                    (query, _) = get_query(query_string, Item)
                 if any(query.match(item) for item in task.imported_items()):
                     return True
         return False

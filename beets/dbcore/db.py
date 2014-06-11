@@ -24,7 +24,7 @@ import collections
 
 import beets
 from beets.util.functemplate import Template
-from .query import MatchQuery
+from .query import MatchQuery, build_sql
 from .types import BASE_TYPE
 
 
@@ -509,7 +509,10 @@ class Results(object):
                     ),
                     (row['id'],)
                 )
-            values = dict(row)
+
+            cols = dict(row)
+            values = dict((k, v) for (k, v) in cols.items()
+                          if not k[:4] == 'flex')
             flex_values = dict((row['key'], row['value']) for row in flex_rows)
 
             # Construct the Python object and yield it if it passes the
@@ -739,24 +742,20 @@ class Database(object):
 
     # Querying.
 
-    def _fetch(self, model_cls, query, order_by=None):
+    def _fetch(self, model_cls, query, sort_order=None):
         """Fetch the objects of type `model_cls` matching the given
         query. The query may be given as a string, string sequence, a
         Query object, or None (to fetch everything). If provided,
-        `order_by` is a SQLite ORDER BY clause for sorting.
-        """
-        where, subvals = query.clause()
+       `sort_order` is either a SQLite ORDER BY clause for sorting or a
+        Sort object.
+         """
 
-        sql = "SELECT * FROM {0} WHERE {1}".format(
-            model_cls._table,
-            where or '1',
-        )
-        if order_by:
-            sql += " ORDER BY {0}".format(order_by)
+        sql, subvals, is_slow = build_sql(model_cls, query, sort_order)
+
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
 
-        return Results(model_cls, rows, self, None if where else query)
+        return Results(model_cls, rows, self, None if not is_slow else query)
 
     def _get(self, model_cls, id):
         """Get a Model object by its id or None if the id does not

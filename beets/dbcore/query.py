@@ -497,3 +497,163 @@ class DateQuery(FieldQuery):
             # Match any date.
             clause = '1'
         return clause, subvals
+
+
+class Sort(object):
+    """An abstract class representing a sort opertation for a query into the
+    item database.
+    """
+    def select_clause(self):
+        """ Generates a select sql fragment.
+        """
+        return None
+
+    def union_clause(self):
+        """ Generates a union sql fragment or None if the Sort is a slow sort.
+        """
+        return None
+
+    def order_clause(self):
+        """Generates a sql fragment to be use in a ORDER BY clause
+        or None if it's a slow query
+        """
+        return None
+
+    def sort(self, items):
+        """Sort the given items list. Meant to be used with slow queries.
+        """
+        return items
+
+
+class MultipleSort(Sort):
+    """ Sort class that combines several sort criteria.
+    """
+
+    def __init__(self):
+        self.sorts = []
+
+    def add_criteria(self, sort):
+        self.sorts.append(sort)
+
+    def select_clause(self):
+        """ Generate a select sql fragment.
+        """
+        select_strings = []
+        index = 0
+        for sort in self.sorts:
+            select = sort.select_clause()
+            if select is None:
+                # FIXME : sort for slow sort
+                break
+            else:
+                select_strings.append(select)
+                index = index + 1
+
+        select_string = ",".join(select_strings)
+        return "" if not select_string else ", " + select_string
+
+    def union_clause(self):
+        """ Returns a union sql fragment.
+        """
+        union_strings = []
+        for sort in self.sorts:
+            union = sort.union_clause()
+            if union is None:
+                pass
+            else:
+                union_strings.append(union)
+
+        return "".join(union_strings)
+
+    def order_clause(self):
+        """Returns a sql fragment to be use in a ORDER BY clause
+        or None if it's a slow query
+        """
+        order_strings = []
+        index = 0
+        for sort in self.sorts:
+            order = sort.order_clause()
+            if order is None:
+                break
+            else:
+                order_strings.append(order)
+                index = index + 1
+
+        return ",".join(order_strings)
+
+    def sort(self, items):
+        # FIXME : sort according to criteria following the first slow sort
+        return items
+
+
+class FlexFieldSort(Sort):
+
+    def __init__(self, model_cls, field, is_ascending):
+        self.model_cls = model_cls
+        self.field = field
+        self.is_ascending = is_ascending
+
+    def select_clause(self):
+        """ Return a select sql fragment.
+        """
+        return "sort_flexattr{0!s}.value as flex_{0!s} ".format(self.field)
+
+    def union_clause(self):
+        """ Returns an union sql fragment.
+        """
+        return "LEFT JOIN {flextable} as sort_flexattr{index!s} \
+               ON {table}.id = sort_flexattr{index!s}.entity_id \
+               AND sort_flexattr{index!s}.key='{flexattr}' ".format(
+            flextable=self.model_cls._flex_table,
+            table=self.model_cls._table,
+            index=self.field, flexattr=self.field)
+
+    def order_clause(self):
+        """ Returns an order sql fragment.
+        """
+        order = "ASC" if self.is_ascending else "DESC"
+        return "flex_{0} {1} ".format(self.field, order)
+
+
+class FixedFieldSort(Sort):
+
+    def __init__(self, field, is_ascending=True):
+        self.field = field
+        self.is_ascending = is_ascending
+
+    """ Sort on a fixed field
+    """
+    def order_clause(self):
+        order = "ASC" if self.is_ascending else "DESC"
+        return "{0} {1}".format(self.field, order)
+
+
+def build_sql(model_cls, query, sort_order):
+    """ Generate a sql statement (and the values that must be injected into it)
+    from a query, sort and a model class.
+    """
+    where, subvals = query.clause()
+
+    if not sort_order:
+        sort_select = ""
+        sort_union = ""
+        sort_order = ""
+    elif isinstance(sort_order, basestring):
+        sort_select = ""
+        sort_union = ""
+        sort_order = " ORDER BY {0}".format(sort_order)
+    elif isinstance(sort_order, Sort):
+        sort_select = sort_order.select_clause()
+        sort_union = sort_order.union_clause()
+        sort_order = " ORDER BY {0}".format(sort_order.order_clause())
+
+    sql = "SELECT {table}.* {sort_select} FROM {table} {sort_union} WHERE \
+            {query_clause} {sort_order}".format(
+        sort_select=sort_select,
+        sort_union=sort_union,
+        table=model_cls._table,
+        query_clause=where or '1',
+        sort_order=sort_order
+    )
+
+    return (sql, subvals, where is None) 

@@ -546,7 +546,7 @@ class Item(LibModel):
         for query, path_format in path_formats:
             if query == PF_KEY_DEFAULT:
                 continue
-            query = get_query(query, type(self))
+            (query, _) = get_query(query, type(self))
             if query.match(self):
                 # The query matches the item! Use the corresponding path
                 # format.
@@ -889,7 +889,8 @@ class Album(LibModel):
 
 def get_query(val, model_cls):
     """Take a value which may be None, a query string, a query string
-    list, or a Query object, and return a suitable Query object.
+    list, or a Query object, and return a suitable Query object and Sort
+    object.
 
     `model_cls` is the subclass of Model indicating which entity this
     is a query for (i.e., Album or Item) and is used to determine which
@@ -910,7 +911,7 @@ def get_query(val, model_cls):
         val = [s.decode('utf8') for s in shlex.split(val)]
 
     if val is None:
-        return dbcore.query.TrueQuery()
+        return (dbcore.query.TrueQuery(), None)
 
     elif isinstance(val, list) or isinstance(val, tuple):
         # Special-case path-like queries, which are non-field queries
@@ -928,18 +929,23 @@ def get_query(val, model_cls):
             path_parts = ()
             non_path_parts = val
 
+        # separate query token and sort token
+        query_val = [s for s in non_path_parts if not s.endswith(('+', '-'))]
+        sort_val = [s for s in non_path_parts if s.endswith(('+', '-'))]
+
         # Parse remaining parts and construct an AndQuery.
         query = dbcore.query_from_strings(
-            dbcore.AndQuery, model_cls, prefixes, non_path_parts
+            dbcore.AndQuery, model_cls, prefixes, query_val
         )
+        sort = dbcore.sort_from_strings(model_cls, sort_val)
 
         # Add path queries to aggregate query.
         if path_parts:
             query.subqueries += [PathQuery('path', s) for s in path_parts]
-        return query
+        return (query, sort)
 
     elif isinstance(val, dbcore.Query):
-        return val
+        return (val, None)
 
     else:
         raise ValueError('query must be None or have type Query or str')
@@ -1006,30 +1012,30 @@ class Library(dbcore.Database):
 
     # Querying.
 
-    def _fetch(self, model_cls, query, order_by=None):
-        """Parse a query and fetch.
-        """
+    def _fetch(self, model_cls, query, sort_order=None):
+        """Parse a query and fetch. If a sort_order is explicitly given,
+        any sort order specification present in the query string is ignored.
+          """
+        (query, sort) = get_query(query, model_cls)
+        sort = sort if sort_order is None else sort_order
+
         return super(Library, self)._fetch(
-            model_cls, get_query(query, model_cls), order_by
+            model_cls, query, sort
         )
 
-    def albums(self, query=None):
+    def albums(self, query=None, sort_order=None):
         """Get a sorted list of :class:`Album` objects matching the
-        given query.
+        given sort order. If a sort_order is explicitly given,
+        any sort order specification present in the query string is ignored.
         """
-        order = '{0}, album'.format(
-            _orelse("albumartist_sort", "albumartist")
-        )
-        return self._fetch(Album, query, order)
+        return self._fetch(Album, query, sort_order)
 
-    def items(self, query=None):
+    def items(self, query=None, sort_order=None):
         """Get a sorted list of :class:`Item` objects matching the given
-        query.
+        given sort order. If a sort_order is explicitly given,
+        any sort order specification present in the query string is ignored.
         """
-        order = '{0}, album, disc, track'.format(
-            _orelse("artist_sort", "artist")
-        )
-        return self._fetch(Item, query, order)
+        return self._fetch(Item, query, sort_order)
 
     # Convenience accessors.
 

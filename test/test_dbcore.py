@@ -412,6 +412,37 @@ class QueryFromStringsTest(_common.TestCase):
         self.assertIsInstance(q.subqueries[0], dbcore.query.NumericQuery)
 
 
+class SortFromStringsTest(_common.TestCase):
+    def sfs(self, strings):
+        return dbcore.queryparse.sort_from_strings(
+            TestModel1,
+            strings,
+        )
+
+    def test_zero_parts(self):
+        s = self.sfs([])
+        self.assertIsNone(s)
+
+    def test_one_parts(self):
+        s = self.sfs(['field+'])
+        self.assertIsInstance(s, dbcore.query.Sort)
+
+    def test_two_parts(self):
+        s = self.sfs(['field+', 'another_field-'])
+        self.assertIsInstance(s, dbcore.query.MultipleSort)
+        self.assertEqual(len(s.sorts), 2)
+
+    def test_fixed_field_sort(self):
+        s = self.sfs(['field_one+'])
+        self.assertIsInstance(s, dbcore.query.MultipleSort)
+        self.assertIsInstance(s.sorts[0], dbcore.query.FixedFieldSort)
+
+    def test_flex_field_sort(self):
+        s = self.sfs(['flex_field+'])
+        self.assertIsInstance(s, dbcore.query.MultipleSort)
+        self.assertIsInstance(s.sorts[0], dbcore.query.FlexFieldSort)
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
