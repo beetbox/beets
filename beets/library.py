@@ -29,6 +29,7 @@ from beets.util import bytestring_path, syspath, normpath, samefile
 from beets.util.functemplate import Template
 from beets import dbcore
 from beets.dbcore import types
+from beets.dbcore.query import SmartArtistSort
 import beets
 
 
@@ -1013,11 +1014,11 @@ class Library(dbcore.Database):
     # Querying.
 
     def _fetch(self, model_cls, query, sort_order=None):
-        """Parse a query and fetch. If a sort_order is explicitly given,
-        any sort order specification present in the query string is ignored.
+        """Parse a query and fetch. If a order specification is present in the
+        query string the sort_order argument is ignored.
           """
         (query, sort) = get_query(query, model_cls)
-        sort = sort if sort_order is None else sort_order
+        sort = sort_order if sort is None else sort
 
         return super(Library, self)._fetch(
             model_cls, query, sort
@@ -1025,16 +1026,20 @@ class Library(dbcore.Database):
 
     def albums(self, query=None, sort_order=None):
         """Get a sorted list of :class:`Album` objects matching the
-        given sort order. If a sort_order is explicitly given,
-        any sort order specification present in the query string is ignored.
+        given sort order. If a order specification is present in the query
+        string the sort_order argument is ignored. 
         """
+        if sort_order is None:
+            sort_order = SmartArtistSort(Album)
         return self._fetch(Album, query, sort_order)
 
     def items(self, query=None, sort_order=None):
         """Get a sorted list of :class:`Item` objects matching the given
-        given sort order. If a sort_order is explicitly given,
-        any sort order specification present in the query string is ignored.
+        given sort order. If a order specification is present in the query
+        string the sort_order argument is ignored.
         """
+        if sort_order is None:
+            sort_order = SmartArtistSort(Item)
         return self._fetch(Item, query, sort_order)
 
     # Convenience accessors.

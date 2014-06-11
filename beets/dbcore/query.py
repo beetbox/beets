@@ -628,6 +628,36 @@ class FixedFieldSort(Sort):
         order = "ASC" if self.is_ascending else "DESC"
         return "{0} {1}".format(self.field, order)
 
+class SmartArtistSort(Sort):
+    """ Sort Album or Item on artist sort fields, defaulting back on
+        artist field if the sort specific field is empty.
+    """
+    def __init__(self, model_cls, is_ascending=True):
+        self.model_cls = model_cls
+        self.is_ascending = is_ascending
+
+    def select_clause(self):
+        return ""
+
+    def union_clause(self):
+        return ""
+
+    def order_clause(self):
+        order = "ASC" if self.is_ascending else "DESC"
+        if 'albumartist_sort' in self.model_cls._fields:
+            exp1 = 'albumartist_sort'
+            exp2 = 'albumartist'
+        elif 'artist_sort' in self.model_cls_fields:
+            exp1 = 'artist_sort'
+            exp2 = 'artist'
+        else:
+            return ""
+
+        order_str = ('(CASE {0} WHEN NULL THEN {1} '
+                     'WHEN "" THEN {1} '
+                     'ELSE {0} END) {2} ').format(exp1, exp2, order)
+        return order_str
+
 
 def build_sql(model_cls, query, sort_order):
     """ Generate a sql statement (and the values that must be injected into it)
