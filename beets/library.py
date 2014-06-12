@@ -1027,10 +1027,8 @@ class Library(dbcore.Database):
     def albums(self, query=None, sort_order=None):
         """Get a sorted list of :class:`Album` objects matching the
         given sort order. If a order specification is present in the query
-        string the sort_order argument is ignored. 
+        string the sort_order argument is ignored.
         """
-        if sort_order is None:
-            sort_order = SmartArtistSort(Album)
         return self._fetch(Album, query, sort_order)
 
     def items(self, query=None, sort_order=None):
@@ -1038,8 +1036,6 @@ class Library(dbcore.Database):
         given sort order. If a order specification is present in the query
         string the sort_order argument is ignored.
         """
-        if sort_order is None:
-            sort_order = SmartArtistSort(Item)
         return self._fetch(Item, query, sort_order)
 
     # Convenience accessors.

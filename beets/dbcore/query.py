@@ -628,6 +628,7 @@ class FixedFieldSort(Sort):
         order = "ASC" if self.is_ascending else "DESC"
         return "{0} {1}".format(self.field, order)
 
+
 class SmartArtistSort(Sort):
     """ Sort Album or Item on artist sort fields, defaulting back on
         artist field if the sort specific field is empty.
@@ -657,6 +658,9 @@ class SmartArtistSort(Sort):
                      'WHEN "" THEN {1} '
                      'ELSE {0} END) {2} ').format(exp1, exp2, order)
         return order_str
+
+
+special_sorts = {'smartartist': SmartArtistSort}
 
 
 def build_sql(model_cls, query, sort_order):

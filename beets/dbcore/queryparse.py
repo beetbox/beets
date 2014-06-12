@@ -134,6 +134,8 @@ def construct_sort_part(model_cls, part):
     elif field in model_cls._getters():
         # Computed field, all following fields must use the slow path.
         pass
+    elif field in query.special_sorts:
+        sort = query.special_sorts[field](model_cls, is_ascending)
     else:
         # Neither fixed nor computed : must be a flex attr.
         sort = query.FlexFieldSort(model_cls, field, is_ascending)
