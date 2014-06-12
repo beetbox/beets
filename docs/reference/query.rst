@@ -183,3 +183,25 @@ equivalent::
 Note that this only matches items that are *already in your library*, so a path
 query won't necessarily find *all* the audio files in a directory---just the
 ones you've already added to your beets library.
+
+
+Sort Order
+----------
+
+You can also specify the order used when outputting the results. Of course, this
+is only useful when displaying the result, for example with the ``list``
+command, and is useless when the query is used as a filter for an command. Use
+the name of the `field` you want to sort on, followed by a ``+`` or ``-`` sign
+if you want ascending or descending sort. For example this command::
+
+    $ beet list -a year+
+
+will list all albums in chronological order.
+
+You can also specify several sort orders, which will be used in the same order at
+which they appear in your query::
+
+    $ beet list -a genre+ year+
+ 
+This command will sort all albums by genre and, in each genre, in chronological
+order.
