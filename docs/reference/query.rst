@@ -198,6 +198,11 @@ if you want ascending or descending sort. For example this command::
 
 will list all albums in chronological order.
 
+There is a special ``smartartist`` sort that uses sort-specific field (
+``artist_sort`` for items and ``albumartist_sort`` for albums) but falls back to
+standard artist fields if these are empty. When no sort order is specified,
+``smartartist+`` is used (but this is configurable).
+
 You can also specify several sort orders, which will be used in the same order at
 which they appear in your query::
 
