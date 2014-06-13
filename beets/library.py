@@ -29,7 +29,6 @@ from beets.util import bytestring_path, syspath, normpath, samefile
 from beets.util.functemplate import Template
 from beets import dbcore
 from beets.dbcore import types
-from beets.dbcore.query import SmartArtistSort
 import beets
 
 
