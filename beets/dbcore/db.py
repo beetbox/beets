@@ -483,43 +483,64 @@ class Results(object):
     """An item query result set. Iterating over the collection lazily
     constructs LibModel objects that reflect database rows.
     """
-    def __init__(self, model_class, rows, db, query=None):
+    def __init__(self, model_class, rows, db, query=None, sort=None):
         """Create a result set that will construct objects of type
         `model_class`, which should be a subclass of `LibModel`, out of
         the query result mapping in `rows`. The new objects are
-        associated with the database `db`. If `query` is provided, it is
-        used as a predicate to filter the results for a "slow query" that
-        cannot be evaluated by the database directly.
+        associated with the database `db`.
+        If `query` is provided, it is used as a predicate to filter the results
+        for a "slow query" that cannot be evaluated by the database directly.
+        If `sort` is provided, it is used to sort the full list of results
+        before returning. This means it is a "slow sort" and all objects must
+        be built before returning the first one.
         """
         self.model_class = model_class
         self.rows = rows
         self.db = db
         self.query = query
+        self.sort = sort
 
     def __iter__(self):
         """Construct Python objects for all rows that pass the query
         predicate.
         """
-        for row in self.rows:
-            # Get the flexible attributes for the object.
-            with self.db.transaction() as tx:
-                flex_rows = tx.query(
-                    'SELECT * FROM {0} WHERE entity_id=?'.format(
-                        self.model_class._flex_table
-                    ),
-                    (row['id'],)
-                )
+        if self.sort:
+            # slow sort, must build the full list first
+            objects = []
+            for row in self.rows:
+                obj = self._generate_results(row)
+                # check the predicate if any
+                if not self.query or self.query.match(obj):
+                    objects.append(obj)
+            # Now that we have the full list, we can sort it
+            objects = self.sort.sort(objects)
+            for o in objects:
+                yield o
+        else:
+            for row in self.rows:
+                obj = self._generate_results(row)
+                # check the predicate if any
+                if not self.query or self.query.match(obj):
+                    yield obj
 
-            cols = dict(row)
-            values = dict((k, v) for (k, v) in cols.items()
-                          if not k[:4] == 'flex')
-            flex_values = dict((row['key'], row['value']) for row in flex_rows)
+    def _generate_results(self, row):
+        # Get the flexible attributes for the object.
+        with self.db.transaction() as tx:
+            flex_rows = tx.query(
+                'SELECT * FROM {0} WHERE entity_id=?'.format(
+                    self.model_class._flex_table
+                ),
+                (row['id'],)
+            )
 
-            # Construct the Python object and yield it if it passes the
-            # predicate.
-            obj = self.model_class._awaken(self.db, values, flex_values)
-            if not self.query or self.query.match(obj):
-                yield obj
+        cols = dict(row)
+        values = dict((k, v) for (k, v) in cols.items()
+                      if not k[:4] == 'flex')
+        flex_values = dict((row['key'], row['value']) for row in flex_rows)
+
+        # Construct the Python object
+        obj = self.model_class._awaken(self.db, values, flex_values)
+        return obj
 
     def __len__(self):
         """Get the number of matching objects.
@@ -750,12 +771,15 @@ class Database(object):
         Sort object.
          """
 
-        sql, subvals, is_slow = build_sql(model_cls, query, sort_order)
+        sql, subvals, slow_query, slow_sort = build_sql(model_cls, query,
+                                                        sort_order)
 
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
 
-        return Results(model_cls, rows, self, None if not is_slow else query)
+        return Results(model_cls, rows, self,
+                       None if not slow_query else query,
+                       None if not slow_sort else sort_order)
 
     def _get(self, model_cls, id):
         """Get a Model object by its id or None if the id does not

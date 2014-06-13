@@ -133,7 +133,7 @@ def construct_sort_part(model_cls, part):
         sort = query.FixedFieldSort(field, is_ascending)
     elif field in model_cls._getters():
         # Computed field, all following fields must use the slow path.
-        pass
+        sort = query.ComputedFieldSort(model_cls, field, is_ascending)
     elif field in query.special_sorts:
         sort = query.special_sorts[field](model_cls, is_ascending)
     else:
