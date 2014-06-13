@@ -901,13 +901,15 @@ def list_items(lib, query, album, fmt):
     tmpl = Template(ui._pick_format(album, fmt))
 
     if album:
+        sort_parts = str(config['sort_album']).split()
         sort_order = sort_from_strings(library.Album,
-                                       [str(config['sort_album'])])
+                                       sort_parts)
         for album in lib.albums(query, sort_order):
             ui.print_obj(album, lib, tmpl)
     else:
+        sort_parts = str(config['sort_item']).split()
         sort_order = sort_from_strings(library.Item,
-                                       [str(config['sort_item'])])
+                                       sort_parts)
         for item in lib.items(query, sort_order):
             ui.print_obj(item, lib, tmpl)
 
