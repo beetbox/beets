@@ -38,9 +38,10 @@ Little improvements and fixes:
 * The :ref:`remove-cmd` command now shows the paths of files that will be
   deleted. Thanks again to brunal.
 * Don't display changes for fields that are not in the restricted field set.
-  This fixes :ref:`write` showing changes for fields that are not written
+  This fixes :ref:`write-cmd` showing changes for fields that are not written
   to the file.
-* :ref:`write`: Don't display the item name if there are no changes for it.
+* :ref:`write-cmd` command: Don't display the item name if there are no
+  changes for it.
 * When using both :doc:`/plugins/convert` and :doc:`/plugins/scrub`, avoid
   scrubbing the source file of conversions. (Fix a regression introduced in
   the previous release.)
