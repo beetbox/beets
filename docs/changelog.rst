@@ -41,6 +41,9 @@ Little improvements and fixes:
   This fixes :ref:`write` showing changes for fields that are not written
   to the file.
 * :ref:`write`: Don't display the item name if there are no changes for it.
+* When using both :doc:`/plugins/convert` and :doc:`/plugins/scrub`, avoid
+  scrubbing the source file of conversions. (Fix a regression introduced in
+  the previous release.)
 
 
 1.3.6 (May 10, 2014)

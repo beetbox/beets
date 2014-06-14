@@ -138,7 +138,7 @@ def _scrub(path):
 
 # Automatically embed art into imported albums.
 @ScrubPlugin.listen('write')
-def write_item(item):
+def write_item(path):
     if not scrubbing and config['scrub']['auto']:
-        log.debug(u'auto-scrubbing %s' % util.displayable_path(item.path))
-        _scrub(item.path)
+        log.debug(u'auto-scrubbing %s' % util.displayable_path(path))
+        _scrub(path)
