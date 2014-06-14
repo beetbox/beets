@@ -37,6 +37,10 @@ Little improvements and fixes:
   and paths). Thanks to brunal.
 * The :ref:`remove-cmd` command now shows the paths of files that will be
   deleted. Thanks again to brunal.
+* Don't display changes for fields that are not in the restricted field set.
+  This fixes :ref:`write` showing changes for fields that are not written
+  to the file.
+* :ref:`write`: Don't display the item name if there are no changes for it.
 
 
 1.3.6 (May 10, 2014)
