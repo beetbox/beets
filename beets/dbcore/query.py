@@ -569,7 +569,7 @@ class MultipleSort(Sort):
                 select_strings.append(select)
 
         select_string = ",".join(select_strings)
-        return "" if not select_string else ", " + select_string
+        return select_string
 
     def union_clause(self):
         sql_sorts = self._sql_sorts()
@@ -730,7 +730,9 @@ def build_sql(model_cls, query, sort):
             if sort else ""
         slow_sort = False
     elif isinstance(sort, Sort):
-        sort_select = sort.select_clause()
+        select_clause = sort.select_clause() 
+        sort_select = " ,{0} ".format(select_clause) \
+            if select_clause else ""
         sort_union = sort.union_clause()
         slow_sort = sort.is_slow()
         order_clause = sort.order_clause()
