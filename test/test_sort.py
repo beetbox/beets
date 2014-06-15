@@ -27,6 +27,26 @@ class DummyDataTestCase(_common.TestCase):
     def setUp(self):
         super(DummyDataTestCase, self).setUp()
         self.lib = beets.library.Library(':memory:')
+        
+        albums = [_common.album() for _ in range(3)]
+        albums[0].album = "album A"
+        albums[0].genre = "Rock"
+        albums[0].year = "2001"
+        albums[0].flex1 = "flex1-1"
+        albums[0].flex2 = "flex2-A"
+        albums[1].album = "album B"
+        albums[1].genre = "Rock"
+        albums[1].year = "2001"
+        albums[1].flex1 = "flex1-2"
+        albums[1].flex2 = "flex2-A"
+        albums[2].album = "album C"
+        albums[2].genre = "Jazz"
+        albums[2].year = "2005"
+        albums[2].flex1 = "flex1-1"
+        albums[2].flex2 = "flex2-B"
+        for album in albums:
+            self.lib.add(album)
+
         items = [_common.item() for _ in range(3)]
         items[0].title = 'foo bar'
         items[0].artist = 'one'
@@ -35,6 +55,7 @@ class DummyDataTestCase(_common.TestCase):
         items[0].comp = True
         items[0].flex1 = "flex1-0"
         items[0].flex2 = "flex2-A"
+        items[0].album_id = albums[0].id
         items[1].title = 'baz qux'
         items[1].artist = 'two'
         items[1].album = 'baz'
@@ -42,6 +63,7 @@ class DummyDataTestCase(_common.TestCase):
         items[1].comp = True
         items[1].flex1 = "flex1-1"
         items[1].flex2 = "flex2-A"
+        items[1].album_id = albums[0].id
         items[2].title = 'beets 4 eva'
         items[2].artist = 'three'
         items[2].album = 'foo'
@@ -49,9 +71,29 @@ class DummyDataTestCase(_common.TestCase):
         items[2].comp = False
         items[2].flex1 = "flex1-2"
         items[2].flex2 = "flex1-B"
+        items[2].album_id = albums[1].id
         for item in items:
             self.lib.add(item)
-        self.lib.add_album(items[:2])
+
+        albums = [_common.album() for _ in range(3)]
+        albums[0].album = "album A"
+        albums[0].genre = "Jazz"
+        albums[0].year = "2001"
+        albums[0].flex1 = "flex1-1"
+        albums[0].flex2 = "flex2-A"
+        albums[1].album = "album B"
+        albums[1].genre = "Jazz"
+        albums[1].year = "2001"
+        albums[1].flex1 = "flex1-2"
+        albums[1].flex2 = "flex2-A"
+        albums[2].album = "album C"
+        albums[2].genre = "Rock"
+        albums[2].year = "2005"
+        albums[2].flex1 = "flex1-1"
+        albums[2].flex2 = "flex2-B"
+        
+        for album in albums:
+            self.lib.add(album)
 
 
 class SortFixedFieldTest(DummyDataTestCase):
@@ -59,7 +101,7 @@ class SortFixedFieldTest(DummyDataTestCase):
         q = ''
         sort = dbcore.query.FixedFieldSort("year", True)
         results = self.lib.items(q, sort)
-        self.assertTrue(results[0]['year']<results[1]['year'])
+        self.assertLessEqual(results[0]['year'], results[1]['year'])
         self.assertEqual(results[0]['year'],2001)
         # same thing with query string
         q = 'year+'
@@ -71,7 +113,7 @@ class SortFixedFieldTest(DummyDataTestCase):
         q = ''
         sort = dbcore.query.FixedFieldSort("year", False)
         results = self.lib.items(q, sort)
-        self.assertTrue(results[0]['year']>results[1]['year'])
+        self.assertGreaterEqual(results[0]['year'], results[1]['year'])
         self.assertEqual(results[0]['year'],2003)
         # same thing with query string
         q = 'year-'
@@ -87,11 +129,11 @@ class SortFixedFieldTest(DummyDataTestCase):
         sort.add_criteria(s1)
         sort.add_criteria(s2)
         results = self.lib.items(q, sort)
-        self.assertTrue(results[0]['album']<=results[1]['album'])
-        self.assertTrue(results[1]['album']<=results[2]['album'])
+        self.assertLessEqual(results[0]['album'], results[1]['album'])
+        self.assertLessEqual(results[1]['album'], results[2]['album'])
         self.assertEqual(results[0]['album'],'baz')
         self.assertEqual(results[1]['album'],'baz')
-        self.assertTrue(results[0]['year']<=results[1]['year'])
+        self.assertLessEqual(results[0]['year'], results[1]['year'])
         #same thing with query string
         q = 'album+ year+'
         results2 = self.lib.items(q)
@@ -104,7 +146,7 @@ class SortFlexFieldTest(DummyDataTestCase):
         q = ''
         sort = dbcore.query.FlexFieldSort(beets.library.Item, "flex1", True)
         results = self.lib.items(q, sort)
-        self.assertTrue(results[0]['flex1']<results[1]['flex1'])
+        self.assertLessEqual(results[0]['flex1'], results[1]['flex1'])
         self.assertEqual(results[0]['flex1'],'flex1-0')
         # same thing with query string
         q = 'flex1+'
@@ -132,11 +174,11 @@ class SortFlexFieldTest(DummyDataTestCase):
         sort.add_criteria(s1)
         sort.add_criteria(s2)
         results = self.lib.items(q, sort)
-        self.assertTrue(results[0]['flex2']>=results[1]['flex2'])
-        self.assertTrue(results[1]['flex2']>=results[2]['flex2'])
+        self.assertGreaterEqual(results[0]['flex2'], results[1]['flex2'])
+        self.assertGreaterEqual(results[1]['flex2'], results[2]['flex2'])
         self.assertEqual(results[0]['flex2'],'flex2-A')
         self.assertEqual(results[1]['flex2'],'flex2-A')
-        self.assertTrue(results[0]['flex1']<=results[1]['flex1'])
+        self.assertLessEqual(results[0]['flex1'], results[1]['flex1'])
         #same thing with query string
         q = 'flex2- flex1+'
         results2 = self.lib.items(q)
@@ -144,7 +186,94 @@ class SortFlexFieldTest(DummyDataTestCase):
             self.assertEqual(r1.id, r2.id)
 
 
+class SortAlbumFixedFieldTest(DummyDataTestCase):
+    def test_sort_asc(self):
+        q = ''
+        sort = dbcore.query.FixedFieldSort("year", True)
+        results = self.lib.albums(q, sort)
+        self.assertLessEqual(results[0]['year'], results[1]['year'])
+        self.assertEqual(results[0]['year'],2001)
+        # same thing with query string
+        q = 'year+'
+        results2 = self.lib.albums(q)
+        for r1, r2 in zip(results, results2) :
+            self.assertEqual(r1.id, r2.id)
 
+    def test_sort_desc(self):
+        q = ''
+        sort = dbcore.query.FixedFieldSort("year", False)
+        results = self.lib.albums(q, sort)
+        self.assertGreaterEqual(results[0]['year'], results[1]['year'])
+        self.assertEqual(results[0]['year'],2005)
+        # same thing with query string
+        q = 'year-'
+        results2 = self.lib.albums(q)
+        for r1, r2 in zip(results, results2) :
+            self.assertEqual(r1.id, r2.id)
+
+    def test_sort_two_field_asc(self):
+        q = ''
+        s1 = dbcore.query.FixedFieldSort("genre", True)
+        s2 = dbcore.query.FixedFieldSort("album", True)
+        sort = dbcore.query.MultipleSort()
+        sort.add_criteria(s1)
+        sort.add_criteria(s2)
+        results = self.lib.albums(q, sort)
+        self.assertLessEqual(results[0]['genre'], results[1]['genre'])
+        self.assertLessEqual(results[1]['genre'], results[2]['genre'])
+        self.assertEqual(results[0]['genre'],'Jazz')
+        self.assertEqual(results[1]['genre'],'Jazz')
+        self.assertLessEqual(results[0]['album'], results[1]['album'])
+        #same thing with query string
+        q = 'genre+ album+'
+        results2 = self.lib.albums(q)
+        for r1, r2 in zip(results, results2) :
+            self.assertEqual(r1.id, r2.id)
+
+
+class SortAlbumFlexdFieldTest(DummyDataTestCase):
+    def test_sort_asc(self):
+        q = ''
+        sort = dbcore.query.FlexFieldSort(beets.library.Album, "flex1", True)
+        results = self.lib.albums(q, sort)
+        self.assertLessEqual(results[0]['flex1'], results[1]['flex1'])
+        self.assertLessEqual(results[1]['flex1'], results[2]['flex1'])
+        # same thing with query string
+        q = 'flex1+'
+        results2 = self.lib.albums(q)
+        for r1, r2 in zip(results, results2) :
+            self.assertEqual(r1.id, r2.id)
+
+    def test_sort_desc(self):
+        q = ''
+        sort = dbcore.query.FlexFieldSort(beets.library.Album, "flex1", False)
+        results = self.lib.albums(q, sort)
+        self.assertGreaterEqual(results[0]['flex1'], results[1]['flex1'])
+        self.assertGreaterEqual(results[1]['flex1'], results[2]['flex1'])
+        # same thing with query string
+        q = 'flex1-'
+        results2 = self.lib.albums(q)
+        for r1, r2 in zip(results, results2) :
+            self.assertEqual(r1.id, r2.id)
+
+    def test_sort_two_field_asc(self):
+        q = ''
+        s1 = dbcore.query.FlexFieldSort(beets.library.Album, "flex2", True)
+        s2 = dbcore.query.FlexFieldSort(beets.library.Album, "flex1", True)
+        sort = dbcore.query.MultipleSort()
+        sort.add_criteria(s1)
+        sort.add_criteria(s2)
+        results = self.lib.albums(q, sort)
+        self.assertLessEqual(results[0]['flex2'], results[1]['flex2'])
+        self.assertLessEqual(results[1]['flex2'], results[2]['flex2'])
+        self.assertEqual(results[0]['flex2'],'flex2-A')
+        self.assertEqual(results[1]['flex2'],'flex2-A')
+        self.assertLessEqual(results[0]['flex1'], results[1]['flex1'])
+        #same thing with query string
+        q = 'flex2+ flex1+'
+        results2 = self.lib.albums(q)
+        for r1, r2 in zip(results, results2) :
+            self.assertEqual(r1.id, r2.id)
 
 
 def suite():
