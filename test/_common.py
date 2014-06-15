@@ -106,7 +106,7 @@ def album(lib=None):
         mb_albumartistid = 'someID-1'
     )
     if lib:
-        lib.add_album(i)
+        lib.add(i)
     return i    
     
 # Dummy import session.
