@@ -730,7 +730,7 @@ def build_sql(model_cls, query, sort):
             if sort else ""
         slow_sort = False
     elif isinstance(sort, Sort):
-        select_clause = sort.select_clause() 
+        select_clause = sort.select_clause()
         sort_select = " ,{0} ".format(select_clause) \
             if select_clause else ""
         sort_union = sort.union_clause()
