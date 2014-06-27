@@ -78,6 +78,12 @@ class FSArtTest(_common.TestCase):
         fn = fetchart.art_in_path(self.dpath, ('art',), True)
         self.assertEqual(fn, None)
 
+    def test_precedence_amongst_correct_files(self):
+        _common.touch(os.path.join(self.dpath, 'back.jpg'))
+        _common.touch(os.path.join(self.dpath, 'front.jpg'))
+        _common.touch(os.path.join(self.dpath, 'front-cover.jpg'))
+        fn = fetchart.art_in_path(self.dpath, ('cover', 'front', 'back'), False)
+        self.assertEqual(fn, os.path.join(self.dpath, 'front-cover.jpg'))
 
 class CombinedTest(_common.TestCase):
     ASIN = 'xxxx'
