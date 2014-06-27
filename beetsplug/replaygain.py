@@ -305,7 +305,6 @@ class GStreamerBackend(object):
             if self._error is not None:
                 raise self._error
 
-
     def compute_track_gain(self, items):
         self.compute(items, False)
         if len(self._file_tags) != len(items):
@@ -348,9 +347,12 @@ class GStreamerBackend(object):
         self._pipe.set_state(self.Gst.State.NULL)
         self._main_loop.quit()
         err, debug = message.parse_error()
+        f = self._src.get_property("location")
         # A GStreamer error, either an unsupported format or a bug.
-        self._error = ReplayGainError("Error %s - %s on file %s" %
-                              (err, debug, self._src.get_property("location")))
+        self._error = \
+            ReplayGainError(u"Error {0} - {1} on file {2}".format(err,
+                                                                  debug,
+                                                                  f))
 
     def _on_tag(self, bus, message):
         tags = message.parse_tag()
