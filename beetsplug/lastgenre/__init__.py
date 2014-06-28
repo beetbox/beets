@@ -197,6 +197,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 if len(tags_all) >= count:
                     break
             tags = tags_all
+
+        def remove_duplicates(seq):
+            """Remove duplicates from sequence wile preserving order"""
+            seen = set()
+            seen_add = seen.add
+            return [ x for x in seq if x not in seen and not seen_add(x)]
+
+        tags = remove_duplicates(tags)
+
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
         tags = [x.title() for x in tags if self._is_allowed(x)]
