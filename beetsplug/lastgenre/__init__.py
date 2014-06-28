@@ -202,7 +202,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             """Remove duplicates from sequence wile preserving order"""
             seen = set()
             seen_add = seen.add
-            return [ x for x in seq if x not in seen and not seen_add(x)]
+            return [x for x in seq if x not in seen and not seen_add(x)]
 
         tags = remove_duplicates(tags)
 
