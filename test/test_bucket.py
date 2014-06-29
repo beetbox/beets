@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2014, Fabrice Laporte.
 #
@@ -31,9 +32,10 @@ class BucketPluginTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     def _setup_config(self, bucket_year=[], bucket_alpha=[],
-                      extrapolate=False):
+                      bucket_alpha_regex = {}, extrapolate=False):
         config['bucket']['bucket_year'] = bucket_year
         config['bucket']['bucket_alpha'] = bucket_alpha
+        config['bucket']['bucket_alpha_regex'] = bucket_alpha_regex
         config['bucket']['extrapolate'] = extrapolate
         self.plugin.setup()
 
@@ -106,6 +108,26 @@ class BucketPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(self.plugin._tmpl_bucket('errol'), 'E')
         self._setup_config(bucket_alpha=[])
         self.assertEqual(self.plugin._tmpl_bucket('errol'), 'E')
+
+    def test_alpha_regex(self):
+        """Check regex is used"""
+        self._setup_config(bucket_alpha=['foo', 'bar'],
+                           bucket_alpha_regex={'foo': '^[a-d]',
+                                               'bar': '^[e-z]'})
+        self.assertEqual(self.plugin._tmpl_bucket('alpha'), 'foo')
+        self.assertEqual(self.plugin._tmpl_bucket('delta'), 'foo')
+        self.assertEqual(self.plugin._tmpl_bucket('zeta'), 'bar')
+        self.assertEqual(self.plugin._tmpl_bucket('Alpha'), 'A')
+
+    def test_alpha_regex_mix(self):
+        """Check mixing regex and non-regex is possible"""
+        self._setup_config(bucket_alpha=['A - D', 'E - L'],
+                           bucket_alpha_regex={'A - D': '^[0-9a-dA-D…äÄ]'})
+        self.assertEqual(self.plugin._tmpl_bucket('alpha'), 'A - D')
+        self.assertEqual(self.plugin._tmpl_bucket('Ärzte'), 'A - D')
+        self.assertEqual(self.plugin._tmpl_bucket('112'), 'A - D')
+        self.assertEqual(self.plugin._tmpl_bucket('…and Oceans'), 'A - D')
+        self.assertEqual(self.plugin._tmpl_bucket('Eagles'), 'E - L')
 
     @raises(ui.UserError)
     def test_bad_alpha_range_def(self):
