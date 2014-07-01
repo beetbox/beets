@@ -47,6 +47,10 @@ Little improvements and fixes:
   the previous release.)
 * :doc:`/plugins/replaygain`: Logging is now quieter during import. Thanks to
   Yevgeny Bezman.
+* :doc:`/plugins/fetchart`: When loading art from the filesystem, we now
+  prioritize covers with more keywords in them. This means that
+  ``cover-front.jpg`` will now be taken before ``cover-back.jpg`` because it
+  contains two keywords rather than one.
 
 
 1.3.6 (May 10, 2014)
