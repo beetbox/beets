@@ -50,7 +50,9 @@ Little improvements and fixes:
 * :doc:`/plugins/fetchart`: When loading art from the filesystem, we now
   prioritize covers with more keywords in them. This means that
   ``cover-front.jpg`` will now be taken before ``cover-back.jpg`` because it
-  contains two keywords rather than one.
+  contains two keywords rather than one. Thanks to Fabrice Laporte.
+* :doc:`/plugins/lastgenre`: Remove duplicates from canonicalized genre lists.
+  Thanks again to Fabrice Laporte.
 
 
 1.3.6 (May 10, 2014)

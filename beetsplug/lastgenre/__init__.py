@@ -41,6 +41,13 @@ PYLAST_EXCEPTIONS = (
 )
 
 
+def deduplicate(seq):
+    """Remove duplicates from sequence wile preserving order.
+    """
+    seen = set()
+    return [x for x in seq if x not in seen and not seen.add(x)]
+
+
 # Core genre identification routine.
 
 def _tags_for(obj, min_weight=None):
@@ -198,13 +205,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     break
             tags = tags_all
 
-        def remove_duplicates(seq):
-            """Remove duplicates from sequence wile preserving order"""
-            seen = set()
-            seen_add = seen.add
-            return [x for x in seq if x not in seen and not seen_add(x)]
-
-        tags = remove_duplicates(tags)
+        tags = deduplicate(tags)
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
