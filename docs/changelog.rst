@@ -57,6 +57,9 @@ Little improvements and fixes:
   incremental imports will no longer try to import albums again after you've
   chosen to skip them, and erroneous invitations to resume "interrupted"
   imports should be reduced. Thanks to jcassette.
+* :doc:`/plugins/bucket`: You can now customize the definition of alphanumeric
+  "ranges" using regular expressions. And the heuristic for detecting years
+  has been improved. Thanks to sotho.
 
 
 1.3.6 (May 10, 2014)

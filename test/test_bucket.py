@@ -32,7 +32,7 @@ class BucketPluginTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     def _setup_config(self, bucket_year=[], bucket_alpha=[],
-                      bucket_alpha_regex = {}, extrapolate=False):
+                      bucket_alpha_regex={}, extrapolate=False):
         config['bucket']['bucket_year'] = bucket_year
         config['bucket']['bucket_alpha'] = bucket_alpha
         config['bucket']['bucket_alpha_regex'] = bucket_alpha_regex
