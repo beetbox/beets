@@ -129,6 +129,13 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(self.plugin._resolve_genres(['iota blues']),
                          '')
 
+    def test_no_duplicate(self):
+        """Remove duplicated genres.
+        """
+        self._setup_config(count=99)
+        self.assertEqual(self.plugin._resolve_genres(['blues', 'blues']),
+                         'Blues')
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
