@@ -389,10 +389,11 @@ class ImportTask(object):
         if session.config['incremental']:
             self.save_history()
 
-        self.cleanup(copy=session.config['copy'],
-                     delete=session.config['delete'],
-                     move=session.config['move'])
-        self._emit_imported(session.lib)
+        if not self.skip:
+            self.cleanup(copy=session.config['copy'],
+                         delete=session.config['delete'],
+                         move=session.config['move'])
+            self._emit_imported(session.lib)
 
     def cleanup(self, copy=False, delete=False, move=False):
         """Remove and prune imported paths.
@@ -1062,18 +1063,16 @@ def manipulate_files(session, task):
     manipulations *after* items have been added to the library and
     finalizes each task.
     """
-    if task.skip:
-        return
+    if not task.skip:
+        if task.should_remove_duplicates:
+            task.remove_duplicates(session.lib)
 
-    if task.should_remove_duplicates:
-        task.remove_duplicates(session.lib)
-
-    task.manipulate_files(
-        move=session.config['move'],
-        copy=session.config['copy'],
-        write=session.config['write'],
-        session=session,
-    )
+        task.manipulate_files(
+            move=session.config['move'],
+            copy=session.config['copy'],
+            write=session.config['write'],
+            session=session,
+        )
 
     # Progress, cleanup, and event.
     task.finalize(session)
