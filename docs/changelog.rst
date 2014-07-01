@@ -53,6 +53,10 @@ Little improvements and fixes:
   contains two keywords rather than one. Thanks to Fabrice Laporte.
 * :doc:`/plugins/lastgenre`: Remove duplicates from canonicalized genre lists.
   Thanks again to Fabrice Laporte.
+* The importer now records its progress when skipping albums. This means that
+  incremental imports will no longer try to import albums again after you've
+  chosen to skip them, and erroneous invitations to resume "interrupted"
+  imports should be reduced. Thanks to jcassette.
 
 
 1.3.6 (May 10, 2014)
