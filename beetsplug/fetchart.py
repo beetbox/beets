@@ -153,6 +153,11 @@ def google_art(album):
 
 # Art from the filesystem.
 
+def sort_by_keywords_priority(image, cover_names):
+    """Sorting function for image names. Return indexes of cover names found
+    in the image filename."""
+    return [idx for (idx, x) in enumerate(cover_names) if x in image]
+
 
 def art_in_path(path, cover_names, cautious):
     """Look for album art files in a specified directory."""
@@ -167,6 +172,8 @@ def art_in_path(path, cover_names, cautious):
                 images.append(fn)
 
     # Look for "preferred" filenames.
+    images = sorted(images, key=lambda x: sort_by_keywords_priority(x,
+                    cover_names))
     cover_pat = r"(\b|_)({0})(\b|_)".format('|'.join(cover_names))
     for fn in images:
         if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
