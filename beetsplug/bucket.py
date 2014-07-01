@@ -152,22 +152,30 @@ def extract_modes(spans):
     return deflen, deffmt
 
 
-def build_alpha_spans(alpha_spans_str):
+def build_alpha_spans(alpha_spans_str, alpha_regexs):
     """Extract alphanumerics from string and return sorted list of chars
     [from...to]
     """
     spans = []
     ASCII_DIGITS = string.digits + string.ascii_lowercase
     for elem in alpha_spans_str:
-        bucket = sorted([x for x in elem.lower() if x.isalnum()])
-        if bucket:
-            beginIdx = ASCII_DIGITS.index(bucket[0])
-            endIdx = ASCII_DIGITS.index(bucket[-1])
+        if elem in alpha_regexs:
+            spans.append(re.compile(alpha_regexs[elem]))
         else:
-            raise ui.UserError("invalid range defined for alpha bucket '%s'"
-                               " : no alphanumeric character found" %
-                               elem)
-        spans.append(ASCII_DIGITS[beginIdx:endIdx + 1])
+            bucket = sorted([x for x in elem.lower() if x.isalnum()])
+            if bucket:
+                beginIdx = ASCII_DIGITS.index(bucket[0])
+                endIdx = ASCII_DIGITS.index(bucket[-1])
+            else:
+                raise ui.UserError("invalid range defined for alpha bucket "
+                                   "'%s': no alphanumeric character found" %
+                                   elem)
+            spans.append(
+                re.compile(
+                    "^[" + ASCII_DIGITS[beginIdx:endIdx + 1] +
+                    ASCII_DIGITS[beginIdx:endIdx + 1].upper() + "]"
+                )
+            )
     return spans
 
 
@@ -179,6 +187,7 @@ class BucketPlugin(plugins.BeetsPlugin):
         self.config.add({
             'bucket_year': [],
             'bucket_alpha': [],
+            'bucket_alpha_regex': {},
             'extrapolate': False
         })
         self.setup()
@@ -193,7 +202,10 @@ class BucketPlugin(plugins.BeetsPlugin):
             self.year_spans = extend_year_spans(self.year_spans,
                                                 self.ys_len_mode)
 
-        self.alpha_spans = build_alpha_spans(self.config['bucket_alpha'].get())
+        self.alpha_spans = build_alpha_spans(
+            self.config['bucket_alpha'].get(),
+            self.config['bucket_alpha_regex'].get()
+        )
 
     def find_bucket_year(self, year):
         """Return  bucket that matches given year or return the year
@@ -215,12 +227,12 @@ class BucketPlugin(plugins.BeetsPlugin):
         string initial if no matching bucket.
         """
         for (i, span) in enumerate(self.alpha_spans):
-            if s.lower()[0] in span:
+            if span.match(s):
                 return self.config['bucket_alpha'].get()[i]
         return s[0].upper()
 
     def _tmpl_bucket(self, text, field=None):
-        if not field and text.isdigit():
+        if not field and len(text) == 4 and text.isdigit():
             field = 'year'
 
         if field == 'year':

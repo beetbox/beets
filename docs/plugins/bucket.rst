@@ -38,3 +38,12 @@ of declared buckets::
         extrapolate: true
 
 The above configuration creates five-year ranges for any input year.
+
+If the automatic range of an alpha bucket is not sufficient an overriding regular expression can be used::
+
+      bucket:
+         bucket_alpha: ['A - D', 'E - L', 'M - R', 'S - Z']
+         bucket_alpha_regex:
+           'A - D': ^[0-9a-dA-D…äÄ]
+
+The *A - D* bucket now matches also all artists starting with ä or Ä and 0 to 9 and … (three dots). The other buckets work as ranges (see above).
