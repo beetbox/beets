@@ -45,6 +45,8 @@ Little improvements and fixes:
 * When using both :doc:`/plugins/convert` and :doc:`/plugins/scrub`, avoid
   scrubbing the source file of conversions. (Fix a regression introduced in
   the previous release.)
+* :doc:`/plugins/replaygain`: Logging is now quieter during import. Thanks to
+  Yevgeny Bezman.
 
 
 1.3.6 (May 10, 2014)
