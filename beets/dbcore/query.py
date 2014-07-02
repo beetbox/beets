@@ -748,4 +748,4 @@ def build_sql(model_cls, query, sort):
         sort_order=sort_order
     )
 
-    return (sql, subvals, slow_query, slow_sort) 
+    return sql, subvals, slow_query, slow_sort
