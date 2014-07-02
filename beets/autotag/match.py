@@ -364,6 +364,12 @@ def _add_candidate(items, results, info):
         log.debug('Duplicate.')
         return
 
+    # Discard matches without required tags.
+    for req_tag in config['match']['required'].as_str_seq():
+        if getattr(info, req_tag) is None:
+            log.debug('Ignored. Missing required tag: %s' % req_tag)
+            return
+
     # Find mapping between the items and the track info.
     mapping, extra_items, extra_tracks = assign_items(items, info.tracks)
 
