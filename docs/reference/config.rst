@@ -541,14 +541,13 @@ The available penalties are the same as those for the :ref:`max_rec` setting.
 required
 ~~~~~~~~
 
-You can also avoid matches that doesn't meet a required tag criteria.
-
-Just add the tags you want to enforce to the ``required`` setting::
+You can avoid matches that lack certain required information. Add the tags you
+want to enforce to the ``required`` setting::
 
     match:
         required: year label catalognum country
 
-No tag are required by default.
+No tags are required by default.
 
 .. _path-format-config:
 

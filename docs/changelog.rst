@@ -10,6 +10,8 @@ New stuff
   their "added" date. Thanks to Stig Inge Lea Bjørnsen.
 * Support for AIFF files. Tags are stored as ID3 frames in one of the file's
   IFF chunks.
+* A new :ref:`required` configuration option for the importer skips matches
+  that are missing certain data. Thanks to oprietop.
 
 Little improvements and fixes:
 
