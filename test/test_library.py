@@ -1,6 +1,5 @@
-# encoding: utf-8
 # This file is part of beets.
-# Copyright 2013, Adrian Sampson.
+# Copyright 2014, Adrian Sampson.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -1013,15 +1012,16 @@ class TemplateTest(_common.LibTestCase):
         self.album.store()
         self.assertEqual(self.i.evaluate_template('$foo'), 'baz')
 
-		
+
 class UnicodePathTest(_common.LibTestCase):
     def test_unicode_path(self):
-        self.i.path = os.path.join(_common.RSRC, 'unicode’d.mp3')
-        # if there are any problems with unicode paths, we will raise here and fail
+        self.i.path = os.path.join(_common.RSRC, u'unicode\u2019d.mp3')
+        # If there are any problems with unicode paths, we will raise
+        # here and fail.
         self.i.read()
         self.i.write()
 
-		
+
 class WriteTest(_common.LibTestCase):
     def test_write_nonexistant(self):
         self.i.path = '/path/does/not/exist'
