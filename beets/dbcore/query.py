@@ -535,7 +535,7 @@ class Sort(object):
 
 
 class MultipleSort(Sort):
-    """ Sort class that combines several sort criteria.
+    """Sort class that combines several sort criteria.
     This implementation tries to implement as many sort operation in sql,
     falling back to python sort only when necessary.
     """

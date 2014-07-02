@@ -505,7 +505,7 @@ class Results(object):
         predicate.
         """
         if self.sort:
-            # slow sort, must build the full list first
+            # Slow sort. Must build the full list first.
             objects = []
             for row in self.rows:
                 obj = self._generate_results(row)

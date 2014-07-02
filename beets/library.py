@@ -942,10 +942,10 @@ def get_query(val, model_cls):
         # Add path queries to aggregate query.
         if path_parts:
             query.subqueries += [PathQuery('path', s) for s in path_parts]
-        return (query, sort)
+        return query, sort
 
     elif isinstance(val, dbcore.Query):
-        return (val, None)
+        return val, None
 
     else:
         raise ValueError('query must be None or have type Query or str')
