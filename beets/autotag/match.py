@@ -350,6 +350,7 @@ def _recommendation(results):
 
     return rec
 
+
 def _add_candidate(items, results, info):
     """Given a candidate AlbumInfo object, attempt to add the candidate
     to the output dictionary of AlbumMatch objects. This involves
