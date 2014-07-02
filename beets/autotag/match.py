@@ -363,7 +363,7 @@ def _add_candidate(items, results, info):
     if info.album_id in results:
         log.debug('Duplicate.')
         return
-    
+
     # Discard matches without required tags.
     for req_tag in config['match']['required'].as_str_seq():
         if getattr(info, req_tag) is None:
