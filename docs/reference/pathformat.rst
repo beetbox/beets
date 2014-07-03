@@ -200,6 +200,7 @@ Ordinary metadata:
 * albumdisambig
 * disctitle
 * encoder
+* path
 
 .. _artist credit: http://wiki.musicbrainz.org/Artist_Credit
 .. _list of type names: http://musicbrainz.org/doc/Release_Group/Type
