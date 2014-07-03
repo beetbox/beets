@@ -200,7 +200,6 @@ Ordinary metadata:
 * albumdisambig
 * disctitle
 * encoder
-* path
 
 .. _artist credit: http://wiki.musicbrainz.org/Artist_Credit
 .. _list of type names: http://musicbrainz.org/doc/Release_Group/Type
@@ -228,6 +227,7 @@ Library metadata:
 
 * mtime: The modification time of the audio file.
 * added: The date and time that the music was added to your library.
+* path: The item's filename.
 
 
 .. _templ_plugins:
