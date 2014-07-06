@@ -30,7 +30,7 @@ from beets.util.functemplate import Template
 from beets import dbcore
 from beets.dbcore import types
 import beets
-
+from beets.attachments import Attachment
 
 log = logging.getLogger('beets')
 
@@ -957,7 +957,7 @@ def get_query(val, model_cls):
 class Library(dbcore.Database):
     """A database of music containing songs and albums.
     """
-    _models = (Item, Album)
+    _models = (Item, Album, Attachment)
 
     def __init__(self, path='library.blb',
                  directory='~/Music',

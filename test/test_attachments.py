@@ -18,13 +18,14 @@ from _common import unittest
 from beets.attachments import AttachmentFactory
 from beets.library import Library, Album
 
+
 class AttachmentFactoryTest(unittest.TestCase):
 
     def setUp(self):
         self.lib = Library(':memory:')
         self.factory = AttachmentFactory(self.lib)
 
-    def test_create(self):
+    def test_create_with_url_and_type(self):
         attachment = self.factory.create('/path/to/attachment', 'coverart')
         self.assertEqual(attachment.url, '/path/to/attachment')
         self.assertEqual(attachment.type, 'coverart')
@@ -38,12 +39,23 @@ class AttachmentFactoryTest(unittest.TestCase):
         self.assertEqual(attachment.ref_type, 'album')
 
     def test_create_populates_metadata(self):
-        def collector(type, url):
+        def collector(type, path):
             return {'mime': 'image/'}
         self.factory.register_collector(collector)
 
         attachment = self.factory.create('/path/to/attachment', 'coverart')
         self.assertEqual(attachment['mime'], 'image/')
+
+    def test_find_all_attachments(self):
+        self.factory.create('/path', 'atype').add()
+        self.factory.create('/another_path', 'asecondtype').add()
+
+        all_attachments = self.factory.find()
+        self.assertEqual(len(all_attachments), 2)
+
+        attachment = all_attachments.get()
+        self.assertEqual(attachment.path, '/path')
+        self.assertEqual(attachment.type, 'atype')
 
 
 def suite():
