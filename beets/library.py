@@ -30,6 +30,7 @@ from beets.util.functemplate import Template
 from beets import dbcore
 from beets.dbcore import types
 import beets
+from beets import attachments
 from beets.attachments import Attachment
 
 log = logging.getLogger('beets')
@@ -193,7 +194,7 @@ class WriteError(FileOperationError):
 
 # Item and Album model classes.
 
-class LibModel(dbcore.Model):
+class LibModel(dbcore.Model, attachments.LibModelMixin):
     """Shared concrete functionality for Items and Albums.
     """
     _bytes_keys = ('path', 'artpath')

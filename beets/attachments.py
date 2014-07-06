@@ -21,6 +21,17 @@ from beets import dbcore
 from beets.dbcore.query import Query, AndQuery
 
 
+def ref_type(entity):
+    # FIXME prevents circular dependency
+    from beets.library import Item, Album
+    if isinstance(entity, Item):
+        return 'item'
+    elif isinstance(entity, Album):
+        return 'album'
+    else:
+        raise ValueError('{} must be a Item or Album'.format(entity))
+
+
 class Attachment(dbcore.db.Model):
     """Represents an attachment in the database.
 
@@ -62,15 +73,7 @@ class Attachment(dbcore.db.Model):
         """Set the `ref` and `ref_type` properties so that
         `self.entity == entity`.
         """
-        # FIXME prevents circular dependency
-        from beets.library import Item, Album
-        if isinstance(entity, Item):
-            self.ref_type = 'item'
-        elif isinstance(entity, Album):
-            self.ref_type = 'album'
-        else:
-            raise ValueError('{} must be a Item or Album'.format(entity))
-
+        self.ref_type = ref_type(entity)
         if not entity.id:
             raise ValueError('{} must have an id', format(entity))
         self.ref = entity.id
@@ -297,14 +300,27 @@ class AttachmentCommand(ArgumentParser):
         pass
 
 
+class AttachmentRefQuery(Query):
+
+    def __init__(self, entity):
+        self.entity = entity
+
+    def clause(self):
+        return ('(ref = ? AND ref_type = ?)',
+                (self.entity.id, ref_type(self.entity)))
+
+    def match(self, attachment):
+        return attachment.entity == self.entity
+
+
 class AttachmentEntityQuery(Query):
 
-    def __init__(self, query):
-        self.query = query
+    def __init__(self, entity_query):
+        self.query = entity_query
 
     def match(self, attachment):
         if self.query is not None:
-            return self.query.match(attachment.entity)
+            return self.query.match(attachment.query)
         else:
             return True
 
@@ -314,5 +330,4 @@ class LibModelMixin(object):
     """
 
     def attachments(self):
-        # TODO implement
-        raise NotImplementedError
+        return self._db._fetch(Attachment, AttachmentRefQuery(self))

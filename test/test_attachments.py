@@ -16,7 +16,7 @@
 from _common import unittest
 
 from beets.attachments import AttachmentFactory
-from beets.library import Library, Album
+from beets.library import Library, Album, Item
 
 
 class AttachmentFactoryTest(unittest.TestCase):
@@ -56,6 +56,35 @@ class AttachmentFactoryTest(unittest.TestCase):
         attachment = all_attachments.get()
         self.assertEqual(attachment.path, '/path')
         self.assertEqual(attachment.type, 'atype')
+
+
+class EntityAttachmentsTest(unittest.TestCase):
+
+    def setUp(self):
+        self.lib = Library(':memory:')
+        self.factory = AttachmentFactory(self.lib)
+
+    def test_all_item_attachments(self):
+        item = Item()
+        item.add(self.lib)
+
+        attachment = self.factory.create('/path/to/attachment',
+                                         'coverart', item)
+        attachment.add()
+
+        self.assertItemsEqual(map(lambda a: a.id, item.attachments()),
+                              [attachment.id])
+
+    def test_all_album_attachments(self):
+        album = Album()
+        album.add(self.lib)
+
+        attachment = self.factory.create('/path/to/attachment',
+                                         'coverart', album)
+        attachment.add()
+
+        self.assertItemsEqual(map(lambda a: a.id, album.attachments()),
+                              [attachment.id])
 
 
 def suite():
