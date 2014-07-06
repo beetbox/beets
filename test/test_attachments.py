@@ -13,8 +13,13 @@
 # included in all copies or substantial portions of the Software.
 
 
+import os
+from tempfile import mkstemp
 from _common import unittest
+from helper import TestHelper
 
+import beets.ui
+from beets.plugins import BeetsPlugin
 from beets.attachments import AttachmentFactory
 from beets.library import Library, Album, Item
 
@@ -85,6 +90,78 @@ class EntityAttachmentsTest(unittest.TestCase):
 
         self.assertItemsEqual(map(lambda a: a.id, album.attachments()),
                               [attachment.id])
+
+
+class AttachCommandTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self.setup_beets()
+        self.setup_log_attachment_plugin()
+        self.tmp_files = []
+
+    def tearDown(self):
+        self.teardown_beets()
+        self.unload_plugins()
+        for p in self.tmp_files:
+            os.remove(p)
+
+    def test_attach_to_album(self):
+        album = Album(album='albumtitle')
+        self.lib.add(album)
+
+        attachment_path = self.mkstemp('.log')
+        self.runcli('attach', attachment_path, 'albumtitle')
+        attachment = album.attachments().get()
+        self.assertEqual(attachment.type, 'log')
+
+    def test_attach_to_album_and_move(self):
+        self.skipTest('Not implemented')
+
+    def test_file_relative_to_album_dir(self):
+        self.skipTest('Not implemented')
+
+    def test_attach_to_item(self):
+        item = Item(title='tracktitle')
+        self.lib.add(item)
+
+        attachment_path = self.mkstemp('.log')
+        self.runcli('attach', '--track', attachment_path, 'tracktitle')
+        attachment = item.attachments().get()
+        self.assertEqual(attachment.type, 'log')
+
+    def test_attach_to_item_and_move(self):
+        self.skipTest('Not implemented')
+
+    def test_user_type(self):
+        album = Album(album='albumtitle')
+        self.lib.add(album)
+
+        attachment_path = self.mkstemp()
+        self.runcli('attach', '-t', 'customtype', attachment_path, 'albumtitle')
+        attachment = album.attachments().get()
+        self.assertEqual(attachment.type, 'customtype')
+
+    def test_unknown_warning(self):
+        self.skipTest('Not implemented')
+
+    # Helpers
+
+    def runcli(self, *args):
+        beets.ui._raw_main(list(args), self.lib)
+
+    def mkstemp(self, suffix=''):
+        (handle, path) = mkstemp(suffix)
+        os.close(handle)
+        self.tmp_files.append(path)
+        return path
+
+    def setup_log_attachment_plugin(self):
+        def log_discoverer(path):
+            if path.endswith('.log'):
+                return 'log'
+        log_plugin = BeetsPlugin()
+        log_plugin.attachment_discoverer = log_discoverer
+        self.add_plugin(log_plugin)
 
 
 def suite():

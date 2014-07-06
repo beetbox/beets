@@ -38,6 +38,7 @@ from beets.util import syspath, normpath, ancestry, displayable_path
 from beets.util.functemplate import Template
 from beets import library
 from beets import config
+from beets import attachments
 from beets.util.confit import _package_path
 
 VARIOUS_ARTISTS = u'Various Artists'
@@ -76,6 +77,9 @@ def _do_query(lib, query, album, also_items=True):
         raise ui.UserError('No matching items found.')
 
     return items, albums
+
+
+default_commands.append(attachments.AttachCommand())
 
 
 # fields: Shows a list of available fields for queries and format strings.

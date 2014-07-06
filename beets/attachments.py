@@ -15,8 +15,10 @@
 
 import re
 import urlparse
+import optparse
 from argparse import ArgumentParser
 
+from beets.plugins import find_plugins
 from beets import dbcore
 from beets.dbcore.query import Query, AndQuery
 
@@ -232,9 +234,12 @@ class AttachmentFactory(object):
         """
         self._collectors.append(collector)
 
-    def register_plugin(self, plugin):
-        self.register_discoverer(plugin.attachment_discoverer)
-        self.register_collector(plugin.attachment_collector)
+    def register_plugins(self, plugins):
+        for plugin in plugins:
+            if hasattr(plugin, 'attachment_discoverer'):
+                self.register_discoverer(plugin.attachment_discoverer)
+            if hasattr(plugin, 'attachment_collector'):
+                self.register_collector(plugin.attachment_collector)
 
     def _discover_types(self, path):
         types = []
@@ -252,6 +257,8 @@ class AttachmentFactory(object):
         all_meta = {}
         for collector in self._collectors:
             try:
+                # TODO maybe we should provide file handle for checking
+                # content
                 meta = collector(type, path)
                 if isinstance(meta, dict):
                     all_meta.update(meta)
@@ -300,7 +307,54 @@ class AttachmentCommand(ArgumentParser):
         pass
 
 
+class AttachCommand(object):
+    """Duck type for ui.Subcommand
+    """
+
+    def __init__(self):
+        self.name = 'attach'
+        self.parser = optparse.OptionParser()
+        self.aliases = ()
+        self.help = 'create an attachment for an album or a ' \
+                    'track and move the attachment'
+        self.hide = False
+
+        self.parser.add_option(
+            '-c', '--copy', action='store_true', dest='copy',
+            help='copy attachment intead of moving them'
+        )
+        self.parser.add_option(
+            '--track', action='store_true', dest='track',
+            help='attach path to the tracks matched by the query'
+        )
+        self.parser.add_option(
+            '-t', '--type', dest='type',
+            help='create one attachment with this type',
+        )
+
+    def func(self, lib, opts, args):
+        # FIXME prevents circular dependency
+        from beets.ui import decargs
+        factory = AttachmentFactory(lib)
+        factory.register_plugins(find_plugins())
+        path = args.pop(0)
+
+        if opts.track:
+            entities = lib.items(decargs(args))
+        else:
+            entities = lib.albums(decargs(args))
+
+        for entity in entities:
+            if opts.type:
+                factory.create(path, opts.type, entity).add()
+            else:
+                for attachment in factory.discover(path, entity):
+                    attachment.add()
+
+
 class AttachmentRefQuery(Query):
+    """Matches any attachment whose entity is `entity`.
+    """
 
     def __init__(self, entity):
         self.entity = entity
@@ -314,6 +368,8 @@ class AttachmentRefQuery(Query):
 
 
 class AttachmentEntityQuery(Query):
+    """Matches any attachment whose entity matches `entity_query`.
+    """
 
     def __init__(self, entity_query):
         self.query = entity_query

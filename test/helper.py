@@ -170,6 +170,14 @@ class TestHelper(object):
         beets.plugins.load_plugins(plugins)
         beets.plugins.find_plugins()
 
+    def add_plugin(self, plugin):
+        """Add a plugin instance to the list returned by
+        `plugins.find_plugins()`.
+        """
+        def create_plugin():
+            return plugin
+        beets.plugins._classes.add(create_plugin)
+
     def unload_plugins(self):
         """Unload all plugins and remove the from the configuration.
         """
