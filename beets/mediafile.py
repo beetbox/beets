@@ -1243,7 +1243,6 @@ class MediaFile(object):
         )
         try:
             self.mgfile = mutagen.File(path)
-            print(self.mgfile)
         except unreadable_exc as exc:
             log.debug(u'header parsing failed: {0}'.format(unicode(exc)))
             raise UnreadableFileError(path)
