@@ -15,7 +15,7 @@ class IHatePluginTest(unittest.TestCase):
             genre='TestGenre',
             album=u'TestAlbum',
             artist=u'TestArtist')
-        task = importer.SingletonImportTask(test_item)
+        task = importer.SingletonImportTask(None, test_item)
 
         # Empty query should let it pass.
         self.assertFalse(IHatePlugin.do_i_hate_this(task, match_pattern))
