@@ -775,9 +775,9 @@ class SubcommandsOptionParser(optparse.OptionParser):
         return self.parse_args(args)
 
     def parse_subcommand(self, args):
-        """Given the `args` left unused by a typical OptionParser
-        `parse_args`, return the invoked subcommand, the subcommand
-        options, and the subcommand arguments.
+        """Given the `args` left unused by a `parse_global_options`,
+        return the invoked subcommand, the subcommand options, and the
+        subcommand arguments.
         """
         # Help is default command
         if not args:

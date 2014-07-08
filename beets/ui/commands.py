@@ -23,6 +23,7 @@ import time
 import itertools
 import codecs
 import platform
+import re
 
 import beets
 from beets import ui
@@ -110,6 +111,7 @@ fields_cmd = ui.Subcommand(
 )
 fields_cmd.func = fields_func
 default_commands.append(fields_cmd)
+
 
 # help: Print help text for commands
 
@@ -1521,7 +1523,8 @@ def completion_script(commands):
         command_names.append(name)
 
         for alias in cmd.aliases:
-            aliases[alias] = name
+            if re.match(r'^\w+$', alias):
+                aliases[alias] = name
 
         options[name] = {'flags': [], 'opts': []}
         for opts in cmd.parser._get_all_options()[1:]:
@@ -1539,9 +1542,6 @@ def completion_script(commands):
         'flags': ['-v', '--verbose'],
         'opts': '-l --library -c --config -d --directory -h --help'.split(' ')
     }
-
-    # Help subcommand
-    command_names.append('help')
 
     # Add flags common to all commands
     options['_common'] = {
