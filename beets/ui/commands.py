@@ -111,6 +111,29 @@ fields_cmd = ui.Subcommand(
 fields_cmd.func = fields_func
 default_commands.append(fields_cmd)
 
+# help: Print help text for commands
+
+class HelpCommand(ui.Subcommand):
+
+    def __init__(self):
+        super(HelpCommand, self).__init__(
+            'help', aliases=('?',),
+            help='give detailed help on a specific sub-command',
+        )
+
+    def func(self, lib, opts, args):
+        if args:
+            cmdname = args[0]
+            helpcommand = self.root_parser._subcommand_for_name(cmdname)
+            if not helpcommand:
+                raise ui.UserError("unknown command '{0}'".format(cmdname))
+            helpcommand.print_help()
+        else:
+            self.root_parser.print_help()
+
+
+default_commands.append(HelpCommand())
+
 
 # import: Autotagger and importer.
 
