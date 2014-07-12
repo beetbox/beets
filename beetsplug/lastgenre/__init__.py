@@ -362,20 +362,25 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 ))
                 album.store()
 
-                for item in album.items():
-                    # If we're using track-level sources, also look up each
-                    # track on the album.
-                    if 'track' in self.sources:
-                        item.genre, src = self._get_genre(item)
-                        item.store()
-                        log.info(
-                            u'genre for track {0} - {1} ({2}): {3}'. format(
-                                item.artist, item.title, src, item.genre
-                            )
-                        )
+            # If using track-level, pick all, even the ones not in an Album.
+            if 'track' in self.sources:
+                for item in lib.items(ui.decargs(args)):
+                    item.genre, src = self._get_genre(item)
+                    item.store()
+                    log.info(u'genre for track {0} - {1} ({2}): {3}'.format(
+                        item.artist, item.title, src, item.genre
+                    ))
 
                     if write:
                         item.try_write()
+
+            # Now only the albums
+            for album in lib.albums(ui.decargs(args)):
+                album.genre, src = self._get_genre(album)
+                log.info(u'genre for album {0} - {1} ({2}): {3}'.format(
+                    album.albumartist, album.album, src, album.genre
+                ))
+                album.store()
 
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]
