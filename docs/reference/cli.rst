@@ -279,7 +279,7 @@ write
 `````
 ::
 
-    beet write [-ap] [QUERY]
+    beet write [-p] [QUERY]
 
 Write metadata from the database into files' tags.
 
