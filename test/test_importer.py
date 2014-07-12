@@ -1135,7 +1135,6 @@ class ResumeImportTest(unittest.TestCase, TestHelper):
         self.assertEqual(len(self.lib.albums()), 2)
         self.assertIsNotNone(self.lib.albums('album:album 1').get())
 
-    @unittest.skip('not working yet')
     @patch('beets.plugins.send')
     def test_resume_singleton(self, plugins_send):
         self.importer = self.create_importer(item_count=2)

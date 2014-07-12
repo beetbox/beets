@@ -22,7 +22,7 @@ import unicodedata
 import time
 import re
 from unidecode import unidecode
-from beets.mediafile import MediaFile, MutagenError
+from beets.mediafile import MediaFile, MutagenError, UnreadableFileError
 from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile
@@ -349,7 +349,7 @@ class Item(LibModel):
     def read(self, read_path=None):
         """Read the metadata from the associated file.
 
-        If ``read_path`` is specified, read metadata from that file
+        If `read_path` is specified, read metadata from that file
         instead. Updates all the properties in `_media_fields`
         from the media file.
 
@@ -361,7 +361,7 @@ class Item(LibModel):
             read_path = normpath(read_path)
         try:
             mediafile = MediaFile(syspath(read_path))
-        except (OSError, IOError) as exc:
+        except (OSError, IOError, UnreadableFileError) as exc:
             raise ReadError(read_path, exc)
 
         for key in self._media_fields:

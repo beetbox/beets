@@ -23,6 +23,8 @@ import pickle
 import itertools
 from collections import defaultdict
 from tempfile import mkdtemp
+from bisect import insort, bisect_left
+from contextlib import contextmanager
 import shutil
 
 from beets import autotag
@@ -79,33 +81,52 @@ def _save_state(state):
 # Utilities for reading and writing the beets progress file, which
 # allows long tagging tasks to be resumed when they pause (or crash).
 
-def progress_set(toppath, paths):
-    """Record that tagging for the given `toppath` was successful up to
-    `paths`. If paths is None, then clear the progress value (indicating
-    that the tagging completed).
-    """
+@contextmanager
+def progress_state():
     state = _open_state()
-    if PROGRESS_KEY not in state:
-        state[PROGRESS_KEY] = {}
-
-    if paths is None:
-        # Remove progress from file.
-        if toppath in state[PROGRESS_KEY]:
-            del state[PROGRESS_KEY][toppath]
-    else:
-        state[PROGRESS_KEY][toppath] = paths
-
+    progress = state.setdefault(PROGRESS_KEY, defaultdict(list))
+    yield progress
     _save_state(state)
 
 
-def progress_get(toppath):
-    """Get the last successfully tagged subpath of toppath. If toppath
-    has no progress information, returns None.
+def progress_add(toppath, *paths):
+    """Record that the files under all of the `paths` have been imported
+    under `toppath`.
     """
-    state = _open_state()
-    if PROGRESS_KEY not in state:
-        return None
-    return state[PROGRESS_KEY].get(toppath)
+    with progress_state() as state:
+        imported = state[toppath]
+        for path in paths:
+            # Normally `progress_add` will be called with the path
+            # argument increasing. This is because of the ordering in
+            # `autotag.albums_in_dir`. We take advantage of that to make
+            # the code faster
+            if imported and imported[len(imported) - 1] <= path:
+                imported.append(path)
+            else:
+                insort(imported, path)
+
+
+def progress_element(toppath, path):
+    """Return whether `path` has been imported in `toppath`.
+    """
+    with progress_state() as state:
+        imported = state[toppath]
+        i = bisect_left(imported, path)
+        return i != len(imported) and imported[i] == path
+
+
+def has_progress(toppath):
+    """Return `True` if there exist paths that have already been
+    imported under `toppath`.
+    """
+    with progress_state() as state:
+        return len(state[toppath]) != 0
+
+
+def progress_reset(toppath):
+    with progress_state() as state:
+        if toppath in state:
+            del state[toppath]
 
 
 # Similarly, utilities for manipulating the "incremental" import log.
@@ -308,7 +329,8 @@ class ImportTask(object):
         """Updates the progress state to indicate that this album has
         finished.
         """
-        progress_set(self.toppath, self.paths)
+        if self.toppath:
+            progress_add(self.toppath, *self.paths)
 
     def save_history(self):
         """Save the directory in the history for incremental imports.
@@ -593,8 +615,8 @@ class SingletonImportTask(ImportTask):
     """ImportTask for a single track that is not associated to an album.
     """
 
-    def __init__(self, item):
-        super(SingletonImportTask, self).__init__(paths=[item.path])
+    def __init__(self, toppath, item):
+        super(SingletonImportTask, self).__init__(toppath, [item.path])
         self.item = item
         self.is_album = False
         self.paths = [item.path]
@@ -608,10 +630,6 @@ class SingletonImportTask(ImportTask):
 
     def imported_items(self):
         return [self.item]
-
-    def save_progress(self):
-        # TODO we should also save progress for singletons
-        pass
 
     def save_history(self):
         # TODO we should also save history for singletons
@@ -698,10 +716,10 @@ class SentinelImportTask(ImportTask):
     def save_progress(self):
         if self.paths is None:
             # "Done" sentinel.
-            progress_set(self.toppath, None)
+            progress_reset(self.toppath)
         else:
             # "Directory progress" sentinel for singletons
-            progress_set(self.toppath, self.paths)
+            progress_add(self.toppath, *self.paths)
 
     def skip(self):
         return True
@@ -800,6 +818,19 @@ def read_tasks(session):
         history_dirs = history_get()
 
     for toppath in session.paths:
+
+        # Determine if we want to resume import of the toppath
+        resuming = False
+        if session.want_resume and has_progress(toppath):
+            # Either accept immediately or prompt for input to decide.
+            if session.want_resume is True or \
+               session.should_resume(toppath):
+                log.warn('Resuming interrupted import of %s' % toppath)
+                resuming = True
+            else:
+                # Clear progress; we're starting from the top.
+                progress_reset(toppath)
+
         # Extract archives.
         archive_task = None
         if ArchiveImportTask.is_archive(syspath(toppath)):
@@ -822,6 +853,9 @@ def read_tasks(session):
 
         # Check whether the path is to a file.
         if not os.path.isdir(syspath(toppath)):
+            if resuming and progress_element(toppath, toppath):
+                continue
+
             try:
                 item = library.Item.from_path(toppath)
             except mediafile.UnreadableFileError:
@@ -830,7 +864,7 @@ def read_tasks(session):
                 ))
                 continue
             if session.config['singletons']:
-                yield SingletonImportTask(item)
+                yield SingletonImportTask(toppath, item)
             else:
                 yield ImportTask(toppath, [toppath], [item])
             continue
@@ -845,28 +879,11 @@ def read_tasks(session):
                 yield SentinelImportTask(toppath)
             continue
 
-        resume_dir = None
-        if session.want_resume:
-            resume_dir = progress_get(toppath)
-            if resume_dir:
-                # Either accept immediately or prompt for input to decide.
-                if session.want_resume is True or \
-                   session.should_resume(toppath):
-                    log.warn('Resuming interrupted import of %s' % toppath)
-                else:
-                    # Clear progress; we're starting from the top.
-                    resume_dir = None
-                    progress_set(toppath, None)
-
         # Produce paths under this directory.
         for paths, items in autotag.albums_in_dir(toppath):
             # Skip according to progress.
-            if session.want_resume and resume_dir:
-                # We're fast-forwarding to resume a previous tagging.
-                if paths == resume_dir:
-                    # We've hit the last good path! Turn off the
-                    # fast-forwarding.
-                    resume_dir = None
+            if resuming \
+               and all(map(lambda p: progress_element(toppath, p), paths)):
                 continue
 
             # When incremental, skip paths in the history.
@@ -880,7 +897,8 @@ def read_tasks(session):
             # Yield all the necessary tasks.
             if session.config['singletons']:
                 for item in items:
-                    yield SingletonImportTask(item)
+                    if not (resuming and progress_element(toppath, item.path)):
+                        yield SingletonImportTask(toppath, item)
                 yield SentinelImportTask(toppath, paths)
             else:
                 yield ImportTask(toppath, paths, items)
@@ -906,7 +924,7 @@ def query_tasks(session):
     if session.config['singletons']:
         # Search for items.
         for item in session.lib.items(session.query):
-            yield SingletonImportTask(item)
+            yield SingletonImportTask(None, item)
 
     else:
         # Search for albums.
@@ -967,7 +985,7 @@ def user_query(session, task):
         # Set up a little pipeline for dealing with the singletons.
         def emitter(task):
             for item in task.items:
-                yield SingletonImportTask(item)
+                yield SingletonImportTask(task.toppath, item)
             yield SentinelImportTask(task.toppath, task.paths)
 
         ipl = pipeline.Pipeline([

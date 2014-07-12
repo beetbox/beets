@@ -62,6 +62,8 @@ Little improvements and fixes:
 * :doc:`/plugins/bucket`: You can now customize the definition of alphanumeric
   "ranges" using regular expressions. And the heuristic for detecting years
   has been improved. Thanks to sotho.
+* Already imported singleton tracks are skipped when resuming an
+  import.
 
 
 1.3.6 (May 10, 2014)

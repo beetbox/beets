@@ -656,28 +656,35 @@ class Subcommand(object):
         self.aliases = aliases
         self.help = help
         self.hide = hide
+        self._root_parser = None
+
+    def print_help(self):
+        self.parser.print_help()
+
+    def parse_args(self, args):
+        return self.parser.parse_args(args)
+
+    @property
+    def root_parser(self):
+        return self._root_parser
+
+    @root_parser.setter
+    def root_parser(self, root_parser):
+        self._root_parser = root_parser
+        self.parser.prog = '{0} {1}'.format(root_parser.get_prog_name(),
+                                            self.name)
 
 
 class SubcommandsOptionParser(optparse.OptionParser):
     """A variant of OptionParser that parses subcommands and their
     arguments.
     """
-    # A singleton command used to give help on other subcommands.
-    _HelpSubcommand = Subcommand(
-        'help', optparse.OptionParser(),
-        help='give detailed help on a specific sub-command',
-        aliases=('?',)
-    )
 
     def __init__(self, *args, **kwargs):
         """Create a new subcommand-aware option parser. All of the
         options to OptionParser.__init__ are supported in addition
         to subcommands, a sequence of Subcommand objects.
         """
-        # The subcommand array, with the help command included.
-        self.subcommands = list(kwargs.pop('subcommands', []))
-        self.subcommands.append(self._HelpSubcommand)
-
         # A more helpful default usage.
         if 'usage' not in kwargs:
             kwargs['usage'] = """
@@ -687,18 +694,17 @@ class SubcommandsOptionParser(optparse.OptionParser):
         # Super constructor.
         optparse.OptionParser.__init__(self, *args, **kwargs)
 
-        # Adjust the help-visible name of each subcommand.
-        for subcommand in self.subcommands:
-            subcommand.parser.prog = '%s %s' % \
-                (self.get_prog_name(), subcommand.name)
-
         # Our root parser needs to stop on the first unrecognized argument.
         self.disable_interspersed_args()
 
-    def add_subcommand(self, cmd):
+        self.subcommands = []
+
+    def add_subcommand(self, *cmds):
         """Adds a Subcommand object to the parser's list of commands.
         """
-        self.subcommands.append(cmd)
+        for cmd in cmds:
+            cmd.root_parser = self
+            self.subcommands.append(cmd)
 
     # Add the list of subcommands to the help message.
     def format_help(self, formatter=None):
@@ -762,48 +768,27 @@ class SubcommandsOptionParser(optparse.OptionParser):
                 return subcommand
         return None
 
-    def parse_args(self, a=None, v=None):
-        """Like OptionParser.parse_args, but returns these four items:
-        - options: the options passed to the root parser
-        - subcommand: the Subcommand object that was invoked
-        - suboptions: the options passed to the subcommand parser
-        - subargs: the positional arguments passed to the subcommand
+    def parse_global_options(self, args):
+        """Parse options up to the subcommand argument. Returns a tuple
+        of the options object and the remaining arguments.
         """
-        options, args = optparse.OptionParser.parse_args(self, a, v)
-        subcommand, suboptions, subargs = self._parse_sub(args)
-        return options, subcommand, suboptions, subargs
+        return self.parse_args(args)
 
-    def _parse_sub(self, args):
-        """Given the `args` left unused by a typical OptionParser
-        `parse_args`, return the invoked subcommand, the subcommand
-        options, and the subcommand arguments.
+    def parse_subcommand(self, args):
+        """Given the `args` left unused by a `parse_global_options`,
+        return the invoked subcommand, the subcommand options, and the
+        subcommand arguments.
         """
+        # Help is default command
         if not args:
-            # No command given.
-            self.print_help()
-            self.exit()
-        else:
-            cmdname = args.pop(0)
-            subcommand = self._subcommand_for_name(cmdname)
-            if not subcommand:
-                self.error('unknown command ' + cmdname)
+            args = ['help']
 
-        suboptions, subargs = subcommand.parser.parse_args(args)
+        cmdname = args.pop(0)
+        subcommand = self._subcommand_for_name(cmdname)
+        if not subcommand:
+            raise UserError("unknown command '{0}'".format(cmdname))
 
-        if subcommand is self._HelpSubcommand:
-            if subargs:
-                # particular
-                cmdname = subargs[0]
-                helpcommand = self._subcommand_for_name(cmdname)
-                if not helpcommand:
-                    self.error('no command named {0}'.format(cmdname))
-                helpcommand.parser.print_help()
-                self.exit()
-            else:
-                # general
-                self.print_help()
-                self.exit()
-
+        suboptions, subargs = subcommand.parse_args(args)
         return subcommand, suboptions, subargs
 
 
@@ -876,9 +861,7 @@ def _configure(args):
     from beets.ui.commands import default_commands
 
     # Construct the root parser.
-    commands = list(default_commands)
-    commands.append(migrate.migrate_cmd)  # Temporary.
-    parser = SubcommandsOptionParser(subcommands=commands)
+    parser = SubcommandsOptionParser()
     parser.add_option('-l', '--library', dest='library',
                       help='library database file to use')
     parser.add_option('-d', '--directory', dest='directory',
@@ -889,7 +872,7 @@ def _configure(args):
                       help='path to configuration file')
 
     # Parse the command-line!
-    options, args = optparse.OptionParser.parse_args(parser, args)
+    options, subargs = parser.parse_global_options(args)
 
     # Add any additional config files specified with --config. This
     # special handling lets specified plugins get loaded before we
@@ -914,13 +897,17 @@ def _configure(args):
         log.debug('no user configuration found at {0}'.format(
             util.displayable_path(config_path)))
 
+    # Add builtin subcommands
+    parser.add_subcommand(*default_commands)
+    parser.add_subcommand(migrate.migrate_cmd)
+
     # Now add the plugin commands to the parser.
     _load_plugins()
     for cmd in plugins.commands():
         parser.add_subcommand(cmd)
 
     # Parse the remainder of the command line with loaded plugins.
-    return parser._parse_sub(args)
+    return parser.parse_subcommand(subargs)
 
 
 def _raw_main(args, lib=None):

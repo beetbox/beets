@@ -26,6 +26,7 @@ import _common
 from _common import unittest
 from _common import item
 import beets.library
+import beets.mediafile
 from beets import util
 from beets import plugins
 from beets import config
@@ -1053,6 +1054,22 @@ class WriteTest(_common.LibTestCase):
         self.i.write(custom_path)
         self.assertEqual(MediaFile(custom_path).artist, 'new artist')
         self.assertNotEqual(MediaFile(self.i.path).artist, 'new artist')
+
+
+class ItemReadTest(unittest.TestCase):
+
+    def test_unreadable_raise_read_error(self):
+        unreadable = os.path.join(_common.RSRC, 'image-2x3.png')
+        item = beets.library.Item()
+        with self.assertRaises(beets.library.ReadError) as cm:
+            item.read(unreadable)
+        self.assertIsInstance(cm.exception.reason,
+                              beets.mediafile.UnreadableFileError)
+
+    def test_nonexistent_raise_read_error(self):
+        item = beets.library.Item()
+        with self.assertRaises(beets.library.ReadError):
+            item.read('/thisfiledoesnotexist')
 
 
 def suite():
