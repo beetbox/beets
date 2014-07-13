@@ -355,13 +355,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             write = config['import']['write'].get(bool)
             self.config.set_args(opts)
 
-            for album in lib.albums(ui.decargs(args)):
-                album.genre, src = self._get_genre(album)
-                log.info(u'genre for album {0} - {1} ({2}): {3}'.format(
-                    album.albumartist, album.album, src, album.genre
-                ))
-                album.store()
-
             # If using track-level, pick all, even the ones not in an Album.
             if 'track' in self.sources:
                 for item in lib.items(ui.decargs(args)):
