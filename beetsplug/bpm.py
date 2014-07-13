@@ -18,7 +18,6 @@ import time
 import logging
 
 from beets import ui
-from beets import util
 from beets.plugins import BeetsPlugin
 
 log = logging.getLogger('beets')
