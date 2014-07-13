@@ -12,7 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Determine BPM from keyboard listening to Enter key strokes"""
+"""Determine BPM by pressing a key to the rhythm."""
 
 import time
 import logging
@@ -25,7 +25,7 @@ log = logging.getLogger('beets')
 
 def bpm(max_strokes):
     """Returns average BPM (possibly of a playing song) 
-    listening to Enter strokes
+    listening to Enter keystrokes.
     """
     t0 = None
     dt = []
