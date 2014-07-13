@@ -78,7 +78,7 @@ class BPMPlugin(BeetsPlugin):
                 return
 
         log.info('Press Enter {0} times to the rhythm or Ctrl-D \
-                 to exit'.format(self.config['max_strokes'].get(int)))
+to exit'.format(self.config['max_strokes'].get(int)))
         new_bpm = bpm(self.config['max_strokes'].get(int))
         item['bpm'] = int(new_bpm)
         if write:
