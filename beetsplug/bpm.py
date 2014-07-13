@@ -42,7 +42,6 @@ def bpm(max_strokes):
             break
 
     # Return average BPM
-    # bpm = (max_strokes-1) / sum(dt) * 60
     ave = sum([1.0 / dti * 60 for dti in dt]) / len(dt)
     return ave
 
