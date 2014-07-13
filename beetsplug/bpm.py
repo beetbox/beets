@@ -24,7 +24,7 @@ log = logging.getLogger('beets')
 
 
 def bpm(max_strokes):
-    """Returns average BPM (possibly of a playing song) 
+    """Returns average BPM (possibly of a playing song)
     listening to Enter keystrokes.
     """
     t0 = None
@@ -42,9 +42,10 @@ def bpm(max_strokes):
             break
 
     # Return average BPM
-    #bpm = (max_strokes-1) / sum(dt) * 60.0
-    ave = sum([1./dti*60.0 for dti in dt]) / len(dt)
+    # bpm = (max_strokes-1) / sum(dt) * 60
+    ave = sum([1.0 / dti * 60 for dti in dt]) / len(dt)
     return ave
+
 
 class BPMPlugin(BeetsPlugin):
 
@@ -57,7 +58,8 @@ class BPMPlugin(BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand('bpm',
-                            help='detect bpm of a song listening to key strokes')
+                            help='determine bpm of a song by pressing \
+                            a key to the rhythm')
         cmd.func = self.command
         return [cmd]
 
@@ -74,9 +76,9 @@ class BPMPlugin(BeetsPlugin):
             log.info('Found bpm {0}'.format(item['bpm']))
             if not overwrite:
                 return
-            
-        log.info('Press enter {0} times to the rhythm or Ctrl-D to exit'.format(
-                self.config['max_strokes'].get(int)))
+
+        log.info('Press Enter {0} times to the rhythm or Ctrl-D \
+                 to exit'.format(self.config['max_strokes'].get(int)))
         new_bpm = bpm(self.config['max_strokes'].get(int))
         item['bpm'] = int(new_bpm)
         if write:
