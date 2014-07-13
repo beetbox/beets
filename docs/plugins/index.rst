@@ -58,6 +58,7 @@ by typing ``beet version``.
    fromfilename
    ftintitle
    keyfinder
+   bpm
 
 Autotagger Extensions
 ---------------------
@@ -90,6 +91,7 @@ Metadata
   statistics (last_played, play_count, skip_count, rating).
 * :doc:`keyfinder`: Use the `KeyFinder`_ program to detect the musical
   key from the audio.
+* :doc:`bpm`: Determine bpm from keystrokes
 
 .. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
 .. _the Echo Nest: http://www.echonest.com
