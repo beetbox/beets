@@ -19,6 +19,7 @@ from beets.ui import Subcommand
 from beets import config
 from beets import ui
 from beets import util
+import subprocess
 import platform
 import logging
 import shlex
@@ -33,6 +34,8 @@ def play_music(lib, opts, args):
     """
     command_str = config['play']['command'].get()
     use_folders = config['play']['use_folders'].get(bool)
+    term = config['play']['terminal'].get()
+
     if command_str:
         command = shlex.split(command_str)
     else:
@@ -46,6 +49,10 @@ def play_music(lib, opts, args):
         else:
             # If not Mac or Windows, then assume Unixy.
             command = ['xdg-open']
+
+    # Safety check
+    if not term:
+        term = 'default'
 
     # Preform search by album and add folders rather then tracks to playlist.
     if opts.album:
@@ -85,11 +92,19 @@ def play_music(lib, opts, args):
 
     # Create temporary m3u file to hold our playlist.
     m3u = NamedTemporaryFile('w', suffix='.m3u', delete=False)
-    for item in paths:
-        m3u.write(item + '\n')
-    m3u.close()
+    
+    if term == 'cygwin':
+        # Needs to use cygpath to get correct patg in file
+        for item in paths:
+            path = subprocess.check_output(['cygpath', '-w', item])
+            m3u.write(path)
+        command.append(subprocess.check_output(['cygpath', '-w', m3u.name]).strip())
+    else:
+        for item in paths:
+            m3u.write(item)
+        command.append(m3u.name)
 
-    command.append(m3u.name)
+    m3u.close()
 
     # Invoke the command and log the output.
     output = util.command_output(command)
