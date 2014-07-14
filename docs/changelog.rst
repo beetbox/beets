@@ -12,6 +12,7 @@ New stuff
   IFF chunks.
 * A new :ref:`required` configuration option for the importer skips matches
   that are missing certain data. Thanks to oprietop.
+* The new :doc:`/plugins/bpm` lets you manually measure the tempo of a playing song. Thanks to aroquen.
 
 Little improvements and fixes:
 
