@@ -19,8 +19,8 @@ from beets.ui import Subcommand
 from beets import config
 from beets import ui
 from beets import util
+import sys
 import subprocess
-import platform
 import logging
 import shlex
 from tempfile import NamedTemporaryFile
@@ -35,18 +35,18 @@ def play_music(lib, opts, args):
     """
     command_str = config['play']['command'].get()
     use_folders = config['play']['use_folders'].get(bool)
-    sys_name = platform.system().lower()
-        
+    sys_name = sys.platform
+
     if command_str:
         command = shlex.split(command_str)
     else:
         # If a command isn't set, then let the OS decide how to open the
         # playlist.
-        if sys_name.startswith('darwin'):
+        if sys_name == 'darwin':
             command = ['open']
-        elif sys_name.startswith('windows'):
+        elif sys_name == 'windows':
             command = ['start']
-        elif sys_name.startswith('cygwin'):
+        elif sys_name == 'cygwin':
             ui.print_("Must add command in config file, see documentation at http://beets.readthedocs.org/en/v" + __version__ + "/reference/config.html")
             return
         else:
@@ -93,7 +93,7 @@ def play_music(lib, opts, args):
     m3u = NamedTemporaryFile('w', suffix='.m3u', delete=False)
 
     
-    if sys_name.startswith('cygwin'):
+    if sys_name == 'cygwin':
         # Needs to use cygpath to get correct patg in file
         for item in paths:
             path = subprocess.check_output(['cygpath', '-w', item])
