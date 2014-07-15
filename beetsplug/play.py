@@ -24,6 +24,7 @@ import platform
 import logging
 import shlex
 from tempfile import NamedTemporaryFile
+from beets.__init__ import __version__
 
 log = logging.getLogger('beets')
 
@@ -34,25 +35,23 @@ def play_music(lib, opts, args):
     """
     command_str = config['play']['command'].get()
     use_folders = config['play']['use_folders'].get(bool)
-    term = config['play']['terminal'].get()
-
+    sys_name = platform.system().lower()
+        
     if command_str:
         command = shlex.split(command_str)
     else:
         # If a command isn't set, then let the OS decide how to open the
         # playlist.
-        sys_name = platform.system()
-        if sys_name == 'Darwin':
+        if sys_name.startswith('darwin'):
             command = ['open']
-        elif sys_name == 'Windows':
+        elif sys_name.startswith('windows'):
             command = ['start']
+        elif sys_name.startswith('cygwin'):
+            ui.print_("Must add command in config file, see documentation at http://beets.readthedocs.org/en/v" + __version__ + "/reference/config.html")
+            return
         else:
-            # If not Mac or Windows, then assume Unixy.
+            # If not Mac or Windows, then assume Unix.
             command = ['xdg-open']
-
-    # Safety check
-    if not term:
-        term = 'default'
 
     # Preform search by album and add folders rather then tracks to playlist.
     if opts.album:
@@ -92,8 +91,9 @@ def play_music(lib, opts, args):
 
     # Create temporary m3u file to hold our playlist.
     m3u = NamedTemporaryFile('w', suffix='.m3u', delete=False)
+
     
-    if term == 'cygwin':
+    if sys_name.startswith('cygwin'):
         # Needs to use cygpath to get correct patg in file
         for item in paths:
             path = subprocess.check_output(['cygpath', '-w', item])
