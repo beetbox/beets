@@ -84,7 +84,7 @@ def _save_state(state):
 @contextmanager
 def progress_state():
     state = _open_state()
-    progress = state.setdefault(PROGRESS_KEY, defaultdict(list))
+    progress = state.setdefault(PROGRESS_KEY, {})
     yield progress
     _save_state(state)
 
@@ -94,7 +94,7 @@ def progress_add(toppath, *paths):
     under `toppath`.
     """
     with progress_state() as state:
-        imported = state[toppath]
+        imported = state.setdefault(toppath, [])
         for path in paths:
             # Normally `progress_add` will be called with the path
             # argument increasing. This is because of the ordering in
@@ -110,6 +110,8 @@ def progress_element(toppath, path):
     """Return whether `path` has been imported in `toppath`.
     """
     with progress_state() as state:
+        if toppath not in state:
+            return False
         imported = state[toppath]
         i = bisect_left(imported, path)
         return i != len(imported) and imported[i] == path
@@ -120,12 +122,13 @@ def has_progress(toppath):
     imported under `toppath`.
     """
     with progress_state() as state:
-        return len(state[toppath]) != 0
+        return state.get(toppath)
 
 
 def progress_reset(toppath):
     with progress_state() as state:
-        state[toppath] = []
+        if toppath in state:
+            del state[toppath]
 
 
 # Similarly, utilities for manipulating the "incremental" import log.
