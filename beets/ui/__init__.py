@@ -690,6 +690,7 @@ class SubcommandsOptionParser(optparse.OptionParser):
             kwargs['usage'] = """
   %prog COMMAND [ARGS...]
   %prog help COMMAND"""
+        kwargs['add_help_option'] = False
 
         # Super constructor.
         optparse.OptionParser.__init__(self, *args, **kwargs)
@@ -772,7 +773,13 @@ class SubcommandsOptionParser(optparse.OptionParser):
         """Parse options up to the subcommand argument. Returns a tuple
         of the options object and the remaining arguments.
         """
-        return self.parse_args(args)
+        options, subargs = self.parse_args(args)
+
+        # Force the help command
+        if options.help:
+            subargs = ['help']
+        return options, subargs
+
 
     def parse_subcommand(self, args):
         """Given the `args` left unused by a `parse_global_options`,
@@ -870,6 +877,8 @@ def _configure(args):
                       help='print debugging information')
     parser.add_option('-c', '--config', dest='config',
                       help='path to configuration file')
+    parser.add_option('-h', '--help', dest='help', action='store_true',
+                      help='how this help message and exit')
 
     # Parse the command-line!
     options, subargs = parser.parse_global_options(args)
