@@ -125,8 +125,7 @@ def has_progress(toppath):
 
 def progress_reset(toppath):
     with progress_state() as state:
-        if toppath in state:
-            del state[toppath]
+        state[toppath] = []
 
 
 # Similarly, utilities for manipulating the "incremental" import log.
