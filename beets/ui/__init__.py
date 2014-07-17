@@ -724,6 +724,7 @@ class SubcommandsOptionParser(optparse.OptionParser):
         disp_names = []
         help_position = 0
         subcommands = [c for c in self.subcommands if not c.hide]
+        subcommands.sort(key=lambda c: c.name)
         for subcommand in subcommands:
             name = subcommand.name
             if subcommand.aliases:
