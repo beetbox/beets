@@ -1122,6 +1122,8 @@ class ResumeImportTest(unittest.TestCase, TestHelper):
         self.importer = self.create_importer(album_count=2)
         self.config['import']['resume'] = True
 
+        # Aborts import after one album. This also ensures that we skip
+        # the first album in the second try.
         def raise_exception(event, **kwargs):
             if event == 'album_imported':
                 raise importer.ImportAbort
@@ -1141,6 +1143,8 @@ class ResumeImportTest(unittest.TestCase, TestHelper):
         self.config['import']['resume'] = True
         self.config['import']['singletons'] = True
 
+        # Aborts import after one track. This also ensures that we skip
+        # the first album in the second try.
         def raise_exception(event, **kwargs):
             if event == 'item_imported':
                 raise importer.ImportAbort

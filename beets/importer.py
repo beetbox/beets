@@ -81,8 +81,13 @@ def _save_state(state):
 # Utilities for reading and writing the beets progress file, which
 # allows long tagging tasks to be resumed when they pause (or crash).
 
+def progress_read():
+    state = _open_state()
+    return state.setdefault(PROGRESS_KEY, {})
+
+
 @contextmanager
-def progress_state():
+def progress_write():
     state = _open_state()
     progress = state.setdefault(PROGRESS_KEY, {})
     yield progress
@@ -93,7 +98,7 @@ def progress_add(toppath, *paths):
     """Record that the files under all of the `paths` have been imported
     under `toppath`.
     """
-    with progress_state() as state:
+    with progress_write() as state:
         imported = state.setdefault(toppath, [])
         for path in paths:
             # Normally `progress_add` will be called with the path
@@ -109,24 +114,24 @@ def progress_add(toppath, *paths):
 def progress_element(toppath, path):
     """Return whether `path` has been imported in `toppath`.
     """
-    with progress_state() as state:
-        if toppath not in state:
-            return False
-        imported = state[toppath]
-        i = bisect_left(imported, path)
-        return i != len(imported) and imported[i] == path
+    state = progress_read()
+    if toppath not in state:
+        return False
+    imported = state[toppath]
+    i = bisect_left(imported, path)
+    return i != len(imported) and imported[i] == path
 
 
 def has_progress(toppath):
     """Return `True` if there exist paths that have already been
     imported under `toppath`.
     """
-    with progress_state() as state:
-        return state.get(toppath)
+    state = progress_read()
+    return toppath in state
 
 
 def progress_reset(toppath):
-    with progress_state() as state:
+    with progress_write() as state:
         if toppath in state:
             del state[toppath]
 
