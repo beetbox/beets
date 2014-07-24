@@ -713,31 +713,34 @@ special_sorts = {'smartartist': SmartArtistSort}
 
 def build_sql(model_cls, query, sort):
     """ Generate a sql statement (and the values that must be injected into it)
-    from a query, sort and a model class.
+    from a query, sort and a model class. Query and sort objects are returned
+    only for slow query and slow sort operation.
     """
     where, subvals = query.clause()
-    slow_query = where is None
+    if where is not None:
+        query = None
 
     if not sort:
         sort_select = ""
         sort_union = ""
         sort_order = ""
-        slow_sort = False
+        sort = None
     elif isinstance(sort, basestring):
         sort_select = ""
         sort_union = ""
         sort_order = " ORDER BY {0}".format(sort) \
             if sort else ""
-        slow_sort = False
+        sort = None
     elif isinstance(sort, Sort):
         select_clause = sort.select_clause()
         sort_select = " ,{0} ".format(select_clause) \
             if select_clause else ""
         sort_union = sort.union_clause()
-        slow_sort = sort.is_slow()
         order_clause = sort.order_clause()
         sort_order = " ORDER BY {0}".format(order_clause) \
             if order_clause else ""
+        if sort.is_slow():
+            sort = None
 
     sql = ("SELECT {table}.* {sort_select} FROM {table} {sort_union} WHERE "
            "{query_clause} {sort_order}").format(
@@ -748,4 +751,4 @@ def build_sql(model_cls, query, sort):
         sort_order=sort_order
     )
 
-    return sql, subvals, slow_query, slow_sort
+    return sql, subvals, query, sort

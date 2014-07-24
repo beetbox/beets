@@ -546,7 +546,7 @@ class Item(LibModel):
         for query, path_format in path_formats:
             if query == PF_KEY_DEFAULT:
                 continue
-            (query, _) = get_query(query, type(self))
+            (query, _) = get_query_sort(query, type(self))
             if query.match(self):
                 # The query matches the item! Use the corresponding path
                 # format.
@@ -887,7 +887,7 @@ class Album(LibModel):
 
 # Query construction helper.
 
-def get_query(val, model_cls):
+def get_query_sort(val, model_cls):
     """Take a value which may be None, a query string, a query string
     list, or a Query object, and return a suitable Query object and Sort
     object.
@@ -1016,8 +1016,8 @@ class Library(dbcore.Database):
         """Parse a query and fetch. If a order specification is present in the
         query string the sort_order argument is ignored.
           """
-        (query, sort) = get_query(query, model_cls)
-        sort = sort_order if sort is None else sort
+        query, sort = get_query_sort(query, model_cls)
+        sort = sort or sort_order
 
         return super(Library, self)._fetch(
             model_cls, query, sort

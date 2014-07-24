@@ -508,7 +508,7 @@ class Results(object):
             # Slow sort. Must build the full list first.
             objects = []
             for row in self.rows:
-                obj = self._generate_results(row)
+                obj = self._make_model(row)
                 # check the predicate if any
                 if not self.query or self.query.match(obj):
                     objects.append(obj)
@@ -518,12 +518,12 @@ class Results(object):
                 yield o
         else:
             for row in self.rows:
-                obj = self._generate_results(row)
+                obj = self._make_model(row)
                 # check the predicate if any
                 if not self.query or self.query.match(obj):
                     yield obj
 
-    def _generate_results(self, row):
+    def _make_model(self, row):
         # Get the flexible attributes for the object.
         with self.db.transaction() as tx:
             flex_rows = tx.query(
@@ -771,15 +771,12 @@ class Database(object):
         Sort object.
          """
 
-        sql, subvals, slow_query, slow_sort = build_sql(model_cls, query,
-                                                        sort_order)
+        sql, subvals, query, sort = build_sql(model_cls, query, sort_order)
 
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
 
-        return Results(model_cls, rows, self,
-                       None if not slow_query else query,
-                       None if not slow_sort else sort_order)
+        return Results(model_cls, rows, self, query, sort)
 
     def _get(self, model_cls, id):
         """Get a Model object by its id or None if the id does not
