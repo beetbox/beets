@@ -93,17 +93,19 @@ Using
 Once you have all the dependencies sorted out, you can enable fingerprinting by
 editing your :doc:`configuration file </reference/config>`. Put ``chroma`` on
 your ``plugins:`` line. With that, beets will use fingerprinting the next time
-you run ``beet import``. This can be disabled by setting the ``auto`` option to
-false, like so::
-
-    acoustid:
-        auto: no
+you run ``beet import``.
 
 You can also use the ``beet fingerprint`` command to generate fingerprints for
 items already in your library. (Provide a query to fingerprint a subset of your
 library.) The generated fingerprints will be stored in the library database.
 If you have the ``import.write`` config option enabled, they will also be
 written to files' metadata.
+
+You can disable fingerprinting on import by setting the ``auto`` option to
+false, like so::
+
+    chroma:
+        auto: no
 
 .. _submitfp:
 

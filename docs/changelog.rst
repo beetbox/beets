@@ -65,6 +65,8 @@ Little improvements and fixes:
   has been improved. Thanks to sotho.
 * Already imported singleton tracks are skipped when resuming an
   import.
+* :doc:`/plugins/chroma`: A new ``auto`` configuration option disables
+  fingerprinting on import. Thanks to ddettrittus.
 
 
 1.3.6 (May 10, 2014)

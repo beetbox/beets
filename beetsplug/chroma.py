@@ -114,6 +114,16 @@ def _all_releases(items):
 
 
 class AcoustidPlugin(plugins.BeetsPlugin):
+    def __init__(self):
+        super(AcoustidPlugin, self).__init__()
+
+        self.config.add({
+            'auto': True,
+        })
+
+        if self.config['auto']:
+            self.register_listener('import_task_start', fingerprint_task)
+
     def track_distance(self, item, info):
         dist = hooks.Distance()
         if item.path not in _matches or not info.track_id:
@@ -176,16 +186,13 @@ class AcoustidPlugin(plugins.BeetsPlugin):
 # Hooks into import process.
 
 
-@AcoustidPlugin.listen('import_task_start')
 def fingerprint_task(task, session):
     """Fingerprint each item in the task for later use during the
     autotagging candidate search.
     """
-    auto = config['acoustid']['auto']
-    if auto:
-        items = task.items if task.is_album else [task.item]
-        for item in items:
-            acoustid_match(item.path)
+    items = task.items if task.is_album else [task.item]
+    for item in items:
+        acoustid_match(item.path)
 
 
 @AcoustidPlugin.listen('import_task_apply')
