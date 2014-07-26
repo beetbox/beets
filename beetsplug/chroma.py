@@ -181,9 +181,11 @@ def fingerprint_task(task, session):
     """Fingerprint each item in the task for later use during the
     autotagging candidate search.
     """
-    items = task.items if task.is_album else [task.item]
-    for item in items:
-        acoustid_match(item.path)
+    auto = config['acoustid']['auto']
+    if auto:
+        items = task.items if task.is_album else [task.item]
+        for item in items:
+            acoustid_match(item.path)
 
 
 @AcoustidPlugin.listen('import_task_apply')
