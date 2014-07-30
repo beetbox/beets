@@ -202,21 +202,24 @@ def sorted_walk(path, ignore=(), logger=None):
             yield res
 
 
-#We don't create directories on dry-runs, but we must pretend they exist
+# We don't create directories on dry-runs, but we must pretend they exist
 directories_created = Set()
+
+
 def mkdirall(path, pretend=False):
     """Make all the enclosing directories of path (like mkdir -p on the
     parent).
     """
 
     if pretend:
-        #directory = syspath(ancestry(path)[-1]) # "dirname"
-        # This seems cleaner but MAY have differences on symlinks (leading to an equivalent result)
+        # directory = syspath(ancestry(path)[-1]) # "dirname"
+        # This seems cleaner but MAY have differences on symlinks (leading to
+        #  an equivalent result)
         directory = os.path.dirname(path)
         if directory not in directories_created:
             directories_created.add(directory)
-            #This is not a "raw" translation, but it's brief one
-            print("mkdir -p '%s'" % (directory) )
+            # This is not a "raw" translation, but it's brief one
+            print("mkdir -p '%s'" % (directory))
         return
     for ancestor in ancestry(path):
         if not os.path.isdir(syspath(ancestor)):

@@ -178,8 +178,8 @@ def convert_item(dest_dir, keep_new, path_formats, pretend=False):
                 continue
 
         if pretend:
-            #Should we add support for tagging and after_convert plugins?
-            continue #A yield is used at the start of the loop
+            # Should we add support for tagging and after_convert plugins?
+            continue  # A yield is used at the start of the loop
 
         # Write tags from the database to the converted file.
         item.write(path=converted)
