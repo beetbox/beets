@@ -638,10 +638,6 @@ class SingletonImportTask(ImportTask):
     def imported_items(self):
         return [self.item]
 
-    def save_history(self):
-        # TODO we should also save history for singletons
-        pass
-
     def apply_metadata(self):
         autotag.apply_item_metadata(self.item, self.match.info)
 
@@ -894,18 +890,26 @@ def read_tasks(session):
                 continue
 
             # When incremental, skip paths in the history.
-            if session.config['incremental'] \
-               and tuple(paths) in history_dirs:
-                log.debug(u'Skipping previously-imported path: %s' %
-                          displayable_path(paths))
+            if session.config['incremental'] and tuple(paths) in history_dirs:
+                log.debug(u'Skipping previously-imported path: {0}'
+                          .format(displayable_path(paths)))
                 incremental_skipped += 1
                 continue
 
             # Yield all the necessary tasks.
             if session.config['singletons']:
                 for item in items:
-                    if not (resuming and progress_element(toppath, item.path)):
-                        yield SingletonImportTask(toppath, item)
+                    # TODO Abstract all the progress and incremental
+                    # stuff away!
+                    if resuming and progress_element(toppath, item.path):
+                        continue
+                    if session.config['incremental'] \
+                       and (item.path,) in history_dirs:
+                        log.debug(u'Skipping previously-imported path: {0}'
+                                  .format(displayable_path(paths)))
+                        incremental_skipped += 1
+                        continue
+                    yield SingletonImportTask(toppath, item)
                 yield SentinelImportTask(toppath, paths)
             else:
                 yield ImportTask(toppath, paths, items)

@@ -1159,6 +1159,45 @@ class ResumeImportTest(unittest.TestCase, TestHelper):
         self.assertIsNotNone(self.lib.items('title:track 1').get())
 
 
+class IncrementalImportTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self.setup_beets()
+        self.config['import']['incremental'] = True
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_incremental_album(self):
+        importer = self.create_importer(album_count=1)
+        importer.run()
+
+        # Change album name so the original file would be imported again
+        # if incremental was off.
+        album = self.lib.albums().get()
+        album['album'] = 'edited album'
+        album.store()
+
+        importer = self.create_importer(album_count=1)
+        importer.run()
+        self.assertEqual(len(self.lib.albums()), 2)
+
+    def test_incremental_item(self):
+        self.config['import']['singletons'] = True
+        importer = self.create_importer(item_count=1)
+        importer.run()
+
+        # Change track name so the original file would be imported again
+        # if incremental was off.
+        item = self.lib.items().get()
+        item['artist'] = 'edited artist'
+        item.store()
+
+        importer = self.create_importer(item_count=1)
+        importer.run()
+        self.assertEqual(len(self.lib.items()), 2)
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
