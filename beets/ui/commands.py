@@ -102,9 +102,12 @@ class AttachCommand(ui.Subcommand):
             '-t', '--type', dest='type',
             help='create one attachment with this type',
         )
+        self.parser.add_option(
+            '-l', '--local', dest='local', action='store_true',
+            help='path is local to album directory',
+        )
 
     def func(self, lib, opts, args):
-        # FIXME prevents circular dependency
         factory = attachments.AttachmentFactory(lib)
         factory.register_plugins(plugins.find_plugins())
         path = args.pop(0)
@@ -114,12 +117,28 @@ class AttachCommand(ui.Subcommand):
         else:
             entities = lib.albums(decargs(args))
 
+        if opts.local and opts.track:
+            raise ui.UserError('Cannot attach local files to tracks.')
+
         for entity in entities:
-            if opts.type:
-                factory.create(path, opts.type, entity).add()
+            if opts.local:
+                album_dir = entity.item_dir()
             else:
-                for attachment in factory.discover(path, entity):
+                album_dir = None
+            abspath = self.resolve_path(path, album_dir)
+
+            if opts.type:
+                factory.create(abspath, opts.type, entity).add()
+            else:
+                for attachment in factory.discover(abspath, entity):
                     attachment.add()
+
+    def resolve_path(self, path, album_dir=None):
+        if os.path.isabs(path):
+            return normpath(path)
+        if album_dir:
+            return normpath(os.path.join(album_dir, path))
+        return normpath(os.path.abspath(path))
 
 
 default_commands.append(AttachCommand())

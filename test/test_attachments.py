@@ -100,14 +100,13 @@ class AttachCommandTest(unittest.TestCase, TestHelper):
         self.tmp_files = []
 
     def tearDown(self):
-        self.teardown_beets()
-        self.unload_plugins()
         for p in self.tmp_files:
             os.remove(p)
+        self.teardown_beets()
+        self.unload_plugins()
 
     def test_attach_to_album(self):
-        album = Album(album='albumtitle')
-        self.lib.add(album)
+        album = self.add_album('albumtitle')
 
         attachment_path = self.mkstemp('.log')
         self.runcli('attach', attachment_path, 'albumtitle')
@@ -117,8 +116,20 @@ class AttachCommandTest(unittest.TestCase, TestHelper):
     def test_attach_to_album_and_move(self):
         self.skipTest('Not implemented')
 
-    def test_file_relative_to_album_dir(self):
+    def test_attach_to_album_and_copy(self):
         self.skipTest('Not implemented')
+
+    def test_attach_to_album_and_not_move(self):
+        self.skipTest('Not implemented')
+
+    def test_file_relative_to_album_dir(self):
+        album = self.add_album('albumtitle')
+
+        attachment_path = os.path.join(album.item_dir(), 'inalbumdir.log')
+        self.mkstemp(path=attachment_path)
+        self.runcli('attach', '--local', 'inalbumdir.log', 'albumtitle')
+        attachment = album.attachments().get()
+        self.assertEqual(attachment.type, 'log')
 
     def test_attach_to_item(self):
         item = Item(title='tracktitle')
@@ -133,8 +144,7 @@ class AttachCommandTest(unittest.TestCase, TestHelper):
         self.skipTest('Not implemented')
 
     def test_user_type(self):
-        album = Album(album='albumtitle')
-        self.lib.add(album)
+        album = self.add_album('albumtitle')
 
         attachment_path = self.mkstemp()
         self.runcli('attach', '-t', 'customtype', attachment_path, 'albumtitle')
@@ -149,9 +159,14 @@ class AttachCommandTest(unittest.TestCase, TestHelper):
     def runcli(self, *args):
         beets.ui._raw_main(list(args), self.lib)
 
-    def mkstemp(self, suffix=''):
-        (handle, path) = mkstemp(suffix)
-        os.close(handle)
+    def mkstemp(self, suffix='', path=None):
+        if path:
+            path = path + suffix
+            with open(path, 'a+') as f:
+                f.write('')
+        else:
+            (handle, path) = mkstemp(suffix)
+            os.close(handle)
         self.tmp_files.append(path)
         return path
 
@@ -162,6 +177,16 @@ class AttachCommandTest(unittest.TestCase, TestHelper):
         log_plugin = BeetsPlugin()
         log_plugin.attachment_discoverer = log_discoverer
         self.add_plugin(log_plugin)
+
+    def add_album(self, name):
+        album = Album(album=name)
+        self.lib.add(album)
+        album_dir = os.path.join(self.lib.directory, name)
+        os.mkdir(album_dir)
+
+        item = Item(album_id=album.id, path=os.path.join(album_dir, 'track.mp3'))
+        self.lib.add(item)
+        return album
 
 
 def suite():
