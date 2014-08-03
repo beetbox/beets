@@ -20,8 +20,133 @@ from helper import TestHelper
 
 import beets.ui
 from beets.plugins import BeetsPlugin
-from beets.attachments import AttachmentFactory
+from beets.attachments import AttachmentFactory, Attachment
 from beets.library import Library, Album, Item
+
+
+class AttachmentDestinationTest(unittest.TestCase, TestHelper):
+    """Test the `attachment.destination` property.
+    """
+
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_relative_to_album_prefix(self):
+        self.set_path_template('${basename}')
+        attachment = self.create_album_attachment('/path/attachment.ext')
+        album_dir = attachment.entity.item_dir()
+        self.assertEqual(attachment.destination,
+                         os.path.join(album_dir, 'attachment.ext'))
+
+    def test_relative_to_track_prefix(self):
+        self.set_path_template('${basename}')
+        attachment = self.create_item_attachment(
+            '/r/attachment.ext',
+            track_path='/the/track/path.mp3'
+        )
+        self.assertEqual('/the/track/path - attachment.ext',
+                         attachment.destination)
+
+    def test_libdir(self):
+        self.set_path_template('${libdir}/here')
+        attachment = self.create_album_attachment('/r/attachment.ext')
+        self.assertEqual(attachment.destination,
+                         '{0}/here'.format(self.lib.directory))
+
+    def test_path_type_query(self):
+        self.set_path_template(
+            '/fallback',
+            {
+                'type': 'customtype',
+                'path': '${type}.ext'
+            }
+        )
+        attachment = self.create_item_attachment(
+            '/r/attachment.ext',
+            type='customtype',
+            track_path='/the/track/path.mp3'
+        )
+        self.assertEqual('/the/track/path - customtype.ext',
+                         attachment.destination)
+
+        attachment = self.create_item_attachment(
+            '/r/attachment.ext',
+            type='anothertype',
+            track_path='/the/track/path.mp3'
+        )
+        self.assertEqual('/fallback', attachment.destination)
+
+    def test_flex_attr(self):
+        self.set_path_template(
+            '${covertype}.${ext}',
+            {
+                'covertype': 'front',
+                'path': 'cover.${ext}'
+            }
+        )
+
+        attachment = self.create_item_attachment(
+            '/r/attachment.jpg',
+            type='customtype',
+            track_path='/the/track/path.mp3'
+        )
+
+        attachment['covertype'] = 'front'
+        self.assertEqual('/the/track/path - cover.jpg',
+                         attachment.destination)
+
+        attachment['covertype'] = 'back'
+        self.assertEqual('/the/track/path - back.jpg',
+                         attachment.destination)
+
+    def test_album_with_extension(self):
+        self.set_path_template({'ext': 'jpg'})
+        attachment = self.create_album_attachment('/path/attachment.ext')
+        album = attachment.entity
+        album.album = 'Album Name'
+        album.albumartist = 'Album Artist'
+        album.store()
+        album_dir = attachment.entity.item_dir()
+        self.assertEqual(attachment.destination,
+                         '{0}/Album Artist - Album Name.jpg'
+                         .format(album_dir))
+
+    def test_item_with_extension(self):
+        self.set_path_template({'ext': 'jpg'})
+        attachment = self.create_item_attachment(
+            '/path/attachment.ext',
+            track_path='/the/track/path.mp3'
+        )
+        self.assertEqual(attachment.destination,
+                         '/the/track/path.jpg')
+
+    # Helper
+
+    def set_path_template(self, *templates):
+        self.config['attachment']['paths'] = templates
+
+    def create_item_attachment(self, path, type='atype',
+                               track_path='/track/path.mp3'):
+        item = Item(path='/the/track/path.mp3')
+        self.lib.add(item)
+        return Attachment(db=self.lib, entity=item,
+                          path=path, type=type)
+
+    def create_album_attachment(self, path, type='type'):
+        album = Album(album='album')
+        self.lib.add(album)
+        album_dir = os.path.join(self.lib.directory, album.album)
+        os.mkdir(album_dir)
+
+        # Make sure album.item_dir() returns a path
+        item = Item(album_id=album.id, path=os.path.join(album_dir,
+                                                         'track.mp3'))
+        self.lib.add(item)
+
+        return Attachment(db=self.lib, entity=album, path=path, type=type)
 
 
 class AttachmentFactoryTest(unittest.TestCase):
@@ -29,6 +154,10 @@ class AttachmentFactoryTest(unittest.TestCase):
     def setUp(self):
         self.lib = Library(':memory:')
         self.factory = AttachmentFactory(self.lib)
+
+    def tearDown(self):
+        self.lib._connection().close()
+        del self.lib._connections
 
     def test_create_with_path_and_type(self):
         attachment = self.factory.create('/path/to/attachment', 'coverart')
@@ -147,7 +276,8 @@ class AttachCommandTest(unittest.TestCase, TestHelper):
         album = self.add_album('albumtitle')
 
         attachment_path = self.mkstemp()
-        self.runcli('attach', '-t', 'customtype', attachment_path, 'albumtitle')
+        self.runcli('attach', '-t', 'customtype',
+                    attachment_path, 'albumtitle')
         attachment = album.attachments().get()
         self.assertEqual(attachment.type, 'customtype')
 
@@ -184,7 +314,8 @@ class AttachCommandTest(unittest.TestCase, TestHelper):
         album_dir = os.path.join(self.lib.directory, name)
         os.mkdir(album_dir)
 
-        item = Item(album_id=album.id, path=os.path.join(album_dir, 'track.mp3'))
+        item = Item(album_id=album.id,
+                    path=os.path.join(album_dir, 'track.mp3'))
         self.lib.add(item)
         return album
 

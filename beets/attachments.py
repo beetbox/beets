@@ -14,11 +14,14 @@
 
 
 import re
-from argparse import ArgumentParser
 import os.path
+import collections
+from argparse import ArgumentParser
 
 from beets import dbcore
-from beets.dbcore.query import Query, AndQuery
+from beets.dbcore.query import Query, AndQuery, MatchQuery
+from beets.util import normpath
+from beets.util.functemplate import Template
 
 
 def ref_type(entity):
@@ -61,13 +64,14 @@ class Attachment(dbcore.db.Model):
     def entity(self):
         """Return the `Item` or `Album` we are attached to.
         """
+        # TODO cache this for performance
         if self.ref is None or self.ref_type is None:
             return None
         query = dbcore.query.MatchQuery('id', self.ref)
         if self.ref_type == 'item':
-            self._db.items(query)
+            return self._db.items(query).get()
         elif self.ref_type == 'album':
-            self._db.albums(query)
+            return self._db.albums(query).get()
 
     @entity.setter
     def entity(self, entity):
@@ -86,11 +90,8 @@ class Attachment(dbcore.db.Model):
         If `destination` is given it must be a path. If the path is
         relative, it is treated relative to the `libdir`.
 
-        TODO: Review next paragraph.
-        If the destination is `None` the method retrieves a template
-        from a `type -> template` map using the attachements type. It
-        then evaluates the template in the context of the attachment and
-        its associated entity.
+        If the destination is `None` it is set to the `destionation`
+        property.
 
         If the destination already exists and `force` is `False` it
         raises an error.
@@ -107,12 +108,37 @@ class Attachment(dbcore.db.Model):
             libdir = self._db.directory
             assert os.path.isabs(libdir)
             path = os.path.normpath(os.path.join(libdir, path))
-        return path
+        return normpath(path)
 
     @path.setter
     def path(self, value):
-        self['path'] = value
+        self['path'] = normpath(value)
 
+    @property
+    def destination(self):
+        template = self._destination_template()
+        mapping = DestinationTemplateMapping(self)
+        path = template.substitute(mapping)
+        if not os.path.isabs(path):
+            path = mapping.entity_prefix + path
+        # TODO replacing stuff
+        return normpath(path)
+
+    def _destination_template(self):
+        # TODO template functions
+        # FIXME circular dependency
+        from beets import config
+        for path_spec in reversed(config['attachment']['paths'].get()):
+            if isinstance(path_spec, basestring):
+                return Template(path_spec)
+
+            if 'ext' in path_spec:
+                template_str = '${ext_prefix}.' + path_spec.pop('ext')
+            if 'path' in path_spec:
+                template_str = path_spec.pop('path')
+            queries = [MatchQuery(k, v) for k, v in path_spec.items()]
+            if AndQuery(queries).match(self):
+                return Template(template_str)
 
     def _validate(self):
         # TODO integrate this into the `store()` method.
@@ -120,10 +146,13 @@ class Attachment(dbcore.db.Model):
         assert re.match(r'^[a-zA-Z][-\w]*', self.type)
 
     def __getattr__(self, key):
+        # Called only if attribute was not found on self or in the class
+        # tree.
         if key in self._fields.keys():
             return self[key]
         else:
-            object.__getattr__(self, key)
+            # Raises attribute error
+            self.__getattribute__(key)
 
     def __setattr__(self, key, value):
         # Unlike dbcore.Model we do not provide attribute setters for
@@ -135,7 +164,119 @@ class Attachment(dbcore.db.Model):
 
     @classmethod
     def _getters(cls):
-        return []
+        return {}
+
+
+class DestinationTemplateMapping(collections.Mapping):
+    """View of an attachment's attributes, its entity's attributes and
+    additional computed values.
+
+    If a key is requested it first looks for a property with the same
+    name on the class and returns its value. It then looks for an
+    attribute of the attachment and finally for an attribute of the
+    attachment's entity.
+    """
+
+    @property
+    def entity_prefix(self):
+        """Absolute path prefix depending on the entity's path.
+
+        For albums this is the album directory including a trailing
+        directory separator.
+
+        For tracks (i.e. items) this is the tracks path without the
+        extension and ` - ` attached, e.g. `/path/to/track - `
+        """
+        if self.attachment.ref_type == 'album':
+            return self['entity_dir']
+        elif self.attachment.ref_type == 'item':
+            return self['track_base'] + ' - '
+
+    @property
+    def ext_prefix(self):
+        """Absolute path to be used with different extensions.
+
+        For albums this is `/path/to/album/dir/Album Artist - Album Name`.
+
+        For tracks (i.e. items) this is the tracks path without the
+        extension (`track_base`).
+        """
+        if self.attachment.ref_type == 'album':
+            base = '{0} - {1}'.format(self.entity_mapping['albumartist'],
+                                      self.entity_mapping['album'])
+            return os.path.join(self['entity_dir'], base)
+        elif self.attachment.ref_type == 'item':
+            return self['track_base']
+
+    @property
+    def entity_dir(self):
+        """The album directory for album attachments or the directory
+        containing the track file for track attachments.
+
+        The directory includes a trailing slash.
+        """
+        if self.attachment.ref_type == 'album':
+            return self.entity.item_dir() + os.sep
+        elif self.attachment.ref_type == 'item':
+            return os.path.split(self.entity.path)[0] + os.sep
+
+    @property
+    def track_base(self):
+        """For tack attachments, return the track path without its extension.
+        """
+        if self.attachment.ref_type == 'item':
+            return os.path.splitext(self.entity.path)[0]
+
+
+    @property
+    def basename(self):
+        """Filename of the attachment's path in its parent directory.
+        """
+        return os.path.basename(self.attachment.path)
+
+    @property
+    def ext(self):
+        """Extension of the attachment's path without a leading dot.
+        """
+        ext = os.path.splitext(self.attachment.path)[1]
+        if ext:
+            ext = ext[1:]
+        return ext
+
+    @property
+    def libdir(self):
+        """Absolute path of the beets music directory.
+        """
+        return self.attachment._db.directory
+
+    def __init__(self, attachment):
+        self.attachment = attachment
+        self.entity = attachment.entity
+        self.entity_mapping = self.entity._formatted_mapping(for_path=True)
+
+        self._getters = []
+        for name, method in type(self).__dict__.items():
+            if isinstance(method, property):
+                self._getters.append(name)
+        self._keys = set(attachment.keys(True))
+        self._keys.union(self.entity_mapping.keys())
+        self._keys.union(self._getters)
+
+    def __getitem__(self, key):
+        if key in self._getters:
+            return self.__getattribute__(key)
+        elif key in self.attachment:
+            return self.attachment._get_formatted(key, for_path=True)
+        elif key in self.entity_mapping:
+            return self.entity[key]
+        else:
+            raise KeyError(key)
+
+    def __iter__(self):
+        return self._keys
+
+    def __len__(self):
+        return len(self._keys)
 
 
 class AttachmentFactory(object):
