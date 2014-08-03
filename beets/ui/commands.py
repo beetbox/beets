@@ -79,7 +79,50 @@ def _do_query(lib, query, album, also_items=True):
     return items, albums
 
 
-default_commands.append(attachments.AttachCommand())
+class AttachCommand(ui.Subcommand):
+    """Duck type for ui.Subcommand
+    """
+
+    def __init__(self):
+        super(AttachCommand, self).__init__(
+            'attach',
+            help='create an attachment for an album or a '
+                 'track and move the attachment'
+        )
+
+        self.parser.add_option(
+            '-c', '--copy', action='store_true', dest='copy',
+            help='copy attachment intead of moving them'
+        )
+        self.parser.add_option(
+            '--track', action='store_true', dest='track',
+            help='attach path to the tracks matched by the query'
+        )
+        self.parser.add_option(
+            '-t', '--type', dest='type',
+            help='create one attachment with this type',
+        )
+
+    def func(self, lib, opts, args):
+        # FIXME prevents circular dependency
+        factory = attachments.AttachmentFactory(lib)
+        factory.register_plugins(plugins.find_plugins())
+        path = args.pop(0)
+
+        if opts.track:
+            entities = lib.items(decargs(args))
+        else:
+            entities = lib.albums(decargs(args))
+
+        for entity in entities:
+            if opts.type:
+                factory.create(path, opts.type, entity).add()
+            else:
+                for attachment in factory.discover(path, entity):
+                    attachment.add()
+
+
+default_commands.append(AttachCommand())
 
 
 # fields: Shows a list of available fields for queries and format strings.

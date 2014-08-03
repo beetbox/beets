@@ -15,7 +15,6 @@
 
 import re
 import urlparse
-import optparse
 from argparse import ArgumentParser
 
 from beets.plugins import find_plugins
@@ -305,51 +304,6 @@ class AttachmentCommand(ArgumentParser):
         The method is called by beets prior to calling `parse_args`.
         """
         pass
-
-
-class AttachCommand(object):
-    """Duck type for ui.Subcommand
-    """
-
-    def __init__(self):
-        self.name = 'attach'
-        self.parser = optparse.OptionParser()
-        self.aliases = ()
-        self.help = 'create an attachment for an album or a ' \
-                    'track and move the attachment'
-        self.hide = False
-
-        self.parser.add_option(
-            '-c', '--copy', action='store_true', dest='copy',
-            help='copy attachment intead of moving them'
-        )
-        self.parser.add_option(
-            '--track', action='store_true', dest='track',
-            help='attach path to the tracks matched by the query'
-        )
-        self.parser.add_option(
-            '-t', '--type', dest='type',
-            help='create one attachment with this type',
-        )
-
-    def func(self, lib, opts, args):
-        # FIXME prevents circular dependency
-        from beets.ui import decargs
-        factory = AttachmentFactory(lib)
-        factory.register_plugins(find_plugins())
-        path = args.pop(0)
-
-        if opts.track:
-            entities = lib.items(decargs(args))
-        else:
-            entities = lib.albums(decargs(args))
-
-        for entity in entities:
-            if opts.type:
-                factory.create(path, opts.type, entity).add()
-            else:
-                for attachment in factory.discover(path, entity):
-                    attachment.add()
 
 
 class AttachmentRefQuery(Query):
