@@ -24,7 +24,56 @@ from beets.attachments import AttachmentFactory, Attachment
 from beets.library import Library, Album, Item
 
 
-class AttachmentDestinationTest(unittest.TestCase, TestHelper):
+class AttachmentTestHelper(TestHelper):
+
+    def mkstemp(self, suffix='', path=None, content=''):
+        if path:
+            path = path + suffix
+            with open(path, 'a+') as f:
+                f.write(content)
+        else:
+            (handle, path) = mkstemp(suffix)
+            os.write(handle, content)
+            os.close(handle)
+
+        if not hasattr(self, 'tmp_files'):
+            self.tmp_files = []
+        self.tmp_files.append(path)
+        return path
+
+    def remove_tmp_files(self):
+        if not hasattr(self, 'tmp_files'):
+            return
+
+        for p in self.tmp_files:
+            if os.path.exists(p):
+                os.remove(p)
+
+    def create_item_attachment(self, path, type='atype',
+                               track_path='/track/path.mp3'):
+        item = Item(path=track_path)
+        self.lib.add(item)
+        return Attachment(db=self.lib, entity=item,
+                          path=path, type=type)
+
+    def create_album_attachment(self, path, type='type'):
+        album = Album(album='album')
+        self.lib.add(album)
+        album_dir = os.path.join(self.lib.directory, album.album)
+        os.mkdir(album_dir)
+
+        # Make sure album.item_dir() returns a path
+        item = Item(album_id=album.id,
+                    path=os.path.join(album_dir, 'track.mp3'))
+        self.lib.add(item)
+
+        attachment = Attachment(db=self.lib, entity=album,
+                                path=path, type=type)
+        self.lib.add(attachment)
+        return attachment
+
+
+class AttachmentDestinationTest(unittest.TestCase, AttachmentTestHelper):
     """Test the `attachment.destination` property.
     """
 
@@ -128,25 +177,66 @@ class AttachmentDestinationTest(unittest.TestCase, TestHelper):
     def set_path_template(self, *templates):
         self.config['attachment']['paths'] = templates
 
-    def create_item_attachment(self, path, type='atype',
-                               track_path='/track/path.mp3'):
-        item = Item(path='/the/track/path.mp3')
-        self.lib.add(item)
-        return Attachment(db=self.lib, entity=item,
-                          path=path, type=type)
 
-    def create_album_attachment(self, path, type='type'):
-        album = Album(album='album')
-        self.lib.add(album)
-        album_dir = os.path.join(self.lib.directory, album.album)
-        os.mkdir(album_dir)
+class AttachmentTest(unittest.TestCase, AttachmentTestHelper):
+    """Test `attachment.move()`.
+    """
 
-        # Make sure album.item_dir() returns a path
-        item = Item(album_id=album.id, path=os.path.join(album_dir,
-                                                         'track.mp3'))
-        self.lib.add(item)
+    def setUp(self):
+        self.setup_beets()
+        self.config['attachment']['paths'] = ['$entity_prefix/$basename']
 
-        return Attachment(db=self.lib, entity=album, path=path, type=type)
+    def tearDown(self):
+        self.teardown_beets()
+        self.remove_tmp_files()
+
+    def test_move(self):
+        attachment = self.create_album_attachment(self.mkstemp())
+        original_path = attachment.path
+
+        self.assertNotEqual(attachment.destination, original_path)
+        self.assertTrue(os.path.isfile(original_path))
+        attachment.move()
+
+        self.assertEqual(attachment.destination, attachment.path)
+        self.assertTrue(os.path.isfile(attachment.path))
+        self.assertFalse(os.path.exists(original_path))
+
+    def test_copy(self):
+        attachment = self.create_album_attachment(self.mkstemp())
+        original_path = attachment.path
+
+        self.assertNotEqual(attachment.destination, original_path)
+        self.assertTrue(os.path.isfile(original_path))
+        attachment.move(copy=True)
+
+        self.assertEqual(attachment.destination, attachment.path)
+        self.assertTrue(os.path.isfile(attachment.path))
+        self.assertTrue(os.path.isfile(original_path))
+
+    def test_move_dest_exists(self):
+        attachment = self.create_album_attachment(self.mkstemp('.jpg'))
+        dest = attachment.destination
+        dest_root, dest_ext = os.path.splitext(dest)
+        self.mkstemp(path=dest)
+
+        # TODO test log warning
+        attachment.move()
+
+        self.assertEqual(dest_root + '.1' + dest_ext, attachment.path)
+        self.assertTrue(os.path.isfile(attachment.path))
+        self.assertTrue(os.path.isfile(attachment.destination))
+
+    def test_move_overwrite(self):
+        attachment_path = self.mkstemp(suffix='.jpg', content='JPEG')
+        attachment = self.create_album_attachment(attachment_path)
+        self.mkstemp(path=attachment.destination, content='NONJPEG')
+
+        # TODO test log warning
+        attachment.move(overwrite=True)
+
+        with open(attachment.destination, 'r') as f:
+            self.assertEqual(f.read(), 'JPEG')
 
 
 class AttachmentFactoryTest(unittest.TestCase):
@@ -221,18 +311,16 @@ class EntityAttachmentsTest(unittest.TestCase):
                               [attachment.id])
 
 
-class AttachCommandTest(unittest.TestCase, TestHelper):
+class AttachCommandTest(unittest.TestCase, AttachmentTestHelper):
 
     def setUp(self):
         self.setup_beets()
         self.setup_log_attachment_plugin()
-        self.tmp_files = []
 
     def tearDown(self):
-        for p in self.tmp_files:
-            os.remove(p)
         self.teardown_beets()
         self.unload_plugins()
+        self.remove_tmp_files()
 
     def test_attach_to_album(self):
         album = self.add_album('albumtitle')
@@ -288,17 +376,6 @@ class AttachCommandTest(unittest.TestCase, TestHelper):
 
     def runcli(self, *args):
         beets.ui._raw_main(list(args), self.lib)
-
-    def mkstemp(self, suffix='', path=None):
-        if path:
-            path = path + suffix
-            with open(path, 'a+') as f:
-                f.write('')
-        else:
-            (handle, path) = mkstemp(suffix)
-            os.close(handle)
-        self.tmp_files.append(path)
-        return path
 
     def setup_log_attachment_plugin(self):
         def log_discoverer(path):

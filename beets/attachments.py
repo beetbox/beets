@@ -16,12 +16,17 @@
 import re
 import os.path
 import collections
+import logging
 from argparse import ArgumentParser
 
 from beets import dbcore
 from beets.dbcore.query import Query, AndQuery, MatchQuery
-from beets.util import normpath
+from beets import util
+from beets.util import normpath, displayable_path
 from beets.util.functemplate import Template
+
+
+log = logging.getLogger('beets')
 
 
 def ref_type(entity):
@@ -83,23 +88,46 @@ class Attachment(dbcore.db.Model):
             raise ValueError('{} must have an id', format(entity))
         self.ref = entity.id
 
-    def move(self, destination=None, copy=False, force=False):
-        """Moves the attachment from its original `path` to
-        `destination` and updates `self.path`.
+    def move(self, dest=None, copy=False, overwrite=False):
+        """Moves the attachment from its original `path` to `dest` and
+        updates `self.path`.
 
-        If `destination` is given it must be a path. If the path is
-        relative, it is treated relative to the `libdir`.
+        The `dest` parameter defaults to the `destination property`. If
+        it specified, it must be an absolute path.
 
-        If the destination is `None` it is set to the `destionation`
-        property.
-
-        If the destination already exists and `force` is `False` it
-        raises an error.
+        If the destination already exists and `overwrite` is `False` an
+        alternative is chosen. For example if the destination is
+        `/path/to/file.ext` then the alternative is
+        `/path/to/file.1.ext`. If the alternative exists, too, the
+        integer is increased until the path does not exist.
 
         If `copy` is `False` (the default) then the original file is deleted.
         """
-        # TODO implement
-        raise NotImplementedError
+
+        if dest is None:
+            dest = self.destination
+
+        if os.path.exists(dest) and not overwrite:
+            root, ext = os.path.splitext(dest)
+            log.warn('attachment destination already exists: {0}'
+                     .format(displayable_path(dest)))
+
+            alternative = 0
+            while os.path.exists(dest):
+                alternative += 1
+                dest = root + ".{0}".format(alternative) + ext
+
+        if copy:
+            util.copy(self.path, dest, overwrite)
+            log.warn('copy attachment to {0}'
+                     .format(displayable_path(dest)))
+        else:
+            util.move(self.path, dest, overwrite)
+            log.warn('move attachment to {0}'
+                     .format(displayable_path(dest)))
+        self.path = dest
+        self.store()
+        return self.path
 
     @property
     def path(self):
@@ -218,7 +246,7 @@ class DestinationTemplateMapping(collections.Mapping):
         if self.attachment.ref_type == 'album':
             return self.entity.item_dir() + os.sep
         elif self.attachment.ref_type == 'item':
-            return os.path.split(self.entity.path)[0] + os.sep
+            return os.path.dirname(self.entity.path) + os.sep
 
     @property
     def track_base(self):
@@ -226,7 +254,6 @@ class DestinationTemplateMapping(collections.Mapping):
         """
         if self.attachment.ref_type == 'item':
             return os.path.splitext(self.entity.path)[0]
-
 
     @property
     def basename(self):
