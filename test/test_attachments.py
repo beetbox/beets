@@ -30,9 +30,9 @@ class AttachmentFactoryTest(unittest.TestCase):
         self.lib = Library(':memory:')
         self.factory = AttachmentFactory(self.lib)
 
-    def test_create_with_url_and_type(self):
+    def test_create_with_path_and_type(self):
         attachment = self.factory.create('/path/to/attachment', 'coverart')
-        self.assertEqual(attachment.url, '/path/to/attachment')
+        self.assertEqual(attachment.path, '/path/to/attachment')
         self.assertEqual(attachment.type, 'coverart')
 
     def test_create_sets_entity(self):

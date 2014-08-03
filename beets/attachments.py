@@ -14,10 +14,9 @@
 
 
 import re
-import urlparse
 from argparse import ArgumentParser
+import os.path
 
-from beets.plugins import find_plugins
 from beets import dbcore
 from beets.dbcore.query import Query, AndQuery
 
@@ -37,13 +36,13 @@ class Attachment(dbcore.db.Model):
     """Represents an attachment in the database.
 
     An attachment has four properties that correspond to fields in the
-    database: `url`, `type`, `ref`, and `ref_type`. Flexible
+    database: `path`, `type`, `ref`, and `ref_type`. Flexible
     attributes are accessed as `attachment[key]`.
     """
 
     _fields = {
         'id':       dbcore.types.Id(),
-        'url':      dbcore.types.String(),
+        'path':     dbcore.types.String(),
         'ref':      dbcore.types.Integer(),
         'ref_type': dbcore.types.String(),
         'type':     dbcore.types.String(),
@@ -51,11 +50,12 @@ class Attachment(dbcore.db.Model):
     _table = 'attachments'
     _flex_table = 'attachment_metadata'
 
-    def __init__(self, db=None, libdir=None, path=None, **values):
-        if path is not None:
-            values['url'] = path
+    def __init__(self, db=None, entity=None, path=None, **values):
         super(Attachment, self).__init__(db, **values)
-        self.libdir = libdir
+        if path is not None:
+            self.path = path
+        if entity is not None:
+            self.entity = entity
 
     @property
     def entity(self):
@@ -80,59 +80,44 @@ class Attachment(dbcore.db.Model):
         self.ref = entity.id
 
     def move(self, destination=None, copy=False, force=False):
-        """Moves the attachment from its original `url` to its
-        destination URL.
+        """Moves the attachment from its original `path` to
+        `destination` and updates `self.path`.
 
         If `destination` is given it must be a path. If the path is
         relative, it is treated relative to the `libdir`.
 
+        TODO: Review next paragraph.
         If the destination is `None` the method retrieves a template
         from a `type -> template` map using the attachements type. It
         then evaluates the template in the context of the attachment and
         its associated entity.
 
-        The method tries to retrieve the resource from `self.url` and
-        saves it to `destination`. If the destination already exists and
-        `force` is `False` it raises an error. Otherwise the destination
-        is overwritten and `self.url` is set to `destination`.
+        If the destination already exists and `force` is `False` it
+        raises an error.
 
-        If `copy` is `False` and the original `url` pointed to a local
-        file it removes that file.
+        If `copy` is `False` (the default) then the original file is deleted.
         """
         # TODO implement
         raise NotImplementedError
 
     @property
     def path(self):
-        if self.resolve().scheme == 'file':
-            return self.resolve().path
+        path = self['path']
+        if not os.path.isabs(path):
+            libdir = self._db.directory
+            assert os.path.isabs(libdir)
+            path = os.path.normpath(os.path.join(libdir, path))
+        return path
 
     @path.setter
     def path(self, value):
-        self.url = value
+        self['path'] = value
 
-    def resolve(self):
-        """Return a url structure for the `url` property.
-
-        This is similar to `urlparse(attachment.url)`.  If `url` has
-        no schema it defaults to `file`. If the schema is `file` and
-        the path is relative it is resolved relative to the `libdir`.
-
-        The return value is an instance of `urlparse.ParseResult`.
-        """
-        (scheme, netloc, path, params, query, fragment) = \
-            urlparse.urlparse(self.url, scheme='file')
-        # if not os.path.isabs(path):
-        #     assert os.path.isabs(beetsdir)
-        #     path = os.path.normpath(os.path.join(beetsdir, path))
-        return urlparse.ParseResult(scheme, netloc, path,
-                                    params, query, fragment)
 
     def _validate(self):
         # TODO integrate this into the `store()` method.
         assert self.entity
         assert re.match(r'^[a-zA-Z][-\w]*', self.type)
-        urlparse.urlparse(self.url)
 
     def __getattr__(self, key):
         if key in self._fields.keys():
@@ -160,9 +145,9 @@ class AttachmentFactory(object):
     allows plugins to provide additional data.
     """
 
-    def __init__(self, db=None, libdir=None):
+    def __init__(self, db=None):
         self._db = db
-        self._libdir = libdir
+        self._libdir = db.directory
         self._discoverers = []
         self._collectors = []
 
@@ -182,39 +167,27 @@ class AttachmentFactory(object):
             queries.append(attachment_query)
         return self._db._fetch(Attachment, AndQuery(queries))
 
-    def discover(self, url, entity=None):
-        """Yield a list of attachments for types registered with the url.
+    def discover(self, path, entity=None):
+        """Yield a list of attachments for types registered with the path.
 
         The method uses the registered type discoverer functions to get
-        a list of types for `url`. For each type it yields an attachment
-        created with `create_with_type`.
-
-        The scheme of the url defaults to `file`.
+        a list of types for `path`. For each type it yields an attachment
+        through `create`.
         """
-        url = urlparse.urlparse(url, scheme='file')
-        if url.scheme != 'file':
-            # TODO Discoverers are only required to handle paths. In the
-            # future we might want to add the possibility to register
-            # discoverers for general URLs.
-            return
+        for type in self._discover_types(path):
+            yield self.create(path, type, entity)
 
-        for type in self._discover_types(url.path):
-            yield self.create(url.path, type, entity)
-
-    def create(self, url, type, entity=None):
+    def create(self, path, type, entity=None):
         """Return a populated `Attachment` instance.
 
-        The `url`, `type`, and `entity` properties of the attachment are
-        set corresponding to the arguments.  The method also set
-        flexible attributes for metadata retrieved from all registered
-        collectors.
+        The `path`, `type`, and `entity` properties of the attachment
+        are set corresponding to the arguments.  In addition the method
+        set retrieves meta data from registered collectors and and adds
+        it as flexible attributes
         """
-        # TODO extend this to handle general urls
-        attachment = Attachment(db=self._db, libdir=self._libdir,
-                                url=url, type=type)
-        if entity is not None:
-            attachment.entity = entity
-        for key, value in self._collect_meta(type, url).items():
+        attachment = Attachment(db=self._db, path=path,
+                                entity=entity, type=type)
+        for key, value in self._collect_meta(type, attachment.path).items():
             attachment[key] = value
         return attachment
 
