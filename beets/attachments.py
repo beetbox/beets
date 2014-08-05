@@ -149,6 +149,19 @@ class Attachment(dbcore.db.Model):
         self['path'] = normpath(value)
 
     @property
+    def basename(self):
+        # TODO doc
+        if self.ref_type == 'item':
+            prefix = os.path.splitext(self.entity.path)[0]
+            # FIXME circular dependency
+            from beets import config
+            for sep in config['attachment']['track separators'].get(list):
+                if self.path.startswith(prefix + sep):
+                    return self.path[(len(prefix) + len(sep)):]
+
+        return os.path.basename(self.path)
+
+    @property
     def destination(self):
         template = self._destination_template()
         mapping = DestinationTemplateMapping(self)
@@ -224,7 +237,10 @@ class DestinationTemplateMapping(collections.Mapping):
         if self.attachment.ref_type == 'album':
             return self['entity_dir']
         elif self.attachment.ref_type == 'item':
-            return self['track_base'] + ' - '
+            # FIXME circular dependency
+            from beets import config
+            separator = config['attachment']['track separators'].get(list)[0]
+            return self['track_base'] + separator
 
     @property
     def ext_prefix(self):
@@ -263,9 +279,9 @@ class DestinationTemplateMapping(collections.Mapping):
 
     @property
     def basename(self):
-        """Filename of the attachment's path in its parent directory.
+        """See `attachment.basename`
         """
-        return os.path.basename(self.attachment.path)
+        return self.attachment.basename
 
     @property
     def ext(self):
@@ -351,7 +367,7 @@ class AttachmentFactory(object):
         for type in self._detect_types(path):
             yield self.create(path, type, entity)
 
-    def discover(self, entity, local=None):
+    def discover(self, entity_or_prefix, local=None):
         """Return a list of non-audio files whose path start with the
         entity prefix.
 
@@ -364,45 +380,55 @@ class AttachmentFactory(object):
         type. For albums the only separator is the directory separator.
         For items the separtors are configured by `attachments.item_sep`
         """
+        prefix, dir = self.path_prefix(entity_or_prefix)
         if local is None:
-            return self._discover_full(entity)
+            return self._discover_full(prefix, dir)
         else:
-            return self._discover_local(entity, local)
+            return self._discover_local(prefix, local)
 
-    def _discover_full(self, entity):
-        if ref_type(entity) == 'album':
-            entity_dir = entity.item_dir()
-            entity_prefix = entity_dir
-        else:
-            entity_dir = os.path.dirname(entity.path)
-            entity_prefix = os.path.splitext(entity.path)[0]
+    def path_prefix(self, entity_or_prefix):
+        # TODO doc
+        if isinstance(entity_or_prefix, basestring):
+            if os.path.isdir(entity_or_prefix):
+                dir = entity_or_prefix
+                prefix = dir
+            else:
+                prefix = os.path.splitext(entity_or_prefix)[0]
+                dir = os.path.dirname(prefix)
+        elif ref_type(entity_or_prefix) == 'album':
+            dir = entity_or_prefix.item_dir()
+            prefix = dir
+        else:  # entity is track
+            prefix = os.path.splitext(entity_or_prefix.path)[0]
+            dir = os.path.dirname(prefix)
+        return (prefix, dir)
 
+    def _discover_full(self, prefix, dir):
         discovered = []
-        for dirpath, dirnames, filenames in os.walk(entity_dir):
+        for dirpath, dirnames, filenames in os.walk(dir):
             for dirname in dirnames:
                 path = os.path.join(dirpath, dirname)
-                if not path.startswith(entity_prefix):
+                if not path.startswith(prefix):
                     dirnames.remove(dirname)
 
             for filename in filenames:
                 path = os.path.join(dirpath, filename)
                 ext = os.path.splitext(path)[1].lower()
-                if path.startswith(entity_prefix) \
-                   and ext not in AUDIO_EXTENSIONS:
+                if path.startswith(prefix) and ext not in AUDIO_EXTENSIONS:
                     discovered.append(path)
         return discovered
 
-    def _discover_local(self, entity, local):
-        if ref_type(entity) == 'album':
-            seps = [os.sep]
-            entity_prefix = entity.item_dir()
-        else:
-            # TODO make this configurable
-            seps = [os.sep, ' - ', '', ' ', '-', '_', '.']
-            entity_prefix = os.path.splitext(entity.path)[0]
-
+    def _discover_local(self, prefix, local):
+        # FIXME circular dependency
+        from beets import config
+        # TODO add this to config_default.yaml
+        # config['attachment']['track separators'] = \
+        #         [os.sep, ' - ', '', ' ', '-', '_', '.']
+        seps = config['attachment']['track separators'].get(list)
+        if local[0] == '.':
+            seps.append('')
         for sep in seps:
-            path = entity_prefix + sep + local
+            path = prefix + sep + local
             if os.path.isfile(path):
                 return [path]
         return []

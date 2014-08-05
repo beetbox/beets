@@ -28,7 +28,10 @@ class AttachmentTestHelper(TestHelper):
 
     def setup_beets(self):
         super(AttachmentTestHelper, self).setup_beets()
+        # TODO this comes into default config
         self.config['attachment']['paths'] = ['${entity_prefix}${basename}']
+        self.config['attachment']['track separators'] = \
+            [' - ', ' ', '-', '_', '.', os.sep]
 
     @property
     def factory(self):
@@ -86,6 +89,21 @@ class AttachmentTestHelper(TestHelper):
                                 path=path, type=type)
         self.lib.add(attachment)
         return attachment
+
+    def add_attachment_plugin(self, ext, meta={}):
+        def ext_detector(path):
+            if path.endswith('.' + ext):
+                return ext
+        def collector(type, path):
+            if type == ext:
+                return meta
+        log_plugin = BeetsPlugin()
+        log_plugin.attachment_detector = ext_detector
+        log_plugin.attachment_collector = collector
+        self.add_plugin(log_plugin)
+
+    def runcli(self, *args):
+        beets.ui._raw_main(list(args), self.lib)
 
 
 class AttachmentDestinationTest(unittest.TestCase, AttachmentTestHelper):
@@ -186,6 +204,17 @@ class AttachmentDestinationTest(unittest.TestCase, AttachmentTestHelper):
         )
         self.assertEqual(attachment.destination,
                          '/the/track/path.jpg')
+
+    def test_item_basename(self):
+        self.set_path_template('$basename')
+        self.config['attachment']['track separators'] = ['--']
+        attachment = self.create_item_attachment(
+            '/a.ext',
+            track_path='/track.mp3'
+        )
+        self.assertEqual('/track--a.ext', attachment.destination)
+        attachment.path = attachment.destination
+        self.assertEqual('/track--a.ext', attachment.destination)
 
     # Helper
 
@@ -593,19 +622,6 @@ class AttachCommandTest(unittest.TestCase, AttachmentTestHelper):
 
     def test_interactive_type(self):
         self.skipTest('not implemented yet')
-
-    # Helpers
-
-    def runcli(self, *args):
-        beets.ui._raw_main(list(args), self.lib)
-
-    def add_attachment_plugin(self, ext):
-        def ext_detector(path):
-            if path.endswith('.' + ext):
-                return ext
-        log_plugin = BeetsPlugin()
-        log_plugin.attachment_detector = ext_detector
-        self.add_plugin(log_plugin)
 
 
 def suite():
