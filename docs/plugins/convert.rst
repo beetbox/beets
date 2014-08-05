@@ -89,19 +89,19 @@ and select a command with the ``--format`` command-line option or the
             speex:
                 command: ffmpeg -i $source -y -acodec speex $dest
                 extension: spx
-            wav:
-                command: ffmpeg -i $source -y -acodec pcm_s16le $dest
-                extension: wav
+            wav: ffmpeg -i $source -y -acodec pcm_s16le $dest
 
 In this example ``beet convert`` will use the *speex* command by
 default. To convert the audio to `wav`, run ``beet convert -f wav``.
+This will also use the format key (`wav`) as the file extension.
 
 Each entry in the ``formats`` map consists of a key (the name of the
-format) as well as the command and the extension.  ``extension`` is the
-filename extension to be used for newly transcoded files.
-``command`` is the command-line to use to transcode audio. The tokens
-``$source`` and ``$dest`` in the command are replaced with the paths to
-the existing and new file.
+format) as well as the command and the possibly the file extension.
+``extension`` is the filename extension to be used for newly transcoded
+files.  If only the command is given as a string, the file extension
+defaults to the format’s name. ``command`` is the command-line to use
+to transcode audio. The tokens ``$source`` and ``$dest`` in the command
+are replaced with the paths to the existing and new file.
 
 The plugin in comes with default commands for the most common audio
 formats: `mp3`, `alac`, `flac`, `aac`, `opus`, `ogg`, `wmv`. For

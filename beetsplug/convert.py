@@ -25,6 +25,7 @@ import pipes
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
 from beetsplug.embedart import embed_item
+from beets.util.confit import ConfigTypeError
 
 log = logging.getLogger('beets')
 _fs_lock = threading.Lock()
@@ -51,32 +52,33 @@ def get_format(format=None):
     if not format:
         format = config['convert']['format'].get(unicode).lower()
     format = ALIASES.get(format, format)
-    # TODO extension may default to format so this doesn't have to be a
-    # dictionary
-    format_info = config['convert']['formats'][format].get(dict)
-
-    # Convenience and backwards-compatibility shortcuts.
-    keys = config['convert'].keys()
-    if 'command' in keys:
-        format_info['command'] = config['convert']['command'].get(unicode)
-    elif 'opts' in keys:
-        # Undocumented option for backwards compatibility with < 1.3.1.
-        format_info['command'] = u'ffmpeg -i $source -y {0} $dest'.format(
-            config['convert']['opts'].get(unicode)
-        )
-    if 'extension' in keys:
-        format_info['extension'] = config['convert']['extension'].get(unicode)
 
     try:
-        return (
-            format_info['command'].encode('utf8'),
-            format_info['extension'].encode('utf8'),
-        )
+        format_info = config['convert']['formats'][format].get(dict)
+        command = format_info['command']
+        extension = format_info['extension']
     except KeyError:
         raise ui.UserError(
             u'convert: format {0} needs "command" and "extension" fields'
             .format(format)
         )
+    except ConfigTypeError:
+        command = config['convert']['formats'][format].get(str)
+        extension = format
+
+    # Convenience and backwards-compatibility shortcuts.
+    keys = config['convert'].keys()
+    if 'command' in keys:
+        command = config['convert']['command'].get(unicode)
+    elif 'opts' in keys:
+        # Undocumented option for backwards compatibility with < 1.3.1.
+        command = u'ffmpeg -i $source -y {0} $dest'.format(
+            config['convert']['opts'].get(unicode)
+        )
+    if 'extension' in keys:
+        extension = config['convert']['extension'].get(unicode)
+
+    return (command.encode('utf8'), extension.encode('utf8'))
 
 
 def encode(command, source, dest):
@@ -263,29 +265,14 @@ class ConvertPlugin(BeetsPlugin):
                     u'command': u'ffmpeg -i $source -y -vn -acodec alac $dest',
                     u'extension': u'm4a',
                 },
-                u'flac': {
-                    u'command': u'ffmpeg -i $source -y -vn -acodec flac $dest',
-                    u'extension': u'flac',
-                },
-                u'mp3': {
-                    u'command': u'ffmpeg -i $source -y -vn -aq 2 $dest',
-                    u'extension': u'mp3',
-                },
-                u'opus': {
-                    u'command': u'ffmpeg -i $source -y -vn -acodec libopus '
-                                u'-ab 96k $dest',
-                    u'extension': u'opus',
-                },
-                u'ogg': {
-                    u'command': u'ffmpeg -i $source -y -vn -acodec libvorbis '
-                                u'-aq 2 $dest',
-                    u'extension': u'ogg',
-                },
-                u'windows media': {
-                    u'command': u'ffmpeg -i $source -y -vn -acodec wmav2 '
-                                u'-vn $dest',
-                    u'extension': u'wma',
-                },
+                u'flac': u'ffmpeg -i $source -y -vn -acodec flac $dest',
+                u'mp3': u'ffmpeg -i $source -y -vn -aq 2 $dest',
+                u'opus':
+                    u'ffmpeg -i $source -y -vn -acodec libopus -ab 96k $dest',
+                u'ogg':
+                    u'ffmpeg -i $source -y -vn -acodec libvorbis -aq 2 $dest',
+                u'wma':
+                    u'ffmpeg -i $source -y -vn -acodec wmav2 -vn $dest',
             },
             u'max_bitrate': 500,
             u'auto': False,

@@ -77,13 +77,10 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
             'paths': {'default': 'converted'},
             'format': 'mp3',
             'formats': {
-                'mp3': {
-                    'command': 'cp $source $dest',
-                    'extension': 'mp3',
-                },
+                'mp3': 'cp $source $dest',
                 'opus': {
                     'command': 'cp $source $dest',
-                    'extension': 'opus',
+                    'extension': 'ops',
                 }
             }
         }
@@ -110,7 +107,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
     def test_format_option(self):
         with control_stdin('y'):
             self.run_command('convert', '--format', 'opus', self.item.path)
-            converted = os.path.join(self.convert_dest, 'converted.opus')
+            converted = os.path.join(self.convert_dest, 'converted.ops')
         self.assertTrue(os.path.isfile(converted))
 
     def test_embed_album_art(self):
