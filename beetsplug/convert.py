@@ -37,26 +37,22 @@ ALIASES = {
 }
 
 
-def _destination(dest_dir, item, keep_new, path_formats):
-    """Return the path under `dest_dir` where the file should be placed
-    (possibly after conversion).
+def replace_ext(path, ext):
+    """Return the path with its extension replaced by `ext`.
+
+    The new extension must not contain a leading dot.
     """
-    dest = item.destination(basedir=dest_dir, path_formats=path_formats)
-    if keep_new:
-        # When we're keeping the converted file, no extension munging
-        # occurs.
-        return dest
-    else:
-        # Otherwise, replace the extension.
-        _, ext = get_format()
-        return os.path.splitext(dest)[0] + ext
+    return os.path.splitext(path)[0] + '.' + ext
 
 
-def get_format():
-    """Get the currently configured format command and extension.
+def get_format(format=None):
+    """Return the command tempate and the extension from the config.
     """
-    format = config['convert']['format'].get(unicode).lower()
+    if not format:
+        format = config['convert']['format'].get(unicode).lower()
     format = ALIASES.get(format, format)
+    # TODO extension may default to format so this doesn't have to be a
+    # dictionary
     format_info = config['convert']['formats'][format].get(dict)
 
     # Convenience and backwards-compatibility shortcuts.
@@ -74,7 +70,7 @@ def get_format():
     try:
         return (
             format_info['command'].encode('utf8'),
-            (u'.' + format_info['extension']).encode('utf8'),
+            format_info['extension'].encode('utf8'),
         )
     except KeyError:
         raise ui.UserError(
@@ -83,11 +79,10 @@ def get_format():
         )
 
 
-def encode(source, dest):
-    """Encode ``source`` to ``dest`` using the command from ``get_format()``.
+def encode(command, source, dest):
+    """Encode `source` to `dest` using command template `command`.
 
-    Raises an ``ui.UserError`` if the command was not found and a
-    ``subprocess.CalledProcessError`` if the command exited with a
+    Raises `subprocess.CalledProcessError` if the command exited with a
     non-zero status code.
     """
     quiet = config['convert']['quiet'].get()
@@ -95,7 +90,6 @@ def encode(source, dest):
     if not quiet:
         log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
 
-    command, _ = get_format()
     command = Template(command).safe_substitute({
         'source': pipes.quote(source),
         'dest':   pipes.quote(dest),
@@ -115,7 +109,7 @@ def encode(source, dest):
         raise
     except OSError as exc:
         raise ui.UserError(
-            u'convert: could invoke ffmpeg: {0}'.format(exc)
+            u"convert: could invoke '{0}': {0}".format(command, exc)
         )
 
     if not quiet:
@@ -134,16 +128,21 @@ def should_transcode(item):
         item.bitrate >= 1000 * maxbr
 
 
-def convert_item(dest_dir, keep_new, path_formats):
+def convert_item(dest_dir, keep_new, path_formats, command, ext):
     while True:
         item = yield
-        dest = _destination(dest_dir, item, keep_new, path_formats)
+        dest = item.destination(basedir=dest_dir, path_formats=path_formats)
 
-        if os.path.exists(util.syspath(dest)):
-            log.info(u'Skipping {0} (target file exists)'.format(
-                util.displayable_path(item.path)
-            ))
-            continue
+        # When keeping the new file in the library, we first move the
+        # current (pristine) file to the destination. We'll then copy it
+        # back to its old path or transcode it to a new path.
+        if keep_new:
+            original = dest
+            converted = replace_ext(item.path, ext)
+        else:
+            original = item.path
+            dest = replace_ext(dest, ext)
+            converted = dest
 
         # Ensure that only one thread tries to create directories at a
         # time. (The existence check is not atomic with the directory
@@ -151,19 +150,16 @@ def convert_item(dest_dir, keep_new, path_formats):
         with _fs_lock:
             util.mkdirall(dest)
 
-        # When keeping the new file in the library, we first move the
-        # current (pristine) file to the destination. We'll then copy it
-        # back to its old path or transcode it to a new path.
+        if os.path.exists(util.syspath(dest)):
+            log.info(u'Skipping {0} (target file exists)'.format(
+                util.displayable_path(item.path)
+            ))
+            continue
+
         if keep_new:
             log.info(u'Moving to {0}'.
-                     format(util.displayable_path(dest)))
-            util.move(item.path, dest)
-            original = dest
-            _, ext = get_format()
-            converted = os.path.splitext(item.path)[0] + ext
-        else:
-            original = item.path
-            converted = dest
+                     format(util.displayable_path(original)))
+            util.move(item.path, original)
 
         if not should_transcode(item):
             # No transcoding necessary.
@@ -171,7 +167,7 @@ def convert_item(dest_dir, keep_new, path_formats):
             util.copy(original, converted)
         else:
             try:
-                encode(original, converted)
+                encode(command, original, converted)
             except subprocess.CalledProcessError:
                 continue
 
@@ -198,12 +194,12 @@ def convert_on_import(lib, item):
     library.
     """
     if should_transcode(item):
-        _, ext = get_format()
+        command, ext = get_format()
         fd, dest = tempfile.mkstemp(ext)
         os.close(fd)
         _temp_files.append(dest)  # Delete the transcode later.
         try:
-            encode(item.path, dest)
+            encode(command, item.path, dest)
         except subprocess.CalledProcessError:
             return
         item.path = dest
@@ -213,21 +209,24 @@ def convert_on_import(lib, item):
 
 
 def convert_func(lib, opts, args):
-    dest = opts.dest if opts.dest is not None else \
-        config['convert']['dest'].get()
-
-    if not dest:
+    if not opts.dest:
+        opts.dest = config['convert']['dest'].get()
+    if not opts.dest:
         raise ui.UserError('no convert destination set')
+    opts.dest = util.bytestring_path(opts.dest)
 
-    dest = util.bytestring_path(dest)
-    threads = opts.threads if opts.threads is not None else \
-        config['convert']['threads'].get(int)
-    keep_new = opts.keep_new
+    if not opts.threads:
+        opts.threads = config['convert']['threads'].get(int)
 
-    if not config['convert']['paths']:
-        path_formats = ui.get_path_formats()
-    else:
+    if config['convert']['paths']:
         path_formats = ui.get_path_formats(config['convert']['paths'])
+    else:
+        path_formats = ui.get_path_formats()
+
+    if not opts.format:
+        opts.format = config['convert']['format'].get(unicode).lower()
+
+    command, ext = get_format(opts.format)
 
     ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
 
@@ -238,9 +237,12 @@ def convert_func(lib, opts, args):
         items = (i for a in lib.albums(ui.decargs(args)) for i in a.items())
     else:
         items = iter(lib.items(ui.decargs(args)))
-    convert = [convert_item(dest, keep_new, path_formats)
-               for i in range(threads)]
-    pipe = util.pipeline.Pipeline([items, convert])
+    convert_stages = []
+    for i in range(opts.threads):
+        convert_stages.append(
+            convert_item(opts.dest, opts.keep_new, path_formats, command, ext)
+        )
+    pipe = util.pipeline.Pipeline([items, convert_stages])
     pipe.run_parallel()
 
 
@@ -304,6 +306,8 @@ class ConvertPlugin(BeetsPlugin):
                               dest='keep_new', help='keep only the converted \
                               and move the old files')
         cmd.parser.add_option('-d', '--dest', action='store',
+                              help='set the destination directory')
+        cmd.parser.add_option('-f', '--format', action='store', dest='format',
                               help='set the destination directory')
         cmd.func = convert_func
         return [cmd]

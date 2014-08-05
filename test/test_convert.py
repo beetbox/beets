@@ -72,9 +72,21 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
         self.load_plugins('convert')
 
         self.convert_dest = os.path.join(self.temp_dir, 'convert_dest')
-        self.config['convert']['dest'] = str(self.convert_dest)
-        self.config['convert']['command'] = u'cp $source $dest'
-        self.config['convert']['paths']['default'] = u'converted'
+        self.config['convert'] = {
+            'dest': self.convert_dest,
+            'paths': {'default': 'converted'},
+            'format': 'mp3',
+            'formats': {
+                'mp3': {
+                    'command': 'cp $source $dest',
+                    'extension': 'mp3',
+                },
+                'opus': {
+                    'command': 'cp $source $dest',
+                    'extension': 'opus',
+                }
+            }
+        }
 
     def tearDown(self):
         self.unload_plugins()
@@ -94,6 +106,12 @@ class ConvertCliTest(unittest.TestCase, TestHelper):
 
         self.item.load()
         self.assertEqual(os.path.splitext(self.item.path)[1], '.mp3')
+
+    def test_format_option(self):
+        with control_stdin('y'):
+            self.run_command('convert', '--format', 'opus', self.item.path)
+            converted = os.path.join(self.convert_dest, 'converted.opus')
+        self.assertTrue(os.path.isfile(converted))
 
     def test_embed_album_art(self):
         self.config['convert']['embed'] = True
