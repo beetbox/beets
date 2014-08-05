@@ -32,6 +32,11 @@ log = logging.getLogger('beets')
 AUDIO_EXTENSIONS = ['.mp3', '.ogg', '.mp4', '.m4a', '.mpc',
                     '.wma', '.wv', '.flac', '.aiff', '.ape']
 
+DEFAULT_TEMPLATE = '${entity_prefix}${basename}'
+
+def config(key):
+    from beets import config
+    return config['attachments'][key]
 
 def ref_type(entity):
     # FIXME prevents circular dependency
@@ -73,7 +78,6 @@ class Attachment(dbcore.db.Model):
     def entity(self):
         """Return the `Item` or `Album` we are attached to.
         """
-        # TODO cache this for performance
         if self.ref is None or self.ref_type is None:
             return None
         query = dbcore.query.MatchQuery('id', self.ref)
@@ -89,7 +93,7 @@ class Attachment(dbcore.db.Model):
         """
         self.ref_type = ref_type(entity)
         if not entity.id:
-            raise ValueError('{} must have an id', format(entity))
+            raise ValueError('{} must have an id'.format(entity))
         self.ref = entity.id
 
     def move(self, dest=None, copy=False, overwrite=False):
@@ -151,11 +155,10 @@ class Attachment(dbcore.db.Model):
     @property
     def basename(self):
         # TODO doc
-        if self.ref_type == 'item':
+        if ref_type(self.entity) == 'item':
+            # TODO use `path_prefix`
             prefix = os.path.splitext(self.entity.path)[0]
-            # FIXME circular dependency
-            from beets import config
-            for sep in config['attachment']['track separators'].get(list):
+            for sep in config('track separators').get(list):
                 if self.path.startswith(prefix + sep):
                     return self.path[(len(prefix) + len(sep)):]
 
@@ -173,9 +176,7 @@ class Attachment(dbcore.db.Model):
 
     def _destination_template(self):
         # TODO template functions
-        # FIXME circular dependency
-        from beets import config
-        for path_spec in reversed(config['attachment']['paths'].get()):
+        for path_spec in reversed(config('paths').get(list)):
             if isinstance(path_spec, basestring):
                 return Template(path_spec)
 
@@ -186,6 +187,7 @@ class Attachment(dbcore.db.Model):
             queries = [MatchQuery(k, v) for k, v in path_spec.items()]
             if AndQuery(queries).match(self):
                 return Template(template_str)
+        return Template(DEFAULT_TEMPLATE)
 
     def _validate(self):
         # TODO integrate this into the `store()` method.
@@ -234,12 +236,10 @@ class DestinationTemplateMapping(collections.Mapping):
         For tracks (i.e. items) this is the tracks path without the
         extension and ` - ` attached, e.g. `/path/to/track - `
         """
-        if self.attachment.ref_type == 'album':
+        if ref_type(self.entity) == 'album':
             return self['entity_dir']
-        elif self.attachment.ref_type == 'item':
-            # FIXME circular dependency
-            from beets import config
-            separator = config['attachment']['track separators'].get(list)[0]
+        elif ref_type(self.entity) == 'item':
+            separator = config('track separators').get(list)[0]
             return self['track_base'] + separator
 
     @property
@@ -251,11 +251,11 @@ class DestinationTemplateMapping(collections.Mapping):
         For tracks (i.e. items) this is the tracks path without the
         extension (`track_base`).
         """
-        if self.attachment.ref_type == 'album':
+        if ref_type(self.entity) == 'album':
             base = '{0} - {1}'.format(self.entity_mapping['albumartist'],
                                       self.entity_mapping['album'])
             return os.path.join(self['entity_dir'], base)
-        elif self.attachment.ref_type == 'item':
+        elif ref_type(self.entity) == 'item':
             return self['track_base']
 
     @property
@@ -265,16 +265,16 @@ class DestinationTemplateMapping(collections.Mapping):
 
         The directory includes a trailing slash.
         """
-        if self.attachment.ref_type == 'album':
+        if ref_type(self.entity) == 'album':
             return self.entity.item_dir() + os.sep
-        elif self.attachment.ref_type == 'item':
+        elif ref_type(self.entity) == 'item':
             return os.path.dirname(self.entity.path) + os.sep
 
     @property
     def track_base(self):
         """For tack attachments, return the track path without its extension.
         """
-        if self.attachment.ref_type == 'item':
+        if ref_type(self.entity) == 'item':
             return os.path.splitext(self.entity.path)[0]
 
     @property
@@ -419,12 +419,7 @@ class AttachmentFactory(object):
         return discovered
 
     def _discover_local(self, prefix, local):
-        # FIXME circular dependency
-        from beets import config
-        # TODO add this to config_default.yaml
-        # config['attachment']['track separators'] = \
-        #         [os.sep, ' - ', '', ' ', '-', '_', '.']
-        seps = config['attachment']['track separators'].get(list)
+        seps = config('track separators').get(list)
         if local[0] == '.':
             seps.append('')
         for sep in seps:
@@ -441,10 +436,12 @@ class AttachmentFactory(object):
         set retrieves meta data from registered collectors and and adds
         it as flexible attributes
         """
+        # TODO entity should not be optional
         attachment = Attachment(db=self._db, path=path,
                                 entity=entity, type=type)
         for key, value in self._collect_meta(type, attachment.path).items():
             attachment[key] = value
+
         return attachment
 
     def add(self, path, type, entity):
@@ -485,8 +482,6 @@ class AttachmentFactory(object):
         Uses the functions from `register_detector` and the
         `attachments.types` configuration.
         """
-        # FIXME circular dependency
-        from beets import config
         for detector in self._detectors:
             try:
                 type = detector(path)
@@ -496,7 +491,7 @@ class AttachmentFactory(object):
                 # TODO logging?
                 pass
 
-        types_config = config['attachments']['types']
+        types_config = config('types')
         if types_config.exists():
             for matcher, type in types_config.get(dict).items():
                 if re.match(matcher, path):

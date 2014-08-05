@@ -35,6 +35,7 @@ from beets import util
 from beets import config
 from beets.util import pipeline
 from beets.util import syspath, normpath, displayable_path
+from beets.attachments import AttachmentFactory
 from enum import Enum
 from beets import mediafile
 
@@ -180,6 +181,8 @@ class ImportSession(object):
         self.query = query
         self.seen_idents = set()
         self._is_resuming = dict()
+        self.attachment_factory = AttachmentFactory(lib)
+        self.attachment_factory.register_plugins(plugins.find_plugins())
 
         # Normalize the paths.
         if self.paths:
@@ -354,6 +357,7 @@ class ImportTask(object):
         # TODO remove this eventually
         self.should_remove_duplicates = False
         self.is_album = True
+        self.attachments = []
 
     def set_null_candidates(self):
         """Set the candidates to indicate no album match was found.
@@ -606,6 +610,10 @@ class ImportTask(object):
             for item in self.imported_items():
                 item.store()
 
+        for a in self.attachments:
+            if move or copy:
+                a.move(copy=copy)
+
         plugins.send('import_task_files', session=session, task=self)
 
     def add(self, lib):
@@ -613,7 +621,12 @@ class ImportTask(object):
         """
         with lib.transaction():
             self.remove_replaced(lib)
+            # FIXME set album earlier so we can use it to create
+            # attachmenst
             self.album = lib.add_album(self.imported_items())
+            for a in self.attachments:
+                a.entity = self.album
+                a.add(lib)
 
     def remove_replaced(self, lib):
         """Removes all the items from the library that have the same
@@ -647,6 +660,19 @@ class ImportTask(object):
         for item in self.imported_items():
             item.load()
         self.album.load()
+
+    def discover_attachments(self, factory):
+        """Return a list of known attachments for files in the album's directory.
+
+        Saves the list in the `attachments` attribute.
+        """
+        # FIXME the album model should already be available so we can
+        # attach the attachment. This also means attachments must handle
+        # unpersisted entities.
+        for album_path in self.paths:
+            for path in factory.discover(album_path):
+                self.attachments.extend(factory.detect(path))
+        return self.attachments
 
     # Utilities.
 
@@ -722,6 +748,9 @@ class SingletonImportTask(ImportTask):
         with lib.transaction():
             self.remove_replaced(lib)
             lib.add(self.item)
+            for a in self.attachments:
+                a.entity = self.item
+                a.add(lib)
 
     def infer_album_fields(self):
         raise NotImplementedError
@@ -1096,6 +1125,7 @@ def apply_choices(session, task):
     if task.is_album:
         task.infer_album_fields()
 
+    task.discover_attachments(session.attachment_factory)
     task.add(session.lib)
 
 

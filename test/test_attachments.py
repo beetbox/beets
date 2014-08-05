@@ -28,10 +28,10 @@ class AttachmentTestHelper(TestHelper):
 
     def setup_beets(self):
         super(AttachmentTestHelper, self).setup_beets()
-        # TODO this comes into default config
-        self.config['attachment']['paths'] = ['${entity_prefix}${basename}']
-        self.config['attachment']['track separators'] = \
-            [' - ', ' ', '-', '_', '.', os.sep]
+        self.config['attachments'] = {
+            'paths': ['${entity_prefix}${basename}'],
+            'track separators': [' - ', ' ', '-', '_', '.', os.sep]
+        }
 
     @property
     def factory(self):
@@ -94,9 +94,11 @@ class AttachmentTestHelper(TestHelper):
         def ext_detector(path):
             if path.endswith('.' + ext):
                 return ext
+
         def collector(type, path):
             if type == ext:
                 return meta
+
         log_plugin = BeetsPlugin()
         log_plugin.attachment_detector = ext_detector
         log_plugin.attachment_collector = collector
@@ -207,7 +209,7 @@ class AttachmentDestinationTest(unittest.TestCase, AttachmentTestHelper):
 
     def test_item_basename(self):
         self.set_path_template('$basename')
-        self.config['attachment']['track separators'] = ['--']
+        self.config['attachments']['track separators'] = ['--']
         attachment = self.create_item_attachment(
             '/a.ext',
             track_path='/track.mp3'
@@ -219,7 +221,7 @@ class AttachmentDestinationTest(unittest.TestCase, AttachmentTestHelper):
     # Helper
 
     def set_path_template(self, *templates):
-        self.config['attachment']['paths'] = templates
+        self.config['attachments']['paths'] = templates
 
 
 class AttachmentTest(unittest.TestCase, AttachmentTestHelper):
@@ -435,6 +437,44 @@ class EntityAttachmentsTest(unittest.TestCase, AttachmentTestHelper):
         ]
         queried = album.attachments('type:riplog').get()
         self.assertEqual(queried.id, attachments[1].id)
+
+
+class AttachImportTest(unittest.TestCase, AttachmentTestHelper):
+
+    def setUp(self):
+        self.setup_beets()
+        self.add_attachment_plugin('jpg', meta={'covertype': 'front'})
+        self.importer = self.create_importer()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_add_album_attachment(self):
+        album_dir = os.path.join(self.importer.paths[0], 'album 0')
+        self.touch('cover.jpg', dir=album_dir)
+        self.importer.run()
+        album = self.lib.albums().get()
+        attachment = album.attachments().get()
+        self.assertEqual(attachment.type, 'jpg')
+        self.assertEqual(attachment['covertype'], 'front')
+        self.assertEqual(attachment.path,
+                         os.path.join(album.item_dir(), 'cover.jpg'))
+
+    def test_add_singleton_track_attachment(self):
+        self.config['import']['singletons'] = True
+        track_prefix = os.path.join(self.importer.paths[0],
+                                    'album 0', 'track 0')
+        self.touch(track_prefix + '.cover.jpg')
+        self.importer.run()
+        item = self.lib.items().get()
+        attachment = item.attachments().get()
+        self.assertEqual(attachment.type, 'jpg')
+        self.assertEqual(attachment['covertype'], 'front')
+        self.assertEqual(
+            attachment.path,
+            os.path.splitext(item.path)[0] + ' - track 0.cover.jpg'
+        )
+        self.skipTest('Basename should not contain "track 0"')
 
 
 class AttachCommandTest(unittest.TestCase, AttachmentTestHelper):
