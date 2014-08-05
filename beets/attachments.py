@@ -29,6 +29,10 @@ from beets.util.functemplate import Template
 log = logging.getLogger('beets')
 
 
+AUDIO_EXTENSIONS = ['.mp3', '.ogg', '.mp4', '.m4a', '.mpc',
+                    '.wma', '.wv', '.flac', '.aiff', '.ape']
+
+
 def ref_type(entity):
     # FIXME prevents circular dependency
     from beets.library import Item, Album
@@ -103,9 +107,11 @@ class Attachment(dbcore.db.Model):
 
         If `copy` is `False` (the default) then the original file is deleted.
         """
-
         if dest is None:
             dest = self.destination
+
+        if self.path == dest:
+            return self.path
 
         if os.path.exists(dest) and not overwrite:
             root, ext = os.path.splitext(dest)
@@ -316,7 +322,7 @@ class AttachmentFactory(object):
     def __init__(self, db=None):
         self._db = db
         self._libdir = db.directory
-        self._discoverers = []
+        self._detectors = []
         self._collectors = []
 
     def find(self, attachment_query=None, entity_query=None):
@@ -335,15 +341,71 @@ class AttachmentFactory(object):
             queries.append(attachment_query)
         return self._db._fetch(Attachment, AndQuery(queries))
 
-    def discover(self, path, entity=None):
+    def detect(self, path, entity=None):
         """Yield a list of attachments for types registered with the path.
 
-        The method uses the registered type discoverer functions to get
+        The method uses the registered type detector functions to get
         a list of types for `path`. For each type it yields an attachment
         through `create`.
         """
-        for type in self._discover_types(path):
+        for type in self._detect_types(path):
             yield self.create(path, type, entity)
+
+    def discover(self, entity, local=None):
+        """Return a list of non-audio files whose path start with the
+        entity prefix.
+
+        For albums the entity prefix is the album directory.  For items it
+        is the item's path, excluding the extension.
+
+        If the `local` argument is given the method returns a singleton
+        list consisting of the path `entity_preifix + separator + local` if
+        it exists. Multiple separators are tried depening on the entity
+        type. For albums the only separator is the directory separator.
+        For items the separtors are configured by `attachments.item_sep`
+        """
+        if local is None:
+            return self._discover_full(entity)
+        else:
+            return self._discover_local(entity, local)
+
+    def _discover_full(self, entity):
+        if ref_type(entity) == 'album':
+            entity_dir = entity.item_dir()
+            entity_prefix = entity_dir
+        else:
+            entity_dir = os.path.dirname(entity.path)
+            entity_prefix = os.path.splitext(entity.path)[0]
+
+        discovered = []
+        for dirpath, dirnames, filenames in os.walk(entity_dir):
+            for dirname in dirnames:
+                path = os.path.join(dirpath, dirname)
+                if not path.startswith(entity_prefix):
+                    dirnames.remove(dirname)
+
+            for filename in filenames:
+                path = os.path.join(dirpath, filename)
+                ext = os.path.splitext(path)[1].lower()
+                if path.startswith(entity_prefix) \
+                   and ext not in AUDIO_EXTENSIONS:
+                    discovered.append(path)
+        return discovered
+
+    def _discover_local(self, entity, local):
+        if ref_type(entity) == 'album':
+            seps = [os.sep]
+            entity_prefix = entity.item_dir()
+        else:
+            # TODO make this configurable
+            seps = [os.sep, ' - ', '', ' ', '-', '_', '.']
+            entity_prefix = os.path.splitext(entity.path)[0]
+
+        for sep in seps:
+            path = entity_prefix + sep + local
+            if os.path.isfile(path):
+                return [path]
+        return []
 
     def create(self, path, type, entity=None):
         """Return a populated `Attachment` instance.
@@ -359,12 +421,22 @@ class AttachmentFactory(object):
             attachment[key] = value
         return attachment
 
-    def register_discoverer(self, discover):
-        """`discover` is a callable accepting the path of an attachment
+    def add(self, path, type, entity):
+        """Create an attachment, add it to the database and return it.
+
+        This is the same as calling `create()` and then adding the
+        attachment to the database.
+        """
+        attachment = self.create(path, type, entity)
+        self._db.add(attachment)
+        return attachment
+
+    def register_detector(self, detector):
+        """`detector` is a callable accepting the path of an attachment
         as its only argument. If it was able to determine the type it
         returns its name as a string. Otherwise it must return `None`
         """
-        self._discoverers.append(discover)
+        self._detectors.append(detector)
 
     def register_collector(self, collector):
         """`collector` is a callable accepting the type and path of an
@@ -376,22 +448,33 @@ class AttachmentFactory(object):
 
     def register_plugins(self, plugins):
         for plugin in plugins:
-            if hasattr(plugin, 'attachment_discoverer'):
-                self.register_discoverer(plugin.attachment_discoverer)
+            if hasattr(plugin, 'attachment_detector'):
+                self.register_detector(plugin.attachment_detector)
             if hasattr(plugin, 'attachment_collector'):
                 self.register_collector(plugin.attachment_collector)
 
-    def _discover_types(self, path):
-        types = []
-        for discover in self._discoverers:
+    def _detect_types(self, path):
+        """Yield a list of types registered for the path.
+
+        Uses the functions from `register_detector` and the
+        `attachments.types` configuration.
+        """
+        # FIXME circular dependency
+        from beets import config
+        for detector in self._detectors:
             try:
-                type = discover(path)
+                type = detector(path)
                 if type:
-                    types.append(type)
+                    yield type
             except:
                 # TODO logging?
                 pass
-        return types
+
+        types_config = config['attachments']['types']
+        if types_config.exists():
+            for matcher, type in types_config.get(dict).items():
+                if re.match(matcher, path):
+                    yield type
 
     def _collect_meta(self, type, path):
         all_meta = {}

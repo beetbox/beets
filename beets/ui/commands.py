@@ -38,7 +38,7 @@ from beets.util import syspath, normpath, ancestry, displayable_path
 from beets.util.functemplate import Template
 from beets import library
 from beets import config
-from beets import attachments
+from beets.attachments import AttachmentFactory
 from beets.util.confit import _package_path
 
 VARIOUS_ARTISTS = u'Various Artists'
@@ -95,43 +95,58 @@ class AttachCommand(ui.Subcommand):
             help='copy attachment intead of moving them'
         )
         self.parser.add_option(
+            '-M', '--no-move', action='store_false', dest='move',
+            help='keep the attachment in place'
+        )
+        self.parser.add_option(
             '--track', action='store_true', dest='track',
             help='attach path to the tracks matched by the query'
         )
         self.parser.add_option(
             '-t', '--type', dest='type',
-            help='create one attachment with this type',
+            help='create one attachment with this type'
         )
         self.parser.add_option(
             '-l', '--local', dest='local', action='store_true',
-            help='path is local to album directory',
+            help='path is local to album directory'
+        )
+        self.parser.add_option(
+            '-d', '--discover', dest='discover', action='store_true',
         )
 
     def func(self, lib, opts, args):
-        factory = attachments.AttachmentFactory(lib)
+        factory = AttachmentFactory(lib)
         factory.register_plugins(plugins.find_plugins())
-        path = args.pop(0)
+
+        if opts.discover:
+            path = None
+        else:
+            path = args.pop(0)
 
         if opts.track:
             entities = lib.items(decargs(args))
         else:
             entities = lib.albums(decargs(args))
 
-        if opts.local and opts.track:
-            raise ui.UserError('Cannot attach local files to tracks.')
-
         for entity in entities:
-            if opts.local:
-                album_dir = entity.item_dir()
+            if opts.local or opts.discover:
+                paths = factory.discover(entity, path)
             else:
-                album_dir = None
-            abspath = self.resolve_path(path, album_dir)
+                paths = [self.resolve_path(path)]
 
-            if opts.type:
-                factory.create(abspath, opts.type, entity).add()
-            else:
-                for attachment in factory.discover(abspath, entity):
-                    attachment.add()
+            for abspath in paths:
+                if opts.type:
+                    attachments = [factory.create(abspath, opts.type, entity)]
+                else:
+                    attachments = factory.detect(abspath, entity)
+
+                for a in attachments:
+                    a.add()
+                    if opts.move != False or opts.copy:
+                        a.move(copy=opts.copy)
+                else:
+                    log.warn(u'unknown attachment: {0}'
+                             .format(displayable_path(abspath)))
 
     def resolve_path(self, path, album_dir=None):
         if os.path.isabs(path):

@@ -35,6 +35,7 @@ import os
 import os.path
 import shutil
 import subprocess
+import logging
 from tempfile import mkdtemp, mkstemp
 from contextlib import contextmanager
 from StringIO import StringIO
@@ -86,6 +87,35 @@ def capture_stdout():
         yield sys.stdout
     finally:
         sys.stdout = org
+
+
+@contextmanager
+def capture_log(logger='beets'):
+    """Collects log messages in a list.
+
+    >>> with capture_log('x') as logs:
+    ...     logging.getLogger('x').info('eggs')
+    ...
+    >>> logs
+    ['eggs']
+    """
+    capture = LogCapture()
+    log = logging.getLogger(logger)
+    log.addHandler(capture)
+    try:
+        yield capture.messages
+    finally:
+        log.removeHandler(capture)
+
+
+class LogCapture(logging.Handler):
+
+    def __init__(self):
+        super(LogCapture, self).__init__()
+        self.messages = []
+
+    def emit(self, record):
+        self.messages.append(str(record.msg))
 
 
 def has_program(cmd, args=['--version']):
