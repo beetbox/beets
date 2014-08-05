@@ -67,6 +67,8 @@ Little improvements and fixes:
   import.
 * :doc:`/plugins/chroma`: A new ``auto`` configuration option disables
   fingerprinting on import. Thanks to ddettrittus.
+* :doc:`/plugins/convert`: Add ``--format`` option to select the
+  transoding command from the command-line.
 
 
 1.3.6 (May 10, 2014)
