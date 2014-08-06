@@ -180,24 +180,35 @@ class TestHelper(object):
         beets.plugins._instances = {}
 
     def create_importer(self, item_count=1, album_count=1):
-        """Returns import session with fixtures.
+        """Create files to import and return corresponding session.
 
         Copies the specified number of files to a subdirectory of
-        ``self.temp_dir`` and creates a ``TestImportSession`` for this
-        path.
+        `self.temp_dir` and creates a `TestImportSession` for this path.
         """
         import_dir = os.path.join(self.temp_dir, 'import')
         if not os.path.isdir(import_dir):
             os.mkdir(import_dir)
 
-        for i in range(album_count):
-            album = u'album {0}'.format(i)
+        album_no = 0
+        while album_count:
+            album = u'album {0}'.format(album_no)
             album_dir = os.path.join(import_dir, album)
+            if os.path.exists(album_dir):
+                album_no += 1
+                continue
             os.mkdir(album_dir)
-            for j in range(item_count):
-                title = 'track {0}'.format(j)
+            album_count -= 1
+
+            track_no = 0
+            album_item_count = item_count
+            while album_item_count:
+                title = 'track {0}'.format(track_no)
                 src = os.path.join(_common.RSRC, 'full.mp3')
                 dest = os.path.join(album_dir, '{0}.mp3'.format(title))
+                if os.path.exists(dest):
+                    track_no += 1
+                    continue
+                album_item_count -= 1
                 shutil.copy(src, dest)
                 mediafile = MediaFile(dest)
                 mediafile.update({
