@@ -119,6 +119,12 @@ compatibility with Windows-influenced network filesystems like Samba).
 Trailing dots and trailing whitespace, which can cause problems on Windows
 clients, are also removed.
 
+Note that paths might contain special characters such as typographical
+quotes (``“”``). With the configuration above, those will not be
+replaced as they don’t match the typewriter quote (``"``). You either
+have to add them to the replacement list or use the
+:ref:`asciify-paths` configuration option below.
+
 .. _asciify-paths:
 
 asciify_paths
