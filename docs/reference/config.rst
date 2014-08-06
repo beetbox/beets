@@ -119,6 +119,22 @@ compatibility with Windows-influenced network filesystems like Samba).
 Trailing dots and trailing whitespace, which can cause problems on Windows
 clients, are also removed.
 
+.. _asciify-paths:
+
+asciify_paths
+~~~~~~~~~~~~~
+
+Works like a specialized ``replace`` configuration.  If set to ``yes``,
+all non-ASCII characters in paths created by beets are converted to
+their ASCII equivalents.  For example, if your path template for
+singletons is ``singletons/$title`` and the title of a track is "Café",
+then the track will be saved as ``singletons/Cafe.mp3``.  The changes
+take place before applying the ``replace`` configuration. Uses the
+mapping provided by the `unidecode module`_.  Defaults to ``no``.
+
+.. _unidecode module: http://pypi.python.org/pypi/Unidecode
+
+
 .. _art-filename:
 
 art_filename

@@ -69,7 +69,8 @@ These functions are built in to beets:
   nothing if ``falsetext`` is left off).
 * ``%asciify{text}``: Convert non-ASCII characters to their ASCII equivalents.
   For example, "café" becomes "cafe". Uses the mapping provided by the
-  `unidecode module`_.
+  `unidecode module`_. See the :ref:`asciify-paths` configuration
+  option.
 * ``%aunique{identifiers,disambiguators}``: Provides a unique string to
   disambiguate similar albums in the database. See :ref:`aunique`, below.
 * ``%time{date_time,format}``: Return the date and time in any format accepted

@@ -32,6 +32,7 @@ replace:
     '\s+$': ''
     '^\s+': ''
 path_sep_replace: _
+asciify_paths: false
 art_filename: cover
 max_filename_length: 0
 

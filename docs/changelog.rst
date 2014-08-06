@@ -69,6 +69,9 @@ Little improvements and fixes:
   fingerprinting on import. Thanks to ddettrittus.
 * :doc:`/plugins/convert`: Add ``--format`` option to select the
   transoding command from the command-line.
+* Add :ref:`asciify-paths` configuration option to replace non-ASCII
+  characters in paths.
+
 
 
 1.3.6 (May 10, 2014)
