@@ -136,6 +136,10 @@ class DestinationTest(_common.TestCase):
         super(DestinationTest, self).tearDown()
         self.lib._connection().close()
 
+        # Reset config if it was changed in test cases
+        config.clear()
+        config.read(user=False, defaults=True)
+
     def test_directory_works_with_trailing_slash(self):
         self.lib.directory = 'one/'
         self.lib.path_formats = [('default', 'two')]
@@ -446,6 +450,14 @@ class DestinationTest(_common.TestCase):
         self.i.path = util.bytestring_path(u'bar.caf\xe9')
         dest = self.i.destination(platform='linux2', fragment=True)
         self.assertEqual(dest, u'foo.caf\xe9')
+
+    def test_asciify_and_replace(self):
+        config['asciify_paths'] = True
+        self.lib.replacements = [(re.compile(u'"'), u'q')]
+        self.lib.directory = 'lib'
+        self.lib.path_formats = [('default', '$title')]
+        self.i.title = u'\u201c\u00f6\u2014\u00cf\u201d'
+        self.assertEqual(self.i.destination(), np('lib/qo--Iq'))
 
 
 class ItemFormattedMappingTest(_common.LibTestCase):
