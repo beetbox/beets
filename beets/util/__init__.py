@@ -24,7 +24,6 @@ from collections import defaultdict
 import traceback
 import subprocess
 import platform
-from sets import Set
 
 
 MAX_FILENAME_LENGTH = 200
@@ -202,25 +201,10 @@ def sorted_walk(path, ignore=(), logger=None):
             yield res
 
 
-# We don't create directories on dry-runs, but we must pretend they exist
-directories_created = Set()
-
-
-def mkdirall(path, pretend=False):
+def mkdirall(path):
     """Make all the enclosing directories of path (like mkdir -p on the
     parent).
     """
-
-    if pretend:
-        # directory = syspath(ancestry(path)[-1]) # "dirname"
-        # This seems cleaner but MAY have differences on symlinks (leading to
-        #  an equivalent result)
-        directory = os.path.dirname(path)
-        if directory not in directories_created:
-            directories_created.add(directory)
-            # This is not a "raw" translation, but it's brief one
-            print("mkdir -p '%s'" % (directory))
-        return
     for ancestor in ancestry(path):
         if not os.path.isdir(syspath(ancestor)):
             try:
@@ -404,13 +388,10 @@ def samefile(p1, p2):
     return shutil._samefile(syspath(p1), syspath(p2))
 
 
-def remove(path, soft=True, pretend=False):
+def remove(path, soft=True):
     """Remove the file. If `soft`, then no error will be raised if the
     file does not exist.
     """
-    if pretend:
-        print("rm '%s'" % (path))
-        return
     path = syspath(path)
     if soft and not os.path.exists(path):
         return
@@ -420,15 +401,12 @@ def remove(path, soft=True, pretend=False):
         raise FilesystemError(exc, 'delete', (path,), traceback.format_exc())
 
 
-def copy(path, dest, replace=False, pretend=False):
+def copy(path, dest, replace=False):
     """Copy a plain file. Permissions are not copied. If `dest` already
     exists, raises a FilesystemError unless `replace` is True. Has no
     effect if `path` is the same as `dest`. Paths are translated to
     system paths before the syscall.
     """
-    if pretend:
-        print("cp '%s' '%s'" % (path, dest))
-        return
     if samefile(path, dest):
         return
     path = syspath(path)
@@ -442,7 +420,7 @@ def copy(path, dest, replace=False, pretend=False):
                               traceback.format_exc())
 
 
-def move(path, dest, replace=False, pretend=False):
+def move(path, dest, replace=False):
     """Rename a file. `dest` may not be a directory. If `dest` already
     exists, raises an OSError unless `replace` is True. Has no effect if
     `path` is the same as `dest`. If the paths are on different
@@ -450,9 +428,6 @@ def move(path, dest, replace=False, pretend=False):
     instead, in which case metadata will *not* be preserved. Paths are
     translated to system paths.
     """
-    if pretend:
-        print("mv '%s' '%s'" % (path, dest))
-        return
     if samefile(path, dest):
         return
     path = syspath(path)
@@ -643,7 +618,7 @@ def cpu_count():
         return 1
 
 
-def command_output(cmd, shell=False, pretend=False):
+def command_output(cmd, shell=False):
     """Runs the command and returns its output after it has exited.
 
     ``cmd`` is a list of arguments starting with the command names.  If
@@ -658,9 +633,6 @@ def command_output(cmd, shell=False, pretend=False):
     Python 2.6 and which can have problems if lots of output is sent to
     stderr.
     """
-    if pretend:
-        print(cmd)
-        return
     with open(os.devnull, 'wb') as devnull:
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=devnull,
                                 close_fds=platform.system() != 'Windows',

@@ -67,8 +67,10 @@ Little improvements and fixes:
   import.
 * :doc:`/plugins/chroma`: A new ``auto`` configuration option disables
   fingerprinting on import. Thanks to ddettrittus.
-* :doc:`/plugins/convert`: Add ``--format`` option to select the
-  transoding command from the command-line.
+* :doc:`/plugins/convert`: A new ``--format`` option to can select the
+  transcoding preset from the command-line.
+* :doc:`/plugins/convert`: Transcoding presets can now omit their filename
+  extensions (extensions default to the name of the preset).
 * A new :ref:`asciify-paths` configuration option replaces all non-ASCII
   characters in paths.
 

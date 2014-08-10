@@ -90,7 +90,7 @@ def encode(command, source, dest, pretend=False):
     quiet = config['convert']['quiet'].get()
 
     if not quiet and not pretend:
-        log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
+        log.info(u'Encoding {0}'.format(util.displayable_path(source)))
 
     command = Template(command).safe_substitute({
         'source': pipes.quote(source),
@@ -100,10 +100,12 @@ def encode(command, source, dest, pretend=False):
     log.debug(u'convert: executing: {0}'
               .format(util.displayable_path(command)))
 
+    if pretend:
+        log.info(command)
+        return
+
     try:
-        util.command_output(command, shell=True, pretend=pretend)
-        if pretend:
-            return
+        util.command_output(command, shell=True)
     except subprocess.CalledProcessError:
         # Something went wrong (probably Ctrl+C), remove temporary files
         log.info(u'Encoding {0} failed. Cleaning up...'
@@ -152,8 +154,9 @@ def convert_item(dest_dir, keep_new, path_formats, command, ext,
         # Ensure that only one thread tries to create directories at a
         # time. (The existence check is not atomic with the directory
         # creation inside this function.)
-        with _fs_lock:
-            util.mkdirall(dest, pretend)
+        if not pretend:
+            with _fs_lock:
+                util.mkdirall(dest)
 
         if os.path.exists(util.syspath(dest)):
             log.info(u'Skipping {0} (target file exists)'.format(
@@ -162,14 +165,29 @@ def convert_item(dest_dir, keep_new, path_formats, command, ext,
             continue
 
         if keep_new:
-            log.info(u'Moving to {0}'.
-                     format(util.displayable_path(original)))
-            util.move(item.path, original, pretend)
+            if pretend:
+                log.info(u'mv {0} {1}'.format(
+                    util.displayable_path(item.path),
+                    util.displayable_path(original),
+                ))
+            else:
+                log.info(u'Moving to {0}'.format(
+                    util.displayable_path(original))
+                )
+                util.move(item.path, original)
 
         if not should_transcode(item):
-            # No transcoding necessary.
-            log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
-            util.copy(original, converted, pretend)
+            if pretend:
+                log.info(u'cp {0} {1}'.format(
+                    util.displayable_path(original),
+                    util.displayable_path(converted),
+                ))
+            else:
+                # No transcoding necessary.
+                log.info(u'Copying {0}'.format(
+                    util.displayable_path(item.path))
+                )
+                util.copy(original, converted)
         else:
             try:
                 encode(command, original, converted, pretend)
@@ -177,8 +195,7 @@ def convert_item(dest_dir, keep_new, path_formats, command, ext,
                 continue
 
         if pretend:
-            # Should we add support for tagging and after_convert plugins?
-            continue  # A yield is used at the start of the loop
+            continue
 
         # Write tags from the database to the converted file.
         item.write(path=converted)
@@ -238,7 +255,7 @@ def convert_func(lib, opts, args):
     command, ext = get_format(opts.format)
 
     pretend = opts.pretend if opts.pretend is not None else \
-        config['convert']['pretend'].get()
+        config['convert']['pretend'].get(bool)
 
     if not pretend:
         ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
@@ -299,7 +316,7 @@ class ConvertPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand('convert', help='convert to external location')
         cmd.parser.add_option('-p', '--pretend', action='store_true',
-                              help='only show what would happen')
+                              help='show actions but do nothing')
         cmd.parser.add_option('-a', '--album', action='store_true',
                               help='choose albums instead of tracks')
         cmd.parser.add_option('-t', '--threads', action='store', type='int',
