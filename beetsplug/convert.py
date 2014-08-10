@@ -81,7 +81,7 @@ def get_format(format=None):
     return (command.encode('utf8'), extension.encode('utf8'))
 
 
-def encode(command, source, dest):
+def encode(command, source, dest, pretend=False):
     """Encode `source` to `dest` using command template `command`.
 
     Raises `subprocess.CalledProcessError` if the command exited with a
@@ -89,7 +89,7 @@ def encode(command, source, dest):
     """
     quiet = config['convert']['quiet'].get()
 
-    if not quiet:
+    if not quiet and not pretend:
         log.info(u'Started encoding {0}'.format(util.displayable_path(source)))
 
     command = Template(command).safe_substitute({
@@ -101,7 +101,9 @@ def encode(command, source, dest):
               .format(util.displayable_path(command)))
 
     try:
-        util.command_output(command, shell=True)
+        util.command_output(command, shell=True, pretend=pretend)
+        if pretend:
+            return
     except subprocess.CalledProcessError:
         # Something went wrong (probably Ctrl+C), remove temporary files
         log.info(u'Encoding {0} failed. Cleaning up...'
@@ -114,7 +116,7 @@ def encode(command, source, dest):
             u"convert: could invoke '{0}': {0}".format(command, exc)
         )
 
-    if not quiet:
+    if not quiet and not pretend:
         log.info(u'Finished encoding {0}'.format(
             util.displayable_path(source))
         )
@@ -130,7 +132,8 @@ def should_transcode(item):
         item.bitrate >= 1000 * maxbr
 
 
-def convert_item(dest_dir, keep_new, path_formats, command, ext):
+def convert_item(dest_dir, keep_new, path_formats, command, ext,
+                 pretend=False):
     while True:
         item = yield
         dest = item.destination(basedir=dest_dir, path_formats=path_formats)
@@ -150,7 +153,7 @@ def convert_item(dest_dir, keep_new, path_formats, command, ext):
         # time. (The existence check is not atomic with the directory
         # creation inside this function.)
         with _fs_lock:
-            util.mkdirall(dest)
+            util.mkdirall(dest, pretend)
 
         if os.path.exists(util.syspath(dest)):
             log.info(u'Skipping {0} (target file exists)'.format(
@@ -161,17 +164,21 @@ def convert_item(dest_dir, keep_new, path_formats, command, ext):
         if keep_new:
             log.info(u'Moving to {0}'.
                      format(util.displayable_path(original)))
-            util.move(item.path, original)
+            util.move(item.path, original, pretend)
 
         if not should_transcode(item):
             # No transcoding necessary.
             log.info(u'Copying {0}'.format(util.displayable_path(item.path)))
-            util.copy(original, converted)
+            util.copy(original, converted, pretend)
         else:
             try:
-                encode(command, original, converted)
+                encode(command, original, converted, pretend)
             except subprocess.CalledProcessError:
                 continue
+
+        if pretend:
+            # Should we add support for tagging and after_convert plugins?
+            continue  # A yield is used at the start of the loop
 
         # Write tags from the database to the converted file.
         item.write(path=converted)
@@ -230,21 +237,27 @@ def convert_func(lib, opts, args):
 
     command, ext = get_format(opts.format)
 
-    ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
+    pretend = opts.pretend if opts.pretend is not None else \
+        config['convert']['pretend'].get()
 
-    if not ui.input_yn("Convert? (Y/n)"):
-        return
+    if not pretend:
+        ui.commands.list_items(lib, ui.decargs(args), opts.album, None)
+
+        if not ui.input_yn("Convert? (Y/n)"):
+            return
 
     if opts.album:
         items = (i for a in lib.albums(ui.decargs(args)) for i in a.items())
     else:
         items = iter(lib.items(ui.decargs(args)))
-    convert_stages = []
-    for i in range(opts.threads):
-        convert_stages.append(
-            convert_item(opts.dest, opts.keep_new, path_formats, command, ext)
-        )
-    pipe = util.pipeline.Pipeline([items, convert_stages])
+    convert = [convert_item(opts.dest,
+                            opts.keep_new,
+                            path_formats,
+                            command,
+                            ext,
+                            pretend)
+               for _ in range(opts.threads)]
+    pipe = util.pipeline.Pipeline([items, convert])
     pipe.run_parallel()
 
 
@@ -253,6 +266,7 @@ class ConvertPlugin(BeetsPlugin):
         super(ConvertPlugin, self).__init__()
         self.config.add({
             u'dest': None,
+            u'pretend': False,
             u'threads': util.cpu_count(),
             u'format': u'mp3',
             u'formats': {
@@ -284,6 +298,8 @@ class ConvertPlugin(BeetsPlugin):
 
     def commands(self):
         cmd = ui.Subcommand('convert', help='convert to external location')
+        cmd.parser.add_option('-p', '--pretend', action='store_true',
+                              help='only show what would happen')
         cmd.parser.add_option('-a', '--album', action='store_true',
                               help='choose albums instead of tracks')
         cmd.parser.add_option('-t', '--threads', action='store', type='int',
