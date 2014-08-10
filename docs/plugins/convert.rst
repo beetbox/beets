@@ -36,13 +36,14 @@ and customize the available commands
 The ``-a`` (or ``--album``) option causes the command
 to match albums instead of tracks.
 
-The ``-t`` (``--threads``) option allows you to specify or overwrite
-the respective configuration option.
-
 By default, the command places converted files into the destination directory
 and leaves your library pristine. To instead back up your original files into
 the destination directory and keep converted files in your library, use the
 ``-k`` (or ``--keep-new``) option.
+
+To test your configuration without taking any actions, use the ``--pretend``
+flag. The plugin will print out the commands it will run instead of executing
+them.
 
 
 Configuration

@@ -12,7 +12,8 @@ New stuff
   IFF chunks.
 * A new :ref:`required` configuration option for the importer skips matches
   that are missing certain data. Thanks to oprietop.
-* The new :doc:`/plugins/bpm` lets you manually measure the tempo of a playing song. Thanks to aroquen.
+* The new :doc:`/plugins/bpm` lets you manually measure the tempo of a playing
+  song. Thanks to aroquen.
 
 Little improvements and fixes:
 
@@ -73,6 +74,9 @@ Little improvements and fixes:
   extensions (extensions default to the name of the preset).
 * A new :ref:`asciify-paths` configuration option replaces all non-ASCII
   characters in paths.
+* :doc:`/plugins/convert`: A new ``--pretend`` option lets you preview the
+  commands the plugin will execute without actually taking any action. Thanks
+  to Dietrich Daroch.
 
 
 
