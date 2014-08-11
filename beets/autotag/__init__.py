@@ -52,16 +52,19 @@ def albums_in_dir(path):
         for filename in files:
             try:
                 i = library.Item.from_path(os.path.join(root, filename))
-            except mediafile.FileTypeError:
-                pass
-            except mediafile.UnreadableFileError:
-                log.warn(u'unreadable file: {0}'.format(
-                    displayable_path(filename))
-                )
             except library.ReadError as exc:
-                log.error(u'error reading {0}: {1}'.format(
-                    displayable_path(filename), exc
-                ))
+                if isinstance(exc.reason, mediafile.FileTypeError):
+                    # Silently ignore non-music files.
+                    pass
+                elif isinstance(exc.reason, mediafile.UnreadableFileError):
+                    log.warn(u'unreadable file: {0}'.format(
+                        displayable_path(filename))
+                    )
+                else:
+                    log.error(u'error reading {0}: {1}'.format(
+                        displayable_path(filename),
+                        exc,
+                    ))
             else:
                 items.append(i)
 
