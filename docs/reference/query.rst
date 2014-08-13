@@ -156,7 +156,7 @@ Find all items added before the year 2010::
 
     $ beet ls 'added:..2009'
 
-Find all items added on 2008-12-01 but before 2009-10-12::
+Find all items added on or after 2008-12-01 but before 2009-10-12::
 
     $ beet ls 'added:2008-12..2009-10-11'
 
