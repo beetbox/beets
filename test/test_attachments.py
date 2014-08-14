@@ -224,7 +224,7 @@ class AttachmentDestinationTest(unittest.TestCase, AttachmentTestHelper):
 
 
 class AttachmentTest(unittest.TestCase, AttachmentTestHelper):
-    """Test `attachment.move()`.
+    """Test `attachment.move()` and `attachment.entity`.
     """
 
     def setUp(self):
@@ -232,6 +232,8 @@ class AttachmentTest(unittest.TestCase, AttachmentTestHelper):
 
     def tearDown(self):
         self.teardown_beets()
+
+    # attachment.move()
 
     def test_move(self):
         attachment = self.create_album_attachment(self.touch('a'))
@@ -295,6 +297,44 @@ class AttachmentTest(unittest.TestCase, AttachmentTestHelper):
             'overwrite attachment destination {0}'.format(dest), logs
         )
 
+    # attachment.entity()
+
+    def test_set_entity(self):
+        album = self.add_album()
+        attachment = self.factory.create('/path/to/attachment', 'coverart')
+        attachment.entity = album
+        self.assertEqual(attachment.entity, album)
+
+    def test_set_entity_and_add(self):
+        album = self.add_album()
+        attachment = self.factory.create('/path/to/attachment', 'coverart')
+        attachment.entity = album
+        attachment.add()
+
+        attachment = self.factory.find().get()
+        self.assertEqual(attachment.entity.id, album.id)
+
+    def test_set_entity_and_store(self):
+        album1 = self.add_album()
+        self.factory.add('/path/to/attachment', 'coverart', album1)
+
+        attachment = self.factory.find().get()
+        album2 = self.add_album()
+        attachment.entity = album2
+        attachment.store()
+        self.assertNotEqual(attachment.entity.id, album1.id)
+        self.assertEqual(attachment.entity.id, album2.id)
+
+    def test_set_entity_and_add_entity(self):
+        album = Album(db=self.lib)
+        attachment = self.factory.create('/path/to/attachment', 'coverart')
+        attachment.entity = album
+        album.add()
+        attachment.add()
+
+        self.assertEqual(attachment.ref, album.id)
+        self.assertEqual(attachment.entity.id, album.id)
+
 
 class AttachmentFactoryTest(unittest.TestCase, AttachmentTestHelper):
     """Tests the following methods of `AttachmentFactory`
@@ -337,6 +377,14 @@ class AttachmentFactoryTest(unittest.TestCase, AttachmentTestHelper):
         attachment = self.factory.create('/path/to/attachment', 'noart')
         self.assertNotIn('mime', attachment)
 
+    def test_create_retrieves_existing(self):
+        item = self.add_item('track')
+        attachment1 = self.factory.create('/path/to/a', 'coverart', item)
+        attachment1.add()
+
+        attachment2 = self.factory.create('/path/to/a', 'coverart', item)
+        self.assertEqual(attachment1.id, attachment2.id)
+
     # factory.detect()
 
     def test_detect_plugin_types(self):
@@ -348,6 +396,7 @@ class AttachmentFactoryTest(unittest.TestCase, AttachmentTestHelper):
         self.assertEqual(len(attachments), 1)
         self.assertEqual(attachments[0].type, 'image')
 
+    # TODO Glob and RegExp
     def test_detect_config_types(self):
         self.config['attachments']['types'] = {
             '.*\.jpg': 'image'
@@ -599,6 +648,14 @@ class AttachCommandTest(unittest.TestCase, AttachmentTestHelper):
         self.runcli('attach', '--no-move', attachment_path, 'albumtitle')
         attachment = album.attachments().get()
         self.assertEqual(attachment.path, attachment_path)
+
+    def test_do_not_attach_existing(self):
+        album = self.add_album('albumtitle')
+        attachment_path = self.touch('attachment.log')
+
+        self.runcli('attach', '--no-move', attachment_path, 'albumtitle')
+        self.runcli('attach', '--no-move', attachment_path, 'albumtitle')
+        self.assertEqual(len(list(album.attachments())), 1)
 
     def test_unknown_type_warning(self):
         album = self.add_album('albumtitle')

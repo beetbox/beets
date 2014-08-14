@@ -95,14 +95,10 @@ class Attachment(dbcore.db.Model):
         `self.entity == entity`.
         """
         self._entity = entity
-
-    def store(self):
-        entity = self._entity
-        if entity is None or entity.id is None:
-            raise ValueError('{} must have an id'.format(entity))
-        self.ref_type = ref_type(entity)
-        self.ref = entity.id
-        super(Attachment, self).store()
+        # FIXME we cannot use self.ref = None because none is converted
+        # to 0.
+        self._values_fixed['ref'] = None
+        self._values_fixed['ref_type'] = None
 
     def move(self, dest=None, copy=False, overwrite=False):
         """Moves the attachment from its original `path` to `dest` and
@@ -204,10 +200,29 @@ class Attachment(dbcore.db.Model):
                 return Template(template_str)
         return Template(DEFAULT_TEMPLATE)
 
+    def store(self):
+        self._validate()
+        super(Attachment, self).store()
+
+    def add(self, db=None):
+        if db:
+            self._db = db
+        self._check_db(False)
+        self._validate()
+
+        if self.id:
+            self.store()
+        else:
+            super(Attachment, self).add()
+        return self
+
     def _validate(self):
-        # TODO integrate this into the `store()` method.
-        assert self.entity
-        assert re.match(r'^[a-zA-Z][-\w]*', self.type)
+        if self.ref is None or self.ref_type is None:
+            entity = self.entity
+            if entity is None or entity.id is None:
+                raise ValueError('{} must have an id'.format(entity))
+            self.ref_type = ref_type(entity)
+            self.ref = entity.id
 
     def __getattr__(self, key):
         # Called only if attribute was not found on self or in the class
@@ -363,6 +378,10 @@ class AttachmentFactory(object):
         set retrieves meta data from registered collectors and and adds
         it as flexible attributes.
 
+        If an attachment with the same path, ref, ref_type and type
+        attributes already exists in the database, it returns that
+        record
+
         Also sets the attachments's basename to the value returned by
         `Attachment.basename()`. Therefore, if the entity is moved
         later, we retain the basename instead of recalculating it
@@ -371,6 +390,16 @@ class AttachmentFactory(object):
         # TODO entity should not be optional
         attachment = Attachment(db=self._db, path=path,
                                 entity=entity, type=type)
+        if entity and entity.id:
+            existing = self.find(AndQuery([
+                MatchQuery('path', attachment.path),
+                MatchQuery('ref', entity.id),
+                MatchQuery('ref_type', ref_type(entity)),
+                MatchQuery('type', attachment.type),
+            ])).get()
+            if existing is not None:
+                attachment = existing
+
         attachment.basename = self.basename(path, entity)
         for key, value in self._collect_meta(type, attachment.path).items():
             attachment[key] = value
@@ -382,8 +411,7 @@ class AttachmentFactory(object):
         This is the same as calling `create()` and then adding the
         attachment to the database.
         """
-        attachment = self.create(path, type, entity)
-        self._db.add(attachment)
+        attachment = self.create(path, type, entity).add()
         return attachment
 
     def find(self, attachment_query=None, entity_query=None):
