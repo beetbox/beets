@@ -159,6 +159,25 @@ class AttachCommand(ui.Subcommand):
 default_commands.append(AttachCommand())
 
 
+class AttachListCommand(ui.Subcommand):
+
+    def __init__(self):
+        super(AttachListCommand, self).__init__(
+            'attachls',
+            help='list attachments by query'
+                 'track and move the attachment'
+        )
+
+    def func(self, lib, opts, args):
+        args = decargs(args)
+        factory = AttachmentFactory(lib)
+        for a in factory.parse_and_find(*args):
+            print('{0}: {1}'.format(a.type, displayable_path(a.path)))
+
+
+default_commands.append(AttachListCommand())
+
+
 # fields: Shows a list of available fields for queries and format strings.
 
 def fields_func(lib, opts, args):

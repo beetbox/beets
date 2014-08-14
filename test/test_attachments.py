@@ -14,8 +14,9 @@
 
 
 import os
+import itertools
 from _common import unittest
-from helper import TestHelper, capture_log
+from helper import TestHelper, capture_log, capture_stdout
 
 import beets.ui
 from beets.plugins import BeetsPlugin
@@ -52,25 +53,28 @@ class AttachmentTestHelper(TestHelper):
             f.write(content)
         return path
 
-    def add_album(self, name='album name', touch=True):
+    def add_album(self, name='album name', touch=True, artist=None):
         """Add an album with one track to the library and create
         dummy track file.
         """
-        album = Album(album=name)
+        album = Album(album=name, albumartist=artist)
         self.lib.add(album)
         item_path = os.path.join(self.lib.directory, name, 'track.mp3')
-        self.touch(item_path)
+        if touch:
+            self.touch(item_path)
 
         item = Item(album_id=album.id, path=item_path)
         self.lib.add(item)
         return album
 
-    def add_item(self, title):
+    def add_item(self, title='The Title', artist='The Artist',
+                 album='The Album', touch=True):
         """Add item to the library and create dummy file.
         """
         path = os.path.join(self.libdir, '{0}.mp3'.format(title))
-        self.touch(path)
-        item = Item(title=title, path=path)
+        if touch:
+            self.touch(path)
+        item = Item(title=title, path=path, artist=artist, album=album)
         self.lib.add(item)
         return item
 
@@ -88,6 +92,21 @@ class AttachmentTestHelper(TestHelper):
         self.lib.add(attachment)
         return attachment
 
+    def add_album_attachment(self, path='att.ext', type='atype',
+                             album='The Album', artist='The Artist'):
+        album = self.add_album(name=album, artist=artist, touch=False)
+        if not os.path.isabs(path):
+            path = os.path.join(album.item_dir(), path)
+        return self.factory.add(path, type, album)
+
+    def add_item_attachment(self, path='att.ext', type='atype',
+                            album='Album', artist='Artist', title='Title'):
+        track = self.add_item(title=title, artist=artist,
+                              album=album, touch=False)
+        if not os.path.isabs(path):
+            path = os.path.join(track.path, path)
+        return self.factory.add(path, type, track)
+
     def add_attachment_plugin(self, ext, meta={}):
         def ext_detector(path):
             if path.endswith('.' + ext):
@@ -97,10 +116,10 @@ class AttachmentTestHelper(TestHelper):
             if type == ext:
                 return meta
 
-        log_plugin = BeetsPlugin()
-        log_plugin.attachment_detector = ext_detector
-        log_plugin.attachment_collector = collector
-        self.add_plugin(log_plugin)
+        plugin = BeetsPlugin()
+        plugin.attachment_detector = ext_detector
+        plugin.attachment_collector = collector
+        self.add_plugin(plugin)
 
     def set_path_template(self, *templates):
         self.config['attachments']['paths'] = templates
@@ -110,6 +129,16 @@ class AttachmentTestHelper(TestHelper):
 
     def runcli(self, *args):
         beets.ui._raw_main(list(args), self.lib)
+
+    def cli_output(self, *args):
+        with capture_stdout() as output:
+            self.runcli(*args)
+        return output.getvalue().split('\n')
+
+    def libpath(self, *components):
+        components = \
+            itertools.chain(*map(lambda comp: comp.split('/'), components))
+        return os.path.join(self.libdir, *components)
 
 
 class AttachmentDestinationTest(unittest.TestCase, AttachmentTestHelper):
@@ -342,7 +371,6 @@ class AttachmentFactoryTest(unittest.TestCase, AttachmentTestHelper):
     * factory.create() and meta data collectors
     * factory.detect() and type detectors (config and plugin)
     * factory.discover()
-    * factory.find()
     * factory.basename()
     """
 
@@ -435,21 +463,6 @@ class AttachmentFactoryTest(unittest.TestCase, AttachmentTestHelper):
         discovered = self.factory.discover(album, 'cover.jpg')
         self.assertEqual([attachment_path], discovered)
 
-    # factory.find()
-    # TODO extend
-
-    def test_find_all_attachments(self):
-        item = self.add_item('track')
-        self.factory.add('/path', 'atype', item)
-        self.factory.add('/another_path', 'asecondtype', item)
-
-        all_attachments = self.factory.find()
-        self.assertEqual(len(all_attachments), 2)
-
-        attachment = all_attachments.get()
-        self.assertEqual(attachment.path, '/path')
-        self.assertEqual(attachment.type, 'atype')
-
     # factory.basename()
 
     def test_item_basename(self):
@@ -496,6 +509,51 @@ class AttachmentFactoryTest(unittest.TestCase, AttachmentTestHelper):
         album = self.add_album()
         path = '/attachments/y.cover.jpg'
         self.assertEqual('y.cover.jpg', self.factory.basename(path, album))
+
+
+class AttachmentQueryTest(unittest.TestCase, AttachmentTestHelper):
+
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_all(self):
+        self.add_item_attachment(type='a')
+        self.add_album_attachment(type='b')
+        attachments = self.factory.find()
+        self.assertItemsEqual('ab', map(lambda a: a.type, attachments))
+
+    def test_type_query(self):
+        attachment = self.add_album_attachment(type='y')
+        self.add_album_attachment(type='another')
+
+        res = self.factory.parse_and_find('type:y')
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res.get().id, attachment.id)
+
+    def test_album_name_query(self):
+        attachment = self.add_album_attachment(album='xxx')
+        self.add_item_attachment(album='xxx')
+        self.add_album_attachment(album='another')
+        res = self.factory.parse_and_find('a:album:xxx')
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res.get().id, attachment.id)
+
+    def test_album_search_query(self):
+        self.add_album_attachment(album='xxx')
+        self.add_album_attachment(artist='xxx')
+        self.add_album_attachment(album='another')
+        res = self.factory.parse_and_find('a:xxx')
+        self.assertEqual(len(res), 2)
+
+    def test_entity_album_search(self):
+        self.add_album_attachment(album='xxx')
+        self.add_item_attachment(album='xxx')
+        self.add_album_attachment(album='another')
+        res = self.factory.parse_and_find('e:album:xxx')
+        self.assertEqual(len(res), 2)
 
 
 class EntityAttachmentsTest(unittest.TestCase, AttachmentTestHelper):

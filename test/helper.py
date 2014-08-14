@@ -87,6 +87,7 @@ def capture_stdout():
         yield sys.stdout
     finally:
         sys.stdout = org
+        print(org.getvalue())
 
 
 @contextmanager

@@ -20,7 +20,7 @@ import logging
 from argparse import ArgumentParser
 
 from beets import dbcore
-from beets.dbcore.query import Query, AndQuery, MatchQuery
+from beets.dbcore.query import Query, AndQuery, MatchQuery, OrQuery, FalseQuery
 from beets import util
 from beets.util import normpath, displayable_path
 from beets.util.functemplate import Template
@@ -42,6 +42,7 @@ def config(key):
 
 def track_separators():
     return config('track separators').get(list) + [os.sep]
+
 
 def ref_type(entity):
     # FIXME prevents circular dependency
@@ -414,7 +415,7 @@ class AttachmentFactory(object):
         attachment = self.create(path, type, entity).add()
         return attachment
 
-    def find(self, attachment_query=None, entity_query=None):
+    def find(self, attachment_query=None, album_query=None, item_query=None):
         """Yield all attachments in the library matching
         `attachment_query` and their associated items matching
         `entity_query`.
@@ -425,10 +426,43 @@ class AttachmentFactory(object):
               library.items(entity_query).attachments()
         """
         # FIXME make this faster with joins
-        queries = [AttachmentEntityQuery(entity_query)]
+        queries = []
+        from beets.library import Item, Album
+        if album_query:
+            queries.append(AttachmentEntityQuery(album_query, Album))
+            if not item_query:
+                queries.append(AttachmentEntityQuery(FalseQuery(), Item))
+        if item_query:
+            queries.append(AttachmentEntityQuery(item_query, Item))
+            if not album_query:
+                queries.append(AttachmentEntityQuery(FalseQuery(), Album))
+
+        if queries:
+            queries = [OrQuery(queries)]
         if attachment_query:
             queries.append(attachment_query)
         return self._db._fetch(Attachment, AndQuery(queries))
+
+    def parse_and_find(self, *query_strings):
+        from beets.library import get_query, Item, Album
+        queries = {Item: [], Album: [], Attachment: []}
+        for q in query_strings:
+            if q.startswith('a:'):
+                queries[Album].append(q[2:])
+            elif q.startswith('t:'):
+                queries[Item].append(q[2:])
+            elif q.startswith('e:'):
+                queries[Album].append(q[2:])
+                queries[Item].append(q[2:])
+            else:
+                queries[Attachment].append(q)
+
+        for klass, qs in queries.items():
+            if qs:
+                queries[klass] = get_query(qs, klass)
+            else:
+                queries[klass] = None
+        return self.find(queries[Attachment], queries[Album], queries[Item])
 
     def discover(self, entity_or_prefix, local=None):
         """Return a list of non-audio files whose path start with the
@@ -438,7 +472,7 @@ class AttachmentFactory(object):
         is the item's path, excluding the extension.
 
         If the `local` argument is given the method returns a singleton
-        list consisting of the path `entity_preifix + separator + local` if
+        list consisting of the path `entity_prefix + separator + local` if
         it exists. Multiple separators are tried depening on the entity
         type. For albums the only separator is the directory separator.
         For items the separtors are configured by `attachments.item_sep`
@@ -667,14 +701,15 @@ class AttachmentEntityQuery(Query):
     """Matches any attachment whose entity matches `entity_query`.
     """
 
-    def __init__(self, entity_query):
+    def __init__(self, entity_query, entity_class=None):
         self.query = entity_query
+        self.entity_class = entity_class
 
     def match(self, attachment):
-        if self.query is not None:
-            return self.query.match(attachment.query)
-        else:
-            return True
+        entity = attachment.entity
+        if self.entity_class and not isinstance(entity, self.entity_class):
+            return False
+        return self.query.match(entity)
 
 
 class LibModelMixin(object):
