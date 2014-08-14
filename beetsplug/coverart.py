@@ -111,7 +111,7 @@ class CoverArtCommand(AttachmentCommand):
 
         :param covertype:  Restrict the list to coverart of this type.
         """
-        for attachment in self.factory.find(TypeQuery('coverart'), query)
+        for attachment in self.factory.find(TypeQuery('coverart'), query):
             if covertype is None:
                 print_attachment(attachment)
             elif attachment.meta['covertype'] == covertype:

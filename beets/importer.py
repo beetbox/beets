@@ -669,7 +669,7 @@ class ImportTask(object):
         # FIXME the album model should already be available so we can
         # attach the attachment. This also means attachments must handle
         # unpersisted entities.
-        for album_path in self.paths:
+        for album_path in self.paths or []:
             for path in factory.discover(album_path):
                 self.attachments.extend(factory.detect(path))
         return self.attachments

@@ -87,6 +87,8 @@ def item(lib=None):
 
 # Dummy import session.
 def import_session(lib=None, logfile=None, paths=[], query=[], cli=False):
+    if lib is None:
+        lib = beets.library.Library(':memory:')
     cls = commands.TerminalImportSession if cli else importer.ImportSession
     return cls(lib, logfile, paths, query)
 
