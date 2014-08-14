@@ -20,6 +20,7 @@ import:
     detail: no
     flat: no
     group_albums: no
+    attachments: yes
 
 clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~", "System Volume Information"]

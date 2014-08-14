@@ -1129,7 +1129,8 @@ def apply_choices(session, task):
     if task.is_album:
         task.infer_album_fields()
 
-    task.discover_attachments(session.attachment_factory)
+    if session.config['attachments']:
+        task.discover_attachments(session.attachment_factory)
     task.add(session.lib)
 
 

@@ -40,6 +40,9 @@ def config(key):
     return config['attachments'][key]
 
 
+def track_separators():
+    return config('track separators').get(list) + [os.sep]
+
 def ref_type(entity):
     # FIXME prevents circular dependency
     from beets.library import Item, Album
@@ -122,23 +125,27 @@ class Attachment(dbcore.db.Model):
         if self.path == dest:
             return self.path
 
-        if os.path.exists(dest) and not overwrite:
-            root, ext = os.path.splitext(dest)
-            log.warn('attachment destination already exists: {0}'
-                     .format(displayable_path(dest)))
+        if os.path.exists(dest):
+            if overwrite:
+                log.warn('overwrite attachment destination {0}'
+                         .format(displayable_path(dest)))
+            else:
+                log.warn('attachment destination already exists: {0}'
+                         .format(displayable_path(dest)))
+                root, ext = os.path.splitext(dest)
 
-            alternative = 0
-            while os.path.exists(dest):
-                alternative += 1
-                dest = root + ".{0}".format(alternative) + ext
+                alternative = 0
+                while os.path.exists(dest):
+                    alternative += 1
+                    dest = root + ".{0}".format(alternative) + ext
 
         if copy:
             util.copy(self.path, dest, overwrite)
-            log.warn('copy attachment to {0}'
+            log.info('copy attachment to {0}'
                      .format(displayable_path(dest)))
         else:
             util.move(self.path, dest, overwrite)
-            log.warn('move attachment to {0}'
+            log.info('move attachment to {0}'
                      .format(displayable_path(dest)))
         self.path = dest
         self.store()
@@ -247,8 +254,7 @@ class DestinationTemplateMapping(collections.Mapping):
         if ref_type(self.entity) == 'album':
             return self['entity_dir']
         elif ref_type(self.entity) == 'item':
-            separator = config('track separators').get(list)[0]
-            return self['track_base'] + separator
+            return self['track_base'] + track_separators()[0]
 
     @property
     def ext_prefix(self):
@@ -349,6 +355,37 @@ class AttachmentFactory(object):
         self._detectors = []
         self._collectors = []
 
+    def create(self, path, type, entity=None):
+        """Return a populated `Attachment` instance.
+
+        The `path`, `type`, and `entity` properties of the attachment
+        are set corresponding to the arguments.  In addition the method
+        set retrieves meta data from registered collectors and and adds
+        it as flexible attributes.
+
+        Also sets the attachments's basename to the value returned by
+        `Attachment.basename()`. Therefore, if the entity is moved
+        later, we retain the basename instead of recalculating it
+        through `attachment.basename`.
+        """
+        # TODO entity should not be optional
+        attachment = Attachment(db=self._db, path=path,
+                                entity=entity, type=type)
+        attachment.basename = self.basename(path, entity)
+        for key, value in self._collect_meta(type, attachment.path).items():
+            attachment[key] = value
+        return attachment
+
+    def add(self, path, type, entity):
+        """Create an attachment, add it to the database and return it.
+
+        This is the same as calling `create()` and then adding the
+        attachment to the database.
+        """
+        attachment = self.create(path, type, entity)
+        self._db.add(attachment)
+        return attachment
+
     def find(self, attachment_query=None, entity_query=None):
         """Yield all attachments in the library matching
         `attachment_query` and their associated items matching
@@ -364,16 +401,6 @@ class AttachmentFactory(object):
         if attachment_query:
             queries.append(attachment_query)
         return self._db._fetch(Attachment, AndQuery(queries))
-
-    def detect(self, path, entity=None):
-        """Yield a list of attachments for types registered with the path.
-
-        The method uses the registered type detector functions to get
-        a list of types for `path`. For each type it yields an attachment
-        through `create`.
-        """
-        for type in self._detect_types(path):
-            yield self.create(path, type, entity)
 
     def discover(self, entity_or_prefix, local=None):
         """Return a list of non-audio files whose path start with the
@@ -410,7 +437,7 @@ class AttachmentFactory(object):
         return discovered
 
     def _discover_local(self, prefix, local):
-        seps = config('track separators').get(list)
+        seps = track_separators()
         if local[0] == '.':
             seps.append('')
         for sep in seps:
@@ -419,28 +446,15 @@ class AttachmentFactory(object):
                 return [path]
         return []
 
-    @classmethod
-    def path_prefix(cls, entity_or_prefix):
-        # TODO doc
-        if isinstance(entity_or_prefix, basestring):
-            if os.path.isdir(entity_or_prefix):
-                dir = entity_or_prefix
-                prefix = dir
-            else:
-                prefix = os.path.splitext(entity_or_prefix)[0]
-                dir = os.path.dirname(prefix)
-        elif ref_type(entity_or_prefix) == 'album':
-            try:
-                dir = entity_or_prefix.item_dir()
-                prefix = dir
-            except ValueError:
-                raise ValueError('Could not determine album directory')
-        else:  # entity is track
-            if entity_or_prefix.path is None:
-                raise ValueError('Item has no path')
-            prefix = os.path.splitext(entity_or_prefix.path)[0]
-            dir = os.path.dirname(prefix)
-        return (prefix, dir)
+    def detect(self, path, entity=None):
+        """Yield a list of attachments for types registered with the path.
+
+        The method uses the registered type detector functions to get
+        a list of types for `path`. For each type it yields an attachment
+        through `create`.
+        """
+        for type in self._detect_types(path):
+            yield self.create(path, type, entity)
 
     @classmethod
     def basename(cls, path, entity_or_prefix):
@@ -478,7 +492,7 @@ class AttachmentFactory(object):
         if ref_type(entity_or_prefix) == 'album':
             separators = [os.sep]
         else:
-            separators = config('track separators').get(list)
+            separators = track_separators()
 
         prefix, _ = cls.path_prefix(entity_or_prefix)
         for sep in separators:
@@ -486,36 +500,28 @@ class AttachmentFactory(object):
                 return path[(len(prefix) + len(sep)):]
         return os.path.basename(path)
 
-    def create(self, path, type, entity=None):
-        """Return a populated `Attachment` instance.
-
-        The `path`, `type`, and `entity` properties of the attachment
-        are set corresponding to the arguments.  In addition the method
-        set retrieves meta data from registered collectors and and adds
-        it as flexible attributes.
-
-        Also sets the attachments's basename to the value returned by
-        `Attachment.basename()`. Therefore, if the entity is moved
-        later, we retain the basename instead of recalculating it
-        through `attachment.basename`.
-        """
-        # TODO entity should not be optional
-        attachment = Attachment(db=self._db, path=path,
-                                entity=entity, type=type)
-        attachment.basename = self.basename(path, entity)
-        for key, value in self._collect_meta(type, attachment.path).items():
-            attachment[key] = value
-        return attachment
-
-    def add(self, path, type, entity):
-        """Create an attachment, add it to the database and return it.
-
-        This is the same as calling `create()` and then adding the
-        attachment to the database.
-        """
-        attachment = self.create(path, type, entity)
-        self._db.add(attachment)
-        return attachment
+    @classmethod
+    def path_prefix(cls, entity_or_prefix):
+        # TODO doc
+        if isinstance(entity_or_prefix, basestring):
+            if os.path.isdir(entity_or_prefix):
+                dir = entity_or_prefix
+                prefix = dir
+            else:
+                prefix = os.path.splitext(entity_or_prefix)[0]
+                dir = os.path.dirname(prefix)
+        elif ref_type(entity_or_prefix) == 'album':
+            try:
+                dir = entity_or_prefix.item_dir()
+                prefix = dir
+            except ValueError:
+                raise ValueError('Could not determine album directory')
+        else:  # entity is track
+            if entity_or_prefix.path is None:
+                raise ValueError('Item has no path')
+            prefix = os.path.splitext(entity_or_prefix.path)[0]
+            dir = os.path.dirname(prefix)
+        return (prefix, dir)
 
     def register_detector(self, detector):
         """`detector` is a callable accepting the path of an attachment

@@ -28,10 +28,8 @@ class AttachmentTestHelper(TestHelper):
 
     def setup_beets(self):
         super(AttachmentTestHelper, self).setup_beets()
-        self.config['attachments'] = {
-            'paths': ['${entity_prefix}${basename}'],
-            'track separators': [' - ', ' ', '-', '_', '.', os.sep]
-        }
+        self.set_path_template('${entity_prefix}${basename}')
+        self.set_track_separator(' - ', ' ', '.')
 
     @property
     def factory(self):
@@ -103,6 +101,12 @@ class AttachmentTestHelper(TestHelper):
         log_plugin.attachment_detector = ext_detector
         log_plugin.attachment_collector = collector
         self.add_plugin(log_plugin)
+
+    def set_path_template(self, *templates):
+        self.config['attachments']['paths'] = templates
+
+    def set_track_separator(self, *separators):
+        self.config['attachments']['track separators'] = list(separators)
 
     def runcli(self, *args):
         beets.ui._raw_main(list(args), self.lib)
@@ -218,11 +222,6 @@ class AttachmentDestinationTest(unittest.TestCase, AttachmentTestHelper):
         attachment.path = attachment.destination
         self.assertEqual('/track--a.ext', attachment.destination)
 
-    # Helper
-
-    def set_path_template(self, *templates):
-        self.config['attachments']['paths'] = templates
-
 
 class AttachmentTest(unittest.TestCase, AttachmentTestHelper):
     """Test `attachment.move()`.
@@ -261,26 +260,40 @@ class AttachmentTest(unittest.TestCase, AttachmentTestHelper):
     def test_move_dest_exists(self):
         attachment = self.create_album_attachment(self.touch('a.jpg'))
         dest = attachment.destination
-        dest_root, dest_ext = os.path.splitext(dest)
         self.touch(dest)
 
-        # TODO test log warning
-        attachment.move()
+        dest_root, dest_ext = os.path.splitext(dest)
+        dest_alternative = dest_root + '.1' + dest_ext
 
-        self.assertEqual(dest_root + '.1' + dest_ext, attachment.path)
+        with capture_log() as logs:
+            attachment.move()
+
+        self.assertEqual(dest_alternative,  attachment.path)
         self.assertTrue(os.path.isfile(attachment.path))
         self.assertTrue(os.path.isfile(attachment.destination))
+
+        self.assertIn(
+            'attachment destination already exists: {0}'.format(dest), logs
+        )
+        self.assertIn(
+            'move attachment to {0}'.format(dest_alternative), logs
+        )
 
     def test_move_overwrite(self):
         attachment_path = self.touch('a.jpg', content='JPEG')
         attachment = self.create_album_attachment(attachment_path)
-        self.touch(attachment.destination, content='NONJPEG')
+        dest = attachment.destination
+        self.touch(dest, content='NONJPEG')
 
-        # TODO test log warning
-        attachment.move(overwrite=True)
+        with capture_log() as logs:
+            attachment.move(overwrite=True)
 
-        with open(attachment.destination, 'r') as f:
+        with open(dest, 'r') as f:
             self.assertEqual(f.read(), 'JPEG')
+
+        self.assertIn(
+            'overwrite attachment destination {0}'.format(dest), logs
+        )
 
 
 class AttachmentFactoryTest(unittest.TestCase, AttachmentTestHelper):
@@ -290,6 +303,7 @@ class AttachmentFactoryTest(unittest.TestCase, AttachmentTestHelper):
     * factory.detect() and type detectors (config and plugin)
     * factory.discover()
     * factory.find()
+    * factory.basename()
     """
 
     def setUp(self):
@@ -479,7 +493,9 @@ class EntityAttachmentsTest(unittest.TestCase, AttachmentTestHelper):
         self.assertEqual(queried.id, attachments[1].id)
 
 
-class AttachImportTest(unittest.TestCase, AttachmentTestHelper):
+class AttachmentImportTest(unittest.TestCase, AttachmentTestHelper):
+    """Attachments should be created in the importer.
+    """
 
     def setUp(self):
         self.setup_beets()
@@ -502,6 +518,14 @@ class AttachImportTest(unittest.TestCase, AttachmentTestHelper):
         self.assertEqual(attachment['covertype'], 'front')
         self.assertEqual(attachment.path,
                          os.path.join(album.item_dir(), 'cover.jpg'))
+
+    def test_config_disable(self):
+        self.config['import']['attachments'] = False
+        album_dir = os.path.join(self.importer.paths[0], 'album 0')
+        self.touch('cover.jpg', dir=album_dir)
+        self.importer.run()
+        album = self.lib.albums().get()
+        self.assertEqual(len(album.attachments()), 0)
 
     def test_add_singleton_track_attachment(self):
         self.config['import']['singletons'] = True
@@ -532,6 +556,8 @@ class AttachCommandTest(unittest.TestCase, AttachmentTestHelper):
     def tearDown(self):
         self.teardown_beets()
         self.unload_plugins()
+
+    # attach FILE ALBUM_QUERY
 
     def test_attach_to_album(self):
         album = self.add_album('albumtitle')
@@ -574,6 +600,20 @@ class AttachCommandTest(unittest.TestCase, AttachmentTestHelper):
         attachment = album.attachments().get()
         self.assertEqual(attachment.path, attachment_path)
 
+    def test_unknown_type_warning(self):
+        album = self.add_album('albumtitle')
+        attachment_path = self.touch('unkown')
+        with capture_log() as logs:
+            self.runcli('attach', attachment_path)
+
+        self.assertIn('unknown attachment: {0}'.format(attachment_path), logs)
+        self.assertIsNone(album.attachments().get())
+
+    def test_interactive_type(self):
+        self.skipTest('not implemented yet')
+
+    # attach --track FILE ITEM_QUERY
+
     def test_attach_to_item(self):
         item = self.add_item(title='tracktitle')
         attachment_path = self.touch('attachment.log')
@@ -595,6 +635,7 @@ class AttachCommandTest(unittest.TestCase, AttachmentTestHelper):
         self.assertTrue(os.path.isfile(dest))
 
     # attach --local FILE ALBUM_QUERY
+    # TODO globs
 
     def test_local_album_file(self):
         albums = [self.add_album('album 1'), self.add_album('album 2')]
@@ -607,7 +648,10 @@ class AttachCommandTest(unittest.TestCase, AttachmentTestHelper):
         for album in albums:
             self.assertEqual(len(list(album.attachments())), 1)
             attachment = album.attachments().get()
+
             self.assertEqual(attachment.type, 'log')
+            self.assertEqual(attachment.path,
+                             os.path.join(album.item_dir(), 'inalbumdir.log'))
 
     # attach --track --local FILE ITEM_QUERY
 
@@ -640,6 +684,16 @@ class AttachCommandTest(unittest.TestCase, AttachmentTestHelper):
 
         self.assertEqual(len(list(item.attachments())), 1)
 
+    def test_local_track_file_with_custom_separator(self):
+        self.set_track_separator('XX', '||')
+        item = self.add_item('song')
+        prefix = os.path.splitext(item.path)[0]
+        self.touch(prefix + '||rip.log')
+
+        self.runcli('attach', '--track', '--local', 'rip.log')
+        attachment = item.attachments().get()
+        self.assertEqual(prefix + 'XXrip.log', attachment.path)
+
     # attach --discover ALBUM_QUERY
 
     def test_discover_in_album_dir(self):
@@ -658,10 +712,8 @@ class AttachCommandTest(unittest.TestCase, AttachmentTestHelper):
         self.assertEqual(len(attachments1), 1)
         self.assertEqual(attachments1[0].type, 'png')
 
-        attachments2 = list(album2.attachments())
-        self.assertEqual(len(attachments2), 2)
-        self.assertItemsEqual(map(lambda a: a.type, attachments2),
-                              ['png', 'log'])
+        attachment_types = map(lambda a: a.type, (album2.attachments()))
+        self.assertItemsEqual(attachment_types, ['png', 'log'])
 
     # attach --discover --track ITEM_QUERY
 
@@ -680,12 +732,11 @@ class AttachCommandTest(unittest.TestCase, AttachmentTestHelper):
         self.runcli('attach', '--discover', '--track')
 
         for track in tracks:
-            self.assertEqual(len(list(track.attachments())), 5)
-            attachment_types = map(lambda a: a.type, list(track.attachments()))
+            attachment_types = map(lambda a: a.type, track.attachments())
             self.assertItemsEqual(['png', 'png', 'png', 'log', 'log'],
                                   attachment_types)
 
-    # attach --type TYPE QUERY
+    # attach --type TYPE FILE QUERY
 
     def test_user_type(self):
         album = self.add_album('albumtitle')
@@ -694,18 +745,6 @@ class AttachCommandTest(unittest.TestCase, AttachmentTestHelper):
         self.runcli('attach', '-t', 'customtype', attachment_path)
         attachment = album.attachments().get()
         self.assertEqual(attachment.type, 'customtype')
-
-    def test_unknown_type_warning(self):
-        album = self.add_album('albumtitle')
-        attachment_path = self.touch('unkown')
-        with capture_log() as logs:
-            self.runcli('attach', attachment_path)
-
-        self.assertIn('unknown attachment: {0}'.format(attachment_path), logs)
-        self.assertIsNone(album.attachments().get())
-
-    def test_interactive_type(self):
-        self.skipTest('not implemented yet')
 
 
 def suite():
