@@ -17,11 +17,16 @@ Command-Line Interface
 
         beet COMMAND [ARGS...]
 
-    Beets also offers command line completion via the `completion`_
-    command.  The rest of this document describes the available
+    The rest of this document describes the available
     commands. If you ever need a quick list of what's available, just
     type ``beet help`` or ``beet help COMMAND`` for help with a specific
     command.
+
+    Beets also offers shell completion. For bash, see the `completion`_
+    command; for zsh, see the accompanying `completion script`_ for the
+    ``beet`` command.
+
+
 
 
 Commands
@@ -398,6 +403,10 @@ sequence for the shell and won't be seen by beets.)
 Completion of plugin commands only works for those plugins
 that were enabled when running ``beet completion``. If you add a plugin
 later on you will want to re-generate the script.
+
+If you use zsh, take a look instead at the included `completion script`_.
+
+.. _completion script: https://github.com/sampsyo/beets/blob/master/extra/_beet
 
 
 .. only:: man
