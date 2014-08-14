@@ -34,9 +34,11 @@ AUDIO_EXTENSIONS = ['.mp3', '.ogg', '.mp4', '.m4a', '.mpc',
 
 DEFAULT_TEMPLATE = '${entity_prefix}${basename}'
 
+
 def config(key):
     from beets import config
     return config['attachments'][key]
+
 
 def ref_type(entity):
     # FIXME prevents circular dependency
@@ -45,8 +47,6 @@ def ref_type(entity):
         return 'item'
     elif isinstance(entity, Album):
         return 'album'
-    else:
-        raise ValueError('{} must be a Item or Album'.format(entity))
 
 
 class Attachment(dbcore.db.Model):
@@ -71,30 +71,35 @@ class Attachment(dbcore.db.Model):
         super(Attachment, self).__init__(db, **values)
         if path is not None:
             self.path = path
-        if entity is not None:
-            self.entity = entity
+        self._entity = entity
+        self._basename = None
 
     @property
     def entity(self):
         """Return the `Item` or `Album` we are attached to.
         """
-        if self.ref is None or self.ref_type is None:
-            return None
-        query = dbcore.query.MatchQuery('id', self.ref)
-        if self.ref_type == 'item':
-            return self._db.items(query).get()
-        elif self.ref_type == 'album':
-            return self._db.albums(query).get()
+        if self._entity is None and self.ref:
+            query = dbcore.query.MatchQuery('id', self.ref)
+            if self.ref_type == 'item':
+                self._entity = self._db.items(query).get()
+            elif self.ref_type == 'album':
+                self._entity = self._db.albums(query).get()
+        return self._entity
 
     @entity.setter
     def entity(self, entity):
         """Set the `ref` and `ref_type` properties so that
         `self.entity == entity`.
         """
-        self.ref_type = ref_type(entity)
-        if not entity.id:
+        self._entity = entity
+
+    def store(self):
+        entity = self._entity
+        if entity is None or entity.id is None:
             raise ValueError('{} must have an id'.format(entity))
+        self.ref_type = ref_type(entity)
         self.ref = entity.id
+        super(Attachment, self).store()
 
     def move(self, dest=None, copy=False, overwrite=False):
         """Moves the attachment from its original `path` to `dest` and
@@ -154,15 +159,18 @@ class Attachment(dbcore.db.Model):
 
     @property
     def basename(self):
+        """Return the value assigned to the attribute or calculate it
+        from `AttachmentFactory.basename()`.
+        """
         # TODO doc
-        if ref_type(self.entity) == 'item':
-            # TODO use `path_prefix`
-            prefix = os.path.splitext(self.entity.path)[0]
-            for sep in config('track separators').get(list):
-                if self.path.startswith(prefix + sep):
-                    return self.path[(len(prefix) + len(sep)):]
+        if self._basename is None:
+            return AttachmentFactory.basename(self.path, self.entity)
+        else:
+            return self._basename
 
-        return os.path.basename(self.path)
+    @basename.setter
+    def basename(self, basename):
+        self._basename = basename
 
     @property
     def destination(self):
@@ -386,23 +394,6 @@ class AttachmentFactory(object):
         else:
             return self._discover_local(prefix, local)
 
-    def path_prefix(self, entity_or_prefix):
-        # TODO doc
-        if isinstance(entity_or_prefix, basestring):
-            if os.path.isdir(entity_or_prefix):
-                dir = entity_or_prefix
-                prefix = dir
-            else:
-                prefix = os.path.splitext(entity_or_prefix)[0]
-                dir = os.path.dirname(prefix)
-        elif ref_type(entity_or_prefix) == 'album':
-            dir = entity_or_prefix.item_dir()
-            prefix = dir
-        else:  # entity is track
-            prefix = os.path.splitext(entity_or_prefix.path)[0]
-            dir = os.path.dirname(prefix)
-        return (prefix, dir)
-
     def _discover_full(self, prefix, dir):
         discovered = []
         for dirpath, dirnames, filenames in os.walk(dir):
@@ -428,20 +419,92 @@ class AttachmentFactory(object):
                 return [path]
         return []
 
+    @classmethod
+    def path_prefix(cls, entity_or_prefix):
+        # TODO doc
+        if isinstance(entity_or_prefix, basestring):
+            if os.path.isdir(entity_or_prefix):
+                dir = entity_or_prefix
+                prefix = dir
+            else:
+                prefix = os.path.splitext(entity_or_prefix)[0]
+                dir = os.path.dirname(prefix)
+        elif ref_type(entity_or_prefix) == 'album':
+            try:
+                dir = entity_or_prefix.item_dir()
+                prefix = dir
+            except ValueError:
+                raise ValueError('Could not determine album directory')
+        else:  # entity is track
+            if entity_or_prefix.path is None:
+                raise ValueError('Item has no path')
+            prefix = os.path.splitext(entity_or_prefix.path)[0]
+            dir = os.path.dirname(prefix)
+        return (prefix, dir)
+
+    @classmethod
+    def basename(cls, path, entity_or_prefix):
+        """Compute the basename of a path with respect to the entity.
+
+        Gets the prefix from `path_prefix()` and separators from the
+        configuration. Tries to remove any combination of `prefix +
+        separator` from the binning of `path` and return the remaining
+        string. If this fails, the method strips all parent directories
+        from `path`.
+
+        Examples::
+            path = '/root/track.cover.jpg'
+            prefix = '/root/track.mp3'
+            basename(path, prefix) == 'cover.jpg'
+
+            item = Item(path='/root/track.mp3')
+            basename(path, item) == 'cover.jpg'
+
+            path = '/root/track/cover.jpg'
+            basename(path, item) == 'cover.jpg'
+
+            path = '/different/root/track - cover.jpg'
+            basename(path, item) == 'track - cover.jpg'
+
+            album = Album()  # with `item_dir() == '/album'`
+            path = '/album/covers/front.jpg'
+            basename(path, album) == 'covers/front.jpg'
+        """
+        # FIXME require entity_or_prefix to be Item or Album
+        # TODO check os.path.basename(path) for prefixes
+        if not entity_or_prefix:
+            return os.path.basename(path)
+
+        if ref_type(entity_or_prefix) == 'album':
+            separators = [os.sep]
+        else:
+            separators = config('track separators').get(list)
+
+        prefix, _ = cls.path_prefix(entity_or_prefix)
+        for sep in separators:
+            if path.startswith(prefix + sep):
+                return path[(len(prefix) + len(sep)):]
+        return os.path.basename(path)
+
     def create(self, path, type, entity=None):
         """Return a populated `Attachment` instance.
 
         The `path`, `type`, and `entity` properties of the attachment
         are set corresponding to the arguments.  In addition the method
         set retrieves meta data from registered collectors and and adds
-        it as flexible attributes
+        it as flexible attributes.
+
+        Also sets the attachments's basename to the value returned by
+        `Attachment.basename()`. Therefore, if the entity is moved
+        later, we retain the basename instead of recalculating it
+        through `attachment.basename`.
         """
         # TODO entity should not be optional
         attachment = Attachment(db=self._db, path=path,
                                 entity=entity, type=type)
+        attachment.basename = self.basename(path, entity)
         for key, value in self._collect_meta(type, attachment.path).items():
             attachment[key] = value
-
         return attachment
 
     def add(self, path, type, entity):

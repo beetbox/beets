@@ -306,13 +306,10 @@ class AttachmentFactoryTest(unittest.TestCase, AttachmentTestHelper):
         self.assertEqual(attachment.type, 'coverart')
 
     def test_create_sets_entity(self):
-        album = Album()
-        album.add(self.lib)
+        album = self.add_album()
         attachment = self.factory.create('/path/to/attachment', 'coverart',
                                          entity=album)
-        self.assertEqual(attachment.ref, album.id)
-        self.assertEqual(attachment.ref_type, 'album')
-        self.assertEqual(attachment.entity.id, album.id)
+        self.assertEqual(attachment.entity, album)
 
     def test_create_populates_metadata(self):
         def collector(type, path):
@@ -379,8 +376,9 @@ class AttachmentFactoryTest(unittest.TestCase, AttachmentTestHelper):
     # TODO extend
 
     def test_find_all_attachments(self):
-        self.factory.create('/path', 'atype').add()
-        self.factory.create('/another_path', 'asecondtype').add()
+        item = self.add_item('track')
+        self.factory.add('/path', 'atype', item)
+        self.factory.add('/another_path', 'asecondtype', item)
 
         all_attachments = self.factory.find()
         self.assertEqual(len(all_attachments), 2)
@@ -388,6 +386,53 @@ class AttachmentFactoryTest(unittest.TestCase, AttachmentTestHelper):
         attachment = all_attachments.get()
         self.assertEqual(attachment.path, '/path')
         self.assertEqual(attachment.type, 'atype')
+
+    # factory.basename()
+
+    def test_item_basename(self):
+        item = Item(path='/music/track.mp3')
+        path = '/music/track.cover.jpg'
+        self.assertEqual('cover.jpg', self.factory.basename(path, item))
+
+    def test_item_nested_basename(self):
+        item = Item(path='/music/track.mp3')
+        path = '/music/track/covers/front.jpg'
+        self.assertEqual('covers/front.jpg', self.factory.basename(path, item))
+
+    def test_item_other_dir_basename(self):
+        self.skipTest('not yet implemented')
+        item = Item(path='/music/track.mp3')
+        path = '/attachments/track.cover.jpg'
+        self.assertEqual('cover.jpg', self.factory.basename(path, item))
+
+    def test_album_basename(self):
+        album = self.add_album()
+        path = os.path.join(album.item_dir(), 'cover.jpg')
+        self.assertEqual('cover.jpg', self.factory.basename(path, album))
+
+    def test_album_nested_basename(self):
+        album = self.add_album()
+        basename = os.path.join('covers', 'front.jpg')
+        path = os.path.join(album.item_dir(), 'covers', 'front.jpg')
+        self.assertEqual(basename, self.factory.basename(path, album))
+
+    def test_album_name_prefix_basename(self):
+        self.skipTest('not yet implemented')
+        album = self.add_album()
+        album.album = 'The Album'
+        album.albumartist = 'The Artist'
+        path = '/attachments/the artist - the album - cover.jpg'
+        self.assertEqual('cover.jpg', self.factory.basename(path, album))
+
+    def test_item_not_related(self):
+        item = Item(path='/music/track.mp3')
+        path = '/attachments/y.cover.jpg'
+        self.assertEqual('y.cover.jpg', self.factory.basename(path, item))
+
+    def test_album_not_related(self):
+        album = self.add_album()
+        path = '/attachments/y.cover.jpg'
+        self.assertEqual('y.cover.jpg', self.factory.basename(path, album))
 
 
 class EntityAttachmentsTest(unittest.TestCase, AttachmentTestHelper):
@@ -404,9 +449,7 @@ class EntityAttachmentsTest(unittest.TestCase, AttachmentTestHelper):
         self.teardown_beets()
 
     def test_all_item_attachments(self):
-        item = Item()
-        item.add(self.lib)
-
+        item = self.add_item('a track')
         attachments = [
             self.factory.add('/path/to/attachment', 'coverart', item),
             self.factory.add('/path/to/attachment', 'riplog', item)
@@ -416,9 +459,7 @@ class EntityAttachmentsTest(unittest.TestCase, AttachmentTestHelper):
                               map(lambda a: a.id, attachments))
 
     def test_all_album_attachments(self):
-        album = Album()
-        album.add(self.lib)
-
+        album = self.add_album()
         attachments = [
             self.factory.add('/path/to/attachment', 'coverart', album),
             self.factory.add('/path/to/attachment', 'riplog', album)
@@ -428,9 +469,8 @@ class EntityAttachmentsTest(unittest.TestCase, AttachmentTestHelper):
 
     def test_query_album_attachments(self):
         self.skipTest('Not implemented yet')
-        album = Album()
-        album.add(self.lib)
 
+        album = self.add_album()
         attachments = [
             self.factory.add('/path/to/attachment', 'coverart', album),
             self.factory.add('/path/to/attachment', 'riplog', album)
@@ -447,6 +487,7 @@ class AttachImportTest(unittest.TestCase, AttachmentTestHelper):
         self.importer = self.create_importer()
 
     def tearDown(self):
+        self.unload_plugins()
         self.teardown_beets()
 
     def test_add_album_attachment(self):
@@ -454,6 +495,8 @@ class AttachImportTest(unittest.TestCase, AttachmentTestHelper):
         self.touch('cover.jpg', dir=album_dir)
         self.importer.run()
         album = self.lib.albums().get()
+        self.assertEqual(len(album.attachments()), 1)
+
         attachment = album.attachments().get()
         self.assertEqual(attachment.type, 'jpg')
         self.assertEqual(attachment['covertype'], 'front')
@@ -462,19 +505,20 @@ class AttachImportTest(unittest.TestCase, AttachmentTestHelper):
 
     def test_add_singleton_track_attachment(self):
         self.config['import']['singletons'] = True
-        track_prefix = os.path.join(self.importer.paths[0],
-                                    'album 0', 'track 0')
+        track_prefix = \
+            os.path.join(self.importer.paths[0], 'album 0', 'track 0')
         self.touch(track_prefix + '.cover.jpg')
         self.importer.run()
         item = self.lib.items().get()
+
+        self.assertEqual(len(item.attachments()), 1)
         attachment = item.attachments().get()
         self.assertEqual(attachment.type, 'jpg')
         self.assertEqual(attachment['covertype'], 'front')
         self.assertEqual(
             attachment.path,
-            os.path.splitext(item.path)[0] + ' - track 0.cover.jpg'
+            os.path.splitext(item.path)[0] + ' - cover.jpg'
         )
-        self.skipTest('Basename should not contain "track 0"')
 
 
 class AttachCommandTest(unittest.TestCase, AttachmentTestHelper):

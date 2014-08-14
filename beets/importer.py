@@ -749,7 +749,6 @@ class SingletonImportTask(ImportTask):
             self.remove_replaced(lib)
             lib.add(self.item)
             for a in self.attachments:
-                a.entity = self.item
                 a.add(lib)
 
     def infer_album_fields(self):
@@ -764,6 +763,11 @@ class SingletonImportTask(ImportTask):
 
     def reload(self):
         self.item.load()
+
+    def discover_attachments(self, factory):
+        for path in factory.discover(self.item.path):
+            self.attachments.extend(factory.detect(path, self.item))
+        return self.attachments
 
 
 # FIXME The inheritance relationships are inverted. This is why there
