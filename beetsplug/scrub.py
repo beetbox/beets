@@ -68,7 +68,8 @@ class ScrubPlugin(BeetsPlugin):
 
                 # Get album art if we need to restore it.
                 if opts.write:
-                    mf = mediafile.MediaFile(item.path)
+                    mf = mediafile.MediaFile(item.path,
+                                             config['id3v23'].get(bool))
                     art = mf.art
 
                 # Remove all tags.
@@ -82,7 +83,7 @@ class ScrubPlugin(BeetsPlugin):
                         log.info('restoring art')
                         mf = mediafile.MediaFile(item.path)
                         mf.art = art
-                        mf.save(config['id3v23'].get(bool))
+                        mf.save()
 
             scrubbing = False
 

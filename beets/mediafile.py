@@ -1222,9 +1222,12 @@ class MediaFile(object):
     """Represents a multimedia file on disk and provides access to its
     metadata.
     """
-    def __init__(self, path):
+    def __init__(self, path, id3v23=False):
         """Constructs a new `MediaFile` reflecting the file at path. May
         throw `UnreadableFileError`.
+
+        By default, MP3 files are saved with ID3v2.4 tags. You can use
+        the older ID3v2.3 standard by specifying the `id3v23` option.
         """
         self.path = path
 
@@ -1296,18 +1299,19 @@ class MediaFile(object):
         else:
             raise FileTypeError(path, type(self.mgfile).__name__)
 
-        # add a set of tags if it's missing
+        # Add a set of tags if it's missing.
         if self.mgfile.tags is None:
             self.mgfile.add_tags()
 
-    def save(self, id3v23=False):
-        """Write the object's tags back to the file.
+        # Set the ID3v2.3 flag only for MP3s.
+        self.id3v23 = id3v23 and self.type == 'mp3'
 
-        By default, MP3 files are saved with ID3v2.4 tags. You can use
-        the older ID3v2.3 standard by specifying the `id3v23` option.
+    def save(self):
+        """Write the object's tags back to the file.
         """
+        # Possibly save the tags to ID3v2.3.
         kwargs = {}
-        if id3v23 and self.type == 'mp3':
+        if self.id3v23:
             id3 = self.mgfile
             if hasattr(id3, 'tags'):
                 # In case this is an MP3 object, not an ID3 object.

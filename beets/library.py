@@ -393,7 +393,8 @@ class Item(LibModel):
         else:
             path = normpath(path)
         try:
-            mediafile = MediaFile(syspath(path))
+            mediafile = MediaFile(syspath(path),
+                                  id3v23=beets.config['id3v23'].get(bool))
         except (OSError, IOError) as exc:
             raise ReadError(self.path, exc)
 
@@ -401,7 +402,7 @@ class Item(LibModel):
 
         mediafile.update(self)
         try:
-            mediafile.save(id3v23=beets.config['id3v23'].get(bool))
+            mediafile.save()
         except (OSError, IOError, MutagenError) as exc:
             raise WriteError(self.path, exc)
 
