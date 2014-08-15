@@ -309,6 +309,31 @@ class ID3v23Test(unittest.TestCase, TestHelper):
         finally:
             self._delete_test()
 
+    def test_v24_image_encoding(self):
+        mf = self._make_test(id3v23=False)
+        try:
+            mf.images = [beets.mediafile.Image(b'test data')]
+            mf.save()
+            frame = mf.mgfile.tags.getall('APIC')[0]
+            self.assertEqual(frame.encoding, 3)
+        finally:
+            self._delete_test()
+
+    @unittest.skip
+    def test_v23_image_encoding(self):
+        """For compatibility with OS X/iTunes (and strict adherence to
+        the standard), ID3v2.3 tags need to use an inferior text
+        encoding: UTF-8 is not supported.
+        """
+        mf = self._make_test(id3v23=True)
+        try:
+            mf.images = [beets.mediafile.Image(b'test data')]
+            mf.save()
+            frame = mf.mgfile.tags.getall('APIC')[0]
+            self.assertEqual(frame.encoding, 1)
+        finally:
+            self._delete_test()
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
