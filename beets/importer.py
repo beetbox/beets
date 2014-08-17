@@ -355,6 +355,8 @@ class ImportTask(object):
         self.should_remove_duplicates = False
         self.is_album = True
 
+        self.found_duplicates = None
+
     def set_null_candidates(self):
         """Set the candidates to indicate no album match was found.
         """
@@ -534,6 +536,7 @@ class ImportTask(object):
             album_paths = set(i.path for i in album.items())
             if album_paths != task_paths:
                 duplicates.append(album)
+        self.found_duplicates = duplicates
         return duplicates
 
     def infer_album_fields(self):
