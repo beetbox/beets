@@ -203,19 +203,10 @@ class Attachment(dbcore.db.Model):
 
     def store(self):
         self._validate()
-        super(Attachment, self).store()
-
-    def add(self, db=None):
-        if db:
-            self._db = db
-        self._check_db(False)
-        self._validate()
-
-        if self.id:
-            self.store()
+        if self.id is None:
+            self.add()
         else:
-            super(Attachment, self).add()
-        return self
+            super(Attachment, self).store()
 
     def _validate(self):
         if self.ref is None or self.ref_type is None:
@@ -412,7 +403,8 @@ class AttachmentFactory(object):
         This is the same as calling `create()` and then adding the
         attachment to the database.
         """
-        attachment = self.create(path, type, entity).add()
+        attachment = self.create(path, type, entity)
+        attachment.add()
         return attachment
 
     def find(self, attachment_query=None, album_query=None, item_query=None):

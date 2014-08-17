@@ -141,7 +141,7 @@ class AttachCommand(ui.Subcommand):
                     attachments = factory.detect(abspath, entity)
 
                 for a in attachments:
-                    a.add()
+                    a.store()
                     if opts.move != False or opts.copy:
                         a.move(copy=opts.copy)
                 else:

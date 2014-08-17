@@ -626,7 +626,7 @@ class ImportTask(object):
             self.album = lib.add_album(self.imported_items())
             for a in self.attachments:
                 a.entity = self.album
-                a.add(lib)
+                a.store()
 
     def remove_replaced(self, lib):
         """Removes all the items from the library that have the same
@@ -749,7 +749,7 @@ class SingletonImportTask(ImportTask):
             self.remove_replaced(lib)
             lib.add(self.item)
             for a in self.attachments:
-                a.add(lib)
+                a.store()
 
     def infer_album_fields(self):
         raise NotImplementedError
