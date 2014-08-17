@@ -393,7 +393,8 @@ class Item(LibModel):
         else:
             path = normpath(path)
         try:
-            mediafile = MediaFile(syspath(path))
+            mediafile = MediaFile(syspath(path),
+                                  id3v23=beets.config['id3v23'].get(bool))
         except (OSError, IOError) as exc:
             raise ReadError(self.path, exc)
 
@@ -401,7 +402,7 @@ class Item(LibModel):
 
         mediafile.update(self)
         try:
-            mediafile.save(id3v23=beets.config['id3v23'].get(bool))
+            mediafile.save()
         except (OSError, IOError, MutagenError) as exc:
             raise WriteError(self.path, exc)
 
@@ -571,8 +572,13 @@ class Item(LibModel):
             subpath = unicodedata.normalize('NFD', subpath)
         else:
             subpath = unicodedata.normalize('NFC', subpath)
+
+        if beets.config['asciify_paths']:
+            subpath = unidecode(subpath)
+
         # Truncate components and remove forbidden characters.
         subpath = util.sanitize_path(subpath, self._db.replacements)
+
         # Encode for the filesystem.
         if not fragment:
             subpath = bytestring_path(subpath)
@@ -830,6 +836,8 @@ class Album(LibModel):
 
         filename_tmpl = Template(beets.config['art_filename'].get(unicode))
         subpath = self.evaluate_template(filename_tmpl, True)
+        if beets.config['asciify_paths']:
+            subpath = unidecode(subpath)
         subpath = util.sanitize_path(subpath,
                                      replacements=self._db.replacements)
         subpath = bytestring_path(subpath)

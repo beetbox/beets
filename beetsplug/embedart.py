@@ -183,11 +183,12 @@ def clear(lib, query):
     for item in lib.items(query):
         log.info(u'%s - %s' % (item.artist, item.title))
         try:
-            mf = mediafile.MediaFile(syspath(item.path))
+            mf = mediafile.MediaFile(syspath(item.path),
+                                     config['id3v23'].get(bool))
         except mediafile.UnreadableFileError as exc:
             log.error(u'Could not clear art from {0}: {1}'.format(
                 displayable_path(item.path), exc
             ))
             continue
         mf.art = None
-        mf.save(config['id3v23'].get(bool))
+        mf.save()

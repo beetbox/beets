@@ -137,6 +137,9 @@ class EchonestMetadataPlugin(plugins.BeetsPlugin):
             except pyechonest.util.EchoNestAPIError as e:
                 if e.code == 3:
                     # reached access limit per minute
+                    log.debug(u'echonest: rate-limited on try {0}; '
+                              u'waiting {1} seconds'
+                              .format(i + 1, RETRY_INTERVAL))
                     time.sleep(RETRY_INTERVAL)
                 elif e.code == 5:
                     # specified identifier does not exist

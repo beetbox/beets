@@ -4,23 +4,17 @@ Convert Plugin
 The ``convert`` plugin lets you convert parts of your collection to a
 directory of your choice, transcoding audio and embedding album art along the
 way. It can transcode to and from any format using a configurable command
-line. It will skip files that are already present in the target directory.
-Converted files follow the same path formats as your library.
-
-.. _FFmpeg: http://ffmpeg.org
+line.
 
 
 Installation
 ------------
 
-First, enable the ``convert`` plugin (see :doc:`/plugins/index`).
+Enable the ``convert`` plugin in your configuration (see
+:doc:`/plugins/index`).  By default, the plugin depends on `FFmpeg`_ to
+transcode the audio, so you might want to install it.
 
-To transcode music, this plugin requires the ``ffmpeg`` command-line
-tool. If its executable is in your path, it  will be found automatically
-by the plugin. Otherwise, configure the plugin to locate the executable::
-
-    convert:
-        ffmpeg: /usr/bin/ffmpeg
+.. _FFmpeg: http://ffmpeg.org
 
 
 Usage
@@ -28,16 +22,28 @@ Usage
 
 To convert a part of your collection, run ``beet convert QUERY``. This
 will display all items matching ``QUERY`` and ask you for confirmation before
-starting the conversion. The ``-a`` (or ``--album``) option causes the command
-to match albums instead of tracks.
+starting the conversion. The command will then transcode all the
+matching files to the destination directory given by the ``-d``
+(``--dest``) option or the ``dest`` configuration. The path layout
+mirrors that of your library, but it may be customized through the
+``paths`` configuration.
 
-The ``-t`` (``--threads``) and ``-d`` (``--dest``) options allow you to specify
-or overwrite the respective configuration options.
+The plugin uses a command-line program to transcode the audio. With the
+``-f`` (``--format``) option you can choose the transcoding command
+and customize the available commands
+:ref:`through the configuration <convert-format-config>`.
+
+The ``-a`` (or ``--album``) option causes the command
+to match albums instead of tracks.
 
 By default, the command places converted files into the destination directory
 and leaves your library pristine. To instead back up your original files into
 the destination directory and keep converted files in your library, use the
 ``-k`` (or ``--keep-new``) option.
+
+To test your configuration without taking any actions, use the ``--pretend``
+flag. The plugin will print out the commands it will run instead of executing
+them.
 
 
 Configuration
@@ -48,7 +54,7 @@ The plugin offers several configuration options, all of which live under the
 
 * ``dest`` sets the directory the files will be converted (or copied) to.
   A destination is required---you either have to provide it in the config file
-  or on the command line using the ``-d`` flag.
+  or on the command-line using the ``-d`` flag.
 * ``embed`` indicates whether or not to embed album art in converted items.
   Default: true.
 * If you set ``max_bitrate``, all lossy files with a higher bitrate will be
@@ -69,39 +75,14 @@ The plugin offers several configuration options, all of which live under the
   encoding. By default, the plugin will detect the number of processors
   available and use them all.
 
-These config options control the transcoding process:
+.. _convert-format-config:
 
-* ``format`` is the name of the audio file format to transcode to. Files that
-  are already in the format (and are below the maximum bitrate) will not be
-  transcoded. The plugin includes default commands for the formats MP3, AAC,
-  ALAC, FLAC, Opus, Vorbis, and Windows Media; the default is MP3. If you want
-  to use a different format (or customize the transcoding options), use the
-  options below.
-* ``extension`` is the filename extension to be used for newly transcoded
-  files. This is implied by the ``format`` option, but you can set it yourself
-  if you're using a different format.
-* ``command`` is the command line to use to transcode audio. A default
-  command, usually using an FFmpeg invocation, is implied by the ``format``
-  option. The tokens ``$source`` and ``$dest`` in the command are replaced
-  with the paths to the existing and new file. For example, the command
-  ``ffmpeg -i $source -y -aq 4 $dest`` transcodes to MP3 using FFmpeg at the
-  V4 quality level.
+Configuring the transcoding command
+```````````````````````````````````
 
-Here's an example configuration::
-
-    convert:
-        embed: false
-        format: aac
-        max_bitrate: 200
-        dest: /home/user/MusicForPhone
-        threads: 4
-        paths:
-            default: $albumartist/$title
-
-If you have several formats you want to switch between, you can list them
-under the ``formats`` key and refer to them using the ``format`` option. Each
-key under ``formats`` should contain values for ``command`` and ``extension``
-as described above::
+You can customize the transcoding command through the ``formats`` map
+and select a command with the ``--format`` command-line option or the
+``format`` configuration.::
 
     convert:
         format: speex
@@ -109,6 +90,28 @@ as described above::
             speex:
                 command: ffmpeg -i $source -y -acodec speex $dest
                 extension: spx
-            wav:
-                command: ffmpeg -i $source -y -acodec pcm_s16le $dest
-                extension: wav
+            wav: ffmpeg -i $source -y -acodec pcm_s16le $dest
+
+In this example ``beet convert`` will use the *speex* command by
+default. To convert the audio to `wav`, run ``beet convert -f wav``.
+This will also use the format key (`wav`) as the file extension.
+
+Each entry in the ``formats`` map consists of a key (the name of the
+format) as well as the command and the possibly the file extension.
+``extension`` is the filename extension to be used for newly transcoded
+files.  If only the command is given as a string, the file extension
+defaults to the format’s name. ``command`` is the command-line to use
+to transcode audio. The tokens ``$source`` and ``$dest`` in the command
+are replaced with the paths to the existing and new file.
+
+The plugin in comes with default commands for the most common audio
+formats: `mp3`, `alac`, `flac`, `aac`, `opus`, `ogg`, `wmv`. For
+details have a look at the output of ``beet config -d``.
+
+For a one-command-fits-all solution use the ``convert.command`` and
+``convert.extension`` options. If these are set the formats are ignored
+and the given command is used for all conversions.::
+
+    convert:
+        command: ffmpeg -i $source -y -vn -aq 2 $dest
+        extension: mp3

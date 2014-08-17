@@ -12,7 +12,8 @@ New stuff
   IFF chunks.
 * A new :ref:`required` configuration option for the importer skips matches
   that are missing certain data. Thanks to oprietop.
-* The new :doc:`/plugins/bpm` lets you manually measure the tempo of a playing song. Thanks to aroquen.
+* The new :doc:`/plugins/bpm` lets you manually measure the tempo of a playing
+  song. Thanks to aroquen.
 
 Little improvements and fixes:
 
@@ -67,6 +68,16 @@ Little improvements and fixes:
   import.
 * :doc:`/plugins/chroma`: A new ``auto`` configuration option disables
   fingerprinting on import. Thanks to ddettrittus.
+* :doc:`/plugins/convert`: A new ``--format`` option to can select the
+  transcoding preset from the command-line.
+* :doc:`/plugins/convert`: Transcoding presets can now omit their filename
+  extensions (extensions default to the name of the preset).
+* A new :ref:`asciify-paths` configuration option replaces all non-ASCII
+  characters in paths.
+* :doc:`/plugins/convert`: A new ``--pretend`` option lets you preview the
+  commands the plugin will execute without actually taking any action. Thanks
+  to Dietrich Daroch.
+
 
 
 1.3.6 (May 10, 2014)
