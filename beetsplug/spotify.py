@@ -1,3 +1,5 @@
+from __future__ import print_function
+import sys
 import re
 import webbrowser
 import requests
@@ -42,7 +44,7 @@ class SpotifyPlugin(BeetsPlugin):
         spotify_cmd.parser.add_option(
             '-m', '--mode', action='store',
             help='"open" to open spotify with playlist, '
-                 '"list" to copy/paste (default)'
+                 '"list" to print (default)'
         )
         spotify_cmd.parser.add_option(
             '-f', '--show_failures', action='store_true',
@@ -63,7 +65,7 @@ class SpotifyPlugin(BeetsPlugin):
             self.config['show_failures'].set(True)
 
         if self.config['mode'].get() not in ['list', 'open']:
-            print self.config['mode'].get() + " is not a valid mode"
+            self.warning(self.config['mode'].get() + " is not a valid mode")
             return False
 
         self.opts = opts
@@ -80,7 +82,7 @@ class SpotifyPlugin(BeetsPlugin):
             self.out("Your beets query returned no items, skipping spotify")
             return
 
-        print "Processing " + str(len(items)) + " tracks..."
+        self.warning("Processing " + str(len(items)) + " tracks...")
 
         for item in items:
 
@@ -146,16 +148,17 @@ class SpotifyPlugin(BeetsPlugin):
         failure_count = len(failures)
         if failure_count > 0:
             if self.config['show_failures'].get():
-                print
-                print str(failure_count) + \
-                    " track(s) did not match a Spotify ID"
-                print "#########################"
+                self.warning("\n#########################")
+                self.warning(str(failure_count) +
+                             " track(s) did not match a Spotify ID")
                 for track in failures:
-                    print "track:" + track
-                print "#########################"
+                    self.warning("track:" + track)
+                self.warning("#########################\n")
             else:
-                print str(failure_count) + " track(s) did not match " + \
+                self.warning(
+                    str(failure_count) + " track(s) did not match "
                     "a Spotify ID, --show_failures to display"
+                )
 
         return results
 
@@ -163,21 +166,21 @@ class SpotifyPlugin(BeetsPlugin):
         if results:
             ids = map(lambda x: x['id'], results)
             if self.config['mode'].get() == "open":
-                print "Attempting to open Spotify with playlist"
+                self.warning("Attempting to open Spotify with playlist")
                 spotify_url = self.playlist_partial + ",".join(ids)
                 webbrowser.open(spotify_url)
 
             else:
-                print
-                print "Copy everything between the hashes and paste into " + \
-                    "a Spotify playlist"
-                print "#########################"
+                self.warning("")
                 for item in ids:
-                    print unicode.encode(self.open_url + item)
-                print "#########################"
+                    print(unicode.encode(self.open_url + item))
+                self.warning("")
         else:
-            print "No Spotify tracks found from beets query"
+            self.warning("No Spotify tracks found from beets query")
 
     def out(self, msg):
         if self.config['verbose'].get() or self.opts.verbose:
-            print msg
+            self.warning(msg)
+
+    def warning(self, msg):
+        print(msg, file=sys.stderr)

@@ -1,7 +1,7 @@
 Spotify Plugin
 =====================
 
-The ``spotify`` plugin generates Spotify playlists from tracks within the Beets library. Using the `Spotify Web API`_, any tracks that can be matched with a Spotify ID are returned, and the results can be either copy/pasted in to a playlist, or opened directly in Spotify.
+The ``spotify`` plugin generates Spotify playlists from tracks within the Beets library. Using the `Spotify Web API`_, any tracks that can be matched with a Spotify ID are returned, and the results can be either pasted in to a playlist, or opened directly in Spotify.
 
 .. _Spotify Web API: https://developer.spotify.com/web-api/search-item/
 
@@ -29,8 +29,6 @@ An example command, and it's output::
 
     Processing 14 tracks...
 
-    Copy everything between the hashes and paste into a Spotify playlist
-    #########################
     http://open.spotify.com/track/19w0OHr8SiZzRhjpnjctJ4
     http://open.spotify.com/track/3PRLM4FzhplXfySa4B7bxS
     http://open.spotify.com/track/0ci6bxPw8muHTmSRs1MOjD
@@ -45,7 +43,6 @@ An example command, and it's output::
     http://open.spotify.com/track/3aoAkxvRjwhXDajp5aSZS6
     http://open.spotify.com/track/7cG68oOj0pZYoSVuP1Jzot
     http://open.spotify.com/track/4qPtIDBT2iVQv13tjpXMDt
-    #########################
 
 Options for the command::
 
@@ -54,7 +51,7 @@ Options for the command::
     Options:
       -h, --help            show this help message and exit
       -m MODE, --mode=MODE  "open" to open spotify with playlist, "list" to
-                            copy/paste (default)
+                            print (default)
       -f, --show_failures   Print out list of any tracks that did not match a
                             Sptoify ID
       -v, --verbose         show extra output
@@ -77,7 +74,7 @@ Example config.yaml
 Examples of the configuration options::
 
     spotify:
-        mode: "open" # Default is list, shows the copy/paste output.  open attempts to open directly in Spotify (only tested on Mac)
+        mode: "open" # Default is list, shows the plugin output.  open attempts to open directly in Spotify (only tested on Mac)
         region_filter: "US" # Filters tracks by only that market (2-letter code)
         show_faiulres: on # Displays the tracks that did not match a Spotify ID
         tiebreak: "first" # Need to break ties when then are multiple tracks.  Default is popularity.
@@ -100,6 +97,6 @@ Examples of the configuration options::
 Spotify Plugin Modes
 ---------------------
 
-* ``list``: The default mode for the spotify plugin is to print out the playlist as a list of links.  This list can then be copied and pasted in to a new or existing spotify playlist.
+* ``list``: The default mode for the spotify plugin is to print out the playlist as a list of links.  This list can then be pasted in to a new or existing spotify playlist.
 * ``open``: This mode actually sends a link to your default webbrowser with instructions to open spotify with the playlist you created.  Until this has been tested on all platforms, it will remain optional.
 
