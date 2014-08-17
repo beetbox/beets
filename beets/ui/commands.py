@@ -24,7 +24,6 @@ import itertools
 import codecs
 import platform
 import re
-import collections
 
 import beets
 from beets import ui
@@ -745,9 +744,10 @@ class TerminalImportSession(importer.ImportSession):
     def summarize_items(self,items):
         summary_text = ""
         summary_text += "%d items. " % len(items)
-
-        format_counts = collections.Counter( [item[1] for item in items] )
-
+        format_counts = {}
+        for item in items:
+            format_counts[item[1]] = format_counts.get(item[1],0) + 1;
+        
         for format, count in format_counts.iteritems():
             summary_text += '{count} {format}. '.format(format=format, count=count)
 
