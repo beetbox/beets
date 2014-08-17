@@ -1,11 +1,11 @@
-import json, re, webbrowser
+import re
+import webbrowser
 import requests
-from pprint import pprint
-from operator import attrgetter
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs
-from beets import config, ui, library
+from beets import ui
 from requests.exceptions import HTTPError
+
 
 class SpotifyPlugin(BeetsPlugin):
 
@@ -19,7 +19,7 @@ class SpotifyPlugin(BeetsPlugin):
         super(SpotifyPlugin, self).__init__()
         self.config.add({
             'mode': 'list',
-            'tiebreak' : 'popularity',
+            'tiebreak': 'popularity',
             'show_failures': False,
             'verbose': False,
             'artist_field': 'albumartist',
@@ -35,16 +35,21 @@ class SpotifyPlugin(BeetsPlugin):
             if success:
                 results = self.query_spotify(lib, decargs(args))
                 self.output_results(results)
-        spotify_cmd = ui.Subcommand('spotify',
+        spotify_cmd = ui.Subcommand(
+            'spotify',
             help='build spotify playlist of results'
         )
-        spotify_cmd.parser.add_option('-m', '--mode', action='store',
-            help='"open" to open spotify with playlist, "list" to copy/paste (default)'
+        spotify_cmd.parser.add_option(
+            '-m', '--mode', action='store',
+            help='"open" to open spotify with playlist, '
+                 '"list" to copy/paste (default)'
         )
-        spotify_cmd.parser.add_option('-f', '--show_failures', action='store_true',
+        spotify_cmd.parser.add_option(
+            '-f', '--show_failures', action='store_true',
             help='Print out list of any tracks that did not match a Sptoify ID'
         )
-        spotify_cmd.parser.add_option('-v', '--verbose', action='store_true',
+        spotify_cmd.parser.add_option(
+            '-v', '--verbose', action='store_true',
             help='show extra output'
         )
         spotify_cmd.func = queries
@@ -81,10 +86,17 @@ class SpotifyPlugin(BeetsPlugin):
 
             # Apply regex transformations if provided
             for regex in self.config['regex'].get():
-                if not regex['field'] or not regex['search'] or not regex['replace']:
+                if (
+                    not regex['field'] or
+                    not regex['search'] or
+                    not regex['replace']
+                ):
                     continue
+
                 value = item[regex['field']]
-                item[regex['field']] = re.sub(regex['search'], regex['replace'], value)
+                item[regex['field']] = re.sub(
+                    regex['search'], regex['replace'], value
+                )
 
             # Custom values can be passed in the config (just in case)
             artist = item[self.config['artist_field'].get()]
@@ -92,8 +104,10 @@ class SpotifyPlugin(BeetsPlugin):
             query = item[self.config['track_field'].get()]
             search_url = query + " album:" + album + " artist:" + artist
 
-            # Query the Web API for each track and look for the items' JSON data
-            r = requests.get(self.base_url, params={"q": search_url, "type": "track"})
+            # Query the Web API for each track, look for the items' JSON data
+            r = requests.get(self.base_url, params={
+                "q": search_url, "type": "track"
+            })
             self.out(r.url)
             try:
                 r.raise_for_status()
@@ -103,12 +117,14 @@ class SpotifyPlugin(BeetsPlugin):
                 continue
 
             r_data = r.json()['tracks']['items']
-            
+
             # Apply market filter if requested
             region_filter = self.config['region_filter'].get()
             if region_filter:
-                r_data = filter(lambda x: region_filter in x['available_markets'], r_data)
-            
+                r_data = filter(
+                    lambda x: region_filter in x['available_markets'], r_data
+                )
+
             # Simplest, take the first result
             chosen_result = None
             if len(r_data) == 1 or self.config['tiebreak'].get() == "first":
@@ -116,7 +132,9 @@ class SpotifyPlugin(BeetsPlugin):
                 chosen_result = r_data[0]
             elif len(r_data) > 1:
                 # Use the popularity filter
-                self.out("Most popular track chosen, count: " + str(len(r_data)))
+                self.out(
+                    "Most popular track chosen, count: " + str(len(r_data))
+                )
                 chosen_result = max(r_data, key=lambda x: x['popularity'])
 
             if chosen_result:
@@ -129,13 +147,15 @@ class SpotifyPlugin(BeetsPlugin):
         if failure_count > 0:
             if self.config['show_failures'].get():
                 print
-                print str(failure_count) + " track(s) did not match a Spotify ID"
+                print str(failure_count) + \
+                    " track(s) did not match a Spotify ID"
                 print "#########################"
                 for track in failures:
                     print "track:" + track
                 print "#########################"
             else:
-                print str(failure_count) + " track(s) did not match a Spotify ID, --show_failures to display"
+                print str(failure_count) + " track(s) did not match " + \
+                    "a Spotify ID, --show_failures to display"
 
         return results
 
@@ -149,7 +169,8 @@ class SpotifyPlugin(BeetsPlugin):
 
             else:
                 print
-                print "Copy everything between the hashes and paste into a Spotify playlist"
+                print "Copy everything between the hashes and paste into " + \
+                    "a Spotify playlist"
                 print "#########################"
                 for item in ids:
                     print unicode.encode(self.open_url + item)
@@ -159,5 +180,4 @@ class SpotifyPlugin(BeetsPlugin):
 
     def out(self, msg):
         if self.config['verbose'].get() or self.opts.verbose:
-            print msg;
-
+            print msg
