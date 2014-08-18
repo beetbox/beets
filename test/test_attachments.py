@@ -39,6 +39,7 @@ class AttachmentTestHelper(TestHelper):
         return self._factory
 
     def touch(self, path, dir=None, content=''):
+        # TODO move into TestHelper
         if dir:
             path = os.path.join(dir, path)
 
@@ -133,12 +134,70 @@ class AttachmentTestHelper(TestHelper):
     def cli_output(self, *args):
         with capture_stdout() as output:
             self.runcli(*args)
-        return output.getvalue().split('\n')
+        return [l for l in output.getvalue().split('\n') if l]
 
     def libpath(self, *components):
         components = \
             itertools.chain(*map(lambda comp: comp.split('/'), components))
         return os.path.join(self.libdir, *components)
+
+
+class AttachmentDocTest(unittest.TestCase, AttachmentTestHelper):
+    """Tests for the guide of the attachment documentation.
+    """
+
+    def setUp(self):
+        self.setup_beets()
+        self.config['path_formats'] = {'default': '$album/$track $title'}
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    @unittest.skip
+    def test_attache_single_file_with_type(self):
+        self.add_album(name='Revolver')
+        attachment_path = self.touch('cover.jpg')
+
+        output = self.cli_output('attach', attachment_path, '--type',
+                                 'cover', 'album:Revolver')
+        self.assertIn("add cover attachment {0} to 'The Beatles - Revolver'"
+                      .format(attachment_path), output)
+
+        output = self.cli_output('attachls', 'type:cover', 'e:album:Revolver')
+        self.assertIn('cover: {0}/Revolver/cover.jpg'
+                      .format(self.libdir), output)
+
+    def test_attache_single_file_with_type_and_path_config(self):
+        self.config['attachments']['paths'] = [{
+            'type': 'cover',
+            'path': 'front.$ext',
+        }]
+        self.add_album(name='Revolver')
+        attachment_path = self.touch('cover.jpg')
+
+        self.runcli('attach', attachment_path, '--type',
+                    'cover', 'album:Revolver')
+
+        output = self.cli_output('attachls', 'type:cover', 'e:album:Revolver')
+        self.assertIn('cover: {0}/Revolver/front.jpg'
+                      .format(self.libdir), output)
+
+    @unittest.skip
+    def test_import_cover_and_booklet(self):
+        importer = self.create_importer()
+        album_dir = os.path.join(self.importer.paths[0], 'album 0')
+        cover_path = self.touch(album_dir, 'cover.jpg')
+        booklet_path = self.touch(album_dir, 'booklet.pdf')
+
+        with capture_stdout() as output:
+            importer.run()
+        output = output.getValue().split('\n')
+        self.assertIn("add cover attachment {0} to 'Artist - Album 0'"
+                      .format(cover_path), output)
+        self.assertIn("add booklet attachment {0} to 'Artist - Album 0'"
+                      .format(booklet_path), output)
+
+    # TODO attach-import
 
 
 class AttachmentDestinationTest(unittest.TestCase, AttachmentTestHelper):
@@ -263,6 +322,7 @@ class AttachmentTest(unittest.TestCase, AttachmentTestHelper):
         self.teardown_beets()
 
     # attachment.move()
+    # TODO move attachments with same path
 
     def test_move(self):
         attachment = self.create_album_attachment(self.touch('a'))
@@ -424,7 +484,10 @@ class AttachmentFactoryTest(unittest.TestCase, AttachmentTestHelper):
         self.assertEqual(len(attachments), 1)
         self.assertEqual(attachments[0].type, 'image')
 
-    # TODO Glob and RegExp
+    # TODO Glob and RegExp.
+    # * Globs dont match files starting with a dot
+    # * Add extended bash globs.
+    # * Regexp must match full basename
     def test_detect_config_types(self):
         self.config['attachments']['types'] = {
             '.*\.jpg': 'image'
@@ -601,7 +664,10 @@ class EntityAttachmentsTest(unittest.TestCase, AttachmentTestHelper):
 
 
 class AttachmentImportTest(unittest.TestCase, AttachmentTestHelper):
-    """Attachments should be created in the importer.
+    """Import process should discover and add attachments.
+
+    Since the importer uses the `AttachmentFactory.discover()` method more
+    comprehensive tests can be found in that test case.
     """
 
     def setUp(self):
@@ -650,6 +716,8 @@ class AttachmentImportTest(unittest.TestCase, AttachmentTestHelper):
             attachment.path,
             os.path.splitext(item.path)[0] + ' - cover.jpg'
         )
+
+    # TODO interactive type input
 
 
 class AttachCommandTest(unittest.TestCase, AttachmentTestHelper):

@@ -11,4 +11,5 @@ guide.
    main
    tagger
    advanced
+   attachments
    migration

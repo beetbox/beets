@@ -605,6 +605,7 @@ class AttachmentFactory(object):
         Uses the functions from `register_detector` and the
         `attachments.types` configuration.
         """
+        # TODO Make list unique
         for detector in self._detectors:
             try:
                 type = detector(path)
