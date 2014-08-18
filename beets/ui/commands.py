@@ -756,9 +756,9 @@ class TerminalImportSession(importer.ImportSession):
             # print some detail about the existing and new items so it can be an informed decision
             for duplicate in found_duplicates:
                 old_items = [(item.path, item.format, item.bitrate, item.length) for item in duplicate.items()]
-                print("OLD: " + util.summarize_items(old_items))
+                print("OLD: " + ui.summarize_items(old_items))
             new_items = [(item.path, item.format, item.bitrate, item.length) for item in task.items]
-            print("NEW: " + util.summarize_items(new_items))
+            print("NEW: " + ui.summarize_items(new_items))
 
             sel = ui.input_options(
                 ('Skip new', 'Keep both', 'Remove old')
