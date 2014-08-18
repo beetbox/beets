@@ -77,6 +77,8 @@ Little improvements and fixes:
 * :doc:`/plugins/convert`: A new ``--pretend`` option lets you preview the
   commands the plugin will execute without actually taking any action. Thanks
   to Dietrich Daroch.
+* Fix a crash when a float-valued tag field only contained a ``+`` or ``-``
+  character.
 
 
 

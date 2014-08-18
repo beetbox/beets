@@ -154,11 +154,12 @@ def _safe_cast(out_type, val):
         else:
             if not isinstance(val, basestring):
                 val = unicode(val)
-            val = re.match(r'[\+-]?[0-9\.]*', val.strip()).group(0)
-            if not val:
-                return 0.0
-            else:
-                return float(val)
+            match = re.match(r'[\+-]?[0-9\.]+', val.strip())
+            if match:
+                val = match.group(0)
+                if val:
+                    return float(val)
+            return 0.0
 
     else:
         return val

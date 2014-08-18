@@ -107,6 +107,10 @@ class InvalidValueToleranceTest(unittest.TestCase):
         self.assertTrue(isinstance(us, unicode))
         self.assertTrue(us.startswith(u'caf'))
 
+    def test_safe_cast_float_with_no_numbers(self):
+        v = _sc(float, '+')
+        self.assertEqual(v, 0.0)
+
 
 class SafetyTest(unittest.TestCase, TestHelper):
     def setUp(self):
