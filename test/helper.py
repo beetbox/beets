@@ -81,13 +81,13 @@ def capture_stdout():
     'spam'
     """
     org = sys.stdout
-    sys.stdout = StringIO()
+    sys.stdout = captured = StringIO()
     sys.stdout.encoding = 'utf8'
     try:
-        yield sys.stdout
+        yield captured
     finally:
         sys.stdout = org
-        print(org.getvalue())
+        print(captured.getvalue())
 
 
 @contextmanager

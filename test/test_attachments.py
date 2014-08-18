@@ -197,7 +197,24 @@ class AttachmentDocTest(unittest.TestCase, AttachmentTestHelper):
         self.assertIn("add booklet attachment {0} to 'Artist - Album 0'"
                       .format(booklet_path), output)
 
-    # TODO attach-import
+    def test_attach_import(self):
+        self.config['attachments']['types'] = {'cover.jpg': 'cover'}
+
+        album1 = self.add_album(name='Revolver', artist='The Beatles')
+        album2 = self.add_album(name='Abbey Road', artist='The Beatles')
+        cover_path1 = self.touch(os.path.join(album1.item_dir(), 'cover.jpg'))
+        cover_path2 = self.touch(os.path.join(album2.item_dir(), 'cover.jpg'))
+
+        output = self.cli_output('attach-import')
+        self.assertIn("add cover attachment {0} to 'The Beatles - Revolver'"
+                      .format(cover_path1), output)
+        self.assertIn("add cover attachment {0} to 'The Beatles - Abbey Road'"
+                      .format(cover_path2), output)
+
+        album1.load()
+        self.assertEqual(len(album1.attachments()), 1)
+        album2.load()
+        self.assertEqual(len(album2.attachments()), 1)
 
 
 class AttachmentDestinationTest(unittest.TestCase, AttachmentTestHelper):
@@ -484,13 +501,10 @@ class AttachmentFactoryTest(unittest.TestCase, AttachmentTestHelper):
         self.assertEqual(len(attachments), 1)
         self.assertEqual(attachments[0].type, 'image')
 
-    # TODO Glob and RegExp.
-    # * Globs dont match files starting with a dot
-    # * Add extended bash globs.
-    # * Regexp must match full basename
-    def test_detect_config_types(self):
+    # TODO add extended bash globs
+    def test_detect_config_glob_types(self):
         self.config['attachments']['types'] = {
-            '.*\.jpg': 'image'
+            '*.jpg': 'image'
         }
 
         attachments = list(self.factory.detect('/path/to/cover.jpg'))
@@ -500,15 +514,17 @@ class AttachmentFactoryTest(unittest.TestCase, AttachmentTestHelper):
         attachments = list(self.factory.detect('/path/to/cover.png'))
         self.assertEqual(len(attachments), 0)
 
-    def test_detect_multiple_types(self):
-        self.factory.register_detector(lambda _: 'a')
-        self.factory.register_detector(lambda _: 'b')
+    def test_detect_config_regexp_types(self):
         self.config['attachments']['types'] = {
-            '.*\.jpg$': 'c',
-            '.*/cover.jpg': 'd'
+            '/[abc]+.*\.(txt|md)/': 'xxx'
         }
-        attachments = list(self.factory.detect('/path/to/cover.jpg'))
-        self.assertItemsEqual(map(lambda a: a.type, attachments), 'abcd')
+
+        attachments = list(self.factory.detect('/path/to/aabbcc.md'))
+        self.assertEqual(len(attachments), 1)
+        self.assertEqual(attachments[0].type, 'xxx')
+
+        attachments = list(self.factory.detect('/path/to/aabbcc.mdx'))
+        self.assertEqual(len(attachments), 0)
 
     # factory.discover(album)
 

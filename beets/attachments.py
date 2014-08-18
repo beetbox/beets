@@ -18,6 +18,7 @@ import os.path
 import collections
 import logging
 from argparse import ArgumentParser
+from fnmatch import fnmatch
 
 from beets import dbcore
 from beets.dbcore.query import Query, AndQuery, MatchQuery, OrQuery, FalseQuery
@@ -457,7 +458,7 @@ class AttachmentFactory(object):
         return self.find(queries[Attachment], queries[Album], queries[Item])
 
     def discover(self, entity_or_prefix, local=None):
-        """Return a list of non-audio files whose path start with the
+        """Return a list of non-audio file paths that start with the
         entity prefix.
 
         For albums the entity prefix is the album directory.  For items it
@@ -469,6 +470,9 @@ class AttachmentFactory(object):
         type. For albums the only separator is the directory separator.
         For items the separtors are configured by `attachments.item_sep`
         """
+        # TODO return attachments with create()
+        # FIXME we need to handle paths as `entity_prefix` because of
+        # the importer.
         prefix, dir = self.path_prefix(entity_or_prefix)
         if local is None:
             return self._discover_full(prefix, dir)
@@ -507,7 +511,11 @@ class AttachmentFactory(object):
         a list of types for `path`. For each type it yields an attachment
         through `create`.
         """
-        for type in self._detect_types(path):
+        # TODO entity should not be optional
+        # TODO update doc
+        types = self._detect_plugin_types(path)
+        types.update(self._detect_config_types(path))
+        for type in types:
             yield self.create(path, type, entity)
 
     @classmethod
@@ -599,27 +607,33 @@ class AttachmentFactory(object):
             if hasattr(plugin, 'attachment_collector'):
                 self.register_collector(plugin.attachment_collector)
 
-    def _detect_types(self, path):
-        """Yield a list of types registered for the path.
-
-        Uses the functions from `register_detector` and the
-        `attachments.types` configuration.
-        """
+    def _detect_plugin_types(self, path):
+        types = set()
         # TODO Make list unique
         for detector in self._detectors:
             try:
                 type = detector(path)
                 if type:
-                    yield type
+                    types.add(type)
             except:
                 # TODO logging?
                 pass
+        return types
 
+    def _detect_config_types(self, path):
+        types = set()
         types_config = config('types')
-        if types_config.exists():
-            for matcher, type in types_config.get(dict).items():
-                if re.match(matcher, path):
-                    yield type
+        if not types_config.exists():
+            return types
+
+        basename = os.path.basename(path)
+        for pattern, type in types_config.get(dict).items():
+            if ((pattern[0] == '/' and pattern[-1] == '/'
+                 and re.match(pattern[1:-1] + '$', basename))
+                or fnmatch(basename, pattern)):
+                 types.add(type)
+
+        return types
 
     def _collect_meta(self, type, path):
         all_meta = {}

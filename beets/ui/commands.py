@@ -80,8 +80,6 @@ def _do_query(lib, query, album, also_items=True):
 
 
 class AttachCommand(ui.Subcommand):
-    """Duck type for ui.Subcommand
-    """
 
     def __init__(self):
         super(AttachCommand, self).__init__(
@@ -172,10 +170,35 @@ class AttachListCommand(ui.Subcommand):
         args = decargs(args)
         factory = AttachmentFactory(lib)
         for a in factory.parse_and_find(*args):
-            print('{0}: {1}'.format(a.type, displayable_path(a.path)))
+            print(u'{0}: {1}'.format(a.type, displayable_path(a.path)))
 
 
 default_commands.append(AttachListCommand())
+
+
+class AttachImportCommand(ui.Subcommand):
+    """Search files in album directories and create attachments for them.
+    """
+
+    def __init__(self):
+        super(AttachImportCommand, self).__init__(
+            'attach-import',
+            help='create attachments for albums already in the library'
+        )
+
+    def func(self, lib, opts, args):
+        args = decargs(args)
+        factory = AttachmentFactory(lib)
+        for album in lib.albums(decargs(args)):
+            for path in factory.discover(album):
+                for attachment in factory.detect(path, album):
+                    print(u"add {0} attachment {1} to '{2} - {3}'"
+                          .format(attachment.type, path,
+                                  album.albumartist, album.album))
+                    attachment.add()
+
+
+default_commands.append(AttachImportCommand())
 
 
 # fields: Shows a list of available fields for queries and format strings.
