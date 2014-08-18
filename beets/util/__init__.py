@@ -658,3 +658,30 @@ def max_filename_length(path, limit=MAX_FILENAME_LENGTH):
         return min(res[9], limit)
     else:
         return limit
+
+def summarize_items(items):
+    """Produces a brief summary line for manually resolving duplicates during import.
+    Accepts a list of tuples, one per item containing:
+    (path, format, bitrate, duration)
+    """
+
+    summary_text = ""
+    summary_text += "%d items. " % len(items)
+    format_counts = {}
+    for item in items:
+        format_counts[item[1]] = format_counts.get(item[1],0) + 1;
+
+    for format, count in format_counts.iteritems():
+        summary_text += '{count} {format}. '.format(format=format, count=count)
+
+    average_bitrate = sum([item[2] for item in items]) / len(items)
+    total_duration = sum([item[3] for item in items])
+    summary_text += '{bitrate}K average bitrate. '.format(bitrate=int(average_bitrate/1000))
+    summary_text += '{length}s total length. '.format(length=int(total_duration))
+
+    return summary_text
+
+
+
+
+

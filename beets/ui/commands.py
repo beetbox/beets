@@ -741,23 +741,6 @@ class TerminalImportSession(importer.ImportSession):
                 assert isinstance(choice, autotag.TrackMatch)
                 return choice
 
-    def summarize_items(self,items):
-        summary_text = ""
-        summary_text += "%d items. " % len(items)
-        format_counts = {}
-        for item in items:
-            format_counts[item[1]] = format_counts.get(item[1],0) + 1;
-        
-        for format, count in format_counts.iteritems():
-            summary_text += '{count} {format}. '.format(format=format, count=count)
-
-        average_bitrate = sum([item[2] for item in items]) / len(items)
-        total_duration = sum([item[3] for item in items])
-        summary_text += '{bitrate} average bitrate. '.format(bitrate=average_bitrate)
-        summary_text += '{length}s total length. '.format(length=int(total_duration))
-
-        return summary_text
-
     def resolve_duplicate(self, task):
         """Decide what to do when a new album or item seems similar to one
         that's already in the library.
@@ -771,12 +754,11 @@ class TerminalImportSession(importer.ImportSession):
             sel = 's'
         else:
             # print some detail about the existing and new items so it can be an informed decision
-
             for duplicate in task.found_duplicates:
                 old_items = [(item.path, item.format, item.bitrate, item.length) for item in duplicate.items()]
-                print("OLD: " + self.summarize_items(old_items))
+                print("OLD: " + util.summarize_items(old_items))
             new_items = [(item.path, item.format, item.bitrate, item.length) for item in task.items]
-            print("NEW: " + self.summarize_items(new_items))
+            print("NEW: " + util.summarize_items(new_items))
 
             sel = ui.input_options(
                 ('Skip new', 'Keep both', 'Remove old')
