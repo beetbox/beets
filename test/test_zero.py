@@ -10,9 +10,11 @@ from beets.mediafile import MediaFile
 
 
 class ZeroPluginTest(unittest.TestCase, TestHelper):
+    def setUp(self):
+        self.setup_beets()
 
     def tearDown(self):
-        config.clear()
+        self.teardown_beets()
         self.unload_plugins()
 
     def test_no_patterns(self):
