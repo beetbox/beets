@@ -16,6 +16,9 @@ New stuff
   song. Thanks to aroquen.
 * The new :doc:`/plugins/spotify` generates playlists for your `Spotify`_
   account. Thanks to Olin Gay.
+* When the importer detects duplicates, it now shows you some details about
+  the potentially-replaced music so you can make an informed decision. Thanks
+  to Howard Jones.
 
 .. _Spotify: https://www.spotify.com/
 
