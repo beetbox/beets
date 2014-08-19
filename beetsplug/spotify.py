@@ -146,8 +146,9 @@ class SpotifyPlugin(BeetsPlugin):
         failure_count = len(failures)
         if failure_count > 0:
             if self.config['show_failures'].get():
-                log.info(str(failure_count) +
-                             " track(s) did not match a Spotify ID:")
+                log.info("{0} track(s) did not match a Spotify ID:".format(
+                    failure_count
+                ))
                 for track in failures:
                     log.info("track:" + track)
                 log.info("")
