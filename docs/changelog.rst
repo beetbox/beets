@@ -79,6 +79,8 @@ Little improvements and fixes:
   to Dietrich Daroch.
 * Fix a crash when a float-valued tag field only contained a ``+`` or ``-``
   character.
+* Fixed a regression in the core that caused the :doc:`/plugins/scrub` not to
+  work in ``auto`` mode. Thanks to Harry Khanna.
 
 
 
