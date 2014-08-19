@@ -323,7 +323,7 @@ class ID3v23Test(unittest.TestCase, TestHelper):
         finally:
             self._delete_test()
 
-    @unittest.skip
+    @unittest.skip("a bug, see #899")
     def test_v23_image_encoding(self):
         """For compatibility with OS X/iTunes (and strict adherence to
         the standard), ID3v2.3 tags need to use an inferior text
