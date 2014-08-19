@@ -25,6 +25,7 @@ import traceback
 import subprocess
 import platform
 
+
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = u'\\\\?\\'
 

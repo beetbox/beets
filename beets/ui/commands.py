@@ -424,6 +424,32 @@ def show_item_change(item, match):
     print_(' '.join(info))
 
 
+def summarize_items(items):
+    """Produces a brief summary line describing a set of items. Used for
+    manually resolving duplicates during import.
+    """
+    summary_parts = []
+    summary_parts.append("{0} items".format(len(items)))
+
+    format_counts = {}
+    for item in items:
+        format_counts[item.format] = format_counts.get(item.format, 0) + 1
+    if len(format_counts) == 1:
+        # A single format.
+        summary_parts.append(items[0].format)
+    else:
+        # Enumerate all the formats.
+        for format, count in format_counts.iteritems():
+            summary_parts.append('{0} {1}'.format(format, count))
+
+    average_bitrate = sum([item.bitrate for item in items]) / len(items)
+    total_duration = sum([item.length for item in items])
+    summary_parts.append('{0}kbps'.format(int(average_bitrate / 1000)))
+    summary_parts.append(ui.human_seconds_short(total_duration))
+
+    return ', '.join(summary_parts)
+
+
 def _summary_judment(rec):
     """Determines whether a decision should be made without even asking
     the user. This occurs in quiet mode and when an action is chosen for
@@ -753,12 +779,11 @@ class TerminalImportSession(importer.ImportSession):
             log.info('Skipping.')
             sel = 's'
         else:
-            # print some detail about the existing and new items so it can be an informed decision
+            # Print some detail about the existing and new items so the
+            # user can make an informed decision.
             for duplicate in found_duplicates:
-                old_items = [(item.path, item.format, item.bitrate, item.length) for item in duplicate.items()]
-                print("OLD: " + ui.summarize_items(old_items))
-            new_items = [(item.path, item.format, item.bitrate, item.length) for item in task.items]
-            print("NEW: " + ui.summarize_items(new_items))
+                print("Old: " + summarize_items(list(duplicate.items())))
+            print("New: " + summarize_items(task.items))
 
             sel = ui.input_options(
                 ('Skip new', 'Keep both', 'Remove old')
