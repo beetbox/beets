@@ -61,6 +61,7 @@ by typing ``beet version``.
    bucket
    importadded
    bpm
+   spotify
 
 Autotagger Extensions
 ---------------------
@@ -135,6 +136,7 @@ Miscellaneous
 * :doc:`info`: Print music files' tags to the console.
 * :doc:`missing`: List missing tracks.
 * :doc:`duplicates`: List duplicate tracks or albums.
+* :doc:`spotify`: Create Spotify playlists from the Beets library
 
 .. _MPD: http://www.musicpd.org/
 .. _MPD clients: http://mpd.wikia.com/wiki/Clients
