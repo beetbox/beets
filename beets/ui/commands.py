@@ -741,7 +741,7 @@ class TerminalImportSession(importer.ImportSession):
                 assert isinstance(choice, autotag.TrackMatch)
                 return choice
 
-    def resolve_duplicate(self, task):
+    def resolve_duplicate(self, task, found_duplicates):
         """Decide what to do when a new album or item seems similar to one
         that's already in the library.
         """
@@ -753,6 +753,13 @@ class TerminalImportSession(importer.ImportSession):
             log.info('Skipping.')
             sel = 's'
         else:
+            # print some detail about the existing and new items so it can be an informed decision
+            for duplicate in found_duplicates:
+                old_items = [(item.path, item.format, item.bitrate, item.length) for item in duplicate.items()]
+                print("OLD: " + ui.summarize_items(old_items))
+            new_items = [(item.path, item.format, item.bitrate, item.length) for item in task.items]
+            print("NEW: " + ui.summarize_items(new_items))
+
             sel = ui.input_options(
                 ('Skip new', 'Keep both', 'Remove old')
             )

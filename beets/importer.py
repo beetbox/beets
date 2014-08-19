@@ -250,7 +250,7 @@ class ImportSession(object):
     def choose_match(self, task):
         raise NotImplementedError
 
-    def resolve_duplicate(self, task):
+    def resolve_duplicate(self, task, found_duplicates):
         raise NotImplementedError
 
     def choose_item(self, task):
@@ -1056,8 +1056,9 @@ def resolve_duplicates(session, task):
     """
     if task.choice_flag in (action.ASIS, action.APPLY):
         ident = task.chosen_ident()
-        if ident in session.seen_idents or task.find_duplicates(session.lib):
-            session.resolve_duplicate(task)
+        found_duplicates = task.find_duplicates(session.lib)
+        if ident in session.seen_idents or found_duplicates:
+            session.resolve_duplicate(task, found_duplicates)
             session.log_choice(task, True)
         session.seen_idents.add(ident)
 
