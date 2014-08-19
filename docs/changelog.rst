@@ -88,7 +88,8 @@ Little improvements and fixes:
   character.
 * Fixed a regression in the core that caused the :doc:`/plugins/scrub` not to
   work in ``auto`` mode. Thanks to Harry Khanna.
-
+* The :ref:`write-cmd` command now has a ``--force`` flag. Thanks again to
+  Harry Khanna.
 
 
 1.3.6 (May 10, 2014)
