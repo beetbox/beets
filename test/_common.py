@@ -128,6 +128,9 @@ class TestCase(unittest.TestCase):
             os.environ['HOME'] = self._old_home
         self.io.restore()
 
+        beets.config.clear()
+        beets.config._materialized = False
+
     def assertExists(self, path):
         self.assertTrue(os.path.exists(path),
                         'file does not exist: %s' % path)

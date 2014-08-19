@@ -116,6 +116,10 @@ def _clear_weights():
 
 
 class DistanceTest(_common.TestCase):
+    def tearDown(self):
+        super(DistanceTest, self).tearDown()
+        _clear_weights()
+
     def test_add(self):
         dist = Distance()
         dist.add('add', 1.0)
