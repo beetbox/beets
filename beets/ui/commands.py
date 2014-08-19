@@ -424,12 +424,17 @@ def show_item_change(item, match):
     print_(' '.join(info))
 
 
-def summarize_items(items):
+def summarize_items(items, singleton):
     """Produces a brief summary line describing a set of items. Used for
     manually resolving duplicates during import.
+
+    `items` is a list of `Item` objects. `singleton` indicates whether
+    this is an album or single-item import (if the latter, them `items`
+    should only have one element).
     """
     summary_parts = []
-    summary_parts.append("{0} items".format(len(items)))
+    if not singleton:
+        summary_parts.append("{0} items".format(len(items)))
 
     format_counts = {}
     for item in items:
@@ -782,8 +787,14 @@ class TerminalImportSession(importer.ImportSession):
             # Print some detail about the existing and new items so the
             # user can make an informed decision.
             for duplicate in found_duplicates:
-                print("Old: " + summarize_items(list(duplicate.items())))
-            print("New: " + summarize_items(task.items))
+                print("Old: " + summarize_items(
+                    list(duplicate.items()) if task.is_album else [duplicate],
+                    not task.is_album,
+                ))
+            print("New: " + summarize_items(
+                task.imported_items(),
+                not task.is_album,
+            ))
 
             sel = ui.input_options(
                 ('Skip new', 'Keep both', 'Remove old')
