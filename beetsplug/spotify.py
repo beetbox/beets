@@ -1,12 +1,14 @@
 from __future__ import print_function
-import sys
 import re
 import webbrowser
 import requests
+import logging
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs
 from beets import ui
 from requests.exceptions import HTTPError
+
+log = logging.getLogger('beets')
 
 
 class SpotifyPlugin(BeetsPlugin):
@@ -23,7 +25,6 @@ class SpotifyPlugin(BeetsPlugin):
             'mode': 'list',
             'tiebreak': 'popularity',
             'show_failures': False,
-            'verbose': False,
             'artist_field': 'albumartist',
             'album_field': 'album',
             'track_field': 'title',
@@ -51,10 +52,6 @@ class SpotifyPlugin(BeetsPlugin):
             help='list tracks that did not match a Sptoify ID',
             dest='show_failures',
         )
-        spotify_cmd.parser.add_option(
-            '-v', '--verbose', action='store_true',
-            help='show extra output'
-        )
         spotify_cmd.func = queries
         return [spotify_cmd]
 
@@ -66,7 +63,7 @@ class SpotifyPlugin(BeetsPlugin):
             self.config['show_failures'].set(True)
 
         if self.config['mode'].get() not in ['list', 'open']:
-            self.warning(self.config['mode'].get() + " is not a valid mode")
+            log.warn(self.config['mode'].get() + " is not a valid mode")
             return False
 
         self.opts = opts
@@ -80,10 +77,10 @@ class SpotifyPlugin(BeetsPlugin):
         items = lib.items(query)
 
         if not items:
-            self.out("Your beets query returned no items, skipping spotify")
+            log.debug("Your beets query returned no items, skipping spotify")
             return
 
-        self.warning("Processing " + str(len(items)) + " tracks...")
+        log.info("Processing " + str(len(items)) + " tracks...")
 
         for item in items:
 
@@ -111,11 +108,11 @@ class SpotifyPlugin(BeetsPlugin):
             r = requests.get(self.base_url, params={
                 "q": search_url, "type": "track"
             })
-            self.out(r.url)
+            log.debug(r.url)
             try:
                 r.raise_for_status()
             except HTTPError as e:
-                self.out("URL returned a " + e.response.status_code + "error")
+                log.debug("URL returned a " + e.response.status_code + "error")
                 failures.append(search_url)
                 continue
 
@@ -131,11 +128,11 @@ class SpotifyPlugin(BeetsPlugin):
             # Simplest, take the first result
             chosen_result = None
             if len(r_data) == 1 or self.config['tiebreak'].get() == "first":
-                self.out("Spotify track(s) found, count: " + str(len(r_data)))
+                log.debug("Spotify track(s) found, count: " + str(len(r_data)))
                 chosen_result = r_data[0]
             elif len(r_data) > 1:
                 # Use the popularity filter
-                self.out(
+                log.debug(
                     "Most popular track chosen, count: " + str(len(r_data))
                 )
                 chosen_result = max(r_data, key=lambda x: x['popularity'])
@@ -143,19 +140,19 @@ class SpotifyPlugin(BeetsPlugin):
             if chosen_result:
                 results.append(chosen_result)
             else:
-                self.out("No spotify track found: " + search_url)
+                log.debug("No spotify track found: " + search_url)
                 failures.append(search_url)
 
         failure_count = len(failures)
         if failure_count > 0:
             if self.config['show_failures'].get():
-                self.warning(str(failure_count) +
+                log.info(str(failure_count) +
                              " track(s) did not match a Spotify ID:")
                 for track in failures:
-                    self.warning("track:" + track)
-                self.warning("")
+                    log.info("track:" + track)
+                log.info("")
             else:
-                self.warning(
+                log.warn(
                     str(failure_count) + " track(s) did not match "
                     "a Spotify ID; use --show-failures to display\n"
                 )
@@ -166,7 +163,7 @@ class SpotifyPlugin(BeetsPlugin):
         if results:
             ids = map(lambda x: x['id'], results)
             if self.config['mode'].get() == "open":
-                self.warning("Attempting to open Spotify with playlist")
+                log.info("Attempting to open Spotify with playlist")
                 spotify_url = self.playlist_partial + ",".join(ids)
                 webbrowser.open(spotify_url)
 
@@ -174,11 +171,4 @@ class SpotifyPlugin(BeetsPlugin):
                 for item in ids:
                     print(unicode.encode(self.open_url + item))
         else:
-            self.warning("No Spotify tracks found from beets query")
-
-    def out(self, msg):
-        if self.config['verbose'].get() or self.opts.verbose:
-            self.warning(msg)
-
-    def warning(self, msg):
-        print(msg, file=sys.stderr)
+            log.warn("No Spotify tracks found from beets query")

@@ -36,7 +36,6 @@ Command-line options include:
   open it in the Spotify app. (See below.)
 * ``--show-failures`` or ``-f``: List the tracks that did not match a Spotify
   ID.
-* ``--verbose`` or ``-v``: Show extra output.
 
 Configuring
 -----------
