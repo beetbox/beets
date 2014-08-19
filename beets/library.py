@@ -392,13 +392,14 @@ class Item(LibModel):
             path = self.path
         else:
             path = normpath(path)
+
+        plugins.send('write', item=self, path=path)
+
         try:
             mediafile = MediaFile(syspath(path),
                                   id3v23=beets.config['id3v23'].get(bool))
         except (OSError, IOError) as exc:
             raise ReadError(self.path, exc)
-
-        plugins.send('write', item=self, path=path)
 
         mediafile.update(self)
         try:
