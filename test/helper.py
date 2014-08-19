@@ -351,7 +351,7 @@ class TestImportSession(importer.ImportSession):
         assert isinstance(resolution, self.Resolution)
         self._resolutions.append(resolution)
 
-    def resolve_duplicate(self, task):
+    def resolve_duplicate(self, task, found_duplicates):
         try:
             res = self._resolutions.pop(0)
         except IndexError:
