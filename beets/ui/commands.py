@@ -1415,7 +1415,7 @@ default_commands.append(move_cmd)
 
 # write: Write tags into files.
 
-def write_items(lib, query, pretend):
+def write_items(lib, query, pretend, force):
     """Write tag information from the database to the respective files
     in the filesystem.
     """
@@ -1440,19 +1440,23 @@ def write_items(lib, query, pretend):
 
         # Check for and display changes.
         changed = ui.show_model_changes(item, clean_item,
-                                        library.Item._media_fields)
-        if changed and not pretend:
+                                        library.Item._media_fields, force)
+        if (changed or force) and not pretend:
             item.try_write()
 
 
 def write_func(lib, opts, args):
-    write_items(lib, decargs(args), opts.pretend)
+    write_items(lib, decargs(args), opts.pretend, opts.force)
 
 
 write_cmd = ui.Subcommand('write', help='write tag information to files')
 write_cmd.parser.add_option(
     '-p', '--pretend', action='store_true',
     help="show all changes but do nothing"
+)
+write_cmd.parser.add_option(
+    '-f', '--force', action='store_true',
+    help="write tags even if the existing tags match the database"
 )
 write_cmd.func = write_func
 default_commands.append(write_cmd)

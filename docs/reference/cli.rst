@@ -284,7 +284,7 @@ write
 `````
 ::
 
-    beet write [-p] [QUERY]
+    beet write [-pf] [QUERY]
 
 Write metadata from the database into files' tags.
 
@@ -292,11 +292,14 @@ When you make changes to the metadata stored in beets' library database
 (during import or with the :ref:`modify-cmd` command, for example), you often
 have the option of storing changes only in the database, leaving your files
 untouched. The ``write`` command lets you later change your mind and write the
-contents of the database into the files.
+contents of the database into the files. By default, this writes the changes only if there is a difference between the database and the tags in the file.
+
+You can think of this command as the opposite of :ref:`update-cmd`.
 
 The ``-p`` option previews metadata changes without actually applying them.
 
-You can think of this command as the opposite of :ref:`update-cmd`.
+The ``-f`` option forces a write to the file, even if the file tags match the database. This is useful for making sure that enabled plugins that run on write (e.g., the Scrub and Zero plugins) are run on the file. 
+
 
 
 .. _stats-cmd:
