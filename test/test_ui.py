@@ -22,14 +22,13 @@ import platform
 
 import _common
 from _common import unittest
-from helper import capture_stdout, has_program
+from helper import capture_stdout, has_program, TestHelper
 
 from beets import library
 from beets import ui
 from beets.ui import commands
 from beets import autotag
 from beets.autotag.match import distance
-from beets import importer
 from beets.mediafile import MediaFile
 from beets import config
 from beets import plugins
@@ -502,9 +501,16 @@ class InputTest(_common.TestCase):
         self.assertEqual(album, u'\xc2me')
 
 
-class ConfigTest(_common.TestCase):
+class ConfigTest(unittest.TestCase, TestHelper):
     def setUp(self):
-        super(ConfigTest, self).setUp()
+        self.setup_beets()
+
+        # Don't use the BEETSDIR from `helper`. Instead, we point the home
+        # directory there. Some tests will set `BEETSDIR` themselves.
+        del os.environ['BEETSDIR']
+        self._old_home = os.environ.get('HOME')
+        os.environ['HOME'] = self.temp_dir
+
         self._orig_cwd = os.getcwd()
         self.test_cmd = self._make_test_cmd()
         commands.default_commands.append(self.test_cmd)
@@ -530,13 +536,9 @@ class ConfigTest(_common.TestCase):
 
     def tearDown(self):
         commands.default_commands.pop()
-        if 'BEETSDIR' in os.environ:
-            del os.environ['BEETSDIR']
-        if os.getcwd != self._orig_cwd:
-            os.chdir(self._orig_cwd)
-        if hasattr(self.test_cmd, 'lib'):
-            self.test_cmd.lib._connection().close()
-        super(ConfigTest, self).tearDown()
+        os.chdir(self._orig_cwd)
+        os.environ['HOME'] = self._old_home
+        self.teardown_beets()
 
     def _make_test_cmd(self):
         test_cmd = ui.Subcommand('test', help='test')
@@ -551,10 +553,8 @@ class ConfigTest(_common.TestCase):
 
     def _reset_config(self):
         # Config should read files again on demand
-        config.sources = []
+        config.clear()
         config._materialized = False
-        config._lazy_suffix = []
-        config._lazy_prefix = []
 
     def write_config_file(self):
         return open(self.user_config_path, 'w')

@@ -155,7 +155,8 @@ class TestHelper(object):
 
     def teardown_beets(self):
         del self.lib._connections
-        del os.environ['BEETSDIR']
+        if 'BEETSDIR' in os.environ:
+            del os.environ['BEETSDIR']
         self.remove_temp_dir()
         self.config.clear()
         beets.config.read(user=False, defaults=True)
