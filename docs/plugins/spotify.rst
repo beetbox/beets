@@ -1,8 +1,9 @@
 Spotify Plugin
-=====================
+==============
 
-The ``spotify`` plugin generates Spotify playlists from tracks within the Beets library. Using the `Spotify Web API`_, any tracks that can be matched with a Spotify ID are returned, and the results can be either pasted in to a playlist, or opened directly in Spotify.
+The ``spotify`` plugin generates `Spotify`_ playlists from tracks in your library. Using the `Spotify Web API`_, any tracks that can be matched with a Spotify ID are returned, and the results can be either pasted in to a playlist, or opened directly in Spotify.
 
+.. _Spotify: https://www.spotify.com/
 .. _Spotify Web API: https://developer.spotify.com/web-api/search-item/
 
 Why Use This Plugin?
@@ -14,6 +15,7 @@ Why Use This Plugin?
 
 Basic Usage
 -----------
+
 First, enable the plugin in your beets configuration::
 
     plugins: <other plugins> spotify
@@ -23,26 +25,13 @@ Then, you can search for tracks as usual with the ``spotify`` command::
     beet spotify <options if needed> <search args>
 
 
-An example command, and it's output::
+Here's an example::
 
-    beet spotify "In The Lonely Hour"
-
+    $ beet spotify "In The Lonely Hour"
     Processing 14 tracks...
-
     http://open.spotify.com/track/19w0OHr8SiZzRhjpnjctJ4
     http://open.spotify.com/track/3PRLM4FzhplXfySa4B7bxS
-    http://open.spotify.com/track/0ci6bxPw8muHTmSRs1MOjD
-    http://open.spotify.com/track/7IHOIqZUUInxjVkko181PB
-    http://open.spotify.com/track/0fySyVgczjbjbxMwNrdwkp
-    http://open.spotify.com/track/1VbhR6D6zUoSTBzvnRonXO
-    http://open.spotify.com/track/4TBFEe4n95WPxeUYt9jrMe
-    http://open.spotify.com/track/2DnBQKrh8aodN4dBSdXAUh
-    http://open.spotify.com/track/4DlYkz7xtje3iV2dDBu3OK
-    http://open.spotify.com/track/7C6cA8girfd6ZvbkmZmx9V
-    http://open.spotify.com/track/6uZ2x1Z6DSpOGAlVlvuhif
-    http://open.spotify.com/track/3aoAkxvRjwhXDajp5aSZS6
-    http://open.spotify.com/track/7cG68oOj0pZYoSVuP1Jzot
-    http://open.spotify.com/track/4qPtIDBT2iVQv13tjpXMDt
+    [...]
 
 Options for the command::
 
@@ -52,7 +41,7 @@ Options for the command::
       -h, --help            show this help message and exit
       -m MODE, --mode=MODE  "open" to open spotify with playlist, "list" to
                             print (default)
-      -f, --show_failures   Print out list of any tracks that did not match a
+      -f, --show-failures   Print out list of any tracks that did not match a
                             Sptoify ID
       -v, --verbose         show extra output
 

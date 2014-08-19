@@ -39,16 +39,17 @@ class SpotifyPlugin(BeetsPlugin):
                 self.output_results(results)
         spotify_cmd = ui.Subcommand(
             'spotify',
-            help='build spotify playlist of results'
+            help='build a Spotify playlist'
         )
         spotify_cmd.parser.add_option(
             '-m', '--mode', action='store',
-            help='"open" to open spotify with playlist, '
+            help='"open" to open Spotify with playlist, '
                  '"list" to print (default)'
         )
         spotify_cmd.parser.add_option(
-            '-f', '--show_failures', action='store_true',
-            help='Print out list of any tracks that did not match a Sptoify ID'
+            '-f', '--show-failures', action='store_true',
+            help='list tracks that did not match a Sptoify ID',
+            dest='show_failures',
         )
         spotify_cmd.parser.add_option(
             '-v', '--verbose', action='store_true',
@@ -148,16 +149,15 @@ class SpotifyPlugin(BeetsPlugin):
         failure_count = len(failures)
         if failure_count > 0:
             if self.config['show_failures'].get():
-                self.warning("\n#########################")
                 self.warning(str(failure_count) +
-                             " track(s) did not match a Spotify ID")
+                             " track(s) did not match a Spotify ID:")
                 for track in failures:
                     self.warning("track:" + track)
-                self.warning("#########################\n")
+                self.warning("")
             else:
                 self.warning(
                     str(failure_count) + " track(s) did not match "
-                    "a Spotify ID, --show_failures to display"
+                    "a Spotify ID; use --show-failures to display\n"
                 )
 
         return results
@@ -171,10 +171,8 @@ class SpotifyPlugin(BeetsPlugin):
                 webbrowser.open(spotify_url)
 
             else:
-                self.warning("")
                 for item in ids:
                     print(unicode.encode(self.open_url + item))
-                self.warning("")
         else:
             self.warning("No Spotify tracks found from beets query")
 
