@@ -14,6 +14,10 @@ New stuff
   that are missing certain data. Thanks to oprietop.
 * The new :doc:`/plugins/bpm` lets you manually measure the tempo of a playing
   song. Thanks to aroquen.
+* The new :doc:`/plugins/spotify` generates playlists for your `Spotify`_
+  account. Thanks to Olin Gay.
+
+.. _Spotify: https://www.spotify.com/
 
 Little improvements and fixes:
 
