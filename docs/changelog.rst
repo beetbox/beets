@@ -4,7 +4,7 @@ Changelog
 1.3.8 (in development)
 ----------------------
 
-Changelog goes here!
+This release adds **sorting** to beets queries. See :ref:`query-sort`.
 
 
 1.3.7 (August 22, 2014)

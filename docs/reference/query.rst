@@ -185,6 +185,8 @@ query won't necessarily find *all* the audio files in a directory---just the
 ones you've already added to your beets library.
 
 
+.. _query-sort:
+
 Sort Order
 ----------
 
@@ -207,6 +209,6 @@ You can also specify several sort orders, which will be used in the same order a
 which they appear in your query::
 
     $ beet list -a genre+ year+
- 
+
 This command will sort all albums by genre and, in each genre, in chronological
 order.
